@@ -6,7 +6,7 @@ defmodule CadetWeb.LayoutView do
   # Load appropriate scripts and stylesheet according to environment
   def head_tags(conn) do
     if Application.get_env(:cadet, :environment) == :dev do
-      script_tag(webpack_entry_file)
+      script_tag(webpack_entry_file())
     else
       [
         stylesheet_tag(static_path(conn, "/css/app.css")),
@@ -25,7 +25,7 @@ defmodule CadetWeb.LayoutView do
   end
 
   defp webpack_entry_file do
-    "http://#{webpack_host}:#{webpack_port}/#{webpack_entry}.js"
+    "http://#{webpack_host()}:#{webpack_port()}/#{webpack_entry()}.js"
   end
 
   defp webpack_host, do: System.get_env("CADET_HOST")
