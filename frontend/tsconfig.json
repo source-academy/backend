@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "target": "es2015",
+    "jsx": "preserve",
+    "allowSyntheticDefaultImports": true,
+    "lib": ["dom", "es2015"]
+  },
+  "exclude": ["scripts", "webpack"]
+}
