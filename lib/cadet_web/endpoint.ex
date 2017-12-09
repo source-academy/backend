@@ -11,7 +11,7 @@ defmodule CadetWeb.Endpoint do
   )
 
   # Serve assets files from priv/assets directory as-is.
-  plug(Plug.Static, at: "/lib", from: :cadet, gzip: false)
+  plug(Plug.Static, at: "/lib", from: {:cadet, "priv/assets"}, gzip: false)
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
