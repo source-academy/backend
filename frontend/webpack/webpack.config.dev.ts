@@ -80,6 +80,7 @@ const config: webpack.Configuration = {
             options: {
               ident: 'postcss',
               plugins: () => [
+                require('precss'),
                 require('postcss-flexbugs-fixes'),
                 autoprefixer({
                   browsers: [
@@ -104,6 +105,12 @@ const config: webpack.Configuration = {
       'process.env': {
         NODE_ENV: JSON.stringify('development'),
       },
+    }),
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery',
+      Popper: ['popper.js', 'default'],
     }),
     new CheckerPlugin(),
     new webpack.HotModuleReplacementPlugin(),

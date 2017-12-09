@@ -85,6 +85,7 @@ const config: webpack.Configuration = {
                 ident: 'postcss',
                 plugins: () => [
                   require('postcss-flexbugs-fixes'),
+                  require('precss'),
                   autoprefixer({
                     browsers: [
                       '>1%',
@@ -112,6 +113,12 @@ const config: webpack.Configuration = {
       'process.env': {
         NODE_ENV: JSON.stringify('production'),
       },
+    }),
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery',
+      Popper: ['popper.js', 'default'],
     }),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new webpack.optimize.CommonsChunkPlugin({
