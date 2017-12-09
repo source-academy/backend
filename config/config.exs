@@ -6,16 +6,14 @@
 use Mix.Config
 
 # General application configuration
-config :cadet,
-  ecto_repos: [Cadet.Repo]
+config :cadet, ecto_repos: [Cadet.Repo]
 
 # Configures the endpoint
 config :cadet, CadetWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "ueV6EWi+7MCMcJH/WZZVKPZbQxFix7tF1Xv9ajD4AN4jLowHbdUX33rmKWPvEEgz",
   render_errors: [view: CadetWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Cadet.PubSub,
-           adapter: Phoenix.PubSub.PG2]
+  pubsub: [name: Cadet.PubSub, adapter: Phoenix.PubSub.PG2]
 
 # Configures Elixir's Logger
 config :logger, :console,
@@ -24,4 +22,4 @@ config :logger, :console,
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
-import_config "#{Mix.env}.exs"
+import_config "#{Mix.env()}.exs"

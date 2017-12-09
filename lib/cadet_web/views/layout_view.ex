@@ -3,15 +3,17 @@ defmodule CadetWeb.LayoutView do
 
   import Phoenix.HTML.Tag, only: [tag: 2, content_tag: 3]
 
-  # Load appropriate scripts and stylesheet according to environment
-  def head_tags(conn) do
+  @doc """
+  Returns environment-specific HTML Head content.
+  """
+  def env_head_content(conn) do
     if Application.get_env(:cadet, :environment) == :dev do
       script_tag(webpack_entry_file())
     else
       [
-        stylesheet_tag(static_path(conn, "/css/app.css")),
-        script_tag(static_path(conn, "/js/vendor.js")),
-        script_tag(static_path(conn, "/js/app.js"))
+        stylesheet_tag(static_path(conn, "/lib/css/app.css")),
+        script_tag(static_path(conn, "/lib/js/vendor.js")),
+        script_tag(static_path(conn, "/lib/js/app.js"))
       ]
     end
   end

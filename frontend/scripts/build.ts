@@ -7,10 +7,12 @@ import config from '../webpack/webpack.config.prod'
 
 process.env.NODE_ENV = 'production'
 
-// Recreate priv/static directory
+// Delete build directories in priv/static
 const staticPath = path.resolve(__dirname, '../../priv/static')
-rimraf.sync(staticPath)
-fs.mkdirSync(staticPath)
+
+const buildDirectories = ['js', 'css']
+
+buildDirectories.forEach(dir => rimraf.sync(path.join(staticPath, dir)))
 
 // Run Webpack
 webpack(config).run(err => {

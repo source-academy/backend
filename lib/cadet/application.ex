@@ -11,7 +11,7 @@ defmodule Cadet.Application do
       # Start the Ecto repository
       supervisor(Cadet.Repo, []),
       # Start the endpoint when the application starts
-      supervisor(CadetWeb.Endpoint, []),
+      supervisor(CadetWeb.Endpoint, [])
       # Start your own worker by calling: Cadet.Worker.start_link(arg1, arg2, arg3)
       # worker(Cadet.Worker, [arg1, arg2, arg3]),
     ]

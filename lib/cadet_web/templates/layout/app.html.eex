@@ -7,13 +7,13 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
     <title>Source Academy</title>
-    <%= head_tags(@conn) %>
+    <%= env_head_content(@conn) %>
   </head>
 
   <body>
     <div class="container">
       <main role="main">
-        <%= render @view_module, @view_template, assigns %>
+        <%= render(@view_module, @view_template, assigns) %>
       </main>
     </div>
   </body>

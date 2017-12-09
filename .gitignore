@@ -3,8 +3,11 @@
 /db
 /deps
 /*.ez
-/priv/static/js
-/priv/static/css
+
+!/priv/static
+/priv/static/*
+!/priv/static/favicon.ico
+!/priv/static/lib/
 
 # Generated on crash by the VM
 erl_crash.dump

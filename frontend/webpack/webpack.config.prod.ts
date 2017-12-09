@@ -24,7 +24,7 @@ const config: webpack.Configuration = {
     devtoolModuleFilenameTemplate: info =>
       path.relative(
         path.resolve(__dirname, '../src'),
-        info.absoluteResourcePath
+        info.absoluteResourcePath,
       ),
   },
 
@@ -119,7 +119,7 @@ const config: webpack.Configuration = {
       minChunks: Infinity,
     }),
     new ExtractTextPlugin({
-      filename: `${process.env.CADET_WEBPACK_ENTRY}.css`,
+      filename: `css/${process.env.CADET_WEBPACK_ENTRY}.css`,
     }),
   ],
 
