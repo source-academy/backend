@@ -11,9 +11,9 @@ defmodule CadetWeb.LayoutView do
       script_tag(webpack_entry_file())
     else
       [
-        stylesheet_tag(static_path(conn, "/lib/css/app.css")),
-        script_tag(static_path(conn, "/lib/js/vendor.js")),
-        script_tag(static_path(conn, "/lib/js/app.js"))
+        stylesheet_tag(static_path(conn, "/css/app.css")),
+        script_tag(static_path(conn, "/js/vendor.js")),
+        script_tag(static_path(conn, "/js/app.js"))
       ]
     end
   end
