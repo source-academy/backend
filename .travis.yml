@@ -1,10 +1,13 @@
 language: elixir
 elixir: 1.5.0
+otp_release: '20.1'
+env:
+  - MIX_ENV=test
 addons:
   postgresql: '9.6'
 services:
   - postgresql
 before_script:
   - mix ecto.setup
-after_script:
+script:
   - mix coveralls.travis
