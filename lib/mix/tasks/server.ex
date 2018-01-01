@@ -6,6 +6,7 @@ defmodule Mix.Tasks.Cadet.Server do
   use Mix.Task
 
   def run(args) do
+    Dotenv.load!()
     :ok = Mix.Tasks.Phx.Server.run(args)
   end
 end
