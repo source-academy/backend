@@ -14,6 +14,14 @@ defmodule Cadet do
     end
   end
 
+  def context do
+    quote do
+      alias Cadet.Repo
+
+      import Ecto.Changeset
+    end
+  end
+
   defmacro __using__(which) when is_atom(which) do
     apply(__MODULE__, which, [])
   end
