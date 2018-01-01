@@ -1,0 +1,11 @@
+language: elixir
+elixir: 1.6.0-dev
+otp_release: 20.1
+addons:
+  postgresql: '9.6'
+services:
+  - postgresql
+before_script:
+  - mix ecto.setup
+after_script:
+  - mix coveralls.travis

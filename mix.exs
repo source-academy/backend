@@ -9,6 +9,13 @@ defmodule Cadet.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix, :gettext] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
       aliases: aliases(),
       deps: deps()
     ]
@@ -43,7 +50,8 @@ defmodule Cadet.Mixfile do
       {:cowboy, "~> 1.0"},
       {:dotenv, "~> 2.0.0"},
       {:ecto_enum, "~> 1.0"},
-      {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
+      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.8", only: :test}
     ]
   end
 
