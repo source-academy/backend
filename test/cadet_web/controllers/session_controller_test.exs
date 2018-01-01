@@ -8,7 +8,7 @@ defmodule CadetWeb.SessionControllerTest do
 
   test "POST /session", %{conn: conn} do
     conn = post(conn, "/session")
-    assert html_response(conn, 302) 
+    assert html_response(conn, 302)
   end
 
   test "DELETE /session/:id", %{conn: conn} do

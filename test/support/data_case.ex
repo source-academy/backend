@@ -22,6 +22,7 @@ defmodule Cadet.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import Cadet.DataCase
+      import Cadet.Factory
     end
   end
 
