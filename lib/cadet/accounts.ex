@@ -4,7 +4,10 @@ defmodule Cadet.Accounts do
   """
   use Cadet, :context
 
+  alias Comeonin.Pbkdf2
+
   alias Cadet.Accounts.User
+  alias Cadet.Accounts.Query
   alias Cadet.Accounts.Authorization
 
   @doc """
@@ -28,7 +31,7 @@ defmodule Cadet.Accounts do
   The user will be able to authenticate using the e-mail
   """
   def add_email(user = %User{}, email) do
-    token = get_token(:email, email) || random_token()
+    token = get_token(:email, email) || get_random_token()
 
     changeset =
       %Authorization{}
@@ -42,6 +45,25 @@ defmodule Cadet.Accounts do
     Repo.insert(changeset)
   end
 
+  @doc """
+  Associate a password to an existing `%User{}`
+  The user will be able to authenticate using any of the e-mail
+  and the password.
+  """
+  def set_password(user = %User{}, password) do
+    token = Pbkdf2.hashpwsalt(password)
+
+    Repo.transaction(fn ->
+      authorizations = Repo.all(Query.user_emails(user.id))
+
+      for email <- authorizations do
+        email
+        |> change(%{token: token})
+        |> Repo.update!()
+      end
+    end)
+  end
+
   defp get_token(provider, uid) do
     auth = Repo.get_by(Authorization, provider: provider, uid: uid)
 
@@ -52,7 +74,7 @@ defmodule Cadet.Accounts do
     end
   end
 
-  defp random_token() do
+  defp get_random_token() do
     length = 64
 
     :crypto.strong_rand_bytes(length)

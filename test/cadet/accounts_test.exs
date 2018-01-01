@@ -60,4 +60,18 @@ defmodule Cadet.AccountsTest do
     {:error, changeset} = Accounts.add_email(user2, "teddy@happy.mail")
     assert %{uid: ["has already been taken"]} = errors_on(changeset)
   end
+
+  test "setting user password without e-mail" do
+    user = insert(:user)
+    assert {:ok, []} = Accounts.set_password(user, "newpassword")
+  end
+
+  test "setting user password with multiple e-mails" do
+    user = insert(:user)
+    insert(:email, user: user)
+    insert(:email, user: user)
+    assert {:ok, auths} = Accounts.set_password(user, "newpassword")
+    assert length(auths) == 2
+    assert Enum.all?(auths, &(&1.user_id == user.id))
+  end
 end
