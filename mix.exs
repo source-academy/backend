@@ -50,6 +50,8 @@ defmodule Cadet.Mixfile do
       {:dotenv, "~> 2.0.0"},
       {:ecto_enum, "~> 1.0"},
       {:ex_machina, "~> 2.1"},
+      {:pbkdf2_elixir, "~> 0.12"},
+      {:comeonin, "~> 4.0"},
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test}
