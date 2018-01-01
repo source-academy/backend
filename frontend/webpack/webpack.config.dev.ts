@@ -106,12 +106,6 @@ const config: webpack.Configuration = {
         NODE_ENV: JSON.stringify('development'),
       },
     }),
-    new webpack.ProvidePlugin({
-      $: 'jquery',
-      jQuery: 'jquery',
-      'window.jQuery': 'jquery',
-      Popper: ['popper.js', 'default'],
-    }),
     new CheckerPlugin(),
     new webpack.HotModuleReplacementPlugin(),
   ],
