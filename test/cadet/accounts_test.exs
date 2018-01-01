@@ -11,9 +11,9 @@ defmodule Cadet.AccountsTest do
         role: :student
       })
 
-    assert(user.first_name == "happy")
-    assert(user.last_name == "user")
-    assert(user.role == :student)
+    assert user.first_name == "happy"
+    assert user.last_name == "user"
+    assert user.role == :student
   end
 
   test "invalid create user" do
