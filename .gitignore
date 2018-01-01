@@ -4,10 +4,7 @@
 /deps
 /*.ez
 
-!/priv/static
-/priv/static/*
-!/priv/static/favicon.ico
-!/priv/static/lib/
+/priv/static
 
 # Generated on crash by the VM
 erl_crash.dump
