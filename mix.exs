@@ -42,6 +42,7 @@ defmodule Cadet.Mixfile do
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
       {:dotenv, "~> 2.0.0"},
+      {:ecto_enum, "~> 1.0"},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
     ]
   end
