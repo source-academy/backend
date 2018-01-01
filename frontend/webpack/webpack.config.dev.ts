@@ -54,6 +54,13 @@ const config: webpack.Configuration = {
         ],
       },
       {
+        test: [/\.ttf$/, /\.eot$/, /\.woff$/],
+        loader: require.resolve('file-loader'),
+        options: {
+          name: 'static/media/[name].[hash:8].[ext]',
+        },
+      },
+      {
         test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
         loader: require.resolve('url-loader'),
         options: {

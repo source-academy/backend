@@ -1,0 +1,9 @@
+/* Modify BlueprintJS variables here */
+@import url('https://fonts.googleapis.com/css?family=Nunito');
+
+$icon-font-path: '~@blueprintjs/core/resources/icons' !default;
+$pt-font-family: 'Nunito', sans-serif !default;
+$pt-navbar-height: 50px !default;
+$pt-font-size: 14px !default;
+
+@import '~@blueprintjs/core/src/common/variables';

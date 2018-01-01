@@ -1,5 +1,7 @@
-<nav class="navbar navbar-light bg-light">
-  <span class="navbar-brand mb-0 h1">
-    Source Academy
-  </span>
+<nav class="pt-navbar pt-dark">
+  <div class="pt-navbar-group pt-align-left">
+    <div class="pt-navbar-heading">
+      Source Academy
+    </div>
+  </div>
 </nav>
