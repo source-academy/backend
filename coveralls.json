@@ -3,6 +3,7 @@
     "lib/cadet_web.ex",
     "lib/cadet_web/endpoint.ex",
     "lib/cadet.ex",
+    "lib/cadet/application.ex",
     "lib/mix/tasks",
     "test/support"
   ]
