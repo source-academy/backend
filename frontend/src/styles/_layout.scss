@@ -1,4 +1,26 @@
 body {
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  background: $sa-header-bg-color;
+  z-index: 9;
+}
+
+.pt-navbar.pt-dark {
+  width: 100%;
+  background: transparent;
+  text-transform: uppercase;
+  box-shadow: none;
+
+  @media (max-width: 768px) {
+    .pt-button span {
+      display: none;
+    }
+  }
 }

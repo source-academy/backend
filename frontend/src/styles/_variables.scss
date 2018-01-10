@@ -6,4 +6,10 @@ $pt-font-family: 'Nunito', sans-serif !default;
 $pt-navbar-height: 50px !default;
 $pt-font-size: 14px !default;
 
+// Source Academy Color Pallete
+$sa-dark-blue: #101e35 !default;
+
+// Layout Variables
+$sa-header-bg-color: linear-gradient(45deg, $sa-dark-blue, #192c39);
+
 @import '~@blueprintjs/core/src/common/variables';
