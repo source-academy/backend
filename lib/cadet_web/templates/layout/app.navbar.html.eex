@@ -1,7 +1,8 @@
 <nav class="pt-navbar pt-dark">
   <div class="pt-navbar-group pt-align-left">
-    <div class="pt-navbar-heading">
-      Source Academy
+    <div id="sa-navbar-heading" class="pt-navbar-heading">
+      <img src="/lib/images/logo.gif" style="height:30px"></img>
+      <span>Source Academy</span>
     </div>
   </div>
 </nav>

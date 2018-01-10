@@ -24,3 +24,22 @@ header {
     }
   }
 }
+
+#sa-navbar-heading {
+  display: flex;
+  flex-direction: row;
+  height: $pt-navbar-height;
+  padding: 10px 0;
+
+  img {
+    margin-right: 10px;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 0.9em;
+  }
+}
