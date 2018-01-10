@@ -74,4 +74,56 @@ defmodule Cadet.AccountsTest do
     assert length(auths) == 2
     assert Enum.all?(auths, &(&1.user_id == user.id))
   end
+
+  test "create authorization" do
+    user = insert(:user)
+
+    attrs = %{
+      provider: :email,
+      uid: "test@gmail.com",
+      token: "hahaha"
+    }
+
+    assert {:ok, auth} = Accounts.create_authorization(attrs, user)
+    assert auth.user_id == user.id
+    assert auth.uid == "test@gmail.com"
+  end
+
+  test "valid registration" do
+    attrs = %{
+      first_name: "Test",
+      last_name: "Name",
+      email: "test@gmail.com",
+      password: "somepassword",
+      password_confirmation: "somepassword"
+    }
+
+    assert {:ok, user} = Accounts.register(attrs, :student)
+    assert user.first_name == "Test"
+    assert user.last_name == "Name"
+  end
+
+  test "register using invalid email format" do
+    attrs = %{
+      first_name: "Test",
+      email: "testgmail.com",
+      password: "somepassword",
+      password_confirmation: "somepassword"
+    }
+
+    assert {:error, changeset} = Accounts.register(attrs, :student)
+    assert %{email: ["has invalid format"]} == errors_on(changeset)
+  end
+
+  test "register password confirmation does not match" do
+    attrs = %{
+      first_name: "Test",
+      email: "test@gmail.com",
+      password: "somepassword2",
+      password_confirmation: "somepassword"
+    }
+
+    assert {:error, changeset} = Accounts.register(attrs, :student)
+    assert %{password_confirmation: ["does not match confirmation"]} == errors_on(changeset)
+  end
 end

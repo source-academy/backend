@@ -9,6 +9,48 @@ defmodule Cadet.Accounts do
   alias Cadet.Accounts.User
   alias Cadet.Accounts.Query
   alias Cadet.Accounts.Authorization
+  alias Cadet.Accounts.Form.Registration
+
+  @doc """
+  Register new User entity using E-mail and Password
+  authentication.
+  """
+  def register(attrs = %{}, role) do
+    changeset = Registration.changeset(%Registration{}, attrs)
+
+    if changeset.valid?() do
+      registration = apply_changes(changeset)
+
+      Repo.transaction(fn ->
+        attrs_with_role = Map.put(attrs, :role, role)
+        {:ok, user} = create_user(attrs_with_role)
+
+        {:ok, _} =
+          create_authorization(
+            %{
+              provider: :email,
+              uid: registration.email,
+              token: Pbkdf2.hashpwsalt(registration.password)
+            },
+            user
+          )
+
+        user
+      end)
+    else
+      {:error, changeset}
+    end
+  end
+
+  @doc """
+  Creates Authorization entity with specified attributes.
+  """
+  def create_authorization(attrs = %{}, user = %User{}) do
+    %Authorization{}
+    |> Authorization.changeset(attrs)
+    |> put_assoc(:user, user)
+    |> Repo.insert()
+  end
 
   @doc """
   Creates User entity with specified attributes.

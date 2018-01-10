@@ -1,7 +1,7 @@
-defmodule Cadet.Accounts.RegistrationTest do
+defmodule Cadet.Accounts.Form.RegistrationTest do
   use Cadet.DataCase
 
-  alias Cadet.Accounts.Registration
+  alias Cadet.Accounts.Form.Registration
 
   @valid_changeset_params [
     %{
@@ -32,7 +32,7 @@ defmodule Cadet.Accounts.RegistrationTest do
     },
     "password too short" => %{
       first_name: "happy",
-      email: "somegmail.com",
+      email: "some@gmail.com",
       password: "passwor",
       password_confirmation: "passwor"
     }
