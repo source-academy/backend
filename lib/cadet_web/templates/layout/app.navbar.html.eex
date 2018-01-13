@@ -5,4 +5,18 @@
       <span>Source Academy</span>
     </div>
   </div>
+  <div id="sa-navbar-menu" class="pt-navbar-group">
+    <button class="pt-button pt-minimal pt-icon-globe">
+      Game
+    </button>
+    <button class="pt-button pt-minimal pt-icon-dashboard pt-active">
+      Dashboard
+    </button>
+    <button class="pt-button pt-minimal pt-icon-code-block">
+      Playground
+    </button>
+    <button class="pt-button pt-minimal pt-intent-danger">
+      Sign Out
+    </button>
+  </div>
 </nav>

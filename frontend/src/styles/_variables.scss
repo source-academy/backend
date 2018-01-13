@@ -11,6 +11,6 @@ $sa-dark-blue: #101e35 !default;
 $sa-darker-blue: darken($sa-dark-blue, 5%);
 
 // Layout Variables
-$sa-header-bg-color: linear-gradient(45deg, $sa-dark-blue, #192c39);
+$sa-header-bg-color: black;
 
 @import '~@blueprintjs/core/src/common/variables';

@@ -10,7 +10,7 @@
   flex-direction: column;
   justify-content: center;
   width: 50%;
-  background: $sa-darker-blue;
+  background: transparentize($sa-darker-blue, 0.1);
   padding: 0 3rem;
   color: white;
 }
@@ -29,6 +29,7 @@
 #sa-login-form section.content {
   display: flex;
   flex-direction: column;
+  max-width: 600px;
 
   .pt-input-group {
     margin-bottom: 1rem;
