@@ -11,6 +11,7 @@ defmodule CadetWeb.Router do
 
   pipeline :auth do
     plug(Cadet.Auth.Pipeline)
+    plug(CadetWeb.Plug.AssignCurrentUser)
   end
 
   pipeline :ensure_auth do

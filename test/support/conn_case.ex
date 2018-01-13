@@ -33,6 +33,16 @@ defmodule CadetWeb.ConnCase do
       Ecto.Adapters.SQL.Sandbox.mode(Cadet.Repo, {:shared, self()})
     end
 
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    conn = Phoenix.ConnTest.build_conn()
+    if tags[:authenticate] != nil do
+      {:ok, conn: authenticate(conn, tags[:authenticate])}
+    else
+      {:ok, conn: conn}
+    end
+  end
+
+  defp authenticate(conn, role) do
+    user = Cadet.Factory.insert(:user, %{role: role})
+    Cadet.Auth.Guardian.Plug.sign_in(conn, user)
   end
 end
