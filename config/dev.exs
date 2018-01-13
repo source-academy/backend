@@ -62,3 +62,7 @@ config :cadet, Cadet.Repo,
   database: "cadet_dev",
   hostname: "localhost",
   pool_size: 10
+
+config :cadet, Cadet.Auth.Guardian,
+  issuer: "cadet",
+  secret_key: "UiVBXJi9eJhVrcczxfqFoclJKr6m+s22LW/3e7CRzBmDZmHiprIFhJi4q5JQ7psE"

@@ -20,3 +20,7 @@ config :cadet, Cadet.Repo,
   database: "cadet_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
+
+config :cadet, Cadet.Auth.Guardian,
+  issuer: "cadet",
+  secret_key: "4ZxeVrSvCJlmndrFL7tBpnZsTc/rOQygVIyscAMY1oKKzkKi7hkjXl9F1f28Jap8"

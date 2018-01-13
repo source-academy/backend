@@ -9,11 +9,26 @@ defmodule CadetWeb.Router do
     plug(:put_secure_browser_headers)
   end
 
+  pipeline :auth do
+    plug(Cadet.Auth.Pipeline)
+  end
+
+  pipeline :ensure_auth do
+    plug(Guardian.Plug.EnsureAuthenticated)
+  end
+
+  # Public Pages
   scope "/", CadetWeb do
-    pipe_through(:browser)
+    pipe_through([:browser, :auth])
+
+    resources("/session", SessionController, only: [:new, :create, :delete])
+  end
+
+  # Authenticated Pages
+  scope "/", CadetWeb do
+    pipe_through([:browser, :auth, :ensure_auth])
 
     get("/", PageController, :index)
-    resources("/session", SessionController, only: [:new, :create, :delete])
   end
 
   # Other scopes may use custom stacks.
