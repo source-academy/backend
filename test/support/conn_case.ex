@@ -34,6 +34,7 @@ defmodule CadetWeb.ConnCase do
     end
 
     conn = Phoenix.ConnTest.build_conn()
+
     if tags[:authenticate] != nil do
       {:ok, conn: authenticate(conn, tags[:authenticate])}
     else

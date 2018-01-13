@@ -23,7 +23,7 @@ defmodule CadetWeb.Router do
     pipe_through([:browser, :auth])
 
     resources("/session", SessionController, only: [:new, :create])
-    get "/session/logout", SessionController, :logout
+    get("/session/logout", SessionController, :logout)
   end
 
   # Authenticated Pages

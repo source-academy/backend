@@ -10,12 +10,12 @@ defmodule CadetWeb.Plug.AssignCurrentUserTest do
 
   test "not logged in", %{conn: conn} do
     conn = AssignCurrentUser.call(conn, %{})
-    assert conn.assigns[:current_user] == nil 
+    assert conn.assigns[:current_user] == nil
   end
 
-  @tag authenticate: :student 
+  @tag authenticate: :student
   test "logged in", %{conn: conn} do
     conn = AssignCurrentUser.call(conn, %{})
-    assert conn.assigns[:current_user] != nil 
+    assert conn.assigns[:current_user] != nil
   end
 end
