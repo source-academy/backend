@@ -40,6 +40,7 @@ defmodule CadetWeb do
 
       import CadetWeb.Router.Helpers
       import CadetWeb.ErrorHelpers
+      import CadetWeb.ViewHelpers
       import CadetWeb.Gettext
     end
   end

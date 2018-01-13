@@ -75,17 +75,20 @@ span.sa-error {
   padding-right: 2rem;
 
   .pt-button {
-    font-weight: 500;
     letter-spacing: 1px;
-    margin-right: 1rem;
+    font-weight: 500;
+  }
+
+  .pt-button:not(:last-child).pt-active {
+    background-image: linear-gradient(135deg, #f97794 10%, #623aa2 100%);
+  }
+
+  .pt-button:not(:last-child) {
     border: none;
+    margin-right: 1rem;
     border-radius: 0;
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 15px;
-  }
-
-  .pt-button.pt-active {
-    background-image: linear-gradient(135deg, #f97794 10%, #623aa2 100%);
   }
 
   .pt-button:last-child {
@@ -93,7 +96,6 @@ span.sa-error {
   }
 
   .pt-button[class*='pt-icon-']::before {
-    margin-right: 0;
     color: white;
   }
 }
@@ -115,4 +117,9 @@ span.sa-error {
     font-weight: 500;
     font-size: 0.9em;
   }
+}
+
+#sa-login-button {
+  background-image: linear-gradient(135deg, #52e5e7 10%, #130cb7 100%);
+  align-self: center;
 }
