@@ -3,7 +3,7 @@ defmodule CadetWeb.SessionControllerTest do
 
   test "GET /session/new", %{conn: conn} do
     conn = get(conn, "/session/new")
-    assert html_response(conn, 200) =~ "Source Academy"
+    assert html_response(conn, 200)
   end
 
   test "POST /session", %{conn: conn} do
