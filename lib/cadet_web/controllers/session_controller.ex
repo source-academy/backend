@@ -35,8 +35,10 @@ defmodule CadetWeb.SessionController do
     end
   end
 
-  def delete(conn, _params) do
-    redirect(conn, to: session_path(conn, :new))
+  def logout(conn, _params) do
+    conn
+    |> Guardian.Plug.sign_out()
+    |> redirect(to: session_path(conn, :new))
   end
 
   defp flash_message(:create, reason) do

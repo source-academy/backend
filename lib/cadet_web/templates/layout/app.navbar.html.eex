@@ -21,13 +21,9 @@
       </button>
 
     <%= if logged_in?(@conn) do %>
-      <button class="pt-button pt-minimal pt-intent-danger">
-        Logout
-      </button>
-    <% end %>
-
-    <%= if !logged_in?(@conn) do %>
-      <%= link "Sign In", to: session_path(@conn, :new), id: "sa-login-button", class: "pt-button pt-minimal pt-icon-lock" %>
+      <%= button "Logout", to: session_path(@conn, :logout), method: "get", class: "pt-button pt-minimal pt-intent-danger" %>
+    <% else %>
+      <%= button "Sign In", to: session_path(@conn, :new), method: "get", id: "sa-login-button", class: "pt-button pt-minimal pt-icon-lock" %>
     <% end %>
   </div>
 

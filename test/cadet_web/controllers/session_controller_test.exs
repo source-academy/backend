@@ -90,8 +90,11 @@ defmodule CadetWeb.SessionControllerTest do
     end
   end
 
-  test "DELETE /session/:id", %{conn: conn} do
-    conn = delete(conn, "/session/3")
-    assert html_response(conn, 302)
+  @tag authenticate: :student
+  test "GET /session/logout", %{conn: conn} do
+    conn = get(conn, "/session/logout")
+    assert redirected_to(conn) =~ "/session/new"
+    conn = get(conn, "/")
+    assert html_response(conn, 401) =~ "unauthenticated"
   end
 end
