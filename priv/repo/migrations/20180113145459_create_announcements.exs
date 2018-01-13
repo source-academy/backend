@@ -3,12 +3,12 @@ defmodule Cadet.Repo.Migrations.CreateAnnouncements do
 
   def change do
     create table(:announcements) do
-      add :title, :string, null: false
-      add :content, :text
-      add :pinned, :boolean
-      add :published, :boolean
+      add(:title, :string, null: false)
+      add(:content, :text)
+      add(:pinned, :boolean)
+      add(:published, :boolean)
 
-      add :poster_id, references(:users)
+      add(:poster_id, references(:users))
 
       timestamps()
     end
