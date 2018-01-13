@@ -9,7 +9,7 @@ defmodule CadetWeb.SessionControllerTest do
   end
 
   describe "POST /session" do
-    test "invalid input", %{conn: conn} do
+    test "blank email", %{conn: conn} do
       conn =
         post(conn, "/session", %{
           "login" => %{
@@ -18,7 +18,19 @@ defmodule CadetWeb.SessionControllerTest do
           }
         })
 
-      assert html_response(conn, 200) =~ "email can&#39;t be blank"
+      assert html_response(conn, 200) =~ "Email can&#39;t be blank"
+    end
+
+    test "blank password", %{conn: conn} do
+      conn =
+        post(conn, "/session", %{
+          "login" => %{
+            "email" => "test@gmail.com",
+            "password" => ""
+          }
+        })
+
+      assert html_response(conn, 200) =~ "Password can&#39;t be blank"
     end
 
     test "valid input and valid user", %{conn: conn} do
