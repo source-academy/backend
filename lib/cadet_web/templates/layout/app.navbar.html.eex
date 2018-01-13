@@ -26,5 +26,4 @@
       <%= button "Sign In", to: session_path(@conn, :new), method: "get", id: "sa-login-button", class: "pt-button pt-minimal pt-icon-lock" %>
     <% end %>
   </div>
-
 </nav>
