@@ -12,6 +12,29 @@ header {
   z-index: 9;
 }
 
+main {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+  background: $sa-darker-blue;
+}
+
+h1 {
+  font-size: 24px;
+}
+
+h2 {
+  font-size: 22px;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+h4 {
+  font-size: 18px;
+}
+
 .pt-navbar.pt-dark {
   width: 100%;
   background: transparent;

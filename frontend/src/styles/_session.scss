@@ -1,0 +1,43 @@
+#sa-new-session {
+  display: flex;
+  width: 100%;
+  flex-direction: row-reverse;
+  justify-content: right;
+}
+
+#sa-login-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 50%;
+  background: $sa-darker-blue;
+  padding: 0 3rem;
+  color: white;
+}
+
+#sa-login-form section.heading {
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+}
+
+#sa-login-form section.content {
+  display: flex;
+  flex-direction: column;
+
+  .pt-input-group {
+    margin-bottom: 1rem;
+  }
+  .pt-button {
+    border-radius: 0;
+  }
+  .pt-button-group {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .pt-button-group *:not(:last-child) {
+    margin-right: 1rem;
+  }
+}

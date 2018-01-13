@@ -8,6 +8,7 @@ $pt-font-size: 14px !default;
 
 // Source Academy Color Pallete
 $sa-dark-blue: #101e35 !default;
+$sa-darker-blue: darken($sa-dark-blue, 5%);
 
 // Layout Variables
 $sa-header-bg-color: linear-gradient(45deg, $sa-dark-blue, #192c39);

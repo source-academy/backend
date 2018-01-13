@@ -14,11 +14,8 @@
     <header>
       <%= render("app.navbar.html") %>
     </header>
-
-    <div class="container">
-      <main role="main">
-        <%= render(@view_module, @view_template, assigns) %>
-      </main>
-    </div>
+    <main role="main">
+      <%= render(@view_module, @view_template, assigns) %>
+    </main>
   </body>
 </html>

@@ -1,8 +1,30 @@
-<div id="ca-session-new">
-  <section class="header">
-    <h1 class="title">Source Academy</h1>
-    <h2 class="subtitle">Sign In</h1>
-  </section>
-  <section class="form">
-  </section>
+<style>
+  main {
+    background: url('/lib/images/auth_bg.png');
+    background-size: cover;
+  }
+</style>
+
+<div id="sa-new-session" class="pt-dark">
+  <form id="sa-login-form">
+    <section class="heading">
+      <span>Login to Source Academy</span>
+    </section>
+    <section class="content">
+      <div class="pt-input-group">
+        <span class="pt-icon pt-icon-envelope"></span>
+        <input type="text" class="pt-input" placeholder="E-Mail" />
+      </div>
+      <div class="pt-input-group">
+        <button class="pt-button pt-minimal pt-intent-warning pt-icon-lock"></button>
+        <input type="password" class="pt-input" placeholder="Password" />
+      </div>
+      <div class="actions pt-button-group">
+        <button class="pt-button pt-intent-primary">
+          Sign In
+        </button>
+        <a href="#">Forgot Password?</a> 
+      </div>
+    </section>
+  </form>
 </div>
