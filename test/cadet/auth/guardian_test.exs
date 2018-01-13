@@ -10,12 +10,15 @@ defmodule Cadet.Auth.GuardianTest do
 
   test "get user from claims" do
     user = insert(:user)
+
     good_claims = %{
-      "sub" => to_string(user.id),
+      "sub" => to_string(user.id)
     }
+
     bad_claims = %{
       "sub" => "2000"
     }
+
     assert Guardian.resource_from_claims(good_claims) == {:ok, user}
     assert Guardian.resource_from_claims(bad_claims) == {:error, :not_found}
   end

@@ -1,5 +1,5 @@
 defmodule Cadet.Auth.Guardian do
-  use Guardian, otp_app: :auth_ex
+  use Guardian, otp_app: :cadet
 
   alias Cadet.Accounts
 

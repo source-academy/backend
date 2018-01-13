@@ -6,15 +6,17 @@ defmodule CadetWeb.LayoutView do
   @doc """
   Returns environment-specific HTML Head content.
   """
-  def env_head_content(conn) do
-    if Application.get_env(:cadet, :environment) == :prod do
+  def env_head_content(conn, env \\ Application.get_env(:cadet, :environment)) do
+    if env == :prod do
       [
         stylesheet_tag(static_path(conn, "/css/app.css")),
         script_tag(static_path(conn, "/js/vendor.js")),
         script_tag(static_path(conn, "/js/app.js"))
       ]
     else
-      script_tag(webpack_entry_file())
+      [
+        script_tag(webpack_entry_file())
+      ]
     end
   end
 
