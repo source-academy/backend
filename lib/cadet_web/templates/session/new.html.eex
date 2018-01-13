@@ -6,27 +6,27 @@
 </style>
 
 <div id="sa-new-session" class="pt-dark">
-  <form id="sa-login-form">
+  <%= form_for @changeset, session_path(@conn, :create), [id: "sa-login-form"], fn f -> %>
     <section class="heading">
       <span>Login to Source Academy</span>
     </section>
     <section class="content">
       <div class="pt-input-group">
         <span class="pt-icon pt-icon-envelope"></span>
-        <input type="text" class="pt-input" placeholder="E-Mail" />
+        <%= email_input f, :email, class: "pt-input", placeholder: "E-Mail" %>
+        <%= error_tag f, :email %>
       </div>
       <div class="pt-input-group">
         <button class="pt-button pt-minimal pt-intent-warning pt-icon-lock"></button>
-        <input type="password" class="pt-input" placeholder="Password" />
+        <%= password_input f, :password, class: "pt-input", placeholder: "Password" %>
+        <%= error_tag f, :password %>
       </div>
       <div class="actions pt-button-group">
-        <button class="pt-button pt-intent-primary">
-          Sign In
-        </button>
+        <%= submit "Sign In", class: "pt-button pt-intent-primary" %>
         <a href="#">
           Forgot Password?
         </a> 
       </div>
     </section>
-  </form>
+  <% end %>
 </div>

@@ -35,6 +35,18 @@ h4 {
   font-size: 18px;
 }
 
+.pt-input-group {
+  position: relative;
+}
+
+span.sa-error {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  color: $pt-intent-danger;
+  margin-left: 1rem;
+}
+
 .pt-navbar.pt-dark {
   width: 100%;
   background: transparent;
