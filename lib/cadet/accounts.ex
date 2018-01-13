@@ -106,6 +106,25 @@ defmodule Cadet.Accounts do
     end)
   end
 
+  @doc """
+  Sign in using given e-mail and password combination
+  """
+  def sign_in(email, password) do
+    auth = Repo.one(Query.email(email))
+
+    cond do
+      auth == nil ->
+        {:error, :not_found}
+
+      not Pbkdf2.checkpw(password, auth.token) ->
+        {:error, :invalid_password}
+
+      true ->
+        auth = Repo.preload(auth, :user)
+        {:ok, auth.user}
+    end
+  end
+
   defp get_token(provider, uid) do
     auth = Repo.get_by(Authorization, provider: provider, uid: uid)
 

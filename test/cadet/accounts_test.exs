@@ -126,4 +126,34 @@ defmodule Cadet.AccountsTest do
     assert {:error, changeset} = Accounts.register(attrs, :student)
     assert %{password_confirmation: ["does not match confirmation"]} == errors_on(changeset)
   end
+
+  describe "sign in using e-mail and password" do
+    test "success" do
+      user = insert(:user)
+
+      email =
+        insert(:email, %{
+          token: Pbkdf2.hash_pwd_salt("somepassword"),
+          user: user
+        })
+
+      assert {:ok, user} == Accounts.sign_in(email.uid, "somepassword")
+    end
+
+    test "e-mail not found" do
+      assert {:error, :not_found} == Accounts.sign_in("unknown@mail.com", "somepassword")
+    end
+
+    test "invalid password" do
+      user = insert(:user)
+
+      email =
+        insert(:email, %{
+          token: Pbkdf2.hash_pwd_salt("somepassword"),
+          user: user
+        })
+
+      assert {:error, :invalid_password} == Accounts.sign_in(email.uid, "somepassword2")
+    end
+  end
 end

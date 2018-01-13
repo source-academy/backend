@@ -33,6 +33,41 @@ defmodule CadetWeb.SessionControllerTest do
       assert html_response(conn, 200) =~ "Password can&#39;t be blank"
     end
 
+    test "email not found", %{conn: conn} do
+      conn =
+        post(conn, "/session", %{
+          "login" => %{
+            "email" => "unknown@gmail.com",
+            "password" => "somepassword"
+          }
+        })
+
+      assert get_flash(conn, :error) == "E-mail not registered in the system"
+      assert redirected_to(conn) =~ "/session/new"
+    end
+
+    test "password invalid", %{conn: conn} do
+      test_password = "somepassword"
+      user = insert(:user)
+
+      email =
+        insert(:email, %{
+          token: Pbkdf2.hash_pwd_salt(test_password),
+          user: user
+        })
+
+      conn =
+        post(conn, "/session", %{
+          "login" => %{
+            "email" => email.uid,
+            "password" => "somepassword2"
+          }
+        })
+
+      assert get_flash(conn, :error) == "Invalid e-mail or password"
+      assert redirected_to(conn) =~ "/session/new"
+    end
+
     test "valid input and valid user", %{conn: conn} do
       test_password = "somepassword"
       user = insert(:user)

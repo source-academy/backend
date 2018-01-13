@@ -21,6 +21,11 @@
   margin-bottom: 2rem;
 }
 
+#sa-login-form section.error {
+  color: lighten($pt-intent-danger, 20%);
+  margin: 1rem 0;
+}
+
 #sa-login-form section.content {
   display: flex;
   flex-direction: column;

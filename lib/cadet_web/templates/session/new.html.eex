@@ -10,6 +10,14 @@
     <section class="heading">
       <span>Login to Source Academy</span>
     </section>
+
+    <% error_flash = get_flash(@conn, :error) %>
+    <%= if error_flash != nil do %>
+      <section class="error">
+        <%= error_flash %>
+      </section>
+    <% end %>
+
     <section class="content">
       <div class="pt-input-group">
         <span class="pt-icon pt-icon-envelope"></span>
