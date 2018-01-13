@@ -15,8 +15,11 @@ defmodule CadetWeb.PageControllerTest do
   describe "Authenticated User" do
     setup do
       user = insert(:user)
-      conn = build_conn()
+
+      conn =
+        build_conn()
         |> Guardian.Plug.sign_in(user)
+
       {:ok, [conn: conn]}
     end
 
