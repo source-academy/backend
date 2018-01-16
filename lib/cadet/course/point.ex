@@ -11,7 +11,7 @@ defmodule Cadet.Course.Point do
     field(:reason, :string)
     field(:amount, :integer)
 
-    belongs_to(:gived_by, User)
+    belongs_to(:given_by, User)
     belongs_to(:given_to, User)
 
     timestamps()

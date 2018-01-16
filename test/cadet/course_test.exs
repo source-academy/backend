@@ -63,4 +63,59 @@ defmodule Cadet.CourseTest do
       assert {:error, :not_found} = Course.delete_announcement(255)
     end
   end
+
+  describe "Points" do
+    test "give manual xp valid" do
+      staff = insert(:user, %{role: :staff})
+      student = insert(:user)
+
+      result =
+        Course.give_manual_xp(staff, student, %{
+          reason: "DG XP Week 4",
+          amount: 100
+        })
+
+      assert {:ok, point} = result
+      assert point.amount == 100
+    end
+
+    test "give manual xp invalid" do
+      staff = insert(:user, %{role: :staff})
+      student = insert(:user)
+
+      result =
+        Course.give_manual_xp(staff, student, %{
+          reason: "DG XP Week 4",
+          amount: -100
+        })
+
+      assert {:error, changeset} = result
+      assert errors_on(changeset) == %{amount: ["must be greater than 0"]}
+    end
+
+    test "give manual xp not staff" do
+      student = insert(:user)
+
+      result =
+        Course.give_manual_xp(student, student, %{
+          reason: "DG XP Week 4",
+          amount: 100
+        })
+
+      assert {:error, :insufficient_privileges} = result
+    end
+
+    test "delete manual xp" do
+      point = insert(:point)
+      student = insert(:user)
+      staff = insert(:user, %{role: :staff})
+      admin = insert(:user, %{role: :admin})
+      assert {:error, :not_found} = Course.delete_manual_xp(student, 200)
+      assert {:error, :insufficient_privileges} = Course.delete_manual_xp(staff, point.id)
+      assert {:error, :insufficient_privileges} = Course.delete_manual_xp(student, point.id)
+      assert {:ok, _} = Course.delete_manual_xp(point.given_by, point.id)
+      point = insert(:point)
+      assert {:ok, _} = Course.delete_manual_xp(admin, point.id)
+    end
+  end
 end

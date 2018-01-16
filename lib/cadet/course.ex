@@ -79,7 +79,7 @@ defmodule Cadet.Course do
 
     cond do
       point == nil -> {:error, :not_found}
-      !(user.role == :admin || point.giver_id == user.id) -> {:error, :insufficient_privileges}
+      !(user.role == :admin || point.given_by_id == user.id) -> {:error, :insufficient_privileges}
       true -> Repo.delete(point)
     end
   end
