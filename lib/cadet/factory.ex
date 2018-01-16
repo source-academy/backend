@@ -35,7 +35,7 @@ defmodule Cadet.Factory do
       reason: "Dummy reason",
       amount: 100,
       given_by: build(:user, %{role: :staff}),
-      given_to: build(:user) 
+      given_to: build(:user)
     }
   end
 end
