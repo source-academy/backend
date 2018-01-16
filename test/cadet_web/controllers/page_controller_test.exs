@@ -1,8 +1,6 @@
 defmodule CadetWeb.PageControllerTest do
   use CadetWeb.ConnCase
 
-  alias Cadet.Auth.Guardian
-
   describe "Unauthenticated User" do
     test "GET /", %{conn: conn} do
       conn = get(conn, "/")
