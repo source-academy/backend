@@ -13,7 +13,7 @@ defmodule Cadet.Course.AnnouncementTest do
 
   test "valid changeset" do
     @valid_changeset_params
-    |> Enum.map(&User.changeset(%User{}, &1))
+    |> Enum.map(&Announcement.changeset(%Announcement{}, &1))
     |> Enum.each(&assert(&1.valid?()))
   end
 
