@@ -7,6 +7,7 @@ defmodule Cadet.Course do
 
   alias Cadet.Accounts.User
   alias Cadet.Course.Announcement
+  alias Cadet.Course.Point
 
   @doc """
   Create announcement entity using specified user as poster
@@ -51,6 +52,35 @@ defmodule Cadet.Course do
       {:error, :not_found}
     else
       Repo.delete(announcement)
+    end
+  end
+
+  @doc """
+  Give manual XP to another user
+  """
+  def give_manual_xp(given_by = %User{}, given_to = %User{}, attr = %{}) do
+    if given_by.role == :student do
+      {:error, :insufficient_privileges}
+    else
+      changeset =
+        Point.changeset(%Point{}, attr)
+        |> put_assoc(:given_by, given_by)
+        |> put_assoc(:given_to, given_to)
+
+      Repo.insert(changeset)
+    end
+  end
+
+  @doc """
+  Retract previously given manual XP entry another user
+  """
+  def delete_manual_xp(user = %User{}, id) do
+    point = Repo.get(Point, id)
+
+    cond do
+      point == nil -> {:error, :not_found}
+      !(user.role == :admin || point.giver_id == user.id) -> {:error, :insufficient_privileges}
+      true -> Repo.delete(point)
     end
   end
 end

@@ -1,53 +1,43 @@
 defmodule Cadet.Accounts.Form.RegistrationTest do
-  use Cadet.DataCase
+  use Cadet.ChangesetCase, async: true
 
   alias Cadet.Accounts.Form.Registration
 
-  @valid_changeset_params [
+  valid_changesets Registration do
     %{
       first_name: "happy",
       email: "some@gmail.com",
       password: "mypassword",
       password_confirmation: "mypassword"
     }
-  ]
+  end
 
-  @invalid_changeset_params %{
-    "empty first_name" => %{
+  invalid_changesets Registration do
+    %{
       email: "some@gmail.com",
       password: "mypassword",
       password_confirmation: "mypassword"
-    },
-    "confirmation does not match" => %{
+    }
+
+    %{
       first_name: "happy",
       email: "some@gmail.com",
       password: "mypassword",
       password_confirmation: "doesnotmatch"
-    },
-    "invalid email" => %{
+    }
+
+    %{
       first_name: "happy",
       email: "somegmail.com",
       password: "mypassword",
       password_confirmation: "mypassword"
-    },
-    "password too short" => %{
+    }
+
+    %{
       first_name: "happy",
       email: "some@gmail.com",
       password: "passwor",
       password_confirmation: "passwor"
     }
-  }
-
-  test "valid changeset" do
-    @valid_changeset_params
-    |> Enum.map(&Registration.changeset(%Registration{}, &1))
-    |> Enum.each(&assert(&1.valid?()))
-  end
-
-  test "invalid changesets" do
-    for {reason, param} <- @invalid_changeset_params do
-      changeset = Registration.changeset(%Registration{}, param)
-      refute(changeset.valid?(), reason)
-    end
   end
 end
