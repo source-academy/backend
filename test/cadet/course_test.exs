@@ -1,7 +1,9 @@
 defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
+  alias Cadet.Repo
   alias Cadet.Course
+  alias Cadet.Course.Group
 
   describe "Announcements" do
     test "create valid" do
@@ -116,6 +118,44 @@ defmodule Cadet.CourseTest do
       assert {:ok, _} = Course.delete_manual_xp(point.given_by, point.id)
       point = insert(:point)
       assert {:ok, _} = Course.delete_manual_xp(admin, point.id)
+    end
+  end
+
+  describe "Groups" do
+    test "valid assign group" do
+      staff = insert(:user, %{role: :staff})
+      student = insert(:user, %{role: :student})
+      another_staff = insert(:user, %{role: :staff})
+
+      assert {:ok, assignment} = Course.assign_group(staff, student)
+      assert assignment.leader_id == staff.id
+      assert assignment.student_id == student.id
+
+      assert {:ok, assignment} = Course.assign_group(another_staff, student)
+      assert assignment.leader_id == another_staff.id
+      assert assignment.student_id == student.id
+
+      assert Repo.get_by(Group, leader_id: staff.id) == nil
+    end
+
+    test "invalid leader or student" do
+      student = insert(:user, %{role: :student})
+      another_student = insert(:user, %{role: :student})
+      staff = insert(:user, %{role: :staff})
+      another_staff = insert(:user, %{role: :staff})
+
+      assert {:error, :invalid} == Course.assign_group(student, another_student)
+      assert {:error, :invalid} == Course.assign_group(staff, staff)
+      assert {:error, :invalid} == Course.assign_group(staff, another_staff)
+    end
+
+    test "list group members" do
+      staff = insert(:user, %{role: :staff})
+      insert(:group, %{leader: staff})
+      insert(:group, %{leader: staff})
+
+      result = Course.list_students_by_leader(staff)
+      assert Enum.count(result) == 2
     end
   end
 end

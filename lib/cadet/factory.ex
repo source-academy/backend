@@ -5,6 +5,7 @@ defmodule Cadet.Factory do
   alias Cadet.Accounts.Authorization
   alias Cadet.Course.Announcement
   alias Cadet.Course.Point
+  alias Cadet.Course.Group
 
   def user_factory do
     %User{
@@ -36,6 +37,13 @@ defmodule Cadet.Factory do
       amount: 100,
       given_by: build(:user, %{role: :staff}),
       given_to: build(:user)
+    }
+  end
+
+  def group_factory do
+    %Group{
+      leader: build(:user, %{role: :staff}),
+      student: build(:user, %{role: :student})
     }
   end
 end

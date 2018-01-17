@@ -8,6 +8,7 @@ defmodule Cadet.Course do
   alias Cadet.Accounts.User
   alias Cadet.Course.Announcement
   alias Cadet.Course.Point
+  alias Cadet.Course.Group
 
   @doc """
   Create announcement entity using specified user as poster
@@ -82,5 +83,53 @@ defmodule Cadet.Course do
       !(user.role == :admin || point.given_by_id == user.id) -> {:error, :insufficient_privileges}
       true -> Repo.delete(point)
     end
+  end
+
+  @doc """
+  Reassign a student to a discussion group.
+  This will un-assign student from the current discussion group
+  """
+  def assign_group(leader = %User{}, student = %User{}) do
+    cond do
+      leader.role == :student ->
+        {:error, :invalid}
+
+      student.role != :student ->
+        {:error, :invalid}
+
+      true ->
+        Repo.transaction(fn ->
+          {:ok, _} = unassign_group(student)
+
+          Group.changeset(%Group{}, %{})
+          |> put_assoc(:leader, leader)
+          |> put_assoc(:student, student)
+          |> Repo.insert!()
+        end)
+    end
+  end
+
+  @doc """
+  Remove existing student from discussion group, no-op if a student
+  is unassigned
+  """
+  def unassign_group(student = %User{}) do
+    existing_group = Repo.get_by(Group, student_id: student.id)
+
+    if existing_group == nil do
+      {:ok, nil}
+    else
+      Repo.delete(existing_group)
+    end
+  end
+
+  @doc """
+  Get list of students under staff discussion group
+  """
+  def list_students_by_leader(staff = %User{}) do
+    import Cadet.Course.Query, only: [group_members: 1]
+
+    Repo.all(group_members(staff))
+    |> Repo.preload([:student])
   end
 end
