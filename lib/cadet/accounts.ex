@@ -78,10 +78,10 @@ defmodule Cadet.Accounts do
     changeset =
       %Authorization{}
       |> Authorization.changeset(%{
-           provider: :email,
-           uid: email,
-           token: token
-         })
+        provider: :email,
+        uid: email,
+        token: token
+      })
       |> put_assoc(:user, user)
 
     Repo.insert(changeset)

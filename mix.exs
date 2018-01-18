@@ -55,7 +55,9 @@ defmodule Cadet.Mixfile do
       {:guardian, "~> 1.0"},
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.8", only: :test}
+      {:excoveralls, "~> 0.8", only: :test},
+      {:arc, "~> 0.8.0"},
+      {:arc_ecto, "~> 0.7.0"}
     ]
   end
 

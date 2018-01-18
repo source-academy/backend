@@ -9,6 +9,8 @@ defmodule Cadet.Course do
   alias Cadet.Course.Announcement
   alias Cadet.Course.Point
   alias Cadet.Course.Group
+  alias Cadet.Course.Material
+  alias Cadet.Course.Upload
 
   @doc """
   Create announcement entity using specified user as poster
@@ -131,5 +133,72 @@ defmodule Cadet.Course do
 
     Repo.all(group_members(staff))
     |> Repo.preload([:student])
+  end
+
+  @doc """
+  Create a new folder to put material files in
+  """
+  def create_material_folder(uploader = %User{}, attrs = %{}) do
+    create_material_folder(nil, uploader, attrs)
+  end
+
+  @doc """
+  Create a new folder to put material files in
+  """
+  def create_material_folder(parent, uploader = %User{}, attrs = %{}) do
+    changeset =
+      Material.folder_changeset(%Material{}, attrs)
+      |> put_assoc(:uploader, uploader)
+
+    case parent do
+      %Material{} ->
+        Repo.insert(put_assoc(changeset, :parent, parent))
+
+      _ ->
+        Repo.insert(changeset)
+    end
+  end
+
+  @doc """
+  Upload a material file to designated folder
+  """
+  def upload_material_file(folder = %Material{}, uploader = %User{}, attr = %{}) do
+    changeset =
+      Material.changeset(%Material{}, attr)
+      |> put_assoc(:uploader, uploader)
+      |> put_assoc(:parent, folder)
+
+    Repo.insert(changeset)
+  end
+
+  @doc """
+  Delete a material file/directory. A directory tree
+  is deleted recursively
+  """
+  def delete_material(id) when is_binary(id) or is_number(id) do
+    material = Repo.get(Material, id)
+    delete_material(material)
+  end
+
+  def delete_material(material = %Material{}) do
+    cond do
+      material == nil ->
+        {:error, :not_found}
+
+      material.file != nil ->
+        Upload.delete({material.file, material})
+        Repo.delete(material)
+
+      true ->
+        Repo.delete(material)
+    end
+  end
+
+  @doc """
+  List material folder content 
+  """
+  def list_material_folders(folder = %Material{}) do
+    import Cadet.Course.Query, only: [material_folder_files: 1]
+    Repo.all(material_folder_files(folder.id))
   end
 end

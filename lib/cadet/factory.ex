@@ -6,6 +6,7 @@ defmodule Cadet.Factory do
   alias Cadet.Course.Announcement
   alias Cadet.Course.Point
   alias Cadet.Course.Group
+  alias Cadet.Course.Material
 
   def user_factory do
     %User{
@@ -44,6 +45,32 @@ defmodule Cadet.Factory do
     %Group{
       leader: build(:user, %{role: :staff}),
       student: build(:user, %{role: :student})
+    }
+  end
+
+  def material_folder_factory do
+    %Material{
+      name: "Folder",
+      description: "This is a folder",
+      uploader: build(:user, %{role: :staff})
+    }
+  end
+
+  def material_file_factory do
+    %Material{
+      name: "Folder",
+      description: "This is a folder",
+      file: build(:upload),
+      parent: build(:material_folder),
+      uploader: build(:user, %{role: :staff})
+    }
+  end
+
+  def upload_factory do
+    %Plug.Upload{
+      content_type: "text/plain",
+      filename: sequence(:upload, &"upload#{&1}.txt"),
+      path: "test/fixtures/upload.txt"
     }
   end
 end
