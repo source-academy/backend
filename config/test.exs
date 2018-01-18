@@ -6,6 +6,8 @@ config :cadet, CadetWeb.Endpoint,
   http: [port: 4001],
   server: false
 
+config :cadet, environment: :test
+
 # Reduce number of rounds for hashing to improve performance
 config :pbkdf2_elixir, :rounds, 1
 

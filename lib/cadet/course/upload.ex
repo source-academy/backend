@@ -4,7 +4,11 @@ defmodule Cadet.Course.Upload do
   """
   use Arc.Definition
   use Arc.Ecto.Definition
-  def __storage, do: Arc.Storage.Local
 
   @versions [:original]
+
+  def storage_dir(_, _) do
+    env = Application.get_env(:cadet, :environment)
+    "uploads/#{env}/materials"
+  end
 end
