@@ -18,7 +18,7 @@ Cadet is the web application powering Source Academy.
 
 Install Elixir dependencies
 
-    mix deps get
+    mix deps.get
 
 Initialise Development Database
 
