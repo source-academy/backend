@@ -31,7 +31,7 @@ Install frontend dependencies
 
 Run the server in your local machine
 
-    mix phx server
+    mix cadet.server
 
 ## License
 
