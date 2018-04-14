@@ -18,6 +18,10 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
+  pipeline :ensure_admin do
+    plug(CadetWeb.Plug.CheckAdmin)
+  end
+
   # Public Pages
   scope "/", CadetWeb do
     pipe_through([:browser, :auth])
