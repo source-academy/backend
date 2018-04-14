@@ -11,7 +11,7 @@
       <button class="pt-button pt-minimal pt-icon-globe">
         Game
       </button>
-      <button class="pt-button pt-minimal pt-icon-dashboard pt-active">
+      <button class="pt-button pt-minimal pt-icon-dashboard">
         Dashboard
       </button>
     <% end %>
@@ -19,6 +19,10 @@
       <button class="pt-button pt-minimal pt-icon-code-block">
         Playground
       </button>
+
+    <%= if is_admin?(@conn) do %>
+      <%= button "Admin", to: admin_path(@conn, :index), method: "get", class: "pt-button pt-minimal pt-icon-settings" %>
+    <% end %>
 
     <%= if logged_in?(@conn) do %>
       <%= button "Logout", to: session_path(@conn, :logout), method: "get", class: "pt-button pt-minimal pt-intent-danger" %>
