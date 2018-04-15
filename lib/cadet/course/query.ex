@@ -1,4 +1,7 @@
 defmodule Cadet.Course.Query do
+  @moduledoc """
+  Generate queries related to the Course context
+  """
   import Ecto.Query
 
   alias Cadet.Accounts.User

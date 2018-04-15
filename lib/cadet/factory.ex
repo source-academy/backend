@@ -1,4 +1,7 @@
 defmodule Cadet.Factory do
+  @moduledoc """
+  Factory for testing
+  """
   use ExMachina.Ecto, repo: Cadet.Repo
 
   alias Cadet.Accounts.User

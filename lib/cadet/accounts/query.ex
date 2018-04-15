@@ -1,4 +1,7 @@
 defmodule Cadet.Accounts.Query do
+  @moduledoc """
+  Generate queries related to the Accounts context
+  """
   import Ecto.Query
 
   alias Cadet.Accounts.Authorization
