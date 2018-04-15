@@ -11,7 +11,8 @@ defmodule Cadet.Accounts.Form.Login do
   @required_fields ~w(email password)a
 
   def changeset(login, params \\ %{}) do
-    cast(login, params, @required_fields)
+    login
+    |> cast(params, @required_fields)
     |> validate_required(@required_fields)
   end
 end
