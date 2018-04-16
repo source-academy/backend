@@ -1,4 +1,7 @@
 defmodule Cadet.Accounts.Form.Login do
+  @moduledoc """
+  Validates login information provided through forms.
+  """
   use Ecto.Schema
 
   import Ecto.Changeset

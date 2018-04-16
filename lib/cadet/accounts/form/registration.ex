@@ -1,4 +1,7 @@
 defmodule Cadet.Accounts.Form.Registration do
+  @moduledoc """
+  Validates registration information provided through forms.
+  """
   use Ecto.Schema
 
   import Ecto.Changeset

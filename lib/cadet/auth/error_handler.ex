@@ -1,5 +1,5 @@
 defmodule Cadet.Auth.ErrorHandler do
-  @doc """
+  @moduledoc """
   Handles authentication errors
   """
   import Plug.Conn
