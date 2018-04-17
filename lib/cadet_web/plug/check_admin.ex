@@ -1,8 +1,7 @@
 defmodule CadetWeb.Plug.CheckAdmin do
   @moduledoc """
   Checks whether :current_user is an admin.
-  If the user is not an admin, the default HTTP 403 Forbidden page will be
-  rendered.
+  If the user is not an admin, the HTTP 403 response will be sent.
   """
 
   import Plug.Conn
