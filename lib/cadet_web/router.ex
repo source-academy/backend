@@ -38,10 +38,10 @@ defmodule CadetWeb.Router do
   end
 
   # Admin Pages
-  scope "/", CadetWeb do
+  scope "/admin", CadetWeb do
     pipe_through([:browser, :auth, :ensure_auth, :ensure_admin])
 
-    get("/admin", AdminController, :index)
+    get("/", AdminController, :index)
   end
 
   # Other scopes may use custom stacks.

@@ -1,21 +1,21 @@
 defmodule CadetWeb.Plug.CheckAdmin do
   @moduledoc """
-  A plug that checks whether :current_user is an admin
+  Checks whether :current_user is an admin.
+  If the user is not an admin, the default HTTP 403 Forbidden page will be
+  rendered.
   """
 
   import Plug.Conn
 
-  import Phoenix.Controller
-
   def init(opts), do: opts
 
   def call(conn, _) do
-    if conn.assigns[:current_user] != nil && conn.assigns[:current_user].role == :admin do
+    if conn.assigns[:current_user].role == :admin do
       conn
     else
       conn
-      |> put_status(:forbidden)
-      |> render(CadetWeb.ErrorView, "403.html")
+      |> put_resp_content_type("text/html")
+      |> send_resp(:forbidden, "Not admin")
       |> halt()
     end
   end
