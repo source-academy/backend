@@ -1,4 +1,8 @@
 defmodule Cadet.Accounts.Form.Login do
+  @moduledoc """
+  The Accounts.Form entity represents an entry from an accounts form.
+  A login form comprises of e-mail and password
+  """
   use Ecto.Schema
 
   import Ecto.Changeset
@@ -11,7 +15,8 @@ defmodule Cadet.Accounts.Form.Login do
   @required_fields ~w(email password)a
 
   def changeset(login, params \\ %{}) do
-    cast(login, params, @required_fields)
+    login
+    |> cast(params, @required_fields)
     |> validate_required(@required_fields)
   end
 end

@@ -1,4 +1,7 @@
 defmodule Cadet.Auth.Guardian do
+  @moduledoc """
+  Guardian implementation module
+  """
   use Guardian, otp_app: :cadet
 
   alias Cadet.Accounts

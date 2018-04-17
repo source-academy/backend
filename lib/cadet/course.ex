@@ -17,7 +17,8 @@ defmodule Cadet.Course do
   """
   def create_announcement(poster = %User{}, attrs = %{}) do
     changeset =
-      Announcement.changeset(%Announcement{}, attrs)
+      %Announcement{}
+      |> Announcement.changeset(attrs)
       |> put_assoc(:poster, poster)
 
     Repo.insert(changeset)
@@ -41,7 +42,8 @@ defmodule Cadet.Course do
   Get Announcement with specified ID
   """
   def get_announcement(id) do
-    Repo.get(Announcement, id)
+    Announcement
+    |> Repo.get(id)
     |> Repo.preload(:poster)
   end
 
@@ -66,7 +68,8 @@ defmodule Cadet.Course do
       {:error, :insufficient_privileges}
     else
       changeset =
-        Point.changeset(%Point{}, attr)
+        %Point{}
+        |> Point.changeset(attr)
         |> put_assoc(:given_by, given_by)
         |> put_assoc(:given_to, given_to)
 
@@ -103,7 +106,8 @@ defmodule Cadet.Course do
         Repo.transaction(fn ->
           {:ok, _} = unassign_group(student)
 
-          Group.changeset(%Group{}, %{})
+          %Group{}
+          |> Group.changeset(%{})
           |> put_assoc(:leader, leader)
           |> put_assoc(:student, student)
           |> Repo.insert!()
@@ -131,7 +135,9 @@ defmodule Cadet.Course do
   def list_students_by_leader(staff = %User{}) do
     import Cadet.Course.Query, only: [group_members: 1]
 
-    Repo.all(group_members(staff))
+    staff
+    |> group_members()
+    |> Repo.all()
     |> Repo.preload([:student])
   end
 
@@ -147,7 +153,8 @@ defmodule Cadet.Course do
   """
   def create_material_folder(parent, uploader = %User{}, attrs = %{}) do
     changeset =
-      Material.folder_changeset(%Material{}, attrs)
+      %Material{}
+      |> Material.folder_changeset(attrs)
       |> put_assoc(:uploader, uploader)
 
     case parent do
@@ -164,7 +171,8 @@ defmodule Cadet.Course do
   """
   def upload_material_file(folder = %Material{}, uploader = %User{}, attr = %{}) do
     changeset =
-      Material.changeset(%Material{}, attr)
+      %Material{}
+      |> Material.changeset(attr)
       |> put_assoc(:uploader, uploader)
       |> put_assoc(:parent, folder)
 

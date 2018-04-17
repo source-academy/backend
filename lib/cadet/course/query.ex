@@ -1,4 +1,7 @@
 defmodule Cadet.Course.Query do
+  @moduledoc """
+  Generate queries related to the Course context
+  """
   import Ecto.Query
 
   alias Cadet.Accounts.User
@@ -10,12 +13,12 @@ defmodule Cadet.Course.Query do
   end
 
   def group_members(staff_id) do
-    from(g in Group)
+    Group
     |> where([g], g.leader_id == ^staff_id)
   end
 
   def material_folder_files(folder_id) do
-    from(m in Material)
+    Material
     |> where([m], m.parent_id == ^folder_id)
   end
 end
