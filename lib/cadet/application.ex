@@ -1,7 +1,5 @@
 defmodule Cadet.Application do
-  @moduledoc """
-  A module for working with applications and defining application callbacks.
-  """
+  @moduledoc false
   use Application
 
   # See https://hexdocs.pm/elixir/Application.html

@@ -1,6 +1,7 @@
 defmodule Cadet.Accounts.Form.Login do
   @moduledoc """
-  Validates login information provided through forms.
+  The Accounts.Form entity represents an entry from an accounts form.
+  A login form comprises of e-mail and password
   """
   use Ecto.Schema
 
