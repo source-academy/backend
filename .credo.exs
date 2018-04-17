@@ -102,7 +102,7 @@
         {Credo.Check.Refactor.NegatedConditionsInUnless},
         {Credo.Check.Refactor.NegatedConditionsWithElse},
         {Credo.Check.Refactor.Nesting},
-        {Credo.Check.Refactor.PipeChainStart},
+        {Credo.Check.Refactor.PipeChainStart, excluded_functions: ~w(:crypto.strong_rand_bytes)},
         {Credo.Check.Refactor.UnlessWithElse},
 
         {Credo.Check.Warning.BoolOperationOnSameValues},
