@@ -11,3 +11,4 @@ before_script:
   - mix ecto.setup
 script:
   - mix coveralls.travis
+  - mix credo

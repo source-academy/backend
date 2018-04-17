@@ -1,7 +1,7 @@
 defmodule Cadet.Course.Point do
   @moduledoc """
   The Points entities are experience points that are given to
-  user manually by staff (for instance due to discussion group). 
+  user manually by staff (for instance due to discussion group).
   """
   use Cadet, :model
 

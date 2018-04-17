@@ -1,4 +1,10 @@
 defmodule Cadet.Accounts.Form.Registration do
+  @moduledoc """
+  The Accounts.Form entity represents an entry from an accounts form.
+  A registration form contains the same information as the User and Authorization
+  entity, including first name, last name, e-mail, password and password
+  confirmation.
+  """
   use Ecto.Schema
 
   import Ecto.Changeset

@@ -1,4 +1,7 @@
 defmodule Cadet.Auth.Pipeline do
+  @moduledoc """
+  Pipeline to verify Guardian JWT token session and header
+  """
   use Guardian.Plug.Pipeline,
     otp_app: :cadet,
     error_handler: Cadet.Auth.ErrorHandler,

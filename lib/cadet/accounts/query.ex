@@ -1,16 +1,19 @@
 defmodule Cadet.Accounts.Query do
+  @moduledoc """
+  Generate queries related to the Accounts context
+  """
   import Ecto.Query
 
   alias Cadet.Accounts.Authorization
 
   def user_emails(user_id) do
-    from(a in Authorization)
+    Authorization
     |> emails
     |> of_user(user_id)
   end
 
   def email(uid) do
-    from(a in Authorization)
+    Authorization
     |> emails
     |> of_uid(uid)
   end
