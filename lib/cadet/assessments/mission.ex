@@ -22,5 +22,12 @@ defmodule Cadet.Assessments.Mission do
 
   @required_fields ~w(order category title open_at close_at)a
   @optional_fields ~w(summary_short summary_long)
-  @optional_file_fields ~w(cover_url)
+  @optional_file_fields ~w(cover_picture)
+
+  def changeset(mission, attrs \\ %{}) do
+    mission
+    |> cast(attrs, @required_fields ++ @optional_fields)
+    |> cast_attachments(attrs, @optional_file_fields)
+    |> validate_required(@required_fields)
+  end
 end
