@@ -8,6 +8,7 @@ defmodule Cadet.Assessments.Mission do
 
   alias Cadet.Assessments.Category
   alias Cadet.Assessments.Image
+  alias Cadet.Assessments.Upload
 
   schema "missions" do
     field(:order, :string)
@@ -17,6 +18,7 @@ defmodule Cadet.Assessments.Mission do
     field(:summary_long, :string)
     field(:open_at, Timex.Ecto.DateTime)
     field(:close_at, Timex.Ecto.DateTime)
+    field(:file, Upload.Type)
     field(:cover_picture, Image.Type)
   end
 
