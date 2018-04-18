@@ -18,8 +18,8 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
-  pipeline :ensure_admin do
-    plug(CadetWeb.Plug.CheckAdmin)
+  pipeline :ensure_admin_staff do
+    plug(CadetWeb.Plug.EnsureRoles, %{roles: [:admin, :staff]})
   end
 
   # Public Pages
@@ -39,7 +39,7 @@ defmodule CadetWeb.Router do
 
   # Admin Pages
   scope "/admin", CadetWeb do
-    pipe_through([:browser, :auth, :ensure_auth, :ensure_admin])
+    pipe_through([:browser, :auth, :ensure_auth, :ensure_admin_staff])
 
     get("/", AdminController, :index)
   end

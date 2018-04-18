@@ -20,7 +20,7 @@
         Playground
       </button>
 
-    <%= if is_admin?(@conn) do %>
+    <%= if is_roles?(@conn, [:admin, :staff]) do %>
       <%= button "Admin", to: admin_path(@conn, :index), method: "get", class: "pt-button pt-minimal pt-icon-settings" %>
     <% end %>
 
