@@ -64,7 +64,7 @@ defmodule Cadet.Assessments.Mission do
   defp validate_questions(changeset = %Ecto.Changeset{}) do
     validate_change(changeset, :questions, fn :questions, questions ->
       case validate_questions(
-             {questions.type |> String.downcase() |> String.to_atom(), questions}
+             {questions["type"] |> String.downcase() |> String.to_atom(), questions}
            ) do
         {:ok} -> []
         {:error, errors} -> [questions: errors]
@@ -74,10 +74,17 @@ defmodule Cadet.Assessments.Mission do
 
   @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t()}
   defp validate_questions({:mcq, questions}) do
+    {:ok}
   end
 
   @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t()}
   defp validate_questions({:programming, questions}) do
+    {:ok}
+  end
+
+  @spec validate_questions({any, any}) :: {:error, String.t()}
+  defp validate_questions({_, _}) do
+    {:error, "No such question type exists"}
   end
 
   @spec process_json(Ecto.Changeset.t(), {atom, atom}) :: Ecto.Changeset.t()
