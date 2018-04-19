@@ -45,7 +45,7 @@ defmodule Cadet.Assessments.Mission do
   @required_file_fields ~w(file)a
   @optional_file_fields ~w(cover_picture)a
 
-  @spec changeset(Cadet.Assessments.Mission.t, map) :: Ecto.Changeset.t
+  @spec changeset(Cadet.Assessments.Mission.t(), map) :: Ecto.Changeset.t()
   def changeset(mission, attrs \\ %{}) do
     mission
     |> cast(attrs, @required_fields ++ @optional_fields)
@@ -60,30 +60,31 @@ defmodule Cadet.Assessments.Mission do
     |> validate_questions()
   end
 
-  @spec validate_questions(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec validate_questions(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   defp validate_questions(changeset = %Ecto.Changeset{}) do
     validate_change(changeset, :questions, fn :questions, questions ->
-      case validate_questions({questions.type |> String.downcase |> String.to_atom, questions}) do
+      case validate_questions(
+             {questions.type |> String.downcase() |> String.to_atom(), questions}
+           ) do
         {:ok} -> []
         {:error, errors} -> [questions: errors]
       end
     end)
   end
 
-  @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t}
+  @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t()}
   defp validate_questions({:mcq, questions}) do
-
   end
 
-  @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t}
+  @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t()}
   defp validate_questions({:programming, questions}) do
-
   end
 
-  @spec process_json(Ecto.Changeset.t, {atom, atom}) :: Ecto.Changeset.t
+  @spec process_json(Ecto.Changeset.t(), {atom, atom}) :: Ecto.Changeset.t()
   defp process_json(changeset, {raw_field, field}) do
     change = get_change(changeset, raw_field)
     json = change && Poison.decode!(change)
+
     if json do
       put_change(changeset, field, json)
     else
@@ -91,7 +92,7 @@ defmodule Cadet.Assessments.Mission do
     end
   end
 
-  @spec validate_open_close_date(Ecto.Changeset.t) :: Ecto.Changeset.t
+  @spec validate_open_close_date(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   defp validate_open_close_date(changeset) do
     validate_change(changeset, :open_at, fn :open_at, open_at ->
       if Timex.after?(open_at, get_field(changeset, :close_at)) do
@@ -102,11 +103,13 @@ defmodule Cadet.Assessments.Mission do
     end)
   end
 
-  @spec validate_map(Ecto.Changeset.t, {atom, list(atom | String.t)}) :: Ecto.Changeset.t
+  @spec validate_map(Ecto.Changeset.t(), {atom, list(atom | String.t())}) :: Ecto.Changeset.t()
   defp validate_map(changeset, {field, required_keys}) do
-    validate_change(changeset, field, fn(_, value) ->
-      result = required_keys
-               |> Enum.all?(&(Map.has_key?(value, "#{&1}")))
+    validate_change(changeset, field, fn _, value ->
+      result =
+        required_keys
+        |> Enum.all?(&Map.has_key?(value, "#{&1}"))
+
       if result do
         []
       else
