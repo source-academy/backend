@@ -8,7 +8,7 @@ defmodule Cadet.Asessments.MissionTest do
       summary_long: "long summary", open_at: Timex.now(),
       close_at: Timex.shift(Timex.now(), weeks: 2),
       file: "test/fixtures/upload.txt",
-      cover_picture: "test/fixtures/upload.txt"}
+      cover_picture: "test/fixtures/upload.png"}
     %{order: "2", category: :sidequest, title: "EMP", open_at: Timex.now(),
       close_at: Timex.shift(Timex.now(), weeks: 3)}
   end

@@ -24,7 +24,7 @@ defmodule Cadet.Assessments.Mission do
 
   @required_fields ~w(order category title open_at close_at)a
   @optional_fields ~w(summary_short summary_long)
-  @optional_file_fields ~w(cover_picture)
+  @optional_file_fields ~w(cover_picture file)
 
   def changeset(mission, attrs \\ %{}) do
     mission
