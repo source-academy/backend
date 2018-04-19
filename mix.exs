@@ -17,7 +17,8 @@ defmodule Cadet.Mixfile do
         "coveralls.html": :test
       ],
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [plt_add_apps: [:mix]]
     ]
   end
 

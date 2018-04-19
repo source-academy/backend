@@ -45,7 +45,6 @@ defmodule CadetWeb.SessionController do
     case reason do
       :not_found -> "E-mail not registered in the system"
       :invalid_password -> "Invalid e-mail or password"
-      _ -> "Unknown"
     end
   end
 end
