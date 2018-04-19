@@ -21,7 +21,7 @@ defmodule Cadet.ChangesetCase do
   end
 
   def build_upload(path, content_type \\ "image\png") do
-    %Plug.Upload(path: path, filename: Path.basename(path), content_type: content_type)
+    %Plug.Upload{path: path, filename: Path.basename(path), content_type: content_type}
   end
 
   defp test_changesets(header, func, mod, block) do
