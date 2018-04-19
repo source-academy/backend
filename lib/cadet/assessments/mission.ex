@@ -3,7 +3,8 @@ defmodule Cadet.Assessments.Mission do
   The Mission entity stores metadata of a students' assessment
   (mission, sidequest, path, and contest).
 
-  Question types polymorphism is embedded in the json.
+  Question types polymorphism is embedded in the json stored in the
+  questions field.
   """
   use Cadet, :model
   use Arc.Ecto.Schema
@@ -104,9 +105,8 @@ defmodule Cadet.Assessments.Mission do
   @spec validate_map(Ecto.Changeset.t, {atom, list(atom | String.t)}) :: Ecto.Changeset.t
   defp validate_map(changeset, {field, required_keys}) do
     validate_change(changeset, field, fn(_, value) ->
-      result = value
-               |> Map.keys()
-               |> Enum.all?(&(String.to_atom("#{&1}") in required_keys))
+      result = required_keys
+               |> Enum.all?(&(Map.has_key?(value, "#{&1}")))
       if result do
         []
       else
