@@ -20,16 +20,19 @@ defmodule Cadet.Assessments.Mission do
     field(:close_at, Timex.Ecto.DateTime)
     field(:file, Upload.Type)
     field(:cover_picture, Image.Type)
+    field(:max_xp, :integer)
   end
 
-  @required_fields ~w(order category title open_at close_at)a
-  @optional_fields ~w(summary_short summary_long)
-  @optional_file_fields ~w(cover_picture file)
+  @required_fields ~w(order category title open_at close_at max_xp)a
+  @optional_fields ~w(summary_short summary_long)a
+  @required_file_fields ~w(file)a
+  @optional_file_fields ~w(cover_picture)a
 
   def changeset(mission, attrs \\ %{}) do
     mission
     |> cast(attrs, @required_fields ++ @optional_fields)
-    |> cast_attachments(attrs, @optional_file_fields)
-    |> validate_required(@required_fields)
+    |> cast_attachments(attrs, @required_file_fields ++ @optional_file_fields)
+    |> validate_required(@required_fields ++ @required_file_fields)
+    |> validate_number(:max_xp, greater_than_or_equal_to: 0)
   end
 end

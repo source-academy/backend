@@ -20,6 +20,10 @@ defmodule Cadet.ChangesetCase do
     test_changesets("Invalid", &refute/2, mod, block)
   end
 
+  def build_upload(path) do
+    %Plug.Upload{path: path, filename: Path.basename(path)}
+  end
+
   defp test_changesets(header, func, mod, block) do
     params =
       case block do
