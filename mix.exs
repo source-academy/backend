@@ -18,8 +18,7 @@ defmodule Cadet.Mixfile do
       ],
       aliases: aliases(),
       deps: deps(),
-      dialyzer: [plt_add_apps: [:mix, :ex_unit],
-                path: ["_build/dev/lib/cadet/ebin", "_build/test/lib/cadet/ebin"]]
+      dialyzer: [plt_add_apps: [:mix, :ex_unit]]
     ]
   end
 
