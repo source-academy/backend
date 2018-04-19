@@ -5,9 +5,12 @@ defmodule Mix.Tasks.Cadet.Server do
   """
   use Mix.Task
 
-  @spec run([any]) :: no_return
   def run(args) do
-    Dotenv.load!()
+    try do
+      Dotenv.load!()
+    rescue
+      e in RuntimeError -> e
+    end
     :ok = Mix.Tasks.Phx.Server.run(args)
   end
 end
