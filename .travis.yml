@@ -16,4 +16,4 @@ before_script:
 script:
   - mix coveralls.travis
   - mix credo
-  - MIX_ENV=dev mix dialyzer --halt-exit-status
+  - mix dialyzer --halt-exit-status
