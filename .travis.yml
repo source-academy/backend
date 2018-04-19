@@ -2,9 +2,7 @@ language: elixir
 elixir: 1.5.0
 otp_release: '20.1'
 env:
-  - MIX_ENV=test COMMAND="mix coveralls.travis"
-  - MIX_ENV=test COMMAND="mix credo"
-  - MIX_ENV=dev COMMAND="mix dialyzer --halt-exit-status"
+  - MIX_ENV=test
 cache:
   directories:
     - _build
@@ -16,4 +14,6 @@ services:
 before_script:
   - mix ecto.setup
 script:
-  - $COMMAND
+  - mix coveralls.travis
+  - mix credo
+  - MIX_ENV=dev mix dialyzer --halt-exit-status
