@@ -16,3 +16,4 @@ before_script:
 script:
   - mix coveralls.travis
   - mix credo
+  - mix dialyzer --halt-exit-status
