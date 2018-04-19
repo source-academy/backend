@@ -13,8 +13,6 @@ defmodule CadetWeb.ConnCase do
   of the test unless the test case is marked as async.
   """
 
-  @dialyzer {:no_return, __ex_unit_setup_0: 1}
-
   use ExUnit.CaseTemplate
 
   using do
