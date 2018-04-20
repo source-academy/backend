@@ -7,6 +7,8 @@ defmodule Cadet.Repo.Migrations.AddFieldsToMission do
       add(:file, :string, null: false)
       add(:library, :map, null: false)
       add(:questions, :map)
+
+      timestamps()
     end
   end
 end

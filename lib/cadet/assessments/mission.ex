@@ -38,6 +38,8 @@ defmodule Cadet.Assessments.Mission do
 
     field(:raw_library, :string, virtual: true)
     field(:raw_questions, :string, virtual: true)
+
+    timestamps()
   end
 
   @required_fields ~w(order category title open_at close_at max_xp library)a
@@ -64,7 +66,7 @@ defmodule Cadet.Assessments.Mission do
   defp validate_questions(changeset = %Ecto.Changeset{}) do
     validate_change(changeset, :questions, fn :questions, questions ->
       case validate_questions(
-             {questions["type"] |> String.downcase() |> String.to_atom(), questions}
+             {questions["type"] |> String.downcase() |> String.to_atom(), questions["questions"]}
            ) do
         {:ok} -> []
         {:error, errors} -> [questions: errors]
@@ -72,19 +74,35 @@ defmodule Cadet.Assessments.Mission do
     end)
   end
 
-  @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t()}
-  defp validate_questions({:mcq, questions}) do
-    {:ok}
-  end
-
-  @spec validate_questions({:mcq, map}) :: {:ok} | {:error, String.t()}
-  defp validate_questions({:programming, questions}) do
-    {:ok}
+  @spec validate_questions({:mcq | :programming, list(map)}) :: {:ok} | {:error, String.t()}
+  defp validate_questions({type, questions}) when type == :mcq or type == :programming do
+    if is_list(questions) && Enum.all?(questions, &valid_question?({type, &1})) do
+      {:ok}
+    else
+      {:error, "Unable to read from MCQ questions."}
+    end
   end
 
   @spec validate_questions({any, any}) :: {:error, String.t()}
   defp validate_questions({_, _}) do
     {:error, "No such question type exists"}
+  end
+
+  @spec valid_question?({:mcq, map}) :: boolean
+  defp valid_question?({:mcq, question}) do
+    is_map(question) && map_has_keys?(question, ~w(content choices)a) &&
+      is_list(question["choices"]) && valid_choices?(question["choices"]) && true
+  end
+
+  @spec valid_question?({:programming, map}) :: boolean
+  defp valid_question?({:programming, question}) do
+    is_map(question) &&
+      map_has_keys?(question, ~w(content solution_template solution_header solution))
+  end
+
+  @spec valid_choices?(list) :: boolean
+  defp valid_choices?(choices) do
+    Enum.all?(choices, &map_has_keys?(&1, ~w(content hint is_correct)))
   end
 
   @spec process_json(Ecto.Changeset.t(), {atom, atom}) :: Ecto.Changeset.t()
@@ -113,15 +131,17 @@ defmodule Cadet.Assessments.Mission do
   @spec validate_map(Ecto.Changeset.t(), {atom, list(atom | String.t())}) :: Ecto.Changeset.t()
   defp validate_map(changeset, {field, required_keys}) do
     validate_change(changeset, field, fn _, value ->
-      result =
-        required_keys
-        |> Enum.all?(&Map.has_key?(value, "#{&1}"))
-
-      if result do
+      if map_has_keys?(value, required_keys) do
         []
       else
         [{field, "#{field} must have keys #{Enum.join(required_keys, ", ")}"}]
       end
     end)
+  end
+
+  @spec map_has_keys?(map, list(atom | String.t())) :: boolean
+  defp map_has_keys?(map = %{}, required_keys) do
+    required_keys
+    |> Enum.all?(&Map.has_key?(map, "#{&1}"))
   end
 end
