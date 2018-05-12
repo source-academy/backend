@@ -22,7 +22,6 @@ defmodule CadetWeb.Router do
   scope "/", CadetWeb do
     pipe_through([:browser, :auth])
 
-    resources("/", PageController, only: [:index])
     resources("/session", SessionController, only: [:new, :create])
     get("/session/logout", SessionController, :logout)
   end
@@ -30,6 +29,8 @@ defmodule CadetWeb.Router do
   # Authenticated Pages
   scope "/", CadetWeb do
     pipe_through([:browser, :auth, :ensure_auth])
+
+    get("/", PageController, :index)
   end
 
   # Other scopes may use custom stacks.
