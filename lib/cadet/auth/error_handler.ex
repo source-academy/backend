@@ -2,13 +2,13 @@ defmodule Cadet.Auth.ErrorHandler do
   @moduledoc """
   Handles authentication errors
   """
+  import Phoenix.Controller, only: [redirect: 2]
+  import CadetWeb.Router.Helpers, only: [session_path: 2]
   import Plug.Conn
 
-  def auth_error(conn, {type, _reason}, _opts) do
-    body = to_string(type)
-
+  def auth_error(conn, {_type, _reason}, _opts) do
     conn
-    |> put_resp_content_type("text/html")
-    |> send_resp(401, body)
+    |> put_status(401)
+    |> redirect(to: session_path(conn, :new))
   end
 end
