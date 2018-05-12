@@ -1,0 +1,35 @@
+.sa-admin-navbar {
+  position: fixed;
+  top: 50px;
+  left: 0px;
+  width: 100%;
+  z-index: 1;
+  background: $sa-gray3;
+
+  a {
+    color: $sa-dark-blue;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 5px;
+  }
+
+  .first-row, .second-row {
+    padding: 0px 20px;
+  }
+
+  .first-row a {
+    font-size: 1.1em;
+  }
+
+  .second-row a {
+    font-size: 0.85em;
+  }
+
+  .second-row {
+    background: $sa-gray4;
+  }
+
+  a.pt-button::after {
+    display: none !important;
+  }
+}

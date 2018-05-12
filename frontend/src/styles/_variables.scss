@@ -10,6 +10,12 @@ $pt-font-size: 14px !default;
 $sa-dark-blue: #101e35 !default;
 $sa-darker-blue: darken($sa-dark-blue, 5%);
 
+$sa-gray5: #F2F4F7;
+$sa-gray4: darken($sa-gray5, 5%);
+$sa-gray3: darken($sa-gray5, 10%);
+$sa-gray2: darken($sa-gray5, 15%);
+$sa-gray1: darken($sa-gray5, 20%);
+
 // Layout Variables
 $sa-header-bg-color: black;
 

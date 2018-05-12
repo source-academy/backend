@@ -1,0 +1,24 @@
+<div class="sa-admin-navbar">
+  <div class="first-row">
+    <div class="container">
+      <div class="pt-button-group pt-minimal">
+        <%= link "Announcements", to: "#", class: "pt-button" %>
+        <%= link "Assessments", to: "#", class: "pt-button" %>
+        <%= link "My Students", to: "#", class: "pt-button" %>
+        <%= link "Gradings", to: "#", class: "pt-button" %>
+        <%= link "Path Submissions", to: "#", class: "pt-button" %>
+      </div>
+    </div>
+  </div>
+  <div class="second-row">
+    <div class="container">
+      <div class="pt-button-group pt-minimal">
+        <%= link "Achievements", to: "#", class: "pt-button" %>
+        <%= link "Materials", to: "#", class: "pt-button" %>
+        <%= link "Discussion Groups", to: "#", class: "pt-button" %>
+        <%= link "Students", to: "#", class: "pt-button" %>
+        <%= link "Libraries", to: "#", class: "pt-button" %>
+      </div>
+    </div>
+  </div>
+</div>
