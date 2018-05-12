@@ -95,6 +95,6 @@ defmodule CadetWeb.SessionControllerTest do
     conn = get(conn, "/session/logout")
     assert redirected_to(conn) =~ "/session/new"
     conn = get(conn, "/")
-    assert redirected_to(conn) =~ "/session/new"
+    assert html_response(conn, 401) =~ "/session/new"
   end
 end
