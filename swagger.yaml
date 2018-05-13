@@ -1,0 +1,52 @@
+swagger: "2.0"
+info:
+  description: "This is the cadet backend API."
+  version: "1.0.0"
+  title: "Cadet"
+  license:
+    name: "MIT License"
+    url: "https://github.com/source-academy/cadet/blob/master/LICENSE"
+host: "sourceacademy.comp.nus.edu.sg"
+basePath: "/v1"
+tags:
+- name: "auth"
+  description: "User authentication"
+schemes:
+- "https"
+paths:
+  /auth:
+    post:
+      tags:
+      - "auth"
+      summary: "Authenticate a user"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: body
+        name: user
+        description: The username of the user to be authenticated
+        schema:
+          $ref: "#/definitions/Accounts.Form.Login"
+      responses:
+        200:
+          description: "Authenticated"
+        403:
+          description: "Wrong username or password"
+definitions:
+  Accounts.Form.Login:
+    type: object
+    required:
+    - username
+    - password
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+securityDefinitions:
+  JWT:
+    type: apiKey
+    in: header
+    name: X-API-Key
