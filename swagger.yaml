@@ -1,0 +1,188 @@
+swagger: "2.0"
+info:
+  description: "This is the cadet backend API."
+  version: "1.0.0"
+  title: "Cadet"
+  license:
+    name: "MIT License"
+    url: "https://github.com/source-academy/cadet/blob/master/LICENSE"
+host: "sourceacademy.comp.nus.edu.sg"
+basePath: "/v1"
+tags:
+- name: "auth"
+  description: "User authentication"
+- name: "course"
+  description: "Course administration management"
+schemes:
+- "https"
+paths:
+  /auth:
+    post:
+      tags:
+      - "auth"
+      summary: "Authenticate a user"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "user"
+        description: "The login information to be authenticated"
+        required: true
+        schema:
+          $ref: "#/definitions/Accounts.Form.Login"
+      responses:
+        200:
+          description: "Authenticated"
+        403:
+          description: "Wrong username or password"
+  /course/announcements:
+    get:
+      tags:
+      - "course"
+      summary: "Get announcements"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "query"
+        name: "limit"
+        description: "Maximum number of announcements to fetch"
+        type: "integer"
+        required: false
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Course.Announcement"
+        401:
+          description: "Not authenticated"
+  /course/announcement:
+    post:
+      tags:
+      - "course"
+      summary: "Create new announcement"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "announcement"
+        description: "The announcement to be created"
+        required: true
+        schema:
+          $ref: "#/definitions/Course.Announcement"
+      responses:
+        204:
+          description: "OK"
+        401:
+          description: "Not authenticated."
+        403:
+          description: "Access token does not have the required scope."
+  /course/announcement/{id}:
+    parameters:
+    - in: "path"
+      name: "id"
+      type: "integer"
+      required: true
+      description: "ID of announcement to read"
+    get:
+      tags:
+      - "course"
+      summary: "Read an announcement"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/Course.Announcement"
+        401:
+          description: "Not authenticated"
+        403:
+          description: "Access token does not have the required scope."
+        404:
+          description: "Not found"
+    put:
+      tags:
+      - "course"
+      summary: "Update an announcement"
+      consumes:
+      - "application/json"
+      responses:
+        204:
+          description: "OK"
+        401:
+          description: "Not authenticated"
+        403:
+          description: "Access token does not have the required scope."
+        404:
+          description: "Not found"
+    delete:
+      tags:
+      - "course"
+      summary: "Delete an announcement"
+      responses:
+        204:
+          description: "OK"
+        401:
+          description: "Not authenticated"
+        403:
+          description: "Access token does not have the required scope."
+        404:
+          description: "Not found"
+definitions:
+  Accounts.Form.Login:
+    type: "object"
+    required:
+    - "username"
+    - "password"
+    properties:
+      username:
+        type: "string"
+      password:
+        type: "string"
+  Course.Announcement:
+    type: "object"
+    required:
+    - "title"
+    properties:
+      title:
+        type: "string"
+      content:
+        type: "string"
+      pinned:
+        type: "boolean"
+  Course.Group:
+    type: "object"
+    properties:
+      leader_id:
+        type: "integer"
+      student_id:
+        type: "integer"
+  Course.Material:
+    type: "object"
+    required:
+    - "name"
+    - "parent_id"
+    - "uploader_id"
+    properties:
+      name:
+        type: "string"
+      description:
+        type: "string"
+      file:
+        type: "string"
+        format: "binary"
+      parent_id:
+        type: "integer"
+      uploader_id:
+        type: "integer"
+securityDefinitions:
+  JWT:
+    type: "apiKey"
+    in: "header"
+    name: "X-API-Key"
