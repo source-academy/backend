@@ -37,4 +37,17 @@ defmodule CadetWeb.Router do
   # scope "/api", CadetWeb do
   #   pipe_through :api
   # end
+
+  def swagger_info do
+    %{
+      info: %{
+        version: "1.0",
+        title: "cadet"
+      }
+    }
+  end
+
+  scope "/api/swagger" do
+    forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json"
+  end
 end
