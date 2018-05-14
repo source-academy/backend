@@ -3,6 +3,8 @@ defmodule CadetWeb.SessionController do
 
   import Ecto.Changeset
 
+  use PhoenixSwagger
+
   alias Cadet.Accounts
   alias Cadet.Auth.Guardian
   alias Cadet.Accounts.Form
@@ -39,6 +41,30 @@ defmodule CadetWeb.SessionController do
     conn
     |> Guardian.Plug.sign_out()
     |> redirect(to: session_path(conn, :new))
+  end
+
+  swagger_path :create do
+    post "/session"
+    summary "Authenticate user"
+    consumes "application/json"
+    parameters do
+      login :body, Schema.ref(:FormLogin), "login attributes"
+    end
+    response 200, "OK"
+    response 403, "Wrong login attributes"
+  end
+
+  def swagger_definitions do
+    %{
+      FormLogin: swagger_schema do
+        title "Login form"
+        description "Authentication"
+        properties do
+          email :string, "Email of user", required: true
+          password :string, "Password of user", required: true
+        end
+      end
+    }
   end
 
   defp flash_message(:create, reason) do
