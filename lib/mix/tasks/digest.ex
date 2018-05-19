@@ -5,7 +5,11 @@ defmodule Mix.Tasks.Cadet.Digest do
   use Mix.Task
 
   def run(args) do
-    Dotenv.load!()
+    try do
+      Dotenv.load!()
+    rescue
+      e in RuntimeError -> e
+    end
     Mix.Shell.IO.cmd("cd frontend && npm run build")
     :ok = Mix.Tasks.Phx.Digest.run(args)
   end

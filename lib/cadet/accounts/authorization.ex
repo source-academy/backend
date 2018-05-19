@@ -23,7 +23,7 @@ defmodule Cadet.Accounts.Authorization do
   @required_fields ~w(provider uid token)a
   @optional_fields ~w(refresh_token expires_at)a
 
-  def changeset(authorization, params \\ :empty) do
+  def changeset(authorization, params \\ %{}) do
     authorization
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)

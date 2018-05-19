@@ -32,8 +32,8 @@ defmodule Cadet.Course.Material do
 
   def changeset(material, attrs \\ %{}) do
     material
-    |> cast(attrs, @required_fields ++ @optional_fields)
     |> cast_attachments(attrs, @optional_file_fields)
+    |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_changeset
   end
 
