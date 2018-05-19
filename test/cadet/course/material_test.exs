@@ -5,7 +5,7 @@ defmodule Cadet.Course.MaterialTest do
 
   valid_changesets Material do
     %{name: "Lecture Notes", description: "This is lecture notes"}
-    %{name: "File", file: "test/fixtures/upload.txt"}
+    %{name: "File", file: build_upload("test/fixtures/upload.txt", "text/plain")}
   end
 
   invalid_changesets Material do

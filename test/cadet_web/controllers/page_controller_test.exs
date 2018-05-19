@@ -4,7 +4,7 @@ defmodule CadetWeb.PageControllerTest do
   describe "Unauthenticated User" do
     test "GET /", %{conn: conn} do
       conn = get(conn, "/")
-      assert html_response(conn, 401) =~ "unauthenticated"
+      assert html_response(conn, 401) =~ "/session/new"
     end
   end
 
