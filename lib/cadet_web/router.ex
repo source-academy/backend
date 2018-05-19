@@ -17,8 +17,10 @@ defmodule CadetWeb.Router do
   end
 
   # Public Pages
-  scope "/", CadetWeb do
+  scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
+
+    post("/auth", AuthController, :create)
 
     resources("/session", SessionController, only: [:new, :create])
     get("/session/logout", SessionController, :logout)
@@ -41,11 +43,12 @@ defmodule CadetWeb.Router do
       info: %{
         version: "1.0",
         title: "cadet"
-      }
+      },
+      basePath: "/v1"
     }
   end
 
-  scope "/api/swagger" do
+  scope "/v1/swagger" do
     forward("/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json")
   end
 end
