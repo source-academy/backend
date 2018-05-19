@@ -26,9 +26,7 @@ defmodule CadetWeb.AuthController do
           conn
           |> render("token.json", access_token: access_token, refresh_token: refresh_token)
 
-        {:error, reason} ->
-          {:ok, resp} = Poison.encode(%{reason: reason})
-
+        {:error, _reason} ->
           conn
           |> send_resp(403, "Wrong email and/or password")
       end
@@ -43,19 +41,82 @@ defmodule CadetWeb.AuthController do
     |> send_resp(404, "Missing parameters")
   end
 
+  def refresh(conn, %{"refresh_token" => refresh_token}) do
+    case Guardian.exchange(refresh_token, "refresh", "access") do
+      {:ok, {refresh_token, _}, {access_token, _}} ->
+        conn
+        |> render("token.json", access_token: access_token, refresh_token: refresh_token)
+      {:error, _reason} ->
+        conn
+        |> send_resp(401, "Invalid Token")
+    end
+  end
+
+  def refresh(conn, _params) do
+    conn
+    |> send_resp(404, "Missing parameter(s)")
+  end
+
+  def logout(conn, %{"refresh_token" => refresh_token}) do
+    case Guardian.revoke(refresh_token) do
+      {:ok, _} ->
+        conn
+        |> send_resp(200, "OK")
+      {:error, _} ->
+        conn
+        |> send_resp(401, "Invalid Token")
+    end
+  end
+
+  def logout(conn, _params) do
+    conn
+    |> send_resp(404, "Missing parameter(s)")
+  end
+
   swagger_path :create do
     post("/auth")
-    summary("Obtain tokens to authenticate user")
+    summary("Obtain access and refresh tokens to authenticate user")
     consumes("application/json")
+    produces("application/json")
 
     parameters do
       login(:body, Schema.ref(:FormLogin), "login attributes", required: true)
     end
 
-    response(200, "OK", Schema.ref(:Token))
+    response(200, "OK", Schema.ref(:Tokens))
     response(403, "Wrong login attributes")
-    response(404, "Missing parameters")
+    response(404, "Missing parameter(s)")
   end
+
+  swagger_path :refresh do
+    post("/auth/refresh")
+    summary("Obtain new access token after expiry of the old one through refresh token")
+    consumes("application/json")
+    produces("application/json")
+
+    parameters do
+      refresh_token(:body, Schema.ref(:RefreshToken), "refresh token obtained from /auth", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:Tokens))
+    response(401, "Invalid refresh token")
+    response(404, "Missing parameter(s)")
+  end
+
+  swagger_path :logout do
+    post("/auth/logout")
+    summary("Logout and invalidate the tokens")
+    consumes("application/json")
+
+    parameters do
+      tokens(:body, Schema.ref(:RefreshToken), "refresh token to be invalidated", required: true)
+    end
+
+    response(200, "OK")
+    response(401, "Invalid token")
+    response(404, "Missing parameter(s)")
+  end
+
 
   def swagger_definitions do
     %{
@@ -76,14 +137,24 @@ defmodule CadetWeb.AuthController do
           end
 
           required(:login)
+
+          example(%{ login: %{ email: "TestAdmin@test.com", password: "password" } })
         end,
-      Token:
+      Tokens:
         swagger_schema do
-          title("Token")
+          title("Tokens")
 
           properties do
             access_token(:string, "Access token with TTL of 1 hour")
             refresh_token(:string, "Refresh token with TTL of 1 year")
+          end
+        end,
+      RefreshToken:
+        swagger_schema do
+          title("Refresh Token")
+
+          properties do
+            refresh_token(:string, "Refresh token", required: true)
           end
         end
     }

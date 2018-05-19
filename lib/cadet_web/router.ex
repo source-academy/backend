@@ -21,9 +21,8 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth])
 
     post("/auth", AuthController, :create)
-
-    resources("/session", SessionController, only: [:new, :create])
-    get("/session/logout", SessionController, :logout)
+    post("/auth/refresh", AuthController, :refresh)
+    post("/auth/logout", AuthController, :logout)
   end
 
   # Authenticated Pages
