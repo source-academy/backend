@@ -61,6 +61,7 @@ defmodule CadetWeb.AuthController do
   def logout(conn, %{"refresh_token" => refresh_token}) do
     case Guardian.decode_and_verify(refresh_token) do
       {:ok, _} ->
+        # Currently does nothing, need to integrate with GuardianDb
         Guardian.revoke(refresh_token)
 
         conn
