@@ -113,5 +113,29 @@ defmodule CadetWeb.AuthControllerTest do
   end
 
   describe "POST /auth/logout" do
+    test "missing parameter", %{conn: conn} do
+      conn = post(conn, "/v1/auth/logout", %{})
+
+      assert response(conn, 404)
+    end
+
+    test "invalid token", %{conn: conn} do
+      conn = post(conn, "/v1/auth/logout", %{"refresh_token" => "asdasd"})
+
+      assert response(conn, 401)
+    end
+
+    test "valid token", %{conn: conn} do
+      user = insert(:user)
+
+      {:ok, refresh_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
+
+      conn = post(conn, "/v1/auth/logout", %{"refresh_token" => refresh_token})
+
+      assert response(conn, 200)
+
+      # Supposedly also check that refresh_token is now revoked. But right now revocation means nothing
+    end
   end
 end
