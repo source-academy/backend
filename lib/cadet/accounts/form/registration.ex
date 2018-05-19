@@ -22,7 +22,7 @@ defmodule Cadet.Accounts.Form.Registration do
 
   @email_format ~r/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/
 
-  def changeset(registration, params \\ :empty) do
+  def changeset(registration, params \\ %{}) do
     registration
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)

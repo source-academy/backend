@@ -189,17 +189,10 @@ defmodule Cadet.Course do
   end
 
   def delete_material(material = %Material{}) do
-    cond do
-      material == nil ->
-        {:error, :not_found}
-
-      material.file != nil ->
-        Upload.delete({material.file, material})
-        Repo.delete(material)
-
-      true ->
-        Repo.delete(material)
+    if material.file do
+      Upload.delete({material.file, material})
     end
+    Repo.delete(material)
   end
 
   @doc """
