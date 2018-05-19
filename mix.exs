@@ -7,7 +7,7 @@ defmodule Cadet.Mixfile do
       version: "0.0.1",
       elixir: "~> 1.5",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:phoenix, :gettext] ++ Mix.compilers(),
+      compilers: [:phoenix, :gettext, :phoenix_swagger] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -61,7 +61,9 @@ defmodule Cadet.Mixfile do
       {:arc, "~> 0.8.0"},
       {:arc_ecto, "~> 0.7.0"},
       {:timex, "~> 3.0"},
-      {:timex_ecto, "~> 3.0"}
+      {:timex_ecto, "~> 3.0"},
+      {:phoenix_swagger, "~> 0.8"},
+      {:ex_json_schema, "~> 0.5"}
     ]
   end
 

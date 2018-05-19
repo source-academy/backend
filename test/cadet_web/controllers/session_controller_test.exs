@@ -3,6 +3,15 @@ defmodule CadetWeb.SessionControllerTest do
 
   import Cadet.Factory
 
+  alias CadetWeb.SessionController
+
+  test "swagger" do
+    # Cos swagger
+    SessionController.swagger_definitions
+    # Found out the real name after macro from source code
+    SessionController.swagger_path_create nil
+  end
+
   test "GET /session/new", %{conn: conn} do
     conn = get(conn, "/session/new")
     assert html_response(conn, 200)
