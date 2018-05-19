@@ -12,10 +12,10 @@ defmodule CadetWeb.SessionControllerTest do
     SessionController.swagger_path_create nil
   end
 
-  test "GET /session/new", %{conn: conn} do
-    conn = get(conn, "/session/new")
-    assert html_response(conn, 200)
-  end
+  # test "GET /session/new", %{conn: conn} do
+  #   conn = get(conn, "/session/new")
+  #   assert html_response(conn, 200)
+  # end
 
   # describe "POST /session" do
   #   test "blank email", %{conn: conn} do
