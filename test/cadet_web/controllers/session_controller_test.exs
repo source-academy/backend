@@ -7,9 +7,9 @@ defmodule CadetWeb.SessionControllerTest do
 
   test "swagger" do
     # Cos swagger
-    SessionController.swagger_definitions
+    SessionController.swagger_definitions()
     # Found out the real name after macro from source code
-    SessionController.swagger_path_create nil
+    SessionController.swagger_path_create(nil)
   end
 
   # test "GET /session/new", %{conn: conn} do
