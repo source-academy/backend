@@ -46,6 +46,7 @@ defmodule CadetWeb.AuthController do
       {:ok, {refresh_token, _}, {access_token, _}} ->
         conn
         |> render("token.json", access_token: access_token, refresh_token: refresh_token)
+
       {:error, _reason} ->
         conn
         |> send_resp(401, "Invalid Token")
@@ -62,6 +63,7 @@ defmodule CadetWeb.AuthController do
       {:ok, _} ->
         conn
         |> send_resp(200, "OK")
+
       {:error, _} ->
         conn
         |> send_resp(401, "Invalid Token")
@@ -95,7 +97,12 @@ defmodule CadetWeb.AuthController do
     produces("application/json")
 
     parameters do
-      refresh_token(:body, Schema.ref(:RefreshToken), "refresh token obtained from /auth", required: true)
+      refresh_token(
+        :body,
+        Schema.ref(:RefreshToken),
+        "refresh token obtained from /auth",
+        required: true
+      )
     end
 
     response(200, "OK", Schema.ref(:Tokens))
@@ -117,7 +124,6 @@ defmodule CadetWeb.AuthController do
     response(404, "Missing parameter(s)")
   end
 
-
   def swagger_definitions do
     %{
       FormLogin:
@@ -138,7 +144,7 @@ defmodule CadetWeb.AuthController do
 
           required(:login)
 
-          example(%{ login: %{ email: "TestAdmin@test.com", password: "password" } })
+          example(%{login: %{email: "TestAdmin@test.com", password: "password"}})
         end,
       Tokens:
         swagger_schema do
