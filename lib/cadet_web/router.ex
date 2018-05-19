@@ -1,8 +1,8 @@
 defmodule CadetWeb.Router do
   use CadetWeb, :router
 
-  pipeline :browser do
-    plug(:accepts, ["html"])
+  pipeline :api do
+    plug(:accepts, ["json"])
     plug(:fetch_session)
     plug(:fetch_flash)
     plug(:protect_from_forgery)
@@ -20,7 +20,7 @@ defmodule CadetWeb.Router do
 
   # Public Pages
   scope "/", CadetWeb do
-    pipe_through([:browser, :auth])
+    pipe_through([:api, :auth])
 
     resources("/session", SessionController, only: [:new, :create])
     get("/session/logout", SessionController, :logout)
@@ -28,7 +28,7 @@ defmodule CadetWeb.Router do
 
   # Authenticated Pages
   scope "/", CadetWeb do
-    pipe_through([:browser, :auth, :ensure_auth])
+    pipe_through([:api, :auth, :ensure_auth])
 
     get("/", PageController, :index)
   end
