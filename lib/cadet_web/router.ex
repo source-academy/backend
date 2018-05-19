@@ -28,8 +28,6 @@ defmodule CadetWeb.Router do
   # Authenticated Pages
   scope "/", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
-
-    get("/", PageController, :index)
   end
 
   # Other scopes may use custom stacks.
