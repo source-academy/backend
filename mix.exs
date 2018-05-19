@@ -17,7 +17,8 @@ defmodule Cadet.Mixfile do
         "coveralls.html": :test
       ],
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [plt_add_apps: [:mix, :ex_unit]]
     ]
   end
 
@@ -56,6 +57,7 @@ defmodule Cadet.Mixfile do
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test},
+      {:dialyxir, "~> 0.5", only: [:dev, :test], runtime: false},
       {:arc, "~> 0.8.0"},
       {:arc_ecto, "~> 0.7.0"},
       {:timex, "~> 3.0"},

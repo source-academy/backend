@@ -36,14 +36,11 @@ defmodule CadetWeb.ConnCase do
     conn = Phoenix.ConnTest.build_conn()
 
     if tags[:authenticate] != nil do
-      {:ok, conn: authenticate(conn, tags[:authenticate])}
+      user = Cadet.Factory.insert(:user, %{role: tags[:authenticate]})
+      conn = Cadet.Auth.Guardian.Plug.sign_in(conn, user)
+      {:ok, conn: conn}
     else
       {:ok, conn: conn}
     end
-  end
-
-  defp authenticate(conn, role) do
-    user = Cadet.Factory.insert(:user, %{role: role})
-    Cadet.Auth.Guardian.Plug.sign_in(conn, user)
   end
 end

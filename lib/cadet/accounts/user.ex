@@ -20,7 +20,7 @@ defmodule Cadet.Accounts.User do
   @required_fields ~w(first_name role)a
   @optional_fields ~w(last_name)a
 
-  def changeset(user, params \\ :empty) do
+  def changeset(user, params \\ %{}) do
     user
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
