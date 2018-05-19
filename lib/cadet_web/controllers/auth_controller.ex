@@ -62,6 +62,7 @@ defmodule CadetWeb.AuthController do
     case Guardian.decode_and_verify(refresh_token) do
       {:ok, _} ->
         Guardian.revoke(refresh_token)
+
         conn
         |> send_resp(200, "OK")
 
