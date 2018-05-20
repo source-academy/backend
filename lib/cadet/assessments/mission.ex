@@ -18,6 +18,7 @@ defmodule Cadet.Assessments.Mission do
     field(:open_at, Timex.Ecto.DateTime)
     field(:close_at, Timex.Ecto.DateTime)
     field(:cover_picture, Image.Type)
+    has_many :questions, Question, on_delete: :delete_all
   end
 
   @required_fields ~w(order category title open_at close_at)a
