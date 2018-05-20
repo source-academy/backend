@@ -3,7 +3,8 @@ defmodule Cadet.Factory do
   Factory for testing
   """
   use ExMachina.Ecto, repo: Cadet.Repo
-  @dialyzer {:no_return, fields_for: 1} # fields_for has been deprecated, only raising exception
+  # fields_for has been deprecated, only raising exception
+  @dialyzer {:no_return, fields_for: 1}
 
   alias Cadet.Accounts.User
   alias Cadet.Accounts.Authorization

@@ -44,26 +44,30 @@ defmodule CadetWeb.SessionController do
   end
 
   swagger_path :create do
-    post "/session"
-    summary "Authenticate user"
-    consumes "application/json"
+    post("/session")
+    summary("Authenticate user")
+    consumes("application/json")
+
     parameters do
-      login :body, Schema.ref(:FormLogin), "login attributes"
+      login(:body, Schema.ref(:FormLogin), "login attributes")
     end
-    response 200, "OK"
-    response 403, "Wrong login attributes"
+
+    response(200, "OK")
+    response(403, "Wrong login attributes")
   end
 
   def swagger_definitions do
     %{
-      FormLogin: swagger_schema do
-        title "Login form"
-        description "Authentication"
-        properties do
-          email :string, "Email of user", required: true
-          password :string, "Password of user", required: true
+      FormLogin:
+        swagger_schema do
+          title("Login form")
+          description("Authentication")
+
+          properties do
+            email(:string, "Email of user", required: true)
+            password(:string, "Password of user", required: true)
+          end
         end
-      end
     }
   end
 
