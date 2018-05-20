@@ -10,6 +10,7 @@ defmodule Mix.Tasks.Cadet.Digest do
     rescue
       e in RuntimeError -> e
     end
+
     Mix.Shell.IO.cmd("cd frontend && npm run build")
     :ok = Mix.Tasks.Phx.Digest.run(args)
   end

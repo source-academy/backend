@@ -1,11 +1,9 @@
 defmodule CadetWeb.Router do
   use CadetWeb, :router
 
-  pipeline :browser do
-    plug(:accepts, ["html"])
+  pipeline :api do
+    plug(:accepts, ["json"])
     plug(:fetch_session)
-    plug(:fetch_flash)
-    plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
   end
 
@@ -20,7 +18,7 @@ defmodule CadetWeb.Router do
 
   # Public Pages
   scope "/", CadetWeb do
-    pipe_through([:browser, :auth])
+    pipe_through([:api, :auth])
 
     resources("/session", SessionController, only: [:new, :create])
     get("/session/logout", SessionController, :logout)
@@ -28,7 +26,7 @@ defmodule CadetWeb.Router do
 
   # Authenticated Pages
   scope "/", CadetWeb do
-    pipe_through([:browser, :auth, :ensure_auth])
+    pipe_through([:api, :auth, :ensure_auth])
 
     get("/", PageController, :index)
   end
@@ -48,6 +46,6 @@ defmodule CadetWeb.Router do
   end
 
   scope "/api/swagger" do
-    forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json"
+    forward("/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json")
   end
 end
