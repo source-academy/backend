@@ -4,7 +4,7 @@ defmodule Cadet.Assessments.Question do
 
   alias Cadet.Assessments.Mission
 
-  schema "assessment_questions" do
+  schema "questions" do
     field :title, :string
     field :display_order, :integer
     field :weight, :integer
