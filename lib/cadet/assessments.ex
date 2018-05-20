@@ -14,14 +14,14 @@ defmodule Cadet.Assessments do
   alias Timex.Timezone
   alias Timex.Duration
 
-  alias SourceAcademy.Repo
+  alias Cadet.Repo
 
-  alias SourceAcademy.Assessments.Assessment
-  alias SourceAcademy.Assessments.Question
+  alias Cadet.Assessments.Assessment
+  alias Cadet.Assessments.Question
   
-  alias SourceAcademy.Course
-  alias SourceAcademy.Course.Group
-  alias SourceAcademy.Accounts
+  alias Cadet.Course
+  alias Cadet.Course.Group
+  alias Cadet.Accounts
 
   def all_assessments, do: Repo.all(Assessment)
 
