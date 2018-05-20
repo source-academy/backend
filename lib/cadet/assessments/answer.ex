@@ -7,29 +7,35 @@ defmodule Cadet.Assessments.Answer do
   schema "answers" do
     field :marks, :float, default: 0.0
     field :answer_json, :map
+    field :type, ProblemType
+    field :raw_json, :string, virtual: true
     belongs_to :submission, Submission
     belongs_to :question, Question
     timestamps()
   end
 
-  @required_fields ~w(answer_json)a
-  @optional_fields ~w(marks)a
+  @required_fields ~w(answer_json type)a
+  @optional_fields ~w(marks raw_json)a
 
   def changeset(answer, params) do
     answer
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:marks, greater_than_or_equal_to: 0.0)
-    |> validate_json(:answer_json)
+    |> put_json
   end
 
-  def validate_json(changeset, json_field) do
-    validate_change(changeset, json_field, fn _, json ->
-      case Map.has_key?(json, :type) do
-        true -> []
-        false -> [{json_field, "Invalid Question"}]
+  defp put_json(changeset) do
+    change = get_change(changeset, :raw_json)
+    if change do
+      json = Poison.decode!(change)
+      if json != nil do
+        put_change(changeset, :json, json)
+      else
+        changeset
       end
-    end)
+    else
+      changeset
+    end
   end
-
 end

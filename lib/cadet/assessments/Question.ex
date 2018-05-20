@@ -9,28 +9,35 @@ defmodule Cadet.Assessments.Question do
     field :display_order, :integer
     field :weight, :integer
     field :question_json, :map
+    field :type, ProblemType
+    field :raw_json, :string, virtual: true
     belongs_to :mission, Mission
     timestamps()
   end
 
-  @required_fields ~w(title weight question_json)a
-  @optional_fields ~w(display_order)a
+  @required_fields ~w(title weight question_json type)a
+  @optional_fields ~w(display_order raw_json)a
 
   def changeset(question, params) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
-    |> validate_json(:question_json)
+    |> put_json
   end
 
-  def validate_json(changeset, json_field) do
-    validate_change(changeset, json_field, fn _, json ->
-      case Map.has_key?(json, :type) do
-        true -> []
-        false -> [{json_field, "Invalid Question"}]
+  defp put_json(changeset) do
+    change = get_change(changeset, :raw_json)
+    if change do
+      json = Poison.decode!(change)
+      if json != nil do
+        put_change(changeset, :json, json)
+      else
+        changeset
       end
-    end)
+    else
+      changeset
+    end
   end
 
 end
