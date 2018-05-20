@@ -10,6 +10,10 @@ defmodule Cadet.Assessments.Mission do
   alias Cadet.Assessments.Image
 
   schema "missions" do
+    field :name, :string
+    field :is_published, :boolean, default: false
+    #field :description, :string, default: ""
+    #field :briefing, :string, default: ""
     field(:order, :string)
     field(:category, Category)
     field(:title, :string)
@@ -17,12 +21,21 @@ defmodule Cadet.Assessments.Mission do
     field(:summary_long, :string)
     field(:open_at, Timex.Ecto.DateTime)
     field(:close_at, Timex.Ecto.DateTime)
+    field :max_xp, :integer, default: 0
+    field :priority, :integer, default: 0
     field(:cover_picture, Image.Type)
     has_many :questions, Question, on_delete: :delete_all
-    belongs_to :assessment, Assessment
   end
 
-  @required_fields ~w(order category title open_at close_at)a
-  @optional_fields ~w(summary_short summary_long)
+  @required_fields ~w(name order category title open_at close_at)a
+  @optional_fields ~w(summary_short summary_long is_published max_xp priority)a
   @optional_file_fields ~w(cover_url)
+
+  def changeset(mission, params) do
+    mission
+    |> cast(params, @required_fields ++ @optional_fields)
+    |> validate_required(@required_fields)
+    |> validate_number(:max_xp, greater_than_or_equal_to: 0)
+  end
+  
 end
