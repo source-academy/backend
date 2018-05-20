@@ -1,15 +1,19 @@
-defmodule Cadet.Assessments do
+defmodule SourceAcademy.Assessments do
   @moduledoc false
   import Ecto.Changeset
   import Ecto.Query
-
+  
   alias Timex.Timezone
   alias Timex.Duration
 
-  alias Cadet.Repo
+  alias SourceAcademy.Repo
 
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Question
+  alias SourceAcademy.Assessments.Assessment
+  alias SourceAcademy.Assessments.Question
+  
+  alias SourceAcademy.Course
+  alias SourceAcademy.Course.Group
+  alias SourceAcademy.Accounts
 
   def all_assessments, do: Repo.all(Assessment)
 
@@ -29,8 +33,8 @@ defmodule Cadet.Assessments do
     all_assessments()
     |> Enum.filter(&(
       &1.is_published &&
-      Timex.before?(&1.open_at, now) &&
-      Timex.before?(&1.close_at, week_after)
+      Timex.before?(&1.mission.open_at, now) &&
+      Timex.before?(&1.mission.close_at, week_after)
     ))
   end
 
@@ -38,7 +42,7 @@ defmodule Cadet.Assessments do
     changeset = %Assessment{}
     |> Assessment.changeset(params)
 
-    change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
+    #change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
   end
 
   def build_question(params) do
@@ -46,30 +50,15 @@ defmodule Cadet.Assessments do
     |> Question.changeset(params)
   end
 
-  def build_programming_question(params) do
-    %ProgrammingQuestion{}
-    |> ProgrammingQuestion.changeset(params)
-  end
+  #def build_test_case(params) do
+  #  %TestCase{}
+  #  |> TestCase.changeset(params)
+  #end
 
-  def build_test_case(params) do
-    %TestCase{}
-    |> TestCase.changeset(params)
-  end
-
-  def build_mcq_question(params) do
-    %MCQQuestion{}
-    |> MCQQuestion.changeset(params)
-  end
-
-  def build_mcq_choice(params) do
-    %MCQChoice{}
-    |> MCQChoice.changeset(params)
-  end
-
-  def build_programming_answer(params) do
-    %ProgrammingAnswer{}
-    |> ProgrammingAnswer.changeset(params)
-  end
+  #def build_programming_answer(params) do
+  #  %ProgrammingAnswer{}
+  #  |> ProgrammingAnswer.changeset(params)
+  #end
 
   def create_assessment(params) do
     changeset = build_assessment(params)
@@ -80,49 +69,37 @@ defmodule Cadet.Assessments do
     Question.changeset(question, params)
   end
 
-  def change_programming_question(programming_question, params) do
-    ProgrammingQuestion.changeset(programming_question, params)
-  end
+  #def change_test_case(test_case, params) do
+  #  TestCase.changeset(test_case, params)
+  #end
 
-  def change_test_case(test_case, params) do
-    TestCase.changeset(test_case, params)
-  end
+  #def create_submission(assessment, student) do
+  #  changeset = %Submission{}
+  #    |> Submission.changeset(%{})
+  #    |> put_assoc(:student, student)
+  #    |> put_assoc(:assessment, assessment)
+  #  Repo.insert(changeset)
+  #end
 
-  def change_mcq_question(mcq_question, params) do
-    MCQQuestion.changeset(mcq_question, params)
-  end
+  #def build_grading(submission, params \\ %{}) do
+  #  submission
+  #  |> Submission.changeset(params)
+  #  |> cast_assoc(:answers, required: true)
+  #end
 
-  def change_mcq_choice(mcq_choice, params) do
-    MCQChoice.changeset(mcq_choice, params)
-  end
-
-  def create_submission(assessment, student) do
-    changeset = %Submission{}
-      |> Submission.changeset(%{})
-      |> put_assoc(:student, student)
-      |> put_assoc(:assessment, assessment)
-    Repo.insert(changeset)
-  end
-
-  def build_grading(submission, params \\ %{}) do
-    submission
-    |> Submission.changeset(params)
-    |> cast_assoc(:programming_answers, required: true)
-  end
-
-  def create_test_case(params, programming_question_id) do
-    programming_question = Repo.get(ProgrammingQuestion,
-      programming_question_id)
-    changeset = params
-      |> build_test_case()
-      |> put_assoc(:programming_question, programming_question)
-    Repo.insert(changeset)
-  end
+  #def create_test_case(params, programming_question_id) do
+  #  programming_question = Repo.get(ProgrammingQuestion,
+  #   programming_question_id)
+  #  changeset = params
+  #    |> build_test_case()
+  #    |> put_assoc(:programming_question, programming_question)
+  #  Repo.insert(changeset)
+  #end
 
   def change_assessment(id, params \\ :empty) do
     assessment = Repo.get(Assessment, id)
     Assessment.changeset(assessment, params)
-    |> change(%{raw_library: Poison.encode!(assessment.library)})
+    #|> change(%{raw_library: Poison.encode!(assessment.library)})
   end
 
   def update_assessment(id, params) do
@@ -137,12 +114,6 @@ defmodule Cadet.Assessments do
       params: params)
   end
 
-  def update_programming_question(id, params) do
-    simple_update(ProgrammingQuestion, id,
-      using: &ProgrammingQuestion.changeset/2,
-      params: params)
-  end
-
   def publish_assessment(id) do
     assessment = Repo.get(Assessment, id)
     changeset = change(assessment, %{is_published: true})
@@ -150,57 +121,25 @@ defmodule Cadet.Assessments do
   end
 
   def get_question(id, opts \\ [preload: true]) do
-    question = Repo.get(Question, id)
-    if opts[:preload] do
-      Repo.preload(question, [
-        programming_question: [:test_cases],
-        mcq_question: [:choices]
-      ])
-    else
-      question
-    end
+    Repo.get(Question, id)
   end
 
-  def update_test_case(id, params) do
-    test_case = Repo.get(TestCase, id)
-    changeset = TestCase.changeset(test_case, params)
-    Repo.update(changeset)
-  end
+  #def update_test_case(id, params) do
+  #  test_case = Repo.get(TestCase, id)
+  #  changeset = TestCase.changeset(test_case, params)
+  #  Repo.update(changeset)
+  #end
 
-  def delete_test_case(id) do
-    test_case = Repo.get(TestCase, id)
-    Repo.delete(test_case)
-  end
-
-  def update_mcq_choice(id, params) do
-    simple_update(MCQChoice, id,
-      using: &MCQChoice.changeset/2,
-      params: params)
-  end
-
-  def update_mcq_question(id, params) do
-    simple_update(MCQQuestion, id,
-      using: &MCQQuestion.changeset/2,
-      params: params)
-  end
-
-  def create_mcq_choice(params, mcq_question_id) do
-    mcq_question = Repo.get(MCQQuestion, mcq_question_id)
-    if mcq_question != nil do
-      changeset = params
-        |> build_mcq_choice()
-        |> put_assoc(:mcq_question, mcq_question)
-      Repo.insert(changeset)
-    else
-      {:error, :mcq_question_not_found}
-    end
-  end
+  #def delete_test_case(id) do
+  #  test_case = Repo.get(TestCase, id)
+  #  Repo.delete(test_case)
+  #end
 
   def all_pending_gradings do
     Repo.all(
       from s in Submission,
       where: s.status == "submitted",
-      preload: [student: [:user], assessment: []]
+      preload: [:student, :assessment]
     )
   end
 
@@ -213,7 +152,7 @@ defmodule Cadet.Assessments do
     Repo.all(
       from s in Submission,
       where: s.assessment_id == ^assessment.id,
-      preload: [student: [:user]]
+      preload: [:student]
     )
   end
 
@@ -226,16 +165,15 @@ defmodule Cadet.Assessments do
       ),
       where: is_nil(sub.student_id) and not s.is_phantom,
       select: s,
-      preload: [:user]
+      preload: [:student]
     )
   end
 
   def pending_gradings_of(staff) do
     Repo.all(
       from s in Submission,
-      join: dg in DiscussionGroup, on: s.student_id == dg.student_id,
-      where: s.status == "submitted" and dg.staff_id == ^staff.id,
-      preload: [student: [:user], assessment: []]
+      where: s.status == "submitted" and s.grader_id == ^staff.id,
+      preload: [:student, :assessment]
     )
   end
 
@@ -243,16 +181,9 @@ defmodule Cadet.Assessments do
     Repo.one(
       from a in Assessment,
       where: (a.id == ^id),
-      left_join: q in Question, on: q.assessment_id == ^id,
-      left_join: pq in ProgrammingQuestion, on: pq.question_id == q.id,
-      left_join: mq in MCQQuestion, on: mq.question_id == q.id,
-      preload: [
-        questions: {
-          q,
-          programming_question: pq,
-          mcq_question: mq
-        }
-      ]
+      left_join: m in Mission, on: m.assessment_id == ^id,
+      left_join: q in Question, on: q.mission_id == m.id,
+      preload: [:question]
     )
   end
 
@@ -260,19 +191,19 @@ defmodule Cadet.Assessments do
     Repo.get(Assessment, id)
   end
 
-  def create_question(params, type, assessment_id)
-    when is_binary(assessment_id) do
-    assessment = Repo.get(Assessment, assessment_id)
-    create_question(params, type, assessment)
+  def create_question(params, type, mission_id)
+    when is_binary(mission_id) do
+    mission = Repo.get(Assessment, mission_id)
+    create_question(params, type, mission)
   end
 
-  def create_question(params, type, assessment) do
+  def create_question(params, type, mission) do
     Repo.transaction fn ->
-      assessment = Repo.preload(assessment, :questions)
-      questions = assessment.questions
+      mission = Repo.preload(mission, :questions)
+      questions = mission.questions
       changeset = params
         |> build_question()
-        |> put_assoc(:assessment, assessment)
+        |> put_assoc(:mission, mission)
         |> put_display_order(questions)
       case Repo.insert(changeset) do
         {:ok, question} -> create_concrete_question(question, type)
@@ -335,69 +266,13 @@ defmodule Cadet.Assessments do
 
   def opened?(assessment) do
     timezone = Timezone.get("Asia/Singapore", Timex.now)
-    date = Timezone.convert(assessment.open_at, timezone)
+    date = Timezone.convert(assessment.mission.open_at, timezone)
     Timex.before?(date, Timex.now())
-  end
-
-  def prepare_workspace(id, question_order, student) when is_binary(id) do
-    assessment = Repo.get(Assessment, id)
-    if assessment == nil do
-      {:error, :assessment_not_found}
-    else
-      prepare_workspace(assessment, question_order, student)
-    end
-  end
-
-  def prepare_workspace(assessment, question_order, student) do
-    # Ensure student attempted the assessment
-    submission = find_submission(assessment, student)
-    student = Repo.preload(student, :user)
-
-    if submission == nil do
-      {:error, :assessment_not_attempted}
-    else
-      question =
-        case get_assessment_question(assessment, question_order, true) do
-          {:ok, question} -> question
-          {:error, _} -> nil
-        end
-      previous_question =
-        case get_assessment_question(assessment, question_order - 1) do
-          {:ok, question} -> question
-          {:error, _} -> nil
-        end
-      next_question =
-        case get_assessment_question(assessment, question_order + 1) do
-          {:ok, question} -> question
-          {:error, _} -> nil
-        end
-
-      # Need to pass answer only if programming question
-      extra = if question.programming_question != nil do
-        prepare_programming_question(
-           question.programming_question,
-           submission
-        )
-      else
-        %{type: :mcq_question}
-      end
-
-      Map.merge(extra, %{
-        student: student,
-        assessment: assessment,
-        question: question,
-        next_question: next_question,
-        previous_question: previous_question
-      })
-    end
   end
 
   def get_submission(id) do
     Repo.get(Submission, id)
-    |> Repo.preload([
-        assessment: [],
-        student: [:user],
-        programming_answers: [question: [:question]]
+    |> Repo.preload([:assessment, :student, :answers]
       ])
   end
 
@@ -437,9 +312,9 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
-  def get_programming_answer(question, submission) do
+  def get_answer(question, submission) do
     Repo.one(
-      from answer in ProgrammingAnswer,
+      from answer in Answer,
       where: answer.submission_id == ^submission.id
         and answer.question_id == ^question.id
     )
@@ -452,17 +327,6 @@ defmodule Cadet.Assessments do
     if question == nil do
       {:error, :question_not_found}
     else
-      question =
-        if preload do
-          Repo.preload(question,
-            [
-              mcq_question: [:choices],
-              programming_question: [:test_cases]
-            ]
-          )
-        else
-          Repo.preload(question, [:mcq_question, :programming_question])
-        end
       {:ok, question}
     end
   end
@@ -496,7 +360,7 @@ defmodule Cadet.Assessments do
   end
 
   def question_name(assessment, order) do
-    prefix = case assessment.type do
+    prefix = case assessment.mission.category do
       :mission -> "mission"
       :sidequest -> "sidequest"
       :contest -> "contest"
@@ -505,41 +369,36 @@ defmodule Cadet.Assessments do
     prefix <> "_" <> assessment.name <> "_q" <> order
   end
 
-  def delete_mcq_choice(id) do
-    mcq_choice = Repo.get!(MCQChoice, id)
-    Repo.delete!(mcq_choice)
-  end
-
   def update_grading(id, params, grader) do
     Repo.transaction fn ->
       submission = get_submission(id)
-        |> Repo.preload(:programming_answers)
+        |> Repo.preload(:answers)
       changeset = build_grading(submission, params)
 
       # Get previous marks
-      previous_marks = submission.programming_answers
+      previous_marks = submission.answers
         |> Enum.map(&(&1.marks))
         |> Enum.sum
 
       # Update Programming Answers
-      for {_, ps} <- params["programming_answers"] do
+      for {_, ps} <- params["answers"] do
         previous = Enum.find(
-          submission.programming_answers,
+          submission.answers,
           &(&1.id == String.to_integer(ps["id"]))
         )
-        changeset = ProgrammingAnswer.changeset(previous, ps)
+        changeset = Answer.changeset(previous, ps)
         Repo.update!(changeset)
       end
 
-      total_marks = params["programming_answers"]
+      total_marks = params["answers"]
         |> Enum.map(fn {_, params} -> params["marks"] end)
         |> Enum.map(fn mark ->
           {parsed, _} = Float.parse(mark)
           parsed
         end)
         |> Enum.sum
-      max_marks = submission.programming_answers
-        |> Enum.map(&(&1.question.question.weight))
+      max_marks = submission.answers
+        |> Enum.map(&(&1.question.weight))
         |> Enum.sum
       total_marks = Enum.min([total_marks, max_marks])
       max_xp = submission.assessment.max_xp
@@ -572,56 +431,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def submit_mcq_choice(id, student) do
-    mcq_choice = Repo.get!(MCQChoice, id)
-      |> Repo.preload(:mcq_question)
-
-    question = Repo.get!(Question, mcq_choice.mcq_question.question_id)
-
-    path_submission = %PathSubmission{}
-      |> PathSubmission.changeset(%{
-          code: "",
-          is_correct: mcq_choice.is_correct
-       })
-      |> put_assoc(:student, student)
-      |> put_assoc(:mcq_choice, mcq_choice)
-      |> put_assoc(:question, question)
-
-    Repo.insert!(path_submission)
-
-    mcq_choice
-  end
-
-  def submit_code(programming_question_id, code, student) do
-    programming_question =
-      Repo.get(ProgrammingQuestion, programming_question_id)
-      |> Repo.preload(:test_cases)
-    solution_header = programming_question.solution_header
-    test_cases = programming_question.test_cases
-    body = Poison.encode(%{
-      header: solution_header,
-      test_cases: Enum.map(test_cases, &(%{
-        id: &1.id,
-        code: &1.code,
-        expected: &1.expected_result
-      }))
-    })
-    headers = [
-      {"Accept", "application/json"},
-      {"Content-Type", "application/json"}
-    ]
-    response = HTTPotion.post("http://localhost:8080/submit", [
-      body: body,
-      headers: headers
-    ])
-    case response do
-      %HTTPotion.Response{} ->
-        {:ok, Poison.decode(response.body)}
-      %HTTPotion.ErrorResponse{} ->
-        {:error, response.message}
-    end
-  end
-
   def prepare_game(student) do
     # Get all non-attempted assessment
     assessments = Repo.all(
@@ -634,7 +443,7 @@ defmodule Cadet.Assessments do
     # Filter those can be attempted, min by order, mission first
     assessments =
       assessments
-      |> Enum.filter(&(&1.type != :path && can_attempt?(&1, student.user)))
+      |> Enum.filter(&(&1.mission.category != :path && can_attempt?(&1, student.user)))
     if Enum.empty?(assessments) do
       nil
     else
@@ -646,7 +455,7 @@ defmodule Cadet.Assessments do
   end
 
   def story_name_pair(assessment) do
-    {assessment.type, assessment.name}
+    {assessment.mission.category, assessment.name}
   end
 
   def compare_story_name_pair({t1, n1}, {t2, n2}) do
@@ -661,31 +470,8 @@ defmodule Cadet.Assessments do
   end
 
   def story_name(assessment) do
-    type = Atom.to_string(assessment.type)
+    type = Atom.to_string(assessment.mission.category)
     String.downcase(type) <> "-" <> assessment.name
-  end
-
-  defp create_concrete_question(question, type) do
-    result = case type do
-      "programming" -> create_blank_programming_question(question)
-      _ -> create_blank_mcq_question(question)
-    end
-    case result do
-      {:ok, _} -> question
-      {:error, changeset} -> Repo.rollback(changeset)
-    end
-  end
-
-  defp create_blank_programming_question(question) do
-    build_programming_question(%{})
-    |> put_assoc(:question, question)
-    |> Repo.insert
-  end
-
-  defp create_blank_mcq_question(question) do
-    build_mcq_question(%{})
-    |> put_assoc(:question, question)
-    |> Repo.insert
   end
 
   defp prepare_programming_question(programming_question, submission) do
@@ -700,11 +486,6 @@ defmodule Cadet.Assessments do
       answer: answer,
       comments: comments
     }
-  end
-
-  defp prepare_mcq_question(mcq_question, submission) do
-    mcq_question = Repo.preload(mcq_question, :choices)
-    %{ type: :mcq_question }
   end
 
   def get_student_submission(assessment_id, student) do
@@ -725,24 +506,7 @@ defmodule Cadet.Assessments do
       submission
       |> change(%{ status: new_status, submitted_at: submitted_at })
       |> Repo.update!
-
-      # 3. Update code readonly flag
-      # If the submission is changed from submitted to attempting, set readonly
-      # to false, and vice versa
-      codes =
-        from code in Code,
-        join: answer in ProgrammingAnswer, on: answer.code_id == code.id,
-        where: answer.submission_id == ^submission.id
-      is_readonly = if new_status == :attempting, do: false, else: true
-      Repo.update_all(codes, set: [is_readonly: is_readonly])
     end
-  end
 
-  def priority(id, delta) do
-    changeset = change_assessment(id, %{})
-
-    simple_update(Assessment, id,
-      using: &Assessment.changeset/2,
-      params: %{ priority: changeset.data.priority + delta })
   end
 end
