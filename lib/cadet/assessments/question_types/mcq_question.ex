@@ -33,8 +33,6 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
     if change do
       json = Poison.decode!(change)
 
-      IO.puts(inspect(json))
-
       changeset
       |> cast(json, @required_fields)
     else

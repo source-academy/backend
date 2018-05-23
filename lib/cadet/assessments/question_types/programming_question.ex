@@ -30,7 +30,6 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
 
   defp put_programmingquestion(changeset) do
     change = get_change(changeset, :raw_programmingquestion)
-    IO.puts(inspect(change))
 
     if change do
       json = Poison.decode!(change)

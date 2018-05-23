@@ -4,7 +4,13 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
   alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
 
   valid_changesets ProgrammingQuestion do
-    %{content: "asd", solution_template: "asd", solution_header: "asd", solution: "asd", library: %{version: 1}}
+    %{
+      content: "asd",
+      solution_template: "asd",
+      solution_header: "asd",
+      solution: "asd",
+      library: %{version: 1}
+    }
 
     %{
       raw_programmingquestion:
@@ -14,5 +20,13 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
 
   invalid_changesets ProgrammingQuestion do
     %{content: "asd"}
+
+    %{
+      content: "asd",
+      solution_template: "asd",
+      solution_header: "asd",
+      solution: "asd",
+      library: %{globals: ["a"]}
+    }
   end
 end
