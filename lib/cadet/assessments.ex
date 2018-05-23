@@ -144,13 +144,7 @@ defmodule Cadet.Assessments do
   #   test_case = Repo.get(TestCase, id)
   #   Repo.delete(test_case)
   # end
-
-  # def update_mcq_choice(id, params) do
-  #   simple_update(MCQChoice, id,
-  #     using: &MCQChoice.changeset/2,
-  #     params: params)
-  # end
-
+  
   # def update_mcq_question(id, params) do
   #   simple_update(MCQQuestion, id,
   #     using: &MCQQuestion.changeset/2,
