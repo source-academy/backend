@@ -28,4 +28,6 @@ defmodule CadetWeb.QuestionController do
 
   def delete(conn, %{"mission_id" => mission_id, "id" => id}) do
     Assessments.delete_question(id)
+  end
+
 end
