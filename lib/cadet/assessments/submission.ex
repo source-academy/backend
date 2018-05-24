@@ -31,10 +31,10 @@ defmodule Cadet.Assessments.Submission do
   end
 
   def validate_role(changeset, user, role) do
-    validate_change(changeset, user, fn _, user ->
+    validate_change(changeset, user, fn ^user, user ->
       case user.role == ^role do
         true -> []
-        false -> [{user, "Access Denied"}]
+        false -> [{^user, "Access Denied"}]
       end
     end)
   end
