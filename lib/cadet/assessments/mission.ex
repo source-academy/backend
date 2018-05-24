@@ -9,13 +9,6 @@ defmodule Cadet.Assessments.Mission do
   alias Cadet.Assessments.Category
   alias Cadet.Assessments.Image
 
-  @default_library %{
-    week: 3,
-    globals: [],
-    externals: [],
-    files: []
-  }
-
   schema "missions" do
     field :name, :string
     field :is_published, :boolean, default: false
@@ -33,8 +26,8 @@ defmodule Cadet.Assessments.Mission do
     timestamps()
   end
 
-  @required_fields ~w(name order category title open_at close_at library)a
-  @optional_fields ~w(summary_short summary_long is_published max_xp priority raw_library)a
+  @required_fields ~w(name order category title open_at close_at)a
+  @optional_fields ~w(summary_short summary_long is_published max_xp priority)a
   @optional_file_fields ~w(cover_url)
 
   def changeset(mission, params) do
