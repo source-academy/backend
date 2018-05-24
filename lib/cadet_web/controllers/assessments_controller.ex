@@ -3,21 +3,8 @@ defmodule CadetWeb.AssessmentController do
 
   alias Cadet.Assessments
 
-  @tabs_map %{
-    "Missions" => :mission,
-    "Sidequests" => :sidequest,
-    "Paths" => :path,
-    "Contests" => :contest,
-  }
-
   def index(conn, params) do
-    active_tab = Map.get(params, "tab", "Missions")
-    tab_keys = @tabs_map
-      |> Map.to_list
-      |> Enum.map(fn {key, _} -> key end)
-    type = Map.get(@tabs_map, active_tab)
-    missions = Assessments.all_missions(type)
-    Poison.encode!(%{"active_tab" => active_tab, "tabs" => tab_keys, "missions" => missions})
+    Assessments.all_missions(type)
   end
 
   def new(conn, _params) do
