@@ -15,8 +15,6 @@ defmodule Cadet.Assessments.Question do
     field :title, :string
     field :display_order, :integer
     field :weight, :integer
-    field :library, :map, default: @default_library
-    field :raw_library, :string, virtual: true
     field :question, :map
     field :type, ProblemType
     field :raw_question, :string, virtual: true
@@ -39,6 +37,7 @@ defmodule Cadet.Assessments.Question do
     change = get_change(changeset, :raw_question)
     if change do
       json = Poison.decode!(change)
+
       if json != nil do
         put_change(changeset, :json, json)
       else
@@ -48,5 +47,4 @@ defmodule Cadet.Assessments.Question do
       changeset
     end
   end
-
 end
