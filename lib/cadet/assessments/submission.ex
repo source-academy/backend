@@ -10,7 +10,7 @@ defmodule Cadet.Assessments.Submission do
     field :submitted_at, Timex.Ecto.DateTime
     field :override_xp, :integer
 
-    belongs_to :assessment, Assessment
+    belongs_to :mission, Mission
     belongs_to :student, User
     belongs_to :grader, User
     has_many :answers, Answer
