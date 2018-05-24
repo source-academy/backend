@@ -6,16 +6,16 @@ defmodule Cadet.Assessments.Answer do
 
   schema "answers" do
     field :marks, :float, default: 0.0
-    field :answer_json, :map
+    field :answer, :map
     field :type, ProblemType
-    field :raw_json, :string, virtual: true
+    field :raw_answer, :string, virtual: true
     belongs_to :submission, Submission
     belongs_to :question, Question
     timestamps()
   end
 
-  @required_fields ~w(answer_json type)a
-  @optional_fields ~w(marks raw_json)a
+  @required_fields ~w(answer type)a
+  @optional_fields ~w(marks raw_answer)a
 
   def changeset(answer, params) do
     answer
@@ -26,7 +26,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   defp put_json(changeset) do
-    change = get_change(changeset, :raw_json)
+    change = get_change(changeset, :raw_answer)
     if change do
       json = Poison.decode!(change)
       if json != nil do

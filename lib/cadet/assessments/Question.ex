@@ -4,19 +4,28 @@ defmodule Cadet.Assessments.Question do
 
   alias Cadet.Assessments.Mission
 
+  @default_library %{
+    week: 3,
+    globals: [],
+    externals: [],
+    files: []
+  }
+
   schema "questions" do
     field :title, :string
     field :display_order, :integer
     field :weight, :integer
-    field :question_json, :map
+    field :library, :map, default: @default_library
+    field :raw_library, :string, virtual: true
+    field :question, :map
     field :type, ProblemType
-    field :raw_json, :string, virtual: true
+    field :raw_question, :string, virtual: true
     belongs_to :mission, Mission
     timestamps()
   end
 
-  @required_fields ~w(title weight question_json type)a
-  @optional_fields ~w(display_order raw_json)a
+  @required_fields ~w(title weight question type library)a
+  @optional_fields ~w(display_order raw_question raw_lbrary)a
 
   def changeset(question, params) do
     question
@@ -27,7 +36,7 @@ defmodule Cadet.Assessments.Question do
   end
 
   defp put_json(changeset) do
-    change = get_change(changeset, :raw_json)
+    change = get_change(changeset, :raw_question)
     if change do
       json = Poison.decode!(change)
       if json != nil do
