@@ -11,6 +11,7 @@ defmodule Mix.Tasks.Cadet.Server do
     rescue
       e in RuntimeError -> e
     end
+
     :ok = Mix.Tasks.Phx.Server.run(args)
   end
 end

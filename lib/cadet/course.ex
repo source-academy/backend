@@ -192,6 +192,7 @@ defmodule Cadet.Course do
     if material.file do
       Upload.delete({material.file, material})
     end
+
     Repo.delete(material)
   end
 

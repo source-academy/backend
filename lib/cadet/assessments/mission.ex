@@ -17,10 +17,10 @@ defmodule Cadet.Assessments.Mission do
   }
 
   schema "missions" do
-    field :name, :string
-    field :is_published, :boolean, default: false
-    field :library, :map, default: @default_library
-    field :raw_library, :string, virtual: true
+    field(:name, :string)
+    field(:is_published, :boolean, default: false)
+    field(:library, :map, default: @default_library)
+    field(:raw_library, :string, virtual: true)
     field(:order, :string)
     field(:category, Category)
     field(:title, :string)
@@ -28,10 +28,10 @@ defmodule Cadet.Assessments.Mission do
     field(:summary_long, :string)
     field(:open_at, Timex.Ecto.DateTime)
     field(:close_at, Timex.Ecto.DateTime)
-    field :max_xp, :integer, default: 0
-    field :priority, :integer, default: 0
+    field(:max_xp, :integer, default: 0)
+    field(:priority, :integer, default: 0)
     field(:cover_picture, Image.Type)
-    has_many :questions, Question, on_delete: :delete_all
+    has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
@@ -45,5 +45,4 @@ defmodule Cadet.Assessments.Mission do
     |> validate_required(@required_fields)
     |> validate_number(:max_xp, greater_than_or_equal_to: 0)
   end
-  
 end
