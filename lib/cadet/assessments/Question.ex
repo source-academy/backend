@@ -12,15 +12,15 @@ defmodule Cadet.Assessments.Question do
   }
 
   schema "questions" do
-    field :title, :string
-    field :display_order, :integer
-    field :weight, :integer
-    field :library, :map, default: @default_library
-    field :raw_library, :string, virtual: true
-    field :question, :map
-    field :type, ProblemType
-    field :raw_question, :string, virtual: true
-    belongs_to :mission, Mission
+    field(:title, :string)
+    field(:display_order, :integer)
+    field(:weight, :integer)
+    field(:library, :map, default: @default_library)
+    field(:raw_library, :string, virtual: true)
+    field(:question, :map)
+    field(:type, ProblemType)
+    field(:raw_question, :string, virtual: true)
+    belongs_to(:mission, Mission)
     timestamps()
   end
 
@@ -37,8 +37,10 @@ defmodule Cadet.Assessments.Question do
 
   defp put_question(changeset) do
     change = get_change(changeset, :raw_question)
+
     if change do
       json = Poison.decode!(change)
+
       if json != nil do
         put_change(changeset, :json, json)
       else

@@ -1,12 +1,12 @@
 defmodule Cadet.Assessments.Submission do
   @moduledoc false
   use Cadet, :model
-  
+
   import Ecto.Query
 
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.SubmissionStatus
-  
+
   schema "submissions" do
     field(:status, SubmissionStatus, default: :attempting)
     field(:submitted_at, Timex.Ecto.DateTime)
@@ -35,7 +35,7 @@ defmodule Cadet.Assessments.Submission do
 
   def validate_role(changeset, user, role) do
     validate_change(changeset, user, fn ^user, user ->
-      case user.role == ^role do
+      case user.role == role do
         true -> []
         false -> [{^user, "Access Denied"}]
       end

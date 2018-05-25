@@ -42,7 +42,8 @@ defmodule Cadet.Assessments do
   end
 
   def build_mission(params) do
-    changeset = %{}
+    changeset =
+      %{}
       |> Mission.changeset(params)
 
     change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
