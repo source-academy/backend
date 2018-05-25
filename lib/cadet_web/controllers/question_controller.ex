@@ -7,7 +7,7 @@ defmodule CadetWeb.QuestionController do
     Assessments.create_question(params, type, mission_id)
   end
 
-  def edit(conn, %{"mission_id" => mission_id, "id" => id} = params) do
+  def edit(conn, params = %{"mission_id" => mission_id, "id" => id}) do
     tab = params["tab"] || "Content"
     question = Assessments.get_question(id)
     mission = Assessments.get_mission(mission_id)
