@@ -27,8 +27,8 @@ defmodule Cadet.Assessments do
   def all_open_missions(category) do
     now = Timex.now()
 
-    Repo.all(from(a in Mission, where: a.category == ^category))
-    |> Enum.filter(&(&1.is_published && Timex.before?(&1.open_at, now)))
+    mission_with_category = Repo.all(from(a in Mission, where: a.category == ^category))
+    Enum.filter(mission_with_category, &(&1.is_published && Timex.before?(&1.open_at, now)))
   end
 
   def missions_due_soon() do
@@ -366,7 +366,8 @@ defmodule Cadet.Assessments do
   end
 
   def get_submission(id) do
-    Repo.get(Submission, id)
+    Submission
+    |> Repo.get(id)
     |> Repo.preload(
       mission: [],
       student: [:user],
@@ -492,8 +493,9 @@ defmodule Cadet.Assessments do
   def update_grading(id, params, grader) do
     Repo.transaction(fn ->
       submission =
-        get_submission(id)
-        |> Repo.preload(:answers)
+        id
+	|> get_submission
+	|> Repo.preload(:answers)
 
       changeset = build_grading(submission, params)
 
@@ -656,7 +658,6 @@ defmodule Cadet.Assessments do
       t1 == :sidequest && t2 == :mission -> false
       t1 == :contest && t2 == :mission -> false
       t1 == :contest && t2 == :sidequest -> false
-      true -> false
     end
   end
 
