@@ -29,8 +29,9 @@ defmodule Cadet.Assessments.Submission do
     submission
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_role(:student, "student")
-    |> validate_role(:grader, "staff")
+
+    #  |> validate_role(:student, "student")
+    #  |> validate_role(:grader, "staff")
   end
 
   # def validate_role(changeset, user, role) do
@@ -41,4 +42,18 @@ defmodule Cadet.Assessments.Submission do
   #    end
   #  end)
   # end
+
+  def convert_date(params, field) do
+    if params[field] != "" && params[field] != nil do
+      timezone = Timezone.get("Asia/Singapore", Timex.now)
+      date = params[field]
+        |> String.to_integer
+        |> Timex.from_unix(:millisecond)
+        |> Timezone.convert(timezone)
+      Map.put(params, field, date)
+    else
+      params
+    end
+  end
+
 end

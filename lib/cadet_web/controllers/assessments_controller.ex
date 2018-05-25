@@ -4,6 +4,7 @@ defmodule CadetWeb.AssessmentController do
   alias Cadet.Assessments
 
   def index(conn, params) do
+    type = String.to_atom(String.splice(Map.get(params, "tab", "Missions"), 0..-2))
     Assessments.all_missions(type)
   end
 
