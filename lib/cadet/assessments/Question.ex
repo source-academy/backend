@@ -3,6 +3,7 @@ defmodule Cadet.Assessments.Question do
   use Cadet, :model
 
   alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.ProblemType
 
   @default_library %{
     week: 3,

@@ -2,6 +2,7 @@ defmodule Cadet.Assessments do
   @moduledoc false
   import Ecto.Changeset
   import Ecto.Query
+  import Cadet.ContextHelper
 
   alias Timex.Timezone
   alias Timex.Duration
@@ -11,7 +12,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessment.Mission
   alias Cadet.Assessment.Question
   alias Cadet.Assessment.Answer
-
+  
   alias Cadet.Course.User
   alias Cadet.Course.Group
 
@@ -50,7 +51,7 @@ defmodule Cadet.Assessments do
   end
 
   def build_question(params) do
-    %Question{}
+    %{}
     |> Question.changeset(params)
   end
 
@@ -60,7 +61,7 @@ defmodule Cadet.Assessments do
   # end
 
   def build_answer(params) do
-    %Answer{}
+    %{}
     |> Answer.changeset(params)
   end
 
@@ -79,7 +80,7 @@ defmodule Cadet.Assessments do
 
   def create_submission(mission, student) do
     changeset =
-      %Submission{}
+      %{}
       |> Submission.changeset(%{})
       |> put_assoc(:student, student)
       |> put_assoc(:mission, mission)
@@ -103,17 +104,17 @@ defmodule Cadet.Assessments do
   # end
 
   def change_mission(id, params \\ :empty) do
-    mission = Repo.get(mission, id)
+    mission = Repo.get(Mission, id)
 
-    mission.changeset(mission, params)
+    Mission.changeset(mission, params)
     |> change(%{raw_library: Poison.encode!(mission.library)})
   end
 
   def update_mission(id, params) do
     simple_update(
-      mission,
+      Mission,
       id,
-      using: &mission.changeset/2,
+      using: &Mission.changeset/2,
       params: params
     )
   end
@@ -128,7 +129,7 @@ defmodule Cadet.Assessments do
   end
 
   def publish_mission(id) do
-    mission = Repo.get(mission, id)
+    mission = Repo.get(Mission, id)
     changeset = change(mission, %{is_published: true})
     Repo.update(changeset)
   end
@@ -171,7 +172,7 @@ defmodule Cadet.Assessments do
   end
 
   def submissions_of_mission(id) when is_binary(id) do
-    mission = Repo.get!(mission, id)
+    mission = Repo.get!(Mission, id)
     submissions_of_mission(mission)
   end
 
@@ -213,7 +214,7 @@ defmodule Cadet.Assessments do
   def get_mission_and_questions(id) do
     Repo.one(
       from(
-        a in mission,
+        a in Mission,
         where: a.id == ^id,
         left_join: q in Question,
         on: q.mission_id == ^id,
@@ -223,18 +224,18 @@ defmodule Cadet.Assessments do
   end
 
   def get_mission(id) do
-    Repo.get(mission, id)
+    Repo.get(Mission, id)
   end
 
   def create_question(params, type, mission_id)
       when is_binary(mission_id) do
-    mission = Repo.get(mission, mission_id)
+    mission = Repo.get(Mission, mission_id)
     create_question(params, type, mission)
   end
 
   def create_question(params, type, mission) do
     Repo.transaction(fn ->
-      mission = Repo.preload(mission, :questions)
+      mission = Repo.preload(Mission, :questions)
       questions = mission.questions
 
       changeset =
@@ -243,10 +244,10 @@ defmodule Cadet.Assessments do
         |> put_assoc(:mission, mission)
         |> put_display_order(questions)
 
-      case Repo.insert(changeset) do
-        {:ok, question} -> create_concrete_question(question, type)
-        {:error, changeset} -> Repo.rollback(changeset)
-      end
+      Repo.insert(changeset)# do
+      #  {:ok, question} -> #create_concrete_question(question, type)
+      #  {:error, changeset} -> Repo.rollback(changeset)
+      #end
     end)
   end
 
@@ -264,7 +265,7 @@ defmodule Cadet.Assessments do
   end
 
   def attempt_mission(id, student) when is_binary(id) do
-    mission = Repo.get(mission, id)
+    mission = Repo.get(Mission, id)
 
     if mission == nil do
       {:error, :mission_not_found}
@@ -297,7 +298,7 @@ defmodule Cadet.Assessments do
   end
 
   def can_attempt?(id, user) do
-    mission = Repo.get(mission, id)
+    mission = Repo.get(Mission, id)
     can_attempt?(mission, user)
   end
 
@@ -308,7 +309,7 @@ defmodule Cadet.Assessments do
   end
 
   def prepare_workspace(id, question_order, student) when is_binary(id) do
-    mission = Repo.get(mission, id)
+    mission = Repo.get(Mission, id)
 
     if mission == nil do
       {:error, :mission_not_found}
@@ -353,7 +354,7 @@ defmodule Cadet.Assessments do
       #   %{type: :mcq_question}
       # end
 
-      Map.merge(extra, %{
+      Poison.encode!(%{
         student: student,
         mission: mission,
         question: question,
@@ -373,7 +374,7 @@ defmodule Cadet.Assessments do
   end
 
   def get_or_create_programming_answer(question, submission) do
-    answer = get_programming_answer(question, submission)
+    answer = get_answer(question, submission)
 
     if answer == nil do
       student = Repo.get(User, submission.student_id)
@@ -402,7 +403,7 @@ defmodule Cadet.Assessments do
   end
 
   def create_answer(question, submission, code) do
-    %Answer{}
+    %{}
     |> Answer.changeset(%{})
     |> put_assoc(:submission, submission)
     |> put_assoc(:question, question)
@@ -444,7 +445,7 @@ defmodule Cadet.Assessments do
       from(
         s in Submission,
         where: s.student_id == ^student.id,
-        join: a in mission,
+        join: a in Mission,
         on: a.id == s.mission_id,
         select: s,
         preload: [mission: a]
@@ -545,7 +546,7 @@ defmodule Cadet.Assessments do
 
       # Increase XP
       mission = submission.mission
-      name = display_mission_name(mission)
+      name = mission.name
 
       {:ok, xp_history} =
         Course.create_xp_history(
@@ -622,7 +623,7 @@ defmodule Cadet.Assessments do
     missions =
       Repo.all(
         from(
-          a in mission,
+          a in Mission,
           left_join: s in Submission,
           on: a.id == s.mission_id and s.student_id == ^student.id,
           where: is_nil(s.student_id),
@@ -743,4 +744,6 @@ defmodule Cadet.Assessments do
       Repo.update_all(codes, set: [is_readonly: is_readonly])
     end)
   end
+
+
 end
