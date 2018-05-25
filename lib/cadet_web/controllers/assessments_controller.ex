@@ -4,7 +4,7 @@ defmodule CadetWeb.AssessmentController do
   alias Cadet.Assessments
 
   def index(conn, params) do
-    type = String.to_atom(String.splice(Map.get(params, "tab", "Missions"), 0..-2))
+    type = String.to_atom(String.slice(Map.get(params, "tab", "Missions"), 0..-2))
     Assessments.all_missions(type)
   end
 
@@ -31,12 +31,12 @@ defmodule CadetWeb.AssessmentController do
   end
 
   def publish(conn, %{"mission_id" => id}) do
-    Assessments.publish_assessment(id)
+    Assessments.publish_mission(id)
   end
 
   def submissions(conn, %{"mission_id" => id}) do
     mission = Assessments.get_mission(id)
-    submissions = Assessments.submissions_of_assessment(mission)
+    submissions = Assessments.submissions_of_mission(mission)
     not_attempted = Assessments.students_not_attempted(mission)
 
     Poison.encode!(%{

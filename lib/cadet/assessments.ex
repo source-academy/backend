@@ -105,8 +105,9 @@ defmodule Cadet.Assessments do
 
   def change_mission(id, params \\ :empty) do
     mission = Repo.get(Mission, id)
-
-    Mission.changeset(mission, params)
+    
+    mission
+    |> Mission.changeset(params)
     |> change(%{raw_library: Poison.encode!(mission.library)})
   end
 
@@ -251,7 +252,7 @@ defmodule Cadet.Assessments do
     end)
   end
 
-  def find_submission(%mission{} = mission, student) do
+  def find_submission(mission = %mission{}, student) do
     find_submission(mission.id, student)
   end
 
@@ -289,7 +290,7 @@ defmodule Cadet.Assessments do
     can_attempt?(id, user) && find_submission(id, student) != nil
   end
 
-  def can_attempt?(%mission{} = mission, user) do
+  def can_attempt?(mission = %mission{}, user) do
     if Accounts.staff?(user) do
       true
     else
