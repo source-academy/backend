@@ -494,8 +494,8 @@ defmodule Cadet.Assessments do
     Repo.transaction(fn ->
       submission =
         id
-	|> get_submission
-	|> Repo.preload(:answers)
+  |> get_submission
+  |> Repo.preload(:answers)
 
       changeset = build_grading(submission, params)
 
