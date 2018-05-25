@@ -22,10 +22,10 @@ defmodule Cadet.Assessments.Answer do
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:marks, greater_than_or_equal_to: 0.0)
-    |> put_json
+    |> put_answer
   end
 
-  defp put_json(changeset) do
+  defp put_answer(changeset) do
     change = get_change(changeset, :raw_answer)
     if change do
       json = Poison.decode!(change)

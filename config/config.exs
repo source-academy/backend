@@ -29,8 +29,8 @@ import_config "#{Mix.env()}.exs"
 
 # Configure Phoenix Swagger
 config :cadet, :phoenix_swagger,
-swagger_files: %{
-  "priv/static/swagger.json" => [
-    router: CadetWeb.Router
-  ]
-}
+  swagger_files: %{
+    "priv/static/swagger.json" => [
+      router: CadetWeb.Router
+    ]
+  }

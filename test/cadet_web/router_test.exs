@@ -4,6 +4,6 @@ defmodule CadetWeb.RouterTest do
   alias CadetWeb.Router
 
   test "Swagger" do
-    Router.swagger_info
+    Router.swagger_info()
   end
 end

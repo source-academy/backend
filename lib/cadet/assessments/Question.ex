@@ -32,10 +32,10 @@ defmodule Cadet.Assessments.Question do
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
-    |> put_json
+    |> put_question
   end
 
-  defp put_json(changeset) do
+  defp put_question(changeset) do
     change = get_change(changeset, :raw_question)
     if change do
       json = Poison.decode!(change)
@@ -48,5 +48,4 @@ defmodule Cadet.Assessments.Question do
       changeset
     end
   end
-
 end
