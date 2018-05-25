@@ -35,6 +35,7 @@ defmodule Cadet.Assessments.Question do
 
   defp put_json(changeset) do
     change = get_change(changeset, :raw_question)
+
     if change do
       json = Poison.decode!(change)
 

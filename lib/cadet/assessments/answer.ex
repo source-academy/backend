@@ -5,12 +5,12 @@ defmodule Cadet.Assessments.Answer do
   alias Cadet.Assessments.Mission
 
   schema "answers" do
-    field :marks, :float, default: 0.0
-    field :answer, :map
-    field :type, ProblemType
-    field :raw_answer, :string, virtual: true
-    belongs_to :submission, Submission
-    belongs_to :question, Question
+    field(:marks, :float, default: 0.0)
+    field(:answer, :map)
+    field(:type, ProblemType)
+    field(:raw_answer, :string, virtual: true)
+    belongs_to(:submission, Submission)
+    belongs_to(:question, Question)
     timestamps()
   end
 
@@ -27,7 +27,6 @@ defmodule Cadet.Assessments.Answer do
 
   defp put_json(changeset) do
     change = get_change(changeset, :raw_answer)
-    
     if change do
       json = Poison.decode!(change)
 
