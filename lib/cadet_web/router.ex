@@ -41,7 +41,14 @@ defmodule CadetWeb.Router do
         version: "1.0",
         title: "cadet"
       },
-      basePath: "/v1"
+      basePath: "/v1",
+      securityDefinitions: %{
+        JWT: %{
+          type: "apiKey",
+          in: "header",
+          name: "Authorization"
+        }
+      }
     }
   end
 
