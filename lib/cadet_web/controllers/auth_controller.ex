@@ -23,39 +23,32 @@ defmodule CadetWeb.AuthController do
           {:ok, refresh_token, _} =
             Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
 
-          conn
-          |> render("token.json", access_token: access_token, refresh_token: refresh_token)
+          render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
 
         {:error, _reason} ->
-          conn
-          |> send_resp(403, "Wrong email and/or password")
+          send_resp(conn, 403, "Wrong email and/or password")
       end
     else
-      conn
-      |> send_resp(400, "Missing parameters")
+      send_resp(conn, 400, "Missing parameters")
     end
   end
 
   def create(conn, _params) do
-    conn
-    |> send_resp(400, "Missing parameters")
+    send_resp(conn, 400, "Missing parameters")
   end
 
   def refresh(conn, %{"refresh_token" => refresh_token}) do
     case Guardian.exchange(refresh_token, "refresh", "access") do
       {:ok, {refresh_token, _}, {access_token, _}} ->
-        conn
-        |> render("token.json", access_token: access_token, refresh_token: refresh_token)
+        render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
 
       {:error, _reason} ->
-        conn
-        |> send_resp(401, "Invalid Token")
+        send_resp(conn, 401, "Invalid Token")
     end
   end
 
   def refresh(conn, _params) do
-    conn
-    |> send_resp(400, "Missing parameter(s)")
+    send_resp(conn, 400, "Missing parameter(s)")
   end
 
   def logout(conn, %{"refresh_token" => refresh_token}) do
@@ -64,18 +57,15 @@ defmodule CadetWeb.AuthController do
         # Currently does nothing, need to integrate with GuardianDb
         Guardian.revoke(refresh_token)
 
-        conn
-        |> send_resp(200, "OK")
+        send_resp(conn, 200, "OK")
 
       {:error, _} ->
-        conn
-        |> send_resp(401, "Invalid Token")
+        send_resp(conn, 401, "Invalid Token")
     end
   end
 
   def logout(conn, _params) do
-    conn
-    |> send_resp(400, "Missing parameter(s)")
+    send_resp(conn, 400, "Missing parameter(s)")
   end
 
   swagger_path :create do
