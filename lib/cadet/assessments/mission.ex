@@ -8,13 +8,12 @@ defmodule Cadet.Assessments.Mission do
 
   alias Cadet.Assessments.Category
   alias Cadet.Assessments.Image
+  alias Cadet.Assessments.Question
 
   schema "missions" do
-    field(:name, :string)
-    field(:is_published, :boolean, default: false)
-    field(:order, :string)
-    field(:category, Category)
     field(:title, :string)
+    field(:is_published, :boolean, default: false)
+    field(:category, Category)
     field(:summary_short, :string)
     field(:summary_long, :string)
     field(:open_at, Timex.Ecto.DateTime)
@@ -23,10 +22,11 @@ defmodule Cadet.Assessments.Mission do
     field(:priority, :integer, default: 0)
     field(:cover_picture, Image.Type)
     has_many(:questions, Question, on_delete: :delete_all)
+    # field(:order, :string)
     timestamps()
   end
 
-  @required_fields ~w(name order category title open_at close_at)a
+  @required_fields ~w(category title open_at close_at)a
   @optional_fields ~w(summary_short summary_long is_published max_xp priority)a
   @optional_file_fields ~w(cover_url)
 

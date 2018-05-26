@@ -9,9 +9,9 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Repo
 
-  alias Cadet.Assessment.Mission
-  alias Cadet.Assessment.Question
-  alias Cadet.Assessment.Answer
+  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Question
+  alias Cadet.Assessments.Answer
   
   alias Cadet.Course.User
   alias Cadet.Course.Group
@@ -43,16 +43,12 @@ defmodule Cadet.Assessments do
   end
 
   def build_mission(params) do
-    changeset =
-      %{}
-      |> Mission.changeset(params)
-
-    change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
+    Mission.changeset(%Mission{}, params)
   end
 
   def build_question(params) do
-    %{}
-    |> Question.changeset(params)
+    changeset = Question.changeset(%Question{}, params)
+    change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
   end
 
   # def build_test_case(params) do
@@ -61,8 +57,8 @@ defmodule Cadet.Assessments do
   # end
 
   def build_answer(params) do
-    %{}
-    |> Answer.changeset(params)
+    changeset = Answer.changeset(%Answer{}, params)
+    change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
   end
 
   def create_mission(params) do
@@ -363,7 +359,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def get_or_create_programming_answer(question, submission) do
+  def get_or_create_answer(question, submission) do
     answer = get_answer(question, submission)
 
     if answer == nil do
@@ -659,7 +655,7 @@ defmodule Cadet.Assessments do
   end
 
   defp create_concrete_question(question, type) do
-     build_question(%{"type" => ^type})
+     build_question(%{"type" => type})
      |> put_assoc(:question, question)
      |> Repo.insert
   end
