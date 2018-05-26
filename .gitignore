@@ -20,3 +20,8 @@ erl_crash.dump
 
 # Uploaded file
 /uploads
+
+# Terraform Files
+.terraform
+*.tfstate
+*.backup
