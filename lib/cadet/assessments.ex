@@ -12,6 +12,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.Submission
 
   alias Cadet.Course.User
   alias Cadet.Course.Group
