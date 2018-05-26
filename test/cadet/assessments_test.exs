@@ -2,6 +2,7 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   alias Cadet.Assessments
+  alias Cadet.Accounts
 
   test "create mission" do
     {:ok, mission} =
@@ -115,4 +116,5 @@ defmodule Cadet.AssessmentsTest do
     {:ok, mission} = Assessments.publish_mission(mission.id)
     assert mission.is_published == true
   end
+
 end
