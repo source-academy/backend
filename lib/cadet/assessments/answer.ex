@@ -4,7 +4,7 @@ defmodule Cadet.Assessments.Answer do
 
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.ProblemType
-  
+
   schema "answers" do
     field(:marks, :float, default: 0.0)
     field(:answer, :map)

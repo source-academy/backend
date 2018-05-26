@@ -12,7 +12,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Answer
-  
+
   alias Cadet.Course.User
   alias Cadet.Course.Group
 
@@ -101,7 +101,7 @@ defmodule Cadet.Assessments do
 
   def change_mission(id, params \\ :empty) do
     mission = Repo.get(Mission, id)
-    
+
     mission
     |> Mission.changeset(params)
     |> change(%{raw_library: Poison.encode!(mission.library)})
@@ -224,7 +224,7 @@ defmodule Cadet.Assessments do
       questions = mission.questions
 
       changeset =
-        params ++ %{"type" => type}
+        (params ++ %{"type" => type})
         |> build_question()
         |> put_assoc(:mission, mission)
         |> put_display_order(questions)
@@ -330,22 +330,25 @@ defmodule Cadet.Assessments do
         end
 
       # Need to pass answer only if programming question
-      extra = if question.type == "programming" do
-        prepare_programming_question(
-           question,
-           submission
-        )
-      else
-        %{type: :mcq_question}
-      end
+      extra =
+        if question.type == "programming" do
+          prepare_programming_question(
+            question,
+            submission
+          )
+        else
+          %{type: :mcq_question}
+        end
 
-      Poison.encode!(Map.merge(extra, %{
-        student: student,
-        mission: mission,
-        question: question,
-        next_question: next_question,
-        previous_question: previous_question
-      }))
+      Poison.encode!(
+        Map.merge(extra, %{
+          student: student,
+          mission: mission,
+          question: question,
+          next_question: next_question,
+          previous_question: previous_question
+        })
+      )
     end
   end
 
@@ -478,8 +481,8 @@ defmodule Cadet.Assessments do
     Repo.transaction(fn ->
       submission =
         id
-  |> get_submission
-  |> Repo.preload(:answers)
+        |> get_submission
+        |> Repo.preload(:answers)
 
       changeset = build_grading(submission, params)
 
@@ -651,22 +654,25 @@ defmodule Cadet.Assessments do
   end
 
   defp create_blank_question(question, type) do
-
   end
 
   defp create_concrete_question(question, type) do
-     build_question(%{"type" => type})
-     |> put_assoc(:question, question)
-     |> Repo.insert
+    %{"type" => type}
+    |> build_question
+    |> put_assoc(:question, question)
+    |> Repo.insert()
   end
 
   defp prepare_programming_question(question, submission) do
-    answer = get_or_create_answer(
-      question,
-      submission
-    )
+    answer =
+      get_or_create_answer(
+        question,
+        submission
+      )
+
     answer = Repo.preload(answer, :code)
     comments = Workspace.comments_of(answer.code)
+
     %{
       type: :programming,
       answer: answer,
@@ -700,7 +706,7 @@ defmodule Cadet.Assessments do
       # 3. Update code readonly flag
       # If the submission is changed from submitted to attempting, set readonly
       # to false, and vice versa
-      #codes =
+      # codes =
       #  from(
       #    code in Code,
       #    join: answer in Answer,
@@ -708,10 +714,8 @@ defmodule Cadet.Assessments do
       #    where: answer.submission_id == ^submission.id
       #  )
 
-      #is_readonly = if new_status == :attempting, do: false, else: true
-      #Repo.update_all(codes, set: [is_readonly: is_readonly])
+      # is_readonly = if new_status == :attempting, do: false, else: true
+      # Repo.update_all(codes, set: [is_readonly: is_readonly])
     end)
   end
-
-
 end

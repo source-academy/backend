@@ -8,8 +8,8 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_mission(%{
         title: "mission",
         category: :mission,
-        open_at: Timex.now,
-        close_at: Timex.shift(Timex.now, days: 7),
+        open_at: Timex.now(),
+        close_at: Timex.shift(Timex.now(), days: 7),
         is_published: false
       })
 
@@ -22,8 +22,8 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_mission(%{
         title: "sidequest",
         category: :sidequest,
-        open_at: Timex.now,
-        close_at: Timex.shift(Timex.now, days: 7),
+        open_at: Timex.now(),
+        close_at: Timex.shift(Timex.now(), days: 7),
         is_published: false
       })
 
@@ -36,8 +36,8 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_mission(%{
         title: "contest",
         category: :contest,
-        open_at: Timex.now,
-        close_at: Timex.shift(Timex.now, days: 7),
+        open_at: Timex.now(),
+        close_at: Timex.shift(Timex.now(), days: 7),
         is_published: false
       })
 
@@ -50,8 +50,8 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_mission(%{
         title: "path",
         category: :path,
-        open_at: Timex.now,
-        close_at: Timex.shift(Timex.now, days: 7),
+        open_at: Timex.now(),
+        close_at: Timex.shift(Timex.now(), days: 7),
         is_published: false
       })
 
@@ -60,18 +60,24 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "create programming question" do
-    mission = Assessments.create_mission(%{
+    mission =
+      Assessments.create_mission(%{
         title: "mission",
         category: :mission,
-        open_at: Timex.now,
-        close_at: Timex.shift(Timex.now, days: 7),
+        open_at: Timex.now(),
+        close_at: Timex.shift(Timex.now(), days: 7),
         is_published: false
       })
+
     {:ok, question} =
-      Assessments.create_question(%{
-        title: "question",
-        weight: 5,
-      }, :programming, mission.id)
+      Assessments.create_question(
+        %{
+          title: "question",
+          weight: 5
+        },
+        :programming,
+        mission.id
+      )
 
     assert question.title == "question"
     assert question.type == :programming
@@ -79,18 +85,24 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "create multiple choice question" do
-    mission = Assessments.create_mission(%{
+    mission =
+      Assessments.create_mission(%{
         title: "mission",
         category: :mission,
-        open_at: Timex.now,
-        close_at: Timex.shift(Timex.now, days: 7),
+        open_at: Timex.now(),
+        close_at: Timex.shift(Timex.now(), days: 7),
         is_published: false
       })
+
     {:ok, question} =
-      Assessments.create_question(%{
-        title: "question",
-        weight: 5,
-      }, :multiple, mission.id)
+      Assessments.create_question(
+        %{
+          title: "question",
+          weight: 5
+        },
+        :multiple,
+        mission.id
+      )
 
     assert question.title == "question"
     assert question.type == :multiple_choice
@@ -98,13 +110,15 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "publish mission" do
-    mission = Assessments.create_mission(%{
+    mission =
+      Assessments.create_mission(%{
         title: "mission",
         category: :mission,
-        open_at: Timex.now,
-        close_At: Timex.shift(Timex.now, days: 7),
+        open_at: Timex.now(),
+        close_At: Timex.shift(Timex.now(), days: 7),
         is_published: false
       })
+
     {:ok, mission} = Assessments.publish_mission(mission.id)
     assert mission.is_published == true
   end
