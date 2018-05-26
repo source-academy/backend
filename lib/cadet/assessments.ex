@@ -212,19 +212,19 @@ defmodule Cadet.Assessments do
     Repo.get(Mission, id)
   end
 
-  def create_question(params, type, mission_id)
-      when is_binary(mission_id) do
-    mission = Repo.get(Mission, mission_id)
-    create_question(params, type, mission)
+  def create_question(params, type, mission_id) do
+    mission = get_mission(mission_id)
+    create_question_for_mission(params, type, mission)
   end
 
-  def create_question(params, type, mission) do
+  def create_question_for_mission(params, type, mission) do
     Repo.transaction(fn ->
-      mission = Repo.preload(Mission, :questions)
+      mission = Repo.preload(mission, :questions)
       questions = mission.questions
 
       changeset =
-        (params ++ %{"type" => type})
+        params
+        |> Map.merge(%{type: type})
         |> build_question()
         |> put_assoc(:mission, mission)
         |> put_display_order(questions)

@@ -24,7 +24,7 @@ defmodule Cadet.Assessments.Question do
   end
 
   @required_fields ~w(title weight question type library)a
-  @optional_fields ~w(display_order raw_question raw_lbrary)a
+  @optional_fields ~w(display_order raw_question raw_library)a
 
   def changeset(question, params) do
     question
