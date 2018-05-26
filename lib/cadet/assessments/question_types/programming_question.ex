@@ -17,8 +17,8 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
     field(:raw_programmingquestion, :string, virtual: true)
   end
 
-  @required_fields ~w(content solution_template solution_header solution)a
-  @optional_fields ~w(raw_programmingquestion)a
+  @required_fields ~w(content solution_template solution)a
+  @optional_fields ~w(solution_header raw_programmingquestion)a
 
   def changeset(question, params \\ %{}) do
     question
