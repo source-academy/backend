@@ -150,18 +150,6 @@ defmodule Cadet.Assessments do
   #   Repo.delete(test_case)
   # end
 
-  # def update_mcq_choice(id, params) do
-  #   simple_update(MCQChoice, id,
-  #     using: &MCQChoice.changeset/2,
-  #     params: params)
-  # end
-
-  # def update_mcq_question(id, params) do
-  #   simple_update(MCQQuestion, id,
-  #     using: &MCQQuestion.changeset/2,
-  #     params: params)
-  # end
-
   def all_pending_gradings do
     Repo.all(
       from(
@@ -240,15 +228,15 @@ defmodule Cadet.Assessments do
       questions = mission.questions
 
       changeset =
-        params
+        params ++ %{"type" => type}
         |> build_question()
         |> put_assoc(:mission, mission)
         |> put_display_order(questions)
 
-      Repo.insert(changeset)# do
-      #  {:ok, question} -> #create_concrete_question(question, type)
-      #  {:error, changeset} -> Repo.rollback(changeset)
-      #end
+      case Repo.insert(changeset) do
+        {:ok, question} -> question
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
     end)
   end
 
@@ -345,23 +333,23 @@ defmodule Cadet.Assessments do
           {:error, _} -> nil
         end
 
-      # # Need to pass answer only if programming question
-      # extra = if question.type == "programming" do
-      #   prepare_programming_question(
-      #      question.programming_question,
-      #      submission
-      #   )
-      # else
-      #   %{type: :mcq_question}
-      # end
+      # Need to pass answer only if programming question
+      extra = if question.type == "programming" do
+        prepare_programming_question(
+           question,
+           submission
+        )
+      else
+        %{type: :mcq_question}
+      end
 
-      Poison.encode!(%{
+      Poison.encode!(Map.merge(extra, %{
         student: student,
         mission: mission,
         question: question,
         next_question: next_question,
         previous_question: previous_question
-      })
+      }))
     end
   end
 
@@ -593,7 +581,7 @@ defmodule Cadet.Assessments do
 
   # def submit_code(programming_question_id, code, student) do
   #   programming_question =
-  #     Repo.get(ProgrammingQuestion, programming_question_id)
+  #     Repo.get(Question, programming_question_id)
   #     |> Repo.preload(:test_cases)
   #   solution_header = programming_question.solution_header
   #   test_cases = programming_question.test_cases
@@ -666,47 +654,29 @@ defmodule Cadet.Assessments do
     String.downcase(type) <> "-" <> mission.name
   end
 
-  # defp create_concrete_question(question, type) do
-  #   result = case type do
-  #     "programming" -> create_blank_programming_question(question)
-  #     _ -> create_blank_mcq_question(question)
-  #   end
-  #   case result do
-  #     {:ok, _} -> question
-  #     {:error, changeset} -> Repo.rollback(changeset)
-  #   end
-  # end
+  defp create_blank_question(question, type) do
 
-  # defp create_blank_programming_question(question) do
-  #   build_question(%{})
-  #   |> put_assoc(:question, question)
-  #   |> Repo.insert
-  # end
+  end
 
-  # defp create_blank_mcq_question(question) do
-  #   build_question(%{})
-  #   |> put_assoc(:question, question)
-  #   |> Repo.insert
-  # end
+  defp create_concrete_question(question, type) do
+     build_question(%{"type" => ^type})
+     |> put_assoc(:question, question)
+     |> Repo.insert
+  end
 
-  # defp prepare_programming_question(question, submission) do
-  #   answer = get_or_create_answer(
-  #     question,
-  #     submission
-  #   )
-  #   answer = Repo.preload(answer, :code)
-  #   comments = Workspace.comments_of(answer.code)
-  #   %{
-  #     type: :programming,
-  #     answer: answer,
-  #     comments: comments
-  #   }
-  # end
-
-  # defp prepare_mcq_question(mcq_question, submission) do
-  #   mcq_question = Repo.preload(mcq_question, :choices)
-  #   %{ type: :mcq_question }
-  # end
+  defp prepare_programming_question(question, submission) do
+    answer = get_or_create_answer(
+      question,
+      submission
+    )
+    answer = Repo.preload(answer, :code)
+    comments = Workspace.comments_of(answer.code)
+    %{
+      type: :programming,
+      answer: answer,
+      comments: comments
+    }
+  end
 
   def get_student_submission(mission_id, student) do
     Repo.get_by(
@@ -734,16 +704,16 @@ defmodule Cadet.Assessments do
       # 3. Update code readonly flag
       # If the submission is changed from submitted to attempting, set readonly
       # to false, and vice versa
-      codes =
-        from(
-          code in Code,
-          join: answer in Answer,
-          on: answer.code_id == code.id,
-          where: answer.submission_id == ^submission.id
-        )
+      #codes =
+      #  from(
+      #    code in Code,
+      #    join: answer in Answer,
+      #    on: answer.code_id == code.id,
+      #    where: answer.submission_id == ^submission.id
+      #  )
 
-      is_readonly = if new_status == :attempting, do: false, else: true
-      Repo.update_all(codes, set: [is_readonly: is_readonly])
+      #is_readonly = if new_status == :attempting, do: false, else: true
+      #Repo.update_all(codes, set: [is_readonly: is_readonly])
     end)
   end
 
