@@ -33,6 +33,10 @@ Run the server in your local machine
 
     mix cadet.server
 
+## Style Guide
+
+We follow this style guide: https://github.com/christopheradams/elixir_style_guide
+
 ## License
 
 MIT
