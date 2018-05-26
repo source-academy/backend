@@ -26,15 +26,15 @@ defmodule CadetWeb.AuthController do
           render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
 
         {:error, _reason} ->
-          send_resp(conn, 403, "Wrong email and/or password")
+          send_resp(conn, :forbidden, "Wrong email and/or password")
       end
     else
-      send_resp(conn, 400, "Missing parameters")
+      send_resp(conn, :bad_request, "Missing parameters")
     end
   end
 
   def create(conn, _params) do
-    send_resp(conn, 400, "Missing parameters")
+    send_resp(conn, :bad_request, "Missing parameters")
   end
 
   def refresh(conn, %{"refresh_token" => refresh_token}) do
@@ -43,12 +43,12 @@ defmodule CadetWeb.AuthController do
         render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
 
       {:error, _reason} ->
-        send_resp(conn, 401, "Invalid Token")
+        send_resp(conn, :unauthorized, "Invalid Token")
     end
   end
 
   def refresh(conn, _params) do
-    send_resp(conn, 400, "Missing parameter(s)")
+    send_resp(conn, :bad_request, "Missing parameter(s)")
   end
 
   def logout(conn, %{"refresh_token" => refresh_token}) do
@@ -57,15 +57,15 @@ defmodule CadetWeb.AuthController do
         # Currently does nothing, need to integrate with GuardianDb
         Guardian.revoke(refresh_token)
 
-        send_resp(conn, 200, "OK")
+        send_resp(conn, :ok, "OK")
 
       {:error, _} ->
-        send_resp(conn, 401, "Invalid Token")
+        send_resp(conn, :unauthorized, "Invalid Token")
     end
   end
 
   def logout(conn, _params) do
-    send_resp(conn, 400, "Missing parameter(s)")
+    send_resp(conn, :bad_request, "Missing parameter(s)")
   end
 
   swagger_path :create do
