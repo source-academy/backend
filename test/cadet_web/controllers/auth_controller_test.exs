@@ -17,7 +17,7 @@ defmodule CadetWeb.AuthControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth", %{})
 
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
 
     test "blank email", %{conn: conn} do
@@ -26,7 +26,7 @@ defmodule CadetWeb.AuthControllerTest do
           "login" => %{"email" => "", "password" => "password"}
         })
 
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
 
     test "blank password", %{conn: conn} do
@@ -35,7 +35,7 @@ defmodule CadetWeb.AuthControllerTest do
           "login" => %{"email" => "test@test.com", "password" => ""}
         })
 
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
 
     test "email not found", %{conn: conn} do
@@ -91,7 +91,7 @@ defmodule CadetWeb.AuthControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth/refresh", %{})
 
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
 
     test "invalid token", %{conn: conn} do
@@ -116,7 +116,7 @@ defmodule CadetWeb.AuthControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth/logout", %{})
 
-      assert response(conn, 404)
+      assert response(conn, 400)
     end
 
     test "invalid token", %{conn: conn} do
