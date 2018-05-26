@@ -45,7 +45,7 @@ defmodule CadetWeb.Router do
     }
   end
 
-  scope "/v1/swagger" do
+  scope "/swagger" do
     forward("/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json")
   end
 end
