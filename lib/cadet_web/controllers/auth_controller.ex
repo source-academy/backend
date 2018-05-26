@@ -32,13 +32,13 @@ defmodule CadetWeb.AuthController do
       end
     else
       conn
-      |> send_resp(404, "Missing parameters")
+      |> send_resp(400, "Missing parameters")
     end
   end
 
   def create(conn, _params) do
     conn
-    |> send_resp(404, "Missing parameters")
+    |> send_resp(400, "Missing parameters")
   end
 
   def refresh(conn, %{"refresh_token" => refresh_token}) do
@@ -55,7 +55,7 @@ defmodule CadetWeb.AuthController do
 
   def refresh(conn, _params) do
     conn
-    |> send_resp(404, "Missing parameter(s)")
+    |> send_resp(400, "Missing parameter(s)")
   end
 
   def logout(conn, %{"refresh_token" => refresh_token}) do
@@ -75,7 +75,7 @@ defmodule CadetWeb.AuthController do
 
   def logout(conn, _params) do
     conn
-    |> send_resp(404, "Missing parameter(s)")
+    |> send_resp(400, "Missing parameter(s)")
   end
 
   swagger_path :create do
@@ -89,8 +89,8 @@ defmodule CadetWeb.AuthController do
     end
 
     response(200, "OK", Schema.ref(:Tokens))
+    response(400, "Missing parameter(s)")
     response(403, "Wrong login attributes")
-    response(404, "Missing parameter(s)")
   end
 
   swagger_path :refresh do
@@ -109,8 +109,8 @@ defmodule CadetWeb.AuthController do
     end
 
     response(200, "OK", Schema.ref(:Tokens))
+    response(400, "Missing parameter(s)")
     response(401, "Invalid refresh token")
-    response(404, "Missing parameter(s)")
   end
 
   swagger_path :logout do
@@ -123,8 +123,8 @@ defmodule CadetWeb.AuthController do
     end
 
     response(200, "OK")
+    response(400, "Missing parameter(s)")
     response(401, "Invalid token")
-    response(404, "Missing parameter(s)")
   end
 
   def swagger_definitions do
