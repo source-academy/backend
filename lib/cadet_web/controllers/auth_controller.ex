@@ -69,7 +69,11 @@ defmodule CadetWeb.AuthController do
 
   swagger_path :create do
     post("/auth")
-    summary("Obtain access and refresh tokens to authenticate user. When accessing resources, pass the access token in the Authorization HTTP header using the Bearer schema: `Authorization: Bearer <token>`. The access token expires 1 hour after issuance while the refresh token expires 1 year after issuance. When access token expires, the refresh token can be used to obtain a new access token.")
+
+    summary(
+      "Obtain access and refresh tokens to authenticate user. When accessing resources, pass the access token in the Authorization HTTP header using the Bearer schema: `Authorization: Bearer <token>`. The access token expires 1 hour after issuance while the refresh token expires 1 year after issuance. When access token expires, the refresh token can be used to obtain a new access token."
+    )
+
     consumes("application/json")
     produces("application/json")
 
