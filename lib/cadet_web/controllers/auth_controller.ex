@@ -51,11 +51,10 @@ defmodule CadetWeb.AuthController do
     send_resp(conn, :bad_request, "Missing parameter(s)")
   end
 
-  def logout(conn, %{"refresh_token" => refresh_token}) do
-    case Guardian.decode_and_verify(refresh_token) do
+  def logout(conn, %{"access_token" => access_token}) do
+    case Guardian.decode_and_verify(access_token) do
       {:ok, _} ->
-        # Currently does nothing, need to integrate with GuardianDb
-        Guardian.revoke(refresh_token)
+        Guardian.revoke(access_token)
 
         send_resp(conn, :ok, "OK")
 
@@ -92,7 +91,7 @@ defmodule CadetWeb.AuthController do
     parameters do
       refresh_token(
         :body,
-        Schema.ref(:RefreshToken),
+        Schema.ref(:AccessToken),
         "refresh token obtained from /auth",
         required: true
       )
@@ -154,6 +153,14 @@ defmodule CadetWeb.AuthController do
 
           properties do
             refresh_token(:string, "Refresh token", required: true)
+          end
+        end,
+      AuthToken:
+        swagger_schema do
+          title("Access Token")
+
+          properties do
+            access_token(:string, "Access token", required: true)
           end
         end
     }
