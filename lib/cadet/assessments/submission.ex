@@ -6,6 +6,9 @@ defmodule Cadet.Assessments.Submission do
 
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.SubmissionStatus
+  alias Cadet.Accounts.User
+  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Answer
 
   schema "submissions" do
     field(:status, SubmissionStatus, default: :attempting)
@@ -20,8 +23,8 @@ defmodule Cadet.Assessments.Submission do
     timestamps()
   end
 
-  @required_fields ~w(status student)a
-  @optional_fields ~w(override_xp submitted_at grader)a
+  @required_fields ~w(status)a
+  @optional_fields ~w(override_xp submitted_at)a
 
   def changeset(submission, params) do
     params = convert_date(params, "submitted_at")

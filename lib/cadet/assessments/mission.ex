@@ -23,7 +23,7 @@ defmodule Cadet.Assessments.Mission do
     field(:cover_picture, Image.Type)
     has_many(:questions, Question, on_delete: :delete_all)
     field(:order, :string, default: "")
-    # timestamps()
+    timestamps()
   end
 
   @required_fields ~w(category title open_at close_at)a

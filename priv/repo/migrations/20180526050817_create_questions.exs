@@ -15,6 +15,7 @@ defmodule Cadet.Repo.Migrations.CreateQuestions do
       add(:question, :map, null: false)
       add(:raw_question, :string)
       add(:mission_id, references(:missions))
+      timestamps()
     end
   end
 

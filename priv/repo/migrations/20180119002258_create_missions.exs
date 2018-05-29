@@ -15,6 +15,7 @@ defmodule Cadet.Repo.Migrations.CreateMissions do
       add(:open_at, :timestamp, null: false)
       add(:close_at, :timestamp, null: false)
       add(:cover_picture, :string)
+      timestamps()
     end
 
     create(index(:missions, [:order], using: :hash))
