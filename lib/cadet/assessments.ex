@@ -16,14 +16,12 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Repo
 
-  alias Cadet.Assessment.Mission
-  alias Cadet.Assessment.Question
-  alias Cadet.Assessment.Answer
-  
-  alias Cadet.Course.User
+  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Question
+  alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.Submission
+  alias Cadet.Accounts.User
   alias Cadet.Course.Group
-
-  alias Cadet.Accounts
 
   def all_missions, do: Repo.all(Mission)
 
@@ -370,13 +368,12 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def create_answer(question, submission, code) do
-    %Answer{}
+  def create_answer(question, submission) do
+    %{}
     |> Answer.changeset(%{})
     |> put_assoc(:submission, submission)
     |> put_assoc(:question, question)
-    |> put_assoc(:code, code)
-    |> Repo.insert
+    |> Repo.insert()
   end
 
   def delete_question(id) do
@@ -538,7 +535,7 @@ defmodule Cadet.Assessments do
   #     header: solution_header,
   #     test_cases: Enum.map(test_cases, &(%{
   #       id: &1.id,
-  #       code: &1.code,
+  #       code: &1.,
   #       expected: &1.expected_result
   #     }))
   #   })

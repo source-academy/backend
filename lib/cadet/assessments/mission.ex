@@ -12,7 +12,6 @@ defmodule Cadet.Assessments.Mission do
   schema "missions" do
     field :name, :string
     field :is_published, :boolean, default: false
-    field(:order, :string)
     field(:category, Category)
     field(:title, :string)
     field(:summary_short, :string)
@@ -22,7 +21,8 @@ defmodule Cadet.Assessments.Mission do
     field :max_xp, :integer, default: 0
     field :priority, :integer, default: 0
     field(:cover_picture, Image.Type)
-    has_many :questions, Question, on_delete: :delete_all
+    has_many(:questions, Question, on_delete: :delete_all)
+    field(:order, :string, default: "")
     timestamps()
   end
 
