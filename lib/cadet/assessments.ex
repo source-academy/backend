@@ -13,11 +13,8 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Answer
   alias Cadet.Assessments.Submission
-
-  alias Cadet.Course.User
+  alias Cadet.Accounts.User
   alias Cadet.Course.Group
-
-  alias Cadet.Accounts
 
   def all_missions, do: Repo.all(Mission)
 
@@ -77,7 +74,7 @@ defmodule Cadet.Assessments do
 
   def create_submission(mission, student) do
     changeset =
-      %{}
+      %Submission{}
       |> Submission.changeset(%{})
       |> put_assoc(:student, student)
       |> put_assoc(:mission, mission)
@@ -101,11 +98,10 @@ defmodule Cadet.Assessments do
   # end
 
   def change_mission(id, params \\ :empty) do
-    mission = Repo.get(Mission, id)
+    mission = get_mission(id)
 
     mission
     |> Mission.changeset(params)
-    |> change(%{raw_library: Poison.encode!(mission.library)})
   end
 
   def update_mission(id, params) do
@@ -275,8 +271,8 @@ defmodule Cadet.Assessments do
     can_attempt?(id, user) && find_submission(id, student) != nil
   end
 
-  def can_attempt?(mission = %mission{}, user) do
-    if Accounts.staff?(user) do
+  def can_attempt_mission?(mission, user) do
+    if user.role == :staff do
       true
     else
       mission.is_published && opened?(mission)
@@ -284,8 +280,8 @@ defmodule Cadet.Assessments do
   end
 
   def can_attempt?(id, user) do
-    mission = Repo.get(Mission, id)
-    can_attempt?(mission, user)
+    mission = get_mission(id)
+    can_attempt_mission?(mission, user)
   end
 
   def opened?(mission) do
@@ -367,37 +363,18 @@ defmodule Cadet.Assessments do
     answer = get_answer(question, submission)
 
     if answer == nil do
-      student = Repo.get(User, submission.student_id)
-      owner = Accounts.get_user(student.user_id)
-      # Create code
-      {:ok, code} =
-        Workspace.create_code(
-          %{
-            title: "solution",
-            content: question.solution_template
-          },
-          owner
-        )
-
-      {:ok, answer} =
-        create_answer(
-          question,
-          submission,
-          code
-        )
-
+      {:ok, answer} = create_answer(question, submission)
       answer
     else
       answer
     end
   end
 
-  def create_answer(question, submission, code) do
+  def create_answer(question, submission) do
     %{}
     |> Answer.changeset(%{})
     |> put_assoc(:submission, submission)
     |> put_assoc(:question, question)
-    |> put_assoc(:code, code)
     |> Repo.insert()
   end
 
@@ -589,7 +566,7 @@ defmodule Cadet.Assessments do
   #     header: solution_header,
   #     test_cases: Enum.map(test_cases, &(%{
   #       id: &1.id,
-  #       code: &1.code,
+  #       code: &1.,
   #       expected: &1.expected_result
   #     }))
   #   })
@@ -671,13 +648,9 @@ defmodule Cadet.Assessments do
         submission
       )
 
-    answer = Repo.preload(answer, :code)
-    comments = Workspace.comments_of(answer.code)
-
     %{
       type: :programming,
-      answer: answer,
-      comments: comments
+      answer: answer
     }
   end
 

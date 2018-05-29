@@ -22,7 +22,7 @@ defmodule Cadet.Assessments.Question do
     field(:type, ProblemType)
     field(:raw_question, :string, virtual: true)
     belongs_to(:mission, Mission)
-    # timestamps()
+    timestamps()
   end
 
   @required_fields ~w(title weight question type library)a
