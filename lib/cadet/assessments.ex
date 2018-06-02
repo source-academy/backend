@@ -81,14 +81,6 @@ defmodule Cadet.Assessments do
     |> cast_assoc(:answers, required: true)
   end
 
-
-  def change_mission(id, params \\ :empty) do
-    mission = get_mission(id)
-
-    mission
-    |> Mission.changeset(params)
-  end
-
   def update_mission(id, params) do
     simple_update(
       Mission,
@@ -116,8 +108,6 @@ defmodule Cadet.Assessments do
   def get_question(id, opts \\ [preload: true]) do
     Repo.get(Question, id)
   end
-
-
 
   def all_pending_gradings do
     Repo.all(
@@ -151,7 +141,7 @@ defmodule Cadet.Assessments do
         where: s.role == "student",
         left_join: sub in Submission,
         on: sub.student_id == s.id and sub.mission_id == ^mission.id,
-        where: is_nil(sub.student_id) and not s.is_phantom,
+        where: is_nil(sub.student_id)
         select: s
       )
     )
@@ -224,7 +214,6 @@ defmodule Cadet.Assessments do
 
   def attempt_mission(id, student) when is_binary(id) do
     mission = Repo.get(Mission, id)
-
     if mission == nil do
       {:error, :mission_not_found}
     else
@@ -508,12 +497,6 @@ defmodule Cadet.Assessments do
     end)
   end
 
-
-
-
-
-
-
   def prepare_game(student) do
     # Get all non-attempted mission
     missions =
@@ -575,7 +558,6 @@ defmodule Cadet.Assessments do
         question,
         submission
       )
-
     %{
       type: :programming,
       answer: answer
@@ -604,8 +586,6 @@ defmodule Cadet.Assessments do
       submission
       |> change(%{status: new_status, submitted_at: submitted_at})
       |> Repo.update!()
-
-
     end)
   end
 end
