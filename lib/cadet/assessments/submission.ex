@@ -32,19 +32,18 @@ defmodule Cadet.Assessments.Submission do
     submission
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-
-    #  |> validate_role(:student, "student")
-    #  |> validate_role(:grader, "staff")
+    |> validate_role(:student, "student")
+    |> validate_role(:grader, "staff")
   end
 
-  # def validate_role(changeset, user, role) do
-  #  validate_change(changeset, user, fn ^user, user ->
-  #    case user.role == ^role do
-  #      true -> []
-  #      false -> [{^user, "Access Denied"}]
-  #    end
-  #  end)
-  # end
+  def validate_role(changeset, user, role) do
+    validate_change(changeset, user, fn ^user, user ->
+      case user.role == role do
+        true -> []
+        false -> [{user, "Access Denied"}]
+      end
+    end)
+  end
 
   def convert_date(params, field) do
     if params[field] != "" && params[field] != nil do
