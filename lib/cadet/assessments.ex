@@ -49,10 +49,6 @@ defmodule Cadet.Assessments do
     change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
   end
 
-  # def build_test_case(params) do
-  #   %TestCase{}
-  #   |> TestCase.changeset(params)
-  # end
 
   def build_answer(params) do
     changeset = Answer.changeset(%Answer{}, params)
@@ -68,9 +64,6 @@ defmodule Cadet.Assessments do
     Question.changeset(question, params)
   end
 
-  # def change_test_case(test_case, params) do
-  #   TestCase.changeset(test_case, params)
-  # end
 
   def create_submission(mission, student) do
     changeset =
@@ -88,14 +81,6 @@ defmodule Cadet.Assessments do
     |> cast_assoc(:answers, required: true)
   end
 
-  # def create_test_case(params, programming_question_id) do
-  #   programming_question = Repo.get(ProgrammingQuestion,
-  #     programming_question_id)
-  #   changeset = params
-  #     |> build_test_case()
-  #     |> put_assoc(:programming_question, programming_question)
-  #   Repo.insert(changeset)
-  # end
 
   def change_mission(id, params \\ :empty) do
     mission = get_mission(id)
@@ -132,16 +117,7 @@ defmodule Cadet.Assessments do
     Repo.get(Question, id)
   end
 
-  # def update_test_case(id, params) do
-  #   test_case = Repo.get(TestCase, id)
-  #   changeset = TestCase.changeset(test_case, params)
-  #   Repo.update(changeset)
-  # end
 
-  # def delete_test_case(id) do
-  #   test_case = Repo.get(TestCase, id)
-  #   Repo.delete(test_case)
-  # end
 
   def all_pending_gradings do
     Repo.all(
@@ -450,10 +426,6 @@ defmodule Cadet.Assessments do
     prefix <> "_" <> mission.name <> "_q" <> order
   end
 
-  # def delete_mcq_choice(id) do
-  #   mcq_choice = Repo.get!(MCQChoice, id)
-  #   Repo.delete!(mcq_choice)
-  # end
 
   def update_grading(id, params, grader) do
     Repo.transaction(fn ->
@@ -536,55 +508,11 @@ defmodule Cadet.Assessments do
     end)
   end
 
-  # def submit_mcq_choice(id, student) do
-  #   mcq_choice = Repo.get!(MCQChoice, id)
-  #     |> Repo.preload(:mcq_question)
 
-  #   question = Repo.get!(Question, mcq_choice.mcq_question.question_id)
 
-  #   path_submission = %PathSubmission{}
-  #     |> PathSubmission.changeset(%{
-  #         code: "",
-  #         is_correct: mcq_choice.is_correct
-  #      })
-  #     |> put_assoc(:student, student)
-  #     |> put_assoc(:mcq_choice, mcq_choice)
-  #     |> put_assoc(:question, question)
 
-  #   Repo.insert!(path_submission)
 
-  #   mcq_choice
-  # end
 
-  # def submit_code(programming_question_id, code, student) do
-  #   programming_question =
-  #     Repo.get(Question, programming_question_id)
-  #     |> Repo.preload(:test_cases)
-  #   solution_header = programming_question.solution_header
-  #   test_cases = programming_question.test_cases
-  #   body = Poison.encode(%{
-  #     header: solution_header,
-  #     test_cases: Enum.map(test_cases, &(%{
-  #       id: &1.id,
-  #       code: &1.,
-  #       expected: &1.expected_result
-  #     }))
-  #   })
-  #   headers = [
-  #     {"Accept", "application/json"},
-  #     {"Content-Type", "application/json"}
-  #   ]
-  #   response = HTTPotion.post("http://localhost:8080/submit", [
-  #     body: body,
-  #     headers: headers
-  #   ])
-  #   case response do
-  #     %HTTPotion.Response{} ->
-  #       {:ok, Poison.decode(response.body)}
-  #     %HTTPotion.ErrorResponse{} ->
-  #       {:error, response.message}
-  #   end
-  # end
 
   def prepare_game(student) do
     # Get all non-attempted mission
@@ -677,19 +605,7 @@ defmodule Cadet.Assessments do
       |> change(%{status: new_status, submitted_at: submitted_at})
       |> Repo.update!()
 
-      # 3. Update code readonly flag
-      # If the submission is changed from submitted to attempting, set readonly
-      # to false, and vice versa
-      # codes =
-      #  from(
-      #    code in Code,
-      #    join: answer in Answer,
-      #    on: answer.code_id == code.id,
-      #    where: answer.submission_id == ^submission.id
-      #  )
 
-      # is_readonly = if new_status == :attempting, do: false, else: true
-      # Repo.update_all(codes, set: [is_readonly: is_readonly])
     end)
   end
 end
