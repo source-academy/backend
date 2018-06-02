@@ -49,7 +49,6 @@ defmodule Cadet.Assessments do
     change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
   end
 
-
   def build_answer(params) do
     changeset = Answer.changeset(%Answer{}, params)
     change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
@@ -63,7 +62,6 @@ defmodule Cadet.Assessments do
   def change_question(question, params) do
     Question.changeset(question, params)
   end
-
 
   def create_submission(mission, student) do
     changeset =
@@ -141,7 +139,7 @@ defmodule Cadet.Assessments do
         where: s.role == "student",
         left_join: sub in Submission,
         on: sub.student_id == s.id and sub.mission_id == ^mission.id,
-        where: is_nil(sub.student_id)
+        where: is_nil(sub.student_id),
         select: s
       )
     )
@@ -214,6 +212,7 @@ defmodule Cadet.Assessments do
 
   def attempt_mission(id, student) when is_binary(id) do
     mission = Repo.get(Mission, id)
+
     if mission == nil do
       {:error, :mission_not_found}
     else
@@ -415,7 +414,6 @@ defmodule Cadet.Assessments do
     prefix <> "_" <> mission.name <> "_q" <> order
   end
 
-
   def update_grading(id, params, grader) do
     Repo.transaction(fn ->
       submission =
@@ -558,6 +556,7 @@ defmodule Cadet.Assessments do
         question,
         submission
       )
+
     %{
       type: :programming,
       answer: answer
