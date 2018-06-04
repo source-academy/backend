@@ -7,12 +7,13 @@ defmodule Cadet.Assessments.AnswerTest do
     %{
       marks: 2,
       answer: %{},
-      type: :programming,
+      type: :programming
     }
+
     %{
       marks: 1,
       answer: %{},
-      type: :multiple_choice,
+      type: :multiple_choice
     }
   end
 
@@ -20,7 +21,7 @@ defmodule Cadet.Assessments.AnswerTest do
     %{
       marks: -2,
       answer: %{},
-      type: :programming,
+      type: :programming
     }
   end
 end

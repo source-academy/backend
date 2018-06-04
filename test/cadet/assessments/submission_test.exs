@@ -7,7 +7,7 @@ defmodule Cadet.Assessments.SubmissionTest do
     %{
       status: :submitted,
       submitted_at: Timex.now(),
-      override_xp: 100,
+      override_xp: 100
     }
   end
 end

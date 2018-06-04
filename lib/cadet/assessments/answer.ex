@@ -1,8 +1,8 @@
 defmodule Cadet.Assessments.Answer do
   @moduledoc """
-+  Answers model contains domain logic for answers management for
-   programming and multiple choice questions
-+  """
+  Answers model contains domain logic for answers management for
+  programming and multiple choice questions.
+  """
   use Cadet, :model
 
   alias Cadet.Assessments.Mission

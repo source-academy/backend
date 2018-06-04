@@ -1,8 +1,8 @@
 defmodule Cadet.Assessments do
   @moduledoc """
-+  Assessments context contains domain logic for assessments management such as
-+  missions, sidequests, paths, etc.
-+  """
+  Assessments context contains domain logic for assessments management such as
+  missions, sidequests, paths, etc.
+  """
   import Ecto.Changeset
   import Ecto.Query
   import Cadet.ContextHelper
@@ -48,13 +48,16 @@ defmodule Cadet.Assessments do
   end
 
   def build_question(params, type) do
-    case type do
-      :programming -> create_programming_question({"type" => :programming})
-      :multiple_choice -> create_multiple_choice_question({"type" => :multiple_choice})
-    end
-
-    change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
+    Question.changeset(%Question{}, Map.merge(%{:type => type}, params))
   end
+
+  # def build_question(params, type) do
+  #   case type do
+  #     :programming -> create_programming_question(%{:type => :programming})
+  #     :multiple_choice -> create_multiple_choice_question(%{:type => :multiple_choice})
+  #   end
+  #   change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
+  # end
 
   def build_answer(params) do
     changeset = Answer.changeset(%Answer{}, params)
@@ -92,12 +95,13 @@ defmodule Cadet.Assessments do
   end
 
   def update_question(id, params) do
+    question = get_question(id)
     case question.type do
       :multiple_choice ->
         simple_update(
           Question,
           id,
-          using: &MCQQuestion.changeset/2,
+          using: &Question.changeset/2, #&MCQQuestion.changeset/2,
           params: params
         )
 
@@ -105,7 +109,7 @@ defmodule Cadet.Assessments do
         simple_update(
           Question,
           id,
-          using: &ProgrammingQuestion.changeset/2,
+          using: &Question.changeset/2, #&ProgrammingQuestion.changeset/2,
           params: params
         )
     end
