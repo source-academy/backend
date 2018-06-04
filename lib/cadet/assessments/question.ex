@@ -1,5 +1,8 @@
 defmodule Cadet.Assessments.Question do
-  @moduledoc false
+  @moduledoc """
++  Questions model contains domain logic for questions management including
+   programming and multiple choice questions
++  """
   use Cadet, :model
 
   alias Cadet.Assessments.Mission
@@ -32,6 +35,7 @@ defmodule Cadet.Assessments.Question do
     |> validate_required(@required_fields)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
     |> put_json
+    |> put_library
   end
 
   defp put_json(changeset) do
@@ -41,7 +45,23 @@ defmodule Cadet.Assessments.Question do
       json = Poison.decode!(change)
 
       if json != nil do
-        put_change(changeset, :json, json)
+        put_change(changeset, :question, json)
+      else
+        changeset
+      end
+    else
+      changeset
+    end
+  end
+
+  defp put_library(changeset) do
+    change = get_change(changeset, :raw_library)
+
+    if change do
+      json = Poison.decode!(change)
+
+      if json != nil do
+        put_change(changeset, :library, json)
       else
         changeset
       end

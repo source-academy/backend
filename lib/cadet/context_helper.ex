@@ -49,14 +49,4 @@ defmodule Cadet.ContextHelper do
       end
     end)
   end
-
-  def toggle_field(queryable, id, field) do
-    model = Repo.get(queryable, id)
-    new_value = !Map.get(model, field)
-    changes = Keyword.put([], field, new_value)
-
-    model
-    |> change(changes)
-    |> Repo.update()
-  end
 end
