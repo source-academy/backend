@@ -9,14 +9,15 @@ defmodule Cadet.Assessments.QuestionTest do
       title: "question",
       weight: 5,
       question: %{},
-      type: :programming,
+      type: :programming
     }
+
     %{
       display_order: 1,
       title: "mcq",
       weight: 5,
       question: %{},
-      type: :multiple_choice,
+      type: :multiple_choice
     }
   end
 
@@ -26,14 +27,14 @@ defmodule Cadet.Assessments.QuestionTest do
       title: "question",
       weight: -5,
       question: %{},
-      type: :programming,
+      type: :programming
     }
 
     %{
       display_order: 2,
       weight: 5,
       question: %{},
-      type: :multiple_choice,
+      type: :multiple_choice
     }
   end
 end

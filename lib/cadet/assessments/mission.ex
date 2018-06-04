@@ -22,7 +22,6 @@ defmodule Cadet.Assessments.Mission do
     field(:max_xp, :integer, default: 0)
     field(:priority, :integer, default: 0)
     field(:cover_picture, Image.Type)
-    field(:mission_pdf, Upload)
     has_many(:questions, Question, on_delete: :delete_all)
     field(:order, :string, default: "")
     timestamps()
@@ -33,8 +32,7 @@ defmodule Cadet.Assessments.Mission do
   @optional_file_fields ~w(cover_picture mission_pdf)a
 
   def changeset(mission, params) do
-    params =
-      params
+    params = params
       |> convert_date("open_at")
       |> convert_date("close_at")
     mission
@@ -52,5 +50,18 @@ defmodule Cadet.Assessments.Mission do
         []
       end
     end)
+  end
+
+  def convert_date(params, field) do
+    if params[field] != "" && params[field] != nil do
+      timezone = Timezone.get("Asia/Singapore", Timex.now)
+      date = params[field]
+        |> String.to_integer
+        |> Timex.from_unix(:millisecond)
+        |> Timezone.convert(timezone)
+      Map.put(params, field, date)
+    else
+      params
+    end
   end
 end
