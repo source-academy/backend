@@ -9,6 +9,7 @@ defmodule Cadet.Assessments.Mission do
   alias Cadet.Assessments.Category
   alias Cadet.Assessments.Image
   alias Cadet.Assessments.Question
+  alias Cadet.Assessments.Upload
 
   schema "missions" do
     field(:title, :string)
@@ -21,19 +22,35 @@ defmodule Cadet.Assessments.Mission do
     field(:max_xp, :integer, default: 0)
     field(:priority, :integer, default: 0)
     field(:cover_picture, Image.Type)
+    field(:mission_pdf, Upload)
     has_many(:questions, Question, on_delete: :delete_all)
     field(:order, :string, default: "")
     timestamps()
   end
 
-  @required_fields ~w(category title open_at close_at)a
+  @required_fields ~w(category title open_at close_at max_xp)a
   @optional_fields ~w(summary_short summary_long is_published max_xp priority)a
-  @optional_file_fields ~w(cover_url)
+  @optional_file_fields ~w(cover_picture mission_pdf)a
 
   def changeset(mission, params) do
+    params =
+      params
+      |> convert_date("open_at")
+      |> convert_date("close_at")
     mission
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:max_xp, greater_than_or_equal_to: 0)
+    |> validate_open_close_date
+  end
+
+  defp validate_open_close_date(changeset) do
+    validate_change(changeset, :open_at, fn :open_at, open_at ->
+      if open_at >= get_field(changeset, :close_at) do
+        [open_at: "Open date must be < close date"]
+      else
+        []
+      end
+    end)
   end
 end

@@ -1,5 +1,8 @@
 defmodule Cadet.Assessments do
-  @moduledoc false
+  @moduledoc """
++  Assessments context contains domain logic for assessments management such as
++  missions, sidequests, paths, etc.
++  """
   import Ecto.Changeset
   import Ecto.Query
   import Cadet.ContextHelper
@@ -26,7 +29,7 @@ defmodule Cadet.Assessments do
     now = Timex.now()
 
     mission_with_category = Repo.all(from(a in Mission, where: a.category == ^category))
-    Enum.filter(mission_with_category, &(&1.is_published && Timex.before?(&1.open_at, now)))
+    Enum.filter(mission_with_category, &(&1.is_published and Timex.before?(&1.open_at, now)))
   end
 
   def missions_due_soon() do
@@ -35,7 +38,7 @@ defmodule Cadet.Assessments do
 
     all_missions()
     |> Enum.filter(
-      &(&1.is_published && Timex.before?(&1.open_at, now) &&
+      &(&1.is_published and Timex.before?(&1.open_at, now) and
           Timex.before?(&1.close_at, week_after))
     )
   end
@@ -44,8 +47,12 @@ defmodule Cadet.Assessments do
     Mission.changeset(%Mission{}, params)
   end
 
-  def build_question(params) do
-    changeset = Question.changeset(%Question{}, params)
+  def build_question(params, type) do
+    case type do
+      :programming -> create_programming_question({"type" => :programming})
+      :multiple_choice -> create_multiple_choice_question({"type" => :multiple_choice})
+    end
+
     change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
   end
 
@@ -57,10 +64,6 @@ defmodule Cadet.Assessments do
   def create_mission(params) do
     changeset = build_mission(params)
     Repo.insert(changeset)
-  end
-
-  def change_question(question, params) do
-    Question.changeset(question, params)
   end
 
   def create_submission(mission, student) do
@@ -89,12 +92,23 @@ defmodule Cadet.Assessments do
   end
 
   def update_question(id, params) do
-    simple_update(
-      Question,
-      id,
-      using: &Question.changeset/2,
-      params: params
-    )
+    case question.type do
+      :multiple_choice ->
+        simple_update(
+          Question,
+          id,
+          using: &MCQQuestion.changeset/2,
+          params: params
+        )
+
+      :programming ->
+        simple_update(
+          Question,
+          id,
+          using: &ProgrammingQuestion.changeset/2,
+          params: params
+        )
+    end
   end
 
   def publish_mission(id) do
@@ -185,8 +199,7 @@ defmodule Cadet.Assessments do
 
       changeset =
         params
-        |> Map.merge(%{type: type})
-        |> build_question()
+        |> build_question(type)
         |> put_assoc(:mission, mission)
         |> put_display_order(questions)
 
@@ -232,14 +245,14 @@ defmodule Cadet.Assessments do
   end
 
   def can_open?(id, user, student) do
-    can_attempt?(id, user) && find_submission(id, student) != nil
+    can_attempt?(id, user) and find_submission(id, student) != nil
   end
 
   def can_attempt_mission?(mission, user) do
     if user.role == :staff do
       true
     else
-      mission.is_published && opened?(mission)
+      mission.is_published and opened?(mission)
     end
   end
 
@@ -301,15 +314,13 @@ defmodule Cadet.Assessments do
           %{type: :mcq_question}
         end
 
-      Poison.encode!(
-        Map.merge(extra, %{
-          student: student,
-          mission: mission,
-          question: question,
-          next_question: next_question,
-          previous_question: previous_question
-        })
-      )
+      Map.merge(extra, %{
+        student: student,
+        mission: mission,
+        question: question,
+        next_question: next_question,
+        previous_question: previous_question
+      })
     end
   end
 
@@ -511,7 +522,7 @@ defmodule Cadet.Assessments do
     # Filter those can be attempted, min by order, mission first
     missions =
       missions
-      |> Enum.filter(&(&1.type != :path && can_attempt?(&1, student.user)))
+      |> Enum.filter(&(&1.type != :path and can_attempt?(&1, student.user)))
 
     if Enum.empty?(missions) do
       nil
@@ -529,9 +540,9 @@ defmodule Cadet.Assessments do
     cond do
       t1 == t2 -> n1 <= n2
       t1 == :mission -> true
-      t1 == :sidequest && t2 == :mission -> false
-      t1 == :contest && t2 == :mission -> false
-      t1 == :contest && t2 == :sidequest -> false
+      t1 == :sidequest and t2 == :mission -> false
+      t1 == :contest and t2 == :mission -> false
+      t1 == :contest and t2 == :sidequest -> false
     end
   end
 
@@ -540,12 +551,9 @@ defmodule Cadet.Assessments do
     String.downcase(type) <> "-" <> mission.name
   end
 
-  defp create_blank_question(question, type) do
-  end
-
   defp create_concrete_question(question, type) do
-    %{"type" => type}
-    |> build_question
+    %{}
+    |> build_question(type)
     |> put_assoc(:question, question)
     |> Repo.insert()
   end
