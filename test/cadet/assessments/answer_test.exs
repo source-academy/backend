@@ -15,6 +15,13 @@ defmodule Cadet.Assessments.AnswerTest do
       answer: %{},
       type: :multiple_choice
     }
+
+    %{
+      marks: 100,
+      answer: %{},
+      type: :programming,
+      raw_answer: ~s({"answer": "This is a sample json"})
+    }
   end
 
   invalid_changesets Answer do
