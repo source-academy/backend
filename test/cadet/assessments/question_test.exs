@@ -19,6 +19,17 @@ defmodule Cadet.Assessments.QuestionTest do
       question: %{},
       type: :multiple_choice
     }
+
+    %{
+      display_order: 5,
+      title: "sample title",
+      weight: 4,
+      question: %{},
+      type: :programming,
+      raw_library: ~s({"week": 5, "globals": [], "externals": [],
+        "files": []}),
+      raw_question: ~s({"question": "This is a sample json"})
+    }
   end
 
   invalid_changesets Question do

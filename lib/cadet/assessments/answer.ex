@@ -35,7 +35,7 @@ defmodule Cadet.Assessments.Answer do
       json = Poison.decode!(change)
 
       if json != nil do
-        put_change(changeset, :json, json)
+        put_change(changeset, :answer, json)
       else
         changeset
       end
