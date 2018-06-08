@@ -3,6 +3,8 @@ defmodule Cadet.Assessments do
   Assessments context contains domain logic for assessments management such as
   missions, sidequests, paths, etc.
   """
+  use Cadet, :context
+
   import Ecto.Changeset
   import Ecto.Query
   import Cadet.ContextHelper
@@ -12,6 +14,8 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Repo
 
+  alias Cadet.Assessments.QuestionTypes.MCQQuestion
+  alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Answer
@@ -599,4 +603,25 @@ defmodule Cadet.Assessments do
       |> Repo.update!()
     end)
   end
+
+  # To be uncommented when assessments context is merged
+  # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
+  #   %MCQQuestion{}
+  #   |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
+  # end
+
+  # def create_multiple_choice_question(attr = %{}) do
+  #   %MCQQuestion{}
+  #   |> MCQQuestion.changeset(attr)
+  # end
+
+  # def create_programming_question(json_attr) when is_binary(json_attr) do
+  #   %ProgrammingQuestion{}
+  #   |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
+  # end
+
+  # def create_programming_question(attr = %{}) do
+  #   %ProgrammingQuestion{}
+  #   |> ProgrammingQuestion.changeset(attr)
+  # end
 end
