@@ -33,6 +33,11 @@ Run the server in your local machine
 
     mix cadet.server
 
+
+## Style Guide
+
+We follow this style guide: https://github.com/christopheradams/elixir_style_guide
+
 ## API documentation
 
 When the server is running, API documentation can then be accessed through http://localhost:4000/v1/swagger
