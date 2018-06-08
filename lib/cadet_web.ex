@@ -39,7 +39,6 @@ defmodule CadetWeb do
       # use Phoenix.HTML
 
       import CadetWeb.Router.Helpers
-      import CadetWeb.ErrorHelpers
       import CadetWeb.ViewHelpers
       import CadetWeb.Gettext
     end
