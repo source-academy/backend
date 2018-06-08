@@ -34,3 +34,13 @@ config :cadet, :phoenix_swagger,
       router: CadetWeb.Router
     ]
   }
+
+# Configure GuardianDB
+config :guardian, Guardian.DB,
+  repo: Cadet.Repo,
+  # default
+  schema_name: "guardian_tokens",
+  # store all token types if not set
+  token_types: ["access"],
+  # default: 60 minute
+  sweep_interval: 60
