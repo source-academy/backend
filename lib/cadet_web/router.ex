@@ -17,18 +17,17 @@ defmodule CadetWeb.Router do
   end
 
   # Public Pages
-  scope "/", CadetWeb do
+  scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
 
-    resources("/session", SessionController, only: [:new, :create])
-    get("/session/logout", SessionController, :logout)
+    post("/auth", AuthController, :create)
+    post("/auth/refresh", AuthController, :refresh)
+    post("/auth/logout", AuthController, :logout)
   end
 
   # Authenticated Pages
   scope "/", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
-
-    get("/", PageController, :index)
   end
 
   # Other scopes may use custom stacks.
@@ -41,11 +40,19 @@ defmodule CadetWeb.Router do
       info: %{
         version: "1.0",
         title: "cadet"
+      },
+      basePath: "/v1",
+      securityDefinitions: %{
+        JWT: %{
+          type: "apiKey",
+          in: "header",
+          name: "Authorization"
+        }
       }
     }
   end
 
-  scope "/api/swagger" do
+  scope "/swagger" do
     forward("/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json")
   end
 end
