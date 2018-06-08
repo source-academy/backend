@@ -8,23 +8,24 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.QuestionTypes.MCQQuestion
   alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
 
-  def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
-    %MCQQuestion{}
-    |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
-  end
+  # To be uncommented when assessments context is merged
+  # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
+  #   %MCQQuestion{}
+  #   |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
+  # end
 
-  def create_multiple_choice_question(attr = %{}) do
-    %MCQQuestion{}
-    |> MCQQuestion.changeset(attr)
-  end
+  # def create_multiple_choice_question(attr = %{}) do
+  #   %MCQQuestion{}
+  #   |> MCQQuestion.changeset(attr)
+  # end
 
-  def create_programming_question(json_attr) when is_binary(json_attr) do
-    %ProgrammingQuestion{}
-    |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
-  end
+  # def create_programming_question(json_attr) when is_binary(json_attr) do
+  #   %ProgrammingQuestion{}
+  #   |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
+  # end
 
-  def create_programming_question(attr = %{}) do
-    %ProgrammingQuestion{}
-    |> ProgrammingQuestion.changeset(attr)
-  end
+  # def create_programming_question(attr = %{}) do
+  #   %ProgrammingQuestion{}
+  #   |> ProgrammingQuestion.changeset(attr)
+  # end
 end
