@@ -54,6 +54,7 @@ defmodule Cadet.Mixfile do
       {:pbkdf2_elixir, "~> 0.12"},
       {:comeonin, "~> 4.0"},
       {:guardian, "~> 1.0"},
+      {:guardian_db, "~> 1.0"},
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test},
