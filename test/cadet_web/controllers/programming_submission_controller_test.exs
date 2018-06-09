@@ -5,7 +5,6 @@ defmodule CadetWeb.ProgrammingSubmissionControllerTest do
 
   test "swagger" do
     ProgrammingSubmissionController.swagger_definitions()
-    ProgrammingSubmissionController.swagger_path_create(nil)
-    ProgrammingSubmissionController.swagger_path_update(nil)
+    ProgrammingSubmissionController.swagger_path_submit(nil)
   end
 end

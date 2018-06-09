@@ -3,41 +3,21 @@ defmodule CadetWeb.ProgrammingSubmissionController do
 
   use PhoenixSwagger
 
-  swagger_path :create do
+  swagger_path :submit do
     post("/submission/programming")
 
-    summary("Create a new submission of a particular mission.")
+    summary("Create/update a submission of a particular programming question.")
 
     security([%{JWT: []}])
 
     consumes("application/json")
 
     parameters do
-      mission_id(:body, :integer, "mission id", required: true)
-      answer(:body, Schema.ref(:ProgrammingSubmission), "answer", required: true)
+      submission(:body, Schema.ref(:ProgrammingSubmission), "submission", required: true)
     end
 
     response(200, "OK")
-    response(400, "Missing parameter(s)")
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :update do
-    post("/submission/programming/{submissionId}")
-
-    summary("Updates an existing submission")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      submissionId(:path, :integer, "submission id", required: true)
-      answer(:body, Schema.ref(:ProgrammingSubmission), "answer", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Missing parameter(s))")
+    response(400, "Missing parameter(s) or wrong submission type")
     response(401, "Unauthorised")
   end
 
@@ -45,9 +25,9 @@ defmodule CadetWeb.ProgrammingSubmissionController do
     %{
       ProgrammingSubmission:
         swagger_schema do
-          title("Submission for answers to programming questions")
-
           properties do
+            questionId(:integer, "The question id", required: true)
+
             submitted(:boolean, "Whether this is the final submission", default: false)
 
             answer(
