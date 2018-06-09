@@ -1,7 +1,7 @@
-defmodule CadetWeb.ProgrammingSubmissionControllerTest do
+defmodule CadetWeb.Submission.ProgrammingSubmissionControllerTest do
   use CadetWeb.ConnCase
 
-  alias CadetWeb.ProgrammingSubmissionController
+  alias CadetWeb.Submission.ProgrammingSubmissionController
 
   test "swagger" do
     ProgrammingSubmissionController.swagger_definitions()

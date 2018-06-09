@@ -29,9 +29,11 @@ defmodule CadetWeb.Router do
   scope "/", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
-    post("/submission/programming", ProgrammingSubmissionController, :submit)
+    scope "/submission", Submission do
+      post("/submission/programming", ProgrammingSubmissionController, :submit)
+      post("/submission/mcq", MCQSubmissionController, :submit)
+    end
 
-    post("/submission/mcq", MCQSubmissionController, :submit)
   end
 
   # Other scopes may use custom stacks.

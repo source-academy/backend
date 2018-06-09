@@ -1,4 +1,4 @@
-defmodule CadetWeb.MCQSubmissionController do
+defmodule CadetWeb.Submission.MCQSubmissionController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
