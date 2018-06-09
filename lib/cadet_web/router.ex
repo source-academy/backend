@@ -28,6 +28,9 @@ defmodule CadetWeb.Router do
   # Authenticated Pages
   scope "/", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
+
+    post("/submission/programming", ProgrammingSubmissionController, :create)
+    post("/submission/programming/:id", ProgrammingSubmissionController, :update)
   end
 
   # Other scopes may use custom stacks.
