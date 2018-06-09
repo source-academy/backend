@@ -34,12 +34,10 @@ defmodule CadetWeb.Submission.MCQSubmissionController do
         end,
       MCQCorrectness:
         swagger_schema do
-
           properties do
             correct(:boolean, "Whether the answer submitted was correct")
           end
         end
     }
   end
-
 end

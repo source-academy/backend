@@ -34,6 +34,7 @@ defmodule CadetWeb.Router do
       post("/submission/mcq", MCQSubmissionController, :submit)
     end
 
+    get("/missions", MissionsController, :index)
   end
 
   # Other scopes may use custom stacks.
