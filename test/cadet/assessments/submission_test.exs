@@ -6,8 +6,11 @@ defmodule Cadet.Assessments.SubmissionTest do
   valid_changesets Submission do
     %{
       status: :submitted,
-      submitted_at: Timex.now(),
+      submitted_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
       override_xp: 100
     }
+  end
+
+  invalid_changesets Submission do
   end
 end
