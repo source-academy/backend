@@ -8,7 +8,7 @@ defmodule Cadet.Assessments do
   import Ecto.Changeset
   import Ecto.Query
   import Cadet.ContextHelper
-
+  
   alias Timex.Timezone
   alias Timex.Duration
 
@@ -22,6 +22,8 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.Submission
   alias Cadet.Accounts.User
   alias Cadet.Course.Group
+  alias Cadet.Assessments.QuestionTypes.MCQQuestion
+  alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
 
   def all_missions, do: Repo.all(Mission)
 
@@ -55,13 +57,13 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, Map.merge(%{:type => type}, params))
   end
 
-  # def build_question(params, type) do
-  #   case type do
-  #     :programming -> create_programming_question(%{:type => :programming})
-  #     :multiple_choice -> create_multiple_choice_question(%{:type => :multiple_choice})
-  #   end
-  #   change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
-  # end
+  def build_question(params, type) do
+    case type do
+      :programming -> create_programming_question(%{:type => :programming})
+      :multiple_choice -> create_multiple_choice_question(%{:type => :multiple_choice})
+    end
+    change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
+  end
 
   def build_answer(params) do
     changeset = Answer.changeset(%Answer{}, params)
@@ -105,7 +107,7 @@ defmodule Cadet.Assessments do
         simple_update(
           Question,
           id,
-          using: &Question.changeset/2, #&MCQQuestion.changeset/2,
+          using: &MCQQuestion.changeset/2,
           params: params
         )
 
@@ -113,7 +115,7 @@ defmodule Cadet.Assessments do
         simple_update(
           Question,
           id,
-          using: &Question.changeset/2, #&ProgrammingQuestion.changeset/2,
+          using: &ProgrammingQuestion.changeset/2,
           params: params
         )
     end
@@ -604,6 +606,7 @@ defmodule Cadet.Assessments do
     end)
   end
 
+<<<<<<< HEAD
   # To be uncommented when assessments context is merged
   # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
   #   %MCQQuestion{}
@@ -624,4 +627,26 @@ defmodule Cadet.Assessments do
   #   %ProgrammingQuestion{}
   #   |> ProgrammingQuestion.changeset(attr)
   # end
+=======
+  def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
+    %MCQQuestion{}
+    |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
+  end
+
+  def create_multiple_choice_question(attr = %{}) do
+    %MCQQuestion{}
+    |> MCQQuestion.changeset(attr)
+  end
+
+  def create_programming_question(json_attr) when is_binary(json_attr) do
+    %ProgrammingQuestion{}
+    |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
+  end
+
+  def create_programming_question(attr = %{}) do
+    %ProgrammingQuestion{}
+    |> ProgrammingQuestion.changeset(attr)
+  end
+
+>>>>>>> Added question types
 end
