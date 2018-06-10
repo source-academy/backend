@@ -11,6 +11,7 @@ defmodule Cadet do
       use Ecto.Schema
 
       import Ecto.Changeset
+      import Cadet.ModelHelper
     end
   end
 

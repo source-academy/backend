@@ -22,6 +22,7 @@ defmodule Cadet.Assessments.Mission do
     field(:max_xp, :integer, default: 0)
     field(:priority, :integer, default: 0)
     field(:cover_picture, Image.Type)
+    field(:mission_pdf, Upload.Type)
     has_many(:questions, Question, on_delete: :delete_all)
     field(:order, :string, default: "")
     timestamps()
@@ -33,35 +34,23 @@ defmodule Cadet.Assessments.Mission do
 
   def changeset(mission, params) do
     params = params
-      |> convert_date("open_at")
-      |> convert_date("close_at")
+      |> convert_date(:open_at)
+      |> convert_date(:close_at)
     mission
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:max_xp, greater_than_or_equal_to: 0)
+    |> cast_attachments(params, @optional_file_fields)
     |> validate_open_close_date
   end
 
   defp validate_open_close_date(changeset) do
     validate_change(changeset, :open_at, fn :open_at, open_at ->
-      if open_at >= get_field(changeset, :close_at) do
-        [open_at: "Open date must be < close date"]
-      else
+      if Timex.before?(open_at, get_field(changeset, :close_at)) do
         []
+      else
+        [open_at: "Open date must be before close date"]
       end
     end)
-  end
-
-  def convert_date(params, field) do
-    if params[field] != "" && params[field] != nil do
-      timezone = Timezone.get("Asia/Singapore", Timex.now)
-      date = params[field]
-        |> String.to_integer
-        |> Timex.from_unix(:millisecond)
-        |> Timezone.convert(timezone)
-      Map.put(params, field, date)
-    else
-      params
-    end
   end
 end
