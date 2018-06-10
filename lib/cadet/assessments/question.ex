@@ -7,6 +7,7 @@ defmodule Cadet.Assessments.Question do
 
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.ProblemType
+  alias Cadet.Assessments.QuestionTypes
 
   @default_library %{
     week: 3,
@@ -34,39 +35,16 @@ defmodule Cadet.Assessments.Question do
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
-    |> put_json
-    |> put_library
+    |> put_question
   end
 
-  defp put_json(changeset) do
-    change = get_change(changeset, :raw_question)
-
-    if change do
-      json = Poison.decode!(change)
-
-      if json != nil do
-        put_change(changeset, :question, json)
-      else
-        changeset
-      end
-    else
-      changeset
-    end
-  end
-
-  defp put_library(changeset) do
-    change = get_change(changeset, :raw_library)
-
-    if change do
-      json = Poison.decode!(change)
-
-      if json != nil do
-        put_change(changeset, :library, json)
-      else
-        changeset
-      end
-    else
-      changeset
+  defp put_question(changeset) do
+    json = Poison.decode(get_change(changeset, :raw_question))
+    type = get_change(changeset, :type)
+    case type do
+      :programming -> put_change(changeset, :question, &ProgrammingQuestion.changeset(changeset, json))
+      :multiple_choice -> put_change(changeset, :question, &MCQQuestion.changeset(changeset, json))
+>>>>>>> Changes according to question types
     end
   end
 end

@@ -17,4 +17,14 @@ defmodule Cadet.ModelHelper do
       params
     end
   end
+  
+  defp validate_open_close_date(changeset) do
+    validate_change(changeset, :open_at, fn :open_at, open_at ->
+      if Timex.before?(open_at, get_field(changeset, :close_at)) do
+        []
+      else
+        [open_at: "Open date must be before close date"]
+      end
+    end)
+  end
 end
