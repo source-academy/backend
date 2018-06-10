@@ -12,6 +12,15 @@ defmodule Cadet.Factory do
   alias Cadet.Course.Point
   alias Cadet.Course.Group
   alias Cadet.Course.Material
+  alias Cadet.Assessments.QuestionTypes.MCQChoice
+
+  def mcq_choice_factory do
+    %MCQChoice{
+      content: "This is a choice",
+      hint: "This is a hint",
+      is_correct: Enum.random([true, false])
+    }
+  end
 
   def user_factory do
     %User{

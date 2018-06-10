@@ -7,6 +7,7 @@ defmodule Cadet.Assessments.Answer do
 
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.ProblemType
+  alias Cadet.Assessments.AnswerTypes
 
   schema "answers" do
     field(:marks, :float, default: 0.0)
@@ -30,17 +31,15 @@ defmodule Cadet.Assessments.Answer do
   end
 
   defp put_answer(changeset) do
-    change = get_change(changeset, :raw_answer)
-    if change do
-      json = Poison.decode!(change)
+    json = Poison.decode(get_change(changeset, :raw_answer))
+    type = get_change(changeset, :type)
 
-      if json != nil do
-        put_change(changeset, :answer, json)
-      else
-        changeset
-      end
-    else
-      changeset
+    case type do
+      :programming ->
+        put_change(changeset, :answer, ProgrammingAnswer.changeset(changeset, json))
+
+      :multiple_choice ->
+        put_change(changeset, :answer, MCQAnswer.changeset(changeset, json))
     end
   end
 end
