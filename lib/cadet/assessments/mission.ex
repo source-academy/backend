@@ -37,4 +37,13 @@ defmodule Cadet.Assessments.Mission do
     |> validate_number(:max_xp, greater_than_or_equal_to: 0)
   end
   
+  defp validate_open_close_date(changeset) do
+    validate_change(changeset, :open_at, fn :open_at, open_at ->
+      if Timex.before?(open_at, get_field(changeset, :close_at)) do
+        []
+      else
+        [open_at: "Open date must be before close date"]
+      end
+    end)
+  end
 end

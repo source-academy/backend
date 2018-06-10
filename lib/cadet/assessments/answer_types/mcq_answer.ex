@@ -1,7 +1,7 @@
 defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
   @moduledoc """
-  The Assessments.QuestionTypes.MCQQuestion entity represents an MCQ Question.
-  It comprises of content and choices.
+  The Assessments.QuestionTypes.MCQQuestion entity represents an MCQ Answer.
+  It comprises of one of the MCQ choices.
   """
   use Ecto.Schema
 
@@ -10,7 +10,7 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
   alias Cadet.Assessments.QuestionTypes.MCQChoice
 
   embedded_schema do
-    field(:answer_choice, MCQChoice)
+    embeds_one(:answer_choice, MCQChoice)
   end
 
   @required_fields ~w(answer_choice)a
@@ -20,5 +20,4 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
     |> cast(params, @required_fields)
     |> validate_required(@required_fields)
   end
-
 end
