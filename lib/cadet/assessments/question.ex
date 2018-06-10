@@ -41,10 +41,13 @@ defmodule Cadet.Assessments.Question do
   defp put_question(changeset) do
     json = Poison.decode(get_change(changeset, :raw_question))
     type = get_change(changeset, :type)
+
     case type do
-      :programming -> put_change(changeset, :question, &ProgrammingQuestion.changeset(changeset, json))
-      :multiple_choice -> put_change(changeset, :question, &MCQQuestion.changeset(changeset, json))
->>>>>>> Changes according to question types
+      :programming ->
+        put_change(changeset, :question, ProgrammingQuestion.changeset(changeset, json))
+
+      :multiple_choice ->
+        put_change(changeset, :question, MCQQuestion.changeset(changeset, json))
     end
   end
 end

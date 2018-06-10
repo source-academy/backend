@@ -11,7 +11,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
   embedded_schema do
     field(:content, :string)
     field(:hint, :string)
-    field(:is_correct, :boolean, default: falser)
+    field(:is_correct, :boolean, default: false)
   end
 
   @required_fields ~w(content is_correct)a
