@@ -37,6 +37,8 @@ defmodule CadetWeb.Router do
     end
 
     get("/missions", MissionsController, :index)
+    get("/missions/open", MissionsController, :open)
+    get("/missions/:id/questions", MissionsController, :questions)
   end
 
   # Other scopes may use custom stacks.

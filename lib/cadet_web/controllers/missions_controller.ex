@@ -13,6 +13,39 @@ defmodule CadetWeb.MissionsController do
     produces("application/json")
 
     response(200, "OK", Schema.ref(:MissionsList))
+    response(400, "Missing parameter(s)")
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :open do
+    get("/missions/open")
+
+    summary("Get a list of open missions")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    response(200, "OK", Schema.ref(:MissionsList))
+    response(400, "Missing parameter(s)")
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :questions do
+    get("/missions/{missionId}/questions")
+
+    summary("Get questions contained inside a mission. Response is either `mcq` or `programming`")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    parameters do
+      missionId(:path, :integer, "mission id", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:Questions))
+    response(400, "Missing parameter(s) or invalid missionId")
     response(401, "Unauthorised")
   end
 
@@ -27,10 +60,13 @@ defmodule CadetWeb.MissionsController do
       Mission:
         swagger_schema do
           properties do
+            order(:integer, "The order of showing the missions", required: true)
             id(:integer, "The mission id", required: true)
             title(:string, "The title of the mission", required: true)
+            category(:string, "Either mission/sidequest/path/contest", required: true)
             summary_long(:string, "Long summary", required: true)
             summary_short(:string, "Short summary", required: true)
+            open_at(:string, "The opening date", format: "date-time", required: true)
             close_at(:string, "The closing date", format: "date-time", required: true)
 
             max_xp(
@@ -41,13 +77,36 @@ defmodule CadetWeb.MissionsController do
 
             cover_picture(:string, "The URL to the cover picture", required: true)
             mission_pdf(:string, "The URL to the mission pdf")
-
-            question(
-              Schema.new do
-                type(:array)
-                items(Schema.ref(:ProgrammingQuestion))
-              end
-            )
+          end
+        end,
+      Questions:
+        swagger_schema do
+          properties do
+            mcq(Schema.new do
+              type(:array)
+              items(Schema.ref(:MCQQuestion))
+            end)
+            programming(Schema.new do
+              type(:array)
+              items(Schema.ref(:ProgrammingQuestion))
+            end)
+          end
+        end,
+      MCQQuestion:
+        swagger_schema do
+          properties do
+            content(:string, "the question content", required: true)
+            choices(Schema.new do
+              type(:array)
+              items(Schema.ref(:MCQChoice))
+            end)
+          end
+        end,
+      MCQChoice:
+        swagger_schema do
+          properties do
+            content(:string, "the choice content", required: true)
+            hint(:string, "the hint", required: true)
           end
         end,
       ProgrammingQuestion:
@@ -62,7 +121,8 @@ defmodule CadetWeb.MissionsController do
       Library:
         swagger_schema do
           properties do
-            version(:integer)
+            chapter(:integer)
+            sourceChap(:integer)
 
             globals(
               Schema.new do
