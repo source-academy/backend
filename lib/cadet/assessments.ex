@@ -3,18 +3,19 @@ defmodule Cadet.Assessments do
   Assessments context contains domain logic for assessments management such as
   missions, sidequests, paths, etc.
   """
+  use Cadet, :context
 
   import Ecto.Changeset
   import Ecto.Query
   import Cadet.ContextHelper
-
-  use Cadet, :context
 
   alias Timex.Timezone
   alias Timex.Duration
 
   alias Cadet.Repo
 
+  alias Cadet.Assessments.QuestionTypes.MCQQuestion
+  alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Answer
@@ -56,15 +57,14 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, Map.merge(%{:type => type}, params))
   end
 
-  def build_question(params, type) do
-    case type do
-      :programming -> create_programming_question(%{:type => :programming})
-      :multiple_choice -> create_multiple_choice_question(%{:type => :multiple_choice})
-    end
-
-    # change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
-  end
-
+ # def build_question(params, type) do
+ #   case type do
+ #     :programming -> create_programming_question(%{:type => :programming})
+ #     :multiple_choice -> create_multiple_choice_question(%{:type => :multiple_choice})
+ #   end
+ #   change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
+ # end
+  
   def build_answer(params) do
     changeset = Answer.changeset(%Answer{}, params)
     change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
@@ -102,7 +102,6 @@ defmodule Cadet.Assessments do
 
   def update_question(id, params) do
     question = get_question(id)
-
     case question.type do
       :multiple_choice ->
         simple_update(
@@ -607,23 +606,24 @@ defmodule Cadet.Assessments do
     end)
   end
 
-  def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
-    %MCQQuestion{}
-    |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
-  end
+  # To be uncommented when assessments context is merged
+  # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
+  #   %MCQQuestion{}
+  #   |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
+  # end
 
-  def create_multiple_choice_question(attr = %{}) do
-    %MCQQuestion{}
-    |> MCQQuestion.changeset(attr)
-  end
+  # def create_multiple_choice_question(attr = %{}) do
+  #   %MCQQuestion{}
+  #   |> MCQQuestion.changeset(attr)
+  # end
 
-  def create_programming_question(json_attr) when is_binary(json_attr) do
-    %ProgrammingQuestion{}
-    |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
-  end
+  # def create_programming_question(json_attr) when is_binary(json_attr) do
+  #   %ProgrammingQuestion{}
+  #   |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
+  # end
 
-  def create_programming_question(attr = %{}) do
-    %ProgrammingQuestion{}
-    |> ProgrammingQuestion.changeset(attr)
-  end
+  # def create_programming_question(attr = %{}) do
+  #   %ProgrammingQuestion{}
+  #   |> ProgrammingQuestion.changeset(attr)
+  # end
 end

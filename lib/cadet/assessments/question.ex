@@ -17,15 +17,13 @@ defmodule Cadet.Assessments.Question do
   }
 
   schema "questions" do
-    field(:title, :string)
-    field(:display_order, :integer)
-    field(:weight, :integer)
-    field(:library, :map, default: @default_library)
-    field(:raw_library, :string, virtual: true)
-    field(:question, :map)
-    field(:type, ProblemType)
-    field(:raw_question, :string, virtual: true)
-    belongs_to(:mission, Mission)
+    field :title, :string
+    field :display_order, :integer
+    field :weight, :integer
+    field :question, :map
+    field :type, ProblemType
+    field :raw_question, :string, virtual: true
+    belongs_to :mission, Mission
     timestamps()
   end
 
