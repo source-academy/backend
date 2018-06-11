@@ -65,7 +65,7 @@ defmodule Cadet.Mixfile do
       {:timex_ecto, "~> 3.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:ex_json_schema, "~> 0.5"},
-      {:pre_commit, "~> 0.3.4", only: :dev}
+      {:pre_commit, "~> 0.3.4", only: [:dev, :test]}
     ]
   end
 

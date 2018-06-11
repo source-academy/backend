@@ -45,4 +45,4 @@ config :guardian, Guardian.DB,
   # default: 60 minute
   sweep_interval: 60
 
-config :pre_commit, commands: ["test", "credo"]
+config :pre_commit, commands: ["format --check-formatted", "test", "credo"]
