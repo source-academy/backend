@@ -13,7 +13,6 @@ defmodule CadetWeb.MissionsController do
     produces("application/json")
 
     response(200, "OK", Schema.ref(:MissionsList))
-    response(400, "Missing parameter(s)")
     response(401, "Unauthorised")
   end
 
@@ -27,7 +26,6 @@ defmodule CadetWeb.MissionsController do
     produces("application/json")
 
     response(200, "OK", Schema.ref(:MissionsList))
-    response(400, "Missing parameter(s)")
     response(401, "Unauthorised")
   end
 
