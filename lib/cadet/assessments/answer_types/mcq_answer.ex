@@ -15,9 +15,9 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
 
   @required_fields ~w(answer_choice)a
 
-  def changeset(question, params \\ %{}) do
-    question
-    |> cast(params, @required_fields)
+  def changeset(answer, params \\ %{}) do
+    answer
+    |> cast_embed(:answer_choice, with: &MCQChoice.changeset/2, required: true)
     |> validate_required(@required_fields)
   end
 end

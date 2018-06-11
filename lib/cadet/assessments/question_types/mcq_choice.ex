@@ -14,8 +14,8 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
     field(:is_correct, :boolean, default: false)
   end
 
-  @required_fields ~w(content is_correct)a
-  @optional_fields ~w(is_correct)a
+  @required_fields ~w(content)a
+  @optional_fields ~w(hint is_correct)a
 
   def changeset(question, params \\ %{}) do
     question

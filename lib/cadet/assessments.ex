@@ -7,9 +7,9 @@ defmodule Cadet.Assessments do
   import Ecto.Changeset
   import Ecto.Query
   import Cadet.ContextHelper
-  
+
   use Cadet, :context
-  
+
   alias Timex.Timezone
   alias Timex.Duration
 
@@ -61,7 +61,8 @@ defmodule Cadet.Assessments do
       :programming -> create_programming_question(%{:type => :programming})
       :multiple_choice -> create_multiple_choice_question(%{:type => :multiple_choice})
     end
-    change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
+
+    # change(changeset, %{raw_library: Poison.encode!(changeset.data.library)})
   end
 
   def build_answer(params) do
@@ -101,6 +102,7 @@ defmodule Cadet.Assessments do
 
   def update_question(id, params) do
     question = get_question(id)
+
     case question.type do
       :multiple_choice ->
         simple_update(
@@ -624,5 +626,4 @@ defmodule Cadet.Assessments do
     %ProgrammingQuestion{}
     |> ProgrammingQuestion.changeset(attr)
   end
-
 end

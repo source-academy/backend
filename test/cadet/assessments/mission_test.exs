@@ -11,6 +11,7 @@ defmodule Cadet.Assessments.MissionTest do
       close_at: Timex.shift(Timex.now(), days: 7) |> Timex.to_unix() |> Integer.to_string(),
       max_xp: 100
     }
+
     %{
       category: :mission,
       title: "mission",

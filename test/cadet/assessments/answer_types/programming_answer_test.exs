@@ -12,4 +12,3 @@ defmodule Cadet.Assessments.AnswerTypes.ProgrammingAnswerTest do
     %{}
   end
 end
-  
