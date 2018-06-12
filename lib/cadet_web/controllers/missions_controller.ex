@@ -147,7 +147,6 @@ defmodule CadetWeb.MissionsController do
         swagger_schema do
           properties do
             chapter(:integer)
-            sourceChap(:integer)
 
             globals(
               Schema.new do
