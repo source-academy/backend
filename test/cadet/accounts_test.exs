@@ -6,21 +6,21 @@ defmodule Cadet.AccountsTest do
   test "create user" do
     {:ok, user} =
       Accounts.create_user(%{
-        first_name: "happy",
-        last_name: "user",
+        name: "happy user",
+        nusnet_id: "e948329",
         role: :student
       })
 
-    assert user.first_name == "happy"
-    assert user.last_name == "user"
+    assert user.name == "happy user"
+    assert user.nusnet_id == "e948329"
     assert user.role == :student
   end
 
   test "invalid create user" do
     {:error, changeset} =
       Accounts.create_user(%{
-        first_name: "happy",
-        last_name: "user",
+        name: "happy user",
+        nusnet_id: "e483921",
         role: :unknown
       })
 
@@ -28,9 +28,9 @@ defmodule Cadet.AccountsTest do
   end
 
   test "get existing user" do
-    user = insert(:user, first_name: "Teddy")
+    user = insert(:user, name: "Teddy")
     result = Accounts.get_user(user.id)
-    assert result.first_name == "Teddy"
+    assert result.name == "Teddy"
   end
 
   test "get unknown user" do
@@ -91,21 +91,22 @@ defmodule Cadet.AccountsTest do
 
   test "valid registration" do
     attrs = %{
-      first_name: "Test",
-      last_name: "Name",
+      name: "Test Name",
+      nusnet_id: "e948203",
       email: "test@gmail.com",
       password: "somepassword",
       password_confirmation: "somepassword"
     }
 
     assert {:ok, user} = Accounts.register(attrs, :student)
-    assert user.first_name == "Test"
-    assert user.last_name == "Name"
+    assert user.name == "Test Name"
+    assert user.nusnet_id == "e948203"
   end
 
   test "register using invalid email format" do
     attrs = %{
-      first_name: "Test",
+      name: "Test",
+      nusnet_id: "e948293",
       email: "testgmail.com",
       password: "somepassword",
       password_confirmation: "somepassword"
@@ -117,7 +118,8 @@ defmodule Cadet.AccountsTest do
 
   test "register password confirmation does not match" do
     attrs = %{
-      first_name: "Test",
+      name: "Test",
+      nusnet_id: "e839182",
       email: "test@gmail.com",
       password: "somepassword2",
       password_confirmation: "somepassword"

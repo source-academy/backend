@@ -14,18 +14,18 @@ import Cadet.Factory
 if Application.get_env(:cadet, :environment) == :dev do
   seeded_users = [
     %{
-      first_name: "Test",
-      last_name: "Student",
+      name: "TestStudent",
+      nusnet_id: "E012345",
       role: :student
     },
     %{
-      first_name: "Test",
-      last_name: "Staff",
+      name: "TestStaff",
+      nusnet_id: "E123456",
       role: :staff
     },
     %{
-      first_name: "Test",
-      last_name: "Admin",
+      name: "TestAdmin",
+      nusnet_id: "E234567",
       role: :admin
     }
   ]
@@ -34,7 +34,7 @@ if Application.get_env(:cadet, :environment) == :dev do
     user = insert(:user, attr)
 
     insert(:email, %{
-      uid: attr.first_name <> attr.last_name <> "@test.com",
+      uid: attr.name <> "@test.com",
       token: Pbkdf2.hash_pwd_salt("password"),
       user: user
     })

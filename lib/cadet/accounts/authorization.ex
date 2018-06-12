@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.Authorization do
   @moduledoc """
   The User entity represents a user.
-  It stores basic information such as first name, last name, and e-mail.
+  It stores basic information such as name, NUSNET ID, and e-mail.
   Each user is associated to one `role` which determines the access level
   of the user.
   """

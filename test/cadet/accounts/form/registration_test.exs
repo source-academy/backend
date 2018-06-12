@@ -5,7 +5,8 @@ defmodule Cadet.Accounts.Form.RegistrationTest do
 
   valid_changesets Registration do
     %{
-      first_name: "happy",
+      name: "happy",
+      nusnet_id: "e853820",
       email: "some@gmail.com",
       password: "mypassword",
       password_confirmation: "mypassword"

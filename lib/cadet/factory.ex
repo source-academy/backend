@@ -15,7 +15,8 @@ defmodule Cadet.Factory do
 
   def user_factory do
     %User{
-      first_name: "John Smith",
+      name: "John Smith",
+      nusnet_id: "E345678",
       role: :student
     }
   end
