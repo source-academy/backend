@@ -1,18 +1,4 @@
 defmodule Cadet.Assessments.Answer do
-<<<<<<< HEAD
-  @moduledoc false
-  use Cadet, :model
-
-  alias Cadet.Assessments.ProblemType
-
-  schema "answers" do
-    field :marks, :float, default: 0.0
-    field :answer, :map
-    field :type, ProblemType
-    field :raw_answer, :string, virtual: true
-    belongs_to :submission, Submission
-    belongs_to :question, Question
-=======
   @moduledoc """
   Answers model contains domain logic for answers management for
   programming and multiple choice questions.
@@ -30,7 +16,6 @@ defmodule Cadet.Assessments.Answer do
     field(:raw_answer, :string, virtual: true)
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
->>>>>>> d08d50a55138354557a30d45d5423d8531f5c5b1
     timestamps()
   end
 
@@ -48,10 +33,6 @@ defmodule Cadet.Assessments.Answer do
   defp put_answer(changeset) do
     json = Poison.decode(get_change(changeset, :raw_answer))
     type = get_change(changeset, :type)
-<<<<<<< HEAD
-
-=======
->>>>>>> d08d50a55138354557a30d45d5423d8531f5c5b1
     case type do
       :programming ->
         put_change(changeset, :answer, ProgrammingAnswer.changeset(changeset, json))
