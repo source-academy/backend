@@ -29,6 +29,24 @@ defmodule CadetWeb.MissionsController do
     response(401, "Unauthorised")
   end
 
+  swagger_path :show do
+    get("/missions/{missionId}")
+
+    summary("Get information about one particular mission.")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    parameters do
+      missionId(:path, :integer, "mission id", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:Mission))
+    response(400, "Missing parameter(s) or invalid missionId")
+    response(401, "Unauthorised")
+  end
+
   swagger_path :questions do
     get("/missions/{missionId}/questions")
 
@@ -80,24 +98,33 @@ defmodule CadetWeb.MissionsController do
       Questions:
         swagger_schema do
           properties do
-            mcq(Schema.new do
-              type(:array)
-              items(Schema.ref(:MCQQuestion))
-            end)
-            programming(Schema.new do
-              type(:array)
-              items(Schema.ref(:ProgrammingQuestion))
-            end)
+            mcq(
+              Schema.new do
+                type(:array)
+                items(Schema.ref(:MCQQuestion))
+              end
+            )
+
+            programming(
+              Schema.new do
+                type(:array)
+                items(Schema.ref(:ProgrammingQuestion))
+              end
+            )
           end
         end,
       MCQQuestion:
         swagger_schema do
           properties do
+            questionId(:integer, "question id", required: true)
             content(:string, "the question content", required: true)
-            choices(Schema.new do
-              type(:array)
-              items(Schema.ref(:MCQChoice))
-            end)
+
+            choices(
+              Schema.new do
+                type(:array)
+                items(Schema.ref(:MCQChoice))
+              end
+            )
           end
         end,
       MCQChoice:
@@ -110,7 +137,7 @@ defmodule CadetWeb.MissionsController do
       ProgrammingQuestion:
         swagger_schema do
           properties do
-            id(:integer, "The question id", required: true)
+            questionId(:integer, "The question id", required: true)
             library(Schema.ref(:Library), "The library used for this question", required: true)
             content(:string, "The question itself", required: true)
             solution_template(:string)

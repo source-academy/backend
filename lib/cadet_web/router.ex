@@ -36,9 +36,12 @@ defmodule CadetWeb.Router do
       post("/mcq", MCQAnswerController, :submit)
     end
 
-    get("/missions", MissionsController, :index)
+    resources("/missions", MissionsController, only: [:index, :show])
     get("/missions/open", MissionsController, :open)
     get("/missions/:id/questions", MissionsController, :questions)
+
+    get("/grading", GradingController, :index)
+    get("/grading/:submissionid/:questionid", GradingController, :show)
   end
 
   # Other scopes may use custom stacks.

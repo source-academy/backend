@@ -6,7 +6,7 @@ defmodule CadetWeb.Answer.MCQAnswerController do
   swagger_path :show do
     get("/answer/mcq/{questionId}")
 
-    summary("Obtain answer of a particular MCQ")
+    summary("Obtain answer of a particular MCQ previously submitted by current user")
 
     security([%{JWT: []}])
 
@@ -17,14 +17,19 @@ defmodule CadetWeb.Answer.MCQAnswerController do
     end
 
     response(200, "OK", Schema.ref(:MCQAnswer))
-    response(400, "Missing parameter(s) or wrong answer type or non-existent answer for given questionId")
+
+    response(
+      400,
+      "Missing parameter(s) or wrong answer type or non-existent answer for given questionId"
+    )
+
     response(401, "Unauthorised")
   end
 
   swagger_path :submit do
     post("/answer/mcq")
 
-    summary("Create/update answer of a particular MCQ question.")
+    summary("Create/update answer of a particular MCQ question (under the current user).")
 
     security([%{JWT: []}])
 

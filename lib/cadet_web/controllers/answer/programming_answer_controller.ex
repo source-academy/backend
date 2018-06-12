@@ -6,7 +6,9 @@ defmodule CadetWeb.Answer.ProgrammingAnswerController do
   swagger_path :show do
     get("/answer/programming/{questionId}")
 
-    summary("Obtain answer of a particular programming question")
+    summary(
+      "Obtain answer of a particular programming question submitted previously by current user"
+    )
 
     security([%{JWT: []}])
 
@@ -17,15 +19,19 @@ defmodule CadetWeb.Answer.ProgrammingAnswerController do
     end
 
     response(200, "OK", Schema.ref(:ProgrammingAnswer))
-    response(400, "Missing parameter(s) or wrong answer type or non-existent answer for given questionId")
+
+    response(
+      400,
+      "Missing parameter(s) or wrong answer type or non-existent answer for given questionId"
+    )
+
     response(401, "Unauthorised")
   end
-
 
   swagger_path :submit do
     post("/answer/programming")
 
-    summary("Create/update answer of a particular programming question.")
+    summary("Create/update answer of a particular programming question (under the current user).")
 
     security([%{JWT: []}])
 
