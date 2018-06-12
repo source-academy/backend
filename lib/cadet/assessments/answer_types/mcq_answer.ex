@@ -13,11 +13,8 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
     embeds_one(:answer_choice, MCQChoice)
   end
 
-  @required_fields ~w(answer_choice)a
-
   def changeset(answer, params \\ %{}) do
     answer
     |> cast_embed(:answer_choice, with: &MCQChoice.changeset/2, required: true)
-    |> validate_required(@required_fields)
   end
 end

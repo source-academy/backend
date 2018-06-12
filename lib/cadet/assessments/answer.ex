@@ -33,10 +33,6 @@ defmodule Cadet.Assessments.Answer do
   defp put_answer(changeset) do
     json = Poison.decode(get_change(changeset, :raw_answer))
     type = get_change(changeset, :type)
-<<<<<<< HEAD
-
-=======
->>>>>>> 4f7a4cac6db7085fa332ad1b67cbb1de0a6fc501
     case type do
       :programming ->
         put_change(changeset, :answer, ProgrammingAnswer.changeset(changeset, json))
