@@ -22,6 +22,8 @@ erl_crash.dump
 /uploads
 .DS_Store
 
+.DS_Store
+
 # Terraform Files
 .terraform
 *.tfstate
