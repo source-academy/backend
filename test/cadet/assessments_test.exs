@@ -20,9 +20,9 @@ defmodule Cadet.AssessmentsTest do
   test "all open missions" do
     open_mission = insert(:mission, is_published: true, category: :mission)
     closed_mission = insert(:mission, is_published: false, category: :mission)
-    result = Assessments.all_open_missions(:mission)
-    assert open_mission in result
-    refute closed_mission in result
+    result = Enum.map(Assessments.all_open_missions(:mission), fn m -> m.id end)
+    assert open_mission.id in result
+    refute closed_mission.id in result
   end
 
   test "create mission" do
@@ -151,10 +151,10 @@ defmodule Cadet.AssessmentsTest do
     sidequest = insert(:mission, category: :sidequest)
     contest = insert(:mission, category: :contest)
     path = insert(:mission, category: :path)
-    assert mission in Assessments.all_missions(:mission)
-    assert sidequest in Assessments.all_missions(:sidequest)
-    assert contest in Assessments.all_missions(:contest)
-    assert path in Assessments.all_missions(:path)
+    assert mission.id in Enum.map(Assessments.all_missions(:mission), fn m -> m.id end)
+    assert sidequest.id in Enum.map(Assessments.all_missions(:sidequest), fn m -> m.id end)
+    assert contest.id in Enum.map(Assessments.all_missions(:contest), fn m -> m.id end)
+    assert path.id in Enum.map(Assessments.all_missions(:path), fn m -> m.id end)
   end
 
   test "due missions" do
@@ -170,9 +170,9 @@ defmodule Cadet.AssessmentsTest do
         is_published: true
       )
 
-    result = Assessments.missions_due_soon()
-    assert mission_in_timerange in result
-    refute mission_far in result
+    result = Enum.map(Assessments.missions_due_soon(), fn m -> m.id end)
+    assert mission_in_timerange.id in result
+    refute mission_far.id in result
   end
 
   test "update question" do
