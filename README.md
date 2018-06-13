@@ -21,9 +21,13 @@ Install Elixir dependencies
 
     mix deps.get
 
-Initialise Development Database
+Initialise development database
 
     mix ecto.setup
+
+Setup environment variables
+
+    export IVLE_KEY="aB1de9g"
 
 Run the server in your local machine
 
