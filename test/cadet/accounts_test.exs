@@ -105,11 +105,11 @@ defmodule Cadet.AccountsTest do
         user: user
       })
 
-      assert {:ok, user} == Accounts.sign_in("E012345")
+      assert {:ok, user} == Accounts.sign_in("E012345", "t0k3n")
     end
 
     test "NUSNET ID not found" do
-      assert {:error, :not_found} == Accounts.sign_in("A0123456")
+      assert {:error, :bad_request} == Accounts.sign_in("A0123456", "t0k3n")
     end
   end
 end

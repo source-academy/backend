@@ -4,9 +4,10 @@ defmodule Cadet.Accounts do
   """
   use Cadet, :context
 
+  alias Cadet.Accounts.Authorization
+  alias Cadet.Accounts.Ivle
   alias Cadet.Accounts.User
   alias Cadet.Accounts.Query
-  alias Cadet.Accounts.Authorization
   alias Cadet.Accounts.Form.Registration
 
   @doc """
@@ -15,7 +16,7 @@ defmodule Cadet.Accounts do
   def register(attrs = %{}, role) do
     changeset = Registration.changeset(%Registration{}, attrs)
 
-    if changeset.valid?() do
+    if changeset.valid? do
       registration = apply_changes(changeset)
 
       Repo.transaction(fn ->
@@ -97,11 +98,19 @@ defmodule Cadet.Accounts do
   @doc """
   Sign in using given NUSNET_ID
   """
-  def sign_in(nusnet_id) do
+  def sign_in(nusnet_id, token) do
     auth = Repo.one(Query.nusnet_id(nusnet_id))
 
     if auth == nil do
-      {:error, :not_found}
+      {:ok, name} = Ivle.fetch_name(token)
+
+      case register(%{name: name, nusnet_id: nusnet_id}, :student) do
+        {:ok, _} ->
+          sign_in(nusnet_id, token)
+
+        {:error, _} ->
+          {:error, :bad_request}
+      end
     else
       auth = Repo.preload(auth, :user)
       {:ok, auth.user}

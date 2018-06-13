@@ -6,8 +6,9 @@ defmodule CadetWeb.AuthController do
   use PhoenixSwagger
 
   alias Cadet.Accounts
-  alias Cadet.Auth.Guardian
   alias Cadet.Accounts.Form
+  alias Cadet.Accounts.Ivle
+  alias Cadet.Auth.Guardian
 
   @doc """
   Receives a /login request with valid attributes.
@@ -22,38 +23,30 @@ defmodule CadetWeb.AuthController do
 
     if changeset.valid? do
       login = apply_changes(changeset)
-      ivle_key = System.get_env("IVLE_KEY")
-      ivle_url = "https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get"
 
-      case HTTPoison.get("#{ivle_url}?APIKey=#{ivle_key}&Token=#{login.ivle_token}") do
-        {:ok, response} ->
-          if response.status_code == 200 do
-            nusnet_id = String.replace(response.body, ~s("), "")
+      case Ivle.fetch_nusnet_id(login.ivle_token) do
+        {:ok, nusnet_id} ->
+          case Accounts.sign_in(nusnet_id, login.ivle_token) do
+            {:ok, user} ->
+              {:ok, access_token, _} =
+                Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
 
-            case Accounts.sign_in(nusnet_id) do
-              {:ok, user} ->
-                {:ok, access_token, _} =
-                  Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
+              {:ok, refresh_token, _} =
+                Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
 
-                {:ok, refresh_token, _} =
-                  Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
+              render(
+                conn,
+                "token.json",
+                access_token: access_token,
+                refresh_token: refresh_token
+              )
 
-                render(
-                  conn,
-                  "token.json",
-                  access_token: access_token,
-                  refresh_token: refresh_token
-                )
-
-              {:error, _reason} ->
-                send_resp(conn, :forbidden, "Wrong nusnet_id")
-            end
-          else
-            send_resp(conn, :bad_request, response.status_code)
+            {:error, _reason} ->
+              send_resp(conn, :forbidden, "Internal sign-in process failed")
           end
 
-        {:error, reason} ->
-          send_resp(conn, :bad_request, reason)
+        {:error, _reason} ->
+          send_resp(conn, :bad_request, "Request to IVLE failed")
       end
     else
       send_resp(conn, :bad_request, "Missing parameters")
