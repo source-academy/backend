@@ -7,5 +7,9 @@ defmodule Cadet.Repo.Migrations.AddIvleToAccounts do
       remove(:last_name)
       add(:name, :string)
     end
+
+    alter table(:authorizations) do
+      remove(:token)
+    end
   end
 end
