@@ -11,6 +11,4 @@ defmodule Cadet.Assessments.SubmissionTest do
     }
   end
 
-  invalid_changesets Submission do
-  end
 end
