@@ -28,8 +28,8 @@ defmodule Cadet.Accounts do
         {:ok, _} =
           create_authorization(
             %{
-              provider: :email,
-              uid: registration.email,
+              provider: :nusnet_id,
+              uid: registration.nusnet_id,
               token: Pbkdf2.hashpwsalt(registration.password)
             },
             user
@@ -72,14 +72,14 @@ defmodule Cadet.Accounts do
   Associate an e-mail address with an existing `%User{}`
   The user will be able to authenticate using the e-mail
   """
-  def add_email(user = %User{}, email) do
-    token = get_token(:email, email) || get_random_token()
+  def add_nusnet_id(user = %User{}, nusnet_id) do
+    token = get_token(:nusnet_id, nusnet_id) || get_random_token()
 
     changeset =
       %Authorization{}
       |> Authorization.changeset(%{
-        provider: :email,
-        uid: email,
+        provider: :nusnet_id,
+        uid: nusnet_id,
         token: token
       })
       |> put_assoc(:user, user)
@@ -96,10 +96,10 @@ defmodule Cadet.Accounts do
     token = Pbkdf2.hashpwsalt(password)
 
     Repo.transaction(fn ->
-      authorizations = Repo.all(Query.user_emails(user.id))
+      authorizations = Repo.all(Query.user_nusnet_ids(user.id))
 
-      for email <- authorizations do
-        email
+      for nusnet_id <- authorizations do
+        nusnet_id
         |> change(%{token: token})
         |> Repo.update!()
       end
@@ -109,8 +109,8 @@ defmodule Cadet.Accounts do
   @doc """
   Sign in using given e-mail and password combination
   """
-  def sign_in(email, password) do
-    auth = Repo.one(Query.email(email))
+  def sign_in(nusnet_id, password) do
+    auth = Repo.one(Query.nusnet_id(nusnet_id))
 
     cond do
       auth == nil ->

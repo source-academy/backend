@@ -37,27 +37,27 @@ defmodule Cadet.AccountsTest do
     refute Accounts.get_user(10_000)
   end
 
-  test "associate email to user" do
+  test "associate nusnet_id to user" do
     user = insert(:user)
-    {:ok, auth} = Accounts.add_email(user, "teddy@happy.mail")
-    assert auth.provider == :email
+    {:ok, auth} = Accounts.add_nusnet_id(user, "teddy@happy.mail")
+    assert auth.provider == :nusnet_id
     assert auth.uid == "teddy@happy.mail"
     assert auth.user_id == user.id
     assert byte_size(auth.token) > 0
   end
 
-  test "duplicate email one user" do
+  test "duplicate nusnet_id one user" do
     user = insert(:user)
-    {:ok, _} = Accounts.add_email(user, "teddy@happy.mail")
-    {:error, changeset} = Accounts.add_email(user, "teddy@happy.mail")
+    {:ok, _} = Accounts.add_nusnet_id(user, "teddy@happy.mail")
+    {:error, changeset} = Accounts.add_nusnet_id(user, "teddy@happy.mail")
     assert %{uid: ["has already been taken"]} = errors_on(changeset)
   end
 
-  test "duplicate email different user" do
+  test "duplicate nusnet_id different user" do
     user = insert(:user)
-    {:ok, _} = Accounts.add_email(user, "teddy@happy.mail")
+    {:ok, _} = Accounts.add_nusnet_id(user, "teddy@happy.mail")
     user2 = insert(:user)
-    {:error, changeset} = Accounts.add_email(user2, "teddy@happy.mail")
+    {:error, changeset} = Accounts.add_nusnet_id(user2, "teddy@happy.mail")
     assert %{uid: ["has already been taken"]} = errors_on(changeset)
   end
 
@@ -68,8 +68,8 @@ defmodule Cadet.AccountsTest do
 
   test "setting user password with multiple e-mails" do
     user = insert(:user)
-    insert(:email, user: user)
-    insert(:email, user: user)
+    insert(:nusnet_id, user: user)
+    insert(:nusnet_id, user: user)
     assert {:ok, auths} = Accounts.set_password(user, "newpassword")
     assert length(auths) == 2
     assert Enum.all?(auths, &(&1.user_id == user.id))
@@ -79,7 +79,7 @@ defmodule Cadet.AccountsTest do
     user = insert(:user)
 
     attrs = %{
-      provider: :email,
+      provider: :nusnet_id,
       uid: "test@gmail.com",
       token: "hahaha"
     }
@@ -93,7 +93,6 @@ defmodule Cadet.AccountsTest do
     attrs = %{
       name: "Test Name",
       nusnet_id: "e948203",
-      email: "test@gmail.com",
       password: "somepassword",
       password_confirmation: "somepassword"
     }
@@ -103,24 +102,10 @@ defmodule Cadet.AccountsTest do
     assert user.nusnet_id == "e948203"
   end
 
-  test "register using invalid email format" do
-    attrs = %{
-      name: "Test",
-      nusnet_id: "e948293",
-      email: "testgmail.com",
-      password: "somepassword",
-      password_confirmation: "somepassword"
-    }
-
-    assert {:error, changeset} = Accounts.register(attrs, :student)
-    assert %{email: ["has invalid format"]} == errors_on(changeset)
-  end
-
   test "register password confirmation does not match" do
     attrs = %{
       name: "Test",
       nusnet_id: "e839182",
-      email: "test@gmail.com",
       password: "somepassword2",
       password_confirmation: "somepassword"
     }
@@ -133,13 +118,13 @@ defmodule Cadet.AccountsTest do
     test "success" do
       user = insert(:user)
 
-      email =
-        insert(:email, %{
+      nusnet_id =
+        insert(:nusnet_id, %{
           token: Pbkdf2.hash_pwd_salt("somepassword"),
           user: user
         })
 
-      assert {:ok, user} == Accounts.sign_in(email.uid, "somepassword")
+      assert {:ok, user} == Accounts.sign_in(nusnet_id.uid, "somepassword")
     end
 
     test "e-mail not found" do
@@ -149,13 +134,13 @@ defmodule Cadet.AccountsTest do
     test "invalid password" do
       user = insert(:user)
 
-      email =
-        insert(:email, %{
+      nusnet_id =
+        insert(:nusnet_id, %{
           token: Pbkdf2.hash_pwd_salt("somepassword"),
           user: user
         })
 
-      assert {:error, :invalid_password} == Accounts.sign_in(email.uid, "somepassword2")
+      assert {:error, :invalid_password} == Accounts.sign_in(nusnet_id.uid, "somepassword2")
     end
   end
 end

@@ -15,7 +15,7 @@ defmodule CadetWeb.AuthController do
     if changeset.valid? do
       login = apply_changes(changeset)
 
-      case Accounts.sign_in(login.email, login.password) do
+      case Accounts.sign_in(login.nusnet_id, login.password) do
         {:ok, user} ->
           {:ok, access_token, _} =
             Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
@@ -26,7 +26,7 @@ defmodule CadetWeb.AuthController do
           render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
 
         {:error, _reason} ->
-          send_resp(conn, :forbidden, "Wrong email and/or password")
+          send_resp(conn, :forbidden, "Wrong nusnet_id and/or password")
       end
     else
       send_resp(conn, :bad_request, "Missing parameters")

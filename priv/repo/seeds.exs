@@ -33,7 +33,7 @@ if Application.get_env(:cadet, :environment) == :dev do
   Enum.each(seeded_users, fn attr ->
     user = insert(:user, attr)
 
-    insert(:email, %{
+    insert(:nusnet_id, %{
       uid: attr.name <> "@test.com",
       token: Pbkdf2.hash_pwd_salt("password"),
       user: user

@@ -21,10 +21,10 @@ defmodule Cadet.Factory do
     }
   end
 
-  def email_factory do
+  def nusnet_id_factory do
     %Authorization{
-      provider: :email,
-      uid: sequence(:email, &"email-#{&1}@example.com"),
+      provider: :nusnet_id,
+      uid: sequence(:nusnet_id, &"nusnet_id-#{&1}@example.com"),
       token: sequence(:token, &"token-#{&1}"),
       user: build(:user)
     }
