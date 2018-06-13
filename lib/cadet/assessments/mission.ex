@@ -3,9 +3,9 @@ defmodule Cadet.Assessments.Mission do
   The Mission entity stores metadata of a students' assessment
   (mission, sidequest, path, and contest)
   """
-  use Cadet, :model 
+  use Cadet, :model
   use Arc.Ecto.Schema
-  
+
   import Cadet.ModelHelper
 
   alias Cadet.Assessments.Category
@@ -34,9 +34,11 @@ defmodule Cadet.Assessments.Mission do
   @optional_file_fields ~w(cover_picture mission_pdf)a
 
   def changeset(mission, params) do
-    params = params
+    params =
+      params
       |> convert_date(:open_at)
       |> convert_date(:close_at)
+
     mission
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
@@ -44,7 +46,7 @@ defmodule Cadet.Assessments.Mission do
     |> cast_attachments(params, @optional_file_fields)
     |> validate_open_close_date
   end
-  
+
   defp validate_open_close_date(changeset) do
     validate_change(changeset, :open_at, fn :open_at, open_at ->
       if Timex.before?(open_at, get_field(changeset, :close_at)) do

@@ -5,11 +5,16 @@ defmodule Cadet.AssessmentsTest do
   alias Cadet.Accounts
 
   test "all missions" do
-    missions = [insert(:mission), insert(:mission), 
-      insert(:mission), insert(:mission), insert(:mission)]
+    missions = [
+      insert(:mission),
+      insert(:mission),
+      insert(:mission),
+      insert(:mission),
+      insert(:mission)
+    ]
+
     result = Assessments.all_missions()
-    assert Enum.all?(result, fn x -> x.id in Enum.map(missions,
-      fn m -> m.id end) end)
+    assert Enum.all?(result, fn x -> x.id in Enum.map(missions, fn m -> m.id end) end)
   end
 
   test "all open missions" do
@@ -19,7 +24,7 @@ defmodule Cadet.AssessmentsTest do
     assert open_mission in result
     refute closed_mission in result
   end
-  
+
   test "create mission" do
     {:ok, mission} =
       Assessments.create_mission(%{
@@ -74,6 +79,7 @@ defmodule Cadet.AssessmentsTest do
 
   test "create programming question" do
     mission = insert(:mission)
+
     {:ok, question} =
       Assessments.create_question(
         %{
@@ -94,6 +100,7 @@ defmodule Cadet.AssessmentsTest do
 
   test "create multiple choice question" do
     mission = insert(:mission)
+
     {:ok, question} =
       Assessments.create_question(
         %{
@@ -101,7 +108,8 @@ defmodule Cadet.AssessmentsTest do
           weight: 5,
           type: :multiple_choice,
           question: %{},
-          raw_question: "{\"content\":\"asd\",\"choices\":[{\"is_correct\":true,\"content\":\"asd\"}]}"
+          raw_question:
+            "{\"content\":\"asd\",\"choices\":[{\"is_correct\":true,\"content\":\"asd\"}]}"
         },
         mission.id
       )
@@ -151,10 +159,17 @@ defmodule Cadet.AssessmentsTest do
 
   test "due missions" do
     mission_before_now = insert(:mission, close_at: Timex.now(), is_published: true)
-    mission_in_timerange = insert(:mission, 
-      close_at: Timex.shift(Timex.now(), days: 4), is_published: true)
-    mission_far = insert(:mission, close_at: Timex.shift(
-      Timex.now(), weeks: 2), is_published: true)
+
+    mission_in_timerange =
+      insert(:mission, close_at: Timex.shift(Timex.now(), days: 4), is_published: true)
+
+    mission_far =
+      insert(
+        :mission,
+        close_at: Timex.shift(Timex.now(), weeks: 2),
+        is_published: true
+      )
+
     result = Assessments.missions_due_soon()
     assert mission_in_timerange in result
     refute mission_far in result
@@ -175,11 +190,11 @@ defmodule Cadet.AssessmentsTest do
     assert Assessments.get_question(question.id) == nil
   end
 
-  #test "mission and its questions" do
+  # test "mission and its questions" do
   #  mission1 = insert(:mission)
   #  mission2 = insert(:mission)
   #  question1 = insert(:question) 
   #  question2 = insert(:question)
   #  assert mission1 in Assessments.get_mission_and_questions(mission1.id)
-  #end
+  # end
 end

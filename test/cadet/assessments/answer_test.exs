@@ -17,6 +17,12 @@ defmodule Cadet.Assessments.AnswerTest do
     }
 
     %{
+      marks: 1,
+      answer: %{},
+      type: :multiple_choice
+    }
+
+    %{
       marks: 100,
       answer: %{},
       type: :programming,

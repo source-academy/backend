@@ -7,9 +7,9 @@ defmodule Cadet.Assessments do
   import Ecto.Changeset
   import Ecto.Query
   import Cadet.ContextHelper
-  
+
   use Cadet, :context
-  
+
   alias Timex.Timezone
   alias Timex.Duration
 
@@ -72,6 +72,7 @@ defmodule Cadet.Assessments do
 
   def update_question(id, params) do
     question = get_question(id)
+
     simple_update(
       Question,
       id,
@@ -81,7 +82,7 @@ defmodule Cadet.Assessments do
   end
 
   def publish_mission(id) do
-    mission = get_mission(id) 
+    mission = get_mission(id)
     changeset = change(mission, %{is_published: true})
     Repo.update(changeset)
   end
@@ -149,24 +150,23 @@ defmodule Cadet.Assessments do
     end
   end
 
-  #def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
+  # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
   #  %MCQQuestion{}
   #  |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
-  #end
+  # end
 
-  #def create_multiple_choice_question(attr = %{}) do
+  # def create_multiple_choice_question(attr = %{}) do
   #  %MCQQuestion{}
   #  |> MCQQuestion.changeset(attr)
-  #end
+  # end
 
-  #def create_programming_question(json_attr) when is_binary(json_attr) do
+  # def create_programming_question(json_attr) when is_binary(json_attr) do
   #  %ProgrammingQuestion{}
   #  |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
-  #end
+  # end
 
-  #def create_programming_question(attr = %{}) do
+  # def create_programming_question(attr = %{}) do
   #  %ProgrammingQuestion{}
   #  |> ProgrammingQuestion.changeset(attr)
-  #end
-
+  # end
 end
