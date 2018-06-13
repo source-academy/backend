@@ -40,7 +40,6 @@ defmodule Cadet.AccountsTest do
     assert auth.provider == :nusnet_id
     assert auth.uid == "teddy@happy.mail"
     assert auth.user_id == user.id
-    assert byte_size(auth.token) > 0
   end
 
   test "duplicate nusnet_id one user" do

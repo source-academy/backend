@@ -43,7 +43,6 @@ defmodule Cadet.Mixfile do
     [
       {:arc, "~> 0.8.0"},
       {:arc_ecto, "~> 0.7.0"},
-      {:comeonin, "~> 4.0"},
       {:cowboy, "~> 1.0"},
       {:dotenv, "~> 2.0.0"},
       {:ecto_enum, "~> 1.0"},

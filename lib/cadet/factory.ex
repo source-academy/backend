@@ -24,7 +24,6 @@ defmodule Cadet.Factory do
     %Authorization{
       provider: :nusnet_id,
       uid: sequence(:nusnet_id, &"E#{&1}"),
-      token: sequence(:token, &"token-#{&1}"),
       user: build(:user)
     }
   end

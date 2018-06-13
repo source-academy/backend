@@ -32,7 +32,6 @@ if Application.get_env(:cadet, :environment) == :dev do
 
     insert(:nusnet_id, %{
       uid: attr.name <> "@test.com",
-      token: Pbkdf2.hash_pwd_salt("password"),
       user: user
     })
   end)
