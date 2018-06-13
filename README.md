@@ -27,7 +27,7 @@ Initialise development database
 
 Setup environment variables
 
-    export IVLE_KEY="aB1de9g"
+    export IVLE_KEY="1vl3keyy"
 
 Run the server in your local machine
 

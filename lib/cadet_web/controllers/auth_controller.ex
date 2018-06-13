@@ -6,20 +6,19 @@ defmodule CadetWeb.AuthController do
   use PhoenixSwagger
 
   alias Cadet.Accounts
-  alias Cadet.Accounts.Form
+  alias Cadet.Accounts.Form.Login
   alias Cadet.Accounts.Ivle
   alias Cadet.Auth.Guardian
 
   @doc """
-  Receives a /login request with valid attributes.
+  Receives a /login request with valid attributes (`Login form`).
 
-  If the user is already registered in our database, simply return tokens.
-
-  If the user has not been registered before, register the user, then return the
-  tokens.
+  If the user is already registered in our database, simply return `Tokens`. If
+  the user has not been registered before, register the user, then return the
+  `Tokens`.
   """
   def create(conn, %{"login" => attrs}) do
-    changeset = Form.Login.changeset(%Form.Login{}, attrs)
+    changeset = Login.changeset(%Login{}, attrs)
 
     if changeset.valid? do
       login = apply_changes(changeset)
@@ -41,20 +40,23 @@ defmodule CadetWeb.AuthController do
                 refresh_token: refresh_token
               )
 
-            {:error, _reason} ->
-              send_resp(conn, :forbidden, "Internal sign-in process failed")
+            {:error, :bad_request} ->
+              send_resp(conn, :bad_request, "Invalid token")
           end
 
-        {:error, _reason} ->
-          send_resp(conn, :bad_request, "Request to IVLE failed")
+        {:error, reason} ->
+          send_resp(conn, :service_unavailable, "Authentication call to IVLE failed: #{reason}")
       end
     else
-      send_resp(conn, :bad_request, "Missing parameters")
+      send_resp(conn, :bad_request, "Missing parameter")
     end
   end
 
+  @doc """
+  Receives a /login request with invalid attributes.
+  """
   def create(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameters")
+    send_resp(conn, :bad_request, "Missing parameter")
   end
 
   def refresh(conn, %{"refresh_token" => refresh_token}) do
@@ -109,8 +111,8 @@ defmodule CadetWeb.AuthController do
     end
 
     response(200, "OK", Schema.ref(:Tokens))
-    response(400, "Missing parameter(s)")
-    response(403, "Wrong login attributes")
+    response(400, "Missing parameter/Invalid token")
+    response(503, "Authentication call to IVLE failed")
   end
 
   swagger_path :refresh do

@@ -102,11 +102,15 @@ defmodule Cadet.Accounts do
     auth = Repo.one(Query.nusnet_id(nusnet_id))
 
     if auth == nil do
-      {:ok, name} = Ivle.fetch_name(token)
+      case Ivle.fetch_name(token) do
+        {:ok, name} ->
+          case register(%{name: name, nusnet_id: nusnet_id}, :student) do
+            {:ok, _} ->
+              sign_in(nusnet_id, token)
 
-      case register(%{name: name, nusnet_id: nusnet_id}, :student) do
-        {:ok, _} ->
-          sign_in(nusnet_id, token)
+            {:error, _} ->
+              {:error, :bad_request}
+          end
 
         {:error, _} ->
           {:error, :bad_request}
