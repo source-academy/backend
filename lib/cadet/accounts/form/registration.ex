@@ -1,8 +1,8 @@
 defmodule Cadet.Accounts.Form.Registration do
   @moduledoc """
-  The Accounts.Form entity represents an entry from an accounts form.
-  A registration form contains the same information as the User and Authorization
-  entity, including name, NUSNET ID, password, and password confirmation.
+  The Accounts.Form entity represents an entry from a /auth call, where the
+  IVLE authentication token corresponds to a user who has not been registered
+  in our database.
   """
 
   use Ecto.Schema
@@ -12,17 +12,13 @@ defmodule Cadet.Accounts.Form.Registration do
   embedded_schema do
     field(:name, :string)
     field(:nusnet_id, :string)
-    field(:password, :string)
-    field(:password_confirmation, :string)
   end
 
-  @required_fields ~w(name nusnet_id password password_confirmation)a
+  @required_fields ~w(name nusnet_id)a
 
   def changeset(registration, params \\ %{}) do
     registration
     |> cast(params, @required_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:password, min: 8)
-    |> validate_confirmation(:password)
   end
 end

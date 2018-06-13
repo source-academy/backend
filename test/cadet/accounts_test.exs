@@ -58,16 +58,17 @@ defmodule Cadet.AccountsTest do
     assert %{uid: ["has already been taken"]} = errors_on(changeset)
   end
 
-  test "setting user password without e-mail" do
+  test "setting user nusnet_id without e-mail" do
     user = insert(:user)
-    assert {:ok, []} = Accounts.set_password(user, "newpassword")
+    assert {:ok, []} = Accounts.set_nusnet_id(user, "E012345")
   end
 
-  test "setting user password with multiple e-mails" do
+  # TODO: A user may not have multiple NUSNET_IDs?
+  test "setting user nusnet_id with multiple e-mails" do
     user = insert(:user)
     insert(:nusnet_id, user: user)
     insert(:nusnet_id, user: user)
-    assert {:ok, auths} = Accounts.set_password(user, "newpassword")
+    assert {:ok, auths} = Accounts.set_nusnet_id(user, "E012345")
     assert length(auths) == 2
     assert Enum.all?(auths, &(&1.user_id == user.id))
   end
@@ -89,54 +90,27 @@ defmodule Cadet.AccountsTest do
   test "valid registration" do
     attrs = %{
       name: "Test Name",
-      nusnet_id: "E012345",
-      password: "somepassword",
-      password_confirmation: "somepassword"
+      nusnet_id: "E012345"
     }
 
     assert {:ok, user} = Accounts.register(attrs, :student)
     assert user.name == "Test Name"
   end
 
-  test "register password confirmation does not match" do
-    attrs = %{
-      name: "Test",
-      nusnet_id: "e839182",
-      password: "somepassword2",
-      password_confirmation: "somepassword"
-    }
-
-    assert {:error, changeset} = Accounts.register(attrs, :student)
-    assert %{password_confirmation: ["does not match confirmation"]} == errors_on(changeset)
-  end
-
-  describe "sign in using e-mail and password" do
+  describe "sign in using nusnet_id" do
     test "success" do
       user = insert(:user)
 
-      nusnet_id =
-        insert(:nusnet_id, %{
-          token: Pbkdf2.hash_pwd_salt("somepassword"),
-          user: user
-        })
+      insert(:nusnet_id, %{
+        uid: "E012345",
+        user: user
+      })
 
-      assert {:ok, user} == Accounts.sign_in(nusnet_id.uid, "somepassword")
+      assert {:ok, user} == Accounts.sign_in("E012345")
     end
 
-    test "e-mail not found" do
-      assert {:error, :not_found} == Accounts.sign_in("unknown@mail.com", "somepassword")
-    end
-
-    test "invalid password" do
-      user = insert(:user)
-
-      nusnet_id =
-        insert(:nusnet_id, %{
-          token: Pbkdf2.hash_pwd_salt("somepassword"),
-          user: user
-        })
-
-      assert {:error, :invalid_password} == Accounts.sign_in(nusnet_id.uid, "somepassword2")
+    test "NUSNET ID not found" do
+      assert {:error, :not_found} == Accounts.sign_in("A0123456")
     end
   end
 end

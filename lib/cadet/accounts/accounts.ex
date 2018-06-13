@@ -12,8 +12,7 @@ defmodule Cadet.Accounts do
   alias Cadet.Accounts.Form.Registration
 
   @doc """
-  Register new User entity using E-mail and Password
-  authentication.
+  Register new User entity using Cadet.Accounts.Form.Registration
   """
   def register(attrs = %{}, role) do
     changeset = Registration.changeset(%Registration{}, attrs)
@@ -30,7 +29,7 @@ defmodule Cadet.Accounts do
             %{
               provider: :nusnet_id,
               uid: registration.nusnet_id,
-              token: Pbkdf2.hashpwsalt(registration.password)
+              token: Pbkdf2.hashpwsalt(registration.nusnet_id)
             },
             user
           )
@@ -69,8 +68,7 @@ defmodule Cadet.Accounts do
   end
 
   @doc """
-  Associate an e-mail address with an existing `%User{}`
-  The user will be able to authenticate using the e-mail
+  Associate NUSTNET_ID with an existing `%User{}`
   """
   def add_nusnet_id(user = %User{}, nusnet_id) do
     token = get_token(:nusnet_id, nusnet_id) || get_random_token()
@@ -88,12 +86,10 @@ defmodule Cadet.Accounts do
   end
 
   @doc """
-  Associate a password to an existing `%User{}`
-  The user will be able to authenticate using any of the e-mail
-  and the password.
+  Associate a NUSNET_ID to an existing `%User{}`
   """
-  def set_password(user = %User{}, password) do
-    token = Pbkdf2.hashpwsalt(password)
+  def set_nusnet_id(user = %User{}, nusnet_id) do
+    token = Pbkdf2.hashpwsalt(nusnet_id)
 
     Repo.transaction(fn ->
       authorizations = Repo.all(Query.user_nusnet_ids(user.id))
@@ -107,21 +103,16 @@ defmodule Cadet.Accounts do
   end
 
   @doc """
-  Sign in using given e-mail and password combination
+  Sign in using given NUSNET_ID
   """
-  def sign_in(nusnet_id, password) do
+  def sign_in(nusnet_id) do
     auth = Repo.one(Query.nusnet_id(nusnet_id))
 
-    cond do
-      auth == nil ->
-        {:error, :not_found}
-
-      not Pbkdf2.checkpw(password, auth.token) ->
-        {:error, :invalid_password}
-
-      true ->
-        auth = Repo.preload(auth, :user)
-        {:ok, auth.user}
+    if auth == nil do
+      {:error, :not_found}
+    else
+      auth = Repo.preload(auth, :user)
+      {:ok, auth.user}
     end
   end
 
