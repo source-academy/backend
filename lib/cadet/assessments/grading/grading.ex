@@ -10,6 +10,8 @@ defmodule Cadet.Assessments.Grading do
     field(:weight, :integer)
     field(:marks, :integer)
     field(:comment, :string)
+
+    timestamps()
   end
 
   @required_fields ~w(weight marks)a
