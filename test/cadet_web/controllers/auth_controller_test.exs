@@ -20,70 +20,13 @@ defmodule CadetWeb.AuthControllerTest do
       assert response(conn, 400)
     end
 
-    test "blank email", %{conn: conn} do
+    test "blank token", %{conn: conn} do
       conn =
         post(conn, "/v1/auth", %{
-          "login" => %{"email" => "", "password" => "password"}
+          "login" => %{"ivle_token" => ""}
         })
 
       assert response(conn, 400)
-    end
-
-    test "blank password", %{conn: conn} do
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{"email" => "test@test.com", "password" => ""}
-        })
-
-      assert response(conn, 400)
-    end
-
-    test "email not found", %{conn: conn} do
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{"email" => "unknown@test.com", "password" => "password"}
-        })
-
-      assert response(conn, 403)
-    end
-
-    test "invalid password", %{conn: conn} do
-      test_password = "password"
-      user = insert(:user)
-
-      email =
-        insert(:email, %{
-          token: Pbkdf2.hash_pwd_salt(test_password),
-          user: user
-        })
-
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{"email" => email.uid, "password" => "password2"}
-        })
-
-      assert response(conn, 403)
-    end
-
-    test "valid email and password", %{conn: conn} do
-      test_password = "password"
-      user = insert(:user)
-
-      email =
-        insert(:email, %{
-          token: Pbkdf2.hash_pwd_salt(test_password),
-          user: user
-        })
-
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{
-            "email" => email.uid,
-            "password" => test_password
-          }
-        })
-
-      assert json_response(conn, 200)
     end
   end
 
