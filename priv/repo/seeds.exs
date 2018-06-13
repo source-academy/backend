@@ -30,9 +30,6 @@ if Application.get_env(:cadet, :environment) == :dev do
   Enum.each(seeded_users, fn attr ->
     user = insert(:user, attr)
 
-    insert(:nusnet_id, %{
-      uid: attr.name <> "@test.com",
-      user: user
-    })
+    insert(:nusnet_id, %{user: user})
   end)
 end

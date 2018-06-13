@@ -22,19 +22,38 @@ defmodule CadetWeb.AuthController do
 
     if changeset.valid? do
       login = apply_changes(changeset)
+      ivle_key = System.get_env("IVLE_KEY")
+      ivle_url = "https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get"
 
-      case Accounts.sign_in(login.nusnet_id) do
-        {:ok, user} ->
-          {:ok, access_token, _} =
-            Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
+      case HTTPoison.get("#{ivle_url}?APIKey=#{ivle_key}&Token=#{login.ivle_token}") do
+        {:ok, response} ->
+          if response.status_code == 200 do
+            nusnet_id = String.replace(response.body, ~s("), "")
 
-          {:ok, refresh_token, _} =
-            Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
+            case Accounts.sign_in(nusnet_id) do
+              {:ok, user} ->
+                {:ok, access_token, _} =
+                  Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
 
-          render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
+                {:ok, refresh_token, _} =
+                  Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
 
-        {:error, _reason} ->
-          send_resp(conn, :forbidden, "Wrong nusnet_id")
+                render(
+                  conn,
+                  "token.json",
+                  access_token: access_token,
+                  refresh_token: refresh_token
+                )
+
+              {:error, _reason} ->
+                send_resp(conn, :forbidden, "Wrong nusnet_id")
+            end
+          else
+            send_resp(conn, :bad_request, response.status_code)
+          end
+
+        {:error, reason} ->
+          send_resp(conn, :bad_request, reason)
       end
     else
       send_resp(conn, :bad_request, "Missing parameters")
