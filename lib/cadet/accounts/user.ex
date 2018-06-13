@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.User do
   @moduledoc """
   The User entity represents a user.
-  It stores basic information such as name, NUSNET ID, and e-mail.
+  It stores basic information such as name and role
   Each user is associated to one `role` which determines the access level
   of the user.
   """
@@ -11,13 +11,12 @@ defmodule Cadet.Accounts.User do
 
   schema "users" do
     field(:name, :string)
-    field(:nusnet_id, :string)
     field(:role, Role)
 
     timestamps()
   end
 
-  @required_fields ~w(name nusnet_id role)a
+  @required_fields ~w(name role)a
 
   def changeset(user, params \\ %{}) do
     user

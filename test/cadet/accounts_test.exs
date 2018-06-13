@@ -7,12 +7,10 @@ defmodule Cadet.AccountsTest do
     {:ok, user} =
       Accounts.create_user(%{
         name: "happy user",
-        nusnet_id: "e948329",
         role: :student
       })
 
     assert user.name == "happy user"
-    assert user.nusnet_id == "e948329"
     assert user.role == :student
   end
 
@@ -20,7 +18,6 @@ defmodule Cadet.AccountsTest do
     {:error, changeset} =
       Accounts.create_user(%{
         name: "happy user",
-        nusnet_id: "e483921",
         role: :unknown
       })
 
@@ -92,14 +89,13 @@ defmodule Cadet.AccountsTest do
   test "valid registration" do
     attrs = %{
       name: "Test Name",
-      nusnet_id: "e948203",
+      nusnet_id: "E012345",
       password: "somepassword",
       password_confirmation: "somepassword"
     }
 
     assert {:ok, user} = Accounts.register(attrs, :student)
     assert user.name == "Test Name"
-    assert user.nusnet_id == "e948203"
   end
 
   test "register password confirmation does not match" do

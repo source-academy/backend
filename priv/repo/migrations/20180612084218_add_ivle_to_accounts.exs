@@ -6,7 +6,6 @@ defmodule Cadet.Repo.Migrations.AddIvleToAccounts do
       remove(:first_name)
       remove(:last_name)
       add(:name, :string)
-      add(:nusnet_id, :string)
     end
   end
 end

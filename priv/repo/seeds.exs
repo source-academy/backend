@@ -15,17 +15,14 @@ if Application.get_env(:cadet, :environment) == :dev do
   seeded_users = [
     %{
       name: "TestStudent",
-      nusnet_id: "E012345",
       role: :student
     },
     %{
       name: "TestStaff",
-      nusnet_id: "E123456",
       role: :staff
     },
     %{
       name: "TestAdmin",
-      nusnet_id: "E234567",
       role: :admin
     }
   ]
