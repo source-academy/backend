@@ -26,27 +26,4 @@ defmodule Cadet.ContextHelper do
       change(changeset, %{display_order: last.display_order + 1})
     end
   end
-
-  def update_display_order(queryable, id, offset) do
-    model = Repo.get(queryable, id)
-
-    Repo.transaction(fn ->
-      next_display_order = model.display_order + offset
-      next_model = Repo.one(from(u in queryable, where: u.display_order == ^next_display_order))
-
-      if next_model != nil do
-        Repo.update!(
-          change(model, %{
-            display_order: model.display_order + offset
-          })
-        )
-
-        Repo.update!(
-          change(next_model, %{
-            display_order: model.display_order
-          })
-        )
-      end
-    end)
-  end
 end

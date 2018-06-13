@@ -12,6 +12,8 @@ defmodule Cadet.Factory do
   alias Cadet.Course.Point
   alias Cadet.Course.Group
   alias Cadet.Course.Material
+  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Question
 
   def user_factory do
     %User{
@@ -76,6 +78,25 @@ defmodule Cadet.Factory do
       content_type: "text/plain",
       filename: sequence(:upload, &"upload#{&1}.txt"),
       path: "test/fixtures/upload.txt"
+    }
+  end
+
+  def mission_factory do
+    %Mission{
+      title: "mission",
+      category: Enum.random([:mission, :sidequest, :contest, :path]),
+      open_at: Timex.now(),
+      close_at: Timex.shift(Timex.now(), days: Enum.random(1..30))
+    }
+  end
+
+  def question_factory do
+    %Question{
+      title: "question",
+      weight: Enum.random(1..10),
+      question: %{},
+      type: Enum.random([:programming, :multiple_choice]),
+      mission: build(:mission)
     }
   end
 end

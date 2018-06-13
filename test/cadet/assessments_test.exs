@@ -4,6 +4,22 @@ defmodule Cadet.AssessmentsTest do
   alias Cadet.Assessments
   alias Cadet.Accounts
 
+  test "all missions" do
+    missions = [insert(:mission), insert(:mission), 
+      insert(:mission), insert(:mission), insert(:mission)]
+    result = Assessments.all_missions()
+    assert Enum.all?(result, fn x -> x.id in Enum.map(missions,
+      fn m -> m.id end) end)
+  end
+
+  test "all open missions" do
+    open_mission = insert(:mission, is_published: true, category: :mission)
+    closed_mission = insert(:mission, is_published: false, category: :mission)
+    result = Assessments.all_open_missions(:mission)
+    assert open_mission in result
+    refute closed_mission in result
+  end
+  
   test "create mission" do
     {:ok, mission} =
       Assessments.create_mission(%{
@@ -57,53 +73,42 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "create programming question" do
-    {:ok, mission} =
-      Assessments.create_mission(%{
-        title: "mission",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
+    mission = insert(:mission)
     {:ok, question} =
       Assessments.create_question(
         %{
           title: "question",
           weight: 5,
-          question: %{}
+          type: :programming,
+          question: %{},
+          raw_question: "{\"content\": \"asd\", \"solution_template\": \"template\",
+            \"solution\": \"soln\", \"library\": {\"version\": 1}}"
         },
-        :programming,
         mission.id
       )
 
     assert question.title == "question"
-    assert question.type == :programming
     assert question.weight == 5
+    assert question.type == :programming
   end
 
   test "create multiple choice question" do
-    {:ok, mission} =
-      Assessments.create_mission(%{
-        title: "mission",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
+    mission = insert(:mission)
     {:ok, question} =
       Assessments.create_question(
         %{
           title: "question",
           weight: 5,
-          question: %{}
+          type: :multiple_choice,
+          question: %{},
+          raw_question: "{\"content\":\"asd\",\"choices\":[{\"is_correct\":true,\"content\":\"asd\"}]}"
         },
-        :multiple_choice,
         mission.id
       )
 
     assert question.title == "question"
-    assert question.type == :multiple_choice
     assert question.weight == 5
+    assert question.type == :multiple_choice
   end
 
   test "publish mission" do
@@ -117,23 +122,6 @@ defmodule Cadet.AssessmentsTest do
 
     {:ok, mission} = Assessments.publish_mission(mission.id)
     assert mission.is_published == true
-  end
-
-  test "create submission" do
-    {:ok, mission} =
-      Assessments.create_mission(%{
-        title: "mission",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
-    {:ok, student} =
-      Accounts.create_user(%{first_name: "first", last_name: "last", role: :student})
-
-    {:ok, submission} = Assessments.create_submission(mission, student)
-    assert submission.status == :attempting
-    assert submission.student == student
   end
 
   test "update mission" do
@@ -150,102 +138,48 @@ defmodule Cadet.AssessmentsTest do
     assert mission.title == "changed_mission"
   end
 
-  test "all sidequests" do
-    category =
-      List.first(
-        Enum.uniq(Enum.map(Assessments.all_missions(:sidequest), fn m -> m.category end))
-      )
-
-    assert category == nil or category == :sidequest
-  end
-
-  test "all open missions" do
-    assert Enum.empty?(
-             Enum.filter(
-               Assessments.all_open_missions(:mission),
-               &(!&1.is_published || Timex.after?(&1.open_at, Timex.now()))
-             )
-           )
+  test "all missions with category" do
+    mission = insert(:mission, category: :mission)
+    sidequest = insert(:mission, category: :sidequest)
+    contest = insert(:mission, category: :contest)
+    path = insert(:mission, category: :path)
+    assert mission in Assessments.all_missions(:mission)
+    assert sidequest in Assessments.all_missions(:sidequest)
+    assert contest in Assessments.all_missions(:contest)
+    assert path in Assessments.all_missions(:path)
   end
 
   test "due missions" do
-    assert Enum.empty?(
-             Enum.filter(
-               Assessments.missions_due_soon(),
-               &(!&1.is_published || Timex.after?(&1.open_at, Timex.now()) ||
-                   Timex.after?(&1.close_at, Timex.add(Timex.now(), Duration.from_weeks(1))))
-             )
-           )
+    mission_before_now = insert(:mission, close_at: Timex.now(), is_published: true)
+    mission_in_timerange = insert(:mission, 
+      close_at: Timex.shift(Timex.now(), days: 4), is_published: true)
+    mission_far = insert(:mission, close_at: Timex.shift(
+      Timex.now(), weeks: 2), is_published: true)
+    result = Assessments.missions_due_soon()
+    assert mission_in_timerange in result
+    refute mission_far in result
   end
 
   test "update question" do
-    {:ok, mission} =
-      Assessments.create_mission(%{
-        title: "mission",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
-    {:ok, question} =
-      Assessments.create_question(
-        %{
-          title: "question",
-          weight: 5,
-          question: %{}
-        },
-        :multiple_choice,
-        mission.id
-      )
-
+    mission = insert(:mission)
+    question = insert(:question)
     Assessments.update_question(question.id, %{weight: 10})
     question = Assessments.get_question(question.id)
     assert question.weight == 10
   end
 
-  test "pending gradings" do
-    status =
-      List.first(Enum.uniq(Enum.map(Assessments.all_pending_gradings(), fn g -> g.status end)))
-
-    assert status == nil or status == :submitted
-  end
-
-  test "cannot open mission which hasn't been published" do
-    {:ok, mission} =
-      Assessments.create_mission(%{
-        title: "mission",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
-    {:ok, student} =
-      Accounts.create_user(%{first_name: "first", last_name: "last", role: :student})
-
-    assert Assessments.can_open?(mission.id, student, student) == false
-  end
-
   test "delete question" do
-    {:ok, mission} =
-      Assessments.create_mission(%{
-        title: "mission",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
-    {:ok, question} =
-      Assessments.create_question(
-        %{
-          title: "question",
-          weight: 5,
-          question: %{}
-        },
-        :multiple_choice,
-        mission.id
-      )
-
+    mission = insert(:mission)
+    question = insert(:question)
     Assessments.delete_question(question.id)
     assert Assessments.get_question(question.id) == nil
   end
+
+  #test "mission and its questions" do
+  #  mission1 = insert(:mission)
+  #  mission2 = insert(:mission)
+  #  question1 = insert(:question) 
+  #  question2 = insert(:question)
+  #  assert mission1 in Assessments.get_mission_and_questions(mission1.id)
+  #end
 end

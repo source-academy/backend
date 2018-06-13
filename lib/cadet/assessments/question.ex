@@ -7,21 +7,13 @@ defmodule Cadet.Assessments.Question do
 
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.ProblemType
-  alias Cadet.Assessments.QuestionTypes
-
-  @default_library %{
-    week: 3,
-    globals: [],
-    externals: [],
-    files: []
-  }
+  alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
+  alias Cadet.Assessments.QuestionTypes.MCQQuestion
 
   schema "questions" do
     field(:title, :string)
     field(:display_order, :integer)
     field(:weight, :integer)
-    field(:library, :map, default: @default_library)
-    field(:raw_library, :string, virtual: true)
     field(:question, :map)
     field(:type, ProblemType)
     field(:raw_question, :string, virtual: true)
@@ -29,8 +21,8 @@ defmodule Cadet.Assessments.Question do
     timestamps()
   end
 
-  @required_fields ~w(title weight question type library)a
-  @optional_fields ~w(display_order raw_question raw_library)a
+  @required_fields ~w(title weight question type)a
+  @optional_fields ~w(display_order raw_question)a
 
   def changeset(question, params) do
     question
@@ -41,11 +33,13 @@ defmodule Cadet.Assessments.Question do
   end
 
   defp put_question(changeset) do
-    json = Poison.decode(get_change(changeset, :raw_question))
+    {:ok, json} = Poison.decode(get_change(changeset, :raw_question) || "{}")
     type = get_change(changeset, :type)
     case type do
-      :programming -> put_change(changeset, :question, &ProgrammingQuestion.changeset(changeset, json))
-      :multiple_choice -> put_change(changeset, :question, &MCQQuestion.changeset(changeset, json))
+      :programming -> put_change(changeset, :question,
+        Map.from_struct(apply_changes(ProgrammingQuestion.changeset(%ProgrammingQuestion{}, json))))
+      :multiple_choice -> put_change(changeset, :question, Map.from_struct(apply_changes(MCQQuestion.changeset(%MCQQuestion{}, json))))
+      _ -> changeset
     end
   end
 end

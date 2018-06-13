@@ -24,7 +24,6 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
       content: "asd",
       solution_template: "asd",
       solution_header: "asd",
-      solution: "asd",
       library: %{globals: ["a"]}
     }
   end
