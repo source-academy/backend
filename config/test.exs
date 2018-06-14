@@ -14,6 +14,9 @@ config :pbkdf2_elixir, :rounds, 1
 # Print only warnings and errors during test
 config :logger, level: :warn
 
+# Don't save secret keys in ExVCR cassettes
+config :exvcr, filter_url_params: true
+
 # Configure your database
 config :cadet, Cadet.Repo,
   adapter: Ecto.Adapters.Postgres,

@@ -1,0 +1,29 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": [],
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get"
+    },
+    "response": {
+      "binary": false,
+      "body": "\"e0175719\"",
+      "headers": {
+        "Cache-Control": "private",
+        "Content-Type": "application/json",
+        "Server": "Microsoft-IIS/8.5",
+        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
+        "Set-Cookie": "ASP.NET_SessionId=lfsylbddbogkoekdb1fmvhyy; path=/; HttpOnly",
+        "X-AspNet-Version": "4.0.30319",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Thu, 14 Jun 2018 03:48:00 GMT",
+        "Content-Length": "10"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

@@ -14,6 +14,14 @@ defmodule Cadet.Accounts.Ivle do
   @doc """
   Get the NUSNET ID of the user corresponding to this token.
 
+  IVLE responses
+
+    - 200 with non-empty body: valid key & valid token
+    - 500: invalid key
+    - 200 with 'empty' body: valid key but invalid token
+
+  Note: an 'empty' body is a string with two literal double quotes, i.e. "\"\""
+
   ## Parameters
 
     - token: String, the IVLE authentication token
@@ -27,14 +35,14 @@ defmodule Cadet.Accounts.Ivle do
   def fetch_nusnet_id(token) do
     case HTTPoison.get(api_url("UserID_Get", token)) do
       {:ok, response} ->
-        if response.status_code == 200 do
+        if String.length(response.body) > 2 do
           {:ok, String.replace(response.body, ~s("), "")}
         else
           {:error, :bad_request}
         end
 
       {:error, _} ->
-        {:error, :bad_request}
+        {:error, :internal_server_error}
     end
   end
 
