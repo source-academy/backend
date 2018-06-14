@@ -58,12 +58,14 @@ defmodule CadetWeb.AuthControllerTest do
     end
 
     test "invalid token", %{conn: conn} do
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{"ivle_token" => @token <> "Z"}
-        })
+      use_cassette "auth_controller/v1/auth#2" do
+        conn =
+          post(conn, "/v1/auth", %{
+            "login" => %{"ivle_token" => @token <> "Z"}
+          })
 
-      assert response(conn, 400)
+        assert response(conn, 400)
+      end
     end
   end
 
