@@ -1,10 +1,27 @@
 defmodule CadetWeb.AuthControllerTest do
+  @moduledoc """
+  Some tests in this module use pre-recorded HTTP responses saved by ExVCR.
+  this allows testing without the use of actual external IVLE API calls.
+
+  In the case that you need to change the recorded responses, you will need
+  to set the two environment variables IVLE_KEY (used as a module attribute in
+  `Cadet.Accounts.IVLE`) and TOKEN (used here). Don't forget to delete the
+  cassette files, otherwise ExVCR will not override the cassettes.
+  """
+
   use CadetWeb.ConnCase
+  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   import Cadet.Factory
 
   alias CadetWeb.AuthController
   alias Cadet.Auth.Guardian
+
+  @token String.replace(inspect(System.get_env("TOKEN")), ~s("), "")
+
+  setup_all do
+    HTTPoison.start()
+  end
 
   test "swagger" do
     AuthController.swagger_definitions()
@@ -13,7 +30,18 @@ defmodule CadetWeb.AuthControllerTest do
     AuthController.swagger_path_logout(nil)
   end
 
-  describe "POST /v1/auth" do
+  describe "POST /auth" do
+    test "success", %{conn: conn} do
+      use_cassette "auth_controller/v1/auth#1" do
+        conn =
+          post(conn, "/v1/auth", %{
+            "login" => %{"ivle_token" => @token}
+          })
+
+        assert response(conn, 200)
+      end
+    end
+
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth", %{})
 
@@ -24,6 +52,15 @@ defmodule CadetWeb.AuthControllerTest do
       conn =
         post(conn, "/v1/auth", %{
           "login" => %{"ivle_token" => ""}
+        })
+
+      assert response(conn, 400)
+    end
+
+    test "invalid token", %{conn: conn} do
+      conn =
+        post(conn, "/v1/auth", %{
+          "login" => %{"ivle_token" => @token <> "Z"}
         })
 
       assert response(conn, 400)

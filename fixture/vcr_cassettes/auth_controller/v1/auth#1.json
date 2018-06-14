@@ -1,0 +1,56 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": [],
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get"
+    },
+    "response": {
+      "binary": false,
+      "body": "\"e0175719\"",
+      "headers": {
+        "Cache-Control": "private",
+        "Content-Type": "application/json",
+        "Server": "Microsoft-IIS/8.5",
+        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
+        "Set-Cookie": "ASP.NET_SessionId=jwly1z0b1n2pe00eeaq3bggh; path=/; HttpOnly",
+        "X-AspNet-Version": "4.0.30319",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Thu, 14 Jun 2018 06:58:46 GMT",
+        "Content-Length": "10"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": [],
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get"
+    },
+    "response": {
+      "binary": false,
+      "body": "\"LEE NING YUAN\"",
+      "headers": {
+        "Cache-Control": "private",
+        "Content-Type": "application/json",
+        "Server": "Microsoft-IIS/8.5",
+        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
+        "Set-Cookie": "ASP.NET_SessionId=i23dg0wwtwugerj5ckaldtmk; path=/; HttpOnly",
+        "X-AspNet-Version": "4.0.30319",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Thu, 14 Jun 2018 06:58:46 GMT",
+        "Content-Length": "15"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]
