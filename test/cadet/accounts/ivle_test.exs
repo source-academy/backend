@@ -35,4 +35,20 @@ defmodule Cadet.Accounts.IvleTest do
       end
     end
   end
+
+  describe "Fetch a name" do
+    test "Using a valid token" do
+      use_cassette "ivle/fetch_name#1" do
+        {:ok, resp} = Ivle.fetch_name(@token)
+        assert String.length(resp) > 0
+      end
+    end
+
+    test "Using an invalid token" do
+      use_cassette "ivle/fetch_name#2" do
+        {:error, resp} = Ivle.fetch_name(@token <> "Z")
+        assert resp == :bad_request
+      end
+    end
+  end
 end

@@ -14,13 +14,11 @@ defmodule Cadet.Accounts.Ivle do
   @doc """
   Get the NUSNET ID of the user corresponding to this token.
 
-  IVLE responses
+  returns...
 
-    - 200 with non-empty body: valid key & valid token
-    - 500: invalid key
-    - 200 with 'empty' body: valid key but invalid token
-
-  Note: an 'empty' body is a string with two literal double quotes, i.e. "\"\""
+    - {:ok, nusnet_id} - valid token, nusnet_id is a string
+    - {:error, :bad_request} - invalid token
+    - {:error, :internal_server_error} - the ivle_key is invalid
 
   ## Parameters
 
@@ -32,22 +30,16 @@ defmodule Cadet.Accounts.Ivle do
       {:ok, "e012345"}
 
   """
-  def fetch_nusnet_id(token) do
-    case HTTPoison.get(api_url("UserID_Get", token)) do
-      {:ok, response} ->
-        if String.length(response.body) > 2 do
-          {:ok, String.replace(response.body, ~s("), "")}
-        else
-          {:error, :bad_request}
-        end
-
-      {:error, _} ->
-        {:error, :internal_server_error}
-    end
-  end
+  def fetch_nusnet_id(token), do: api_fetch("UserID_Get", token)
 
   @doc """
   Get the full name of the user corresponding to this token.
+
+  returns...
+
+    - {:ok, username} - valid token, username is a string
+    - {:error, :bad_request} - invalid token
+    - {:error, :internal_server_error} - the ivle_key is invalid
 
   ## Parameters
 
@@ -59,17 +51,22 @@ defmodule Cadet.Accounts.Ivle do
       {:ok, "LEE NING YUAN"}
 
   """
-  def fetch_name(token) do
-    case HTTPoison.get(api_url("UserName_get", token)) do
+  def fetch_name(token), do: api_fetch("UserName_Get", token)
+
+  defp api_fetch(path, token) do
+    # IVLE responds with 200 (:ok) if key and token are valid
+    # If key is invalid, IVLE responds with 500 (:internal_server_error)
+    # If token is invalid, IVLE returns an 'empty' string (i.e. "\"\"")
+    case HTTPoison.get(api_url(path, token)) do
       {:ok, response} ->
-        if response.status_code == 200 do
+        if String.length(response.body) > 2 do
           {:ok, String.replace(response.body, ~s("), "")}
         else
           {:error, :bad_request}
         end
 
       {:error, _} ->
-        {:error, :bad_request}
+        {:error, :internal_server_error}
     end
   end
 
