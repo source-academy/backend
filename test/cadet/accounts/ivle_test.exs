@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.IvleTest do
   @moduledoc """
   This test module uses pre-recoreded HTTP responses saved by ExVCR. This
-  allows testing without actual API calls.
+  allows testing without actual external IVLE API calls.
 
   In the case that you need to change the recorded responses, you will need
   to set the two environment variables IVLE_KEY (used as a module attribute in

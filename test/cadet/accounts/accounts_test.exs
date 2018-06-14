@@ -1,7 +1,26 @@
 defmodule Cadet.AccountsTest do
+  @moduledoc """
+  Some tests in this module use pre-recorded HTTP responses saved by ExVCR.
+  this allows testing without the use of actual external IVLE API calls.
+
+  In the case that you need to change the recorded responses, you will need
+  to set the two environment variables IVLE_KEY (used as a module attribute in
+  `Cadet.Accounts.IVLE`) and TOKEN (used here). Don't forget to delete the
+  cassette files, otherwise ExVCR will not override the cassettes.
+  """
+
   use Cadet.DataCase
+  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias Cadet.Accounts
+  alias Cadet.Repo
+  alias Cadet.Accounts.Query
+
+  @token String.replace(inspect(System.get_env("TOKEN")), ~s("), "")
+
+  setup_all do
+    HTTPoison.start()
+  end
 
   test "create user" do
     {:ok, user} =
@@ -97,19 +116,32 @@ defmodule Cadet.AccountsTest do
   end
 
   describe "sign in using nusnet_id" do
-    test "success" do
+    test "unregistered user" do
+      use_cassette "accounts/sign_in#1" do
+        {:ok, _} = Accounts.sign_in("e012345", @token)
+        assert Repo.one(Query.nusnet_id("e012345")).uid == "e012345"
+      end
+    end
+
+    test "registered user" do
       user = insert(:user)
 
       insert(:nusnet_id, %{
-        uid: "E012345",
+        uid: "e012345",
         user: user
       })
 
-      assert {:ok, user} == Accounts.sign_in("E012345", "t0k3n")
+      assert {:ok, user} == Accounts.sign_in("e012345", @token)
     end
 
-    test "NUSNET ID not found" do
-      assert {:error, :bad_request} == Accounts.sign_in("A0123456", "t0k3n")
+    test "invalid token" do
+      use_cassette "accounts/sign_in#2" do
+        assert {:error, :bad_request} == Accounts.sign_in("A0123456", "t0k3n")
+      end
+    end
+
+    test "invalid nusnet id" do
+      assert {:error, :internal_server_error} == Accounts.sign_in("", @token)
     end
   end
 end
