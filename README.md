@@ -25,11 +25,6 @@ Initialise Development Database
 
     mix ecto.setup
 
-Install frontend dependencies
-
-    cd frontend
-    npm install
-
 Run the server in your local machine
 
     mix cadet.server
@@ -41,7 +36,7 @@ We follow this style guide: https://github.com/christopheradams/elixir_style_gui
 
 ## API documentation
 
-When the server is running, API documentation can then be accessed through http://localhost:4000/v1/swagger
+When the server is running, API documentation can then be accessed through http://localhost:4000/swagger
 
 ## License
 
