@@ -12,6 +12,8 @@ defmodule Cadet.Accounts do
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration
+
+  Returns {:ok, user} on success, otherwise {:error, changeset}
   """
   def register(attrs = %{}, role) do
     changeset = Registration.changeset(%Registration{}, attrs)
@@ -109,11 +111,12 @@ defmodule Cadet.Accounts do
               sign_in(nusnet_id, token)
 
             {:error, _} ->
-              {:error, :bad_request}
+              {:error, :internal_server_error}
           end
 
-        {:error, _} ->
-          {:error, :bad_request}
+        {:error, reason} ->
+          # reason can be :bad_request or :internal_server_error
+          {:error, reason}
       end
     else
       auth = Repo.preload(auth, :user)

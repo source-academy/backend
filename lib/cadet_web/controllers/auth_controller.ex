@@ -40,12 +40,14 @@ defmodule CadetWeb.AuthController do
                 refresh_token: refresh_token
               )
 
-            {:error, :bad_request} ->
-              send_resp(conn, :bad_request, "Invalid token")
+            {:error, reason} ->
+              # reason can be :bad_request or :internal_server_error
+              send_resp(conn, reason, "Unable to retrieve user")
           end
 
         {:error, reason} ->
-          send_resp(conn, :service_unavailable, "Authentication call to IVLE failed: #{reason}")
+          # reason can be :bad_request or :internal_server_error
+          send_resp(conn, reason, "Unable to fetch NUSNET ID from IVLE.")
       end
     else
       send_resp(conn, :bad_request, "Missing parameter")
@@ -111,8 +113,8 @@ defmodule CadetWeb.AuthController do
     end
 
     response(200, "OK", Schema.ref(:Tokens))
-    response(400, "Missing parameter/Invalid token")
-    response(503, "Authentication call to IVLE failed")
+    response(400, "Missing or invalid parameter")
+    response(500, "Internal server error")
   end
 
   swagger_path :refresh do
