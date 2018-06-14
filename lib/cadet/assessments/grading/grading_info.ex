@@ -12,7 +12,6 @@ defmodule Cadet.Assessments.GradingInfo do
     field(:comment, :string)
     # TODO add once assessments is merged
     # belongs_to(:question, Assessments.Question)
-    timestamps()
   end
 
   # TODO add :question once assessments is merged

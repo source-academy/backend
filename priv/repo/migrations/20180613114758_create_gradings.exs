@@ -3,9 +3,7 @@ defmodule Cadet.Repo.Migrations.CreateGradings do
 
   def change do
     create table(:gradings) do
-      add(:weight, :integer)
-      add(:marks, :integer)
-      add(:comment, :string)
+      add(:grading_infos, :map)
 
       timestamps()
     end
