@@ -97,7 +97,7 @@ defmodule CadetWeb.AuthController do
     parameters do
       refresh_token(
         :body,
-        Schema.ref(:AccessToken),
+        Schema.ref(:RefreshToken),
         "refresh token obtained from /auth",
         required: true
       )
