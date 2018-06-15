@@ -6,34 +6,34 @@ defmodule Cadet.Accounts.Form.RegistrationTest do
   valid_changesets Registration do
     %{
       name: "happy",
-      nusnet_id: "e853820",
-      password: "mypassword",
-      password_confirmation: "mypassword"
+      nusnet_id: "e853820"
     }
   end
 
   invalid_changesets Registration do
+    %{}
+
     %{
-      password: "mypassword",
-      password_confirmation: "mypassword"
+      name: "happy"
     }
 
     %{
-      first_name: "happy",
-      password: "mypassword",
-      password_confirmation: "doesnotmatch"
+      nusnet_id: "e853820"
     }
 
     %{
-      first_name: "happy",
-      password: "mypassword",
-      password_confirmation: "mypassword"
+      name: "",
+      nusnet_id: ""
     }
 
     %{
-      first_name: "happy",
-      password: "passwor",
-      password_confirmation: "passwor"
+      name: "",
+      nusnet_id: "e853820"
+    }
+
+    %{
+      name: "happy",
+      nusnet_id: ""
     }
   end
 end
