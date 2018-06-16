@@ -42,6 +42,8 @@ defmodule CadetWeb.Router do
 
     get("/grading", GradingController, :index)
     get("/grading/:submissionid/:questionid", GradingController, :show)
+    post("/grading/:submissionid/:questionid", GradingController, :update_comment)
+    post("/grading/:submissionid", GradingController, :update_mark)
   end
 
   # Other scopes may use custom stacks.

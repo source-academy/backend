@@ -31,6 +31,50 @@ defmodule CadetWeb.GradingController do
     end
 
     response(200, "OK", Schema.ref(:GradingInfo))
+    response(400, "Invalid or missing parameter(s) or submission and/or question not found")
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :update_comment do
+    post("/grading/{submissionId}/{questionId}")
+
+    summary("Update comment given to the answer of a particular qurrstion in a submission")
+
+    security([%{JWT: []}])
+
+    consumes("application/json")
+    produces("application/json")
+
+    parameters do
+      submissionId(:path, :integer, "submission id", required: true)
+      questionId(:path, :integer, "question id", required: true)
+      comment(:body, Schema.ref(:Comment), "comment given for a question", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid or missing parameter(s) or submission and/or question not found")
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :update_mark do
+    post("/grading/{submissionId}")
+
+    summary("Update marks of a submission")
+
+    security([%{JWT: []}])
+
+    consumes("application/json")
+    produces("application/json")
+
+    parameters do
+      submissionId(:path, :integer, "submission id", required: true)
+      questionId(:path, :integer, "question id", required: true)
+      mark(:body, Schema.ref(:Mark), "mark given for a question", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid or missing parameter(s) or submission and/or question not found")
+    response(401, "Unauthorised")
   end
 
   def swagger_definitions do
@@ -68,6 +112,18 @@ defmodule CadetWeb.GradingController do
         swagger_schema do
           properties do
             code(:string, "Code provided by student", required: true)
+          end
+        end,
+      Comment:
+        swagger_schema do
+          properties do
+            comment(:string, "comment given", required: true)
+          end
+        end,
+      Mark:
+        swagger_schema do
+          properties do
+            exp(:integer, "xp given", required: true)
           end
         end
     }
