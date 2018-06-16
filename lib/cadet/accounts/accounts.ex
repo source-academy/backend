@@ -122,7 +122,7 @@ defmodule Cadet.Accounts do
 
         {:error, _} ->
           # register/2 returns {:error, changeset} if changeset is invalid
-          {:error, :bad_request}
+          {:error, :internal_server_error}
       end
     end
   end

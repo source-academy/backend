@@ -7,6 +7,12 @@ defmodule Cadet.Accounts.IvleTest do
   to set the two environment variables IVLE_KEY (used as a module attribute in
   `Cadet.Accounts.IVLE`) and TOKEN (used here). Don't forget to delete the
   cassette files, otherwise ExVCR will not override the cassettes.
+
+  Token refers to the user's authentication token. Please see the IVLE API docs:
+  https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
+  To quickly obtain a token, simply supply a dummy url to a login call:
+      https://ivle.nus.edu.sg/api/login/?apikey=YOUR_API_KEY&url=http://localhost
+  then copy down the token from your browser's address bar.
   """
 
   use ExUnit.Case, async: false
@@ -14,7 +20,7 @@ defmodule Cadet.Accounts.IvleTest do
 
   alias Cadet.Accounts.Ivle
 
-  @token String.replace(inspect(System.get_env("TOKEN")), ~s("), "")
+  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: ""
 
   setup_all do
     HTTPoison.start()
