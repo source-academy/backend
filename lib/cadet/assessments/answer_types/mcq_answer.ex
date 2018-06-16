@@ -10,11 +10,7 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
   alias Cadet.Assessments.QuestionTypes.MCQChoice
 
   embedded_schema do
-<<<<<<< Updated upstream
     field(:choice_id, :integer)  
-=======
-    field(:choice_id, :integer)
->>>>>>> Stashed changes
   end
 
   @required_fields ~w(choice_id)a

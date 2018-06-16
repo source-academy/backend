@@ -22,10 +22,6 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-<<<<<<< Updated upstream
-    |> validate_number(:choice_id, "greater_than": 0, "less_than": 5)
-=======
     |> validate_number(:choice_id, greater_than: 0, less_than: 5)
->>>>>>> Stashed changes
   end
 end
