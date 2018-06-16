@@ -25,9 +25,10 @@ Initialise development database
 
     mix ecto.setup
 
-Setup environment variables
+Replace the value of `IVLE_KEY` in the `.env` file with your [IVLE LAPI Key
+](https://ivle.nus.edu.sg/LAPI/default.aspx)
 
-    export IVLE_KEY="1vl3keyy"
+    export IVLE_KEY=your_ivle_lapi_key
 
 Run the server in your local machine
 
