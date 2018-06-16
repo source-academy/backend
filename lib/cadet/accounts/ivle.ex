@@ -54,19 +54,17 @@ defmodule Cadet.Accounts.Ivle do
   def fetch_name(token), do: api_fetch("UserName_Get", token)
 
   defp api_fetch(path, token) do
-    # IVLE responds with 200 (:ok) if key and token are valid
-    # If key is invalid, IVLE responds with 500 (:internal_server_error)
-    # If token is invalid, IVLE returns an 'empty' string (i.e. "\"\"")
     case HTTPoison.get(api_url(path, token)) do
-      {:ok, response} ->
-        if String.length(response.body) > 2 do
-          {:ok, String.replace(response.body, ~s("), "")}
-        else
-          {:error, :bad_request}
-        end
+      {:ok, %{body: body, status_code: 200}} when body != ~s("") ->
+        {:ok, Poison.decode!(body)}
 
-      {:error, _} ->
+      {:ok, %{status_code: 500}} ->
+        # IVLE responds with 500 if APIKey is invalid
         {:error, :internal_server_error}
+
+      {:ok, %{body: ~s(""), status_code: 200}} ->
+        # IVLE responsed 200 with body == ~s("") if token is invalid
+        {:error, :bad_request}
     end
   end
 
