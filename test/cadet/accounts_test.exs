@@ -34,7 +34,7 @@ defmodule Cadet.AccountsTest do
   end
 
   test "get unknown user" do
-    refute Accounts.get_user(10000)
+    refute Accounts.get_user(10_000)
   end
 
   test "associate email to user" do
