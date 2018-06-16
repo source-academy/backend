@@ -84,7 +84,6 @@ defmodule Cadet.AccountsTest do
     assert {:ok, []} = Accounts.set_nusnet_id(user, "E012345")
   end
 
-  # TODO: A user may not have multiple NUSNET_IDs?
   test "setting user nusnet_id with multiple e-mails" do
     user = insert(:user)
     insert(:nusnet_id, user: user)
