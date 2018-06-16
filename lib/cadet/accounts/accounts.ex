@@ -107,19 +107,22 @@ defmodule Cadet.Accounts do
       auth = Repo.preload(auth, :user)
       {:ok, auth.user}
     else
-      case Ivle.fetch_name(token) do
-        {:ok, name} ->
-          case register(%{name: name, nusnet_id: nusnet_id}, :student) do
-            {:ok, _} ->
-              sign_in(nusnet_id, token)
+      # user is not registered in our database
+      with {:ok, name} <- Ivle.fetch_name(token),
+           {:ok, _} <- register(%{name: name, nusnet_id: nusnet_id}, :student) do
+        sign_in(nusnet_id, token)
+      else
+        {:error, :bad_request} ->
+          # Ivle.fetch_name/1 responds with :bad_request if token is invalid
+          {:error, :bad_request}
 
-            {:error, _} ->
-              {:error, :internal_server_error}
-          end
+        {:error, :internal_server_error} ->
+          # Ivle.fetch_name/1 responds with :internal_server_error if API key is invalid
+          {:error, :internal_server_error}
 
-        {:error, reason} ->
-          # reason can be :bad_request or :internal_server_error
-          {:error, reason}
+        {:error, _} ->
+          # register/2 returns {:error, changeset} if changeset is invalid
+          {:error, :bad_request}
       end
     end
   end
