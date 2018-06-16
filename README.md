@@ -10,9 +10,10 @@ Cadet is the web application powering Source Academy.
 ### System Requirements
 
 1. Elixir 1.5, (1.6.0-dev is recommended for the code formatter)
-1. Erlang/OTP 20.1
-1. NodeJS Stable
-1. PostgreSQL (>= 9.6)
+2. Erlang/OTP 20.1
+3. NodeJS Stable
+4. PostgreSQL (>= 9.6)
+5. git (>= 2.13.2)
 
 ### Setting Up Local Development Environment
 
@@ -24,11 +25,6 @@ Initialise Development Database
 
     mix ecto.setup
 
-Install frontend dependencies
-
-    cd frontend
-    npm install
-
 Run the server in your local machine
 
     mix cadet.server
@@ -36,11 +32,11 @@ Run the server in your local machine
 
 ## Style Guide
 
-We follow this style guide: https://github.com/christopheradams/elixir_style_guide
+We follow this style guide: https://github.com/lexmag/elixir-style-guide
 
 ## API documentation
 
-When the server is running, API documentation can then be accessed through http://localhost:4000/v1/swagger
+When the server is running, API documentation can then be accessed through http://localhost:4000/swagger
 
 ## License
 
