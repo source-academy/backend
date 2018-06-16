@@ -20,7 +20,7 @@ defmodule Cadet.Accounts.IvleTest do
 
   alias Cadet.Accounts.Ivle
 
-  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: ""
+  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 
   setup_all do
     HTTPoison.start()

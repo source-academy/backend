@@ -23,7 +23,7 @@ defmodule CadetWeb.AuthControllerTest do
   alias CadetWeb.AuthController
   alias Cadet.Auth.Guardian
 
-  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: ""
+  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 
   setup_all do
     HTTPoison.start()
