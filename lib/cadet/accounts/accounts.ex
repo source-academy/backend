@@ -103,7 +103,10 @@ defmodule Cadet.Accounts do
   def sign_in(nusnet_id, token) do
     auth = Repo.one(Query.nusnet_id(nusnet_id))
 
-    if auth == nil do
+    if auth do
+      auth = Repo.preload(auth, :user)
+      {:ok, auth.user}
+    else
       case Ivle.fetch_name(token) do
         {:ok, name} ->
           case register(%{name: name, nusnet_id: nusnet_id}, :student) do
@@ -118,9 +121,6 @@ defmodule Cadet.Accounts do
           # reason can be :bad_request or :internal_server_error
           {:error, reason}
       end
-    else
-      auth = Repo.preload(auth, :user)
-      {:ok, auth.user}
     end
   end
 end
