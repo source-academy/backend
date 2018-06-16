@@ -1,9 +1,8 @@
 defmodule CadetWeb.AuthController do
   use CadetWeb, :controller
+  use PhoenixSwagger
 
   import Ecto.Changeset
-
-  use PhoenixSwagger
 
   alias Cadet.Accounts
   alias Cadet.Accounts.Form.Login
@@ -20,37 +19,33 @@ defmodule CadetWeb.AuthController do
   def create(conn, %{"login" => attrs}) do
     changeset = Login.changeset(%Login{}, attrs)
 
-    if changeset.valid? do
-      login = apply_changes(changeset)
+    with valid = changeset.valid?,
+         {:changes, login} when valid <- {:changes, apply_changes(changeset)},
+         {:fetch, {:ok, nusnet_id}} <- {:fetch, Ivle.fetch_nusnet_id(login.ivle_token)},
+         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, login.ivle_token)} do
+      {:ok, access_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
 
-      case Ivle.fetch_nusnet_id(login.ivle_token) do
-        {:ok, nusnet_id} ->
-          case Accounts.sign_in(nusnet_id, login.ivle_token) do
-            {:ok, user} ->
-              {:ok, access_token, _} =
-                Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
+      {:ok, refresh_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
 
-              {:ok, refresh_token, _} =
-                Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
-
-              render(
-                conn,
-                "token.json",
-                access_token: access_token,
-                refresh_token: refresh_token
-              )
-
-            {:error, reason} ->
-              # reason can be :bad_request or :internal_server_error
-              send_resp(conn, reason, "Unable to retrieve user")
-          end
-
-        {:error, reason} ->
-          # reason can be :bad_request or :internal_server_error
-          send_resp(conn, reason, "Unable to fetch NUSNET ID from IVLE.")
-      end
+      render(
+        conn,
+        "token.json",
+        access_token: access_token,
+        refresh_token: refresh_token
+      )
     else
-      send_resp(conn, :bad_request, "Missing parameter")
+      {:changes, _} ->
+        send_resp(conn, :bad_request, "Missing parameter")
+
+      {:fetch, {:error, reason}} ->
+        # reason can be :bad_request or :internal_server_error
+        send_resp(conn, reason, "Unable to fetch NUSNET ID from IVLE.")
+
+      {:signin, {:error, reason}} ->
+        # reason can be :bad_request or :internal_server_error
+        send_resp(conn, reason, "Unable to retrieve user")
     end
   end
 
