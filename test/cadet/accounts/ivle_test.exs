@@ -23,14 +23,14 @@ defmodule Cadet.Accounts.IvleTest do
   describe "Fetch an NUSNET ID" do
     test "Using a valid token" do
       use_cassette "ivle/fetch_nusnet_id#1" do
-        {:ok, resp} = Ivle.fetch_nusnet_id(@token)
+        assert {:ok, resp} = Ivle.fetch_nusnet_id(@token)
         assert String.length(resp) > 0
       end
     end
 
     test "Using an invalid token" do
       use_cassette "ivle/fetch_nusnet_id#2" do
-        {:error, resp} = Ivle.fetch_nusnet_id(@token <> "Z")
+        assert {:error, resp} = Ivle.fetch_nusnet_id(@token <> "Z")
         assert resp == :bad_request
       end
     end
@@ -39,14 +39,14 @@ defmodule Cadet.Accounts.IvleTest do
   describe "Fetch a name" do
     test "Using a valid token" do
       use_cassette "ivle/fetch_name#1" do
-        {:ok, resp} = Ivle.fetch_name(@token)
+        assert {:ok, resp} = Ivle.fetch_name(@token)
         assert String.length(resp) > 0
       end
     end
 
     test "Using an invalid token" do
       use_cassette "ivle/fetch_name#2" do
-        {:error, resp} = Ivle.fetch_name(@token <> "Z")
+        assert {:error, resp} = Ivle.fetch_name(@token <> "Z")
         assert resp == :bad_request
       end
     end

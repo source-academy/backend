@@ -29,8 +29,7 @@ defmodule Cadet.AccountsTest do
         role: :student
       })
 
-    assert user.name == "happy user"
-    assert user.role == :student
+    assert %{name: "happy user", role: :student} = user
   end
 
   test "invalid create user" do
@@ -46,7 +45,7 @@ defmodule Cadet.AccountsTest do
   test "get existing user" do
     user = insert(:user, name: "Teddy")
     result = Accounts.get_user(user.id)
-    assert result.name == "Teddy"
+    assert %{name: "Teddy", role: :student} = result
   end
 
   test "get unknown user" do
@@ -55,10 +54,8 @@ defmodule Cadet.AccountsTest do
 
   test "associate nusnet_id to user" do
     user = insert(:user)
-    {:ok, auth} = Accounts.add_nusnet_id(user, "teddy@happy.mail")
-    assert auth.provider == :nusnet_id
-    assert auth.uid == "teddy@happy.mail"
-    assert auth.user_id == user.id
+    {:ok, auth} = Accounts.add_nusnet_id(user, "e012345")
+    assert %{uid: "e012345", provider: :nusnet_id, user: ^user} = auth
   end
 
   test "duplicate nusnet_id one user" do
@@ -96,23 +93,22 @@ defmodule Cadet.AccountsTest do
 
     attrs = %{
       provider: :nusnet_id,
-      uid: "test@gmail.com",
+      uid: "e012345",
       token: "hahaha"
     }
 
     assert {:ok, auth} = Accounts.create_authorization(attrs, user)
-    assert auth.user_id == user.id
-    assert auth.uid == "test@gmail.com"
+    assert %{uid: "e012345", provider: :nusnet_id, user: ^user} = auth
   end
 
   test "valid registration" do
     attrs = %{
       name: "Test Name",
-      nusnet_id: "E012345"
+      nusnet_id: "e012345"
     }
 
     assert {:ok, user} = Accounts.register(attrs, :student)
-    assert user.name == "Test Name"
+    assert %{name: "Test Name", role: :student} = user
   end
 
   describe "sign in using nusnet_id" do
