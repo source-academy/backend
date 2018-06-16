@@ -16,10 +16,10 @@
         "Content-Type": "application/json",
         "Server": "Microsoft-IIS/8.5",
         "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
-        "Set-Cookie": "ASP.NET_SessionId=qtyp2glxtn14vk3v0rmbhrne; path=/; HttpOnly",
+        "Set-Cookie": "ASP.NET_SessionId=xe5hsey2kwxaxzfmd5poiziu; path=/; HttpOnly",
         "X-AspNet-Version": "4.0.30319",
         "X-Powered-By": "ASP.NET",
-        "Date": "Sat, 16 Jun 2018 12:28:47 GMT",
+        "Date": "Sat, 16 Jun 2018 12:52:50 GMT",
         "Content-Length": "15"
       },
       "status_code": 200,
