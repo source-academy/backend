@@ -10,11 +10,18 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
   alias Cadet.Assessments.QuestionTypes.MCQChoice
 
   embedded_schema do
-    embeds_one(:answer_choice, MCQChoice)
+<<<<<<< Updated upstream
+    field(:choice_id, :integer)  
+=======
+    field(:choice_id, :integer)
+>>>>>>> Stashed changes
   end
+
+  @required_fields ~w(choice_id)a
 
   def changeset(answer, params \\ %{}) do
     answer
-    |> cast_embed(:answer_choice, with: &MCQChoice.changeset/2, required: true)
+    |> cast(params, @required_fields)
+    |> validate_number(:choice_id, greater_than: 0, less_than: 5)
   end
 end

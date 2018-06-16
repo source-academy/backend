@@ -7,10 +7,10 @@ defmodule Cadet.Assessments.AnswerTypes.ProgrammingAnswer do
   import Ecto.Changeset
 
   embedded_schema do
-    field(:solution_code, :string)
+    field(:code, :string)
   end
 
-  @required_fields ~w(solution_code)a
+  @required_fields ~w(code)a
 
   def changeset(answer, params \\ %{}) do
     answer

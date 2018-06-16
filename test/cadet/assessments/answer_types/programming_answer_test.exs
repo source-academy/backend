@@ -5,7 +5,7 @@ defmodule Cadet.Assessments.AnswerTypes.ProgrammingAnswerTest do
   alias Cadet.Assessments.AnswerTypes.ProgrammingAnswer
 
   valid_changesets ProgrammingAnswer do
-    %{solution_code: "This is some code"}
+    %{code: "This is some code"}
   end
 
   invalid_changesets ProgrammingAnswer do

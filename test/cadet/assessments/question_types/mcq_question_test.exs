@@ -4,16 +4,16 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestionTest do
   alias Cadet.Assessments.QuestionTypes.MCQQuestion
 
   valid_changesets MCQQuestion do
-    %{content: "asd", choices: [%{content: "asd", is_correct: true}]}
+    %{content: "asd", choices: [%{choice_id: 1, content: "asd", is_correct: true}]}
 
     %{
       raw_mcqquestion:
-        "{\"content\":\"asd\",\"choices\":[{\"is_correct\":true,\"content\":\"asd\"}]}"
+        "{\"content\":\"asd\",\"choices\":[{\"choice_id\": 1, \"is_correct\":true,\"content\":\"asd\"}]}"
     }
   end
 
   invalid_changesets MCQQuestion do
     %{content: "asd"}
-    %{content: "asd", choices: [%{content: "asd", is_correct: false}]}
+    %{content: "asd", choices: [%{choice_id: 2, content: "asd", is_correct: false}]}
   end
 end
