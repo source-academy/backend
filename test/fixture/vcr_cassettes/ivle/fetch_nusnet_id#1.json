@@ -6,21 +6,21 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get"
+      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get"
     },
     "response": {
       "binary": false,
-      "body": "\"LEE NING YUAN\"",
+      "body": "\"e0175719\"",
       "headers": {
         "Cache-Control": "private",
         "Content-Type": "application/json",
         "Server": "Microsoft-IIS/8.5",
         "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
-        "Set-Cookie": "ASP.NET_SessionId=d0qbwr4kfx1dt40nqpkce1wh; path=/; HttpOnly",
+        "Set-Cookie": "ASP.NET_SessionId=g33tyvk4f4qcxs0o0og3caow; path=/; HttpOnly",
         "X-AspNet-Version": "4.0.30319",
         "X-Powered-By": "ASP.NET",
-        "Date": "Thu, 14 Jun 2018 04:18:14 GMT",
-        "Content-Length": "15"
+        "Date": "Sat, 16 Jun 2018 12:28:47 GMT",
+        "Content-Length": "10"
       },
       "status_code": 200,
       "type": "ok"

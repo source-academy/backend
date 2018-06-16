@@ -6,7 +6,7 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get"
+      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get"
     },
     "response": {
       "binary": false,
@@ -16,10 +16,10 @@
         "Content-Type": "application/json",
         "Server": "Microsoft-IIS/8.5",
         "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
-        "Set-Cookie": "ASP.NET_SessionId=4nn21p3coilmdgmlfl4lh1rc; path=/; HttpOnly",
+        "Set-Cookie": "ASP.NET_SessionId=ixih50bscs3up2pvx5fkypjt; path=/; HttpOnly",
         "X-AspNet-Version": "4.0.30319",
         "X-Powered-By": "ASP.NET",
-        "Date": "Thu, 14 Jun 2018 07:10:13 GMT",
+        "Date": "Sat, 16 Jun 2018 12:28:47 GMT",
         "Content-Length": "2"
       },
       "status_code": 200,

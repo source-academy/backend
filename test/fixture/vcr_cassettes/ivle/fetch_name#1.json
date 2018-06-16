@@ -10,17 +10,17 @@
     },
     "response": {
       "binary": false,
-      "body": "\"\"",
+      "body": "\"LEE NING YUAN\"",
       "headers": {
         "Cache-Control": "private",
         "Content-Type": "application/json",
         "Server": "Microsoft-IIS/8.5",
         "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
-        "Set-Cookie": "ASP.NET_SessionId=uajdaozgjmfr3sbbxqe5ltls; path=/; HttpOnly",
+        "Set-Cookie": "ASP.NET_SessionId=qtyp2glxtn14vk3v0rmbhrne; path=/; HttpOnly",
         "X-AspNet-Version": "4.0.30319",
         "X-Powered-By": "ASP.NET",
-        "Date": "Thu, 14 Jun 2018 04:18:14 GMT",
-        "Content-Length": "2"
+        "Date": "Sat, 16 Jun 2018 12:28:47 GMT",
+        "Content-Length": "15"
       },
       "status_code": 200,
       "type": "ok"
