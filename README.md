@@ -32,7 +32,9 @@ Run the server in your local machine
 
 ## Style Guide
 
-We follow this style guide: https://github.com/lexmag/elixir-style-guide
+We follow this style guide: https://github.com/lexmag/elixir-style-guide and https://github.com/christopheradams/elixir_style_guide
+
+Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
 
 ## API documentation
 
