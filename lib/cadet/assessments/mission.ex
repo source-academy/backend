@@ -6,8 +6,6 @@ defmodule Cadet.Assessments.Mission do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  import Cadet.ModelHelper
-
   alias Cadet.Assessments.Category
   alias Cadet.Assessments.Image
   alias Cadet.Assessments.Question

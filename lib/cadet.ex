@@ -30,6 +30,13 @@ defmodule Cadet do
     end
   end
 
+  def remote_assets do
+    quote do
+      use Arc.Definition
+      use Arc.Ecto.Definition
+    end
+  end
+
   defp apply_single(context) do
     apply(__MODULE__, context, [])
   end
