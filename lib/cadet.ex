@@ -57,9 +57,14 @@ defmodule Cadet do
 
   defmacro __using__(opt) do
     cond do
-      is_atom(opt) -> apply_single(opt)
-      is_list(opt) -> apply_multiple(opt)
-      true -> nil
+      is_atom(opt) ->
+        apply_single(opt)
+
+      is_list(opt) ->
+        apply_multiple(opt)
+
+      true ->
+        raise "invalid arguments when using Cadet contexts"
     end
   end
 end
