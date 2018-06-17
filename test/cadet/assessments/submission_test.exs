@@ -10,5 +10,4 @@ defmodule Cadet.Assessments.SubmissionTest do
       override_xp: 100
     }
   end
-
 end

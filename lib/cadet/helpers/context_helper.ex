@@ -1,7 +1,7 @@
 defmodule Cadet.ContextHelper do
-  @moduledoc false
-  import Ecto.Query
-  import Ecto.Changeset
+  @moduledoc """
+  Contains utility functions that may be commonly used across the Cadet project.
+  """
 
   alias Cadet.Repo
 
@@ -15,15 +15,6 @@ defmodule Cadet.ContextHelper do
     else
       changeset = using.(model, params)
       Repo.update(changeset)
-    end
-  end
-
-  def put_display_order(changeset, collection) do
-    if Enum.empty?(collection) do
-      change(changeset, %{display_order: 1})
-    else
-      last = Enum.max_by(collection, & &1.display_order)
-      change(changeset, %{display_order: last.display_order + 1})
     end
   end
 end

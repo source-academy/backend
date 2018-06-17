@@ -2,9 +2,7 @@ defmodule Cadet.Assessments.QuestionTypes.Library do
   @moduledoc """
   The library entity represents a library to be used in a programming question.
   """
-  use Ecto.Schema
-
-  import Ecto.Changeset
+  use Cadet, :model
 
   embedded_schema do
     field(:version, :integer, default: 1)

@@ -3,17 +3,11 @@ defmodule Cadet.Assessments do
   Assessments context contains domain logic for assessments management such as
   missions, sidequests, paths, etc.
   """
+  use Cadet, [:context, :display]
 
-  import Ecto.Changeset
   import Ecto.Query
-  import Cadet.ContextHelper
 
-  use Cadet, :context
-
-  alias Timex.Timezone
   alias Timex.Duration
-
-  alias Cadet.Repo
 
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.Question
@@ -24,7 +18,9 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.QuestionTypes.MCQQuestion
   alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
 
-  def all_missions, do: Repo.all(Mission)
+  def all_missions() do
+    Repo.all(Mission)
+  end
 
   def all_missions(category) do
     Repo.all(from(a in Mission, where: a.category == ^category))
