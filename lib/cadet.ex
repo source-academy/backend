@@ -62,6 +62,14 @@ defmodule Cadet do
     )
   end
 
+  @doc """
+  The `use Cadet` macro supports both single and multiple arguments i.e.:
+    ```
+    use Cadet, :context
+
+    use Cadet, [:context, :model, :etc]
+    ```
+  """
   defmacro __using__(opt) do
     cond do
       is_atom(opt) ->
