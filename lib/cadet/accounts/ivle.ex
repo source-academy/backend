@@ -9,7 +9,7 @@ defmodule Cadet.Accounts.IVLE do
   """
 
   @api_url "https://ivle.nus.edu.sg/api/Lapi.svc"
-  @api_key Dotenv.load!().values["IVLE_KEY"]
+  @api_key Dotenv.load().values["IVLE_KEY"]
 
   @doc """
   Get the NUSNET ID of the user corresponding to this token.
