@@ -2,8 +2,7 @@ defmodule Cadet.Assessments.Image do
   @moduledoc """
   Image assets used by the missions
   """
-  use Arc.Definition
-  use Arc.Ecto.Definition
+  use Cadet, :remote_assets
 
   @versions [:original]
 

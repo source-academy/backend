@@ -2,9 +2,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
   @moduledoc """
   The ProgrammingQuestion entity represents a Programming question.
   """
-  use Ecto.Schema
-
-  import Ecto.Changeset
+  use Cadet, :model
 
   alias Cadet.Assessments.QuestionTypes.Library
 

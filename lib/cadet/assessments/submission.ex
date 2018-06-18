@@ -2,9 +2,6 @@ defmodule Cadet.Assessments.Submission do
   @moduledoc false
   use Cadet, :model
 
-  import Ecto.Query
-
-  alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.SubmissionStatus
   alias Cadet.Accounts.User
   alias Cadet.Assessments.Mission

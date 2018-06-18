@@ -3,28 +3,18 @@ defmodule Cadet.Assessments do
   Assessments context contains domain logic for assessments management such as
   missions, sidequests, paths, etc.
   """
+  use Cadet, [:context, :display]
 
-  import Ecto.Changeset
   import Ecto.Query
-  import Cadet.ContextHelper
 
-  use Cadet, :context
-
-  alias Timex.Timezone
   alias Timex.Duration
-
-  alias Cadet.Repo
 
   alias Cadet.Assessments.Mission
   alias Cadet.Assessments.Question
-  alias Cadet.Assessments.Answer
-  alias Cadet.Assessments.Submission
-  alias Cadet.Accounts.User
-  alias Cadet.Course.Group
-  alias Cadet.Assessments.QuestionTypes.MCQQuestion
-  alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
 
-  def all_missions, do: Repo.all(Mission)
+  def all_missions() do
+    Repo.all(Mission)
+  end
 
   def all_missions(category) do
     Repo.all(from(a in Mission, where: a.category == ^category))
@@ -71,8 +61,6 @@ defmodule Cadet.Assessments do
   end
 
   def update_question(id, params) do
-    question = get_question(id)
-
     simple_update(
       Question,
       id,
@@ -87,7 +75,7 @@ defmodule Cadet.Assessments do
     Repo.update(changeset)
   end
 
-  def get_question(id, opts \\ [preload: true]) do
+  def get_question(id) do
     Repo.get(Question, id)
   end
 
@@ -135,7 +123,7 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
-  def get_mission_question(mission, order, preload \\ false) do
+  def get_mission_question(mission, order) do
     question =
       Repo.get_by(
         Question,

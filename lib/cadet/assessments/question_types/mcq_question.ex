@@ -3,9 +3,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
   The Assessments.QuestionTypes.MCQQuestion entity represents an MCQ Question.
   It comprises of content and choices.
   """
-  use Ecto.Schema
-
-  import Ecto.Changeset
+  use Cadet, :model
 
   alias Cadet.Assessments.QuestionTypes.MCQChoice
 

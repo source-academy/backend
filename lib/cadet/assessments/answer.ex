@@ -5,7 +5,6 @@ defmodule Cadet.Assessments.Answer do
   """
   use Cadet, :model
 
-  alias Cadet.Assessments.Mission
   alias Cadet.Assessments.ProblemType
 
   schema "answers" do
