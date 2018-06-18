@@ -62,8 +62,8 @@ defmodule Cadet.Accounts.IVLE do
         # IVLE responds with 500 if APIKey is invalid
         {:error, :internal_server_error}
 
-      {:ok, _} ->
-        # IVLE responds 200 with body == ~s("") if token is invalid
+      {:ok, %{body: ~s(""), status_code: 200}} ->
+        # IVLE responsed 200 with body == ~s("") if token is invalid
         {:error, :bad_request}
     end
   end
