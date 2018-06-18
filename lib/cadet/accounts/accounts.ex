@@ -116,11 +116,8 @@ defmodule Cadet.Accounts do
           # Ivle.fetch_name/1 responds with :bad_request if token is invalid
           {:error, :bad_request}
 
-        {:error, :internal_server_error} ->
-          # Ivle.fetch_name/1 responds with :internal_server_error if API key is invalid
-          {:error, :internal_server_error}
-
         {:error, _} ->
+          # Ivle.fetch_name/1 responds with :internal_server_error if API key is invalid
           # register/2 returns {:error, changeset} if changeset is invalid
           {:error, :internal_server_error}
       end
