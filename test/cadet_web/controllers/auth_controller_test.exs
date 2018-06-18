@@ -73,6 +73,19 @@ defmodule CadetWeb.AuthControllerTest do
         assert response(conn, 400)
       end
     end
+
+    test "invalid nusnet id", %{conn: conn} do
+      # an invalid nusnet id == ~s("") is typically caught by IVLE.fetch_nusnet_id
+      # the custom cassette skips this step so that we can test Accounts.sign_in
+      use_cassette "auth_controller/v1/auth#1", custom: true do
+        conn =
+          post(conn, "/v1/auth", %{
+            "login" => %{"ivle_token" => 'token'}
+          })
+
+        assert response(conn, 400)
+      end
+    end
   end
 
   describe "POST /auth/refresh" do
