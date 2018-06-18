@@ -6,20 +6,20 @@ defmodule Cadet.Accounts.Query do
 
   alias Cadet.Accounts.Authorization
 
-  def user_emails(user_id) do
+  def user_nusnet_ids(user_id) do
     Authorization
-    |> emails
+    |> nusnet_ids
     |> of_user(user_id)
   end
 
-  def email(uid) do
+  def nusnet_id(uid) do
     Authorization
-    |> emails
+    |> nusnet_ids
     |> of_uid(uid)
   end
 
-  defp emails(query) do
-    query |> where([a], a.provider == "email")
+  defp nusnet_ids(query) do
+    query |> where([a], a.provider == "nusnet_id")
   end
 
   defp of_user(query, user_id) do

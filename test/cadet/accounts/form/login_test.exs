@@ -4,11 +4,11 @@ defmodule Cadet.Accounts.LoginTest do
   alias Cadet.Accounts.Form.Login
 
   valid_changesets Login do
-    %{email: "some@gmail.com", password: "somepassword"}
+    %{ivle_token: "T0K3N"}
   end
 
   invalid_changesets Login do
-    %{email: "", password: "somepassword"}
-    %{email: "some@gmail.com", password: ""}
+    %{ivle_token: ""}
+    %{}
   end
 end

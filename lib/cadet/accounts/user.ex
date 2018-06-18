@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.User do
   @moduledoc """
   The User entity represents a user.
-  It stores basic information such as first name, last name, and e-mail.
+  It stores basic information such as name and role
   Each user is associated to one `role` which determines the access level
   of the user.
   """
@@ -10,19 +10,17 @@ defmodule Cadet.Accounts.User do
   alias Cadet.Accounts.Role
 
   schema "users" do
-    field(:first_name, :string)
-    field(:last_name, :string)
+    field(:name, :string)
     field(:role, Role)
 
     timestamps()
   end
 
-  @required_fields ~w(first_name role)a
-  @optional_fields ~w(last_name)a
+  @required_fields ~w(name role)a
 
   def changeset(user, params \\ %{}) do
     user
-    |> cast(params, @required_fields ++ @optional_fields)
+    |> cast(params, @required_fields)
     |> validate_required(@required_fields)
     |> validate_inclusion(:role, Role.__valid_values__())
   end
