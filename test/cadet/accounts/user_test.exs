@@ -4,12 +4,13 @@ defmodule Cadet.Accounts.UserTest do
   alias Cadet.Accounts.User
 
   valid_changesets User do
-    %{first_name: "happy people", role: :admin}
-    %{first_name: "happy", last_name: "people", role: :student}
+    %{name: "happy people", role: :admin}
+    %{name: "happy", role: :student}
   end
 
   invalid_changesets User do
-    %{last_name: "people", role: :student}
-    %{first_name: "happy", last_name: "people", role: :avenger}
+    %{name: "people"}
+    %{role: :avenger}
+    %{name: "", role: :student}
   end
 end

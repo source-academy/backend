@@ -17,16 +17,15 @@ defmodule Cadet.Factory do
 
   def user_factory do
     %User{
-      first_name: "John Smith",
+      name: "John Smith",
       role: :student
     }
   end
 
-  def email_factory do
+  def nusnet_id_factory do
     %Authorization{
-      provider: :email,
-      uid: sequence(:email, &"email-#{&1}@example.com"),
-      token: sequence(:token, &"token-#{&1}"),
+      provider: :nusnet_id,
+      uid: sequence(:nusnet_id, &"E#{&1}"),
       user: build(:user)
     }
   end

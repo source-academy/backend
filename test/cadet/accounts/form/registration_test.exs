@@ -5,39 +5,35 @@ defmodule Cadet.Accounts.Form.RegistrationTest do
 
   valid_changesets Registration do
     %{
-      first_name: "happy",
-      email: "some@gmail.com",
-      password: "mypassword",
-      password_confirmation: "mypassword"
+      name: "happy",
+      nusnet_id: "e853820"
     }
   end
 
   invalid_changesets Registration do
+    %{}
+
     %{
-      email: "some@gmail.com",
-      password: "mypassword",
-      password_confirmation: "mypassword"
+      name: "happy"
     }
 
     %{
-      first_name: "happy",
-      email: "some@gmail.com",
-      password: "mypassword",
-      password_confirmation: "doesnotmatch"
+      nusnet_id: "e853820"
     }
 
     %{
-      first_name: "happy",
-      email: "somegmail.com",
-      password: "mypassword",
-      password_confirmation: "mypassword"
+      name: "",
+      nusnet_id: ""
     }
 
     %{
-      first_name: "happy",
-      email: "some@gmail.com",
-      password: "passwor",
-      password_confirmation: "passwor"
+      name: "",
+      nusnet_id: "e853820"
+    }
+
+    %{
+      name: "happy",
+      nusnet_id: ""
     }
   end
 end
