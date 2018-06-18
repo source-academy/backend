@@ -1,4 +1,4 @@
-defmodule Cadet.Accounts.IvleTest do
+defmodule Cadet.Accounts.IVLETest do
   @moduledoc """
   This test module uses pre-recoreded HTTP responses saved by ExVCR. This
   allows testing without actual external IVLE API calls.
@@ -18,7 +18,7 @@ defmodule Cadet.Accounts.IvleTest do
   use ExUnit.Case, async: false
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  alias Cadet.Accounts.Ivle
+  alias Cadet.Accounts.IVLE
 
   @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 
@@ -29,14 +29,14 @@ defmodule Cadet.Accounts.IvleTest do
   describe "Fetch an NUSNET ID" do
     test "Using a valid token" do
       use_cassette "ivle/fetch_nusnet_id#1" do
-        assert {:ok, resp} = Ivle.fetch_nusnet_id(@token)
+        assert {:ok, resp} = IVLE.fetch_nusnet_id(@token)
         assert String.length(resp) > 0
       end
     end
 
     test "Using an invalid token" do
       use_cassette "ivle/fetch_nusnet_id#2" do
-        assert {:error, resp} = Ivle.fetch_nusnet_id(@token <> "Z")
+        assert {:error, resp} = IVLE.fetch_nusnet_id(@token <> "Z")
         assert resp == :bad_request
       end
     end
@@ -45,14 +45,14 @@ defmodule Cadet.Accounts.IvleTest do
   describe "Fetch a name" do
     test "Using a valid token" do
       use_cassette "ivle/fetch_name#1" do
-        assert {:ok, resp} = Ivle.fetch_name(@token)
+        assert {:ok, resp} = IVLE.fetch_name(@token)
         assert String.length(resp) > 0
       end
     end
 
     test "Using an invalid token" do
       use_cassette "ivle/fetch_name#2" do
-        assert {:error, resp} = Ivle.fetch_name(@token <> "Z")
+        assert {:error, resp} = IVLE.fetch_name(@token <> "Z")
         assert resp == :bad_request
       end
     end

@@ -6,7 +6,7 @@ defmodule CadetWeb.AuthController do
 
   alias Cadet.Accounts
   alias Cadet.Accounts.Form.Login
-  alias Cadet.Accounts.Ivle
+  alias Cadet.Accounts.IVLE
   alias Cadet.Auth.Guardian
 
   @doc """
@@ -21,7 +21,7 @@ defmodule CadetWeb.AuthController do
 
     with valid = changeset.valid?,
          {:changes, login} when valid <- {:changes, apply_changes(changeset)},
-         {:fetch, {:ok, nusnet_id}} <- {:fetch, Ivle.fetch_nusnet_id(login.ivle_token)},
+         {:fetch, {:ok, nusnet_id}} <- {:fetch, IVLE.fetch_nusnet_id(login.ivle_token)},
          {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, login.ivle_token)} do
       {:ok, access_token, _} =
         Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})

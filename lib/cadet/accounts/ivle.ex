@@ -1,4 +1,4 @@
-defmodule Cadet.Accounts.Ivle do
+defmodule Cadet.Accounts.IVLE do
   @moduledoc """
   Helper functions to IVLE calls. All helper functions are prefixed with fetch
   to differentiate them from database helpers, or other 'getters'.
@@ -26,7 +26,7 @@ defmodule Cadet.Accounts.Ivle do
 
   ## Examples
 
-      iex> Cadet.Accounts.Ivle.fetch_nusnet_id("T0K3N...")
+      iex> Cadet.Accounts.IVLE.fetch_nusnet_id("T0K3N...")
       {:ok, "e012345"}
 
   """
@@ -47,7 +47,7 @@ defmodule Cadet.Accounts.Ivle do
 
   ## Examples
 
-      iex> Cadet.Accounts.Ivle.fetch_name("T0K3N...")
+      iex> Cadet.Accounts.IVLE.fetch_name("T0K3N...")
       {:ok, "LEE NING YUAN"}
 
   """
