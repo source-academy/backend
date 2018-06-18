@@ -25,12 +25,12 @@ Initialise development database
 
     mix ecto.setup
 
-Replace the value of `IVLE_KEY` in the `.env` file with your [IVLE LAPI Key
-](https://ivle.nus.edu.sg/LAPI/default.aspx). If you've compiled the
-application before setting a valid value, you must force a recompilation with
-`mix clean && mix`.
+Copy the file `.env.example` as `.env` in the project root, and replace the
+value of `IVLE_KEY` in with your [IVLE LAPI Key](https://ivle.nus.edu.sg/LAPI/default.aspx).
+If you've compiled the application before setting a valid value, you must force
+a recompilation with `mix clean && mix`.
 
-    export IVLE_KEY=your_ivle_lapi_key
+    IVLE_KEY=your_ivle_lapi_key
 
 Run the server in your local machine
 
