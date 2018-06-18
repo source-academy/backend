@@ -14,18 +14,15 @@ import Cadet.Factory
 if Application.get_env(:cadet, :environment) == :dev do
   seeded_users = [
     %{
-      first_name: "Test",
-      last_name: "Student",
+      name: "TestStudent",
       role: :student
     },
     %{
-      first_name: "Test",
-      last_name: "Staff",
+      name: "TestStaff",
       role: :staff
     },
     %{
-      first_name: "Test",
-      last_name: "Admin",
+      name: "TestAdmin",
       role: :admin
     }
   ]
@@ -33,10 +30,6 @@ if Application.get_env(:cadet, :environment) == :dev do
   Enum.each(seeded_users, fn attr ->
     user = insert(:user, attr)
 
-    insert(:email, %{
-      uid: attr.first_name <> attr.last_name <> "@test.com",
-      token: Pbkdf2.hash_pwd_salt("password"),
-      user: user
-    })
+    insert(:nusnet_id, %{user: user})
   end)
 end

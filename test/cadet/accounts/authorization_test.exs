@@ -4,12 +4,12 @@ defmodule Cadet.Accounts.AuthorizationTest do
   alias Cadet.Accounts.Authorization
 
   valid_changesets Authorization do
-    %{provider: :email, uid: "some@gmail.com", token: "sometoken", user_id: 2}
+    %{provider: :nusnet_id, uid: "E012345", user_id: 2}
   end
 
   invalid_changesets Authorization do
-    %{provider: :email, uid: "some@gmail.com", user_id: 2}
-    %{provider: :email, token: "sometoken", user_id: 2}
-    %{provider: :facebook, utoken: "sometoken", user_id: 2}
+    %{provider: :nusnet_id, uid: "", user_id: 2}
+    %{provider: :facebook, uid: "E012345", user_id: :unknown}
+    %{provider: :email, user_id: 2}
   end
 end
