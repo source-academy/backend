@@ -35,10 +35,12 @@ defmodule CadetWeb.GradingController do
     response(401, "Unauthorised")
   end
 
-  swagger_path :update_comment do
+  swagger_path :update do
     post("/grading/{submissionId}/{questionId}")
 
-    summary("Update comment given to the answer of a particular qurrstion in a submission")
+    summary(
+      "Update comment and/or marks given to the answer of a particular qurrstion in a submission"
+    )
 
     security([%{JWT: []}])
 
@@ -48,28 +50,7 @@ defmodule CadetWeb.GradingController do
     parameters do
       submissionId(:path, :integer, "submission id", required: true)
       questionId(:path, :integer, "question id", required: true)
-      comment(:body, Schema.ref(:Comment), "comment given for a question", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Invalid or missing parameter(s) or submission and/or question not found")
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :update_mark do
-    post("/grading/{submissionId}")
-
-    summary("Update marks of a submission")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      submissionId(:path, :integer, "submission id", required: true)
-      questionId(:path, :integer, "question id", required: true)
-      mark(:body, Schema.ref(:Mark), "mark given for a question", required: true)
+      grading(:body, Schema.ref(:Grade), "comment given for a question", required: true)
     end
 
     response(200, "OK")
@@ -103,9 +84,8 @@ defmodule CadetWeb.GradingController do
         swagger_schema do
           properties do
             answer(Schema.ref(:Answer))
-            marks(:integer, "Marks given to this answer", required: true)
-            weight(:integer, "the max xp that can be given to this question", required: true)
-            comment(:string, "existing comments if present", required: true)
+            grade(Schema.ref(:Grade))
+            max_xp(:integer, "the max xp that can be given to this question", required: true)
           end
         end,
       Answer:
@@ -114,16 +94,11 @@ defmodule CadetWeb.GradingController do
             code(:string, "Code provided by student", required: true)
           end
         end,
-      Comment:
+      Grade:
         swagger_schema do
           properties do
-            comment(:string, "comment given", required: true)
-          end
-        end,
-      Mark:
-        swagger_schema do
-          properties do
-            exp(:integer, "xp given", required: true)
+            comment(:string, "comment given")
+            xp(:integer, "xp given")
           end
         end
     }

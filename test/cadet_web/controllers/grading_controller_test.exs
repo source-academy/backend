@@ -7,5 +7,6 @@ defmodule CadetWeb.GradingControllerTest do
     GradingController.swagger_definitions()
     GradingController.swagger_path_index(nil)
     GradingController.swagger_path_show(nil)
+    GradingController.swagger_path_update(nil)
   end
 end
