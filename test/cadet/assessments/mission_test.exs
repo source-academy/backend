@@ -8,7 +8,7 @@ defmodule Cadet.Assessments.MissionTest do
       category: :mission,
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-      close_at: Timex.shift(Timex.now(), days: 7) |> Timex.to_unix() |> Integer.to_string(),
+      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
       max_xp: 100
     }
 
@@ -16,7 +16,7 @@ defmodule Cadet.Assessments.MissionTest do
       category: :mission,
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-      close_at: Timex.shift(Timex.now(), days: 7) |> Timex.to_unix() |> Integer.to_string(),
+      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
       max_xp: 100,
       cover_picture: build_upload("test/fixtures/upload.png", "image/png"),
       mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
@@ -28,7 +28,7 @@ defmodule Cadet.Assessments.MissionTest do
       category: :mission,
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-      close_at: Timex.shift(Timex.now(), days: 7) |> Timex.to_unix() |> Integer.to_string(),
+      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
       max_xp: -100
     }
 
