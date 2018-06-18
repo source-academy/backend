@@ -80,7 +80,7 @@ defmodule CadetWeb.AuthControllerTest do
       use_cassette "auth_controller/v1/auth#1", custom: true do
         conn =
           post(conn, "/v1/auth", %{
-            "login" => %{"ivle_token" => 'token'}
+            "login" => %{"ivle_token" => "token"}
           })
 
         assert response(conn, 400)
