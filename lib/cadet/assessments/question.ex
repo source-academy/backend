@@ -5,7 +5,7 @@ defmodule Cadet.Assessments.Question do
   """
   use Cadet, :model
 
-  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.ProblemType
   alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
   alias Cadet.Assessments.QuestionTypes.MCQQuestion
@@ -17,7 +17,7 @@ defmodule Cadet.Assessments.Question do
     field(:question, :map)
     field(:type, ProblemType)
     field(:raw_question, :string, virtual: true)
-    belongs_to(:mission, Mission)
+    belongs_to(:assessment, Assessment)
     timestamps()
   end
 

@@ -3,6 +3,8 @@ defmodule Cadet.ModelHelper do
   This module contains helper for the models.
   """
 
+  import Ecto.Changeset
+
   alias Timex.Timezone
 
   def convert_date(params, field) do
@@ -18,6 +20,18 @@ defmodule Cadet.ModelHelper do
       Map.put(params, field, date)
     else
       params
+    end
+  end
+
+  def put_json(changeset, field, json_field) do
+    change = get_change(changeset, json_field)
+
+    if change do
+      json = Poison.decode!(change)
+
+      put_change(changeset, field, json)
+    else
+      changeset
     end
   end
 end

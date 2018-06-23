@@ -10,7 +10,7 @@ defmodule Cadet.Repo.Migrations.CreateSubmissions do
       add(:status, :status)
       add(:submitted_at, :datetime)
       add(:override_xp, :integer)
-      add(:mission_id, references(:missions))
+      add(:assessment_id, references(:assessments))
       add(:student_id, references(:users))
       add(:grader_id, references(:users))
       timestamps()

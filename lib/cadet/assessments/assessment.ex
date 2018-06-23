@@ -1,6 +1,6 @@
-defmodule Cadet.Assessments.Mission do
+defmodule Cadet.Assessments.Assessment do
   @moduledoc """
-  The Mission entity stores metadata of a students' assessment
+  The Assessment entity stores metadata of a students' assessment
   (mission, sidequest, path, and contest)
   """
   use Cadet, :model
@@ -11,7 +11,7 @@ defmodule Cadet.Assessments.Mission do
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Upload
 
-  schema "missions" do
+  schema "assessments" do
     field(:title, :string)
     field(:is_published, :boolean, default: false)
     field(:category, Category)

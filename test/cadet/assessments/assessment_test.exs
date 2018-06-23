@@ -1,9 +1,9 @@
-defmodule Cadet.Assessments.MissionTest do
+defmodule Cadet.Assessments.AssessmentTest do
   use Cadet.ChangesetCase, async: true
 
-  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Assessment
 
-  valid_changesets Mission do
+  valid_changesets Assessment do
     %{
       category: :mission,
       title: "mission",
@@ -23,7 +23,7 @@ defmodule Cadet.Assessments.MissionTest do
     }
   end
 
-  invalid_changesets Mission do
+  invalid_changesets Assessment do
     %{
       category: :mission,
       title: "mission",

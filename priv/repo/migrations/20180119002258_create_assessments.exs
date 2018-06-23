@@ -6,7 +6,7 @@ defmodule Cadet.Repo.Migrations.CreateMissions do
   def up do
     Category.create_type()
 
-    create table(:missions) do
+    create table(:assessments) do
       add(:order, :string, null: false)
       add(:category, :category, null: false)
       add(:title, :string, null: false)
@@ -15,19 +15,23 @@ defmodule Cadet.Repo.Migrations.CreateMissions do
       add(:open_at, :timestamp, null: false)
       add(:close_at, :timestamp, null: false)
       add(:cover_picture, :string)
+      add(:mission_pdf, :string)
+      add(:is_published, :boolean, null: false)
+      add(:max_xp, :integer)
+      add(:priority, :integer)
       timestamps()
     end
 
-    create(index(:missions, [:order], using: :hash))
-    create(index(:missions, [:open_at]))
-    create(index(:missions, [:close_at]))
+    create(index(:assessments, [:order], using: :hash))
+    create(index(:assessments, [:open_at]))
+    create(index(:assessments, [:close_at]))
   end
 
   def down do
-    drop(index(:missions, [:order]))
-    drop(index(:missions, [:open_at]))
-    drop(index(:missions, [:close_at]))
-    drop(table(:missions))
+    drop(index(:assessments, [:order]))
+    drop(index(:assessments, [:open_at]))
+    drop(index(:assessments, [:close_at]))
+    drop(table(:assessments))
 
     Category.drop_type()
   end

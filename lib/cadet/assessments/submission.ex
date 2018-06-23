@@ -4,7 +4,7 @@ defmodule Cadet.Assessments.Submission do
 
   alias Cadet.Assessments.SubmissionStatus
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Answer
 
   schema "submissions" do
@@ -12,7 +12,7 @@ defmodule Cadet.Assessments.Submission do
     field(:submitted_at, Timex.Ecto.DateTime)
     field(:override_xp, :integer)
 
-    belongs_to(:mission, Mission)
+    belongs_to(:assessment, Assessment)
     belongs_to(:student, User)
     belongs_to(:grader, User)
     has_many(:answers, Answer)

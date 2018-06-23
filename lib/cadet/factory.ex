@@ -12,7 +12,7 @@ defmodule Cadet.Factory do
   alias Cadet.Course.Point
   alias Cadet.Course.Group
   alias Cadet.Course.Material
-  alias Cadet.Assessments.Mission
+  alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
 
   def user_factory do
@@ -80,12 +80,14 @@ defmodule Cadet.Factory do
     }
   end
 
-  def mission_factory do
-    %Mission{
-      title: "mission",
+  def assessment_factory do
+    %Assessment{
+      title: "assessment",
       category: Enum.random([:mission, :sidequest, :contest, :path]),
       open_at: Timex.now(),
-      close_at: Timex.shift(Timex.now(), days: Enum.random(1..30))
+      close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
+      max_xp: 100,
+      is_published: false
     }
   end
 
@@ -95,7 +97,7 @@ defmodule Cadet.Factory do
       weight: Enum.random(1..10),
       question: %{},
       type: Enum.random([:programming, :multiple_choice]),
-      mission: build(:mission)
+      assessment: build(:assessment)
     }
   end
 end
