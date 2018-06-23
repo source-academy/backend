@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.Authorization do
   @moduledoc """
   The User entity represents a user.
-  It stores basic information such as first name, last name, and e-mail.
+  It stores basic information such as name, NUSNET ID, and e-mail.
   Each user is associated to one `role` which determines the access level
   of the user.
   """
@@ -13,14 +13,13 @@ defmodule Cadet.Accounts.Authorization do
   schema "authorizations" do
     field(:provider, Provider)
     field(:uid, :string)
-    field(:token, :string)
     field(:refresh_token, :string)
     field(:expires_at, :integer)
 
     belongs_to(:user, User)
   end
 
-  @required_fields ~w(provider uid token)a
+  @required_fields ~w(provider uid)a
   @optional_fields ~w(refresh_token expires_at)a
 
   def changeset(authorization, params \\ %{}) do

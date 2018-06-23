@@ -1,40 +1,59 @@
 defmodule CadetWeb.AuthController do
   use CadetWeb, :controller
+  use PhoenixSwagger
 
   import Ecto.Changeset
 
-  use PhoenixSwagger
-
   alias Cadet.Accounts
+  alias Cadet.Accounts.Form.Login
+  alias Cadet.Accounts.IVLE
   alias Cadet.Auth.Guardian
-  alias Cadet.Accounts.Form
 
+  @doc """
+  Receives a /login request with valid attributes (`Login form`).
+
+  If the user is already registered in our database, simply return `Tokens`. If
+  the user has not been registered before, register the user, then return the
+  `Tokens`.
+  """
   def create(conn, %{"login" => attrs}) do
-    changeset = Form.Login.changeset(%Form.Login{}, attrs)
+    changeset = Login.changeset(%Login{}, attrs)
 
-    if changeset.valid? do
-      login = apply_changes(changeset)
+    with valid = changeset.valid?,
+         {:changes, login} when valid <- {:changes, apply_changes(changeset)},
+         {:fetch, {:ok, nusnet_id}} <- {:fetch, IVLE.fetch_nusnet_id(login.ivle_token)},
+         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, login.ivle_token)} do
+      {:ok, access_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
 
-      case Accounts.sign_in(login.email, login.password) do
-        {:ok, user} ->
-          {:ok, access_token, _} =
-            Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
+      {:ok, refresh_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
 
-          {:ok, refresh_token, _} =
-            Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
-
-          render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
-
-        {:error, _reason} ->
-          send_resp(conn, :forbidden, "Wrong email and/or password")
-      end
+      render(
+        conn,
+        "token.json",
+        access_token: access_token,
+        refresh_token: refresh_token
+      )
     else
-      send_resp(conn, :bad_request, "Missing parameters")
+      {:changes, _} ->
+        send_resp(conn, :bad_request, "Missing parameter")
+
+      {:fetch, {:error, reason}} ->
+        # reason can be :bad_request or :internal_server_error
+        send_resp(conn, reason, "Unable to fetch NUSNET ID from IVLE.")
+
+      {:signin, {:error, reason}} ->
+        # reason can be :bad_request or :internal_server_error
+        send_resp(conn, reason, "Unable to retrieve user")
     end
   end
 
+  @doc """
+  Receives a /login request with invalid attributes.
+  """
   def create(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameters")
+    send_resp(conn, :bad_request, "Missing parameter")
   end
 
   def refresh(conn, %{"refresh_token" => refresh_token}) do
@@ -73,7 +92,12 @@ defmodule CadetWeb.AuthController do
     summary("Obtain access and refresh tokens to authenticate user.")
 
     description(
-      "When accessing resources, pass the access token in the Authorization HTTP header using the Bearer schema: `Authorization: Bearer <token>`. The access token expires 1 hour after issuance while the refresh token expires 1 year after issuance. When access token expires, the refresh token can be used to obtain a new access token."
+      "Get a set of access and refresh tokens, using the authentication token " <>
+        "from IVLE. When accessing resources, pass the access token in the " <>
+        "Authorization HTTP header using the Bearer schema: `Authorization: " <>
+        "Bearer <token>`. The access token expires 1 hour after issuance while " <>
+        "the refresh token expires 1 year after issuance. When access token " <>
+        "expires, the refresh token can be used to obtain a new access token. "
     )
 
     consumes("application/json")
@@ -84,8 +108,8 @@ defmodule CadetWeb.AuthController do
     end
 
     response(200, "OK", Schema.ref(:Tokens))
-    response(400, "Missing parameter(s)")
-    response(403, "Wrong login attributes")
+    response(400, "Missing or invalid parameter")
+    response(500, "Internal server error")
   end
 
   swagger_path :refresh do
@@ -133,8 +157,7 @@ defmodule CadetWeb.AuthController do
             login(
               Schema.new do
                 properties do
-                  email(:string, "Email of user", required: true)
-                  password(:string, "Password of user", required: true)
+                  ivle_token(:string, "IVLE authentication token", required: true)
                 end
               end
             )
@@ -142,7 +165,19 @@ defmodule CadetWeb.AuthController do
 
           required(:login)
 
-          example(%{login: %{email: "TestAdmin@test.com", password: "password"}})
+          example(%{
+            login: %{
+              ivle_token:
+                "058DA4D1692CEA834A9311G704BA438P9BA2E1829D3N1B5F39F25556FBDB2B" <>
+                  "0FA7B08361C77A75127908704BF2CIDC034F7N4B1217441412B0E3CB5B544E" <>
+                  "EBP2ED8D0D2ABAF2F6A021B7F4GE5F648F64E02B3E36B1V755CC776EEAE38C" <>
+                  "D58D46D1493426C4BC17F276L4E74C835C2C5338C01APFF1DE580D3D559A9A" <>
+                  "7FB3013A0FE7DED7ADC45654ABB5C170460F308F42UECF2D76F2CCC0B21B1F" <>
+                  "IE5B5892D398F4670658V87A6DBA1E16F64AEEB8PD51B1FD7C858F8BECE8G4" <>
+                  "E62DD0EB54F761C1F6T0290FABC27AEB1B707FB4BD1B466C32CE08FDAEB25B" <>
+                  "D9B6F3D75CE9A086ACBD72641EBCC1E3A3A7WA82FDFA8D"
+            }
+          })
         end,
       Tokens:
         swagger_schema do

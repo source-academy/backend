@@ -20,8 +20,7 @@
         #
         # You can give explicit globs or simply directories.
         # In the latter case `**/*.{ex,exs}` will be used.
-        #
-        included: ["lib/", "src/", "web/", "apps/"],
+        included: ["lib/", "src/", "web/", "apps/", "test/"],
         excluded: [~r"/_build/", ~r"/deps/"]
       },
       #
@@ -128,11 +127,7 @@
 
         # Deprecated checks (these will be deleted after a grace period)
         #
-        {Credo.Check.Readability.Specs, false},
-        {Credo.Check.Warning.NameRedeclarationByAssignment, false},
-        {Credo.Check.Warning.NameRedeclarationByCase, false},
-        {Credo.Check.Warning.NameRedeclarationByDef, false},
-        {Credo.Check.Warning.NameRedeclarationByFn, false}
+        {Credo.Check.Readability.Specs, false}
 
         # Custom checks can be created using `mix credo.gen.check`.
         #
