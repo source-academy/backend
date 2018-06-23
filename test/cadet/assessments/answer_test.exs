@@ -26,7 +26,7 @@ defmodule Cadet.Assessments.AnswerTest do
       marks: 100,
       answer: %{},
       type: :programming,
-      raw_answer: ~s({"answer": "This is a sample json"})
+      raw_answer: Poison.encode!(%{answer: "This is a sample json"})
     }
   end
 

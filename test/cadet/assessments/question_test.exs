@@ -26,9 +26,8 @@ defmodule Cadet.Assessments.QuestionTest do
       weight: 4,
       question: %{},
       type: :programming,
-      raw_library: ~s({"week": 5, "globals": [], "externals": [],
-        "files": []}),
-      raw_question: ~s({"question": "This is a sample json"})
+      raw_library: Poison.encode!(%{week: 5, globals: [], externals: [], files: []}),
+      raw_question: Poison.encode!(%{question: "This is a sample json"})
     }
   end
 

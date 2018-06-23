@@ -13,7 +13,12 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
 
     %{
       raw_programmingquestion:
-        "{\"solution_template\":\"asd\",\"solution_header\":\"asd\",\"solution\":\"asd\",\"content\":\"asd\",\"library\":{\"version\":1}}"
+        Poison.encode!(%{
+          content: "asd",
+          solution_template: "asd",
+          solution: "asd",
+          library: %{version: 1}
+        })
     }
   end
 
