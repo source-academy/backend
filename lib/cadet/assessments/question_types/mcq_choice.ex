@@ -2,7 +2,6 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
   @moduledoc """
   The Assessments.QuestionTypes.MCQChoice entity represents an MCQ Choice.
   """
-
   use Cadet, :model
 
   embedded_schema do
