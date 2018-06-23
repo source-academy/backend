@@ -1,6 +1,6 @@
 import EctoEnum
 
 defenum(Cadet.Accounts.Provider, :provider, [
-  # Email provides e-mail and password based authorization 
-  :email
+  # An IVLE authentication token provides a NUSNET ID to track user identity
+  :nusnet_id
 ])

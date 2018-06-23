@@ -1,10 +1,33 @@
 defmodule CadetWeb.AuthControllerTest do
+  @moduledoc """
+  Some tests in this module use pre-recorded HTTP responses saved by ExVCR.
+  this allows testing without the use of actual external IVLE API calls.
+
+  In the case that you need to change the recorded responses, you will need
+  to set the two environment variables IVLE_KEY (used as a module attribute in
+  `Cadet.Accounts.IVLE`) and TOKEN (used here). Don't forget to delete the
+  cassette files, otherwise ExVCR will not override the cassettes.
+
+  Token refers to the user's authentication token. Please see the IVLE API docs:
+  https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
+  To quickly obtain a token, simply supply a dummy url to a login call:
+      https://ivle.nus.edu.sg/api/login/?apikey=YOUR_API_KEY&url=http://localhost
+  then copy down the token from your browser's address bar.
+  """
+
   use CadetWeb.ConnCase
+  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   import Cadet.Factory
 
   alias CadetWeb.AuthController
   alias Cadet.Auth.Guardian
+
+  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
+
+  setup_all do
+    HTTPoison.start()
+  end
 
   test "swagger" do
     AuthController.swagger_definitions()
@@ -13,77 +36,55 @@ defmodule CadetWeb.AuthControllerTest do
     AuthController.swagger_path_logout(nil)
   end
 
-  describe "POST /v1/auth" do
+  describe "POST /auth" do
+    test "success", %{conn: conn} do
+      use_cassette "auth_controller/v1/auth#1" do
+        conn =
+          post(conn, "/v1/auth", %{
+            "login" => %{"ivle_token" => @token}
+          })
+
+        assert response(conn, 200)
+      end
+    end
+
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth", %{})
 
       assert response(conn, 400)
     end
 
-    test "blank email", %{conn: conn} do
+    test "blank token", %{conn: conn} do
       conn =
         post(conn, "/v1/auth", %{
-          "login" => %{"email" => "", "password" => "password"}
+          "login" => %{"ivle_token" => ""}
         })
 
       assert response(conn, 400)
     end
 
-    test "blank password", %{conn: conn} do
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{"email" => "test@test.com", "password" => ""}
-        })
+    test "invalid token", %{conn: conn} do
+      use_cassette "auth_controller/v1/auth#2" do
+        conn =
+          post(conn, "/v1/auth", %{
+            "login" => %{"ivle_token" => @token <> "Z"}
+          })
 
-      assert response(conn, 400)
+        assert response(conn, 400)
+      end
     end
 
-    test "email not found", %{conn: conn} do
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{"email" => "unknown@test.com", "password" => "password"}
-        })
+    test "invalid nusnet id", %{conn: conn} do
+      # an invalid nusnet id == ~s("") is typically caught by IVLE.fetch_nusnet_id
+      # the custom cassette skips this step so that we can test Accounts.sign_in
+      use_cassette "auth_controller/v1/auth#1", custom: true do
+        conn =
+          post(conn, "/v1/auth", %{
+            "login" => %{"ivle_token" => "token"}
+          })
 
-      assert response(conn, 403)
-    end
-
-    test "invalid password", %{conn: conn} do
-      test_password = "password"
-      user = insert(:user)
-
-      email =
-        insert(:email, %{
-          token: Pbkdf2.hash_pwd_salt(test_password),
-          user: user
-        })
-
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{"email" => email.uid, "password" => "password2"}
-        })
-
-      assert response(conn, 403)
-    end
-
-    test "valid email and password", %{conn: conn} do
-      test_password = "password"
-      user = insert(:user)
-
-      email =
-        insert(:email, %{
-          token: Pbkdf2.hash_pwd_salt(test_password),
-          user: user
-        })
-
-      conn =
-        post(conn, "/v1/auth", %{
-          "login" => %{
-            "email" => email.uid,
-            "password" => test_password
-          }
-        })
-
-      assert json_response(conn, 200)
+        assert response(conn, 400)
+      end
     end
   end
 
