@@ -8,7 +8,10 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestionTest do
 
     %{
       raw_mcqquestion:
-        "{\"content\":\"asd\",\"choices\":[{\"choice_id\": 1, \"is_correct\":true,\"content\":\"asd\"}]}"
+        Poison.encode!(%{
+          content: "asd",
+          choices: [%{choice_id: 1, is_correct: true, content: "asd"}]
+        })
     }
   end
 
