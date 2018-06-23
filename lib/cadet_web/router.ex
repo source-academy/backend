@@ -36,9 +36,7 @@ defmodule CadetWeb.Router do
       post("/mcq", MCQAnswerController, :submit)
     end
 
-    resources("/missions", MissionsController, only: [:index, :show])
-    get("/missions/open", MissionsController, :open)
-    get("/missions/:id/questions", MissionsController, :questions)
+    resources("/assessments", AssessmentsController, only: [:index, :show])
 
     get("/grading", GradingController, :index)
     get("/grading/:submissionid/:questionid", GradingController, :show)
