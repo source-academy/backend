@@ -5,8 +5,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
   use Ecto.Schema
 
   import Ecto.Changeset
-
-  alias Cadet.Assessments.QuestionTypes.MCQQuestion
+  # TODO: use Cadet context after !34 is merged
 
   embedded_schema do
     field(:content, :string)
@@ -22,6 +21,6 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_number(:choice_id, greater_than: 0, less_than: 5)
+    |> validate_number(:choice_id, greater_than_or_equal_to: 0)
   end
 end
