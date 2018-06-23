@@ -79,18 +79,6 @@ defmodule Cadet.Assessments do
     Repo.get(Question, id)
   end
 
-  def get_assessment_and_questions(id) do
-    Repo.one(
-      from(
-        a in Assessment,
-        where: a.id == ^id,
-        left_join: q in Question,
-        on: q.assessment_id == ^id,
-        preload: [:question]
-      )
-    )
-  end
-
   def get_assessment(id) do
     Repo.get(Assessment, id)
   end
@@ -123,21 +111,7 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
-  def get_assessment_question(assessment, order) do
-    question =
-      Repo.get_by(
-        Question,
-        assessment_id: assessment.id,
-        display_order: order
-      )
-
-    if question == nil do
-      {:error, :question_not_found}
-    else
-      {:ok, question}
-    end
-  end
-
+  # TODO: Decide what to do with these methods
   # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
   #  %MCQQuestion{}
   #  |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})

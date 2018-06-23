@@ -2,7 +2,6 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   alias Cadet.Assessments
-  alias Cadet.Accounts
 
   test "all assessments" do
     assessments = Enum.map(insert_list(5, :assessment), & &1.id)
@@ -107,7 +106,13 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", weight: 5, type: :multiple_choice}
+    assert %{title: "question", weight: 5, type: :multiple_choice} = question
+  end
+
+  test "create invalid question" do
+    assessment = insert(:assessment)
+
+    assert {:error, _} = Assessments.create_question(%{}, assessment.id)
   end
 
   test "publish assessment" do
