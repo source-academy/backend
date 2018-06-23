@@ -1,11 +1,11 @@
 defmodule CadetWeb.AssessmentsControllerTest do
   use CadetWeb.ConnCase
 
-  alias CadetWeb.MissionsController
+  alias CadetWeb.AssessmentsController
 
   test "swagger" do
-    MissionsController.swagger_definitions()
-    MissionsController.swagger_path_index(nil)
-    MissionsController.swagger_path_show(nil)
+    AssessmentsController.swagger_definitions()
+    AssessmentsController.swagger_path_index(nil)
+    AssessmentsController.swagger_path_show(nil)
   end
 end
