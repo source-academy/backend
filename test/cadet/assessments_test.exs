@@ -109,6 +109,26 @@ defmodule Cadet.AssessmentsTest do
     assert %{title: "question", weight: 5, type: :multiple_choice} = question
   end
 
+  test "create question when there already exists questions" do
+    assessment = insert(:assessment)
+    _ = insert(:question, assessment: assessment, display_order: 1)
+
+    {:ok, question} =
+      Assessments.create_question(
+        %{
+          title: "question",
+          weight: 5,
+          type: :multiple_choice,
+          question: %{},
+          raw_question:
+            Poison.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
+        },
+        assessment.id
+      )
+
+    assert %{display_order: 2} = question
+  end
+
   test "create invalid question" do
     assessment = insert(:assessment)
 
