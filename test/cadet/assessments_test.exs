@@ -5,16 +5,10 @@ defmodule Cadet.AssessmentsTest do
   alias Cadet.Accounts
 
   test "all assessments" do
-    assessments = [
-      insert(:assessment),
-      insert(:assessment),
-      insert(:assessment),
-      insert(:assessment),
-      insert(:assessment)
-    ]
+    assessments = Enum.map(insert_list(5, :assessment), & &1.id)
 
-    result = Assessments.all_assessments()
-    assert Enum.all?(result, fn x -> x.id in Enum.map(assessments, fn m -> m.id end) end)
+    result = Enum.map(Assessments.all_assessments(), & &1.id)
+    assert result == assessments
   end
 
   test "all open assessments" do
@@ -34,8 +28,7 @@ defmodule Cadet.AssessmentsTest do
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert assessment.title == "assessment"
-    assert assessment.category == :mission
+    assert %{title: "assessment", category: :mission} = assessment
   end
 
   test "create sidequest" do
@@ -47,8 +40,7 @@ defmodule Cadet.AssessmentsTest do
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert assessment.title == "sidequest"
-    assert assessment.category == :sidequest
+    assert %{title: "sidequest", category: :sidequest} = assessment
   end
 
   test "create contest" do
@@ -60,8 +52,7 @@ defmodule Cadet.AssessmentsTest do
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert assessment.title == "contest"
-    assert assessment.category == :contest
+    assert %{title: "contest", category: :contest} = assessment
   end
 
   test "create path" do
@@ -73,8 +64,7 @@ defmodule Cadet.AssessmentsTest do
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert assessment.title == "path"
-    assert assessment.category == :path
+    assert %{title: "path", category: :path} = assessment
   end
 
   test "create programming question" do
@@ -87,15 +77,18 @@ defmodule Cadet.AssessmentsTest do
           weight: 5,
           type: :programming,
           question: %{},
-          raw_question: "{\"content\": \"asd\", \"solution_template\": \"template\",
-            \"solution\": \"soln\", \"library\": {\"version\": 1}}"
+          raw_question:
+            Poison.encode!(%{
+              content: "asd",
+              solution_template: "template",
+              solution: "soln",
+              library: %{version: 1}
+            })
         },
         assessment.id
       )
 
-    assert question.title == "question"
-    assert question.weight == 5
-    assert question.type == :programming
+    assert %{title: "question", weight: 5, type: :programming} = question
   end
 
   test "create multiple choice question" do
@@ -109,40 +102,28 @@ defmodule Cadet.AssessmentsTest do
           type: :multiple_choice,
           question: %{},
           raw_question:
-            "{\"content\":\"asd\",\"choices\":[{\"is_correct\":true,\"content\":\"asd\"}]}"
+            Poison.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
         },
         assessment.id
       )
 
-    assert question.title == "question"
-    assert question.weight == 5
-    assert question.type == :multiple_choice
+    assert %{title: "question", weight: 5, type: :multiple_choice}
   end
 
   test "publish assessment" do
-    {:ok, assessment} =
-      Assessments.create_assessment(%{
-        title: "assessment",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
+    assessment = insert(:assessment, is_published: false)
 
     {:ok, assessment} = Assessments.publish_assessment(assessment.id)
     assert assessment.is_published == true
   end
 
   test "update assessment" do
-    {:ok, assessment} =
-      Assessments.create_assessment(%{
-        title: "assessment",
-        category: :mission,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
+    assessment = insert(:assessment, title: "assessment")
 
     Assessments.update_assessment(assessment.id, %{title: "changed_assessment"})
+
     assessment = Assessments.get_assessment(assessment.id)
+
     assert assessment.title == "changed_assessment"
   end
 
@@ -158,25 +139,38 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "due assessments" do
-    assessment_before_now = insert(:assessment, close_at: Timex.now(), is_published: true)
+    assessment_before_now =
+      insert(
+        :assessment,
+        open_at: Timex.shift(Timex.now(), weeks: -1),
+        close_at: Timex.shift(Timex.now(), days: -2),
+        is_published: true
+      )
 
     assessment_in_timerange =
-      insert(:assessment, close_at: Timex.shift(Timex.now(), days: 4), is_published: true)
+      insert(
+        :assessment,
+        open_at: Timex.shift(Timex.now(), days: -1),
+        close_at: Timex.shift(Timex.now(), days: 4),
+        is_published: true
+      )
 
     assessment_far =
       insert(
         :assessment,
+        open_at: Timex.shift(Timex.now(), days: -2),
         close_at: Timex.shift(Timex.now(), weeks: 2),
         is_published: true
       )
 
     result = Enum.map(Assessments.assessments_due_soon(), fn m -> m.id end)
+
     assert assessment_in_timerange.id in result
+    refute assessment_before_now.id in result
     refute assessment_far.id in result
   end
 
   test "update question" do
-    assessment = insert(:assessment)
     question = insert(:question)
     Assessments.update_question(question.id, %{weight: 10})
     question = Assessments.get_question(question.id)
@@ -184,17 +178,8 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "delete question" do
-    assessment = insert(:assessment)
     question = insert(:question)
     Assessments.delete_question(question.id)
     assert Assessments.get_question(question.id) == nil
   end
-
-  # test "assessment and its questions" do
-  #  assessment1 = insert(:assessment)
-  #  assessment2 = insert(:assessment)
-  #  question1 = insert(:question) 
-  #  question2 = insert(:question)
-  #  assert assessment1 in Assessments.get_assessment_and_questions(assessment1.id)
-  # end
 end

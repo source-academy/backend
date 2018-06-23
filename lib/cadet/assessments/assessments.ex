@@ -34,7 +34,7 @@ defmodule Cadet.Assessments do
     all_assessments()
     |> Enum.filter(
       &(&1.is_published and Timex.before?(&1.open_at, now) and
-          Timex.before?(&1.close_at, week_after))
+          Timex.between?(&1.close_at, now, week_after))
     )
   end
 
