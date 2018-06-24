@@ -3,9 +3,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
   The Assessments.QuestionTypes.MCQQuestion entity represents an MCQ Question.
   It comprises of content and choices.
   """
-  use Ecto.Schema
-
-  import Ecto.Changeset
+  use Cadet, :model
 
   alias Cadet.Assessments.QuestionTypes.MCQChoice
 
@@ -21,9 +19,9 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
   def changeset(question, params \\ %{}) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
-    |> put_question()
+    |> put_question
     |> cast_embed(:choices, with: &MCQChoice.changeset/2, required: true)
-    |> validate_one_correct_answer()
+    |> validate_one_correct_answer
     |> validate_required(@required_fields ++ ~w(choices)a)
   end
 

@@ -2,9 +2,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
   @moduledoc """
   The ProgrammingQuestion entity represents a Programming question.
   """
-  use Ecto.Schema
-
-  import Ecto.Changeset
+  use Cadet, :model
 
   alias Cadet.Assessments.QuestionTypes.Library
 
@@ -23,7 +21,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
   def changeset(question, params \\ %{}) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
-    |> put_programmingquestion()
+    |> put_programmingquestion
     |> cast_embed(:library, required: true, with: &Library.changeset/2)
     |> validate_required(@required_fields)
   end

@@ -2,8 +2,7 @@ defmodule Cadet.Assessments.Upload do
   @moduledoc """
   Uploaded PDF file for the mission
   """
-  use Arc.Definition
-  use Arc.Ecto.Definition
+  use Cadet, :remote_assets
 
   @versions [:original]
 
