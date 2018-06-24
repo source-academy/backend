@@ -40,16 +40,14 @@ defmodule CadetWeb.AssessmentsController do
         swagger_schema do
           description("A list of all assessments")
           type(:array)
-          items(Schema.ref(:Assessment))
+          items(Schema.ref(:AssessmentOverview))
         end,
-      Assessment:
+      AssessmentOverview:
         swagger_schema do
           properties do
-            order(:integer, "The order of showing the assessments", required: true)
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            summary_long(:string, "Long summary", required: true)
             summary_short(:string, "Short summary", required: true)
             open_at(:string, "The opening date", format: "date-time", required: true)
             close_at(:string, "The closing date", format: "date-time", required: true)
@@ -61,9 +59,16 @@ defmodule CadetWeb.AssessmentsController do
             )
 
             cover_picture(:string, "The URL to the cover picture", required: true)
+          end
+        end,
+      Assessment:
+        swagger_schema do
+          properties do
+            id(:integer, "The assessment id", required: true)
+            title(:string, "The title of the assessment", required: true)
+            summary_long(:string, "Long summary", required: true)
             mission_pdf(:string, "The URL to the assessment pdf")
 
-            # Questions will only be returned for GET /assessments/{assessmentId}
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
           end
         end,
