@@ -48,8 +48,9 @@ defmodule Cadet.Assessments do
   end
 
   def create_assessment(params) do
-    changeset = build_assessment(params)
-    Repo.insert(changeset)
+    params
+    |> build_assessment
+    |> Repo.insert()
   end
 
   def update_assessment(id, params) do
@@ -71,9 +72,10 @@ defmodule Cadet.Assessments do
   end
 
   def publish_assessment(id) do
-    assessment = get_assessment(id)
-    changeset = change(assessment, %{is_published: true})
-    Repo.update(changeset)
+    id
+    |> get_assessment()
+    |> change(%{is_published: true})
+    |> Repo.update()
   end
 
   def get_question(id) do
