@@ -6,7 +6,11 @@ defmodule CadetWeb.AnswerController do
   swagger_path :submit do
     post("/assessments/question/{questionId}/submit")
 
-    summary("Submit an answer to a question")
+    summary("Submit an answer to a question.")
+
+    description(
+      "For MCQ, answer contains choice_id. For programming question, this is a string containing the student's code."
+    )
 
     security([%{JWT: []}])
 

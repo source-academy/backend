@@ -66,6 +66,7 @@ defmodule CadetWeb.AssessmentsController do
           properties do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
+            type(:string, "Either mission/sidequest/path/contest", required: true)
             summary_long(:string, "Long summary", required: true)
             mission_pdf(:string, "The URL to the assessment pdf")
 
