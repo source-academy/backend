@@ -88,12 +88,12 @@ defmodule CadetWeb.GradingController do
             max_xp(:integer, "the max xp that can be given to this question", required: true)
           end
         end,
-      Answer:
-        swagger_schema do
-          properties do
-            code(:string, "Code provided by student", required: true)
-          end
-        end,
+      # Answer:
+      #   swagger_schema do
+      #     properties do
+      #       code(:string, "Code provided by student", required: true)
+      #     end
+      #   end,
       Grade:
         swagger_schema do
           properties do

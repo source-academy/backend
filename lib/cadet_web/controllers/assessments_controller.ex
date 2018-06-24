@@ -76,21 +76,26 @@ defmodule CadetWeb.AssessmentsController do
       Question:
         swagger_schema do
           properties do
-            questionId(:integer, "question id", required: true)
-            questionType(:string, "the question type (mcq/programming)", required: true)
-            content(:string, "the question content", required: true)
+            questionId(:integer, "The question id", required: true)
+            questionType(:string, "The question type (mcq/programming)", required: true)
+            content(:string, "The question content", required: true)
 
             choices(
               Schema.new do
                 type(:array)
                 items(Schema.ref(:MCQChoice))
               end,
-              "mcq choices if question type is mcq"
+              "MCQ choices if question type is mcq"
+            )
+
+            solution(
+              Schema.ref(:MCQChoice),
+              "The correct choice for an MCQ question that belongs to a Path assessment"
             )
 
             answer(
               :string_or_integer,
-              "previous answer for this quesiton (string/int) depending on question type",
+              "Previous answer for this quesiton (string/int) depending on question type",
               required: true
             )
 
@@ -99,14 +104,14 @@ defmodule CadetWeb.AssessmentsController do
               "The library used for this question (programming questions only)"
             )
 
-            solution_template(:string, "solution template for programming questions")
+            solution_template(:string, "Solution template for programming questions")
           end
         end,
       MCQChoice:
         swagger_schema do
           properties do
-            content(:string, "the choice content", required: true)
-            hint(:string, "the hint", required: true)
+            content(:string, "The choice content", required: true)
+            hint(:string, "The hint", required: true)
           end
         end,
       Library:

@@ -29,14 +29,8 @@ defmodule CadetWeb.Router do
   scope "/", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
-    scope "/answer", Answer do
-      get("/programming/:id", ProgrammingAnswerController, :show)
-      post("/programming", ProgrammingAnswerController, :submit)
-      get("/mcq/:id", MCQAnswerController, :show)
-      post("/mcq", MCQAnswerController, :submit)
-    end
-
     resources("/assessments", AssessmentsController, only: [:index, :show])
+    post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
     get("/grading", GradingController, :index)
     get("/grading/:submissionid/:questionid", GradingController, :show)
