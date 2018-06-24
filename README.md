@@ -44,7 +44,7 @@ We are using following script as a `pre-push` hook.
 An automated way to install the script is:
 
   ```bash
-  echo > .git/hooks/pre-push <<EOL
+  cat > .git/hooks/pre-push <<EOL
     #!/bin/sh
 
     echo Running pre-push hooks...
