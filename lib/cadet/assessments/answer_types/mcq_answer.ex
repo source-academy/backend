@@ -3,10 +3,7 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
   The Assessments.QuestionTypes.MCQQuestion entity represents an MCQ Answer.
   It comprises of one of the MCQ choices.
   """
-  use Ecto.Schema
-
-  import Ecto.Changeset
-  # TODO: use Cadet context after !34 is merged
+  use Cadet, :model
 
   embedded_schema do
     field(:choice_id, :integer)
