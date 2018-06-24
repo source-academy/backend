@@ -28,6 +28,13 @@ defmodule CadetWeb.Router do
   # Authenticated Pages
   scope "/", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
+
+    resources("/assessments", AssessmentsController, only: [:index, :show])
+    post("/assessments/question/:questionid/submit", AnswerController, :submit)
+
+    get("/grading", GradingController, :index)
+    get("/grading/:submissionid", GradingController, :show)
+    post("/grading/:submissionid/:questionid", GradingController, :update)
   end
 
   # Other scopes may use custom stacks.
