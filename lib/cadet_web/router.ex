@@ -33,7 +33,7 @@ defmodule CadetWeb.Router do
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
     get("/grading", GradingController, :index)
-    get("/grading/:submissionid/:questionid", GradingController, :show)
+    get("/grading/:submissionid", GradingController, :show)
     post("/grading/:submissionid/:questionid", GradingController, :update)
   end
 

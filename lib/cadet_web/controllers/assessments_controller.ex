@@ -88,10 +88,7 @@ defmodule CadetWeb.AssessmentsController do
               "MCQ choices if question type is mcq"
             )
 
-            solution(
-              Schema.ref(:MCQChoice),
-              "The correct choice for an MCQ question that belongs to a Path assessment"
-            )
+            solution(:integer, "Solution to a mcq question if it belongs to path assessment")
 
             answer(
               :string_or_integer,
