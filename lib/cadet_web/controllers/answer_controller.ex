@@ -4,7 +4,7 @@ defmodule CadetWeb.AnswerController do
   use PhoenixSwagger
 
   swagger_path :submit do
-    get("/assessments/question/{questionId}/submit")
+    post("/assessments/question/{questionId}/submit")
 
     summary("Submit an answer to a question")
 
