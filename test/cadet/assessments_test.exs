@@ -70,7 +70,7 @@ defmodule Cadet.AssessmentsTest do
     assessment = insert(:assessment)
 
     {:ok, question} =
-      Assessments.create_question(
+      Assessments.create_question_for_assessment(
         %{
           title: "question",
           weight: 5,
@@ -94,7 +94,7 @@ defmodule Cadet.AssessmentsTest do
     assessment = insert(:assessment)
 
     {:ok, question} =
-      Assessments.create_question(
+      Assessments.create_question_for_assessment(
         %{
           title: "question",
           weight: 5,
@@ -114,7 +114,7 @@ defmodule Cadet.AssessmentsTest do
     _ = insert(:question, assessment: assessment, display_order: 1)
 
     {:ok, question} =
-      Assessments.create_question(
+      Assessments.create_question_for_assessment(
         %{
           title: "question",
           weight: 5,
@@ -132,7 +132,7 @@ defmodule Cadet.AssessmentsTest do
   test "create invalid question" do
     assessment = insert(:assessment)
 
-    assert {:error, _} = Assessments.create_question(%{}, assessment.id)
+    assert {:error, _} = Assessments.create_question_for_assessment(%{}, assessment.id)
   end
 
   test "publish assessment" do

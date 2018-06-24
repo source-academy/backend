@@ -24,6 +24,7 @@ defmodule Cadet.Assessments do
     now = Timex.now()
 
     assessment_with_category = Repo.all(from(a in Assessment, where: a.category == ^category))
+    # TODO: Refactor to be done on SQL instead of in-memory
     Enum.filter(assessment_with_category, &(&1.is_published and Timex.before?(&1.open_at, now)))
   end
 
@@ -83,7 +84,8 @@ defmodule Cadet.Assessments do
     Repo.get(Assessment, id)
   end
 
-  def create_question(params, assessment_id) do
+  def create_question_for_assessment(params, assessment_id)
+      when is_binary(assessment_id) or is_number(assessment_id) do
     assessment = get_assessment(assessment_id)
     create_question_for_assessment(params, assessment)
   end

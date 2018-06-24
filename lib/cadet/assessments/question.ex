@@ -33,7 +33,12 @@ defmodule Cadet.Assessments.Question do
   end
 
   defp put_question(changeset) do
-    {:ok, json} = Poison.decode(get_change(changeset, :raw_question) || "{}")
+    {:ok, json} =
+      changeset
+      |> get_change(:raw_question)
+      |> Kernel.||("{}")
+      |> Poison.decode()
+
     type = get_change(changeset, :type)
 
     case type do
@@ -41,16 +46,20 @@ defmodule Cadet.Assessments.Question do
         put_change(
           changeset,
           :question,
-          Map.from_struct(
-            apply_changes(ProgrammingQuestion.changeset(%ProgrammingQuestion{}, json))
-          )
+          %ProgrammingQuestion{}
+          |> ProgrammingQuestion.changeset(json)
+          |> apply_changes
+          |> Map.from_struct()
         )
 
       :multiple_choice ->
         put_change(
           changeset,
           :question,
-          Map.from_struct(apply_changes(MCQQuestion.changeset(%MCQQuestion{}, json)))
+          %MCQQuestion{}
+          |> MCQQuestion.changeset(json)
+          |> apply_changes
+          |> Map.from_struct()
         )
 
       _ ->
