@@ -44,3 +44,12 @@ config :guardian, Guardian.DB,
   token_types: ["access"],
   # default: 60 minute
   sweep_interval: 60
+
+config :git_hooks,
+  hooks: [
+    pre_push: [
+      "format --check-formatted",
+      "test",
+      "credo"
+    ]
+  ]
