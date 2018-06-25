@@ -48,8 +48,11 @@ config :guardian, Guardian.DB,
 config :git_hooks,
   hooks: [
     pre_push: [
-      "format --check-formatted",
-      "test",
-      "credo"
+      verbose: true,
+      mix_tasks: [
+        "format --check-formatted",
+        "test",
+        "credo"
+      ]
     ]
   ]
