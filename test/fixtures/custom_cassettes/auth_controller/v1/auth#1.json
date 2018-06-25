@@ -6,7 +6,7 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get?APIKey=&Token=token"
+      "url": "~r/https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get\?APIKey=.*&Token=token/"
     },
     "response": {
       "binary": false,
@@ -33,7 +33,7 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get?APIKey=&Token=token"
+      "url": "~r/https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get\?APIKey=.*&Token=token/"
     },
     "response": {
       "binary": false,
