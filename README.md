@@ -15,6 +15,60 @@ Cadet is the web application powering Source Academy.
 4. PostgreSQL (>= 9.6)
 5. git (>= 2.13.2)
 
+### Git's `pre-push` hook
+We are using following script as a `pre-push` hook.
+
+  ```bash
+  #!/bin/sh
+
+  echo Running pre-push hooks...
+
+  echo mix format
+  if ! mix format --check-formatted; then
+    exit 1
+  fi
+
+  echo mix test
+  if ! mix test; then
+    exit 1
+  fi
+
+  echo mix credo
+  if ! mix credo; then
+    exit 1
+  fi
+
+  exit 0
+  ```
+
+An automated way to install the script is:
+
+  ```bash
+  cat > .git/hooks/pre-push <<EOL
+    #!/bin/sh
+
+    echo Running pre-push hooks...
+
+    echo mix format
+    if ! mix format --check-formatted; then
+      exit 1
+    fi
+
+    echo mix test
+    if ! mix test; then
+      exit 1
+    fi
+
+    echo mix credo
+    if ! mix credo; then
+      exit 1
+    fi
+
+    exit 0
+  EOL
+  chmod +x .git/hooks/pre-push
+  ```
+
 ### Setting Up Local Development Environment
 
 Install Elixir dependencies
