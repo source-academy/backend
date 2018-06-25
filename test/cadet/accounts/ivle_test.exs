@@ -57,4 +57,19 @@ defmodule Cadet.Accounts.IVLETest do
       end
     end
   end
+
+  describe "Fetch a role" do
+    test "Using a valid token" do
+      use_cassette "ivle/fetch_role#1" do
+        assert {:ok, role} = IVLE.fetch_role(@token)
+        assert Enum.member?([:student, :staff, :admin], role)
+      end
+    end
+
+    test "Using an invalid token" do
+      use_cassette "ivle/fetch_role#2" do
+        assert {:error, :bad_request} = IVLE.fetch_role(@token <> "Z")
+      end
+    end
+  end
 end
