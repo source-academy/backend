@@ -42,7 +42,7 @@ defmodule Cadet.Mixfile do
   defp deps do
     [
       {:arc, "~> 0.8.0"},
-      {:arc_ecto, "~> 0.7.0"},
+      {:arc_ecto, "~> 0.8.0"},
       {:cowboy, "~> 1.0"},
       {:dotenv, "~> 3.0.0"},
       {:ecto_enum, "~> 1.0"},
