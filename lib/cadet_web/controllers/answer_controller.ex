@@ -3,6 +3,13 @@ defmodule CadetWeb.AnswerController do
 
   use PhoenixSwagger
 
+  def submit(conn, %{"answer" => attrs}) do
+    # check role
+    # get question
+    # submit
+    # handle error
+  end
+
   swagger_path :submit do
     post("/assessments/question/{questionId}/submit")
 
@@ -17,6 +24,7 @@ defmodule CadetWeb.AnswerController do
     consumes("application/json")
 
     parameters do
+      questionId(:path, :integer, "question id", required: true)
       answer(:body, Schema.ref(:Answer), "answer", required: true)
     end
 
