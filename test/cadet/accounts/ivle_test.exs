@@ -26,6 +26,34 @@ defmodule Cadet.Accounts.IVLETest do
     HTTPoison.start()
   end
 
+  describe "Do an API call" do
+    test "With one parameter token" do
+      use_cassette "ivle/api_fetch#1" do
+        assert {:ok, resp} = IVLE.api_fetch("UserName_Get", Token: @token)
+        assert String.length(resp) > 0
+      end
+    end
+
+    test "With two parameters token, course code" do
+      use_cassette "ivle/api_fetch#2" do
+        assert {:ok, resp} = IVLE.api_fetch("Modules", AuthToken: @token, CourseID: "CS1101S")
+        assert %{"Results" => _} = resp
+      end
+    end
+
+    test "With an invalid api key" do
+      use_cassette "ivle/api_fetch#3", custom: true do
+        assert {:error, :internal_server_error} = IVLE.api_fetch("UserName_Get", Token: @token)
+      end
+    end
+
+    test "With an invalid token" do
+      use_cassette "ivle/api_fetch#4" do
+        assert {:error, :bad_request} = IVLE.api_fetch("UserName_Get", Token: @token <> "Z")
+      end
+    end
+  end
+
   describe "Fetch an NUSNET ID" do
     test "Using a valid token" do
       use_cassette "ivle/fetch_nusnet_id#1" do
