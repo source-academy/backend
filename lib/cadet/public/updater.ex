@@ -6,11 +6,35 @@ defmodule Cadet.Public.Updater do
 
   The credentials for the guest account are defined in the `.env` file.
   """
+
+  alias Cadet.Accounts.IVLE
+
   @api_key Dotenv.load().values["IVLE_KEY"]
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
   @username Dotenv.load().values["GUEST_USERNAME"]
   @password Dotenv.load().values["GUEST_PASSWORD"]
+
+  @doc """
+  Get the course ID of CS1101S. The course ID a required param in the API call
+  to get announcements/files from IVLE. The course_id is dynamically fetched
+  instead of hard-coded in so that there are less variables to change, if the
+  CS1101S module on IVLE changes ID---all that is needed is that the guest
+  account is in the CS1101S module.
+  """
+  def get_course_id(token) do
+    {:ok, modules} = IVLE.api_fetch("Modules", AuthToken: token, CourseID: "CS1101S")
+
+    cs1101s =
+      modules["Results"]
+      |> Enum.filter(fn module ->
+        module["CourseCode"] == "CS1101S" and
+          module["ID"] != "00000000-0000-0000-0000-000000000000"
+      end)
+      |> List.first()
+
+    cs1101s["ID"]
+  end
 
   @doc """
   Get an authentication token for the guest account.

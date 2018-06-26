@@ -107,7 +107,22 @@ defmodule Cadet.Accounts.IVLE do
     end
   end
 
-  defp api_fetch(method, queries) do
+  @doc """
+  Make an API call to IVLE LAPI.
+
+  returns...
+
+    - {:ok, body} - valid token
+    - {:error, :internal_server_error} - Invalid API key
+    - {:error, :bad_request} - Invalid token
+
+  ## Parameters
+
+    - method: String, the HTTP request method to use
+    - queries: [Keyword], key-value pair of parameters to send
+
+  """
+  def api_fetch(method, queries) do
     case HTTPoison.get(api_url(method, queries)) do
       {:ok, %{body: body, status_code: 200}} when body != ~s("") ->
         {:ok, Poison.decode!(body)}
