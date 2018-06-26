@@ -59,14 +59,26 @@ defmodule Cadet.Accounts.IVLE do
   returns...
 
     - {:ok, :student} - valid token, permission "S"
-    - {:ok, :admin} - valid token, permission "O"
-    - {:ok, :staff} - valid token, permissions "F", "M", "R"
+    - {:ok, :admin} - valid token, permission "O", "F"
+    - {:ok, :staff} - valid token, permissions "M", "R"
     - {:error, :bad_request} - invalid token, or not taking the module
 
   This function assumes that inactive modules have an ID of 
   `"00000000-0000-0000-0000-000000000000"`, and that there is only one active
   module with the course code `"CS1101S"`. (So far, these assumptions have been
   true).
+
+  "O" represents an owner, "F" a co-owner, "M" a manager, and "R" a read manager.
+  #
+  ## Parameters
+
+    - token: String, the IVLE authentication token
+
+  ## Examples
+
+      iex> Cadet.Accounts.IVLE.fetch_role("T0K3N...")
+      {:ok, :student}
+
   """
   def fetch_role(token) do
     {:ok, modules} = api_fetch("Modules", AuthToken: token, CourseID: "CS1101S")
@@ -83,7 +95,7 @@ defmodule Cadet.Accounts.IVLE do
       %{"Permission" => "S"} ->
         {:ok, :student}
 
-      %{"Permission" => "O"} ->
+      %{"Permission" => x} when x == "O" or x == "F" ->
         {:ok, :admin}
 
       %{"Permission" => _} ->
