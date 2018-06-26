@@ -98,7 +98,7 @@ defmodule Cadet.Accounts.IVLE do
       %{"Permission" => x} when x == "O" or x == "F" ->
         {:ok, :admin}
 
-      %{"Permission" => _} ->
+      %{"Permission" => x} when x == "M" or x == "R" ->
         {:ok, :staff}
 
       _ ->
