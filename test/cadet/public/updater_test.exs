@@ -8,6 +8,9 @@ defmodule Cadet.Public.UpdaterTest do
   Don't forget to delete the cassette files, otherwise ExVCR will not override
   the cassettes.
 
+  **Make sure that the cassettes do not expose sensitive information, especially
+  the GUEST_USER, GUEST_PASSWORD, since those are exposed during HTTP post.**
+
   Token refers to the user's authentication token. Please see the IVLE API docs:
   https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
   To quickly obtain a token, simply supply a dummy url to a login call:
@@ -29,6 +32,14 @@ defmodule Cadet.Public.UpdaterTest do
     use_cassette "updater/get_token#1", custom: true do
       token = Updater.get_token()
       assert String.length(token) == 480
+    end
+  end
+
+  test "Get course id" do
+    use_cassette "updater/get_course_id#1", custom: true do
+      course_id = Updater.get_course_id("T0K3N...")
+      assert String.length(course_id) == 36
+      assert course_id != "00000000-0000-0000-0000-000000000000"
     end
   end
 end
