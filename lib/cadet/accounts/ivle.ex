@@ -62,6 +62,7 @@ defmodule Cadet.Accounts.IVLE do
     - {:ok, :admin} - valid token, permission "O", "F"
     - {:ok, :staff} - valid token, permissions "M", "R"
     - {:error, :bad_request} - invalid token, or not taking the module
+    - {:error, :internal_server_error} - the ivle_key is invalid
 
   This function assumes that inactive modules have an ID of 
   `"00000000-0000-0000-0000-000000000000"`, and that there is only one active
@@ -69,7 +70,7 @@ defmodule Cadet.Accounts.IVLE do
   true).
 
   "O" represents an owner, "F" a co-owner, "M" a manager, and "R" a read manager.
-  #
+
   ## Parameters
 
     - token: String, the IVLE authentication token
