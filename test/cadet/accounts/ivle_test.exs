@@ -72,4 +72,36 @@ defmodule Cadet.Accounts.IVLETest do
       end
     end
   end
+
+  describe "Map permission to correct role" do
+    test ~s(Permission "O" maps to :admin) do
+      use_cassette "ivle/fetch_role#3", custom: true do
+        assert {:ok, :admin} = IVLE.fetch_role(@token)
+      end
+    end
+
+    test ~s(Permission "F" maps to :admin) do
+      use_cassette "ivle/fetch_role#4", custom: true do
+        assert {:ok, :admin} = IVLE.fetch_role(@token)
+      end
+    end
+
+    test ~s(Permission "M" maps to :staff) do
+      use_cassette "ivle/fetch_role#5", custom: true do
+        assert {:ok, :staff} = IVLE.fetch_role(@token)
+      end
+    end
+
+    test ~s(Permission "R" maps to :staff) do
+      use_cassette "ivle/fetch_role#6", custom: true do
+        assert {:ok, :staff} = IVLE.fetch_role(@token)
+      end
+    end
+
+    test ~s(Permission "S" maps to :student) do
+      use_cassette "ivle/fetch_role#7", custom: true do
+        assert {:ok, :student} = IVLE.fetch_role(@token)
+      end
+    end
+  end
 end
