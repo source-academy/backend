@@ -42,4 +42,20 @@ defmodule Cadet.Public.UpdaterTest do
       assert course_id != "00000000-0000-0000-0000-000000000000"
     end
   end
+
+  describe "Get announcements" do
+    test "valid token" do
+      use_cassette "updater/get_announcements#1", custom: true do
+        token = Updater.get_token()
+        course_id = Updater.get_course_id(token)
+        assert {:ok, announcements} = Updater.get_announcements(token, course_id)
+        assert is_list(announcements)
+      end
+    end
+  end
+
+  test "GenServer starts" do
+    assert {:ok, _} = GenServer.start_link(Updater, %{}, name: TestUpdater)
+    assert :ok = GenServer.stop(TestUpdater)
+  end
 end
