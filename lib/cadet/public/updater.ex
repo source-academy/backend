@@ -7,6 +7,8 @@ defmodule Cadet.Public.Updater do
   The credentials for the guest account are defined in the `.env` file.
   """
 
+  use GenServer
+
   alias Cadet.Accounts.IVLE
 
   @api_key Dotenv.load().values["IVLE_KEY"]
@@ -14,6 +16,28 @@ defmodule Cadet.Public.Updater do
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
   @username Dotenv.load().values["GUEST_USERNAME"]
   @password Dotenv.load().values["GUEST_PASSWORD"]
+
+  def start_link do
+    GenServer.start_link(__MODULE__, nil)
+  end
+
+  def get_api_params(pid) do
+    GenServer.call(pid, :get_api_params)
+  end
+
+  @impl true
+  def init(_) do
+    token = get_token()
+    course_id = get_course_id(token)
+    api_params = %{token: token, course_id: course_id}
+    {:ok, api_params}
+  end
+
+  @impl true
+  def handle_call(:get_api_params, _from, _state) do
+    {:ok, api_params} = init(nil)
+    {:reply, api_params, api_params}
+  end
 
   @doc """
   Get the course ID of CS1101S. The course ID a required param in the API call
