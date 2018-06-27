@@ -54,7 +54,7 @@ defmodule Cadet.Public.Updater do
   end
 
   def get_announcements(token, course_id) do
-    case IVLE.api_fetch("Announcements", AuthToken: token, CourseID: course_id) do
+    case IVLE.api_call("Announcements", AuthToken: token, CourseID: course_id) do
       {:ok, announcements} -> {:ok, announcements}
       {:error, reason} -> {:error, reason}
     end
@@ -68,7 +68,7 @@ defmodule Cadet.Public.Updater do
   account is in the CS1101S module.
   """
   def get_course_id(token) do
-    {:ok, modules} = IVLE.api_fetch("Modules", AuthToken: token, CourseID: "CS1101S")
+    {:ok, modules} = IVLE.api_call("Modules", AuthToken: token, CourseID: "CS1101S")
 
     cs1101s =
       modules["Results"]
