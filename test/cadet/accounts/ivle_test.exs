@@ -26,7 +26,7 @@ defmodule Cadet.Accounts.IVLETest do
     HTTPoison.start()
   end
 
-  describe "Do an API call" do
+  describe "Do an API call; methods with empty string for invalid token" do
     test "With one parameter token" do
       use_cassette "ivle/api_call#1" do
         assert {:ok, resp} = IVLE.api_call("UserName_Get", Token: @token)
@@ -50,6 +50,28 @@ defmodule Cadet.Accounts.IVLETest do
     test "With an invalid token" do
       use_cassette "ivle/api_call#4" do
         assert {:error, :bad_request} = IVLE.api_call("UserName_Get", Token: @token <> "Z")
+      end
+    end
+  end
+
+  describe ~s(Do an API call; methods with "Invalid token!" for invalid token) do
+    test "With a valid token" do
+      use_cassette "ivle/api_call#5" do
+        assert {:ok, _} = IVLE.api_call("Announcements", AuthToken: @token, CourseID: "")
+      end
+    end
+
+    test "With an invalid token" do
+      use_cassette "ivle/api_call#6" do
+        assert {:error, :bad_request} =
+                 IVLE.api_call("Announcements", AuthToken: @token <> "Z", CourseID: "")
+      end
+    end
+
+    test "With an invalid key" do
+      use_cassette "ivle/api_call#7", custom: true do
+        assert {:error, :internal_server_error} =
+                 IVLE.api_call("Announcements", AuthToken: @token, CourseID: "")
       end
     end
   end

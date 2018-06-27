@@ -16,9 +16,14 @@ defmodule Cadet.Application do
       # Start your own worker by calling: Cadet.Worker.start_link(arg1, arg2, arg3)
       # worker(Cadet.Worker, [arg1, arg2, arg3]),
       # Start the GuardianDB sweeper
-      worker(Guardian.DB.Token.SweeperServer, []),
-      worker(Cadet.Public.Updater, [])
+      worker(Guardian.DB.Token.SweeperServer, [])
     ]
+
+    children = if Mix.env != :test do
+      children ++ [worker(Cadet.Public.Updater, [])]
+    else
+      children
+    end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

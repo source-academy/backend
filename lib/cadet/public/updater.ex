@@ -22,6 +22,8 @@ defmodule Cadet.Public.Updater do
 
   @doc """
   Starts the GenServer.
+
+  WARNING: The GenServer crashes if the API key is invalid, or not provided.
   """
   def start_link() do
     GenServer.start_link(__MODULE__, %{})
