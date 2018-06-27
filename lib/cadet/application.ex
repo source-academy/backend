@@ -19,11 +19,12 @@ defmodule Cadet.Application do
       worker(Guardian.DB.Token.SweeperServer, [])
     ]
 
-    children = if Mix.env != :test do
-      children ++ [worker(Cadet.Public.Updater, [])]
-    else
-      children
-    end
+    children =
+      if Mix.env() != :test do
+        children ++ [worker(Cadet.Public.Updater, [])]
+      else
+        children
+      end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
