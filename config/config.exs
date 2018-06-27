@@ -6,7 +6,9 @@
 use Mix.Config
 
 # General application configuration
-config :cadet, ecto_repos: [Cadet.Repo]
+config :cadet,
+  ecto_repos: [Cadet.Repo],
+  updater: [interval: 5 * 60 * 1000]
 
 # Configures the endpoint
 config :cadet, CadetWeb.Endpoint,

@@ -16,11 +16,11 @@ defmodule Cadet.Public.Updater do
   @api_key Dotenv.load().values["IVLE_KEY"]
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
-  @interval 10 * 1000
+  @interval Keyword.get(Application.fetch_env!(:cadet, :updater), :interval)
   @username Dotenv.load().values["GUEST_USERNAME"]
   @password Dotenv.load().values["GUEST_PASSWORD"]
 
-  def start_link do
+  def start_link() do
     GenServer.start_link(__MODULE__, %{})
   end
 
