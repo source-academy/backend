@@ -53,8 +53,10 @@ defmodule Cadet.Public.UpdaterTest do
   end
 
   test "Start GenServer" do
-    assert {:ok, _} = GenServer.start_link(Updater, %{}, name: TestUpdater)
-    assert :ok = GenServer.stop(TestUpdater)
+    use_cassette "updater/start_link#1", custom: true do
+      assert {:ok, _} = GenServer.start_link(Updater, %{}, name: TestUpdater)
+      assert :ok = GenServer.stop(TestUpdater)
+    end
   end
 
   test "GenServer init/1 callback" do
