@@ -24,7 +24,7 @@ defmodule CadetWeb.AnswerController do
   end
 
   defp assign_question(conn, _) do
-    question = Repo.get(Question, conn.parms.["questionid"])
+    question = Repo.get(Question, conn.params["questionid"])
     IO.puts(inspect(question))
 
     conn
