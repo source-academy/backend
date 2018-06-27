@@ -62,7 +62,9 @@ defmodule Cadet.Public.Updater do
       {:error, :bad_request} ->
         # the token has probably expired---get a new one
         Logger.info("Updater failed fetching announcements. Refreshing token...")
-        {:ok, api_params} = init(%{})
+        token = get_token()
+        course_id = get_course_id(token)
+        api_params = %{token: token, course_id: course_id}
         handle_info(:work, api_params)
     end
   end

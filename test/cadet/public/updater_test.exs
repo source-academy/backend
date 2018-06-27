@@ -65,4 +65,14 @@ defmodule Cadet.Public.UpdaterTest do
       assert course_id != "00000000-0000-0000-0000-000000000000"
     end
   end
+
+  test "Send :work to GenServer" do
+    use_cassette "updater/handle_info#1", custom: true do
+      token = Updater.get_token()
+      course_id = Updater.get_course_id(token)
+      api_params = %{token: token, course_id: course_id}
+      assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
+      assert new_api_params == api_params
+    end
+  end
 end
