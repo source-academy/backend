@@ -11,17 +11,20 @@ defmodule Cadet.Public.Updater do
 
   alias Cadet.Accounts.IVLE
 
+  require Logger
+
   @api_key Dotenv.load().values["IVLE_KEY"]
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
+  @interval 10 * 1000
   @username Dotenv.load().values["GUEST_USERNAME"]
   @password Dotenv.load().values["GUEST_PASSWORD"]
 
   def start_link do
-    GenServer.start_link(__MODULE__, nil)
+    GenServer.start_link(__MODULE__, %{})
   end
 
-  def get_api_params(pid) do
+  def get_announcements(pid) do
     GenServer.call(pid, :get_api_params)
   end
 
@@ -30,13 +33,31 @@ defmodule Cadet.Public.Updater do
     token = get_token()
     course_id = get_course_id(token)
     api_params = %{token: token, course_id: course_id}
+    schedule_work()
     {:ok, api_params}
   end
 
   @impl true
-  def handle_call(:get_api_params, _from, _state) do
-    {:ok, api_params} = init(nil)
-    {:reply, api_params, api_params}
+  def handle_info(:work, api_params) do
+    with {:ok, announcements} <- get_announcements(api_params.token, api_params.course_id) do
+      Logger.info("Updater fetched #{length(announcements)} announcements from IVLE")
+      # TODO: Act on announcements fetched
+      schedule_work()
+      {:noreply, api_params}
+    else
+      {:error, :bad_request} ->
+        # the token has probably expired---get a new one
+        Logger.info("Updater failed fetching announcements. Refreshing token...")
+        {:ok, api_params} = init(%{})
+        handle_call(:get_announcements, %{}, api_params)
+    end
+  end
+
+  def get_announcements(token, course_id) do
+    case IVLE.api_fetch("Announcements", AuthToken: token, CourseID: course_id) do
+      {:ok, announcements} -> {:ok, announcements}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   @doc """
@@ -122,5 +143,9 @@ defmodule Cadet.Public.Updater do
     response.headers
     |> Enum.into(%{})
     |> Map.get("Location")
+  end
+
+  defp schedule_work do
+    Process.send_after(self(), :work, @interval)
   end
 end

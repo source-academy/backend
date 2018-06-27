@@ -107,6 +107,22 @@ defmodule Cadet.Accounts.IVLE do
     end
   end
 
+  def api_fetch(method, queries) when method in ["Announcements"] do
+    with {:ok, %{status_code: 200, body: body}} <- HTTPoison.get(api_url(method, queries)),
+         body = Poison.decode!(body),
+         %{"Comments" => "Valid login!"} <- body do
+      {:ok, body["Results"]}
+    else
+      {:ok, %{status_code: 500}} ->
+        # IVLE responds with 500 if APIKey is invalid
+        {:error, :internal_server_error}
+
+      %{"Comments" => "Invalid login!"} ->
+        # IVLE response if AuthToken is invalid
+        {:error, :bad_request}
+    end
+  end
+
   @doc """
   Make an API call to IVLE LAPI.
 
@@ -121,6 +137,10 @@ defmodule Cadet.Accounts.IVLE do
     - method: String, the HTTP request method to use
     - queries: [Keyword], key-value pair of parameters to send
 
+  This method is valid for methods that return a 200 with an empty string body
+  on invalid tokens. For methods that return with string "Invalid login!" in a
+  JSON nested in the body, refer to the previous method api_fetch/2 with guard
+  clause.
   """
   def api_fetch(method, queries) do
     case HTTPoison.get(api_url(method, queries)) do
@@ -132,7 +152,7 @@ defmodule Cadet.Accounts.IVLE do
         {:error, :internal_server_error}
 
       {:ok, %{body: ~s(""), status_code: 200}} ->
-        # IVLE responsed 200 with body == ~s("") if token is invalid
+        # IVLE responds 200 with body == ~s("") if token is invalid
         {:error, :bad_request}
     end
   end
