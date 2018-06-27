@@ -63,6 +63,10 @@ defmodule Cadet.Accounts.IVLE do
     - {:error, :bad_request} - invalid token, or not taking the module
     - {:error, :internal_server_error} - the ivle_key is invalid
 
+  ## Parameters
+
+    - token: String, the IVLE authentication token
+
   This function assumes that inactive modules have an ID of 
   `"00000000-0000-0000-0000-000000000000"`, and that there is only one active
   module with the course code `"CS1101S"`. (So far, these assumptions have been

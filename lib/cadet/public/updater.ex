@@ -20,15 +20,22 @@ defmodule Cadet.Public.Updater do
   @username Dotenv.load().values["GUEST_USERNAME"]
   @password Dotenv.load().values["GUEST_PASSWORD"]
 
+  @doc """
+  Starts the GenServer.
+  """
   def start_link() do
     GenServer.start_link(__MODULE__, %{})
   end
 
-  def get_announcements(pid) do
-    GenServer.call(pid, :get_api_params)
-  end
-
   @impl true
+  @doc """
+  Callback for the GenServer. This function calls `schedule_work`, which
+  initiates a recursive call every `@interval` milliseconds. This acts as a
+  regularly scheduled task (e.g. cronjob).
+
+  `start_link/0` -> `init/1` -> `schedule_work/0` -> `handle_info/2` ->
+    `schedule_work/0` -> `handle_info/2` -> ...
+  """
   def init(_) do
     token = get_token()
     course_id = get_course_id(token)
@@ -38,6 +45,11 @@ defmodule Cadet.Public.Updater do
   end
 
   @impl true
+  @doc """
+  Callback for the GenServer. This function receives the message sent by
+  `schedule_work/0`, runs and processes `get_announcements/3`, then calls
+  `schedule_work/0` recursively.
+  """
   def handle_info(:work, api_params) do
     with {:ok, announcements} <- get_announcements(api_params.token, api_params.course_id) do
       Logger.info("Updater fetched #{length(announcements)} announcements from IVLE")
@@ -53,6 +65,15 @@ defmodule Cadet.Public.Updater do
     end
   end
 
+  @doc """
+  Get the announcements for CS1101S. Returns a list of announcements.
+
+  ## Parameters
+
+    - token: String, the IVLE authentication token
+    - course_id: String, the course ID of CS1101S. See `get_course_id/1`
+
+  """
   def get_announcements(token, course_id) do
     case IVLE.api_call("Announcements", AuthToken: token, CourseID: course_id) do
       {:ok, announcements} -> {:ok, announcements}
@@ -66,6 +87,11 @@ defmodule Cadet.Public.Updater do
   instead of hard-coded in so that there are less variables to change, if the
   CS1101S module on IVLE changes ID---all that is needed is that the guest
   account is in the CS1101S module.
+
+  ## Parameters
+
+    - token: String, the IVLE authentication token
+
   """
   def get_course_id(token) do
     {:ok, modules} = IVLE.api_call("Modules", AuthToken: token, CourseID: "CS1101S")
