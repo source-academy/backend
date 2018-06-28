@@ -109,16 +109,15 @@ defmodule Cadet.Accounts do
     else
       # user is not registered in our database
       with {:ok, name} <- IVLE.fetch_name(token),
-           {:ok, role} <- IVLE.fetch_role(token),
-           {:ok, _} <- register(%{name: name, nusnet_id: nusnet_id}, role) do
+           {:ok, _} <- register(%{name: name, nusnet_id: nusnet_id}, :student) do
         sign_in(nusnet_id, token)
       else
         {:error, :bad_request} ->
-          # IVLE.fetch_*/1 responds with :bad_request if token is invalid
+          # IVLE.fetch_name/1 responds with :bad_request if token is invalid
           {:error, :bad_request}
 
         {:error, _} ->
-          # IVLE.fetch_*/1 responds with :internal_server_error if API key is invalid
+          # IVLE.fetch_name/1 responds with :internal_server_error if API key is invalid
           # register/2 returns {:error, changeset} if changeset is invalid
           {:error, :internal_server_error}
       end

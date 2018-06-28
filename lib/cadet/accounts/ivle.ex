@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.IVLE do
   [this link](http://ivle.nus.edu.sg/LAPI/default.aspx).
   """
 
-  @api_url "https://ivle.nus.edu.sg/api/Lapi.svc/"
+  @api_url "https://ivle.nus.edu.sg/api/Lapi.svc"
   @api_key Dotenv.load().values["IVLE_KEY"]
 
   @doc """
@@ -30,7 +30,7 @@ defmodule Cadet.Accounts.IVLE do
       {:ok, "e012345"}
 
   """
-  def fetch_nusnet_id(token), do: api_fetch("UserID_Get", Token: token)
+  def fetch_nusnet_id(token), do: api_fetch("UserID_Get", token)
 
   @doc """
   Get the full name of the user corresponding to this token.
@@ -51,64 +51,10 @@ defmodule Cadet.Accounts.IVLE do
       {:ok, "LEE NING YUAN"}
 
   """
-  def fetch_name(token), do: api_fetch("UserName_Get", Token: token)
+  def fetch_name(token), do: api_fetch("UserName_Get", token)
 
-  @doc """
-  Get the role of the user corresponding to this token.
-
-  returns...
-
-    - {:ok, :student} - valid token, permission "S"
-    - {:ok, :admin} - valid token, permission "O", "F"
-    - {:ok, :staff} - valid token, permissions "M", "R"
-    - {:error, :bad_request} - invalid token, or not taking the module
-    - {:error, :internal_server_error} - the ivle_key is invalid
-
-  This function assumes that inactive modules have an ID of 
-  `"00000000-0000-0000-0000-000000000000"`, and that there is only one active
-  module with the course code `"CS1101S"`. (So far, these assumptions have been
-  true).
-
-  "O" represents an owner, "F" a co-owner, "M" a manager, and "R" a read manager.
-
-  ## Parameters
-
-    - token: String, the IVLE authentication token
-
-  ## Examples
-
-      iex> Cadet.Accounts.IVLE.fetch_role("T0K3N...")
-      {:ok, :student}
-
-  """
-  def fetch_role(token) do
-    {:ok, modules} = api_fetch("Modules", AuthToken: token, CourseID: "CS1101S")
-
-    cs1101s =
-      modules["Results"]
-      |> Enum.filter(fn module ->
-        module["CourseCode"] == "CS1101S" and
-          module["ID"] != "00000000-0000-0000-0000-000000000000"
-      end)
-      |> List.first()
-
-    case cs1101s do
-      %{"Permission" => "S"} ->
-        {:ok, :student}
-
-      %{"Permission" => x} when x == "O" or x == "F" ->
-        {:ok, :admin}
-
-      %{"Permission" => x} when x == "M" or x == "R" ->
-        {:ok, :staff}
-
-      _ ->
-        {:error, :bad_request}
-    end
-  end
-
-  defp api_fetch(method, queries) do
-    case HTTPoison.get(api_url(method, queries)) do
+  defp api_fetch(path, token) do
+    case HTTPoison.get(api_url(path, token)) do
       {:ok, %{body: body, status_code: 200}} when body != ~s("") ->
         {:ok, Poison.decode!(body)}
 
@@ -122,14 +68,8 @@ defmodule Cadet.Accounts.IVLE do
     end
   end
 
-  # Construct a valid URL with the module attributes, and given params
-  # token_param_key is specified as some api calls use ...&Token={token},
-  # but other calls use ...&AuthToken={token}
-  defp api_url(method, queries) do
-    queries = [APIKey: @api_key] ++ queries
-
-    @api_url
-    |> URI.merge(method)
-    |> (&"#{&1}?#{URI.encode_query(queries)}").()
+  defp api_url(path, token) do
+    # construct a valid URL with the module attributes, and given params
+    "#{@api_url}/#{path}?APIKey=#{@api_key}&Token=#{token}"
   end
 end
