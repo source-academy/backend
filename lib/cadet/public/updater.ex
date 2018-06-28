@@ -33,22 +33,16 @@ defmodule Cadet.Public.Updater do
       |> HTTPoison.post!({:form, form}, %{}, http_opts)
       |> get_redirect_path()
 
-    response =
-      @api_url
-      |> URI.merge(location)
-      |> URI.to_string()
-      |> HTTPoison.get!(%{}, http_opts)
-
-    token =
-      response
-      |> get_redirect_path()
-      |> URI.parse()
-      |> Map.get(:query)
-      |> URI.query_decoder()
-      |> Enum.into(%{})
-      |> Map.get("token")
-
-    token
+    @api_url
+    |> URI.merge(location)
+    |> URI.to_string()
+    |> HTTPoison.get!(%{}, http_opts)
+    |> get_redirect_path()
+    |> URI.parse()
+    |> Map.get(:query)
+    |> URI.query_decoder()
+    |> Enum.into(%{})
+    |> Map.get("token")
   end
 
   # A browser session is identified by the cookie with key ASP.NET_SessionId
@@ -74,11 +68,8 @@ defmodule Cadet.Public.Updater do
 
   # Extracts the location of a 302 redirect from a %HTTPoison.Response
   defp get_redirect_path(response) do
-    location =
-      response.headers
-      |> Enum.into(%{})
-      |> Map.get("Location")
-
-    location
+    response.headers
+    |> Enum.into(%{})
+    |> Map.get("Location")
   end
 end
