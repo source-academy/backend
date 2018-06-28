@@ -128,11 +128,8 @@ defmodule Cadet.Accounts.IVLE do
   defp api_url(method, queries) do
     queries = [APIKey: @api_key] ++ queries
 
-    url =
-      @api_url
-      |> URI.merge(method)
-      |> (&"#{&1}?#{URI.encode_query(queries)}").()
-
-    url
+    @api_url
+    |> URI.merge(method)
+    |> (&"#{&1}?#{URI.encode_query(queries)}").()
   end
 end
