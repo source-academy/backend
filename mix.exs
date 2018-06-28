@@ -48,6 +48,7 @@ defmodule Cadet.Mixfile do
       {:ecto_enum, "~> 1.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.1"},
+      {:floki, "~> 0.20.0"},
       {:gettext, "~> 0.11"},
       {:guardian, "~> 1.0"},
       {:guardian_db, "~> 1.0"},
