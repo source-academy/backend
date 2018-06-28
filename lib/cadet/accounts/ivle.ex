@@ -182,7 +182,7 @@ defmodule Cadet.Accounts.IVLE do
   # The authentication token parameter must be provided explicitly rather than
   # provided implicitly by this function as some API calls use ...&Token={token},
   # while others use ...&AuthToken={token}
-  def api_url(method, queries) do
+  defp api_url(method, queries) do
     queries = [APIKey: @api_key] ++ queries
 
     @api_url
