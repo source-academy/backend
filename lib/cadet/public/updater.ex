@@ -8,7 +8,7 @@ defmodule Cadet.Public.Updater do
   """
   @api_key Dotenv.load().values["IVLE_KEY"]
   @api_url "https://ivle.nus.edu.sg"
-  @api_url_login URI.to_string(URI.merge(@api_url, "api/login/?apikey=#{@api_key}&url=_"))
+  @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
   @username Dotenv.load().values["GUEST_USERNAME"]
   @password Dotenv.load().values["GUEST_PASSWORD"]
 
@@ -28,16 +28,25 @@ defmodule Cadet.Public.Updater do
     http_opts = [hackney: [cookie: session.cookie, follow_redirect: false]]
     form = [userid: @username, password: @password, __VIEWSTATE: session.viewstate]
 
-    response = HTTPoison.post!(@api_url_login, {:form, form}, %{}, http_opts)
-    location = get_redirect_path(response)
+    location =
+      @api_url_login
+      |> HTTPoison.post!({:form, form}, %{}, http_opts)
+      |> get_redirect_path()
 
-    response = HTTPoison.get!(join(@api_url, location), %{}, http_opts)
+    response =
+      @api_url
+      |> URI.merge(location)
+      |> URI.to_string()
+      |> HTTPoison.get!(%{}, http_opts)
 
     token =
       response
       |> get_redirect_path()
-      |> (&Regex.run(~r/(?<=token=).+/, &1)).()
-      |> List.first()
+      |> URI.parse()
+      |> Map.get(:query)
+      |> URI.query_decoder()
+      |> Enum.into(%{})
+      |> Map.get("token")
 
     token
   end
@@ -55,32 +64,21 @@ defmodule Cadet.Public.Updater do
       |> Floki.attribute("value")
       |> List.first()
 
-    {"Set-Cookie", cookie} =
+    cookie =
       response.headers
-      |> Enum.filter(fn
-        {"Set-Cookie", _} -> true
-        _ -> false
-      end)
-      |> List.first()
+      |> Enum.into(%{})
+      |> Map.get("Set-Cookie")
 
     %{:cookie => cookie, :viewstate => viewstate}
   end
 
   # Extracts the location of a 302 redirect from a %HTTPoison.Response
   defp get_redirect_path(response) do
-    {"Location", location} =
+    location =
       response.headers
-      |> Enum.filter(fn
-        {"Location", _} -> true
-        _ -> false
-      end)
-      |> List.first()
+      |> Enum.into(%{})
+      |> Map.get("Location")
 
     location
-  end
-
-  # Joins two URI components
-  defp join(uri1, uri2) do
-    URI.to_string(URI.merge(uri1, uri2))
   end
 end
