@@ -68,13 +68,26 @@ defmodule Cadet.Public.UpdaterTest do
     end
   end
 
-  test "Send :work to GenServer" do
-    use_cassette "updater/handle_info#1", custom: true do
-      token = Updater.get_token()
-      course_id = Updater.get_course_id(token)
-      api_params = %{token: token, course_id: course_id}
-      assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
-      assert new_api_params == api_params
+  describe "Send :work to GenServer" do
+    test "Valid token" do
+      use_cassette "updater/handle_info#1", custom: true do
+        token = Updater.get_token()
+        course_id = Updater.get_course_id(token)
+        api_params = %{token: token, course_id: course_id}
+        assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
+        assert new_api_params == api_params
+      end
+    end
+
+    test "Invalid token" do
+      use_cassette "updater/handle_info#2", custom: true do
+        token = Updater.get_token()
+        course_id = Updater.get_course_id(token)
+        api_params = %{token: "bad_token", course_id: course_id}
+        assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
+        assert api_params.course_id == new_api_params.course_id
+        assert String.length(new_api_params.token) == 480
+      end
     end
   end
 end
