@@ -16,7 +16,7 @@ defmodule Cadet.Public.Updater do
   @api_key Dotenv.load().values["IVLE_KEY"]
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
-  @interval Keyword.get(Application.fetch_env!(:cadet, :updater), :interval)
+  @interval :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:interval)
   @username Dotenv.load().values["GUEST_USERNAME"]
   @password Dotenv.load().values["GUEST_PASSWORD"]
 
