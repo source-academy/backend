@@ -11,6 +11,7 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
+  alias Cadet.Assessments.Submission
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -113,6 +114,12 @@ defmodule Cadet.Assessments do
   def delete_question(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
+  end
+
+  def all_submissions(grader_id: grader_id) do
+    Submission
+    |> where(grader_id: ^grader_id)
+    |> Repo.all()
   end
 
   # TODO: Decide what to do with these methods
