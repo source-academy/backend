@@ -17,6 +17,7 @@ defmodule CadetWeb.AnswerController do
     consumes("application/json")
 
     parameters do
+      questionId(:path, :integer, "question id", required: true)
       answer(:body, Schema.ref(:Answer), "answer", required: true)
     end
 

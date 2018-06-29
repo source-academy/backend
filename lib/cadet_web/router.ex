@@ -26,7 +26,7 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/", CadetWeb do
+  scope "/v1", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
     resources("/assessments", AssessmentsController, only: [:index, :show])
