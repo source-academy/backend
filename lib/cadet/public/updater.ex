@@ -33,10 +33,13 @@ defmodule Cadet.Public.Updater do
       |> HTTPoison.post!({:form, form}, %{}, http_opts)
       |> get_redirect_path()
 
-    @api_url
-    |> URI.merge(location)
-    |> URI.to_string()
-    |> HTTPoison.get!(%{}, http_opts)
+    response =
+      @api_url
+      |> URI.merge(location)
+      |> URI.to_string()
+      |> HTTPoison.get!(%{}, http_opts)
+
+    response
     |> get_redirect_path()
     |> URI.parse()
     |> Map.get(:query)
