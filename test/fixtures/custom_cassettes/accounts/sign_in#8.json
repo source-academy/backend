@@ -6,7 +6,7 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get"
+      "url": "~r/https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get.*/"
     },
     "response": {
       "binary": false,
@@ -33,7 +33,7 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://ivle.nus.edu.sg/api/Lapi.svc/Modules"
+      "url": "~r/https://ivle.nus.edu.sg/api/Lapi.svc/Modules.*/"
     },
     "response": {
       "binary": false,
