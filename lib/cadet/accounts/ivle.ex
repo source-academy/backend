@@ -130,6 +130,7 @@ defmodule Cadet.Accounts.IVLE do
 
     @api_url
     |> URI.merge(method)
-    |> (&"#{&1}?#{URI.encode_query(queries)}").()
+    |> Map.put(:query, URI.encode_query(queries))
+    |> URI.to_string()
   end
 end
