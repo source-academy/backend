@@ -17,12 +17,16 @@ defmodule CadetWeb do
   and import those modules here.
   """
 
+  use ContextManager
+
   def controller do
     quote do
       use Phoenix.Controller, namespace: CadetWeb
       import Plug.Conn
       import CadetWeb.Router.Helpers
       import CadetWeb.Gettext
+
+      alias Cadet.Repo
     end
   end
 
@@ -57,12 +61,5 @@ defmodule CadetWeb do
       use Phoenix.Channel
       import CadetWeb.Gettext
     end
-  end
-
-  @doc """
-  When used, dispatch to the appropriate controller/view/etc.
-  """
-  defmacro __using__(which) when is_atom(which) do
-    apply(__MODULE__, which, [])
   end
 end
