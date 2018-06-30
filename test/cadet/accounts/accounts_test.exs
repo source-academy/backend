@@ -147,4 +147,59 @@ defmodule Cadet.AccountsTest do
       end
     end
   end
+
+  describe "sign in with unregistered user gets the right roles" do
+    test ~s(user has permission "O") do
+      use_cassette "accounts/sign_in#4", custom: true do
+        assert {:ok, user} = Accounts.sign_in("e012345", @token)
+        assert %{role: :admin} = user
+      end
+    end
+
+    test ~s(user has permission "F") do
+      use_cassette "accounts/sign_in#5", custom: true do
+        assert {:ok, user} = Accounts.sign_in("e012345", @token)
+        assert %{role: :admin} = user
+      end
+    end
+
+    test ~s(user has permission "M") do
+      use_cassette "accounts/sign_in#6", custom: true do
+        assert {:ok, user} = Accounts.sign_in("e012345", @token)
+        assert %{role: :staff} = user
+      end
+    end
+
+    test ~s(user has permission "R") do
+      use_cassette "accounts/sign_in#7", custom: true do
+        assert {:ok, user} = Accounts.sign_in("e012345", @token)
+        assert %{role: :staff} = user
+      end
+    end
+
+    test ~s(user has permission "S") do
+      use_cassette "accounts/sign_in#8", custom: true do
+        assert {:ok, user} = Accounts.sign_in("e012345", @token)
+        assert %{role: :student} = user
+      end
+    end
+
+    test ~s(user has unknown permission "A") do
+      use_cassette "accounts/sign_in#9", custom: true do
+        assert {:error, :bad_request} = Accounts.sign_in("e012345", @token)
+      end
+    end
+
+    test ~s(user cs1101s module is inactive) do
+      use_cassette "accounts/sign_in#10", custom: true do
+        assert {:error, :bad_request} = Accounts.sign_in("e012345", @token)
+      end
+    end
+
+    test ~s(user does not read cs1101s) do
+      use_cassette "accounts/sign_in#11", custom: true do
+        assert {:error, :bad_request} = Accounts.sign_in("e012345", @token)
+      end
+    end
+  end
 end

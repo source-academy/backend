@@ -32,6 +32,8 @@ a recompilation with `mix clean && mix`.
 
     IVLE_KEY=your_ivle_lapi_key
 
+If available, also replace the values for GUEST\_USER and GUEST\_PASSWORD
+
 Run the server in your local machine
 
     mix cadet.server
