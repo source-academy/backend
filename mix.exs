@@ -62,6 +62,7 @@ defmodule Cadet.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
+      {:vex, "~> 0.7.0"},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.2", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test},

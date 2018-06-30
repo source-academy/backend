@@ -30,6 +30,42 @@ defmodule CadetWeb do
     end
   end
 
+  def validators do
+    quote do
+      def validate_role(conn, roles) do
+        if Vex.valid?(
+             Map.from_struct(conn.assigns.current_user),
+             role: [
+               inclusion: roles
+             ]
+           ) do
+          conn
+        else
+          conn
+          |> send_resp(:unauthorized, "Unauthorised")
+          |> halt()
+        end
+      end
+
+      def validate_params(conn, validator \\ %{}) do
+        path_param_validator = Map.get(validator, :path_params)
+        body_param_validator = Map.get(validator, :body_params)
+
+        IO.puts(inspect(path_param_validator))
+        IO.puts(inspect(body_param_validator))
+
+        if Vex.valid?(conn.path_params, path_param_validator) and
+             Vex.valid?(conn.body_params, body_param_validator) do
+          conn
+        else
+          conn
+          |> send_resp(:bad_request, "Invalid params")
+          |> halt()
+        end
+      end
+    end
+  end
+
   def view do
     quote do
       use Phoenix.View,
