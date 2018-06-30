@@ -1,19 +1,24 @@
 defmodule CadetWeb.AnswerController do
-  use CadetWeb, :controller
+  use CadetWeb, [:controller, :validators]
 
   use PhoenixSwagger
 
-  alias Cadet.Assessments.Question
-
-  plug(:can_submit, roles: [:student])
-  plug(:assign_question)
+  alias Cadet.Assessments
 
   def submit(conn, params) do
+    conn
+    |> validate_role([:student, :staff])
+    |> validate_params(submit_validator())
+
+    # offload to Cadet.Assessments:
     # check role
     # get question
+    # check deadline
+    # check format
     # submit
     # handle error
-    IO.puts(inspect(params))
+    IO.puts(inspect(conn))
+
     # IO.puts(get_session(conn, :current_user))
 
     if conn.assigns.current_user.role == :student do
@@ -23,24 +28,38 @@ defmodule CadetWeb.AnswerController do
     conn
   end
 
-  defp assign_question(conn, _) do
-    question = Repo.get(Question, conn.params["questionid"])
-    IO.puts(inspect(question))
-
-    conn
+  defp submit_validator() do
+    %{
+      path_params: %{
+        questionid: [presence: true]
+      },
+      body_params: %{
+        answer: [presence: true, by: fn ans -> is_integer(ans) or is_binary(ans) end]
+      }
+    }
   end
 
-  defp can_submit(conn, options) do
-    IO.puts(inspect(conn))
+  # defp check_deadline_not_past(conn, _) do
+  #   if Question.can_submit?(conn.assigns.question) do
+  #     conn
+  #   else
+  #     conn
+  #     |> send_resp(:unauthorised, "Deadline past")
+  #     |> halt()
+  #   end
+  # end
 
-    if conn.assigns.current_user.role in options[:roles] do
-      conn
-    else
-      conn
-      |> send_resp(:unauthorized, "Your role is not authorised to answer questions")
-      |> halt()
-    end
-  end
+  # defp assign_question(conn, _) do
+  #   question = Repo.get(Question, conn.params["questionid"])
+
+  #   if question && question.can_submit?() do
+  #     conn
+  #   else
+  #     conn
+  #     |> send_resp(:bad_request, "Invalid question")
+  #     |> halt()
+  #   end
+  # end
 
   swagger_path :submit do
     post("/assessments/question/{questionId}/submit")
@@ -61,7 +80,7 @@ defmodule CadetWeb.AnswerController do
     end
 
     response(200, "OK")
-    response(400, "Missing parameter(s) or wrong answer type")
+    response(400, "Invalid parameters")
     response(401, "Unauthorised")
   end
 
