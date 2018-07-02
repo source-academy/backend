@@ -18,10 +18,21 @@ resource "aws_subnet" "private_a" {
   }
 }
 
+resource "aws_subnet" "private_b" {
+  vpc_id                  = "${aws_vpc.cadet.id}"
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = false
+
+  tags {
+    Name        = "${title(var.env)} Cadet Private Subnet A"
+    Environment = "${var.env}"
+  }
+}
+
 resource "aws_subnet" "public_a" {
   vpc_id                  = "${aws_vpc.cadet.id}"
   availability_zone       = "ap-southeast-1a"
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = "10.0.2.0/24"
   map_public_ip_on_launch = true
 
   tags {
@@ -33,7 +44,7 @@ resource "aws_subnet" "public_a" {
 resource "aws_subnet" "public_b" {
   vpc_id                  = "${aws_vpc.cadet.id}"
   availability_zone       = "ap-southeast-1b"
-  cidr_block              = "10.0.2.0/24"
+  cidr_block              = "10.0.3.0/24"
   map_public_ip_on_launch = true
 
   tags {
