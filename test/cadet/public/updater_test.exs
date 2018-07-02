@@ -39,7 +39,7 @@ defmodule Cadet.Public.UpdaterTest do
     use_cassette "updater/get_course_id#1", custom: true do
       course_id = Updater.get_course_id("T0K3N...")
       assert String.length(course_id) == 36
-      assert course_id != "00000000-0000-0000-0000-000000000000"
+      refute course_id == "00000000-0000-0000-0000-000000000000"
     end
   end
 
@@ -55,7 +55,7 @@ defmodule Cadet.Public.UpdaterTest do
   describe "Start GenServer" do
     test "Using GenServer.start_link/3" do
       use_cassette "updater/start_link#1", custom: true do
-        assert {:ok, _} = GenServer.start_link(Updater, %{}, name: TestUpdater)
+        assert {:ok, _} = GenServer.start_link(Updater, nil, name: TestUpdater)
         assert :ok = GenServer.stop(TestUpdater)
       end
     end
@@ -63,28 +63,26 @@ defmodule Cadet.Public.UpdaterTest do
     test "Using Updater.start_link/1" do
       use_cassette "updater/start_link#2", custom: true do
         assert {:ok, pid} = Updater.start_link()
-        assert Process.alive?(pid) == true
+        assert Process.alive?(pid)
         assert GenServer.stop(pid) == :ok
-        assert Process.alive?(pid) == false
+        refute Process.alive?(pid)
       end
     end
   end
 
   test "GenServer init/1 callback" do
     use_cassette "updater/init#1", custom: true do
-      assert {:ok, %{token: token, course_id: course_id}} = Updater.init(%{})
+      assert {:ok, %{token: token, course_id: course_id}} = Updater.init(nil)
       assert String.length(token) == 480
       assert String.length(course_id) == 36
-      assert course_id != "00000000-0000-0000-0000-000000000000"
+      refute course_id == "00000000-0000-0000-0000-000000000000"
     end
   end
 
   describe "Send :work to GenServer" do
     test "Valid token" do
       use_cassette "updater/handle_info#1", custom: true do
-        token = Updater.get_token()
-        course_id = Updater.get_course_id(token)
-        api_params = %{token: token, course_id: course_id}
+        api_params = Updater.get_api_params()
         assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
         assert new_api_params == api_params
       end
@@ -92,9 +90,7 @@ defmodule Cadet.Public.UpdaterTest do
 
     test "Invalid token" do
       use_cassette "updater/handle_info#2", custom: true do
-        token = Updater.get_token()
-        course_id = Updater.get_course_id(token)
-        api_params = %{token: "bad_token", course_id: course_id}
+        api_params = Updater.get_api_params()
         assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
         assert api_params.course_id == new_api_params.course_id
         assert String.length(new_api_params.token) == 480
