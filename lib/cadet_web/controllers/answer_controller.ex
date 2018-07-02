@@ -1,15 +1,11 @@
 defmodule CadetWeb.AnswerController do
-  use CadetWeb, [:controller, :validators]
+  use CadetWeb, :controller
 
   use PhoenixSwagger
 
   alias Cadet.Assessments
 
-  def submit(conn, params) do
-    conn
-    |> validate_role([:student, :staff])
-    |> validate_params(submit_validator())
-
+  def submit(conn, %{"questionid" => question_id, "answer" => answer}) do
     # offload to Cadet.Assessments:
     # check role
     # get question
@@ -18,7 +14,7 @@ defmodule CadetWeb.AnswerController do
     # submit
     # handle error
     IO.puts(inspect(conn))
-
+    Assessments.answer_question(question_id, conn.assigns.current_user, answer)
     # IO.puts(get_session(conn, :current_user))
 
     if conn.assigns.current_user.role == :student do
@@ -28,15 +24,8 @@ defmodule CadetWeb.AnswerController do
     conn
   end
 
-  defp submit_validator() do
-    %{
-      path_params: %{
-        questionid: [presence: true]
-      },
-      body_params: %{
-        answer: [presence: true, by: fn ans -> is_integer(ans) or is_binary(ans) end]
-      }
-    }
+  def submit(conn, _parms) do
+    send_resp(conn, :bad_request, "Missing parameter(s)")
   end
 
   # defp check_deadline_not_past(conn, _) do

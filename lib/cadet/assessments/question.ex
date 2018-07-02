@@ -1,9 +1,9 @@
 defmodule Cadet.Assessments.Question do
   @moduledoc """
-  Questions model contains domain logic for questions management 
+  Questions model contains domain logic for questions management
   including programming and multiple choice questions.
   """
-  use Cadet, :model
+  use Cadet, [:model, :context]
 
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.ProblemType
@@ -30,6 +30,14 @@ defmodule Cadet.Assessments.Question do
     |> validate_required(@required_fields)
     |> validate_number(:weight, greater_than_or_equal_to: 0)
     |> put_question
+  end
+
+  def is_overdue?(question) do
+    if not Ecto.assoc_loaded?(question.assessment) do
+      question = Ecto.preload(question, :assessment)
+    end
+
+    not Timex.between?(Timex.now(), question.assessment.open_at, question.assessment.close_at)
   end
 
   defp put_question(changeset) do

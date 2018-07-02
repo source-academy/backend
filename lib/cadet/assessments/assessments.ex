@@ -9,8 +9,12 @@ defmodule Cadet.Assessments do
 
   alias Timex.Duration
 
+  alias Cadet.Accounts.User
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
+  alias Cadet.Assessments.Submission
+
+  @submit_answer_roles ~w(student staff)a
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -113,6 +117,60 @@ defmodule Cadet.Assessments do
   def delete_question(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
+  end
+
+  def find_submission(user = %User{}, assessment = %Assessment{}) do
+    submission =
+      Submission
+      |> where([s], s.student_id == ^user.id)
+      |> where([s], s.assessment_id == ^assessment.id)
+      |> Repo.one()
+
+    if submission do
+      {:ok, submission}
+    else
+      {:error, nil}
+    end
+  end
+
+  def create_submission(user = %User{}, assessment = %Assessment{}) do
+    %Submission{}
+    |> Submission.changeset(%{})
+    |> put_assoc(:user, user)
+    |> put_assoc(:assessment, assessment)
+    |> Repo.insert!()
+  end
+
+  def find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
+    case find_submission(user, assessment) do
+      {:ok, submission} -> submission
+      {:error, _} -> create_submission(user, assessment)
+    end
+  end
+
+  def answer_question(id, user, answer) do
+    if user.role not in @submit_answer_roles do
+      {:error, {:unauthorized, "User is not permitted to answer questions"}}
+    else
+      question =
+        Question
+        |> where([q], q.id == ^id)
+        |> join(:inner, [q], assessment in assoc(q, :assessment))
+        |> preload([question, assessment], assessment: assessment)
+        |> Repo.one()
+
+      cond do
+        is_nil(question) ->
+          {:error, {:bad_request, "Question not found"}}
+
+        Question.is_overdue?(question) ->
+          {:error, {:bad_request, "Assessment closed"}}
+
+        true ->
+          submission = find_or_create_submission(user, question.assessment)
+          # insert_or_update_answer(submission, question, answer)
+      end
+    end
   end
 
   # TODO: Decide what to do with these methods

@@ -7,6 +7,8 @@ defmodule Cadet.Assessments.Submission do
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Answer
 
+  # TODO: Add unique indices
+
   schema "submissions" do
     field(:status, SubmissionStatus, default: :attempting)
     field(:submitted_at, Timex.Ecto.DateTime)
