@@ -89,11 +89,10 @@ defmodule Cadet.Accounts.IVLE do
 
     cs1101s =
       modules["Results"]
-      |> Enum.filter(fn module ->
+      |> Enum.find(fn module ->
         module["CourseCode"] == "CS1101S" and
           module["ID"] != "00000000-0000-0000-0000-000000000000"
       end)
-      |> List.first()
 
     case cs1101s do
       %{"Permission" => "S"} ->
