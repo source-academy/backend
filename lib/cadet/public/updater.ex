@@ -75,10 +75,7 @@ defmodule Cadet.Public.Updater do
 
   """
   def get_announcements(token, course_id) do
-    case IVLE.api_call("Announcements", AuthToken: token, CourseID: course_id) do
-      {:ok, announcements} -> {:ok, announcements}
-      {:error, reason} -> {:error, reason}
-    end
+    IVLE.api_call("Announcements", AuthToken: token, CourseID: course_id)
   end
 
   @doc """
