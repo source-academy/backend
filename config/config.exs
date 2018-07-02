@@ -8,6 +8,7 @@ use Mix.Config
 # General application configuration
 config :cadet,
   ecto_repos: [Cadet.Repo],
+  # milliseconds
   updater: [interval: 5 * 60 * 1000]
 
 # Configures the endpoint
