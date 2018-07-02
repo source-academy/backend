@@ -26,7 +26,7 @@ defmodule Cadet.Public.Updater do
   WARNING: The GenServer crashes if the API key is invalid, or not provided.
   """
   def start_link() do
-    GenServer.start_link(__MODULE__, %{})
+    GenServer.start_link(__MODULE__, nil)
   end
 
   @impl true
@@ -39,9 +39,7 @@ defmodule Cadet.Public.Updater do
     `schedule_work/0` -> `handle_info/2` -> ...
   """
   def init(_) do
-    token = get_token()
-    course_id = get_course_id(token)
-    api_params = %{token: token, course_id: course_id}
+    api_params = get_api_params()
     schedule_work()
     {:ok, api_params}
   end
@@ -62,9 +60,7 @@ defmodule Cadet.Public.Updater do
       {:error, :bad_request} ->
         # the token has probably expired---get a new one
         Logger.info("Updater failed fetching announcements. Refreshing token...")
-        token = get_token()
-        course_id = get_course_id(token)
-        api_params = %{token: token, course_id: course_id}
+        api_params = get_api_params()
         handle_info(:work, api_params)
     end
   end
@@ -83,6 +79,15 @@ defmodule Cadet.Public.Updater do
       {:ok, announcements} -> {:ok, announcements}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  @doc """
+  Get the authentication token of the guess account, and the CS1101S courseID
+  """
+  def get_api_params do
+    token = get_token()
+    course_id = get_course_id(token)
+    %{token: token, course_id: course_id}
   end
 
   @doc """
