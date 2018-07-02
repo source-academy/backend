@@ -7,6 +7,17 @@ resource "aws_vpc" "cadet" {
   }
 }
 
+resource "aws_subnet" "private_a" {
+  vpc_id                  = "${aws_vpc.cadet.id}"
+  cidr_block              = "10.0.0.0/24"
+  map_public_ip_on_launch = false
+
+  tags {
+    Name        = "${title(var.env)} Cadet Private Subnet A"
+    Environment = "${var.env}"
+  }
+}
+
 resource "aws_subnet" "public_a" {
   vpc_id                  = "${aws_vpc.cadet.id}"
   availability_zone       = "ap-southeast-1a"
@@ -27,6 +38,16 @@ resource "aws_subnet" "public_b" {
 
   tags {
     Name        = "${title(var.env)} Cadet Public Subnet B"
+    Environment = "${var.env}"
+  }
+}
+
+resource "aws_security_group" "db" {
+  name_prefix = "${var.env}-cadet-db-"
+  vpc_id      = "${aws_vpc.cadet.id}"
+
+  tags {
+    Name        = "${title(var.env)} Cadet DB Security Group"
     Environment = "${var.env}"
   }
 }
@@ -71,6 +92,17 @@ resource "aws_security_group_rule" "api_lb_egress" {
   from_port   = 0
   to_port     = 0
   cidr_blocks = ["0.0.0.0/0"]
+}
+
+resource "aws_security_group_rule" "db_ingress_psql" {
+  security_group_id = "${aws_security_group.db.id}"
+  description       = "Allows DB Access from API"
+
+  type                     = "ingress"
+  protocol                 = "tcp"
+  from_port                = 5432
+  to_port                  = 5432
+  source_security_group_id = "${aws_security_group.api.id}"
 }
 
 resource "aws_security_group_rule" "api_ingress_http" {
