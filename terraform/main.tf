@@ -18,7 +18,7 @@ module "staging" {
   source = "./cadet"
 
   env                = "stg"
-  ami_id             = "ami-02fe9d7e"
+  ami_id             = "ami-573f032b"
   instance_type      = "t2.micro"
   min_instance_count = 2
   max_instance_count = 2

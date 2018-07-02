@@ -64,6 +64,7 @@ defmodule Cadet.Mixfile do
       {:timex_ecto, "~> 3.0"},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.2", only: [:dev, :test], runtime: false},
+      {:distillery, "~> 1.5.3", runtime: false},
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
