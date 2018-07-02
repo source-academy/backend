@@ -43,10 +43,18 @@ defmodule Cadet.Public.UpdaterTest do
     end
   end
 
+  test "Get api params" do
+    use_cassette "updater/get_api_params#1", custom: true do
+      assert %{token: token, course_id: course_id} = Updater.get_api_params()
+      assert String.length(token) == 480
+      assert String.length(course_id) == 36
+      refute course_id == "00000000-0000-0000-0000-000000000000"
+    end
+  end
+
   test "Get announcements" do
     use_cassette "updater/get_announcements#1", custom: true do
-      token = Updater.get_token()
-      course_id = Updater.get_course_id(token)
+      %{token: token, course_id: course_id} = Updater.get_api_params()
       assert {:ok, announcements} = Updater.get_announcements(token, course_id)
       assert is_list(announcements)
     end
