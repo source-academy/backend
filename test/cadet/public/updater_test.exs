@@ -52,11 +52,19 @@ defmodule Cadet.Public.UpdaterTest do
     end
   end
 
-  test "Get announcements" do
-    use_cassette "updater/get_announcements#1", custom: true do
-      %{token: token, course_id: course_id} = Updater.get_api_params()
-      assert {:ok, announcements} = Updater.get_announcements(token, course_id)
-      assert is_list(announcements)
+  describe "Get announcements" do
+    test "Valid token" do
+      use_cassette "updater/get_announcements#1", custom: true do
+        %{token: token, course_id: course_id} = Updater.get_api_params()
+        assert {:ok, announcements} = Updater.get_announcements(token, course_id)
+        assert is_list(announcements)
+      end
+    end
+
+    test "Invalid token" do
+      use_cassette "updater/get_announcements#2" do
+        assert {:error, :bad_request} = Updater.get_announcements("t0k3n", "")
+      end
     end
   end
 
@@ -98,7 +106,7 @@ defmodule Cadet.Public.UpdaterTest do
 
     test "Invalid token" do
       use_cassette "updater/handle_info#2", custom: true do
-        api_params = Updater.get_api_params()
+        api_params = %{Updater.get_api_params() | token: "bad_token"}
         assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
         assert api_params.course_id == new_api_params.course_id
         assert String.length(new_api_params.token) == 480
