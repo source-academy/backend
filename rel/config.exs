@@ -36,7 +36,7 @@ end
 environment :prod do
   set include_erts: true
   set include_src: false
-  set cookie: :"l^m/AL2P4|/~aF)&j|j8<PT1bRuAA*kYEA`8L0XQuh=5NVkuu%.0^PVPXBVgtKFL"
+  set cookie: Distillery.Cookies.get()
 end
 
 # You may define one or more releases in this file.
