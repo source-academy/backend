@@ -19,8 +19,13 @@ defmodule Cadet.Application do
       worker(Guardian.DB.Token.SweeperServer, [])
     ]
 
+    # To supply command line args to phx.server, you must use the elixir/iex bin
+    #     $ elixir --erl "--updater" -S mix phx.server
+    #     $ iex --erl "--updater" -S mix phx.server
+    # In the compiled binary howver, this is much simpler
+    #     $ bin/cadet start --updater
     children =
-      if Mix.env() != :test do
+      if :init.get_plain_arguments() |> Enum.member?('--updater') do
         children ++ [worker(Cadet.Public.Updater, [])]
       else
         children

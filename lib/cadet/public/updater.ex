@@ -39,6 +39,7 @@ defmodule Cadet.Public.Updater do
     `schedule_work/0` -> `handle_info/2` -> ...
   """
   def init(_) do
+    Logger.info("Running Cadet.Public.Updater...")
     api_params = get_api_params()
     schedule_work()
     {:ok, api_params}
