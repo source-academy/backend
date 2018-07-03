@@ -10,19 +10,23 @@ resource "aws_db_subnet_group" "main" {
 
 resource "aws_db_instance" "db" {
   name                   = "${title(var.env)}CadetDB"
-  instance_class         = "db.t2.micro"
+  instance_class         = "${var.rds_instance_class}"
   db_subnet_group_name   = "${aws_db_subnet_group.main.name}"
   vpc_security_group_ids = ["${aws_security_group.db.id}"]
-  allocated_storage      = 10
+  allocated_storage      = "${var.rds_allocated_storage}"
   storage_type           = "gp2"
   engine                 = "postgres"
   username               = "postgres"
-  password               = "postgres"
+  password               = "${var.rds_password}"
   port                   = 5432
   publicly_accessible    = false
 
   tags {
     Name        = "${title(var.env)} Cadet DB"
     Environment = "${var.env}"
+  }
+
+  lifecycle {
+    ignore_changes = ["password"]
   }
 }
