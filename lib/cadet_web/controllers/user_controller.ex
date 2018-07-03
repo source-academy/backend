@@ -45,6 +45,8 @@ defmodule CadetWeb.UserController do
               "Role of the user. Can be 'Student', 'Staff', or 'Admin'",
               required: true
             )
+
+            xp(:integer, "Amount of XP. Only provided for 'Student'")
           end
         end
     }
