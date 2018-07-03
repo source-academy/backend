@@ -7,9 +7,18 @@ defmodule CadetWeb.GradingView do
 
   def render("submission.json", %{submission: submission}) do
     %{
+      xp: submission.xp,
       submissionId: submission.id,
-      missionId: submission.assessment_id,
-      studentId: submission.student_id
+      student: %{
+        name: submission.student.name,
+        id: submission.student.id
+      },
+      graded: submission.status == :graded,
+      assessment: %{
+        type: submission.assessment.category,
+        max_xp: submission.assessment.max_xp,
+        id: submission.assessment.id
+      }
     }
   end
 end

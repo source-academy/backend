@@ -10,7 +10,7 @@ defmodule CadetWeb.GradingController do
 
     case user.role do
       :staff ->
-        submissions = Assessments.all_submissions(grader_id: user.id)
+        submissions = Assessments.all_submissions_by_grader(user)
         render(conn, "index.json", submissions: submissions)
 
       _ ->
@@ -87,8 +87,30 @@ defmodule CadetWeb.GradingController do
         swagger_schema do
           properties do
             submissionId(:integer, "submission id", required: true)
-            assessmentId(:integer, "assessment id", required: true)
-            studentId(:integer, "student id", required: true)
+            xp(:integer, "xp given")
+            graded(:boolean, "whether this submission has been graded", required: true)
+            assessment(Schema.ref(:AssessmentInfo))
+            student(Schema.ref(:StudentInfo))
+          end
+        end,
+      AssessmentInfo:
+        swagger_schema do
+          properties do
+            id(:integer, "assessment id", required: true)
+            type(:string, "Either mission/sidequest/path/contest", required: true)
+
+            max_xp(
+              :integer,
+              "The max amount of XP to be earned from this assessment",
+              required: true
+            )
+          end
+        end,
+      StudentInfo:
+        swagger_schema do
+          properties do
+            id(:integer, "student id", required: true)
+            name(:string, "student name", required: true)
           end
         end,
       GradingInfo:

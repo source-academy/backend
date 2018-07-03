@@ -9,6 +9,7 @@ defmodule Cadet.Assessments do
 
   alias Timex.Duration
 
+  alias Cadet.Assessments.Answer
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Submission
@@ -116,10 +117,35 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
-  def all_submissions(grader_id: grader_id) do
-    Submission
-    |> where(grader_id: ^grader_id)
-    |> Repo.all()
+  @spec get_submission_xp(String.t() | integer()) :: number()
+  def get_submission_xp(id) when is_binary(id) or is_integer(id) do
+    Answer
+    |> where(submission_id: ^id)
+    |> Repo.aggregate(:sum, :marks)
+  end
+
+  def all_submissions_by_grader(grader, preload \\ true)
+
+  @spec all_submissions_by_grader(String.t() | integer(), boolean()) :: Submission.t()
+  def all_submissions_by_grader(grader_id, preload)
+      when is_binary(grader_id) or is_integer(grader_id) do
+    submissions =
+      Submission
+      |> where(grader_id: ^grader_id)
+      |> Repo.all()
+
+    if preload do
+      submissions
+      |> Repo.preload([:assessment, :student])
+      |> Enum.map(&Map.put(&1, :xp, get_submission_xp(&1.id)))
+    else
+      submissions
+    end
+  end
+
+  @spec all_submissions_by_grader(Cadet.Accounts.User.t(), boolean()) :: Submission.t()
+  def all_submissions_by_grader(%Cadet.Accounts.User{id: id, role: :staff}, preload) do
+    all_submissions_by_grader(id, preload)
   end
 
   # TODO: Decide what to do with these methods
