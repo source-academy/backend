@@ -37,7 +37,7 @@ defmodule Cadet.Assessments.Question do
       if Ecto.assoc_loaded?(question.assessment) do
         question
       else
-        Ecto.preload(question, :assessment)
+        Repo.preload(question, :assessment)
       end
 
     not Timex.between?(Timex.now(), question.assessment.open_at, question.assessment.close_at)
