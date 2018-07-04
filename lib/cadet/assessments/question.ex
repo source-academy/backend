@@ -33,9 +33,12 @@ defmodule Cadet.Assessments.Question do
   end
 
   def is_overdue?(question) do
-    if not Ecto.assoc_loaded?(question.assessment) do
-      question = Ecto.preload(question, :assessment)
-    end
+    question =
+      if Ecto.assoc_loaded?(question.assessment) do
+        question
+      else
+        Ecto.preload(question, :assessment)
+      end
 
     not Timex.between?(Timex.now(), question.assessment.open_at, question.assessment.close_at)
   end
