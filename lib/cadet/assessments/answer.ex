@@ -17,7 +17,7 @@ defmodule Cadet.Assessments.Answer do
     timestamps()
   end
 
-  @required_fields ~w(answer)a
+  @required_fields ~w(answer submission_id question_id)a
   @optional_fields ~w(marks raw_answer)a
 
   def changeset(answer, params) do
@@ -25,6 +25,20 @@ defmodule Cadet.Assessments.Answer do
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:marks, greater_than_or_equal_to: 0.0)
+    |> foreign_key_constraint(:submission_id)
+    |> foreign_key_constraint(:question_id)
+    |> validate_answer_content()
     |> put_json(:answer, :raw_answer)
+  end
+
+  defp validate_answer_content(changeset) do
+    case changeset.valid? do
+      true ->
+        IO.puts(inspect(changeset))
+        changeset
+
+      false ->
+        changeset
+    end
   end
 end

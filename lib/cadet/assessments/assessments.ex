@@ -178,9 +178,11 @@ defmodule Cadet.Assessments do
     answer_content = build_answer_content(raw_answer, question.type)
 
     %Answer{}
-    |> Answer.changeset(%{answer: answer_content})
-    |> put_assoc(:submission, submission)
-    |> put_assoc(:question, question)
+    |> Answer.changeset(%{
+      answer: answer_content,
+      question_id: 20,
+      submission_id: submission.id
+    })
     |> Repo.insert(
       on_conflict: [set: [answer: answer_content]],
       conflict_target: [:submission_id, :question_id]
