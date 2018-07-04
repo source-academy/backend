@@ -6,7 +6,10 @@
 use Mix.Config
 
 # General application configuration
-config :cadet, ecto_repos: [Cadet.Repo]
+config :cadet,
+  ecto_repos: [Cadet.Repo],
+  # milliseconds
+  updater: [interval: 5 * 60 * 1000]
 
 # Configures the endpoint
 config :cadet, CadetWeb.Endpoint,
@@ -44,15 +47,3 @@ config :guardian, Guardian.DB,
   token_types: ["access"],
   # default: 60 minute
   sweep_interval: 60
-
-config :git_hooks,
-  hooks: [
-    pre_push: [
-      verbose: true,
-      mix_tasks: [
-        "format --check-formatted",
-        "test",
-        "credo"
-      ]
-    ]
-  ]

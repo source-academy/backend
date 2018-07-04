@@ -61,3 +61,15 @@ config :cadet, Cadet.Repo,
 config :cadet, Cadet.Auth.Guardian,
   issuer: "cadet",
   secret_key: "UiVBXJi9eJhVrcczxfqFoclJKr6m+s22LW/3e7CRzBmDZmHiprIFhJi4q5JQ7psE"
+
+config :git_hooks,
+  hooks: [
+    pre_push: [
+      verbose: true,
+      mix_tasks: [
+        "format --check-formatted",
+        "test",
+        "credo"
+      ]
+    ]
+  ]
