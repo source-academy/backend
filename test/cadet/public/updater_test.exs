@@ -8,6 +8,9 @@ defmodule Cadet.Public.UpdaterTest do
   Don't forget to delete the cassette files, otherwise ExVCR will not override
   the cassettes.
 
+  **Make sure that the cassettes do not expose sensitive information, especially
+  the GUEST_USER, GUEST_PASSWORD, since those are exposed during HTTP post.**
+
   Token refers to the user's authentication token. Please see the IVLE API docs:
   https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
   To quickly obtain a token, simply supply a dummy url to a login call:
@@ -29,6 +32,85 @@ defmodule Cadet.Public.UpdaterTest do
     use_cassette "updater/get_token#1", custom: true do
       token = Updater.get_token()
       assert String.length(token) == 480
+    end
+  end
+
+  test "Get course id" do
+    use_cassette "updater/get_course_id#1", custom: true do
+      course_id = Updater.get_course_id("T0K3N...")
+      assert String.length(course_id) == 36
+      refute course_id == "00000000-0000-0000-0000-000000000000"
+    end
+  end
+
+  test "Get api params" do
+    use_cassette "updater/get_api_params#1", custom: true do
+      assert %{token: token, course_id: course_id} = Updater.get_api_params()
+      assert String.length(token) == 480
+      assert String.length(course_id) == 36
+      refute course_id == "00000000-0000-0000-0000-000000000000"
+    end
+  end
+
+  describe "Get announcements" do
+    test "Valid token" do
+      use_cassette "updater/get_announcements#1", custom: true do
+        %{token: token, course_id: course_id} = Updater.get_api_params()
+        assert {:ok, announcements} = Updater.get_announcements(token, course_id)
+        assert is_list(announcements)
+      end
+    end
+
+    test "Invalid token" do
+      use_cassette "updater/get_announcements#2" do
+        assert {:error, :bad_request} = Updater.get_announcements("t0k3n", "")
+      end
+    end
+  end
+
+  describe "Start GenServer" do
+    test "Using GenServer.start_link/3" do
+      use_cassette "updater/start_link#1", custom: true do
+        assert {:ok, _} = GenServer.start_link(Updater, nil, name: TestUpdater)
+        assert :ok = GenServer.stop(TestUpdater)
+      end
+    end
+
+    test "Using Updater.start_link/1" do
+      use_cassette "updater/start_link#2", custom: true do
+        assert {:ok, pid} = Updater.start_link()
+        assert Process.alive?(pid)
+        assert GenServer.stop(pid) == :ok
+        refute Process.alive?(pid)
+      end
+    end
+  end
+
+  test "GenServer init/1 callback" do
+    use_cassette "updater/init#1", custom: true do
+      assert {:ok, %{token: token, course_id: course_id}} = Updater.init(nil)
+      assert String.length(token) == 480
+      assert String.length(course_id) == 36
+      refute course_id == "00000000-0000-0000-0000-000000000000"
+    end
+  end
+
+  describe "Send :work to GenServer" do
+    test "Valid token" do
+      use_cassette "updater/handle_info#1", custom: true do
+        api_params = Updater.get_api_params()
+        assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
+        assert new_api_params == api_params
+      end
+    end
+
+    test "Invalid token" do
+      use_cassette "updater/handle_info#2", custom: true do
+        api_params = %{Updater.get_api_params() | token: "bad_token"}
+        assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
+        assert api_params.course_id == new_api_params.course_id
+        assert String.length(new_api_params.token) == 480
+      end
     end
   end
 end
