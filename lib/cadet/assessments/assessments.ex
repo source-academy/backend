@@ -10,6 +10,7 @@ defmodule Cadet.Assessments do
   alias Timex.Duration
 
   alias Cadet.Accounts.User
+  alias Cadet.Assessments.Answer
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Submission
@@ -133,10 +134,10 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def create_submission(user = %User{}, assessment = %Assessment{}) do
+  def create_empty_submission(user = %User{}, assessment = %Assessment{}) do
     %Submission{}
     |> Submission.changeset(%{})
-    |> put_assoc(:user, user)
+    |> put_assoc(:student, user)
     |> put_assoc(:assessment, assessment)
     |> Repo.insert!()
   end
@@ -144,11 +145,11 @@ defmodule Cadet.Assessments do
   def find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
     case find_submission(user, assessment) do
       {:ok, submission} -> submission
-      {:error, _} -> create_submission(user, assessment)
+      {:error, _} -> create_empty_submission(user, assessment)
     end
   end
 
-  def answer_question(id, user, answer) do
+  def answer_question(id, user, raw_answer) do
     if user.role not in @submit_answer_roles do
       {:error, {:unauthorized, "User is not permitted to answer questions"}}
     else
@@ -168,8 +169,39 @@ defmodule Cadet.Assessments do
 
         true ->
           submission = find_or_create_submission(user, question.assessment)
-          # insert_or_update_answer(submission, question, answer)
+          insert_or_update_answer(submission, question, raw_answer)
       end
+    end
+  end
+
+  defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
+    answer_content = build_answer_content(raw_answer, question.type)
+
+    res =
+      %Answer{}
+      |> Answer.changeset(%{answer: answer_content})
+      |> put_assoc(:submission, submission)
+      |> put_assoc(:question, question)
+      |> Repo.insert(
+        on_conflict: [set: [answer: answer_content]],
+        conflict_target: [:submission_id, :question_id]
+      )
+      |> case do
+        {:ok, _answer} ->
+          {:ok, nil}
+
+        {:error, _error} ->
+          {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+      end
+  end
+
+  defp build_answer_content(raw_answer, question_type) do
+    case question_type do
+      :multiple_choice ->
+        %{choice_id: raw_answer}
+
+      :programming ->
+        %{code: raw_answer}
     end
   end
 

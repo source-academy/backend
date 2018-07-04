@@ -6,49 +6,18 @@ defmodule CadetWeb.AnswerController do
   alias Cadet.Assessments
 
   def submit(conn, %{"questionid" => question_id, "answer" => answer}) do
-    # offload to Cadet.Assessments:
-    # check role
-    # get question
-    # check deadline
-    # check format
-    # submit
-    # handle error
-    IO.puts(inspect(conn))
-    Assessments.answer_question(question_id, conn.assigns.current_user, answer)
-    # IO.puts(get_session(conn, :current_user))
+    case Assessments.answer_question(question_id, conn.assigns.current_user, answer) do
+      {:ok, _nil} ->
+        send_resp(conn, :ok, "OK")
 
-    if conn.assigns.current_user.role == :student do
-      IO.puts("true")
+      {:error, {resp, message}} ->
+        send_resp(conn, resp, message)
     end
-
-    conn
   end
 
   def submit(conn, _parms) do
     send_resp(conn, :bad_request, "Missing parameter(s)")
   end
-
-  # defp check_deadline_not_past(conn, _) do
-  #   if Question.can_submit?(conn.assigns.question) do
-  #     conn
-  #   else
-  #     conn
-  #     |> send_resp(:unauthorised, "Deadline past")
-  #     |> halt()
-  #   end
-  # end
-
-  # defp assign_question(conn, _) do
-  #   question = Repo.get(Question, conn.params["questionid"])
-
-  #   if question && question.can_submit?() do
-  #     conn
-  #   else
-  #     conn
-  #     |> send_resp(:bad_request, "Invalid question")
-  #     |> halt()
-  #   end
-  # end
 
   swagger_path :submit do
     post("/assessments/question/{questionId}/submit")
