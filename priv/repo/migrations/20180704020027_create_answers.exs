@@ -16,5 +16,7 @@ defmodule Cadet.Repo.Migrations.CreateAnswersTable do
         name: :answers_submission_id_question_id_index
       )
     )
+    create(index(:answers, [:submission_id]))
+    create(index(:answers, [:question_id]))
   end
 end
