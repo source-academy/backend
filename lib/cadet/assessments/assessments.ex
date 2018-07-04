@@ -120,35 +120,6 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
-  def find_submission(user = %User{}, assessment = %Assessment{}) do
-    submission =
-      Submission
-      |> where([s], s.student_id == ^user.id)
-      |> where([s], s.assessment_id == ^assessment.id)
-      |> Repo.one()
-
-    if submission do
-      {:ok, submission}
-    else
-      {:error, nil}
-    end
-  end
-
-  def create_empty_submission(user = %User{}, assessment = %Assessment{}) do
-    %Submission{}
-    |> Submission.changeset(%{})
-    |> put_assoc(:student, user)
-    |> put_assoc(:assessment, assessment)
-    |> Repo.insert!()
-  end
-
-  def find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
-    case find_submission(user, assessment) do
-      {:ok, submission} -> submission
-      {:error, _} -> create_empty_submission(user, assessment)
-    end
-  end
-
   def answer_question(id, user, raw_answer) do
     if user.role not in @submit_answer_roles do
       {:error, {:unauthorized, "User is not permitted to answer questions"}}
@@ -171,6 +142,33 @@ defmodule Cadet.Assessments do
           submission = find_or_create_submission(user, question.assessment)
           insert_or_update_answer(submission, question, raw_answer)
       end
+    end
+  end
+
+  defp find_submission(user = %User{}, assessment = %Assessment{}) do
+    submission =
+      Submission
+      |> where([s], s.student_id == ^user.id)
+      |> where([s], s.assessment_id == ^assessment.id)
+      |> Repo.one()
+
+    if submission do
+      {:ok, submission}
+    else
+      {:error, nil}
+    end
+  end
+
+  defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
+    %Submission{}
+    |> Submission.changeset(%{student_id: user.id, assessment_id: assessment.id})
+    |> Repo.insert!()
+  end
+
+  defp find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
+    case find_submission(user, assessment) do
+      {:ok, submission} -> submission
+      {:error, _} -> create_empty_submission(user, assessment)
     end
   end
 
