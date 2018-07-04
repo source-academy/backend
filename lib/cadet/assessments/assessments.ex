@@ -177,22 +177,21 @@ defmodule Cadet.Assessments do
   defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
     answer_content = build_answer_content(raw_answer, question.type)
 
-    res =
-      %Answer{}
-      |> Answer.changeset(%{answer: answer_content})
-      |> put_assoc(:submission, submission)
-      |> put_assoc(:question, question)
-      |> Repo.insert(
-        on_conflict: [set: [answer: answer_content]],
-        conflict_target: [:submission_id, :question_id]
-      )
-      |> case do
-        {:ok, _answer} ->
-          {:ok, nil}
+    %Answer{}
+    |> Answer.changeset(%{answer: answer_content})
+    |> put_assoc(:submission, submission)
+    |> put_assoc(:question, question)
+    |> Repo.insert(
+      on_conflict: [set: [answer: answer_content]],
+      conflict_target: [:submission_id, :question_id]
+    )
+    |> case do
+      {:ok, _answer} ->
+        {:ok, nil}
 
-        {:error, _error} ->
-          {:error, {:bad_request, "Missing or invalid parameter(s)"}}
-      end
+      {:error, _error} ->
+        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+    end
   end
 
   defp build_answer_content(raw_answer, question_type) do
