@@ -37,14 +37,13 @@ defmodule Cadet.ModelHelper do
 
   def add_belongs_to_id_from_model(changeset, assoc, params) do
     # TODO: refactor to accept list
-    params
-    |> Map.get(assoc)
-    |> case do
-      nil ->
-        changeset
+    assoc_id_field = String.to_atom("#{assoc}_id")
+    model = Map.get(params, assoc)
 
-      model ->
-        change(changeset, %{"#{assoc}_id": model.id})
+    if is_nil(get_change(changeset, assoc_id_field)) and not is_nil(model) do
+      change(changeset, %{"#{assoc}_id": model.id})
+    else
+      changeset
     end
   end
 end
