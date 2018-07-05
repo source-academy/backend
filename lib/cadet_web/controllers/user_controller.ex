@@ -8,6 +8,7 @@ defmodule CadetWeb.UserController do
 
   def index(conn, _) do
     user = conn.assigns.current_user
+    # TODO: fetch total xp for this user
     render(conn, "user_info.json", name: user.name, role: user.role, xp: 0)
   end
 
