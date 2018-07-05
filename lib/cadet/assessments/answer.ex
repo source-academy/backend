@@ -49,26 +49,30 @@ defmodule Cadet.Assessments.Answer do
   end
 
   defp validate_answer_content(changeset) do
-    question_type = get_change(changeset, :type)
-    answer = get_change(changeset, :answer)
+    if changeset.valid? do
+      question_type = get_change(changeset, :type)
+      answer = get_change(changeset, :answer)
 
-    answer_content_changeset =
-      case question_type do
-        :programming ->
-          ProgrammingAnswer.changeset(%ProgrammingAnswer{}, answer)
+      answer_content_changeset =
+        case question_type do
+          :programming ->
+            ProgrammingAnswer.changeset(%ProgrammingAnswer{}, answer)
 
-        :multiple_choice ->
-          MCQAnswer.changeset(%MCQAnswer{}, answer)
+          :multiple_choice ->
+            MCQAnswer.changeset(%MCQAnswer{}, answer)
+        end
+
+      answer_content_changeset
+      |> Map.get(:valid?)
+      |> case do
+        true ->
+          changeset
+
+        false ->
+          add_error(changeset, :answer, "invalid answer type provided for question")
       end
-
-    answer_content_changeset
-    |> Map.get(:valid?)
-    |> case do
-      true ->
-        changeset
-
-      false ->
-        add_error(changeset, :answer, "invalid answer type provided for question")
+    else
+      changeset
     end
   end
 end
