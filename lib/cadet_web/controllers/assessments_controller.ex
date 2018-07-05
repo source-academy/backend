@@ -6,6 +6,7 @@ defmodule CadetWeb.AssessmentsController do
 
   alias Cadet.Assessments
   alias Cadet.Assessments.Image
+  alias Cadet.Accounts
 
   def index(conn, _) do
     assessment_list =
@@ -30,6 +31,17 @@ defmodule CadetWeb.AssessmentsController do
   def show(conn, %{"assessmentId" => assessmentId}) do
     assessment = Poison.encode(Assessments.get_assessment(assessmentId))
     render(conn, "index.json", assessment: assessment)
+  end
+
+  def new(conn, %{"studentId" => studentId}) do
+    unattempted_assessments = Assessments.all_assessments()
+    |> Enum.map(&(%{assessment: &1, 
+      submission: Assessments.find_submission(Accounts.get_user(studentId), &1)}))
+    |> Enum.filter(&(&1.submission == nil))
+    |> Enum.map(&(&1.assessment))
+    |> Poison.encode()
+
+    render(conn, "index.json", unattempted_assessments: unattempted_assessments)
   end
 
   swagger_path :index do
