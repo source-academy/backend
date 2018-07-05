@@ -37,7 +37,7 @@ defmodule Cadet.Assessments.Question do
       changeset
       |> get_change(:raw_question)
       |> Kernel.||("{}")
-      |> Poison.decode()
+      |> Jason.decode()
 
     type = get_change(changeset, :type)
 

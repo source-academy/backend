@@ -129,7 +129,7 @@ defmodule Cadet.Accounts.IVLE do
   """
   def api_call(method, queries) when method in ["Announcements"] do
     with {:ok, %{status_code: 200, body: body}} <- HTTPoison.get(api_url(method, queries)),
-         body = Poison.decode!(body),
+         body = Jason.decode!(body),
          %{"Comments" => "Valid login!"} <- body do
       {:ok, body["Results"]}
     else
@@ -165,7 +165,7 @@ defmodule Cadet.Accounts.IVLE do
   def api_call(method, queries) do
     case HTTPoison.get(api_url(method, queries)) do
       {:ok, %{body: body, status_code: 200}} when body != ~s("") ->
-        {:ok, Poison.decode!(body)}
+        {:ok, Jason.decode!(body)}
 
       {:ok, %{status_code: 500}} ->
         # IVLE responds with 500 if APIKey is invalid

@@ -27,7 +27,7 @@ defmodule Cadet.ModelHelper do
     change = get_change(changeset, json_field)
 
     if change do
-      json = Poison.decode!(change)
+      json = Jason.decode!(change)
 
       put_change(changeset, field, json)
     else

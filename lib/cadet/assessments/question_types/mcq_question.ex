@@ -29,7 +29,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
     change = get_change(changeset, :raw_mcqquestion)
 
     if change do
-      json = Poison.decode!(change)
+      json = Jason.decode!(change)
 
       changeset
       |> cast(json, @required_fields)

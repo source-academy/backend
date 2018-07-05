@@ -30,7 +30,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
     change = get_change(changeset, :raw_programmingquestion)
 
     if change do
-      json = Poison.decode!(change)
+      json = Jason.decode!(change)
 
       changeset
       |> cast(json, @required_fields)
