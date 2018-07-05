@@ -2,9 +2,14 @@ defmodule CadetWeb.UserController do
   @moduledoc """
   Provides information about a user.
   """
-  use CadetWeb, :controller
 
+  use CadetWeb, :controller
   use PhoenixSwagger
+
+  def index(conn, _) do
+    user = conn.assigns.current_user
+    render(conn, "user_info.json", name: user.name, role: user.role, xp: 0)
+  end
 
   swagger_path :index do
     get("/user")
@@ -13,21 +18,10 @@ defmodule CadetWeb.UserController do
 
     security([%{JWT: []}])
 
-    consumes("application/json")
     produces("application/json")
 
-    parameters do
-      access_token(
-        :body,
-        Schema.ref(:AccessToken),
-        "access token obtained from /auth",
-        required: true
-      )
-    end
-
     response(200, "OK", Schema.ref(:UserInfo))
-    response(400, "Missing parameter")
-    response(401, "Invalid access token")
+    response(401, "Unauthorized")
   end
 
   def swagger_definitions do
