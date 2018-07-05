@@ -12,8 +12,10 @@ defmodule Cadet.Factory do
   alias Cadet.Course.Point
   alias Cadet.Course.Group
   alias Cadet.Course.Material
+  alias Cadet.Assessments.Answer
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
+  alias Cadet.Assessments.Submission
 
   def user_factory do
     %User{
@@ -98,6 +100,29 @@ defmodule Cadet.Factory do
       question: %{},
       type: Enum.random([:programming, :multiple_choice]),
       assessment: build(:assessment)
+    }
+  end
+
+  def answer_factory do
+    %Answer{
+      xp: Enum.random(1..10) * 100,
+      answer: %{},
+      question: build(:question)
+    }
+  end
+
+  def question_factory do
+    %Question{
+      title: "How much wood could a woodchuck chuck?",
+      weight: 1,
+      question: %{},
+      type: Enum.random([:mission, :sidequest, :path, :contest])
+    }
+  end
+
+  def submission_factory do
+    %Submission{
+      status: Enum.random([:attempting, :submitted, :graded])
     }
   end
 end

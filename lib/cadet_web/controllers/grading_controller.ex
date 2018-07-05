@@ -8,13 +8,9 @@ defmodule CadetWeb.GradingController do
   def index(conn, _) do
     user = conn.assigns[:current_user]
 
-    case user.role do
-      :staff ->
-        submissions = Assessments.all_submissions_by_grader(user)
-        render(conn, "index.json", submissions: submissions)
-
-      _ ->
-        send_resp(conn, :unauthorized, "Only staff can grade")
+    case Assessments.all_submissions_by_grader(user) do
+      {:ok, submissions} -> render(conn, "index.json", submissions: submissions)
+      {:error, {status, error}} -> send_resp(conn, status, error)
     end
   end
 
