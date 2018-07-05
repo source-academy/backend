@@ -2,6 +2,35 @@ defmodule CadetWeb.AssessmentsController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
+  use Arc.Ecto.Schema
+
+  alias Cadet.Assessments
+  alias Cadet.Assessments.Image
+
+  def index(conn, _) do
+    assessment_list =
+      Assessments.all_assessments()
+      |> Enum.map(
+        &%{
+          id: &1.id,
+          title: &1.title,
+          type: Atom.to_string(&1.category),
+          summary_short: &1.summary_short,
+          open_at: DateTime.to_string(&1.open_at),
+          close_at: DateTime.to_string(&1.close_at),
+          max_xp: &1.max_xp,
+          cover_picture: Image.url({&1.cover_picture, &1}, :thumb)
+        }
+      )
+      |> Poison.encode()
+
+    render(conn, "index.json", assessments: assessment_list)
+  end
+
+  def show(conn, %{"assessmentId" => assessmentId}) do
+    assessment = Poison.encode(Assessments.get_assessment(assessmentId))
+    render(conn, "index.json", assessment: assessment)
+  end
 
   swagger_path :index do
     get("/assessments")
