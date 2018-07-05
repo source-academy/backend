@@ -34,4 +34,16 @@ defmodule Cadet.ModelHelper do
       changeset
     end
   end
+
+  def add_belongs_to_id_from_model(changeset, assoc, params) do
+    params
+    |> Map.get(assoc)
+    |> case do
+      nil ->
+        changeset
+
+      model ->
+        change(changeset, %{"#{assoc}_id": model.id})
+    end
+  end
 end

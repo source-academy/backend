@@ -15,6 +15,8 @@ defmodule Cadet do
 
       import Ecto.Changeset
       import Cadet.ModelHelper
+
+      alias Cadet.Repo
     end
   end
 

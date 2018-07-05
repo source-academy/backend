@@ -161,7 +161,7 @@ defmodule Cadet.Assessments do
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
     %Submission{}
-    |> Submission.changeset(%{student_id: user.id, assessment_id: assessment.id})
+    |> Submission.changeset(%{student: user, assessment: assessment})
     |> Repo.insert!()
   end
 
@@ -178,7 +178,7 @@ defmodule Cadet.Assessments do
     %Answer{}
     |> Answer.changeset(%{
       answer: answer_content,
-      question_id: 20,
+      question_id: question.id,
       submission_id: submission.id
     })
     |> Repo.insert(
