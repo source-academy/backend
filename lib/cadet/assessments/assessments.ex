@@ -179,7 +179,8 @@ defmodule Cadet.Assessments do
     |> Answer.changeset(%{
       answer: answer_content,
       question_id: question.id,
-      submission_id: submission.id
+      submission_id: submission.id,
+      type: question.type
     })
     |> Repo.insert(
       on_conflict: [set: [answer: answer_content]],

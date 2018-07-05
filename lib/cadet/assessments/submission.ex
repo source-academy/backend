@@ -2,8 +2,6 @@ defmodule Cadet.Assessments.Submission do
   @moduledoc false
   use Cadet, :model
 
-  import Ecto.Query
-
   alias Cadet.Assessments.SubmissionStatus
   alias Cadet.Accounts.User
   alias Cadet.Assessments.Assessment
@@ -37,34 +35,5 @@ defmodule Cadet.Assessments.Submission do
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:student)
     |> foreign_key_constraint(:assessment)
-    # TODO: change back to student for deployment
-    |> validate_role(:student, :staff)
-    |> validate_role(:grader, :staff)
-  end
-
-  def validate_role(changeset, assoc, role) do
-    # TODO: update to accept named list, do joins +reduce for performance
-    changeset
-    |> Map.get(:changes)
-    |> Map.get(String.to_atom("#{assoc}_id"))
-    |> case do
-      nil ->
-        changeset
-
-      changeset_field ->
-        assoc_reflection = __schema__(:association, assoc)
-
-        user =
-          assoc_reflection
-          |> Map.get(:queryable)
-          |> where([user], user.id == ^changeset_field)
-          |> Repo.one()
-
-        if user.role == role do
-          changeset
-        else
-          add_error(changeset, assoc, "Does not have the role #{role}")
-        end
-    end
   end
 end

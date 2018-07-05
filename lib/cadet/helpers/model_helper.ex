@@ -36,6 +36,7 @@ defmodule Cadet.ModelHelper do
   end
 
   def add_belongs_to_id_from_model(changeset, assoc, params) do
+    # TODO: refactor to accept list
     params
     |> Map.get(assoc)
     |> case do
