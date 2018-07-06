@@ -9,7 +9,7 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     # TODO: fetch total xp for this user
-    render(conn, "user_info.json", name: user.name, role: user.role, xp: 0)
+    render(conn, "index.json", user: user, xp: 0)
   end
 
   swagger_path :index do
@@ -22,7 +22,7 @@ defmodule CadetWeb.UserController do
     produces("application/json")
 
     response(200, "OK", Schema.ref(:UserInfo))
-    response(401, "Unauthorized")
+    response(401, "Unauthorised")
   end
 
   def swagger_definitions do
