@@ -86,7 +86,6 @@ defmodule Cadet.Assessments do
     Repo.get(Assessment, id)
   end
 
-  # TODO: FIX THIS SHIT
   def create_question_for_assessment(params, assessment_id)
       when is_binary(assessment_id) or is_number(assessment_id) do
     assessment = get_assessment(assessment_id)
