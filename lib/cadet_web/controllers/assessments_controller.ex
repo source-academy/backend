@@ -4,9 +4,13 @@ defmodule CadetWeb.AssessmentsController do
   use PhoenixSwagger
   use Arc.Ecto.Schema
 
+  import Ecto.Query
+
+  alias Cadet.Repo
   alias Cadet.Assessments
   alias Cadet.Assessments.Image
-  alias Cadet.Accounts
+  alias Cadet.Submission
+  alias Cadet.Assessment
 
   def index(conn, _) do
     assessment_list =
@@ -33,13 +37,31 @@ defmodule CadetWeb.AssessmentsController do
     render(conn, "index.json", assessment: assessment)
   end
 
-  def new(conn, %{"studentId" => studentId}) do
-    unattempted_assessments = Assessments.all_assessments()
-    |> Enum.map(&(%{assessment: &1, 
-      submission: Assessments.find_submission(Accounts.get_user(studentId), &1)}))
-    |> Enum.filter(&(&1.submission == nil))
-    |> Enum.map(&(&1.assessment))
-    |> Poison.encode()
+  def new(conn, _) do
+    user_id = conn.assigns[:current_user].id
+
+    submission_query =
+      Submission
+      |> where([s], s.student_id == ^user_id)
+      |> select([s], s.assessment_id)
+      |> distinct(true)
+      |> Repo.all()
+
+    unattempted_assessments =
+      Assessment
+      |> where([a], a.id not in ^submission_query)
+      |> select([a], %{
+        id: a.id,
+        title: a.title,
+        type: a.category,
+        summary_short: a.summary_short,
+        open_at: a.open_at,
+        close_at: a.close_at,
+        max_xp: a.max_xp,
+        cover_picture: a.cover_picture
+      })
+      |> Repo.all()
+      |> Poison.encode()
 
     render(conn, "index.json", unattempted_assessments: unattempted_assessments)
   end
