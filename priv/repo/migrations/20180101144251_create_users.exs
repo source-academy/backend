@@ -18,7 +18,6 @@ defmodule Cadet.Repo.Migrations.CreateUsers do
   end
 
   def down do
-    drop(unique_index(:users, [:nusnet_id]))
     drop(table(:users))
     Role.drop_type()
   end

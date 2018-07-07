@@ -19,16 +19,15 @@ defmodule Cadet.Assessments.Assessment do
     field(:summary_long, :string)
     field(:open_at, Timex.Ecto.DateTime)
     field(:close_at, Timex.Ecto.DateTime)
-    field(:max_xp, :integer, default: 0)
     field(:cover_picture, Image.Type)
     field(:mission_pdf, Upload.Type)
-    field(:order, :string, default: "")
+    field(:priority, :integer)
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
-  @required_fields ~w(type title open_at close_at max_xp)a
-  @optional_fields ~w(summary_short summary_long is_published max_xp)a
+  @required_fields ~w(type title open_at close_at)a
+  @optional_fields ~w(summary_short summary_long is_published priority)a
   @optional_file_fields ~w(cover_picture mission_pdf)a
 
   def changeset(mission, params) do
@@ -40,7 +39,6 @@ defmodule Cadet.Assessments.Assessment do
     mission
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_number(:max_xp, greater_than_or_equal_to: 0)
     |> cast_attachments(params, @optional_file_fields)
     |> validate_open_close_date
   end

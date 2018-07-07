@@ -20,8 +20,6 @@ defmodule Cadet.Repo.Migrations.CreateAuthorizations do
   end
 
   def down do
-    drop(index(:authorizations, [:provider, :uid]))
-    drop(index(:authorizations, [:provider, :token]))
     drop(table(:authorizations))
     Provider.drop_type()
   end

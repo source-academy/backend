@@ -8,8 +8,7 @@ defmodule Cadet.Assessments.AssessmentTest do
       type: :mission,
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
-      max_xp: 100
+      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
     }
 
     %{
@@ -17,21 +16,12 @@ defmodule Cadet.Assessments.AssessmentTest do
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
       close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
-      max_xp: 100,
       cover_picture: build_upload("test/fixtures/upload.png", "image/png"),
       mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
     }
   end
 
   invalid_changesets Assessment do
-    %{
-      type: :mission,
-      title: "mission",
-      open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
-      max_xp: -100
-    }
-
     %{type: :mission, title: "mission", max_xp: 100}
 
     %{
