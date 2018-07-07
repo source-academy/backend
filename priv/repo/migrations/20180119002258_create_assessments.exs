@@ -1,14 +1,14 @@
 defmodule Cadet.Repo.Migrations.CreateMissions do
   use Ecto.Migration
 
-  alias Cadet.Assessments.Category
+  alias Cadet.Assessments.AssessmentType
 
   def up do
-    Category.create_type()
+    AssessmentType.create_type()
 
     create table(:assessments) do
       add(:order, :string, null: false)
-      add(:category, :category, null: false)
+      add(:type, :assessment_type, null: false)
       add(:title, :string, null: false)
       add(:summary_short, :text)
       add(:summary_long, :text)
@@ -33,6 +33,6 @@ defmodule Cadet.Repo.Migrations.CreateMissions do
     drop(index(:assessments, [:close_at]))
     drop(table(:assessments))
 
-    Category.drop_type()
+    AssessmentType.drop_type()
   end
 end

@@ -10,5 +10,11 @@ defmodule Cadet.Repo.Migrations.CreateUserHeirarchies do
     create(index(:user_heirarchies, [:slave_id]))
     create(index(:user_heirarchies, [:master_id]))
     create(unique_index(:user_heirarchies, [:slave_id, :master_id]))
+
+    alter table(:users) do
+      add(:user_heirarchy_id, references(:users))
+    end
+
+    create(index(:users, [:user_heirarchy_id]))
   end
 end

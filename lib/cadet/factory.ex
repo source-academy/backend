@@ -83,7 +83,7 @@ defmodule Cadet.Factory do
   def assessment_factory do
     %Assessment{
       title: "assessment",
-      category: Enum.random([:mission, :sidequest, :contest, :path]),
+      type: Enum.random([:mission, :sidequest, :contest, :path]),
       open_at: Timex.now(),
       close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
       max_xp: 100,

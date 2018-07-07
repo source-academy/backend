@@ -5,7 +5,7 @@ defmodule Cadet.Assessments.AssessmentTest do
 
   valid_changesets Assessment do
     %{
-      category: :mission,
+      type: :mission,
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
       close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
@@ -13,7 +13,7 @@ defmodule Cadet.Assessments.AssessmentTest do
     }
 
     %{
-      category: :mission,
+      type: :mission,
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
       close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
@@ -25,14 +25,14 @@ defmodule Cadet.Assessments.AssessmentTest do
 
   invalid_changesets Assessment do
     %{
-      category: :mission,
+      type: :mission,
       title: "mission",
       open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
       close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
       max_xp: -100
     }
 
-    %{category: :mission, title: "mission", max_xp: 100}
+    %{type: :mission, title: "mission", max_xp: 100}
 
     %{
       title: "mission",

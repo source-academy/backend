@@ -16,16 +16,16 @@ defmodule Cadet.Assessments do
     Repo.all(Assessment)
   end
 
-  def all_assessments(category) do
-    Repo.all(from(a in Assessment, where: a.category == ^category))
+  def all_assessments(assessment_type) do
+    Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
   end
 
-  def all_open_assessments(category) do
+  def all_open_assessments(assessment_type) do
     now = Timex.now()
 
-    assessment_with_category = Repo.all(from(a in Assessment, where: a.category == ^category))
+    assessment_with_type = Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
     # TODO: Refactor to be done on SQL instead of in-memory
-    Enum.filter(assessment_with_category, &(&1.is_published and Timex.before?(&1.open_at, now)))
+    Enum.filter(assessment_with_type, &(&1.is_published and Timex.before?(&1.open_at, now)))
   end
 
   def assessments_due_soon() do

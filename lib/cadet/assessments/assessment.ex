@@ -6,7 +6,7 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Assessments.Category
+  alias Cadet.Assessments.AssessmentType
   alias Cadet.Assessments.Image
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.Upload
@@ -14,7 +14,7 @@ defmodule Cadet.Assessments.Assessment do
   schema "assessments" do
     field(:title, :string)
     field(:is_published, :boolean, default: false)
-    field(:category, Category)
+    field(:type, AssessmentType)
     field(:summary_short, :string)
     field(:summary_long, :string)
     field(:open_at, Timex.Ecto.DateTime)
@@ -27,7 +27,7 @@ defmodule Cadet.Assessments.Assessment do
     timestamps()
   end
 
-  @required_fields ~w(category title open_at close_at max_xp)a
+  @required_fields ~w(type title open_at close_at max_xp)a
   @optional_fields ~w(summary_short summary_long is_published max_xp)a
   @optional_file_fields ~w(cover_picture mission_pdf)a
 
