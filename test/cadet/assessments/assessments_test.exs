@@ -73,7 +73,6 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          weight: 5,
           type: :programming,
           question: %{},
           raw_question:
@@ -87,7 +86,7 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", weight: 5, type: :programming} = question
+    assert %{title: "question", type: :programming} = question
   end
 
   test "create multiple choice question" do
@@ -97,7 +96,6 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          weight: 5,
           type: :multiple_choice,
           question: %{},
           raw_question:
@@ -106,7 +104,7 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", weight: 5, type: :multiple_choice} = question
+    assert %{title: "question", type: :multiple_choice} = question
   end
 
   test "create question when there already exists questions" do
@@ -117,7 +115,6 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          weight: 5,
           type: :multiple_choice,
           question: %{},
           raw_question:
@@ -197,9 +194,9 @@ defmodule Cadet.AssessmentsTest do
 
   test "update question" do
     question = insert(:question)
-    Assessments.update_question(question.id, %{weight: 10})
+    Assessments.update_question(question.id, %{title: "new_title"})
     question = Assessments.get_question(question.id)
-    assert question.weight == 10
+    assert question.title == "new_title"
   end
 
   test "delete question" do

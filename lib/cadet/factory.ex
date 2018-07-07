@@ -94,7 +94,6 @@ defmodule Cadet.Factory do
   def question_factory do
     %Question{
       title: "question",
-      weight: Enum.random(1..10),
       question: %{},
       type: Enum.random([:programming, :multiple_choice]),
       assessment: build(:assessment)

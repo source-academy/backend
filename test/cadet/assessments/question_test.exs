@@ -7,7 +7,6 @@ defmodule Cadet.Assessments.QuestionTest do
     %{
       display_order: 2,
       title: "question",
-      weight: 5,
       question: %{},
       type: :programming
     }
@@ -15,7 +14,6 @@ defmodule Cadet.Assessments.QuestionTest do
     %{
       display_order: 1,
       title: "mcq",
-      weight: 5,
       question: %{},
       type: :multiple_choice
     }
@@ -23,7 +21,6 @@ defmodule Cadet.Assessments.QuestionTest do
     %{
       display_order: 5,
       title: "sample title",
-      weight: 4,
       question: %{},
       type: :programming,
       raw_library: Poison.encode!(%{week: 5, globals: [], externals: [], files: []}),
@@ -35,14 +32,11 @@ defmodule Cadet.Assessments.QuestionTest do
     %{
       display_order: 2,
       title: "question",
-      weight: -5,
-      question: %{},
       type: :programming
     }
 
     %{
       display_order: 2,
-      weight: 5,
       question: %{},
       type: :multiple_choice
     }

@@ -1,14 +1,14 @@
 defmodule Cadet.Repo.Migrations.CreateQuestions do
   use Ecto.Migration
 
-  alias Cadet.Assessments.ProblemType
+  alias Cadet.Assessments.QuestionType
 
   def up do
-    ProblemType.create_type()
+    QuestionType.create_type()
 
     create table(:questions) do
       add(:display_order, :integer)
-      add(:type, :type, null: false)
+      add(:type, :question_type, null: false)
       add(:title, :string)
       add(:library, :map)
       add(:raw_library, :text)
@@ -22,6 +22,6 @@ defmodule Cadet.Repo.Migrations.CreateQuestions do
   def down do
     drop(table(:questions))
 
-    ProblemType.drop_type()
+    QuestionType.drop_type()
   end
 end
