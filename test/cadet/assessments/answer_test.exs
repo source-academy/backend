@@ -1,34 +1,39 @@
 defmodule Cadet.Assessments.AnswerTest do
   use Cadet.DataCase
-  use Cadet.ChangesetCase
 
   alias Cadet.Assessments.Answer
 
   describe "Changesets" do
-    valid_changesets Answer do
-      # TODO: Fix answer test
-      # %{
-      #   marks: 2,
-      #   answer: %{"choice_id": "5"},
-      #   submission: build(:submission),
-      #   question: build(:question, %{type: :multiple_choice})
-      # }
+    setup do
+      assessment = insert(:assessment, %{is_published: true})
+      student = insert(:user, %{role: :student})
+      submission = insert(:submission, %{student: student, assessment: assessment})
+      mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
+      programming_question = insert(:question, %{assessment: assessment, type: :programming})
 
-      # %{
-      #   marks: 1,
-      #   answer: %{}
-      # }
+      {:ok,
+       [
+         assessment: assessment,
+         mcq_question: mcq_question,
+         programming_question: programming_question,
+         student: student,
+         submission: submission
+       ]}
+    end
 
-      # %{
-      #   marks: 1,
-      #   answer: %{}
-      # }
+    test "valid mcq question with model params", context do
+      %{assessment: assessment, submission: submission, mcq_question: question} = context
 
-      # %{
-      #   marks: 100,
-      #   answer: %{},
-      #   raw_answer: Poison.encode!(%{answer: "This is a sample json"})
-      # }
+      params = %{
+        submission: submission,
+        question: question,
+        type: question.type,
+        answer: %{choice_id: 0},
+        xp: 1
+      }
+
+      changeset = Answer.changeset(%Answer{}, params)
+      assert(changeset.valid?, Kernel.inspect(params))
     end
   end
 

@@ -22,7 +22,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp raw_answer)a
+  @optional_fields ~w(xp)a
 
   def changeset(answer, params) do
     answer

@@ -13,6 +13,7 @@ defmodule Cadet.Factory do
   alias Cadet.Course.Group
   alias Cadet.Course.Material
   alias Cadet.Assessments.Assessment
+  alias Cadet.Assessments.Submission
   alias Cadet.Assessments.Question
 
   def user_factory do
@@ -92,7 +93,7 @@ defmodule Cadet.Factory do
   end
 
   def submission_factory do
-    %{
+    %Submission{
       student: build(:user, %{role: :student}),
       assessment: build(:assessment)
     }

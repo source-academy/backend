@@ -32,7 +32,7 @@ defmodule Cadet.Assessments.Question do
     |> put_question
   end
 
-  def is_overdue?(question) do
+  def is_open?(question) do
     question =
       if Ecto.assoc_loaded?(question.assessment) do
         question

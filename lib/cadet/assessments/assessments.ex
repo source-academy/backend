@@ -135,8 +135,11 @@ defmodule Cadet.Assessments do
         is_nil(question) ->
           {:error, {:bad_request, "Question not found"}}
 
-        Question.is_overdue?(question) ->
-          {:error, {:bad_request, "Assessment closed"}}
+        Question.is_open?(question) == false ->
+          {:error, {:bad_request, "Assessment not open"}}
+
+        question.assessment.is_published == false ->
+          {:error, {:bad_request, ""}}
 
         true ->
           submission = find_or_create_submission(user, question.assessment)
