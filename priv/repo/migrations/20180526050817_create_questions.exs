@@ -11,10 +11,9 @@ defmodule Cadet.Repo.Migrations.CreateQuestions do
       add(:type, :question_type, null: false)
       add(:title, :string)
       add(:library, :map)
-      add(:raw_library, :text)
       add(:question, :map, null: false)
       add(:raw_question, :string)
-      add(:assessment_id, references(:assessments))
+      add(:assessment_id, references(:assessments), null: false)
       timestamps()
     end
   end

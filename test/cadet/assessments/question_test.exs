@@ -8,14 +8,16 @@ defmodule Cadet.Assessments.QuestionTest do
       display_order: 2,
       title: "question",
       question: %{},
-      type: :programming
+      type: :programming,
+      assessment_id: 2
     }
 
     %{
       display_order: 1,
       title: "mcq",
       question: %{},
-      type: :multiple_choice
+      type: :multiple_choice,
+      assessment_id: 2
     }
 
     %{
@@ -24,7 +26,8 @@ defmodule Cadet.Assessments.QuestionTest do
       question: %{},
       type: :programming,
       raw_library: Poison.encode!(%{week: 5, globals: [], externals: [], files: []}),
-      raw_question: Poison.encode!(%{question: "This is a sample json"})
+      raw_question: Poison.encode!(%{question: "This is a sample json"}),
+      assessment_id: 2
     }
   end
 

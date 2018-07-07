@@ -86,6 +86,7 @@ defmodule Cadet.Assessments do
     Repo.get(Assessment, id)
   end
 
+  # TODO: FIX THIS SHIT
   def create_question_for_assessment(params, assessment_id)
       when is_binary(assessment_id) or is_number(assessment_id) do
     assessment = get_assessment(assessment_id)
@@ -99,8 +100,8 @@ defmodule Cadet.Assessments do
 
       changeset =
         params
+        |> Map.put_new(:assessment_id, assessment.id)
         |> build_question
-        |> put_assoc(:assessment, assessment)
         |> put_display_order(questions)
 
       case Repo.insert(changeset) do
