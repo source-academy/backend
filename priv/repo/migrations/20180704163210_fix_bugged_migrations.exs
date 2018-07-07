@@ -8,7 +8,6 @@ defmodule Cadet.Repo.Migrations.FixBuggedMigrations do
     alter table(:answers) do
       modify(:submission_id, references(:submissions), null: false)
       modify(:question_id, references(:questions), null: false)
-      timestamps()
     end
 
     drop(constraint(:questions, :questions_assessment_id_fkey))
