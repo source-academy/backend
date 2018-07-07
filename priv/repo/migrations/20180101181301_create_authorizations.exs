@@ -17,6 +17,7 @@ defmodule Cadet.Repo.Migrations.CreateAuthorizations do
 
     create(unique_index(:authorizations, [:provider, :uid]))
     create(index(:authorizations, [:provider, :token]))
+    create(index(:authorizations, [:user_id]))
   end
 
   def down do

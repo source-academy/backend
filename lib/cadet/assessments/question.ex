@@ -17,13 +17,14 @@ defmodule Cadet.Assessments.Question do
     field(:question, :map)
     field(:type, QuestionType)
     field(:raw_question, :string, virtual: true)
+    field(:max_xp, :integer)
     embeds_one(:library, Library)
     belongs_to(:assessment, Assessment)
     timestamps()
   end
 
   @required_fields ~w(title question type assessment_id)a
-  @optional_fields ~w(display_order raw_question)a
+  @optional_fields ~w(display_order raw_question max_xp)a
 
   def changeset(question, params) do
     # TODO: Implement foreign_key_validation

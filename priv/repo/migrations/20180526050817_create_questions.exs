@@ -12,7 +12,7 @@ defmodule Cadet.Repo.Migrations.CreateQuestions do
       add(:title, :string)
       add(:library, :map)
       add(:question, :map, null: false)
-      add(:raw_question, :string)
+      add(:max_xp, :integer)
       add(:assessment_id, references(:assessments), null: false)
       timestamps()
     end
