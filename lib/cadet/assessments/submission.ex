@@ -13,6 +13,7 @@ defmodule Cadet.Assessments.Submission do
     field(:status, SubmissionStatus, default: :attempting)
     field(:submitted_at, Timex.Ecto.DateTime)
     field(:override_xp, :integer)
+    field(:xp, :integer, virtual: true)
 
     belongs_to(:assessment, Assessment)
     belongs_to(:student, User)

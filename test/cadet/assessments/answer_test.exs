@@ -29,7 +29,7 @@ defmodule Cadet.Assessments.AnswerTest do
 
   invalid_changesets Answer do
     %{
-      marks: -2,
+      xp: -2,
       answer: %{}
     }
   end

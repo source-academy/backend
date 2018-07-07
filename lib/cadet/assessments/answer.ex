@@ -12,7 +12,7 @@ defmodule Cadet.Assessments.Answer do
   alias Cadet.Assessments.AnswerTypes.MCQAnswer
 
   schema "answers" do
-    field(:marks, :float, default: 0.0)
+    field(:xp, :integer, default: 0)
     field(:answer, :map)
     field(:type, ProblemType, virtual: true)
     field(:raw_answer, :string, virtual: true)
@@ -22,7 +22,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(marks raw_answer)a
+  @optional_fields ~w(xp raw_answer)a
 
   def changeset(answer, params) do
     answer
@@ -31,7 +31,7 @@ defmodule Cadet.Assessments.Answer do
     |> add_belongs_to_id_from_model(:question, params)
     |> add_question_type_from_model(params)
     |> validate_required(@required_fields)
-    |> validate_number(:marks, greater_than_or_equal_to: 0.0)
+    |> validate_number(:xp, greater_than_or_equal_to: 0.0)
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
