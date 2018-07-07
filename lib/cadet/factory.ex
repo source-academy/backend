@@ -91,6 +91,13 @@ defmodule Cadet.Factory do
     }
   end
 
+  def submission_factory do
+    %{
+      student: build(:user, %{role: :student}),
+      assessment: build(:assessment)
+    }
+  end
+
   def question_factory do
     %Question{
       title: "question",
