@@ -3,8 +3,8 @@ defmodule Cadet.Repo.Migrations.CreateSubmissions do
 
   def change do
     create table(:submissions) do
-      add(:assessment_id, references(:assessments))
-      add(:student_id, references(:users))
+      add(:assessment_id, references(:assessments), null: false)
+      add(:student_id, references(:users), null: false)
       timestamps()
     end
 
