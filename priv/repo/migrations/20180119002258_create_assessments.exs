@@ -16,12 +16,13 @@ defmodule Cadet.Repo.Migrations.CreateMissions do
       add(:cover_picture, :string)
       add(:mission_pdf, :string)
       add(:is_published, :boolean, null: false)
-      add(:priority, :integer)
       timestamps()
     end
 
     create(index(:assessments, [:open_at]))
     create(index(:assessments, [:close_at]))
+    create(index(:assessments, [:is_published]))
+    create(index(:assessments, [:type]))
   end
 
   def down do

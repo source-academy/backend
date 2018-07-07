@@ -9,7 +9,7 @@ defmodule Cadet.Assessments.Question do
   alias Cadet.Assessments.QuestionType
   alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
   alias Cadet.Assessments.QuestionTypes.MCQQuestion
-  alias Cadet.Assessments.QuestionTypes.Library
+  alias Cadet.Assessments.Library
 
   schema "questions" do
     field(:title, :string)
@@ -30,7 +30,7 @@ defmodule Cadet.Assessments.Question do
     # TODO: Implement foreign_key_validation
     question
     |> cast(params, @required_fields ++ @optional_fields)
-    |> cast_embed(:library, with: &Library.changeset/2)
+    |> cast_embed(:library)
     |> validate_required(@required_fields)
     |> put_question
   end

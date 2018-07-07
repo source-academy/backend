@@ -27,8 +27,8 @@ defmodule Cadet.Assessments.Answer do
     answer
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_number(:xp, greater_than_or_equal_to: 0.0)
-    |> validate_number(:adjustment, greater_than_or_equal_to: 0.0)
+    |> validate_number(:xp, greater_than_or_equal_to: 0)
+    |> validate_number(:adjustment, greater_than_or_equal_to: 0)
     |> put_json(:answer, :raw_answer)
   end
 end
