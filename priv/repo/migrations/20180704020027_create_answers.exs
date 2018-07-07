@@ -7,6 +7,8 @@ defmodule Cadet.Repo.Migrations.CreateAnswersTable do
       add(:answer, :map, null: false)
       add(:submission_id, references(:submissions, null: false))
       add(:question_id, references(:questions, null: false))
+      add(:comment, :string)
+      add(:adjustment, :integer, default: 0)
 
       timestamps()
     end
