@@ -11,7 +11,6 @@ defmodule Cadet.Assessments.Submission do
 
     belongs_to(:assessment, Assessment)
     belongs_to(:student, User)
-    belongs_to(:grader, User)
     has_many(:answers, Answer)
 
     timestamps()
@@ -21,7 +20,6 @@ defmodule Cadet.Assessments.Submission do
     submission
     |> cast(params, [])
     |> validate_role(:student, :student)
-    |> validate_role(:grader, :staff)
   end
 
   def validate_role(changeset, user, role) do

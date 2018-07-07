@@ -8,11 +8,13 @@ defmodule Cadet.Accounts.User do
   use Cadet, :model
 
   alias Cadet.Accounts.Role
+  alias Cadet.Course.Group
 
   schema "users" do
     field(:name, :string)
     field(:role, Role)
-
+    field(:nusnet_id, :string)
+    belongs_to(:group, Group)
     timestamps()
   end
 
