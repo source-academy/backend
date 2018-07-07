@@ -8,5 +8,7 @@ defmodule Cadet.Repo.Migrations.CreateSubmissions do
       add(:grader_id, references(:users))
       timestamps()
     end
+
+    create(unique_index(:submissions, [:assessment_id, :student_id]))
   end
 end
