@@ -10,5 +10,11 @@ defmodule Cadet.Repo.Migrations.CreateGroups do
 
     create(unique_index(:groups, [:leader_id]))
     create(index(:groups, [:mentor_id]))
+
+    alter table(:users) do
+      add(:group_id, references(:groups))
+    end
+
+    create(index(:users, [:group_id]))
   end
 end
