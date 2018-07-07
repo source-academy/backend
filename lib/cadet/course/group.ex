@@ -8,14 +8,14 @@ defmodule Cadet.Course.Group do
   alias Cadet.Accounts.User
 
   schema "groups" do
+    field(:name, :string)
     belongs_to(:leader, User)
-    belongs_to(:student, User)
+    belongs_to(:mentor, User)
+    has_many(:students, User)
   end
 
   def changeset(group, attrs \\ %{}) do
     group
     |> cast(attrs, [])
-    |> foreign_key_constraint(:leader_id)
-    |> foreign_key_constraint(:student_id)
   end
 end

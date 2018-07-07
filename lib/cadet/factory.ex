@@ -9,8 +9,6 @@ defmodule Cadet.Factory do
   alias Cadet.Accounts.User
   alias Cadet.Accounts.Authorization
   alias Cadet.Course.Announcement
-  alias Cadet.Course.Point
-  alias Cadet.Course.Group
   alias Cadet.Course.Material
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
@@ -35,22 +33,6 @@ defmodule Cadet.Factory do
       title: sequence(:title, &"Announcement #{&1}"),
       content: "Some content",
       poster: build(:user)
-    }
-  end
-
-  def point_factory do
-    %Point{
-      reason: "Dummy reason",
-      amount: 100,
-      given_by: build(:user, %{role: :staff}),
-      given_to: build(:user)
-    }
-  end
-
-  def group_factory do
-    %Group{
-      leader: build(:user, %{role: :staff}),
-      student: build(:user, %{role: :student})
     }
   end
 

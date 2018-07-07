@@ -7,7 +7,6 @@ defmodule Cadet.Course do
 
   alias Cadet.Accounts.User
   alias Cadet.Course.Announcement
-  alias Cadet.Course.Point
   alias Cadet.Course.Group
   alias Cadet.Course.Material
   alias Cadet.Course.Upload
@@ -60,86 +59,56 @@ defmodule Cadet.Course do
     end
   end
 
-  @doc """
-  Give manual XP to another user
-  """
-  def give_manual_xp(given_by = %User{}, given_to = %User{}, attr = %{}) do
-    if given_by.role == :student do
-      {:error, :insufficient_privileges}
-    else
-      changeset =
-        %Point{}
-        |> Point.changeset(attr)
-        |> put_assoc(:given_by, given_by)
-        |> put_assoc(:given_to, given_to)
+  # @doc """
+  # Reassign a student to a discussion group.
+  # This will un-assign student from the current discussion group
+  # """
+  # def assign_group(leader = %User{}, student = %User{}) do
+  #   cond do
+  #     leader.role == :student ->
+  #       {:error, :invalid}
 
-      Repo.insert(changeset)
-    end
-  end
+  #     student.role != :student ->
+  #       {:error, :invalid}
 
-  @doc """
-  Retract previously given manual XP entry another user
-  """
-  def delete_manual_xp(user = %User{}, id) do
-    point = Repo.get(Point, id)
+  #     true ->
+  #       Repo.transaction(fn ->
+  #         {:ok, _} = unassign_group(student)
 
-    cond do
-      point == nil -> {:error, :not_found}
-      !(user.role == :admin || point.given_by_id == user.id) -> {:error, :insufficient_privileges}
-      true -> Repo.delete(point)
-    end
-  end
+  #         %Group{}
+  #         |> Group.changeset(%{})
+  #         |> put_assoc(:leader, leader)
+  #         |> put_assoc(:student, student)
+  #         |> Repo.insert!()
+  #       end)
+  #   end
+  # end
 
-  @doc """
-  Reassign a student to a discussion group.
-  This will un-assign student from the current discussion group
-  """
-  def assign_group(leader = %User{}, student = %User{}) do
-    cond do
-      leader.role == :student ->
-        {:error, :invalid}
+  # @doc """
+  # Remove existing student from discussion group, no-op if a student
+  # is unassigned
+  # """
+  # def unassign_group(student = %User{}) do
+  #   existing_group = Repo.get_by(Group, student_id: student.id)
 
-      student.role != :student ->
-        {:error, :invalid}
+  #   if existing_group == nil do
+  #     {:ok, nil}
+  #   else
+  #     Repo.delete(existing_group)
+  #   end
+  # end
 
-      true ->
-        Repo.transaction(fn ->
-          {:ok, _} = unassign_group(student)
+  # @doc """
+  # Get list of students under staff discussion group
+  # """
+  # def list_students_by_leader(staff = %User{}) do
+  #   import Cadet.Course.Query, only: [group_members: 1]
 
-          %Group{}
-          |> Group.changeset(%{})
-          |> put_assoc(:leader, leader)
-          |> put_assoc(:student, student)
-          |> Repo.insert!()
-        end)
-    end
-  end
-
-  @doc """
-  Remove existing student from discussion group, no-op if a student
-  is unassigned
-  """
-  def unassign_group(student = %User{}) do
-    existing_group = Repo.get_by(Group, student_id: student.id)
-
-    if existing_group == nil do
-      {:ok, nil}
-    else
-      Repo.delete(existing_group)
-    end
-  end
-
-  @doc """
-  Get list of students under staff discussion group
-  """
-  def list_students_by_leader(staff = %User{}) do
-    import Cadet.Course.Query, only: [group_members: 1]
-
-    staff
-    |> group_members()
-    |> Repo.all()
-    |> Repo.preload([:student])
-  end
+  #   staff
+  #   |> group_members()
+  #   |> Repo.all()
+  #   |> Repo.preload([:student])
+  # end
 
   @doc """
   Create a new folder to put material files in
@@ -197,7 +166,7 @@ defmodule Cadet.Course do
   end
 
   @doc """
-  List material folder content 
+  List material folder content
   """
   def list_material_folders(folder = %Material{}) do
     import Cadet.Course.Query, only: [material_folder_files: 1]
