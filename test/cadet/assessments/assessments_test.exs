@@ -2,7 +2,7 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   alias Cadet.Assessments
-  alias Cadet.Assessments.{Question, Assessment, AssessmentType}
+  alias Cadet.Assessments.{Assessment, AssessmentType, Question}
 
   test "all open assessments" do
     open_assessment = insert(:assessment, is_published: true, type: :mission)

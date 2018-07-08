@@ -7,27 +7,26 @@ defmodule Cadet.Assessments do
 
   import Ecto.Query
 
-  alias Timex.Duration
-
   alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Question
 
   def all_assessments(assessment_type) do
     Assessment
-    |> where([a], a.type == ^assessment_type)
+    |> where(type: ^assessment_type)
     |> Repo.all()
   end
 
   def all_open_assessments(assessment_type) do
     Assessment
-    |> where([a], a.is_published)
+    |> where(is_published: true)
+    |> where(type: ^assessment_type)
     |> where([a], a.open_at <= from_now(1, "second"))
     |> Repo.all()
   end
 
   def assessments_due_soon() do
     Assessment
-    |> where([a], a.is_published)
+    |> where(is_published: true)
     |> where([a], a.open_at <= from_now(1, "second"))
     |> where([a], a.close_at >= from_now(1, "second"))
     |> where([a], a.close_at <= from_now(1, "week"))
@@ -68,18 +67,13 @@ defmodule Cadet.Assessments do
   end
 
   def create_question_for_assessment(params, assessment_id)
-      when is_binary(assessment_id) or is_number(assessment_id) do
+      when is_binary(assessment_id) or is_integer(assessment_id) do
     Repo.transaction(fn ->
       assessment =
         Assessment
-        |> where([assessment], assessment.id == ^assessment_id)
-        |> join(
-          :left,
-          [assessment],
-          question in Question,
-          question.assessment_id == assessment.id
-        )
-        |> preload([assessment, question], questions: question)
+        |> where(id: ^assessment_id)
+        |> join(:left, [a], q in Question, q.assessment_id == a.id)
+        |> preload([a, q], questions: q)
         |> Repo.one()
 
       params_with_assessment_id = Map.put_new(params, :assessment_id, assessment.id)
