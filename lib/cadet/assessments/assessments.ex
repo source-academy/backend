@@ -9,8 +9,14 @@ defmodule Cadet.Assessments do
 
   alias Timex.Duration
 
+  alias Cadet.Accounts.User
+  alias Cadet.Assessments.Answer
   alias Cadet.Assessments.Assessment
+  alias Cadet.Assessments.Query
   alias Cadet.Assessments.Question
+  alias Cadet.Assessments.Submission
+
+  @grading_roles ~w(staff)a
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -113,6 +119,49 @@ defmodule Cadet.Assessments do
   def delete_question(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
+  end
+
+  @spec get_submission_xp(String.t() | integer()) :: number()
+  def get_submission_xp(id) when is_binary(id) or is_integer(id) do
+    Answer
+    |> where(submission_id: ^id)
+    |> Repo.aggregate(:sum, :marks)
+  end
+
+  # def all_submissions_by_grader(grader, preload \\ true)
+
+  # @spec all_submissions_by_grader(String.t() | integer(), boolean()) :: Submission.t()
+  # def all_submissions_by_grader(grader_id, preload)
+  #     when is_binary(grader_id) or is_integer(grader_id) do
+  #   submissions =
+  #     Submission
+  #     |> where(grader_id: ^grader_id)
+  #     |> Repo.all()
+
+  #   if preload do
+  #     submissions
+  #     |> Repo.preload([:assessment, :student])
+  #     |> Enum.map(&Map.put(&1, :xp, get_submission_xp(&1.id)))
+  #   else
+  #     submissions
+  #   end
+  # end
+
+  @spec all_submissions_by_grader(User.t()) :: Submission.t()
+  def all_submissions_by_grader(%User{id: id, role: role}) do
+    if role in @grading_roles do
+      submissions =
+        Submission
+        |> join(:left, [s], a in subquery(Query.submissions_xp()), a.submission_id == s.id)
+        |> select([s, a], %{s | xp: a.xp})
+        |> where(grader_id: ^id)
+        |> preload([:assessment, :student])
+        |> Repo.all()
+
+      {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade submissions"}}
+    end
   end
 
   # TODO: Decide what to do with these methods
