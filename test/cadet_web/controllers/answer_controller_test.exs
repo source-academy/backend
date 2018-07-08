@@ -37,9 +37,18 @@ defmodule CadetWeb.AnswerControllerTest do
   #   test "is disallowed", %{conn: conn, mcq_question: question} do
   #     conn = post(conn, build_url(question.id), %{answer: 5})
 
-  #     assert response(conn, 401) =~ "User is not permitted to answer questions"
+  #     assert response(conn, 403) =~ "User is not permitted to answer questions"
   #   end
   # end
+
+  describe "POST /assessments/question/{questionId}/submit/, Admin" do
+    @tag authenticate: :admin
+    test "is disallowed", %{conn: conn, mcq_question: question} do
+      conn = post(conn, build_url(question.id), %{answer: 5})
+
+      assert response(conn, 403) =~ "User is not permitted to answer questions"
+    end
+  end
 
   describe "POST /assessments/question/{questionId}/submit/, Student" do
     @tag authenticate: :student
@@ -136,7 +145,7 @@ defmodule CadetWeb.AnswerControllerTest do
       insert(:question, %{assessment: before_open_at_assessment, type: :multiple_choice})
 
     before_open_at_conn = post(conn, build_url(before_open_at_question.id), %{answer: 5})
-    assert response(before_open_at_conn, 401) == "Assessment not open"
+    assert response(before_open_at_conn, 403) == "Assessment not open"
     assert is_nil(get_answer_value(before_open_at_question, before_open_at_assessment, user))
 
     after_close_at_assessment =
@@ -149,7 +158,7 @@ defmodule CadetWeb.AnswerControllerTest do
       insert(:question, %{assessment: after_close_at_assessment, type: :multiple_choice})
 
     after_close_at_conn = post(conn, build_url(after_close_at_question.id), %{answer: 5})
-    assert response(after_close_at_conn, 401) == "Assessment not open"
+    assert response(after_close_at_conn, 403) == "Assessment not open"
     assert is_nil(get_answer_value(after_close_at_question, after_close_at_assessment, user))
 
     unpublished_assessment = insert(:assessment, %{is_published: false})
@@ -158,7 +167,7 @@ defmodule CadetWeb.AnswerControllerTest do
       insert(:question, %{assessment: unpublished_assessment, type: :multiple_choice})
 
     unpublished_conn = post(conn, build_url(unpublished_question.id), %{answer: 5})
-    assert response(unpublished_conn, 401) == "Assessment not open"
+    assert response(unpublished_conn, 403) == "Assessment not open"
     assert is_nil(get_answer_value(unpublished_question, unpublished_assessment, user))
   end
 

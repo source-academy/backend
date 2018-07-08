@@ -6,13 +6,9 @@ defmodule Cadet.Factory do
   # fields_for has been deprecated, only raising exception
   @dialyzer {:no_return, fields_for: 1}
 
-  alias Cadet.Accounts.User
-  alias Cadet.Accounts.Authorization
-  alias Cadet.Course.Announcement
-  alias Cadet.Course.Material
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Submission
-  alias Cadet.Assessments.Question
+  alias Cadet.Accounts.{Authorization, User}
+  alias Cadet.Course.{Announcement, Material}
+  alias Cadet.Assessments.{Assessment, Question, Submission}
 
   def user_factory do
     %User{

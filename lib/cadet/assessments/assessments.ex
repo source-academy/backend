@@ -136,23 +136,19 @@ defmodule Cadet.Assessments do
         |> preload([question, assessment], assessment: assessment)
         |> Repo.one()
 
-      cond do
-        is_nil(question) ->
-          {:error, {:bad_request, "Question not found"}}
-
-        is_closed?(question.assessment) or not question.assessment.is_published ->
-          {:error, {:unauthorized, "Assessment not open"}}
-
-        true ->
-          with {:ok, submission} <- find_or_create_submission(user, question.assessment),
-               {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
-            {:ok, nil}
-          else
-            _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
-          end
+      with {:question_found?, true} <- {:question_found?, is_map(question)},
+           {:is_open?, true} <- is_open?(question.assessment),
+           {:ok, submission} <- find_or_create_submission(user, question.assessment),
+           {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+        {:ok, nil}
+      else
+        {:question_found?, false} -> {:error, {:bad_request, "Question not found"}}
+        {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
+        {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
+        _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
       end
     else
-      {:error, {:unauthorized, "User is not permitted to answer questions"}}
+      {:error, {:forbidden, "User is not permitted to answer questions"}}
     end
   end
 
@@ -170,14 +166,18 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_closed?(%Assessment{open_at: open_at, close_at: close_at}) do
-    not Timex.between?(Timex.now(), open_at, close_at)
+  defp is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+    {:is_open?, Timex.between?(Timex.now(), open_at, close_at) and is_published}
   end
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
     %Submission{}
     |> Submission.changeset(%{student: user, assessment: assessment})
     |> Repo.insert()
+    |> case do
+      {:ok, submission} -> {:ok, submission}
+      {:error, _} -> {:error, :race_condition}
+    end
   end
 
   defp find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
