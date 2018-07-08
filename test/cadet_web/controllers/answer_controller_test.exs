@@ -1,5 +1,6 @@
 defmodule CadetWeb.AnswerControllerTest do
   use CadetWeb.ConnCase
+  use Cadet.DataCase
 
   alias CadetWeb.AnswerController
 

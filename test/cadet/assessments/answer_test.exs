@@ -3,42 +3,42 @@ defmodule Cadet.Assessments.AnswerTest do
 
   alias Cadet.Assessments.Answer
 
+  setup do
+    assessment = insert(:assessment, %{is_published: true})
+    student = insert(:user, %{role: :student})
+    submission = insert(:submission, %{student: student, assessment: assessment})
+    mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
+    programming_question = insert(:question, %{assessment: assessment, type: :programming})
+
+    valid_mcq_question_params = %{
+      submission_id: submission.id,
+      question_id: mcq_question.id,
+      type: mcq_question.type,
+      answer: %{choice_id: 0},
+      xp: 1
+    }
+
+    valid_programming_question_params = %{
+      submission_id: submission.id,
+      question_id: programming_question.id,
+      type: programming_question.type,
+      answer: %{code: "hello world"},
+      xp: 1
+    }
+
+    {:ok,
+     [
+       assessment: assessment,
+       mcq_question: mcq_question,
+       valid_mcq_question_params: valid_mcq_question_params,
+       programming_question: programming_question,
+       valid_programming_question_params: valid_programming_question_params,
+       student: student,
+       submission: submission
+     ]}
+  end
+
   describe "Changesets" do
-    setup do
-      assessment = insert(:assessment, %{is_published: true})
-      student = insert(:user, %{role: :student})
-      submission = insert(:submission, %{student: student, assessment: assessment})
-      mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
-      programming_question = insert(:question, %{assessment: assessment, type: :programming})
-
-      valid_mcq_question_params = %{
-        submission_id: submission.id,
-        question_id: mcq_question.id,
-        type: mcq_question.type,
-        answer: %{choice_id: 0},
-        xp: 1
-      }
-
-      valid_programming_question_params = %{
-        submission_id: submission.id,
-        question_id: programming_question.id,
-        type: programming_question.type,
-        answer: %{code: "hello world"},
-        xp: 1
-      }
-
-      {:ok,
-       [
-         assessment: assessment,
-         mcq_question: mcq_question,
-         valid_mcq_question_params: valid_mcq_question_params,
-         programming_question: programming_question,
-         valid_programming_question_params: valid_programming_question_params,
-         student: student,
-         submission: submission
-       ]}
-    end
-
     test "valid mcq question params", context do
       %{valid_mcq_question_params: params} = context
 
