@@ -14,8 +14,11 @@ defmodule Cadet.Course.Group do
     has_many(:students, User)
   end
 
+  @required_fields ~w()a
+  @optional_fields ~w(name)a
+
   def changeset(group, attrs \\ %{}) do
     group
-    |> cast(attrs, [])
+    |> cast(attrs, @required_fields ++ @optional_fields)
   end
 end
