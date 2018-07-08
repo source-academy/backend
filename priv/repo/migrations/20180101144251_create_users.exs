@@ -7,8 +7,7 @@ defmodule Cadet.Repo.Migrations.CreateUsers do
     Role.create_type()
 
     create table(:users) do
-      add(:first_name, :string, null: false)
-      add(:last_name, :string)
+      add(:name, :string, null: false)
       add(:role, :role, null: false)
       add(:nusnet_id, :string)
       timestamps()
