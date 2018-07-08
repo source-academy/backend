@@ -23,8 +23,7 @@ defmodule Cadet.Assessments.Submission do
   def changeset(submission, params) do
     submission
     |> cast(params, @required_fields)
-    |> add_belongs_to_id_from_model(:student, params)
-    |> add_belongs_to_id_from_model(:assessment, params)
+    |> add_belongs_to_id_from_model([:student, :assessment], params)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:student_id)
     |> foreign_key_constraint(:assessment_id)

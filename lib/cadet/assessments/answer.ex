@@ -29,8 +29,7 @@ defmodule Cadet.Assessments.Answer do
   def changeset(answer, params) do
     answer
     |> cast(params, @required_fields ++ @optional_fields)
-    |> add_belongs_to_id_from_model(:submission, params)
-    |> add_belongs_to_id_from_model(:question, params)
+    |> add_belongs_to_id_from_model([:submission, :question], params)
     |> add_question_type_from_model(params)
     |> validate_required(@required_fields)
     |> validate_number(:xp, greater_than_or_equal_to: 0.0)
