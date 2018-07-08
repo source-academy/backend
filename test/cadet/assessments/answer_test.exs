@@ -10,7 +10,7 @@ defmodule Cadet.Assessments.AnswerTest do
     mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
     programming_question = insert(:question, %{assessment: assessment, type: :programming})
 
-    valid_mcq_question_params = %{
+    valid_mcq_params = %{
       submission_id: submission.id,
       question_id: mcq_question.id,
       type: mcq_question.type,
@@ -18,7 +18,7 @@ defmodule Cadet.Assessments.AnswerTest do
       xp: 1
     }
 
-    valid_programming_question_params = %{
+    valid_programming_params = %{
       submission_id: submission.id,
       question_id: programming_question.id,
       type: programming_question.type,
@@ -30,9 +30,9 @@ defmodule Cadet.Assessments.AnswerTest do
      [
        assessment: assessment,
        mcq_question: mcq_question,
-       valid_mcq_question_params: valid_mcq_question_params,
+       valid_mcq_params: valid_mcq_params,
        programming_question: programming_question,
-       valid_programming_question_params: valid_programming_question_params,
+       valid_programming_params: valid_programming_params,
        student: student,
        submission: submission
      ]}
@@ -40,14 +40,14 @@ defmodule Cadet.Assessments.AnswerTest do
 
   describe "Changesets" do
     test "valid mcq question params", context do
-      %{valid_mcq_question_params: params} = context
+      %{valid_mcq_params: params} = context
 
       changeset = Answer.changeset(%Answer{}, params)
       assert(changeset.valid?, Kernel.inspect(params))
     end
 
     test "valid programming question with id params", context do
-      %{valid_programming_question_params: params} = context
+      %{valid_programming_params: params} = context
 
       changeset = Answer.changeset(%Answer{}, params)
       assert(changeset.valid?, Kernel.inspect(params))
@@ -57,7 +57,7 @@ defmodule Cadet.Assessments.AnswerTest do
       %{
         submission: submission,
         programming_question: question,
-        valid_programming_question_params: params
+        valid_programming_params: params
       } = context
 
       params =
@@ -72,7 +72,7 @@ defmodule Cadet.Assessments.AnswerTest do
     end
 
     test "invalid mcq question wrong answer format", context do
-      %{valid_mcq_question_params: params} = context
+      %{valid_mcq_params: params} = context
 
       params_wrong_type = Map.put(params, :answer, %{choice_id: "hello world"})
       refute(Answer.changeset(%Answer{}, params_wrong_type).valid?, inspect(params_wrong_type))
@@ -82,7 +82,7 @@ defmodule Cadet.Assessments.AnswerTest do
     end
 
     test "invalid programming question wrong answer format", context do
-      %{valid_programming_question_params: params} = context
+      %{valid_programming_params: params} = context
 
       params_wrong_type = Map.put(params, :answer, %{choice_id: "hello world"})
       refute(Answer.changeset(%Answer{}, params_wrong_type).valid?, inspect(params_wrong_type))
@@ -92,7 +92,7 @@ defmodule Cadet.Assessments.AnswerTest do
     end
 
     test "invalid changeset missing required params", context do
-      %{valid_mcq_question_params: params} = context
+      %{valid_mcq_params: params} = context
       required_fields = ~w(answer submission_id question_id type)a
 
       Enum.each(required_fields, fn field ->
@@ -107,7 +107,7 @@ defmodule Cadet.Assessments.AnswerTest do
 
     test "invalid changeset foreign key constraints", context do
       %{
-        valid_mcq_question_params: params,
+        valid_mcq_params: params,
         mcq_question: mcq_question,
         assessment: assessment,
         submission: submission
