@@ -2,13 +2,7 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   alias Cadet.Assessments
-
-  test "all assessments" do
-    assessments = Enum.map(insert_list(5, :assessment), & &1.id)
-
-    result = Enum.map(Assessments.all_assessments(), & &1.id)
-    assert result == assessments
-  end
+  alias Cadet.Assessments.{Question, Assessment}
 
   test "all open assessments" do
     open_assessment = insert(:assessment, is_published: true, type: :mission)
@@ -144,7 +138,7 @@ defmodule Cadet.AssessmentsTest do
 
     Assessments.update_assessment(assessment.id, %{title: "changed_assessment"})
 
-    assessment = Assessments.get_assessment(assessment.id)
+    assessment = Repo.get(Assessment, assessment.id)
 
     assert assessment.title == "changed_assessment"
   end
@@ -195,13 +189,13 @@ defmodule Cadet.AssessmentsTest do
   test "update question" do
     question = insert(:question)
     Assessments.update_question(question.id, %{title: "new_title"})
-    question = Assessments.get_question(question.id)
+    question = Repo.get(Question, question.id)
     assert question.title == "new_title"
   end
 
   test "delete question" do
     question = insert(:question)
     Assessments.delete_question(question.id)
-    assert Assessments.get_question(question.id) == nil
+    assert Repo.get(Question, question.id) == nil
   end
 end
