@@ -6,7 +6,7 @@ resource "aws_key_pair" "api" {
 resource "aws_launch_configuration" "api" {
   name_prefix                 = "${var.env}-cadet-api-"
   image_id                    = "${var.ami_id}"
-  instance_type               = "${var.instance_type}"
+  instance_type               = "${var.ec2_instance_type}"
   security_groups             = ["${aws_security_group.api.id}"]
   key_name                    = "${aws_key_pair.api.key_name}"
   iam_instance_profile        = "${aws_iam_instance_profile.api.name}"
