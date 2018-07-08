@@ -59,8 +59,6 @@ defmodule CadetWeb.GradingControllerTest do
 
       conn = get(conn, "/v1/grading/")
 
-      assert body = json_response(conn, 200)
-
       expected =
         Enum.map(submissions, fn submission ->
           %{
@@ -78,7 +76,7 @@ defmodule CadetWeb.GradingControllerTest do
           }
         end)
 
-      assert ^expected = body
+      assert ^expected = Enum.sort_by(json_response(conn, 200), & &1["submissionId"])
     end
   end
 
