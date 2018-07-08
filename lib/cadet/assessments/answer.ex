@@ -35,7 +35,6 @@ defmodule Cadet.Assessments.Answer do
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
-    |> put_json(:answer, :raw_answer)
   end
 
   defp add_question_type_from_model(changeset, params) do
