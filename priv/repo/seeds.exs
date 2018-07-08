@@ -12,24 +12,39 @@
 import Cadet.Factory
 
 if Application.get_env(:cadet, :environment) == :dev do
-  seeded_users = [
-    %{
-      name: "TestStudent",
-      role: :student
-    },
-    %{
-      name: "TestStaff",
-      role: :staff
-    },
-    %{
-      name: "TestAdmin",
-      role: :admin
-    }
-  ]
+  # User and Group
+  avenger = insert(:user, %{name: "avenger", role: :staff})
+  mentor = insert(:user, %{name: "mentor", role: :staff})
+  group = insert(:group, %{leader: avenger, mentor: mentor})
+  students = insert_list(5, :student, %{group: group})
+  admin = insert(:user, %{name: "admin", role: :admin})
+  Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
 
-  Enum.each(seeded_users, fn attr ->
-    user = insert(:user, attr)
+  # Assessments
+  mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
 
-    insert(:nusnet_id, %{user: user})
+  questions =
+    insert_list(3, :question, %{
+      type: :programming,
+      question: build(:programming_question),
+      assessment: mission,
+      max_xp: 200
+    })
+
+  submissions =
+    students
+    |> Enum.take(2)
+    |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
+
+  # Answers
+  Enum.each(submissions, fn submission ->
+    Enum.each(questions, fn question ->
+      insert(:answer, %{
+        xp: 200,
+        question: question,
+        submission: submission,
+        answer: build(:programming_answer)
+      })
+    end)
   end)
 end
