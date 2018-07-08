@@ -1,0 +1,116 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": [],
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "~r/https://ivle.nus.edu.sg/api/login/\?apikey=.*/"
+    },
+    "response": {
+      "binary": false,
+      "body": "\r\n\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\r\n\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n<head><title>\r\n\tLogin | IVLE\r\n</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\" /></head>\r\n<body>\r\n<!-- Header -->\r\n    <table border=\"0\" style=\"background: #4F4E52;color: White; font-weight:bold\" width=\"100%\" cellpadding=\"8\" cellspacing=\"8\">\r\n        <tr><td width=\"*\">Access to IVLE requested</td>\r\n        <!-- <td width=\"20px\"><a onclick=\"parent.ivle_close();\" title=\"Close\">[X]</a></td> -->\r\n        </tr>\r\n    </table>\r\n    <form name=\"frm\" method=\"post\" action=\"./?apikey=0&amp;url=_\" id=\"frm\">\r\n<input type=\"hidden\" name=\"__VIEWSTATE\" id=\"__VIEWSTATE\" value=\"/wEPDwULLTEzODMyMDQxNjEPFgIeE1ZhbGlkYXRlUmVxdWVzdE10D2QWAh4Gb25ibHVyBQ91c2VySWRUb1VwcGVyKClkAgkPD2QWBB4Lb25tb3VzZW92ZXIFNWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdsb2dpbmltZzEnKS5zcmM9b2ZmaW1nLnNyYzE7Hgpvbm1vdXNlb3V0BTRkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbG9naW5pbWcxJykuc3JjPW9uaW1nLnNyYzE7ZBgBBR5fX0NvbnRyb2xzUmVxdWlyZVBvc3RCYWNrS2V5X18WAQUJbG9naW5pbWcxYTg4Q/LO3lNCB13iJpTeINmF1JQmGv61ni1TVgDIOII=\" />\r\n\r\n<input type=\"hidden\" name=\"__VIEWSTATEGENERATOR\" id=\"__VIEWSTATEGENERATOR\" value=\"B0AF59B8\" />\r\n    <table border=\"0\">\r\n    <tr valign=\"top\"><td>UserID</td><td>:</td><td> <input name=\"userid\" type=\"text\" maxlength=\"30\" id=\"userid\" onblur=\"userIdToUpper()\" />\r\n                                                  </td></tr>\r\n    <tr valign=\"top\"><td>Password</td><td>:</td><td><input name=\"password\" type=\"password\" maxlength=\"100\" id=\"password\" />\r\n                                                  </td></tr>\r\n                                                  <tr valign=\"top\"><td colspan=\"3\">\r\n <input type=\"image\" name=\"loginimg1\" id=\"loginimg1\" onmouseover=\"document.getElementById(&#39;loginimg1&#39;).src=offimg.src1;\" onmouseout=\"document.getElementById(&#39;loginimg1&#39;).src=onimg.src1;\" src=\"/images/login.gif\" onclick=\"javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions(&quot;loginimg1&quot;, &quot;&quot;, true, &quot;login&quot;, &quot;&quot;, false, false))\" border=\"0\" />\r\n                                                  <br />\r\n                                                  \r\n                                                  \r\n                                                  </td></tr>\r\n    </table>\r\n    </form>\r\n    <script language=\"javascript\">\r\n        var onimg = new Image();\r\n        var offimg = new Image();\r\n        onimg.src = \"/images/enter_new.gif\"; offimg.src = \"/images/enter_h_new.gif\";\r\n        onimg.src1 = \"/images/login.gif\"; offimg.src1 = \"/images/login_h.gif\";\r\n\r\n        function userIdToUpper() {\r\n            var txt = document.getElementById(\"userid\");\r\n            txt.value = txt.value.toUpperCase();\r\n        }    \r\n    </script>\r\n</body>\r\n</html>\r\n",
+      "headers": {
+        "Cache-Control": "private",
+        "Content-Type": "text/html; charset=utf-8",
+        "Server": "Microsoft-IIS/8.5",
+        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
+        "Set-Cookie": "ASP.NET_SessionId=yw5j0qin5kmkp0g12nyjghuy; path=/; HttpOnly",
+        "X-AspNet-Version": "4.0.30319",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Thu, 28 Jun 2018 04:10:06 GMT",
+        "Content-Length": "2942"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "~r/.*/",
+      "headers": [],
+      "method": "post",
+      "options": {
+        "cookie": "ASP.NET_SessionId=yw5j0qin5kmkp0g12nyjghuy; path=/; HttpOnly",
+        "follow_redirect": "false"
+      },
+      "request_body": "",
+      "url": "~r/https://ivle.nus.edu.sg/api/login/.*/"
+    },
+    "response": {
+      "binary": false,
+      "body": "<html><head><title>Object moved</title></head><body>\r\n<h2>Object moved to <a href=\"/api/login/login_result.ashx?apikey=0&amp;url=_&amp;r=0\">here</a>.</h2>\r\n</body></html>\r\n",
+      "headers": {
+        "Cache-Control": "private",
+        "Content-Type": "text/html; charset=utf-8",
+        "Location": "/api/login/login_result.ashx?apikey=0&url=_&r=0",
+        "Server": "Microsoft-IIS/8.5",
+        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
+        "X-AspNet-Version": "4.0.30319",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Thu, 28 Jun 2018 04:10:06 GMT",
+        "Content-Length": "192"
+      },
+      "status_code": 302,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": [],
+      "method": "get",
+      "options": {
+        "cookie": "ASP.NET_SessionId=yw5j0qin5kmkp0g12nyjghuy; path=/; HttpOnly",
+        "follow_redirect": "false"
+      },
+      "request_body": "",
+      "url": "~r/https://ivle.nus.edu.sg/api/login/login_result.ashx.*/"
+    },
+    "response": {
+      "binary": false,
+      "body": "<html><head><title>Object moved</title></head><body>\r\n<h2>Object moved to <a href=\"/api/login/_?token=C838D682D3F97F51F39FF0FE2C14142B5F9997850348633D9FC34032BDC2508A889C926171DFA55FA17799C9A513B6E53F01AF4AD811D8495F2534974B15228D0F17E40B80BC36785DB9F67CC61421D4917AA449D6EB30609DEE38801B110B5EF6EE87AEA19A4E741AF11552F327007673A6FFF723BDB41ACD1D9FB8FC691A68C111BD6561F35F4C3E0EA9148C931FE993330566176CBE06B5F0A28D1AF1772313B2483B8F8FA08E4C611BDC4A38A2101FD5AA1F100977B0B3B13F69FEF492CE7AA4F876A743318EF945321946E6F2E67AAC1D218EB631A94B48866458D7D645B3C79BF26FA7CFC73A2C65A3477BF1D7\">here</a>.</h2>\r\n</body></html>\r\n",
+      "headers": {
+        "Cache-Control": "private",
+        "Content-Type": "text/html; charset=utf-8",
+        "Location": "/api/login/_?token=C838D682D3F97F51F39FF0FE2C14142B5F9997850348633D9FC34032BDC2508A889C926171DFA55FA17799C9A513B6E53F01AF4AD811D8495F2534974B15228D0F17E40B80BC36785DB9F67CC61421D4917AA449D6EB30609DEE38801B110B5EF6EE87AEA19A4E741AF11552F327007673A6FFF723BDB41ACD1D9FB8FC691A68C111BD6561F35F4C3E0EA9148C931FE993330566176CBE06B5F0A28D1AF1772313B2483B8F8FA08E4C611BDC4A38A2101FD5AA1F100977B0B3B13F69FEF492CE7AA4F876A743318EF945321946E6F2E67AAC1D218EB631A94B48866458D7D645B3C79BF26FA7CFC73A2C65A3477BF1D7",
+        "Server": "Microsoft-IIS/8.5",
+        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
+        "X-AspNet-Version": "4.0.30319",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Thu, 28 Jun 2018 04:10:06 GMT",
+        "Content-Length": "616"
+      },
+      "status_code": 302,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": [],
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "~r/https://ivle.nus.edu.sg/api/Lapi.svc/Modules.*/"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"Results\":[{\"Announcements\":[],\"Forums\":[],\"Workbins\":[],\"Webcasts\":[],\"Gradebooks\":[],\"Polls\":[],\"Multimedia\":[],\"LessonPlan\":[],\"ID\":\"a6579f36-4d7d-41fb-b394-92a00b78148b\",\"CourseLevel\":\"1\",\"CourseCode\":\"CS1101S\",\"CourseName\":\"PROGRAMMING METHODOLOGY\",\"CourseDepartment\":\"\",\"CourseSemester\":\"Semester 1\",\"CourseAcadYear\":\"2018/2019\",\"CourseOpenDate\":\"\\/Date(1526486400000+0800)\\/\",\"CourseOpenDate_js\":\"2018-05-17T00:00:00\",\"CourseCloseDate\":\"\\/Date(1545494340000+0800)\\/\",\"CourseCloseDate_js\":\"2018-12-22T23:59:00\",\"CourseMC\":\"0\",\"isActive\":\"Y\",\"Permission\":\"S\",\"Creator\":{\"UserID\":\"dcsmjh\",\"Name\":\"Martin Henz\",\"Email\":null,\"Title\":null,\"UserGuid\":\"4dce39fc-432c-4e4c-aef1-8bb187fcbcc0\",\"AccountType\":null,\"Photo\":null},\"hasGradebookItems\":false,\"hasTimetableItems\":false,\"hasGroupsItems\":false,\"hasClassGroupsForSignUp\":false,\"hasGuestRosterItems\":false,\"hasClassRosterItems\":false,\"hasWeblinkItems\":false,\"hasLecturerItems\":false,\"hasDescriptionItems\":false,\"hasReadingItems\":false,\"hasAnnouncementItems\":false,\"hasProjectGroupItems\":false,\"hasProjectGroupsForSignUp\":false,\"hasConsultationItems\":false,\"hasConsultationSlotsForSignUp\":false,\"hasLessonPlanItems\":false,\"Badge\":3,\"BadgeAnnouncement\":3,\"WebLinks\":[],\"Lecturers\":[],\"Descriptions\":[],\"ReadingFormatted\":[],\"ReadingUnformatted\":[]}],\"Comments\":\"Valid login!\",\"LastUpdate\":\"\\/Date(1530159006903+0800)\\/\",\"LastUpdate_js\":\"2018-06-28T12:10:06.903471+08:00\"}",
+      "headers": {
+        "Cache-Control": "private",
+        "Content-Type": "application/json",
+        "Server": "Microsoft-IIS/8.5",
+        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
+        "Set-Cookie": "ASP.NET_SessionId=ehxhel0jipttae33abzs4wln; path=/; HttpOnly",
+        "X-AspNet-Version": "4.0.30319",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Thu, 28 Jun 2018 04:10:06 GMT",
+        "Content-Length": "1422"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

@@ -5,36 +5,31 @@ defmodule Cadet.Assessments.AnswerTest do
 
   valid_changesets Answer do
     %{
-      marks: 2,
-      answer: %{},
-      type: :programming
+      xp: 2,
+      answer: %{}
     }
 
     %{
-      marks: 1,
-      answer: %{},
-      type: :multiple_choice
+      xp: 1,
+      answer: %{}
     }
 
     %{
-      marks: 1,
-      answer: %{},
-      type: :multiple_choice
+      xp: 1,
+      answer: %{}
     }
 
     %{
-      marks: 100,
+      xp: 100,
       answer: %{},
-      type: :programming,
       raw_answer: Poison.encode!(%{answer: "This is a sample json"})
     }
   end
 
   invalid_changesets Answer do
     %{
-      marks: -2,
-      answer: %{},
-      type: :programming
+      xp: -2,
+      answer: %{}
     }
   end
 end
