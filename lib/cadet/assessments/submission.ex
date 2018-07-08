@@ -26,7 +26,7 @@ defmodule Cadet.Assessments.Submission do
     |> add_belongs_to_id_from_model(:student, params)
     |> add_belongs_to_id_from_model(:assessment, params)
     |> validate_required(@required_fields)
-    |> foreign_key_constraint(:student)
-    |> foreign_key_constraint(:assessment)
+    |> foreign_key_constraint(:student_id)
+    |> foreign_key_constraint(:assessment_id)
   end
 end

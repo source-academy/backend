@@ -3,6 +3,8 @@ defmodule Cadet.Assessments.AnswerTest do
 
   alias Cadet.Assessments.Answer
 
+  @required_fields ~w(answer submission_id question_id type)a
+
   setup do
     assessment = insert(:assessment, %{is_published: true})
     student = insert(:user, %{role: :student})
@@ -39,27 +41,30 @@ defmodule Cadet.Assessments.AnswerTest do
   end
 
   describe "Changesets" do
-    test "valid mcq question params", context do
-      %{valid_mcq_params: params} = context
+    test "valid mcq question params", %{valid_mcq_params: params} do
+      {res, _struct} =
+        %Answer{}
+        |> Answer.changeset(params)
+        |> Repo.insert()
 
-      changeset = Answer.changeset(%Answer{}, params)
-      assert(changeset.valid?, Kernel.inspect(params))
+      assert(res == :ok, Kernel.inspect(params))
     end
 
-    test "valid programming question with id params", context do
-      %{valid_programming_params: params} = context
+    test "valid programming question with id params", %{valid_programming_params: params} do
+      {res, _struct} =
+        %Answer{}
+        |> Answer.changeset(params)
+        |> Repo.insert()
 
-      changeset = Answer.changeset(%Answer{}, params)
-      assert(changeset.valid?, Kernel.inspect(params))
+      assert(res == :ok, Kernel.inspect(params))
     end
 
-    test "converts valid params with models into ids", context do
-      %{
-        submission: submission,
-        programming_question: question,
-        valid_programming_params: params
-      } = context
-
+    test "converts valid params with models into ids",
+         %{
+           submission: submission,
+           programming_question: question,
+           valid_programming_params: params
+         } do
       params =
         params
         |> Map.delete(:submission_id)
@@ -71,9 +76,7 @@ defmodule Cadet.Assessments.AnswerTest do
       assert(changeset.valid?, Kernel.inspect(params))
     end
 
-    test "invalid mcq question wrong answer format", context do
-      %{valid_mcq_params: params} = context
-
+    test "invalid changeset mcq question wrong answer format", %{valid_mcq_params: params} do
       params_wrong_type = Map.put(params, :answer, %{choice_id: "hello world"})
       refute(Answer.changeset(%Answer{}, params_wrong_type).valid?, inspect(params_wrong_type))
 
@@ -81,9 +84,9 @@ defmodule Cadet.Assessments.AnswerTest do
       refute(Answer.changeset(%Answer{}, params_wrong_field).valid?, inspect(params_wrong_field))
     end
 
-    test "invalid programming question wrong answer format", context do
-      %{valid_programming_params: params} = context
-
+    test "invalid changeset programming question wrong answer format", %{
+      valid_programming_params: params
+    } do
       params_wrong_type = Map.put(params, :answer, %{choice_id: "hello world"})
       refute(Answer.changeset(%Answer{}, params_wrong_type).valid?, inspect(params_wrong_type))
 
@@ -91,11 +94,8 @@ defmodule Cadet.Assessments.AnswerTest do
       refute(Answer.changeset(%Answer{}, params_wrong_field).valid?, inspect(params_wrong_field))
     end
 
-    test "invalid changeset missing required params", context do
-      %{valid_mcq_params: params} = context
-      required_fields = ~w(answer submission_id question_id type)a
-
-      Enum.each(required_fields, fn field ->
+    test "invalid changeset missing required params", %{valid_mcq_params: params} do
+      Enum.each(@required_fields, fn field ->
         params_missing_field = Map.delete(params, field)
 
         refute(
@@ -105,17 +105,16 @@ defmodule Cadet.Assessments.AnswerTest do
       end)
     end
 
-    test "invalid changeset foreign key constraints", context do
-      %{
-        valid_mcq_params: params,
-        mcq_question: mcq_question,
-        assessment: assessment,
-        submission: submission
-      } = context
-
+    test "invalid changeset foreign key constraints",
+         %{
+           valid_mcq_params: params,
+           mcq_question: mcq_question,
+           assessment: assessment,
+           submission: submission
+         } do
       {:ok, _} = Repo.delete(mcq_question)
 
-      {:error, changeset} =
+      {_res, changeset} =
         %Answer{}
         |> Answer.changeset(params)
         |> Repo.insert()
@@ -125,7 +124,7 @@ defmodule Cadet.Assessments.AnswerTest do
       new_mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
       {:ok, _} = Repo.delete(submission)
 
-      {:error, changeset} =
+      {_res, changeset} =
         %Answer{}
         |> Answer.changeset(Map.put(params, :question_id, new_mcq_question.id))
         |> Repo.insert()

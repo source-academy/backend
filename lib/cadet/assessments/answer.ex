@@ -14,7 +14,7 @@ defmodule Cadet.Assessments.Answer do
   schema "answers" do
     field(:xp, :integer, default: 0)
     field(:answer, :map)
-    field(:type, ProblemType, virtual: true)
+    field(:type, QuestionType, virtual: true)
     field(:raw_answer, :string, virtual: true)
     field(:comment, :string)
     field(:adjustment, :integer, default: 0)
