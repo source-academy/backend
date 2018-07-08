@@ -84,7 +84,6 @@ defmodule Cadet.ModelHelper do
   """
   def add_belongs_to_id_from_model(changeset, assoc, params) when is_atom(assoc) do
     assoc_id_field = String.to_atom("#{assoc}_id")
-    model = Map.get(params, assoc)
 
     with nil <- get_change(changeset, assoc_id_field),
          model when is_map(model) <- Map.get(params, assoc),

@@ -10,11 +10,9 @@ defmodule Cadet.Assessments do
   alias Timex.Duration
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.Answer
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Question
-  alias Cadet.Assessments.Submission
+  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
+  # TODO: Change once these controllers are shipped
   @submit_answer_roles ~w(student staff)a
 
   def all_assessments() do

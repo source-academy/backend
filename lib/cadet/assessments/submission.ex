@@ -3,10 +3,7 @@ defmodule Cadet.Assessments.Submission do
   use Cadet, :model
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Answer
-
-  # TODO: Add unique indices
+  alias Cadet.Assessments.{Answer, Assessment}
 
   schema "submissions" do
     field(:xp, :integer, virtual: true)
