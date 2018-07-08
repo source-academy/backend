@@ -45,6 +45,9 @@ defmodule CadetWeb.ConnCase do
 
           is_map(tags[:authenticate]) ->
             tags[:authenticate]
+
+          true ->
+            nil
         end
 
       conn =

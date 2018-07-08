@@ -120,7 +120,15 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
-  def answer_question(id, user, raw_answer) do
+  @doc """
+  Public internal api to submit new answers for a question. Possible return values are:
+  `{:ok, nil}` -> success
+  `{:error, error}` -> failed. `error` is in the format of `{http_response_code, error message}`
+
+  Note: This may crash due to the use of `insert!` in the event of a race happening (multiple devices/ repeated clicking)
+
+  """
+  def answer_question(id, user = %User{}, raw_answer) do
     if user.role not in @submit_answer_roles do
       {:error, {:unauthorized, "User is not permitted to answer questions"}}
     else
