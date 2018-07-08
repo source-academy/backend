@@ -5,7 +5,7 @@ defmodule Cadet.Assessments.Answer do
   """
   use Cadet, :model
 
-  alias Cadet.Assessments.ProblemType
+  alias Cadet.Assessments.QuestionType
   alias Cadet.Assessments.Submission
   alias Cadet.Assessments.Question
   alias Cadet.Assessments.AnswerTypes.ProgrammingAnswer
@@ -16,13 +16,15 @@ defmodule Cadet.Assessments.Answer do
     field(:answer, :map)
     field(:type, ProblemType, virtual: true)
     field(:raw_answer, :string, virtual: true)
+    field(:comment, :string)
+    field(:adjustment, :integer, default: 0)
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
     timestamps()
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp)a
+  @optional_fields ~w(xp comment adjustment)a
 
   def changeset(answer, params) do
     answer
