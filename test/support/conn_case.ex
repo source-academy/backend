@@ -38,12 +38,14 @@ defmodule CadetWeb.ConnCase do
     conn = Phoenix.ConnTest.build_conn()
 
     if tags[:authenticate] != nil do
-      user = cond do
-        is_atom(tags[:authenticate]) ->
-          Cadet.Factory.insert(:user, %{role: tags[:authenticate]})
-        is_map(tags[:authenticate]) ->
-          tags[:authenticate]
-      end
+      user =
+        cond do
+          is_atom(tags[:authenticate]) ->
+            Cadet.Factory.insert(:user, %{role: tags[:authenticate]})
+
+          is_map(tags[:authenticate]) ->
+            tags[:authenticate]
+        end
 
       conn =
         conn

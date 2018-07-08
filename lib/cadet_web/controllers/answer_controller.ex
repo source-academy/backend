@@ -16,7 +16,7 @@ defmodule CadetWeb.AnswerController do
   end
 
   def submit(conn, _parms) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
+    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
   swagger_path :submit do

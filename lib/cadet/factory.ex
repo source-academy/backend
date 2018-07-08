@@ -105,7 +105,7 @@ defmodule Cadet.Factory do
       weight: Enum.random(1..10),
       question: %{},
       type: Enum.random([:programming, :multiple_choice]),
-      assessment: build(:assessment)
+      assessment: build(:assessment, %{is_published: true})
     }
   end
 end

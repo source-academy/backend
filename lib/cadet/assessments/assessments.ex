@@ -135,11 +135,8 @@ defmodule Cadet.Assessments do
         is_nil(question) ->
           {:error, {:bad_request, "Question not found"}}
 
-        is_open?(question.assessment) == false ->
-          {:error, {:bad_request, "Assessment not open"}}
-
-        question.assessment.is_published == false ->
-          {:error, {:bad_request, ""}}
+        is_closed?(question.assessment) or not question.assessment.is_published ->
+          {:error, {:unauthorized, "Assessment not open"}}
 
         true ->
           submission = find_or_create_submission(user, question.assessment)
@@ -162,7 +159,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_open?(assessment = %Assessment{}) do
+  defp is_closed?(assessment = %Assessment{}) do
     not Timex.between?(Timex.now(), assessment.open_at, assessment.close_at)
   end
 
