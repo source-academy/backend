@@ -2,7 +2,7 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   alias Cadet.Assessments
-  alias Cadet.Assessments.{Question, Assessment}
+  alias Cadet.Assessments.{Question, Assessment, AssessmentType}
 
   test "all open assessments" do
     open_assessment = insert(:assessment, is_published: true, type: :mission)
@@ -12,52 +12,19 @@ defmodule Cadet.AssessmentsTest do
     refute closed_assessment.id in result
   end
 
-  test "create assessment" do
-    {:ok, assessment} =
-      Assessments.create_assessment(%{
-        title: "assessment",
-        type: :mission,
+  test "create assessments of all types" do
+    Enum.each(AssessmentType.__enum_map__(), fn type ->
+      title_string = Atom.to_string(type)
+
+      {_res, assessment} = Assessments.create_assessment(%{
+        title: title_string,
+        type: type,
         open_at: Timex.now(),
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert %{title: "assessment", type: :mission} = assessment
-  end
-
-  test "create sidequest" do
-    {:ok, assessment} =
-      Assessments.create_assessment(%{
-        title: "sidequest",
-        type: :sidequest,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
-    assert %{title: "sidequest", type: :sidequest} = assessment
-  end
-
-  test "create contest" do
-    {:ok, assessment} =
-      Assessments.create_assessment(%{
-        title: "contest",
-        type: :contest,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
-    assert %{title: "contest", type: :contest} = assessment
-  end
-
-  test "create path" do
-    {:ok, assessment} =
-      Assessments.create_assessment(%{
-        title: "path",
-        type: :path,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
-
-    assert %{title: "path", type: :path} = assessment
+      assert %{title: ^title_string, type: ^type} = assessment
+      end)
   end
 
   test "create programming question" do
