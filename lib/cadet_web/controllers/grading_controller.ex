@@ -1,7 +1,17 @@
 defmodule CadetWeb.GradingController do
   use CadetWeb, :controller
-
   use PhoenixSwagger
+
+  alias Cadet.Assessments
+
+  def index(conn, _) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.all_submissions_by_grader(user) do
+      {:ok, submissions} -> render(conn, "index.json", submissions: submissions)
+      {:error, {status, error}} -> send_resp(conn, status, error)
+    end
+  end
 
   swagger_path :index do
     get("/grading")

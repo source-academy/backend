@@ -9,8 +9,11 @@ defmodule Cadet.Assessments do
 
   alias Timex.Duration
 
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Question
+  alias Cadet.Accounts.User
+  alias Cadet.Assessments.{Assessment, Query, Question, Submission}
+  alias Cadet.Course.Group
+
+  @grading_roles ~w(staff)a
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -113,6 +116,25 @@ defmodule Cadet.Assessments do
   def delete_question(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
+  end
+
+  @spec all_submissions_by_grader(User.t()) ::
+          {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
+  def all_submissions_by_grader(grader = %User{role: role}) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of_staff(grader)
+
+      submissions =
+        Query.all_submissions_with_xp()
+        |> join(:inner, [s], t in subquery(students), s.student_id == t.id)
+        |> preload(:student)
+        |> preload(assessment: ^Query.all_assessments_with_max_xp())
+        |> Repo.all()
+
+      {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
+    end
   end
 
   # TODO: Decide what to do with these methods

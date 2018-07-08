@@ -5,7 +5,6 @@ defmodule Cadet.Assessments.Answer do
   """
   use Cadet, :model
 
-  alias Cadet.Assessments.QuestionType
   alias Cadet.Assessments.Submission
   alias Cadet.Assessments.Question
 
