@@ -86,10 +86,12 @@ defmodule Cadet.ModelHelper do
     assoc_id_field = String.to_atom("#{assoc}_id")
     model = Map.get(params, assoc)
 
-    if is_nil(get_change(changeset, assoc_id_field)) and not is_nil(model) and Map.get(model, :id) do
-      change(changeset, %{"#{assoc}_id": model.id})
+    with nil <- get_change(changeset, assoc_id_field),
+         model when is_map(model) <- Map.get(params, assoc),
+         id <- Map.get(model, :id) do
+      change(changeset, %{"#{assoc}_id": id})
     else
-      changeset
+      _ -> changeset
     end
   end
 end

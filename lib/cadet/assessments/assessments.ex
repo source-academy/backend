@@ -125,16 +125,15 @@ defmodule Cadet.Assessments do
   `{:ok, nil}` -> success
   `{:error, error}` -> failed. `error` is in the format of `{http_response_code, error message}`
 
-  Note: This may crash due to the use of `insert!` in the event of a race happening (multiple devices/ repeated clicking)
+  Note: In the event of `find_or_create_submission` failing due to a race condition, error will be:
+   `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user = %User{}, raw_answer) do
-    if user.role not in @submit_answer_roles do
-      {:error, {:unauthorized, "User is not permitted to answer questions"}}
-    else
+  def answer_question(id, user = %User{role: role}, raw_answer) do
+    if role in @submit_answer_roles do
       question =
         Question
-        |> where([q], q.id == ^id)
+        |> where(id: ^id)
         |> join(:inner, [q], assessment in assoc(q, :assessment))
         |> preload([question, assessment], assessment: assessment)
         |> Repo.one()
@@ -147,17 +146,23 @@ defmodule Cadet.Assessments do
           {:error, {:unauthorized, "Assessment not open"}}
 
         true ->
-          submission = find_or_create_submission(user, question.assessment)
-          insert_or_update_answer(submission, question, raw_answer)
+          with {:ok, submission} <- find_or_create_submission(user, question.assessment),
+               {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+            {:ok, nil}
+          else
+            _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+          end
       end
+    else
+      {:error, {:unauthorized, "User is not permitted to answer questions"}}
     end
   end
 
   defp find_submission(user = %User{}, assessment = %Assessment{}) do
     submission =
       Submission
-      |> where([s], s.student_id == ^user.id)
-      |> where([s], s.assessment_id == ^assessment.id)
+      |> where(student_id: ^user.id)
+      |> where(assessment_id: ^assessment.id)
       |> Repo.one()
 
     if submission do
@@ -167,19 +172,19 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_closed?(assessment = %Assessment{}) do
-    not Timex.between?(Timex.now(), assessment.open_at, assessment.close_at)
+  defp is_closed?(%Assessment{open_at: open_at, close_at: close_at}) do
+    not Timex.between?(Timex.now(), open_at, close_at)
   end
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
     %Submission{}
     |> Submission.changeset(%{student: user, assessment: assessment})
-    |> Repo.insert!()
+    |> Repo.insert()
   end
 
   defp find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
     case find_submission(user, assessment) do
-      {:ok, submission} -> submission
+      {:ok, submission} -> {:ok, submission}
       {:error, _} -> create_empty_submission(user, assessment)
     end
   end
@@ -198,13 +203,6 @@ defmodule Cadet.Assessments do
       on_conflict: [set: [answer: answer_content]],
       conflict_target: [:submission_id, :question_id]
     )
-    |> case do
-      {:ok, _answer} ->
-        {:ok, nil}
-
-      {:error, _error} ->
-        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
-    end
   end
 
   defp build_answer_content(raw_answer, question_type) do

@@ -1,7 +1,6 @@
 defmodule CadetWeb.AnswerControllerTest do
   use CadetWeb.ConnCase
 
-  import Cadet.Factory
   import Ecto.Query
 
   alias CadetWeb.AnswerController
@@ -140,18 +139,18 @@ defmodule CadetWeb.AnswerControllerTest do
     assert response(before_open_at_conn, 401) == "Assessment not open"
     assert is_nil(get_answer_value(before_open_at_question, before_open_at_assessment, user))
 
-    after_open_at_assessment =
+    after_close_at_assessment =
       insert(:assessment, %{
-        open_at: Timex.shift(Timex.now(), days: -5),
-        close_at: Timex.shift(Timex.now(), days: -10)
+        open_at: Timex.shift(Timex.now(), days: -10),
+        close_at: Timex.shift(Timex.now(), days: -5)
       })
 
-    after_open_at_question =
-      insert(:question, %{assessment: after_open_at_assessment, type: :multiple_choice})
+    after_close_at_question =
+      insert(:question, %{assessment: after_close_at_assessment, type: :multiple_choice})
 
-    after_open_at_conn = post(conn, build_url(after_open_at_question.id), %{answer: 5})
-    assert response(after_open_at_conn, 401) == "Assessment not open"
-    assert is_nil(get_answer_value(after_open_at_question, after_open_at_assessment, user))
+    after_close_at_conn = post(conn, build_url(after_close_at_question.id), %{answer: 5})
+    assert response(after_close_at_conn, 401) == "Assessment not open"
+    assert is_nil(get_answer_value(after_close_at_question, after_close_at_assessment, user))
 
     unpublished_assessment = insert(:assessment, %{is_published: false})
 
@@ -170,21 +169,17 @@ defmodule CadetWeb.AnswerControllerTest do
   defp get_answer_value(question, assessment, user) do
     answer =
       Answer
-      |> where([a], a.question_id == ^question.id)
+      |> where(question_id: ^question.id)
       |> join(:inner, [a], s in assoc(a, :submission))
       |> where([a, s], s.student_id == ^user.id)
       |> where([a, s], s.assessment_id == ^assessment.id)
       |> Repo.one()
 
-    cond do
-      is_nil(answer) ->
-        nil
-
-      question.type == :multiple_choice ->
-        Map.get(answer.answer, "choice_id")
-
-      question.type == :programming ->
-        Map.get(answer.answer, "code")
+    if answer do
+      case question.type do
+        :multiple_choice -> Map.get(answer.answer, "choice_id")
+        :programming -> Map.get(answer.answer, "code")
+      end
     end
   end
 end

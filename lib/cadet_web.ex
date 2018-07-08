@@ -22,11 +22,10 @@ defmodule CadetWeb do
   def controller do
     quote do
       use Phoenix.Controller, namespace: CadetWeb
+
       import Plug.Conn
       import CadetWeb.Router.Helpers
       import CadetWeb.Gettext
-
-      alias Cadet.Repo
     end
   end
 

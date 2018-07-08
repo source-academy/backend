@@ -39,40 +39,35 @@ defmodule Cadet.Assessments.Answer do
   end
 
   defp add_question_type_from_model(changeset, params) do
-    question = Map.get(params, :question)
-
-    if is_nil(get_change(changeset, :type)) and not is_nil(question) do
-      change(changeset, %{type: question.type})
+    with question when is_map(question) <- Map.get(params, :question),
+         nil <- get_change(changeset, :type),
+         type when is_atom(type) <- Map.get(question, :type) do
+      change(changeset, %{type: type})
     else
-      changeset
+      _ -> changeset
     end
   end
 
   defp validate_answer_content(changeset) do
-    if changeset.valid? do
-      question_type = get_change(changeset, :type)
-      answer = get_change(changeset, :answer)
-
-      answer_content_changeset =
-        case question_type do
-          :programming ->
-            ProgrammingAnswer.changeset(%ProgrammingAnswer{}, answer)
-
-          :multiple_choice ->
-            MCQAnswer.changeset(%MCQAnswer{}, answer)
-        end
-
-      answer_content_changeset
-      |> Map.get(:valid?)
-      |> case do
-        true ->
-          changeset
-
-        false ->
-          add_error(changeset, :answer, "invalid answer type provided for question")
-      end
+    with true <- changeset.valid?,
+         question_type when is_atom(question_type) <- get_change(changeset, :type),
+         answer when is_map(answer) <- get_change(changeset, :answer),
+         false <- answer_structure_valid?(question_type, answer) do
+      add_error(changeset, :answer, "invalid answer type provided for question")
     else
-      changeset
+      _ -> changeset
     end
+  end
+
+  defp answer_structure_valid?(question_type, answer) do
+    question_type
+    |> case do
+      :programming ->
+        ProgrammingAnswer.changeset(%ProgrammingAnswer{}, answer)
+
+      :multiple_choice ->
+        MCQAnswer.changeset(%MCQAnswer{}, answer)
+    end
+    |> Map.get(:valid?)
   end
 end

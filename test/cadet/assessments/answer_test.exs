@@ -29,7 +29,7 @@ defmodule Cadet.Assessments.AnswerTest do
     }
 
     {:ok,
-     [
+     %{
        assessment: assessment,
        mcq_question: mcq_question,
        valid_mcq_params: valid_mcq_params,
@@ -37,26 +37,26 @@ defmodule Cadet.Assessments.AnswerTest do
        valid_programming_params: valid_programming_params,
        student: student,
        submission: submission
-     ]}
+     }}
   end
 
   describe "Changesets" do
     test "valid mcq question params", %{valid_mcq_params: params} do
-      {res, _struct} =
+      result =
         %Answer{}
         |> Answer.changeset(params)
         |> Repo.insert()
 
-      assert(res == :ok, Kernel.inspect(params))
+      assert({:ok, _} = result, inspect(result))
     end
 
     test "valid programming question with id params", %{valid_programming_params: params} do
-      {res, _struct} =
+      result =
         %Answer{}
         |> Answer.changeset(params)
         |> Repo.insert()
 
-      assert(res == :ok, Kernel.inspect(params))
+      assert({:ok, _} = result, inspect(result))
     end
 
     test "converts valid params with models into ids",
@@ -69,6 +69,7 @@ defmodule Cadet.Assessments.AnswerTest do
         params
         |> Map.delete(:submission_id)
         |> Map.delete(:question_id)
+        |> Map.delete(:type)
         |> Map.put(:submission, submission)
         |> Map.put(:question, question)
 
@@ -114,22 +115,22 @@ defmodule Cadet.Assessments.AnswerTest do
          } do
       {:ok, _} = Repo.delete(mcq_question)
 
-      {_res, changeset} =
+      result =
         %Answer{}
         |> Answer.changeset(params)
         |> Repo.insert()
 
-      refute(changeset.valid?, inspect(changeset))
+      assert({:error, _} = result, inspect(result))
 
       new_mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
       {:ok, _} = Repo.delete(submission)
 
-      {_res, changeset} =
+      result =
         %Answer{}
         |> Answer.changeset(Map.put(params, :question_id, new_mcq_question.id))
         |> Repo.insert()
 
-      refute(changeset.valid?, inspect(changeset))
+      assert({:error, _} = result, inspect(result))
     end
   end
 end

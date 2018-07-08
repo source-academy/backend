@@ -11,26 +11,26 @@ defmodule Cadet.Assessments.SubmissionTest do
 
     valid_params = %{student_id: student.id, assessment_id: assessment.id}
 
-    {:ok, [assessment: assessment, student: student, valid_params: valid_params]}
+    {:ok, %{assessment: assessment, student: student, valid_params: valid_params}}
   end
 
   describe "Changesets" do
     test "valid params", %{valid_params: params} do
-      {res, _struct} =
+      result =
         %Submission{}
         |> Submission.changeset(params)
         |> Repo.insert()
 
-      assert res == :ok
+      assert({:ok, _} = result, inspect(result))
     end
 
     test "converts valid params with models into ids", %{assessment: assessment, student: student} do
-      {res, _struct} =
+      result =
         %Submission{}
         |> Submission.changeset(%{student: student, assessment: assessment})
         |> Repo.insert()
 
-      assert res == :ok
+      assert({:ok, _} = result, inspect(result))
     end
 
     test "invalid changeset missing params", %{valid_params: params} do
@@ -51,22 +51,22 @@ defmodule Cadet.Assessments.SubmissionTest do
     } do
       {:ok, _} = Repo.delete(student)
 
-      {_res, changeset} =
+      result =
         %Submission{}
         |> Submission.changeset(params)
         |> Repo.insert()
 
-      refute(changeset.valid?, inspect(changeset))
+      assert({:error, _} = result, inspect(result))
 
       new_student = insert(:user, %{role: :student})
       {:ok, _} = Repo.delete(assessment)
 
-      {_res, changeset} =
+      result =
         %Submission{}
         |> Submission.changeset(Map.put(params, :student_id, new_student.id))
         |> Repo.insert()
 
-      refute(changeset.valid?, inspect(changeset))
+      assert({:error, _} = result, inspect(result))
     end
   end
 end
