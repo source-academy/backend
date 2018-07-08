@@ -32,17 +32,6 @@ defmodule Cadet.Assessments.Question do
     |> put_question
   end
 
-  def is_open?(question) do
-    question =
-      if Ecto.assoc_loaded?(question.assessment) do
-        question
-      else
-        Repo.preload(question, :assessment)
-      end
-
-    not Timex.between?(Timex.now(), question.assessment.open_at, question.assessment.close_at)
-  end
-
   defp put_question(changeset) do
     {:ok, json} =
       changeset

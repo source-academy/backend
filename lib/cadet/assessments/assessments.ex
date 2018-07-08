@@ -135,7 +135,7 @@ defmodule Cadet.Assessments do
         is_nil(question) ->
           {:error, {:bad_request, "Question not found"}}
 
-        Question.is_open?(question) == false ->
+        is_open?(question.assessment) == false ->
           {:error, {:bad_request, "Assessment not open"}}
 
         question.assessment.is_published == false ->
@@ -160,6 +160,10 @@ defmodule Cadet.Assessments do
     else
       {:error, nil}
     end
+  end
+
+  defp is_open?(assessment = %Assessment{}) do
+    not Timex.between?(Timex.now(), assessment.open_at, assessment.close_at)
   end
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
