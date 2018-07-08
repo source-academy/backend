@@ -19,10 +19,11 @@ defmodule Cadet.Accounts.User do
   end
 
   @required_fields ~w(name role)a
+  @optional_fields ~w(nusnet_id)a
 
   def changeset(user, params \\ %{}) do
     user
-    |> cast(params, @required_fields)
+    |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_inclusion(:role, Role.__valid_values__())
   end
