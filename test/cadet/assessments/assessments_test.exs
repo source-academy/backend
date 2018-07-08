@@ -16,15 +16,16 @@ defmodule Cadet.AssessmentsTest do
     Enum.each(AssessmentType.__enum_map__(), fn type ->
       title_string = Atom.to_string(type)
 
-      {_res, assessment} = Assessments.create_assessment(%{
-        title: title_string,
-        type: type,
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
-      })
+      {_res, assessment} =
+        Assessments.create_assessment(%{
+          title: title_string,
+          type: type,
+          open_at: Timex.now(),
+          close_at: Timex.shift(Timex.now(), days: 7)
+        })
 
       assert %{title: ^title_string, type: ^type} = assessment
-      end)
+    end)
   end
 
   test "create programming question" do
