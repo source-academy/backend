@@ -10,9 +10,11 @@ defmodule Cadet.Assessments do
   alias Timex.Duration
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
+  alias Cadet.Course.Group
 
   @submit_answer_roles ~w(student)a
+  @grading_roles ~w(staff)a
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -148,6 +150,25 @@ defmodule Cadet.Assessments do
       end
     else
       {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+  
+  @spec all_submissions_by_grader(User.t()) ::
+          {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
+  def all_submissions_by_grader(grader = %User{role: role}) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of_staff(grader)
+
+      submissions =
+        Query.all_submissions_with_xp()
+        |> join(:inner, [s], t in subquery(students), s.student_id == t.id)
+        |> preload(:student)
+        |> preload(assessment: ^Query.all_assessments_with_max_xp())
+        |> Repo.all()
+
+      {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
