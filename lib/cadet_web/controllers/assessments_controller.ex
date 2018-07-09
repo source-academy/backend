@@ -7,35 +7,22 @@ defmodule CadetWeb.AssessmentsController do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Assessments
+  alias Cadet.Assessments.Assessment
   alias Cadet.Assessments.Image
-  alias Cadet.Submission
-  alias Cadet.Assessment
 
   def index(conn, _) do
-    assessment_list =
-      Assessments.all_assessments()
-      |> Enum.map(
-        &%{
-          id: &1.id,
-          title: &1.title,
-          type: Atom.to_string(&1.category),
-          summary_short: &1.summary_short,
-          open_at: DateTime.to_string(&1.open_at),
-          close_at: DateTime.to_string(&1.close_at),
-          max_xp: &1.max_xp,
-          cover_picture: Image.url({&1.cover_picture, &1}, :thumb)
-        }
-      )
-      |> Poison.encode()
+    assessments =
+      Assessment
+      |> where(is_published: true)
+      |> Repo.all()
 
-    render(conn, "index.json", assessments: assessment_list)
+    render(conn, "index.json", %{assessments: assessments})
   end
 
-  def show(conn, %{"assessmentId" => assessmentId}) do
-    assessment = Poison.encode(Assessments.get_assessment(assessmentId))
-    render(conn, "index.json", assessment: assessment)
-  end
+  # def show(conn, %{"assessmentId" => assessmentId}) do
+  #   assessment = Poison.encode(Assessments.get_assessment(assessmentId))
+  #   render(conn, "index.json", assessment: assessment)
+  # end
 
   def new(conn, _) do
     user_id = conn.assigns[:current_user].id
@@ -111,17 +98,17 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            summary_short(:string, "Short summary", required: true)
-            open_at(:string, "The opening date", format: "date-time", required: true)
-            close_at(:string, "The closing date", format: "date-time", required: true)
+            shortSummary(:string, "Short summary", required: true)
+            openAt(:string, "The opening date", format: "date-time", required: true)
+            closeAt(:string, "The closing date", format: "date-time", required: true)
 
-            max_xp(
+            maximumEXP(
               :integer,
               "The maximum amount of XP to be earned from this assessment",
               required: true
             )
 
-            cover_picture(:string, "The URL to the cover picture", required: true)
+            coverImage(:string, "The URL to the cover picture", required: true)
           end
         end,
       Assessment:
