@@ -16,8 +16,9 @@ defmodule Mix.Tasks.Cadet.Token do
 
   use Mix.Task
 
-  import Mix.Ecto
   import Ecto.Query
+  import IO.ANSI
+  import Mix.Ecto
 
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Auth.Guardian
@@ -35,15 +36,20 @@ defmodule Mix.Tasks.Cadet.Token do
     roles = Enum.filter(Role.__valid_values__(), &is_binary/1)
     role = List.first(args)
 
-    if Enum.count(args) == 1 and role in roles do
-      {:ok, access_token, _} =
-        Guardian.encode_and_sign(test_user(role), %{}, token_type: "access", ttl: {4, :weeks})
+    if role in roles do
+      user = test_user(role)
 
+      {:ok, access_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {4, :weeks})
+
+      IO.puts("#{bright()}Test user id:#{reset()} #{cyan()}#{user.id}#{reset()}")
+      IO.puts("#{bright()}Test user:#{reset()}")
+      IO.puts("#{cyan()}#{inspect(user, pretty: true)}#{reset()}")
+      IO.puts("#{bright}JWT:#{reset}")
       IO.puts("Bearer #{access_token}")
     else
-      IO.puts("Usage:")
-      IO.puts("  mix task cadet.token <role>")
-      IO.puts("where <role> in #{inspect(roles)}")
+      IO.puts("Invalid arguments provided.")
+      IO.puts("For help, run `mix help cadet.token`")
     end
   end
 
