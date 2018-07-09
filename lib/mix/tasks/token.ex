@@ -45,7 +45,7 @@ defmodule Mix.Tasks.Cadet.Token do
       IO.puts("#{bright()}Test user id:#{reset()} #{cyan()}#{user.id}#{reset()}")
       IO.puts("#{bright()}Test user:#{reset()}")
       IO.puts("#{cyan()}#{inspect(user, pretty: true)}#{reset()}")
-      IO.puts("#{bright}JWT:#{reset}")
+      IO.puts("#{bright()}JWT:#{reset()}")
       IO.puts("Bearer #{access_token}")
     else
       IO.puts("Invalid arguments provided.")
