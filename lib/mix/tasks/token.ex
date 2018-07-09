@@ -7,6 +7,9 @@ defmodule Mix.Tasks.Cadet.Token do
   where <role> in #{inspect(Enum.filter(Cadet.Accounts.Role.__valid_values__(), &is_binary/1))}
 
   For example: `mix task cadet.token student`
+
+  Caveat emptor!!! The list of roles here is generated at compile-time.
+  To get the most up-to-date list, please recompile by running `mix`
   """
 
   @shortdoc "Generates access_token JWT for a given user role"
@@ -36,7 +39,7 @@ defmodule Mix.Tasks.Cadet.Token do
       {:ok, access_token, _} =
         Guardian.encode_and_sign(test_user(role), %{}, token_type: "access", ttl: {4, :weeks})
 
-      IO.puts(access_token)
+      IO.puts("Bearer #{access_token}")
     else
       IO.puts("Usage:")
       IO.puts("  mix task cadet.token <role>")
