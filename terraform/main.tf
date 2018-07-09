@@ -17,10 +17,13 @@ provider "aws" {
 module "staging" {
   source = "./cadet"
 
-  env                = "stg"
-  ami_id             = "ami-573f032b"
-  instance_type      = "t2.micro"
-  min_instance_count = 2
-  max_instance_count = 2
-  ssh_public_key     = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDUWVRkdWFKgcGCdiha2Xpmfg68M+nbrUuuK3zZ07Fyf+VeW3cuwUcyfhp7nyoFP4WpsWO+0sEMpbd0t5krxvAjkhn2llBJrMhqV1GfT/NSi+i0vLp6CNWEGZntUUNnIt9+hmceD5W3BmGfyNMVBH+RVLVDquo6YaiiwzYSg4pfJO6pikrvmvHnOrRZ5YEZmSeMmc1vHeDxL1UqJDzoizvH3eXVixyMa+6EMOx2iDzWXJLlJuEU8FV5nSjmLa6Ld7jbLWc0rUUvnGYp+KwlpZMLJ3+bgdAgyzKMO7pAlr65wO5qi18Jq2mppFaNdUgv9j1xVe0yeyJ06vu70S6e7g4FFfHV2ov/Fu+ADKwmIsTYVBwVlctqok9LoF1rDc+J5LCmyoEoYNZbgcIPjYZOxm6R/OJ8IzTSRzHP8FinychphA3mM70QPTREQdL+AVzM28IA4g39zQA/dVrRilXuj2RB+kpM68hLhfHdpvYJXMcgHisOuuHDvkVkMz111hwORah7PJrFN7QquXrj0gYbKrM2rvExxiTxHk9wH2MPdYEY2l6nSHjgwHWO7EpSOg4nTwFSOqe01k5VtE1V9BthKbty8OvP8I8ZaosGJix/XxV/QJHAC+C2DB8RQorAW/0ZWRPRgN9B3mTIfkjtJMPLUxeI8r9dtrMJmMqMPzW07BlzVQ== source-academy@comp.nus.edu.sg"
+  env                   = "stg"
+  ami_id                = "ami-573f032b"
+  ec2_instance_type     = "t2.micro"
+  instance_class        = "db.t2.micro"
+  min_instance_count    = 2
+  max_instance_count    = 2
+  rds_allocated_storage = 10
+  rds_password          = "postgres"
+  ssh_public_key        = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC5LX23pkdYNFlXdAr/24hND0YUNynL1LCd4hQQxGGx0LBcrKOsHekpXTh091eFk7DvXQpq828VdnZdd6lTDrdmR9j9Uf5xRpRA81TNHC3HhDxgdfJleoMFu8eF44WPtt6ItxqC2ajP2Lw3UJgEctTpUyqlOrETRxhMpMNzxhIgLw9ygesiuGdtN6LaItW3R2Ec8pBxboPrMxBWze++CAG5mpRinI9BuONxBG1DAOQFitcLgGu+p9zpwJcNYRJwrZDlG98g+BsU2b4eEamXbQAxLdFLMHZPDCmV2a01pSfPIaQXoAKZqj/nGLPsTL1FIjZIxXNHtV7Tvvct4HtvzUaNDg1miLV6zlvFPTWMcE7dV+Mbj2aS1sl2eTcLZ5XTJr4so43nf4lH1ujxBODNCCm/68ck9wlf2GUkqyp+dPHr/ObMRcX6JSYs1c8NseSJlDmc87MCclGyxkBA+6on/3IUGsogz4gHupVJdVoR8ffWT2+jk06XLQmVIM1Th2JjV152Htn39RRmId6WuoynMCinaTaB/b5m4cEZNdttLlRmqbRCsOAr/W+BuWH9jtNi/c1qKZBJLyZE408JB9CCe+tFJgQ1hNDL+RAUKlLk6F7Xivft1nYaV58FA3U27mtMPp+RZItALTNAmA/pKfS7W4ACOhDHfpEfmUA4IzaJfruKYQ== ningyuan.sg@gmail.com"
 }

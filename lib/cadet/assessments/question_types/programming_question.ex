@@ -4,14 +4,11 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
   """
   use Cadet, :model
 
-  alias Cadet.Assessments.QuestionTypes.Library
-
   embedded_schema do
     field(:content, :string)
     field(:solution_template, :string)
     field(:solution_header, :string)
     field(:solution, :string)
-    embeds_one(:library, Library)
     field(:raw_programmingquestion, :string, virtual: true)
   end
 
@@ -22,7 +19,6 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> put_programmingquestion
-    |> cast_embed(:library, required: true, with: &Library.changeset/2)
     |> validate_required(@required_fields)
   end
 

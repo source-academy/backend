@@ -1,4 +1,4 @@
-defmodule Cadet.Assessments.QuestionTypes.Library do
+defmodule Cadet.Assessments.Library do
   @moduledoc """
   The library entity represents a library to be used in a programming question.
   """

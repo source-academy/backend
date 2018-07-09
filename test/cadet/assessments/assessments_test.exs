@@ -11,8 +11,8 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "all open assessments" do
-    open_assessment = insert(:assessment, is_published: true, category: :mission)
-    closed_assessment = insert(:assessment, is_published: false, category: :mission)
+    open_assessment = insert(:assessment, is_published: true, type: :mission)
+    closed_assessment = insert(:assessment, is_published: false, type: :mission)
     result = Enum.map(Assessments.all_open_assessments(:mission), fn m -> m.id end)
     assert open_assessment.id in result
     refute closed_assessment.id in result
@@ -22,48 +22,48 @@ defmodule Cadet.AssessmentsTest do
     {:ok, assessment} =
       Assessments.create_assessment(%{
         title: "assessment",
-        category: :mission,
+        type: :mission,
         open_at: Timex.now(),
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert %{title: "assessment", category: :mission} = assessment
+    assert %{title: "assessment", type: :mission} = assessment
   end
 
   test "create sidequest" do
     {:ok, assessment} =
       Assessments.create_assessment(%{
         title: "sidequest",
-        category: :sidequest,
+        type: :sidequest,
         open_at: Timex.now(),
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert %{title: "sidequest", category: :sidequest} = assessment
+    assert %{title: "sidequest", type: :sidequest} = assessment
   end
 
   test "create contest" do
     {:ok, assessment} =
       Assessments.create_assessment(%{
         title: "contest",
-        category: :contest,
+        type: :contest,
         open_at: Timex.now(),
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert %{title: "contest", category: :contest} = assessment
+    assert %{title: "contest", type: :contest} = assessment
   end
 
   test "create path" do
     {:ok, assessment} =
       Assessments.create_assessment(%{
         title: "path",
-        category: :path,
+        type: :path,
         open_at: Timex.now(),
         close_at: Timex.shift(Timex.now(), days: 7)
       })
 
-    assert %{title: "path", category: :path} = assessment
+    assert %{title: "path", type: :path} = assessment
   end
 
   test "create programming question" do
@@ -73,7 +73,6 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          weight: 5,
           type: :programming,
           question: %{},
           raw_question:
@@ -87,7 +86,7 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", weight: 5, type: :programming} = question
+    assert %{title: "question", type: :programming} = question
   end
 
   test "create multiple choice question" do
@@ -97,7 +96,6 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          weight: 5,
           type: :multiple_choice,
           question: %{},
           raw_question:
@@ -106,7 +104,7 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", weight: 5, type: :multiple_choice} = question
+    assert %{title: "question", type: :multiple_choice} = question
   end
 
   test "create question when there already exists questions" do
@@ -117,7 +115,6 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          weight: 5,
           type: :multiple_choice,
           question: %{},
           raw_question:
@@ -152,11 +149,11 @@ defmodule Cadet.AssessmentsTest do
     assert assessment.title == "changed_assessment"
   end
 
-  test "all assessments with category" do
-    assessment = insert(:assessment, category: :mission)
-    sidequest = insert(:assessment, category: :sidequest)
-    contest = insert(:assessment, category: :contest)
-    path = insert(:assessment, category: :path)
+  test "all assessments with type" do
+    assessment = insert(:assessment, type: :mission)
+    sidequest = insert(:assessment, type: :sidequest)
+    contest = insert(:assessment, type: :contest)
+    path = insert(:assessment, type: :path)
     assert assessment.id in Enum.map(Assessments.all_assessments(:mission), fn m -> m.id end)
     assert sidequest.id in Enum.map(Assessments.all_assessments(:sidequest), fn m -> m.id end)
     assert contest.id in Enum.map(Assessments.all_assessments(:contest), fn m -> m.id end)
@@ -197,9 +194,9 @@ defmodule Cadet.AssessmentsTest do
 
   test "update question" do
     question = insert(:question)
-    Assessments.update_question(question.id, %{weight: 10})
+    Assessments.update_question(question.id, %{title: "new_title"})
     question = Assessments.get_question(question.id)
-    assert question.weight == 10
+    assert question.title == "new_title"
   end
 
   test "delete question" do

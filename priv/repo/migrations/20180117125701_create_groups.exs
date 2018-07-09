@@ -3,10 +3,18 @@ defmodule Cadet.Repo.Migrations.CreateGroups do
 
   def change do
     create table(:groups) do
-      add(:leader_id, references(:users, on_delete: :delete_all, null: false))
-      add(:student_id, references(:users, on_delete: :delete_all, null: false))
+      add(:leader_id, references(:users), null: false)
+      add(:mentor_id, references(:users))
+      add(:name, :string)
     end
 
-    create(index(:groups, [:leader_id]))
+    create(unique_index(:groups, [:leader_id]))
+    create(index(:groups, [:mentor_id]))
+
+    alter table(:users) do
+      add(:group_id, references(:groups))
+    end
+
+    create(index(:users, [:group_id]))
   end
 end

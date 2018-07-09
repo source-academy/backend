@@ -1,6 +1,6 @@
 import EctoEnum
 
-defenum(Cadet.Assessments.Category, :category, [
+defenum(Cadet.Assessments.AssessmentType, :assessment_type, [
   :mission,
   :sidequest,
   :path,
