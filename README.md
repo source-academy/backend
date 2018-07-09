@@ -49,6 +49,16 @@ Where there is a conflict between the two, the first one (lexmag) shall be the o
 
 When the server is running, API documentation can then be accessed through http://localhost:4000/swagger
 
+## Obtaining `access_token` in dev environment
+
+You can obtain `access_token` JWT of a user with a given role by simply running:
+
+    mix cadet.token <role>
+
+For more information, run
+
+    mix help cadet.token
+
 ## License
 
 MIT
