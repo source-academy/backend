@@ -8,13 +8,13 @@ defmodule Cadet.Assessments.Query do
 
   def all_submissions_with_xp do
     Submission
-    |> join(:left, [s], q in subquery(submissions_xp), s.id == q.submission_id)
+    |> join(:left, [s], q in subquery(submissions_xp()), s.id == q.submission_id)
     |> select([s, q], %Submission{s | xp: q.xp})
   end
 
   def all_assessments_with_max_xp do
     Assessment
-    |> join(:left, [a], q in subquery(assessments_max_xp), a.id == q.assessment_id)
+    |> join(:left, [a], q in subquery(assessments_max_xp()), a.id == q.assessment_id)
     |> select([a, q], %Assessment{a | max_xp: q.max_xp})
   end
 
