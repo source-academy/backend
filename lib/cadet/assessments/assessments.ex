@@ -13,7 +13,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
   # TODO: Change once these controllers are shipped
-  @submit_answer_roles ~w(student staff)a
+  @submit_answer_roles ~w(student)a
 
   def all_assessments() do
     Repo.all(Assessment)

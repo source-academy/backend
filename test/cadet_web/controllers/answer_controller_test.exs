@@ -32,14 +32,14 @@ defmodule CadetWeb.AnswerControllerTest do
     end
   end
 
-  # describe "POST /assessments/question/{questionId}/submit/, Staff" do
-  #   @tag authenticate: :staff
-  #   test "is disallowed", %{conn: conn, mcq_question: question} do
-  #     conn = post(conn, build_url(question.id), %{answer: 5})
+  describe "POST /assessments/question/{questionId}/submit/, Staff" do
+    @tag authenticate: :staff
+    test "is disallowed", %{conn: conn, mcq_question: question} do
+      conn = post(conn, build_url(question.id), %{answer: 5})
 
-  #     assert response(conn, 403) =~ "User is not permitted to answer questions"
-  #   end
-  # end
+      assert response(conn, 403) =~ "User is not permitted to answer questions"
+    end
+  end
 
   describe "POST /assessments/question/{questionId}/submit/, Admin" do
     @tag authenticate: :admin
