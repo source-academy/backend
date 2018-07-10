@@ -11,7 +11,10 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
+<<<<<<< HEAD
   alias Cadet.Course.Group
+=======
+>>>>>>> Implement show sans test
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
@@ -157,16 +160,33 @@ defmodule Cadet.Assessments do
           {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader(grader = %User{role: role}) do
     if role in @grading_roles do
-      students = Cadet.Accounts.Query.students_of_staff(grader)
+      students = Cadet.Accounts.Query.students_of(grader)
 
       submissions =
         Query.all_submissions_with_xp()
         |> join(:inner, [s], t in subquery(students), s.student_id == t.id)
-        |> preload(:student)
-        |> preload(assessment: ^Query.all_assessments_with_max_xp())
+        |> preload([:student, assessment: ^Query.all_assessments_with_max_xp()])
         |> Repo.all()
 
       {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
+    end
+  end
+
+  def get_answers_in_submission(id, grader = %User{role: role}) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of(grader)
+
+      answers =
+        Answer
+        |> where(submission_id: ^id)
+        |> join(:inner, [a], s in Submission, a.submission_id == s.id)
+        |> join(:inner, [a, s], t in subquery(students), s.student_id == t.id)
+        |> preload(:question)
+        |> Repo.all()
+
+      {:ok, answers}
     else
       {:error, {:unauthorized, "User is not permitted to grade."}}
     end

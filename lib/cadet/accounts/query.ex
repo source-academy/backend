@@ -19,8 +19,8 @@ defmodule Cadet.Accounts.Query do
     |> of_uid(uid)
   end
 
-  @spec students_of_staff(User.t()) :: User.t()
-  def students_of_staff(%User{id: id, role: :staff}) do
+  @spec students_of(User.t()) :: User.t()
+  def students_of(%User{id: id, role: :staff}) do
     User
     |> join(:inner, [u], g in Group, u.group_id == g.id and g.leader_id == ^id)
   end

@@ -9,7 +9,16 @@ defmodule CadetWeb.GradingController do
 
     case Assessments.all_submissions_by_grader(user) do
       {:ok, submissions} -> render(conn, "index.json", submissions: submissions)
-      {:error, {status, error}} -> send_resp(conn, status, error)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
+  def show(conn, %{"submissionid" => submission_id}) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.get_answers_in_submission(submission_id, user) do
+      {:ok, answers} -> render(conn, "show.json", answers: answers)
+      {:error, {status, message}} -> send_resp(conn, status, message)
     end
   end
 
