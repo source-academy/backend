@@ -26,7 +26,7 @@ defmodule Cadet.Application do
     #     $ bin/cadet start --updater
     children =
       if :init.get_plain_arguments() |> Enum.member?('--updater') do
-        children ++ [worker(Cadet.Public.Updater, [])]
+        children ++ [worker(Cadet.Updater.Public, [])]
       else
         children
       end

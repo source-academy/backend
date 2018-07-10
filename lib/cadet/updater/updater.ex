@@ -1,4 +1,4 @@
-defmodule Cadet.Public.Updater do
+defmodule Cadet.Updater.Public do
   @moduledoc """
   Represents a guest account in the CS1101S IVLE module. The guest account
   allows us to programmatically access the IVLE module contents, such as
@@ -39,7 +39,7 @@ defmodule Cadet.Public.Updater do
     `schedule_work/0` -> `handle_info/2` -> ...
   """
   def init(_) do
-    Logger.info("Running Cadet.Public.Updater...")
+    Logger.info("Running Cadet.Updater.Public...")
     api_params = get_api_params()
     schedule_work()
     {:ok, api_params}
