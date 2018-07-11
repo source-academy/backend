@@ -13,7 +13,8 @@ defmodule CadetWeb.AssessmentsView do
       openAt: DateTime.to_string(assessment.open_at),
       closeAt: DateTime.to_string(assessment.close_at),
       type: assessment.type,
-      coverImage: Cadet.Assessments.Image.url({assessment.cover_picture, assessment}, :thumb)
+      maximumEXP: assessment.max_xp,
+      coverImage: Cadet.Assessments.Image.url({assessment.cover_picture, assessment})
     }
   end
 end

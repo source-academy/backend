@@ -7,7 +7,7 @@ defmodule CadetWeb.AssessmentsController do
 
   def index(conn, _) do
     case Assessments.all_open_assessments() do
-      {:ok, submission} -> render(conn, "index.json", %{assessments: assessments})
+      {:ok, assessments} -> render(conn, "index.json", %{assessments: assessments})
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
   end

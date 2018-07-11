@@ -32,10 +32,7 @@ defmodule Cadet.Assessments do
   end
 
   def all_open_assessments() do
-    assessments =
-      Assessment
-      |> where(is_published: true)
-      |> Repo.all()
+    assessments = Repo.all(Query.all_assessments_with_max_xp)
 
     {:ok, assessments}
   end
