@@ -117,8 +117,4 @@ defmodule Cadet.Factory do
       code: sequence(:code, &"alert(#{&1})")
     }
   end
-
-  def submission_factory do
-    %Submission{}
-  end
 end
