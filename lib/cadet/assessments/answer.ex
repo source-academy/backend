@@ -12,7 +12,6 @@ defmodule Cadet.Assessments.Answer do
     field(:xp, :integer, default: 0)
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
-    field(:raw_answer, :string, virtual: true)
     field(:comment, :string)
     field(:adjustment, :integer, default: 0)
     belongs_to(:submission, Submission)
@@ -23,9 +22,9 @@ defmodule Cadet.Assessments.Answer do
   @required_fields ~w(answer submission_id question_id type)a
   @optional_fields ~w(xp comment adjustment)a
 
-  def changeset(answer, params) do
+  def changeset(answer, params, allowed_fields \\ @required_fields ++ @optional_fields) do
     answer
-    |> cast(params, @required_fields ++ @optional_fields)
+    |> cast(params, allowed_fields)
     |> add_belongs_to_id_from_model([:submission, :question], params)
     |> add_question_type_from_model(params)
     |> validate_required(@required_fields)

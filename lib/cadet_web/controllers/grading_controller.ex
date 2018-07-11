@@ -138,7 +138,7 @@ defmodule CadetWeb.GradingController do
         swagger_schema do
           properties do
             comment(:string, "comment given")
-            xp(:integer, "xp given")
+            adjustment(:integer, "adjustment given")
           end
         end
     }
