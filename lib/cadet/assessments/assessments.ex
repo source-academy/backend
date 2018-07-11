@@ -127,7 +127,6 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
-<<<<<<< HEAD
   @doc """
   Public internal api to submit new answers for a question. Possible return values are:
   `{:ok, nil}` -> success
@@ -220,7 +219,9 @@ defmodule Cadet.Assessments do
 
       :programming ->
         %{code: raw_answer}
-=======
+    end
+  end
+
   @spec all_submissions_by_grader(User.t()) ::
           {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader(grader = %User{role: role}) do
@@ -254,7 +255,6 @@ defmodule Cadet.Assessments do
       {:ok, answers}
     else
       {:error, {:unauthorized, "User is not permitted to grade."}}
->>>>>>> add-grading-controller
     end
   end
 
