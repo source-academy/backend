@@ -7,8 +7,18 @@ defmodule Cadet.Updater.CS1101S do
   @key_file Dotenv.load().values["01S_RSA_KEY"]
   @local_name "cs1101s"
 
+  require Logger
+
   def clone() do
+    Logger.info("Cloning CS1101S: Started")
     git("clone", [@remote_repo, @local_name])
+    Logger.info("Cloning CS1101S: Done")
+  end
+
+  def update() do
+    Logger.info("Updating CS1101S...")
+    git("fetch")
+    git("pull")
   end
 
   def fetch() do
@@ -19,13 +29,13 @@ defmodule Cadet.Updater.CS1101S do
     git("pull")
   end
 
-  def git(cmd, args \\ [])
+  defp git(cmd, args \\ [])
 
-  def git("clone", args) do
+  defp git("clone", args) do
     System.cmd("git", ["clone"] ++ args, env: [{"GIT_SSH_COMMAND", "ssh -i #{@key_file}"}])
   end
 
-  def git(cmd, args) do
+  defp git(cmd, args) do
     System.cmd(
       "git",
       ["-C", @local_name] ++ [cmd] ++ args,

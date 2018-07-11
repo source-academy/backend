@@ -1,6 +1,9 @@
 defmodule Cadet.Application do
   @moduledoc false
+
   use Application
+
+  alias Cadet.Updater
 
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
@@ -26,10 +29,13 @@ defmodule Cadet.Application do
     #     $ bin/cadet start --updater
     children =
       if :init.get_plain_arguments() |> Enum.member?('--updater') do
-        children ++ [
-          worker(Cadet.Updater.Public, []),
-          worker(Cadet.Updater.Scheduler, [])
-        ]
+        Task.async(&Updater.CS1101S.clone/0)
+
+        children ++
+          [
+            worker(Updater.Public, []),
+            worker(Updater.Scheduler, [])
+          ]
       else
         children
       end
