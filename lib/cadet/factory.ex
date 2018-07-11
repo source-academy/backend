@@ -6,12 +6,9 @@ defmodule Cadet.Factory do
   # fields_for has been deprecated, only raising exception
   @dialyzer {:no_return, fields_for: 1}
 
-  alias Cadet.Accounts.User
-  alias Cadet.Accounts.Authorization
-  alias Cadet.Course.Announcement
-  alias Cadet.Course.Material
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Question
+  alias Cadet.Accounts.{Authorization, User}
+  alias Cadet.Course.{Announcement, Material}
+  alias Cadet.Assessments.{Assessment, Question, Submission}
 
   def user_factory do
     %User{
@@ -72,12 +69,19 @@ defmodule Cadet.Factory do
     }
   end
 
+  def submission_factory do
+    %Submission{
+      student: build(:user, %{role: :student}),
+      assessment: build(:assessment)
+    }
+  end
+
   def question_factory do
     %Question{
       title: "question",
       question: %{},
       type: Enum.random([:programming, :multiple_choice]),
-      assessment: build(:assessment)
+      assessment: build(:assessment, %{is_published: true})
     }
   end
 end
