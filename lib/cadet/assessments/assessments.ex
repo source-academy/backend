@@ -12,7 +12,6 @@ defmodule Cadet.Assessments do
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
-  # TODO: Change once these controllers are shipped
   @submit_answer_roles ~w(student)a
 
   def all_assessments() do
@@ -133,7 +132,7 @@ defmodule Cadet.Assessments do
         Question
         |> where(id: ^id)
         |> join(:inner, [q], assessment in assoc(q, :assessment))
-        |> preload([question, assessment], assessment: assessment)
+        |> preload([q, a], assessment: a)
         |> Repo.one()
 
       with {:question_found?, true} <- {:question_found?, is_map(question)},

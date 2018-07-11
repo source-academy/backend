@@ -10,8 +10,8 @@ defmodule CadetWeb.AnswerController do
       {:ok, _nil} ->
         send_resp(conn, :ok, "OK")
 
-      {:error, {resp, message}} ->
-        send_resp(conn, resp, message)
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
     end
   end
 
