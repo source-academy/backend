@@ -5,8 +5,13 @@ defmodule Cadet.Assessments.Answer do
   """
   use Cadet, :model
 
+<<<<<<< HEAD
   alias Cadet.Assessments.{Question, QuestionType, Submission}
   alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer}
+=======
+  alias Cadet.Assessments.Submission
+  alias Cadet.Assessments.Question
+>>>>>>> add-grading-controller
 
   schema "answers" do
     field(:xp, :integer, default: 0)

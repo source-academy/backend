@@ -4,7 +4,8 @@ defmodule Cadet.Accounts.Query do
   """
   import Ecto.Query
 
-  alias Cadet.Accounts.Authorization
+  alias Cadet.Accounts.{Authorization, User}
+  alias Cadet.Course.Group
 
   def user_nusnet_ids(user_id) do
     Authorization
@@ -16,6 +17,12 @@ defmodule Cadet.Accounts.Query do
     Authorization
     |> nusnet_ids
     |> of_uid(uid)
+  end
+
+  @spec students_of(User.t()) :: User.t()
+  def students_of(%User{id: id, role: :staff}) do
+    User
+    |> join(:inner, [u], g in Group, u.group_id == g.id and g.leader_id == ^id)
   end
 
   defp nusnet_ids(query) do

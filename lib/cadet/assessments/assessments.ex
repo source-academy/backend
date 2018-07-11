@@ -10,9 +10,10 @@ defmodule Cadet.Assessments do
   alias Timex.Duration
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
 
   @submit_answer_roles ~w(student)a
+  @grading_roles ~w(staff)a
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -126,6 +127,7 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
+<<<<<<< HEAD
   @doc """
   Public internal api to submit new answers for a question. Possible return values are:
   `{:ok, nil}` -> success
@@ -218,6 +220,41 @@ defmodule Cadet.Assessments do
 
       :programming ->
         %{code: raw_answer}
+=======
+  @spec all_submissions_by_grader(User.t()) ::
+          {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
+  def all_submissions_by_grader(grader = %User{role: role}) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of(grader)
+
+      submissions =
+        Query.all_submissions_with_xp()
+        |> join(:inner, [s], t in subquery(students), s.student_id == t.id)
+        |> preload([:student, assessment: ^Query.all_assessments_with_max_xp()])
+        |> Repo.all()
+
+      {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
+    end
+  end
+
+  def get_answers_in_submission(id, grader = %User{role: role}) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of(grader)
+
+      answers =
+        Answer
+        |> where(submission_id: ^id)
+        |> join(:inner, [a], s in Submission, a.submission_id == s.id)
+        |> join(:inner, [a, s], t in subquery(students), s.student_id == t.id)
+        |> preload(:question)
+        |> Repo.all()
+
+      {:ok, answers}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
+>>>>>>> add-grading-controller
     end
   end
 
