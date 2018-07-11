@@ -30,6 +30,15 @@ defmodule Cadet.Assessments do
     Enum.filter(assessment_with_type, &(&1.is_published and Timex.before?(&1.open_at, now)))
   end
 
+  def all_open_assessments() do
+    assessments =
+      Assessment
+      |> where(is_published: true)
+      |> Repo.all()
+
+    {:ok, assessments}
+  end
+
   def assessments_due_soon() do
     now = Timex.now()
     week_after = Timex.add(now, Duration.from_weeks(1))

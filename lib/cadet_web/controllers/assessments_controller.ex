@@ -2,21 +2,14 @@ defmodule CadetWeb.AssessmentsController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
-  use Arc.Ecto.Schema
 
-  import Ecto.Query
-
-  alias Cadet.Repo
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Image
+  alias Cadet.Assessments
 
   def index(conn, _) do
-    assessments =
-      Assessment
-      |> where(is_published: true)
-      |> Repo.all()
-
-    render(conn, "index.json", %{assessments: assessments})
+    case Assessments.all_open_assessments() do
+      {:ok, submission} -> render(conn, "index.json", %{assessments: assessments})
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
   end
 
   # def show(conn, %{"assessmentId" => assessmentId}) do
@@ -24,34 +17,34 @@ defmodule CadetWeb.AssessmentsController do
   #   render(conn, "index.json", assessment: assessment)
   # end
 
-  def new(conn, _) do
-    user_id = conn.assigns[:current_user].id
+  # def new(conn, _) do
+  #   user_id = conn.assigns[:current_user].id
 
-    submission_query =
-      Submission
-      |> where([s], s.student_id == ^user_id)
-      |> select([s], s.assessment_id)
-      |> distinct(true)
-      |> Repo.all()
+  #   submission_query =
+  #     Submission
+  #     |> where([s], s.student_id == ^user_id)
+  #     |> select([s], s.assessment_id)
+  #     |> distinct(true)
+  #     |> Repo.all()
 
-    unattempted_assessments =
-      Assessment
-      |> where([a], a.id not in ^submission_query)
-      |> select([a], %{
-        id: a.id,
-        title: a.title,
-        type: a.category,
-        summary_short: a.summary_short,
-        open_at: a.open_at,
-        close_at: a.close_at,
-        max_xp: a.max_xp,
-        cover_picture: a.cover_picture
-      })
-      |> Repo.all()
-      |> Poison.encode()
+  #   unattempted_assessments =
+  #     Assessment
+  #     |> where([a], a.id not in ^submission_query)
+  #     |> select([a], %{
+  #       id: a.id,
+  #       title: a.title,
+  #       type: a.category,
+  #       summary_short: a.summary_short,
+  #       open_at: a.open_at,
+  #       close_at: a.close_at,
+  #       max_xp: a.max_xp,
+  #       cover_picture: a.cover_picture
+  #     })
+  #     |> Repo.all()
+  #     |> Poison.encode()
 
-    render(conn, "index.json", unattempted_assessments: unattempted_assessments)
-  end
+  #   render(conn, "index.json", unattempted_assessments: unattempted_assessments)
+  # end
 
   swagger_path :index do
     get("/assessments")
