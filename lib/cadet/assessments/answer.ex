@@ -22,9 +22,9 @@ defmodule Cadet.Assessments.Answer do
   @required_fields ~w(answer submission_id question_id type)a
   @optional_fields ~w(xp comment adjustment)a
 
-  def changeset(answer, params, allowed_fields \\ @required_fields ++ @optional_fields) do
+  def changeset(answer, params) do
     answer
-    |> cast(params, allowed_fields)
+    |> cast(params, @required_fields ++ @optional_fields)
     |> add_belongs_to_id_from_model([:submission, :question], params)
     |> add_question_type_from_model(params)
     |> validate_required(@required_fields)
@@ -32,6 +32,22 @@ defmodule Cadet.Assessments.Answer do
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
+  end
+
+  def grading_changeset(answer, params) do
+    answer
+    |> cast(params, ~w(adjustment comment)a)
+    |> validate_xp_adjustment_total()
+  end
+
+  defp validate_xp_adjustment_total(changeset) do
+    answer = apply_changes(changeset)
+
+    if answer.xp + answer.adjustment >= 0 do
+      changeset
+    else
+      add_error(changeset, :adjustment, "should not make total point < 0")
+    end
   end
 
   defp add_question_type_from_model(changeset, params) do

@@ -22,6 +22,23 @@ defmodule CadetWeb.GradingController do
     end
   end
 
+  def update(conn, %{
+        "submissionid" => submission_id,
+        "questionid" => question_id,
+        "grading" => grading
+      }) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.update_grading_info(
+           %{submission_id: submission_id, question_id: question_id},
+           grading,
+           user
+         ) do
+      {:ok, _} -> send_resp(conn, :ok, "OK")
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
   swagger_path :index do
     get("/grading")
 
@@ -30,10 +47,6 @@ defmodule CadetWeb.GradingController do
     security([%{JWT: []}])
 
     produces("application/json")
-
-    parameters do
-      filter(:query, :string, "Filter only specific types e.g. done/pending")
-    end
 
     response(200, "OK", Schema.ref(:Submissions))
     response(401, "Unauthorised")
@@ -92,6 +105,7 @@ defmodule CadetWeb.GradingController do
           properties do
             submissionId(:integer, "submission id", required: true)
             xp(:integer, "xp given")
+            adjustment(:integer, "adjustment given")
             assessment(Schema.ref(:AssessmentInfo))
             student(Schema.ref(:StudentInfo))
           end
@@ -137,8 +151,14 @@ defmodule CadetWeb.GradingController do
       Grade:
         swagger_schema do
           properties do
-            comment(:string, "comment given")
-            adjustment(:integer, "adjustment given")
+            grading(
+              Schema.new do
+                properties do
+                  comment(:string, "comment given")
+                  adjustment(:integer, "adjustment given")
+                end
+              end
+            )
           end
         end
     }

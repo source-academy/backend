@@ -38,6 +38,7 @@ defmodule CadetWeb.GradingView do
       max_xp: answer.question.max_xp,
       grade: %{
         xp: answer.xp,
+        adjustment: answer.adjustment,
         comment: answer.comment
       }
     }

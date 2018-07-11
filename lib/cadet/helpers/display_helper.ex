@@ -12,4 +12,11 @@ defmodule Cadet.DisplayHelper do
       change(changeset, %{display_order: last.display_order + 1})
     end
   end
+
+  def full_error_messages(errors) do
+    for {key, {message, _}} <- errors do
+      "#{key} #{message}"
+    end
+    |> Enum.join(", ")
+  end
 end

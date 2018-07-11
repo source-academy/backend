@@ -200,24 +200,29 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def update_grading_info_in_answer(id, grader = %User{role: role}, attrs) do
+  def update_grading_info(
+        %{submission_id: submission_id, question_id: question_id},
+        attrs,
+        grader = %User{role: role}
+      ) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
 
       answer =
         Answer
-        |> where(id: ^id)
+        |> where([a], a.submission_id == ^submission_id and a.question_id == ^question_id)
         |> join(:inner, [a], s in Submission, a.submission_id == s.id)
         |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
         |> Repo.one()
 
       if answer do
-        with changeset <- Answer.changeset(answer, attrs, ~w(adjustment comment)a),
-             {:valid, true} <- {:valid, changeset.valid?},
+        changeset = Answer.grading_changeset(answer, attrs)
+
+        with {:valid, true} <- {:valid, changeset.valid?},
              {:ok, _} <- Repo.update(changeset) do
           {:ok, nil}
         else
-          {:valid, false} -> {:error, {:bad_request, "Invalid parameter(s)."}}
+          {:valid, false} -> {:error, {:bad_request, full_error_messages(changeset.errors)}}
           {:error, _} -> {:error, {:internal_server_error, "Please try again later."}}
         end
       else

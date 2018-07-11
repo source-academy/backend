@@ -99,6 +99,7 @@ defmodule CadetWeb.GradingControllerTest do
             "max_xp" => &1.question.max_xp,
             "grade" => %{
               "xp" => &1.xp,
+              "adjustment" => &1.adjustment,
               "comment" => &1.comment
             }
           }
