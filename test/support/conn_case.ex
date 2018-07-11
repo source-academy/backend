@@ -15,11 +15,14 @@ defmodule CadetWeb.ConnCase do
 
   use ExUnit.CaseTemplate
 
+  import Plug.Conn
+
   using do
     quote do
       # Import conveniences for testing with connections
       use Phoenix.ConnTest
       import CadetWeb.Router.Helpers
+      import Cadet.Factory
 
       # The default endpoint for testing
       @endpoint CadetWeb.Endpoint
@@ -35,9 +38,24 @@ defmodule CadetWeb.ConnCase do
 
     conn = Phoenix.ConnTest.build_conn()
 
-    if tags[:authenticate] != nil do
-      user = Cadet.Factory.insert(:user, %{role: tags[:authenticate]})
-      conn = Cadet.Auth.Guardian.Plug.sign_in(conn, user)
+    if tags[:authenticate] do
+      user =
+        cond do
+          is_atom(tags[:authenticate]) ->
+            Cadet.Factory.insert(:user, %{role: tags[:authenticate]})
+
+          is_map(tags[:authenticate]) ->
+            tags[:authenticate]
+
+          true ->
+            nil
+        end
+
+      conn =
+        conn
+        |> Cadet.Auth.Guardian.Plug.sign_in(user)
+        |> assign(:current_user, user)
+
       {:ok, conn: conn}
     else
       {:ok, conn: conn}

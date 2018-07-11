@@ -9,8 +9,10 @@ defmodule Cadet.Assessments do
 
   alias Timex.Duration
 
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Question
+  alias Cadet.Accounts.User
+  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
+
+  @submit_answer_roles ~w(student)a
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -113,6 +115,101 @@ defmodule Cadet.Assessments do
   def delete_question(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
+  end
+
+  @doc """
+  Public internal api to submit new answers for a question. Possible return values are:
+  `{:ok, nil}` -> success
+  `{:error, error}` -> failed. `error` is in the format of `{http_response_code, error message}`
+
+  Note: In the event of `find_or_create_submission` failing due to a race condition, error will be:
+   `{:bad_request, "Missing or invalid parameter(s)"}`
+
+  """
+  def answer_question(id, user = %User{role: role}, raw_answer) do
+    if role in @submit_answer_roles do
+      question =
+        Question
+        |> where(id: ^id)
+        |> join(:inner, [q], assessment in assoc(q, :assessment))
+        |> preload([q, a], assessment: a)
+        |> Repo.one()
+
+      with {:question_found?, true} <- {:question_found?, is_map(question)},
+           {:is_open?, true} <- is_open?(question.assessment),
+           {:ok, submission} <- find_or_create_submission(user, question.assessment),
+           {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+        {:ok, nil}
+      else
+        {:question_found?, false} -> {:error, {:bad_request, "Question not found"}}
+        {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
+        {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
+        _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+
+  defp find_submission(user = %User{}, assessment = %Assessment{}) do
+    submission =
+      Submission
+      |> where(student_id: ^user.id)
+      |> where(assessment_id: ^assessment.id)
+      |> Repo.one()
+
+    if submission do
+      {:ok, submission}
+    else
+      {:error, nil}
+    end
+  end
+
+  defp is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+    {:is_open?, Timex.between?(Timex.now(), open_at, close_at) and is_published}
+  end
+
+  defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
+    %Submission{}
+    |> Submission.changeset(%{student: user, assessment: assessment})
+    |> Repo.insert()
+    |> case do
+      {:ok, submission} -> {:ok, submission}
+      {:error, _} -> {:error, :race_condition}
+    end
+  end
+
+  defp find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
+    case find_submission(user, assessment) do
+      {:ok, submission} -> {:ok, submission}
+      {:error, _} -> create_empty_submission(user, assessment)
+    end
+  end
+
+  defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
+    answer_content = build_answer_content(raw_answer, question.type)
+
+    %Answer{}
+    |> Answer.changeset(%{
+      answer: answer_content,
+      question_id: question.id,
+      submission_id: submission.id,
+      type: question.type
+    })
+    |> Repo.insert(
+      on_conflict: [set: [answer: answer_content]],
+      conflict_target: [:submission_id, :question_id]
+    )
+  end
+
+  defp build_answer_content(raw_answer, question_type) do
+    case question_type do
+      :multiple_choice ->
+        %{choice_id: raw_answer}
+
+      :programming ->
+        %{code: raw_answer}
+    end
   end
 
   # TODO: Decide what to do with these methods

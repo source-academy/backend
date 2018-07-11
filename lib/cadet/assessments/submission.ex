@@ -3,8 +3,7 @@ defmodule Cadet.Assessments.Submission do
   use Cadet, :model
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.{Answer, Assessment}
 
   schema "submissions" do
     field(:xp, :integer, virtual: true)
@@ -16,15 +15,14 @@ defmodule Cadet.Assessments.Submission do
     timestamps()
   end
 
+  @required_fields ~w(student_id assessment_id)a
+
   def changeset(submission, params) do
     submission
-    |> cast(params, [])
-    |> validate_role(:student, :student)
-  end
-
-  def validate_role(changeset, user, role) do
-    validate_change(changeset, user, fn ^user, user ->
-      if user.role == role, do: [], else: [{user, "does not have the role #{role}"}]
-    end)
+    |> cast(params, @required_fields)
+    |> add_belongs_to_id_from_model([:student, :assessment], params)
+    |> validate_required(@required_fields)
+    |> foreign_key_constraint(:student_id)
+    |> foreign_key_constraint(:assessment_id)
   end
 end
