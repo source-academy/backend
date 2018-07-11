@@ -36,14 +36,34 @@ defmodule Cadet.Updater.CS1101S do
   defp git(cmd, args \\ [])
 
   defp git("clone", args) do
-    System.cmd("git", ["clone"] ++ args, env: [{"GIT_SSH_COMMAND", "ssh -i #{@key_file}"}])
+    {out, exit} =
+      System.cmd(
+        "git",
+        ["clone"] ++ args,
+        env: [{"GIT_SSH_COMMAND", "ssh -i #{@key_file}"}],
+        stderr_to_stdout: true
+      )
+
+    Logger.debug(fn ->
+      "git clone exited with #{exit}: #{out}"
+    end)
+
+    {out, exit}
   end
 
   defp git(cmd, args) do
-    System.cmd(
-      "git",
-      ["-C", @local_name] ++ [cmd] ++ args,
-      env: [{"GIT_SSH_COMMAND", "ssh -i #{@key_file}"}]
-    )
+    {out, exit} =
+      System.cmd(
+        "git",
+        ["-C", @local_name] ++ [cmd] ++ args,
+        env: [{"GIT_SSH_COMMAND", "ssh -i #{@key_file}"}],
+        stderr_to_stdout: true
+      )
+
+    Logger.debug(fn ->
+      "git #{cmd} #{inspect(args)} exited with #{exit}: #{out}"
+    end)
+
+    {out, exit}
   end
 end
