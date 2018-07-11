@@ -12,6 +12,8 @@ defmodule Cadet.DataCase do
   of the test unless the test case is marked as async.
   """
 
+  @temp_repo "test/temp_repo"
+
   use ExUnit.CaseTemplate
 
   using do
@@ -51,4 +53,28 @@ defmodule Cadet.DataCase do
       end)
     end)
   end
+
+  @doc """
+  Run a git command with `loc` as the git repository root.
+  """
+  def git_from(loc, cmd, opts \\ []) do
+    System.cmd("git", ["-C", loc, cmd] ++ opts, stderr_to_stdout: true)
+  end
+
+  @doc """
+  Push an empty file with `filename` into the given remote repository
+  """
+  def git_add_file(filename, remote_repo) do
+    {_, 0} = git_from(".", "clone", [remote_repo, @temp_repo])
+    {_, 0} = System.cmd("touch", [Path.join(@temp_repo, filename)])
+    {_, 0} = git_from(@temp_repo, "add", [filename])
+    {_, 0} = git_from(@temp_repo, "commit", ["-m", "dummy-commit"])
+    {_, 0} = git_from(@temp_repo, "push")
+    {_, 0} = clean_dirs([@temp_repo])
+  end
+
+  @doc """
+  Remove directories.
+  """
+  def clean_dirs(dirs), do: System.cmd("rm", ["-rf"] ++ dirs)
 end
