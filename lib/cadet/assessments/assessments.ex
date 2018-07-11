@@ -23,6 +23,38 @@ defmodule Cadet.Assessments do
     Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
   end
 
+  def assessment_with_questions_and_answers(id, user = %User{role: role}) do
+    if role in @submit_answer_roles do
+      assessment =
+        Assessment
+        |> where(id: ^id)
+        |> select([:type, :title, :summary_long, :mission_pdf, :id])
+        |> Repo.one()
+
+      if assessment do
+        answer_query =
+          Answer
+          |> join(:inner, [a], s in assoc(a, :submission))
+          |> where([a, s], s.student_id == ^user.id)
+
+        questions =
+          Question
+          |> where(assessment_id: ^id)
+          |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+          |> select([q, a], %{q | answer: a.answer})
+          |> order_by(:display_order)
+          |> Repo.all()
+
+        assessment = Map.put(assessment, :questions, questions)
+        {:ok, assessment}
+      else
+        {:error, {:bad_request, "Assessment not found"}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+
   def all_open_assessments(assessment_type) do
     now = Timex.now()
 
@@ -32,7 +64,10 @@ defmodule Cadet.Assessments do
   end
 
   def all_open_assessments() do
-    assessments = Repo.all(Query.all_assessments_with_max_xp)
+    assessments =
+      Query.all_assessments_with_max_xp()
+      |> where(is_published: true)
+      |> Repo.all()
 
     {:ok, assessments}
   end
