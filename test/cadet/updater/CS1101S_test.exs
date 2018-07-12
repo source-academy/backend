@@ -13,18 +13,18 @@ defmodule Cadet.Updater.CS1101STest do
   alias Cadet.Updater.CS1101S
 
   setup_all do
-    {_, 0} = System.cmd("mkdir", [@remote_repo])
+    :ok = File.mkdir(@remote_repo)
     {_, 0} = git_from(@remote_repo, "init", ["--bare"])
     # git pull fails on an empty --bare repo, so need to push something there first
     git_add_file("dummy_setup_all", @remote_repo)
-    on_exit(fn -> clean_dirs([@local_repo, @remote_repo]) end)
+    on_exit(fn -> clean_dirs!([@local_repo, @remote_repo]) end)
     :ok
   end
 
   test "Clone is ok" do
     assert :ok == CS1101S.clone()
     assert File.exists?(@local_repo)
-    {_, 0} = clean_dirs([@local_repo])
+    :ok = clean_dirs!([@local_repo])
   end
 
   test "With update" do

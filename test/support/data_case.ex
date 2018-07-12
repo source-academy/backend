@@ -66,15 +66,20 @@ defmodule Cadet.DataCase do
   """
   def git_add_file(filename, remote_repo) do
     {_, 0} = git_from(".", "clone", [remote_repo, @temp_repo])
-    {_, 0} = System.cmd("touch", [Path.join(@temp_repo, filename)])
+    :ok = File.touch(Path.join(@temp_repo, filename))
     {_, 0} = git_from(@temp_repo, "add", [filename])
     {_, 0} = git_from(@temp_repo, "commit", ["-m", "dummy-commit"])
     {_, 0} = git_from(@temp_repo, "push")
-    {_, 0} = clean_dirs([@temp_repo])
+    :ok = clean_dirs!([@temp_repo])
   end
 
   @doc """
   Remove directories.
   """
-  def clean_dirs(dirs), do: System.cmd("rm", ["-rf"] ++ dirs)
+  def clean_dirs!(dirs) do
+    dirs
+    |> Enum.each(fn dir -> File.rm_rf!(dir) end)
+
+    :ok
+  end
 end
