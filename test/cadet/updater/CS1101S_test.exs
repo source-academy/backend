@@ -6,6 +6,7 @@ defmodule Cadet.Updater.CS1101STest do
 
   @remote_repo "test/remote_repo"
   @local_repo "test/local_repo"
+  @temp_repo "test/temp_repo"
 
   use Cadet.DataCase
   use ExUnit.Case, async: false
@@ -31,5 +32,28 @@ defmodule Cadet.Updater.CS1101STest do
     CS1101S.clone()
     assert {_, 0} = CS1101S.update()
     assert File.exists?(Path.join(@local_repo, "dummy_setup_all"))
+  end
+
+  # Run a git command with `loc` as the git repository root.
+  defp git_from(loc, cmd, opts \\ []) do
+    System.cmd("git", ["-C", loc, cmd] ++ opts, stderr_to_stdout: true)
+  end
+
+  # Push an empty file with `filename` into the given remote repository
+  defp git_add_file(filename, remote_repo) do
+    {_, 0} = git_from(".", "clone", [remote_repo, @temp_repo])
+    :ok = File.touch(Path.join(@temp_repo, filename))
+    {_, 0} = git_from(@temp_repo, "add", [filename])
+    {_, 0} = git_from(@temp_repo, "commit", ["-m", "dummy-commit"])
+    {_, 0} = git_from(@temp_repo, "push")
+    :ok = clean_dirs!([@temp_repo])
+  end
+
+  # Remove directories.
+  defp clean_dirs!(dirs) do
+    dirs
+    |> Enum.each(fn dir -> File.rm_rf!(dir) end)
+
+    :ok
   end
 end
