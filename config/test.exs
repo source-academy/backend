@@ -12,7 +12,7 @@ config :cadet, environment: :test
 config :pbkdf2_elixir, :rounds, 1
 
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :warn, compile_time_purge_level: :warn
 
 # Don't save secret keys in ExVCR cassettes
 config :exvcr,
