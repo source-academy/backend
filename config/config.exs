@@ -11,6 +11,12 @@ config :cadet,
   # milliseconds
   updater: [interval: 5 * 60 * 1000]
 
+# Scheduler, e.g. for CS1101S
+config :cadet, Cadet.Updater.Scheduler,
+  jobs: [
+    {"* * * * *", {Cadet.Updater.CS1101S, :update, []}}
+  ]
+
 # Configures the endpoint
 config :cadet, CadetWeb.Endpoint,
   url: [host: "localhost"],
