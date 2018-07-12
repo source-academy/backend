@@ -11,7 +11,6 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
-  alias Cadet.Course.Group
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
@@ -91,7 +90,7 @@ defmodule Cadet.Assessments do
   end
 
   def create_question_for_assessment(params, assessment_id)
-      when is_binary(assessment_id) or is_number(assessment_id) do
+      when is_ecto_id(assessment_id) do
     assessment = get_assessment(assessment_id)
     create_question_for_assessment(params, assessment)
   end
@@ -181,7 +180,7 @@ defmodule Cadet.Assessments do
 
   @spec get_answers_in_submission(integer() | String.t(), User.t()) ::
           {:ok, [Answer.t()]} | {:error, {:unauthorized, String.t()}}
-  def get_answers_in_submission(id, grader = %User{role: role}) do
+  def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
 
@@ -200,11 +199,19 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @spec update_grading_info(
+          %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
+          %{},
+          User.t()
+        ) ::
+          {:ok, nil}
+          | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
         grader = %User{role: role}
-      ) do
+      )
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) and is_map(attrs) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
 
@@ -293,25 +300,4 @@ defmodule Cadet.Assessments do
         %{code: raw_answer}
     end
   end
-
-  # TODO: Decide what to do with these methods
-  # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
-  #  %MCQQuestion{}
-  #  |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
-  # end
-
-  # def create_multiple_choice_question(attr = %{}) do
-  #  %MCQQuestion{}
-  #  |> MCQQuestion.changeset(attr)
-  # end
-
-  # def create_programming_question(json_attr) when is_binary(json_attr) do
-  #  %ProgrammingQuestion{}
-  #  |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
-  # end
-
-  # def create_programming_question(attr = %{}) do
-  #  %ProgrammingQuestion{}
-  #  |> ProgrammingQuestion.changeset(attr)
-  # end
 end

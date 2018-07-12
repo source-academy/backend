@@ -34,12 +34,14 @@ defmodule Cadet.Assessments.Answer do
     |> validate_answer_content()
   end
 
+  @spec grading_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def grading_changeset(answer, params) do
     answer
     |> cast(params, ~w(adjustment comment)a)
     |> validate_xp_adjustment_total()
   end
 
+  @spec validate_xp_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   defp validate_xp_adjustment_total(changeset) do
     answer = apply_changes(changeset)
 

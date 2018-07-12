@@ -13,6 +13,7 @@ defmodule Cadet.DisplayHelper do
     end
   end
 
+  @spec full_error_messages(keyword({String.t(), term()})) :: String.t()
   def full_error_messages(errors) do
     for {key, {message, _}} <- errors do
       "#{key} #{message}"
