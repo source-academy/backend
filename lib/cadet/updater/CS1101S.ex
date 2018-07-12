@@ -21,15 +21,6 @@ defmodule Cadet.Updater.CS1101S do
 
   def update() do
     Logger.info("Updating CS1101S...")
-    git("fetch")
-    git("pull")
-  end
-
-  def fetch() do
-    git("fetch")
-  end
-
-  def pull() do
     git("pull")
   end
 

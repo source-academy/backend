@@ -27,18 +27,9 @@ defmodule Cadet.Updater.CS1101STest do
     {_, 0} = clean_dirs([@local_repo])
   end
 
-  describe "Workflow is ok" do
-    test "With fetch/pull" do
-      CS1101S.clone()
-      assert {_, 0} = CS1101S.fetch()
-      assert {_, 0} = CS1101S.pull()
-      assert File.exists?(Path.join(@local_repo, "dummy_setup_all"))
-    end
-
-    test "With update" do
-      CS1101S.clone()
-      assert {_, 0} = CS1101S.update()
-      assert File.exists?(Path.join(@local_repo, "dummy_setup_all"))
-    end
+  test "With update" do
+    CS1101S.clone()
+    assert {_, 0} = CS1101S.update()
+    assert File.exists?(Path.join(@local_repo, "dummy_setup_all"))
   end
 end
