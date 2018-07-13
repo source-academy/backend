@@ -106,6 +106,23 @@ defmodule Cadet.Factory do
     }
   end
 
+  def mcq_question_factory do
+    %{
+      content: Faker.Pokemon.name(),
+      choices:
+        Enum.map(0..5, fn x ->
+          build(:mcq_choice, %{choice_id: x, is_correct: x == 0})
+        end)
+    }
+  end
+
+  def mcq_choice_factory do
+    %{
+      content: Faker.Pokemon.name(),
+      hint: Faker.Pokemon.location()
+    }
+  end
+
   def answer_factory do
     %Answer{
       answer: %{}
@@ -115,6 +132,12 @@ defmodule Cadet.Factory do
   def programming_answer_factory do
     %{
       code: sequence(:code, &"alert(#{&1})")
+    }
+  end
+
+  def mcq_answer_factory do
+    %{
+      choice_id: Enum.random(1..5)
     }
   end
 
