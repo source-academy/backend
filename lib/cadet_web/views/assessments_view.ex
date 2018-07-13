@@ -52,6 +52,14 @@ defmodule CadetWeb.AssessmentsView do
     Map.take(library, fields)
   end
 
+  def render("mcq_choice.json", %{mcq_choice: choice}) do
+    %{
+      id: choice["choice_id"],
+      content: choice["content"],
+      hint: choice["hint"]
+    }
+  end
+
   defp add_question_fields_by_type(partial, params = %{question: question}) do
     case question.type do
       :programming -> add_programming_question_fields(partial, params)
@@ -71,8 +79,13 @@ defmodule CadetWeb.AssessmentsView do
     }
 
     case params.is_graded do
-      true -> Map.merge(partial, programming_fields)
-      false -> Map.merge(partial, programming_fields)
+      true ->
+        Map.merge(partial, programming_fields)
+
+      false ->
+        programming_fields
+        |> Map.merge(%{solution: programming_question["solution"]})
+        |> Map.merge(partial)
     end
   end
 
@@ -93,16 +106,19 @@ defmodule CadetWeb.AssessmentsView do
     }
 
     case params.is_graded do
-      true -> Map.merge(partial, mcq_fields)
-      false -> Map.merge(partial, mcq_fields)
+      true ->
+        Map.merge(partial, mcq_fields)
+
+      false ->
+        mcq_fields
+        |> Map.merge(%{solution: find_correct_choice(mcq_question["choices"])})
+        |> Map.merge(partial)
     end
   end
 
-  def render("mcq_choice.json", %{mcq_choice: choice}) do
-    %{
-      id: choice["choice_id"],
-      content: choice["content"],
-      hint: choice["hint"]
-    }
+  defp find_correct_choice(choices) do
+    choices
+    |> Enum.find(fn choice -> Map.get(choice, "is_correct") end)
+    |> Map.get("choice_id")
   end
 end

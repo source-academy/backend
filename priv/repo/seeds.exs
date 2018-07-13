@@ -22,14 +22,14 @@ if Application.get_env(:cadet, :environment) == :dev do
 
   # Assessments
   Enum.each(1..5, fn _ ->
-    mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
+    assessment = insert(:assessment, %{is_published: true})
 
     programming_questions =
       insert_list(3, :question, %{
         type: :programming,
         library: if(Enum.random(0..2) == 0, do: build(:library)),
         question: build(:programming_question),
-        assessment: mission,
+        assessment: assessment,
         max_xp: 200
       })
 
@@ -37,14 +37,14 @@ if Application.get_env(:cadet, :environment) == :dev do
       insert_list(3, :question, %{
         type: :multiple_choice,
         question: build(:mcq_question),
-        assessment: mission,
+        assessment: assessment,
         max_xp: 40
       })
 
     submissions =
       students
       |> Enum.take(2)
-      |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
+      |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1}))
 
     # Programming Answers
     Enum.each(submissions, fn submission ->
