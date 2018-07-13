@@ -21,50 +21,53 @@ if Application.get_env(:cadet, :environment) == :dev do
   Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
 
   # Assessments
-  mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
+  Enum.each(1..5, fn _ ->
+    mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
 
-  programming_questions =
-    insert_list(3, :question, %{
-      type: :programming,
-      question: build(:programming_question),
-      assessment: mission,
-      max_xp: 200
-    })
-
-  mcq_questions =
-    insert_list(3, :question, %{
-      type: :multiple_choice,
-      question: build(:mcq_question),
-      assessment: mission,
-      max_xp: 40
-    })
-
-  submissions =
-    students
-    |> Enum.take(2)
-    |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
-
-  # Programming Answers
-  Enum.each(submissions, fn submission ->
-    Enum.each(programming_questions, fn question ->
-      insert(:answer, %{
-        xp: 200,
-        question: question,
-        submission: submission,
-        answer: build(:programming_answer)
+    programming_questions =
+      insert_list(3, :question, %{
+        type: :programming,
+        library: (if Enum.random(0..2) == 0, do: build(:library)),
+        question: build(:programming_question),
+        assessment: mission,
+        max_xp: 200
       })
+
+    mcq_questions =
+      insert_list(3, :question, %{
+        type: :multiple_choice,
+        question: build(:mcq_question),
+        assessment: mission,
+        max_xp: 40
+      })
+
+    submissions =
+      students
+      |> Enum.take(2)
+      |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
+
+    # Programming Answers
+    Enum.each(submissions, fn submission ->
+      Enum.each(programming_questions, fn question ->
+        insert(:answer, %{
+          xp: 200,
+          question: question,
+          submission: submission,
+          answer: build(:programming_answer)
+        })
+      end)
     end)
-  end)
 
-  # MCQ Answers
-  Enum.each(submissions, fn submission ->
-    Enum.each(mcq_questions, fn question ->
-      insert(:answer, %{
-        xp: 20,
-        question: question,
-        submission: submission,
-        answer: build(:mcq_answer)
-      })
+    # MCQ Answers
+    Enum.each(submissions, fn submission ->
+      Enum.each(mcq_questions, fn question ->
+        insert(:answer, %{
+          xp: 20,
+          question: question,
+          submission: submission,
+          answer: build(:mcq_answer)
+        })
+      end)
     end)
   end)
 end

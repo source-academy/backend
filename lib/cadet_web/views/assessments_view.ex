@@ -64,9 +64,9 @@ defmodule CadetWeb.AssessmentsView do
          params = %{question: %{question: programming_question, answer: answer}}
        ) do
     programming_fields = %{
-      content: programming_question.content,
-      solutionTemplate: programming_question.solution_template,
-      solutionHeader: programming_question.solution_header,
+      content: programming_question["content"],
+      solutionTemplate: programming_question["solution_template"],
+      solutionHeader: programming_question["solution_header"],
       answer: answer && answer.answer["code"]
     }
 
@@ -81,10 +81,10 @@ defmodule CadetWeb.AssessmentsView do
          params = %{question: %{question: mcq_question, answer: answer}}
        ) do
     mcq_fields = %{
-      content: mcq_question.content,
+      content: mcq_question["content"],
       choices:
         render_many(
-          mcq_question.choices,
+          mcq_question["choices"],
           CadetWeb.AssessmentsView,
           "mcq_choice.json",
           as: :mcq_choice
@@ -100,9 +100,9 @@ defmodule CadetWeb.AssessmentsView do
 
   def render("mcq_choice.json", %{mcq_choice: choice}) do
     %{
-      id: choice.choice_id,
-      content: choice.content,
-      hint: choice.hint
+      id: choice["choice_id"],
+      content: choice["content"],
+      hint: choice["hint"]
     }
   end
 end
