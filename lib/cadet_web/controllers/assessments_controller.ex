@@ -7,12 +7,19 @@ defmodule CadetWeb.AssessmentsController do
 
   def index(conn, _) do
     case Assessments.all_open_assessments() do
-      {:ok, assessments} -> render(conn, "index.json", %{assessments: assessments})
+      {:ok, assessments} -> render(conn, "index.json", assessments: assessments)
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
   end
 
+  def show(conn, %{"id" => assessment_id}) do
+    user = conn.assigns[:current_user]
 
+    case Assessments.assessment_with_questions_and_answers(assessment_id, user) do
+      {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
 
   # def show(conn, %{"assessmentId" => assessmentId}) do
   #   assessment = Poison.encode(Assessments.get_assessment(assessmentId))
@@ -127,8 +134,8 @@ defmodule CadetWeb.AssessmentsController do
       Question:
         swagger_schema do
           properties do
-            questionId(:integer, "The question id", required: true)
-            questionType(:string, "The question type (mcq/programming)", required: true)
+            id(:integer, "The question id", required: true)
+            type(:string, "The question type (mcq/programming)", required: true)
             content(:string, "The question content", required: true)
 
             choices(

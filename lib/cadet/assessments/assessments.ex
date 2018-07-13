@@ -41,7 +41,7 @@ defmodule Cadet.Assessments do
           Question
           |> where(assessment_id: ^id)
           |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
-          |> select([q, a], %{q | answer: a.answer})
+          |> select([q, a], %{q | answer: a})
           |> order_by(:display_order)
           |> Repo.all()
 

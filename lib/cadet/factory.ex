@@ -117,4 +117,13 @@ defmodule Cadet.Factory do
       code: sequence(:code, &"alert(#{&1})")
     }
   end
+
+  def library_factory do
+    %{
+      chapter: Enum.random(1..20),
+      globals: ["hello", "world"],
+      files: ["/path/to/nothing"],
+      globals: ["life", "universe"]
+    }
+  end
 end
