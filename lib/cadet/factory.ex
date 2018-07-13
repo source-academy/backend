@@ -12,14 +12,14 @@ defmodule Cadet.Factory do
 
   def user_factory do
     %User{
-      name: "John Smith",
+      name: Faker.Name.En.name(),
       role: :staff
     }
   end
 
   def student_factory do
     %User{
-      name: sequence("student"),
+      name: Faker.Name.En.name(),
       role: :student
     }
   end
@@ -34,30 +34,30 @@ defmodule Cadet.Factory do
 
   def group_factory do
     %Group{
-      name: sequence("group")
+      name: Faker.Company.name()
     }
   end
 
   def announcement_factory do
     %Announcement{
-      title: sequence(:title, &"Announcement #{&1}"),
-      content: "Some content",
+      title: sequence(:title, &"Announcement #{&1}") <> Faker.Company.catch_phrase(),
+      content: Faker.StarWars.quote(),
       poster: build(:user)
     }
   end
 
   def material_folder_factory do
     %Material{
-      name: "Folder",
-      description: "This is a folder",
+      name: Faker.Cat.name(),
+      description: Faker.Cat.breed(),
       uploader: build(:user, %{role: :staff})
     }
   end
 
   def material_file_factory do
     %Material{
-      name: "Folder",
-      description: "This is a folder",
+      name: Faker.StarWars.character(),
+      description: Faker.StarWars.planet(),
       file: build(:upload),
       parent: build(:material_folder),
       uploader: build(:user, %{role: :staff})
@@ -74,7 +74,7 @@ defmodule Cadet.Factory do
 
   def assessment_factory do
     %Assessment{
-      title: "assessment",
+      title: Faker.Lorem.Shakespeare.En.hamlet(),
       type: Enum.random([:mission, :sidequest, :contest, :path]),
       open_at: Timex.now(),
       close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
@@ -100,7 +100,7 @@ defmodule Cadet.Factory do
 
   def programming_question_factory do
     %{
-      content: sequence("ProgrammingQuestion"),
+      content: Faker.Pokemon.name(),
       solution_template: "f => f(f);",
       solution: "(f => f(f))(f => f(f));"
     }
@@ -121,9 +121,9 @@ defmodule Cadet.Factory do
   def library_factory do
     %{
       chapter: Enum.random(1..20),
-      globals: ["hello", "world"],
-      files: ["/path/to/nothing"],
-      globals: ["life", "universe"]
+      globals: Faker.Lorem.words(),
+      externals: Faker.Lorem.words(),
+      files: Enum.map(1..5, fn _ -> Faker.File.file_name() end)
     }
   end
 end
