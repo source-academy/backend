@@ -211,7 +211,7 @@ defmodule Cadet.Assessments do
         attrs,
         grader = %User{role: role}
       )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) and is_map(attrs) do
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
 
@@ -233,7 +233,7 @@ defmodule Cadet.Assessments do
           {:error, _} -> {:error, {:internal_server_error, "Please try again later."}}
         end
       else
-        {:error, {:bad_request, "Answer not found."}}
+        {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
       end
     else
       {:error, {:unauthorized, "User is not permitted to grade."}}

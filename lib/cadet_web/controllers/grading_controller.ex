@@ -22,16 +22,18 @@ defmodule CadetWeb.GradingController do
     end
   end
 
-  def update(conn, %{
-        "submissionid" => submission_id,
-        "questionid" => question_id,
-        "grading" => grading
-      }) do
+  def update(
+        conn,
+        params = %{
+          "submissionid" => submission_id,
+          "questionid" => question_id
+        }
+      ) do
     user = conn.assigns[:current_user]
 
     case Assessments.update_grading_info(
            %{submission_id: submission_id, question_id: question_id},
-           grading,
+           params["grading"],
            user
          ) do
       {:ok, _} -> send_resp(conn, :ok, "OK")
