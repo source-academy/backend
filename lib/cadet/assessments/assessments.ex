@@ -28,6 +28,7 @@ defmodule Cadet.Assessments do
       assessment =
         Assessment
         |> where(id: ^id)
+        |> where(is_published: true)
         |> select([:type, :title, :summary_long, :mission_pdf, :id])
         |> Repo.one()
 
