@@ -17,4 +17,6 @@ defmodule CadetWeb.AssessmentsView do
       coverImage: Cadet.Assessments.Image.url({assessment.cover_picture, assessment})
     }
   end
+
+  def render("show.json", %{assessment: })
 end

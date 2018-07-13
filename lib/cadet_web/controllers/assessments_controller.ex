@@ -12,6 +12,8 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
+
+
   # def show(conn, %{"assessmentId" => assessmentId}) do
   #   assessment = Poison.encode(Assessments.get_assessment(assessmentId))
   #   render(conn, "index.json", assessment: assessment)
@@ -110,8 +112,8 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            summary_long(:string, "Long summary", required: true)
-            mission_pdf(:string, "The URL to the assessment pdf")
+            longSummary(:string, "Long summary", required: true)
+            missionPDF(:string, "The URL to the assessment pdf")
 
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
           end
@@ -147,7 +149,7 @@ defmodule CadetWeb.AssessmentsController do
 
             library(
               Schema.ref(:Library),
-              "The library used for this question (programming questions only)"
+              "The library used for this question"
             )
 
             solution_template(:string, "Solution template for programming questions")
