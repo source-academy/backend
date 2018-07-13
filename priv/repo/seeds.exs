@@ -27,7 +27,7 @@ if Application.get_env(:cadet, :environment) == :dev do
     programming_questions =
       insert_list(3, :question, %{
         type: :programming,
-        library: (if Enum.random(0..2) == 0, do: build(:library)),
+        library: if(Enum.random(0..2) == 0, do: build(:library)),
         question: build(:programming_question),
         assessment: mission,
         max_xp: 200

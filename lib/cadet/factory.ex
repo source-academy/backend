@@ -110,7 +110,7 @@ defmodule Cadet.Factory do
     %{
       content: Faker.Pokemon.name(),
       choices:
-        Enum.map(0..5, fn x ->
+        Enum.map(0..2, fn x ->
           build(:mcq_choice, %{choice_id: x, is_correct: x == 0})
         end)
     }
@@ -137,15 +137,15 @@ defmodule Cadet.Factory do
 
   def mcq_answer_factory do
     %{
-      choice_id: Enum.random(1..5)
+      choice_id: Enum.random(0..2)
     }
   end
 
   def library_factory do
     %{
       chapter: Enum.random(1..20),
-      globals: Faker.Lorem.words(),
-      externals: Faker.Lorem.words(),
+      globals: Faker.Lorem.words(Enum.random(1..3)),
+      externals: Faker.Lorem.words(Enum.random(1..3)),
       files: Enum.map(1..5, fn _ -> Faker.File.file_name() end)
     }
   end
