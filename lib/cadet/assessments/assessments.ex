@@ -10,9 +10,10 @@ defmodule Cadet.Assessments do
   alias Timex.Duration
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
 
   @submit_answer_roles ~w(student)a
+  @grading_roles ~w(staff)a
 
   def all_assessments() do
     Repo.all(Assessment)
@@ -89,7 +90,7 @@ defmodule Cadet.Assessments do
   end
 
   def create_question_for_assessment(params, assessment_id)
-      when is_binary(assessment_id) or is_number(assessment_id) do
+      when is_ecto_id(assessment_id) do
     assessment = get_assessment(assessment_id)
     create_question_for_assessment(params, assessment)
   end
@@ -148,6 +149,95 @@ defmodule Cadet.Assessments do
       end
     else
       {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+
+  @spec all_submissions_by_grader(User.t()) ::
+          {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
+  def all_submissions_by_grader(grader = %User{role: role}) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of(grader)
+
+      submissions =
+        Submission
+        |> join(:inner, [s], x in subquery(Query.submissions_xp()), s.id == x.submission_id)
+        |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
+        |> join(
+          :inner,
+          [s],
+          a in subquery(Query.all_assessments_with_max_xp()),
+          s.assessment_id == a.id
+        )
+        |> select([s, x, st, a], %Submission{s | xp: x.xp, student: st, assessment: a})
+        |> Repo.all()
+
+      {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
+    end
+  end
+
+  @spec get_answers_in_submission(integer() | String.t(), User.t()) ::
+          {:ok, [Answer.t()]} | {:error, {:unauthorized, String.t()}}
+  def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of(grader)
+
+      answers =
+        Answer
+        |> where(submission_id: ^id)
+        |> join(:inner, [a], s in Submission, a.submission_id == s.id)
+        |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
+        |> join(:inner, [a], q in assoc(a, :question))
+        |> preload([a, ..., q], question: q)
+        |> Repo.all()
+
+      {:ok, answers}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
+    end
+  end
+
+  @spec update_grading_info(
+          %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
+          %{},
+          User.t()
+        ) ::
+          {:ok, nil}
+          | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
+  def update_grading_info(
+        %{submission_id: submission_id, question_id: question_id},
+        attrs,
+        grader = %User{role: role}
+      )
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
+    if role in @grading_roles do
+      students = Cadet.Accounts.Query.students_of(grader)
+
+      answer =
+        Answer
+        |> where([a], a.submission_id == ^submission_id and a.question_id == ^question_id)
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
+        |> Repo.one()
+
+      with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
+           {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
+             {:valid, Answer.grading_changeset(answer, attrs)},
+           {:ok, _} <- Repo.update(changeset) do
+        {:ok, nil}
+      else
+        {:answer_found?, false} ->
+          {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
+
+        {:valid, changeset} ->
+          {:error, {:bad_request, full_error_messages(changeset.errors)}}
+
+        {:error, _} ->
+          {:error, {:internal_server_error, "Please try again later."}}
+      end
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
@@ -211,25 +301,4 @@ defmodule Cadet.Assessments do
         %{code: raw_answer}
     end
   end
-
-  # TODO: Decide what to do with these methods
-  # def create_multiple_choice_question(json_attr) when is_binary(json_attr) do
-  #  %MCQQuestion{}
-  #  |> MCQQuestion.changeset(%{raw_mcqquestion: json_attr})
-  # end
-
-  # def create_multiple_choice_question(attr = %{}) do
-  #  %MCQQuestion{}
-  #  |> MCQQuestion.changeset(attr)
-  # end
-
-  # def create_programming_question(json_attr) when is_binary(json_attr) do
-  #  %ProgrammingQuestion{}
-  #  |> ProgrammingQuestion.changeset(%{raw_programmingquestion: json_attr})
-  # end
-
-  # def create_programming_question(attr = %{}) do
-  #  %ProgrammingQuestion{}
-  #  |> ProgrammingQuestion.changeset(attr)
-  # end
 end

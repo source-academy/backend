@@ -12,6 +12,7 @@ defmodule Cadet.Assessments.Assessment do
   alias Cadet.Assessments.Upload
 
   schema "assessments" do
+    field(:max_xp, :integer, virtual: true)
     field(:title, :string)
     field(:is_published, :boolean, default: false)
     field(:type, AssessmentType)

@@ -1,7 +1,45 @@
 defmodule CadetWeb.GradingController do
   use CadetWeb, :controller
-
   use PhoenixSwagger
+
+  alias Cadet.Assessments
+
+  def index(conn, _) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.all_submissions_by_grader(user) do
+      {:ok, submissions} -> render(conn, "index.json", submissions: submissions)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
+  def show(conn, %{"submissionid" => submission_id}) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.get_answers_in_submission(submission_id, user) do
+      {:ok, answers} -> render(conn, "show.json", answers: answers)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
+  def update(
+        conn,
+        params = %{
+          "submissionid" => submission_id,
+          "questionid" => question_id
+        }
+      ) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.update_grading_info(
+           %{submission_id: submission_id, question_id: question_id},
+           params["grading"],
+           user
+         ) do
+      {:ok, _} -> send_resp(conn, :ok, "OK")
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
 
   swagger_path :index do
     get("/grading")
@@ -11,10 +49,6 @@ defmodule CadetWeb.GradingController do
     security([%{JWT: []}])
 
     produces("application/json")
-
-    parameters do
-      filter(:query, :string, "Filter only specific types e.g. done/pending")
-    end
 
     response(200, "OK", Schema.ref(:Submissions))
     response(401, "Unauthorised")
@@ -72,8 +106,30 @@ defmodule CadetWeb.GradingController do
         swagger_schema do
           properties do
             submissionId(:integer, "submission id", required: true)
-            missionId(:integer, "mission id", required: true)
-            studentId(:integer, "student id", required: true)
+            xp(:integer, "xp given")
+            adjustment(:integer, "adjustment given")
+            assessment(Schema.ref(:AssessmentInfo))
+            student(Schema.ref(:StudentInfo))
+          end
+        end,
+      AssessmentInfo:
+        swagger_schema do
+          properties do
+            id(:integer, "assessment id", required: true)
+            type(:string, "Either mission/sidequest/path/contest", required: true)
+
+            max_xp(
+              :integer,
+              "The max amount of XP to be earned from this assessment",
+              required: true
+            )
+          end
+        end,
+      StudentInfo:
+        swagger_schema do
+          properties do
+            id(:integer, "student id", required: true)
+            name(:string, "student name", required: true)
           end
         end,
       GradingInfo:
@@ -97,8 +153,14 @@ defmodule CadetWeb.GradingController do
       Grade:
         swagger_schema do
           properties do
-            comment(:string, "comment given")
-            xp(:integer, "xp given")
+            grading(
+              Schema.new do
+                properties do
+                  comment(:string, "comment given")
+                  adjustment(:integer, "adjustment given")
+                end
+              end
+            )
           end
         end
     }

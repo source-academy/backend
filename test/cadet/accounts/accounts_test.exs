@@ -49,7 +49,7 @@ defmodule Cadet.AccountsTest do
   end
 
   test "get existing user" do
-    user = insert(:user, name: "Teddy")
+    user = insert(:user, name: "Teddy", role: :student)
     result = Accounts.get_user(user.id)
     assert %{name: "Teddy", role: :student} = result
   end
