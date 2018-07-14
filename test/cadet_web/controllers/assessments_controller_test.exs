@@ -94,113 +94,123 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "GET /assessment_id, student" do
+  describe "GET /assessment_id, all roles" do
     test "it renders assessment details", %{
       conn: conn,
-      users: %{students: [student | _students]},
+      users: users,
       assessments: assessments
     } do
-      for {_type, %{assessment: assessment}} <- assessments do
-        expected_assessments = %{
-          "id" => assessment.id,
-          "title" => assessment.title,
-          "type" => "#{assessment.type}",
-          "longSummary" => assessment.summary_long,
-          "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
-        }
+      for role <- Role.__enum_map__() do
+        user = Map.get(users, role)
 
-        resp_assessments =
-          conn
-          |> sign_in(student)
-          |> get(build_url(assessment.id))
-          |> json_response(200)
-          |> Map.delete("questions")
+        for {_type, %{assessment: assessment}} <- assessments do
+          expected_assessments = %{
+            "id" => assessment.id,
+            "title" => assessment.title,
+            "type" => "#{assessment.type}",
+            "longSummary" => assessment.summary_long,
+            "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
+          }
 
-        assert ^expected_assessments = resp_assessments
+          resp_assessments =
+            conn
+            |> sign_in(user)
+            |> get(build_url(assessment.id))
+            |> json_response(200)
+            |> Map.delete("questions")
+
+          assert ^expected_assessments = resp_assessments
+        end
       end
     end
 
     test "it renders assessment questions", %{
       conn: conn,
-      users: %{students: [student | _students]},
+      users: users,
       assessments: assessments
     } do
-      for {_type,
-           %{
-             assessment: assessment,
-             mcq_questions: mcq_questions,
-             programming_questions: programming_questions
-           }} <- assessments do
-        # Programming questions should come first due to seeding order
-        expected_programming_questions =
-          Enum.map(
-            programming_questions,
-            &%{
-              "id" => &1.id,
-              "type" => "#{&1.type}",
-              "content" => &1.question.content,
-              "solutionTemplate" => &1.question.solution_template,
-              "solutionHeader" => &1.question.solution_header,
-              "library" =>
-                if &1.library do
-                  %{
-                    "globals" => &1.library.globals,
-                    "files" => &1.library.files,
-                    "externals" => &1.library.externals,
-                    "chapter" => &1.library.chapter
-                  }
-                end
-            }
-          )
+      for role <- Role.__enum_map__() do
+        user = Map.get(users, role)
 
-        expected_mcq_questions =
-          Enum.map(
-            mcq_questions,
-            &%{
-              "id" => &1.id,
-              "type" => "#{&1.type}",
-              "content" => &1.question.content,
-              "choices" =>
-                Enum.map(
-                  &1.question.choices,
-                  fn choice ->
+        for {_type,
+             %{
+               assessment: assessment,
+               mcq_questions: mcq_questions,
+               programming_questions: programming_questions
+             }} <- assessments do
+          # Programming questions should come first due to seeding order
+          expected_programming_questions =
+            Enum.map(
+              programming_questions,
+              &%{
+                "id" => &1.id,
+                "type" => "#{&1.type}",
+                "content" => &1.question.content,
+                "solutionTemplate" => &1.question.solution_template,
+                "solutionHeader" => &1.question.solution_header,
+                "library" =>
+                  if &1.library do
                     %{
-                      "id" => choice.choice_id,
-                      "content" => choice.content,
-                      "hint" => choice.hint
+                      "globals" => &1.library.globals,
+                      "files" => &1.library.files,
+                      "externals" => &1.library.externals,
+                      "chapter" => &1.library.chapter
                     }
                   end
-                ),
-              "library" =>
-                if &1.library do
-                  %{
-                    "globals" => &1.library.globals,
-                    "files" => &1.library.files,
-                    "externals" => &1.library.externals,
-                    "chapter" => &1.library.chapter
-                  }
-                end
-            }
-          )
+              }
+            )
 
-        expected_questions = expected_programming_questions ++ expected_mcq_questions
+          expected_mcq_questions =
+            Enum.map(
+              mcq_questions,
+              &%{
+                "id" => &1.id,
+                "type" => "#{&1.type}",
+                "content" => &1.question.content,
+                "choices" =>
+                  Enum.map(
+                    &1.question.choices,
+                    fn choice ->
+                      %{
+                        "id" => choice.choice_id,
+                        "content" => choice.content,
+                        "hint" => choice.hint
+                      }
+                    end
+                  ),
+                "library" =>
+                  if &1.library do
+                    %{
+                      "globals" => &1.library.globals,
+                      "files" => &1.library.files,
+                      "externals" => &1.library.externals,
+                      "chapter" => &1.library.chapter
+                    }
+                  end
+              }
+            )
 
-        resp_questions =
-          conn
-          |> sign_in(student)
-          |> get(build_url(assessment.id))
-          |> json_response(200)
-          |> Map.get("questions")
-          |> Enum.map(&Map.delete(&1, "answer"))
-          |> Enum.map(&Map.delete(&1, "solution"))
+          expected_questions = expected_programming_questions ++ expected_mcq_questions
 
-        assert expected_questions == resp_questions
+          resp_questions =
+            conn
+            |> sign_in(user)
+            |> get(build_url(assessment.id))
+            |> json_response(200)
+            |> Map.get("questions")
+            |> Enum.map(&Map.delete(&1, "answer"))
+            |> Enum.map(&Map.delete(&1, "solution"))
+
+          assert expected_questions == resp_questions
+        end
       end
     end
+  end
 
+  describe "GET /assessment_id, student" do
     test "it renders previously submitted answers", %{
       conn: conn,
-      users: %{students: [student | _students]},
+      users: %{student: student},
       assessments: assessments
     } do
       for {_type,
@@ -229,9 +239,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "it renders mcq solutions for ungraded assessments (path)", %{
+    test "it renders solutions for ungraded assessments (path)", %{
       conn: conn,
-      users: %{students: [student | _students]},
+      users: %{student: student},
       assessments: assessments
     } do
       %{
@@ -260,11 +270,43 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assert expected_solutions == resp_solutions
     end
 
-    test "it does not render mcq solutions for ungraded assessments (path)", %{
+    test "it does not render solutions for ungraded assessments (path)", %{
       conn: conn,
-      users: %{students: [student | _students]},
+      users: %{student: student},
       assessments: assessments
     } do
+      for {_type,
+           %{
+             assessment: assessment
+           }} <- Map.delete(assessments, :path) do
+        resp_solutions =
+          conn
+          |> sign_in(student)
+          |> get(build_url(assessment.id))
+          |> json_response(200)
+          |> Map.get("questions")
+          |> Enum.map(&Map.get(&1, ["solution"]))
+
+        assert Enum.uniq(resp_solutions) == [nil]
+      end
+    end
+
+    test "it does not render questions for unpublished assessments", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: %{mission: mission}
+    } do
+      {:ok, _} =
+        mission.assessment
+        |> Assessment.changeset(%{is_published: false})
+        |> Repo.update()
+
+      conn =
+        conn
+        |> sign_in(student)
+        |> get(build_url(mission.assessment.id))
+
+      assert response(conn, 400) == "Assessment not found"
     end
   end
 

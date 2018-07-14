@@ -14,14 +14,6 @@ defmodule Cadet.Test.Seeds do
       admin = insert(:user, %{name: "admin", role: :admin})
       Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
 
-      users = %{
-        avenger: avenger,
-        mentor: mentor,
-        group: group,
-        students: students,
-        admin: admin
-      }
-
       assessments =
         Enum.reduce(
           Cadet.Assessments.AssessmentType.__enum_map__(),
@@ -30,7 +22,18 @@ defmodule Cadet.Test.Seeds do
         )
 
       %{
-        users: users,
+        accounts: %{
+          avenger: avenger,
+          mentor: mentor,
+          group: group,
+          students: students,
+          admin: admin
+        },
+        users: %{
+          staff: avenger,
+          student: List.first(students),
+          admin: admin
+        },
         assessments: assessments
       }
     end
