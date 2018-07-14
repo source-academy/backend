@@ -38,13 +38,14 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   def render("question.json", params = %{question: question}) do
-    %{
+    question_partial = %{
       id: question.id,
       type: question.type,
       library:
         render_one(question.library, CadetWeb.AssessmentsView, "library.json", as: :library)
     }
-    |> add_question_fields_by_type(params)
+
+    add_question_fields_by_type(question_partial, params)
   end
 
   def render("library.json", %{library: library}) do
