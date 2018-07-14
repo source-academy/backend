@@ -60,6 +60,7 @@ defmodule Cadet.Mixfile do
       {:phoenix_pubsub, "~> 1.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:postgrex, ">= 0.0.0"},
+      {:quantum, "~> 2.2.7"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
