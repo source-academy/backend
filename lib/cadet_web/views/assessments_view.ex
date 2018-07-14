@@ -77,7 +77,10 @@ defmodule CadetWeb.AssessmentsView do
       content: programming_question["content"],
       solutionTemplate: programming_question["solution_template"],
       solutionHeader: programming_question["solution_header"],
-      answer: answer && answer.answer["code"]
+      answer:
+        if answer do
+          answer.answer["code"]
+        end
     }
 
     case params.is_graded do
@@ -104,7 +107,10 @@ defmodule CadetWeb.AssessmentsView do
           "mcq_choice.json",
           as: :mcq_choice
         ),
-      answer: answer && answer.answer["choice_id"]
+      answer:
+        if answer do
+          answer.answer["choice_id"]
+        end
     }
 
     case params.is_graded do

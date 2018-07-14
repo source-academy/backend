@@ -94,6 +94,58 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
+  describe "GET /assessment_id, student" do
+    @tag authenticate: :student
+    test "it renders assessment details", %{conn: conn, assessments: assessments} do
+      for {_type, %{assessment: assessment}} <- assessments do
+        expected = %{
+          "id" => assessment.id,
+          "title" => assessment.title,
+          "type" => "#{assessment.type}",
+          "longSummary" => assessment.summary_long,
+          "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
+        }
+
+        conn = get(conn, build_url(assessment.id))
+
+        assert ^expected = Map.delete(json_response(conn, 200), "questions")
+      end
+    end
+
+    @tag authenticate: :student
+    test "it renders assessment questions", %{conn: conn, assessments: assessments} do
+      for {_type,
+           %{
+             assessment: assessment,
+             mcq_questions: mcq_questions,
+             programming_questions: programming_questions
+           }} <- assessments do
+
+        # Programming questions should come first
+        expected_programming_questions = Enum.map(programming_questions, &%{}
+
+        expected = %{
+          "id" => assessment.id,
+          "title" => assessment.title,
+          "type" => "#{assessment.type}",
+          "longSummary" => assessment.summary_long,
+          "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
+        }
+
+        conn = get(conn, build_url(assessment.id))
+
+        assert ^expected = Map.delete(json_response(conn, 200), "questions")
+      end
+    end
+  end
+
+  # for role <- [:staff, :admin] do
+  #   describe "GET /assessment_id, #{role}" do
+  #     it "renders assessment details" do
+  #     end
+  #   end
+  # end
+
   defp build_url, do: "/v1/assessments/"
   defp build_url(assessment_id), do: "/v1/assessments/#{assessment_id}"
 
