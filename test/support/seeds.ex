@@ -76,27 +76,50 @@ defmodule Cadet.Test.Seeds do
 
     # Programming Answers
     programming_answers =
-      for submission <- submissions,
-          question <- programming_questions do
-        insert(:answer, %{
-          xp: 200,
-          question: question,
-          submission: submission,
-          answer: build(:programming_answer)
-        })
-      end
+      Enum.map(submissions, fn submission ->
+        Enum.map(programming_questions, fn question ->
+          insert(:answer, %{
+            xp: 200,
+            question: question,
+            submission: submission,
+            answer: build(:programming_answer)
+          })
+        end)
+      end)
+
+    mcq_answers =
+      Enum.map(submissions, fn submission ->
+        Enum.map(mcq_questions, fn question ->
+          insert(:answer, %{
+            xp: 40,
+            question: question,
+            submission: submission,
+            answer: build(:mcq_answer)
+          })
+        end)
+      end)
+
+    # # submission <- submissions,
+    # for question <- programming_questions do
+    #   insert(:answer, %{
+    #     xp: 200,
+    #     question: question,
+    #     submission: submission,
+    #     answer: build(:programming_answer)
+    #   })
+    # end
 
     # MCQ Answers
-    mcq_answers =
-      for submission <- submissions,
-          question <- mcq_questions do
-        insert(:answer, %{
-          xp: 200,
-          question: question,
-          submission: submission,
-          answer: build(:mcq_answer)
-        })
-      end
+    # mcq_answers =
+    #   for submission <- submissions,
+    #       question <- mcq_questions do
+    #     insert(:answer, %{
+    #       xp: 200,
+    #       question: question,
+    #       submission: submission,
+    #       answer: build(:mcq_answer)
+    #     })
+    #   end
 
     %{
       assessment: assessment,

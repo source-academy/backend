@@ -95,10 +95,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "GET /assessment_id, student" do
-    @tag authenticate: :student
-    test "it renders assessment details", %{conn: conn, assessments: assessments} do
+    test "it renders assessment details", %{
+      conn: conn,
+      users: %{students: [student | _students]},
+      assessments: assessments
+    } do
       for {_type, %{assessment: assessment}} <- assessments do
-        expected = %{
+        expected_assessments = %{
           "id" => assessment.id,
           "title" => assessment.title,
           "type" => "#{assessment.type}",
@@ -106,14 +109,22 @@ defmodule CadetWeb.AssessmentsControllerTest do
           "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
         }
 
-        conn = get(conn, build_url(assessment.id))
+        resp_assessments =
+          conn
+          |> sign_in(student)
+          |> get(build_url(assessment.id))
+          |> json_response(200)
+          |> Map.delete("questions")
 
-        assert ^expected = Map.delete(json_response(conn, 200), "questions")
+        assert ^expected_assessments = resp_assessments
       end
     end
 
-    @tag authenticate: :student
-    test "it renders assessment questions", %{conn: conn, assessments: assessments} do
+    test "it renders assessment questions", %{
+      conn: conn,
+      users: %{students: [student | _students]},
+      assessments: assessments
+    } do
       for {_type,
            %{
              assessment: assessment,
@@ -176,6 +187,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         resp_questions =
           conn
+          |> sign_in(student)
           |> get(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions")
@@ -183,6 +195,37 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Enum.map(&Map.delete(&1, "solution"))
 
         assert expected_questions == resp_questions
+      end
+    end
+
+    test "it renders previously submitted answers", %{
+      conn: conn,
+      users: %{students: [student | _students]},
+      assessments: assessments
+    } do
+      for {_type,
+           %{
+             assessment: assessment,
+             mcq_answers: [mcq_answers | _mcq_answers],
+             programming_answers: [programming_answers | _programming_answers]
+           }} <- assessments do
+        # Programming questions should come first due to seeding order
+
+        expected_programming_answers =
+          Enum.map(programming_answers, &%{"answer" => &1.answer.code})
+
+        expected_mcq_answers = Enum.map(mcq_answers, &%{"answer" => &1.answer.choice_id})
+        expected_answers = expected_programming_answers ++ expected_mcq_answers
+
+        resp_answers =
+          conn
+          |> sign_in(student)
+          |> get(build_url(assessment.id))
+          |> json_response(200)
+          |> Map.get("questions")
+          |> Enum.map(&Map.take(&1, ["answer"]))
+
+        assert expected_answers == resp_answers
       end
     end
   end
