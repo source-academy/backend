@@ -1,5 +1,6 @@
 defmodule CadetWeb.AssessmentsView do
   use CadetWeb, :view
+  use Timex
 
   @graded_assessment_types ~w(mission sidequest contest)a
 
@@ -12,8 +13,8 @@ defmodule CadetWeb.AssessmentsView do
       id: assessment.id,
       title: assessment.title,
       shortSummary: assessment.summary_short,
-      openAt: DateTime.to_string(assessment.open_at),
-      closeAt: DateTime.to_string(assessment.close_at),
+      openAt: format_datetime(assessment.open_at),
+      closeAt: format_datetime(assessment.close_at),
       type: assessment.type,
       maximumEXP: assessment.max_xp,
       coverImage: Cadet.Assessments.Image.url({assessment.cover_picture, assessment})
@@ -121,5 +122,9 @@ defmodule CadetWeb.AssessmentsView do
     choices
     |> Enum.find(fn choice -> Map.get(choice, "is_correct") end)
     |> Map.get("choice_id")
+  end
+
+  defp format_datetime(datetime) do
+    Timex.format!(DateTime.truncate(datetime, :millisecond), "{ISO:Extended}")
   end
 end

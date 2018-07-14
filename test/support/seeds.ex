@@ -1,4 +1,7 @@
 defmodule Cadet.Test.Seeds do
+  @moduledoc """
+  This module contains functions that seed more complex setups into the DB for tests.
+  """
   import Cadet.Factory
 
   def call do
@@ -36,7 +39,8 @@ defmodule Cadet.Test.Seeds do
   defp build_assessment(assessment_type, students) do
     assessment = insert(:assessment, %{type: assessment_type, is_published: true})
 
-    programming_questions = Enum.map(1..3, fn id ->
+    programming_questions =
+      Enum.map(1..3, fn id ->
         insert(:question, %{
           display_order: id,
           type: :programming,
@@ -47,7 +51,8 @@ defmodule Cadet.Test.Seeds do
         })
       end)
 
-    mcq_questions = Enum.map(4..6, fn id ->
+    mcq_questions =
+      Enum.map(4..6, fn id ->
         insert(:question, %{
           display_order: id,
           type: :multiple_choice,

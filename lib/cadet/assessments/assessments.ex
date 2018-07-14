@@ -24,34 +24,35 @@ defmodule Cadet.Assessments do
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}) do
-  # def assessment_with_questions_and_answers(id, user = %User{role: role}) do
+    # def assessment_with_questions_and_answers(id, user = %User{role: role}) do
     # if role in @submit_answer_roles do
-      assessment =
-        Assessment
-        |> where(id: ^id)
-        |> where(is_published: true)
-        |> select([:type, :title, :summary_long, :mission_pdf, :id])
-        |> Repo.one()
+    assessment =
+      Assessment
+      |> where(id: ^id)
+      |> where(is_published: true)
+      |> select([:type, :title, :summary_long, :mission_pdf, :id])
+      |> Repo.one()
 
-      if assessment do
-        answer_query =
-          Answer
-          |> join(:inner, [a], s in assoc(a, :submission))
-          |> where([a, s], s.student_id == ^user.id)
+    if assessment do
+      answer_query =
+        Answer
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> where([a, s], s.student_id == ^user.id)
 
-        questions =
-          Question
-          |> where(assessment_id: ^id)
-          |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
-          |> select([q, a], %{q | answer: a})
-          |> order_by(:display_order)
-          |> Repo.all()
+      questions =
+        Question
+        |> where(assessment_id: ^id)
+        |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+        |> select([q, a], %{q | answer: a})
+        |> order_by(:display_order)
+        |> Repo.all()
 
-        assessment = Map.put(assessment, :questions, questions)
-        {:ok, assessment}
-      else
-        {:error, {:bad_request, "Assessment not found"}}
-      end
+      assessment = Map.put(assessment, :questions, questions)
+      {:ok, assessment}
+    else
+      {:error, {:bad_request, "Assessment not found"}}
+    end
+
     # else
     #   {:error, {:forbidden, "User is not permitted to answer questions"}}
     # end
