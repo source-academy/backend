@@ -31,8 +31,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       Cadet.Test.Seeds.call()
     end
 
-    describe "GET /, #{role}" do
-      # assessments = Repo.all(Cadet.Assessments)
+    describe "GET /, #{role}", context do
     end
   end
 

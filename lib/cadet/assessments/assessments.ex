@@ -68,6 +68,7 @@ defmodule Cadet.Assessments do
     assessments =
       Query.all_assessments_with_max_xp()
       |> where(is_published: true)
+      |> order_by(:open_at)
       |> Repo.all()
 
     {:ok, assessments}
