@@ -26,6 +26,11 @@ defmodule CadetWeb.ConnCase do
 
       # The default endpoint for testing
       @endpoint CadetWeb.Endpoint
+
+      # Helper function
+      def sign_in(conn, user) do
+        CadetWeb.ConnCase.sign_in(conn, user)
+      end
     end
   end
 
@@ -51,14 +56,17 @@ defmodule CadetWeb.ConnCase do
             nil
         end
 
-      conn =
-        conn
-        |> Cadet.Auth.Guardian.Plug.sign_in(user)
-        |> assign(:current_user, user)
+      conn = sign_in(conn, user)
 
       {:ok, conn: conn}
     else
       {:ok, conn: conn}
     end
+  end
+
+  def sign_in(conn, user) do
+    conn
+    |> Cadet.Auth.Guardian.Plug.sign_in(user)
+    |> assign(:current_user, user)
   end
 end
