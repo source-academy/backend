@@ -34,21 +34,25 @@ defmodule Cadet.Assessments do
       |> Repo.one()
 
     if assessment do
-      answer_query =
-        Answer
-        |> join(:inner, [a], s in assoc(a, :submission))
-        |> where([a, s], s.student_id == ^user.id)
+      if Timex.after?(Timex.now(), assessment.open_at) do
+        answer_query =
+          Answer
+          |> join(:inner, [a], s in assoc(a, :submission))
+          |> where([a, s], s.student_id == ^user.id)
 
-      questions =
-        Question
-        |> where(assessment_id: ^id)
-        |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
-        |> select([q, a], %{q | answer: a})
-        |> order_by(:display_order)
-        |> Repo.all()
+        questions =
+          Question
+          |> where(assessment_id: ^id)
+          |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+          |> select([q, a], %{q | answer: a})
+          |> order_by(:display_order)
+          |> Repo.all()
 
-      assessment = Map.put(assessment, :questions, questions)
-      {:ok, assessment}
+        assessment = Map.put(assessment, :questions, questions)
+        {:ok, assessment}
+      else
+        {:error, {:unauthorized, "Assessment not open"}}
+      end
     else
       {:error, {:bad_request, "Assessment not found"}}
     end
