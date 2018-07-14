@@ -58,13 +58,14 @@ if Application.get_env(:cadet, :environment) == :dev do
     end
 
     # MCQ Answers    for submission <- submissions,
-    question <- mcq_questions do
-      insert(:answer, %{
-        xp: 200,
-        question: question,
-        submission: submission,
-        answer: build(:mcq_answer)
-      })
-    end
+    question <-
+      mcq_questions do
+        insert(:answer, %{
+          xp: 200,
+          question: question,
+          submission: submission,
+          answer: build(:mcq_answer)
+        })
+      end
   end
 end
