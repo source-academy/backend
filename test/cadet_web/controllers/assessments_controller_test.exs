@@ -8,7 +8,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   alias Cadet.Repo
 
   setup do
-    Cadet.Test.Seeds.call()
+    Cadet.Test.Seeds.assessments()
   end
 
   test "swagger" do

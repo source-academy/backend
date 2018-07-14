@@ -4,7 +4,7 @@ defmodule Cadet.Test.Seeds do
   """
   import Cadet.Factory
 
-  def call do
+  def assessments do
     if Application.get_env(:cadet, :environment) == :test do
       # User and Group
       avenger = insert(:user, %{name: "avenger", role: :staff})

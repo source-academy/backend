@@ -104,5 +104,7 @@ erl_crash.dump
 *.tfstate
 *.backup
 
+# VSCode Elixir language support
+.elixir_ls/
 
 .env
