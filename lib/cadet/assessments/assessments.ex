@@ -161,7 +161,7 @@ defmodule Cadet.Assessments do
       submissions =
         Submission
         |> join(:inner, [s], x in subquery(Query.submissions_xp()), s.id == x.submission_id)
-        |> join(:inner, [s], st in assoc(s, :student))
+        |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
         |> join(
           :inner,
           [s],
@@ -169,7 +169,6 @@ defmodule Cadet.Assessments do
           s.assessment_id == a.id
         )
         |> select([s, x, st, a], %Submission{s | xp: x.xp, student: st, assessment: a})
-        |> join(:inner, [s], t in subquery(students), s.student_id == t.id)
         |> Repo.all()
 
       {:ok, submissions}
@@ -190,7 +189,7 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a], s in Submission, a.submission_id == s.id)
         |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
         |> join(:inner, [a], q in assoc(a, :question))
-        |> preload([a, _, _, q], question: q)
+        |> preload([a, ..., q], question: q)
         |> Repo.all()
 
       {:ok, answers}
@@ -218,22 +217,24 @@ defmodule Cadet.Assessments do
       answer =
         Answer
         |> where([a], a.submission_id == ^submission_id and a.question_id == ^question_id)
-        |> join(:inner, [a], s in Submission, a.submission_id == s.id)
+        |> join(:inner, [a], s in assoc(a, :submission))
         |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
         |> Repo.one()
 
-      if answer do
-        changeset = Answer.grading_changeset(answer, attrs)
-
-        with {:valid, true} <- {:valid, changeset.valid?},
-             {:ok, _} <- Repo.update(changeset) do
-          {:ok, nil}
-        else
-          {:valid, false} -> {:error, {:bad_request, full_error_messages(changeset.errors)}}
-          {:error, _} -> {:error, {:internal_server_error, "Please try again later."}}
-        end
+      with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
+           {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
+             {:valid, Answer.grading_changeset(answer, attrs)},
+           {:ok, _} <- Repo.update(changeset) do
+        {:ok, nil}
       else
-        {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
+        {:answer_found?, false} ->
+          {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
+
+        {:valid, changeset} ->
+          {:error, {:bad_request, full_error_messages(changeset.errors)}}
+
+        {:error, _} ->
+          {:error, {:internal_server_error, "Please try again later."}}
       end
     else
       {:error, {:unauthorized, "User is not permitted to grade."}}

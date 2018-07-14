@@ -15,9 +15,8 @@ defmodule Cadet.DisplayHelper do
 
   @spec full_error_messages(keyword({String.t(), term()})) :: String.t()
   def full_error_messages(errors) do
-    for {key, {message, _}} <- errors do
-      "#{key} #{message}"
-    end
+    errors
+    |> Enum.map(fn {key, {message, _}} -> "#{key} #{message}" end)
     |> Enum.join(", ")
   end
 end
