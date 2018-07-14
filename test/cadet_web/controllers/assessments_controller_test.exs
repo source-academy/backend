@@ -228,6 +228,44 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assert expected_answers == resp_answers
       end
     end
+
+    test "it renders mcq solutions for ungraded assessments (path)", %{
+      conn: conn,
+      users: %{students: [student | _students]},
+      assessments: assessments
+    } do
+      %{
+        assessment: assessment,
+        mcq_questions: mcq_questions,
+        programming_questions: programming_questions
+      } = assessments.path
+
+      # Seeds set solution as 0
+      expected_mcq_solutions = Enum.map(mcq_questions, fn _ -> %{"solution" => 0} end)
+
+      expected_programming_solutions =
+        Enum.map(programming_questions, &%{"solution" => &1.question.solution})
+
+      expected_solutions = Enum.sort(expected_mcq_solutions ++ expected_programming_solutions)
+
+      resp_solutions =
+        conn
+        |> sign_in(student)
+        |> get(build_url(assessment.id))
+        |> json_response(200)
+        |> Map.get("questions")
+        |> Enum.map(&Map.take(&1, ["solution"]))
+        |> Enum.sort()
+
+      assert expected_solutions == resp_solutions
+    end
+
+    test "it does not render mcq solutions for ungraded assessments (path)", %{
+      conn: conn,
+      users: %{students: [student | _students]},
+      assessments: assessments
+    } do
+    end
   end
 
   # for role <- [:staff, :admin] do

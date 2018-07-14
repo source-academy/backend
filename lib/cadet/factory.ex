@@ -104,8 +104,8 @@ defmodule Cadet.Factory do
     %{
       content: Faker.Pokemon.name(),
       solution_header: Faker.Pokemon.location(),
-      solution_template: "f => f(f);",
-      solution: "(f => f(f))(f => f(f));"
+      solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
+      solution: Faker.Lorem.Shakespeare.hamlet()
     }
   end
 
