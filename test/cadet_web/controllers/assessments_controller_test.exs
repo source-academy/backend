@@ -120,21 +120,69 @@ defmodule CadetWeb.AssessmentsControllerTest do
              mcq_questions: mcq_questions,
              programming_questions: programming_questions
            }} <- assessments do
+        # Programming questions should come first due to seeding order
+        expected_programming_questions =
+          Enum.map(
+            programming_questions,
+            &%{
+              "id" => &1.id,
+              "type" => "#{&1.type}",
+              "content" => &1.question.content,
+              "solutionTemplate" => &1.question.solution_template,
+              "solutionHeader" => &1.question.solution_header,
+              "library" =>
+                if &1.library do
+                  %{
+                    "globals" => &1.library.globals,
+                    "files" => &1.library.files,
+                    "externals" => &1.library.externals,
+                    "chapter" => &1.library.chapter
+                  }
+                end
+            }
+          )
 
-        # Programming questions should come first
-        expected_programming_questions = Enum.map(programming_questions, &%{}
+        expected_mcq_questions =
+          Enum.map(
+            mcq_questions,
+            &%{
+              "id" => &1.id,
+              "type" => "#{&1.type}",
+              "content" => &1.question.content,
+              "choices" =>
+                Enum.map(
+                  &1.question.choices,
+                  fn choice ->
+                    %{
+                      "id" => choice.choice_id,
+                      "content" => choice.content,
+                      "hint" => choice.hint
+                    }
+                  end
+                ),
+              "library" =>
+                if &1.library do
+                  %{
+                    "globals" => &1.library.globals,
+                    "files" => &1.library.files,
+                    "externals" => &1.library.externals,
+                    "chapter" => &1.library.chapter
+                  }
+                end
+            }
+          )
 
-        expected = %{
-          "id" => assessment.id,
-          "title" => assessment.title,
-          "type" => "#{assessment.type}",
-          "longSummary" => assessment.summary_long,
-          "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
-        }
+        expected_questions = expected_programming_questions ++ expected_mcq_questions
 
-        conn = get(conn, build_url(assessment.id))
+        resp_questions =
+          conn
+          |> get(build_url(assessment.id))
+          |> json_response(200)
+          |> Map.get("questions")
+          |> Enum.map(&Map.delete(&1, "answer"))
+          |> Enum.map(&Map.delete(&1, "solution"))
 
-        assert ^expected = Map.delete(json_response(conn, 200), "questions")
+        assert expected_questions == resp_questions
       end
     end
   end

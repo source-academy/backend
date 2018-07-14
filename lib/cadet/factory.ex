@@ -103,6 +103,7 @@ defmodule Cadet.Factory do
   def programming_question_factory do
     %{
       content: Faker.Pokemon.name(),
+      solution_header: Faker.Pokemon.location(),
       solution_template: "f => f(f);",
       solution: "(f => f(f))(f => f(f));"
     }
