@@ -31,7 +31,33 @@ defmodule CadetWeb.AssessmentsControllerTest do
       Cadet.Test.Seeds.call()
     end
 
-    describe "GET /, #{role}", context do
+    describe "GET /, #{role}" do
+      @tag authenticate: role
+      test "renders assessments overview", %{conn: conn, assessments: assessments} do
+        open_at_asc_comparator = fn x, y -> Timex.before?(x.open_at, y.open_at) end
+
+        conn = get(conn, build_url())
+
+        expected =
+          assessments
+          |> Map.values()
+          |> Enum.map(fn a -> a.assessment end)
+          |> Enum.sort(open_at_asc_comparator)
+          |> Enum.map(
+            &%{
+              "id" => &1.id,
+              "title" => &1.title,
+              "shortSummary " => &1.summary_short,
+              "openAt" => DateTime.to_string(&1.open_at),
+              "closeAt" => DateTime.to_string(&1.close_at),
+              "type" => "#{&1.type}",
+              "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
+              "maximumEXP" => 600
+            }
+          )
+
+        assert expected == json_response(conn, 200)
+      end
     end
   end
 

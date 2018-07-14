@@ -26,29 +26,36 @@ defmodule Cadet.Test.Seeds do
           fn type, acc -> Map.put(acc, type, build_assessment(type, students)) end
         )
 
-      Map.merge(users, assessments)
+      %{
+        users: users,
+        assessments: assessments
+      }
     end
   end
 
   defp build_assessment(assessment_type, students) do
     assessment = insert(:assessment, %{type: assessment_type, is_published: true})
 
-    programming_questions =
-      insert_list(3, :question, %{
-        type: :programming,
-        library: if(Enum.random(0..2) == 0, do: build(:library)),
-        question: build(:programming_question),
-        assessment: assessment,
-        max_xp: 200
-      })
+    programming_questions = Enum.map(1..3, fn id ->
+        insert(:question, %{
+          display_order: id,
+          type: :programming,
+          library: if(Enum.random(0..2) == 0, do: build(:library)),
+          question: build(:programming_question),
+          assessment: assessment,
+          max_xp: 200
+        })
+      end)
 
-    mcq_questions =
-      insert_list(3, :question, %{
-        type: :multiple_choice,
-        question: build(:mcq_question),
-        assessment: assessment,
-        max_xp: 40
-      })
+    mcq_questions = Enum.map(4..6, fn id ->
+        insert(:question, %{
+          display_order: id,
+          type: :multiple_choice,
+          question: build(:mcq_question),
+          assessment: assessment,
+          max_xp: 40
+        })
+      end)
 
     submissions =
       students
