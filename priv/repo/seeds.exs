@@ -21,7 +21,7 @@ if Application.get_env(:cadet, :environment) == :dev do
   Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
 
   # Assessments
-  Enum.each(1..5, fn _ ->
+  for _ <- 1..5 do
     assessment = insert(:assessment, %{is_published: true})
 
     programming_questions =
@@ -47,27 +47,24 @@ if Application.get_env(:cadet, :environment) == :dev do
       |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1}))
 
     # Programming Answers
-    Enum.each(submissions, fn submission ->
-      Enum.each(programming_questions, fn question ->
-        insert(:answer, %{
-          xp: 200,
-          question: question,
-          submission: submission,
-          answer: build(:programming_answer)
-        })
-      end)
-    end)
+    for submission <- submissions,
+        question <- programming_questions do
+      insert(:answer, %{
+        xp: 200,
+        question: question,
+        submission: submission,
+        answer: build(:programming_answer)
+      })
+    end
 
-    # MCQ Answers
-    Enum.each(submissions, fn submission ->
-      Enum.each(mcq_questions, fn question ->
-        insert(:answer, %{
-          xp: 20,
-          question: question,
-          submission: submission,
-          answer: build(:mcq_answer)
-        })
-      end)
-    end)
-  end)
+    # MCQ Answers    for submission <- submissions,
+    question <- mcq_questions do
+      insert(:answer, %{
+        xp: 200,
+        question: question,
+        submission: submission,
+        answer: build(:mcq_answer)
+      })
+    end
+  end
 end

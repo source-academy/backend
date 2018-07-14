@@ -12,7 +12,6 @@ defmodule Cadet.Assessments.Answer do
     field(:xp, :integer, default: 0)
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
-    field(:raw_answer, :string, virtual: true)
     field(:comment, :string)
     field(:adjustment, :integer, default: 0)
     belongs_to(:submission, Submission)
@@ -33,6 +32,24 @@ defmodule Cadet.Assessments.Answer do
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
+  end
+
+  @spec grading_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
+  def grading_changeset(answer, params) do
+    answer
+    |> cast(params, ~w(adjustment comment)a)
+    |> validate_xp_adjustment_total()
+  end
+
+  @spec validate_xp_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  defp validate_xp_adjustment_total(changeset) do
+    answer = apply_changes(changeset)
+
+    if answer.xp + answer.adjustment >= 0 do
+      changeset
+    else
+      add_error(changeset, :adjustment, "should not make total point < 0")
+    end
   end
 
   defp add_question_type_from_model(changeset, params) do
