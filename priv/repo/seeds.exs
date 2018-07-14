@@ -37,14 +37,13 @@ if Application.get_env(:cadet, :environment) == :dev do
     |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
 
   # Answers
-  Enum.each(submissions, fn submission ->
-    Enum.each(questions, fn question ->
-      insert(:answer, %{
-        xp: 200,
-        question: question,
-        submission: submission,
-        answer: build(:programming_answer)
-      })
-    end)
-  end)
+  for submission <- submissions,
+      question <- questions do
+    insert(:answer, %{
+      xp: 200,
+      question: question,
+      submission: submission,
+      answer: build(:programming_answer)
+    })
+  end
 end

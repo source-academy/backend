@@ -249,16 +249,15 @@ defmodule CadetWeb.GradingControllerTest do
       |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
 
     answers =
-      Enum.flat_map(submissions, fn submission ->
-        Enum.map(questions, fn question ->
-          insert(:answer, %{
-            xp: 200,
-            question: question,
-            submission: submission,
-            answer: build(:programming_answer)
-          })
-        end)
-      end)
+      for submission <- submissions,
+          question <- questions do
+        insert(:answer, %{
+          xp: 200,
+          question: question,
+          submission: submission,
+          answer: build(:programming_answer)
+        })
+      end
 
     %{
       grader: grader,
