@@ -98,8 +98,4 @@ defmodule CadetWeb.AssessmentsControllerTest do
   defp build_url(assessment_id), do: "/v1/assessments/#{assessment_id}"
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
-
-  defp format_datetime(datetime) do
-    Timex.format!(DateTime.truncate(datetime, :millisecond), "{ISO:Extended}")
-  end
 end

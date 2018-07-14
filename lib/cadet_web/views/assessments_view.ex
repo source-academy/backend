@@ -123,8 +123,4 @@ defmodule CadetWeb.AssessmentsView do
     |> Enum.find(fn choice -> Map.get(choice, "is_correct") end)
     |> Map.get("choice_id")
   end
-
-  defp format_datetime(datetime) do
-    Timex.format!(DateTime.truncate(datetime, :millisecond), "{ISO:Extended}")
-  end
 end

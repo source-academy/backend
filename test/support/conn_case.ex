@@ -27,6 +27,11 @@ defmodule CadetWeb.ConnCase do
       # The default endpoint for testing
       @endpoint CadetWeb.Endpoint
 
+      # Helper function for formatting datetime for views
+      defp format_datetime(datetime) do
+        Timex.format!(DateTime.truncate(datetime, :millisecond), "{ISO:Extended}")
+      end
+
       # Helper function
       def sign_in(conn, user) do
         CadetWeb.ConnCase.sign_in(conn, user)
