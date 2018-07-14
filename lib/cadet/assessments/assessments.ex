@@ -23,12 +23,57 @@ defmodule Cadet.Assessments do
     Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
   end
 
+  def assessment_with_questions_and_answers(id, user = %User{}) do
+    # def assessment_with_questions_and_answers(id, user = %User{role: role}) do
+    # if role in @submit_answer_roles do
+    assessment =
+      Assessment
+      |> where(id: ^id)
+      |> where(is_published: true)
+      |> select([:type, :title, :summary_long, :mission_pdf, :id])
+      |> Repo.one()
+
+    if assessment do
+      answer_query =
+        Answer
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> where([a, s], s.student_id == ^user.id)
+
+      questions =
+        Question
+        |> where(assessment_id: ^id)
+        |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+        |> select([q, a], %{q | answer: a})
+        |> order_by(:display_order)
+        |> Repo.all()
+
+      assessment = Map.put(assessment, :questions, questions)
+      {:ok, assessment}
+    else
+      {:error, {:bad_request, "Assessment not found"}}
+    end
+
+    # else
+    #   {:error, {:forbidden, "User is not permitted to answer questions"}}
+    # end
+  end
+
   def all_open_assessments(assessment_type) do
     now = Timex.now()
 
     assessment_with_type = Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
     # TODO: Refactor to be done on SQL instead of in-memory
     Enum.filter(assessment_with_type, &(&1.is_published and Timex.before?(&1.open_at, now)))
+  end
+
+  def all_open_assessments() do
+    assessments =
+      Query.all_assessments_with_max_xp()
+      |> where(is_published: true)
+      |> order_by(:open_at)
+      |> Repo.all()
+
+    {:ok, assessments}
   end
 
   def assessments_due_soon() do

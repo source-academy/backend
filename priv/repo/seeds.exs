@@ -21,29 +21,58 @@ if Application.get_env(:cadet, :environment) == :dev do
   Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
 
   # Assessments
-  mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
+  for _ <- 1..5 do
+    assessment = insert(:assessment, %{is_published: true})
 
-  questions =
-    insert_list(3, :question, %{
-      type: :programming,
-      question: build(:programming_question),
-      assessment: mission,
-      max_xp: 200
-    })
+    programming_questions =
+      insert_list(3, :question, %{
+        type: :programming,
+        library:
+          if Enum.random(0..2) == 0 do
+            build(:library)
+          end,
+        question: build(:programming_question),
+        assessment: assessment,
+        max_xp: 200
+      })
 
-  submissions =
-    students
-    |> Enum.take(2)
-    |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
+    mcq_questions =
+      insert_list(3, :question, %{
+        type: :multiple_choice,
+        library:
+          if Enum.random(0..2) == 0 do
+            build(:library)
+          end,
+        question: build(:mcq_question),
+        assessment: assessment,
+        max_xp: 40
+      })
 
-  # Answers
-  for submission <- submissions,
-      question <- questions do
-    insert(:answer, %{
-      xp: 200,
-      question: question,
-      submission: submission,
-      answer: build(:programming_answer)
-    })
+    submissions =
+      students
+      |> Enum.take(2)
+      |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1}))
+
+    # Programming Answers
+    for submission <- submissions,
+        question <- programming_questions do
+      insert(:answer, %{
+        xp: 200,
+        question: question,
+        submission: submission,
+        answer: build(:programming_answer)
+      })
+    end
+
+    # MCQ Answers
+    for submission <- submissions,
+        question <- mcq_questions do
+      insert(:answer, %{
+        xp: 200,
+        question: question,
+        submission: submission,
+        answer: build(:mcq_answer)
+      })
+    end
   end
 end
