@@ -2,9 +2,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
   use CadetWeb.ConnCase
   use Timex
 
+  import Ecto.Query
+
   alias CadetWeb.AssessmentsController
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Accounts.Role
+  alias Cadet.Assessments.{Assessment, Submission}
+  alias Cadet.Accounts.{Role, User}
   alias Cadet.Repo
 
   setup do
@@ -31,13 +33,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  # All roles should see the same overview page
-  for role <- Role.__enum_map__() do
-    describe "GET /, #{role}" do
-      @tag authenticate: role
-      test "renders assessments overview", %{conn: conn, assessments: assessments} do
-        conn = get(conn, build_url())
-
+  # All roles should see the same overview
+  describe "GET /, all roles" do
+    test "renders assessments overview", %{conn: conn, users: users, assessments: assessments} do
+      for {_role, user} <- users do
         expected =
           assessments
           |> Map.values()
@@ -52,23 +51,33 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
-              "maximumEXP" => 720
+              "maximumEXP" => 720,
+              "attempted" => has_attempted?(user, &1)
             }
           )
 
-        assert ^expected = json_response(conn, 200)
-      end
+        resp =
+          conn
+          |> sign_in(user)
+          |> get(build_url())
+          |> json_response(200)
 
-      @tag authenticate: role
-      test "does not render unpublished assessments", %{conn: conn, assessments: assessments} do
+        assert expected == resp
+      end
+    end
+
+    test "does not render unpublished assessments", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      for {_role, user} <- users do
         mission = assessments.mission
 
         {:ok, _} =
           mission.assessment
           |> Assessment.changeset(%{is_published: false})
           |> Repo.update()
-
-        conn = get(conn, build_url())
 
         expected =
           assessments
@@ -85,11 +94,18 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
-              "maximumEXP" => 720
+              "maximumEXP" => 720,
+              "attempted" => has_attempted?(user, &1)
             }
           )
 
-        assert ^expected = json_response(conn, 200)
+        resp =
+          conn
+          |> sign_in(user)
+          |> get(build_url())
+          |> json_response(200)
+
+        assert expected == resp
       end
     end
   end
@@ -119,7 +135,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> json_response(200)
             |> Map.delete("questions")
 
-          assert ^expected_assessments = resp_assessments
+          assert expected_assessments == resp_assessments
         end
       end
     end
@@ -375,4 +391,14 @@ defmodule CadetWeb.AssessmentsControllerTest do
   defp build_url(assessment_id), do: "/v1/assessments/#{assessment_id}"
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
+
+  defp has_attempted?(user = %User{}, assessment = %Assessment{}) do
+    submission =
+      Submission
+      |> where(student_id: ^user.id)
+      |> where(assessment_id: ^assessment.id)
+      |> Repo.one()
+
+    not is_nil(submission)
+  end
 end

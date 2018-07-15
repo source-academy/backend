@@ -13,6 +13,7 @@ defmodule Cadet.Assessments.Assessment do
 
   schema "assessments" do
     field(:max_xp, :integer, virtual: true)
+    field(:attempted, :boolean, virtual: true)
     field(:title, :string)
     field(:is_published, :boolean, default: false)
     field(:type, AssessmentType)

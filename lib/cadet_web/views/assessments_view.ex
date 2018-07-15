@@ -16,6 +16,7 @@ defmodule CadetWeb.AssessmentsView do
       openAt: format_datetime(assessment.open_at),
       closeAt: format_datetime(assessment.close_at),
       type: assessment.type,
+      attempted: assessment.attempted,
       maximumEXP: assessment.max_xp,
       coverImage: Cadet.Assessments.Image.url({assessment.cover_picture, assessment})
     }

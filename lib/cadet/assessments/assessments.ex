@@ -64,9 +64,16 @@ defmodule Cadet.Assessments do
     Enum.filter(assessment_with_type, &(&1.is_published and Timex.before?(&1.open_at, now)))
   end
 
-  def all_published_assessments do
+  @doc """
+  Returns a list of assessments with all fields and an indicator showing whether it has been attempted
+  by the supplied user
+  """
+  def all_published_assessments(user = %User{}) do
     assessments =
       Query.all_assessments_with_max_xp()
+      |> subquery()
+      |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
+      |> select([a, s], %{a | attempted: not is_nil(s.id)})
       |> where(is_published: true)
       |> order_by(:open_at)
       |> Repo.all()
