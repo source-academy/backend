@@ -266,7 +266,32 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "it does not render questions for unpublished assessments", %{
+    test "it does not permit access to not yet open assessments", %{
+      conn: conn,
+      users: users,
+      assessments: %{mission: mission}
+    } do
+      for role <- Role.__enum_map__() do
+        user = Map.get(users, role)
+
+        {:ok, _} =
+          mission.assessment
+          |> Assessment.changeset(%{
+            open_at: Timex.shift(Timex.now(), days: 5),
+            close_at: Timex.shift(Timex.now(), days: 10)
+          })
+          |> Repo.update()
+
+        conn =
+          conn
+          |> sign_in(user)
+          |> get(build_url(mission.assessment.id))
+
+        assert response(conn, 401) == "Assessment not open"
+      end
+    end
+
+    test "it does not permit access to unpublished assessments", %{
       conn: conn,
       users: users,
       assessments: %{mission: mission}

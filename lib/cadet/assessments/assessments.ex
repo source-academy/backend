@@ -24,13 +24,11 @@ defmodule Cadet.Assessments do
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}) do
-    # def assessment_with_questions_and_answers(id, user = %User{role: role}) do
-    # if role in @submit_answer_roles do
     assessment =
       Assessment
       |> where(id: ^id)
       |> where(is_published: true)
-      |> select([:type, :title, :summary_long, :mission_pdf, :id])
+      |> select([:type, :title, :summary_long, :mission_pdf, :id, :open_at])
       |> Repo.one()
 
     if assessment do
@@ -56,10 +54,6 @@ defmodule Cadet.Assessments do
     else
       {:error, {:bad_request, "Assessment not found"}}
     end
-
-    # else
-    #   {:error, {:forbidden, "User is not permitted to answer questions"}}
-    # end
   end
 
   def all_open_assessments(assessment_type) do

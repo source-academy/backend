@@ -30,13 +30,13 @@ defmodule Cadet.Assessments.Assessment do
   @optional_fields ~w(summary_short summary_long is_published)a
   @optional_file_fields ~w(cover_picture mission_pdf)a
 
-  def changeset(mission, params) do
+  def changeset(assessment, params) do
     params =
       params
       |> convert_date(:open_at)
       |> convert_date(:close_at)
 
-    mission
+    assessment
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> cast_attachments(params, @optional_file_fields)
