@@ -6,6 +6,10 @@ defmodule Cadet.Assessments.Query do
 
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
+  @doc """
+  Returns a query with the following bindings:
+  [submissions_with_xp, answers]
+  """
   @spec all_submissions_with_xp :: Submission.t()
   def all_submissions_with_xp do
     Submission
@@ -13,6 +17,10 @@ defmodule Cadet.Assessments.Query do
     |> select([s, q], %Submission{s | xp: q.xp})
   end
 
+  @doc """
+  Returns a query with the following bindings:
+  [assessments_with_xp, questions]
+  """
   @spec all_assessments_with_max_xp :: Assessment.t()
   def all_assessments_with_max_xp do
     Assessment

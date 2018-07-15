@@ -18,6 +18,7 @@ defmodule Cadet.Assessments.Question do
     field(:type, QuestionType)
     field(:raw_question, :string, virtual: true)
     field(:max_xp, :integer)
+    field(:answer, :map, virtual: true)
     embeds_one(:library, Library)
     belongs_to(:assessment, Assessment)
     timestamps()
