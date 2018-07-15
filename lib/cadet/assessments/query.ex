@@ -10,7 +10,7 @@ defmodule Cadet.Assessments.Query do
   Returns a query with the following bindings:
   [submissions_with_xp, answers]
   """
-  @spec all_submissions_with_xp :: Submission.t()
+  @spec all_submissions_with_xp :: Ecto.Query.t()
   def all_submissions_with_xp do
     Submission
     |> join(:inner, [s], q in subquery(submissions_xp()), s.id == q.submission_id)
@@ -21,14 +21,14 @@ defmodule Cadet.Assessments.Query do
   Returns a query with the following bindings:
   [assessments_with_xp, questions]
   """
-  @spec all_assessments_with_max_xp :: Assessment.t()
+  @spec all_assessments_with_max_xp :: Ecto.Query.t()
   def all_assessments_with_max_xp do
     Assessment
     |> join(:inner, [a], q in subquery(assessments_max_xp()), a.id == q.assessment_id)
     |> select([a, q], %Assessment{a | max_xp: q.max_xp})
   end
 
-  @spec submissions_xp :: %{submission_id: integer(), xp: integer()}
+  @spec submissions_xp :: Ecto.Query.t()
   def submissions_xp do
     Answer
     |> group_by(:submission_id)
@@ -38,7 +38,7 @@ defmodule Cadet.Assessments.Query do
     })
   end
 
-  @spec assessments_max_xp :: %{assessment_id: integer(), max_xp: integer()}
+  @spec assessments_max_xp :: Ecto.Query.t()
   def assessments_max_xp do
     Question
     |> group_by(:assessment_id)
