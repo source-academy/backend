@@ -28,9 +28,7 @@ defmodule CadetWeb.ConnCase do
       @endpoint CadetWeb.Endpoint
 
       # Helper function for formatting datetime for views
-      defp format_datetime(datetime) do
-        Timex.format!(DateTime.truncate(datetime, :millisecond), "{ISO:Extended}")
-      end
+      import CadetWeb.ViewHelpers
 
       # Helper function
       def sign_in(conn, user) do
