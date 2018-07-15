@@ -7,7 +7,7 @@ defmodule Cadet.Course do
 
   alias Cadet.Accounts.User
   alias Cadet.Course.Announcement
-  alias Cadet.Course.Group
+  # alias Cadet.Course.Group
   alias Cadet.Course.Material
   alias Cadet.Course.Upload
 

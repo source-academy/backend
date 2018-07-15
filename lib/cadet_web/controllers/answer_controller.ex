@@ -3,6 +3,22 @@ defmodule CadetWeb.AnswerController do
 
   use PhoenixSwagger
 
+  alias Cadet.Assessments
+
+  def submit(conn, %{"questionid" => question_id, "answer" => answer}) do
+    case Assessments.answer_question(question_id, conn.assigns.current_user, answer) do
+      {:ok, _nil} ->
+        send_resp(conn, :ok, "OK")
+
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
+    end
+  end
+
+  def submit(conn, _parms) do
+    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+  end
+
   swagger_path :submit do
     post("/assessments/question/{questionId}/submit")
 
@@ -22,7 +38,7 @@ defmodule CadetWeb.AnswerController do
     end
 
     response(200, "OK")
-    response(400, "Missing parameter(s) or wrong answer type")
+    response(400, "Invalid parameters")
     response(401, "Unauthorised")
   end
 

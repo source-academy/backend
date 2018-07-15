@@ -5,13 +5,13 @@ defmodule Cadet.Assessments.Library do
   use Cadet, :model
 
   embedded_schema do
-    field(:version, :integer, default: 1)
+    field(:chapter, :integer, default: 1)
     field(:globals, {:array, :string}, default: [])
     field(:externals, {:array, :string}, default: [])
     field(:files, {:array, :string}, default: [])
   end
 
-  @required_fields ~w(version)a
+  @required_fields ~w(chapter)a
   @optional_fields ~w(globals externals files)a
 
   def changeset(library, params \\ %{}) do

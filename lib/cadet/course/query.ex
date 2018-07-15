@@ -4,7 +4,6 @@ defmodule Cadet.Course.Query do
   """
   import Ecto.Query
 
-  alias Cadet.Accounts.User
   alias Cadet.Course.Material
 
   def material_folder_files(folder_id) do

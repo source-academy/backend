@@ -1,4 +1,4 @@
-defmodule Cadet.Public.UpdaterTest do
+defmodule Cadet.Updater.PublicTest do
   @moduledoc """
   This test module uses pre-recoreded HTTP responses saved by ExVCR. This
   allows testing without actual external IVLE API calls.
@@ -21,7 +21,7 @@ defmodule Cadet.Public.UpdaterTest do
   use ExUnit.Case, async: false
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  alias Cadet.Public.Updater
+  alias Cadet.Updater.Public
 
   setup_all do
     HTTPoison.start()
@@ -30,14 +30,14 @@ defmodule Cadet.Public.UpdaterTest do
   test "Get authentication token" do
     # a custom cassette is used, as body of 302 redirects expose the api key
     use_cassette "updater/get_token#1", custom: true do
-      token = Updater.get_token()
+      token = Public.get_token()
       assert String.length(token) == 480
     end
   end
 
   test "Get course id" do
     use_cassette "updater/get_course_id#1", custom: true do
-      course_id = Updater.get_course_id("T0K3N...")
+      course_id = Public.get_course_id("T0K3N...")
       assert String.length(course_id) == 36
       refute course_id == "00000000-0000-0000-0000-000000000000"
     end
@@ -45,7 +45,7 @@ defmodule Cadet.Public.UpdaterTest do
 
   test "Get api params" do
     use_cassette "updater/get_api_params#1", custom: true do
-      assert %{token: token, course_id: course_id} = Updater.get_api_params()
+      assert %{token: token, course_id: course_id} = Public.get_api_params()
       assert String.length(token) == 480
       assert String.length(course_id) == 36
       refute course_id == "00000000-0000-0000-0000-000000000000"
@@ -55,15 +55,15 @@ defmodule Cadet.Public.UpdaterTest do
   describe "Get announcements" do
     test "Valid token" do
       use_cassette "updater/get_announcements#1", custom: true do
-        %{token: token, course_id: course_id} = Updater.get_api_params()
-        assert {:ok, announcements} = Updater.get_announcements(token, course_id)
+        %{token: token, course_id: course_id} = Public.get_api_params()
+        assert {:ok, announcements} = Public.get_announcements(token, course_id)
         assert is_list(announcements)
       end
     end
 
     test "Invalid token" do
       use_cassette "updater/get_announcements#2" do
-        assert {:error, :bad_request} = Updater.get_announcements("t0k3n", "")
+        assert {:error, :bad_request} = Public.get_announcements("t0k3n", "")
       end
     end
   end
@@ -71,14 +71,14 @@ defmodule Cadet.Public.UpdaterTest do
   describe "Start GenServer" do
     test "Using GenServer.start_link/3" do
       use_cassette "updater/start_link#1", custom: true do
-        assert {:ok, _} = GenServer.start_link(Updater, nil, name: TestUpdater)
-        assert :ok = GenServer.stop(TestUpdater)
+        assert {:ok, _} = GenServer.start_link(Public, nil, name: TestPublic)
+        assert :ok = GenServer.stop(TestPublic)
       end
     end
 
-    test "Using Updater.start_link/1" do
+    test "Using Public.start_link/1" do
       use_cassette "updater/start_link#2", custom: true do
-        assert {:ok, pid} = Updater.start_link()
+        assert {:ok, pid} = Public.start_link()
         assert Process.alive?(pid)
         assert GenServer.stop(pid) == :ok
         refute Process.alive?(pid)
@@ -88,7 +88,7 @@ defmodule Cadet.Public.UpdaterTest do
 
   test "GenServer init/1 callback" do
     use_cassette "updater/init#1", custom: true do
-      assert {:ok, %{token: token, course_id: course_id}} = Updater.init(nil)
+      assert {:ok, %{token: token, course_id: course_id}} = Public.init(nil)
       assert String.length(token) == 480
       assert String.length(course_id) == 36
       refute course_id == "00000000-0000-0000-0000-000000000000"
@@ -98,16 +98,16 @@ defmodule Cadet.Public.UpdaterTest do
   describe "Send :work to GenServer" do
     test "Valid token" do
       use_cassette "updater/handle_info#1", custom: true do
-        api_params = Updater.get_api_params()
-        assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
+        api_params = Public.get_api_params()
+        assert {:noreply, new_api_params} = Public.handle_info(:work, api_params)
         assert new_api_params == api_params
       end
     end
 
     test "Invalid token" do
       use_cassette "updater/handle_info#2", custom: true do
-        api_params = %{Updater.get_api_params() | token: "bad_token"}
-        assert {:noreply, new_api_params} = Updater.handle_info(:work, api_params)
+        api_params = %{Public.get_api_params() | token: "bad_token"}
+        assert {:noreply, new_api_params} = Public.handle_info(:work, api_params)
         assert api_params.course_id == new_api_params.course_id
         assert String.length(new_api_params.token) == 480
       end
