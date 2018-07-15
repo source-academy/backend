@@ -41,7 +41,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         expected =
           assessments
           |> Map.values()
-          |> Enum.map(fn a -> a.assessment end)
+          |> Enum.map(& &1.assessment)
           |> Enum.sort(&open_at_asc_comparator/2)
           |> Enum.map(
             &%{
@@ -323,8 +323,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
       for {_type,
            %{
              assessment: assessment,
-             mcq_answers: [mcq_answers | _mcq_answers],
-             programming_answers: [programming_answers | _programming_answers]
+             mcq_answers: [mcq_answers | _],
+             programming_answers: [programming_answers | _]
            }} <- assessments do
         # Programming questions should come first due to seeding order
 

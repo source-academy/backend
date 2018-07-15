@@ -23,7 +23,7 @@ defmodule Cadet.Assessments do
     Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
   end
 
-  def assessment_with_questions_and_answers(id, user = %User{}) do
+  def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
     assessment =
       Assessment
       |> where(id: ^id)
@@ -36,7 +36,7 @@ defmodule Cadet.Assessments do
         answer_query =
           Answer
           |> join(:inner, [a], s in assoc(a, :submission))
-          |> where([a, s], s.student_id == ^user.id)
+          |> where([_, s], s.student_id == ^user.id)
 
         questions =
           Question
@@ -64,7 +64,7 @@ defmodule Cadet.Assessments do
     Enum.filter(assessment_with_type, &(&1.is_published and Timex.before?(&1.open_at, now)))
   end
 
-  def all_open_assessments() do
+  def all_published_assessments do
     assessments =
       Query.all_assessments_with_max_xp()
       |> where(is_published: true)

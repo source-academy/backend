@@ -77,20 +77,15 @@ defmodule CadetWeb.AssessmentsView do
       content: programming_question["content"],
       solutionTemplate: programming_question["solution_template"],
       solutionHeader: programming_question["solution_header"],
-      answer:
-        if answer do
-          answer.answer["code"]
-        end
+      answer: answer && answer.answer["code"]
     }
 
-    case params.is_graded do
-      true ->
-        Map.merge(partial, programming_fields)
-
-      false ->
-        programming_fields
-        |> Map.merge(%{solution: programming_question["solution"]})
-        |> Map.merge(partial)
+    if params.is_graded do
+      Map.merge(partial, programming_fields)
+    else
+      programming_fields
+      |> Map.merge(%{solution: programming_question["solution"]})
+      |> Map.merge(partial)
     end
   end
 
@@ -107,26 +102,21 @@ defmodule CadetWeb.AssessmentsView do
           "mcq_choice.json",
           as: :mcq_choice
         ),
-      answer:
-        if answer do
-          answer.answer["choice_id"]
-        end
+      answer: answer && answer.answer["choice_id"]
     }
 
-    case params.is_graded do
-      true ->
-        Map.merge(partial, mcq_fields)
-
-      false ->
-        mcq_fields
-        |> Map.merge(%{solution: find_correct_choice(mcq_question["choices"])})
-        |> Map.merge(partial)
+    if params.is_graded do
+      Map.merge(partial, mcq_fields)
+    else
+      mcq_fields
+      |> Map.merge(%{solution: find_correct_choice(mcq_question["choices"])})
+      |> Map.merge(partial)
     end
   end
 
   defp find_correct_choice(choices) do
     choices
-    |> Enum.find(fn choice -> Map.get(choice, "is_correct") end)
+    |> Enum.find(&Map.get(&1, "is_correct"))
     |> Map.get("choice_id")
   end
 end

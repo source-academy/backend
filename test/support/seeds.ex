@@ -4,6 +4,38 @@ defmodule Cadet.Test.Seeds do
   """
   import Cadet.Factory
 
+  @doc """
+  This sets up the common assessments environment by inserting relevant entries into the DB.
+  Returns a map of the following format:
+  %{
+    accounts: %{
+      avenger: avenger,
+      mentor: mentor,
+      group: group,
+      students: students,
+      admin: admin
+    },
+    users: %{
+      staff: avenger,
+      student: List.first(students),
+      admin: admin
+    },
+    assessments: %{
+      path: %{
+        assessment: assessment,
+        programming_questions: programming_questions,
+        mcq_questions: mcq_questions,
+        submissions: submissions,
+        programming_answers: programming_answers,
+        mcq_answers: mcq_answers
+      },
+      mission: ...,
+      contest: ...,
+      sidequest: ...
+    }
+  }
+  """
+
   def assessments do
     if Application.get_env(:cadet, :environment) == :test do
       # User and Group
@@ -18,7 +50,7 @@ defmodule Cadet.Test.Seeds do
         Enum.reduce(
           Cadet.Assessments.AssessmentType.__enum_map__(),
           %{},
-          fn type, acc -> Map.put(acc, type, build_assessment(type, students)) end
+          fn type, acc -> Map.put(acc, type, insert_assessments(type, students)) end
         )
 
       %{
@@ -39,7 +71,7 @@ defmodule Cadet.Test.Seeds do
     end
   end
 
-  defp build_assessment(assessment_type, students) do
+  defp insert_assessments(assessment_type, students) do
     assessment = insert(:assessment, %{type: assessment_type, is_published: true})
 
     programming_questions =
@@ -47,10 +79,7 @@ defmodule Cadet.Test.Seeds do
         insert(:question, %{
           display_order: id,
           type: :programming,
-          library:
-            if Enum.random(0..2) == 0 do
-              build(:library)
-            end,
+          library: Enum.random([true, false]) && build(:library),
           question: build(:programming_question),
           assessment: assessment,
           max_xp: 200
@@ -62,10 +91,7 @@ defmodule Cadet.Test.Seeds do
         insert(:question, %{
           display_order: id,
           type: :multiple_choice,
-          library:
-            if Enum.random(0..2) == 0 do
-              build(:library)
-            end,
+          library: Enum.random([true, false]) && build(:library),
           question: build(:mcq_question),
           assessment: assessment,
           max_xp: 40

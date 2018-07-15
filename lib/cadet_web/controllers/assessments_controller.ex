@@ -6,7 +6,7 @@ defmodule CadetWeb.AssessmentsController do
   alias Cadet.Assessments
 
   def index(conn, _) do
-    {:ok, assessments} = Assessments.all_open_assessments()
+    {:ok, assessments} = Assessments.all_published_assessments()
 
     render(conn, "index.json", assessments: assessments)
   end
