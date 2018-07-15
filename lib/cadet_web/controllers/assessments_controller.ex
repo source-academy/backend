@@ -70,6 +70,12 @@ defmodule CadetWeb.AssessmentsController do
             openAt(:string, "The opening date", format: "date-time", required: true)
             closeAt(:string, "The closing date", format: "date-time", required: true)
 
+            attempted(
+              :boolean,
+              "Whether the assessment has been attempted by the current user",
+              required: true
+            )
+
             maximumEXP(
               :integer,
               "The maximum amount of XP to be earned from this assessment",
