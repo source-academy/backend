@@ -21,12 +21,62 @@ defmodule Cadet.Assessments do
     |> Repo.all()
   end
 
+  def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
+    assessment =
+      Assessment
+      |> where(id: ^id)
+      |> where(is_published: true)
+      |> select([:type, :title, :summary_long, :mission_pdf, :id, :open_at])
+      |> Repo.one()
+
+    if assessment do
+      if Timex.after?(Timex.now(), assessment.open_at) do
+        answer_query =
+          Answer
+          |> join(:inner, [a], s in assoc(a, :submission))
+          |> where([_, s], s.student_id == ^user.id)
+
+        questions =
+          Question
+          |> where(assessment_id: ^id)
+          |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+          |> select([q, a], %{q | answer: a})
+          |> order_by(:display_order)
+          |> Repo.all()
+
+        assessment = Map.put(assessment, :questions, questions)
+        {:ok, assessment}
+      else
+        {:error, {:unauthorized, "Assessment not open"}}
+      end
+    else
+      {:error, {:bad_request, "Assessment not found"}}
+    end
+  end
+
   def all_open_assessments(assessment_type) do
     Assessment
     |> where(is_published: true)
     |> where(type: ^assessment_type)
     |> where([a], a.open_at <= from_now(1, "second"))
     |> Repo.all()
+  end
+
+  @doc """
+  Returns a list of assessments with all fields and an indicator showing whether it has been attempted
+  by the supplied user
+  """
+  def all_published_assessments(user = %User{}) do
+    assessments =
+      Query.all_assessments_with_max_xp()
+      |> subquery()
+      |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
+      |> select([a, s], %{a | attempted: not is_nil(s.id)})
+      |> where(is_published: true)
+      |> order_by(:open_at)
+      |> Repo.all()
+
+    {:ok, assessments}
   end
 
   def assessments_due_soon() do

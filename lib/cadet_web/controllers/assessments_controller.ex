@@ -3,6 +3,24 @@ defmodule CadetWeb.AssessmentsController do
 
   use PhoenixSwagger
 
+  alias Cadet.Assessments
+
+  def index(conn, _) do
+    user = conn.assigns[:current_user]
+    {:ok, assessments} = Assessments.all_published_assessments(user)
+
+    render(conn, "index.json", assessments: assessments)
+  end
+
+  def show(conn, %{"id" => assessment_id}) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.assessment_with_questions_and_answers(assessment_id, user) do
+      {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
   swagger_path :index do
     get("/assessments")
 
@@ -48,17 +66,23 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            summary_short(:string, "Short summary", required: true)
-            open_at(:string, "The opening date", format: "date-time", required: true)
-            close_at(:string, "The closing date", format: "date-time", required: true)
+            shortSummary(:string, "Short summary", required: true)
+            openAt(:string, "The opening date", format: "date-time", required: true)
+            closeAt(:string, "The closing date", format: "date-time", required: true)
 
-            max_xp(
+            attempted(
+              :boolean,
+              "Whether the assessment has been attempted by the current user",
+              required: true
+            )
+
+            maximumEXP(
               :integer,
               "The maximum amount of XP to be earned from this assessment",
               required: true
             )
 
-            cover_picture(:string, "The URL to the cover picture", required: true)
+            coverImage(:string, "The URL to the cover picture", required: true)
           end
         end,
       Assessment:
@@ -67,8 +91,8 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            summary_long(:string, "Long summary", required: true)
-            mission_pdf(:string, "The URL to the assessment pdf")
+            longSummary(:string, "Long summary", required: true)
+            missionPDF(:string, "The URL to the assessment pdf")
 
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
           end
@@ -82,8 +106,8 @@ defmodule CadetWeb.AssessmentsController do
       Question:
         swagger_schema do
           properties do
-            questionId(:integer, "The question id", required: true)
-            questionType(:string, "The question type (mcq/programming)", required: true)
+            id(:integer, "The question id", required: true)
+            type(:string, "The question type (mcq/programming)", required: true)
             content(:string, "The question content", required: true)
 
             choices(
@@ -104,7 +128,7 @@ defmodule CadetWeb.AssessmentsController do
 
             library(
               Schema.ref(:Library),
-              "The library used for this question (programming questions only)"
+              "The library used for this question"
             )
 
             solution_template(:string, "Solution template for programming questions")

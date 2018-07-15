@@ -27,6 +27,9 @@ defmodule CadetWeb.ConnCase do
       # The default endpoint for testing
       @endpoint CadetWeb.Endpoint
 
+      # Helper function for formatting datetime for views
+      import CadetWeb.ViewHelpers
+
       # Helper function
       def sign_in(conn, user) do
         CadetWeb.ConnCase.sign_in(conn, user)
