@@ -5,11 +5,8 @@ defmodule Cadet.Assessments.Question do
   """
   use Cadet, :model
 
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.QuestionType
-  alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
-  alias Cadet.Assessments.QuestionTypes.MCQQuestion
-  alias Cadet.Assessments.Library
+  alias Cadet.Assessments.{Assessment, Library, QuestionType}
+  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion}
 
   schema "questions" do
     field(:title, :string)

@@ -19,10 +19,8 @@ defmodule Cadet.DataCase do
       alias Cadet.Repo
 
       import Ecto
-      import Ecto.Changeset
-      import Ecto.Query
-      import Cadet.DataCase
-      import Cadet.Factory
+      import Ecto.{Changeset, Query}
+      import Cadet.{DataCase, Factory}
     end
   end
 

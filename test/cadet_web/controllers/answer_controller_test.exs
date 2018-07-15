@@ -3,9 +3,9 @@ defmodule CadetWeb.AnswerControllerTest do
 
   import Ecto.Query
 
-  alias CadetWeb.AnswerController
   alias Cadet.Assessments.Answer
   alias Cadet.Repo
+  alias CadetWeb.AnswerController
 
   test "swagger" do
     AnswerController.swagger_definitions()

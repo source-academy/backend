@@ -6,10 +6,8 @@ defmodule Cadet.Course do
   use Cadet, :context
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.Announcement
+  alias Cadet.Course.{Announcement, Material, Upload}
   # alias Cadet.Course.Group
-  alias Cadet.Course.Material
-  alias Cadet.Course.Upload
 
   @doc """
   Create announcement entity using specified user as poster

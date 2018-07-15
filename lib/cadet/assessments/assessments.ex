@@ -15,7 +15,7 @@ defmodule Cadet.Assessments do
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
 
-  def all_assessments() do
+  def all_assessments do
     Repo.all(Assessment)
   end
 
@@ -81,7 +81,7 @@ defmodule Cadet.Assessments do
     {:ok, assessments}
   end
 
-  def assessments_due_soon() do
+  def assessments_due_soon do
     now = Timex.now()
     week_after = Timex.add(now, Duration.from_weeks(1))
 
