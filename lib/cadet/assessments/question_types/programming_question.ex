@@ -18,20 +18,6 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
   def changeset(question, params \\ %{}) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
-    |> put_programmingquestion
     |> validate_required(@required_fields)
-  end
-
-  defp put_programmingquestion(changeset) do
-    change = get_change(changeset, :raw_programmingquestion)
-
-    if change do
-      json = Poison.decode!(change)
-
-      changeset
-      |> cast(json, @required_fields)
-    else
-      changeset
-    end
   end
 end

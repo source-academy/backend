@@ -30,41 +30,5 @@ defmodule Cadet.Assessments.Question do
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:library)
     |> validate_required(@required_fields)
-    |> put_question
-  end
-
-  defp put_question(changeset) do
-    {:ok, json} =
-      changeset
-      |> get_change(:raw_question)
-      |> Kernel.||("{}")
-      |> Poison.decode()
-
-    type = get_change(changeset, :type)
-
-    case type do
-      :programming ->
-        put_change(
-          changeset,
-          :question,
-          %ProgrammingQuestion{}
-          |> ProgrammingQuestion.changeset(json)
-          |> apply_changes
-          |> Map.from_struct()
-        )
-
-      :multiple_choice ->
-        put_change(
-          changeset,
-          :question,
-          %MCQQuestion{}
-          |> MCQQuestion.changeset(json)
-          |> apply_changes
-          |> Map.from_struct()
-        )
-
-      _ ->
-        changeset
-    end
   end
 end

@@ -19,23 +19,9 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
   def changeset(question, params \\ %{}) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
-    |> put_question
     |> cast_embed(:choices, with: &MCQChoice.changeset/2, required: true)
     |> validate_one_correct_answer
     |> validate_required(@required_fields ++ ~w(choices)a)
-  end
-
-  defp put_question(changeset) do
-    change = get_change(changeset, :raw_mcqquestion)
-
-    if change do
-      json = Poison.decode!(change)
-
-      changeset
-      |> cast(json, @required_fields)
-    else
-      changeset
-    end
   end
 
   defp validate_one_correct_answer(changeset) do
