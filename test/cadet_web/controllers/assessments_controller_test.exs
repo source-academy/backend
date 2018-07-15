@@ -347,12 +347,29 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  # for role <- [:staff, :admin] do
-  #   describe "GET /assessment_id, #{role}" do
-  #     it "renders assessment details" do
-  #     end
-  #   end
-  # end
+  describe "GET /assessment_id, non-students" do
+    test "it renders empty answers", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      for role <- [:staff, :admin] do
+        user = Map.get(users, role)
+
+        for {_type, %{assessment: assessment}} <- assessments do
+          resp_answers =
+            conn
+            |> sign_in(user)
+            |> get(build_url(assessment.id))
+            |> json_response(200)
+            |> Map.get("questions")
+            |> Enum.map(&Map.get(&1, ["answer"]))
+
+          assert Enum.uniq(resp_answers) == [nil]
+        end
+      end
+    end
+  end
 
   defp build_url, do: "/v1/assessments/"
   defp build_url(assessment_id), do: "/v1/assessments/#{assessment_id}"

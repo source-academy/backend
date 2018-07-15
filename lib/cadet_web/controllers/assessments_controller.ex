@@ -6,10 +6,9 @@ defmodule CadetWeb.AssessmentsController do
   alias Cadet.Assessments
 
   def index(conn, _) do
-    case Assessments.all_open_assessments() do
-      {:ok, assessments} -> render(conn, "index.json", assessments: assessments)
-      {:error, {status, message}} -> send_resp(conn, status, message)
-    end
+    {:ok, assessments} = Assessments.all_open_assessments()
+
+    render(conn, "index.json", assessments: assessments)
   end
 
   def show(conn, %{"id" => assessment_id}) do
@@ -20,40 +19,6 @@ defmodule CadetWeb.AssessmentsController do
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
   end
-
-  # def show(conn, %{"assessmentId" => assessmentId}) do
-  #   assessment = Poison.encode(Assessments.get_assessment(assessmentId))
-  #   render(conn, "index.json", assessment: assessment)
-  # end
-
-  # def new(conn, _) do
-  #   user_id = conn.assigns[:current_user].id
-
-  #   submission_query =
-  #     Submission
-  #     |> where([s], s.student_id == ^user_id)
-  #     |> select([s], s.assessment_id)
-  #     |> distinct(true)
-  #     |> Repo.all()
-
-  #   unattempted_assessments =
-  #     Assessment
-  #     |> where([a], a.id not in ^submission_query)
-  #     |> select([a], %{
-  #       id: a.id,
-  #       title: a.title,
-  #       type: a.category,
-  #       summary_short: a.summary_short,
-  #       open_at: a.open_at,
-  #       close_at: a.close_at,
-  #       max_xp: a.max_xp,
-  #       cover_picture: a.cover_picture
-  #     })
-  #     |> Repo.all()
-  #     |> Poison.encode()
-
-  #   render(conn, "index.json", unattempted_assessments: unattempted_assessments)
-  # end
 
   swagger_path :index do
     get("/assessments")
