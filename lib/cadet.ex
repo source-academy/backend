@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Consistency.MultiAliasImportRequireUse
 defmodule Cadet do
   @moduledoc """
   Cadet keeps the contexts that define your domain

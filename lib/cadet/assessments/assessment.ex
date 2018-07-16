@@ -6,10 +6,7 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Assessments.AssessmentType
-  alias Cadet.Assessments.Image
-  alias Cadet.Assessments.Question
-  alias Cadet.Assessments.Upload
+  alias Cadet.Assessments.{AssessmentType, Image, Question, Upload}
 
   schema "assessments" do
     field(:max_xp, :integer, virtual: true)
