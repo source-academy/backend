@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/source-academy/cadet.svg?branch=master)](https://travis-ci.org/source-academy/cadet)
 [![Coverage Status](https://coveralls.io/repos/github/source-academy/cadet/badge.svg?branch=master)](https://coveralls.io/github/source-academy/cadet?branch=master)
+[![Inline docs](http://inch-ci.org/github/source-academy/cadet.svg)](http://inch-ci.org/github/source-academy/cadet)
 
 Cadet is the web application powering Source Academy.
 
