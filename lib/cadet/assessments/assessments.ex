@@ -202,8 +202,8 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec all_submissions_by_grader(User.t()) ::
-          {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
+  @spec all_submissions_by_grader(%User{}) ::
+          {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader(grader = %User{role: role}) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
@@ -227,8 +227,8 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec get_answers_in_submission(integer() | String.t(), User.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:unauthorized, String.t()}}
+  @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
+          {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
   def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
@@ -251,7 +251,7 @@ defmodule Cadet.Assessments do
   @spec update_grading_info(
           %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
           %{},
-          User.t()
+          %User{}
         ) ::
           {:ok, nil}
           | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}

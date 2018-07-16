@@ -53,7 +53,7 @@ defmodule Mix.Tasks.Cadet.Token do
     end
   end
 
-  @spec test_user(atom() | String.t()) :: User.t()
+  @spec test_user(atom() | String.t()) :: %User{}
   defp test_user(role) when is_atom(role) or is_binary(role) do
     if Application.get_env(:cadet, :environment) in @env_allow_mock do
       user =
