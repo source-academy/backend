@@ -8,5 +8,4 @@ defmodule CadetWeb.RouterTest do
     conn = get(conn, "/swagger/index.html")
     assert response(conn, 200)
   end
-
 end
