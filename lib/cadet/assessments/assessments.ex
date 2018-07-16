@@ -7,19 +7,11 @@ defmodule Cadet.Assessments do
 
   import Ecto.Query
 
-  alias Timex.Duration
-
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
-
-  def all_assessments(assessment_type) do
-    Assessment
-    |> where(type: ^assessment_type)
-    |> Repo.all()
-  end
 
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
     assessment =
@@ -54,14 +46,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def all_open_assessments(assessment_type) do
-    Assessment
-    |> where(is_published: true)
-    |> where(type: ^assessment_type)
-    |> where([a], a.open_at <= from_now(1, "second"))
-    |> Repo.all()
-  end
-
   @doc """
   Returns a list of assessments with all fields and an indicator showing whether it has been attempted
   by the supplied user
@@ -77,15 +61,6 @@ defmodule Cadet.Assessments do
       |> Repo.all()
 
     {:ok, assessments}
-  end
-
-  def assessments_due_soon() do
-    Assessment
-    |> where(is_published: true)
-    |> where([a], a.open_at <= from_now(1, "second"))
-    |> where([a], a.close_at >= from_now(1, "second"))
-    |> where([a], a.close_at <= from_now(1, "week"))
-    |> Repo.all()
   end
 
   def create_assessment(params) do

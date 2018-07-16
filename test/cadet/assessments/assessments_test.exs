@@ -4,14 +4,6 @@ defmodule Cadet.AssessmentsTest do
   alias Cadet.Assessments
   alias Cadet.Assessments.{Assessment, AssessmentType, Question}
 
-  test "all open assessments" do
-    open_assessment = insert(:assessment, is_published: true, type: :mission)
-    closed_assessment = insert(:assessment, is_published: false, type: :mission)
-    result = Enum.map(Assessments.all_open_assessments(:mission), fn m -> m.id end)
-    assert open_assessment.id in result
-    refute closed_assessment.id in result
-  end
-
   test "create assessments of all types" do
     Enum.each(AssessmentType.__enum_map__(), fn type ->
       title_string = Atom.to_string(type)
@@ -109,49 +101,6 @@ defmodule Cadet.AssessmentsTest do
     assessment = Repo.get(Assessment, assessment.id)
 
     assert assessment.title == "changed_assessment"
-  end
-
-  test "all assessments with type" do
-    assessment = insert(:assessment, type: :mission)
-    sidequest = insert(:assessment, type: :sidequest)
-    contest = insert(:assessment, type: :contest)
-    path = insert(:assessment, type: :path)
-    assert assessment.id in Enum.map(Assessments.all_assessments(:mission), fn m -> m.id end)
-    assert sidequest.id in Enum.map(Assessments.all_assessments(:sidequest), fn m -> m.id end)
-    assert contest.id in Enum.map(Assessments.all_assessments(:contest), fn m -> m.id end)
-    assert path.id in Enum.map(Assessments.all_assessments(:path), fn m -> m.id end)
-  end
-
-  test "due assessments" do
-    assessment_before_now =
-      insert(
-        :assessment,
-        open_at: Timex.shift(Timex.now(), weeks: -1),
-        close_at: Timex.shift(Timex.now(), days: -2),
-        is_published: true
-      )
-
-    assessment_in_timerange =
-      insert(
-        :assessment,
-        open_at: Timex.shift(Timex.now(), days: -1),
-        close_at: Timex.shift(Timex.now(), days: 4),
-        is_published: true
-      )
-
-    assessment_far =
-      insert(
-        :assessment,
-        open_at: Timex.shift(Timex.now(), days: -2),
-        close_at: Timex.shift(Timex.now(), weeks: 2),
-        is_published: true
-      )
-
-    result = Enum.map(Assessments.assessments_due_soon(), fn m -> m.id end)
-
-    assert assessment_in_timerange.id in result
-    refute assessment_before_now.id in result
-    refute assessment_far.id in result
   end
 
   test "update question" do
