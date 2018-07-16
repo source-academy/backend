@@ -95,8 +95,8 @@ defmodule Cadet.Assessments do
     assessment =
       Assessment
       |> where(id: ^assessment_id)
-      |> join(:left, [a], q in Question, q.assessment_id == a.id)
-      |> preload([a, q], questions: q)
+      |> join(:left, [a], q in assoc(a, :questions))
+      |> preload([_, q], questions: q)
       |> Repo.one()
 
     if assessment do
