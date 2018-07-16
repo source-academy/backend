@@ -5,12 +5,12 @@ defmodule Cadet.Accounts.UserFactory do
 
   defmacro __using__(_opts) do
     quote do
-      alias Cadet.Accounts.User
+      alias Cadet.Accounts.{Role, User}
 
       def user_factory do
         %User{
           name: Faker.Name.En.name(),
-          role: :staff
+          role: Enum.random(Role.__enum_map__())
         }
       end
 
