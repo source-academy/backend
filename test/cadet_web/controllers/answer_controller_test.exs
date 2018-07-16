@@ -3,7 +3,8 @@ defmodule CadetWeb.AnswerControllerTest do
 
   import Ecto.Query
 
-  alias Cadet.Assessments.Answer
+  alias Cadet.Accounts.User
+  alias Cadet.Assessments.{Answer, Assessment, Submission}
   alias Cadet.Repo
   alias CadetWeb.AnswerController
 
@@ -66,6 +67,23 @@ defmodule CadetWeb.AnswerControllerTest do
       programming_conn = post(conn, build_url(programming_question.id), %{answer: "hello world"})
       assert response(programming_conn, 200) =~ "OK"
       assert get_answer_value(programming_question, assessment, user) == "hello world"
+    end
+
+    @tag authenticate: :student
+    test "valid params update submission is sets submission updated_at", %{
+      conn: conn,
+      assessment: assessment,
+      mcq_question: mcq_question
+    } do
+      user = conn.assigns.current_user
+
+      post(conn, build_url(mcq_question.id), %{answer: 5})
+      initial_submission = get_submission(user, assessment)
+
+      post(conn, build_url(mcq_question.id), %{answer: 6})
+      updated_submission = get_submission(user, assessment)
+
+      assert Timex.after?(updated_submission.updated_at, initial_submission.updated_at)
     end
 
     @tag authenticate: :student
@@ -173,6 +191,13 @@ defmodule CadetWeb.AnswerControllerTest do
 
   defp build_url(question_id) do
     "/v1/assessments/question/#{question_id}/submit/"
+  end
+
+  defp get_submission(%User{role: :student, id: student_id}, %Assessment{id: assessment_id}) do
+    Submission
+    |> where(student_id: ^student_id)
+    |> where(assessment_id: ^assessment_id)
+    |> Repo.one!()
   end
 
   defp get_answer_value(question, assessment, user) do
