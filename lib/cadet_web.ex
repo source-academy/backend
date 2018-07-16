@@ -1,3 +1,4 @@
+# credo:disable-for-this-file Credo.Check.Consistency.MultiAliasImportRequireUse
 defmodule CadetWeb do
   @moduledoc """
   The entrypoint for defining your web interface, such
@@ -42,8 +43,7 @@ defmodule CadetWeb do
       # use Phoenix.HTML
 
       import CadetWeb.Router.Helpers
-      import CadetWeb.ViewHelpers
-      import CadetWeb.Gettext
+      import CadetWeb.{Gettext, ViewHelpers}
     end
   end
 

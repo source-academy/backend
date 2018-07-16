@@ -3,8 +3,8 @@ defmodule CadetWeb.UserControllerTest do
 
   import Cadet.Factory
 
-  alias CadetWeb.UserController
   alias Cadet.Auth.Guardian
+  alias CadetWeb.UserController
 
   test "swagger" do
     assert is_map(UserController.swagger_definitions())

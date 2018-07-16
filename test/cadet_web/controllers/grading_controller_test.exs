@@ -1,9 +1,9 @@
 defmodule CadetWeb.GradingControllerTest do
   use CadetWeb.ConnCase
 
-  alias CadetWeb.GradingController
   alias Cadet.Assessments.Answer
   alias Cadet.Repo
+  alias CadetWeb.GradingController
 
   test "swagger" do
     GradingController.swagger_definitions()
