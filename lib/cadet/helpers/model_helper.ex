@@ -7,6 +7,10 @@ defmodule Cadet.ModelHelper do
 
   alias Timex.Timezone
 
+  def convert_date(:invalid, _) do
+    :invalid
+  end
+
   def convert_date(params, field) do
     if is_binary(params[field]) && params[field] != "" do
       timezone = Timezone.get("Asia/Singapore", Timex.now())
