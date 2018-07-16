@@ -7,21 +7,11 @@ defmodule Cadet.Assessments do
 
   import Ecto.Query
 
-  alias Timex.Duration
-
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
-
-  def all_assessments do
-    Repo.all(Assessment)
-  end
-
-  def all_assessments(assessment_type) do
-    Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
-  end
 
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
     assessment =
@@ -56,14 +46,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def all_open_assessments(assessment_type) do
-    now = Timex.now()
-
-    assessment_with_type = Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
-    # TODO: Refactor to be done on SQL instead of in-memory
-    Enum.filter(assessment_with_type, &(&1.is_published and Timex.before?(&1.open_at, now)))
-  end
-
   @doc """
   Returns a list of assessments with all fields and an indicator showing whether it has been attempted
   by the supplied user
@@ -81,28 +63,9 @@ defmodule Cadet.Assessments do
     {:ok, assessments}
   end
 
-  def assessments_due_soon do
-    now = Timex.now()
-    week_after = Timex.add(now, Duration.from_weeks(1))
-
-    all_assessments()
-    |> Enum.filter(
-      &(&1.is_published and Timex.before?(&1.open_at, now) and
-          Timex.between?(&1.close_at, now, week_after))
-    )
-  end
-
-  def build_assessment(params) do
-    Assessment.changeset(%Assessment{}, params)
-  end
-
-  def build_question(params) do
-    Question.changeset(%Question{}, params)
-  end
-
   def create_assessment(params) do
-    params
-    |> build_assessment
+    %Assessment{}
+    |> Assessment.changeset(params)
     |> Repo.insert()
   end
 
@@ -124,43 +87,28 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def publish_assessment(id) when is_ecto_id(id) do
-    id
-    |> get_assessment()
-    |> change(%{is_published: true})
-    |> Repo.update()
+  def publish_assessment(id) do
+    update_assessment(id, %{is_published: true})
   end
 
-  def get_question(id) when is_ecto_id(id) do
-    Repo.get(Question, id)
-  end
+  def create_question_for_assessment(params, assessment_id) when is_ecto_id(assessment_id) do
+    assessment =
+      Assessment
+      |> where(id: ^assessment_id)
+      |> join(:left, [a], q in assoc(a, :questions))
+      |> preload([_, q], questions: q)
+      |> Repo.one()
 
-  def get_assessment(id) when is_ecto_id(id) do
-    Repo.get(Assessment, id)
-  end
+    if assessment do
+      params_with_assessment_id = Map.put_new(params, :assessment_id, assessment.id)
 
-  def create_question_for_assessment(params, assessment_id)
-      when is_ecto_id(assessment_id) do
-    assessment = get_assessment(assessment_id)
-    create_question_for_assessment(params, assessment)
-  end
-
-  def create_question_for_assessment(params, assessment) do
-    Repo.transaction(fn ->
-      assessment = Repo.preload(assessment, :questions)
-      questions = assessment.questions
-
-      changeset =
-        params
-        |> Map.put_new(:assessment_id, assessment.id)
-        |> build_question
-        |> put_display_order(questions)
-
-      case Repo.insert(changeset) do
-        {:ok, question} -> question
-        {:error, changeset} -> Repo.rollback(changeset)
-      end
-    end)
+      %Question{}
+      |> Question.changeset(params_with_assessment_id)
+      |> put_display_order(assessment.questions)
+      |> Repo.insert()
+    else
+      {:error, "Assessment not found"}
+    end
   end
 
   def delete_question(id) when is_ecto_id(id) do
