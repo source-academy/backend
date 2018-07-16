@@ -10,16 +10,6 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
       solution: "asd",
       library: %{version: 1}
     }
-
-    %{
-      raw_programmingquestion:
-        Poison.encode!(%{
-          content: "asd",
-          solution_template: "asd",
-          solution: "asd",
-          library: %{version: 1}
-        })
-    }
   end
 
   invalid_changesets ProgrammingQuestion do

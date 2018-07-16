@@ -27,18 +27,6 @@ defmodule Cadet.ModelHelper do
     end
   end
 
-  def put_json(changeset, field, json_field) do
-    change = get_change(changeset, json_field)
-
-    if change do
-      json = Poison.decode!(change)
-
-      put_change(changeset, field, json)
-    else
-      changeset
-    end
-  end
-
   @doc """
   Given a changeset for a model that has some `belongs_to` associations, this function will attach multiple ids to the changeset if the models are provided in the parameters.
 
