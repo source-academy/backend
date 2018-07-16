@@ -5,6 +5,7 @@
     "lib/cadet.ex",
     "lib/cadet/application.ex",
     "lib/mix/tasks",
-    "test/support"
+    "test/support",
+    "test/factories"
   ]
 }
