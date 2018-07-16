@@ -10,15 +10,13 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
   embedded_schema do
     field(:content, :string)
     embeds_many(:choices, MCQChoice)
-    field(:raw_mcqquestion, :string, virtual: true)
   end
 
   @required_fields ~w(content)a
-  @optional_fields ~w(raw_mcqquestion)a
 
   def changeset(question, params \\ %{}) do
     question
-    |> cast(params, @required_fields ++ @optional_fields)
+    |> cast(params, @required_fields)
     |> cast_embed(:choices, with: &MCQChoice.changeset/2, required: true)
     |> validate_one_correct_answer
     |> validate_required(@required_fields ++ ~w(choices)a)
