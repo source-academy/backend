@@ -27,6 +27,7 @@ defmodule CadetWeb do
       import Plug.Conn
       import CadetWeb.Router.Helpers
       import CadetWeb.Gettext
+      import Cadet.SharedHelper
     end
   end
 
