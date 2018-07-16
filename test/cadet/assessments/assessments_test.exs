@@ -76,7 +76,7 @@ defmodule Cadet.AssessmentsTest do
           type: :programming,
           question: %{},
           raw_question:
-            Poison.encode!(%{
+            Jason.encode!(%{
               content: "asd",
               solution_template: "template",
               solution: "soln",
@@ -99,7 +99,7 @@ defmodule Cadet.AssessmentsTest do
           type: :multiple_choice,
           question: %{},
           raw_question:
-            Poison.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
+            Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
         },
         assessment.id
       )
@@ -118,7 +118,7 @@ defmodule Cadet.AssessmentsTest do
           type: :multiple_choice,
           question: %{},
           raw_question:
-            Poison.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
+            Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
         },
         assessment.id
       )
