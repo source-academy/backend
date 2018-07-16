@@ -6,63 +6,11 @@ defmodule Cadet.Factory do
   # fields_for has been deprecated, only raising exception
   @dialyzer {:no_return, fields_for: 1}
 
-  alias Cadet.Accounts.{Authorization, User}
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Course.{Announcement, Group, Material}
 
-  def user_factory do
-    %User{
-      name: Faker.Name.En.name(),
-      role: :staff
-    }
-  end
-
-  def student_factory do
-    %User{
-      name: Faker.Name.En.name(),
-      role: :student
-    }
-  end
-
-  def nusnet_id_factory do
-    %Authorization{
-      provider: :nusnet_id,
-      uid: sequence(:nusnet_id, &"E#{&1}"),
-      user: build(:user)
-    }
-  end
-
-  def group_factory do
-    %Group{
-      name: Faker.Company.name()
-    }
-  end
-
-  def announcement_factory do
-    %Announcement{
-      title: sequence(:title, &"Announcement #{&1}") <> Faker.Company.catch_phrase(),
-      content: Faker.StarWars.quote(),
-      poster: build(:user)
-    }
-  end
-
-  def material_folder_factory do
-    %Material{
-      name: Faker.Cat.name(),
-      description: Faker.Cat.breed(),
-      uploader: build(:user, %{role: :staff})
-    }
-  end
-
-  def material_file_factory do
-    %Material{
-      name: Faker.StarWars.character(),
-      description: Faker.StarWars.planet(),
-      file: build(:upload),
-      parent: build(:material_folder),
-      uploader: build(:user, %{role: :staff})
-    }
-  end
+  use Cadet.Accounts.{AuthorizationFactory, UserFactory}
+  use Cadet.Course.{AnnouncementFactory, GroupFactory, MaterialFactory}
 
   def upload_factory do
     %Plug.Upload{
