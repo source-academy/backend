@@ -69,7 +69,7 @@ defmodule Cadet.Assessments do
     |> Repo.insert()
   end
 
-  def update_assessment(id, params) do
+  def update_assessment(id, params) when is_ecto_id(id) do
     simple_update(
       Assessment,
       id,
@@ -78,7 +78,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def update_question(id, params) do
+  def update_question(id, params) when is_ecto_id(id) do
     simple_update(
       Question,
       id,
@@ -119,7 +119,7 @@ defmodule Cadet.Assessments do
     end)
   end
 
-  def delete_question(id) do
+  def delete_question(id) when is_ecto_id(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
   end
@@ -133,7 +133,7 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user = %User{role: role}, raw_answer) do
+  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
     if role in @submit_answer_roles do
       question =
         Question
@@ -158,8 +158,8 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec all_submissions_by_grader(User.t()) ::
-          {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
+  @spec all_submissions_by_grader(%User{}) ::
+          {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader(grader = %User{role: role}) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
@@ -183,8 +183,8 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec get_answers_in_submission(integer() | String.t(), User.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:unauthorized, String.t()}}
+  @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
+          {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
   def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
@@ -207,7 +207,7 @@ defmodule Cadet.Assessments do
   @spec update_grading_info(
           %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
           %{},
-          User.t()
+          %User{}
         ) ::
           {:ok, nil}
           | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}

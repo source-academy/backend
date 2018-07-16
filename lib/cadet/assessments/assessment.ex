@@ -6,10 +6,7 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Assessments.AssessmentType
-  alias Cadet.Assessments.Image
-  alias Cadet.Assessments.Question
-  alias Cadet.Assessments.Upload
+  alias Cadet.Assessments.{AssessmentType, Image, Question, Upload}
 
   schema "assessments" do
     field(:max_xp, :integer, virtual: true)
@@ -38,9 +35,9 @@ defmodule Cadet.Assessments.Assessment do
       |> convert_date(:close_at)
 
     assessment
+    |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> cast_attachments(params, @optional_file_fields)
     |> validate_open_close_date
   end
 

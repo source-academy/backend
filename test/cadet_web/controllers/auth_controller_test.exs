@@ -20,8 +20,8 @@ defmodule CadetWeb.AuthControllerTest do
 
   import Cadet.Factory
 
-  alias CadetWeb.AuthController
   alias Cadet.Auth.Guardian
+  alias CadetWeb.AuthController
 
   @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 

@@ -13,7 +13,7 @@ defmodule CadetWeb.GradingController do
     end
   end
 
-  def show(conn, %{"submissionid" => submission_id}) do
+  def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
     user = conn.assigns[:current_user]
 
     case Assessments.get_answers_in_submission(submission_id, user) do
@@ -28,7 +28,8 @@ defmodule CadetWeb.GradingController do
           "submissionid" => submission_id,
           "questionid" => question_id
         }
-      ) do
+      )
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     user = conn.assigns[:current_user]
 
     case Assessments.update_grading_info(

@@ -32,7 +32,7 @@
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
       #
-      strict: false,
+      strict: true,
       #
       # If you want to use uncolored output by default, you can change `color`
       # to `false` below:
@@ -57,7 +57,7 @@
         # For some checks, like AliasUsage, you can only customize the priority
         # Priority values are: `low, normal, high, higher`
         #
-        {Credo.Check.Design.AliasUsage, priority: :low},
+        {Credo.Check.Design.AliasUsage, if_called_more_often_than: 2, excluded_namespaces: ["Faker"]},
 
         # For others you can set parameters
 
@@ -73,9 +73,10 @@
         #
         {Credo.Check.Design.TagTODO, exit_status: 0},
         {Credo.Check.Design.TagFIXME},
+        {Credo.Check.Readability.AliasOrder, exit_status: 0},
         {Credo.Check.Readability.FunctionNames},
         {Credo.Check.Readability.LargeNumbers},
-        {Credo.Check.Readability.MaxLineLength, priority: :low, max_length: 80},
+        {Credo.Check.Readability.MaxLineLength, max_length: 100},
         {Credo.Check.Readability.ModuleAttributeNames},
         {Credo.Check.Readability.ModuleDoc},
         {Credo.Check.Readability.ModuleNames},
@@ -99,7 +100,7 @@
         {Credo.Check.Refactor.NegatedConditionsInUnless},
         {Credo.Check.Refactor.NegatedConditionsWithElse},
         {Credo.Check.Refactor.Nesting},
-        {Credo.Check.Refactor.PipeChainStart, excluded_functions: ~w(:crypto.strong_rand_bytes)},
+        {Credo.Check.Refactor.PipeChainStart},
         {Credo.Check.Refactor.UnlessWithElse},
         {Credo.Check.Warning.BoolOperationOnSameValues},
         {Credo.Check.Warning.IExPry},
@@ -122,8 +123,8 @@
         {Credo.Check.Refactor.ABCSize, false},
         {Credo.Check.Refactor.AppendSingleItem, false},
         {Credo.Check.Refactor.VariableRebinding, false},
-        {Credo.Check.Warning.MapGetUnsafePass, false},
-        {Credo.Check.Consistency.MultiAliasImportRequireUse, false},
+        {Credo.Check.Warning.MapGetUnsafePass},
+        {Credo.Check.Consistency.MultiAliasImportRequireUse},
 
         # Deprecated checks (these will be deleted after a grace period)
         #

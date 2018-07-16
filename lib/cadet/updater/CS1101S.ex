@@ -13,13 +13,14 @@ defmodule Cadet.Updater.CS1101S do
 
   require Logger
 
-  def clone() do
+  @spec clone :: no_return()
+  def clone do
     Logger.info("Cloning CS1101S: Started")
     git("clone", [@remote_repo, @local_name])
     Logger.info("Cloning CS1101S: Done")
   end
 
-  def update() do
+  def update do
     Logger.info("Updating CS1101S...")
     git("pull")
   end

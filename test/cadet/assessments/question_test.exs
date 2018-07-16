@@ -25,8 +25,8 @@ defmodule Cadet.Assessments.QuestionTest do
       title: "sample title",
       question: %{},
       type: :programming,
-      raw_library: Poison.encode!(%{week: 5, globals: [], externals: [], files: []}),
-      raw_question: Poison.encode!(%{question: "This is a sample json"}),
+      raw_library: Jason.encode!(%{week: 5, globals: [], externals: [], files: []}),
+      raw_question: Jason.encode!(%{question: "This is a sample json"}),
       assessment_id: 2
     }
   end

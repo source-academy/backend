@@ -4,11 +4,8 @@ defmodule Cadet.Accounts do
   """
   use Cadet, :context
 
-  alias Cadet.Accounts.Authorization
-  alias Cadet.Accounts.IVLE
-  alias Cadet.Accounts.User
-  alias Cadet.Accounts.Query
   alias Cadet.Accounts.Form.Registration
+  alias Cadet.Accounts.{Authorization, IVLE, Query, User}
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration
@@ -63,7 +60,7 @@ defmodule Cadet.Accounts do
   @doc """
   Get the User entity with specified primary key.
   """
-  def get_user(id) do
+  def get_user(id) when is_ecto_id(id) do
     Repo.get(User, id)
   end
 

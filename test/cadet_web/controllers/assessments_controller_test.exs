@@ -4,10 +4,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   import Ecto.Query
 
-  alias CadetWeb.AssessmentsController
-  alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Accounts.{Role, User}
+  alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Repo
+  alias CadetWeb.AssessmentsController
 
   setup do
     Cadet.Test.Seeds.assessments()
@@ -213,7 +213,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> sign_in(user)
             |> get(build_url(assessment.id))
             |> json_response(200)
-            |> Map.get("questions")
+            |> Map.get("questions", [])
             |> Enum.map(&Map.delete(&1, "answer"))
             |> Enum.map(&Map.delete(&1, "solution"))
 
@@ -249,7 +249,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> sign_in(user)
           |> get(build_url(assessment.id))
           |> json_response(200)
-          |> Map.get("questions")
+          |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["solution"]))
           |> Enum.sort()
 
@@ -274,7 +274,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> sign_in(user)
             |> get(build_url(assessment.id))
             |> json_response(200)
-            |> Map.get("questions")
+            |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["solution"]))
 
           assert Enum.uniq(resp_solutions) == [nil]
@@ -355,7 +355,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> sign_in(student)
           |> get(build_url(assessment.id))
           |> json_response(200)
-          |> Map.get("questions")
+          |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["answer"]))
 
         assert expected_answers == resp_answers
@@ -378,7 +378,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> sign_in(user)
             |> get(build_url(assessment.id))
             |> json_response(200)
-            |> Map.get("questions")
+            |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["answer"]))
 
           assert Enum.uniq(resp_answers) == [nil]
