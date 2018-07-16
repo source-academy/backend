@@ -106,7 +106,7 @@ defmodule Cadet.Assessments do
     |> Repo.insert()
   end
 
-  def update_assessment(id, params) do
+  def update_assessment(id, params) when is_ecto_id(id) do
     simple_update(
       Assessment,
       id,
@@ -115,7 +115,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def update_question(id, params) do
+  def update_question(id, params) when is_ecto_id(id) do
     simple_update(
       Question,
       id,
@@ -124,18 +124,18 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def publish_assessment(id) do
+  def publish_assessment(id) when is_ecto_id(id) do
     id
     |> get_assessment()
     |> change(%{is_published: true})
     |> Repo.update()
   end
 
-  def get_question(id) do
+  def get_question(id) when is_ecto_id(id) do
     Repo.get(Question, id)
   end
 
-  def get_assessment(id) do
+  def get_assessment(id) when is_ecto_id(id) do
     Repo.get(Assessment, id)
   end
 
@@ -163,7 +163,7 @@ defmodule Cadet.Assessments do
     end)
   end
 
-  def delete_question(id) do
+  def delete_question(id) when is_ecto_id(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
   end
@@ -177,7 +177,7 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user = %User{role: role}, raw_answer) do
+  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
     if role in @submit_answer_roles do
       question =
         Question
