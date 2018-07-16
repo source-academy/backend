@@ -88,35 +88,27 @@ defmodule Cadet.Assessments do
   end
 
   def publish_assessment(id) do
-    simple_update(
-      Assessment,
-      id,
-      using: &Assessment.changeset/2,
-      params: %{is_published: true}
-    )
+    update_assessment(id, %{is_published: true})
   end
 
   def create_question_for_assessment(params, assessment_id) when is_ecto_id(assessment_id) do
-    Repo.transaction(fn ->
-      assessment =
-        Assessment
-        |> where(id: ^assessment_id)
-        |> join(:left, [a], q in Question, q.assessment_id == a.id)
-        |> preload([a, q], questions: q)
-        |> Repo.one()
+    assessment =
+      Assessment
+      |> where(id: ^assessment_id)
+      |> join(:left, [a], q in Question, q.assessment_id == a.id)
+      |> preload([a, q], questions: q)
+      |> Repo.one()
 
+    if assessment do
       params_with_assessment_id = Map.put_new(params, :assessment_id, assessment.id)
 
-      changeset =
-        %Question{}
-        |> Question.changeset(params_with_assessment_id)
-        |> put_display_order(assessment.questions)
-
-      case Repo.insert(changeset) do
-        {:ok, question} -> question
-        {:error, changeset} -> Repo.rollback(changeset)
-      end
-    end)
+      %Question{}
+      |> Question.changeset(params_with_assessment_id)
+      |> put_display_order(assessment.questions)
+      |> Repo.insert()
+    else
+      {:error, "Assessment not found"}
+    end
   end
 
   def delete_question(id) when is_ecto_id(id) do
