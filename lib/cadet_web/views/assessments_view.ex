@@ -88,18 +88,16 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   defp build_answer_by_type(%{question: %{answer: answer, type: question_type}}) do
-    if answer do
-      answer_getter =
-        case question_type do
-          :programming -> & &1.answer["code"]
-          :multiple_choice -> & &1.answer["choice_id"]
-        end
+    # No need to check if answer exists since empty answer would be a
+    # `%Answer{..., answer: nil}` and nil["anything"] = nil
 
-      transform_map_for_view(answer, %{answer: answer_getter})
-    else
-      # Empty answer field is expected.
-      %{answer: nil}
-    end
+    answer_getter =
+      case question_type do
+        :programming -> & &1.answer["code"]
+        :multiple_choice -> & &1.answer["choice_id"]
+      end
+
+    transform_map_for_view(answer, %{answer: answer_getter})
   end
 
   def build_choice(%{choice: choice}) do
