@@ -53,3 +53,9 @@ config :guardian, Guardian.DB,
   token_types: ["access"],
   # default: 60 minute
   sweep_interval: 60
+
+# Import secrets, such as the IVLE key, or guest account credentials
+# The secret.exs file holds secrets that are useful even in development, and
+# so is kept separate from the prod.secret.exs file, which holds secrets useful
+# only for configuring the production build.
+import_config "secrets.exs"

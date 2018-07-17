@@ -4,7 +4,7 @@ defmodule Cadet.AccountsTest do
   this allows testing without the use of actual external IVLE API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set the two environment variables IVLE_KEY (used as a module attribute in
+  to set the two config variables `:ivle_key` (used as a module attribute in
   `Cadet.Accounts.IVLE`) and TOKEN (used here). Don't forget to delete the
   cassette files, otherwise ExVCR will not override the cassettes.
 

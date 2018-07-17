@@ -4,7 +4,7 @@ defmodule Cadet.Updater.PublicTest do
   allows testing without actual external IVLE API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set the environment variables IVLE_KEY, GUEST_USERNAME, and GUEST_PASSWORD.
+  to set the config variables :ivle_key, GUEST_USERNAME, and GUEST_PASSWORD.
   Don't forget to delete the cassette files, otherwise ExVCR will not override
   the cassettes.
 

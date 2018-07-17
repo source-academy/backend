@@ -13,7 +13,7 @@ defmodule Cadet.Updater.Public do
 
   require Logger
 
-  @api_key Dotenv.load().values["IVLE_KEY"]
+  @api_key :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:ivle_key)
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
   @interval :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:interval)

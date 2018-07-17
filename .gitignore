@@ -51,6 +51,7 @@ _build/
 node_modules/
 /priv/static/
 /config/prod.secret.exs
+/config/secrets.exs
 /rel
 
 ### Vim ###
