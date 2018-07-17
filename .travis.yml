@@ -17,3 +17,4 @@ script:
   - mix coveralls.travis
   - mix credo
   - mix inch.report
+  - mix format --check-formatted
