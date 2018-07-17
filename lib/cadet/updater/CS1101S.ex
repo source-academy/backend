@@ -27,8 +27,6 @@ defmodule Cadet.Updater.CS1101S do
     git("pull", ["origin", "master"])
   end
 
-  defp git(cmd, args \\ [])
-
   defp git("clone", args) do
     {out, exit} =
       System.cmd(
