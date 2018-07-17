@@ -17,8 +17,8 @@ defmodule Cadet.Updater.Public do
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
   @interval :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:interval)
-  @username Dotenv.load().values["GUEST_USERNAME"]
-  @password Dotenv.load().values["GUEST_PASSWORD"]
+  @username :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_username)
+  @password :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_password)
 
   @doc """
   Starts the GenServer.

@@ -9,7 +9,7 @@ use Mix.Config
 config :cadet,
   ecto_repos: [Cadet.Repo],
   # milliseconds
-  updater: [interval: 5 * 60 * 1000]
+  updater: [interval: 1 * 60 * 1000]
 
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Updater.Scheduler,
