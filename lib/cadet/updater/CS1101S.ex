@@ -24,7 +24,7 @@ defmodule Cadet.Updater.CS1101S do
 
   def update do
     Logger.info("Updating CS1101S...")
-    git("pull")
+    git("pull", ["origin", "master"])
   end
 
   defp git(cmd, args \\ [])
