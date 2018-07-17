@@ -42,10 +42,12 @@ defmodule Cadet.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:arc, "~> 0.8.0"},
-      {:arc_ecto, "~> 0.8.0"},
+      {:arc, "~> 0.10.0"},
+      {:arc_ecto, "~> 0.10.0"},
       {:cowboy, "~> 1.0"},
       {:ecto_enum, "~> 1.0"},
+      {:ex_aws, "~> 2.0"},
+      {:ex_aws_kms, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.1"},
       {:floki, "~> 0.20.0"},
