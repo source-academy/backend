@@ -27,7 +27,7 @@ defmodule CadetWeb.AuthController do
         Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
 
       {:ok, refresh_token, _} =
-        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
 
       render(
         conn,
@@ -56,24 +56,35 @@ defmodule CadetWeb.AuthController do
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
+  @doc """
+  Receives a /refresh request with valid attribute.
+
+  Exchanges the refresh_token with a new access_token.
+  """
   def refresh(conn, %{"refresh_token" => refresh_token}) do
     case Guardian.exchange(refresh_token, "refresh", "access") do
-      {:ok, {refresh_token, _}, {access_token, _}} ->
-        render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
+      {:ok, {_refresh_token, _}, {access_token, _}} ->
+        render(conn, "access_token.json", access_token: access_token)
 
       {:error, _reason} ->
         send_resp(conn, :unauthorized, "Invalid Token")
     end
   end
 
+  @doc """
+  Receives a /refresh request with invalid attributes.
+  """
   def refresh(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
+    send_resp(conn, :bad_request, "Missing parameter")
   end
 
-  def logout(conn, %{"access_token" => access_token}) do
-    case Guardian.decode_and_verify(access_token) do
+  @doc """
+  Receives a /logout request with valid attribute.
+  """
+  def logout(conn, %{"refresh_token" => refresh_token}) do
+    case Guardian.decode_and_verify(refresh_token) do
       {:ok, _} ->
-        Guardian.revoke(access_token)
+        Guardian.revoke(refresh_token)
         text(conn, "OK")
 
       {:error, _} ->
@@ -81,8 +92,11 @@ defmodule CadetWeb.AuthController do
     end
   end
 
+  @doc """
+  Receives a /logout request with invalid attributes.
+  """
   def logout(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
+    send_resp(conn, :bad_request, "Missing parameter")
   end
 
   swagger_path :create do
@@ -126,7 +140,7 @@ defmodule CadetWeb.AuthController do
       )
     end
 
-    response(200, "OK", Schema.ref(:Tokens))
+    response(200, "OK", Schema.ref(:AccessToken))
     response(400, "Missing parameter(s)")
     response(401, "Invalid refresh token")
   end
