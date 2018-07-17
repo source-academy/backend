@@ -4,9 +4,12 @@ defmodule CadetWeb.AuthControllerTest do
   this allows testing without the use of actual external IVLE API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set the two config variables `:ivle_key` (used as a module attribute in
-  `Cadet.Accounts.IVLE`) and TOKEN (used here). Don't forget to delete the
-  cassette files, otherwise ExVCR will not override the cassettes.
+  to set the config variables `:ivle_key` (used as a module attribute in
+  `Cadet.Accounts.IVLE`) and environment variable TOKEN (used here). Don't
+  forget to delete the cassette files, otherwise ExVCR will not override the
+  cassettes. You can set the TOKEN environment variable like so,
+
+    TOKEN=very_long_token_here mix test
 
   Token refers to the user's authentication token. Please see the IVLE API docs:
   https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
