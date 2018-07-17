@@ -20,7 +20,7 @@ module "staging" {
   env                   = "stg"
   ami_id                = "ami-573f032b"
   ec2_instance_type     = "t2.micro"
-  instance_class        = "db.t2.micro"
+  rds_instance_class    = "db.t2.micro"
   min_instance_count    = 2
   max_instance_count    = 2
   rds_allocated_storage = 10
