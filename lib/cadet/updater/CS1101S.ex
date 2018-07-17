@@ -3,13 +3,15 @@ defmodule Cadet.Updater.CS1101S do
   Pulls content from the remote cs1101s repository into a local one.
   """
 
+  @key_file :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:cs1101s_rsa_key)
+  @local_name if Mix.env() != :test, do: "cs1101s", else: "test/local_repo"
   @remote_repo (if Mix.env() != :test do
-                  Dotenv.load().values["01S_REPOSITORY"]
+                  :cadet
+                  |> Application.fetch_env!(:updater)
+                  |> Keyword.get(:cs1101s_repository)
                 else
                   "test/remote_repo"
                 end)
-  @local_name if Mix.env() != :test, do: "cs1101s", else: "test/local_repo"
-  @key_file Dotenv.load().values["01S_RSA_KEY"]
 
   require Logger
 
