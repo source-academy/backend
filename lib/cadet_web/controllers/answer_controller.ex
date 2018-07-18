@@ -9,7 +9,7 @@ defmodule CadetWeb.AnswerController do
       when is_ecto_id(question_id) do
     case Assessments.answer_question(question_id, conn.assigns.current_user, answer) do
       {:ok, _nil} ->
-        send_resp(conn, :ok, "OK")
+        text(conn, "OK")
 
       {:error, {status, message}} ->
         send_resp(conn, status, message)
@@ -40,7 +40,7 @@ defmodule CadetWeb.AnswerController do
 
     response(200, "OK")
     response(400, "Invalid parameters")
-    response(401, "Unauthorised")
+    response(403, "User not permitted to answer questions or assessment not open")
   end
 
   def swagger_definitions do

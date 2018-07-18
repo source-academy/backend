@@ -37,7 +37,7 @@ defmodule CadetWeb.GradingController do
            params["grading"],
            user
          ) do
-      {:ok, _} -> send_resp(conn, :ok, "OK")
+      {:ok, _} -> text(conn, "OK")
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
   end
