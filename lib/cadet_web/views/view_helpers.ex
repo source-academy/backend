@@ -29,7 +29,7 @@ defmodule CadetWeb.ViewHelpers do
   transform_map_for_view(source, field_list)
   > %{
     foofoo: "ho",
-    barbar: "bar"
+    barbar: "ha"
   }
 
   key_transformations = %{
