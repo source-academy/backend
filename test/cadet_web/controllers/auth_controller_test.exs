@@ -104,7 +104,7 @@ defmodule CadetWeb.AuthControllerTest do
       assert response(conn, 401)
     end
 
-    test "valid token", %{conn: conn} do
+    test "valid refresh token", %{conn: conn} do
       user = insert(:user)
 
       {:ok, refresh_token, _} =
@@ -115,8 +115,31 @@ defmodule CadetWeb.AuthControllerTest do
         |> post("/v1/auth/refresh", %{"refresh_token" => refresh_token})
         |> json_response(200)
 
-      assert %{"access_token" => access_token} = resp
+      assert %{"access_token" => access_token, "refresh_token" => refresh_token} = resp
       assert {:ok, _} = Guardian.decode_and_verify(access_token)
+      assert {:ok, _} = Guardian.decode_and_verify(refresh_token)
+    end
+
+    test "access token fails", %{conn: conn} do
+      user = insert(:user)
+
+      {:ok, access_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :day})
+
+      conn = post(conn, "/v1/auth/refresh", %{"refresh_token" => access_token})
+
+      assert response(conn, 401) == "Invalid Token"
+    end
+
+    test "expired refresh token", %{conn: conn} do
+      user = insert(:user)
+
+      {:ok, refresh_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {-1, :week})
+
+      conn = post(conn, "/v1/auth/refresh", %{"refresh_token" => refresh_token})
+
+      assert response(conn, 401) == "Invalid Token"
     end
   end
 
