@@ -34,6 +34,7 @@ defmodule Cadet.Mixfile do
 
   # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support", "test/factories"]
+  defp elixirc_paths(:dev), do: ["lib", "test/factories"]
   defp elixirc_paths(_), do: ["lib"]
 
   # Specifies your project dependencies.
@@ -44,7 +45,6 @@ defmodule Cadet.Mixfile do
       {:arc, "~> 0.8.0"},
       {:arc_ecto, "~> 0.8.0"},
       {:cowboy, "~> 1.0"},
-      {:dotenv, "~> 3.0.0"},
       {:ecto_enum, "~> 1.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.1"},

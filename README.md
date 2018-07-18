@@ -16,47 +16,55 @@ Cadet is the web application powering Source Academy.
 
 ### Setting Up Local Development Environment
 
-Install Elixir dependencies
+1. Install Elixir dependencies
+```bash
+$ mix deps.get
+```
 
-    mix deps.get
+2. Initialise development database
+```bash
+$ mix ecto.setup
+```
 
-Initialise development database
+3. Setup the developement secrets (replace the values appropriately)
+```bash
+$ cp config/secrets.exs.example config/secrets.exs
+$ vim config/secrets.exs
+```    
+  - A valid `ivle_key` is required for the application to properly authenticate with IVLE.
+  - A valid `cs1101s_repository`, `cs1101s_rsa_key`, `guest_username`, and `guest_password`
+    is required for the application to run with the `--updater` flag. Otherwise, the default
+    values will suffice.
 
-    mix ecto.setup
+4. Run the server in your local machine
+```bash
+$ mix phx.server
+```
 
-Copy the file `.env.example` as `.env` in the project root, and replace the
-value of `IVLE_KEY` in with your [IVLE LAPI Key](https://ivle.nus.edu.sg/LAPI/default.aspx).
-If you've compiled the application before setting a valid value, you must force
-a recompilation with `mix clean && mix`.
-
-    IVLE_KEY=your_ivle_lapi_key
-
-If available, also replace the values for GUEST\_USER and GUEST\_PASSWORD
-
-Run the server in your local machine
-
-    mix cadet.server
+5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can
+   also be accessed at http://localhost:4000/swagger.
 
 
-## Style Guide
+### Obtaining `access_token` in dev environment
+
+You can obtain `access_token` JWT of a user with a given role by simply running:
+
+```bash
+$ mix cadet.token <role>
+```
+
+For more information, run
+
+```bash
+$ mix help cadet.token
+```
+
+### Style Guide
 
 We follow this style guide: https://github.com/lexmag/elixir-style-guide and https://github.com/christopheradams/elixir_style_guide
 
 Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
 
-## API documentation
-
-When the server is running, API documentation can then be accessed through http://localhost:4000/swagger
-
-## Obtaining `access_token` in dev environment
-
-You can obtain `access_token` JWT of a user with a given role by simply running:
-
-    mix cadet.token <role>
-
-For more information, run
-
-    mix help cadet.token
 
 ## License
 
