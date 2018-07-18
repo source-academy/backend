@@ -292,7 +292,7 @@ defmodule Cadet.Assessments do
 
   defp build_answer_content(raw_answer, question_type) do
     case question_type do
-      :multiple_choice ->
+      :mcq ->
         %{choice_id: raw_answer}
 
       :programming ->

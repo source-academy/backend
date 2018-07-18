@@ -50,7 +50,7 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          type: :multiple_choice,
+          type: :mcq,
           question: %{},
           raw_question:
             Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
@@ -58,7 +58,7 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", type: :multiple_choice} = question
+    assert %{title: "question", type: :mcq} = question
   end
 
   test "create question when there already exists questions" do
@@ -69,7 +69,7 @@ defmodule Cadet.AssessmentsTest do
       Assessments.create_question_for_assessment(
         %{
           title: "question",
-          type: :multiple_choice,
+          type: :mcq,
           question: %{},
           raw_question:
             Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})

@@ -14,7 +14,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
-    mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
+    mcq_question = insert(:question, %{assessment: assessment, type: :mcq})
     programming_question = insert(:question, %{assessment: assessment, type: :programming})
 
     %{
@@ -142,7 +142,7 @@ defmodule CadetWeb.AnswerControllerTest do
       })
 
     before_open_at_question =
-      insert(:question, %{assessment: before_open_at_assessment, type: :multiple_choice})
+      insert(:question, %{assessment: before_open_at_assessment, type: :mcq})
 
     before_open_at_conn = post(conn, build_url(before_open_at_question.id), %{answer: 5})
     assert response(before_open_at_conn, 403) == "Assessment not open"
@@ -155,7 +155,7 @@ defmodule CadetWeb.AnswerControllerTest do
       })
 
     after_close_at_question =
-      insert(:question, %{assessment: after_close_at_assessment, type: :multiple_choice})
+      insert(:question, %{assessment: after_close_at_assessment, type: :mcq})
 
     after_close_at_conn = post(conn, build_url(after_close_at_question.id), %{answer: 5})
     assert response(after_close_at_conn, 403) == "Assessment not open"
@@ -163,8 +163,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
     unpublished_assessment = insert(:assessment, %{is_published: false})
 
-    unpublished_question =
-      insert(:question, %{assessment: unpublished_assessment, type: :multiple_choice})
+    unpublished_question = insert(:question, %{assessment: unpublished_assessment, type: :mcq})
 
     unpublished_conn = post(conn, build_url(unpublished_question.id), %{answer: 5})
     assert response(unpublished_conn, 403) == "Assessment not open"
@@ -186,7 +185,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
     if answer do
       case question.type do
-        :multiple_choice -> Map.get(answer.answer, "choice_id")
+        :mcq -> Map.get(answer.answer, "choice_id")
         :programming -> Map.get(answer.answer, "code")
       end
     end

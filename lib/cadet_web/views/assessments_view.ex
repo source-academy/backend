@@ -80,7 +80,7 @@ defmodule CadetWeb.AssessmentsView do
       solution_getter =
         case question_type do
           :programming -> &Map.get(&1, "solution")
-          :multiple_choice -> &find_correct_choice(&1["choices"])
+          :mcq -> &find_correct_choice(&1["choices"])
         end
 
       transform_map_for_view(question, %{solution: solution_getter})
@@ -94,7 +94,7 @@ defmodule CadetWeb.AssessmentsView do
     answer_getter =
       case question_type do
         :programming -> & &1.answer["code"]
-        :multiple_choice -> & &1.answer["choice_id"]
+        :mcq -> & &1.answer["choice_id"]
       end
 
     transform_map_for_view(answer, %{answer: answer_getter})
@@ -117,7 +117,7 @@ defmodule CadetWeb.AssessmentsView do
           solutionHeader: "solution_header"
         })
 
-      :multiple_choice ->
+      :mcq ->
         transform_map_for_view(question, %{
           content: "content",
           choices: &Enum.map(&1["choices"], fn choice -> build_choice(%{choice: choice}) end)
