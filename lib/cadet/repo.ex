@@ -16,11 +16,6 @@ defmodule Cadet.Repo do
         |> Application.fetch_env!(:aws)
         |> Keyword.get(:rds_cipher_text)
 
-      key_id =
-        :cadet
-        |> Application.fetch_env!(:aws)
-        |> Keyword.get(:rds_key_id)
-
       region =
         :cadet
         |> Application.fetch_env!(:aws)
@@ -28,7 +23,7 @@ defmodule Cadet.Repo do
 
       {:ok, kms_response} =
         cipher_text
-        |> KMS.decrypt(KeyId: key_id)
+        |> KMS.decrypt()
         |> ExAws.request(region: region)
 
       password =
