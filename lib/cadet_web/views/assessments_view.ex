@@ -9,109 +9,119 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   def render("overview.json", %{assessment: assessment}) do
-    %{
-      id: assessment.id,
-      title: assessment.title,
-      shortSummary: assessment.summary_short,
-      openAt: format_datetime(assessment.open_at),
-      closeAt: format_datetime(assessment.close_at),
-      type: assessment.type,
-      attempted: assessment.attempted,
-      maximumEXP: assessment.max_xp,
-      coverImage: Cadet.Assessments.Image.url({assessment.cover_picture, assessment})
-    }
+    transform_map_for_view(assessment, %{
+      id: :id,
+      title: :title,
+      shortSummary: :summary_short,
+      openAt: &format_datetime(&1.open_at),
+      closeAt: &format_datetime(&1.close_at),
+      type: :type,
+      attempted: :attempted,
+      maximumEXP: :max_xp,
+      coverImage: &Cadet.Assessments.Image.url({&1.cover_picture, &1})
+    })
   end
 
   def render("show.json", %{assessment: assessment}) do
-    %{
-      id: assessment.id,
-      title: assessment.title,
-      type: assessment.type,
-      longSummary: assessment.summary_long,
-      missionPDF: Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment}),
-      questions:
-        render_many(
-          assessment.questions,
-          CadetWeb.AssessmentsView,
-          "question.json",
-          %{as: :question, is_graded: assessment.type in @graded_assessment_types}
-        )
-    }
+    transform_map_for_view(
+      assessment,
+      %{
+        id: :id,
+        title: :title,
+        type: :type,
+        longSummary: :summary_long,
+        missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
+        questions:
+          &Enum.map(&1.questions, fn question ->
+            build_question_with_answer_and_solution_if_ungraded(%{
+              question: question,
+              assessment: assessment
+            })
+          end)
+      }
+    )
   end
 
-  def render("question.json", params = %{question: question}) do
-    question_partial = %{
-      id: question.id,
-      type: question.type,
-      library:
-        render_one(question.library, CadetWeb.AssessmentsView, "library.json", as: :library)
-    }
-
-    add_question_fields_by_type(question_partial, params)
-  end
-
-  def render("library.json", %{library: library}) do
-    fields = [:globals, :files, :externals, :chapter]
-    Map.take(library, fields)
-  end
-
-  def render("mcq_choice.json", %{mcq_choice: choice}) do
-    %{
-      id: choice["choice_id"],
-      content: choice["content"],
-      hint: choice["hint"]
-    }
-  end
-
-  defp add_question_fields_by_type(partial, params = %{question: question}) do
-    case question.type do
-      :programming -> add_programming_question_fields(partial, params)
-      :multiple_choice -> add_mcq_question_fields(partial, params)
+  def build_library(%{library: library}) do
+    if library do
+      transform_map_for_view(library, [:globals, :files, :externals, :chapter])
     end
   end
 
-  defp add_programming_question_fields(
-         partial,
-         params = %{question: %{question: programming_question, answer: answer}}
-       ) do
-    programming_fields = %{
-      content: programming_question["content"],
-      solutionTemplate: programming_question["solution_template"],
-      solutionHeader: programming_question["solution_header"],
-      answer: answer && answer.answer["code"]
-    }
+  def build_question_with_answer_and_solution_if_ungraded(%{
+        question: question,
+        assessment: assessment
+      }) do
+    components = [
+      build_generic_question_fields(%{question: question}),
+      build_question_content_by_type(%{question: question}),
+      build_answer_by_type(%{question: question}),
+      build_solution_if_ungraded_by_type(%{question: question, assessment: assessment})
+    ]
 
-    if params.is_graded do
-      Map.merge(partial, programming_fields)
-    else
-      programming_fields
-      |> Map.merge(%{solution: programming_question["solution"]})
-      |> Map.merge(partial)
+    components
+    |> Enum.filter(& &1)
+    |> Enum.reduce(%{}, &Map.merge/2)
+  end
+
+  defp build_generic_question_fields(%{question: question}) do
+    transform_map_for_view(question, %{
+      id: :id,
+      type: :type,
+      library: &build_library(%{library: &1.library})
+    })
+  end
+
+  defp build_solution_if_ungraded_by_type(%{
+         question: %{question: question, type: question_type},
+         assessment: %{type: assessment_type}
+       }) do
+    if assessment_type not in @graded_assessment_types do
+      solution_getter =
+        case question_type do
+          :programming -> &Map.get(&1, "solution")
+          :multiple_choice -> &find_correct_choice(&1["choices"])
+        end
+
+      transform_map_for_view(question, %{solution: solution_getter})
     end
   end
 
-  defp add_mcq_question_fields(
-         partial,
-         params = %{question: %{question: mcq_question, answer: answer}}
-       ) do
-    mcq_fields = %{
-      content: mcq_question["content"],
-      choices:
-        render_many(
-          mcq_question["choices"],
-          CadetWeb.AssessmentsView,
-          "mcq_choice.json",
-          as: :mcq_choice
-        ),
-      answer: answer && answer.answer["choice_id"]
-    }
+  defp build_answer_by_type(%{question: %{answer: answer, type: question_type}}) do
+    # No need to check if answer exists since empty answer would be a
+    # `%Answer{..., answer: nil}` and nil["anything"] = nil
 
-    if params.is_graded do
-      Map.merge(partial, mcq_fields)
-    else
-      mcq_fields
-      |> Map.merge(%{solution: find_correct_choice(mcq_question["choices"])})
-      |> Map.merge(partial)
+    answer_getter =
+      case question_type do
+        :programming -> & &1.answer["code"]
+        :multiple_choice -> & &1.answer["choice_id"]
+      end
+
+    transform_map_for_view(answer, %{answer: answer_getter})
+  end
+
+  def build_choice(%{choice: choice}) do
+    transform_map_for_view(choice, %{
+      id: "choice_id",
+      content: "content",
+      hint: "hint"
+    })
+  end
+
+  defp build_question_content_by_type(%{question: %{question: question, type: question_type}}) do
+    case question_type do
+      :programming ->
+        transform_map_for_view(question, %{
+          content: "content",
+          solutionTemplate: "solution_template",
+          solutionHeader: "solution_header"
+        })
+
+      :multiple_choice ->
+        transform_map_for_view(question, %{
+          content: "content",
+          choices: &Enum.map(&1["choices"], fn choice -> build_choice(%{choice: choice}) end)
+        })
     end
   end
 
