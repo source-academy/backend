@@ -17,17 +17,17 @@ Cadet is the web application powering Source Academy.
 ### Setting Up Local Development Environment
 
 1. Install Elixir dependencies
-```
+```bash
 $ mix deps.get
 ```
 
 2. Initialise development database
-```
+```bash
 $ mix ecto.setup
 ```
 
 3. Setup the developement secrets (replace the values appropriately)
-```
+```bash
 $ cp config/secrets.exs.example config/secrets.exs
 $ vim config/secrets.exs
 ```    
@@ -37,7 +37,7 @@ $ vim config/secrets.exs
     values will suffice.
 
 4. Run the server in your local machine
-```
+```bash
 $ mix phx.server
 ```
 
@@ -49,11 +49,15 @@ $ mix phx.server
 
 You can obtain `access_token` JWT of a user with a given role by simply running:
 
-    mix cadet.token <role>
+```bash
+$ mix cadet.token <role>
+```
 
 For more information, run
 
-    mix help cadet.token
+```bash
+$ mix help cadet.token
+```
 
 ### Style Guide
 
