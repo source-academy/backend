@@ -9,7 +9,7 @@ defmodule CadetWeb.AnswerController do
       when is_ecto_id(question_id) do
     case Assessments.answer_question(question_id, conn.assigns.current_user, answer) do
       {:ok, _nil} ->
-        send_resp(conn, :ok, "OK")
+        text(conn, "OK")
 
       {:error, {status, message}} ->
         send_resp(conn, status, message)
