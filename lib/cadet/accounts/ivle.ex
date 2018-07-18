@@ -2,13 +2,13 @@ defmodule Cadet.Accounts.IVLE do
   @moduledoc """
   This module provides abstractions for various IVLE API calls.
 
-  This module relies on the environment variable `IVLE_KEY` being set.
-  `IVLE_KEY` should contain the IVLE Lapi key. Obtain the key from
+  This module relies on the config variable `:ivle_key` being set.
+  `:ivle_key` should contain the IVLE Lapi key. Obtain the key from
   [this link](http://ivle.nus.edu.sg/LAPI/default.aspx).
   """
 
+  @api_key :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:ivle_key)
   @api_url "https://ivle.nus.edu.sg/api/Lapi.svc/"
-  @api_key Dotenv.load().values["IVLE_KEY"]
 
   @doc """
   Get the NUSNET ID of the user corresponding to this token.
