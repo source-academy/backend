@@ -79,7 +79,7 @@ defmodule Cadet.Assessments.Answer do
       :programming ->
         ProgrammingAnswer.changeset(%ProgrammingAnswer{}, answer)
 
-      :multiple_choice ->
+      :mcq ->
         MCQAnswer.changeset(%MCQAnswer{}, answer)
     end
     |> Map.get(:valid?)

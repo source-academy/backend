@@ -35,7 +35,7 @@ if Application.get_env(:cadet, :environment) == :dev do
 
     mcq_questions =
       insert_list(3, :question, %{
-        type: :multiple_choice,
+        type: :mcq,
         library: Enum.random([true, false]) && build(:library),
         question: build(:mcq_question),
         assessment: assessment,

@@ -11,7 +11,7 @@ defmodule Cadet.Assessments.QuestionFactory do
         %Question{
           title: sequence("question"),
           question: %{},
-          type: Enum.random([:programming, :multiple_choice]),
+          type: Enum.random([:programming, :mcq]),
           assessment: build(:assessment, %{is_published: true})
         }
       end

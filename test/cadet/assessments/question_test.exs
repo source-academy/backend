@@ -16,7 +16,7 @@ defmodule Cadet.Assessments.QuestionTest do
       display_order: 1,
       title: "mcq",
       question: %{},
-      type: :multiple_choice,
+      type: :mcq,
       assessment_id: 2
     }
 
@@ -41,7 +41,7 @@ defmodule Cadet.Assessments.QuestionTest do
     %{
       display_order: 2,
       question: %{},
-      type: :multiple_choice
+      type: :mcq
     }
   end
 end
