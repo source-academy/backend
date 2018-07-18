@@ -90,7 +90,7 @@ defmodule Cadet.Test.Seeds do
       Enum.map(4..6, fn id ->
         insert(:question, %{
           display_order: id,
-          type: :multiple_choice,
+          type: :mcq,
           library: Enum.random([true, false]) && build(:library),
           question: build(:mcq_question),
           assessment: assessment,
