@@ -122,28 +122,6 @@ defmodule Cadet.Test.Seeds do
         end)
       end)
 
-    # # submission <- submissions,
-    # for question <- programming_questions do
-    #   insert(:answer, %{
-    #     xp: 200,
-    #     question: question,
-    #     submission: submission,
-    #     answer: build(:programming_answer)
-    #   })
-    # end
-
-    # MCQ Answers
-    # mcq_answers =
-    #   for submission <- submissions,
-    #       question <- mcq_questions do
-    #     insert(:answer, %{
-    #       xp: 200,
-    #       question: question,
-    #       submission: submission,
-    #       answer: build(:mcq_answer)
-    #     })
-    #   end
-
     %{
       assessment: assessment,
       programming_questions: programming_questions,
