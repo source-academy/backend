@@ -40,11 +40,16 @@ defmodule Mix.Tasks.Cadet.Token do
       user = test_user(role)
 
       {:ok, access_token, _} =
-        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {4, :weeks})
+        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :day})
+
+      {:ok, refresh_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
 
       IO.puts("#{bright()}Test user id:#{reset()} #{cyan()}#{user.id}#{reset()}")
       IO.puts("#{bright()}Test user:#{reset()}")
       IO.puts("#{cyan()}#{inspect(user, pretty: true)}#{reset()}")
+      IO.puts("#{bright()}refresh_token:#{reset()}")
+      IO.puts("#{refresh_token}")
       IO.puts("#{bright()}JWT:#{reset()}")
       IO.puts("Bearer #{access_token}")
     else
