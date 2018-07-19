@@ -13,6 +13,16 @@ defmodule Cadet.Assessments do
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
 
+  def user_total_xp(user = %User{role: role}) do
+    xp =
+      Query.all_submissions_with_xp()
+      |> subquery()
+      |> group_by(:student_id)
+      |> where(student_id: ^user.id)
+      |> select([s], sum(s.xp))
+      |> Repo.one()
+  end
+
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
     assessment =
       Assessment
