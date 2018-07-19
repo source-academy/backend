@@ -1,11 +1,39 @@
 defmodule Cadet.Repo do
   use Ecto.Repo, otp_app: :cadet
 
+  alias ExAws.KMS
+
+  @env Mix.env()
+
   @doc """
-  Dynamically loads the repository url from the
-  DATABASE_URL environment variable.
+  Dynamically obtains the database password from encrypted cipher text using
+  AWS KMS (only in production).
   """
   def init(_, opts) do
-    {:ok, Keyword.put(opts, :url, System.get_env("DATABASE_URL"))}
+    if @env == :prod do
+      cipher_text =
+        :cadet
+        |> Application.fetch_env!(:aws)
+        |> Keyword.get(:rds_cipher_text)
+
+      region =
+        :cadet
+        |> Application.fetch_env!(:aws)
+        |> Keyword.get(:region)
+
+      {:ok, kms_response} =
+        cipher_text
+        |> KMS.decrypt()
+        |> ExAws.request(region: region)
+
+      password =
+        kms_response
+        |> Map.get("Plaintext")
+        |> Base.decode64!()
+
+      {:ok, Keyword.put(opts, :password, password)}
+    else
+      {:ok, opts}
+    end
   end
 end
