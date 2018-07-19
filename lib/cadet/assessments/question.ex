@@ -6,6 +6,7 @@ defmodule Cadet.Assessments.Question do
   use Cadet, :model
 
   alias Cadet.Assessments.{Assessment, Library, QuestionType}
+  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion}
 
   schema "questions" do
     field(:title, :string)
@@ -23,10 +24,34 @@ defmodule Cadet.Assessments.Question do
   @optional_fields ~w(display_order max_xp)a
 
   def changeset(question, params) do
-    # TODO: Implement foreign_key_validation
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:library)
     |> validate_required(@required_fields)
+    |> validate_question_content()
+    |> foreign_key_constraint(:assessment)
+  end
+
+  defp validate_question_content(changeset) do
+    with true <- changeset.valid?,
+         question_type when is_atom(question_type) <- get_change(changeset, :type),
+         question when is_map(question) <- get_change(changeset, :question),
+         false <- question_structure_valid?(question_type, question) do
+      add_error(changeset, :answer, "invalid question provided for question type")
+    else
+      _ -> changeset
+    end
+  end
+
+  defp question_structure_valid?(question_type, question) do
+    question_type
+    |> case do
+      :programming ->
+        ProgrammingQuestion.changeset(%ProgrammingQuestion{}, question)
+
+      :mcq ->
+        MCQQuestion.changeset(%MCQQuestion{}, question)
+    end
+    |> Map.get(:valid?)
   end
 end
