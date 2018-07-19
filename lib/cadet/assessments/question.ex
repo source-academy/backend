@@ -28,9 +28,10 @@ defmodule Cadet.Assessments.Question do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:library)
+    |> add_belongs_to_id_from_model(:assessment, params)
     |> validate_required(@required_fields ++ @required_embeds)
     |> validate_question_content()
-    |> foreign_key_constraint(:assessment)
+    |> foreign_key_constraint(:assessment_id)
   end
 
   defp validate_question_content(changeset) do
