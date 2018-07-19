@@ -3,7 +3,6 @@ defmodule CadetWeb.UserControllerTest do
 
   import Cadet.Factory
 
-  alias Cadet.Auth.Guardian
   alias CadetWeb.UserController
 
   test "swagger" do
@@ -12,9 +11,23 @@ defmodule CadetWeb.UserControllerTest do
   end
 
   describe "GET /user" do
-    test "success", %{conn: conn} do
-      user = insert(:user, %{role: :student})
-      conn = Guardian.Plug.sign_in(conn, user)
+    @tag authenticate: :student
+    test "success, student", %{conn: conn} do
+      user = conn.assigns.current_user
+      assessment = insert(:assessment, %{is_published: true})
+      question = insert(:question, %{assessment: assessment})
+      submission = insert(:submission, %{assessment: assessment, student: user})
+      insert(:answer, %{question: question, submission: submission, xp: 50, adjustment: -10})
+
+      conn = get(conn, "/v1/user", nil)
+      body = json_response(conn, 200)
+      assert response(conn, 200)
+      assert %{"name" => user.name, "role" => "#{user.role}", "xp" => 40} == body
+    end
+
+    @tag authenticate: :staff
+    test "success, staff", %{conn: conn} do
+      user = conn.assigns.current_user
       conn = get(conn, "/v1/user", nil)
       body = json_response(conn, 200)
       assert response(conn, 200)
