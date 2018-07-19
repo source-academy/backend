@@ -23,14 +23,7 @@ defmodule CadetWeb.AuthController do
          {:changes, login} when valid <- {:changes, apply_changes(changeset)},
          {:fetch, {:ok, nusnet_id}} <- {:fetch, IVLE.fetch_nusnet_id(login.ivle_token)},
          {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, login.ivle_token)} do
-      %{access_token: access_token, refresh_token: refresh_token} = generate_tokens(user)
-
-      render(
-        conn,
-        "token.json",
-        access_token: access_token,
-        refresh_token: refresh_token
-      )
+      render(conn, "token.json", generate_tokens(user))
     else
       {:changes, _} ->
         send_resp(conn, :bad_request, "Missing parameter")
@@ -61,8 +54,7 @@ defmodule CadetWeb.AuthController do
     # TODO: Refactor to use refresh after guardian_db > v1.1.0 is released.
     case Guardian.resource_from_token(refresh_token) do
       {:ok, user, %{"typ" => "refresh"}} ->
-        %{access_token: access_token, refresh_token: refresh_token} = generate_tokens(user)
-        render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
+        render(conn, "token.json", generate_tokens(user))
 
       _ ->
         send_resp(conn, :unauthorized, "Invalid Token")
