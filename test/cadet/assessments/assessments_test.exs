@@ -29,6 +29,7 @@ defmodule Cadet.AssessmentsTest do
           title: "question",
           type: :programming,
           question: %{},
+          library: build(:library),
           raw_question:
             Jason.encode!(%{
               content: "asd",
@@ -52,6 +53,7 @@ defmodule Cadet.AssessmentsTest do
           title: "question",
           type: :mcq,
           question: %{},
+          library: build(:library),
           raw_question:
             Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
         },
@@ -71,6 +73,7 @@ defmodule Cadet.AssessmentsTest do
           title: "question",
           type: :mcq,
           question: %{},
+          library: build(:library),
           raw_question:
             Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
         },

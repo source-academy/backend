@@ -79,7 +79,6 @@ defmodule Cadet.Test.Seeds do
         insert(:question, %{
           display_order: id,
           type: :programming,
-          library: Enum.random([true, false]) && build(:library),
           question: build(:programming_question),
           assessment: assessment,
           max_xp: 200
@@ -91,7 +90,6 @@ defmodule Cadet.Test.Seeds do
         insert(:question, %{
           display_order: id,
           type: :mcq,
-          library: Enum.random([true, false]) && build(:library),
           question: build(:mcq_question),
           assessment: assessment,
           max_xp: 40
