@@ -121,7 +121,10 @@ defmodule CadetWeb.GradingControllerTest do
               "solution_template" => &1.question.question.solution_template,
               "questionType" => "#{&1.question.type}",
               "questionId" => &1.question.id,
-              "library" => &1.question.library,
+              "library" =>
+                &1.question.library
+                |> Map.from_struct()
+                |> Enum.reduce(%{}, fn {k, v}, acc -> Map.put(acc, "#{k}", v) end),
               "content" => &1.question.question.content,
               "answer" => &1.answer.code
             },
@@ -134,7 +137,7 @@ defmodule CadetWeb.GradingControllerTest do
           }
         )
 
-      assert ^expected = Enum.sort_by(json_response(conn, 200), & &1["question"]["questionId"])
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["question"]["questionId"])
     end
 
     @tag authenticate: :staff

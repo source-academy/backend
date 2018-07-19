@@ -8,7 +8,7 @@ defmodule Cadet.ChangesetCase do
 
   using do
     quote do
-      import Cadet.ChangesetCase
+      import Cadet.{ChangesetCase, Factory}
     end
   end
 

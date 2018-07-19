@@ -27,7 +27,6 @@ if Application.get_env(:cadet, :environment) == :dev do
     programming_questions =
       insert_list(3, :question, %{
         type: :programming,
-        library: Enum.random([true, false]) && build(:library),
         question: build(:programming_question),
         assessment: assessment,
         max_xp: 200
@@ -36,7 +35,6 @@ if Application.get_env(:cadet, :environment) == :dev do
     mcq_questions =
       insert_list(3, :question, %{
         type: :mcq,
-        library: Enum.random([true, false]) && build(:library),
         question: build(:mcq_question),
         assessment: assessment,
         max_xp: 40
