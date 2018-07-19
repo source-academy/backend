@@ -30,6 +30,10 @@ variable "rds_password" {
   description = "Password for RDS"
 }
 
+variable "lambda_filename" {
+  description = "Location of the lambda deployment zip"
+}
+
 variable "ssh_public_key" {
   description = "Public SSH Key Used by the Instance"
 }
