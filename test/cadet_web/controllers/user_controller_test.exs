@@ -12,7 +12,7 @@ defmodule CadetWeb.UserControllerTest do
   end
 
   describe "GET /user" do
-    test "success", %{conn: conn} do
+    test "success, student", %{conn: conn} do
       user = insert(:user, %{role: :student})
       assessment = insert(:assessment, %{is_published: true})
       question = insert(:question, %{assessment: assessment})
@@ -24,6 +24,16 @@ defmodule CadetWeb.UserControllerTest do
       body = json_response(conn, 200)
       assert response(conn, 200)
       assert %{"name" => user.name, "role" => "#{user.role}", "xp" => 40} == body
+    end
+
+    test "success, staff", %{conn: conn} do
+      user = insert(:user, %{role: :staff})
+
+      conn = Guardian.Plug.sign_in(conn, user)
+      conn = get(conn, "/v1/user", nil)
+      body = json_response(conn, 200)
+      assert response(conn, 200)
+      assert %{"name" => user.name, "role" => "#{user.role}", "xp" => 0} == body
     end
 
     test "unauthorized", %{conn: conn} do
