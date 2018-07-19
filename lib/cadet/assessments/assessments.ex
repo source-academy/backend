@@ -21,6 +21,12 @@ defmodule Cadet.Assessments do
       |> where(student_id: ^user.id)
       |> select([s], sum(s.xp))
       |> Repo.one()
+
+    if xp do
+      Decimal.to_integer(xp)
+    else
+      0
+    end
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
