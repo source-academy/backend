@@ -9,6 +9,7 @@ defmodule Cadet.Assessments.QuestionTest do
       title: "question",
       question: %{},
       type: :programming,
+      library: build(:library),
       assessment_id: 2
     }
 
@@ -17,6 +18,7 @@ defmodule Cadet.Assessments.QuestionTest do
       title: "mcq",
       question: %{},
       type: :mcq,
+      library: build(:library),
       assessment_id: 2
     }
 
@@ -25,7 +27,7 @@ defmodule Cadet.Assessments.QuestionTest do
       title: "sample title",
       question: %{},
       type: :programming,
-      raw_library: Jason.encode!(%{week: 5, globals: [], externals: [], files: []}),
+      library: build(:library),
       raw_question: Jason.encode!(%{question: "This is a sample json"}),
       assessment_id: 2
     }

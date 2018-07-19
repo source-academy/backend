@@ -5,10 +5,8 @@ defmodule Cadet.Assessments.LibraryFactory do
 
   defmacro __using__(_opts) do
     quote do
-      alias Cadet.Assessments.Library
-
       def library_factory do
-        %Library{
+        %{
           chapter: Enum.random(1..20),
           globals: Faker.Lorem.words(Enum.random(1..3)),
           externals: Faker.Lorem.words(Enum.random(1..3)),
