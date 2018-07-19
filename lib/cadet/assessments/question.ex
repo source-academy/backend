@@ -21,12 +21,13 @@ defmodule Cadet.Assessments.Question do
 
   @required_fields ~w(title question type assessment_id)a
   @optional_fields ~w(display_order max_xp)a
+  @required_embeds ~w(library)a
 
   def changeset(question, params) do
     # TODO: Implement foreign_key_validation
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:library)
-    |> validate_required(@required_fields)
+    |> validate_required(@required_fields ++ @required_embeds)
   end
 end
