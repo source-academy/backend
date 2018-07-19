@@ -6,10 +6,12 @@ defmodule CadetWeb.UserController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
+  import Cadet.Assessments
+
   def index(conn, _) do
     user = conn.assigns.current_user
-    # TODO: fetch total xp for this user
-    render(conn, "index.json", user: user, xp: 0)
+    xp = user_total_xp(user)
+    render(conn, "index.json", user: user, xp: xp)
   end
 
   swagger_path :index do
