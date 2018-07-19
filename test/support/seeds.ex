@@ -78,7 +78,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(1..3, fn id ->
         insert(:programming_question, %{
           display_order: id,
-          library: Enum.random([true, false]) && build(:library),
           assessment: assessment,
           max_xp: 200
         })
@@ -88,7 +87,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(4..6, fn id ->
         insert(:mcq_question, %{
           display_order: id,
-          library: Enum.random([true, false]) && build(:library),
           assessment: assessment,
           max_xp: 40
         })

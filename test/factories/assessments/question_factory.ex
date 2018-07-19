@@ -16,6 +16,7 @@ defmodule Cadet.Assessments.QuestionFactory do
           title: sequence("question"),
           type: :programming,
           assessment: build(:assessment, %{is_published: true}),
+          library: build(:library),
           question: %{
             content: Faker.Pokemon.name(),
             solution_header: Faker.Pokemon.location(),
@@ -30,6 +31,7 @@ defmodule Cadet.Assessments.QuestionFactory do
           title: sequence("question"),
           type: :mcq,
           assessment: build(:assessment, %{is_published: true}),
+          library: build(:library),
           question: %{
             content: Faker.Pokemon.name(),
             choices: Enum.map(0..2, &build(:mcq_choice, %{choice_id: &1, is_correct: &1 == 0}))

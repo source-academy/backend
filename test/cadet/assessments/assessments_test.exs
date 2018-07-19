@@ -28,6 +28,7 @@ defmodule Cadet.AssessmentsTest do
         %{
           title: "question",
           type: :programming,
+          library: build(:library),
           question: %{
             content: Faker.Pokemon.name(),
             solution_header: Faker.Pokemon.location(),
@@ -49,6 +50,7 @@ defmodule Cadet.AssessmentsTest do
         %{
           title: "question",
           type: :mcq,
+          library: build(:library),
           question: %{
             content: Faker.Pokemon.name(),
             choices: Enum.map(0..2, &build(:mcq_choice, %{choice_id: &1, is_correct: &1 == 0}))
@@ -69,6 +71,7 @@ defmodule Cadet.AssessmentsTest do
         %{
           title: "question",
           type: :mcq,
+          library: build(:library),
           question: %{
             content: Faker.Pokemon.name(),
             choices: Enum.map(0..2, &build(:mcq_choice, %{choice_id: &1, is_correct: &1 == 0}))
