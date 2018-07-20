@@ -3,15 +3,15 @@ defmodule Cadet.Test.ChangesetHelper do
   This module defines helper method(s) that is useful to test changeset/2 of
   an Ecto schema.
 
-  This module provides `test_changeset`, `test_changeset_db`, `generate_changeset`
+  This module provides `assert_changeset`, `assert_changeset_db`, `generate_changeset`
   ```
   """
 
   defmacro __using__(opt) do
     if opt[:entity] do
       quote do
-        @spec test_changeset(map(), :valid | :invalid, atom()) :: any()
-        defp test_changeset(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
+        @spec assert_changeset(map(), :valid | :invalid, atom()) :: any()
+        defp assert_changeset(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
           changeset = generate_changeset(params, function_name)
 
           tester =
@@ -23,8 +23,8 @@ defmodule Cadet.Test.ChangesetHelper do
           tester.(changeset.valid?, inspect(changeset, pretty: true))
         end
 
-        @spec test_changeset_db(map(), :valid | :invalid, atom()) :: any()
-        defp test_changeset_db(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
+        @spec assert_changeset_db(map(), :valid | :invalid, atom()) :: any()
+        defp assert_changeset_db(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
           result =
             params
             |> generate_changeset(function_name)
