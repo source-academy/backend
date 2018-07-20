@@ -3,6 +3,8 @@ defmodule Cadet.Repo do
 
   alias ExAws.KMS
 
+  @dialyzer {:no_match, init: 2}
+
   @env Mix.env()
 
   @doc """
