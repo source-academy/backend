@@ -35,25 +35,9 @@ defmodule Cadet.Assessments.Question do
   end
 
   defp validate_question_content(changeset) do
-    with true <- changeset.valid?,
-         question_type when is_atom(question_type) <- get_change(changeset, :type),
-         question when is_map(question) <- get_change(changeset, :question),
-         false <- question_structure_valid?(question_type, question) do
-      add_error(changeset, :answer, "invalid question provided for question type")
-    else
-      _ -> changeset
-    end
-  end
-
-  defp question_structure_valid?(question_type, question) do
-    question_type
-    |> case do
-      :programming ->
-        ProgrammingQuestion.changeset(%ProgrammingQuestion{}, question)
-
-      :mcq ->
-        MCQQuestion.changeset(%MCQQuestion{}, question)
-    end
-    |> Map.get(:valid?)
+    validate_arbitrary_embedded_struct_by_type(changeset, :question, %{
+      mcq: MCQQuestion,
+      programming: ProgrammingQuestion
+    })
   end
 end

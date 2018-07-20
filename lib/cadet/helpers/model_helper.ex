@@ -85,4 +85,30 @@ defmodule Cadet.ModelHelper do
       _ -> changeset
     end
   end
+
+  @doc """
+  Given a changeset for a model with a `:type` field and a `field` of type `:map`,
+  and a map of %{type1: TypeOneModel, type2: TypeTwoModel}, this helper function will
+  check whether `field` is valid based on the model's `:type` by calling the appropriate
+  model's `&changeset/2` function.
+  """
+  def validate_arbitrary_embedded_struct_by_type(changeset, field, type_to_model_map)
+      when is_atom(field) and is_map(type_to_model_map) do
+    build_changeset = fn params, model -> apply(model, :changeset, [struct(model), params]) end
+
+    structure_valid? = fn params, type ->
+      params
+      |> build_changeset.(Map.get(type_to_model_map, type))
+      |> Map.get(:valid?)
+    end
+
+    with true <- changeset.valid?,
+         type when is_atom(type) <- get_change(changeset, :type),
+         map when is_map(map) <- get_change(changeset, field),
+         false <- structure_valid?.(map, type) do
+      add_error(changeset, field, "invalid #{field} provided for #{field} type")
+    else
+      _ -> changeset
+    end
+  end
 end
