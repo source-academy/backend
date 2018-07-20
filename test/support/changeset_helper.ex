@@ -41,6 +41,7 @@ defmodule Cadet.Test.ChangesetHelper do
           assert(status == expected, inspect(result, pretty: true))
         end
 
+        @spec generate_changeset(map(), atom()) :: Ecto.Changeset.t()
         defp generate_changeset(params, function_name \\ :changeset) do
           apply(unquote(opt[:entity]), function_name, [struct(unquote(opt[:entity])), params])
         end
