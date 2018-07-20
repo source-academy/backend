@@ -10,8 +10,6 @@ defmodule Cadet.Test.ChangesetHelper do
   defmacro __using__(opt) do
     if opt[:entity] do
       quote do
-        alias Cadet.Repo
-
         @spec test_changeset(map(), :assert | :refute, atom()) :: any()
         defp test_changeset(params, assert_or_refute \\ :assert, function_name \\ :changeset) do
           changeset = generate_changeset(params, function_name)
@@ -30,7 +28,7 @@ defmodule Cadet.Test.ChangesetHelper do
           result =
             params
             |> generate_changeset(function_name)
-            |> Repo.insert()
+            |> Cadet.Repo.insert()
 
           expected =
             case assert_or_refute do
