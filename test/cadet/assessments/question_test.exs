@@ -82,16 +82,16 @@ defmodule Cadet.Assessments.QuestionTest do
       valid_mcq_params: mcq_params,
       valid_programming_params: programming_params
     } do
-      Enum.each([mcq_params, programming_params], fn params ->
-        Enum.each(@required_fields ++ @required_embeds, fn field ->
+      for params <- [mcq_params, programming_params] do
+        for field <- @required_fields ++ @required_embeds do
           params_missing_field = Map.delete(params, field)
 
           refute(
             Question.changeset(%Question{}, params_missing_field).valid?,
             inspect(params_missing_field, pretty: true)
           )
-        end)
-      end)
+        end
+      end
     end
 
     test "invalid question content", %{
