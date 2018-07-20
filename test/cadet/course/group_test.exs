@@ -1,9 +1,13 @@
 defmodule Cadet.Course.GroupTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Course.Group
 
-  valid_changesets Group do
-    %{}
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: Group
+
+  describe "Changesets" do
+    test "valid changeset" do
+      assert_changeset(%{})
+      assert_changeset(%{name: "tst"})
+    end
   end
 end

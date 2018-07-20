@@ -1,18 +1,19 @@
 defmodule Cadet.Assessments.LibraryTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Assessments.Library
 
-  valid_changesets Library do
-    %{
-      version: 1
-    }
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: Library
 
-    %{
-      version: 1,
-      globals: ["asd"],
-      externals: [],
-      fields: []
-    }
+  describe "Changesets" do
+    test "valid changesets" do
+      assert_changeset(%{version: 1})
+
+      assert_changeset(%{
+        version: 1,
+        globals: ["asd"],
+        externals: [],
+        fields: []
+      })
+    end
   end
 end

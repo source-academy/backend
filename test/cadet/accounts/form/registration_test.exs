@@ -1,39 +1,21 @@
 defmodule Cadet.Accounts.Form.RegistrationTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Accounts.Form.Registration
 
-  valid_changesets Registration do
-    %{
-      name: "happy",
-      nusnet_id: "e853820"
-    }
-  end
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: Registration
 
-  invalid_changesets Registration do
-    %{}
+  describe "Changesets" do
+    test "valid changeset" do
+      assert_changeset(%{name: "happy", nusnet_id: "e853820"})
+    end
 
-    %{
-      name: "happy"
-    }
-
-    %{
-      nusnet_id: "e853820"
-    }
-
-    %{
-      name: "",
-      nusnet_id: ""
-    }
-
-    %{
-      name: "",
-      nusnet_id: "e853820"
-    }
-
-    %{
-      name: "happy",
-      nusnet_id: ""
-    }
+    test "invalid changeset" do
+      assert_changeset(%{}, :invalid)
+      assert_changeset(%{name: "happy"}, :invalid)
+      assert_changeset(%{nusnet_id: "e853820"}, :invalid)
+      assert_changeset(%{name: "", nusnet_id: ""}, :invalid)
+      assert_changeset(%{name: "", nusnet_id: "e853820"}, :invalid)
+      assert_changeset(%{name: "happy", nusnet_id: ""}, :invalid)
+    end
   end
 end

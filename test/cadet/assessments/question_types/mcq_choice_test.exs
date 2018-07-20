@@ -1,20 +1,23 @@
 defmodule Cadet.Assessments.QuestionTypes.MCQChoiceTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Assessments.QuestionTypes.MCQChoice
 
-  valid_changesets MCQChoice do
-    %{choice_id: 1, content: "asd", is_correct: true}
-    %{choice_id: 4, content: "asd", hint: "asd", is_correct: true}
-  end
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: MCQChoice
 
-  invalid_changesets MCQChoice do
-    %{choice_id: 1, content: "asd"}
-    %{choice_id: 1, hint: "asd"}
-    %{choice_id: 1, is_correct: false}
-    %{choice_id: 1, content: "asd", hint: "aaa"}
-    %{content: 1, is_correct: true}
-    %{choice_id: 6, content: 1, is_correct: true}
-    %{choice_id: -1, content: 1, is_correct: true}
+  describe "Changesets" do
+    test "valid changesets" do
+      assert_changeset(%{choice_id: 1, content: "asd", is_correct: true})
+      assert_changeset(%{choice_id: 4, content: "asd", hint: "asd", is_correct: true})
+    end
+
+    test "invalid changesets" do
+      assert_changeset(%{choice_id: 1, content: "asd"}, :invalid)
+      assert_changeset(%{choice_id: 1, hint: "asd"}, :invalid)
+      assert_changeset(%{choice_id: 1, is_correct: false}, :invalid)
+      assert_changeset(%{choice_id: 1, content: "asd", hint: "aaa"}, :invalid)
+      assert_changeset(%{content: 1, is_correct: true}, :invalid)
+      assert_changeset(%{choice_id: 6, content: 1, is_correct: true}, :invalid)
+      assert_changeset(%{choice_id: -1, content: 1, is_correct: true}, :invalid)
+    end
   end
 end

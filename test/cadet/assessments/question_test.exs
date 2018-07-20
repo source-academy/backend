@@ -1,49 +1,58 @@
 defmodule Cadet.Assessments.QuestionTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Assessments.Question
 
-  valid_changesets Question do
-    %{
-      display_order: 2,
-      title: "question",
-      question: %{},
-      type: :programming,
-      library: build(:library),
-      assessment_id: 2
-    }
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: Question
 
-    %{
-      display_order: 1,
-      title: "mcq",
-      question: %{},
-      type: :mcq,
-      library: build(:library),
-      assessment_id: 2
-    }
+  describe "Changesets" do
+    test "valid changesets" do
+      assert_changeset(%{
+        display_order: 2,
+        title: "question",
+        question: %{},
+        type: :programming,
+        library: build(:library),
+        assessment_id: 2
+      })
 
-    %{
-      display_order: 5,
-      title: "sample title",
-      question: %{},
-      type: :programming,
-      library: build(:library),
-      raw_question: Jason.encode!(%{question: "This is a sample json"}),
-      assessment_id: 2
-    }
-  end
+      assert_changeset(%{
+        display_order: 1,
+        title: "mcq",
+        question: %{},
+        type: :mcq,
+        library: build(:library),
+        assessment_id: 2
+      })
 
-  invalid_changesets Question do
-    %{
-      display_order: 2,
-      title: "question",
-      type: :programming
-    }
+      assert_changeset(%{
+        display_order: 5,
+        title: "sample title",
+        question: %{},
+        type: :programming,
+        library: build(:library),
+        raw_question: Jason.encode!(%{question: "This is a sample json"}),
+        assessment_id: 2
+      })
+    end
 
-    %{
-      display_order: 2,
-      question: %{},
-      type: :mcq
-    }
+    test "invalid changesets" do
+      assert_changeset(
+        %{
+          display_order: 2,
+          title: "question",
+          type: :programming
+        },
+        :invalid
+      )
+
+      assert_changeset(
+        %{
+          display_order: 2,
+          question: %{},
+          type: :mcq
+        },
+        :invalid
+      )
+    end
   end
 end

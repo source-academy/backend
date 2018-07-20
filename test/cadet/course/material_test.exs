@@ -1,14 +1,21 @@
 defmodule Cadet.Course.MaterialTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Course.Material
 
-  valid_changesets Material do
-    %{name: "Lecture Notes", description: "This is lecture notes"}
-    %{name: "File", file: build_upload("test/fixtures/upload.txt", "text/plain")}
-  end
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: Material
 
-  invalid_changesets Material do
-    %{name: "", description: "some description"}
+  describe "Changesets" do
+    test "valid changesets" do
+      assert_changeset(%{name: "Lecture Notes", description: "This is lecture notes"})
+
+      assert_changeset(%{
+        name: "File",
+        file: build_upload("test/fixtures/upload.txt", "text/plain")
+      })
+    end
+
+    test "invalid changeset" do
+      assert_changeset(%{name: "", description: "some description"}, :invalid)
+    end
   end
 end

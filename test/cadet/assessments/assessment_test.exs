@@ -1,34 +1,40 @@
 defmodule Cadet.Assessments.AssessmentTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Assessments.Assessment
 
-  valid_changesets Assessment do
-    %{
-      type: :mission,
-      title: "mission",
-      open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
-    }
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: Assessment
 
-    %{
-      type: :mission,
-      title: "mission",
-      open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-      close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
-      cover_picture: build_upload("test/fixtures/upload.png", "image/png"),
-      mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
-    }
-  end
+  describe "Changesets" do
+    test "valid changesets" do
+      assert_changeset(%{
+        type: :mission,
+        title: "mission",
+        open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
+        close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
+      })
 
-  invalid_changesets Assessment do
-    %{type: :mission, title: "mission", max_xp: 100}
+      assert_changeset(%{
+        type: :mission,
+        title: "mission",
+        open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
+        close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
+        cover_picture: build_upload("test/fixtures/upload.png", "image/png"),
+        mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
+      })
+    end
 
-    %{
-      title: "mission",
-      open_at: Timex.now(),
-      close_at: Timex.shift(Timex.now(), days: 7),
-      max_xp: 100
-    }
+    test "invalid changesets" do
+      assert_changeset(%{type: :mission, title: "mission", max_xp: 100}, :invalid)
+
+      assert_changeset(
+        %{
+          title: "mission",
+          open_at: Timex.now(),
+          close_at: Timex.shift(Timex.now(), days: 7),
+          max_xp: 100
+        },
+        :invalid
+      )
+    end
   end
 end

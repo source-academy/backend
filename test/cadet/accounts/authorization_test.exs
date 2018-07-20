@@ -1,15 +1,18 @@
 defmodule Cadet.Accounts.AuthorizationTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Accounts.Authorization
 
-  valid_changesets Authorization do
-    %{provider: :nusnet_id, uid: "E012345", user_id: 2}
-  end
+  use Cadet.DataCase
+  use Cadet.Test.ChangesetHelper, entity: Authorization
 
-  invalid_changesets Authorization do
-    %{provider: :nusnet_id, uid: "", user_id: 2}
-    %{provider: :facebook, uid: "E012345", user_id: :unknown}
-    %{provider: :email, user_id: 2}
+  describe "Changesets" do
+    test "valid changeset" do
+      assert_changeset(%{provider: :nusnet_id, uid: "E012345", user_id: 2})
+    end
+
+    test "invalid changesets" do
+      assert_changeset(%{provider: :nusnet_id, uid: "", user_id: 2}, :invalid)
+      assert_changeset(%{provider: :facebook, uid: "E012345", user_id: :unknown}, :invalid)
+      assert_changeset(%{provider: :email, user_id: 2}, :invalid)
+    end
   end
 end
