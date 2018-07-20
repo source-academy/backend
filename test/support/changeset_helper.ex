@@ -10,30 +10,30 @@ defmodule Cadet.Test.ChangesetHelper do
   defmacro __using__(opt) do
     if opt[:entity] do
       quote do
-        @spec test_changeset(map(), :assert | :refute, atom()) :: any()
-        defp test_changeset(params, assert_or_refute \\ :assert, function_name \\ :changeset) do
+        @spec test_changeset(map(), :valid | :invalid, atom()) :: any()
+        defp test_changeset(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
           changeset = generate_changeset(params, function_name)
 
           tester =
-            case assert_or_refute do
-              :assert -> &assert/2
-              :refute -> &refute/2
+            case valid_or_invalid do
+              :valid -> &assert/2
+              :invalid -> &refute/2
             end
 
           tester.(changeset.valid?, inspect(changeset, pretty: true))
         end
 
-        @spec test_changeset_db(map(), :assert | :refute, atom()) :: any()
-        defp test_changeset_db(params, assert_or_refute \\ :assert, function_name \\ :changeset) do
+        @spec test_changeset_db(map(), :valid | :invalid, atom()) :: any()
+        defp test_changeset_db(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
           result =
             params
             |> generate_changeset(function_name)
             |> Cadet.Repo.insert()
 
           expected =
-            case assert_or_refute do
-              :assert -> :ok
-              :refute -> :error
+            case valid_or_invalid do
+              :valid -> :ok
+              :invalid -> :error
             end
 
           {status, _} = result

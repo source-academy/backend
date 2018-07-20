@@ -11,8 +11,8 @@ defmodule Cadet.Accounts.UserTest do
     end
 
     test "invalid changeset" do
-      test_changeset_db(%{name: "people"}, :refute)
-      test_changeset(%{role: :avenger}, :refute)
+      test_changeset_db(%{name: "people"}, :invalid)
+      test_changeset(%{role: :avenger}, :invalid)
     end
   end
 end
