@@ -6,7 +6,7 @@ defmodule Cadet.Assessments.AnswerTypes.ProgrammingAnswerTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{code: "This is some code"})
+      assert_changeset(%{code: "This is some code"}, :valid)
     end
 
     test "invalid changeset" do

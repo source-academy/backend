@@ -11,7 +11,7 @@ defmodule Cadet.Test.ChangesetHelper do
     if opt[:entity] do
       quote do
         @spec assert_changeset(map(), :valid | :invalid, atom()) :: any()
-        defp assert_changeset(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
+        defp assert_changeset(params, valid_or_invalid, function_name \\ :changeset) do
           changeset = generate_changeset(params, function_name)
 
           tester =
@@ -24,7 +24,7 @@ defmodule Cadet.Test.ChangesetHelper do
         end
 
         @spec assert_changeset_db(map(), :valid | :invalid, atom()) :: any()
-        defp assert_changeset_db(params, valid_or_invalid \\ :valid, function_name \\ :changeset) do
+        defp assert_changeset_db(params, valid_or_invalid, function_name \\ :changeset) do
           result =
             params
             |> generate_changeset(function_name)

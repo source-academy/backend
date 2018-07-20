@@ -6,7 +6,7 @@ defmodule Cadet.Course.AnnouncementTest do
 
   describe "Changesets" do
     test "valid changesets" do
-      assert_changeset(%{title: "title", content: "Hello world", published: true})
+      assert_changeset(%{title: "title", content: "Hello world", published: true}, :valid)
     end
 
     test "invalid changeset" do

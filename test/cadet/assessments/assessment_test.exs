@@ -6,21 +6,27 @@ defmodule Cadet.Assessments.AssessmentTest do
 
   describe "Changesets" do
     test "valid changesets" do
-      assert_changeset(%{
-        type: :mission,
-        title: "mission",
-        open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-        close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
-      })
+      assert_changeset(
+        %{
+          type: :mission,
+          title: "mission",
+          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
+          close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
+        },
+        :valid
+      )
 
-      assert_changeset(%{
-        type: :mission,
-        title: "mission",
-        open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-        close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
-        cover_picture: build_upload("test/fixtures/upload.png", "image/png"),
-        mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
-      })
+      assert_changeset(
+        %{
+          type: :mission,
+          title: "mission",
+          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
+          close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
+          cover_picture: build_upload("test/fixtures/upload.png", "image/png"),
+          mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
+        },
+        :valid
+      )
     end
 
     test "invalid changesets" do

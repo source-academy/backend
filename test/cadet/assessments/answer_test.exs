@@ -43,11 +43,11 @@ defmodule Cadet.Assessments.AnswerTest do
 
   describe "Changesets" do
     test "valid mcq question params", %{valid_mcq_params: params} do
-      assert_changeset_db(params)
+      assert_changeset_db(params, :valid)
     end
 
     test "valid programming question with id params", %{valid_programming_params: params} do
-      assert_changeset_db(params)
+      assert_changeset_db(params, :valid)
     end
 
     test "converts valid params with models into ids",
@@ -64,7 +64,7 @@ defmodule Cadet.Assessments.AnswerTest do
         |> Map.put(:submission, submission)
         |> Map.put(:question, question)
 
-      assert_changeset(params)
+      assert_changeset(params, :valid)
     end
 
     test "invalid changeset mcq question wrong answer format", %{valid_mcq_params: params} do

@@ -6,8 +6,8 @@ defmodule Cadet.Course.GroupTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{})
-      assert_changeset(%{name: "tst"})
+      assert_changeset(%{}, :valid)
+      assert_changeset(%{name: "tst"}, :valid)
     end
   end
 end

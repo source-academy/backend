@@ -6,8 +6,8 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoiceTest do
 
   describe "Changesets" do
     test "valid changesets" do
-      assert_changeset(%{choice_id: 1, content: "asd", is_correct: true})
-      assert_changeset(%{choice_id: 4, content: "asd", hint: "asd", is_correct: true})
+      assert_changeset(%{choice_id: 1, content: "asd", is_correct: true}, :valid)
+      assert_changeset(%{choice_id: 4, content: "asd", hint: "asd", is_correct: true}, :valid)
     end
 
     test "invalid changesets" do

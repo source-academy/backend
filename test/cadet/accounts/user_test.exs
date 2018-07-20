@@ -6,8 +6,8 @@ defmodule Cadet.Accounts.UserTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{name: "happy people", role: :admin})
-      assert_changeset(%{name: "happy", role: :student})
+      assert_changeset(%{name: "happy people", role: :admin}, :valid)
+      assert_changeset(%{name: "happy", role: :student}, :valid)
     end
 
     test "invalid changeset" do

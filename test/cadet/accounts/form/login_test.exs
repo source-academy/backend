@@ -6,7 +6,7 @@ defmodule Cadet.Accounts.LoginTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{ivle_token: "T0K3N"})
+      assert_changeset(%{ivle_token: "T0K3N"}, :valid)
     end
 
     test "invalid changeset" do

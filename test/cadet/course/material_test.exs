@@ -6,12 +6,15 @@ defmodule Cadet.Course.MaterialTest do
 
   describe "Changesets" do
     test "valid changesets" do
-      assert_changeset(%{name: "Lecture Notes", description: "This is lecture notes"})
+      assert_changeset(%{name: "Lecture Notes", description: "This is lecture notes"}, :valid)
 
-      assert_changeset(%{
-        name: "File",
-        file: build_upload("test/fixtures/upload.txt", "text/plain")
-      })
+      assert_changeset(
+        %{
+          name: "File",
+          file: build_upload("test/fixtures/upload.txt", "text/plain")
+        },
+        :valid
+      )
     end
 
     test "invalid changeset" do

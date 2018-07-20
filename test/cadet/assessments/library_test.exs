@@ -6,14 +6,17 @@ defmodule Cadet.Assessments.LibraryTest do
 
   describe "Changesets" do
     test "valid changesets" do
-      assert_changeset(%{version: 1})
+      assert_changeset(%{version: 1}, :valid)
 
-      assert_changeset(%{
-        version: 1,
-        globals: ["asd"],
-        externals: [],
-        fields: []
-      })
+      assert_changeset(
+        %{
+          version: 1,
+          globals: ["asd"],
+          externals: [],
+          fields: []
+        },
+        :valid
+      )
     end
   end
 end

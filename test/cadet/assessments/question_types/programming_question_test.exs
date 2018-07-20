@@ -6,12 +6,15 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{
-        content: "asd",
-        solution_template: "asd",
-        solution: "asd",
-        library: %{version: 1}
-      })
+      assert_changeset(
+        %{
+          content: "asd",
+          solution_template: "asd",
+          solution: "asd",
+          library: %{version: 1}
+        },
+        :valid
+      )
     end
 
     test "invalid changesets" do

@@ -6,7 +6,7 @@ defmodule Cadet.Accounts.AuthorizationTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{provider: :nusnet_id, uid: "E012345", user_id: 2})
+      assert_changeset(%{provider: :nusnet_id, uid: "E012345", user_id: 2}, :valid)
     end
 
     test "invalid changesets" do

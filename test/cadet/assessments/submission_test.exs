@@ -17,11 +17,11 @@ defmodule Cadet.Assessments.SubmissionTest do
 
   describe "Changesets" do
     test "valid params", %{valid_params: params} do
-      assert_changeset_db(params)
+      assert_changeset_db(params, :valid)
     end
 
     test "converts valid params with models into ids", %{assessment: assessment, student: student} do
-      assert_changeset_db(%{student: student, assessment: assessment})
+      assert_changeset_db(%{student: student, assessment: assessment}, :valid)
     end
 
     test "invalid changeset missing params", %{valid_params: params} do

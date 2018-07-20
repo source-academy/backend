@@ -6,7 +6,7 @@ defmodule Cadet.Accounts.Form.RegistrationTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{name: "happy", nusnet_id: "e853820"})
+      assert_changeset(%{name: "happy", nusnet_id: "e853820"}, :valid)
     end
 
     test "invalid changeset" do
