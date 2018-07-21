@@ -1,8 +1,7 @@
 defmodule Cadet.Accounts.Form.RegistrationTest do
   alias Cadet.Accounts.Form.Registration
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: Registration
+  use Cadet.ChangesetCase, entity: Registration
 
   describe "Changesets" do
     test "valid changeset" do

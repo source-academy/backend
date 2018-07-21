@@ -1,8 +1,7 @@
 defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
   alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: ProgrammingQuestion
+  use Cadet.ChangesetCase, entity: ProgrammingQuestion
 
   describe "Changesets" do
     test "valid changeset" do

@@ -1,8 +1,7 @@
 defmodule Cadet.Accounts.UserTest do
   alias Cadet.Accounts.User
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: User
+  use Cadet.ChangesetCase, entity: User
 
   describe "Changesets" do
     test "valid changeset" do

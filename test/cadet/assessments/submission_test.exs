@@ -1,8 +1,7 @@
 defmodule Cadet.Assessments.SubmissionTest do
   alias Cadet.Assessments.Submission
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: Submission
+  use Cadet.ChangesetCase, entity: Submission
 
   @required_fields ~w(student_id assessment_id)a
 
@@ -44,7 +43,9 @@ defmodule Cadet.Assessments.SubmissionTest do
       new_student = insert(:user, %{role: :student})
       {:ok, _} = Repo.delete(assessment)
 
-      assert_changeset_db(Map.put(params, :student_id, new_student.id), :invalid)
+      params
+      |> Map.put(:student_id, new_student.id)
+      |> assert_changeset_db(:invalid)
     end
   end
 end

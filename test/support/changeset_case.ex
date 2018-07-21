@@ -1,4 +1,4 @@
-defmodule Cadet.Test.ChangesetHelper do
+defmodule Cadet.ChangesetCase do
   @moduledoc """
   This module defines helper method(s) that is useful to test changeset/2 of
   an Ecto schema.
@@ -10,6 +10,8 @@ defmodule Cadet.Test.ChangesetHelper do
   defmacro __using__(opt) do
     if opt[:entity] do
       quote do
+        use Cadet.DataCase
+
         @spec assert_changeset(map(), :valid | :invalid, atom()) :: any()
         defp assert_changeset(params, valid_or_invalid, function_name \\ :changeset) do
           changeset = generate_changeset(params, function_name)

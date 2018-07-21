@@ -1,8 +1,7 @@
 defmodule Cadet.Course.MaterialTest do
   alias Cadet.Course.Material
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: Material
+  use Cadet.ChangesetCase, entity: Material
 
   describe "Changesets" do
     test "valid changesets" do

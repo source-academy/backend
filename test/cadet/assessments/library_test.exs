@@ -1,8 +1,7 @@
 defmodule Cadet.Assessments.LibraryTest do
   alias Cadet.Assessments.Library
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: Library
+  use Cadet.ChangesetCase, entity: Library
 
   describe "Changesets" do
     test "valid changesets" do

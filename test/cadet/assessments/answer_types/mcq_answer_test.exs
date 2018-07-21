@@ -1,8 +1,7 @@
 defmodule Cadet.Assessments.AnswerTypes.MCQAnswerTest do
   alias Cadet.Assessments.AnswerTypes.MCQAnswer
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: MCQAnswer
+  use Cadet.ChangesetCase, entity: MCQAnswer
 
   describe "Changesets" do
     test "valid changesets" do

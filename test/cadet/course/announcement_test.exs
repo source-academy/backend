@@ -1,8 +1,7 @@
 defmodule Cadet.Course.AnnouncementTest do
   alias Cadet.Course.Announcement
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: Announcement
+  use Cadet.ChangesetCase, entity: Announcement
 
   describe "Changesets" do
     test "valid changesets" do
@@ -10,7 +9,7 @@ defmodule Cadet.Course.AnnouncementTest do
     end
 
     test "invalid changeset" do
-      assert_changeset_db(%{title: "", content: "Some content"}, :invalid)
+      assert_changeset(%{title: "", content: "Some content"}, :invalid)
     end
   end
 end

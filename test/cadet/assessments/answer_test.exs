@@ -1,8 +1,7 @@
 defmodule Cadet.Assessments.AnswerTest do
   alias Cadet.Assessments.Answer
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: Answer
+  use Cadet.ChangesetCase, entity: Answer
 
   @required_fields ~w(answer submission_id question_id type)a
 
@@ -108,7 +107,9 @@ defmodule Cadet.Assessments.AnswerTest do
 
       {:ok, _} = Repo.delete(submission)
 
-      assert_changeset_db(Map.put(params, :question_id, new_mcq_question.id), :invalid)
+      params
+      |> Map.put(:question_id, new_mcq_question.id)
+      |> assert_changeset_db(:invalid)
     end
   end
 end

@@ -1,8 +1,7 @@
 defmodule Cadet.Accounts.AuthorizationTest do
   alias Cadet.Accounts.Authorization
 
-  use Cadet.DataCase
-  use Cadet.Test.ChangesetHelper, entity: Authorization
+  use Cadet.ChangesetCase, entity: Authorization
 
   describe "Changesets" do
     test "valid changeset" do
