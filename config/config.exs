@@ -50,7 +50,7 @@ config :guardian, Guardian.DB,
   # default
   schema_name: "guardian_tokens",
   # store all token types if not set
-  token_types: ["access"],
+  token_types: ["refresh"],
   # default: 60 minute
   sweep_interval: 60
 

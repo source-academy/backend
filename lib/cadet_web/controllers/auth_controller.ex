@@ -6,7 +6,7 @@ defmodule CadetWeb.AuthController do
 
   alias Cadet.Accounts
   alias Cadet.Accounts.Form.Login
-  alias Cadet.Accounts.IVLE
+  alias Cadet.Accounts.{IVLE, User}
   alias Cadet.Auth.Guardian
 
   @doc """
@@ -23,18 +23,7 @@ defmodule CadetWeb.AuthController do
          {:changes, login} when valid <- {:changes, apply_changes(changeset)},
          {:fetch, {:ok, nusnet_id}} <- {:fetch, IVLE.fetch_nusnet_id(login.ivle_token)},
          {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, login.ivle_token)} do
-      {:ok, access_token, _} =
-        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
-
-      {:ok, refresh_token, _} =
-        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
-
-      render(
-        conn,
-        "token.json",
-        access_token: access_token,
-        refresh_token: refresh_token
-      )
+      render(conn, "token.json", generate_tokens(user))
     else
       {:changes, _} ->
         send_resp(conn, :bad_request, "Missing parameter")
@@ -56,24 +45,36 @@ defmodule CadetWeb.AuthController do
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
-  def refresh(conn, %{"refresh_token" => refresh_token}) do
-    case Guardian.exchange(refresh_token, "refresh", "access") do
-      {:ok, {refresh_token, _}, {access_token, _}} ->
-        render(conn, "token.json", access_token: access_token, refresh_token: refresh_token)
+  @doc """
+  Receives a /refresh request with valid attribute.
 
-      {:error, _reason} ->
+  Exchanges the refresh_token with a new access_token.
+  """
+  def refresh(conn, %{"refresh_token" => refresh_token}) do
+    # TODO: Refactor to use refresh after guardian_db > v1.1.0 is released.
+    case Guardian.resource_from_token(refresh_token) do
+      {:ok, user, %{"typ" => "refresh"}} ->
+        render(conn, "token.json", generate_tokens(user))
+
+      _ ->
         send_resp(conn, :unauthorized, "Invalid Token")
     end
   end
 
+  @doc """
+  Receives a /refresh request with invalid attributes.
+  """
   def refresh(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
+    send_resp(conn, :bad_request, "Missing parameter")
   end
 
-  def logout(conn, %{"access_token" => access_token}) do
-    case Guardian.decode_and_verify(access_token) do
+  @doc """
+  Receives a /logout request with valid attribute.
+  """
+  def logout(conn, %{"refresh_token" => refresh_token}) do
+    case Guardian.decode_and_verify(refresh_token) do
       {:ok, _} ->
-        Guardian.revoke(access_token)
+        Guardian.revoke(refresh_token)
         text(conn, "OK")
 
       {:error, _} ->
@@ -81,8 +82,22 @@ defmodule CadetWeb.AuthController do
     end
   end
 
+  @doc """
+  Receives a /logout request with invalid attributes.
+  """
   def logout(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
+    send_resp(conn, :bad_request, "Missing parameter")
+  end
+
+  @spec generate_tokens(%User{}) :: %{access_token: String.t(), refresh_token: String.t()}
+  defp generate_tokens(user) do
+    {:ok, access_token, _} =
+      Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
+
+    {:ok, refresh_token, _} =
+      Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
+
+    %{access_token: access_token, refresh_token: refresh_token}
   end
 
   swagger_path :create do
@@ -193,14 +208,6 @@ defmodule CadetWeb.AuthController do
 
           properties do
             refresh_token(:string, "Refresh token", required: true)
-          end
-        end,
-      AccessToken:
-        swagger_schema do
-          title("Access Token")
-
-          properties do
-            access_token(:string, "Access token", required: true)
           end
         end
     }
