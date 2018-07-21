@@ -5,7 +5,7 @@ defmodule Cadet.AssessmentsTest do
   alias Cadet.Assessments.{Assessment, AssessmentType, Question}
 
   test "create assessments of all types" do
-    Enum.each(AssessmentType.__enum_map__(), fn type ->
+    for type <- AssessmentType.__enum_map__() do
       title_string = Atom.to_string(type)
 
       {_res, assessment} =
@@ -17,7 +17,7 @@ defmodule Cadet.AssessmentsTest do
         })
 
       assert %{title: ^title_string, type: ^type} = assessment
-    end)
+    end
   end
 
   test "create programming question" do
