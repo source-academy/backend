@@ -1,14 +1,16 @@
 defmodule Cadet.Accounts.LoginTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Accounts.Form.Login
 
-  valid_changesets Login do
-    %{ivle_token: "T0K3N"}
-  end
+  use Cadet.ChangesetCase, entity: Login
 
-  invalid_changesets Login do
-    %{ivle_token: ""}
-    %{}
+  describe "Changesets" do
+    test "valid changeset" do
+      assert_changeset(%{ivle_token: "T0K3N"}, :valid)
+    end
+
+    test "invalid changeset" do
+      assert_changeset(%{ivle_token: ""}, :invalid)
+      assert_changeset(%{}, :invalid)
+    end
   end
 end

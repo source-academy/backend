@@ -1,43 +1,55 @@
 defmodule Cadet.ChangesetCase do
   @moduledoc """
-  This module defines the setup for changeset tests
+  This module defines helper method(s) that is useful to test changeset/2 of
+  an Ecto schema.
+
+  This module provides `assert_changeset`, `assert_changeset_db`, `generate_changeset`
+  ```
   """
-  use ExUnit.CaseTemplate
 
-  import ExUnit.Assertions, only: [assert: 2, refute: 2]
+  defmacro __using__(opt) do
+    if opt[:entity] do
+      quote do
+        use Cadet.DataCase
 
-  using do
-    quote do
-      import Cadet.{ChangesetCase, Factory}
-    end
-  end
+        @spec assert_changeset(map(), :valid | :invalid, atom()) :: any()
+        defp assert_changeset(params, valid_or_invalid, function_name \\ :changeset) do
+          changeset = generate_changeset(params, function_name)
 
-  defmacro valid_changesets(mod, do: block) do
-    test_changesets("Valid", &assert/2, mod, block)
-  end
+          tester =
+            case valid_or_invalid do
+              :valid -> &assert/2
+              :invalid -> &refute/2
+            end
 
-  defmacro invalid_changesets(mod, do: block) do
-    test_changesets("Invalid", &refute/2, mod, block)
-  end
+          tester.(changeset.valid?, inspect(changeset, pretty: true))
+        end
 
-  def build_upload(path, content_type \\ "image\png") do
-    %Plug.Upload{path: path, filename: Path.basename(path), content_type: content_type}
-  end
+        @spec assert_changeset_db(map(), :valid | :invalid, atom()) :: any()
+        defp assert_changeset_db(params, valid_or_invalid, function_name \\ :changeset) do
+          result =
+            params
+            |> generate_changeset(function_name)
+            |> Cadet.Repo.insert()
 
-  defp test_changesets(header, func, mod, block) do
-    params =
-      case block do
-        {:__block__, _, params} -> params
-        {:%{}, _, _} -> [block]
-      end
+          expected =
+            case valid_or_invalid do
+              :valid -> :ok
+              :invalid -> :error
+            end
 
-    quote do
-      test "#{unquote(header)} #{unquote(mod)} changesets" do
-        for param <- unquote(params) do
-          changeset = unquote(mod).changeset(%unquote(mod){}, param)
-          unquote(func).(changeset.valid?(), Kernel.inspect(param))
+          {status, _} = result
+
+          assert(status == expected, inspect(result, pretty: true))
+        end
+
+        @spec generate_changeset(map(), atom()) :: Ecto.Changeset.t()
+        defp generate_changeset(params, function_name \\ :changeset) do
+          apply(unquote(opt[:entity]), function_name, [struct(unquote(opt[:entity])), params])
         end
       end
+    else
+      raise "invalid arguments -- please supply :entity option"
     end
   end
 end
