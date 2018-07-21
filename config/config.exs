@@ -53,3 +53,14 @@ config :guardian, Guardian.DB,
   token_types: ["access"],
   # default: 60 minute
   sweep_interval: 60
+
+# Configure :ex_aws
+ 
+config :ex_aws, 
+access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
+s3: [ 
+ scheme: "https://", 
+ host: "sreyansapitest.s3-ap-southeast-1.amazonaws.com", 
+ region: "ap-southeast-1" 
+]

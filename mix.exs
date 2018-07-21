@@ -69,7 +69,8 @@ defmodule Cadet.Mixfile do
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
-      {:phoenix_live_reload, "~> 1.0", only: :dev}
+      {:phoenix_live_reload, "~> 1.0", only: :dev},
+      {:ex_aws, "~> 1.0"},
     ]
   end
 

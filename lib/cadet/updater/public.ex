@@ -9,10 +9,13 @@ defmodule Cadet.Updater.Public do
 
   use GenServer
 
+  alias Cadet.Accounts
   alias Cadet.Accounts.IVLE
+  alias Cadet.Course
 
   require Logger
 
+  @token "6AAF968D36153A283F2A1BEE7FC5B5FB18E64B64DD2B47978101656E426BD4790CB260EB98A625D74A9C89419AF4EAF124DEA11A6FCF3A848C75E4876B0699F2A9A27D01221FCF2E78E853E84AE2E6B06DE2523CFB71DF6A9E2A73032B4CB29CB501DC381FA877BFEACE7C2BE00B39184E11018B54525CF131E6DE2614EFCF1CA957B25A10EAC64B9C524A210403E7D9F61BEBDEAD06A3B7963E2BD56CCA6556345A0ACB03736103A6A83CCB8604B32A22A88D01BFBF6D54281F5338FCC3B6418F7EF17560EE230772FA645D2AE7D58E1B03DA7D4868AF5AEF5338E611BC2374DD9A6783E36BAEFAE8203B8BB8A146D0"
   @api_key Dotenv.load().values["IVLE_KEY"]
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
@@ -54,7 +57,13 @@ defmodule Cadet.Updater.Public do
   def handle_info(:work, api_params) do
     with {:ok, announcements} <- get_announcements(api_params.token, api_params.course_id) do
       Logger.info("Updater fetched #{length(announcements)} announcements from IVLE")
-      # TODO: Act on announcements fetched
+
+      announcements
+        |> Enum.filter(&(!&1["isRead"]))
+        |> Enum.map(&(%{title: &1["Title"], content: &1["Description"], published: true, poster: &1["Creator"]["Name"]}))
+        |> Enum.map(&(Course.create_announcement(Accounts.get_user_by_name(&1.poster), Map.take(&1, [:title, :content, :published]))))
+
+      read_announcements(api_params.token, api_params.course_id)
       schedule_work()
       {:noreply, api_params}
     else
@@ -79,13 +88,40 @@ defmodule Cadet.Updater.Public do
     IVLE.api_call("Announcements", AuthToken: token, CourseID: course_id)
   end
 
+  def read_announcements(token, course_id) do
+    session = get_browser_session()
+    http_opts = [hackney: [cookie: session.cookie, follow_redirect: false]]
+    form = [__EVENTTARGET: "ctl00$ctl00$ContentPlaceHolder1$btnSignIn", __VIEWSTATE: session.viewstate, 
+      "ctl00$ctl00$ContentPlaceHolder1$userid": @username, "ctl00$ctl00$ContentPlaceHolder1$password": @password] 
+
+    "https://ivle.nus.edu.sg/default.aspx"
+    |> HTTPoison.post!({:form, form}, %{"Content-Type": "application/x-www-form-urlencoded"}, [])
+
+    {body, headers, status_code} = HTTPoison.get("https://ivle.nus.edu.sg/v1/Announcement/default.aspx?CourseID=" <> course_id, %{}, http_opts)
+  end
+
+  def get_file_info(token, course_id) do
+    {:ok, folders} = IVLE.api_call("Workbins", AuthToken: token, CourseID: course_id)
+
+    folders
+    |> Enum.map(&(&1["Files"]))
+    |> Enum.map(&(Enum.map(&1, fn file -> %{id: file["ID"], name: file["FileName"]} end)))
+    |> Enum.concat
+  end
+
+  def upload_files(token, course_id) do
+    get_file_info(token, course_id)
+    |> Enum.map(&(%{name: &1.name, binary: elem(IVLE.api_call("Download", AuthToken: token, ID: &1.id), 1)}))
+    |> IO.inspect
+    |> Enum.map(&(ExAws.request(ExAws.S3.put_object("sreyansapitest", &1.name, &1.binary, [acl: :public_read]))))
+
+  end
   @doc """
   Get the authentication token of the guess account, and the CS1101S courseID
   """
   def get_api_params do
-    token = get_token()
-    course_id = get_course_id(token)
-    %{token: token, course_id: course_id}
+    course_id = get_course_id(@token)
+    %{token: @token, course_id: course_id}
   end
 
   @doc """
