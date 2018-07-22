@@ -13,15 +13,15 @@ defmodule Cadet.Assessments do
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
 
-  def user_total_xp(user = %User{}) do
-    xp =
-      Query.all_submissions_with_xp()
+  def user_total_grade(user = %User{}) do
+    grade =
+      Query.all_submissions_with_grade()
       |> subquery()
       |> where(student_id: ^user.id)
-      |> Repo.aggregate(:sum, :xp)
+      |> Repo.aggregate(:sum, :grade)
 
-    if xp do
-      Decimal.to_integer(xp)
+    if grade do
+      Decimal.to_integer(grade)
     else
       0
     end
@@ -66,7 +66,7 @@ defmodule Cadet.Assessments do
   """
   def all_published_assessments(user = %User{}) do
     assessments =
-      Query.all_assessments_with_max_xp()
+      Query.all_assessments_with_max_grade()
       |> subquery()
       |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
       |> select([a, s], %{a | attempted: not is_nil(s.id)})
@@ -172,15 +172,15 @@ defmodule Cadet.Assessments do
 
       submissions =
         Submission
-        |> join(:inner, [s], x in subquery(Query.submissions_xp()), s.id == x.submission_id)
+        |> join(:inner, [s], x in subquery(Query.submissions_grade()), s.id == x.submission_id)
         |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
         |> join(
           :inner,
           [s],
-          a in subquery(Query.all_assessments_with_max_xp()),
+          a in subquery(Query.all_assessments_with_max_grade()),
           s.assessment_id == a.id
         )
-        |> select([s, x, st, a], %Submission{s | xp: x.xp, student: st, assessment: a})
+        |> select([s, x, st, a], %Submission{s | grade: x.grade, student: st, assessment: a})
         |> Repo.all()
 
       {:ok, submissions}

@@ -17,12 +17,12 @@ defmodule CadetWeb.UserControllerTest do
       assessment = insert(:assessment, %{is_published: true})
       question = insert(:question, %{assessment: assessment})
       submission = insert(:submission, %{assessment: assessment, student: user})
-      insert(:answer, %{question: question, submission: submission, xp: 50, adjustment: -10})
+      insert(:answer, %{question: question, submission: submission, grade: 50, adjustment: -10})
 
       conn = get(conn, "/v1/user", nil)
       body = json_response(conn, 200)
       assert response(conn, 200)
-      assert %{"name" => user.name, "role" => "#{user.role}", "xp" => 40} == body
+      assert %{"name" => user.name, "role" => "#{user.role}", "grade" => 40} == body
     end
 
     @tag authenticate: :staff
@@ -31,7 +31,7 @@ defmodule CadetWeb.UserControllerTest do
       conn = get(conn, "/v1/user", nil)
       body = json_response(conn, 200)
       assert response(conn, 200)
-      assert %{"name" => user.name, "role" => "#{user.role}", "xp" => 0} == body
+      assert %{"name" => user.name, "role" => "#{user.role}", "grade" => 0} == body
     end
 
     test "unauthorized", %{conn: conn} do
