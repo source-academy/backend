@@ -17,7 +17,7 @@ defmodule Cadet.Assessments.AnswerTest do
       question_id: mcq_question.id,
       type: mcq_question.type,
       answer: %{choice_id: 0},
-      xp: 1
+      grade: 1
     }
 
     valid_programming_params = %{
@@ -25,7 +25,7 @@ defmodule Cadet.Assessments.AnswerTest do
       question_id: programming_question.id,
       type: programming_question.type,
       answer: %{code: "hello world"},
-      xp: 1
+      grade: 1
     }
 
     {:ok,

@@ -6,7 +6,7 @@ defmodule Cadet.Assessments.Submission do
   alias Cadet.Assessments.{Answer, Assessment}
 
   schema "submissions" do
-    field(:xp, :integer, virtual: true)
+    field(:grade, :integer, virtual: true)
 
     belongs_to(:assessment, Assessment)
     belongs_to(:student, User)
