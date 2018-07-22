@@ -1,7 +1,7 @@
 defmodule Cadet.Assessments.SubmissionTest do
-  use Cadet.DataCase
-
   alias Cadet.Assessments.Submission
+
+  use Cadet.ChangesetCase, entity: Submission
 
   @required_fields ~w(student_id assessment_id)a
 
@@ -16,32 +16,19 @@ defmodule Cadet.Assessments.SubmissionTest do
 
   describe "Changesets" do
     test "valid params", %{valid_params: params} do
-      result =
-        %Submission{}
-        |> Submission.changeset(params)
-        |> Repo.insert()
-
-      assert({:ok, _} = result, inspect(result))
+      assert_changeset_db(params, :valid)
     end
 
     test "converts valid params with models into ids", %{assessment: assessment, student: student} do
-      result =
-        %Submission{}
-        |> Submission.changeset(%{student: student, assessment: assessment})
-        |> Repo.insert()
-
-      assert({:ok, _} = result, inspect(result))
+      assert_changeset_db(%{student: student, assessment: assessment}, :valid)
     end
 
     test "invalid changeset missing params", %{valid_params: params} do
-      Enum.each(@required_fields, fn field ->
+      for field <- @required_fields do
         params_missing_field = Map.delete(params, field)
 
-        refute(
-          Submission.changeset(%Submission{}, params_missing_field).valid?,
-          inspect(params_missing_field)
-        )
-      end)
+        assert_changeset(params_missing_field, :invalid)
+      end
     end
 
     test "invalid changeset foreign key constraint", %{
@@ -51,22 +38,14 @@ defmodule Cadet.Assessments.SubmissionTest do
     } do
       {:ok, _} = Repo.delete(student)
 
-      result =
-        %Submission{}
-        |> Submission.changeset(params)
-        |> Repo.insert()
-
-      assert({:error, _} = result, inspect(result))
+      assert_changeset_db(params, :invalid)
 
       new_student = insert(:user, %{role: :student})
       {:ok, _} = Repo.delete(assessment)
 
-      result =
-        %Submission{}
-        |> Submission.changeset(Map.put(params, :student_id, new_student.id))
-        |> Repo.insert()
-
-      assert({:error, _} = result, inspect(result))
+      params
+      |> Map.put(:student_id, new_student.id)
+      |> assert_changeset_db(:invalid)
     end
   end
 end

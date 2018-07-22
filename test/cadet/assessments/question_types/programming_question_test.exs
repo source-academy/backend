@@ -1,25 +1,33 @@
 defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
 
-  valid_changesets ProgrammingQuestion do
-    %{
-      content: "asd",
-      solution_template: "asd",
-      solution: "asd",
-      library: %{version: 1}
-    }
-  end
+  use Cadet.ChangesetCase, entity: ProgrammingQuestion
 
-  invalid_changesets ProgrammingQuestion do
-    %{content: "asd"}
+  describe "Changesets" do
+    test "valid changeset" do
+      assert_changeset(
+        %{
+          content: "asd",
+          solution_template: "asd",
+          solution: "asd",
+          library: %{version: 1}
+        },
+        :valid
+      )
+    end
 
-    %{
-      content: "asd",
-      solution_template: "asd",
-      solution_header: "asd",
-      library: %{globals: ["a"]}
-    }
+    test "invalid changesets" do
+      assert_changeset(%{content: "asd"}, :invalid)
+
+      assert_changeset(
+        %{
+          content: "asd",
+          solution_template: "asd",
+          solution_header: "asd",
+          library: %{globals: ["a"]}
+        },
+        :invalid
+      )
+    end
   end
 end

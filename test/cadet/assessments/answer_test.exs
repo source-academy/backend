@@ -1,7 +1,7 @@
 defmodule Cadet.Assessments.AnswerTest do
-  use Cadet.DataCase
-
   alias Cadet.Assessments.Answer
+
+  use Cadet.ChangesetCase, entity: Answer
 
   @required_fields ~w(answer submission_id question_id type)a
 
@@ -42,21 +42,11 @@ defmodule Cadet.Assessments.AnswerTest do
 
   describe "Changesets" do
     test "valid mcq question params", %{valid_mcq_params: params} do
-      result =
-        %Answer{}
-        |> Answer.changeset(params)
-        |> Repo.insert()
-
-      assert({:ok, _} = result, inspect(result))
+      assert_changeset_db(params, :valid)
     end
 
     test "valid programming question with id params", %{valid_programming_params: params} do
-      result =
-        %Answer{}
-        |> Answer.changeset(params)
-        |> Repo.insert()
-
-      assert({:ok, _} = result, inspect(result))
+      assert_changeset_db(params, :valid)
     end
 
     test "converts valid params with models into ids",
@@ -73,37 +63,33 @@ defmodule Cadet.Assessments.AnswerTest do
         |> Map.put(:submission, submission)
         |> Map.put(:question, question)
 
-      changeset = Answer.changeset(%Answer{}, params)
-      assert(changeset.valid?, Kernel.inspect(params))
+      assert_changeset(params, :valid)
     end
 
     test "invalid changeset mcq question wrong answer format", %{valid_mcq_params: params} do
       params_wrong_type = Map.put(params, :answer, %{choice_id: "hello world"})
-      refute(Answer.changeset(%Answer{}, params_wrong_type).valid?, inspect(params_wrong_type))
+      assert_changeset(params_wrong_type, :invalid)
 
       params_wrong_field = Map.put(params, :answer, %{code: 2})
-      refute(Answer.changeset(%Answer{}, params_wrong_field).valid?, inspect(params_wrong_field))
+      assert_changeset(params_wrong_field, :invalid)
     end
 
     test "invalid changeset programming question wrong answer format", %{
       valid_programming_params: params
     } do
       params_wrong_type = Map.put(params, :answer, %{choice_id: "hello world"})
-      refute(Answer.changeset(%Answer{}, params_wrong_type).valid?, inspect(params_wrong_type))
+      assert_changeset(params_wrong_type, :invalid)
 
       params_wrong_field = Map.put(params, :answer, %{code: 2})
-      refute(Answer.changeset(%Answer{}, params_wrong_field).valid?, inspect(params_wrong_field))
+      assert_changeset(params_wrong_field, :invalid)
     end
 
     test "invalid changeset missing required params", %{valid_mcq_params: params} do
-      Enum.each(@required_fields, fn field ->
+      for field <- @required_fields do
         params_missing_field = Map.delete(params, field)
 
-        refute(
-          Answer.changeset(%Answer{}, params_missing_field).valid?,
-          inspect(params_missing_field)
-        )
-      end)
+        assert_changeset(params_missing_field, :invalid)
+      end
     end
 
     test "invalid changeset foreign key constraints",
@@ -115,22 +101,14 @@ defmodule Cadet.Assessments.AnswerTest do
          } do
       {:ok, _} = Repo.delete(mcq_question)
 
-      result =
-        %Answer{}
-        |> Answer.changeset(params)
-        |> Repo.insert()
-
-      assert({:error, _} = result, inspect(result))
+      assert_changeset_db(params, :invalid)
 
       new_mcq_question = insert(:mcq_question, %{assessment: assessment})
       {:ok, _} = Repo.delete(submission)
 
-      result =
-        %Answer{}
-        |> Answer.changeset(Map.put(params, :question_id, new_mcq_question.id))
-        |> Repo.insert()
-
-      assert({:error, _} = result, inspect(result))
+      params
+      |> Map.put(:question_id, new_mcq_question.id)
+      |> assert_changeset_db(:invalid)
     end
   end
 end

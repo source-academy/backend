@@ -1,16 +1,17 @@
 defmodule Cadet.Accounts.UserTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Accounts.User
 
-  valid_changesets User do
-    %{name: "happy people", role: :admin}
-    %{name: "happy", role: :student}
-  end
+  use Cadet.ChangesetCase, entity: User
 
-  invalid_changesets User do
-    %{name: "people"}
-    %{role: :avenger}
-    %{name: "", role: :student}
+  describe "Changesets" do
+    test "valid changeset" do
+      assert_changeset(%{name: "happy people", role: :admin}, :valid)
+      assert_changeset(%{name: "happy", role: :student}, :valid)
+    end
+
+    test "invalid changeset" do
+      assert_changeset(%{name: "people"}, :invalid)
+      assert_changeset(%{role: :avenger}, :invalid)
+    end
   end
 end
