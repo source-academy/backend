@@ -4,6 +4,8 @@ defmodule Cadet.Assessments.Library do
   """
   use Cadet, :model
 
+  import Cadet.Assessments.LibraryType
+
   embedded_schema do
     field(:chapter, :integer, default: 1)
     field(:globals, {:array, :string}, default: [])
