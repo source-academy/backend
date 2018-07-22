@@ -53,12 +53,10 @@ defmodule Cadet.Assessments.QuestionTest do
       assessment: assessment,
       valid_mcq_params: params
     } do
-      params =
-        params
-        |> Map.delete(:assessment_id)
-        |> Map.put(:assessment, assessment)
-
-      assert_changeset_db(params, :valid)
+      params
+      |> Map.delete(:assessment_id)
+      |> Map.put(:assessment, assessment)
+      |> assert_changeset_db(:valid)
     end
   end
 
@@ -69,9 +67,9 @@ defmodule Cadet.Assessments.QuestionTest do
     } do
       for params <- [mcq_params, programming_params],
           field <- @required_fields ++ @required_embeds do
-        params_missing_field = Map.delete(params, field)
-
-        assert_changeset(params_missing_field, :invalid)
+        params
+        |> Map.delete(field)
+        |> assert_changeset(:invalid)
       end
     end
 
@@ -79,11 +77,13 @@ defmodule Cadet.Assessments.QuestionTest do
       valid_mcq_params: mcq_params,
       valid_programming_params: programming_params
     } do
-      mcq_params = Map.put(mcq_params, :type, :programming)
-      assert_changeset(mcq_params, :invalid)
+      mcq_params
+      |> Map.put(:type, :programming)
+      |> assert_changeset(:invalid)
 
-      programming_params = Map.put(programming_params, :type, :mcq)
-      assert_changeset(programming_params, :invalid)
+      programming_params
+      |> Map.put(:type, :mcq)
+      |> assert_changeset(:invalid)
     end
 
     test "foreign key constraints", %{
