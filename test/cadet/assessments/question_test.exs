@@ -1,7 +1,7 @@
 defmodule Cadet.Assessments.QuestionTest do
-  use Cadet.DataCase
-
   alias Cadet.Assessments.Question
+
+  use Cadet.ChangesetCase, entity: Question
 
   @required_fields ~w(title question type assessment_id)a
   @required_embeds ~w(library)a
@@ -42,21 +42,11 @@ defmodule Cadet.Assessments.QuestionTest do
 
   describe "valid changesets" do
     test "valid mcq question", %{valid_mcq_params: params} do
-      res =
-        %Question{}
-        |> Question.changeset(params)
-        |> Repo.insert()
-
-      assert({:ok, _} = res, inspect(res, pretty: true))
+      assert_changeset_db(params, :valid)
     end
 
     test "valid programming question", %{valid_programming_params: params} do
-      res =
-        %Question{}
-        |> Question.changeset(params)
-        |> Repo.insert()
-
-      assert({:ok, _} = res, inspect(res, pretty: true))
+      assert_changeset_db(params, :valid)
     end
 
     test "cast model param in valid changeset to id", %{
@@ -68,12 +58,7 @@ defmodule Cadet.Assessments.QuestionTest do
         |> Map.delete(:assessment_id)
         |> Map.put(:assessment, assessment)
 
-      res =
-        %Question{}
-        |> Question.changeset(params)
-        |> Repo.insert()
-
-      assert({:ok, _} = res, inspect(res, pretty: true))
+      assert_changeset_db(params, :valid)
     end
   end
 
@@ -86,10 +71,7 @@ defmodule Cadet.Assessments.QuestionTest do
           field <- @required_fields ++ @required_embeds do
         params_missing_field = Map.delete(params, field)
 
-        refute(
-          Question.changeset(%Question{}, params_missing_field).valid?,
-          inspect(params_missing_field, pretty: true)
-        )
+        assert_changeset(params_missing_field, :invalid)
       end
     end
 
@@ -98,18 +80,10 @@ defmodule Cadet.Assessments.QuestionTest do
       valid_programming_params: programming_params
     } do
       mcq_params = Map.put(mcq_params, :type, :programming)
-
-      refute(
-        Question.changeset(%Question{}, mcq_params).valid?,
-        inspect(mcq_params, pretty: true)
-      )
+      assert_changeset(mcq_params, :invalid)
 
       programming_params = Map.put(programming_params, :type, :mcq)
-
-      refute(
-        Question.changeset(%Question{}, programming_params).valid?,
-        inspect(programming_params, pretty: true)
-      )
+      assert_changeset(programming_params, :invalid)
     end
 
     test "foreign key constraints", %{
@@ -118,12 +92,7 @@ defmodule Cadet.Assessments.QuestionTest do
     } do
       {:ok, _} = Repo.delete(assessment)
 
-      res =
-        %Question{}
-        |> Question.changeset(params)
-        |> Repo.insert()
-
-      assert({:error, _} = res, inspect(res, pretty: true))
+      assert_changeset_db(params, :invalid)
     end
   end
 end
