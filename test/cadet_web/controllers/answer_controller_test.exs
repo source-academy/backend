@@ -14,8 +14,8 @@ defmodule CadetWeb.AnswerControllerTest do
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
-    mcq_question = insert(:question, %{assessment: assessment, type: :mcq})
-    programming_question = insert(:question, %{assessment: assessment, type: :programming})
+    mcq_question = insert(:mcq_question, %{assessment: assessment})
+    programming_question = insert(:programming_question, %{assessment: assessment})
 
     %{
       assessment: assessment,
@@ -141,8 +141,7 @@ defmodule CadetWeb.AnswerControllerTest do
         close_at: Timex.shift(Timex.now(), days: 10)
       })
 
-    before_open_at_question =
-      insert(:question, %{assessment: before_open_at_assessment, type: :mcq})
+    before_open_at_question = insert(:mcq_question, %{assessment: before_open_at_assessment})
 
     before_open_at_conn = post(conn, build_url(before_open_at_question.id), %{answer: 5})
     assert response(before_open_at_conn, 403) == "Assessment not open"
@@ -154,8 +153,7 @@ defmodule CadetWeb.AnswerControllerTest do
         close_at: Timex.shift(Timex.now(), days: -5)
       })
 
-    after_close_at_question =
-      insert(:question, %{assessment: after_close_at_assessment, type: :mcq})
+    after_close_at_question = insert(:mcq_question, %{assessment: after_close_at_assessment})
 
     after_close_at_conn = post(conn, build_url(after_close_at_question.id), %{answer: 5})
     assert response(after_close_at_conn, 403) == "Assessment not open"
@@ -163,7 +161,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
     unpublished_assessment = insert(:assessment, %{is_published: false})
 
-    unpublished_question = insert(:question, %{assessment: unpublished_assessment, type: :mcq})
+    unpublished_question = insert(:mcq_question, %{assessment: unpublished_assessment})
 
     unpublished_conn = post(conn, build_url(unpublished_question.id), %{answer: 5})
     assert response(unpublished_conn, 403) == "Assessment not open"

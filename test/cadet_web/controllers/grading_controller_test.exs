@@ -239,9 +239,7 @@ defmodule CadetWeb.GradingControllerTest do
     mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
 
     questions =
-      insert_list(3, :question, %{
-        type: :programming,
-        question: build(:programming_question),
+      insert_list(3, :programming_question, %{
         assessment: mission,
         max_xp: 200
       })

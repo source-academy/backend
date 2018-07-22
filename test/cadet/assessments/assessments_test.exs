@@ -28,15 +28,13 @@ defmodule Cadet.AssessmentsTest do
         %{
           title: "question",
           type: :programming,
-          question: %{},
           library: build(:library),
-          raw_question:
-            Jason.encode!(%{
-              content: "asd",
-              solution_template: "template",
-              solution: "soln",
-              library: %{version: 1}
-            })
+          question: %{
+            content: Faker.Pokemon.name(),
+            solution_header: Faker.Pokemon.location(),
+            solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
+            solution: Faker.Lorem.Shakespeare.hamlet()
+          }
         },
         assessment.id
       )
@@ -52,10 +50,11 @@ defmodule Cadet.AssessmentsTest do
         %{
           title: "question",
           type: :mcq,
-          question: %{},
           library: build(:library),
-          raw_question:
-            Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
+          question: %{
+            content: Faker.Pokemon.name(),
+            choices: Enum.map(0..2, &build(:mcq_choice, %{choice_id: &1, is_correct: &1 == 0}))
+          }
         },
         assessment.id
       )
@@ -65,17 +64,18 @@ defmodule Cadet.AssessmentsTest do
 
   test "create question when there already exists questions" do
     assessment = insert(:assessment)
-    _ = insert(:question, assessment: assessment, display_order: 1)
+    _ = insert(:mcq_question, assessment: assessment, display_order: 1)
 
     {:ok, question} =
       Assessments.create_question_for_assessment(
         %{
           title: "question",
           type: :mcq,
-          question: %{},
           library: build(:library),
-          raw_question:
-            Jason.encode!(%{content: "asd", choices: [%{is_correct: true, content: "asd"}]})
+          question: %{
+            content: Faker.Pokemon.name(),
+            choices: Enum.map(0..2, &build(:mcq_choice, %{choice_id: &1, is_correct: &1 == 0}))
+          }
         },
         assessment.id
       )

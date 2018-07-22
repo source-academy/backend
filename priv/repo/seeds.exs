@@ -25,17 +25,13 @@ if Application.get_env(:cadet, :environment) == :dev do
     assessment = insert(:assessment, %{is_published: true})
 
     programming_questions =
-      insert_list(3, :question, %{
-        type: :programming,
-        question: build(:programming_question),
+      insert_list(3, :programming_question, %{
         assessment: assessment,
         max_xp: 200
       })
 
     mcq_questions =
-      insert_list(3, :question, %{
-        type: :mcq,
-        question: build(:mcq_question),
+      insert_list(3, :mcq_question, %{
         assessment: assessment,
         max_xp: 40
       })

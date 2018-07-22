@@ -9,8 +9,8 @@ defmodule Cadet.Assessments.AnswerTest do
     assessment = insert(:assessment, %{is_published: true})
     student = insert(:user, %{role: :student})
     submission = insert(:submission, %{student: student, assessment: assessment})
-    mcq_question = insert(:question, %{assessment: assessment, type: :mcq})
-    programming_question = insert(:question, %{assessment: assessment, type: :programming})
+    mcq_question = insert(:mcq_question, %{assessment: assessment})
+    programming_question = insert(:programming_question, %{assessment: assessment})
 
     valid_mcq_params = %{
       submission_id: submission.id,
@@ -103,8 +103,7 @@ defmodule Cadet.Assessments.AnswerTest do
 
       assert_changeset_db(params, :invalid)
 
-      new_mcq_question = insert(:question, %{assessment: assessment, type: :mcq})
-
+      new_mcq_question = insert(:mcq_question, %{assessment: assessment})
       {:ok, _} = Repo.delete(submission)
 
       params
