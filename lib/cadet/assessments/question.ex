@@ -6,6 +6,7 @@ defmodule Cadet.Assessments.Question do
   use Cadet, :model
 
   alias Cadet.Assessments.{Assessment, Library, QuestionType}
+  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion}
 
   schema "questions" do
     field(:title, :string)
@@ -24,10 +25,19 @@ defmodule Cadet.Assessments.Question do
   @required_embeds ~w(library)a
 
   def changeset(question, params) do
-    # TODO: Implement foreign_key_validation
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:library)
+    |> add_belongs_to_id_from_model(:assessment, params)
     |> validate_required(@required_fields ++ @required_embeds)
+    |> validate_question_content()
+    |> foreign_key_constraint(:assessment_id)
+  end
+
+  defp validate_question_content(changeset) do
+    validate_arbitrary_embedded_struct_by_type(changeset, :question, %{
+      mcq: MCQQuestion,
+      programming: ProgrammingQuestion
+    })
   end
 end

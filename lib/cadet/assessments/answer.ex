@@ -63,25 +63,9 @@ defmodule Cadet.Assessments.Answer do
   end
 
   defp validate_answer_content(changeset) do
-    with true <- changeset.valid?,
-         question_type when is_atom(question_type) <- get_change(changeset, :type),
-         answer when is_map(answer) <- get_change(changeset, :answer),
-         false <- answer_structure_valid?(question_type, answer) do
-      add_error(changeset, :answer, "invalid answer type provided for question")
-    else
-      _ -> changeset
-    end
-  end
-
-  defp answer_structure_valid?(question_type, answer) do
-    question_type
-    |> case do
-      :programming ->
-        ProgrammingAnswer.changeset(%ProgrammingAnswer{}, answer)
-
-      :mcq ->
-        MCQAnswer.changeset(%MCQAnswer{}, answer)
-    end
-    |> Map.get(:valid?)
+    validate_arbitrary_embedded_struct_by_type(changeset, :answer, %{
+      mcq: MCQAnswer,
+      programming: ProgrammingAnswer
+    })
   end
 end
