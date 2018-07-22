@@ -10,8 +10,8 @@ defmodule CadetWeb.UserController do
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    xp = user_total_xp(user)
-    render(conn, "index.json", user: user, xp: xp)
+    grade = user_total_grade(user)
+    render(conn, "index.json", user: user, grade: grade)
   end
 
   swagger_path :index do
@@ -43,7 +43,7 @@ defmodule CadetWeb.UserController do
               required: true
             )
 
-            xp(:integer, "Amount of XP. Only provided for 'Student'")
+            grade(:integer, "Amount of grade. Only provided for 'Student'")
           end
         end
     }

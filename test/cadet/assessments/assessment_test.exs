@@ -29,14 +29,14 @@ defmodule Cadet.Assessments.AssessmentTest do
     end
 
     test "invalid changesets" do
-      assert_changeset(%{type: :mission, title: "mission", max_xp: 100}, :invalid)
+      assert_changeset(%{type: :mission, title: "mission", max_grade: 100}, :invalid)
 
       assert_changeset(
         %{
           title: "mission",
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: 7),
-          max_xp: 100
+          max_grade: 100
         },
         :invalid
       )

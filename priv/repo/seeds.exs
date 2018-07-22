@@ -27,13 +27,13 @@ if Application.get_env(:cadet, :environment) == :dev do
     programming_questions =
       insert_list(3, :programming_question, %{
         assessment: assessment,
-        max_xp: 200
+        max_grade: 200
       })
 
     mcq_questions =
       insert_list(3, :mcq_question, %{
         assessment: assessment,
-        max_xp: 40
+        max_grade: 40
       })
 
     submissions =
@@ -45,7 +45,7 @@ if Application.get_env(:cadet, :environment) == :dev do
     for submission <- submissions,
         question <- programming_questions do
       insert(:answer, %{
-        xp: 200,
+        grade: 200,
         question: question,
         submission: submission,
         answer: build(:programming_answer)
@@ -56,7 +56,7 @@ if Application.get_env(:cadet, :environment) == :dev do
     for submission <- submissions,
         question <- mcq_questions do
       insert(:answer, %{
-        xp: 200,
+        grade: 200,
         question: question,
         submission: submission,
         answer: build(:mcq_answer)
