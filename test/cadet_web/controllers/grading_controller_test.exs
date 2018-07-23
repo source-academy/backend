@@ -70,7 +70,7 @@ defmodule CadetWeb.GradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "xp" => 600,
+            "grade" => 600,
             "submissionId" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -78,7 +78,7 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "assessment" => %{
               "type" => "mission",
-              "max_xp" => 600,
+              "max_grade" => 600,
               "id" => mission.id
             }
           }
@@ -132,9 +132,9 @@ defmodule CadetWeb.GradingControllerTest do
               "content" => &1.question.question.content,
               "answer" => &1.answer.code
             },
-            "max_xp" => &1.question.max_xp,
+            "max_grade" => &1.question.max_grade,
             "grade" => %{
-              "xp" => &1.xp,
+              "grade" => &1.grade,
               "adjustment" => &1.adjustment,
               "comment" => &1.comment
             }
@@ -245,7 +245,7 @@ defmodule CadetWeb.GradingControllerTest do
     questions =
       insert_list(3, :programming_question, %{
         assessment: mission,
-        max_xp: 200
+        max_grade: 200
       })
 
     submissions =
@@ -257,7 +257,7 @@ defmodule CadetWeb.GradingControllerTest do
       for submission <- submissions,
           question <- questions do
         insert(:answer, %{
-          xp: 200,
+          grade: 200,
           question: question,
           submission: submission,
           answer: build(:programming_answer)

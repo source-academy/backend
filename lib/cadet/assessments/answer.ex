@@ -9,7 +9,7 @@ defmodule Cadet.Assessments.Answer do
   alias Cadet.Assessments.{Question, QuestionType, Submission}
 
   schema "answers" do
-    field(:xp, :integer, default: 0)
+    field(:grade, :integer, default: 0)
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
     field(:comment, :string)
@@ -20,7 +20,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp comment adjustment)a
+  @optional_fields ~w(grade comment adjustment)a
 
   def changeset(answer, params) do
     answer
@@ -28,7 +28,7 @@ defmodule Cadet.Assessments.Answer do
     |> add_belongs_to_id_from_model([:submission, :question], params)
     |> add_question_type_from_model(params)
     |> validate_required(@required_fields)
-    |> validate_number(:xp, greater_than_or_equal_to: 0.0)
+    |> validate_number(:grade, greater_than_or_equal_to: 0.0)
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
@@ -38,14 +38,14 @@ defmodule Cadet.Assessments.Answer do
   def grading_changeset(answer, params) do
     answer
     |> cast(params, ~w(adjustment comment)a)
-    |> validate_xp_adjustment_total()
+    |> validate_grade_adjustment_total()
   end
 
-  @spec validate_xp_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
-  defp validate_xp_adjustment_total(changeset) do
+  @spec validate_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  defp validate_grade_adjustment_total(changeset) do
     answer = apply_changes(changeset)
 
-    if answer.xp + answer.adjustment >= 0 do
+    if answer.grade + answer.adjustment >= 0 do
       changeset
     else
       add_error(changeset, :adjustment, "should not make total point < 0")

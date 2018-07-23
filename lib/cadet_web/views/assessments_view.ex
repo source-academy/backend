@@ -17,7 +17,7 @@ defmodule CadetWeb.AssessmentsView do
       closeAt: &format_datetime(&1.close_at),
       type: :type,
       attempted: :attempted,
-      maximumEXP: :max_xp,
+      maximumGrade: :max_grade,
       coverImage: &Cadet.Assessments.Image.url({&1.cover_picture, &1})
     })
   end
