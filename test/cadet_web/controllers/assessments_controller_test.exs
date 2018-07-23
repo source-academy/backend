@@ -163,16 +163,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "type" => "#{&1.type}",
                 "content" => &1.question.content,
                 "solutionTemplate" => &1.question.solution_template,
-                "solutionHeader" => &1.question.solution_header,
-                "library" =>
-                  if &1.library do
-                    %{
-                      "globals" => &1.library.globals,
-                      "files" => &1.library.files,
-                      "externals" => &1.library.externals,
-                      "chapter" => &1.library.chapter
-                    }
-                  end
+                "solutionHeader" => &1.question.solution_header
               }
             )
 
@@ -193,16 +184,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                         "hint" => choice.hint
                       }
                     end
-                  ),
-                "library" =>
-                  if &1.library do
-                    %{
-                      "globals" => &1.library.globals,
-                      "files" => &1.library.files,
-                      "externals" => &1.library.externals,
-                      "chapter" => &1.library.chapter
-                    }
-                  end
+                  )
               }
             )
 
@@ -216,8 +198,52 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Map.get("questions", [])
             |> Enum.map(&Map.delete(&1, "answer"))
             |> Enum.map(&Map.delete(&1, "solution"))
+            |> Enum.map(&Map.delete(&1, "library"))
 
           assert expected_questions == resp_questions
+        end
+      end
+    end
+
+    test "it renders assessment question libraries", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      for role <- Role.__enum_map__() do
+        user = Map.get(users, role)
+
+        for {_type,
+             %{
+               assessment: assessment,
+               mcq_questions: mcq_questions,
+               programming_questions: programming_questions
+             }} <- assessments do
+          # Programming questions should come first due to seeding order
+
+          expected_libraries =
+            (programming_questions ++ mcq_questions)
+            |> Enum.map(&Map.get(&1, :library))
+            |> Enum.map(
+              &%{
+                "chapter" => &1.chapter,
+                "globals" => &1.globals,
+                "external" => %{
+                  "name" => "#{&1.external.name}",
+                  "exposedSymbols" => &1.external.exposed_symbols
+                }
+              }
+            )
+
+          resp_libraries =
+            conn
+            |> sign_in(user)
+            |> get(build_url(assessment.id))
+            |> json_response(200)
+            |> Map.get("questions", [])
+            |> Enum.map(&Map.get(&1, "library"))
+
+          assert resp_libraries == expected_libraries
         end
       end
     end

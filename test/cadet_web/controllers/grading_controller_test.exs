@@ -121,10 +121,14 @@ defmodule CadetWeb.GradingControllerTest do
               "solution_template" => &1.question.question.solution_template,
               "questionType" => "#{&1.question.type}",
               "questionId" => &1.question.id,
-              "library" =>
-                &1.question.library
-                |> Map.from_struct()
-                |> Enum.reduce(%{}, fn {k, v}, acc -> Map.put(acc, "#{k}", v) end),
+              "library" => %{
+                "chapter" => &1.question.library.chapter,
+                "globals" => &1.question.library.globals,
+                "external" => %{
+                  "name" => "#{&1.question.library.external.name}",
+                  "exposedSymbols" => &1.question.library.external.exposed_symbols
+                }
+              },
               "content" => &1.question.question.content,
               "answer" => &1.answer.code
             },
