@@ -42,13 +42,22 @@ defmodule CadetWeb.AssessmentsView do
     )
   end
 
-  def build_library(%{library: library}) do
-    if library do
-      transform_map_for_view(library, [:globals, :files, :externals, :chapter])
-    end
+  defp build_external_library(%{external_library: external_library}) do
+    transform_map_for_view(external_library, %{
+      name: :name,
+      exposedSymbols: :exposed_symbols
+    })
   end
 
-  def build_question_with_answer_and_solution_if_ungraded(%{
+  defp build_library(%{library: library}) do
+      transform_map_for_view(library, %{
+        chapter: :chapter,
+        globals: :globals,
+        external: &build_external_library(%{external_library: &1.external})
+      })
+  end
+
+  defp build_question_with_answer_and_solution_if_ungraded(%{
         question: question,
         assessment: assessment
       }) do
