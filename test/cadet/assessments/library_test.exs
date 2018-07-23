@@ -17,5 +17,18 @@ defmodule Cadet.Assessments.LibraryTest do
       |> Map.delete(:external)
       |> assert_changeset(:invalid)
     end
+
+    test "invalid changeset invalid globals", %{valid_params: params} do
+      invalid_globals = [
+        %{"foo" => ["foo", "bar"]},
+        %{"foo" => %{"foo" => "bar"}}
+      ]
+
+      for global <- invalid_globals do
+        params
+        |> Map.put(:globals, global)
+        |> assert_changeset(:invalid)
+      end
+    end
   end
 end

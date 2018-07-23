@@ -8,7 +8,7 @@ defmodule Cadet.Assessments.Library do
 
   embedded_schema do
     field(:chapter, :integer, default: 1)
-    field(:globals, {:array, :string}, default: [])
+    field(:globals, :map, default: %{})
     embeds_one(:external, ExternalLibrary)
   end
 
@@ -21,5 +21,16 @@ defmodule Cadet.Assessments.Library do
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:external)
     |> validate_required(@required_fields ++ @required_embeds)
+    |> validate_globals()
+  end
+
+  def validate_globals(changeset) do
+    globals = get_change(changeset, :globals)
+
+    if Enum.all?(globals, fn {name, value} -> is_binary(name) and is_binary(value) end) do
+      changeset
+    else
+      add_error(changeset, :globals, "invalid format")
+    end
   end
 end

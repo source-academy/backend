@@ -10,7 +10,12 @@ defmodule Cadet.Assessments.LibraryFactory do
       def library_factory do
         %{
           chapter: Enum.random(1..20),
-          globals: Faker.Lorem.words(Enum.random(5..15)),
+          globals:
+            Enum.reduce(
+              0..5,
+              %{},
+              fn _, acc -> Map.put(acc, Faker.Lorem.word(), Faker.Lorem.sentence()) end
+            ),
           external: build(:external_library)
         }
       end
