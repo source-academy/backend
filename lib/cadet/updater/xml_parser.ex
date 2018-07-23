@@ -103,6 +103,11 @@ This TEXT will not be shown in cadet, but may be useful in the generated pdf.
 
 </CONTENT>
   """
+
+  import SweetXml
+
+  alias Cadet.Assessments.Assessment
+
   defmacrop is_non_empty_list(term) do
     quote do: is_list(unquote(term)) and unquote(term) != []
   end
@@ -125,5 +130,27 @@ This TEXT will not be shown in cadet, but may be useful in the generated pdf.
       {:listing, {:error, _}} -> {:error, "Directory containing XML is empty."}
       {:filter, _} -> {:error, "No XML file is found."}
     end
+  end
+
+  # TODO: change to `defp`
+  @spec process(String.t()) :: %Assessment{}
+  def process(xml) do
+    task = xml |> xpath(~x"//TASK"e)
+    type = xpath(task, ~x"@kind"s)
+    number = xpath(task, ~x"@number"s)
+    start_date = task
+                 |> xpath(~x"@startdate"s)
+                 |> Timex.parse!("{ISO:Extended}")
+    due_date = task
+               |> xpath(~x"@duedate"s)
+               |> Timex.parse!("{ISO:Extended}")
+    title = "#{String.capitalize(type)} #{String.slice(number, 1..-1)}"
+    %Assessment{}
+    |> Assessment.changeset(%{type: type, title: title, open_at: start_date, close_at: due_date})
+  end
+
+  # TODO: delete this
+  def xml do
+    @xml
   end
 end
