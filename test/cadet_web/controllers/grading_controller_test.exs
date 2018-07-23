@@ -118,9 +118,10 @@ defmodule CadetWeb.GradingControllerTest do
         |> Enum.map(
           &%{
             "question" => %{
-              "solution_template" => &1.question.question.solution_template,
-              "questionType" => "#{&1.question.type}",
-              "questionId" => &1.question.id,
+              "solutionHeader" => &1.question.question.solution_header,
+              "solutionTemplate" => &1.question.question.solution_template,
+              "type" => "#{&1.question.type}",
+              "id" => &1.question.id,
               "library" => %{
                 "chapter" => &1.question.library.chapter,
                 "globals" => &1.question.library.globals,
