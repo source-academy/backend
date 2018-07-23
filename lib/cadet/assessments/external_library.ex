@@ -8,10 +8,10 @@ defmodule Cadet.Assessments.Library.ExternalLibrary do
 
   embedded_schema do
     field(:name, ExternalLibraryName, default: :none)
-    field(:exposed_symbols, {:array, :string}, default: [])
+    field(:symbols, {:array, :string}, default: [])
   end
 
-  @required_fields ~w(name exposed_symbols)a
+  @required_fields ~w(name symbols)a
 
   def changeset(library, params \\ %{}) do
     library

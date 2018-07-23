@@ -146,7 +146,7 @@ defmodule CadetWeb.AssessmentsController do
           properties do
             name(:string, "Name of the external library", required: true)
 
-            exposedSymbols(
+            symbols(
               Schema.new do
                 type(:array)
 

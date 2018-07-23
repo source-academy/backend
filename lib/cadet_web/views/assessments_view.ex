@@ -58,10 +58,7 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   defp build_external_library(%{external_library: external_library}) do
-    transform_map_for_view(external_library, %{
-      name: :name,
-      exposedSymbols: :exposed_symbols
-    })
+    transform_map_for_view(external_library, [:name, :symbols])
   end
 
   defp build_question_with_answer_and_solution_if_ungraded(%{

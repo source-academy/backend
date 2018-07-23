@@ -23,7 +23,7 @@ defmodule Cadet.Assessments.LibraryFactory do
       def external_library_factory do
         %{
           name: Enum.random(ExternalLibraryName.__enum_map__()),
-          exposed_symbols: Faker.Lorem.words(Enum.random(5..15))
+          symbols: Faker.Lorem.words(Enum.random(5..15))
         }
       end
     end

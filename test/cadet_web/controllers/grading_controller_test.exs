@@ -127,7 +127,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "globals" => &1.question.library.globals,
                 "external" => %{
                   "name" => "#{&1.question.library.external.name}",
-                  "exposedSymbols" => &1.question.library.external.exposed_symbols
+                  "symbols" => &1.question.library.external.symbols
                 }
               },
               "content" => &1.question.question.content,

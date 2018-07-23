@@ -230,7 +230,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "globals" => &1.globals,
                 "external" => %{
                   "name" => "#{&1.external.name}",
-                  "exposedSymbols" => &1.external.exposed_symbols
+                  "symbols" => &1.external.symbols
                 }
               }
             )
