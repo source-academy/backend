@@ -146,7 +146,12 @@ defmodule CadetWeb.GradingController do
               properties do
                 question(Schema.ref(:Question))
                 grade(Schema.ref(:Grade))
-                max_(:integer, "the max grade that can be given to this question", required: true)
+
+                max_grade(
+                  :integer,
+                  "the max grade that can be given to this question",
+                  required: true
+                )
               end
             end
           )
@@ -154,14 +159,9 @@ defmodule CadetWeb.GradingController do
       Grade:
         swagger_schema do
           properties do
-            grading(
-              Schema.new do
-                properties do
-                  comment(:string, "comment given")
-                  adjustment(:integer, "adjustment given")
-                end
-              end
-            )
+            grade(:integer, "Grade awarded by autograder")
+            comment(:string, "comment given")
+            adjustment(:integer, "adjustment given")
           end
         end
     }

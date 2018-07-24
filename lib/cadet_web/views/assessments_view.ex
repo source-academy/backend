@@ -42,20 +42,32 @@ defmodule CadetWeb.AssessmentsView do
     )
   end
 
-  def build_library(%{library: library}) do
-    if library do
-      transform_map_for_view(library, [:globals, :files, :externals, :chapter])
-    end
+  defp build_library(%{library: library}) do
+    transform_map_for_view(library, %{
+      chapter: :chapter,
+      globals: :globals,
+      external: &build_external_library(%{external_library: &1.external})
+    })
   end
 
-  def build_question_with_answer_and_solution_if_ungraded(%{
-        question: question,
-        assessment: assessment
-      }) do
-    components = [
+  def build_question(%{question: question}) do
+    Map.merge(
       build_generic_question_fields(%{question: question}),
-      build_question_content_by_type(%{question: question}),
-      build_answer_by_type(%{question: question}),
+      build_question_content_by_type(%{question: question})
+    )
+  end
+
+  defp build_external_library(%{external_library: external_library}) do
+    transform_map_for_view(external_library, [:name, :symbols])
+  end
+
+  defp build_question_with_answer_and_solution_if_ungraded(%{
+         question: question,
+         assessment: assessment
+       }) do
+    components = [
+      build_question(%{question: question}),
+      build_answer_by_question_type(%{question: question}),
       build_solution_if_ungraded_by_type(%{question: question, assessment: assessment})
     ]
 
@@ -87,7 +99,7 @@ defmodule CadetWeb.AssessmentsView do
     end
   end
 
-  defp build_answer_by_type(%{question: %{answer: answer, type: question_type}}) do
+  defp build_answer_by_question_type(%{question: %{answer: answer, type: question_type}}) do
     # No need to check if answer exists since empty answer would be a
     # `%Answer{..., answer: nil}` and nil["anything"] = nil
 

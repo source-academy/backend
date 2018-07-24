@@ -26,21 +26,15 @@ defmodule CadetWeb.GradingView do
   end
 
   def render("grading_info.json", %{answer: answer}) do
-    %{
-      question: %{
-        solution_template: answer.question.question["solution_template"],
-        questionType: answer.question.type,
-        questionId: answer.question.id,
-        library: answer.question.library,
-        content: answer.question.question["content"],
-        answer: answer.answer["code"]
-      },
-      max_grade: answer.question.max_grade,
-      grade: %{
-        grade: answer.grade,
-        adjustment: answer.adjustment,
-        comment: answer.comment
-      }
-    }
+    transform_map_for_view(answer, %{
+      question:
+        &Map.put(
+          CadetWeb.AssessmentsView.build_question(%{question: &1.question}),
+          :answer,
+          &1.answer["code"]
+        ),
+      max_grade: & &1.question.max_grade,
+      grade: &transform_map_for_view(&1, [:grade, :adjustment, :comment])
+    })
   end
 end
