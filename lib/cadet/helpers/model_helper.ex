@@ -94,21 +94,26 @@ defmodule Cadet.ModelHelper do
   """
   def validate_arbitrary_embedded_struct_by_type(changeset, field, type_to_model_map)
       when is_atom(field) and is_map(type_to_model_map) do
-    build_changeset = fn params, model -> apply(model, :changeset, [struct(model), params]) end
-
-    structure_valid? = fn params, type ->
-      params
-      |> build_changeset.(Map.get(type_to_model_map, type))
-      |> Map.get(:valid?)
+    build_changeset = fn params, type ->
+      model = Map.get(type_to_model_map, type)
+      apply(model, :changeset, [struct(model), params])
     end
 
     with true <- changeset.valid?,
-         type when is_atom(type) <- get_change(changeset, :type),
-         map when is_map(map) <- get_change(changeset, field),
-         false <- structure_valid?.(map, type) do
-      add_error(changeset, field, "invalid #{field} provided for #{field} type")
+         {:type, type} when is_atom(type) <- {:type, get_change(changeset, :type)},
+         {:field_change, map} when is_map(map) <- {:field_change, get_change(changeset, field)},
+         {:changeset, embed_changeset = %Ecto.Changeset{valid?: true}} <-
+           {:changeset, build_changeset.(map, type)} do
+      validated_map = embed_changeset |> apply_changes |> Map.from_struct()
+      put_change(changeset, field, validated_map)
     else
-      _ -> changeset
+      {:changeset, _} ->
+        add_error(changeset, field, "invalid #{field} provided for #{field} type")
+
+      # Missing or wrongly typed fields should be handled by `validates_required/2`
+      # in parent changeset.
+      _ ->
+        changeset
     end
   end
 end
