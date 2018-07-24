@@ -4,6 +4,7 @@ defmodule Cadet.Assessments.AnswerTypes.ProgrammingAnswer do
   """
   use Cadet, :model
 
+  @primary_key false
   embedded_schema do
     field(:code, :string)
   end

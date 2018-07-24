@@ -4,6 +4,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
   """
   use Cadet, :model
 
+  @primary_key false
   embedded_schema do
     field(:content, :string)
     field(:solution_template, :string)

@@ -6,6 +6,7 @@ defmodule Cadet.Assessments.Library do
 
   alias Cadet.Assessments.Library.ExternalLibrary
 
+  @primary_key false
   embedded_schema do
     field(:chapter, :integer, default: 1)
     field(:globals, :map, default: %{})

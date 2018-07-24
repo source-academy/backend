@@ -6,6 +6,7 @@ defmodule Cadet.Assessments.Library.ExternalLibrary do
 
   alias Cadet.Assessments.Library.ExternalLibraryName
 
+  @primary_key false
   embedded_schema do
     field(:name, ExternalLibraryName, default: :none)
     field(:symbols, {:array, :string}, default: [])

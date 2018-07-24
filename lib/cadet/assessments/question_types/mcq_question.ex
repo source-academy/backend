@@ -7,6 +7,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQQuestion do
 
   alias Cadet.Assessments.QuestionTypes.MCQChoice
 
+  @primary_key false
   embedded_schema do
     field(:content, :string)
     embeds_many(:choices, MCQChoice)

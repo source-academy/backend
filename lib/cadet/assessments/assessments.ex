@@ -291,15 +291,18 @@ defmodule Cadet.Assessments do
   defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
     answer_content = build_answer_content(raw_answer, question.type)
 
-    %Answer{}
-    |> Answer.changeset(%{
-      answer: answer_content,
-      question_id: question.id,
-      submission_id: submission.id,
-      type: question.type
-    })
-    |> Repo.insert(
-      on_conflict: [set: [answer: answer_content]],
+    answer_changeset =
+      %Answer{}
+      |> Answer.changeset(%{
+        answer: answer_content,
+        question_id: question.id,
+        submission_id: submission.id,
+        type: question.type
+      })
+
+    Repo.insert(
+      answer_changeset,
+      on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
       conflict_target: [:submission_id, :question_id]
     )
   end

@@ -66,6 +66,17 @@ defmodule Cadet.Assessments.AnswerTest do
       assert_changeset(params, :valid)
     end
 
+    test "converts valid mcq params with string value to integer", %{valid_mcq_params: params} do
+      string_params = Map.put(params, :answer, %{choice_id: "0"})
+
+      answer =
+        %Answer{}
+        |> Answer.changeset(string_params)
+        |> Repo.insert!()
+
+      assert is_integer(answer.answer.choice_id)
+    end
+
     test "invalid changeset mcq question wrong answer format", %{valid_mcq_params: params} do
       params_wrong_type = Map.put(params, :answer, %{choice_id: "hello world"})
       assert_changeset(params_wrong_type, :invalid)
