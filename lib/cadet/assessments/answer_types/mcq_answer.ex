@@ -5,6 +5,7 @@ defmodule Cadet.Assessments.AnswerTypes.MCQAnswer do
   """
   use Cadet, :model
 
+  @primary_key false
   embedded_schema do
     field(:choice_id, :integer)
   end
