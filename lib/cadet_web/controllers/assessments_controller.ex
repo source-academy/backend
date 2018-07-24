@@ -141,6 +141,24 @@ defmodule CadetWeb.AssessmentsController do
             hint(:string, "The hint", required: true)
           end
         end,
+      ExternalLibrary:
+        swagger_schema do
+          properties do
+            name(:string, "Name of the external library", required: true)
+
+            symbols(
+              Schema.new do
+                type(:array)
+
+                items(
+                  Schema.new do
+                    type(:string)
+                  end
+                )
+              end
+            )
+          end
+        end,
       Library:
         swagger_schema do
           properties do
@@ -158,28 +176,9 @@ defmodule CadetWeb.AssessmentsController do
               end
             )
 
-            externals(
-              Schema.new do
-                type(:array)
-
-                items(
-                  Schema.new do
-                    type(:string)
-                  end
-                )
-              end
-            )
-
-            files(
-              Schema.new do
-                type(:array)
-
-                items(
-                  Schema.new do
-                    type(:string)
-                  end
-                )
-              end
+            external(
+              Schema.ref(:ExternalLibrary),
+              "The external library for this question"
             )
           end
         end

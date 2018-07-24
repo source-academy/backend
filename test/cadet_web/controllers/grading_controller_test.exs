@@ -118,13 +118,18 @@ defmodule CadetWeb.GradingControllerTest do
         |> Enum.map(
           &%{
             "question" => %{
-              "solution_template" => &1.question.question.solution_template,
-              "questionType" => "#{&1.question.type}",
-              "questionId" => &1.question.id,
-              "library" =>
-                &1.question.library
-                |> Map.from_struct()
-                |> Enum.reduce(%{}, fn {k, v}, acc -> Map.put(acc, "#{k}", v) end),
+              "solutionHeader" => &1.question.question.solution_header,
+              "solutionTemplate" => &1.question.question.solution_template,
+              "type" => "#{&1.question.type}",
+              "id" => &1.question.id,
+              "library" => %{
+                "chapter" => &1.question.library.chapter,
+                "globals" => &1.question.library.globals,
+                "external" => %{
+                  "name" => "#{&1.question.library.external.name}",
+                  "symbols" => &1.question.library.external.symbols
+                }
+              },
               "content" => &1.question.question.content,
               "answer" => &1.answer.code
             },
