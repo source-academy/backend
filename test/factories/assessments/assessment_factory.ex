@@ -8,14 +8,17 @@ defmodule Cadet.Assessments.AssessmentFactory do
       alias Cadet.Assessments.Assessment
 
       def assessment_factory do
+        type = Enum.random([:mission, :sidequest, :contest, :path])
+
         %Assessment{
           title: Faker.Lorem.Shakespeare.En.hamlet(),
           summary_short: Faker.Lorem.Shakespeare.En.king_richard_iii(),
           summary_long: Faker.Lorem.Shakespeare.En.romeo_and_juliet(),
-          number: Faker.Lorem.word(),
+          number:
+            "#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{Enum.random(0..10)}",
           story: Faker.Lorem.word(),
           reading: Faker.Lorem.sentence(),
-          type: Enum.random([:mission, :sidequest, :contest, :path]),
+          type: type,
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
           is_published: false
