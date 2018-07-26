@@ -67,7 +67,13 @@ defmodule CadetWeb.AssessmentsController do
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
             shortSummary(:string, "Short summary", required: true)
-            number(:string, "The string identifying the relative position of this assessment")
+
+            number(
+              :string,
+              "The string identifying the relative position of this assessment",
+              required: true
+            )
+
             story(:string, "The story that should be shown for this assessment")
             reading(:string, "The reading for this assessment")
             openAt(:string, "The opening date", format: "date-time", required: true)
@@ -94,7 +100,13 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            number(:string, "The string identifying the relative position of this assessment")
+
+            number(
+              :string,
+              "The string identifying the relative position of this assessment",
+              required: true
+            )
+
             story(:string, "The story that should be shown for this assessment")
             reading(:string, "The reading for this assessment")
             longSummary(:string, "Long summary", required: true)
