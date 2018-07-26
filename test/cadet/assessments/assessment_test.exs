@@ -9,6 +9,7 @@ defmodule Cadet.Assessments.AssessmentTest do
         %{
           type: :mission,
           title: "mission",
+          number: "M#{Enum.random(0..10)}",
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
         },
@@ -19,6 +20,7 @@ defmodule Cadet.Assessments.AssessmentTest do
         %{
           type: :mission,
           title: "mission",
+          number: "M#{Enum.random(0..10)}",
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
           cover_picture: build_upload("test/fixtures/upload.png", "image/png"),

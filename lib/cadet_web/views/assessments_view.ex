@@ -16,6 +16,9 @@ defmodule CadetWeb.AssessmentsView do
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
       type: :type,
+      story: :story,
+      number: :number,
+      reading: :reading,
       attempted: :attempted,
       maximumGrade: :max_grade,
       coverImage: &Cadet.Assessments.Image.url({&1.cover_picture, &1})
@@ -29,6 +32,9 @@ defmodule CadetWeb.AssessmentsView do
         id: :id,
         title: :title,
         type: :type,
+        story: :story,
+        number: :number,
+        reading: :reading,
         longSummary: :summary_long,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         questions:

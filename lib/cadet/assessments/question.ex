@@ -16,6 +16,7 @@ defmodule Cadet.Assessments.Question do
     field(:max_grade, :integer)
     field(:answer, :map, virtual: true)
     embeds_one(:library, Library)
+    embeds_one(:grading_library, Library)
     belongs_to(:assessment, Assessment)
     timestamps()
   end
@@ -27,8 +28,9 @@ defmodule Cadet.Assessments.Question do
   def changeset(question, params) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
-    |> cast_embed(:library)
     |> add_belongs_to_id_from_model(:assessment, params)
+    |> cast_embed(:library)
+    |> cast_embed(:grading_library)
     |> validate_required(@required_fields ++ @required_embeds)
     |> validate_question_content()
     |> foreign_key_constraint(:assessment_id)

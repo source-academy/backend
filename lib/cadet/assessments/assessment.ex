@@ -20,12 +20,16 @@ defmodule Cadet.Assessments.Assessment do
     field(:close_at, Timex.Ecto.DateTime)
     field(:cover_picture, Image.Type)
     field(:mission_pdf, Upload.Type)
+    field(:number, :string)
+    field(:story, :string)
+    field(:reading, :string)
+
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
-  @required_fields ~w(type title open_at close_at)a
-  @optional_fields ~w(summary_short summary_long is_published)a
+  @required_fields ~w(type title open_at close_at number)a
+  @optional_fields ~w(reading summary_short summary_long is_published story)a
   @optional_file_fields ~w(cover_picture mission_pdf)a
 
   def changeset(assessment, params) do
