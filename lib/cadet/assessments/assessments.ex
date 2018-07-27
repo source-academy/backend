@@ -157,6 +157,10 @@ defmodule Cadet.Assessments do
       |> preload([_, q], questions: q)
       |> Repo.one()
 
+    create_question_for_assessment(params, assessment)
+  end
+
+  def create_question_for_assessment(params, assessment) do
     if assessment do
       params_with_assessment_id = Map.put_new(params, :assessment_id, assessment.id)
 

@@ -4,6 +4,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
   """
   use Cadet, :model
 
+  @primary_key false
   embedded_schema do
     field(:content, :string)
     field(:hint, :string)
