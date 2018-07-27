@@ -87,12 +87,20 @@ defmodule Cadet.Updater.PublicTest do
     end
   end
 
-  test "GenServer init/1 callback" do
-    use_cassette "updater/init#1", custom: true do
-      assert {:ok, %{token: token, course_id: course_id}} = Public.init(nil)
-      assert String.length(token) == 480
-      assert String.length(course_id) == 36
-      refute course_id == "00000000-0000-0000-0000-000000000000"
+  describe "GenServer init/1 callback" do
+    test "get_api_params/0 is successful" do
+      use_cassette "updater/init#1", custom: true do
+        assert {:ok, %{token: token, course_id: course_id}} = Public.init(nil)
+        assert String.length(token) == 480
+        assert String.length(course_id) == 36
+        refute course_id == "00000000-0000-0000-0000-000000000000"
+      end
+    end
+
+    test "get_api_params/0 is unsuccessful in non-prod environment" do
+      use_cassette "updater/init#2", custom: true do
+        assert {:ok, nil} = Public.init(nil)
+      end
     end
   end
 
