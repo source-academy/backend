@@ -28,10 +28,14 @@ defmodule Cadet.Assessments.Library do
   def validate_globals(changeset) do
     globals = get_change(changeset, :globals)
 
-    if globals && Enum.all?(globals, fn {name, value} -> is_binary(name) and is_binary(value) end) do
+    with {:nil?, false} <- {:nil?, is_nil(globals)},
+         {:valid?, true} <-
+           {:valid?,
+            Enum.all?(globals, fn {name, value} -> is_binary(name) and is_binary(value) end)} do
       changeset
     else
-      add_error(changeset, :globals, "invalid format")
+      {:nil?, true} -> changeset
+      _ -> add_error(changeset, :globals, "invalid format")
     end
   end
 end

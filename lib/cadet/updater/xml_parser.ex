@@ -186,6 +186,9 @@ defmodule Cadet.Updater.XMLParser do
           identifier: ~x"./IDENTIFIER/text()" |> transform_by(&process_charlist/1),
           value: ~x"./VALUE/text()" |> transform_by(&process_charlist/1)
         )
+        |> Enum.reduce(%{}, fn %{identifier: identifier, value: value}, acc ->
+          Map.put(acc, identifier, value)
+        end)
 
       library =
         library

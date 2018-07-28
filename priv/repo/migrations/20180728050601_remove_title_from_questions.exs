@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.RemoveTitleFromQuestions do
 
   def change do
     alter table(:questions) do
-      remove :title
+      remove(:title)
     end
   end
 end
