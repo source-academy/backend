@@ -68,12 +68,12 @@ defmodule Cadet.Updater.Public do
           poster: &1["Creator"]["Name"]
         }
       )
-      |> Enum.map(
-        &Course.create_announcement(
-          Accounts.get_user_by_name(&1.poster),
-          Map.take(&1, [:title, :content, :published])
-        )
-      )
+      # |> Enum.map(
+      #   &Course.create_announcement(
+      #     Accounts.get_user_by_name(&1.poster),
+      #     Map.take(&1, [:title, :content, :published])
+      #   )
+      # )
 
       # read_announcements(api_params.token, api_params.course_id)
       schedule_work()
