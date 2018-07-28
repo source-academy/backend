@@ -106,7 +106,7 @@ defmodule CadetWeb.GradingController do
       Submission:
         swagger_schema do
           properties do
-            submissionId(:integer, "submission id", required: true)
+            id(:integer, "submission id", required: true)
             grade(:integer, "grade given")
             adjustment(:integer, "adjustment given")
             assessment(Schema.ref(:AssessmentInfo))
@@ -118,8 +118,10 @@ defmodule CadetWeb.GradingController do
           properties do
             id(:integer, "assessment id", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
+            title(:string, "Mission title", required: true)
+            coverImage(:string, "The URL to the cover picture", required: true)
 
-            max_grade(
+            maxGrade(
               :integer,
               "The max grade for this assessment",
               required: true
@@ -147,7 +149,7 @@ defmodule CadetWeb.GradingController do
                 question(Schema.ref(:Question))
                 grade(Schema.ref(:Grade))
 
-                max_grade(
+                maxGrade(
                   :integer,
                   "the max grade that can be given to this question",
                   required: true
