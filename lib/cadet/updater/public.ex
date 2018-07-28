@@ -59,9 +59,21 @@ defmodule Cadet.Updater.Public do
       Logger.info("Updater fetched #{length(announcements)} announcements from IVLE")
 
       announcements
-        |> Enum.filter(&(!&1["isRead"]))
-        |> Enum.map(&(%{title: &1["Title"], content: &1["Description"], published: true, poster: &1["Creator"]["Name"]}))
-        |> Enum.map(&(Course.create_announcement(Accounts.get_user_by_name(&1.poster), Map.take(&1, [:title, :content, :published]))))
+      |> Enum.filter(&(!&1["isRead"]))
+      |> Enum.map(
+        &%{
+          title: &1["Title"],
+          content: &1["Description"],
+          published: true,
+          poster: &1["Creator"]["Name"]
+        }
+      )
+      |> Enum.map(
+        &Course.create_announcement(
+          Accounts.get_user_by_name(&1.poster),
+          Map.take(&1, [:title, :content, :published])
+        )
+      )
 
       read_announcements(api_params.token, api_params.course_id)
       schedule_work()
@@ -88,34 +100,48 @@ defmodule Cadet.Updater.Public do
     IVLE.api_call("Announcements", AuthToken: token, CourseID: course_id)
   end
 
-  def read_announcements(token, course_id) do
-    session = get_browser_session()
-    http_opts = [hackney: [cookie: session.cookie, follow_redirect: false]]
-    form = [__EVENTTARGET: "ctl00$ctl00$ContentPlaceHolder1$btnSignIn", __VIEWSTATE: session.viewstate, 
-      "ctl00$ctl00$ContentPlaceHolder1$userid": @username, "ctl00$ctl00$ContentPlaceHolder1$password": @password] 
+  # def read_announcements(token, course_id) do
+  #   session = get_browser_session()
+  #   http_opts = [hackney: [cookie: session.cookie, follow_redirect: false]]
 
-    "https://ivle.nus.edu.sg/default.aspx"
-    |> HTTPoison.post!({:form, form}, %{"Content-Type": "application/x-www-form-urlencoded"}, [])
+  #   form = [
+  #     __EVENTTARGET: "ctl00$ctl00$ContentPlaceHolder1$btnSignIn",
+  #     __VIEWSTATE: session.viewstate,
+  #     "ctl00$ctl00$ContentPlaceHolder1$userid": @username,
+  #     "ctl00$ctl00$ContentPlaceHolder1$password": @password
+  #   ]
 
-    {body, headers, status_code} = HTTPoison.get("https://ivle.nus.edu.sg/v1/Announcement/default.aspx?CourseID=" <> course_id, %{}, http_opts)
-  end
+  #   "https://ivle.nus.edu.sg/default.aspx"
+  #   |> HTTPoison.post!({:form, form}, %{"Content-Type": "application/x-www-form-urlencoded"}, [])
+
+  #   {body, headers, status_code} =
+  #     HTTPoison.get(
+  #       "https://ivle.nus.edu.sg/v1/Announcement/default.aspx?CourseID=" <> course_id,
+  #       %{},
+  #       http_opts
+  #     )
+  # end
 
   def get_file_info(token, course_id) do
     {:ok, folders} = IVLE.api_call("Workbins", AuthToken: token, CourseID: course_id)
 
     folders
-    |> Enum.map(&(&1["Files"]))
-    |> Enum.map(&(Enum.map(&1, fn file -> %{id: file["ID"], name: file["FileName"]} end)))
-    |> Enum.concat
+    |> Enum.map(& &1["Files"])
+    |> Enum.map(&Enum.map(Enum.filter(&1, fn file -> !file["isDownloaded"] end),
+      fn file -> %{id: file["ID"], name: file["FileName"], is_downloaded: file["isDownloaded"]} end))
+    |> Enum.concat()
   end
 
   def upload_files(token, course_id) do
     get_file_info(token, course_id)
-    |> Enum.map(&(%{name: &1.name, binary: elem(IVLE.api_call("Download", AuthToken: token, ID: &1.id), 1)}))
-    |> IO.inspect
-    |> Enum.map(&(ExAws.request(ExAws.S3.put_object("sreyansapitest", &1.name, &1.binary, [acl: :public_read]))))
-
+    |> Enum.map(
+      &%{name: &1.name, binary: elem(IVLE.api_call("Download", AuthToken: token, ID: &1.id), 1)}
+    )
+    |> Enum.map(
+      &ExAws.request(ExAws.S3.put_object("sreyansapitest", &1.name, &1.binary, acl: :public_read))
+    )
   end
+
   @doc """
   Get the authentication token of the guess account, and the CS1101S courseID
   """

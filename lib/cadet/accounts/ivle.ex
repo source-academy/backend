@@ -143,7 +143,6 @@ defmodule Cadet.Accounts.IVLE do
     end
   end
 
-
   def api_call(method, queries) when method in ["Workbins"] do
     with {:ok, %{status_code: 200, body: body}} <- HTTPoison.get(api_url(method, queries)) do
       {:ok, List.first(Poison.decode!(body)["Results"])["Folders"]}

@@ -75,7 +75,7 @@ defmodule Cadet.Accounts do
   def get_user_by_name(name) do
     User
     |> where([u], u.name == ^name and u.role == "admin")
-    |> Repo.one
+    |> Repo.one()
   end
 
   @doc """
