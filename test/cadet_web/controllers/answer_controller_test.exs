@@ -3,7 +3,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
   import Ecto.Query
 
-  alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
   alias CadetWeb.AnswerController
 
@@ -93,6 +93,28 @@ defmodule CadetWeb.AnswerControllerTest do
 
       assert response(updated_programming_conn, 200) =~ "OK"
       assert get_answer_value(programming_question, assessment, user) == "hello_world"
+    end
+
+    @tag authenticate: :student
+    test "answering all questions updates submission status to attempted", %{
+      conn: conn,
+      assessment: assessment,
+      mcq_question: mcq_question,
+      programming_question: programming_question
+    } do
+      user = conn.assigns.current_user
+      post(conn, build_url(mcq_question.id), %{answer: 5})
+      post(conn, build_url(programming_question.id), %{answer: "hello world"})
+
+      assessment = assessment |> Repo.preload(:questions)
+
+      submission =
+        Submission
+        |> where(student_id: ^user.id)
+        |> where(assessment_id: ^assessment.id)
+        |> Repo.one!()
+
+      assert submission.status == :attempted
     end
 
     @tag authenticate: :student

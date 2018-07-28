@@ -169,8 +169,8 @@ defmodule Cadet.Assessments do
     model_assoc_count = fn model, assoc, id ->
       model
       |> where(id: ^id)
-      |> join(:inner, [a], q in assoc(a, ^assoc))
-      |> select([_, q], count(q.id))
+      |> join(:inner, [m], a in assoc(m, ^assoc))
+      |> select([_, a], count(a.id))
       |> Repo.one()
     end
 
@@ -179,7 +179,7 @@ defmodule Cadet.Assessments do
       {:ok, model_assoc_count.(Assessment, :questions, assessment.id)}
     end)
     |> Multi.run(:submission, fn _ ->
-      {:ok, model_assoc_count.(Submission, :answers, assessment.id)}
+      {:ok, model_assoc_count.(Submission, :answers, submission.id)}
     end)
     |> Multi.run(:update, fn %{submission: s_count, assessment: a_count} ->
       if s_count == a_count do
