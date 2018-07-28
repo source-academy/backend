@@ -54,7 +54,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
-              "maximumGrade" => 720,
+              "maxGrade" => 720,
               "attempted" => has_attempted?(user, &1)
             }
           )
@@ -100,7 +100,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
-              "maximumGrade" => 720,
+              "maxGrade" => 720,
               "attempted" => has_attempted?(user, &1)
             }
           )

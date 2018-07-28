@@ -85,7 +85,7 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
-            maximumGrade(
+            maxGrade(
               :integer,
               "The maximum Grade for this assessment",
               required: true

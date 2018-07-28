@@ -71,20 +71,22 @@ defmodule CadetWeb.GradingControllerTest do
         Enum.map(submissions, fn submission ->
           %{
             "grade" => 600,
-            "submissionId" => submission.id,
+            "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id
             },
             "assessment" => %{
               "type" => "mission",
-              "max_grade" => 600,
-              "id" => mission.id
+              "maxGrade" => 600,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => Cadet.Assessments.Image.url({mission.cover_picture, mission})
             }
           }
         end)
 
-      assert ^expected = Enum.sort_by(json_response(conn, 200), & &1["submissionId"])
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
     end
 
     @tag authenticate: :staff
@@ -133,7 +135,7 @@ defmodule CadetWeb.GradingControllerTest do
               "content" => &1.question.question.content,
               "answer" => &1.answer.code
             },
-            "max_grade" => &1.question.max_grade,
+            "maxGrade" => &1.question.max_grade,
             "grade" => %{
               "grade" => &1.grade,
               "adjustment" => &1.adjustment,
