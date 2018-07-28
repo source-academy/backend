@@ -5,17 +5,20 @@ defmodule Cadet.Updater.XMLParser do
   @local_name if Mix.env() != :test, do: "cs1101s", else: "test/local_repo"
   @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
 
+  use Cadet, [:display]
 
   import SweetXml
 
+  alias Cadet.Assessments
   alias Cadet.Assessments.Assessment
+
+  require Logger
 
   defmacrop is_non_empty_list(term) do
     quote do: is_list(unquote(term)) and unquote(term) != []
   end
 
-  @spec parse_and_insert(:mission | :sidequest | :path | :contest) ::
-          {:ok, nil} | {:error, String.t()}
+  @spec parse_and_insert(:mission | :sidequest | :path | :contest) :: :ok | {:error, String.t()}
   def parse_and_insert(type) do
     with {:assessment_type, true} <- {:assessment_type, type in Map.keys(@locations)},
          {:cloned?, {:ok, root}} when is_non_empty_list(root) <- {:cloned?, File.ls(@local_name)},
@@ -23,34 +26,44 @@ defmodule Cadet.Updater.XMLParser do
          {:listing, {:ok, listing}} when is_non_empty_list(listing) <-
            {:listing, @local_name |> Path.join(@locations[type]) |> File.ls()},
          {:filter, xml_files} when is_non_empty_list(xml_files) <-
-           {:filter, Enum.filter(listing, &String.ends_with?(&1, ".xml"))} do
-      process_xml_files(Path.join(@local_name, @locations[type]), xml_files)
-      {:ok, nil}
+           {:filter, Enum.filter(listing, &String.ends_with?(&1, ".xml"))},
+         {:process, :ok} <-
+           {:process, process_xml_files(Path.join(@local_name, @locations[type]), xml_files)} do
+      :ok
     else
       {:assessment_type, false} -> {:error, "XML location of assessment type is not defined."}
       {:cloned?, {:error, _}} -> {:error, "Local copy of repository is either missing or empty."}
       {:type, false} -> {:error, "Directory containing XML is not found."}
       {:listing, {:error, _}} -> {:error, "Directory containing XML is empty."}
       {:filter, _} -> {:error, "No XML file is found."}
+      {:process, :error} -> {:error, "Error processing XML files."}
     end
   end
 
+  @spec process_xml_files(String.t(), [String.t()]) :: :ok | :error
   def process_xml_files(path, files) do
     for file <- files do
-      assessment =
-        path
-        |> Path.join(file)
-        |> File.read!()
-        |> process()
+      path
+      |> Path.join(file)
+      |> File.read!()
+      |> process()
+      |> case do
+        :ok ->
+          Logger.info("Imported #{file} successfully.\n")
+          :ok
 
-      IO.puts(inspect(assessment, pretty: true))
+        :error ->
+          Logger.error("Failed to import #{file}.\n")
+          :error
+      end
     end
+    |> ok_error_reducer()
   end
 
   # TODO: change to `defp`
-  @spec process(String.t()) :: %Assessment{}
+  @spec process(String.t()) :: :ok | :error
   def process(xml) do
-    assessment_changeset =
+    assessment_params =
       xml
       |> xpath(
         ~x"//TASK"e,
@@ -66,88 +79,127 @@ defmodule Cadet.Updater.XMLParser do
       )
       |> Map.put(:is_published, true)
 
-    Assessment.changeset(%Assessment{}, assessment_changeset)
+    case Assessments.insert_or_update_assessment(assessment_params) do
+      {:ok, assessment} ->
+        Logger.info("Created/updated assessment with id: #{assessment.id}")
+        process_questions(xml, assessment.id)
+
+      {:error, changeset} ->
+        log_error_bad_changeset(changeset, Assessment)
+        :error
+    end
+  rescue
+    e in Timex.Parse.ParseError ->
+      %{message: message} = e
+      Logger.error("Time does not conform to ISO8601 DateTime: #{message}")
+      :error
   end
 
-  def process_question(xml, assessment_id) do
+  def process_questions(xml, assessment_id) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
 
-    question_changeset =
-      xml
-      |> xpath(
-        ~x"//PROBLEMS/PROBLEM"el,
-        type: ~x"./@type"s,
-        max_grade: ~x"./@maxgrade"i,
-        entity: ~x"."
-      )
-      |> Enum.map(&process_question_by_question_type/1)
-      |> Enum.map(&process_question_library(&1, default_library))
-      |> Enum.map(&Map.delete(&1, :entity))
+    xml
+    |> xpath(
+      ~x"//PROBLEMS/PROBLEM"el,
+      type: ~x"./@type"os,
+      max_grade: ~x"./@maxgrade"oi,
+      entity: ~x"."
+    )
+    |> Enum.map(fn param ->
+      with {:not_nil?, true} <-
+             {:not_nil?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
+           question when is_map(question) <- process_question_by_question_type(param),
+           question when is_map(question) <- process_question_library(question, default_library),
+           question when is_map(question) <- Map.delete(question, :entity),
+           {:ok, _question} <- Assessments.create_question_for_assessment(question, assessment_id) do
+        :ok
+      else
+        {:not_nil?, false} ->
+          Logger.error("Missing attribute on PROBLEM")
+          :error
 
-    question_changeset
+        {:error, changeset} ->
+          log_error_bad_changeset(changeset, Question)
+          :error
+
+        :error ->
+          :error
+      end
+    end)
+    |> ok_error_reducer()
+  end
+
+  defp log_error_bad_changeset(changeset, entity) do
+    Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset.errors)}")
+
+    Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
   end
 
   defp process_question_by_question_type(question) do
     entity = question[:entity]
 
-    question_map =
-      case question[:type] do
-        "programming" ->
+    question[:type]
+    |> case do
+      "programming" ->
+        entity
+        |> xpath(
+          ~x"."e,
+          content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+          solution_template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
+          solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
+          grader: ~x"./SNIPPET/GRADER/text()" |> transform_by(&process_charlist/1)
+        )
+
+      "mcq" ->
+        choices =
           entity
           |> xpath(
-            ~x"."e,
+            ~x"./CHOICE"el,
             content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-            solution_template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
-            solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
-            grader: ~x"./SNIPPET/GRADER/text()" |> transform_by(&process_charlist/1)
+            is_correct: ~x"./@correct"s |> transform_by(&String.to_atom/1)
           )
+          |> Enum.with_index()
+          |> Enum.map(fn {choice, id} -> Map.put(choice, :choice_id, id) end)
 
-        "mcq" ->
-          choices =
-            entity
-            |> xpath(
-              ~x"./CHOICE"el,
-              content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-              is_correct: ~x"./@correct"s |> transform_by(&String.to_atom/1)
-            )
-            |> Enum.with_index()
-            |> Enum.map(fn {choice, id} -> Map.put(choice, :choice_id, id) end)
+        entity
+        |> xpath(~x"."e, content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1))
+        |> Map.put(:choices, choices)
 
-          entity
-          |> xpath(~x"."e, content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1))
-          |> Map.put(:choices, choices)
-      end
-
-    Map.put(question, :question, question_map)
+      _ ->
+        Logger.error("Invalid question type.")
+        :error
+    end
+    |> case do
+      :error -> :error
+      question_map -> Map.put(question, :question, question_map)
+    end
   end
 
   defp process_question_library(question, default_library) do
     library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
 
-    globals =
-      library
-      |> xpath(
-        ~x"./GLOBAL"l,
-        identifier: ~x"./IDENTIFIER/text()" |> transform_by(&process_charlist/1),
-        value: ~x"./VALUE/text()" |> transform_by(&process_charlist/1)
-      )
+    if library do
+      globals =
+        library
+        |> xpath(
+          ~x"./GLOBAL"l,
+          identifier: ~x"./IDENTIFIER/text()" |> transform_by(&process_charlist/1),
+          value: ~x"./VALUE/text()" |> transform_by(&process_charlist/1)
+        )
 
-    library =
-      library
-      |> xpath(
-        ~x"."e,
-        chapter: ~x"./@interpreter"i
-      )
-      |> Map.put(:globals, globals)
+      library =
+        library
+        |> xpath(
+          ~x"."e,
+          chapter: ~x"./@interpreter"i
+        )
+        |> Map.put(:globals, globals)
 
-    IO.puts(inspect(library))
-
-    Map.put(question, :library, library)
-  end
-
-  # TODO: delete this
-  def xml do
-    @xml
+      Map.put(question, :library, library)
+    else
+      Logger.error("Missing DEPLOYMENT")
+      :error
+    end
   end
 
   @spec process_charlist(charlist()) :: String.t()
@@ -155,5 +207,11 @@ defmodule Cadet.Updater.XMLParser do
     charlist
     |> to_string()
     |> String.trim()
+  end
+
+  defp ok_error_reducer(list) do
+    Enum.reduce(list, fn result, acc ->
+      if result == :ok and acc == :ok, do: :ok, else: :error
+    end)
   end
 end

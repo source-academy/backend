@@ -127,6 +127,18 @@ defmodule Cadet.Assessments do
     |> Repo.insert()
   end
 
+  def insert_or_update_assessment(params = %{number: number}) do
+    Assessment
+    |> where(number: ^number)
+    |> Repo.one()
+    |> case do
+      nil -> %Assessment{}
+      assessment -> assessment
+    end
+    |> Assessment.changeset(params)
+    |> Repo.insert_or_update()
+  end
+
   def update_assessment(id, params) when is_ecto_id(id) do
     simple_update(
       Assessment,
@@ -157,10 +169,6 @@ defmodule Cadet.Assessments do
       |> preload([_, q], questions: q)
       |> Repo.one()
 
-    create_question_for_assessment(params, assessment)
-  end
-
-  def create_question_for_assessment(params, assessment) do
     if assessment do
       params_with_assessment_id = Map.put_new(params, :assessment_id, assessment.id)
 
