@@ -79,9 +79,9 @@ defmodule CadetWeb.AssessmentsController do
             openAt(:string, "The opening date", format: "date-time", required: true)
             closeAt(:string, "The closing date", format: "date-time", required: true)
 
-            attempted(
-              :boolean,
-              "Whether the assessment has been attempted by the current user",
+            status(
+              :string,
+              "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
               required: true
             )
 

@@ -9,6 +9,7 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
+  alias Ecto.Multi
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
@@ -68,7 +69,7 @@ defmodule Cadet.Assessments do
       Query.all_assessments_with_max_grade()
       |> subquery()
       |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
-      |> select([a, s], %{a | attempted: not is_nil(s.id)})
+      |> select([a, s], %{a | user_status: s.status})
       |> where(is_published: true)
       |> order_by(:open_at)
       |> Repo.all()
@@ -151,6 +152,7 @@ defmodule Cadet.Assessments do
            {:is_open?, true} <- is_open?(question.assessment),
            {:ok, submission} <- find_or_create_submission(user, question.assessment),
            {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+        update_submission_status(submission, question.assessment)
         {:ok, nil}
       else
         {:question_found?, false} -> {:error, {:bad_request, "Question not found"}}
@@ -161,6 +163,32 @@ defmodule Cadet.Assessments do
     else
       {:error, {:forbidden, "User is not permitted to answer questions"}}
     end
+  end
+
+  def update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
+    model_assoc_count = fn model, assoc, id ->
+      model
+      |> where(id: ^id)
+      |> join(:inner, [a], q in assoc(a, ^assoc))
+      |> select([_, q], count(q.id))
+      |> Repo.one()
+    end
+
+    Multi.new()
+    |> Multi.run(:assessment, fn _ ->
+      {:ok, model_assoc_count.(Assessment, :questions, assessment.id)}
+    end)
+    |> Multi.run(:submission, fn _ ->
+      {:ok, model_assoc_count.(Submission, :answers, assessment.id)}
+    end)
+    |> Multi.run(:update, fn %{submission: s_count, assessment: a_count} ->
+      if s_count == a_count do
+        submission |> Submission.changeset(%{status: :attempted}) |> Repo.update()
+      else
+        {:ok, nil}
+      end
+    end)
+    |> Repo.transaction()
   end
 
   @spec all_submissions_by_grader(%User{}) ::

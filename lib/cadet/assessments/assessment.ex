@@ -5,12 +5,11 @@ defmodule Cadet.Assessments.Assessment do
   """
   use Cadet, :model
   use Arc.Ecto.Schema
-
-  alias Cadet.Assessments.{AssessmentType, Image, Question, Upload}
+  alias Cadet.Assessments.{AssessmentType, Image, Question, SubmissionStatus, Upload}
 
   schema "assessments" do
     field(:max_grade, :integer, virtual: true)
-    field(:attempted, :boolean, virtual: true)
+    field(:user_status, SubmissionStatus, virtual: true)
     field(:title, :string)
     field(:is_published, :boolean, default: false)
     field(:type, AssessmentType)

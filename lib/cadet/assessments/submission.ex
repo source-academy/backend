@@ -3,10 +3,11 @@ defmodule Cadet.Assessments.Submission do
   use Cadet, :model
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.{Answer, Assessment}
+  alias Cadet.Assessments.{Answer, Assessment, SubmissionStatus}
 
   schema "submissions" do
     field(:grade, :integer, virtual: true)
+    field(:status, SubmissionStatus, default: :attempting)
 
     belongs_to(:assessment, Assessment)
     belongs_to(:student, User)
@@ -15,7 +16,7 @@ defmodule Cadet.Assessments.Submission do
     timestamps()
   end
 
-  @required_fields ~w(student_id assessment_id)a
+  @required_fields ~w(student_id assessment_id status)a
 
   def changeset(submission, params) do
     submission

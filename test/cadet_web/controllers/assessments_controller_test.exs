@@ -5,7 +5,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   import Ecto.Query
 
   alias Cadet.Accounts.{Role, User}
-  alias Cadet.Assessments.{Assessment, Submission}
+  alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus}
   alias Cadet.Repo
   alias CadetWeb.AssessmentsController
 
@@ -33,7 +33,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  # All roles should see the same overview
+  # All roles should see almost the same overview
   describe "GET /, all roles" do
     test "renders assessments overview", %{conn: conn, users: users, assessments: assessments} do
       for {_role, user} <- users do
@@ -55,7 +55,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
               "maximumGrade" => 720,
-              "attempted" => has_attempted?(user, &1)
+              "status" => assessment_status?(user, &1)
             }
           )
 
@@ -101,7 +101,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
               "maximumGrade" => 720,
-              "attempted" => has_attempted?(user, &1)
+              "status" => assessment_status?(user, &1)
             }
           )
 
@@ -112,6 +112,33 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> json_response(200)
 
         assert expected == resp
+      end
+    end
+  end
+
+  describe "GET /, student only" do
+    test "renders student submission status in overview", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: assessments
+    } do
+      assessment = assessments.mission.assessment
+      [submission | _] = assessments.mission.submissions
+
+      for status <- SubmissionStatus.__enum_map__() do
+        submission
+        |> Submission.changeset(%{status: status})
+        |> Repo.update()
+
+        resp =
+          conn
+          |> sign_in(student)
+          |> get(build_url())
+          |> json_response(200)
+          |> Enum.find(&(&1["id"] == assessment.id))
+          |> Map.get("status")
+
+        assert assessment_status?(student, assessment) == resp
       end
     end
   end
@@ -427,13 +454,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
 
-  defp has_attempted?(user = %User{}, assessment = %Assessment{}) do
+  defp assessment_status?(user = %User{}, assessment = %Assessment{}) do
     submission =
       Submission
       |> where(student_id: ^user.id)
       |> where(assessment_id: ^assessment.id)
       |> Repo.one()
 
-    not is_nil(submission)
+    (submission && submission.status |> Atom.to_string()) || "not_attempted"
   end
 end
