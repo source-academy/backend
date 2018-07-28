@@ -13,7 +13,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
       def programming_question_factory do
         %Question{
-          title: sequence("question"),
           type: :programming,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
@@ -29,7 +28,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
       def mcq_question_factory do
         %Question{
-          title: sequence("question"),
           type: :mcq,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),

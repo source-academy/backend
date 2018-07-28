@@ -3,14 +3,13 @@ defmodule Cadet.Assessments.QuestionTest do
 
   use Cadet.ChangesetCase, entity: Question
 
-  @required_fields ~w(title question type assessment_id)a
+  @required_fields ~w(question type assessment_id)a
   @required_embeds ~w(library)a
 
   setup do
     assessment = insert(:assessment)
 
     valid_programming_params = %{
-      title: "programming_question",
       type: :programming,
       assessment_id: assessment.id,
       library: build(:library),
@@ -23,7 +22,6 @@ defmodule Cadet.Assessments.QuestionTest do
     }
 
     valid_mcq_params = %{
-      title: "mcq_question",
       type: :mcq,
       assessment_id: assessment.id,
       library: build(:library),

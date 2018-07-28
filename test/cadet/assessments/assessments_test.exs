@@ -28,7 +28,6 @@ defmodule Cadet.AssessmentsTest do
     {:ok, question} =
       Assessments.create_question_for_assessment(
         %{
-          title: "question",
           type: :programming,
           library: build(:library),
           question: %{
@@ -41,7 +40,7 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", type: :programming} = question
+    assert %{type: :programming} = question
   end
 
   test "create multiple choice question" do
@@ -50,7 +49,6 @@ defmodule Cadet.AssessmentsTest do
     {:ok, question} =
       Assessments.create_question_for_assessment(
         %{
-          title: "question",
           type: :mcq,
           library: build(:library),
           question: %{
@@ -61,7 +59,7 @@ defmodule Cadet.AssessmentsTest do
         assessment.id
       )
 
-    assert %{title: "question", type: :mcq} = question
+    assert %{type: :mcq} = question
   end
 
   test "create question when there already exists questions" do
@@ -71,7 +69,6 @@ defmodule Cadet.AssessmentsTest do
     {:ok, question} =
       Assessments.create_question_for_assessment(
         %{
-          title: "question",
           type: :mcq,
           library: build(:library),
           question: %{
@@ -109,10 +106,10 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "update question" do
-    question = insert(:question)
-    Assessments.update_question(question.id, %{title: "new_title"})
+    question = insert(:question, display_order: 1)
+    Assessments.update_question(question.id, %{display_order: 5})
     question = Repo.get(Question, question.id)
-    assert question.title == "new_title"
+    assert question.display_order == 5
   end
 
   test "delete question" do
