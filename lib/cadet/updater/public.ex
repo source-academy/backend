@@ -75,7 +75,7 @@ defmodule Cadet.Updater.Public do
         )
       )
 
-      read_announcements(api_params.token, api_params.course_id)
+      # read_announcements(api_params.token, api_params.course_id)
       schedule_work()
       {:noreply, api_params}
     else
@@ -127,8 +127,11 @@ defmodule Cadet.Updater.Public do
 
     folders
     |> Enum.map(& &1["Files"])
-    |> Enum.map(&Enum.map(Enum.filter(&1, fn file -> !file["isDownloaded"] end),
-      fn file -> %{id: file["ID"], name: file["FileName"], is_downloaded: file["isDownloaded"]} end))
+    |> Enum.map(
+      &Enum.map(Enum.filter(&1, fn file -> !file["isDownloaded"] end), fn file ->
+        %{id: file["ID"], name: file["FileName"], is_downloaded: file["isDownloaded"]}
+      end)
+    )
     |> Enum.concat()
   end
 
