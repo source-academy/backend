@@ -8,6 +8,7 @@ defmodule Cadet.Updater.Public do
   """
 
   use GenServer
+  use Cadet.DeploymentHelper
 
   alias Cadet.Accounts.IVLE
 
@@ -16,7 +17,6 @@ defmodule Cadet.Updater.Public do
   @api_key :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:ivle_key)
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
-  @env Mix.env()
   @interval :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:interval)
   @username :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_username)
   @password :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_password)
@@ -49,11 +49,11 @@ defmodule Cadet.Updater.Public do
       {:ok, api_params}
     rescue
       error in FunctionClauseError ->
-        if @env != :prod do
-          Logger.warn("Cadet.Updater.Public failed to initialise.")
-          {:ok, nil}
-        else
+        if_compilation Mix.env() == :prod do
           reraise error, System.stacktrace()
+        else
+          Logger.warn("Cadet.Updater.Public failed to initialise with error #{error}.")
+          {:ok, nil}
         end
     end
   end

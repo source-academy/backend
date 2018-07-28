@@ -1,18 +1,17 @@
 defmodule Cadet.Repo do
   use Ecto.Repo, otp_app: :cadet
+  use Cadet.DeploymentHelper
 
   alias ExAws.KMS
 
   @dialyzer {:no_match, init: 2}
-
-  @env Mix.env()
 
   @doc """
   Dynamically obtains the database password from encrypted cipher text using
   AWS KMS (only in production).
   """
   def init(_, opts) do
-    if @env == :prod do
+    if_compilation Mix.env() == :prod do
       cipher_text =
         :cadet
         |> Application.fetch_env!(:aws)
