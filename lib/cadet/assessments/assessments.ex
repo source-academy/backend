@@ -32,8 +32,9 @@ defmodule Cadet.Assessments do
     Assessment
     |> where(is_published: true)
     |> where([a], not is_nil(a.story))
+    |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
     |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
-    |> where([_, s], is_nil(s.id))
+    |> where([_, s], is_nil(s.id) or s.status != "submitted")
     |> order_by([a], a.open_at)
     |> order_by([a], a.type)
     |> select([a], a.story)
