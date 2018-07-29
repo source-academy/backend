@@ -77,8 +77,7 @@ defmodule CadetWeb.UserControllerTest do
       assessments_with_indices = Enum.with_index(early_assessments ++ late_assessments)
 
       # Submit for i-th assessment, expect (i+1)th story to be returned
-      for {assessment, idx} <-
-            Enum.slice(assessments_with_indices, 0, length(assessments_with_indices) - 1) do
+      for {assessment, idx} <- Enum.drop(assessments_with_indices, -1) do
         insert(:submission, %{student: user, assessment: assessment})
 
         {expected_assessment, _} = Enum.fetch!(assessments_with_indices, idx + 1)
