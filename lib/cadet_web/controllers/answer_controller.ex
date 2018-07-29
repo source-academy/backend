@@ -12,7 +12,9 @@ defmodule CadetWeb.AnswerController do
         text(conn, "OK")
 
       {:error, {status, message}} ->
-        send_resp(conn, status, message)
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 

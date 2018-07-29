@@ -5,13 +5,15 @@ defmodule CadetWeb.AssessmentsController do
 
   alias Cadet.Assessments
 
-  def finalise(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
+  def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
       {:ok, _nil} ->
         text(conn, "OK")
 
       {:error, {status, message}} ->
-        send_resp(conn, status, message)
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
@@ -31,9 +33,9 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  swagger_path :finalise do
-    post("/assessments/{assessmentId}/finalise")
-    summary("Finalise submission")
+  swagger_path :submit do
+    post("/assessments/{assessmentId}/submit")
+    summary("Finalise submission for an assessment")
     security([%{JWT: []}])
 
     parameters do
