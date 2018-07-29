@@ -14,11 +14,11 @@ defmodule Cadet.Assessments do
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
 
-  def user_total_grade(user = %User{}) do
+  def user_total_grade(%User{id: user_id}) do
     grade =
       Query.all_submissions_with_grade()
       |> subquery()
-      |> where(student_id: ^user.id)
+      |> where(student_id: ^user_id)
       |> Repo.aggregate(:sum, :grade)
 
     if grade do
@@ -26,6 +26,19 @@ defmodule Cadet.Assessments do
     else
       0
     end
+  end
+
+  def user_current_story(%User{id: user_id}) do
+    Assessment
+    |> where(is_published: true)
+    |> where([a], not is_nil(a.story))
+    |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
+    |> where([_, s], is_nil(s.id))
+    |> order_by([a], a.open_at)
+    |> order_by([a], a.type)
+    |> select([a], a.story)
+    |> first()
+    |> Repo.one()
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
