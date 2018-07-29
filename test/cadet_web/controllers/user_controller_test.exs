@@ -140,6 +140,7 @@ defmodule CadetWeb.UserControllerTest do
     @tag authenticate: :staff
     test "success, staff", %{conn: conn} do
       user = conn.assigns.current_user
+      assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
 
       resp =
         conn

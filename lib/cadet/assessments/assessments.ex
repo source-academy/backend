@@ -28,18 +28,20 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def user_current_story(%User{id: user_id}) do
-    Assessment
-    |> where(is_published: true)
-    |> where([a], not is_nil(a.story))
-    |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
-    |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
-    |> where([_, s], is_nil(s.id) or s.status != "submitted")
-    |> order_by([a], a.open_at)
-    |> order_by([a], a.type)
-    |> select([a], a.story)
-    |> first()
-    |> Repo.one()
+  def user_current_story(%User{id: user_id, role: role}) do
+    if role in @submit_answer_roles do
+      Assessment
+      |> where(is_published: true)
+      |> where([a], not is_nil(a.story))
+      |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
+      |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
+      |> where([_, s], is_nil(s.id) or s.status != "submitted")
+      |> order_by([a], a.open_at)
+      |> order_by([a], a.type)
+      |> select([a], a.story)
+      |> first()
+      |> Repo.one()
+    end
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
