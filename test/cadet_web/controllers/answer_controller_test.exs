@@ -115,6 +115,24 @@ defmodule CadetWeb.AnswerControllerTest do
         |> Repo.one!()
 
       assert submission.status == :attempted
+
+      # should not affect submission changes
+      conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+      assert response(conn, 200) =~ "OK"
+    end
+
+    @tag authenticate: :student
+    test "answering submitted question is unsuccessful", %{
+      conn: conn,
+      assessment: assessment,
+      mcq_question: mcq_question
+    } do
+      user = conn.assigns.current_user
+
+      insert(:submission, %{assessment: assessment, student: user, status: :submitted})
+      conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+
+      assert response(conn, 403) == "Assessment submission already finalised"
     end
 
     @tag authenticate: :student

@@ -196,7 +196,7 @@ defmodule Cadet.Assessments do
         {:status, :submitted} ->
           {:error, {:forbidden, "Assessment has already been submitted"}}
 
-        {:error, _} ->
+        _ ->
           {:error, {:internal_server_error, "Please try again later."}}
       end
     else
