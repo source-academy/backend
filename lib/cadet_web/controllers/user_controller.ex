@@ -11,7 +11,8 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     grade = user_total_grade(user)
-    render(conn, "index.json", user: user, grade: grade)
+    story = user_current_story(user)
+    render(conn, "index.json", user: user, grade: grade, story: story)
   end
 
   swagger_path :index do
