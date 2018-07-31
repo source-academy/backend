@@ -1,13 +1,15 @@
 defmodule Cadet.Course.AnnouncementTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Course.Announcement
 
-  valid_changesets Announcement do
-    %{title: "title", content: "Hello world", published: true}
-  end
+  use Cadet.ChangesetCase, entity: Announcement
 
-  invalid_changesets Announcement do
-    %{title: "", content: "Some content"}
+  describe "Changesets" do
+    test "valid changesets" do
+      assert_changeset(%{title: "title", content: "Hello world", published: true}, :valid)
+    end
+
+    test "invalid changeset" do
+      assert_changeset(%{title: "", content: "Some content"}, :invalid)
+    end
   end
 end

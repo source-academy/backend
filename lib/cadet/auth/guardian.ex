@@ -33,11 +33,13 @@ defmodule Cadet.Auth.Guardian do
     end
   end
 
-  def on_refresh({old_token, old_claims}, {new_token, new_claims}, _options) do
-    with {:ok, _} <- DB.on_refresh({old_token, old_claims}, {new_token, new_claims}) do
-      {:ok, {old_token, old_claims}, {new_token, new_claims}}
-    end
-  end
+  # TODO: Uncomment when there is an update to guardian_db > v1.1.0
+  # (when git commit ef024b6 is merged)
+  # def on_refresh({old_token, old_claims}, {new_token, new_claims}, _options) do
+  #   with {:ok, _} <- DB.on_refresh({old_token, old_claims}, {new_token, new_claims}) do
+  #     {:ok, {old_token, old_claims}, {new_token, new_claims}}
+  #   end
+  # end
 
   def on_revoke(claims, token, _options) do
     with {:ok, _} <- DB.on_revoke(claims, token) do

@@ -6,11 +6,11 @@
 /cover
 /deps
 /doc
+/docs
 /.fetch
 erl_crash.dump
 *.ez
 *.beam
-/config/*.secret.exs
 
 ### Elixir Patch ###
 
@@ -49,7 +49,6 @@ _build/
 /*.ez
 node_modules/
 /priv/static/
-/config/prod.secret.exs
 /rel
 
 ### Vim ###
@@ -92,9 +91,10 @@ erl_crash.dump
 # Alternatively, you may comment the line below and commit the
 # secrets files as long as you replace their contents by environment
 # variables.
-/config/*.secret.exs
+/config/*secrets.exs
 
 # Uploaded file
+/cs1101s
 /uploads
 
 .DS_Store
@@ -104,5 +104,7 @@ erl_crash.dump
 *.tfstate
 *.backup
 
+# VSCode Elixir language support
+.elixir_ls/
 
 .env

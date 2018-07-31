@@ -1,17 +1,19 @@
 defmodule Cadet.Assessments.AnswerTypes.MCQAnswerTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Assessments.AnswerTypes.MCQAnswer
 
-  valid_changesets MCQAnswer do
-    %{choice_id: 0}
-    %{choice_id: 1}
-    %{choice_id: 2}
-    %{choice_id: 3}
-    %{choice_id: 4}
-  end
+  use Cadet.ChangesetCase, entity: MCQAnswer
 
-  invalid_changesets MCQAnswer do
-    %{choice_id: -2}
+  describe "Changesets" do
+    test "valid changesets" do
+      assert_changeset(%{choice_id: 0}, :valid)
+      assert_changeset(%{choice_id: 1}, :valid)
+      assert_changeset(%{choice_id: 2}, :valid)
+      assert_changeset(%{choice_id: 3}, :valid)
+      assert_changeset(%{choice_id: 4}, :valid)
+    end
+
+    test "invalid changesets" do
+      assert_changeset(%{choice_id: -2}, :invalid)
+    end
   end
 end

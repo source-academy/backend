@@ -1,22 +1,37 @@
 defmodule Cadet.Assessments.Library do
   @moduledoc """
-  The library entity represents a library to be used in a programming question.
+  The library entity represents a library to be used in a  question.
   """
   use Cadet, :model
 
+  alias Cadet.Assessments.Library.ExternalLibrary
+
+  @primary_key false
   embedded_schema do
     field(:chapter, :integer, default: 1)
-    field(:globals, {:array, :string}, default: [])
-    field(:externals, {:array, :string}, default: [])
-    field(:files, {:array, :string}, default: [])
+    field(:globals, :map, default: %{})
+    embeds_one(:external, ExternalLibrary)
   end
 
   @required_fields ~w(chapter)a
-  @optional_fields ~w(globals externals files)a
+  @optional_fields ~w(globals)a
+  @required_embeds ~w(external)a
 
   def changeset(library, params \\ %{}) do
     library
     |> cast(params, @required_fields ++ @optional_fields)
-    |> validate_required(@required_fields)
+    |> cast_embed(:external)
+    |> validate_required(@required_fields ++ @required_embeds)
+    |> validate_globals()
+  end
+
+  def validate_globals(changeset) do
+    globals = get_change(changeset, :globals)
+
+    if Enum.all?(globals, fn {name, value} -> is_binary(name) and is_binary(value) end) do
+      changeset
+    else
+      add_error(changeset, :globals, "invalid format")
+    end
   end
 end

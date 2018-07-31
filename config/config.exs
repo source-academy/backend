@@ -9,7 +9,7 @@ use Mix.Config
 config :cadet,
   ecto_repos: [Cadet.Repo],
   # milliseconds
-  updater: [interval: 5 * 60 * 1000]
+  updater: [interval: 1 * 60 * 1000]
 
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Updater.Scheduler,
@@ -50,16 +50,13 @@ config :guardian, Guardian.DB,
   # default
   schema_name: "guardian_tokens",
   # store all token types if not set
-  token_types: ["access"],
+  token_types: ["refresh"],
   # default: 60 minute
   sweep_interval: 60
 
-# Configure :ex_aws
-config :ex_aws,
-  access_key_id: {:system, "AWS_ACCESS_KEY_ID"},
-  secret_access_key: {:system, "AWS_SECRET_ACCESS_KEY"},
-  s3: [
-    scheme: "https://",
-    host: "sreyansapitest.s3-ap-southeast-1.amazonaws.com",
-    region: "ap-southeast-1"
-  ]
+
+# Import secrets, such as the IVLE key, or guest account credentials
+# The secret.exs file holds secrets that are useful even in development, and
+# so is kept separate from the prod.secret.exs file, which holds secrets useful
+# only for configuring the production build.
+import_config "secrets.exs"

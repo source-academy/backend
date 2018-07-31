@@ -19,10 +19,8 @@ defmodule Cadet.DataCase do
       alias Cadet.Repo
 
       import Ecto
-      import Ecto.Changeset
-      import Ecto.Query
-      import Cadet.DataCase
-      import Cadet.Factory
+      import Ecto.{Changeset, Query}
+      import Cadet.{DataCase, Factory}
     end
   end
 
@@ -50,5 +48,12 @@ defmodule Cadet.DataCase do
         String.replace(acc, "%{#{key}}", to_string(value))
       end)
     end)
+  end
+
+  @doc """
+  A helper that builds a Plug.Upload struct to test Arc.Ecto fields
+  """
+  def build_upload(path, content_type \\ "image\png") do
+    %Plug.Upload{path: path, filename: Path.basename(path), content_type: content_type}
   end
 end

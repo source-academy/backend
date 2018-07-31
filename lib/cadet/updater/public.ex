@@ -15,20 +15,18 @@ defmodule Cadet.Updater.Public do
 
   require Logger
 
-  @token "6AAF968D36153A283F2A1BEE7FC5B5FB18E64B64DD2B47978101656E426BD4790CB260EB98A625D74A9C89419AF4EAF124DEA11A6FCF3A848C75E4876B0699F2A9A27D01221FCF2E78E853E84AE2E6B06DE2523CFB71DF6A9E2A73032B4CB29CB501DC381FA877BFEACE7C2BE00B39184E11018B54525CF131E6DE2614EFCF1CA957B25A10EAC64B9C524A210403E7D9F61BEBDEAD06A3B7963E2BD56CCA6556345A0ACB03736103A6A83CCB8604B32A22A88D01BFBF6D54281F5338FCC3B6418F7EF17560EE230772FA645D2AE7D58E1B03DA7D4868AF5AEF5338E611BC2374DD9A6783E36BAEFAE8203B8BB8A146D0"
-  @api_key Dotenv.load().values["IVLE_KEY"]
+  @api_key :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:ivle_key)
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
+  @env Mix.env()
   @interval :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:interval)
-  @username Dotenv.load().values["GUEST_USERNAME"]
-  @password Dotenv.load().values["GUEST_PASSWORD"]
+  @username :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_username)
+  @password :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_password)
 
   @doc """
   Starts the GenServer.
-
-  WARNING: The GenServer crashes if the API key is invalid, or not provided.
   """
-  def start_link() do
+  def start_link do
     GenServer.start_link(__MODULE__, nil)
   end
 
@@ -40,12 +38,26 @@ defmodule Cadet.Updater.Public do
 
   `start_link/0` -> `init/1` -> `schedule_work/0` -> `handle_info/2` ->
     `schedule_work/0` -> `handle_info/2` -> ...
+
+  Unless compiled with MIX_ENV of :prod, the GenServer fails silently (and only
+  once). We don't want IVLE accounts to be completely necessary for development.
   """
   def init(_) do
     Logger.info("Running Cadet.Updater.Public...")
-    api_params = get_api_params()
-    schedule_work()
-    {:ok, api_params}
+
+    try do
+      api_params = get_api_params()
+      schedule_work()
+      {:ok, api_params}
+    rescue
+      error in FunctionClauseError ->
+        if @env != :prod do
+          Logger.warn("Cadet.Updater.Public failed to initialise.")
+          {:ok, nil}
+        else
+          reraise error, System.stacktrace()
+        end
+    end
   end
 
   @impl true
@@ -81,7 +93,7 @@ defmodule Cadet.Updater.Public do
     else
       {:error, :bad_request} ->
         # the token has probably expired---get a new one
-        Logger.info("Updater failed fetching announcements. Refreshing token...")
+        Logger.info("Cadet.Updater.Public failed fetching announcements. Refreshing token...")
         api_params = get_api_params()
         handle_info(:work, api_params)
     end
@@ -236,6 +248,7 @@ defmodule Cadet.Updater.Public do
   end
 
   # Extracts the location of a 302 redirect from a %HTTPoison.Response
+  # Returns nil if no location in header (POST login form failed)
   defp get_redirect_path(response) do
     response.headers
     |> Enum.into(%{})

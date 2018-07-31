@@ -4,9 +4,12 @@ defmodule CadetWeb.AuthControllerTest do
   this allows testing without the use of actual external IVLE API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set the two environment variables IVLE_KEY (used as a module attribute in
-  `Cadet.Accounts.IVLE`) and TOKEN (used here). Don't forget to delete the
-  cassette files, otherwise ExVCR will not override the cassettes.
+  to set the config variables `:ivle_key` (used as a module attribute in
+  `Cadet.Accounts.IVLE`) and environment variable TOKEN (used here). Don't
+  forget to delete the cassette files, otherwise ExVCR will not override the
+  cassettes. You can set the TOKEN environment variable like so,
+
+    TOKEN=very_long_token_here mix test
 
   Token refers to the user's authentication token. Please see the IVLE API docs:
   https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
@@ -20,8 +23,8 @@ defmodule CadetWeb.AuthControllerTest do
 
   import Cadet.Factory
 
-  alias CadetWeb.AuthController
   alias Cadet.Auth.Guardian
+  alias CadetWeb.AuthController
 
   @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 
@@ -51,7 +54,7 @@ defmodule CadetWeb.AuthControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth", %{})
 
-      assert response(conn, 400)
+      assert response(conn, 400) == "Missing parameter"
     end
 
     test "blank token", %{conn: conn} do
@@ -60,7 +63,7 @@ defmodule CadetWeb.AuthControllerTest do
           "login" => %{"ivle_token" => ""}
         })
 
-      assert response(conn, 400)
+      assert response(conn, 400) == "Missing parameter"
     end
 
     test "invalid token", %{conn: conn} do
@@ -70,7 +73,7 @@ defmodule CadetWeb.AuthControllerTest do
             "login" => %{"ivle_token" => @token <> "Z"}
           })
 
-        assert response(conn, 400)
+        assert response(conn, 400) == "Unable to fetch NUSNET ID from IVLE."
       end
     end
 
@@ -83,7 +86,7 @@ defmodule CadetWeb.AuthControllerTest do
             "login" => %{"ivle_token" => "token"}
           })
 
-        assert response(conn, 400)
+        assert response(conn, 400) == "Unable to retrieve user"
       end
     end
   end
@@ -92,7 +95,7 @@ defmodule CadetWeb.AuthControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth/refresh", %{})
 
-      assert response(conn, 400)
+      assert response(conn, 400) == "Missing parameter"
     end
 
     test "invalid token", %{conn: conn} do
@@ -101,15 +104,42 @@ defmodule CadetWeb.AuthControllerTest do
       assert response(conn, 401)
     end
 
-    test "valid token", %{conn: conn} do
+    test "valid refresh token", %{conn: conn} do
       user = insert(:user)
 
       {:ok, refresh_token, _} =
-        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {52, :weeks})
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
+
+      resp =
+        conn
+        |> post("/v1/auth/refresh", %{"refresh_token" => refresh_token})
+        |> json_response(200)
+
+      assert %{"access_token" => access_token, "refresh_token" => refresh_token} = resp
+      assert {:ok, _} = Guardian.decode_and_verify(access_token)
+      assert {:ok, _} = Guardian.decode_and_verify(refresh_token)
+    end
+
+    test "access token fails", %{conn: conn} do
+      user = insert(:user)
+
+      {:ok, access_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :day})
+
+      conn = post(conn, "/v1/auth/refresh", %{"refresh_token" => access_token})
+
+      assert response(conn, 401) == "Invalid Token"
+    end
+
+    test "expired refresh token", %{conn: conn} do
+      user = insert(:user)
+
+      {:ok, refresh_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {-1, :week})
 
       conn = post(conn, "/v1/auth/refresh", %{"refresh_token" => refresh_token})
 
-      assert %{"refresh_token" => ^refresh_token, "access_token" => _} = json_response(conn, 200)
+      assert response(conn, 401) == "Invalid Token"
     end
   end
 
@@ -117,11 +147,11 @@ defmodule CadetWeb.AuthControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v1/auth/logout", %{})
 
-      assert response(conn, 400)
+      assert response(conn, 400) == "Missing parameter"
     end
 
     test "invalid token", %{conn: conn} do
-      conn = post(conn, "/v1/auth/logout", %{"access_token" => "asdasd"})
+      conn = post(conn, "/v1/auth/logout", %{"refresh_token" => "asdasd"})
 
       assert response(conn, 401)
     end
@@ -129,15 +159,13 @@ defmodule CadetWeb.AuthControllerTest do
     test "valid token", %{conn: conn} do
       user = insert(:user)
 
-      {:ok, access_token, _} =
-        Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})
+      {:ok, refresh_token, _} =
+        Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
 
-      conn = post(conn, "/v1/auth/logout", %{"access_token" => access_token})
+      conn = post(conn, "/v1/auth/logout", %{"refresh_token" => refresh_token})
 
       assert response(conn, 200)
-
-      # Also check that refresh_token is now revoked
-      assert(elem(Guardian.decode_and_verify(access_token), 0) == :error)
+      assert {:error, _} = Guardian.decode_and_verify(refresh_token)
     end
   end
 end

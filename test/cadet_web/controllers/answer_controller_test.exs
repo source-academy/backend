@@ -3,9 +3,9 @@ defmodule CadetWeb.AnswerControllerTest do
 
   import Ecto.Query
 
-  alias CadetWeb.AnswerController
-  alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
+  alias CadetWeb.AnswerController
 
   test "swagger" do
     AnswerController.swagger_definitions()
@@ -14,8 +14,8 @@ defmodule CadetWeb.AnswerControllerTest do
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
-    mcq_question = insert(:question, %{assessment: assessment, type: :multiple_choice})
-    programming_question = insert(:question, %{assessment: assessment, type: :programming})
+    mcq_question = insert(:mcq_question, %{assessment: assessment})
+    programming_question = insert(:programming_question, %{assessment: assessment})
 
     %{
       assessment: assessment,
@@ -96,6 +96,46 @@ defmodule CadetWeb.AnswerControllerTest do
     end
 
     @tag authenticate: :student
+    test "answering all questions updates submission status to attempted", %{
+      conn: conn,
+      assessment: assessment,
+      mcq_question: mcq_question,
+      programming_question: programming_question
+    } do
+      user = conn.assigns.current_user
+      post(conn, build_url(mcq_question.id), %{answer: 5})
+      post(conn, build_url(programming_question.id), %{answer: "hello world"})
+
+      assessment = assessment |> Repo.preload(:questions)
+
+      submission =
+        Submission
+        |> where(student_id: ^user.id)
+        |> where(assessment_id: ^assessment.id)
+        |> Repo.one!()
+
+      assert submission.status == :attempted
+
+      # should not affect submission changes
+      conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+      assert response(conn, 200) =~ "OK"
+    end
+
+    @tag authenticate: :student
+    test "answering submitted question is unsuccessful", %{
+      conn: conn,
+      assessment: assessment,
+      mcq_question: mcq_question
+    } do
+      user = conn.assigns.current_user
+
+      insert(:submission, %{assessment: assessment, student: user, status: :submitted})
+      conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+
+      assert response(conn, 403) == "Assessment submission already finalised"
+    end
+
+    @tag authenticate: :student
     test "invalid params first submission is unsuccessful", %{
       conn: conn,
       assessment: assessment,
@@ -127,7 +167,7 @@ defmodule CadetWeb.AnswerControllerTest do
     {:ok, _} = Repo.delete(mcq_question)
 
     conn = post(conn, build_url(mcq_question.id), %{answer: 5})
-    assert response(conn, 400) == "Question not found"
+    assert response(conn, 404) == "Question not found"
     assert is_nil(get_answer_value(mcq_question, assessment, user))
   end
 
@@ -141,8 +181,7 @@ defmodule CadetWeb.AnswerControllerTest do
         close_at: Timex.shift(Timex.now(), days: 10)
       })
 
-    before_open_at_question =
-      insert(:question, %{assessment: before_open_at_assessment, type: :multiple_choice})
+    before_open_at_question = insert(:mcq_question, %{assessment: before_open_at_assessment})
 
     before_open_at_conn = post(conn, build_url(before_open_at_question.id), %{answer: 5})
     assert response(before_open_at_conn, 403) == "Assessment not open"
@@ -154,8 +193,7 @@ defmodule CadetWeb.AnswerControllerTest do
         close_at: Timex.shift(Timex.now(), days: -5)
       })
 
-    after_close_at_question =
-      insert(:question, %{assessment: after_close_at_assessment, type: :multiple_choice})
+    after_close_at_question = insert(:mcq_question, %{assessment: after_close_at_assessment})
 
     after_close_at_conn = post(conn, build_url(after_close_at_question.id), %{answer: 5})
     assert response(after_close_at_conn, 403) == "Assessment not open"
@@ -163,8 +201,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
     unpublished_assessment = insert(:assessment, %{is_published: false})
 
-    unpublished_question =
-      insert(:question, %{assessment: unpublished_assessment, type: :multiple_choice})
+    unpublished_question = insert(:mcq_question, %{assessment: unpublished_assessment})
 
     unpublished_conn = post(conn, build_url(unpublished_question.id), %{answer: 5})
     assert response(unpublished_conn, 403) == "Assessment not open"
@@ -186,7 +223,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
     if answer do
       case question.type do
-        :multiple_choice -> Map.get(answer.answer, "choice_id")
+        :mcq -> Map.get(answer.answer, "choice_id")
         :programming -> Map.get(answer.answer, "code")
       end
     end

@@ -1,18 +1,34 @@
 defmodule Cadet.Assessments.LibraryTest do
-  use Cadet.ChangesetCase, async: true
-
   alias Cadet.Assessments.Library
 
-  valid_changesets Library do
-    %{
-      version: 1
-    }
+  use Cadet.ChangesetCase, entity: Library
 
-    %{
-      version: 1,
-      globals: ["asd"],
-      externals: [],
-      fields: []
-    }
+  describe "Changesets" do
+    setup do
+      %{valid_params: build(:library)}
+    end
+
+    test "valid changesets", %{valid_params: params} do
+      assert_changeset(params, :valid)
+    end
+
+    test "invalid changeset missing external library field", %{valid_params: params} do
+      params
+      |> Map.delete(:external)
+      |> assert_changeset(:invalid)
+    end
+
+    test "invalid changeset invalid globals", %{valid_params: params} do
+      invalid_globals = [
+        %{"foo" => ["foo", "bar"]},
+        %{"foo" => %{"foo" => "bar"}}
+      ]
+
+      for global <- invalid_globals do
+        params
+        |> Map.put(:globals, global)
+        |> assert_changeset(:invalid)
+      end
+    end
   end
 end
