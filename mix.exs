@@ -55,7 +55,7 @@ defmodule Cadet.Mixfile do
       {:guardian, "~> 1.0"},
       {:guardian_db, "~> 1.0"},
       {:httpoison, "~> 1.0", override: true},
-      {:inch_ex, "~> 0.5", only: [:dev, :test]},
+      {:inch_ex, "~> 1.0", only: [:dev, :test]},
       {:jason, "~> 1.1"},
       {:jsx, "~> 2.8"},
       {:pbkdf2_elixir, "~> 0.12"},
