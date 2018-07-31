@@ -5,7 +5,7 @@ defmodule CadetWeb.UserControllerTest do
 
   alias Cadet.Repo
   alias CadetWeb.UserController
-  alias Cadet.Assessments.{Assessment, AssessmentType}
+  alias Cadet.Assessments.{Assessment, AssessmentType, Submission}
 
   test "swagger" do
     assert is_map(UserController.swagger_definitions())
@@ -32,10 +32,11 @@ defmodule CadetWeb.UserControllerTest do
       assert expected == resp
     end
 
+    # This also tests for the case where assessment has no submission
     @tag authenticate: :student
     test "success, student story ordering", %{conn: conn} do
-      early_assessments = build_assessments_starting_at(Timex.now())
-      late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: 1))
+      early_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
+      late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
 
       for assessment <- early_assessments ++ late_assessments do
         story =
@@ -52,10 +53,10 @@ defmodule CadetWeb.UserControllerTest do
 
     @tag authenticate: :student
     test "success, student story skips assessment without story", %{conn: conn} do
-      assessments = build_assessments_starting_at(Timex.now())
+      assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
 
       assessments
-      |> Enum.fetch!(0)
+      |> List.first()
       |> Assessment.changeset(%{story: nil})
       |> Repo.update()
 
@@ -69,32 +70,73 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     @tag authenticate: :student
-    test "success, student story skips submitted", %{conn: conn} do
+    test "success, student story skips unopen assessments", %{conn: conn} do
+      build_assessments_starting_at(Timex.shift(Timex.now(), days: 1))
+      build_assessments_starting_at(Timex.shift(Timex.now(), months: -1))
+
+      valid_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
+
+      for assessment <- valid_assessments do
+        assessment
+        |> Assessment.changeset(%{is_published: false})
+        |> Repo.update!()
+      end
+
+      story =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        |> Map.get("story")
+
+      assert story == nil
+    end
+
+    @tag authenticate: :student
+    test "success, student story does not skip attempting", %{conn: conn} do
       user = conn.assigns.current_user
 
-      early_assessments = build_assessments_starting_at(Timex.now())
-      late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: 1))
-      assessments_with_indices = Enum.with_index(early_assessments ++ late_assessments)
+      [assessment | _] = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
 
+      insert(:submission, %{student: user, assessment: assessment, status: :attempting})
+
+      resp_story =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        |> Map.get("story")
+
+      assert resp_story == assessment.story
+    end
+
+    @tag authenticate: :student
+    test "success, student story skips attempted or submitted", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      early_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
+      late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
       # Submit for i-th assessment, expect (i+1)th story to be returned
-      for {assessment, idx} <- Enum.drop(assessments_with_indices, -1) do
-        insert(:submission, %{student: user, assessment: assessment})
+      for status <- [:attempted, :submitted] do
+        for {tester, checker} <-
+              Enum.chunk_every(early_assessments ++ late_assessments, 2, 1, :discard) do
+          insert(:submission, %{student: user, assessment: tester, status: status})
 
-        {expected_assessment, _} = Enum.fetch!(assessments_with_indices, idx + 1)
+          resp_story =
+            conn
+            |> get("/v1/user")
+            |> json_response(200)
+            |> Map.get("story")
 
-        resp_story =
-          conn
-          |> get("/v1/user")
-          |> json_response(200)
-          |> Map.get("story")
+          assert resp_story == checker.story
+        end
 
-        assert resp_story == expected_assessment.story
+        Repo.delete_all(Submission)
       end
     end
 
     @tag authenticate: :staff
     test "success, staff", %{conn: conn} do
       user = conn.assigns.current_user
+      build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
 
       resp =
         conn

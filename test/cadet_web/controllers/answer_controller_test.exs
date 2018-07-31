@@ -3,7 +3,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
   import Ecto.Query
 
-  alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
   alias CadetWeb.AnswerController
 
@@ -96,6 +96,46 @@ defmodule CadetWeb.AnswerControllerTest do
     end
 
     @tag authenticate: :student
+    test "answering all questions updates submission status to attempted", %{
+      conn: conn,
+      assessment: assessment,
+      mcq_question: mcq_question,
+      programming_question: programming_question
+    } do
+      user = conn.assigns.current_user
+      post(conn, build_url(mcq_question.id), %{answer: 5})
+      post(conn, build_url(programming_question.id), %{answer: "hello world"})
+
+      assessment = assessment |> Repo.preload(:questions)
+
+      submission =
+        Submission
+        |> where(student_id: ^user.id)
+        |> where(assessment_id: ^assessment.id)
+        |> Repo.one!()
+
+      assert submission.status == :attempted
+
+      # should not affect submission changes
+      conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+      assert response(conn, 200) =~ "OK"
+    end
+
+    @tag authenticate: :student
+    test "answering submitted question is unsuccessful", %{
+      conn: conn,
+      assessment: assessment,
+      mcq_question: mcq_question
+    } do
+      user = conn.assigns.current_user
+
+      insert(:submission, %{assessment: assessment, student: user, status: :submitted})
+      conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+
+      assert response(conn, 403) == "Assessment submission already finalised"
+    end
+
+    @tag authenticate: :student
     test "invalid params first submission is unsuccessful", %{
       conn: conn,
       assessment: assessment,
@@ -127,7 +167,7 @@ defmodule CadetWeb.AnswerControllerTest do
     {:ok, _} = Repo.delete(mcq_question)
 
     conn = post(conn, build_url(mcq_question.id), %{answer: 5})
-    assert response(conn, 400) == "Question not found"
+    assert response(conn, 404) == "Question not found"
     assert is_nil(get_answer_value(mcq_question, assessment, user))
   end
 

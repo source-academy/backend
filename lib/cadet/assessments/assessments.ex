@@ -9,6 +9,7 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
+  alias Ecto.Multi
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
@@ -27,17 +28,20 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def user_current_story(%User{id: user_id}) do
-    Assessment
-    |> where(is_published: true)
-    |> where([a], not is_nil(a.story))
-    |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
-    |> where([_, s], is_nil(s.id))
-    |> order_by([a], a.open_at)
-    |> order_by([a], a.type)
-    |> select([a], a.story)
-    |> first()
-    |> Repo.one()
+  def user_current_story(%User{id: user_id, role: role}) do
+    if role in @submit_answer_roles do
+      Assessment
+      |> where(is_published: true)
+      |> where([a], not is_nil(a.story))
+      |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
+      |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
+      |> where([_, s], is_nil(s.id) or s.status == "attempting")
+      |> order_by([a], a.open_at)
+      |> order_by([a], a.type)
+      |> select([a], a.story)
+      |> first()
+      |> Repo.one()
+    end
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
@@ -81,7 +85,7 @@ defmodule Cadet.Assessments do
       Query.all_assessments_with_max_grade()
       |> subquery()
       |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
-      |> select([a, s], %{a | attempted: not is_nil(s.id)})
+      |> select([a, s], %{a | user_status: s.status})
       |> where(is_published: true)
       |> order_by(:open_at)
       |> Repo.all()
@@ -157,23 +161,89 @@ defmodule Cadet.Assessments do
         Question
         |> where(id: ^id)
         |> join(:inner, [q], assessment in assoc(q, :assessment))
-        |> preload([q, a], assessment: a)
+        |> preload([_, a], assessment: a)
         |> Repo.one()
 
       with {:question_found?, true} <- {:question_found?, is_map(question)},
            {:is_open?, true} <- is_open?(question.assessment),
            {:ok, submission} <- find_or_create_submission(user, question.assessment),
+           {:status, true} <- {:status, submission.status != :submitted},
            {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+        update_submission_status(submission, question.assessment)
         {:ok, nil}
       else
-        {:question_found?, false} -> {:error, {:bad_request, "Question not found"}}
+        {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
         {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
+        {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
         {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
         _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
       end
     else
       {:error, {:forbidden, "User is not permitted to answer questions"}}
     end
+  end
+
+  def finalise_submission(assessment_id, %User{role: role, id: user_id})
+      when is_ecto_id(assessment_id) do
+    if role in @submit_answer_roles do
+      submission =
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(student_id: ^user_id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+
+      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+           {:is_open?, true} <- is_open?(submission.assessment),
+           {:status, :attempted} <- {:status, submission.status},
+           {:ok, _} <- submission |> Submission.changeset(%{status: :submitted}) |> Repo.update() do
+        {:ok, nil}
+      else
+        {:submission_found?, false} ->
+          {:error, {:not_found, "Submission not found"}}
+
+        {:is_open?, false} ->
+          {:error, {:forbidden, "Assessment not open"}}
+
+        {:status, :attempting} ->
+          {:error, {:bad_request, "Some questions have not been attempted"}}
+
+        {:status, :submitted} ->
+          {:error, {:forbidden, "Assessment has already been submitted"}}
+
+        _ ->
+          {:error, {:internal_server_error, "Please try again later."}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+
+  def update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
+    model_assoc_count = fn model, assoc, id ->
+      model
+      |> where(id: ^id)
+      |> join(:inner, [m], a in assoc(m, ^assoc))
+      |> select([_, a], count(a.id))
+      |> Repo.one()
+    end
+
+    Multi.new()
+    |> Multi.run(:assessment, fn _ ->
+      {:ok, model_assoc_count.(Assessment, :questions, assessment.id)}
+    end)
+    |> Multi.run(:submission, fn _ ->
+      {:ok, model_assoc_count.(Submission, :answers, submission.id)}
+    end)
+    |> Multi.run(:update, fn %{submission: s_count, assessment: a_count} ->
+      if s_count == a_count do
+        submission |> Submission.changeset(%{status: :attempted}) |> Repo.update()
+      else
+        {:ok, nil}
+      end
+    end)
+    |> Repo.transaction()
   end
 
   @spec all_submissions_by_grader(%User{}) ::

@@ -5,6 +5,18 @@ defmodule CadetWeb.AssessmentsController do
 
   alias Cadet.Assessments
 
+  def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
+    case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
+      {:ok, _nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   def index(conn, _) do
     user = conn.assigns[:current_user]
     {:ok, assessments} = Assessments.all_published_assessments(user)
@@ -19,6 +31,21 @@ defmodule CadetWeb.AssessmentsController do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
+  end
+
+  swagger_path :submit do
+    post("/assessments/{assessmentId}/submit")
+    summary("Finalise submission for an assessment")
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "submission id", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(403, "User not permitted to answer questions or assessment not open")
+    response(404, "Submission not found")
   end
 
   swagger_path :index do
@@ -79,9 +106,9 @@ defmodule CadetWeb.AssessmentsController do
             openAt(:string, "The opening date", format: "date-time", required: true)
             closeAt(:string, "The closing date", format: "date-time", required: true)
 
-            attempted(
-              :boolean,
-              "Whether the assessment has been attempted by the current user",
+            status(
+              :string,
+              "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
               required: true
             )
 

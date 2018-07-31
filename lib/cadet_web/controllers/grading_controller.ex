@@ -8,8 +8,13 @@ defmodule CadetWeb.GradingController do
     user = conn.assigns[:current_user]
 
     case Assessments.all_submissions_by_grader(user) do
-      {:ok, submissions} -> render(conn, "index.json", submissions: submissions)
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, submissions} ->
+        render(conn, "index.json", submissions: submissions)
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
@@ -17,8 +22,13 @@ defmodule CadetWeb.GradingController do
     user = conn.assigns[:current_user]
 
     case Assessments.get_answers_in_submission(submission_id, user) do
-      {:ok, answers} -> render(conn, "show.json", answers: answers)
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, answers} ->
+        render(conn, "show.json", answers: answers)
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
@@ -37,8 +47,13 @@ defmodule CadetWeb.GradingController do
            params["grading"],
            user
          ) do
-      {:ok, _} -> text(conn, "OK")
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, _} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 

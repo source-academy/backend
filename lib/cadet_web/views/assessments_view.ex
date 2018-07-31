@@ -19,7 +19,7 @@ defmodule CadetWeb.AssessmentsView do
       story: :story,
       number: :number,
       reading: :reading,
-      attempted: :attempted,
+      status: &(&1.user_status || "not_attempted"),
       maxGrade: :max_grade,
       coverImage: &Cadet.Assessments.Image.url({&1.cover_picture, &1})
     })
