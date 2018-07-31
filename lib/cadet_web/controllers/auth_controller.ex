@@ -26,15 +26,21 @@ defmodule CadetWeb.AuthController do
       render(conn, "token.json", generate_tokens(user))
     else
       {:changes, _} ->
-        send_resp(conn, :bad_request, "Missing parameter")
+        conn
+        |> put_status(:bad_request)
+        |> text("Missing parameter")
 
       {:fetch, {:error, reason}} ->
         # reason can be :bad_request or :internal_server_error
-        send_resp(conn, reason, "Unable to fetch NUSNET ID from IVLE.")
+        conn
+        |> put_status(reason)
+        |> text("Unable to fetch NUSNET ID from IVLE.")
 
       {:signin, {:error, reason}} ->
         # reason can be :bad_request or :internal_server_error
-        send_resp(conn, reason, "Unable to retrieve user")
+        conn
+        |> put_status(reason)
+        |> text("Unable to retrieve user")
     end
   end
 

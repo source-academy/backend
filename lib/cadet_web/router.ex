@@ -30,6 +30,7 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth])
 
     resources("/assessments", AssessmentsController, only: [:index, :show])
+    post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
     get("/grading", GradingController, :index)
