@@ -44,6 +44,8 @@ defmodule CadetWeb.UserController do
               required: true
             )
 
+            story(:string, "Story to displayed to current user. May be null")
+
             grade(:integer, "Amount of grade. Only provided for 'Student'")
           end
         end
