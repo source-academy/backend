@@ -68,6 +68,9 @@ defmodule Cadet.Mixfile do
       {:quantum, "~> 2.2.7"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
+      # TODO: Remove the override once ex_aws released the new version
+      #       without the dependency on xml_builder. Waste my time urgh
+      {:xml_builder, "~> 2.0", override: true},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.2", only: [:dev, :test], runtime: false},
       {:distillery, "~> 1.5.3", runtime: false},
