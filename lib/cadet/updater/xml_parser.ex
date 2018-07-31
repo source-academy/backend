@@ -41,7 +41,7 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   @spec process_xml_files(String.t(), [String.t()]) :: :ok | :error
-  def process_xml_files(path, files) do
+  defp process_xml_files(path, files) do
     for file <- files do
       path
       |> Path.join(file)
@@ -62,9 +62,8 @@ defmodule Cadet.Updater.XMLParser do
     end)
   end
 
-  # TODO: change to `defp`
   @spec process(String.t()) :: :ok | :error
-  def process(xml) do
+  defp process(xml) do
     with {:ok, assessment_params} <- process_assessment(xml),
          {:ok, questions_params} <- process_questions(xml),
          {:ok, %{assessment: assessment}} <-
@@ -151,12 +150,14 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
+  @spec log_error_bad_changeset(Ecto.Changeset.t(), any()) :: :ok
   defp log_error_bad_changeset(changeset, entity) do
     Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset.errors)}")
 
     Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
   end
 
+  @spec process_question_by_question_type(map()) :: map() | :error
   defp process_question_by_question_type(question) do
     entity = question[:entity]
 
@@ -197,6 +198,7 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
+  @spec process_question_library(map(), any()) :: map()
   defp process_question_library(question, default_library) do
     library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
 
@@ -241,11 +243,5 @@ defmodule Cadet.Updater.XMLParser do
     charlist
     |> to_string()
     |> String.trim()
-  end
-
-  defp ok_error_reducer(list) do
-    Enum.reduce(list, fn result, acc ->
-      if result == :ok and acc == :ok, do: :ok, else: :error
-    end)
   end
 end

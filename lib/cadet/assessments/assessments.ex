@@ -151,6 +151,7 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
+  @spec insert_or_update_assessment_changeset(map()) :: Ecto.Changeset.t()
   defp insert_or_update_assessment_changeset(params = %{number: number}) do
     Assessment
     |> where(number: ^number)
@@ -176,6 +177,8 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @spec insert_or_update_question_for_assessment_changeset(map(), number() | String.t()) ::
+          Ecto.Changeset.t()
   defp insert_or_update_question_for_assessment_changeset(params, assessment_id)
        when is_ecto_id(assessment_id) do
     params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
