@@ -169,8 +169,6 @@ defmodule Cadet.Assessments do
       |> preload([_, q], questions: q)
       |> Repo.one()
 
-    IO.puts(inspect(params, inspect: true))
-
     if assessment do
       params_with_assessment_id = Map.put_new(params, :assessment_id, assessment.id)
 
