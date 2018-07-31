@@ -127,16 +127,60 @@ defmodule Cadet.Assessments do
     |> Repo.insert()
   end
 
-  def insert_or_update_assessment(params = %{number: number}) do
+  @spec insert_or_update_assessments_and_questions(map(), [map()]) ::
+          {:ok, any()}
+          | {:error, Ecto.Multi.name(), any(), %{optional(Ecto.Multi.name()) => any()}}
+  def insert_or_update_assessments_and_questions(assessment_params, questions_params) do
+    assessment_multi =
+      Multi.insert_or_update(
+        Multi.new(),
+        :assessment,
+        insert_or_update_assessment_changeset(assessment_params)
+      )
+
+    questions_params
+    |> Enum.with_index(1)
+    |> Enum.reduce(assessment_multi, fn {question_params, index}, multi ->
+      Multi.run(multi, String.to_atom("question#{index}"), fn %{assessment: %Assessment{id: id}} ->
+        question_params
+        |> Map.put(:display_order, index)
+        |> insert_or_update_question_for_assessment_changeset(id)
+        |> Repo.insert()
+      end)
+    end)
+    |> Repo.transaction()
+  end
+
+  defp insert_or_update_assessment_changeset(params = %{number: number}) do
     Assessment
     |> where(number: ^number)
     |> Repo.one()
     |> case do
-      nil -> %Assessment{}
-      assessment -> assessment
+      nil ->
+        Assessment.changeset(%Assessment{}, params)
+
+      assessment ->
+        if Timex.after?(assessment.open_at, Timex.now()) do
+          # Delete all existing questions
+          %{id: assessment_id} = assessment
+
+          Question
+          |> where(assessment_id: ^assessment_id)
+          |> Repo.delete_all()
+
+          Assessment.changeset(assessment, params)
+        else
+          # if the assessment is already open, don't mess with it
+          create_invalid_changeset_with_error(:assessment, "is already open")
+        end
     end
-    |> Assessment.changeset(params)
-    |> Repo.insert_or_update()
+  end
+
+  defp insert_or_update_question_for_assessment_changeset(params, assessment_id)
+       when is_ecto_id(assessment_id) do
+    params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
+
+    Question.changeset(%Question{}, params_with_assessment_id)
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do

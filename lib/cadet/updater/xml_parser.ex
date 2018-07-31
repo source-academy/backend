@@ -57,12 +57,35 @@ defmodule Cadet.Updater.XMLParser do
           :error
       end
     end
-    |> ok_error_reducer()
+    |> Enum.reduce(fn result, acc ->
+      if result == :ok and acc == :ok, do: :ok, else: :error
+    end)
   end
 
   # TODO: change to `defp`
   @spec process(String.t()) :: :ok | :error
   def process(xml) do
+    with {:ok, assessment_params} <- process_assessment(xml),
+         {:ok, questions_params} <- process_questions(xml),
+         {:ok, %{assessment: assessment}} <-
+           Assessments.insert_or_update_assessments_and_questions(
+             assessment_params,
+             questions_params
+           ) do
+      Logger.info("Created/updated assessment with id: #{assessment.id}")
+      :ok
+    else
+      :error ->
+        :error
+
+      {:error, stage, changeset, _} when is_atom(stage) ->
+        log_error_bad_changeset(changeset, stage)
+        :error
+    end
+  end
+
+  @spec process_assessment(String.t()) :: {:ok, map()} | :error
+  defp process_assessment(xml) do
     assessment_params =
       xml
       |> xpath(
@@ -79,15 +102,7 @@ defmodule Cadet.Updater.XMLParser do
       )
       |> Map.put(:is_published, true)
 
-    case Assessments.insert_or_update_assessment(assessment_params) do
-      {:ok, assessment} ->
-        Logger.info("Created/updated assessment with id: #{assessment.id}")
-        process_questions(xml, assessment.id)
-
-      {:error, changeset} ->
-        log_error_bad_changeset(changeset, Assessment)
-        :error
-    end
+    {:ok, assessment_params}
   rescue
     e in Timex.Parse.ParseError ->
       %{message: message} = e
@@ -95,38 +110,45 @@ defmodule Cadet.Updater.XMLParser do
       :error
   end
 
-  def process_questions(xml, assessment_id) do
+  @spec process_questions(String.t()) :: {:ok, [map()]} | :error
+  defp process_questions(xml) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
 
-    xml
-    |> xpath(
-      ~x"//PROBLEMS/PROBLEM"el,
-      type: ~x"./@type"os,
-      max_grade: ~x"./@maxgrade"oi,
-      entity: ~x"."
-    )
-    |> Enum.map(fn param ->
-      with {:not_nil?, true} <-
-             {:not_nil?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
-           question when is_map(question) <- process_question_by_question_type(param),
-           question when is_map(question) <- process_question_library(question, default_library),
-           question when is_map(question) <- Map.delete(question, :entity),
-           {:ok, _question} <- Assessments.create_question_for_assessment(question, assessment_id) do
-        :ok
-      else
-        {:not_nil?, false} ->
-          Logger.error("Missing attribute on PROBLEM")
-          :error
+    questions_params =
+      xml
+      |> xpath(
+        ~x"//PROBLEMS/PROBLEM"el,
+        type: ~x"./@type"os,
+        max_grade: ~x"./@maxgrade"oi,
+        entity: ~x"."
+      )
+      |> Enum.map(fn param ->
+        with {:not_nil?, true} <-
+               {:not_nil?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
+             question when is_map(question) <- process_question_by_question_type(param),
+             question when is_map(question) <-
+               process_question_library(question, default_library),
+             question when is_map(question) <- Map.delete(question, :entity) do
+          question
+        else
+          {:not_nil?, false} ->
+            Logger.error("Missing attribute on PROBLEM")
+            :error
 
-        {:error, changeset} ->
-          log_error_bad_changeset(changeset, Question)
-          :error
+          {:error, changeset} ->
+            log_error_bad_changeset(changeset, Question)
+            :error
 
-        :error ->
-          :error
-      end
-    end)
-    |> ok_error_reducer()
+          :error ->
+            :error
+        end
+      end)
+
+    if Enum.any?(questions_params, &(&1 == :error)) do
+      :error
+    else
+      {:ok, questions_params}
+    end
   end
 
   defp log_error_bad_changeset(changeset, entity) do
@@ -190,6 +212,14 @@ defmodule Cadet.Updater.XMLParser do
           Map.put(acc, identifier, value)
         end)
 
+      external =
+        library
+        |> xpath(
+          ~x"./EXTERNAL"o,
+          name: ~x"./@name"s |> transform_by(&String.downcase/1),
+          symbol: ~x"./SYMBOL/text()"sl
+        )
+
       library =
         library
         |> xpath(
@@ -197,6 +227,7 @@ defmodule Cadet.Updater.XMLParser do
           chapter: ~x"./@interpreter"i
         )
         |> Map.put(:globals, globals)
+        |> Map.put(:external, external)
 
       Map.put(question, :library, library)
     else
