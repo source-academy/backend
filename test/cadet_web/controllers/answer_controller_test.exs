@@ -167,7 +167,7 @@ defmodule CadetWeb.AnswerControllerTest do
     {:ok, _} = Repo.delete(mcq_question)
 
     conn = post(conn, build_url(mcq_question.id), %{answer: 5})
-    assert response(conn, 400) == "Question not found"
+    assert response(conn, 404) == "Question not found"
     assert is_nil(get_answer_value(mcq_question, assessment, user))
   end
 

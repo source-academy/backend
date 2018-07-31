@@ -45,6 +45,7 @@ defmodule CadetWeb.AssessmentsController do
     response(200, "OK")
     response(400, "Invalid parameters")
     response(403, "User not permitted to answer questions or assessment not open")
+    response(404, "Submission not found")
   end
 
   swagger_path :index do

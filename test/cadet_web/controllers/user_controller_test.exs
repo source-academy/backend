@@ -56,7 +56,7 @@ defmodule CadetWeb.UserControllerTest do
       assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
 
       assessments
-      |> Enum.fetch!(0)
+      |> List.first()
       |> Assessment.changeset(%{story: nil})
       |> Repo.update()
 
@@ -97,8 +97,7 @@ defmodule CadetWeb.UserControllerTest do
 
       [assessment | _] = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
 
-      submission =
-        insert(:submission, %{student: user, assessment: assessment, status: :attempting})
+      insert(:submission, %{student: user, assessment: assessment, status: :attempting})
 
       resp_story =
         conn
@@ -115,14 +114,11 @@ defmodule CadetWeb.UserControllerTest do
 
       early_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
       late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
-      assessments_with_indices = Enum.with_index(early_assessments ++ late_assessments)
-
       # Submit for i-th assessment, expect (i+1)th story to be returned
       for status <- [:attempted, :submitted] do
-        for {assessment, idx} <- Enum.drop(assessments_with_indices, -1) do
-          insert(:submission, %{student: user, assessment: assessment, status: status})
-
-          {expected_assessment, _} = Enum.fetch!(assessments_with_indices, idx + 1)
+        for {tester, checker} <-
+              Enum.chunk_every(early_assessments ++ late_assessments, 2, 1, :discard) do
+          insert(:submission, %{student: user, assessment: tester, status: status})
 
           resp_story =
             conn
@@ -130,7 +126,7 @@ defmodule CadetWeb.UserControllerTest do
             |> json_response(200)
             |> Map.get("story")
 
-          assert resp_story == expected_assessment.story
+          assert resp_story == checker.story
         end
 
         Repo.delete_all(Submission)

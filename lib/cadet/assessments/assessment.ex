@@ -5,6 +5,7 @@ defmodule Cadet.Assessments.Assessment do
   """
   use Cadet, :model
   use Arc.Ecto.Schema
+
   alias Cadet.Assessments.{AssessmentType, Image, Question, SubmissionStatus, Upload}
 
   schema "assessments" do

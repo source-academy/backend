@@ -172,7 +172,7 @@ defmodule Cadet.Assessments do
         update_submission_status(submission, question.assessment)
         {:ok, nil}
       else
-        {:question_found?, false} -> {:error, {:bad_request, "Question not found"}}
+        {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
         {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
         {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
         {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
@@ -201,7 +201,7 @@ defmodule Cadet.Assessments do
         {:ok, nil}
       else
         {:submission_found?, false} ->
-          {:error, {:bad_request, "Submission not found"}}
+          {:error, {:not_found, "Submission not found"}}
 
         {:is_open?, false} ->
           {:error, {:forbidden, "Assessment not open"}}

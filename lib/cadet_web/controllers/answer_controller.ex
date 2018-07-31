@@ -43,6 +43,7 @@ defmodule CadetWeb.AnswerController do
     response(200, "OK")
     response(400, "Invalid parameters")
     response(403, "User not permitted to answer questions or assessment not open")
+    response(404, "Assessment not found")
   end
 
   def swagger_definitions do

@@ -56,7 +56,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
               "maxGrade" => 720,
-              "status" => assessment_status?(user, &1)
+              "status" => get_assessment_status(user, &1)
             }
           )
 
@@ -102,7 +102,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
               "maxGrade" => 720,
-              "status" => assessment_status?(user, &1)
+              "status" => get_assessment_status(user, &1)
             }
           )
 
@@ -139,7 +139,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Enum.find(&(&1["id"] == assessment.id))
           |> Map.get("status")
 
-        assert assessment_status?(student, assessment) == resp
+        assert get_assessment_status(student, assessment) == resp
       end
     end
   end
@@ -499,7 +499,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> sign_in(user)
         |> post(build_url_submit(assessment.id))
 
-      assert response(conn, 400) == "Submission not found"
+      assert response(conn, 404) == "Submission not found"
     end
 
     test "is not permitted for incomplete assessments", %{
@@ -564,7 +564,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
 
-  defp assessment_status?(user = %User{}, assessment = %Assessment{}) do
+  defp get_assessment_status(user = %User{}, assessment = %Assessment{}) do
     submission =
       Submission
       |> where(student_id: ^user.id)
