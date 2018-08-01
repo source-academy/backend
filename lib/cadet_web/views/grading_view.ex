@@ -12,6 +12,7 @@ defmodule CadetWeb.GradingView do
   def render("submission.json", %{submission: submission}) do
     transform_map_for_view(submission, %{
       grade: :grade,
+      adjustment: :adjustment,
       id: :id,
       student: &transform_map_for_view(&1.student, [:name, :id]),
       assessment:
