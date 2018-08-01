@@ -52,8 +52,7 @@ defmodule Cadet.Assessments.QueryTest do
       |> Repo.all()
       |> Enum.find(&(&1.submission_id == submission.id))
 
-    assert result.grade == 1000
-    assert result.adjustment == -500
+    assert %{grade: 1000, adjustment: -500, submission_id: submission.id} == result
   end
 
   test "assessments_max_grade" do
