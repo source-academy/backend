@@ -22,6 +22,7 @@ defmodule Cadet.Assessments.Question do
 
   @required_fields ~w(question type assessment_id)a
   @optional_fields ~w(display_order max_grade)a
+  @required_embeds ~w(library)a
 
   def changeset(question, params) do
     question
@@ -29,7 +30,7 @@ defmodule Cadet.Assessments.Question do
     |> add_belongs_to_id_from_model(:assessment, params)
     |> cast_embed(:library)
     |> cast_embed(:grading_library)
-    |> validate_required(@required_fields)
+    |> validate_required(@required_fields ++ @required_embeds)
     |> validate_question_content()
     |> foreign_key_constraint(:assessment_id)
   end
