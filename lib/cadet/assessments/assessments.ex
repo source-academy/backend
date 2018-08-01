@@ -19,7 +19,8 @@ defmodule Cadet.Assessments do
       Query.all_submissions_with_grade()
       |> subquery()
       |> where(student_id: ^user_id)
-      |> Repo.aggregate(:sum, :grade)
+      |> select([q], fragment("? + ?", sum(q.grade), sum(q.adjustment)))
+      |> Repo.one()
 
     if grade do
       Decimal.to_integer(grade)
@@ -262,7 +263,13 @@ defmodule Cadet.Assessments do
           a in subquery(Query.all_assessments_with_max_grade()),
           s.assessment_id == a.id
         )
-        |> select([s, x, st, a], %Submission{s | grade: x.grade, student: st, assessment: a})
+        |> select([s, x, st, a], %Submission{
+          s
+          | grade: x.grade,
+            adjustment: x.adjustment,
+            student: st,
+            assessment: a
+        })
         |> Repo.all()
 
       {:ok, submissions}

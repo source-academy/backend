@@ -7,6 +7,7 @@ defmodule Cadet.Assessments.Submission do
 
   schema "submissions" do
     field(:grade, :integer, virtual: true)
+    field(:adjustment, :integer, virtual: true)
     field(:status, SubmissionStatus, default: :attempting)
 
     belongs_to(:assessment, Assessment)

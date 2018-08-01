@@ -71,6 +71,7 @@ defmodule CadetWeb.GradingControllerTest do
         Enum.map(submissions, fn submission ->
           %{
             "grade" => 600,
+            "adjustment" => -300,
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -261,6 +262,7 @@ defmodule CadetWeb.GradingControllerTest do
           question <- questions do
         insert(:answer, %{
           grade: 200,
+          adjustment: -100,
           question: question,
           submission: submission,
           answer: build(:programming_answer)
