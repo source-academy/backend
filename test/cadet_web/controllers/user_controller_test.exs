@@ -39,13 +39,18 @@ defmodule CadetWeb.UserControllerTest do
       late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
 
       for assessment <- early_assessments ++ late_assessments do
-        story =
+        resp_story =
           conn
           |> get("/v1/user")
           |> json_response(200)
           |> Map.get("story")
 
-        assert story == assessment.story
+        expected_story = %{
+          "story" => assessment.story,
+          "allAttempted" => false
+        }
+
+        assert resp_story == expected_story
 
         {:ok, _} = Repo.delete(assessment)
       end
@@ -60,13 +65,18 @@ defmodule CadetWeb.UserControllerTest do
       |> Assessment.changeset(%{story: nil})
       |> Repo.update()
 
-      story =
+      resp_story =
         conn
         |> get("/v1/user")
         |> json_response(200)
         |> Map.get("story")
 
-      assert story == Enum.fetch!(assessments, 1).story
+      expected_story = %{
+        "story" => Enum.fetch!(assessments, 1).story,
+        "allAttempted" => false
+      }
+
+      assert resp_story == expected_story
     end
 
     @tag authenticate: :student
@@ -82,13 +92,18 @@ defmodule CadetWeb.UserControllerTest do
         |> Repo.update!()
       end
 
-      story =
+      resp_story =
         conn
         |> get("/v1/user")
         |> json_response(200)
         |> Map.get("story")
 
-      assert story == nil
+      expected_story = %{
+        "story" => nil,
+        "allAttempted" => true
+      }
+
+      assert resp_story == expected_story
     end
 
     @tag authenticate: :student
@@ -105,7 +120,12 @@ defmodule CadetWeb.UserControllerTest do
         |> json_response(200)
         |> Map.get("story")
 
-      assert resp_story == assessment.story
+      expected_story = %{
+        "story" => assessment.story,
+        "allAttempted" => false
+      }
+
+      assert resp_story == expected_story
     end
 
     @tag authenticate: :student
@@ -126,24 +146,54 @@ defmodule CadetWeb.UserControllerTest do
             |> json_response(200)
             |> Map.get("story")
 
-          assert resp_story == checker.story
+          expected_story = %{
+            "story" => checker.story,
+            "allAttempted" => false
+          }
+
+          assert resp_story == expected_story
         end
 
         Repo.delete_all(Submission)
       end
     end
 
+    @tag authenticate: :student
+    test "success, return most recent assessment when all are attempted", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      early_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
+      late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
+
+      for assessment <- early_assessments ++ late_assessments do
+        insert(:submission, %{student: user, assessment: assessment, status: :attempted})
+      end
+
+      resp_story =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        |> Map.get("story")
+
+      expected_story = %{
+        "story" => late_assessments |> List.first() |> Map.get(:story),
+        "allAttempted" => true
+      }
+
+      assert resp_story == expected_story
+    end
+
     @tag authenticate: :staff
     test "success, staff", %{conn: conn} do
       user = conn.assigns.current_user
-      build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
 
       resp =
         conn
         |> get("/v1/user")
         |> json_response(200)
+        |> Map.delete("story")
 
-      expected = %{"name" => user.name, "role" => "#{user.role}", "grade" => 0, "story" => nil}
+      expected = %{"name" => user.name, "role" => "#{user.role}", "grade" => 0}
 
       assert expected == resp
     end
