@@ -32,28 +32,30 @@ defmodule Cadet.Assessments do
   def user_current_story(user = %User{}) do
     {:ok, %{result: story}} =
       Multi.new()
-      |> Multi.run(:default, fn _ -> {:ok, get_user_story_by_direction(user)} end)
+      |> Multi.run(:default, fn _ -> {:ok, get_user_story_by_type(user)} end)
       |> Multi.run(:result, fn %{default: default_res} ->
-        if default_res,
-          do: {:ok, %{all_attempted: false, story: default_res}},
-          else: {:ok, %{all_attempted: true, story: get_user_story_by_direction(user, :backward)}}
+        if default_res do
+          {:ok, %{all_attempted: false, story: default_res}}
+        else
+          {:ok, %{all_attempted: true, story: get_user_story_by_type(user, :completed)}}
+        end
       end)
       |> Repo.transaction()
 
     story
   end
 
-  @spec get_user_story_by_direction(%User{}, :forward | :backward) :: String.t() | nil
-  def get_user_story_by_direction(%User{id: user_id}, direction \\ :forward)
-      when is_atom(direction) do
+  @spec get_user_story_by_type(%User{}, :incomplete | :completed) :: String.t() | nil
+  def get_user_story_by_type(%User{id: user_id}, type \\ :incomplete)
+      when is_atom(type) do
     filter_and_sort = fn query ->
-      case direction do
-        :forward ->
+      case type do
+        :incomplete ->
           query
           |> where([_, s], is_nil(s.id) or s.status == "attempting")
           |> order_by([a], asc: a.open_at)
 
-        :backward ->
+        :completed ->
           query |> order_by([a], desc: a.close_at)
       end
     end
