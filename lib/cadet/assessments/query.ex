@@ -14,7 +14,7 @@ defmodule Cadet.Assessments.Query do
   def all_submissions_with_grade do
     Submission
     |> join(:inner, [s], q in subquery(submissions_grade()), s.id == q.submission_id)
-    |> select([s, q], %Submission{s | grade: q.grade})
+    |> select([s, q], %Submission{s | grade: q.grade, adjustment: q.adjustment})
   end
 
   @doc """
@@ -34,7 +34,8 @@ defmodule Cadet.Assessments.Query do
     |> group_by(:submission_id)
     |> select([a], %{
       submission_id: a.submission_id,
-      grade: fragment("? + ?", sum(a.grade), sum(a.adjustment))
+      grade: sum(a.grade),
+      adjustment: sum(a.adjustment)
     })
   end
 
