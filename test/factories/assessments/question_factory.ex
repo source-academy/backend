@@ -14,6 +14,7 @@ defmodule Cadet.Assessments.QuestionFactory do
       def programming_question_factory do
         %Question{
           type: :programming,
+          max_grade: 10,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
           grading_library: Enum.random([build(:library), nil]),
@@ -29,6 +30,7 @@ defmodule Cadet.Assessments.QuestionFactory do
       def mcq_question_factory do
         %Question{
           type: :mcq,
+          max_grade: 10,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
           grading_library: Enum.random([build(:library), nil]),
