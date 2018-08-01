@@ -44,9 +44,24 @@ defmodule CadetWeb.UserController do
               required: true
             )
 
-            story(:string, "Story to displayed to current user. May be null")
+            story(Schema.ref(:UserStory), "Story to displayed to current user. ")
 
             grade(:integer, "Amount of grade. Only provided for 'Student'")
+          end
+        end,
+      UserStory:
+        swagger_schema do
+          properties do
+            story(
+              :string,
+              "Name of story to be displayed to current user. May only be null before start of semester" <>
+                " when no assessments are open"
+            )
+
+            allAttempted(
+              :boolean,
+              "Whether all currently available stories have been attempted (allow open world)"
+            )
           end
         end
     }
