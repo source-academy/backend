@@ -11,7 +11,15 @@ defmodule Cadet.Test.XMLGenerator do
   import XmlBuilder
   import Cadet.Factory
 
-  def generate_xml_for(assessment = %Assessment{}, questions) do
+  @spec generate_xml_for(%Assessment{}, [%Question{}], map() | nil) :: String.t()
+  def generate_xml_for(assessment = %Assessment{}, questions, library \\ nil) do
+    assessment_wide_library =
+      if library do
+        process_library(library)
+      else
+        []
+      end
+
     generate(
       content([
         task(
@@ -31,11 +39,13 @@ defmodule Cadet.Test.XMLGenerator do
               for question <- questions do
                 problem(
                   %{type: question.type, maxgrade: question.max_grade},
-                  [text(question.question.content)] ++ process_question_by_question_type(question)
+                  [text(question.question.content)] ++
+                    process_question_by_question_type(question) ++
+                    process_library(question.library)
                 )
               end
             ])
-          ]
+          ] ++ assessment_wide_library
         )
       ])
     )
@@ -59,7 +69,6 @@ defmodule Cadet.Test.XMLGenerator do
         end
 
       :programming ->
-        # TODO: implement this
         template_field = [template(question.question.solution_template)]
 
         solution_field =
@@ -77,7 +86,50 @@ defmodule Cadet.Test.XMLGenerator do
           end
 
         [snippet(template_field ++ solution_field ++ grader_fields)]
+    end
+  end
 
+  defp deployment(raw_attrs, children) do
+    {"DEPLOYMENT", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+  end
+
+  defp external(raw_attrs, children) do
+    {"EXTERNAL", map_permit_keys(raw_attrs, ~w(name)a), children}
+  end
+
+  defp symbol(content) do
+    {"SYMBOL", nil, content}
+  end
+
+  defp global(children) do
+    {"GLOBAL", nil, children}
+  end
+
+  defp identifier(content) do
+    {"IDENTIFIER", nil, content}
+  end
+
+  defp value(content) do
+    {"VALUE", nil, content}
+  end
+
+  defp process_library(library) when is_map(library) do
+    [
+      deployment(
+        %{interpreter: library.chapter},
+        [external(%{name: library.external.name}, Enum.map(library.external.symbols, &symbol/1))] ++
+          process_globals(library[:globals])
+      )
+    ]
+  end
+
+  defp process_globals(globals) when is_nil(globals) do
+    []
+  end
+
+  defp process_globals(globals) when is_map(globals) do
+    for {k, v} <- globals do
+      global([identifier(k), value(v)])
     end
   end
 
