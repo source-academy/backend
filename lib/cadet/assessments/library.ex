@@ -15,12 +15,13 @@ defmodule Cadet.Assessments.Library do
 
   @required_fields ~w(chapter)a
   @optional_fields ~w(globals)a
+  @required_embeds ~w(external)a
 
   def changeset(library, params \\ %{}) do
     library
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:external)
-    |> validate_required(@required_fields)
+    |> validate_required(@required_fields ++ @required_embeds)
     |> validate_globals()
   end
 
