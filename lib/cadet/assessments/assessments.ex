@@ -32,10 +32,10 @@ defmodule Cadet.Assessments do
   def user_current_story(user = %User{}) do
     {:ok, %{result: story}} =
       Multi.new()
-      |> Multi.run(:default, fn _ -> {:ok, get_user_story_by_type(user)} end)
-      |> Multi.run(:result, fn %{default: default_res} ->
-        if default_res do
-          {:ok, %{all_attempted: false, story: default_res}}
+      |> Multi.run(:incomplete, fn _ -> {:ok, get_user_story_by_type(user, :incomplete)} end)
+      |> Multi.run(:result, fn %{incomplete: incomplete_story} ->
+        if incomplete_story do
+          {:ok, %{all_attempted: false, story: incomplete_story}}
         else
           {:ok, %{all_attempted: true, story: get_user_story_by_type(user, :completed)}}
         end
@@ -46,7 +46,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_user_story_by_type(%User{}, :incomplete | :completed) :: String.t() | nil
-  def get_user_story_by_type(%User{id: user_id}, type \\ :incomplete)
+  def get_user_story_by_type(%User{id: user_id}, type)
       when is_atom(type) do
     filter_and_sort = fn query ->
       case type do
