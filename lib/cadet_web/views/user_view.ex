@@ -9,7 +9,7 @@ defmodule CadetWeb.UserView do
       story:
         transform_map_for_view(story, %{
           story: :story,
-          allAttempted: :all_attempted
+          playStory: :play_story?
         })
     }
   end

@@ -32,12 +32,12 @@ defmodule Cadet.Assessments do
   def user_current_story(user = %User{}) do
     {:ok, %{result: story}} =
       Multi.new()
-      |> Multi.run(:incomplete, fn _ -> {:ok, get_user_story_by_type(user, :incomplete)} end)
-      |> Multi.run(:result, fn %{incomplete: incomplete_story} ->
-        if incomplete_story do
-          {:ok, %{all_attempted: false, story: incomplete_story}}
+      |> Multi.run(:unattempted, fn _ -> {:ok, get_user_story_by_type(user, :unattempted)} end)
+      |> Multi.run(:result, fn %{unattempted: unattempted_story} ->
+        if unattempted_story do
+          {:ok, %{play_story?: true, story: unattempted_story}}
         else
-          {:ok, %{all_attempted: true, story: get_user_story_by_type(user, :completed)}}
+          {:ok, %{play_story?: false, story: get_user_story_by_type(user, :attempted)}}
         end
       end)
       |> Repo.transaction()
@@ -45,17 +45,17 @@ defmodule Cadet.Assessments do
     story
   end
 
-  @spec get_user_story_by_type(%User{}, :incomplete | :completed) :: String.t() | nil
+  @spec get_user_story_by_type(%User{}, :unattempted | :attempted) :: String.t() | nil
   def get_user_story_by_type(%User{id: user_id}, type)
       when is_atom(type) do
     filter_and_sort = fn query ->
       case type do
-        :incomplete ->
+        :unattempted ->
           query
-          |> where([_, s], is_nil(s.id) or s.status == "attempting")
+          |> where([_, s], is_nil(s.id))
           |> order_by([a], asc: a.open_at)
 
-        :completed ->
+        :attempted ->
           query |> order_by([a], desc: a.close_at)
       end
     end

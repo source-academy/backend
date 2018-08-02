@@ -58,9 +58,10 @@ defmodule CadetWeb.UserController do
                 " when no assessments are open"
             )
 
-            allAttempted(
+            playStory(
               :boolean,
-              "Whether all currently available stories have been attempted (allow open world)"
+              "Whether story should be played (false indicates story field should only be used to fetch" <>
+                " assets, display open world view)"
             )
           end
         end

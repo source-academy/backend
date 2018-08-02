@@ -47,7 +47,7 @@ defmodule CadetWeb.UserControllerTest do
 
         expected_story = %{
           "story" => assessment.story,
-          "allAttempted" => false
+          "playStory" => true
         }
 
         assert resp_story == expected_story
@@ -73,7 +73,7 @@ defmodule CadetWeb.UserControllerTest do
 
       expected_story = %{
         "story" => Enum.fetch!(assessments, 1).story,
-        "allAttempted" => false
+        "playStory" => true
       }
 
       assert resp_story == expected_story
@@ -100,43 +100,22 @@ defmodule CadetWeb.UserControllerTest do
 
       expected_story = %{
         "story" => nil,
-        "allAttempted" => true
+        "playStory" => false
       }
 
       assert resp_story == expected_story
     end
 
     @tag authenticate: :student
-    test "success, student story does not skip attempting", %{conn: conn} do
-      user = conn.assigns.current_user
-
-      [assessment | _] = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
-
-      insert(:submission, %{student: user, assessment: assessment, status: :attempting})
-
-      resp_story =
-        conn
-        |> get("/v1/user")
-        |> json_response(200)
-        |> Map.get("story")
-
-      expected_story = %{
-        "story" => assessment.story,
-        "allAttempted" => false
-      }
-
-      assert resp_story == expected_story
-    end
-
-    @tag authenticate: :student
-    test "success, student story skips attempted or submitted", %{conn: conn} do
+    test "success, student story skips attempting/attempted/submitted", %{conn: conn} do
       user = conn.assigns.current_user
 
       early_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -3))
       late_assessments = build_assessments_starting_at(Timex.shift(Timex.now(), days: -1))
+
       # Submit for i-th assessment, expect (i+1)th story to be returned
-      for status <- [:attempted, :submitted] do
-        for {tester, checker} <-
+      for status <- [:attempting, :attempted, :submitted] do
+        for [tester, checker] <-
               Enum.chunk_every(early_assessments ++ late_assessments, 2, 1, :discard) do
           insert(:submission, %{student: user, assessment: tester, status: status})
 
@@ -148,7 +127,7 @@ defmodule CadetWeb.UserControllerTest do
 
           expected_story = %{
             "story" => checker.story,
-            "allAttempted" => false
+            "playStory" => true
           }
 
           assert resp_story == expected_story
@@ -177,7 +156,7 @@ defmodule CadetWeb.UserControllerTest do
 
       expected_story = %{
         "story" => late_assessments |> List.first() |> Map.get(:story),
-        "allAttempted" => true
+        "playStory" => false
       }
 
       assert resp_story == expected_story
