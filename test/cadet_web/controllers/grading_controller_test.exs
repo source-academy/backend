@@ -55,6 +55,12 @@ defmodule CadetWeb.GradingControllerTest do
       conn = post(conn, build_url(1, 3), %{"grading" => %{}})
       assert response(conn, 401) =~ "User is not permitted to grade."
     end
+
+    @tag authenticate: :student
+    test "missing parameter", %{conn: conn} do
+      conn = post(conn, build_url(1, 3), %{})
+      assert response(conn, 400) =~ "Missing parameter"
+    end
   end
 
   describe "GET /, staff" do
@@ -206,6 +212,12 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert response(conn, 400) == "Answer not found or user not permitted to grade."
     end
+
+    @tag authenticate: :staff
+    test "missing parameter", %{conn: conn} do
+      conn = post(conn, build_url(1, 3), %{})
+      assert response(conn, 400) =~ "Missing parameter"
+    end
   end
 
   describe "GET /, admin" do
@@ -229,6 +241,12 @@ defmodule CadetWeb.GradingControllerTest do
     test "unauthorized", %{conn: conn} do
       conn = post(conn, build_url(1, 3), %{"grading" => %{}})
       assert response(conn, 401) =~ "User is not permitted to grade."
+    end
+
+    @tag authenticate: :admin
+    test "missing parameter", %{conn: conn} do
+      conn = post(conn, build_url(1, 3), %{})
+      assert response(conn, 400) =~ "Missing parameter"
     end
   end
 
