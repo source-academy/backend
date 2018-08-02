@@ -170,7 +170,9 @@ defmodule Cadet.Updater.XMLParser do
           content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
           solution_template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
           solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
-          grader: ~x"./SNIPPET/GRADER/text()" |> transform_by(&process_charlist/1)
+          autograder:
+            ~x"./SNIPPET/GRADER/text()"l
+            |> transform_by(&Enum.map(&1, fn charlist -> process_charlist(charlist) end))
         )
 
       "mcq" ->

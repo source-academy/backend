@@ -10,7 +10,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
     field(:solution_template, :string)
     field(:solution_header, :string)
     field(:solution, :string)
-    field(:autograder, :string)
+    field(:autograder, {:array, :string})
   end
 
   @required_fields ~w(content solution_template solution)a
