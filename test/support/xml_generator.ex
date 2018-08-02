@@ -2,6 +2,8 @@ defmodule Cadet.Test.XMLGenerator do
   @moduledoc """
   This module contains functions to produce sample XML codes in accordance to
   the specification (xml_api.rst).
+
+  # TODO: Refactor using macros
   """
 
   alias Cadet.Assessments.{Assessment, Question}
@@ -22,6 +24,9 @@ defmodule Cadet.Test.XMLGenerator do
             story: :story
           }),
           [
+            reading(assessment.reading),
+            websummary(assessment.summary_short),
+            text(assessment.summary_long),
             problems([
               for question <- questions do
                 problem(
@@ -55,7 +60,24 @@ defmodule Cadet.Test.XMLGenerator do
 
       :programming ->
         # TODO: implement this
-        []
+        template_field = [template(question.question.solution_template)]
+
+        solution_field =
+          if question.question[:solution] do
+            [solution(question.question[:solution])]
+          else
+            []
+          end
+
+        grader_fields =
+          if question.question[:autograder] do
+            Enum.map(question.question[:autograder], &grader/1)
+          else
+            []
+          end
+
+        [snippet(template_field ++ solution_field ++ grader_fields)]
+
     end
   end
 
@@ -63,8 +85,16 @@ defmodule Cadet.Test.XMLGenerator do
     {"TASK", map_permit_keys(raw_attrs, ~w(kind number startdate duedate title story)a), children}
   end
 
+  defp reading(content) do
+    {"READING", nil, content}
+  end
+
+  defp websummary(content) do
+    {"WEBSUMMARY", nil, content}
+  end
+
   defp problems(children) do
-    {"PROBLEMS", %{}, children}
+    {"PROBLEMS", nil, children}
   end
 
   defp problem(raw_attrs, children) do
@@ -72,7 +102,7 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp text(content) do
-    {"TEXT", %{}, content}
+    {"TEXT", nil, content}
   end
 
   defp choice(raw_attrs, content) do
@@ -80,19 +110,19 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp snippet(children) do
-    {"SNIPPET", %{}, children}
+    {"SNIPPET", nil, children}
   end
 
   defp template(content) do
-    {"TEMPLATE", %{}, content}
+    {"TEMPLATE", nil, content}
   end
 
   defp solution(content) do
-    {"SOLUTION", %{}, content}
+    {"SOLUTION", nil, content}
   end
 
   defp grader(content) do
-    {"GRADER", %{}, content}
+    {"GRADER", nil, content}
   end
 
   defp map_permit_keys(map, keys) when is_map(map) and is_list(keys) do
@@ -103,7 +133,7 @@ defmodule Cadet.Test.XMLGenerator do
     map = Map.from_struct(struct)
 
     map
-    |> Enum.filter(fn {k, v} -> k in mapping end)
+    |> Enum.filter(fn {k, _} -> k in mapping end)
     |> Enum.map(fn
       {k, v} when is_atom(v) -> {k, map[v]}
       _ -> nil

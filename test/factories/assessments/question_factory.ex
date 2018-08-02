@@ -22,7 +22,8 @@ defmodule Cadet.Assessments.QuestionFactory do
             content: Faker.Pokemon.name(),
             solution_header: Faker.Pokemon.location(),
             solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
-            solution: Faker.Lorem.Shakespeare.hamlet()
+            solution: Faker.Lorem.Shakespeare.hamlet(),
+            autograder: (&Faker.Lorem.Shakespeare.king_richard_iii/0) |> Stream.repeatedly() |> Enum.take(Enum.random(0..2))
           }
         }
       end
