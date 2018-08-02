@@ -103,7 +103,7 @@ defmodule CadetWeb.GradingController do
     parameters do
       submissionId(:path, :integer, "submission id", required: true)
       questionId(:path, :integer, "question id", required: true)
-      grading(:body, Schema.ref(:Grade), "comment given for a question", required: true)
+      grading(:body, Schema.ref(:Grading), "comment given for a question", required: true)
     end
 
     response(200, "OK")
@@ -179,6 +179,12 @@ defmodule CadetWeb.GradingController do
             grade(:integer, "Grade awarded by autograder")
             comment(:string, "comment given")
             adjustment(:integer, "adjustment given")
+          end
+        end,
+      Grading:
+        swagger_schema do
+          properties do
+            grading(Schema.ref(:Grade))
           end
         end
     }
