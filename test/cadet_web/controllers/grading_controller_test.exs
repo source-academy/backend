@@ -52,7 +52,7 @@ defmodule CadetWeb.GradingControllerTest do
   describe "POST /:submissionid/:questionid, student" do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      conn = post(conn, build_url(1, 3), %{"grading" => %{}})
       assert response(conn, 401) =~ "User is not permitted to grade."
     end
   end
@@ -227,7 +227,7 @@ defmodule CadetWeb.GradingControllerTest do
   describe "POST /:submissionid/:questionid, admin" do
     @tag authenticate: :admin
     test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      conn = post(conn, build_url(1, 3), %{"grading" => %{}})
       assert response(conn, 401) =~ "User is not permitted to grade."
     end
   end
