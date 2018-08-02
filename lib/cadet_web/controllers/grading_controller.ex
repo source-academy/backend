@@ -34,9 +34,10 @@ defmodule CadetWeb.GradingController do
 
   def update(
         conn,
-        params = %{
+        %{
           "submissionid" => submission_id,
-          "questionid" => question_id
+          "questionid" => question_id,
+          "grading" => grading
         }
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
@@ -44,7 +45,7 @@ defmodule CadetWeb.GradingController do
 
     case Assessments.update_grading_info(
            %{submission_id: submission_id, question_id: question_id},
-           params["grading"],
+           grading,
            user
          ) do
       {:ok, _} ->
@@ -55,6 +56,12 @@ defmodule CadetWeb.GradingController do
         |> put_status(status)
         |> text(message)
     end
+  end
+
+  def update(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> text("Missing parameter")
   end
 
   swagger_path :index do
@@ -103,7 +110,7 @@ defmodule CadetWeb.GradingController do
     parameters do
       submissionId(:path, :integer, "submission id", required: true)
       questionId(:path, :integer, "question id", required: true)
-      grading(:body, Schema.ref(:Grade), "comment given for a question", required: true)
+      grading(:body, Schema.ref(:Grading), "comment given for a question", required: true)
     end
 
     response(200, "OK")
@@ -179,6 +186,19 @@ defmodule CadetWeb.GradingController do
             grade(:integer, "Grade awarded by autograder")
             comment(:string, "comment given")
             adjustment(:integer, "adjustment given")
+          end
+        end,
+      Grading:
+        swagger_schema do
+          properties do
+            grading(
+              Schema.new do
+                properties do
+                  comment(:string, "comment given")
+                  adjustment(:integer, "adjustment given")
+                end
+              end
+            )
           end
         end
     }
