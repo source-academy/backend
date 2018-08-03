@@ -10,7 +10,6 @@ defmodule Cadet.Updater.XMLParser do
   import SweetXml
 
   alias Cadet.Assessments
-  alias Cadet.Assessments.Assessment
 
   require Logger
 
@@ -71,7 +70,10 @@ defmodule Cadet.Updater.XMLParser do
              assessment_params,
              questions_params
            ) do
-      Logger.info("Created/updated assessment with id: #{assessment.id}")
+      Logger.info(
+        "Created/updated assessment with id: #{assessment.id}, with #{length(questions_params)} questions."
+      )
+
       :ok
     else
       :error ->
@@ -112,6 +114,7 @@ defmodule Cadet.Updater.XMLParser do
   @spec process_questions(String.t()) :: {:ok, [map()]} | :error
   defp process_questions(xml) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
+    default_grading_library = xpath(xml, ~x"//TASK/GRADERDEPLOYMENT"e) || default_library
 
     questions_params =
       xml
@@ -126,7 +129,14 @@ defmodule Cadet.Updater.XMLParser do
                {:not_nil?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
-               process_question_library(question, default_library),
+               process_question_library(question, default_library, "DEPLOYMENT", :library),
+             question when is_map(question) <-
+               process_question_library(
+                 question,
+                 default_grading_library,
+                 "GRADERDEPLOYMENT",
+                 :grading_library
+               ),
              question when is_map(question) <- Map.delete(question, :entity) do
           question
         else
@@ -200,9 +210,9 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
-  @spec process_question_library(map(), any()) :: map()
-  defp process_question_library(question, default_library) do
-    library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
+  @spec process_question_library(map(), any(), String.t(), atom()) :: map()
+  defp process_question_library(question, default_library, tag, schema_field) do
+    library = xpath(question[:entity], ~x"./#{tag}"o) || default_library
 
     if library do
       globals =
@@ -233,7 +243,7 @@ defmodule Cadet.Updater.XMLParser do
         |> Map.put(:globals, globals)
         |> Map.put(:external, external)
 
-      Map.put(question, :library, library)
+      Map.put(question, schema_field, library)
     else
       Logger.error("Missing DEPLOYMENT")
       :error
