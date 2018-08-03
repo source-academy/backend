@@ -29,20 +29,47 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def user_current_story(%User{id: user_id, role: role}) do
-    if role in @submit_answer_roles do
-      Assessment
-      |> where(is_published: true)
-      |> where([a], not is_nil(a.story))
-      |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
-      |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
-      |> where([_, s], is_nil(s.id) or s.status == "attempting")
-      |> order_by([a], a.open_at)
-      |> order_by([a], a.type)
-      |> select([a], a.story)
-      |> first()
-      |> Repo.one()
+  def user_current_story(user = %User{}) do
+    {:ok, %{result: story}} =
+      Multi.new()
+      |> Multi.run(:unattempted, fn _ -> {:ok, get_user_story_by_type(user, :unattempted)} end)
+      |> Multi.run(:result, fn %{unattempted: unattempted_story} ->
+        if unattempted_story do
+          {:ok, %{play_story?: true, story: unattempted_story}}
+        else
+          {:ok, %{play_story?: false, story: get_user_story_by_type(user, :attempted)}}
+        end
+      end)
+      |> Repo.transaction()
+
+    story
+  end
+
+  @spec get_user_story_by_type(%User{}, :unattempted | :attempted) :: String.t() | nil
+  def get_user_story_by_type(%User{id: user_id}, type)
+      when is_atom(type) do
+    filter_and_sort = fn query ->
+      case type do
+        :unattempted ->
+          query
+          |> where([_, s], is_nil(s.id))
+          |> order_by([a], asc: a.open_at)
+
+        :attempted ->
+          query |> order_by([a], desc: a.close_at)
+      end
     end
+
+    Assessment
+    |> where(is_published: true)
+    |> where([a], not is_nil(a.story))
+    |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
+    |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
+    |> filter_and_sort.()
+    |> order_by([a], a.type)
+    |> select([a], a.story)
+    |> first()
+    |> Repo.one()
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
