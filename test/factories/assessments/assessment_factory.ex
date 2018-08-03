@@ -10,13 +10,23 @@ defmodule Cadet.Assessments.AssessmentFactory do
       def assessment_factory do
         type = Enum.random([:mission, :sidequest, :contest, :path])
 
+        # These are actual story identifiers so front-end can use seeds to test more effectively
+        valid_stories = [
+          "contest-7.1",
+          "mission-19",
+          "mission-1",
+          "mission-7",
+          "sidequest-2.1",
+          "sidequest-9.1"
+        ]
+
         %Assessment{
           title: Faker.Lorem.Shakespeare.En.hamlet(),
           summary_short: Faker.Lorem.Shakespeare.En.king_richard_iii(),
           summary_long: Faker.Lorem.Shakespeare.En.romeo_and_juliet(),
           number:
             "#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{Enum.random(0..10)}",
-          story: Faker.Lorem.word(),
+          story: Enum.random(valid_stories),
           reading: Faker.Lorem.sentence(),
           type: type,
           open_at: Timex.now(),
