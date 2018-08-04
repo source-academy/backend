@@ -24,5 +24,17 @@ defmodule Cadet.Assessments.LibraryTest do
         |> assert_changeset(:invalid)
       end
     end
+
+    test "valid changeset without globals", %{valid_params: params} do
+      params
+      |> Map.delete(:globals)
+      |> assert_changeset(:valid)
+    end
+
+    test "empty external valid changeset", %{valid_params: params} do
+      params
+      |> Map.delete(:external)
+      |> assert_changeset(:valid)
+    end
   end
 end
