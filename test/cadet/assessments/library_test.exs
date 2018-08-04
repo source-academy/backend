@@ -12,12 +12,6 @@ defmodule Cadet.Assessments.LibraryTest do
       assert_changeset(params, :valid)
     end
 
-    # test "invalid changeset missing external library field", %{valid_params: params} do
-    #   params
-    #   |> Map.delete(:external)
-    #   |> assert_changeset(:invalid)
-    # end
-
     test "invalid changeset invalid globals", %{valid_params: params} do
       invalid_globals = [
         %{"foo" => ["foo", "bar"]},
