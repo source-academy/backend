@@ -66,6 +66,7 @@ defmodule Cadet.Mixfile do
       {:phoenix_swagger, "~> 0.8"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.2.7"},
+      {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
       # TODO: Remove the override once ex_aws released the new version
@@ -77,8 +78,7 @@ defmodule Cadet.Mixfile do
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
-      {:faker, "~> 0.10", only: [:test, :dev]},
-      {:sweet_xml, "~> 0.6"}
+      {:faker, "~> 0.10", only: [:test, :dev]}
     ]
   end
 
