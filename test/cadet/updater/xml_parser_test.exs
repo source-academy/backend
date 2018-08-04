@@ -6,12 +6,22 @@ defmodule Cadet.Updater.XMLParserTest do
   use Cadet.DataCase
 
   import Cadet.Factory
+  import ExUnit.CaptureLog
 
-  test "XML Parser happy path" do
-    for type <- AssessmentType.__enum_map__() do
-      assessment = build(:assessment, type: type, is_published: true)
-      questions = build_list(5, :question, assessment: nil)
+  setup do
+    assessments =
+      Enum.into(
+        AssessmentType.__enum_map__(),
+        %{},
+        &{&1, build(:assessment, type: &1, is_published: true)}
+      )
 
+    questions = build_list(5, :question, assessment: nil)
+    %{assessments: assessments, questions: questions}
+  end
+
+  test "XML Parser happy path", %{assessments: assessments, questions: questions} do
+    for {_type, assessment} <- assessments do
       xml = XMLGenerator.generate_xml_for(assessment, questions)
 
       assert XMLParser.parse_xml(xml) == :ok
@@ -45,6 +55,47 @@ defmodule Cadet.Updater.XMLParserTest do
           ~w(question type library)a
         )
       end
+    end
+  end
+
+  test "dates not in ISO8601 DateTime", %{assessments: assessments, questions: questions} do
+    date_strings =
+      Enum.map(
+        ~w({ISO:Basic} {ISOdate} {RFC822} {RFC1123} {ANSIC} {UNIX}),
+        &{&1, Timex.format!(Timex.now(), &1)}
+      )
+
+    for {_type, assessment} <- assessments,
+        {date_format_string, date_string} <- date_strings do
+      assessment_wrong_date_format = %{assessment | open_at: date_string}
+
+      xml = XMLGenerator.generate_xml_for(assessment_wrong_date_format, questions)
+
+      assert capture_log(fn ->
+               assert(
+                 XMLParser.parse_xml(xml) == :error,
+                 inspect({date_format_string, date_string}, pretty: true)
+               )
+             end) =~ "Time does not conform to ISO8601 DateTime"
+    end
+  end
+
+  test "PROBLEM with missing type", %{assessments: assessments, questions: questions} do
+    for {_type, assessment} <- assessments do
+      xml =
+        XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(maxgrade)a)
+
+      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+               "Missing attribute(s) on PROBLEM"
+    end
+  end
+
+  test "PROBLEM with missing maxgrade", %{assessments: assessments, questions: questions} do
+    for {_type, assessment} <- assessments do
+      xml = XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(type)a)
+
+      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+               "Missing attribute(s) on PROBLEM"
     end
   end
 

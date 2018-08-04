@@ -124,16 +124,16 @@ defmodule Cadet.Updater.XMLParser do
         entity: ~x"."
       )
       |> Enum.map(fn param ->
-        with {:not_nil?, true} <-
-               {:not_nil?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
+        with {:not_missing_attr?, true} <-
+               {:not_missing_attr?, param[:type] != "" and not is_nil(param[:max_grade])},
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
                process_question_library(question, default_library),
              question when is_map(question) <- Map.delete(question, :entity) do
           question
         else
-          {:not_nil?, false} ->
-            Logger.error("Missing attribute on PROBLEM")
+          {:not_missing_attr?, false} ->
+            Logger.error("Missing attribute(s) on PROBLEM")
             :error
 
           {:error, changeset} ->

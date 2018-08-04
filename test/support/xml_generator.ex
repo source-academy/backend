@@ -10,23 +10,22 @@ defmodule Cadet.Test.XMLGenerator do
 
   import XmlBuilder
 
-  @spec generate_xml_for(%Assessment{}, [%Question{}], map() | nil, map() | nil) :: String.t()
+  @spec generate_xml_for(%Assessment{}, [%Question{}], [{atom(), any()}]) :: String.t()
   def generate_xml_for(
         assessment = %Assessment{},
         questions,
-        library \\ nil,
-        grading_library \\ nil
+        opts \\ []
       ) do
     assessment_wide_library =
-      if library do
-        process_library(library, using: &deployment/2)
+      if opts[:library] do
+        process_library(opts[:library], using: &deployment/2)
       else
         []
       end
 
     assessment_wide_grading_library =
-      if grading_library do
-        process_library(grading_library, using: &graderdeployment/2)
+      if opts[:grading_library] do
+        process_library(opts[:grading_library], using: &graderdeployment/2)
       else
         []
       end
@@ -49,7 +48,7 @@ defmodule Cadet.Test.XMLGenerator do
             problems([
               for question <- questions do
                 problem(
-                  %{type: question.type, maxgrade: question.max_grade},
+                  generate_problem_attrs(question, opts[:problem_permit_keys]),
                   [text(question.question.content)] ++
                     process_question_by_question_type(question) ++
                     process_library(question.library, using: &deployment/2) ++
@@ -60,6 +59,13 @@ defmodule Cadet.Test.XMLGenerator do
           ] ++ assessment_wide_library ++ assessment_wide_grading_library
         )
       ])
+    )
+  end
+
+  defp generate_problem_attrs(question, permit_keys) do
+    map_permit_keys(
+      %{type: question.type, maxgrade: question.max_grade},
+      permit_keys || ~w(type maxgrade)a
     )
   end
 
@@ -198,7 +204,9 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp map_permit_keys(map, keys) when is_map(map) and is_list(keys) do
-    Enum.filter(map, fn {k, v} -> k in keys and not is_nil(v) end)
+    map
+    |> Enum.filter(fn {k, v} -> k in keys and not is_nil(v) end)
+    |> Enum.into(%{})
   end
 
   defp map_convert_keys(struct, mapping) do
