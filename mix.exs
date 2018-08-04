@@ -48,6 +48,7 @@ defmodule Cadet.Mixfile do
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.0"},
       {:ex_aws_kms, "~> 2.0"},
+      {:ex_aws_lambda, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.1"},
       {:floki, "~> 0.20.0"},

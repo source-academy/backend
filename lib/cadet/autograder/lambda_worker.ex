@@ -10,7 +10,7 @@ defmodule Cadet.Autograder.LambdaWorker do
   alias Cadet.Assessments.Answer
   alias Cadet.Autograder.ResultStoreWorker
 
-  @api_endpoint :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:api_endpoint)
+  @lambda_name :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:lambda_name)
 
   def test_request_params do
     %{
@@ -21,22 +21,19 @@ defmodule Cadet.Autograder.LambdaWorker do
       ],
       studentProgram: "const f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);"
     }
-    |> Jason.encode!()
   end
 
   def perform(answer_id) do
-    case HTTPoison.post!(@api_endpoint, test_request_params()) do
-      %HTTPoison.Response{status_code: 200, body: body} ->
-        grade = parse_body(body)
+    grade =
+      @lambda_name
+      |> ExAws.Lambda.invoke(test_request_params(), %{})
+      |> ExAws.request!()
+      |> parse_response()
 
-        Que.add(ResultStoreWorker, %{
-          answer_id: answer_id,
-          result: %{grade: grade, status: :success}
-        })
-
-      %HTTPoison.Response{status_code: status_code} ->
-        raise "HTTP Status #{status_code}"
-    end
+    Que.add(ResultStoreWorker, %{
+      answer_id: answer_id,
+      result: %{grade: grade, status: :success}
+    })
   end
 
   def on_failure(answer_id, error) do
@@ -47,9 +44,8 @@ defmodule Cadet.Autograder.LambdaWorker do
     Que.add(ResultStoreWorker, %{answer_id: answer_id, result: %{status: :failed}})
   end
 
-  def parse_body(body) do
-    body
-    |> Jason.decode!()
+  def parse_response(response) do
+    response
     |> Enum.map(fn result ->
       case result["resultType"] do
         "pass" ->
