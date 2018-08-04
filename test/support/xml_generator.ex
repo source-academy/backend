@@ -11,11 +11,23 @@ defmodule Cadet.Test.XMLGenerator do
   import XmlBuilder
   import Cadet.Factory
 
-  @spec generate_xml_for(%Assessment{}, [%Question{}], map() | nil) :: String.t()
-  def generate_xml_for(assessment = %Assessment{}, questions, library \\ nil) do
+  @spec generate_xml_for(%Assessment{}, [%Question{}], map() | nil, map() | nil) :: String.t()
+  def generate_xml_for(
+        assessment = %Assessment{},
+        questions,
+        library \\ nil,
+        grading_library \\ nil
+      ) do
     assessment_wide_library =
       if library do
-        process_library(library)
+        process_library(library, using: &deployment/2)
+      else
+        []
+      end
+
+    assessment_wide_grading_library =
+      if grading_library do
+        process_library(grading_library, using: &graderdeployment/2)
       else
         []
       end
@@ -24,10 +36,10 @@ defmodule Cadet.Test.XMLGenerator do
       content([
         task(
           map_convert_keys(assessment, %{
-            kind: :type,
+            type: :kind,
             number: :number,
-            startdate: :open_at,
-            duedate: :close_at,
+            open_at: :startdate,
+            close_at: :duedate,
             title: :title,
             story: :story
           }),
@@ -41,11 +53,12 @@ defmodule Cadet.Test.XMLGenerator do
                   %{type: question.type, maxgrade: question.max_grade},
                   [text(question.question.content)] ++
                     process_question_by_question_type(question) ++
-                    process_library(question.library)
+                    process_library(question.library, using: &deployment/2) ++
+                    process_library(question.grading_library, using: &graderdeployment/2)
                 )
               end
             ])
-          ] ++ assessment_wide_library
+          ] ++ assessment_wide_library ++ assessment_wide_grading_library
         )
       ])
     )
@@ -93,6 +106,10 @@ defmodule Cadet.Test.XMLGenerator do
     {"DEPLOYMENT", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
   end
 
+  defp graderdeployment(raw_attrs, children) do
+    {"GRADERDEPLOYMENT", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+  end
+
   defp external(raw_attrs, children) do
     {"EXTERNAL", map_permit_keys(raw_attrs, ~w(name)a), children}
   end
@@ -113,9 +130,13 @@ defmodule Cadet.Test.XMLGenerator do
     {"VALUE", nil, content}
   end
 
-  defp process_library(library) when is_map(library) do
+  defp process_library(nil, _) do
+    []
+  end
+
+  defp process_library(library, using: tag_function) when is_map(library) do
     [
-      deployment(
+      tag_function.(
         %{interpreter: library.chapter},
         [external(%{name: library.external.name}, Enum.map(library.external.symbols, &symbol/1))] ++
           process_globals(library[:globals])
@@ -185,12 +206,8 @@ defmodule Cadet.Test.XMLGenerator do
     map = Map.from_struct(struct)
 
     map
-    |> Enum.filter(fn {k, _} -> k in mapping end)
-    |> Enum.map(fn
-      {k, v} when is_atom(v) -> {k, map[v]}
-      _ -> nil
-    end)
-    |> Enum.filter(&(not is_nil(&1)))
+    |> Enum.filter(fn {k, v} -> k in Map.keys(mapping) and not is_nil(v) end)
+    |> Enum.map(fn {k, v} -> {mapping[k], v} end)
     |> Enum.into(%{})
   end
 end
