@@ -26,7 +26,8 @@ defmodule Cadet.Updater.XMLParserTest do
       assert_map_keys(
         Map.from_struct(assessment),
         Map.from_struct(assessment_db),
-        ~w(title is_published type summary_short summary_long open_at close_at number story reading)a
+        ~w(title is_published type summary_short summary_long open_at close_at)a ++
+          ~w(number story reading)a
       )
 
       assessment_id = assessment_db.id
@@ -65,15 +66,11 @@ defmodule Cadet.Updater.XMLParserTest do
   end
 
   defp convert_map_keys_to_string(map) when is_map(map) do
-    map
-    |> Enum.map(fn
+    Enum.into(map, %{}, fn
+      {k, v} when is_atom(k) and is_map(v) -> {Atom.to_string(k), convert_map_keys_to_string(v)}
       {k, v} when is_atom(k) -> {Atom.to_string(k), v}
-      {k, v} -> {k, v}
-    end)
-    |> Enum.map(fn
       {k, v} when is_map(v) -> {k, convert_map_keys_to_string(v)}
       {k, v} -> {k, v}
     end)
-    |> Enum.into(%{})
   end
 end

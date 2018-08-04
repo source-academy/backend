@@ -207,7 +207,6 @@ defmodule Cadet.Test.XMLGenerator do
 
     map
     |> Enum.filter(fn {k, v} -> k in Map.keys(mapping) and not is_nil(v) end)
-    |> Enum.map(fn {k, v} -> {mapping[k], v} end)
-    |> Enum.into(%{})
+    |> Enum.into(%{}, fn {k, v} -> {mapping[k], v} end)
   end
 end
