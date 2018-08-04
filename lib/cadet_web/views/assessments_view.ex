@@ -52,7 +52,7 @@ defmodule CadetWeb.AssessmentsView do
     transform_map_for_view(library, %{
       chapter: :chapter,
       globals: :globals,
-      external: &(&1.external && build_external_library(%{external_library: &1.external}))
+      external: &build_external_library(%{external_library: &1.external})
     })
   end
 
