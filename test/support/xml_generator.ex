@@ -9,7 +9,6 @@ defmodule Cadet.Test.XMLGenerator do
   alias Cadet.Assessments.{Assessment, Question}
 
   import XmlBuilder
-  import Cadet.Factory
 
   @spec generate_xml_for(%Assessment{}, [%Question{}], map() | nil, map() | nil) :: String.t()
   def generate_xml_for(

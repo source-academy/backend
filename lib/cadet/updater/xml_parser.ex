@@ -114,7 +114,6 @@ defmodule Cadet.Updater.XMLParser do
   @spec process_questions(String.t()) :: {:ok, [map()]} | :error
   defp process_questions(xml) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
-    default_grading_library = xpath(xml, ~x"//TASK/GRADERDEPLOYMENT"e) || default_library
 
     questions_params =
       xml
