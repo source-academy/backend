@@ -8,6 +8,9 @@ defmodule Cadet.Updater.XMLParserTest do
   import Cadet.Factory
   import ExUnit.CaptureLog
 
+  @local_name "test/fixtures/local_repo"
+  @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
+
   setup do
     assessments =
       Enum.map(
@@ -15,116 +18,153 @@ defmodule Cadet.Updater.XMLParserTest do
         &build(:assessment, type: &1, is_published: true)
       )
 
+    assessments_with_type = Enum.into(assessments, %{}, &{&1.type, &1})
+
     questions = build_list(5, :question, assessment: nil)
-    %{assessments: assessments, questions: questions}
+
+    %{
+      assessments: assessments,
+      questions: questions,
+      assessments_with_type: assessments_with_type
+    }
   end
 
-  test "XML Parser happy path", %{assessments: assessments, questions: questions} do
-    for assessment <- assessments do
-      xml = XMLGenerator.generate_xml_for(assessment, questions)
+  setup_all do
+    on_exit(fn ->
+      File.rm_rf!(@local_name)
+    end)
+  end
 
-      assert XMLParser.parse_xml(xml) == :ok
+  describe "Pure XML Parser" do
+    test "XML Parser happy path", %{assessments: assessments, questions: questions} do
+      for assessment <- assessments do
+        xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-      number = assessment.number
+        assert XMLParser.parse_xml(xml) == :ok
 
-      assessment_db =
-        Assessment
-        |> where(number: ^number)
-        |> Repo.one()
+        number = assessment.number
 
-      assert_map_keys(
-        Map.from_struct(assessment),
-        Map.from_struct(assessment_db),
-        ~w(title is_published type summary_short summary_long open_at close_at)a ++
-          ~w(number story reading)a
-      )
+        assessment_db =
+          Assessment
+          |> where(number: ^number)
+          |> Repo.one()
 
-      assessment_id = assessment_db.id
-
-      questions_db =
-        Question
-        |> where(assessment_id: ^assessment_id)
-        |> order_by(asc: :display_order)
-        |> Repo.all()
-
-      for {question, question_db} <- Enum.zip(questions, questions_db) do
         assert_map_keys(
-          Map.from_struct(question_db),
-          Map.from_struct(question),
-          ~w(question type library)a
+          Map.from_struct(assessment),
+          Map.from_struct(assessment_db),
+          ~w(title is_published type summary_short summary_long open_at close_at)a ++
+            ~w(number story reading)a
         )
+
+        assessment_id = assessment_db.id
+
+        questions_db =
+          Question
+          |> where(assessment_id: ^assessment_id)
+          |> order_by(asc: :display_order)
+          |> Repo.all()
+
+        for {question, question_db} <- Enum.zip(questions, questions_db) do
+          assert_map_keys(
+            Map.from_struct(question_db),
+            Map.from_struct(question),
+            ~w(question type library)a
+          )
+        end
+      end
+    end
+
+    test "dates not in ISO8601 DateTime", %{assessments: assessments, questions: questions} do
+      date_strings =
+        Enum.map(
+          ~w({ISO:Basic} {ISOdate} {RFC822} {RFC1123} {ANSIC} {UNIX}),
+          &{&1, Timex.format!(Timex.now(), &1)}
+        )
+
+      for assessment <- assessments,
+          {date_format_string, date_string} <- date_strings do
+        assessment_wrong_date_format = %{assessment | open_at: date_string}
+
+        xml = XMLGenerator.generate_xml_for(assessment_wrong_date_format, questions)
+
+        assert capture_log(fn ->
+                 assert(
+                   XMLParser.parse_xml(xml) == :error,
+                   inspect({date_format_string, date_string}, pretty: true)
+                 )
+               end) =~ "Time does not conform to ISO8601 DateTime"
+      end
+    end
+
+    test "PROBLEM with missing type", %{assessments: assessments, questions: questions} do
+      for assessment <- assessments do
+        xml =
+          XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(maxgrade)a)
+
+        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+                 "Missing attribute(s) on PROBLEM"
+      end
+    end
+
+    test "PROBLEM with missing maxgrade", %{assessments: assessments, questions: questions} do
+      for assessment <- assessments do
+        xml = XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(type)a)
+
+        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+                 "Missing attribute(s) on PROBLEM"
+      end
+    end
+
+    test "Invalid question type", %{assessments: assessments, questions: questions} do
+      for assessment <- assessments do
+        xml = XMLGenerator.generate_xml_for(assessment, questions, override_type: "anu")
+
+        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+                 "Invalid question type."
+      end
+    end
+
+    test "Invalid question changeset", %{assessments: assessments, questions: questions} do
+      for assessment <- assessments do
+        questions_without_content =
+          Enum.map(questions, &%{&1 | question: %{&1.question | content: ""}})
+
+        xml = XMLGenerator.generate_xml_for(assessment, questions_without_content)
+
+        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+                 ~r/Invalid \b.*\b changeset\./
+      end
+    end
+
+    test "missing DEPLOYMENT", %{assessments: assessments, questions: questions} do
+      for assessment <- assessments do
+        xml = XMLGenerator.generate_xml_for(assessment, questions, no_deployment: true)
+
+        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+                 "Missing DEPLOYMENT"
       end
     end
   end
 
-  test "dates not in ISO8601 DateTime", %{assessments: assessments, questions: questions} do
-    date_strings =
-      Enum.map(
-        ~w({ISO:Basic} {ISOdate} {RFC822} {RFC1123} {ANSIC} {UNIX}),
-        &{&1, Timex.format!(Timex.now(), &1)}
-      )
+  describe "XML file processing" do
+    test "happy path", %{assessments_with_type: assessments_with_type, questions: questions} do
+      for {type, assessment} <- assessments_with_type do
+        xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-    for assessment <- assessments,
-        {date_format_string, date_string} <- date_strings do
-      assessment_wrong_date_format = %{assessment | open_at: date_string}
+        path = Path.join(@local_name, @locations[type])
 
-      xml = XMLGenerator.generate_xml_for(assessment_wrong_date_format, questions)
+        file_name =
+          (type |> Atom.to_string() |> String.capitalize()) <> "-#{assessment.number}.xml"
 
-      assert capture_log(fn ->
-               assert(
-                 XMLParser.parse_xml(xml) == :error,
-                 inspect({date_format_string, date_string}, pretty: true)
-               )
-             end) =~ "Time does not conform to ISO8601 DateTime"
-    end
-  end
+        location = Path.join(path, file_name)
 
-  test "PROBLEM with missing type", %{assessments: assessments, questions: questions} do
-    for assessment <- assessments do
-      xml =
-        XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(maxgrade)a)
+        File.mkdir_p!(path)
+        File.write!(location, xml)
+      end
 
-      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
-               "Missing attribute(s) on PROBLEM"
-    end
-  end
-
-  test "PROBLEM with missing maxgrade", %{assessments: assessments, questions: questions} do
-    for assessment <- assessments do
-      xml = XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(type)a)
-
-      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
-               "Missing attribute(s) on PROBLEM"
-    end
-  end
-
-  test "Invalid question type", %{assessments: assessments, questions: questions} do
-    for assessment <- assessments do
-      xml = XMLGenerator.generate_xml_for(assessment, questions, override_type: "anu")
-
-      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
-               "Invalid question type."
-    end
-  end
-
-  test "Invalid question changeset", %{assessments: assessments, questions: questions} do
-    for assessment <- assessments do
-      questions_without_content =
-        Enum.map(questions, &%{&1 | question: %{&1.question | content: ""}})
-
-      xml = XMLGenerator.generate_xml_for(assessment, questions_without_content)
-
-      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
-               ~r/Invalid \b.*\b changeset\./
-    end
-  end
-
-  test "missing DEPLOYMENT", %{assessments: assessments, questions: questions} do
-    for assessment <- assessments do
-      xml = XMLGenerator.generate_xml_for(assessment, questions, no_deployment: true)
-
-      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
-               "Missing DEPLOYMENT"
+      for type <- AssessmentType.__enum_map__() do
+        assert XMLParser.parse_and_insert(type) == :ok
+      end
     end
   end
 

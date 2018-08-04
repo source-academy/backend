@@ -2,7 +2,7 @@ defmodule Cadet.Updater.XMLParser do
   @moduledoc """
   Parser for XML files from the cs1101s repository.
   """
-  @local_name if Mix.env() != :test, do: "cs1101s", else: "test/local_repo"
+  @local_name if Mix.env() != :test, do: "cs1101s", else: "test/fixtures/local_repo"
   @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
 
   use Cadet, [:display]
