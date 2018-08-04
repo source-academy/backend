@@ -45,7 +45,7 @@ defmodule Cadet.Updater.XMLParser do
       path
       |> Path.join(file)
       |> File.read!()
-      |> process()
+      |> parse_xml()
       |> case do
         :ok ->
           Logger.info("Imported #{file} successfully.\n")
@@ -61,8 +61,8 @@ defmodule Cadet.Updater.XMLParser do
     end)
   end
 
-  @spec process(String.t()) :: :ok | :error
-  defp process(xml) do
+  @spec parse_xml(String.t()) :: :ok | :error
+  def parse_xml(xml) do
     with {:ok, assessment_params} <- process_assessment(xml),
          {:ok, questions_params} <- process_questions(xml),
          {:ok, %{assessment: assessment}} <-
@@ -129,14 +129,7 @@ defmodule Cadet.Updater.XMLParser do
                {:not_nil?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
-               process_question_library(question, default_library, "DEPLOYMENT", :library),
-             question when is_map(question) <-
-               process_question_library(
-                 question,
-                 default_grading_library,
-                 "GRADERDEPLOYMENT",
-                 :grading_library
-               ),
+               process_question_library(question, default_library),
              question when is_map(question) <- Map.delete(question, :entity) do
           question
         else
@@ -190,7 +183,7 @@ defmodule Cadet.Updater.XMLParser do
           entity
           |> xpath(
             ~x"./CHOICE"el,
-            content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+            content: ~x"./text()" |> transform_by(&process_charlist/1),
             is_correct: ~x"./@correct"s |> transform_by(&String.to_atom/1)
           )
           |> Enum.with_index()
@@ -210,44 +203,48 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
-  @spec process_question_library(map(), any(), String.t(), atom()) :: map()
-  defp process_question_library(question, default_library, tag, schema_field) do
-    library = xpath(question[:entity], ~x"./#{tag}"o) || default_library
+  @spec process_question_library(map(), any()) :: map()
+  defp process_question_library(question, default_library) do
+    library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
+    grading_library = xpath(question[:entity], ~x"./GRADERDEPLOYMENT"o) || library
 
     if library do
-      globals =
-        library
-        |> xpath(
-          ~x"./GLOBAL"l,
-          identifier: ~x"./IDENTIFIER/text()" |> transform_by(&process_charlist/1),
-          value: ~x"./VALUE/text()" |> transform_by(&process_charlist/1)
-        )
-        |> Enum.reduce(%{}, fn %{identifier: identifier, value: value}, acc ->
-          Map.put(acc, identifier, value)
-        end)
-
-      external =
-        library
-        |> xpath(
-          ~x"./EXTERNAL"o,
-          name: ~x"./@name"s |> transform_by(&String.downcase/1),
-          symbol: ~x"./SYMBOL/text()"sl
-        )
-
-      library =
-        library
-        |> xpath(
-          ~x"."e,
-          chapter: ~x"./@interpreter"i
-        )
-        |> Map.put(:globals, globals)
-        |> Map.put(:external, external)
-
-      Map.put(question, schema_field, library)
+      question
+      |> Map.put(:library, process_question_library(library))
+      |> Map.put(:grading_library, process_question_library(grading_library))
     else
       Logger.error("Missing DEPLOYMENT")
       :error
     end
+  end
+
+  defp process_question_library(library_entity) do
+    globals =
+      library_entity
+      |> xpath(
+        ~x"./GLOBAL"l,
+        identifier: ~x"./IDENTIFIER/text()" |> transform_by(&process_charlist/1),
+        value: ~x"./VALUE/text()" |> transform_by(&process_charlist/1)
+      )
+      |> Enum.reduce(%{}, fn %{identifier: identifier, value: value}, acc ->
+        Map.put(acc, identifier, value)
+      end)
+
+    external =
+      library_entity
+      |> xpath(
+        ~x"./EXTERNAL"o,
+        name: ~x"./@name"s |> transform_by(&String.downcase/1),
+        symbol: ~x"./SYMBOL/text()"sl
+      )
+
+    library_entity
+    |> xpath(
+      ~x"."e,
+      chapter: ~x"./@interpreter"i
+    )
+    |> Map.put(:globals, globals)
+    |> Map.put(:external, external)
   end
 
   @spec process_charlist(charlist()) :: String.t()
