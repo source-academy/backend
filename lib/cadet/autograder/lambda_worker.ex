@@ -8,6 +8,7 @@ defmodule Cadet.Autograder.LambdaWorker do
   require Logger
 
   alias Cadet.Assessments.Answer
+  alias Cadet.Autograder.ResultStoreWorker
 
   @api_endpoint :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:api_endpoint)
 
@@ -23,19 +24,27 @@ defmodule Cadet.Autograder.LambdaWorker do
     |> Jason.encode!()
   end
 
-  def perform(_) do
+  def perform(answer_id) do
     case HTTPoison.post!(@api_endpoint, test_request_params()) do
       %HTTPoison.Response{status_code: 200, body: body} ->
-        body
-        |> parse_body
+        grade = parse_body(body)
+
+        Que.add(ResultStoreWorker, %{
+          answer_id: answer_id,
+          result: %{grade: grade, status: :success}
+        })
 
       %HTTPoison.Response{status_code: status_code} ->
         raise "HTTP Status #{status_code}"
     end
   end
 
-  def on_failure(_, error) do
-    Logger.error("Autograder error: #{inspect(error)}")
+  def on_failure(answer_id, error) do
+    Logger.error(
+      "Failed to get autograder result. answer_id: #{answer_id}, error: #{inspect(error)}"
+    )
+
+    Que.add(ResultStoreWorker, %{answer_id: answer_id, result: %{status: :failed}})
   end
 
   def parse_body(body) do
@@ -51,7 +60,5 @@ defmodule Cadet.Autograder.LambdaWorker do
       end
     end)
     |> Enum.sum()
-    |> inspect()
-    |> IO.puts()
   end
 end
