@@ -143,7 +143,7 @@ defmodule Cadet.Test.XMLGenerator do
     ]
   end
 
-  defp process_globals(globals) when is_nil(globals) do
+  defp process_globals(nil) do
     []
   end
 
@@ -202,9 +202,8 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp map_convert_keys(struct, mapping) do
-    map = Map.from_struct(struct)
-
-    map
+    struct
+    |> Map.from_struct()
     |> Enum.filter(fn {k, v} -> k in Map.keys(mapping) and not is_nil(v) end)
     |> Enum.into(%{}, fn {k, v} -> {mapping[k], v} end)
   end
