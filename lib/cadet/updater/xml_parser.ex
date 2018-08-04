@@ -119,25 +119,21 @@ defmodule Cadet.Updater.XMLParser do
       xml
       |> xpath(
         ~x"//PROBLEMS/PROBLEM"el,
-        type: ~x"./@type"os,
+        type: ~x"./@type"o |> transform_by(&process_charlist/1),
         max_grade: ~x"./@maxgrade"oi,
         entity: ~x"."
       )
       |> Enum.map(fn param ->
-        with {:not_missing_attr?, true} <-
-               {:not_missing_attr?, param[:type] != "" and not is_nil(param[:max_grade])},
+        with {:no_missing_attr?, true} <-
+               {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
                process_question_library(question, default_library),
              question when is_map(question) <- Map.delete(question, :entity) do
           question
         else
-          {:not_missing_attr?, false} ->
+          {:no_missing_attr?, false} ->
             Logger.error("Missing attribute(s) on PROBLEM")
-            :error
-
-          {:error, changeset} ->
-            log_error_bad_changeset(changeset, Question)
             :error
 
           :error ->
@@ -202,7 +198,7 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
-  @spec process_question_library(map(), any()) :: map()
+  @spec process_question_library(map(), any()) :: map() | :error
   defp process_question_library(question, default_library) do
     library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
     grading_library = xpath(question[:entity], ~x"./GRADERDEPLOYMENT"o) || library
@@ -217,6 +213,7 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
+  @spec process_question_library(any()) :: map()
   defp process_question_library(library_entity) do
     globals =
       library_entity
@@ -246,7 +243,12 @@ defmodule Cadet.Updater.XMLParser do
     |> Map.put(:external, external)
   end
 
-  @spec process_charlist(charlist()) :: String.t()
+  @spec process_charlist(charlist() | nil) :: String.t() | nil
+
+  defp process_charlist(nil) do
+    nil
+  end
+
   defp process_charlist(charlist) do
     charlist
     |> to_string()

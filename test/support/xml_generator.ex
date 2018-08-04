@@ -18,14 +18,18 @@ defmodule Cadet.Test.XMLGenerator do
       ) do
     assessment_wide_library =
       if opts[:library] do
-        process_library(opts[:library], using: &deployment/2)
+        process_library(opts[:library], using: &deployment/2, no_deployment: opts[:no_deployment])
       else
         []
       end
 
     assessment_wide_grading_library =
       if opts[:grading_library] do
-        process_library(opts[:grading_library], using: &graderdeployment/2)
+        process_library(
+          opts[:grading_library],
+          using: &graderdeployment/2,
+          no_deployment: opts[:no_deployment]
+        )
       else
         []
       end
@@ -48,11 +52,23 @@ defmodule Cadet.Test.XMLGenerator do
             problems([
               for question <- questions do
                 problem(
-                  generate_problem_attrs(question, opts[:problem_permit_keys]),
+                  generate_problem_attrs(
+                    question,
+                    opts[:problem_permit_keys],
+                    opts[:override_type]
+                  ),
                   [text(question.question.content)] ++
                     process_question_by_question_type(question) ++
-                    process_library(question.library, using: &deployment/2) ++
-                    process_library(question.grading_library, using: &graderdeployment/2)
+                    process_library(
+                      question.library,
+                      using: &deployment/2,
+                      no_deployment: opts[:no_deployment]
+                    ) ++
+                    process_library(
+                      question.grading_library,
+                      using: &graderdeployment/2,
+                      no_deployment: opts[:no_deployment]
+                    )
                 )
               end
             ])
@@ -62,9 +78,11 @@ defmodule Cadet.Test.XMLGenerator do
     )
   end
 
-  defp generate_problem_attrs(question, permit_keys) do
+  defp generate_problem_attrs(question, permit_keys, override_type) do
+    type = override_type || question.type
+
     map_permit_keys(
-      %{type: question.type, maxgrade: question.max_grade},
+      %{type: type, maxgrade: question.max_grade},
       permit_keys || ~w(type maxgrade)a
     )
   end
@@ -139,14 +157,23 @@ defmodule Cadet.Test.XMLGenerator do
     []
   end
 
-  defp process_library(library, using: tag_function) when is_map(library) do
-    [
-      tag_function.(
-        %{interpreter: library.chapter},
-        [external(%{name: library.external.name}, Enum.map(library.external.symbols, &symbol/1))] ++
-          process_globals(library[:globals])
-      )
-    ]
+  defp process_library(library, using: tag_function, no_deployment: no_deployment)
+       when is_map(library) do
+    if no_deployment do
+      []
+    else
+      [
+        tag_function.(
+          %{interpreter: library.chapter},
+          [
+            external(
+              %{name: library.external.name},
+              Enum.map(library.external.symbols, &symbol/1)
+            )
+          ] ++ process_globals(library[:globals])
+        )
+      ]
+    end
   end
 
   defp process_globals(nil) do

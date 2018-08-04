@@ -10,10 +10,9 @@ defmodule Cadet.Updater.XMLParserTest do
 
   setup do
     assessments =
-      Enum.into(
+      Enum.map(
         AssessmentType.__enum_map__(),
-        %{},
-        &{&1, build(:assessment, type: &1, is_published: true)}
+        &build(:assessment, type: &1, is_published: true)
       )
 
     questions = build_list(5, :question, assessment: nil)
@@ -21,7 +20,7 @@ defmodule Cadet.Updater.XMLParserTest do
   end
 
   test "XML Parser happy path", %{assessments: assessments, questions: questions} do
-    for {_type, assessment} <- assessments do
+    for assessment <- assessments do
       xml = XMLGenerator.generate_xml_for(assessment, questions)
 
       assert XMLParser.parse_xml(xml) == :ok
@@ -65,7 +64,7 @@ defmodule Cadet.Updater.XMLParserTest do
         &{&1, Timex.format!(Timex.now(), &1)}
       )
 
-    for {_type, assessment} <- assessments,
+    for assessment <- assessments,
         {date_format_string, date_string} <- date_strings do
       assessment_wrong_date_format = %{assessment | open_at: date_string}
 
@@ -81,7 +80,7 @@ defmodule Cadet.Updater.XMLParserTest do
   end
 
   test "PROBLEM with missing type", %{assessments: assessments, questions: questions} do
-    for {_type, assessment} <- assessments do
+    for assessment <- assessments do
       xml =
         XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(maxgrade)a)
 
@@ -91,11 +90,41 @@ defmodule Cadet.Updater.XMLParserTest do
   end
 
   test "PROBLEM with missing maxgrade", %{assessments: assessments, questions: questions} do
-    for {_type, assessment} <- assessments do
+    for assessment <- assessments do
       xml = XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(type)a)
 
       assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
                "Missing attribute(s) on PROBLEM"
+    end
+  end
+
+  test "Invalid question type", %{assessments: assessments, questions: questions} do
+    for assessment <- assessments do
+      xml = XMLGenerator.generate_xml_for(assessment, questions, override_type: "anu")
+
+      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+               "Invalid question type."
+    end
+  end
+
+  test "Invalid question changeset", %{assessments: assessments, questions: questions} do
+    for assessment <- assessments do
+      questions_without_content =
+        Enum.map(questions, &%{&1 | question: %{&1.question | content: ""}})
+
+      xml = XMLGenerator.generate_xml_for(assessment, questions_without_content)
+
+      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+               ~r/Invalid \b.*\b changeset\./
+    end
+  end
+
+  test "missing DEPLOYMENT", %{assessments: assessments, questions: questions} do
+    for assessment <- assessments do
+      xml = XMLGenerator.generate_xml_for(assessment, questions, no_deployment: true)
+
+      assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+               "Missing DEPLOYMENT"
     end
   end
 
@@ -117,9 +146,12 @@ defmodule Cadet.Updater.XMLParserTest do
   end
 
   defp convert_map_keys_to_string(map) when is_map(map) do
-    Enum.into(map, %{}, fn
-      {k, v} when is_atom(k) and is_map(v) -> {Atom.to_string(k), convert_map_keys_to_string(v)}
+    map
+    |> Enum.into(%{}, fn
       {k, v} when is_atom(k) -> {Atom.to_string(k), v}
+      {k, v} -> {k, v}
+    end)
+    |> Enum.into(%{}, fn
       {k, v} when is_map(v) -> {k, convert_map_keys_to_string(v)}
       {k, v} -> {k, v}
     end)
