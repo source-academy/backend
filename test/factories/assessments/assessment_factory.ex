@@ -24,8 +24,7 @@ defmodule Cadet.Assessments.AssessmentFactory do
           title: Faker.Lorem.Shakespeare.En.hamlet(),
           summary_short: Faker.Lorem.Shakespeare.En.king_richard_iii(),
           summary_long: Faker.Lorem.Shakespeare.En.romeo_and_juliet(),
-          number:
-            "#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{Enum.random(0..10)}",
+          number: sequence(:number, & "#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{&1}"),
           story: Enum.random(valid_stories),
           reading: Faker.Lorem.sentence(),
           type: type,
