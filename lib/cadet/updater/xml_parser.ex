@@ -109,8 +109,10 @@ defmodule Cadet.Updater.XMLParser do
     {:ok, assessment_params}
   rescue
     e in Timex.Parse.ParseError ->
-      %{message: message} = e
-      Logger.error("Time does not conform to ISO8601 DateTime: #{message}")
+      Logger.error("Time does not conform to ISO8601 DateTime: #{e.message}")
+      :error
+    _ in Protocol.UndefinedError ->
+      Logger.error("Missing TASK")
       :error
   end
 

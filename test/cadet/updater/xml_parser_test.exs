@@ -216,6 +216,26 @@ defmodule Cadet.Updater.XMLParserTest do
         assert capture_log(fn -> assert XMLParser.parse_and_insert(type) == {:error, "Error processing XML files."} end) =~ ":expected_element_start_tag"
       end
     end
+
+    test "valid xml file but invalid assessment xml" do
+      for {type, location} <- @locations do
+        path = Path.join(@local_name, location)
+
+        File.mkdir_p!(path)
+
+        location = Path.join(path, "best-markup-language.xml")
+
+        File.write!(location, """
+                    <html>
+                    <head><title>Best markup language!</title></head>
+                    <body>
+                    <blink>Sadly this usually won't work in newer browsers</blink>
+                    </body>
+                    </html>
+                    """)
+        assert capture_log(fn -> XMLParser.parse_and_insert(type) == {:error, "Error processing XML files."} end) =~ "Missing TASK"
+      end
+    end
   end
 
   defp assert_map_keys(map1, map2, keys) do
