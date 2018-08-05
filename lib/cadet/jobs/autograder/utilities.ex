@@ -25,19 +25,21 @@ defmodule Cadet.Autograder.Utilities do
     Enum.map(assessments, &insert_list(3, :programming_question, %{assessment: &1}))
   end
 
-  # TODO: IMPLEMENT THIS
   def dispatch_answer(answer, question) do
     if question.type == :programming do
       Que.add(Cadet.Autograder.LambdaWorker, %{question: question, answer: answer})
-      IO.puts("Dispatched answer: answer_id: #{answer.id}, question_id: #{question.id}")
     end
   end
 
   def fetch_submissions(assessment_id) when is_ecto_id(assessment_id) do
     User
     |> where(role: "student")
-    |> join(:left, [u], s in Submission, u.id == s.student_id)
-    |> where([_, s], s.assessment_id == ^assessment_id)
+    |> join(
+      :left,
+      [u],
+      s in Submission,
+      u.id == s.student_id and s.assessment_id == ^assessment_id
+    )
     |> select([u, s], %{student_id: u.id, submission: s})
     |> Repo.all()
   end
