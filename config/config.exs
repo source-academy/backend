@@ -12,7 +12,7 @@ config :cadet,
   updater: [interval: 1 * 60 * 1000]
 
 # Scheduler, e.g. for CS1101S
-config :cadet, Cadet.Updater.Scheduler,
+config :cadet, Cadet.Jobs.Scheduler,
   jobs: [
     {"* * * * *", {Cadet.Updater.CS1101S, :update, []}}
   ]
