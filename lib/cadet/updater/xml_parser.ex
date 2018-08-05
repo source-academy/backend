@@ -31,9 +31,9 @@ defmodule Cadet.Updater.XMLParser do
       :ok
     else
       {:assessment_type, false} -> {:error, "XML location of assessment type is not defined."}
-      {:cloned?, {:error, _}} -> {:error, "Local copy of repository is either missing or empty."}
+      {:cloned?, _} -> {:error, "Local copy of repository is either missing or empty."}
       {:type, false} -> {:error, "Directory containing XML is not found."}
-      {:listing, {:error, _}} -> {:error, "Directory containing XML is empty."}
+      {:listing, _} -> {:error, "Directory containing XML is empty."}
       {:filter, _} -> {:error, "No XML file is found."}
       {:process, :error} -> {:error, "Error processing XML files."}
     end
@@ -83,6 +83,9 @@ defmodule Cadet.Updater.XMLParser do
         log_error_bad_changeset(changeset, stage)
         :error
     end
+  catch
+    :exit, _ ->
+      :error
   end
 
   @spec process_assessment(String.t()) :: {:ok, map()} | :error
