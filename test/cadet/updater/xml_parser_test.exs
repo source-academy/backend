@@ -164,12 +164,14 @@ defmodule Cadet.Updater.XMLParserTest do
     end
 
     test "wrong assessment type" do
-      assert XMLParser.parse_and_insert(:lambda) == {:error, "XML location of assessment type is not defined."}
+      assert XMLParser.parse_and_insert(:lambda) ==
+               {:error, "XML location of assessment type is not defined."}
     end
 
     test "repository not cloned" do
       for type <- AssessmentType.__enum_map__() do
-        assert XMLParser.parse_and_insert(type) == {:error, "Local copy of repository is either missing or empty."}
+        assert XMLParser.parse_and_insert(type) ==
+                 {:error, "Local copy of repository is either missing or empty."}
       end
     end
 
@@ -179,7 +181,8 @@ defmodule Cadet.Updater.XMLParserTest do
       @local_name |> Path.join("never-gonna-give-you-up.mp3") |> File.touch!()
 
       for type <- AssessmentType.__enum_map__() do
-        assert XMLParser.parse_and_insert(type) == {:error, "Directory containing XML is not found."}
+        assert XMLParser.parse_and_insert(type) ==
+                 {:error, "Directory containing XML is not found."}
       end
     end
 
@@ -213,7 +216,10 @@ defmodule Cadet.Updater.XMLParserTest do
 
         path |> Path.join("lambda.xml") |> File.touch!()
 
-        assert capture_log(fn -> assert XMLParser.parse_and_insert(type) == {:error, "Error processing XML files."} end) =~ ":expected_element_start_tag"
+        assert capture_log(fn ->
+                 assert XMLParser.parse_and_insert(type) ==
+                          {:error, "Error processing XML files."}
+               end) =~ ":expected_element_start_tag"
       end
     end
 
@@ -226,14 +232,17 @@ defmodule Cadet.Updater.XMLParserTest do
         location = Path.join(path, "best-markup-language.xml")
 
         File.write!(location, """
-                    <html>
-                    <head><title>Best markup language!</title></head>
-                    <body>
-                    <blink>Sadly this usually won't work in newer browsers</blink>
-                    </body>
-                    </html>
-                    """)
-        assert capture_log(fn -> XMLParser.parse_and_insert(type) == {:error, "Error processing XML files."} end) =~ "Missing TASK"
+        <html>
+        <head><title>Best markup language!</title></head>
+        <body>
+        <blink>Sadly this usually won't work in newer browsers</blink>
+        </body>
+        </html>
+        """)
+
+        assert capture_log(fn ->
+                 XMLParser.parse_and_insert(type) == {:error, "Error processing XML files."}
+               end) =~ "Missing TASK"
       end
     end
   end
