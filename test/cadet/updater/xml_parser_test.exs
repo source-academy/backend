@@ -12,6 +12,8 @@ defmodule Cadet.Updater.XMLParserTest do
   @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
 
   setup do
+    File.rm_rf!(@local_name)
+
     assessments =
       Enum.map(
         AssessmentType.__enum_map__(),
@@ -27,12 +29,6 @@ defmodule Cadet.Updater.XMLParserTest do
       questions: questions,
       assessments_with_type: assessments_with_type
     }
-  end
-
-  setup_all do
-    on_exit(fn ->
-      File.rm_rf!(@local_name)
-    end)
   end
 
   describe "Pure XML Parser" do
@@ -164,6 +160,60 @@ defmodule Cadet.Updater.XMLParserTest do
 
       for type <- AssessmentType.__enum_map__() do
         assert XMLParser.parse_and_insert(type) == :ok
+      end
+    end
+
+    test "wrong assessment type" do
+      assert XMLParser.parse_and_insert(:lambda) == {:error, "XML location of assessment type is not defined."}
+    end
+
+    test "repository not cloned" do
+      for type <- AssessmentType.__enum_map__() do
+        assert XMLParser.parse_and_insert(type) == {:error, "Local copy of repository is either missing or empty."}
+      end
+    end
+
+    test "directory containing xml not found" do
+      File.mkdir_p!(@local_name)
+
+      @local_name |> Path.join("never-gonna-give-you-up.mp3") |> File.touch!()
+
+      for type <- AssessmentType.__enum_map__() do
+        assert XMLParser.parse_and_insert(type) == {:error, "Directory containing XML is not found."}
+      end
+    end
+
+    test "directory containing xml is empty" do
+      for {type, location} <- @locations do
+        @local_name
+        |> Path.join(location)
+        |> File.mkdir_p!()
+
+        assert XMLParser.parse_and_insert(type) == {:error, "Directory containing XML is empty."}
+      end
+    end
+
+    test "no xml file is found" do
+      for {type, location} <- @locations do
+        path = Path.join(@local_name, location)
+
+        File.mkdir_p!(path)
+
+        path |> Path.join("Never-gonna-give-you-up.mp3") |> File.touch!()
+
+        assert XMLParser.parse_and_insert(type) == {:error, "No XML file is found."}
+      end
+    end
+
+    test "empty xml file" do
+      for {type, location} <- @locations do
+        path = Path.join(@local_name, location)
+
+        File.mkdir_p!(path)
+
+        path |> Path.join("lambda.xml") |> File.touch!()
+
+        assert capture_log(fn -> assert XMLParser.parse_and_insert(type) == {:error, "Error processing XML files."} end) =~ ":expected_element_start_tag"
       end
     end
   end
