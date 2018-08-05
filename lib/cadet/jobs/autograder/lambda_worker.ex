@@ -7,7 +7,6 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   require Logger
 
-  alias Cadet.Assessments.Answer
   alias Cadet.Autograder.ResultStoreWorker
 
   @lambda_name :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:lambda_name)
@@ -23,7 +22,10 @@ defmodule Cadet.Autograder.LambdaWorker do
     }
   end
 
-  def perform(answer_id) do
+  def build_request_params(%{question: question, answer: answer}) do
+  end
+
+  def perform(%{question: question, answer: answer}) do
     grade =
       @lambda_name
       |> ExAws.Lambda.invoke(test_request_params(), %{})
@@ -31,7 +33,7 @@ defmodule Cadet.Autograder.LambdaWorker do
       |> parse_response()
 
     Que.add(ResultStoreWorker, %{
-      answer_id: answer_id,
+      answer_id: answer.id,
       result: %{grade: grade, status: :success}
     })
   end

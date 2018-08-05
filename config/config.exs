@@ -14,7 +14,9 @@ config :cadet,
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Jobs.Scheduler,
   jobs: [
-    {"* * * * *", {Cadet.Updater.CS1101S, :update, []}}
+    {"* * * * *", {Cadet.Updater.CS1101S, :update, []}},
+    # Grade previous day's submission at 3am
+    {"0 3 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}}
   ]
 
 # Configures the endpoint
