@@ -22,6 +22,7 @@ defmodule Cadet.Assessments.AssessmentFactory do
 
         %Assessment{
           title: Faker.Lorem.Shakespeare.En.hamlet(),
+          cover_picture: Faker.Avatar.image_url(),
           summary_short: Faker.Lorem.Shakespeare.En.king_richard_iii(),
           summary_long: Faker.Lorem.Shakespeare.En.romeo_and_juliet(),
           number:

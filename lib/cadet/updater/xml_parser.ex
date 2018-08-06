@@ -125,6 +125,7 @@ defmodule Cadet.Updater.XMLParser do
         close_at: ~x"./@duedate"s |> transform_by(&Timex.parse!(&1, "{ISO:Extended}")),
         number: ~x"./@number"s,
         story: ~x"./@story"s,
+        cover_picture: ~x"./@coverimage"s,
         reading: ~x"//READING/text()" |> transform_by(&process_charlist/1),
         summary_short: ~x"//WEBSUMMARY/text()" |> transform_by(&process_charlist/1),
         summary_long: ~x"./TEXT/text()" |> transform_by(&process_charlist/1)

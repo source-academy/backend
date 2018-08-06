@@ -6,7 +6,7 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Assessments.{AssessmentType, Image, Question, SubmissionStatus, Upload}
+  alias Cadet.Assessments.{AssessmentType, Question, SubmissionStatus, Upload}
 
   schema "assessments" do
     field(:max_grade, :integer, virtual: true)
@@ -18,7 +18,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:summary_long, :string)
     field(:open_at, Timex.Ecto.DateTime)
     field(:close_at, Timex.Ecto.DateTime)
-    field(:cover_picture, Image.Type)
+    field(:cover_picture, :string)
     field(:mission_pdf, Upload.Type)
     field(:number, :string)
     field(:story, :string)
