@@ -7,6 +7,22 @@ defmodule Cadet.Autograder.GradingJobTest do
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Autograder.{GradingJob, LambdaWorker, Utilities}
 
+  defmacrop assert_dispatched(answer_question_list) do
+    quote do
+      for {answer, question} <- unquote(answer_question_list) do
+        assert_called(
+          Que.add(
+            LambdaWorker,
+            %{
+              question: Repo.get(Question, question.id),
+              answer: Repo.get(Answer, answer.id)
+            }
+          )
+        )
+      end
+    end
+  end
+
   setup do
     assessments =
       insert_list(3, :assessment, %{
@@ -48,53 +64,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       questions = Enum.flat_map(assessments, fn {_, questions} -> questions end)
       answers = Enum.flat_map(submissions, fn {_, answers} -> answers end)
 
-      for {answer, question} <- Enum.zip(answers, questions) do
-        assert_called(
-          Que.add(
-            LambdaWorker,
-            %{
-              question: get_question_for_mock(question.id),
-              answer: get_answer_for_mock(answer.id)
-            }
-          )
-        )
-      end
+      assert_dispatched(Enum.zip(answers, questions))
     end
-  end
-
-  # CHANGE THIS AT YOUR PERIL
-  defp get_question_for_mock(id) do
-    Question
-    |> where(id: ^id)
-    |> select([
-      :assessment_id,
-      :grading_library,
-      :id,
-      :library,
-      :inserted_at,
-      :question,
-      :type,
-      :updated_at,
-      :title,
-      :max_grade
-    ])
-    |> Repo.one()
-  end
-
-  defp get_answer_for_mock(id) do
-    Answer
-    |> where(id: ^id)
-    |> select([
-      :id,
-      :answer,
-      :grade,
-      :inserted_at,
-      :question_id,
-      :submission_id,
-      :updated_at,
-      :adjustment,
-      :autograding_status
-    ])
-    |> Repo.one()
   end
 end
