@@ -56,9 +56,11 @@ defmodule Cadet.Updater.XMLParser do
           :error
       end
     end
-    |> Enum.reduce(fn result, acc ->
-      if result == :ok and acc == :ok, do: :ok, else: :error
-    end)
+    |> Enum.any?(&(&1 == :error))
+    |> case do
+      true -> :error
+      false -> :ok
+    end
   end
 
   @spec parse_xml(String.t()) :: :ok | :error

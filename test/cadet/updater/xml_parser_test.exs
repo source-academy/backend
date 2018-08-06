@@ -14,6 +14,10 @@ defmodule Cadet.Updater.XMLParserTest do
   setup do
     File.rm_rf!(@local_name)
 
+    on_exit(fn ->
+      File.rm_rf!(@local_name)
+    end)
+
     assessments =
       Enum.map(
         AssessmentType.__enum_map__(),
