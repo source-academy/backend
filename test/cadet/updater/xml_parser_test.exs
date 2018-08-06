@@ -96,7 +96,7 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
-    test "dates not in ISO8601 DateTime", %{assessments: assessments, questions: questions} do
+    test "open dates not in ISO8601 DateTime", %{assessments: assessments, questions: questions} do
       date_strings =
         Enum.map(
           ~w({ISO:Basic} {ISOdate} {RFC822} {RFC1123} {ANSIC} {UNIX}),
@@ -115,6 +115,52 @@ defmodule Cadet.Updater.XMLParserTest do
                    inspect({date_format_string, date_string}, pretty: true)
                  )
                end) =~ "Time does not conform to ISO8601 DateTime"
+      end
+    end
+
+    test "close dates not in ISO8601 DateTime", %{assessments: assessments, questions: questions} do
+      date_strings =
+        Enum.map(
+          ~w({ISO:Basic} {ISOdate} {RFC822} {RFC1123} {ANSIC} {UNIX}),
+          &{&1, Timex.format!(Timex.now(), &1)}
+        )
+
+      for assessment <- assessments,
+          {date_format_string, date_string} <- date_strings do
+        assessment_wrong_date_format = %{assessment | close_at: date_string}
+
+        xml = XMLGenerator.generate_xml_for(assessment_wrong_date_format, questions)
+
+        assert capture_log(fn ->
+                 assert(
+                   XMLParser.parse_xml(xml) == :error,
+                   inspect({date_format_string, date_string}, pretty: true)
+                 )
+               end) =~ "Time does not conform to ISO8601 DateTime"
+      end
+    end
+
+    test "open time without offset", %{assessments: assessments, questions: questions} do
+      datetime_string = Timex.format!(Timex.now(), "{YYYY}-{0M}-{0D}T{h24}:{m}:{s}")
+
+      for assessment <- assessments do
+        assessment_time_without_offset = %{assessment | open_at: datetime_string}
+        xml = XMLGenerator.generate_xml_for(assessment_time_without_offset, questions)
+
+        assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :error end) =~
+                 "Time does not have offset specified."
+      end
+    end
+
+    test "close time without offset", %{assessments: assessments, questions: questions} do
+      datetime_string = Timex.format!(Timex.now(), "{YYYY}-{0M}-{0D}T{h24}:{m}:{s}")
+
+      for assessment <- assessments do
+        assessment_time_without_offset = %{assessment | close_at: datetime_string}
+        xml = XMLGenerator.generate_xml_for(assessment_time_without_offset, questions)
+
+        assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :error end) =~
+                 "Time does not have offset specified."
       end
     end
 

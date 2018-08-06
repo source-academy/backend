@@ -108,6 +108,7 @@ defmodule Cadet.Updater.XMLParser do
         :error
     end
   catch
+    # the :erlsom library used by SweetXml will exit if XML is invalid
     :exit, _ ->
       :error
   end
@@ -130,15 +131,30 @@ defmodule Cadet.Updater.XMLParser do
       )
       |> Map.put(:is_published, true)
 
-    {:ok, assessment_params}
+    if verify_has_time_offset(assessment_params) do
+      {:ok, assessment_params}
+    else
+      Logger.error("Time does not have offset specified.")
+      :error
+    end
   rescue
     e in Timex.Parse.ParseError ->
       Logger.error("Time does not conform to ISO8601 DateTime: #{e.message}")
       :error
 
-    _ in Protocol.UndefinedError ->
+    # This error is raised by xpath/3 when TASK does not exist (hence is equal to nil)
+    Protocol.UndefinedError ->
       Logger.error("Missing TASK")
       :error
+  end
+
+  @spec verify_has_time_offset(%{
+          open_at: DateTime.t() | NaiveDateTime.t(),
+          close_at: DateTime.t() | NaiveDateTime.t()
+        }) :: boolean()
+  defp verify_has_time_offset(%{open_at: open_at, close_at: close_at}) do
+    # Timex.parse!/2 returns NaiveDateTime when offset is not specified, or DateTime otherwise.
+    open_at.__struct__ != NaiveDateTime and close_at.__struct__ != NaiveDateTime
   end
 
   @spec process_questions(String.t()) :: {:ok, [map()]} | :error
