@@ -225,7 +225,7 @@ defmodule Cadet.Updater.XMLParser do
           entity
           |> xpath(
             ~x"./CHOICE"el,
-            content: ~x"./text()" |> transform_by(&process_charlist/1),
+            content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
             is_correct: ~x"./@correct"s |> transform_by(&String.to_atom/1)
           )
           |> Enum.with_index()

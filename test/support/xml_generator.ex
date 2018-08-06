@@ -101,7 +101,7 @@ defmodule Cadet.Test.XMLGenerator do
     case question.type do
       :mcq ->
         for mcq_choice <- question.question.choices do
-          choice(%{correct: mcq_choice.is_correct}, mcq_choice.content)
+          choice(%{correct: mcq_choice.is_correct}, [text(mcq_choice.content)])
         end
 
       :programming ->
