@@ -144,7 +144,7 @@ defmodule Cadet.Assessments do
       Multi.run(multi, String.to_atom("question#{index}"), fn %{assessment: %Assessment{id: id}} ->
         question_params
         |> Map.put(:display_order, index)
-        |> insert_or_update_question_for_assessment_changeset(id)
+        |> build_question_changeset_for_assessment_id(id)
         |> Repo.insert()
       end)
     end)
@@ -177,9 +177,9 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec insert_or_update_question_for_assessment_changeset(map(), number() | String.t()) ::
+  @spec build_question_changeset_for_assessment_id(map(), number() | String.t()) ::
           Ecto.Changeset.t()
-  defp insert_or_update_question_for_assessment_changeset(params, assessment_id)
+  defp build_question_changeset_for_assessment_id(params, assessment_id)
        when is_ecto_id(assessment_id) do
     params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
 

@@ -54,7 +54,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "openAt" => format_datetime(&1.open_at),
               "closeAt" => format_datetime(&1.close_at),
               "type" => "#{&1.type}",
-              "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
+              "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "status" => get_assessment_status(user, &1)
             }
@@ -100,7 +100,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "openAt" => format_datetime(&1.open_at),
               "closeAt" => format_datetime(&1.close_at),
               "type" => "#{&1.type}",
-              "coverImage" => Cadet.Assessments.Image.url({&1.cover_picture, &1}),
+              "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "status" => get_assessment_status(user, &1)
             }

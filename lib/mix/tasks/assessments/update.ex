@@ -28,7 +28,7 @@ defmodule Mix.Tasks.Cadet.Assessments.Update do
         run(args)
 
       {:update, _} ->
-        Logger.info("Unable to pull updates")
+        Logger.error("Unable to pull updates")
     end
   end
 end

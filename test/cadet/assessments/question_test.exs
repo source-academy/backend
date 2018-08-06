@@ -4,6 +4,7 @@ defmodule Cadet.Assessments.QuestionTest do
   use Cadet.ChangesetCase, entity: Question
 
   @required_fields ~w(question type assessment_id)a
+  @required_embeds ~w(library)a
 
   setup do
     assessment = insert(:assessment)
@@ -63,7 +64,7 @@ defmodule Cadet.Assessments.QuestionTest do
       valid_programming_params: programming_params
     } do
       for params <- [mcq_params, programming_params],
-          field <- @required_fields do
+          field <- @required_fields ++ @required_embeds do
         params
         |> Map.delete(field)
         |> assert_changeset(:invalid)
