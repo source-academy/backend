@@ -189,7 +189,10 @@ defmodule Cadet.Updater.XMLParserTest do
   end
 
   describe "XML file processing" do
-    test "happy path", %{assessments_with_type: assessments_with_type, questions: questions} do
+    test "happy path by category", %{
+      assessments_with_type: assessments_with_type,
+      questions: questions
+    } do
       for {type, assessment} <- assessments_with_type do
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
@@ -207,6 +210,27 @@ defmodule Cadet.Updater.XMLParserTest do
       for type <- AssessmentType.__enum_map__() do
         assert XMLParser.parse_and_insert(type) == :ok
       end
+    end
+
+    test "happy path process all", %{
+      assessments_with_type: assessments_with_type,
+      questions: questions
+    } do
+      for {type, assessment} <- assessments_with_type do
+        xml = XMLGenerator.generate_xml_for(assessment, questions)
+
+        path = Path.join(@local_name, @locations[type])
+
+        file_name =
+          (type |> Atom.to_string() |> String.capitalize()) <> "-#{assessment.number}.xml"
+
+        location = Path.join(path, file_name)
+
+        File.mkdir_p!(path)
+        File.write!(location, xml)
+      end
+
+      assert XMLParser.parse_and_insert(:all) == :ok
     end
 
     test "wrong assessment type" do

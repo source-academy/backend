@@ -5,6 +5,8 @@ defmodule Cadet.Updater.XMLParser do
   @local_name if Mix.env() != :test, do: "cs1101s", else: "test/fixtures/local_repo"
   @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
 
+  @type assessment_type :: :mission | :sidequest | :path | :contest
+
   use Cadet, [:display]
 
   import SweetXml
@@ -17,7 +19,27 @@ defmodule Cadet.Updater.XMLParser do
     quote do: is_list(unquote(term)) and unquote(term) != []
   end
 
-  @spec parse_and_insert(:mission | :sidequest | :path | :contest) :: :ok | {:error, String.t()}
+  @spec parse_and_insert(:all) :: :ok | {:error, [{assessment_type(), String.t()}]}
+  @spec parse_and_insert(assessment_type()) :: :ok | {:error, String.t()}
+
+  def parse_and_insert(:all) do
+    errors =
+      for {key, _} <- @locations do
+        {key, parse_and_insert(key)}
+      end
+      |> Enum.filter(fn
+        {_, {:error, _}} -> true
+        {_, :ok} -> false
+      end)
+      |> Enum.map(fn {type, {:error, reason}} -> {type, reason} end)
+
+    if Enum.empty?(errors) do
+      :ok
+    else
+      {:error, errors}
+    end
+  end
+
   def parse_and_insert(type) do
     with {:assessment_type, true} <- {:assessment_type, type in Map.keys(@locations)},
          {:cloned?, {:ok, root}} when is_non_empty_list(root) <- {:cloned?, File.ls(@local_name)},
