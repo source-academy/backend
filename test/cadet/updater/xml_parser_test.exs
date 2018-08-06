@@ -74,6 +74,28 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
+    test "happy path existing still closed assessment", %{
+      assessments: assessments,
+      questions: questions
+    } do
+      for assessment <- assessments do
+        still_closed_assessment =
+          Map.from_struct(%{
+            assessment
+            | open_at: Timex.shift(Timex.now(), days: 2),
+              close_at: Timex.shift(Timex.now(), days: 6)
+          })
+
+        %Assessment{}
+        |> Assessment.changeset(still_closed_assessment)
+        |> Repo.insert!()
+
+        xml = XMLGenerator.generate_xml_for(assessment, questions)
+
+        assert XMLParser.parse_xml(xml) == :ok
+      end
+    end
+
     test "dates not in ISO8601 DateTime", %{assessments: assessments, questions: questions} do
       date_strings =
         Enum.map(
@@ -142,6 +164,26 @@ defmodule Cadet.Updater.XMLParserTest do
 
         assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
                  "Missing DEPLOYMENT"
+      end
+    end
+
+    test "existing already open assessment", %{assessments: assessments, questions: questions} do
+      for assessment <- assessments do
+        already_open_assessment =
+          Map.from_struct(%{
+            assessment
+            | open_at: Timex.shift(Timex.now(), days: -2),
+              close_at: Timex.shift(Timex.now(), days: 2)
+          })
+
+        %Assessment{}
+        |> Assessment.changeset(already_open_assessment)
+        |> Repo.insert!()
+
+        xml = XMLGenerator.generate_xml_for(assessment, questions)
+
+        assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :error end) =~
+                 "assessment is already open"
       end
     end
   end
