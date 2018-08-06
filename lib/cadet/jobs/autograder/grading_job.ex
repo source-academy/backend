@@ -31,10 +31,12 @@ defmodule Cadet.Autograder.GradingJob do
     end
   end
 
-  defp grade_individual_submission(
-         %Submission{id: submission_id},
-         %Assessment{questions: questions}
-       ) do
+  # Exposed as public function in case future mix tasks are needed to regrade
+  # certain submissions.
+  def grade_individual_submission(
+        %Submission{id: submission_id},
+        %Assessment{questions: questions}
+      ) do
     answers =
       Answer
       |> where(submission_id: ^submission_id)
@@ -44,7 +46,11 @@ defmodule Cadet.Autograder.GradingJob do
     grade_submission_question_answer_lists(submission_id, questions, answers, Multi.new())
   end
 
-  defp insert_empty_answer(submission_id, %Question{id: question_id, type: question_type}, multi) do
+  defp insert_empty_programming_answer(
+         submission_id,
+         %Question{id: question_id, type: question_type},
+         multi
+       ) do
     if question_type == :programming do
       Multi.insert(
         multi,
@@ -86,7 +92,7 @@ defmodule Cadet.Autograder.GradingJob do
         submission_id,
         question_tail,
         answers,
-        insert_empty_answer(submission_id, question, multi)
+        insert_empty_programming_answer(submission_id, question, multi)
       )
     end
   end
@@ -101,7 +107,7 @@ defmodule Cadet.Autograder.GradingJob do
       submission_id,
       question_tail,
       [],
-      insert_empty_answer(submission_id, question, multi)
+      insert_empty_programming_answer(submission_id, question, multi)
     )
   end
 

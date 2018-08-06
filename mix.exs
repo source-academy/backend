@@ -75,8 +75,9 @@ defmodule Cadet.Mixfile do
       {:distillery, "~> 1.5.3", runtime: false},
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
+      {:faker, "~> 0.10", only: [:test, :dev]},
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
-      {:faker, "~> 0.10", only: [:test, :dev]}
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 
