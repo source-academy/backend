@@ -17,7 +17,10 @@ defmodule Cadet.Autograder.GradingJob do
       |> Utilities.fetch_submissions()
       |> Enum.map(fn item = %{student_id: student_id, submission: submission} ->
         if submission do
-          item
+          %{
+            student_id: student_id,
+            submission: update_submission_status(submission)
+          }
         else
           %{
             student_id: student_id,
@@ -29,6 +32,12 @@ defmodule Cadet.Autograder.GradingJob do
         grade_individual_submission(submission, assessment)
       end)
     end
+  end
+
+  defp update_submission_status(submission = %Submission{}) do
+    submission
+    |> Submission.changeset(%{status: :submitted})
+    |> Repo.update!()
   end
 
   # Exposed as public function in case future mix tasks are needed to regrade
