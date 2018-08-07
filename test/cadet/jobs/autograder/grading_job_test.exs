@@ -4,8 +4,8 @@ defmodule Cadet.Autograder.GradingJobTest do
   import Mock
   import Ecto.Query
 
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
-  alias Cadet.Autograder.{GradingJob, LambdaWorker, Utilities}
+  alias Cadet.Assessments.{Answer, Question, Submission}
+  alias Cadet.Autograder.{GradingJob, LambdaWorker}
 
   defmacrop assert_dispatched(answer_question_list) do
     quote do
