@@ -55,6 +55,26 @@ defmodule Cadet.Autograder.GradingJob do
     grade_submission_question_answer_lists(submission_id, questions, answers, Multi.new())
   end
 
+  defp grade_answer(answer, question = %{type: type}) do
+    case type do
+      :programming -> Utilities.dispatch_programming_answer(answer, question)
+      :mcq -> grade_mcq_answer(answer, question)
+    end
+  end
+
+  def grade_mcq_answer(answer, question = %Question{question: question_content}) do
+    correct_choice =
+      question_content["choices"]
+      |> Enum.find(&Map.get(&1, "is_correct"))
+      |> Map.get("choice_id")
+
+    grade = if answer.answer["choice_id"] == correct_choice, do: question.max_grade, else: 0
+
+    answer
+    |> Answer.autograding_changeset(%{grade: grade, autograding_status: :success})
+    |> Repo.update!()
+  end
+
   defp insert_empty_programming_answer(
          submission_id,
          %Question{id: question_id, type: question_type},
@@ -66,10 +86,25 @@ defmodule Cadet.Autograder.GradingJob do
         "question#{question_id}",
         %Answer{}
         |> Answer.changeset(%{
-          answer: %{code: "Question not answered by student."},
+          answer: %{code: "//Question not answered by student."},
           question_id: question_id,
           submission_id: submission_id,
-          type: question_type
+          type: question_type,
+          comment: "Question not attempted by student"
+        })
+        |> Answer.autograding_changeset(%{grade: 0, autograding_status: :success})
+      )
+    else
+      Multi.insert(
+        multi,
+        "question#{question_id}",
+        %Answer{}
+        |> Answer.changeset(%{
+          answer: %{choice_id: 0},
+          question_id: question_id,
+          submission_id: submission_id,
+          type: question_type,
+          comment: "Question not attempted by student"
         })
         |> Answer.autograding_changeset(%{grade: 0, autograding_status: :success})
       )
@@ -94,7 +129,7 @@ defmodule Cadet.Autograder.GradingJob do
          multi
        ) do
     if question.id == answer.question_id do
-      Utilities.dispatch_answer(answer, question)
+      grade_answer(answer, question)
       grade_submission_question_answer_lists(submission_id, question_tail, answer_tail, multi)
     else
       grade_submission_question_answer_lists(

@@ -25,7 +25,7 @@ defmodule Cadet.Autograder.Utilities do
     Enum.map(assessments, &insert_list(3, :programming_question, %{assessment: &1}))
   end
 
-  def dispatch_answer(answer, question) do
+  def dispatch_programming_answer(answer, question) do
     if question.type == :programming do
       Que.add(Cadet.Autograder.LambdaWorker, %{question: question, answer: answer})
     end
