@@ -23,7 +23,6 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
         %{
           content: "asd",
           solution_template: "asd",
-          solution_header: "asd",
           library: %{globals: ["a"]}
         },
         :invalid

@@ -199,8 +199,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "id" => &1.id,
                 "type" => "#{&1.type}",
                 "content" => &1.question.content,
-                "solutionTemplate" => &1.question.solution_template,
-                "solutionHeader" => &1.question.solution_header
+                "solutionTemplate" => &1.question.solution_template
               }
             )
 

@@ -131,8 +131,7 @@ defmodule CadetWeb.AssessmentsView do
       :programming ->
         transform_map_for_view(question, %{
           content: "content",
-          solutionTemplate: "solution_template",
-          solutionHeader: "solution_header"
+          solutionTemplate: "solution_template"
         })
 
       :mcq ->
