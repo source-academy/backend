@@ -55,7 +55,7 @@ defmodule Cadet.Autograder.Utilities do
     |> Enum.map(&sort_assessment_questions(&1))
   end
 
-  defp sort_assessment_questions(assessment = %Assessment{}) do
+  def sort_assessment_questions(assessment = %Assessment{}) do
     sorted_questions = Enum.sort_by(assessment.questions, & &1.id)
     Map.put(assessment, :questions, sorted_questions)
   end

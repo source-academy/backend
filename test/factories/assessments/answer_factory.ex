@@ -9,7 +9,8 @@ defmodule Cadet.Assessments.AnswerFactory do
 
       def answer_factory do
         %Answer{
-          answer: %{}
+          answer: %{},
+          autograding_status: :none
         }
       end
 

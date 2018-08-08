@@ -4,6 +4,8 @@ defmodule Cadet.Autograder.GradingJobTest do
   import Mock
   import Ecto.Query
 
+  alias Que.Persistence, as: JobsQueue
+
   alias Cadet.Assessments.{Answer, Question, Submission}
   alias Cadet.Autograder.{GradingJob, LambdaWorker}
 
@@ -20,7 +22,7 @@ defmodule Cadet.Autograder.GradingJobTest do
     end
   end
 
-  describe "all programming questions" do
+  describe "#grade_all_due_yesterday, all programming questions" do
     setup do
       assessments =
         insert_list(3, :assessment, %{
@@ -38,7 +40,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       %{assessments: Enum.zip(assessments, questions)}
     end
 
-    test "all assessments attempted, all questions answered, enqueues all jobs", %{
+    test "all assessments attempted, all questions answered, should enqueue all jobs", %{
       assessments: assessments
     } do
       with_mock Que, add: fn _, _ -> nil end do
@@ -74,7 +76,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       end
     end
 
-    test "all assessments attempted, updates all submission statuses", %{
+    test "all assessments attempted, should update all submission statuses", %{
       assessments: assessments
     } do
       with_mock Que, add: fn _, _ -> nil end do
@@ -93,7 +95,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       end
     end
 
-    test "all assessments unattempted, creates submissions", %{
+    test "all assessments unattempted, should create submissions", %{
       assessments: assessments
     } do
       with_mock Que, add: fn _, _ -> nil end do
@@ -114,41 +116,43 @@ defmodule Cadet.Autograder.GradingJobTest do
       end
     end
 
-    test "all assessments attempting, no questions answered, inserts empty answers", %{
-      assessments: assessments
-    } do
-      with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
+    test "all assessments attempting, no questions answered, " <>
+           "should insert empty answers, should not enqueue any",
+         %{
+           assessments: assessments
+         } do
+      student = insert(:user, %{role: :student})
 
-        for {assessment, _} <- assessments do
-          insert(:submission, %{student: student, assessment: assessment, status: :attempting})
-        end
-
-        GradingJob.grade_all_due_yesterday()
-
-        answers =
-          Submission
-          |> where(student_id: ^student.id)
-          |> join(:inner, [s], a in assoc(s, :answers))
-          |> preload([_, a], answers: a)
-          |> Repo.all()
-          |> Enum.map(&Map.from_struct(&1))
-          |> Enum.flat_map(fn submission -> submission.answers end)
-
-        assert Enum.count(answers) == 9
-
-        for answer <- answers do
-          assert answer.grade == 0
-          assert answer.autograding_status == :success
-          assert answer.answer == %{"code" => "//Question not answered by student."}
-          assert answer.comment == "Question not attempted by student"
-        end
+      for {assessment, _} <- assessments do
+        insert(:submission, %{student: student, assessment: assessment, status: :attempting})
       end
+
+      GradingJob.grade_all_due_yesterday()
+
+      answers =
+        Submission
+        |> where(student_id: ^student.id)
+        |> join(:inner, [s], a in assoc(s, :answers))
+        |> preload([_, a], answers: a)
+        |> Repo.all()
+        |> Enum.map(&Map.from_struct(&1))
+        |> Enum.flat_map(fn submission -> submission.answers end)
+
+      assert Enum.count(answers) == 9
+
+      for answer <- answers do
+        assert answer.grade == 0
+        assert answer.autograding_status == :success
+        assert answer.answer == %{"code" => "//Question not answered by student."}
+        assert answer.comment == "Question not attempted by student"
+      end
+
+      assert JobsQueue.all() |> Enum.count() == 0
     end
 
     # Test unanswered question behaviour of two finger walk
     test "all assessments attempting, first question unanswered, " <>
-           "insert empty answer, dispatch submitted answers",
+           "should insert empty answer, should dispatch submitted answers",
          %{
            assessments: assessments
          } do
@@ -206,7 +210,7 @@ defmodule Cadet.Autograder.GradingJobTest do
     end
   end
 
-  describe "all mcq questions" do
+  describe "#grade_all_due_yesterday, all mcq questions" do
     setup do
       assessments =
         insert_list(3, :assessment, %{
@@ -224,9 +228,11 @@ defmodule Cadet.Autograder.GradingJobTest do
       %{assessments: Enum.zip(assessments, questions)}
     end
 
-    test "all assessments attempted, all questions answered, enqueues all jobs", %{
-      assessments: assessments
-    } do
+    test "all assessments attempted, all questions unanswered, " <>
+           "should insert empty answers, should not enqueue any",
+         %{
+           assessments: assessments
+         } do
       student = insert(:user, %{role: :student})
 
       for {assessment, _} <- assessments do
@@ -252,11 +258,15 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.answer == %{"choice_id" => 0}
         assert answer.comment == "Question not attempted by student"
       end
+
+      assert JobsQueue.all() |> Enum.count() == 0
     end
 
-    test "all assessments attempted, all questions answered, grades all questions", %{
-      assessments: assessments
-    } do
+    test "all assessments attempted, all questions answered, " <>
+           "should grade all questions, should not enqueue any",
+         %{
+           assessments: assessments
+         } do
       student = insert(:user, %{role: :student})
 
       submissions_answers =
@@ -288,6 +298,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       for {answer, question} <- Enum.zip(answers, questions) do
         answer_db = Repo.get(Answer, answer.id)
 
+        # seeded questions have correct choice as 0
         if answer_db.answer["choice_id"] == 0 do
           assert answer_db.grade == question.max_grade
         else
@@ -296,6 +307,8 @@ defmodule Cadet.Autograder.GradingJobTest do
 
         assert answer_db.autograding_status == :success
       end
+
+      assert JobsQueue.all() |> Enum.count() == 0
     end
   end
 end
