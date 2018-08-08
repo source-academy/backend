@@ -24,5 +24,12 @@ resource "aws_lambda_function" "grader" {
   handler          = "index.runAll"
   role             = "${aws_iam_role.grader.arn}"
   runtime          = "nodejs8.10"
+  timeout          = "${var.lambda_timeout}"
   source_code_hash = "${base64sha256(file("${var.lambda_filename}"))}"
+
+  environment {
+    variables = {
+      TIMEOUT = "${var.grader_timeout}"
+    }
+  }
 }
