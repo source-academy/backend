@@ -13,24 +13,27 @@ defmodule Cadet.Assessments.QuestionFactory do
 
       def programming_question_factory do
         %Question{
-          title: sequence("question"),
           type: :programming,
+          max_grade: 10,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
           grading_library: Enum.random([build(:library), nil]),
           question: %{
             content: Faker.Pokemon.name(),
-            solution_header: Faker.Pokemon.location(),
             solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
-            solution: Faker.Lorem.Shakespeare.hamlet()
+            solution: Faker.Lorem.Shakespeare.hamlet(),
+            autograder:
+              (&Faker.Lorem.Shakespeare.king_richard_iii/0)
+              |> Stream.repeatedly()
+              |> Enum.take(Enum.random(0..2))
           }
         }
       end
 
       def mcq_question_factory do
         %Question{
-          title: sequence("question"),
           type: :mcq,
+          max_grade: 10,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
           grading_library: Enum.random([build(:library), nil]),

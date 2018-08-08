@@ -19,4 +19,8 @@ defmodule Cadet.DisplayHelper do
     |> Enum.map(fn {key, {message, _}} -> "#{key} #{message}" end)
     |> Enum.join(", ")
   end
+
+  def create_invalid_changeset_with_error(key, message) do
+    add_error(%Ecto.Changeset{}, key, message)
+  end
 end

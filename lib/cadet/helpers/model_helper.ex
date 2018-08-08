@@ -107,8 +107,13 @@ defmodule Cadet.ModelHelper do
       validated_map = embed_changeset |> apply_changes |> Map.from_struct()
       put_change(changeset, field, validated_map)
     else
-      {:changeset, _} ->
-        add_error(changeset, field, "invalid #{field} provided for #{field} type")
+      {:changeset, embed_changeset} ->
+        add_error(
+          changeset,
+          field,
+          "invalid #{field} provided for #{field} type.\n" <>
+            "Changeset: #{inspect(embed_changeset)}"
+        )
 
       # Missing or wrongly typed fields should be handled by `validates_required/2`
       # in parent changeset.

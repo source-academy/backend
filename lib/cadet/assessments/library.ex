@@ -21,17 +21,32 @@ defmodule Cadet.Assessments.Library do
     library
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:external)
+    |> put_default_external()
     |> validate_required(@required_fields ++ @required_embeds)
     |> validate_globals()
   end
 
-  def validate_globals(changeset) do
+  defp validate_globals(changeset) do
     globals = get_change(changeset, :globals)
 
-    if Enum.all?(globals, fn {name, value} -> is_binary(name) and is_binary(value) end) do
+    with {:nil?, false} <- {:nil?, is_nil(globals)},
+         {:valid?, true} <-
+           {:valid?,
+            Enum.all?(globals, fn {name, value} -> is_binary(name) and is_binary(value) end)} do
       changeset
     else
-      add_error(changeset, :globals, "invalid format")
+      {:nil?, true} -> changeset
+      _ -> add_error(changeset, :globals, "invalid format")
+    end
+  end
+
+  def put_default_external(changeset) do
+    external = get_change(changeset, :external)
+
+    if external do
+      changeset
+    else
+      put_change(changeset, :external, %ExternalLibrary{})
     end
   end
 end
