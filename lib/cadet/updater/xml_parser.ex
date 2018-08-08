@@ -278,7 +278,7 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(
         ~x"./EXTERNAL"o,
         name: ~x"./@name"s |> transform_by(&String.downcase/1),
-        symbol: ~x"./SYMBOL/text()"sl
+        symbols: ~x"./SYMBOL/text()"sl
       )
 
     library_entity

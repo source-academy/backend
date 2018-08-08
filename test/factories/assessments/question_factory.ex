@@ -20,7 +20,8 @@ defmodule Cadet.Assessments.QuestionFactory do
           grading_library: Enum.random([build(:library), nil]),
           question: %{
             content: Faker.Pokemon.name(),
-            solution_header: Faker.Pokemon.location(),
+            # solution_header: Faker.Pokemon.location(),
+            solution_header: nil,
             solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
             solution: Faker.Lorem.Shakespeare.hamlet(),
             autograder:
@@ -48,7 +49,8 @@ defmodule Cadet.Assessments.QuestionFactory do
       def mcq_choice_factory do
         %{
           content: Faker.Pokemon.name(),
-          hint: Faker.Pokemon.location()
+          # hint: Faker.Pokemon.location()
+          hint: nil
         }
       end
     end

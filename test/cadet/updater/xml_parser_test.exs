@@ -335,15 +335,48 @@ defmodule Cadet.Updater.XMLParserTest do
     end
   end
 
-  defp assert_map_keys(map1, map2, keys) do
+  defp assert_list(list1, list2) when is_list(list1) and is_list(list2) do
+    assert length(list1) == length(list2)
+
+    for {member1, member2} <- Enum.zip(list1, list2) do
+      case member1 do
+        map when is_map(map) ->
+          assert_map_keys(
+            convert_map_keys_to_string(member1),
+            convert_map_keys_to_string(member2),
+            member1 |> Map.keys() |> Enum.map(&stringify/1)
+          )
+
+        _ ->
+          assert(member1 == member2, "list1: #{inspect(list1)}, list2: #{inspect(list2)}")
+      end
+    end
+  end
+
+  defp stringify(atom) when is_atom(atom), do: Atom.to_string(atom)
+  defp stringify(string) when is_binary(string), do: string
+
+  defp assert_map_keys(map1, map2, keys) when is_map(map1) and is_map(map2) do
     for key <- keys do
-      assert not is_nil(map1[key])
-      assert not is_nil(map2[key])
+      assert_error_message =
+        "key: #{inspect(key)}, map1[key]: #{inspect(map1[key])}, map2[key]: #{inspect(map2[key])}"
 
       case map1[key] do
-        %DateTime{} -> Timex.equal?(map1[key], map2[key])
-        %{} -> convert_map_keys_to_string(map1[key]) == convert_map_keys_to_string(map2[key])
-        _ -> assert map1[key] == map2[key]
+        %DateTime{} ->
+          assert(Timex.equal?(map1[key], map2[key]), assert_error_message)
+
+        %{} ->
+          assert_map_keys(
+            convert_map_keys_to_string(map1[key]),
+            convert_map_keys_to_string(map2[key]),
+            Map.keys(map1[key])
+          )
+
+        list when is_list(list) ->
+          assert_list(map1[key], map2[key])
+
+        _ ->
+          assert(map1[key] == map2[key], assert_error_message)
       end
     end
   end
