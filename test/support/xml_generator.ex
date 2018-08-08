@@ -10,6 +10,7 @@ defmodule Cadet.Test.XMLGenerator do
 
   import XmlBuilder
 
+  # TODO: refactor in smaller functions
   @spec generate_xml_for(%Assessment{}, [%Question{}], [{atom(), any()}]) :: String.t()
   def generate_xml_for(
         assessment = %Assessment{},
