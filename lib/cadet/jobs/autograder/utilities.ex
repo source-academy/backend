@@ -8,7 +8,7 @@ defmodule Cadet.Autograder.Utilities do
   import Cadet.Factory
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.{Assessment, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Submission}
 
   # TODO: DELETE THIS
   def seed_assessments do
@@ -26,9 +26,11 @@ defmodule Cadet.Autograder.Utilities do
   end
 
   def dispatch_programming_answer(answer, question) do
-    if question.type == :programming do
-      Que.add(Cadet.Autograder.LambdaWorker, %{question: question, answer: answer})
-    end
+    answer
+    |> Answer.autograding_changeset(%{autograding_status: :processing})
+    |> Repo.update!()
+
+    Que.add(Cadet.Autograder.LambdaWorker, %{question: question, answer: answer})
   end
 
   def fetch_submissions(assessment_id) when is_ecto_id(assessment_id) do
