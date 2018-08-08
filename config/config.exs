@@ -13,8 +13,9 @@ config :cadet,
 
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Updater.Scheduler,
+  timezone: "Asia/Singapore",
   jobs: [
-    {"* * * * *", {Cadet.Updater.CS1101S, :update, []}}
+    {"@daily", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}}
   ]
 
 # Configures the endpoint

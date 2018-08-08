@@ -15,6 +15,15 @@ defmodule Cadet.Updater.CS1101S do
 
   require Logger
 
+  @doc "Check whether repository is already cloned"
+  @spec repo_cloned? :: boolean()
+  def repo_cloned? do
+    case File.ls(@local_name) do
+      {:ok, files} -> Enum.any?(files, &(&1 == ".git"))
+      _ -> false
+    end
+  end
+
   @spec clone :: no_return()
   def clone do
     Logger.info("Cloning CS1101S: Started")

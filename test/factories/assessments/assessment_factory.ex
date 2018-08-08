@@ -22,10 +22,14 @@ defmodule Cadet.Assessments.AssessmentFactory do
 
         %Assessment{
           title: Faker.Lorem.Shakespeare.En.hamlet(),
+          cover_picture: Faker.Avatar.image_url(),
           summary_short: Faker.Lorem.Shakespeare.En.king_richard_iii(),
           summary_long: Faker.Lorem.Shakespeare.En.romeo_and_juliet(),
           number:
-            "#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{Enum.random(0..10)}",
+            sequence(
+              :number,
+              &"#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{&1}"
+            ),
           story: Enum.random(valid_stories),
           reading: Faker.Lorem.sentence(),
           type: type,

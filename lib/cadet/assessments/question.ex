@@ -9,7 +9,6 @@ defmodule Cadet.Assessments.Question do
   alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion}
 
   schema "questions" do
-    field(:title, :string)
     field(:display_order, :integer)
     field(:question, :map)
     field(:type, QuestionType)
@@ -21,7 +20,7 @@ defmodule Cadet.Assessments.Question do
     timestamps()
   end
 
-  @required_fields ~w(title question type assessment_id)a
+  @required_fields ~w(question type assessment_id)a
   @optional_fields ~w(display_order max_grade)a
   @required_embeds ~w(library)a
 
