@@ -13,6 +13,7 @@ config :cadet,
 
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Updater.Scheduler,
+  timezone: "Asia/Singapore",
   jobs: [
     {"@daily", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}}
   ]
