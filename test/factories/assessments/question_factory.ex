@@ -47,8 +47,7 @@ defmodule Cadet.Assessments.QuestionFactory do
       def mcq_choice_factory do
         %{
           content: Faker.Pokemon.name(),
-          # hint: Faker.Pokemon.location()
-          hint: nil
+          hint: Faker.Pokemon.location()
         }
       end
     end

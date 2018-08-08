@@ -101,7 +101,9 @@ defmodule Cadet.Test.XMLGenerator do
     case question.type do
       :mcq ->
         for mcq_choice <- question.question.choices do
-          choice(%{correct: mcq_choice.is_correct}, [text(mcq_choice.content)])
+          choice(%{correct: mcq_choice.is_correct, hint: mcq_choice.hint}, [
+            text(mcq_choice.content)
+          ])
         end
 
       :programming ->
@@ -211,7 +213,7 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp choice(raw_attrs, content) do
-    {"CHOICE", map_permit_keys(raw_attrs, ~w(correct)a), content}
+    {"CHOICE", map_permit_keys(raw_attrs, ~w(correct hint)a), content}
   end
 
   defp snippet(children) do

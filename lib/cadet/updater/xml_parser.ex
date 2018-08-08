@@ -204,45 +204,50 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec process_question_by_question_type(map()) :: map() | :error
   defp process_question_by_question_type(question) do
-    entity = question[:entity]
-
-    question[:type]
+    question[:entity]
+    |> process_question_entity_by_type(question[:type])
     |> case do
-      "programming" ->
-        entity
-        |> xpath(
-          ~x"."e,
-          content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-          solution_template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
-          solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
-          autograder:
-            ~x"./SNIPPET/GRADER/text()"l
-            |> transform_by(&Enum.map(&1, fn charlist -> process_charlist(charlist) end))
-        )
+      question_map when is_map(question_map) ->
+        Map.put(question, :question, question_map)
 
-      "mcq" ->
-        choices =
-          entity
-          |> xpath(
-            ~x"./CHOICE"el,
-            content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-            is_correct: ~x"./@correct"s |> transform_by(&String.to_atom/1)
-          )
-          |> Enum.with_index()
-          |> Enum.map(fn {choice, id} -> Map.put(choice, :choice_id, id) end)
-
-        entity
-        |> xpath(~x"."e, content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1))
-        |> Map.put(:choices, choices)
-
-      _ ->
-        Logger.error("Invalid question type.")
+      :error ->
         :error
     end
-    |> case do
-      :error -> :error
-      question_map -> Map.put(question, :question, question_map)
-    end
+  end
+
+  defp process_question_entity_by_type(entity, "programming") do
+    entity
+    |> xpath(
+      ~x"."e,
+      content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+      solution_template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
+      solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
+      autograder:
+        ~x"./SNIPPET/GRADER/text()"l
+        |> transform_by(&Enum.map(&1, fn charlist -> process_charlist(charlist) end))
+    )
+  end
+
+  defp process_question_entity_by_type(entity, "mcq") do
+    choices =
+      entity
+      |> xpath(
+        ~x"./CHOICE"el,
+        content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+        is_correct: ~x"./@correct"s |> transform_by(&String.to_atom/1),
+        hint: ~x"./@hint"s
+      )
+      |> Enum.with_index()
+      |> Enum.map(fn {choice, id} -> Map.put(choice, :choice_id, id) end)
+
+    entity
+    |> xpath(~x"."e, content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1))
+    |> Map.put(:choices, choices)
+  end
+
+  defp process_question_entity_by_type(_, _) do
+    Logger.error("Invalid question type.")
+    :error
   end
 
   @spec process_question_library(map(), any()) :: map() | :error
