@@ -23,7 +23,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           number: "M#{Enum.random(0..10)}",
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
-          cover_picture: build_upload("test/fixtures/upload.png", "image/png"),
+          cover_picture: Faker.Avatar.image_url(),
           mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
         },
         :valid

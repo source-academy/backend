@@ -21,7 +21,7 @@ defmodule CadetWeb.AssessmentsView do
       reading: :reading,
       status: &(&1.user_status || "not_attempted"),
       maxGrade: :max_grade,
-      coverImage: &Cadet.Assessments.Image.url({&1.cover_picture, &1})
+      coverImage: :cover_picture
     })
   end
 
@@ -131,8 +131,7 @@ defmodule CadetWeb.AssessmentsView do
       :programming ->
         transform_map_for_view(question, %{
           content: "content",
-          solutionTemplate: "solution_template",
-          solutionHeader: "solution_header"
+          solutionTemplate: "solution_template"
         })
 
       :mcq ->

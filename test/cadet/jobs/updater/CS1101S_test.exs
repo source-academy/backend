@@ -22,9 +22,15 @@ defmodule Cadet.Updater.CS1101STest do
     :ok
   end
 
+  test "not cloned yet" do
+    :ok = clean_dirs!([@local_repo])
+    refute CS1101S.repo_cloned?()
+  end
+
   test "Clone is ok" do
     assert :ok == CS1101S.clone()
     assert File.exists?(@local_repo)
+    assert CS1101S.repo_cloned?()
     :ok = clean_dirs!([@local_repo])
   end
 
