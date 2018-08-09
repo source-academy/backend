@@ -1,0 +1,40 @@
+[
+  {
+    "request": {
+      "body":
+        "{\"studentProgram\":\"const f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);\",\"library\":{\"globals\":[],\"external\":{\"symbols\":[],\"name\":\"NONE\"},\"chapter\":9},\"graderPrograms\":[\"function ek0chei0y1() {\\n    return f(0) === 0 ? 1 : 0;\\n  }\\n\\n  ek0chei0y1();\",\"function ek0chei0y1() {\\n    const test1 = f(7) === 13;\\n    const test2 = f(10) === 55;\\n    const test3 = f(12) === 144;\\n    return test1 && test2 && test3 ? 4 : 0;\\n  }\\n\\n  ek0chei0y1();\"]}",
+      "headers": {
+        "Authorization":
+          "AWS4-HMAC-SHA256 Credential=AKIAIAHN5DV7RTRUVP6A/20180809/ap-southeast-1/lambda/aws4_request,SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date,Signature=5bb3b478cc5669bfd3a6188dd7a72590fd71b0f557673dec67b6b3bc81b3dd94",
+        "host": "lambda.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20180809T095051Z",
+        "x-amz-content-sha256": "",
+        "content-type": "application/json"
+      },
+      "method": "post",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 30000
+      },
+      "request_body": "",
+      "url": "~r/https://lambda.ap-southeast-1.amazonaws.com/.*/"
+    },
+    "response": {
+      "binary": false,
+      "body":
+        "[{\"resultType\":\"pass\",\"grade\":1},{\"resultType\":\"pass\",\"grade\":4}]",
+      "headers": {
+        "Date": "Thu, 09 Aug 2018 09:50:53 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "65",
+        "Connection": "keep-alive",
+        "x-amzn-RequestId": "6049db71-33fa-4faa-88c4-38f57b6754f3",
+        "x-amzn-Remapped-Content-Length": "0",
+        "X-Amz-Executed-Version": "$LATEST",
+        "X-Amzn-Trace-Id": "root=1-6049db71-38f57b6754f379946049db71;sampled=0"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]
