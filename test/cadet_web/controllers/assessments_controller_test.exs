@@ -344,31 +344,6 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "it does not permit access to not yet open assessments", %{
-      conn: conn,
-      users: users,
-      assessments: %{mission: mission}
-    } do
-      for role <- Role.__enum_map__() do
-        user = Map.get(users, role)
-
-        {:ok, _} =
-          mission.assessment
-          |> Assessment.changeset(%{
-            open_at: Timex.shift(Timex.now(), days: 5),
-            close_at: Timex.shift(Timex.now(), days: 10)
-          })
-          |> Repo.update()
-
-        conn =
-          conn
-          |> sign_in(user)
-          |> get(build_url(mission.assessment.id))
-
-        assert response(conn, 401) == "Assessment not open"
-      end
-    end
-
     test "it does not permit access to unpublished assessments", %{
       conn: conn,
       users: users,
@@ -423,6 +398,26 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assert expected_answers == resp_answers
       end
     end
+
+    test "it does not permit access to not yet open assessments", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: %{mission: mission}
+    } do
+      mission.assessment
+      |> Assessment.changeset(%{
+        open_at: Timex.shift(Timex.now(), days: 5),
+        close_at: Timex.shift(Timex.now(), days: 10)
+      })
+      |> Repo.update!()
+
+      conn =
+        conn
+        |> sign_in(student)
+        |> get(build_url(mission.assessment.id))
+
+      assert response(conn, 401) == "Assessment not open"
+    end
   end
 
   describe "GET /assessment_id, non-students" do
@@ -431,7 +426,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       users: users,
       assessments: assessments
     } do
-      for role <- [:staff, :admin] do
+      for role <- ~w(staff admin)a do
         user = Map.get(users, role)
 
         for {_type, %{assessment: assessment}} <- assessments do
@@ -445,6 +440,31 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
           assert Enum.uniq(resp_answers) == [nil]
         end
+      end
+    end
+
+    test "it permits access to not yet open assessments", %{
+      conn: conn,
+      users: users,
+      assessments: %{mission: mission}
+    } do
+      for role <- ~w(staff admin)a do
+        user = Map.get(users, role)
+
+        mission.assessment
+        |> Assessment.changeset(%{
+          open_at: Timex.shift(Timex.now(), days: 5),
+          close_at: Timex.shift(Timex.now(), days: 10)
+        })
+        |> Repo.update!()
+
+        resp =
+          conn
+          |> sign_in(user)
+          |> get(build_url(mission.assessment.id))
+          |> json_response(200)
+
+        assert resp["id"] == mission.assessment.id
       end
     end
   end
