@@ -11,52 +11,89 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   @lambda_name :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:lambda_name)
 
-  def test_request_params do
+  def build_request_params(%{question: question, answer: answer}) do
+    question_content = question.question
+
+    {_, capitalised_name_external} =
+      question.grading_library.external
+      |> Map.from_struct()
+      |> Map.get_and_update(
+        :name,
+        &{&1, &1 |> Atom.to_string() |> String.upcase()}
+      )
+
     %{
-      chapter: 1,
-      graderPrograms: [
-        "function ek0chei0y1() {\n    return f(0) === 0 ? 1 : 0;\n  }\n\n  ek0chei0y1();",
-        "function ek0chei0y1() {\n    const test1 = f(7) === 13;\n    const test2 = f(10) === 55;\n    const test3 = f(12) === 144;\n    return test1 && test2 && test3 ? 4 : 0;\n  }\n\n  ek0chei0y1();"
-      ],
-      studentProgram: "const f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);"
+      graderPrograms: question_content["autograder"],
+      studentProgram: answer.answer["code"],
+      library: %{
+        chapter: question.grading_library.chapter,
+        external: capitalised_name_external,
+        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
+      }
     }
   end
 
-  def build_request_params(%{question: question, answer: answer}) do
-  end
+  def perform(params = %{answer: answer}) do
+    lambda_params = build_request_params(params)
 
-  def perform(%{question: question, answer: answer}) do
-    grade =
+    response =
       @lambda_name
-      |> ExAws.Lambda.invoke(test_request_params(), %{})
+      |> ExAws.Lambda.invoke(lambda_params, %{})
       |> ExAws.request!()
-      |> parse_response()
 
-    Que.add(ResultStoreWorker, %{
-      answer_id: answer.id,
-      result: %{grade: grade, status: :success}
-    })
+    # If the lambda crashes, results are in the format of:
+    # %{"errorMessage" => "${message}"}
+    inspect(response)
+
+    if is_map(response) do
+      raise inspect(response)
+    else
+      result =
+        response
+        |> parse_response(lambda_params)
+        |> Map.put(:status, :success)
+
+      Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
+    end
   end
 
-  def on_failure(answer_id, error) do
+  def on_failure(%{answer: answer}, error) do
     Logger.error(
-      "Failed to get autograder result. answer_id: #{answer_id}, error: #{inspect(error)}"
+      "Failed to get autograder result. answer_id: #{answer.id}, error: #{inspect(error)}"
     )
 
-    Que.add(ResultStoreWorker, %{answer_id: answer_id, result: %{status: :failed}})
+    Que.add(
+      ResultStoreWorker,
+      %{
+        answer_id: answer.id,
+        result: %{
+          grade: 0,
+          status: :failed,
+          errors: [
+            %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
+          ]
+        }
+      }
+    )
   end
 
-  def parse_response(response) do
+  def parse_response(response, %{graderPrograms: grader_programs}) do
     response
-    |> Enum.map(fn result ->
-      case result["resultType"] do
-        "pass" ->
-          result["marks"]
+    |> Enum.zip(grader_programs)
+    |> Enum.reduce(
+      %{grade: 0, errors: []},
+      fn {result, grader_program}, %{grade: grade, errors: errors} ->
+        if result["resultType"] == "pass" do
+          %{grade: grade + result["grade"], errors: errors}
+        else
+          error_result = %{
+            grader_program: grader_program,
+            errors: result["errors"]
+          }
 
-        "error" ->
-          0
+          %{grade: grade, errors: errors ++ [error_result]}
+        end
       end
-    end)
-    |> Enum.sum()
+    )
   end
 end

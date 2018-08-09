@@ -40,11 +40,11 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   end
 
   defp update_answer(answer = %Answer{}, result = %{status: status}) do
-    changes =
-      case status do
-        :success -> %{grade: result.grade, autograding_status: :success}
-        :failed -> %{autograding_status: :failed}
-      end
+    changes = %{
+      grade: result.grade,
+      autograding_status: status,
+      autograding_errors: result.errors
+    }
 
     answer
     |> Answer.autograding_changeset(changes)
