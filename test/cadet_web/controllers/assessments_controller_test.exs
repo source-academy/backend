@@ -235,6 +235,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "answer"))
             |> Enum.map(&Map.delete(&1, "solution"))
             |> Enum.map(&Map.delete(&1, "library"))
+            |> Enum.map(&Map.delete(&1, "comment"))
 
           assert expected_questions == resp_questions
         end
@@ -396,6 +397,33 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Enum.map(&Map.take(&1, ["answer"]))
 
         assert expected_answers == resp_answers
+      end
+    end
+
+    test "it renders comment", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: assessments
+    } do
+      for {_type,
+           %{
+             assessment: assessment,
+             mcq_answers: [mcq_answers | _],
+             programming_answers: [programming_answers | _]
+           }} <- assessments do
+        # Programming questions should come first due to seeding order
+        expected_comments =
+          Enum.map(programming_answers ++ mcq_answers, &%{"comment" => &1.comment})
+
+        resp_comments =
+          conn
+          |> sign_in(student)
+          |> get(build_url(assessment.id))
+          |> json_response(200)
+          |> Map.get("questions", [])
+          |> Enum.map(&Map.take(&1, ["comment"]))
+
+        assert expected_comments == resp_comments
       end
     end
 
