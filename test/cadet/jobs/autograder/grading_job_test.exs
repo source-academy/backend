@@ -9,24 +9,12 @@ defmodule Cadet.Autograder.GradingJobTest do
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Autograder.{GradingJob, LambdaWorker}
 
-  @doc """
-  Helper function to build a list of {answer, question} tuples by querying the db.
-  This updates appropriate meta fields. This function should be called BEFORE
-  &GradingJob.grade_all_due_yesterday/0 because job enqueuing is much faster (
-  memory vs disk). &assert_dispatched/1 can then be called on the output of this function.
-  """
-  defp build_dispatched_validation_list(answer_question_list) do
-    for {answer, question} <- answer_question_list do
-      {Repo.get(Answer, answer.id), Repo.get(Question, question.id)}
-    end
-  end
-
   defp assert_dispatched(answer_question_list) do
     for {answer, question} <- answer_question_list do
       assert_called(
         Que.add(LambdaWorker, %{
-          question: question,
-          answer: answer
+          question: Repo.get(Question, question.id),
+          answer: Repo.get(Answer, answer.id)
         })
       )
     end
@@ -77,8 +65,6 @@ defmodule Cadet.Autograder.GradingJobTest do
         questions = Enum.flat_map(assessments, fn {_, questions} -> questions end)
         answers = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
 
-        validations_list = build_dispatched_validation_list(Enum.zip(answers, questions))
-
         GradingJob.grade_all_due_yesterday()
 
         for submission <- submissions do
@@ -89,7 +75,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert Repo.get(Answer, answer.id).autograding_status == :processing
         end
 
-        assert_dispatched(validations_list)
+        assert_dispatched(Enum.zip(answers, questions))
       end
     end
 
@@ -140,8 +126,6 @@ defmodule Cadet.Autograder.GradingJobTest do
             })
           end)
 
-        validations_list = build_dispatched_validation_list(Enum.zip(answers, questions))
-
         assessment_db =
           Assessment
           |> where(id: ^assessment.id)
@@ -156,7 +140,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert Repo.get(Answer, answer.id).autograding_status == :processing
         end
 
-        assert_dispatched(validations_list)
+        assert_dispatched(Enum.zip(answers, questions))
       end
     end
 
@@ -266,9 +250,6 @@ defmodule Cadet.Autograder.GradingJobTest do
         questions_answered = Enum.drop_every(questions, 3)
         answers_submitted = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
 
-        validations_list =
-          build_dispatched_validation_list(Enum.zip(answers_submitted, questions_answered))
-
         GradingJob.grade_all_due_yesterday()
 
         for submission <- submissions do
@@ -279,7 +260,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert Repo.get(Answer, answer.id).autograding_status == :processing
         end
 
-        assert_dispatched(validations_list)
+        assert_dispatched(Enum.zip(answers_submitted, questions_answered))
         unanswered_question_ids = questions |> Enum.take_every(3) |> Enum.map(& &1.id)
 
         inserted_empty_answers =

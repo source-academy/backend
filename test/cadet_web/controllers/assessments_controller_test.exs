@@ -3,9 +3,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
   use Timex
 
   import Ecto.Query
+  import Mock
 
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus}
+  alias Cadet.Autograder.GradingJob
   alias Cadet.Repo
   alias CadetWeb.AssessmentsController
 
@@ -474,15 +476,33 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn: conn,
       assessments: %{mission: %{assessment: assessment}}
     } do
-      user = insert(:user, %{role: :student})
-      insert(:submission, %{student: user, assessment: assessment, status: :attempted})
+      with_mock GradingJob,
+        grade_individual_submission: fn _, _ -> nil end,
+        preprocess_assessment_for_grading: fn _ -> "preprocessed_assessment" end do
+        user = insert(:user, %{role: :student})
 
-      conn =
-        conn
-        |> sign_in(user)
-        |> post(build_url_submit(assessment.id))
+        submission =
+          insert(:submission, %{student: user, assessment: assessment, status: :attempted})
 
-      assert response(conn, 200) == "OK"
+        conn =
+          conn
+          |> sign_in(user)
+          |> post(build_url_submit(assessment.id))
+
+        assert response(conn, 200) == "OK"
+
+        assert_called(
+          GradingJob.preprocess_assessment_for_grading(Repo.get(Assessment, assessment.id))
+        )
+
+        assert_called(
+          GradingJob.grade_individual_submission(
+            # Preloading is necessary because Mock does an exact match, including metadata
+            Submission |> Repo.get(submission.id) |> Repo.preload(:assessment),
+            "preprocessed_assessment"
+          )
+        )
+      end
     end
 
     # This also covers unpublished and assessments that are not open yet since they cannot be

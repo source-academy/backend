@@ -9,6 +9,7 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
+  alias Cadet.Autograder.GradingJob
   alias Ecto.Multi
 
   @submit_answer_roles ~w(student)a
@@ -284,7 +285,13 @@ defmodule Cadet.Assessments do
       with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :attempted} <- {:status, submission.status},
-           {:ok, _} <- submission |> Submission.changeset(%{status: :submitted}) |> Repo.update() do
+           {:ok, updated_submission} <-
+             submission |> Submission.changeset(%{status: :submitted}) |> Repo.update() do
+        GradingJob.grade_individual_submission(
+          updated_submission,
+          GradingJob.preprocess_assessment_for_grading(submission.assessment)
+        )
+
         {:ok, nil}
       else
         {:submission_found?, false} ->

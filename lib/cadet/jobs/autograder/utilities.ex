@@ -26,9 +26,11 @@ defmodule Cadet.Autograder.Utilities do
   end
 
   def dispatch_programming_answer(answer, question) do
-    answer
-    |> Answer.autograding_changeset(%{autograding_status: :processing})
-    |> Repo.update!()
+    # This should never fail
+    answer =
+      answer
+      |> Answer.autograding_changeset(%{autograding_status: :processing})
+      |> Repo.update!()
 
     Que.add(Cadet.Autograder.LambdaWorker, %{question: question, answer: answer})
   end
