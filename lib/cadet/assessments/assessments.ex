@@ -13,6 +13,7 @@ defmodule Cadet.Assessments do
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
+  @open_all_assessment_roles ~w(staff admin)a
 
   def user_total_grade(%User{id: user_id}) do
     grade =
@@ -80,27 +81,34 @@ defmodule Cadet.Assessments do
       |> Repo.one()
 
     if assessment do
-      if Timex.after?(Timex.now(), assessment.open_at) do
-        answer_query =
-          Answer
-          |> join(:inner, [a], s in assoc(a, :submission))
-          |> where([_, s], s.student_id == ^user.id)
-
-        questions =
-          Question
-          |> where(assessment_id: ^id)
-          |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
-          |> select([q, a], %{q | answer: a})
-          |> order_by(:display_order)
-          |> Repo.all()
-
-        assessment = Map.put(assessment, :questions, questions)
-        {:ok, assessment}
-      else
-        {:error, {:unauthorized, "Assessment not open"}}
-      end
+      assessment_with_questions_and_answers(assessment, user)
     else
       {:error, {:bad_request, "Assessment not found"}}
+    end
+  end
+
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{id: id},
+        user = %User{role: role}
+      ) do
+    if Timex.after?(Timex.now(), assessment.open_at) or role in @open_all_assessment_roles do
+      answer_query =
+        Answer
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> where([_, s], s.student_id == ^user.id)
+
+      questions =
+        Question
+        |> where(assessment_id: ^id)
+        |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+        |> select([q, a], %{q | answer: a})
+        |> order_by(:display_order)
+        |> Repo.all()
+
+      assessment = Map.put(assessment, :questions, questions)
+      {:ok, assessment}
+    else
+      {:error, {:unauthorized, "Assessment not open"}}
     end
   end
 
