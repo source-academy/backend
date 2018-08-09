@@ -150,8 +150,9 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   @spec verify_has_time_offset(%{
-          open_at: DateTime.t() | NaiveDateTime.t(),
-          close_at: DateTime.t() | NaiveDateTime.t()
+          :open_at => DateTime.t() | NaiveDateTime.t(),
+          :close_at => DateTime.t() | NaiveDateTime.t(),
+          optional(atom()) => any()
         }) :: boolean()
   defp verify_has_time_offset(%{open_at: open_at, close_at: close_at}) do
     # Timex.parse!/2 returns NaiveDateTime when offset is not specified, or DateTime otherwise.
