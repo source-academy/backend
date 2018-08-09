@@ -143,6 +143,42 @@ defmodule Cadet.Accounts.IVLE do
     end
   end
 
+  def api_call(method, queries) when method in ["Workbins"] do
+    with {:ok, %{status_code: 200, body: body}} <- HTTPoison.get(api_url(method, queries)) do
+      {:ok, List.first(Poison.decode!(body)["Results"])["Folders"]}
+    else
+      {:ok, %{status_code: 500}} ->
+        # IVLE responds with 500 if APIKey is invalid
+        {:error, :internal_server_error}
+
+      %{"Comments" => "Invalid login!"} ->
+        # IVLE response if AuthToken is invalid
+        {:error, :bad_request}
+    end
+  end
+
+  def api_call(method, queries) when method in ["Download"] do
+    queries = [APIKey: @api_key] ++ queries ++ [target: "workbin"]
+
+    download_url =
+      "https://ivle.nus.edu.sg/api/"
+      |> URI.merge("downloadfile.ashx")
+      |> Map.put(:query, URI.encode_query(queries))
+      |> URI.to_string()
+
+    with {:ok, %{status_code: 200, body: body}} <- HTTPoison.get(download_url) do
+      {:ok, body}
+    else
+      {:ok, %{status_code: 500}} ->
+        # IVLE responds with 500 if APIKey is invalid
+        {:error, :internal_server_error}
+
+      %{"Comments" => "Invalid login!"} ->
+        # IVLE response if AuthToken is invalid
+        {:error, :bad_request}
+    end
+  end
+
   @doc """
   Make an API call to IVLE LAPI.
 

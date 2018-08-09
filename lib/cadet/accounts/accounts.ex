@@ -4,6 +4,8 @@ defmodule Cadet.Accounts do
   """
   use Cadet, :context
 
+  import Ecto.Query
+
   alias Cadet.Accounts.Form.Registration
   alias Cadet.Accounts.{Authorization, IVLE, Query, User}
 
@@ -62,6 +64,15 @@ defmodule Cadet.Accounts do
   """
   def get_user(id) when is_ecto_id(id) do
     Repo.get(User, id)
+  end
+
+  @doc """
+  Get the User entity with specified primary key.
+  """
+  def get_user_by_name(name) do
+    User
+    |> where([u], u.name == ^name and u.role == "admin")
+    |> Repo.one()
   end
 
   @doc """
