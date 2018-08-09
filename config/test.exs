@@ -8,9 +8,6 @@ config :cadet, CadetWeb.Endpoint,
 
 config :cadet, environment: :test
 
-# Reduce number of rounds for hashing to improve performance
-config :pbkdf2_elixir, :rounds, 1
-
 # Print only warnings and errors during test
 config :logger, level: :error, compile_time_purge_level: :error
 
