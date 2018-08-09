@@ -34,10 +34,12 @@ defmodule Cadet.Autograder.GradingJob do
     end
   end
 
-  # Exposed as public function in case future mix tasks are needed to regrade
-  # certain submissions.
-  # &preprocess_assessment_for_grading/1 should be applied on the input assessment
-  # if this function is called directly (not from &grade_all_due_yesterday/0)
+  @doc """
+  Exposed as public function in case future mix tasks are needed to regrade
+  certain submissions.
+  &preprocess_assessment_for_grading/1 should be applied on the input assessment
+  if this function is called directly (not from &grade_all_due_yesterday/0)
+  """
   def grade_individual_submission(
         %Submission{id: submission_id},
         %Assessment{questions: questions},
@@ -56,6 +58,22 @@ defmodule Cadet.Autograder.GradingJob do
       Multi.new(),
       regrade
     )
+  end
+
+  @doc """
+  Helper function to prepare assessment for grading. This ensures that questions
+  are loaded and sorted so that &grade_submission_question_answer_lists/5 can run
+  correctly.
+  """
+  def preprocess_assessment_for_grading(assessment = %Assessment{}) do
+    assessment =
+      if Ecto.assoc_loaded?(assessment.questions) do
+        assessment
+      else
+        Repo.preload(assessment, :questions)
+      end
+
+    Utilities.sort_assessment_questions(assessment)
   end
 
   defp update_submission_status(submission = %Submission{}) do
@@ -171,16 +189,5 @@ defmodule Cadet.Autograder.GradingJob do
 
   defp grade_submission_question_answer_lists(_, [], [], multi, _) do
     Repo.transaction(multi)
-  end
-
-  def preprocess_assessment_for_grading(assessment = %Assessment{}) do
-    assessment =
-      if Ecto.assoc_loaded?(assessment.questions) do
-        assessment
-      else
-        Repo.preload(assessment, :questions)
-      end
-
-    Utilities.sort_assessment_questions(assessment)
   end
 end
