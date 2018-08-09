@@ -1,5 +1,5 @@
 resource "aws_iam_role" "grader" {
-  name = "grader"
+  name = "${var.env}-cadet-grader"
 
   assume_role_policy = <<EOF
 {
