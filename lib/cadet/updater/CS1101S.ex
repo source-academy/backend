@@ -27,7 +27,13 @@ defmodule Cadet.Updater.CS1101S do
   @spec clone :: no_return()
   def clone do
     Logger.info("Cloning CS1101S: Started")
-    git("clone", [@remote_repo, @local_name])
+
+    if repo_cloned? do
+      Logger.info("CS1101S is already cloned.")
+    else
+      git("clone", [@remote_repo, @local_name])
+    end
+
     Logger.info("Cloning CS1101S: Done")
   end
 
