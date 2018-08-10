@@ -75,7 +75,7 @@ defmodule Cadet.Accounts do
     query =
       from(
         u in User,
-        where: u.name == name and u.role == role and u.nusnet_id == nusnet_id
+        where: u.name == ^name and u.role == ^role and u.nusnet_id == ^nusnet_id
       )
 
     users = Repo.all(query)
