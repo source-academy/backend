@@ -4,7 +4,7 @@ defmodule Cadet.Accounts do
   """
   use Cadet, :context
   import Ecto.Query
-  
+
   alias Cadet.Accounts.Authorization
   alias Cadet.Accounts.IVLE
   alias Cadet.Accounts.User

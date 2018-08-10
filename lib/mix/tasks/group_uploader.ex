@@ -4,17 +4,31 @@ defmodule Mix.Tasks.GroupUploader do
   alias Cadet.Course
   alias Cadet.Accounts
 
-  @shortdoc "Parses excel file and creates student groups"
+  @moduledoc """
+  Mix Task to upload the tutorial groups and it's
+  participants
+  """
 
   def run(args) do
     Mix.Task.run("app.start")
     # Removing unneccesary headers 
     groups =
-      Xlsxir.get_list(Xlsxir.multi_extract(Enum.at(args, 0))[:ok])
+      args
+      |> Enum.at(0)
+      |> Xlsxir.multi_extract
+      |> Keyword.get(:ok)
+      |> Xlsxir.get_list
       |> Enum.drop(3)
 
+      # Xlsxir.get_list(Xlsxir.multi_extract(Enum.at(args, 0))[:ok])
+      # |> Enum.drop(3)
+
     avengers =
-      Xlsxir.get_list(Xlsxir.multi_extract(Enum.at(args, 1))[:ok])
+      args
+      |> Enum.at(1)
+      |> Xlsxir.multi_extract
+      |> Keyword.get(:ok)
+      |> Xlsxir.get_list
       |> Enum.drop(1)
 
     helper(groups, 0, avengers, 0, nil)
