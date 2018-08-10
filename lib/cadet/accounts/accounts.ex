@@ -71,18 +71,10 @@ defmodule Cadet.Accounts do
   Get student with given name and nusnet id or create one
   """
   def get_or_create_user(name, role, nusnet_id) do
-    if is_nil(nusnet_id) do
-      nusnet = "SENTINEL"
-    else
-      nusnet = nusnet_id
-    end
-
     query =
       from(
         u in User,
-        where:
-          u.name == ^name and u.role == ^role and
-            (^nusnet == "SENTINEL" or u.nusnet_id == ^nusnet)
+        where: u.name == ^name and u.role == ^role and u.nusnet_id == ^nusnet_id
       )
 
     users = Repo.all(query)

@@ -7,10 +7,9 @@ defmodule Mix.Tasks.GroupUploader do
   @shortdoc "Parses excel file and creates student groups"
 
   def run(args) do
-
     Mix.Task.run("app.start")
     # Removing unneccesary headers 
-    groups = 
+    groups =
       Xlsxir.get_list(Xlsxir.multi_extract(Enum.at(args, 0))[:ok])
       |> Enum.drop(3)
 

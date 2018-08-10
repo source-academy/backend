@@ -76,14 +76,10 @@ defmodule Cadet.Course do
   Adds given student to given group
   """
   def add_student_to_group(group, student) do
-
     student
     |> Repo.preload(:group)
-    |> IO.inspect()
     |> User.changeset()
-    |> IO.inspect()
     |> put_assoc(:group, group)
-    |> IO.inspect()
     |> Repo.update()
   end
 
