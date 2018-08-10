@@ -3,7 +3,8 @@ defmodule Cadet.Accounts do
   Accounts context contains domain logic for User management and Authentication
   """
   use Cadet, :context
-
+  import Ecto.Query
+  
   alias Cadet.Accounts.Authorization
   alias Cadet.Accounts.IVLE
   alias Cadet.Accounts.User
