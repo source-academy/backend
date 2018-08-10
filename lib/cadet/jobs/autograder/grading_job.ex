@@ -61,14 +61,17 @@ defmodule Cadet.Autograder.GradingJob do
   end
 
   defp preprocess_assessment_for_grading(assessment = %Assessment{}) do
-    assessment =
-      if Ecto.assoc_loaded?(assessment.questions) do
-        assessment
-      else
-        Repo.preload(assessment, :questions)
-      end
+    if Ecto.assoc_loaded?(assessment.questions) do
+      Utilities.sort_assessment_questions(assessment)
+    else
+      questions =
+        Question
+        |> where(assessment_id: ^assessment.id)
+        |> order_by(:question_id)
+        |> Repo.all()
 
-    Utilities.sort_assessment_questions(assessment)
+      Map.put(assessment, :questions, questions)
+    end
   end
 
   defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do
