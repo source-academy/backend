@@ -46,8 +46,7 @@ defmodule Cadet.Assessments.Answer do
 
   @spec autograding_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def autograding_changeset(answer, params) do
-    answer
-    |> cast(params, ~w(grade autograding_status autograding_errors)a)
+    cast(answer, params, ~w(grade autograding_status autograding_errors)a)
   end
 
   @spec validate_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()

@@ -32,6 +32,16 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+# Configure ExAWS
+config :ex_aws,
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :instance_role],
+  secret_access_key: [
+    {:system, "AWS_SECRET_ACCESS_KEY"},
+    {:awscli, "default", 30},
+    :instance_role
+  ],
+  region: "ap-southeast-1"
+
 # Configure Arc File Upload
 config :arc, storage: Arc.Storage.Local
 

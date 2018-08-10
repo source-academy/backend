@@ -4,6 +4,8 @@ defmodule Cadet.Autograder.Utilities do
   """
   use Cadet, :context
 
+  require Logger
+
   import Ecto.Query
   import Cadet.Factory
 

@@ -7,7 +7,6 @@ defmodule Cadet.Autograder.GradingJob do
 
   import Ecto.Query
 
-  alias Ecto.Multi
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Autograder.Utilities
 
@@ -19,7 +18,7 @@ defmodule Cadet.Autograder.GradingJob do
         if submission do
           %{
             student_id: student_id,
-            submission: update_submission_status(submission)
+            submission: update_submission_status_to_submitted(submission)
           }
         else
           %{
@@ -37,14 +36,22 @@ defmodule Cadet.Autograder.GradingJob do
   @doc """
   Exposed as public function in case future mix tasks are needed to regrade
   certain submissions.
-  &preprocess_assessment_for_grading/1 should be applied on the input assessment
-  if this function is called directly (not from &grade_all_due_yesterday/0)
   """
-  def grade_individual_submission(
-        %Submission{id: submission_id},
-        %Assessment{questions: questions},
-        regrade \\ false
+  def force_grade_individual_submission(
+        submission = %Submission{},
+        assessment = %Assessment{}
       ) do
+    assessment = preprocess_assessment_for_grading(assessment)
+    grade_individual_submission(submission, assessment, true)
+  end
+
+  # This function requires that assessment questions are already preloaded in sorted
+  # order for autograding to function correctly.
+  defp grade_individual_submission(
+         %Submission{id: submission_id},
+         %Assessment{questions: questions},
+         regrade \\ false
+       ) do
     answers =
       Answer
       |> where(submission_id: ^submission_id)
@@ -55,17 +62,11 @@ defmodule Cadet.Autograder.GradingJob do
       submission_id,
       questions,
       answers,
-      Multi.new(),
       regrade
     )
   end
 
-  @doc """
-  Helper function to prepare assessment for grading. This ensures that questions
-  are loaded and sorted so that &grade_submission_question_answer_lists/5 can run
-  correctly.
-  """
-  def preprocess_assessment_for_grading(assessment = %Assessment{}) do
+  defp preprocess_assessment_for_grading(assessment = %Assessment{}) do
     assessment =
       if Ecto.assoc_loaded?(assessment.questions) do
         assessment
@@ -76,7 +77,17 @@ defmodule Cadet.Autograder.GradingJob do
     Utilities.sort_assessment_questions(assessment)
   end
 
-  defp update_submission_status(submission = %Submission{}) do
+  defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do
+    %Submission{}
+    |> Submission.changeset(%{
+      student_id: student_id,
+      assessment: assessment,
+      status: :submitted
+    })
+    |> Repo.insert!()
+  end
+
+  defp update_submission_status_to_submitted(submission = %Submission{}) do
     submission
     |> Submission.changeset(%{status: :submitted})
     |> Repo.update!()
@@ -99,54 +110,40 @@ defmodule Cadet.Autograder.GradingJob do
 
     answer
     |> Answer.autograding_changeset(%{grade: grade, autograding_status: :success})
-    |> Repo.update!()
+    |> Repo.update()
   end
 
   defp insert_empty_answer(
          submission_id,
-         %Question{id: question_id, type: question_type},
-         multi
+         %Question{id: question_id, type: question_type}
        ) do
     answer_content =
       case question_type do
-        :programming -> %{code: "//Question not answered by student."}
+        :programming -> %{code: "// Question not answered by student."}
         :mcq -> %{choice_id: 0}
       end
 
-    Multi.insert(
-      multi,
-      "question#{question_id}",
-      %Answer{}
-      |> Answer.changeset(%{
-        answer: answer_content,
-        question_id: question_id,
-        submission_id: submission_id,
-        type: question_type,
-        comment: "Question not attempted by student"
-      })
-      |> Answer.autograding_changeset(%{grade: 0, autograding_status: :success})
-    )
-  end
-
-  defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do
-    %Submission{}
-    |> Submission.changeset(%{
-      student_id: student_id,
-      assessment: assessment,
-      status: :submitted
+    %Answer{}
+    |> Answer.changeset(%{
+      answer: answer_content,
+      question_id: question_id,
+      submission_id: submission_id,
+      type: question_type,
+      comment: "Question not attempted by student"
     })
-    |> Repo.insert!()
+    |> Answer.autograding_changeset(%{grade: 0, autograding_status: :success})
+    |> Repo.insert()
   end
 
-  # Two finger walk down question and answer lists. Both lists MUST be pre-sorted
+  # Two finger walk down question and answer lists.
+  # Both lists MUST be pre-sorted by id and question_id respectively
   defp grade_submission_question_answer_lists(
          submission_id,
          [question = %Question{} | question_tail],
          answers = [answer = %Answer{} | answer_tail],
-         multi,
          regrade
        )
-       when is_boolean(regrade) do
+       when is_boolean(regrade) and is_ecto_id(submission_id) do
     if question.id == answer.question_id do
       if regrade || answer.autograding_status in [:none, :failed] do
         grade_answer(answer, question)
@@ -156,15 +153,15 @@ defmodule Cadet.Autograder.GradingJob do
         submission_id,
         question_tail,
         answer_tail,
-        multi,
         regrade
       )
     else
+      insert_empty_answer(submission_id, question)
+
       grade_submission_question_answer_lists(
         submission_id,
         question_tail,
         answers,
-        insert_empty_answer(submission_id, question, multi),
         regrade
       )
     end
@@ -174,20 +171,19 @@ defmodule Cadet.Autograder.GradingJob do
          submission_id,
          [question = %Question{} | question_tail],
          [],
-         multi,
          regrade
        )
-       when is_boolean(regrade) do
+       when is_boolean(regrade) and is_ecto_id(submission_id) do
+    insert_empty_answer(submission_id, question)
+
     grade_submission_question_answer_lists(
       submission_id,
       question_tail,
       [],
-      insert_empty_answer(submission_id, question, multi),
       regrade
     )
   end
 
-  defp grade_submission_question_answer_lists(_, [], [], multi, _) do
-    Repo.transaction(multi)
+  defp grade_submission_question_answer_lists(_, [], [], _) do
   end
 end

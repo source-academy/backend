@@ -20,6 +20,66 @@ defmodule Cadet.Autograder.GradingJobTest do
     end
   end
 
+  describe "#force_grade_individual_submission, all programming questions" do
+    setup do
+      assessments =
+        insert_list(3, :assessment, %{
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -4),
+          type: :mission
+        })
+
+      questions =
+        for assessment <- assessments do
+          insert_list(3, :programming_question, %{assessment: assessment})
+        end
+
+      %{assessments: Enum.zip(assessments, questions)}
+    end
+
+    test "all assessments attempted, all questions graded, " <>
+           "regrade flag set, should enqueue all jobs",
+         %{
+           assessments: assessments
+         } do
+      with_mock Que, add: fn _, _ -> nil end do
+        student = insert(:user, %{role: :student})
+
+        [{assessment, questions} | _] = assessments
+
+        submission =
+          insert(:submission, %{student: student, assessment: assessment, status: :attempted})
+
+        answers =
+          Enum.map(questions, fn question ->
+            insert(:answer, %{
+              question: question,
+              submission: submission,
+              answer: build(:programming_answer),
+              autograding_status: :success
+            })
+          end)
+
+        assessment_db =
+          Assessment
+          |> where(id: ^assessment.id)
+          |> join(:inner, [a], q in assoc(a, :questions))
+          |> order_by([a, q], q.id)
+          |> preload([_, q], questions: q)
+          |> Repo.one()
+
+        GradingJob.force_grade_individual_submission(submission, assessment_db)
+
+        for answer <- answers do
+          assert Repo.get(Answer, answer.id).autograding_status == :processing
+        end
+
+        assert_dispatched(Enum.zip(answers, questions))
+      end
+    end
+  end
+
   describe "#grade_all_due_yesterday, all programming questions" do
     setup do
       assessments =
@@ -103,47 +163,6 @@ defmodule Cadet.Autograder.GradingJobTest do
       assert JobsQueue.all() |> Enum.count() == 0
     end
 
-    test "all assessments attempted, all questions graded, " <>
-           "regrade flag set, should enqueue all jobs",
-         %{
-           assessments: assessments
-         } do
-      with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
-
-        [{assessment, questions} | _] = assessments
-
-        submission =
-          insert(:submission, %{student: student, assessment: assessment, status: :attempted})
-
-        answers =
-          Enum.map(questions, fn question ->
-            insert(:answer, %{
-              question: question,
-              submission: submission,
-              answer: build(:programming_answer),
-              autograding_status: :success
-            })
-          end)
-
-        assessment_db =
-          Assessment
-          |> where(id: ^assessment.id)
-          |> join(:inner, [a], q in assoc(a, :questions))
-          |> order_by([a, q], q.id)
-          |> preload([_, q], questions: q)
-          |> Repo.one()
-
-        GradingJob.grade_individual_submission(submission, assessment_db, true)
-
-        for answer <- answers do
-          assert Repo.get(Answer, answer.id).autograding_status == :processing
-        end
-
-        assert_dispatched(Enum.zip(answers, questions))
-      end
-    end
-
     test "all assessments attempted, should update all submission statuses", %{
       assessments: assessments
     } do
@@ -211,7 +230,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       for answer <- answers do
         assert answer.grade == 0
         assert answer.autograding_status == :success
-        assert answer.answer == %{"code" => "//Question not answered by student."}
+        assert answer.answer == %{"code" => "// Question not answered by student."}
         assert answer.comment == "Question not attempted by student"
       end
 
@@ -276,7 +295,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         for answer <- inserted_empty_answers do
           assert answer.grade == 0
           assert answer.autograding_status == :success
-          assert answer.answer == %{"code" => "//Question not answered by student."}
+          assert answer.answer == %{"code" => "// Question not answered by student."}
           assert answer.comment == "Question not attempted by student"
         end
       end
@@ -382,21 +401,6 @@ defmodule Cadet.Autograder.GradingJobTest do
       end
 
       assert JobsQueue.all() |> Enum.count() == 0
-    end
-  end
-
-  describe "preprocess_assessment_for_grading" do
-    test "it preloads questions in sorted order" do
-      assessment = insert(:assessment, %{is_published: true})
-      insert_list(3, :programming_question, %{assessment: assessment})
-
-      %Assessment{questions: questions} = GradingJob.preprocess_assessment_for_grading(assessment)
-
-      assert questions
-
-      for [first, second] <- Enum.chunk_every(questions, 2, 1, :discard) do
-        assert first.id < second.id
-      end
     end
   end
 end

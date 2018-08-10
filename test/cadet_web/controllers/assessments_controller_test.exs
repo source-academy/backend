@@ -477,8 +477,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assessments: %{mission: %{assessment: assessment}}
     } do
       with_mock GradingJob,
-        grade_individual_submission: fn _, _ -> nil end,
-        preprocess_assessment_for_grading: fn _ -> "preprocessed_assessment" end do
+        force_grade_individual_submission: fn _, _ -> nil end do
         user = insert(:user, %{role: :student})
 
         submission =
@@ -491,15 +490,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         assert response(conn, 200) == "OK"
 
-        assert_called(
-          GradingJob.preprocess_assessment_for_grading(Repo.get(Assessment, assessment.id))
-        )
+        # Preloading is necessary because Mock does an exact match, including metadata
+        submission_db = Submission |> Repo.get(submission.id) |> Repo.preload(:assessment)
 
         assert_called(
-          GradingJob.grade_individual_submission(
-            # Preloading is necessary because Mock does an exact match, including metadata
-            Submission |> Repo.get(submission.id) |> Repo.preload(:assessment),
-            "preprocessed_assessment"
+          GradingJob.force_grade_individual_submission(
+            submission_db,
+            submission_db.assessment
           )
         )
       end
