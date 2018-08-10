@@ -73,7 +73,7 @@ defmodule CadetWeb.AssessmentsView do
        }) do
     components = [
       build_question(%{question: question}),
-      build_answer_by_question_type(%{question: question}),
+      build_answer_fields_by_question_type(%{question: question}),
       build_solution_if_ungraded_by_type(%{question: question, assessment: assessment})
     ]
 
@@ -105,7 +105,9 @@ defmodule CadetWeb.AssessmentsView do
     end
   end
 
-  defp build_answer_by_question_type(%{question: %{answer: answer, type: question_type}}) do
+  defp build_answer_fields_by_question_type(%{
+         question: %{answer: answer, type: question_type}
+       }) do
     # No need to check if answer exists since empty answer would be a
     # `%Answer{..., answer: nil}` and nil["anything"] = nil
 
@@ -115,7 +117,7 @@ defmodule CadetWeb.AssessmentsView do
         :mcq -> & &1.answer["choice_id"]
       end
 
-    transform_map_for_view(answer, %{answer: answer_getter})
+    transform_map_for_view(answer, %{answer: answer_getter, comment: :comment})
   end
 
   def build_choice(%{choice: choice}) do
