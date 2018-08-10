@@ -70,6 +70,7 @@ defmodule Cadet.Mixfile do
       {:exvcr, "~> 0.10", only: :test},
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
       {:phoenix_live_reload, "~> 1.0", only: :dev}
+      {:xlsxir, "~> 1.6.2"}
     ]
   end
 
