@@ -7,9 +7,6 @@ defmodule Cadet.Course do
 
   alias Cadet.Accounts.User
   alias Cadet.Course.{Announcement, Material, Upload, Group}
-  # alias Cadet.Course.Group
-  alias Cadet.Course.Material
-  alias Cadet.Course.Upload
 
   @doc """
   Create announcement entity using specified user as poster
@@ -26,7 +23,7 @@ defmodule Cadet.Course do
   @doc """
   Edit Announcement with specified ID entity by specifying changes
   """
-  def edit_announcement(id, changes = %{}) do
+  def edit_announcement(id, changes = %{}) when is_ecto_id(id) do
     announcement = Repo.get(Announcement, id)
 
     if announcement == nil do
@@ -40,7 +37,7 @@ defmodule Cadet.Course do
   @doc """
   Get Announcement with specified ID
   """
-  def get_announcement(id) do
+  def get_announcement(id) when is_ecto_id(id) do
     Announcement
     |> Repo.get(id)
     |> Repo.preload(:poster)
@@ -49,7 +46,7 @@ defmodule Cadet.Course do
   @doc """
   Delete Announcement with specified ID
   """
-  def delete_announcement(id) do
+  def delete_announcement(id) when is_ecto_id(id) do
     announcement = Repo.get(Announcement, id)
 
     if announcement == nil do
@@ -176,7 +173,7 @@ defmodule Cadet.Course do
   Delete a material file/directory. A directory tree
   is deleted recursively
   """
-  def delete_material(id) when is_binary(id) or is_number(id) do
+  def delete_material(id) when is_ecto_id(id) do
     material = Repo.get(Material, id)
     delete_material(material)
   end

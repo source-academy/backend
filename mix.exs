@@ -33,7 +33,8 @@ defmodule Cadet.Mixfile do
   end
 
   # Specifies which paths to compile per environment.
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:test), do: ["lib", "test/support", "test/factories"]
+  defp elixirc_paths(:dev), do: ["lib", "test/factories"]
   defp elixirc_paths(_), do: ["lib"]
 
   # Specifies your project dependencies.
@@ -41,11 +42,12 @@ defmodule Cadet.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:arc, "~> 0.8.0"},
-      {:arc_ecto, "~> 0.8.0"},
+      {:arc, "~> 0.10.0"},
+      {:arc_ecto, "~> 0.10.0"},
       {:cowboy, "~> 1.0"},
-      {:dotenv, "~> 3.0.0"},
       {:ecto_enum, "~> 1.0"},
+      {:ex_aws, "~> 2.0"},
+      {:ex_aws_kms, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.1"},
       {:floki, "~> 0.20.0"},
@@ -53,16 +55,20 @@ defmodule Cadet.Mixfile do
       {:guardian, "~> 1.0"},
       {:guardian_db, "~> 1.0"},
       {:httpoison, "~> 1.0", override: true},
-      {:pbkdf2_elixir, "~> 0.12"},
+      {:inch_ex, "~> 1.0", only: [:dev, :test]},
+      {:jason, "~> 1.1"},
+      {:jsx, "~> 2.8"},
       {:phoenix, "~> 1.3.0"},
       {:phoenix_ecto, "~> 3.2"},
-      {:phoenix_html, "~> 2.10"},
-      {:phoenix_pubsub, "~> 1.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.2.7"},
+      {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
+      # TODO: Remove the override once ex_aws released the new version
+      #       without the dependency on xml_builder. Waste my time urgh
+      {:xml_builder, "~> 2.0", override: true},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.2", only: [:dev, :test], runtime: false},
       {:distillery, "~> 1.5.3", runtime: false},
@@ -71,6 +77,7 @@ defmodule Cadet.Mixfile do
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
       {:phoenix_live_reload, "~> 1.0", only: :dev},
       {:xlsxir, "~> 1.6.2"}
+      {:faker, "~> 0.10", only: [:test, :dev]}
     ]
   end
 

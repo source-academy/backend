@@ -7,6 +7,10 @@ defmodule Cadet.ModelHelper do
 
   alias Timex.Timezone
 
+  def convert_date(:invalid, _) do
+    :invalid
+  end
+
   def convert_date(params, field) do
     if is_binary(params[field]) && params[field] != "" do
       timezone = Timezone.get("Asia/Singapore", Timex.now())
@@ -20,18 +24,6 @@ defmodule Cadet.ModelHelper do
       Map.put(params, field, date)
     else
       params
-    end
-  end
-
-  def put_json(changeset, field, json_field) do
-    change = get_change(changeset, json_field)
-
-    if change do
-      json = Poison.decode!(change)
-
-      put_change(changeset, field, json)
-    else
-      changeset
     end
   end
 
@@ -91,6 +83,42 @@ defmodule Cadet.ModelHelper do
       change(changeset, %{"#{assoc}_id": id})
     else
       _ -> changeset
+    end
+  end
+
+  @doc """
+  Given a changeset for a model with a `:type` field and a `field` of type `:map`,
+  and a map of %{type1: TypeOneModel, type2: TypeTwoModel}, this helper function will
+  check whether `field` is valid based on the model's `:type` by calling the appropriate
+  model's `&changeset/2` function.
+  """
+  def validate_arbitrary_embedded_struct_by_type(changeset, field, type_to_model_map)
+      when is_atom(field) and is_map(type_to_model_map) do
+    build_changeset = fn params, type ->
+      model = Map.get(type_to_model_map, type)
+      apply(model, :changeset, [struct(model), params])
+    end
+
+    with true <- changeset.valid?,
+         {:type, type} when is_atom(type) <- {:type, get_change(changeset, :type)},
+         {:field_change, map} when is_map(map) <- {:field_change, get_change(changeset, field)},
+         {:changeset, embed_changeset = %Ecto.Changeset{valid?: true}} <-
+           {:changeset, build_changeset.(map, type)} do
+      validated_map = embed_changeset |> apply_changes |> Map.from_struct()
+      put_change(changeset, field, validated_map)
+    else
+      {:changeset, embed_changeset} ->
+        add_error(
+          changeset,
+          field,
+          "invalid #{field} provided for #{field} type.\n" <>
+            "Changeset: #{inspect(embed_changeset)}"
+        )
+
+      # Missing or wrongly typed fields should be handled by `validates_required/2`
+      # in parent changeset.
+      _ ->
+        changeset
     end
   end
 end

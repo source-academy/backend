@@ -8,37 +8,60 @@ defmodule CadetWeb.GradingController do
     user = conn.assigns[:current_user]
 
     case Assessments.all_submissions_by_grader(user) do
-      {:ok, submissions} -> render(conn, "index.json", submissions: submissions)
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, submissions} ->
+        render(conn, "index.json", submissions: submissions)
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
-  def show(conn, %{"submissionid" => submission_id}) do
+  def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
     user = conn.assigns[:current_user]
 
     case Assessments.get_answers_in_submission(submission_id, user) do
-      {:ok, answers} -> render(conn, "show.json", answers: answers)
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, answers} ->
+        render(conn, "show.json", answers: answers)
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
   def update(
         conn,
-        params = %{
+        %{
           "submissionid" => submission_id,
-          "questionid" => question_id
+          "questionid" => question_id,
+          "grading" => grading
         }
-      ) do
+      )
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     user = conn.assigns[:current_user]
 
     case Assessments.update_grading_info(
            %{submission_id: submission_id, question_id: question_id},
-           params["grading"],
+           grading,
            user
          ) do
-      {:ok, _} -> send_resp(conn, :ok, "OK")
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, _} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
+  end
+
+  def update(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> text("Missing parameter")
   end
 
   swagger_path :index do
@@ -87,7 +110,7 @@ defmodule CadetWeb.GradingController do
     parameters do
       submissionId(:path, :integer, "submission id", required: true)
       questionId(:path, :integer, "question id", required: true)
-      grading(:body, Schema.ref(:Grade), "comment given for a question", required: true)
+      grading(:body, Schema.ref(:Grading), "comment given for a question", required: true)
     end
 
     response(200, "OK")
@@ -105,8 +128,8 @@ defmodule CadetWeb.GradingController do
       Submission:
         swagger_schema do
           properties do
-            submissionId(:integer, "submission id", required: true)
-            xp(:integer, "xp given")
+            id(:integer, "submission id", required: true)
+            grade(:integer, "grade given")
             adjustment(:integer, "adjustment given")
             assessment(Schema.ref(:AssessmentInfo))
             student(Schema.ref(:StudentInfo))
@@ -117,10 +140,12 @@ defmodule CadetWeb.GradingController do
           properties do
             id(:integer, "assessment id", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
+            title(:string, "Mission title", required: true)
+            coverImage(:string, "The URL to the cover picture", required: true)
 
-            max_xp(
+            maxGrade(
               :integer,
-              "The max amount of XP to be earned from this assessment",
+              "The max grade for this assessment",
               required: true
             )
           end
@@ -145,12 +170,25 @@ defmodule CadetWeb.GradingController do
               properties do
                 question(Schema.ref(:Question))
                 grade(Schema.ref(:Grade))
-                max_xp(:integer, "the max xp that can be given to this question", required: true)
+
+                maxGrade(
+                  :integer,
+                  "the max grade that can be given to this question",
+                  required: true
+                )
               end
             end
           )
         end,
       Grade:
+        swagger_schema do
+          properties do
+            grade(:integer, "Grade awarded by autograder")
+            comment(:string, "comment given")
+            adjustment(:integer, "adjustment given")
+          end
+        end,
+      Grading:
         swagger_schema do
           properties do
             grading(

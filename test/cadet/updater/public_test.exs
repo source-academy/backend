@@ -4,12 +4,13 @@ defmodule Cadet.Updater.PublicTest do
   allows testing without actual external IVLE API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set the environment variables IVLE_KEY, GUEST_USERNAME, and GUEST_PASSWORD.
-  Don't forget to delete the cassette files, otherwise ExVCR will not override
-  the cassettes.
+  to set the config variables `:ivle_key`, `:guest_username`, and
+  `:guest_password`. Don't forget to delete the cassette files, otherwise
+  ExVCR will not override the cassettes.
 
   **Make sure that the cassettes do not expose sensitive information, especially
-  the GUEST_USER, GUEST_PASSWORD, since those are exposed during HTTP post.**
+  the `:guest_username`, `:guest_password`, since those are exposed during HTTP
+  post.**
 
   Token refers to the user's authentication token. Please see the IVLE API docs:
   https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
@@ -86,12 +87,20 @@ defmodule Cadet.Updater.PublicTest do
     end
   end
 
-  test "GenServer init/1 callback" do
-    use_cassette "updater/init#1", custom: true do
-      assert {:ok, %{token: token, course_id: course_id}} = Public.init(nil)
-      assert String.length(token) == 480
-      assert String.length(course_id) == 36
-      refute course_id == "00000000-0000-0000-0000-000000000000"
+  describe "GenServer init/1 callback" do
+    test "get_api_params/0 is successful" do
+      use_cassette "updater/init#1", custom: true do
+        assert {:ok, %{token: token, course_id: course_id}} = Public.init(nil)
+        assert String.length(token) == 480
+        assert String.length(course_id) == 36
+        refute course_id == "00000000-0000-0000-0000-000000000000"
+      end
+    end
+
+    test "get_api_params/0 is unsuccessful in non-prod environment" do
+      use_cassette "updater/init#2", custom: true do
+        assert {:ok, nil} = Public.init(nil)
+      end
     end
   end
 

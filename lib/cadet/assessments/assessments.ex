@@ -7,56 +7,194 @@ defmodule Cadet.Assessments do
 
   import Ecto.Query
 
-  alias Timex.Duration
-
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
+  alias Ecto.Multi
 
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
+  @open_all_assessment_roles ~w(staff admin)a
 
-  def all_assessments() do
-    Repo.all(Assessment)
+  def user_total_grade(%User{id: user_id}) do
+    grade =
+      Query.all_submissions_with_grade()
+      |> subquery()
+      |> where(student_id: ^user_id)
+      |> select([q], fragment("? + ?", sum(q.grade), sum(q.adjustment)))
+      |> Repo.one()
+
+    if grade do
+      Decimal.to_integer(grade)
+    else
+      0
+    end
   end
 
-  def all_assessments(assessment_type) do
-    Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
+  def user_current_story(user = %User{}) do
+    {:ok, %{result: story}} =
+      Multi.new()
+      |> Multi.run(:unattempted, fn _ -> {:ok, get_user_story_by_type(user, :unattempted)} end)
+      |> Multi.run(:result, fn %{unattempted: unattempted_story} ->
+        if unattempted_story do
+          {:ok, %{play_story?: true, story: unattempted_story}}
+        else
+          {:ok, %{play_story?: false, story: get_user_story_by_type(user, :attempted)}}
+        end
+      end)
+      |> Repo.transaction()
+
+    story
   end
 
-  def all_open_assessments(assessment_type) do
-    now = Timex.now()
+  @spec get_user_story_by_type(%User{}, :unattempted | :attempted) :: String.t() | nil
+  def get_user_story_by_type(%User{id: user_id}, type)
+      when is_atom(type) do
+    filter_and_sort = fn query ->
+      case type do
+        :unattempted ->
+          query
+          |> where([_, s], is_nil(s.id))
+          |> order_by([a], asc: a.open_at)
 
-    assessment_with_type = Repo.all(from(a in Assessment, where: a.type == ^assessment_type))
-    # TODO: Refactor to be done on SQL instead of in-memory
-    Enum.filter(assessment_with_type, &(&1.is_published and Timex.before?(&1.open_at, now)))
+        :attempted ->
+          query |> order_by([a], desc: a.close_at)
+      end
+    end
+
+    Assessment
+    |> where(is_published: true)
+    |> where([a], not is_nil(a.story))
+    |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
+    |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
+    |> filter_and_sort.()
+    |> order_by([a], a.type)
+    |> select([a], a.story)
+    |> first()
+    |> Repo.one()
   end
 
-  def assessments_due_soon() do
-    now = Timex.now()
-    week_after = Timex.add(now, Duration.from_weeks(1))
+  def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
+    assessment =
+      Assessment
+      |> where(id: ^id)
+      |> where(is_published: true)
+      |> Repo.one()
 
-    all_assessments()
-    |> Enum.filter(
-      &(&1.is_published and Timex.before?(&1.open_at, now) and
-          Timex.between?(&1.close_at, now, week_after))
-    )
+    if assessment do
+      assessment_with_questions_and_answers(assessment, user)
+    else
+      {:error, {:bad_request, "Assessment not found"}}
+    end
   end
 
-  def build_assessment(params) do
-    Assessment.changeset(%Assessment{}, params)
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{id: id},
+        user = %User{role: role}
+      ) do
+    if Timex.after?(Timex.now(), assessment.open_at) or role in @open_all_assessment_roles do
+      answer_query =
+        Answer
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> where([_, s], s.student_id == ^user.id)
+
+      questions =
+        Question
+        |> where(assessment_id: ^id)
+        |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+        |> select([q, a], %{q | answer: a})
+        |> order_by(:display_order)
+        |> Repo.all()
+
+      assessment = Map.put(assessment, :questions, questions)
+      {:ok, assessment}
+    else
+      {:error, {:unauthorized, "Assessment not open"}}
+    end
   end
 
-  def build_question(params) do
-    Question.changeset(%Question{}, params)
+  @doc """
+  Returns a list of assessments with all fields and an indicator showing whether it has been attempted
+  by the supplied user
+  """
+  def all_published_assessments(user = %User{}) do
+    assessments =
+      Query.all_assessments_with_max_grade()
+      |> subquery()
+      |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
+      |> select([a, s], %{a | user_status: s.status})
+      |> where(is_published: true)
+      |> order_by(:open_at)
+      |> Repo.all()
+
+    {:ok, assessments}
   end
 
   def create_assessment(params) do
-    params
-    |> build_assessment
+    %Assessment{}
+    |> Assessment.changeset(params)
     |> Repo.insert()
   end
 
-  def update_assessment(id, params) do
+  @spec insert_or_update_assessments_and_questions(map(), [map()]) ::
+          {:ok, any()}
+          | {:error, Ecto.Multi.name(), any(), %{optional(Ecto.Multi.name()) => any()}}
+  def insert_or_update_assessments_and_questions(assessment_params, questions_params) do
+    assessment_multi =
+      Multi.insert_or_update(
+        Multi.new(),
+        :assessment,
+        insert_or_update_assessment_changeset(assessment_params)
+      )
+
+    questions_params
+    |> Enum.with_index(1)
+    |> Enum.reduce(assessment_multi, fn {question_params, index}, multi ->
+      Multi.run(multi, String.to_atom("question#{index}"), fn %{assessment: %Assessment{id: id}} ->
+        question_params
+        |> Map.put(:display_order, index)
+        |> build_question_changeset_for_assessment_id(id)
+        |> Repo.insert()
+      end)
+    end)
+    |> Repo.transaction()
+  end
+
+  @spec insert_or_update_assessment_changeset(map()) :: Ecto.Changeset.t()
+  defp insert_or_update_assessment_changeset(params = %{number: number}) do
+    Assessment
+    |> where(number: ^number)
+    |> Repo.one()
+    |> case do
+      nil ->
+        Assessment.changeset(%Assessment{}, params)
+
+      assessment ->
+        if Timex.after?(assessment.open_at, Timex.now()) do
+          # Delete all existing questions
+          %{id: assessment_id} = assessment
+
+          Question
+          |> where(assessment_id: ^assessment_id)
+          |> Repo.delete_all()
+
+          Assessment.changeset(assessment, params)
+        else
+          # if the assessment is already open, don't mess with it
+          create_invalid_changeset_with_error(:assessment, "is already open")
+        end
+    end
+  end
+
+  @spec build_question_changeset_for_assessment_id(map(), number() | String.t()) ::
+          Ecto.Changeset.t()
+  defp build_question_changeset_for_assessment_id(params, assessment_id)
+       when is_ecto_id(assessment_id) do
+    params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
+
+    Question.changeset(%Question{}, params_with_assessment_id)
+  end
+
+  def update_assessment(id, params) when is_ecto_id(id) do
     simple_update(
       Assessment,
       id,
@@ -65,7 +203,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def update_question(id, params) do
+  def update_question(id, params) when is_ecto_id(id) do
     simple_update(
       Question,
       id,
@@ -75,45 +213,30 @@ defmodule Cadet.Assessments do
   end
 
   def publish_assessment(id) do
-    id
-    |> get_assessment()
-    |> change(%{is_published: true})
-    |> Repo.update()
+    update_assessment(id, %{is_published: true})
   end
 
-  def get_question(id) do
-    Repo.get(Question, id)
+  def create_question_for_assessment(params, assessment_id) when is_ecto_id(assessment_id) do
+    assessment =
+      Assessment
+      |> where(id: ^assessment_id)
+      |> join(:left, [a], q in assoc(a, :questions))
+      |> preload([_, q], questions: q)
+      |> Repo.one()
+
+    if assessment do
+      params_with_assessment_id = Map.put_new(params, :assessment_id, assessment.id)
+
+      %Question{}
+      |> Question.changeset(params_with_assessment_id)
+      |> put_display_order(assessment.questions)
+      |> Repo.insert()
+    else
+      {:error, "Assessment not found"}
+    end
   end
 
-  def get_assessment(id) do
-    Repo.get(Assessment, id)
-  end
-
-  def create_question_for_assessment(params, assessment_id)
-      when is_ecto_id(assessment_id) do
-    assessment = get_assessment(assessment_id)
-    create_question_for_assessment(params, assessment)
-  end
-
-  def create_question_for_assessment(params, assessment) do
-    Repo.transaction(fn ->
-      assessment = Repo.preload(assessment, :questions)
-      questions = assessment.questions
-
-      changeset =
-        params
-        |> Map.put_new(:assessment_id, assessment.id)
-        |> build_question
-        |> put_display_order(questions)
-
-      case Repo.insert(changeset) do
-        {:ok, question} -> question
-        {:error, changeset} -> Repo.rollback(changeset)
-      end
-    end)
-  end
-
-  def delete_question(id) do
+  def delete_question(id) when is_ecto_id(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
   end
@@ -127,23 +250,26 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user = %User{role: role}, raw_answer) do
+  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
     if role in @submit_answer_roles do
       question =
         Question
         |> where(id: ^id)
         |> join(:inner, [q], assessment in assoc(q, :assessment))
-        |> preload([q, a], assessment: a)
+        |> preload([_, a], assessment: a)
         |> Repo.one()
 
       with {:question_found?, true} <- {:question_found?, is_map(question)},
            {:is_open?, true} <- is_open?(question.assessment),
            {:ok, submission} <- find_or_create_submission(user, question.assessment),
+           {:status, true} <- {:status, submission.status != :submitted},
            {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+        update_submission_status(submission, question.assessment)
         {:ok, nil}
       else
-        {:question_found?, false} -> {:error, {:bad_request, "Question not found"}}
+        {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
         {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
+        {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
         {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
         _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
       end
@@ -152,23 +278,92 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec all_submissions_by_grader(User.t()) ::
-          {:ok, [Submission.t()]} | {:error, {:unauthorized, String.t()}}
+  def finalise_submission(assessment_id, %User{role: role, id: user_id})
+      when is_ecto_id(assessment_id) do
+    if role in @submit_answer_roles do
+      submission =
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(student_id: ^user_id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+
+      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+           {:is_open?, true} <- is_open?(submission.assessment),
+           {:status, :attempted} <- {:status, submission.status},
+           {:ok, _} <- submission |> Submission.changeset(%{status: :submitted}) |> Repo.update() do
+        {:ok, nil}
+      else
+        {:submission_found?, false} ->
+          {:error, {:not_found, "Submission not found"}}
+
+        {:is_open?, false} ->
+          {:error, {:forbidden, "Assessment not open"}}
+
+        {:status, :attempting} ->
+          {:error, {:bad_request, "Some questions have not been attempted"}}
+
+        {:status, :submitted} ->
+          {:error, {:forbidden, "Assessment has already been submitted"}}
+
+        _ ->
+          {:error, {:internal_server_error, "Please try again later."}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+
+  def update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
+    model_assoc_count = fn model, assoc, id ->
+      model
+      |> where(id: ^id)
+      |> join(:inner, [m], a in assoc(m, ^assoc))
+      |> select([_, a], count(a.id))
+      |> Repo.one()
+    end
+
+    Multi.new()
+    |> Multi.run(:assessment, fn _ ->
+      {:ok, model_assoc_count.(Assessment, :questions, assessment.id)}
+    end)
+    |> Multi.run(:submission, fn _ ->
+      {:ok, model_assoc_count.(Submission, :answers, submission.id)}
+    end)
+    |> Multi.run(:update, fn %{submission: s_count, assessment: a_count} ->
+      if s_count == a_count do
+        submission |> Submission.changeset(%{status: :attempted}) |> Repo.update()
+      else
+        {:ok, nil}
+      end
+    end)
+    |> Repo.transaction()
+  end
+
+  @spec all_submissions_by_grader(%User{}) ::
+          {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader(grader = %User{role: role}) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
 
       submissions =
         Submission
-        |> join(:inner, [s], x in subquery(Query.submissions_xp()), s.id == x.submission_id)
+        |> join(:inner, [s], x in subquery(Query.submissions_grade()), s.id == x.submission_id)
         |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
         |> join(
           :inner,
           [s],
-          a in subquery(Query.all_assessments_with_max_xp()),
+          a in subquery(Query.all_assessments_with_max_grade()),
           s.assessment_id == a.id
         )
-        |> select([s, x, st, a], %Submission{s | xp: x.xp, student: st, assessment: a})
+        |> select([s, x, st, a], %Submission{
+          s
+          | grade: x.grade,
+            adjustment: x.adjustment,
+            student: st,
+            assessment: a
+        })
         |> Repo.all()
 
       {:ok, submissions}
@@ -177,8 +372,8 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec get_answers_in_submission(integer() | String.t(), User.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:unauthorized, String.t()}}
+  @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
+          {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
   def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
     if role in @grading_roles do
       students = Cadet.Accounts.Query.students_of(grader)
@@ -201,7 +396,7 @@ defmodule Cadet.Assessments do
   @spec update_grading_info(
           %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
           %{},
-          User.t()
+          %User{}
         ) ::
           {:ok, nil}
           | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
@@ -279,22 +474,25 @@ defmodule Cadet.Assessments do
   defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
     answer_content = build_answer_content(raw_answer, question.type)
 
-    %Answer{}
-    |> Answer.changeset(%{
-      answer: answer_content,
-      question_id: question.id,
-      submission_id: submission.id,
-      type: question.type
-    })
-    |> Repo.insert(
-      on_conflict: [set: [answer: answer_content]],
+    answer_changeset =
+      %Answer{}
+      |> Answer.changeset(%{
+        answer: answer_content,
+        question_id: question.id,
+        submission_id: submission.id,
+        type: question.type
+      })
+
+    Repo.insert(
+      answer_changeset,
+      on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
       conflict_target: [:submission_id, :question_id]
     )
   end
 
   defp build_answer_content(raw_answer, question_type) do
     case question_type do
-      :multiple_choice ->
+      :mcq ->
         %{choice_id: raw_answer}
 
       :programming ->

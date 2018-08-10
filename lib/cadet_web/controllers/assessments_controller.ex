@@ -3,6 +3,51 @@ defmodule CadetWeb.AssessmentsController do
 
   use PhoenixSwagger
 
+  alias Cadet.Assessments
+
+  def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
+    case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
+      {:ok, _nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def index(conn, _) do
+    user = conn.assigns[:current_user]
+    {:ok, assessments} = Assessments.all_published_assessments(user)
+
+    render(conn, "index.json", assessments: assessments)
+  end
+
+  def show(conn, %{"id" => assessment_id}) when is_ecto_id(assessment_id) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.assessment_with_questions_and_answers(assessment_id, user) do
+      {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
+  swagger_path :submit do
+    post("/assessments/{assessmentId}/submit")
+    summary("Finalise submission for an assessment")
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "submission id", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(403, "User not permitted to answer questions or assessment not open")
+    response(404, "Submission not found")
+  end
+
   swagger_path :index do
     get("/assessments")
 
@@ -48,17 +93,32 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            summary_short(:string, "Short summary", required: true)
-            open_at(:string, "The opening date", format: "date-time", required: true)
-            close_at(:string, "The closing date", format: "date-time", required: true)
+            shortSummary(:string, "Short summary", required: true)
 
-            max_xp(
-              :integer,
-              "The maximum amount of XP to be earned from this assessment",
+            number(
+              :string,
+              "The string identifying the relative position of this assessment",
               required: true
             )
 
-            cover_picture(:string, "The URL to the cover picture", required: true)
+            story(:string, "The story that should be shown for this assessment")
+            reading(:string, "The reading for this assessment")
+            openAt(:string, "The opening date", format: "date-time", required: true)
+            closeAt(:string, "The closing date", format: "date-time", required: true)
+
+            status(
+              :string,
+              "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
+              required: true
+            )
+
+            maxGrade(
+              :integer,
+              "The maximum Grade for this assessment",
+              required: true
+            )
+
+            coverImage(:string, "The URL to the cover picture", required: true)
           end
         end,
       Assessment:
@@ -67,8 +127,17 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment id", required: true)
             title(:string, "The title of the assessment", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
-            summary_long(:string, "Long summary", required: true)
-            mission_pdf(:string, "The URL to the assessment pdf")
+
+            number(
+              :string,
+              "The string identifying the relative position of this assessment",
+              required: true
+            )
+
+            story(:string, "The story that should be shown for this assessment")
+            reading(:string, "The reading for this assessment")
+            longSummary(:string, "Long summary", required: true)
+            missionPDF(:string, "The URL to the assessment pdf")
 
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
           end
@@ -82,9 +151,10 @@ defmodule CadetWeb.AssessmentsController do
       Question:
         swagger_schema do
           properties do
-            questionId(:integer, "The question id", required: true)
-            questionType(:string, "The question type (mcq/programming)", required: true)
+            id(:integer, "The question id", required: true)
+            type(:string, "The question type (mcq/programming)", required: true)
             content(:string, "The question content", required: true)
+            comment(:string, "Comment given by group leader. Might be null.")
 
             choices(
               Schema.new do
@@ -104,7 +174,7 @@ defmodule CadetWeb.AssessmentsController do
 
             library(
               Schema.ref(:Library),
-              "The library used for this question (programming questions only)"
+              "The library used for this question"
             )
 
             solution_template(:string, "Solution template for programming questions")
@@ -115,6 +185,24 @@ defmodule CadetWeb.AssessmentsController do
           properties do
             content(:string, "The choice content", required: true)
             hint(:string, "The hint", required: true)
+          end
+        end,
+      ExternalLibrary:
+        swagger_schema do
+          properties do
+            name(:string, "Name of the external library", required: true)
+
+            symbols(
+              Schema.new do
+                type(:array)
+
+                items(
+                  Schema.new do
+                    type(:string)
+                  end
+                )
+              end
+            )
           end
         end,
       Library:
@@ -134,28 +222,9 @@ defmodule CadetWeb.AssessmentsController do
               end
             )
 
-            externals(
-              Schema.new do
-                type(:array)
-
-                items(
-                  Schema.new do
-                    type(:string)
-                  end
-                )
-              end
-            )
-
-            files(
-              Schema.new do
-                type(:array)
-
-                items(
-                  Schema.new do
-                    type(:string)
-                  end
-                )
-              end
+            external(
+              Schema.ref(:ExternalLibrary),
+              "The external library for this question"
             )
           end
         end

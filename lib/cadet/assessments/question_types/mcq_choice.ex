@@ -4,6 +4,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
   """
   use Cadet, :model
 
+  @primary_key false
   embedded_schema do
     field(:content, :string)
     field(:hint, :string)
@@ -12,7 +13,7 @@ defmodule Cadet.Assessments.QuestionTypes.MCQChoice do
   end
 
   @required_fields ~w(content is_correct choice_id)a
-  @optional_fields ~w(is_correct)a
+  @optional_fields ~w(hint is_correct)a
 
   def changeset(question, params \\ %{}) do
     question

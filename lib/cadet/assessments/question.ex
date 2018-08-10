@@ -5,68 +5,40 @@ defmodule Cadet.Assessments.Question do
   """
   use Cadet, :model
 
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Assessments.QuestionType
-  alias Cadet.Assessments.QuestionTypes.ProgrammingQuestion
-  alias Cadet.Assessments.QuestionTypes.MCQQuestion
-  alias Cadet.Assessments.Library
+  alias Cadet.Assessments.{Assessment, Library, QuestionType}
+  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion}
 
   schema "questions" do
-    field(:title, :string)
     field(:display_order, :integer)
     field(:question, :map)
     field(:type, QuestionType)
-    field(:raw_question, :string, virtual: true)
-    field(:max_xp, :integer)
+    field(:max_grade, :integer)
+    field(:answer, :map, virtual: true)
     embeds_one(:library, Library)
+    embeds_one(:grading_library, Library)
     belongs_to(:assessment, Assessment)
     timestamps()
   end
 
-  @required_fields ~w(title question type assessment_id)a
-  @optional_fields ~w(display_order raw_question max_xp)a
+  @required_fields ~w(question type assessment_id)a
+  @optional_fields ~w(display_order max_grade)a
+  @required_embeds ~w(library)a
 
   def changeset(question, params) do
-    # TODO: Implement foreign_key_validation
     question
     |> cast(params, @required_fields ++ @optional_fields)
+    |> add_belongs_to_id_from_model(:assessment, params)
     |> cast_embed(:library)
-    |> validate_required(@required_fields)
-    |> put_question
+    |> cast_embed(:grading_library)
+    |> validate_required(@required_fields ++ @required_embeds)
+    |> validate_question_content()
+    |> foreign_key_constraint(:assessment_id)
   end
 
-  defp put_question(changeset) do
-    {:ok, json} =
-      changeset
-      |> get_change(:raw_question)
-      |> Kernel.||("{}")
-      |> Poison.decode()
-
-    type = get_change(changeset, :type)
-
-    case type do
-      :programming ->
-        put_change(
-          changeset,
-          :question,
-          %ProgrammingQuestion{}
-          |> ProgrammingQuestion.changeset(json)
-          |> apply_changes
-          |> Map.from_struct()
-        )
-
-      :multiple_choice ->
-        put_change(
-          changeset,
-          :question,
-          %MCQQuestion{}
-          |> MCQQuestion.changeset(json)
-          |> apply_changes
-          |> Map.from_struct()
-        )
-
-      _ ->
-        changeset
-    end
+  defp validate_question_content(changeset) do
+    validate_arbitrary_embedded_struct_by_type(changeset, :question, %{
+      mcq: MCQQuestion,
+      programming: ProgrammingQuestion
+    })
   end
 end
