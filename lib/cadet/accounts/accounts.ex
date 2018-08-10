@@ -68,6 +68,33 @@ defmodule Cadet.Accounts do
   end
 
   @doc """
+  Get student with given name and nusnet id or create one
+  """
+  def get_or_create_user(name, role, nusnet_id) do
+    if is_nil(nusnet_id) do
+      nusnet = "SENTINEL"
+    else
+      nusnet = nusnet_id
+    end
+
+    query =
+      from(
+        u in User,
+        where:
+          u.name == ^name and u.role == ^role and
+            (^nusnet == "SENTINEL" or u.nusnet_id == ^nusnet)
+      )
+
+    users = Repo.all(query)
+
+    if length(users) != 0 do
+      List.first(users)
+    else
+      elem(create_user(%{name: name, role: role, nusnet_id: nusnet_id}), 1)
+    end
+  end
+
+  @doc """
   Associate NUSTNET_ID with an existing `%User{}`
   """
   def add_nusnet_id(user = %User{}, nusnet_id) do
