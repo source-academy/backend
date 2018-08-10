@@ -6,7 +6,7 @@ defmodule Cadet.Course do
   use Cadet, :context
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.Announcement
+  alias Cadet.Course.{Announcement, Material, Upload, Group}
   # alias Cadet.Course.Group
   alias Cadet.Course.Material
   alias Cadet.Course.Upload
@@ -57,6 +57,34 @@ defmodule Cadet.Course do
     else
       Repo.delete(announcement)
     end
+  end
+
+  @doc """
+  Create group entity with given name
+  """
+  def create_group(name, leader, mentor) do
+    changeset =
+      %Group{}
+      |> Group.changeset(%{name: name})
+      |> put_assoc(:leader, leader)
+      |> put_assoc(:mentor, mentor)
+
+    Repo.insert(changeset)
+  end
+
+  @doc """
+  Adds given student to given group
+  """
+  def add_student_to_group(group, student) do
+
+    student
+    |> Repo.preload(:group)
+    |> IO.inspect()
+    |> User.changeset()
+    |> IO.inspect()
+    |> put_assoc(:group, group)
+    |> IO.inspect()
+    |> Repo.update()
   end
 
   # @doc """
