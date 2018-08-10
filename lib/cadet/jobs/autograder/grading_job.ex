@@ -16,18 +16,12 @@ defmodule Cadet.Autograder.GradingJob do
       |> Utilities.fetch_submissions()
       |> Enum.map(fn %{student_id: student_id, submission: submission} ->
         if submission do
-          %{
-            student_id: student_id,
-            submission: update_submission_status_to_submitted(submission)
-          }
+          update_submission_status_to_submitted(submission)
         else
-          %{
-            student_id: student_id,
-            submission: insert_empty_submission(%{student_id: student_id, assessment: assessment})
-          }
+          insert_empty_submission(%{student_id: student_id, assessment: assessment})
         end
       end)
-      |> Enum.each(fn %{submission: submission} ->
+      |> Enum.each(fn submission ->
         grade_individual_submission(submission, assessment)
       end)
     end
