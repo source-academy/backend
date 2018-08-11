@@ -42,14 +42,14 @@ defmodule Mix.Tasks.GroupUploader do
         "End"
 
       String.contains?(List.first(row), "Total Students") ->
-        avenger =
+        {:ok, avenger} =
           Accounts.get_or_create_user(
             List.first(current_avenger),
             :staff,
             Enum.at(current_avenger, 1)
           )
 
-        mentor =
+        {:ok, mentor} =
           Accounts.get_or_create_user(
             Enum.at(current_avenger, 3),
             :staff,
