@@ -21,7 +21,7 @@ defmodule Cadet.AccountsTest do
   use Cadet.DataCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  alias Cadet{Accounts, Accounts.Query, Repo}
+  alias Cadet.{Accounts, Accounts.Query, Repo}
 
   @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 
