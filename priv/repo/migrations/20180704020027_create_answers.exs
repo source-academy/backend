@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.CreateAnswersTable do
 
   def change do
     create table(:answers) do
-      add(:xp, :integer, default: 0)
+      add(:grade, :integer, default: 0)
       add(:answer, :map, null: false)
       add(:submission_id, references(:submissions), null: false)
       add(:question_id, references(:questions), null: false)

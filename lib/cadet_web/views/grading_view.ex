@@ -10,37 +10,32 @@ defmodule CadetWeb.GradingView do
   end
 
   def render("submission.json", %{submission: submission}) do
-    %{
-      xp: submission.xp,
-      submissionId: submission.id,
-      student: %{
-        name: submission.student.name,
-        id: submission.student.id
-      },
-      assessment: %{
-        type: submission.assessment.type,
-        max_xp: submission.assessment.max_xp,
-        id: submission.assessment.id
-      }
-    }
+    transform_map_for_view(submission, %{
+      grade: :grade,
+      adjustment: :adjustment,
+      id: :id,
+      student: &transform_map_for_view(&1.student, [:name, :id]),
+      assessment:
+        &transform_map_for_view(&1.assessment, %{
+          type: :type,
+          maxGrade: :max_grade,
+          id: :id,
+          title: :title,
+          coverImage: fn a -> Cadet.Assessments.Image.url({a.cover_picture, a}) end
+        })
+    })
   end
 
   def render("grading_info.json", %{answer: answer}) do
-    %{
-      question: %{
-        solution_template: answer.question.question["solution_template"],
-        questionType: answer.question.type,
-        questionId: answer.question.id,
-        library: answer.question.library,
-        content: answer.question.question["content"],
-        answer: answer.answer["code"]
-      },
-      max_xp: answer.question.max_xp,
-      grade: %{
-        xp: answer.xp,
-        adjustment: answer.adjustment,
-        comment: answer.comment
-      }
-    }
+    transform_map_for_view(answer, %{
+      question:
+        &Map.put(
+          CadetWeb.AssessmentsView.build_question(%{question: &1.question}),
+          :answer,
+          &1.answer["code"]
+        ),
+      maxGrade: & &1.question.max_grade,
+      grade: &transform_map_for_view(&1, [:grade, :adjustment, :comment])
+    })
   end
 end

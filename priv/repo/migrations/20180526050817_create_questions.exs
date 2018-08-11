@@ -11,8 +11,9 @@ defmodule Cadet.Repo.Migrations.CreateQuestions do
       add(:type, :question_type, null: false)
       add(:title, :string)
       add(:library, :map)
+      add(:grading_library, :map)
       add(:question, :map, null: false)
-      add(:max_xp, :integer, default: 0)
+      add(:max_grade, :integer, default: 0)
       add(:assessment_id, references(:assessments), null: false)
       timestamps()
     end

@@ -17,10 +17,4 @@ defmodule Cadet.ContextHelper do
       Repo.update(changeset)
     end
   end
-
-  defmacro is_ecto_id(id) do
-    quote do
-      is_integer(unquote(id)) or is_binary(unquote(id))
-    end
-  end
 end

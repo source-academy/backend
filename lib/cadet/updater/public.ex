@@ -13,19 +13,18 @@ defmodule Cadet.Updater.Public do
 
   require Logger
 
-  @api_key Dotenv.load().values["IVLE_KEY"]
+  @api_key :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:ivle_key)
   @api_url "https://ivle.nus.edu.sg"
   @api_url_login @api_url |> URI.merge("api/login/?apikey=#{@api_key}&url=_") |> URI.to_string()
+  @env Mix.env()
   @interval :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:interval)
-  @username Dotenv.load().values["GUEST_USERNAME"]
-  @password Dotenv.load().values["GUEST_PASSWORD"]
+  @username :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_username)
+  @password :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:guest_password)
 
   @doc """
   Starts the GenServer.
-
-  WARNING: The GenServer crashes if the API key is invalid, or not provided.
   """
-  def start_link() do
+  def start_link do
     GenServer.start_link(__MODULE__, nil)
   end
 
@@ -37,12 +36,26 @@ defmodule Cadet.Updater.Public do
 
   `start_link/0` -> `init/1` -> `schedule_work/0` -> `handle_info/2` ->
     `schedule_work/0` -> `handle_info/2` -> ...
+
+  Unless compiled with MIX_ENV of :prod, the GenServer fails silently (and only
+  once). We don't want IVLE accounts to be completely necessary for development.
   """
   def init(_) do
     Logger.info("Running Cadet.Updater.Public...")
-    api_params = get_api_params()
-    schedule_work()
-    {:ok, api_params}
+
+    try do
+      api_params = get_api_params()
+      schedule_work()
+      {:ok, api_params}
+    rescue
+      error in FunctionClauseError ->
+        if @env != :prod do
+          Logger.warn("Cadet.Updater.Public failed to initialise.")
+          {:ok, nil}
+        else
+          reraise error, System.stacktrace()
+        end
+    end
   end
 
   @impl true
@@ -53,14 +66,14 @@ defmodule Cadet.Updater.Public do
   """
   def handle_info(:work, api_params) do
     with {:ok, announcements} <- get_announcements(api_params.token, api_params.course_id) do
-      Logger.info("Updater fetched #{length(announcements)} announcements from IVLE")
+      Logger.info("Cadet.Updater.Public fetched #{length(announcements)} announcements from IVLE")
       # TODO: Act on announcements fetched
       schedule_work()
       {:noreply, api_params}
     else
       {:error, :bad_request} ->
         # the token has probably expired---get a new one
-        Logger.info("Updater failed fetching announcements. Refreshing token...")
+        Logger.info("Cadet.Updater.Public failed fetching announcements. Refreshing token...")
         api_params = get_api_params()
         handle_info(:work, api_params)
     end
@@ -171,6 +184,7 @@ defmodule Cadet.Updater.Public do
   end
 
   # Extracts the location of a 302 redirect from a %HTTPoison.Response
+  # Returns nil if no location in header (POST login form failed)
   defp get_redirect_path(response) do
     response.headers
     |> Enum.into(%{})

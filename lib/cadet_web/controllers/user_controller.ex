@@ -6,10 +6,13 @@ defmodule CadetWeb.UserController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
+  import Cadet.Assessments
+
   def index(conn, _) do
     user = conn.assigns.current_user
-    # TODO: fetch total xp for this user
-    render(conn, "index.json", user: user, xp: 0)
+    grade = user_total_grade(user)
+    story = user_current_story(user)
+    render(conn, "index.json", user: user, grade: grade, story: story)
   end
 
   swagger_path :index do
@@ -41,7 +44,25 @@ defmodule CadetWeb.UserController do
               required: true
             )
 
-            xp(:integer, "Amount of XP. Only provided for 'Student'")
+            story(Schema.ref(:UserStory), "Story to displayed to current user. ")
+
+            grade(:integer, "Amount of grade. Only provided for 'Student'")
+          end
+        end,
+      UserStory:
+        swagger_schema do
+          properties do
+            story(
+              :string,
+              "Name of story to be displayed to current user. May only be null before start of semester" <>
+                " when no assessments are open"
+            )
+
+            playStory(
+              :boolean,
+              "Whether story should be played (false indicates story field should only be used to fetch" <>
+                " assets, display open world view)"
+            )
           end
         end
     }

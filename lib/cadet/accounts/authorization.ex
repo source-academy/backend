@@ -7,8 +7,7 @@ defmodule Cadet.Accounts.Authorization do
   """
   use Cadet, :model
 
-  alias Cadet.Accounts.User
-  alias Cadet.Accounts.Provider
+  alias Cadet.Accounts.{Provider, User}
 
   schema "authorizations" do
     field(:provider, Provider)

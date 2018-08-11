@@ -1,9 +1,9 @@
 defmodule CadetWeb.GradingControllerTest do
   use CadetWeb.ConnCase
 
-  alias CadetWeb.GradingController
   alias Cadet.Assessments.Answer
   alias Cadet.Repo
+  alias CadetWeb.GradingController
 
   test "swagger" do
     GradingController.swagger_definitions()
@@ -52,8 +52,14 @@ defmodule CadetWeb.GradingControllerTest do
   describe "POST /:submissionid/:questionid, student" do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      conn = post(conn, build_url(1, 3), %{"grading" => %{}})
       assert response(conn, 401) =~ "User is not permitted to grade."
+    end
+
+    @tag authenticate: :student
+    test "missing parameter", %{conn: conn} do
+      conn = post(conn, build_url(1, 3), %{})
+      assert response(conn, 400) =~ "Missing parameter"
     end
   end
 
@@ -70,21 +76,24 @@ defmodule CadetWeb.GradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "xp" => 600,
-            "submissionId" => submission.id,
+            "grade" => 600,
+            "adjustment" => -300,
+            "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id
             },
             "assessment" => %{
               "type" => "mission",
-              "max_xp" => 600,
-              "id" => mission.id
+              "maxGrade" => 600,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => Cadet.Assessments.Image.url({mission.cover_picture, mission})
             }
           }
         end)
 
-      assert ^expected = Enum.sort_by(json_response(conn, 200), & &1["submissionId"])
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
     end
 
     @tag authenticate: :staff
@@ -118,23 +127,30 @@ defmodule CadetWeb.GradingControllerTest do
         |> Enum.map(
           &%{
             "question" => %{
-              "solution_template" => &1.question.question.solution_template,
-              "questionType" => "#{&1.question.type}",
-              "questionId" => &1.question.id,
-              "library" => &1.question.library,
+              "solutionTemplate" => &1.question.question.solution_template,
+              "type" => "#{&1.question.type}",
+              "id" => &1.question.id,
+              "library" => %{
+                "chapter" => &1.question.library.chapter,
+                "globals" => &1.question.library.globals,
+                "external" => %{
+                  "name" => "#{&1.question.library.external.name}",
+                  "symbols" => &1.question.library.external.symbols
+                }
+              },
               "content" => &1.question.question.content,
               "answer" => &1.answer.code
             },
-            "max_xp" => &1.question.max_xp,
+            "maxGrade" => &1.question.max_grade,
             "grade" => %{
-              "xp" => &1.xp,
+              "grade" => &1.grade,
               "adjustment" => &1.adjustment,
               "comment" => &1.comment
             }
           }
         )
 
-      assert ^expected = Enum.sort_by(json_response(conn, 200), & &1["question"]["questionId"])
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["question"]["questionId"])
     end
 
     @tag authenticate: :staff
@@ -195,6 +211,12 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert response(conn, 400) == "Answer not found or user not permitted to grade."
     end
+
+    @tag authenticate: :staff
+    test "missing parameter", %{conn: conn} do
+      conn = post(conn, build_url(1, 3), %{})
+      assert response(conn, 400) =~ "Missing parameter"
+    end
   end
 
   describe "GET /, admin" do
@@ -216,8 +238,14 @@ defmodule CadetWeb.GradingControllerTest do
   describe "POST /:submissionid/:questionid, admin" do
     @tag authenticate: :admin
     test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      conn = post(conn, build_url(1, 3), %{"grading" => %{}})
       assert response(conn, 401) =~ "User is not permitted to grade."
+    end
+
+    @tag authenticate: :admin
+    test "missing parameter", %{conn: conn} do
+      conn = post(conn, build_url(1, 3), %{})
+      assert response(conn, 400) =~ "Missing parameter"
     end
   end
 
@@ -236,11 +264,9 @@ defmodule CadetWeb.GradingControllerTest do
     mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
 
     questions =
-      insert_list(3, :question, %{
-        type: :programming,
-        question: build(:programming_question),
+      insert_list(3, :programming_question, %{
         assessment: mission,
-        max_xp: 200
+        max_grade: 200
       })
 
     submissions =
@@ -252,7 +278,8 @@ defmodule CadetWeb.GradingControllerTest do
       for submission <- submissions,
           question <- questions do
         insert(:answer, %{
-          xp: 200,
+          grade: 200,
+          adjustment: -100,
           question: question,
           submission: submission,
           answer: build(:programming_answer)
