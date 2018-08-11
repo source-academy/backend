@@ -64,8 +64,5 @@
   "unicode_util_compat": {:hex, :unicode_util_compat, "0.3.1", "a1f612a7b512638634a603c8f401892afbf99b8ce93a45041f8aaca99cadb85e", [:rebar3], [], "hexpm"},
   "uuid": {:hex, :uuid, "1.1.8", "e22fc04499de0de3ed1116b770c7737779f226ceefa0badb3592e64d5cfb4eb9", [:mix], [], "hexpm"},
   "xlsxir": {:hex, :xlsxir, "1.6.2", "18459faf8009d78363bdee1948a0f25631aec604d70d343fc3ad3c22c2a8df77", [:mix], [{:erlsom, "~> 1.4", [hex: :erlsom, repo: "hexpm", optional: false]}], "hexpm"},
-<<<<<<< HEAD
-=======
   "xml_builder": {:hex, :xml_builder, "2.1.0", "c249d5339427c13cae11e9d9d0e8b40d25d228b9ecc54029f24017385e60280b", [:mix], [], "hexpm"},
->>>>>>> c16c732fa22badf8be34a23fa130c1d76f39cdea
 }
