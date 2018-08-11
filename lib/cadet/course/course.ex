@@ -60,23 +60,21 @@ defmodule Cadet.Course do
   Create group entity with given name
   """
   def create_group(name, leader, mentor) do
-    changeset =
       %Group{}
       |> Group.changeset(%{name: name})
       |> put_assoc(:leader, leader)
       |> put_assoc(:mentor, mentor)
-
-    Repo.insert(changeset)
+      |> Repo.insert(changeset)
   end
 
   @doc """
   Adds given student to given group
   """
-  def add_student_to_group(group, student) do
+  def add_student_to_group(group = %Group{}, student = %User{role: :student}) do
     student
     |> Repo.preload(:group)
     |> User.changeset()
-    |> put_assoc(:group, group)
+    |> change(${"group_id": Map.get(group, :id)})
     |> Repo.update()
   end
 
