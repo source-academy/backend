@@ -3,6 +3,7 @@ defmodule Cadet.Accounts do
   Accounts context contains domain logic for User management and Authentication
   """
   use Cadet, :context
+  
   import Ecto.Query
 
   alias Cadet.Accounts.{Authorization, Form.Registration, IVLE, Query, User}
@@ -68,18 +69,14 @@ defmodule Cadet.Accounts do
   Get student with given name and nusnet id or create one
   """
   def get_or_create_user(name, role, nusnet_id) do
-    query =
-      from(
-        u in User,
-        where: u.name == ^name and u.role == ^role and u.nusnet_id == ^nusnet_id
-      )
-
-    users = Repo.all(query)
-
-    if length(users) != 0 do
-      List.first(users)
-    else
-      elem(create_user(%{name: name, role: role, nusnet_id: nusnet_id}), 1)
+    User
+    |> where(name: ^name)
+    |> where(role: ^role)
+    |> where(nusnet_id: ^nusnet_id)
+    |> Repo.one()
+    |> case do
+      nil -> create_user(%{name: name, role: role, nusnet_id: nusnet_id})
+      user -> {:ok, user}
     end
   end
 
