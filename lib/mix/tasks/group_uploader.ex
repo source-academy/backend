@@ -19,9 +19,6 @@ defmodule Mix.Tasks.GroupUploader do
       |> Xlsxir.get_list()
       |> Enum.drop(3)
 
-    # Xlsxir.get_list(Xlsxir.multi_extract(Enum.at(args, 0))[:ok])
-    # |> Enum.drop(3)
-
     avengers =
       args
       |> Enum.at(1)
