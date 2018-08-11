@@ -5,8 +5,7 @@ defmodule Cadet.Accounts do
   use Cadet, :context
   import Ecto.Query
 
-  alias Cadet.Accounts.Form.Registration
-  alias Cadet.Accounts.{Authorization, IVLE, Query, User}
+  alias Cadet.Accounts.{Authorization, Form.Registration, IVLE, Query, User}
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration

@@ -1,8 +1,8 @@
 defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
-  alias Cadet.{Course, Repo}
   alias Cadet.Course.{Material, Upload}
+  alias Cadet.Repo
 
   describe "Announcements" do
     test "create valid" do

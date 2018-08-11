@@ -1,8 +1,7 @@
 defmodule Mix.Tasks.GroupUploader do
   use Mix.Task
 
-  alias Cadet.Course
-  alias Cadet.Accounts
+  alias Cadet.{Accounts, Course}
 
   @moduledoc """
   Mix Task to upload the tutorial groups and it's
@@ -11,7 +10,7 @@ defmodule Mix.Tasks.GroupUploader do
 
   def run(args) do
     Mix.Task.run("app.start")
-    # Removing unneccesary headers 
+    # Removing unneccesary headers
     groups =
       args
       |> Enum.at(0)

@@ -3,9 +3,9 @@ defmodule CadetWeb.UserControllerTest do
 
   import Cadet.Factory
 
+  alias Cadet.Assessments.{Assessment, AssessmentType, Submission}
   alias Cadet.Repo
   alias CadetWeb.UserController
-  alias Cadet.Assessments.{Assessment, AssessmentType, Submission}
 
   test "swagger" do
     assert is_map(UserController.swagger_definitions())
