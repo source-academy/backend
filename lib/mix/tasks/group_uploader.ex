@@ -14,20 +14,20 @@ defmodule Mix.Tasks.GroupUploader do
     groups =
       args
       |> Enum.at(0)
-      |> Xlsxir.multi_extract
+      |> Xlsxir.multi_extract()
       |> Keyword.get(:ok)
-      |> Xlsxir.get_list
+      |> Xlsxir.get_list()
       |> Enum.drop(3)
 
-      # Xlsxir.get_list(Xlsxir.multi_extract(Enum.at(args, 0))[:ok])
-      # |> Enum.drop(3)
+    # Xlsxir.get_list(Xlsxir.multi_extract(Enum.at(args, 0))[:ok])
+    # |> Enum.drop(3)
 
     avengers =
       args
       |> Enum.at(1)
-      |> Xlsxir.multi_extract
+      |> Xlsxir.multi_extract()
       |> Keyword.get(:ok)
-      |> Xlsxir.get_list
+      |> Xlsxir.get_list()
       |> Enum.drop(1)
 
     helper(groups, 0, avengers, 0, nil)
