@@ -295,10 +295,7 @@ defmodule Cadet.Assessments do
            {:status, :attempted} <- {:status, submission.status},
            {:ok, updated_submission} <-
              submission |> Submission.changeset(%{status: :submitted}) |> Repo.update() do
-        GradingJob.force_grade_individual_submission(
-          updated_submission,
-          submission.assessment
-        )
+        GradingJob.force_grade_individual_submission(updated_submission)
 
         {:ok, nil}
       else

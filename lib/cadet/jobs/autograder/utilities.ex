@@ -7,25 +7,9 @@ defmodule Cadet.Autograder.Utilities do
   require Logger
 
   import Ecto.Query
-  import Cadet.Factory
 
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Submission}
-
-  # TODO: DELETE THIS
-  def seed_assessments do
-    assessments =
-      Enum.map(1..3, fn _ ->
-        insert(:assessment, %{
-          is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
-          type: :mission
-        })
-      end)
-
-    Enum.map(assessments, &insert_list(3, :programming_question, %{assessment: &1}))
-  end
 
   def dispatch_programming_answer(answer, question) do
     # This should never fail

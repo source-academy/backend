@@ -6,7 +6,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   alias Que.Persistence, as: JobsQueue
 
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
+  alias Cadet.Assessments.{Answer, Question, Submission}
   alias Cadet.Autograder.{GradingJob, LambdaWorker}
 
   defp assert_dispatched(answer_question_list) do
@@ -38,11 +38,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       %{assessments: Enum.zip(assessments, questions)}
     end
 
-    test "all assessments attempted, all questions graded, " <>
-           "regrade flag set, should enqueue all jobs",
-         %{
-           assessments: assessments
-         } do
+    test "all assessments attempted, all questions graded, should enqueue all jobs",
+         %{assessments: assessments} do
       with_mock Que, add: fn _, _ -> nil end do
         student = insert(:user, %{role: :student})
 
@@ -61,15 +58,7 @@ defmodule Cadet.Autograder.GradingJobTest do
             })
           end)
 
-        assessment_db =
-          Assessment
-          |> where(id: ^assessment.id)
-          |> join(:inner, [a], q in assoc(a, :questions))
-          |> order_by([a, q], q.id)
-          |> preload([_, q], questions: q)
-          |> Repo.one()
-
-        GradingJob.force_grade_individual_submission(submission, assessment_db)
+        GradingJob.force_grade_individual_submission(submission)
 
         for answer <- answers do
           assert Repo.get(Answer, answer.id).autograding_status == :processing

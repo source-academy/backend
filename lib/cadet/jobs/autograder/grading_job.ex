@@ -30,11 +30,18 @@ defmodule Cadet.Autograder.GradingJob do
   @doc """
   Exposed as public function in case future mix tasks are needed to regrade
   certain submissions.
+
+  Takes in submission to be graded. It will re-grade every answer regardless of
+  its current submission status.
   """
-  def force_grade_individual_submission(
-        submission = %Submission{},
-        assessment = %Assessment{}
-      ) do
+  def force_grade_individual_submission(submission = %Submission{}) do
+    assessment =
+      if Ecto.assoc_loaded?(submission.assessment) do
+        submission.assessment
+      else
+        submission |> Repo.preload(:assessment) |> Map.get(:assessment)
+      end
+
     assessment = preprocess_assessment_for_grading(assessment)
     grade_individual_submission(submission, assessment, true)
   end
@@ -67,7 +74,7 @@ defmodule Cadet.Autograder.GradingJob do
       questions =
         Question
         |> where(assessment_id: ^assessment.id)
-        |> order_by(:question_id)
+        |> order_by(:id)
         |> Repo.all()
 
       Map.put(assessment, :questions, questions)

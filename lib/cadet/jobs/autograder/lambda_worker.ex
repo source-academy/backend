@@ -11,28 +11,6 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   @lambda_name :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:lambda_name)
 
-  def build_request_params(%{question: question, answer: answer}) do
-    question_content = question.question
-
-    {_, capitalised_name_external} =
-      question.grading_library.external
-      |> Map.from_struct()
-      |> Map.get_and_update(
-        :name,
-        &{&1, &1 |> Atom.to_string() |> String.upcase()}
-      )
-
-    %{
-      graderPrograms: question_content["autograder"],
-      studentProgram: answer.answer["code"],
-      library: %{
-        chapter: question.grading_library.chapter,
-        external: capitalised_name_external,
-        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
-      }
-    }
-  end
-
   def perform(params = %{answer: answer}) do
     lambda_params = build_request_params(params)
 
@@ -43,8 +21,6 @@ defmodule Cadet.Autograder.LambdaWorker do
 
     # If the lambda crashes, results are in the format of:
     # %{"errorMessage" => "${message}"}
-    inspect(response)
-
     if is_map(response) do
       raise inspect(response)
     else
@@ -75,6 +51,28 @@ defmodule Cadet.Autograder.LambdaWorker do
         }
       }
     )
+  end
+
+  def build_request_params(%{question: question, answer: answer}) do
+    question_content = question.question
+
+    {_, upcased_name_external} =
+      question.grading_library.external
+      |> Map.from_struct()
+      |> Map.get_and_update(
+        :name,
+        &{&1, &1 |> Atom.to_string() |> String.upcase()}
+      )
+
+    %{
+      graderPrograms: question_content["autograder"],
+      studentProgram: answer.answer["code"],
+      library: %{
+        chapter: question.grading_library.chapter,
+        external: upcased_name_external,
+        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
+      }
+    }
   end
 
   def parse_response(response, %{graderPrograms: grader_programs}) do
