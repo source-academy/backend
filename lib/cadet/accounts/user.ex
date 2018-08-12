@@ -27,4 +27,9 @@ defmodule Cadet.Accounts.User do
     |> validate_required(@required_fields)
     |> validate_inclusion(:role, Role.__valid_values__())
   end
+
+  def student_changeset(student, group_id) do
+    student
+    |> change(%{"group_id": group_id})
+  end
 end

@@ -61,9 +61,7 @@ defmodule Cadet.Course do
   """
   def create_group(name, leader, mentor) do
     %Group{}
-    |> Group.changeset(%{name: name})
-    |> change(%{leader_id: Map.get(leader, :id)})
-    |> change(%{mentor_id: Map.get(mentor, :id)})
+    |> Group.changeset(Map.get(leader, :id), Map.get(mentor, :id), %{name: name})
     |> Repo.insert()
   end
 
@@ -72,9 +70,7 @@ defmodule Cadet.Course do
   """
   def add_student_to_group(group = %Group{}, student = %User{role: :student}) do
     student
-    |> Repo.preload(:group)
-    |> User.changeset()
-    |> change(%{group_id: Map.get(group, :id)})
+    |> User.student_changeset(Map.get(group, :id))
     |> Repo.update()
   end
 
