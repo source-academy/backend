@@ -11,7 +11,8 @@ defmodule Cadet.Accounts.UserFactory do
         %User{
           name: Faker.Name.En.name(),
           role: Enum.random(Role.__enum_map__()),
-          nusnet_id: "E0" <> Integer.to_string(Enum.random(100_000..999_999)) # Due to unique nusnet id constraint
+          # Due to unique nusnet id constraint
+          nusnet_id: "E0" <> Integer.to_string(Enum.random(100_000..999_999))
         }
       end
 
