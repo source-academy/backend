@@ -28,7 +28,7 @@ defmodule Cadet.Mixfile do
   def application do
     [
       mod: {Cadet.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :que, :runtime_tools]
     ]
   end
 
@@ -48,6 +48,7 @@ defmodule Cadet.Mixfile do
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.0"},
       {:ex_aws_kms, "~> 2.0"},
+      {:ex_aws_lambda, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.1"},
       {:floki, "~> 0.20.0"},
@@ -63,6 +64,7 @@ defmodule Cadet.Mixfile do
       {:phoenix_swagger, "~> 0.8"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.2.7"},
+      {:que, "~> 0.5.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
@@ -74,8 +76,9 @@ defmodule Cadet.Mixfile do
       {:distillery, "~> 1.5.3", runtime: false},
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
+      {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
-      {:faker, "~> 0.10", only: [:test, :dev]}
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 

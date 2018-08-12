@@ -57,7 +57,8 @@
         # For some checks, like AliasUsage, you can only customize the priority
         # Priority values are: `low, normal, high, higher`
         #
-        {Credo.Check.Design.AliasUsage, if_called_more_often_than: 2, excluded_namespaces: ["Faker"]},
+        {Credo.Check.Design.AliasUsage,
+         if_called_more_often_than: 2, excluded_namespaces: ["Faker"]},
 
         # For others you can set parameters
 
@@ -73,7 +74,7 @@
         #
         {Credo.Check.Design.TagTODO, exit_status: 0},
         {Credo.Check.Design.TagFIXME},
-        {Credo.Check.Readability.AliasOrder, exit_status: 0},
+        {Credo.Check.Readability.AliasOrder, false},
         {Credo.Check.Readability.FunctionNames},
         {Credo.Check.Readability.LargeNumbers},
         {Credo.Check.Readability.MaxLineLength, max_length: 100},
