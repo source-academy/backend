@@ -51,6 +51,9 @@ defmodule CadetWeb do
   def router do
     quote do
       use Phoenix.Router
+      use Plug.ErrorHandler
+      use Sentry.Plug
+
       import Plug.Conn
       import Phoenix.Controller
     end
