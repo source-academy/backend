@@ -7,12 +7,14 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
   require Logger
 
+  import Cadet.SharedHelper
+
   alias Ecto.Multi
 
   alias Cadet.Repo
   alias Cadet.Assessments.Answer
 
-  def perform(%{answer_id: answer_id, result: result}) do
+  def perform(%{answer_id: answer_id, result: result}) when is_ecto_id(answer_id) do
     Multi.new()
     |> Multi.run(:fetch, fn _ -> fetch_answer(answer_id) end)
     |> Multi.run(:update, fn %{fetch: answer} -> update_answer(answer, result) end)
@@ -29,7 +31,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
     end
   end
 
-  defp fetch_answer(answer_id) do
+  defp fetch_answer(answer_id) when is_ecto_id(answer_id) do
     answer = Repo.get(Answer, answer_id)
 
     if answer do

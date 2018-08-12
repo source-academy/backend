@@ -9,9 +9,9 @@ defmodule Cadet.Autograder.Utilities do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Assessments.{Answer, Assessment, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
-  def dispatch_programming_answer(answer, question) do
+  def dispatch_programming_answer(answer = %Answer{}, question = %Question{}) do
     # This should never fail
     answer =
       answer

@@ -100,14 +100,14 @@ defmodule Cadet.Autograder.GradingJob do
     |> Repo.update!()
   end
 
-  defp grade_answer(answer, question = %{type: type}) do
+  defp grade_answer(answer = %Answer{}, question = %Question{type: type}) do
     case type do
       :programming -> Utilities.dispatch_programming_answer(answer, question)
       :mcq -> grade_mcq_answer(answer, question)
     end
   end
 
-  def grade_mcq_answer(answer, question = %Question{question: question_content}) do
+  def grade_mcq_answer(answer = %Answer{}, question = %Question{question: question_content}) do
     correct_choice =
       question_content["choices"]
       |> Enum.find(&Map.get(&1, "is_correct"))
@@ -123,7 +123,8 @@ defmodule Cadet.Autograder.GradingJob do
   defp insert_empty_answer(
          submission_id,
          %Question{id: question_id, type: question_type}
-       ) do
+       )
+       when is_ecto_id(submission_id) do
     answer_content =
       case question_type do
         :programming -> %{code: "// Question not answered by student."}

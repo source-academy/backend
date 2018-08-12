@@ -1,13 +1,14 @@
 defmodule Cadet.Autograder.LambdaWorker do
   @moduledoc """
   This module submits the answer to the autograder and creates a job for the ResultStoreWorker to
-  write it to db on success.
+  write the received result to db.
   """
   use Que.Worker, concurrency: 20
 
   require Logger
 
   alias Cadet.Autograder.ResultStoreWorker
+  alias Cadet.Assessments.{Answer, Question}
 
   @lambda_name :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:lambda_name)
 
@@ -16,7 +17,7 @@ defmodule Cadet.Autograder.LambdaWorker do
   the correct shape to dispatch to lambda, waits for the response, parses it, and enqueues a
   storage job.
   """
-  def perform(params = %{answer: answer}) do
+  def perform(params = %{answer: answer = %Answer{}, question: %Question{}}) do
     lambda_params = build_request_params(params)
 
     response =
@@ -38,7 +39,7 @@ defmodule Cadet.Autograder.LambdaWorker do
     end
   end
 
-  def on_failure(%{answer: answer}, error) do
+  def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do
     Logger.error(
       "Failed to get autograder result. answer_id: #{answer.id}, error: #{inspect(error)}"
     )
@@ -58,7 +59,7 @@ defmodule Cadet.Autograder.LambdaWorker do
     )
   end
 
-  def build_request_params(%{question: question, answer: answer}) do
+  def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
     question_content = question.question
 
     {_, upcased_name_external} =
