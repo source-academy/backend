@@ -92,7 +92,8 @@ defmodule Cadet.Mixfile do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate", "test"],
       "phx.server": ["cadet.server"],
-      "phx.digest": ["cadet.digest"]
+      "phx.digest": ["cadet.digest"],
+      sentry_recompile: ["deps.compile sentry --force", "compile"]
     ]
   end
 end

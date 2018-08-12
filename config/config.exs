@@ -31,6 +31,14 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+# Configures Sentry
+config :sentry,
+  included_environments: [:prod],
+  environment_name: Mix.env(),
+  enable_source_code_context: true,
+  root_source_code_path: File.cwd!(),
+  context_lines: 5
+
 # Configure Arc File Upload
 config :arc, storage: Arc.Storage.Local
 
