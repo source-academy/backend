@@ -10,14 +10,16 @@ defmodule Cadet.Accounts.UserFactory do
       def user_factory do
         %User{
           name: Faker.Name.En.name(),
-          role: Enum.random(Role.__enum_map__())
+          role: Enum.random(Role.__enum_map__()),
+          nusnet_id: "E0" <> Integer.to_string(Enum.random(100000..999999))
         }
       end
 
       def student_factory do
         %User{
           name: Faker.Name.En.name(),
-          role: :student
+          role: :student,
+          nusnet_id: "E0" <> Integer.to_string(Enum.random(100000..999999))
         }
       end
     end

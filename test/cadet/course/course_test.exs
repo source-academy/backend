@@ -17,7 +17,7 @@ defmodule Cadet.CourseTest do
       mentor = insert(:user, %{role: :staff})
       {:ok, group} = Course.create_group("group_name", leader, mentor)
       student = insert(:student)
-      student = Course.add_student_to_group(group, student)
+      {:ok, student} = Course.add_student_to_group(group, student)
       assert student.group_id == Map.get(group, :id)
     end
   end
