@@ -60,7 +60,7 @@ defmodule Cadet.Course do
   Create group entity with given name
   """
   def create_group(name, leader, mentor) do
-    %Group{} 
+    %Group{}
     |> Group.changeset(%{leader: leader, mentor: mentor, name: name})
     |> Repo.insert()
   end

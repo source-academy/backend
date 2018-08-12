@@ -25,30 +25,32 @@ defmodule Mix.Tasks.GroupUploader do
       |> Xlsxir.get_list()
       |> Enum.drop(1)
 
-    helper(groups, 0, avengers, 0, nil)
+    helper(groups, avengers, nil)
   end
 
-  defp helper(rows, row_index, avengers, avenger_index, current_group) do
-    row = Enum.at(rows, row_index)
-    current_avenger = Enum.at(avengers, avenger_index)
-
+  defp helper(rows, avengers, current_group) do
+    [row | rows] = rows
+    
     cond do
       row == nil || List.first(row) == "//" ->
         "End"
 
       String.contains?(List.first(row), "Total Students") ->
+        [current_avenger_name | [current_avenger_id | [_ | [mentor_name | [mentor_id | _]]]]] =
+          List.first(avengers)
+
         {:ok, avenger} =
           Accounts.get_or_create_user(
-            List.first(current_avenger),
+            current_avenger_name,
             :staff,
-            Enum.at(current_avenger, 1)
+            current_avenger_id
           )
 
         {:ok, mentor} =
           Accounts.get_or_create_user(
-            Enum.at(current_avenger, 3),
+            mentor_name,
             :staff,
-            Enum.at(current_avenger, 4)
+            mentor_id
           )
 
         group_name =
@@ -56,18 +58,15 @@ defmodule Mix.Tasks.GroupUploader do
 
         helper(
           rows,
-          row_index + 1,
-          avengers,
-          avenger_index + 1,
+          Enum.drop(avengers, 1),
           elem(Course.create_group(group_name, avenger, mentor), 1)
         )
 
       List.first(row) == "Name" ->
-        helper(rows, row_index + 1, avengers, avenger_index, current_group)
+        helper(rows, avengers, current_group)
 
       true ->
-        student_name = List.first(row)
-        student_nusnet = Enum.at(row, 1)
+        [student_name | [student_nusnet | _]] = row
         {:ok, student} = Accounts.get_or_create_user(student_name, :student, student_nusnet)
 
         Course.add_student_to_group(
@@ -75,7 +74,7 @@ defmodule Mix.Tasks.GroupUploader do
           student
         )
 
-        helper(rows, row_index + 1, avengers, avenger_index, current_group)
+        helper(rows, avengers, current_group)
     end
   end
 end
