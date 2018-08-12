@@ -208,10 +208,8 @@ defmodule Cadet.Autograder.GradingJobTest do
         Submission
         |> where(student_id: ^student.id)
         |> join(:inner, [s], a in assoc(s, :answers))
-        |> preload([_, a], answers: a)
+        |> select([_, a], a)
         |> Repo.all()
-        |> Enum.map(&Map.from_struct(&1))
-        |> Enum.flat_map(fn submission -> submission.answers end)
 
       assert Enum.count(answers) == 9
 
