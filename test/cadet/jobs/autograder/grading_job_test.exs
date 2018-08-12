@@ -149,7 +149,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
       GradingJob.grade_all_due_yesterday()
 
-      assert JobsQueue.all() |> Enum.count() == 0
+      assert Enum.empty?(JobsQueue.all())
     end
 
     test "all assessments attempted, should update all submission statuses", %{
@@ -186,8 +186,7 @@ defmodule Cadet.Autograder.GradingJobTest do
             |> where(assessment_id: ^assessment.id)
             |> Repo.one()
 
-          assert submission
-          assert submission.status == :submitted
+          assert submission && submission.status == :submitted
         end
       end
     end
@@ -223,7 +222,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.comment == "Question not attempted by student"
       end
 
-      assert JobsQueue.all() |> Enum.count() == 0
+      assert Enum.empty?(JobsQueue.all())
     end
 
     # Test unanswered question behaviour of two finger walk
@@ -275,10 +274,8 @@ defmodule Cadet.Autograder.GradingJobTest do
           Submission
           |> where(student_id: ^student.id)
           |> join(:inner, [s], a in assoc(s, :answers))
-          |> preload([_, a], answers: a)
+          |> select([_, a], a)
           |> Repo.all()
-          |> Enum.map(&Map.from_struct(&1))
-          |> Enum.flat_map(& &1.answers)
           |> Enum.filter(&(&1.question_id in unanswered_question_ids))
 
         for answer <- inserted_empty_answers do
@@ -326,10 +323,8 @@ defmodule Cadet.Autograder.GradingJobTest do
         Submission
         |> where(student_id: ^student.id)
         |> join(:inner, [s], a in assoc(s, :answers))
-        |> preload([_, a], answers: a)
+        |> select([_, a], a)
         |> Repo.all()
-        |> Enum.map(&Map.from_struct(&1))
-        |> Enum.flat_map(fn submission -> submission.answers end)
 
       assert Enum.count(answers) == 9
 
@@ -340,7 +335,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.comment == "Question not attempted by student"
       end
 
-      assert JobsQueue.all() |> Enum.count() == 0
+      assert Enum.empty?(JobsQueue.all())
     end
 
     test "all assessments attempted, all questions answered, " <>
@@ -389,7 +384,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer_db.autograding_status == :success
       end
 
-      assert JobsQueue.all() |> Enum.count() == 0
+      assert Enum.empty?(JobsQueue.all())
     end
   end
 end

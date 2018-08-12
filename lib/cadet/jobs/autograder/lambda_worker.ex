@@ -11,6 +11,11 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   @lambda_name :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:lambda_name)
 
+  @doc """
+  This Que callback transforms an input of %{question: %Question{}, answer: %Answer{}} into
+  the correct shape to dispatch to lambda, waits for the response, parses it, and enqueues a
+  storage job.
+  """
   def perform(params = %{answer: answer}) do
     lambda_params = build_request_params(params)
 

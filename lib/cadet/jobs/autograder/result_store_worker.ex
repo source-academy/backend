@@ -1,7 +1,7 @@
 defmodule Cadet.Autograder.ResultStoreWorker do
   @moduledoc """
   This module writes results from the autograder to db. Separate worker is created with lower
-  concurrency on the assumption  that autograding time >> db IO time so as to reduce db load.
+  concurrency on the assumption that autograding time >> db IO time so as to reduce db load.
   """
   use Que.Worker, concurrency: 5
 

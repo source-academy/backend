@@ -29,7 +29,8 @@ defmodule Cadet.Autograder.GradingJob do
 
   @doc """
   Exposed as public function in case future mix tasks are needed to regrade
-  certain submissions.
+  certain submissions. Manual grading can also be triggered from iex with this
+  function.
 
   Takes in submission to be graded. Submission will be graded regardless of its
   assessment's close_by date or submission status.
