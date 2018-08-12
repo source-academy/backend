@@ -25,12 +25,14 @@ defmodule Mix.Tasks.GroupUploader do
       |> Xlsxir.get_list()
       |> Enum.drop(1)
 
-    helper(groups, avengers, nil)
+    upload_to_database(groups, avengers, nil)
   end
 
-  defp helper(rows, avengers, current_group) do
+  def run(_), do: {:error, "Invalid arguments"}
+
+  defp upload_to_database(rows, avengers, current_group) do
     [row | rows] = rows
-    
+
     cond do
       row == nil || List.first(row) == "//" ->
         "End"
@@ -56,14 +58,14 @@ defmodule Mix.Tasks.GroupUploader do
         group_name =
           String.slice(List.first(row), 0..(elem(:binary.match(List.first(row), "("), 0) - 1))
 
-        helper(
+        upload_to_database(
           rows,
           Enum.drop(avengers, 1),
           elem(Course.create_group(group_name, avenger, mentor), 1)
         )
 
       List.first(row) == "Name" ->
-        helper(rows, avengers, current_group)
+        upload_to_database(rows, avengers, current_group)
 
       true ->
         [student_name | [student_nusnet | _]] = row
@@ -74,7 +76,7 @@ defmodule Mix.Tasks.GroupUploader do
           student
         )
 
-        helper(rows, avengers, current_group)
+        upload_to_database(rows, avengers, current_group)
     end
   end
 end
