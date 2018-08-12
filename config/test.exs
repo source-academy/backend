@@ -16,6 +16,11 @@ config :ex_aws,
   secret_access_key: "world",
   region: "ap-southeast-1"
 
+config :ex_aws,
+  access_key_id: "hello",
+  secret_access_key: "world",
+  region: "ap-southeast-1"
+
 # Don't save secret keys in ExVCR cassettes
 config :exvcr,
   filter_url_params: true,
