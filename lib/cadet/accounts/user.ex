@@ -30,6 +30,6 @@ defmodule Cadet.Accounts.User do
 
   def student_changeset(student, group_id) do
     student
-    |> change(%{"group_id": group_id})
+    |> change(%{group_id: group_id})
   end
 end

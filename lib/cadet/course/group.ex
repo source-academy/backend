@@ -17,10 +17,15 @@ defmodule Cadet.Course.Group do
   @required_fields ~w()a
   @optional_fields ~w(name)a
 
+  def changeset(group, attrs \\ %{}) do
+    group
+    |> cast(attrs, @required_fields ++ @optional_fields)
+  end
+
   def changeset(group, leader_id, mentor_id, attrs \\ %{}) do
     group
     |> cast(attrs, @required_fields ++ @optional_fields)
-    |> change(%{"leader_id": leader_id})
-    |> change(%{"mentor_id": mentor_id})
+    |> change(%{leader_id: leader_id})
+    |> change(%{mentor_id: mentor_id})
   end
 end
