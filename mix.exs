@@ -28,7 +28,7 @@ defmodule Cadet.Mixfile do
   def application do
     [
       mod: {Cadet.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:sentry, :logger, :runtime_tools]
     ]
   end
 
@@ -63,6 +63,7 @@ defmodule Cadet.Mixfile do
       {:phoenix_swagger, "~> 0.8"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.2.7"},
+      {:sentry, "~> 6.4"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
