@@ -12,31 +12,39 @@ defmodule Cadet.Assessments.QuestionFactory do
       end
 
       def programming_question_factory do
+        library = build(:library)
+
         %Question{
           type: :programming,
           max_grade: 10,
           assessment: build(:assessment, %{is_published: true}),
-          library: build(:library),
-          grading_library: Enum.random([build(:library), nil]),
-          question: %{
-            content: Faker.Pokemon.name(),
-            solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
-            solution: Faker.Lorem.Shakespeare.hamlet(),
-            autograder:
-              (&Faker.Lorem.Shakespeare.king_richard_iii/0)
-              |> Stream.repeatedly()
-              |> Enum.take(Enum.random(0..2))
-          }
+          library: library,
+          grading_library: Enum.random([build(:library), library]),
+          question: build(:programming_question_content)
+        }
+      end
+
+      def programming_question_content_factory do
+        %{
+          content: Faker.Pokemon.name(),
+          solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
+          solution: Faker.Lorem.Shakespeare.hamlet(),
+          autograder:
+            (&Faker.Lorem.Shakespeare.king_richard_iii/0)
+            |> Stream.repeatedly()
+            |> Enum.take(Enum.random(0..2))
         }
       end
 
       def mcq_question_factory do
+        library = build(:library)
+
         %Question{
           type: :mcq,
           max_grade: 10,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
-          grading_library: Enum.random([build(:library), nil]),
+          grading_library: Enum.random([build(:library), library]),
           question: %{
             content: Faker.Pokemon.name(),
             choices: Enum.map(0..2, &build(:mcq_choice, %{choice_id: &1, is_correct: &1 == 0}))

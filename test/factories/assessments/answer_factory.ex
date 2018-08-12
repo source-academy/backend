@@ -10,6 +10,7 @@ defmodule Cadet.Assessments.AnswerFactory do
       def answer_factory do
         %Answer{
           answer: %{},
+          autograding_status: :none,
           comment: Faker.Lorem.Shakespeare.En.romeo_and_juliet()
         }
       end
