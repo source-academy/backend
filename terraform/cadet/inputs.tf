@@ -34,6 +34,14 @@ variable "lambda_filename" {
   description = "Location of the lambda deployment zip"
 }
 
+variable "lambda_timeout" {
+  description = "Timeout duration of the lambda service (seconds)"
+}
+
+variable "grader_timeout" {
+  description = "TIMEOUT_DURATION of the grader (milliseconds)"
+}
+
 variable "ssh_public_key" {
   description = "Public SSH Key Used by the Instance"
 }
