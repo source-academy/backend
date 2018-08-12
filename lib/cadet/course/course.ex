@@ -71,7 +71,7 @@ defmodule Cadet.Course do
   def add_student_to_group(group = %Group{}, student = %User{role: :student}) do
     student
     |> User.student_changeset(Map.get(group, :id))
-    |> Repo.update()
+    |> Repo.update!()
   end
 
   # @doc """

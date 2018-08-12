@@ -8,20 +8,18 @@ defmodule Mix.Tasks.GroupUploader do
   participants
   """
 
-  def run(args) do
+  def run([groups_arg | [avengers_arg | _]]) do
     Mix.Task.run("app.start")
     # Removing unneccesary headers
     groups =
-      args
-      |> Enum.at(0)
+      groups_arg
       |> Xlsxir.multi_extract()
       |> Keyword.get(:ok)
       |> Xlsxir.get_list()
       |> Enum.drop(3)
 
     avengers =
-      args
-      |> Enum.at(1)
+      avengers_arg
       |> Xlsxir.multi_extract()
       |> Keyword.get(:ok)
       |> Xlsxir.get_list()
@@ -70,10 +68,11 @@ defmodule Mix.Tasks.GroupUploader do
       true ->
         student_name = List.first(row)
         student_nusnet = Enum.at(row, 1)
+        {:ok, student} = Accounts.get_or_create_user(student_name, :student, student_nusnet)
 
         Course.add_student_to_group(
           current_group,
-          Accounts.get_or_create_user(student_name, :student, student_nusnet)
+          student
         )
 
         helper(rows, row_index + 1, avengers, avenger_index, current_group)
