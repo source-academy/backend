@@ -67,6 +67,39 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert_dispatched(Enum.zip(answers, questions))
       end
     end
+
+    test "all assessments attempted, all questions graded, no assocs preloaded, " <>
+           "should enqueue all jobs",
+         %{assessments: assessments} do
+      with_mock Que, add: fn _, _ -> nil end do
+        student = insert(:user, %{role: :student})
+
+        [{assessment, questions} | _] = assessments
+
+        submission =
+          insert(:submission, %{student: student, assessment: assessment, status: :attempted})
+
+        answers =
+          Enum.map(questions, fn question ->
+            insert(:answer, %{
+              question: question,
+              submission: submission,
+              answer: build(:programming_answer),
+              autograding_status: :success
+            })
+          end)
+
+        submission_db = Repo.get(Submission, submission.id)
+
+        GradingJob.force_grade_individual_submission(submission_db)
+
+        for answer <- answers do
+          assert Repo.get(Answer, answer.id).autograding_status == :processing
+        end
+
+        assert_dispatched(Enum.zip(answers, questions))
+      end
+    end
   end
 
   describe "#grade_all_due_yesterday, all programming questions" do
