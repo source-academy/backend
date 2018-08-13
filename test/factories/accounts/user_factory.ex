@@ -11,7 +11,8 @@ defmodule Cadet.Accounts.UserFactory do
         %User{
           name: Faker.Name.En.name(),
           role: Enum.random(Role.__enum_map__()),
-          nusnet_id: "E0" <> Integer.to_string(Enum.random(100_000..999_999))
+          # Due to unique nusnet id constraint
+          nusnet_id: sequence(:nusnet_id, &("E" <> String.pad_leading(&1, 7, 0)))
         }
       end
 
@@ -19,7 +20,7 @@ defmodule Cadet.Accounts.UserFactory do
         %User{
           name: Faker.Name.En.name(),
           role: :student,
-          nusnet_id: "E0" <> Integer.to_string(Enum.random(100_000..999_999))
+          nusnet_id: sequence(:nusnet_id, &("E" <> String.pad_leading(&1, 7, 0)))
         }
       end
     end

@@ -29,17 +29,19 @@ defmodule Cadet.AccountsTest do
     HTTPoison.start()
   end
 
-  test "get or create exisiting user" do
-    user = insert(:user, %{nusnet_id: "E0123456"})
-    {:ok, result} = Accounts.get_or_create_user(user.name, user.role, user.nusnet_id)
+  describe "get or create user" do
+    test "get or create exisiting user" do
+      user = insert(:user, %{nusnet_id: "E0123456"})
+      {:ok, result} = Accounts.get_or_create_user(user.name, user.role, user.nusnet_id)
 
-    assert result == user
-  end
+      assert result == user
+    end
 
-  test "get or create new user" do
-    {:ok, user} = Accounts.get_or_create_user("happy user", :staff, "E0123456")
+    test "get or create new user" do
+      {:ok, user} = Accounts.get_or_create_user("happy user", :staff, "E0123456")
 
-    assert %{name: "happy user", role: :staff, nusnet_id: "E0123456"} = user
+      assert %{name: "happy user", role: :staff, nusnet_id: "E0123456"} = user
+    end
   end
 
   test "create user" do

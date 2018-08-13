@@ -27,8 +27,9 @@ defmodule Cadet.Accounts.User do
     |> validate_required(@required_fields)
   end
 
-  def student_changeset(student, group_id) do
+  def student_changeset(student, params) do
     student
-    |> change(%{group_id: group_id})
+    |> cast(params, @required_fields ++ @optional_fields)
+    |> add_belongs_to_id_from_model(:group, params)
   end
 end
