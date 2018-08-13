@@ -11,8 +11,9 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     grade = user_total_grade(user)
+    max_grade = user_max_grade(user)
     story = user_current_story(user)
-    render(conn, "index.json", user: user, grade: grade, story: story)
+    render(conn, "index.json", user: user, grade: grade, max_grade: max_grade, story: story)
   end
 
   swagger_path :index do
@@ -47,6 +48,12 @@ defmodule CadetWeb.UserController do
             story(Schema.ref(:UserStory), "Story to displayed to current user. ")
 
             grade(:integer, "Amount of grade. Only provided for 'Student'")
+
+            maxGrade(
+              :integer,
+              "Total maximum grade achievable based on submitted assessments." <>
+                "Only provided for 'Student'"
+            )
           end
         end,
       UserStory:

@@ -16,6 +16,29 @@ defmodule Cadet.Assessments do
   @grading_roles ~w(staff)a
   @open_all_assessment_roles ~w(staff admin)a
 
+  @spec user_max_grade(%User{}) :: integer()
+  def user_max_grade(%User{id: user_id}) when is_ecto_id(user_id) do
+    max_grade =
+      Submission
+      |> where(status: ^:submitted)
+      |> join(:inner, [s], student in assoc(s, :student))
+      |> where([_, student], student.id == ^user_id)
+      |> join(
+        :inner,
+        [s],
+        a in subquery(Query.all_assessments_with_max_grade()),
+        s.assessment_id == a.id
+      )
+      |> select([_, _, a], sum(a.max_grade))
+      |> Repo.one()
+
+    if max_grade do
+      Decimal.to_integer(max_grade)
+    else
+      0
+    end
+  end
+
   def user_total_grade(%User{id: user_id}) do
     grade =
       Query.all_submissions_with_grade()

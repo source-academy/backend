@@ -10,6 +10,7 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 import Cadet.Factory
+alias Cadet.Assessments.SubmissionStatus
 
 if Application.get_env(:cadet, :environment) == :dev do
   # User and Group
@@ -39,13 +40,19 @@ if Application.get_env(:cadet, :environment) == :dev do
     submissions =
       students
       |> Enum.take(2)
-      |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1}))
+      |> Enum.map(
+        &insert(:submission, %{
+          assessment: assessment,
+          student: &1,
+          status: Enum.random(SubmissionStatus.__enum_map__())
+        })
+      )
 
     # Programming Answers
     for submission <- submissions,
         question <- programming_questions do
       insert(:answer, %{
-        grade: 200,
+        grade: Enum.random(0..200),
         question: question,
         submission: submission,
         answer: build(:programming_answer)
@@ -56,7 +63,7 @@ if Application.get_env(:cadet, :environment) == :dev do
     for submission <- submissions,
         question <- mcq_questions do
       insert(:answer, %{
-        grade: 200,
+        grade: Enum.random(0..40),
         question: question,
         submission: submission,
         answer: build(:mcq_answer)
