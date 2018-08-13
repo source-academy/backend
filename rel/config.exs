@@ -46,8 +46,6 @@ end
 
 release :cadet do
   set version: current_version(:cadet)
-  set applications: [
-    :runtime_tools
-  ]
+  set applications: [:runtime_tools, :ex_utils, :memento]
 end
 
