@@ -70,8 +70,6 @@ defmodule Cadet.Accounts do
   """
   def get_or_create_user(name, role, nusnet_id) do
     User
-    |> where(name: ^name)
-    |> where(role: ^role)
     |> where(nusnet_id: ^nusnet_id)
     |> Repo.one()
     |> case do
