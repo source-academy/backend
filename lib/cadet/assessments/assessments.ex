@@ -21,15 +21,14 @@ defmodule Cadet.Assessments do
     max_grade =
       Submission
       |> where(status: ^:submitted)
-      |> join(:inner, [s], student in assoc(s, :student))
-      |> where([_, student], student.id == ^user_id)
+      |> where(student_id: ^user_id)
       |> join(
         :inner,
         [s],
         a in subquery(Query.all_assessments_with_max_grade()),
         s.assessment_id == a.id
       )
-      |> select([_, _, a], sum(a.max_grade))
+      |> select([_, a], sum(a.max_grade))
       |> Repo.one()
 
     if max_grade do
