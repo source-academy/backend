@@ -12,8 +12,8 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
     field(:autograder, {:array, :string})
   end
 
-  @required_fields ~w(content solution_template solution)a
-  @optional_fields ~w(autograder)a
+  @required_fields ~w(content solution_template)a
+  @optional_fields ~w(solution autograder)a
 
   def changeset(question, params \\ %{}) do
     question
