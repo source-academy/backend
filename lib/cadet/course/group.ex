@@ -20,7 +20,6 @@ defmodule Cadet.Course.Group do
   def changeset(group, attrs \\ %{}) do
     group
     |> cast(attrs, @required_fields ++ @optional_fields)
-    |> add_belongs_to_id_from_model(:leader, attrs)
-    |> add_belongs_to_id_from_model(:mentor, attrs)
+    |> add_belongs_to_id_from_model([:leader, :mentor], attrs)
   end
 end
