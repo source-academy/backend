@@ -35,11 +35,11 @@ config :logger, :console,
 
 # Configure ExAWS
 config :ex_aws,
-  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :instance_role],
+  access_key_id: [:instance_role, {:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}],
   secret_access_key: [
+    :instance_role,
     {:system, "AWS_SECRET_ACCESS_KEY"},
-    {:awscli, "default", 30},
-    :instance_role
+    {:awscli, "default", 30}
   ],
   region: "ap-southeast-1"
 
