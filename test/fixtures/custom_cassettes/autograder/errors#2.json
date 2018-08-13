@@ -1,0 +1,40 @@
+[
+  {
+    "request": {
+      "body":
+        "{\"studentProgram\":\"const f = i => f(i);\",\"library\":{\"globals\":[],\"external\":{\"symbols\":[],\"name\":\"NONE\"},\"chapter\":7},\"graderPrograms\":[\"function ek0chei0y1() {\\n    return f(0) === 0 ? 1 : 0;\\n  }\\n\\n  ek0chei0y1();\",\"function ek0chei0y1() {\\n    const test1 = f(7) === 13;\\n    const test2 = f(10) === 55;\\n    const test3 = f(12) === 144;\\n    return test1 && test2 && test3 ? 4 : 0;\\n  }\\n\\n  ek0chei0y1();\"]}",
+      "headers": {
+        "Authorization": "hello_world",
+        "host": "lambda.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20180809T095544Z",
+        "x-amz-content-sha256": "",
+        "content-type": "application/json"
+      },
+      "method": "post",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 30000
+      },
+      "request_body": "",
+      "url": "~r/https://lambda.ap-southeast-1.amazonaws.com/.*/"
+    },
+    "response": {
+      "binary": false,
+      "body":
+        "{\"errorMessage\":\"2018-08-09T09:55:45.692Z 6049db71-33fa-4faa-88c4-38f57b6754f3 Task timed out after 1.00 seconds\"}",
+      "headers": {
+        "Date": "Thu, 09 Aug 2018 09:55:45 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "114",
+        "Connection": "keep-alive",
+        "x-amzn-RequestId": "6049db71-33fa-4faa-88c4-38f57b6754f3",
+        "X-Amz-Function-Error": "Unhandled",
+        "x-amzn-Remapped-Content-Length": "0",
+        "X-Amz-Executed-Version": "$LATEST",
+        "X-Amzn-Trace-Id": "root=1-6049db71-38f57b6754f379946049db71;sampled=0"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

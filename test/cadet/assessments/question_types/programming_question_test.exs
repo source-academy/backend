@@ -8,9 +8,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
       assert_changeset(
         %{
           content: "asd",
-          solution_template: "asd",
-          solution: "asd",
-          library: %{version: 1}
+          solution_template: "asd"
         },
         :valid
       )
@@ -21,9 +19,7 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
 
       assert_changeset(
         %{
-          content: "asd",
-          solution_template: "asd",
-          library: %{globals: ["a"]}
+          content: "asd"
         },
         :invalid
       )

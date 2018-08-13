@@ -12,11 +12,13 @@ config :cadet,
   updater: [interval: 1 * 60 * 1000]
 
 # Scheduler, e.g. for CS1101S
-config :cadet, Cadet.Updater.Scheduler,
+config :cadet, Cadet.Jobs.Scheduler,
   timezone: "Asia/Singapore",
   overlap: false,
   jobs: [
-    {"@daily", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}}
+    {"@daily", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}},
+    # Grade previous day's submission at 3am
+    {"0 3 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}}
   ]
 
 # Configures the endpoint
@@ -38,6 +40,16 @@ config :sentry,
   enable_source_code_context: true,
   root_source_code_path: File.cwd!(),
   context_lines: 5
+
+# Configure ExAWS
+config :ex_aws,
+  access_key_id: [:instance_role, {:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}],
+  secret_access_key: [
+    :instance_role,
+    {:system, "AWS_SECRET_ACCESS_KEY"},
+    {:awscli, "default", 30}
+  ],
+  region: "ap-southeast-1"
 
 # Configure Arc File Upload
 config :arc, storage: Arc.Storage.Local
