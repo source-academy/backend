@@ -13,7 +13,7 @@ defmodule Cadet.Course.Group do
     belongs_to(:mentor, User)
     has_many(:students, User)
   end
-  
+
   @optional_fields ~w(name)a
 
   def changeset(group, attrs \\ %{}) do

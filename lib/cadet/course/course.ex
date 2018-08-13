@@ -70,7 +70,7 @@ defmodule Cadet.Course do
   """
   def add_student_to_group(group = %Group{}, student = %User{role: :student}) do
     student
-    |> User.student_changeset(%{group: group})
+    |> User.group_changeset(%{group: group})
     |> Repo.update()
   end
 

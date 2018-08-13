@@ -1,6 +1,8 @@
 defmodule Mix.Tasks.GroupUploader do
   use Mix.Task
 
+  require Logger
+
   alias Cadet.{Accounts, Course}
 
   @moduledoc """
@@ -10,7 +12,7 @@ defmodule Mix.Tasks.GroupUploader do
 
   def run([groups_arg | [avengers_arg | _]]) do
     Mix.Task.run("app.start")
-    
+
     # Getting only the groups from the excel file
     groups =
       groups_arg
@@ -18,7 +20,7 @@ defmodule Mix.Tasks.GroupUploader do
       |> Keyword.get(:ok)
       |> Xlsxir.get_list()
       |> Enum.drop(3)
-  
+
     # Getting the avenger-mentor-studio relation from the excel file
     avengers =
       avengers_arg
@@ -37,10 +39,9 @@ defmodule Mix.Tasks.GroupUploader do
       # End of excel sheet
       row == nil || List.first(row) == "//" ->
         Logger.info("Task completed")
-      
+
       # Row with tutorial name
       String.contains?(List.first(row), "Total Students") ->
-      
         # Get avenger for that particular tutorial
         [current_avenger_name | [current_avenger_id | [_ | [mentor_name | [mentor_id | _]]]]] =
           List.first(avengers)
@@ -58,7 +59,7 @@ defmodule Mix.Tasks.GroupUploader do
             :staff,
             mentor_id
           )
-        
+
         # Get group name from row
         group_name =
           String.slice(List.first(row), 0..(elem(:binary.match(List.first(row), "("), 0) - 1))
@@ -69,11 +70,11 @@ defmodule Mix.Tasks.GroupUploader do
           # Storing the group in function parameter to assign students to it later
           elem(Course.create_group(group_name, avenger, mentor), 1)
         )
-      
+
       # Have to skip this row as it is just a header
       List.first(row) == "Name" ->
         upload_to_database(rows, avengers, current_group)
-      
+
       # Adding students to their respective groups
       true ->
         [student_name | [student_nusnet | _]] = row
