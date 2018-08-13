@@ -10,14 +10,16 @@ defmodule Mix.Tasks.GroupUploader do
 
   def run([groups_arg | [avengers_arg | _]]) do
     Mix.Task.run("app.start")
-    # Removing unneccesary headers
+    
+    # Getting only the groups from the excel file
     groups =
       groups_arg
       |> Xlsxir.multi_extract()
       |> Keyword.get(:ok)
       |> Xlsxir.get_list()
       |> Enum.drop(3)
-
+  
+    # Getting the avenger-mentor-studio relation from the excel file
     avengers =
       avengers_arg
       |> Xlsxir.multi_extract()
@@ -28,14 +30,18 @@ defmodule Mix.Tasks.GroupUploader do
     upload_to_database(groups, avengers, nil)
   end
 
-  def run(_), do: {:error, "Invalid arguments"}
+  def run(_), do: Logger.error("Invalid arguments")
 
   defp upload_to_database([row | rows], avengers, current_group) do
     cond do
+      # End of excel sheet
       row == nil || List.first(row) == "//" ->
-        "End"
-
+        Logger.info("Task completed")
+      
+      # Row with tutorial name
       String.contains?(List.first(row), "Total Students") ->
+      
+        # Get avenger for that particular tutorial
         [current_avenger_name | [current_avenger_id | [_ | [mentor_name | [mentor_id | _]]]]] =
           List.first(avengers)
 
@@ -52,19 +58,23 @@ defmodule Mix.Tasks.GroupUploader do
             :staff,
             mentor_id
           )
-
+        
+        # Get group name from row
         group_name =
           String.slice(List.first(row), 0..(elem(:binary.match(List.first(row), "("), 0) - 1))
 
         upload_to_database(
           rows,
           Enum.drop(avengers, 1),
+          # Storing the group in function parameter to assign students to it later
           elem(Course.create_group(group_name, avenger, mentor), 1)
         )
-
+      
+      # Have to skip this row as it is just a header
       List.first(row) == "Name" ->
         upload_to_database(rows, avengers, current_group)
-
+      
+      # Adding students to their respective groups
       true ->
         [student_name | [student_nusnet | _]] = row
         {:ok, student} = Accounts.get_or_create_user(student_name, :student, student_nusnet)
