@@ -31,7 +31,6 @@ defmodule Mix.Tasks.GroupUploader do
   def run(_), do: {:error, "Invalid arguments"}
 
   defp upload_to_database([row | rows], avengers, current_group) do
-
     cond do
       row == nil || List.first(row) == "//" ->
         "End"

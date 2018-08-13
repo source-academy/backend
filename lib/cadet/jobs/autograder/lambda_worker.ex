@@ -44,19 +44,16 @@ defmodule Cadet.Autograder.LambdaWorker do
       "Failed to get autograder result. answer_id: #{answer.id}, error: #{inspect(error)}"
     )
 
-    Que.add(
-      ResultStoreWorker,
-      %{
-        answer_id: answer.id,
-        result: %{
-          grade: 0,
-          status: :failed,
-          errors: [
-            %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
-          ]
-        }
+    Que.add(ResultStoreWorker, %{
+      answer_id: answer.id,
+      result: %{
+        grade: 0,
+        status: :failed,
+        errors: [
+          %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
+        ]
       }
-    )
+    })
   end
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
@@ -84,20 +81,18 @@ defmodule Cadet.Autograder.LambdaWorker do
   def parse_response(response, %{graderPrograms: grader_programs}) do
     response
     |> Enum.zip(grader_programs)
-    |> Enum.reduce(
-      %{grade: 0, errors: []},
-      fn {result, grader_program}, %{grade: grade, errors: errors} ->
-        if result["resultType"] == "pass" do
-          %{grade: grade + result["grade"], errors: errors}
-        else
-          error_result = %{
-            grader_program: grader_program,
-            errors: result["errors"]
-          }
+    |> Enum.reduce(%{grade: 0, errors: []}, fn {result, grader_program},
+                                               %{grade: grade, errors: errors} ->
+      if result["resultType"] == "pass" do
+        %{grade: grade + result["grade"], errors: errors}
+      else
+        error_result = %{
+          grader_program: grader_program,
+          errors: result["errors"]
+        }
 
-          %{grade: grade, errors: errors ++ [error_result]}
-        end
+        %{grade: grade, errors: errors ++ [error_result]}
       end
-    )
+    end)
   end
 end

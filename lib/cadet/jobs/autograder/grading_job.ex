@@ -120,10 +120,7 @@ defmodule Cadet.Autograder.GradingJob do
     |> Repo.update()
   end
 
-  defp insert_empty_answer(
-         submission_id,
-         %Question{id: question_id, type: question_type}
-       )
+  defp insert_empty_answer(submission_id, %Question{id: question_id, type: question_type})
        when is_ecto_id(submission_id) do
     answer_content =
       case question_type do

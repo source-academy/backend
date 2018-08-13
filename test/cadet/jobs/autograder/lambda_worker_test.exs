@@ -15,18 +15,15 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
 
   setup do
     question =
-      insert(
-        :programming_question,
-        %{
-          question:
-            build(:programming_question_content, %{
-              autograder: [
-                "function ek0chei0y1() {\n    return f(0) === 0 ? 1 : 0;\n  }\n\n  ek0chei0y1();",
-                "function ek0chei0y1() {\n    const test1 = f(7) === 13;\n    const test2 = f(10) === 55;\n    const test3 = f(12) === 144;\n    return test1 && test2 && test3 ? 4 : 0;\n  }\n\n  ek0chei0y1();"
-              ]
-            })
-        }
-      )
+      insert(:programming_question, %{
+        question:
+          build(:programming_question_content, %{
+            autograder: [
+              "function ek0chei0y1() {\n    return f(0) === 0 ? 1 : 0;\n  }\n\n  ek0chei0y1();",
+              "function ek0chei0y1() {\n    const test1 = f(7) === 13;\n    const test2 = f(10) === 55;\n    const test3 = f(12) === 144;\n    return test1 && test2 && test3 ? 4 : 0;\n  }\n\n  ek0chei0y1();"
+            ]
+          })
+      })
 
     submission =
       insert(:submission, %{
