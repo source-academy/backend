@@ -18,8 +18,25 @@ defmodule CadetWeb.UserControllerTest do
       user = conn.assigns.current_user
       assessment = insert(:assessment, %{is_published: true})
       question = insert(:question, %{assessment: assessment})
-      submission = insert(:submission, %{assessment: assessment, student: user})
+
+      submission =
+        insert(:submission, %{assessment: assessment, student: user, status: :submitted})
+
       insert(:answer, %{question: question, submission: submission, grade: 50, adjustment: -10})
+
+      not_submitted_assessment = insert(:assessment, is_published: true)
+      not_submitted_question = insert(:question, assessment: not_submitted_assessment)
+
+      not_submitted_submission =
+        insert(:submission, assessment: not_submitted_assessment, student: user)
+
+      insert(
+        :answer,
+        question: not_submitted_question,
+        submission: not_submitted_submission,
+        grade: 0,
+        adjustment: 0
+      )
 
       resp =
         conn
@@ -27,7 +44,12 @@ defmodule CadetWeb.UserControllerTest do
         |> json_response(200)
         |> Map.delete("story")
 
-      expected = %{"name" => user.name, "role" => "#{user.role}", "grade" => 40}
+      expected = %{
+        "name" => user.name,
+        "role" => "#{user.role}",
+        "grade" => 40,
+        "maxGrade" => question.max_grade
+      }
 
       assert expected == resp
     end
@@ -172,7 +194,7 @@ defmodule CadetWeb.UserControllerTest do
         |> json_response(200)
         |> Map.delete("story")
 
-      expected = %{"name" => user.name, "role" => "#{user.role}", "grade" => 0}
+      expected = %{"name" => user.name, "role" => "#{user.role}", "grade" => 0, "maxGrade" => 0}
 
       assert expected == resp
     end
