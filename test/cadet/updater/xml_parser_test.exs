@@ -200,8 +200,7 @@ defmodule Cadet.Updater.XMLParserTest do
 
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-        assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :error end) =~
-                 "assessment is already open"
+        assert XMLParser.parse_xml(xml) == :ok
       end
     end
   end
