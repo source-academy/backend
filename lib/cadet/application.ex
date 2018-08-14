@@ -28,7 +28,10 @@ defmodule Cadet.Application do
     # In the compiled binary howver, this is much simpler
     #     $ bin/cadet start --updater
     children =
-      if :init.get_plain_arguments() |> Enum.member?('--updater') do
+      if Enum.any?(
+           :init.get_plain_arguments(),
+           &(&1 |> to_string() |> String.contains?("--updater"))
+         ) do
         Task.async(&Updater.CS1101S.clone/0)
 
         children ++
