@@ -22,6 +22,8 @@ defmodule Cadet.Updater.PublicTest do
   use ExUnit.Case, async: false
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
+  import ExUnit.CaptureLog
+
   alias Cadet.Updater.Public
 
   setup_all do
@@ -99,7 +101,8 @@ defmodule Cadet.Updater.PublicTest do
 
     test "get_api_params/0 is unsuccessful in non-prod environment" do
       use_cassette "updater/init#2", custom: true do
-        assert {:ok, nil} = Public.init(nil)
+        assert capture_log(fn -> assert {:ok, nil} = Public.init(nil) end) =~
+                 "Cadet.Updater.Public failed to initialise."
       end
     end
   end
