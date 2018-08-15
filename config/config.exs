@@ -16,7 +16,7 @@ config :cadet, Cadet.Jobs.Scheduler,
   timezone: "Asia/Singapore",
   overlap: false,
   jobs: [
-    {"0 * * * *", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}},
+    {"@hourly", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}},
     # Grade previous day's submission at 3am
     {"0 3 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}}
   ]
