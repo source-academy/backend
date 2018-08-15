@@ -5,9 +5,47 @@ defmodule Cadet.Course do
   """
   use Cadet, :context
 
+  import Ecto.Query
+
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Announcement, Material, Upload}
-  # alias Cadet.Course.Group
+  alias Cadet.Course.{Announcement, Group, Material, Upload}
+
+  @doc """
+  Get a group based on the group name or create one if it doesn't exist
+  """
+  @spec get_or_create_group(String.t()) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
+  def get_or_create_group(name) when is_binary(name) do
+    Group
+    |> where(name: ^name)
+    |> Repo.one()
+    |> case do
+      nil ->
+        %Group{}
+        |> Group.changeset(%{name: name})
+        |> Repo.insert()
+
+      group ->
+        {:ok, group}
+    end
+  end
+
+  @doc """
+  Updates a group based on the group name or create one if it doesn't exist
+  """
+  @spec insert_or_update_group(map()) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
+  def insert_or_update_group(params = %{name: name}) when is_binary(name) do
+    Group
+    |> where(name: ^name)
+    |> Repo.one()
+    |> case do
+      nil ->
+        Group.changeset(%Group{}, params)
+
+      group ->
+        Group.changeset(group, params)
+    end
+    |> Repo.insert_or_update()
+  end
 
   @doc """
   Create announcement entity using specified user as poster
