@@ -49,11 +49,12 @@ defmodule Cadet.Assessments.AnswerTest do
       assert_changeset_db(params, :valid)
     end
 
-    test "converts valid params with models into ids", %{
-      submission: submission,
-      programming_question: question,
-      valid_programming_params: params
-    } do
+    test "converts valid params with models into ids",
+         %{
+           submission: submission,
+           programming_question: question,
+           valid_programming_params: params
+         } do
       params =
         params
         |> Map.delete(:submission_id)
@@ -102,12 +103,13 @@ defmodule Cadet.Assessments.AnswerTest do
       end
     end
 
-    test "invalid changeset foreign key constraints", %{
-      valid_mcq_params: params,
-      mcq_question: mcq_question,
-      assessment: assessment,
-      submission: submission
-    } do
+    test "invalid changeset foreign key constraints",
+         %{
+           valid_mcq_params: params,
+           mcq_question: mcq_question,
+           assessment: assessment,
+           submission: submission
+         } do
       {:ok, _} = Repo.delete(mcq_question)
 
       assert_changeset_db(params, :invalid)
