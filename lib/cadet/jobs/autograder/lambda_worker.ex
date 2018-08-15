@@ -44,16 +44,18 @@ defmodule Cadet.Autograder.LambdaWorker do
       "Failed to get autograder result. answer_id: #{answer.id}, error: #{inspect(error)}"
     )
 
-    Que.add(ResultStoreWorker, %{
-      answer_id: answer.id,
-      result: %{
-        grade: 0,
-        status: :failed,
-        errors: [
-          %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
-        ]
-      }
-    })
+    Que.add(
+      ResultStoreWorker,
+      %{
+        answer_id: answer.id,
+        result: %{
+          grade: 0,
+          status: :failed,
+          errors: [
+            %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
+          ]
+        }
+      })
   end
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
