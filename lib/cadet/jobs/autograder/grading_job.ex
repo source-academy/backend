@@ -7,10 +7,14 @@ defmodule Cadet.Autograder.GradingJob do
 
   import Ecto.Query
 
+  require Logger
+
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Autograder.Utilities
 
   def grade_all_due_yesterday do
+    Logger.info("Started autograding")
+
     for assessment <- Utilities.fetch_assessments_due_yesterday() do
       assessment.id
       |> Utilities.fetch_submissions()
