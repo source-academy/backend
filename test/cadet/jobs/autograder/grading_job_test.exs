@@ -38,9 +38,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       %{assessments: Enum.zip(assessments, questions)}
     end
 
-    test "all assessments attempted, all questions graded, should enqueue all jobs", %{
-      assessments: assessments
-    } do
+    test "all assessments attempted, all questions graded, should enqueue all jobs",
+         %{assessments: assessments} do
       with_mock Que, add: fn _, _ -> nil end do
         student = insert(:user, %{role: :student})
 
