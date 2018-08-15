@@ -103,6 +103,10 @@ defmodule Cadet.Updater.XMLParser do
       :error ->
         :error
 
+      {:error, stage, %{errors: [assessment: {"is already open", []}]}, _} when is_atom(stage) ->
+        Logger.warn("Assessment already open, ignoring...")
+        :ok
+
       {:error, stage, changeset, _} when is_atom(stage) ->
         log_error_bad_changeset(changeset, stage)
         :error
