@@ -77,7 +77,7 @@
         {Credo.Check.Readability.AliasOrder, false},
         {Credo.Check.Readability.FunctionNames},
         {Credo.Check.Readability.LargeNumbers},
-        {Credo.Check.Readability.MaxLineLength, max_length: 100},
+        {Credo.Check.Readability.MaxLineLength, max_length: 101},
         {Credo.Check.Readability.ModuleAttributeNames},
         {Credo.Check.Readability.ModuleDoc},
         {Credo.Check.Readability.ModuleNames},
