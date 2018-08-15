@@ -55,7 +55,8 @@ defmodule Cadet.Autograder.LambdaWorker do
             %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
           ]
         }
-      })
+      }
+    )
   end
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
@@ -83,18 +84,20 @@ defmodule Cadet.Autograder.LambdaWorker do
   def parse_response(response, %{graderPrograms: grader_programs}) do
     response
     |> Enum.zip(grader_programs)
-    |> Enum.reduce(%{grade: 0, errors: []}, fn {result, grader_program},
-                                               %{grade: grade, errors: errors} ->
-      if result["resultType"] == "pass" do
-        %{grade: grade + result["grade"], errors: errors}
-      else
-        error_result = %{
-          grader_program: grader_program,
-          errors: result["errors"]
-        }
+    |> Enum.reduce(
+      %{grade: 0, errors: []},
+      fn {result, grader_program}, %{grade: grade, errors: errors} ->
+        if result["resultType"] == "pass" do
+          %{grade: grade + result["grade"], errors: errors}
+        else
+          error_result = %{
+            grader_program: grader_program,
+            errors: result["errors"]
+          }
 
-        %{grade: grade, errors: errors ++ [error_result]}
+          %{grade: grade, errors: errors ++ [error_result]}
+        end
       end
-    end)
+    )
   end
 end
