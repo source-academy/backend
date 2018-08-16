@@ -21,13 +21,27 @@ defmodule Cadet.AccountsTest do
   use Cadet.DataCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  alias Cadet.{Accounts, Repo}
-  alias Cadet.Accounts.Query
+  alias Cadet.{Accounts, Accounts.Query, Repo}
 
   @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 
   setup_all do
     HTTPoison.start()
+  end
+
+  describe "get_or_create_user" do
+    test "exisiting user" do
+      user = insert(:user, %{nusnet_id: "E0123456"})
+      {:ok, result} = Accounts.get_or_create_user(user.name, user.role, user.nusnet_id)
+
+      assert result == user
+    end
+
+    test "new user" do
+      {:ok, user} = Accounts.get_or_create_user("happy user", :staff, "E0123456")
+
+      assert %{name: "happy user", role: :staff, nusnet_id: "E0123456"} = user
+    end
   end
 
   test "create user" do

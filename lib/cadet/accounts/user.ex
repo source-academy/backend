@@ -25,6 +25,12 @@ defmodule Cadet.Accounts.User do
     user
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:role, Role.__valid_values__())
+  end
+
+  def group_changeset(student, params) do
+    student
+    |> cast(params, @required_fields ++ @optional_fields)
+    |> add_belongs_to_id_from_model(:group, params)
+    |> validate_required(@required_fields)
   end
 end

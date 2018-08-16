@@ -14,11 +14,11 @@ defmodule Cadet.Course.Group do
     has_many(:students, User)
   end
 
-  @required_fields ~w()a
   @optional_fields ~w(name)a
 
   def changeset(group, attrs \\ %{}) do
     group
-    |> cast(attrs, @required_fields ++ @optional_fields)
+    |> cast(attrs, @optional_fields)
+    |> add_belongs_to_id_from_model([:leader, :mentor], attrs)
   end
 end

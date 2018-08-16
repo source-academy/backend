@@ -11,8 +11,8 @@ defmodule Mix.Tasks.Cadet.Assessments.Import do
 
   import Mix.Ecto
 
-  alias Cadet.Updater.XMLParser
   alias Cadet.Repo
+  alias Cadet.Updater.XMLParser
 
   def run(_args) do
     # Required for Ecto to work properly, from Mix.Ecto

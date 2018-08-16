@@ -4,8 +4,9 @@ defmodule Cadet.Accounts do
   """
   use Cadet, :context
 
-  alias Cadet.Accounts.Form.Registration
-  alias Cadet.Accounts.{Authorization, IVLE, Query, User}
+  import Ecto.Query
+
+  alias Cadet.Accounts.{Authorization, Form.Registration, IVLE, Query, User}
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration
@@ -62,6 +63,19 @@ defmodule Cadet.Accounts do
   """
   def get_user(id) when is_ecto_id(id) do
     Repo.get(User, id)
+  end
+
+  @doc """
+  Get student with given name and nusnet id or create one
+  """
+  def get_or_create_user(name, role, nusnet_id) do
+    User
+    |> where(nusnet_id: ^nusnet_id)
+    |> Repo.one()
+    |> case do
+      nil -> create_user(%{name: name, role: role, nusnet_id: nusnet_id})
+      user -> {:ok, user}
+    end
   end
 
   @doc """
