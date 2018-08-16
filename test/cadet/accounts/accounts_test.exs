@@ -22,7 +22,7 @@ defmodule Cadet.AccountsTest do
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias Cadet.{Accounts, Repo}
-  alias Cadet.Accounts.Query
+  alias Cadet.Accounts.{Query, User}
 
   @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
 
@@ -202,6 +202,36 @@ defmodule Cadet.AccountsTest do
       use_cassette "accounts/sign_in#11", custom: true do
         assert {:error, :bad_request} = Accounts.sign_in("e012345", @token)
       end
+    end
+  end
+
+  describe "insert_or_update_user" do
+    test "existing user" do
+      user = insert(:user)
+      user_params = params_for(:user, nusnet_id: user.nusnet_id)
+      Accounts.insert_or_update_user(user_params)
+
+      updated_user =
+        User
+        |> where(nusnet_id: ^user.nusnet_id)
+        |> Repo.one()
+
+      assert updated_user.id == user.id
+      assert updated_user.name == user_params.name
+      assert updated_user.role == user_params.role
+    end
+
+    test "non-existing user" do
+      user_params = params_for(:user)
+      Accounts.insert_or_update_user(user_params)
+
+      updated_user =
+        User
+        |> where(nusnet_id: ^user_params.nusnet_id)
+        |> Repo.one()
+
+      assert updated_user.name == user_params.name
+      assert updated_user.role == user_params.role
     end
   end
 end

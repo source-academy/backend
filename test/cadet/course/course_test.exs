@@ -2,7 +2,7 @@ defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
   alias Cadet.{Course, Repo}
-  alias Cadet.Course.{Material, Upload}
+  alias Cadet.Course.{Group, Material, Upload}
 
   describe "Announcements" do
     test "create valid" do
@@ -167,6 +167,58 @@ defmodule Cadet.CourseTest do
 
       [file1, file2, file3, folder, folder2]
       |> Enum.each(&assert(Repo.get(Material, &1.id) == nil))
+    end
+  end
+
+  describe "get_or_create_group" do
+    test "existing group" do
+      group = insert(:group)
+
+      {:ok, group_db} = Course.get_or_create_group(group.name)
+
+      assert group_db.id == group.id
+      assert group_db.leader_id == group.leader_id
+    end
+
+    test "non-existent group" do
+      group_name = params_for(:group).name
+
+      {:ok, _} = Course.get_or_create_group(group_name)
+
+      group_db =
+        Group
+        |> where(name: ^group_name)
+        |> Repo.one()
+
+      refute is_nil(group_db)
+    end
+  end
+
+  describe "insert_or_update_group" do
+    test "existing group" do
+      group = insert(:group)
+      group_params = params_with_assocs(:group, name: group.name)
+      Course.insert_or_update_group(group_params)
+
+      updated_group =
+        Group
+        |> where(name: ^group.name)
+        |> Repo.one()
+
+      assert updated_group.id == group.id
+      assert updated_group.leader_id == group_params.leader_id
+    end
+
+    test "non-existent group" do
+      group_params = params_with_assocs(:group)
+      Course.insert_or_update_group(group_params)
+
+      updated_group =
+        Group
+        |> where(name: ^group_params.name)
+        |> Repo.one()
+
+      assert updated_group.leader_id == group_params.leader_id
     end
   end
 end
