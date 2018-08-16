@@ -4,6 +4,8 @@ defmodule Cadet.Accounts do
   """
   use Cadet, :context
 
+  import Ecto.Query
+
   alias Cadet.Accounts.Form.Registration
   alias Cadet.Accounts.{Authorization, IVLE, Query, User}
 
@@ -55,6 +57,25 @@ defmodule Cadet.Accounts do
     %User{}
     |> User.changeset(attrs)
     |> Repo.insert()
+  end
+
+  @doc """
+  Updates User entity with specified attributes. If the User does not exist yet,
+  create one.
+  """
+  @spec insert_or_update_user(map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def insert_or_update_user(attrs = %{nusnet_id: nusnet_id}) when is_binary(nusnet_id) do
+    User
+    |> where(nusnet_id: ^nusnet_id)
+    |> Repo.one()
+    |> case do
+      nil ->
+        User.changeset(%User{}, attrs)
+
+      user ->
+        User.changeset(user, attrs)
+    end
+    |> Repo.insert_or_update()
   end
 
   @doc """
