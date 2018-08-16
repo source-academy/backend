@@ -123,7 +123,7 @@ defmodule Cadet.Updater.XMLParser do
       xml
       |> xpath(
         ~x"//TASK"e,
-        type: ~x"./@kind"s,
+        type: ~x"./@kind"s |> transform_by(&change_quest_to_sidequest/1),
         title: ~x"./@title"s,
         open_at: ~x"./@startdate"s |> transform_by(&Timex.parse!(&1, "{ISO:Extended}")),
         close_at: ~x"./@duedate"s |> transform_by(&Timex.parse!(&1, "{ISO:Extended}")),
@@ -151,6 +151,15 @@ defmodule Cadet.Updater.XMLParser do
     Protocol.UndefinedError ->
       Logger.error("Missing TASK")
       :error
+  end
+
+  @spec change_quest_to_sidequest(String.t()) :: String.t()
+  defp change_quest_to_sidequest("quest") do
+    "sidequest"
+  end
+
+  defp change_quest_to_sidequest(type) when is_binary(type) do
+    type
   end
 
   @spec verify_has_time_offset(%{

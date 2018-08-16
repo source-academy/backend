@@ -190,7 +190,13 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp task(raw_attrs, children) do
-    {"TASK", map_permit_keys(raw_attrs, ~w(kind number startdate duedate title story)a), children}
+    attrs =
+      Map.update!(raw_attrs, :kind, fn
+        "sidequest" -> "quest"
+        type -> type
+      end)
+
+    {"TASK", map_permit_keys(attrs, ~w(kind number startdate duedate title story)a), children}
   end
 
   defp reading(content) do
