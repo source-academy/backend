@@ -14,7 +14,7 @@ defmodule Cadet.Accounts do
 
   Returns {:ok, user} on success, otherwise {:error, changeset}
   """
-  def register(attrs = %{}, role) do
+  def register(attrs = %{nusnet_id: nusnet_id}, role) when is_binary(nusnet_id) do
     changeset = Registration.changeset(%Registration{}, attrs)
 
     if changeset.valid? do
@@ -22,7 +22,7 @@ defmodule Cadet.Accounts do
 
       Repo.transaction(fn ->
         attrs_with_role = Map.put(attrs, :role, role)
-        {:ok, user} = create_user(attrs_with_role)
+        {:ok, user} = insert_or_update_user(attrs_with_role)
 
         {:ok, _} =
           create_authorization(
