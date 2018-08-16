@@ -1,7 +1,8 @@
-defmodule Cadet.Repo.Migrations.RemoveNotNullFromLeaderInGroup do
+defmodule Cadet.Repo.Migrations.RemoveConstraintsFromLeaderInGroup do
   use Ecto.Migration
 
   def up do
+    drop(unique_index(:groups, [:leader_id]))
     drop(constraint(:groups, "groups_leader_id_fkey"))
 
     alter table(:groups) do
@@ -10,6 +11,7 @@ defmodule Cadet.Repo.Migrations.RemoveNotNullFromLeaderInGroup do
   end
 
   def down do
+    create(unique_index(:groups, [:leader_id]))
     drop(constraint(:groups, "groups_leader_id_fkey"))
 
     alter table(:groups) do

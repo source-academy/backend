@@ -216,6 +216,7 @@ defmodule Cadet.AccountsTest do
         |> where(nusnet_id: ^user.nusnet_id)
         |> Repo.one()
 
+      assert updated_user.id == user.id
       assert updated_user.name == user_params.name
       assert updated_user.role == user_params.role
     end

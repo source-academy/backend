@@ -176,6 +176,7 @@ defmodule Cadet.CourseTest do
 
       {:ok, group_db} = Course.get_or_create_group(group.name)
 
+      assert group_db.id == group.id
       assert group_db.leader_id == group.leader_id
     end
 
@@ -204,6 +205,7 @@ defmodule Cadet.CourseTest do
         |> where(name: ^group.name)
         |> Repo.one()
 
+      assert updated_group.id == group.id
       assert updated_group.leader_id == group_params.leader_id
     end
 
