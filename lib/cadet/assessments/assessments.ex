@@ -412,6 +412,7 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a], q in assoc(a, :question))
         |> preload([a, ..., q], question: q)
         |> Repo.all()
+        |> Enum.sort_by(& &1.question.display_order)
 
       {:ok, answers}
     else

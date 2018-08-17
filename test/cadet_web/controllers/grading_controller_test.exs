@@ -124,6 +124,7 @@ defmodule CadetWeb.GradingControllerTest do
       expected =
         answers
         |> Enum.filter(&(&1.submission.id == submission.id))
+        |> Enum.sort_by(& &1.question.display_order)
         |> Enum.map(
           &%{
             "question" => %{
@@ -150,7 +151,7 @@ defmodule CadetWeb.GradingControllerTest do
           }
         )
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["question"]["questionId"])
+      assert expected == json_response(conn, 200)
     end
 
     @tag authenticate: :staff
@@ -264,10 +265,14 @@ defmodule CadetWeb.GradingControllerTest do
     mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
 
     questions =
-      insert_list(3, :programming_question, %{
-        assessment: mission,
-        max_grade: 200
-      })
+      for index <- 1..3 do
+        # insert with display order in reverse
+        insert(:programming_question, %{
+          assessment: mission,
+          max_grade: 200,
+          display_order: 4 - index
+        })
+      end
 
     submissions =
       students
