@@ -32,7 +32,7 @@ defmodule CadetWeb.GradingView do
         &Map.put(
           CadetWeb.AssessmentsView.build_question(%{question: &1.question}),
           :answer,
-          &1.answer["code"]
+          &1.answer["code"] || &1.answer["choice_id"]
         ),
       maxGrade: & &1.question.max_grade,
       grade: &transform_map_for_view(&1, [:grade, :adjustment, :comment])
