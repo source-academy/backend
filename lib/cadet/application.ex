@@ -36,7 +36,7 @@ defmodule Cadet.Application do
 
         children ++
           [
-            worker(Updater.Public, []),
+            # worker(Updater.Public, []),
             worker(Cadet.Jobs.Scheduler, [])
           ]
       else
