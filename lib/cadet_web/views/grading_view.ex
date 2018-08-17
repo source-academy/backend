@@ -21,7 +21,7 @@ defmodule CadetWeb.GradingView do
           maxGrade: :max_grade,
           id: :id,
           title: :title,
-          coverImage: fn a -> Cadet.Assessments.Image.url({a.cover_picture, a}) end
+          coverImage: :cover_picture
         })
     })
   end
