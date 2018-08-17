@@ -44,5 +44,3 @@ config :guardian, Guardian.DB,
   token_types: ["access"],
   # default: 60 minute
   sweep_interval: 60
-
-config :pre_commit, commands: ["format --check-formatted", "test", "credo"]

@@ -1,7 +1,6 @@
 defmodule Cadet.Assessments.AnswerTypes.MCQAnswerTest do
   use Cadet.ChangesetCase, async: true
 
-  import Ecto.Changeset
   alias Cadet.Assessments.AnswerTypes.MCQAnswer
 
   valid_changesets MCQAnswer do

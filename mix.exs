@@ -65,8 +65,7 @@ defmodule Cadet.Mixfile do
       {:dialyxir, "~> 1.0.0-rc.2", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
-      {:phoenix_live_reload, "~> 1.0", only: :dev},
-      {:pre_commit, "~> 0.3.4", only: [:dev, :test]}
+      {:phoenix_live_reload, "~> 1.0", only: :dev}
     ]
   end
 

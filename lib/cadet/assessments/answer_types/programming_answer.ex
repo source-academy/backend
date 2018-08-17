@@ -2,9 +2,7 @@ defmodule Cadet.Assessments.AnswerTypes.ProgrammingAnswer do
   @moduledoc """
   The ProgrammingQuestion entity represents a Programming question.
   """
-  use Ecto.Schema
-
-  import Ecto.Changeset
+  use Cadet, :model
 
   embedded_schema do
     field(:code, :string)
