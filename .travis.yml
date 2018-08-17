@@ -13,6 +13,7 @@ services:
   - postgresql
 before_install:
   - cp config/secrets.exs.example config/secrets.exs
+  - rm -rf ~/.hex/packages
 before_script:
   - mix ecto.setup
 script:
