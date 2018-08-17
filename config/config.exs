@@ -33,6 +33,14 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+# Configures Sentry
+config :sentry,
+  included_environments: [:prod],
+  environment_name: Mix.env(),
+  enable_source_code_context: true,
+  root_source_code_path: File.cwd!(),
+  context_lines: 5
+
 # Configure ExAWS
 config :ex_aws,
   access_key_id: [:instance_role, {:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}],
