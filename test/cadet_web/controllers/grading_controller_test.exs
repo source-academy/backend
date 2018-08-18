@@ -76,8 +76,8 @@ defmodule CadetWeb.GradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "grade" => 600,
-            "adjustment" => -300,
+            "grade" => 800,
+            "adjustment" => -400,
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -85,10 +85,10 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "assessment" => %{
               "type" => "mission",
-              "maxGrade" => 600,
+              "maxGrade" => 800,
               "id" => mission.id,
               "title" => mission.title,
-              "coverImage" => Cadet.Assessments.Image.url({mission.cover_picture, mission})
+              "coverImage" => mission.cover_picture
             }
           }
         end)
@@ -126,29 +126,64 @@ defmodule CadetWeb.GradingControllerTest do
         |> Enum.filter(&(&1.submission.id == submission.id))
         |> Enum.sort_by(& &1.question.display_order)
         |> Enum.map(
-          &%{
-            "question" => %{
-              "solutionTemplate" => &1.question.question.solution_template,
-              "type" => "#{&1.question.type}",
-              "id" => &1.question.id,
-              "library" => %{
-                "chapter" => &1.question.library.chapter,
-                "globals" => &1.question.library.globals,
-                "external" => %{
-                  "name" => "#{&1.question.library.external.name}",
-                  "symbols" => &1.question.library.external.symbols
+          &case &1.question.type do
+            :programming ->
+              %{
+                "question" => %{
+                  "solutionTemplate" => &1.question.question.solution_template,
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "content" => &1.question.question.content,
+                  "answer" => &1.answer.code
+                },
+                "maxGrade" => &1.question.max_grade,
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "comment" => &1.comment
                 }
-              },
-              "content" => &1.question.question.content,
-              "answer" => &1.answer.code
-            },
-            "maxGrade" => &1.question.max_grade,
-            "grade" => %{
-              "grade" => &1.grade,
-              "adjustment" => &1.adjustment,
-              "comment" => &1.comment
-            }
-          }
+              }
+
+            :mcq ->
+              %{
+                "question" => %{
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "content" => &1.question.question.content,
+                  "answer" => &1.answer.choice_id,
+                  "choices" =>
+                    for choice <- &1.question.question.choices do
+                      %{
+                        "content" => choice.content,
+                        "hint" => choice.hint,
+                        "id" => choice.choice_id
+                      }
+                    end
+                },
+                "maxGrade" => &1.question.max_grade,
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "comment" => &1.comment
+                }
+              }
+          end
         )
 
       assert expected == json_response(conn, 200)
@@ -265,14 +300,21 @@ defmodule CadetWeb.GradingControllerTest do
     mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
 
     questions =
-      for index <- 1..3 do
+      for index <- 0..2 do
         # insert with display order in reverse
         insert(:programming_question, %{
           assessment: mission,
           max_grade: 200,
           display_order: 4 - index
         })
-      end
+      end ++
+        [
+          insert(:mcq_question, %{
+            assessment: mission,
+            max_grade: 200,
+            display_order: 1
+          })
+        ]
 
     submissions =
       students
@@ -287,7 +329,11 @@ defmodule CadetWeb.GradingControllerTest do
           adjustment: -100,
           question: question,
           submission: submission,
-          answer: build(:programming_answer)
+          answer:
+            case question.type do
+              :programming -> build(:programming_answer)
+              :mcq -> build(:mcq_answer)
+            end
         })
       end
 
