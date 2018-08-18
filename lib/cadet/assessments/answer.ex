@@ -13,6 +13,7 @@ defmodule Cadet.Assessments.Answer do
   schema "answers" do
     field(:grade, :integer, default: 0)
     field(:xp, :integer, default: 0)
+    field(:xp_adjustment, :integer, default: 0)
     field(:autograding_status, AutogradingStatus, default: :none)
     field(:autograding_errors, {:array, :map}, default: [])
     field(:answer, :map)
