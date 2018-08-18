@@ -8,6 +8,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   require Logger
 
   import Cadet.SharedHelper
+  import Ecto.Query
 
   alias Ecto.Multi
 
@@ -34,7 +35,11 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   end
 
   defp fetch_answer(answer_id) when is_ecto_id(answer_id) do
-    answer = Repo.get(Answer, answer_id)
+    answer =
+      Answer
+      |> join(:inner, [a], q in assoc(a, :question))
+      |> preload([_, q], question: q)
+      |> Repo.get(answer_id)
 
     if answer do
       {:ok, answer}
@@ -44,9 +49,17 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   end
 
   defp update_answer(answer = %Answer{}, result = %{status: status}) do
+    xp_addition =
+      if answer.question.max_grade == 0 do
+        0
+      else
+        Integer.floor_div(answer.question.max_xp * result.grade, answer.question.max_grade)
+      end
+
     changes = %{
       adjustment: 0,
       grade: result.grade,
+      xp: answer.xp + xp_addition,
       autograding_status: status,
       autograding_errors: result.errors
     }

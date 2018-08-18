@@ -119,8 +119,17 @@ defmodule Cadet.Autograder.GradingJob do
 
     grade = if answer.answer["choice_id"] == correct_choice, do: question.max_grade, else: 0
 
+    xp_addition =
+      if question.max_grade == 0,
+        do: 0,
+        else: Integer.floor_div(question.max_xp * grade, question.max_grade)
+
     answer
-    |> Answer.autograding_changeset(%{grade: grade, autograding_status: :success})
+    |> Answer.autograding_changeset(%{
+      grade: grade,
+      xp: answer.xp + xp_addition,
+      autograding_status: :success
+    })
     |> Repo.update()
   end
 

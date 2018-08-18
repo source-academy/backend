@@ -37,7 +37,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
       status: :failed
     }
 
-    %{answer: answer, results: [success_no_errors, success_with_errors, failed]}
+    %{answer: answer, results: [failed, success_with_errors, success_no_errors]}
   end
 
   describe "#perform, invalid answer_id" do
@@ -56,7 +56,11 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
       for result <- results do
         ResultStoreWorker.perform(%{answer_id: answer.id, result: result})
 
-        answer = Repo.get(Answer, answer.id)
+        answer =
+          Answer
+          |> join(:inner, [a], q in assoc(a, :question))
+          |> preload([_, q], question: q)
+          |> Repo.get(answer.id)
 
         errors_string_keys =
           Enum.map(result.errors, fn err ->
@@ -67,6 +71,17 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
 
         assert answer.grade == result.grade
         assert answer.adjustment == 0
+
+        if answer.question.max_grade == 0 do
+          assert answer.xp == 0
+        else
+          assert answer.xp ==
+                   Integer.floor_div(
+                     answer.question.max_xp * answer.grade,
+                     answer.question.max_grade
+                   )
+        end
+
         assert answer.autograding_status == result.status
         assert answer.autograding_errors == errors_string_keys
       end
