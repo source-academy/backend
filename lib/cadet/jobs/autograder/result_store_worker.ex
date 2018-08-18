@@ -24,10 +24,12 @@ defmodule Cadet.Autograder.ResultStoreWorker do
         nil
 
       {:error, failed_operation, failed_value, _} ->
-        Logger.error(
+        error_message =
           "Failed to store autograder result. " <>
-            "answer_id: #{answer_id}, #{failed_operation}, #{inspect(failed_value)}"
-        )
+            "answer_id: #{answer_id}, #{failed_operation}, #{inspect(failed_value, pretty: true)}"
+
+        Logger.error(error_message)
+        Sentry.capture_message(error_message)
     end
   end
 

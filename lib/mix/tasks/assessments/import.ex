@@ -27,7 +27,9 @@ defmodule Mix.Tasks.Cadet.Assessments.Import do
 
       {:error, errors} ->
         for {type, reason} <- errors do
-          Logger.error("Error processing #{type}: #{reason}")
+          error_message = "Error processing #{type}: #{reason}"
+          Logger.error(error_message)
+          Sentry.capture_message(error_message)
         end
     end
   end
