@@ -22,7 +22,7 @@ defmodule Cadet.Assessments.Question do
   end
 
   @required_fields ~w(question type assessment_id)a
-  @optional_fields ~w(display_order max_grade)a
+  @optional_fields ~w(display_order max_grade max_xp)a
   @required_embeds ~w(library)a
 
   def changeset(question, params) do
