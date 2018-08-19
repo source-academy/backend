@@ -62,8 +62,11 @@ defmodule Cadet.Assessments.Answer do
          {:total, true} <- {:total, total >= 0 and total <= question.max_grade} do
       changeset
     else
-      {:question_id, _} -> add_error(changeset, :question_id, "is required")
-      {:total, false} -> add_error(changeset, :adjustment, "should not make total point < 0")
+      {:question_id, _} ->
+        add_error(changeset, :question_id, "is required")
+
+      {:total, false} ->
+        add_error(changeset, :adjustment, "must make total be between 0 and question.max_grade")
     end
   end
 
