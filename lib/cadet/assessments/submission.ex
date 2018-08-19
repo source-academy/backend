@@ -8,6 +8,7 @@ defmodule Cadet.Assessments.Submission do
   schema "submissions" do
     field(:grade, :integer, virtual: true)
     field(:adjustment, :integer, virtual: true)
+    field(:xp_bonus, :integer, default: 0)
     field(:status, SubmissionStatus, default: :attempting)
 
     belongs_to(:assessment, Assessment)
@@ -18,10 +19,17 @@ defmodule Cadet.Assessments.Submission do
   end
 
   @required_fields ~w(student_id assessment_id status)a
+  @optional_fields ~w(xp_bonus)a
+  @xp_early_submission_bonus 100
 
   def changeset(submission, params) do
     submission
-    |> cast(params, @required_fields)
+    |> cast(params, @required_fields ++ @optional_fields)
+    |> validate_number(
+      :xp_bonus,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: @xp_early_submission_bonus
+    )
     |> add_belongs_to_id_from_model([:student, :assessment], params)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:student_id)

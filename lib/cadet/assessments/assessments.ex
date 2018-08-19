@@ -12,6 +12,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Autograder.GradingJob
   alias Ecto.Multi
 
+  @xp_early_submission_bonus 100
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
   @open_all_assessment_roles ~w(staff admin)a
@@ -315,8 +316,7 @@ defmodule Cadet.Assessments do
       with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :attempted} <- {:status, submission.status},
-           {:ok, updated_submission} <-
-             submission |> Submission.changeset(%{status: :submitted}) |> Repo.update() do
+           {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
         GradingJob.force_grade_individual_submission(updated_submission)
 
         {:ok, nil}
@@ -339,6 +339,29 @@ defmodule Cadet.Assessments do
     else
       {:error, {:forbidden, "User is not permitted to answer questions"}}
     end
+  end
+
+  @spec update_submission_status_and_xp_bonus(%Submission{}) ::
+          {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
+  defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
+    assessment =
+      if Ecto.assoc_loaded?(submission.assessment) do
+        submission.assessment
+      else
+        Repo.get(Assessment, submission.assessment_id)
+      end
+
+    xp_bonus =
+      if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: 48)) do
+        @xp_early_submission_bonus
+      else
+        deduction = Timex.diff(Timex.now(), assessment.open_at, :hours) - 48
+        Enum.max([0, @xp_early_submission_bonus - deduction])
+      end
+
+    submission
+    |> Submission.changeset(%{status: :submitted, xp_bonus: xp_bonus})
+    |> Repo.update()
   end
 
   def update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do

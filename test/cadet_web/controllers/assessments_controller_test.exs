@@ -15,6 +15,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     Cadet.Test.Seeds.assessments()
   end
 
+  @xp_early_submission_bonus 100
+
   test "swagger" do
     AssessmentsController.swagger_definitions()
     AssessmentsController.swagger_path_index(nil)
@@ -541,7 +543,103 @@ defmodule CadetWeb.AssessmentsControllerTest do
         # Preloading is necessary because Mock does an exact match, including metadata
         submission_db = Submission |> Repo.get(submission.id) |> Repo.preload(:assessment)
 
+        assert submission_db.status == :submitted
+
         assert_called(GradingJob.force_grade_individual_submission(submission_db))
+      end
+    end
+
+    test "submission of answer within 2 days of opening grants full XP bonus", %{conn: conn} do
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -40),
+          close_at: Timex.shift(Timex.now(), days: 7),
+          is_published: true
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      user = insert(:user, role: :student)
+      submission = insert(:submission, assessment: assessment, student: user, status: :attempted)
+      insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
+
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        conn
+        |> sign_in(user)
+        |> post(build_url_submit(assessment.id))
+        |> response(200)
+
+        submission_db = Repo.get(Submission, submission.id)
+
+        assert submission_db.status == :submitted
+        assert submission_db.xp_bonus == @xp_early_submission_bonus
+      end
+    end
+
+    test "submission of answer after 2 days within the next 100 hours of opening grants decaying XP bonus",
+         %{conn: conn} do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        for hours_after <- 48..148 do
+          assessment =
+            insert(
+              :assessment,
+              open_at: Timex.shift(Timex.now(), hours: -hours_after),
+              close_at: Timex.shift(Timex.now(), hours: 500),
+              is_published: true
+            )
+
+          question = insert(:programming_question, assessment: assessment)
+          user = insert(:user, role: :student)
+
+          submission =
+            insert(:submission, assessment: assessment, student: user, status: :attempted)
+
+          insert(
+            :answer,
+            submission: submission,
+            question: question,
+            answer: %{code: "f => f(f);"}
+          )
+
+          conn
+          |> sign_in(user)
+          |> post(build_url_submit(assessment.id))
+          |> response(200)
+
+          submission_db = Repo.get(Submission, submission.id)
+
+          assert submission_db.status == :submitted
+          assert submission_db.xp_bonus == @xp_early_submission_bonus - (hours_after - 48)
+        end
+      end
+    end
+
+    test "submission of answer after 2 days and after the next 100 hours yield 0 XP bonus", %{
+      conn: conn
+    } do
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -150),
+          close_at: Timex.shift(Timex.now(), days: 7),
+          is_published: true
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      user = insert(:user, role: :student)
+      submission = insert(:submission, assessment: assessment, student: user, status: :attempted)
+      insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
+
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        conn
+        |> sign_in(user)
+        |> post(build_url_submit(assessment.id))
+        |> response(200)
+
+        submission_db = Repo.get(Submission, submission.id)
+
+        assert submission_db.status == :submitted
+        assert submission_db.xp_bonus == 0
       end
     end
 

@@ -13,7 +13,6 @@ defmodule Cadet.Assessments.Answer do
   schema "answers" do
     field(:grade, :integer, default: 0)
     field(:xp, :integer, default: 0)
-    field(:xp_bonus, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
     field(:autograding_status, AutogradingStatus, default: :none)
     field(:autograding_errors, {:array, :map}, default: [])
@@ -27,7 +26,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment xp_bonus grade comment adjustment)a
+  @optional_fields ~w(xp xp_adjustment grade comment adjustment)a
 
   def changeset(answer, params) do
     answer
@@ -37,7 +36,6 @@ defmodule Cadet.Assessments.Answer do
     |> validate_required(@required_fields)
     |> validate_number(:grade, greater_than_or_equal_to: 0)
     |> validate_number(:xp, greater_than_or_equal_to: 0)
-    |> validate_number(:xp_bonus, greater_than_or_equal_to: 0)
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
