@@ -5,9 +5,10 @@ defmodule Cadet.Assessments.Answer do
   """
   use Cadet, :model
 
+  alias Cadet.Repo
+  alias Cadet.Assessments.Answer.AutogradingStatus
   alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer}
   alias Cadet.Assessments.{Question, QuestionType, Submission}
-  alias Cadet.Assessments.Answer.AutogradingStatus
 
   schema "answers" do
     field(:grade, :integer, default: 0)
@@ -53,10 +54,19 @@ defmodule Cadet.Assessments.Answer do
   defp validate_grade_adjustment_total(changeset) do
     answer = apply_changes(changeset)
 
-    if answer.grade + answer.adjustment >= 0 do
-      changeset
+    if answer.question_id do
+      question = Repo.get(Question, answer.question_id)
+
+      total = answer.grade + answer.adjustment
+
+      if total >= 0 and total <= question.max_grade do
+        changeset
+      else
+        add_error(changeset, :adjustment, "should not make total point < 0")
+      end
     else
-      add_error(changeset, :adjustment, "should not make total point < 0")
+      # error should already be handled by foregn_key_constraint
+      changeset
     end
   end
 
