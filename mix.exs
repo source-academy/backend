@@ -28,7 +28,7 @@ defmodule Cadet.Mixfile do
   def application do
     [
       mod: {Cadet.Application, []},
-      extra_applications: [:logger, :que, :runtime_tools]
+      extra_applications: [:sentry, :logger, :que, :runtime_tools]
     ]
   end
 
@@ -66,6 +66,7 @@ defmodule Cadet.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.3.0"},
       {:que, "~> 0.5.0"},
+      {:sentry, "~> 6.4"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
@@ -95,7 +96,8 @@ defmodule Cadet.Mixfile do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate", "test"],
       "phx.server": ["cadet.server"],
-      "phx.digest": ["cadet.digest"]
+      "phx.digest": ["cadet.digest"],
+      sentry_recompile: ["deps.compile sentry --force", "compile"]
     ]
   end
 end
