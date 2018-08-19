@@ -54,19 +54,16 @@ defmodule Cadet.Assessments.Answer do
   defp validate_grade_adjustment_total(changeset) do
     answer = apply_changes(changeset)
 
-    if answer.question_id do
-      question = Repo.get(Question, answer.question_id)
+    total = answer.grade + answer.adjustment
 
-      total = answer.grade + answer.adjustment
-
-      if total >= 0 and total <= question.max_grade do
-        changeset
-      else
-        add_error(changeset, :adjustment, "should not make total point < 0")
-      end
-    else
-      # error should already be handled by foregn_key_constraint
+    with {:question_id, question_id} when is_ecto_id(question_id) <-
+           {:question_id, answer.question_id},
+         question <- Repo.get(Question, question_id),
+         {:total, true} <- {:total, total >= 0 and total <= question.max_grade} do
       changeset
+    else
+      {:question_id, _} -> add_error(changeset, :question_id, "is required")
+      {:total, false} -> add_error(changeset, :adjustment, "should not make total point < 0")
     end
   end
 

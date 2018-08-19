@@ -16,6 +16,7 @@ defmodule Cadet do
 
       import Ecto.Changeset
       import Cadet.ModelHelper
+      import Cadet.SharedHelper
     end
   end
 

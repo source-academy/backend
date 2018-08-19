@@ -40,7 +40,7 @@ defmodule Cadet.Assessments.AnswerTest do
      }}
   end
 
-  describe "Changesets" do
+  describe "changeset" do
     test "valid mcq question params", %{valid_mcq_params: params} do
       assert_changeset_db(params, :valid)
     end
@@ -121,7 +121,9 @@ defmodule Cadet.Assessments.AnswerTest do
       |> Map.put(:question_id, new_mcq_question.id)
       |> assert_changeset_db(:invalid)
     end
+  end
 
+  describe "grading_changeset" do
     test "invalid changeset total grade < 0", %{
       valid_mcq_params: valid_mcq_params,
       mcq_question: mcq_question,
@@ -152,6 +154,10 @@ defmodule Cadet.Assessments.AnswerTest do
 
         refute Answer.grading_changeset(answer, %{adjustment: 1}).valid?
       end
+    end
+
+    test "invalid changeset without question_id" do
+      assert_changeset(%{}, :invalid, :grading_changeset)
     end
   end
 end
