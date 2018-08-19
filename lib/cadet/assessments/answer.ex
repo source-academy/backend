@@ -5,9 +5,10 @@ defmodule Cadet.Assessments.Answer do
   """
   use Cadet, :model
 
+  alias Cadet.Repo
+  alias Cadet.Assessments.Answer.AutogradingStatus
   alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer}
   alias Cadet.Assessments.{Question, QuestionType, Submission}
-  alias Cadet.Assessments.Answer.AutogradingStatus
 
   schema "answers" do
     field(:grade, :integer, default: 0)
@@ -46,17 +47,26 @@ defmodule Cadet.Assessments.Answer do
 
   @spec autograding_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def autograding_changeset(answer, params) do
-    cast(answer, params, ~w(grade autograding_status autograding_errors)a)
+    cast(answer, params, ~w(grade adjustment autograding_status autograding_errors)a)
   end
 
   @spec validate_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
   defp validate_grade_adjustment_total(changeset) do
     answer = apply_changes(changeset)
 
-    if answer.grade + answer.adjustment >= 0 do
+    total = answer.grade + answer.adjustment
+
+    with {:question_id, question_id} when is_ecto_id(question_id) <-
+           {:question_id, answer.question_id},
+         question <- Repo.get(Question, question_id),
+         {:total, true} <- {:total, total >= 0 and total <= question.max_grade} do
       changeset
     else
-      add_error(changeset, :adjustment, "should not make total point < 0")
+      {:question_id, _} ->
+        add_error(changeset, :question_id, "is required")
+
+      {:total, false} ->
+        add_error(changeset, :adjustment, "must make total be between 0 and question.max_grade")
     end
   end
 

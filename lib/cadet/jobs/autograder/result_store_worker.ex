@@ -45,6 +45,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
   defp update_answer(answer = %Answer{}, result = %{status: status}) do
     changes = %{
+      adjustment: 0,
       grade: result.grade,
       autograding_status: status,
       autograding_errors: result.errors

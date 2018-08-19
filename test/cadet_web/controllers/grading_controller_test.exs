@@ -229,7 +229,8 @@ defmodule CadetWeb.GradingControllerTest do
           "grading" => %{"adjustment" => -9_999_999_999}
         })
 
-      assert response(conn, 400) == "adjustment should not make total point < 0"
+      assert response(conn, 400) ==
+               "adjustment must make total be between 0 and question.max_grade"
     end
 
     @tag authenticate: :staff

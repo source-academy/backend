@@ -66,6 +66,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
           end)
 
         assert answer.grade == result.grade
+        assert answer.adjustment == 0
         assert answer.autograding_status == result.status
         assert answer.autograding_errors == errors_string_keys
       end
