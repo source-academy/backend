@@ -49,7 +49,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   end
 
   defp update_answer(answer = %Answer{}, result = %{status: status}) do
-    xp_addition =
+    xp =
       if answer.question.max_grade == 0 do
         0
       else
@@ -59,7 +59,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
     changes = %{
       adjustment: 0,
       grade: result.grade,
-      xp: answer.xp + xp_addition,
+      xp: xp,
       autograding_status: status,
       autograding_errors: result.errors
     }
