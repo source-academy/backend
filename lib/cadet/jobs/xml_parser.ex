@@ -52,12 +52,25 @@ defmodule Cadet.Updater.XMLParser do
            {:process, process_xml_files(Path.join(@local_name, @locations[type]), xml_files)} do
       :ok
     else
-      {:assessment_type, false} -> {:error, "XML location of assessment type is not defined."}
-      {:cloned?, _} -> {:error, "Local copy of repository is either missing or empty."}
-      {:type, false} -> {:error, "Directory containing XML is not found."}
-      {:listing, _} -> :ok
-      {:filter, _} -> :ok
-      {:process, :error} -> {:error, "Error processing XML files."}
+      {:assessment_type, false} ->
+        {:error, "XML location of assessment type is not defined."}
+
+      {:cloned?, _} ->
+        {:error, "Local copy of repository is either missing or empty."}
+
+      {:type, false} ->
+        {:error, "Directory containing XML is not found."}
+
+      {:listing, _} ->
+        Logger.info("Directory containing XML is empty for type #{type}.")
+        :ok
+
+      {:filter, _} ->
+        Logger.info("No XML file is found for type #{type}.")
+        :ok
+
+      {:process, :error} ->
+        {:error, "Error processing XML files."}
     end
   end
 
