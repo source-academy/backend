@@ -76,8 +76,7 @@ defmodule Cadet.Updater.XMLParser do
         :error ->
           error_message = "Failed to import #{file}.\n"
           Logger.error(error_message)
-          # TODO: uncomment when the cs1101s repo is clean
-          # Sentry.capture_message(error_message)
+          Sentry.capture_message(error_message)
           :error
       end
     end
