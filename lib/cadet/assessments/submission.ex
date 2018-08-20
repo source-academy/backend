@@ -8,6 +8,8 @@ defmodule Cadet.Assessments.Submission do
   schema "submissions" do
     field(:grade, :integer, virtual: true)
     field(:adjustment, :integer, virtual: true)
+    field(:xp, :integer, virtual: true)
+    field(:xp_adjustment, :integer, virtual: true)
     field(:xp_bonus, :integer, default: 0)
     field(:status, SubmissionStatus, default: :attempting)
 

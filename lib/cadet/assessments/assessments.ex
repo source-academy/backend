@@ -18,38 +18,56 @@ defmodule Cadet.Assessments do
   @grading_roles ~w(staff)a
   @open_all_assessment_roles ~w(staff admin)a
 
+  @spec user_total_xp(%User{}) :: integer()
+  def user_total_xp(%User{id: user_id}) when is_ecto_id(user_id) do
+    total_xp_bonus =
+      Submission
+      |> where(student_id: ^user_id)
+      |> Repo.aggregate(:sum, :xp_bonus)
+      |> case do
+        nil -> 0
+        xp when is_integer(xp) -> xp
+      end
+
+    total_xp =
+      Query.all_submissions_with_xp()
+      |> subquery()
+      |> where(student_id: ^user_id)
+      |> select([q], fragment("? + ?", sum(q.xp), sum(q.xp_adjustment)))
+      |> Repo.one()
+      |> decimal_to_integer()
+
+    total_xp_bonus + total_xp
+  end
+
   @spec user_max_grade(%User{}) :: integer()
   def user_max_grade(%User{id: user_id}) when is_ecto_id(user_id) do
-    max_grade =
-      Submission
-      |> where(status: ^:submitted)
-      |> where(student_id: ^user_id)
-      |> join(
-        :inner,
-        [s],
-        a in subquery(Query.all_assessments_with_max_grade()),
-        s.assessment_id == a.id
-      )
-      |> select([_, a], sum(a.max_grade))
-      |> Repo.one()
-
-    if max_grade do
-      Decimal.to_integer(max_grade)
-    else
-      0
-    end
+    Submission
+    |> where(status: ^:submitted)
+    |> where(student_id: ^user_id)
+    |> join(
+      :inner,
+      [s],
+      a in subquery(Query.all_assessments_with_max_grade()),
+      s.assessment_id == a.id
+    )
+    |> select([_, a], sum(a.max_grade))
+    |> Repo.one()
+    |> decimal_to_integer()
   end
 
   def user_total_grade(%User{id: user_id}) do
-    grade =
-      Query.all_submissions_with_grade()
-      |> subquery()
-      |> where(student_id: ^user_id)
-      |> select([q], fragment("? + ?", sum(q.grade), sum(q.adjustment)))
-      |> Repo.one()
+    Query.all_submissions_with_grade()
+    |> subquery()
+    |> where(student_id: ^user_id)
+    |> select([q], fragment("? + ?", sum(q.grade), sum(q.adjustment)))
+    |> Repo.one()
+    |> decimal_to_integer()
+  end
 
-    if grade do
-      Decimal.to_integer(grade)
+  defp decimal_to_integer(decimal) do
+    if Decimal.decimal?(decimal) do
+      Decimal.to_integer(decimal)
     else
       0
     end

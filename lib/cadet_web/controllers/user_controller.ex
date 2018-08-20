@@ -13,7 +13,17 @@ defmodule CadetWeb.UserController do
     grade = user_total_grade(user)
     max_grade = user_max_grade(user)
     story = user_current_story(user)
-    render(conn, "index.json", user: user, grade: grade, max_grade: max_grade, story: story)
+    xp = user_total_xp(user)
+
+    render(
+      conn,
+      "index.json",
+      user: user,
+      grade: grade,
+      max_grade: max_grade,
+      story: story,
+      xp: xp
+    )
   end
 
   swagger_path :index do
@@ -54,6 +64,8 @@ defmodule CadetWeb.UserController do
               "Total maximum grade achievable based on submitted assessments." <>
                 "Only provided for 'Student'"
             )
+
+            xp(:integer, "Amount of xp. Only provided for 'Student'")
           end
         end,
       UserStory:

@@ -8,6 +8,17 @@ defmodule Cadet.Assessments.Query do
 
   @doc """
   Returns a query with the following bindings:
+  [submissions_with_xp, answers]
+  """
+  @spec all_submissions_with_xp :: Ecto.Query.t()
+  def all_submissions_with_xp do
+    Submission
+    |> join(:inner, [s], q in subquery(submissions_xp()), s.id == q.submission_id)
+    |> select([s, q], %Submission{s | xp: q.xp, xp_adjustment: q.xp_adjustment})
+  end
+
+  @doc """
+  Returns a query with the following bindings:
   [submissions_with_grade, answers]
   """
   @spec all_submissions_with_grade :: Ecto.Query.t()
@@ -36,6 +47,17 @@ defmodule Cadet.Assessments.Query do
       submission_id: a.submission_id,
       grade: sum(a.grade),
       adjustment: sum(a.adjustment)
+    })
+  end
+
+  @spec submissions_xp :: Ecto.Query.t()
+  def submissions_xp do
+    Answer
+    |> group_by(:submission_id)
+    |> select([a], %{
+      submission_id: a.submission_id,
+      xp: sum(a.xp),
+      xp_adjustment: sum(a.xp_adjustment)
     })
   end
 
