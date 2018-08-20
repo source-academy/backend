@@ -118,6 +118,12 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
+            maxXp(
+              :integer,
+              "The maximum xp for this assessment",
+              required: true
+            )
+
             coverImage(:string, "The URL to the cover picture", required: true)
           end
         end,

@@ -161,7 +161,7 @@ defmodule Cadet.Assessments do
   """
   def all_published_assessments(user = %User{}) do
     assessments =
-      Query.all_assessments_with_max_grade()
+      Query.all_assessments_with_max_xp_and_grade()
       |> subquery()
       |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
       |> select([a, s], %{a | user_status: s.status})

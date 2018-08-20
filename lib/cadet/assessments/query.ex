@@ -30,6 +30,17 @@ defmodule Cadet.Assessments.Query do
 
   @doc """
   Returns a query with the following bindings:
+  [assessments_with_xp_and_grade, questions]
+  """
+  @spec all_assessments_with_max_xp_and_grade :: Ecto.Query.t()
+  def all_assessments_with_max_xp_and_grade do
+    Assessment
+    |> join(:inner, [a], q in subquery(assessments_max_xp_and_grade()), a.id == q.assessment_id)
+    |> select([a, q], %Assessment{a | max_grade: q.max_grade, max_xp: q.max_xp})
+  end
+
+  @doc """
+  Returns a query with the following bindings:
   [assessments_with_grade, questions]
   """
   @spec all_assessments_with_max_grade :: Ecto.Query.t()
@@ -66,5 +77,16 @@ defmodule Cadet.Assessments.Query do
     Question
     |> group_by(:assessment_id)
     |> select([q], %{assessment_id: q.assessment_id, max_grade: sum(q.max_grade)})
+  end
+
+  @spec assessments_max_xp_and_grade :: Ecto.Query.t()
+  def assessments_max_xp_and_grade do
+    Question
+    |> group_by(:assessment_id)
+    |> select([q], %{
+      assessment_id: q.assessment_id,
+      max_grade: sum(q.max_grade),
+      max_xp: sum(q.max_xp)
+    })
   end
 end
