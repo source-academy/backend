@@ -13,6 +13,7 @@ defmodule Cadet.Assessments do
   alias Ecto.Multi
 
   @xp_early_submission_bonus 100
+  @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
   @open_all_assessment_roles ~w(staff admin)a
@@ -352,11 +353,16 @@ defmodule Cadet.Assessments do
       end
 
     xp_bonus =
-      if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: 48)) do
-        @xp_early_submission_bonus
-      else
-        deduction = Timex.diff(Timex.now(), assessment.open_at, :hours) - 48
-        Enum.max([0, @xp_early_submission_bonus - deduction])
+      cond do
+        assessment.type not in @xp_bonus_assessment_type ->
+          0
+
+        Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: 48)) ->
+          @xp_early_submission_bonus
+
+        true ->
+          deduction = Timex.diff(Timex.now(), assessment.open_at, :hours) - 48
+          Enum.max([0, @xp_early_submission_bonus - deduction])
       end
 
     submission
