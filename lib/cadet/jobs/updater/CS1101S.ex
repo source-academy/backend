@@ -59,9 +59,8 @@ defmodule Cadet.Updater.CS1101S do
       Sentry.capture_message(error_message)
     else
       Logger.info("git #{cmd} #{inspect(args)} succeeded")
+      Logger.debug(fn -> "\n#{out}" end)
     end
-
-    Logger.debug(fn -> "\n#{out}" end)
 
     {out, exit}
   end
