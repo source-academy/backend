@@ -76,6 +76,8 @@ defmodule CadetWeb.GradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
             "grade" => 800,
             "adjustment" => -400,
             "id" => submission.id,
@@ -86,6 +88,7 @@ defmodule CadetWeb.GradingControllerTest do
             "assessment" => %{
               "type" => "mission",
               "maxGrade" => 800,
+              "maxXp" => 4000,
               "id" => mission.id,
               "title" => mission.title,
               "coverImage" => mission.cover_picture
@@ -146,10 +149,13 @@ defmodule CadetWeb.GradingControllerTest do
                 },
                 "solution" => &1.question.question.solution,
                 "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
                 }
               }
 
@@ -179,10 +185,13 @@ defmodule CadetWeb.GradingControllerTest do
                 },
                 "solution" => "",
                 "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
                 }
               }
           end
@@ -308,6 +317,7 @@ defmodule CadetWeb.GradingControllerTest do
         insert(:programming_question, %{
           assessment: mission,
           max_grade: 200,
+          max_xp: 1000,
           display_order: 4 - index
         })
       end ++
@@ -315,6 +325,7 @@ defmodule CadetWeb.GradingControllerTest do
           insert(:mcq_question, %{
             assessment: mission,
             max_grade: 200,
+            max_xp: 1000,
             display_order: 1
           })
         ]
@@ -330,6 +341,8 @@ defmodule CadetWeb.GradingControllerTest do
         insert(:answer, %{
           grade: 200,
           adjustment: -100,
+          xp: 1000,
+          xp_adjustment: -500,
           question: question,
           submission: submission,
           answer:

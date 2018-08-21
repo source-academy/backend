@@ -45,7 +45,7 @@ defmodule Cadet.Assessments.Answer do
   def grading_changeset(answer, params) do
     answer
     |> cast(params, ~w(xp_adjustment adjustment comment)a)
-    |> validate_grade_adjustment_total()
+    |> validate_xp_grade_adjustment_total()
   end
 
   @spec autograding_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
@@ -56,23 +56,30 @@ defmodule Cadet.Assessments.Answer do
     |> validate_number(:xp, greater_than_or_equal_to: 0)
   end
 
-  @spec validate_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
-  defp validate_grade_adjustment_total(changeset) do
+  @spec validate_xp_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  defp validate_xp_grade_adjustment_total(changeset) do
     answer = apply_changes(changeset)
 
-    total = answer.grade + answer.adjustment
+    total_grade = answer.grade + answer.adjustment
+
+    total_xp = answer.xp + answer.xp_adjustment
 
     with {:question_id, question_id} when is_ecto_id(question_id) <-
            {:question_id, answer.question_id},
          question <- Repo.get(Question, question_id),
-         {:total, true} <- {:total, total >= 0 and total <= question.max_grade} do
+         {:total_grade, true} <-
+           {:total_grade, total_grade >= 0 and total_grade <= question.max_grade},
+         {:total_xp, true} <- {:total_xp, total_xp >= 0 and total_xp <= question.max_xp} do
       changeset
     else
       {:question_id, _} ->
         add_error(changeset, :question_id, "is required")
 
-      {:total, false} ->
+      {:total_grade, false} ->
         add_error(changeset, :adjustment, "must make total be between 0 and question.max_grade")
+
+      {:total_xp, false} ->
+        add_error(changeset, :xp_adjustment, "must make total be between 0 and question.max_xp")
     end
   end
 
