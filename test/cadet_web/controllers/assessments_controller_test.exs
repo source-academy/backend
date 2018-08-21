@@ -61,7 +61,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
-              "maxXp" => 600,
+              "maxXp" => 4500,
               "status" => get_assessment_status(user, &1)
             }
           )
@@ -71,6 +71,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> sign_in(user)
           |> get(build_url())
           |> json_response(200)
+          |> Enum.map(&Map.delete(&1, "xp"))
+          |> Enum.map(&Map.delete(&1, "grade"))
 
         assert expected == resp
       end
@@ -108,7 +110,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
-              "maxXp" => 600,
+              "maxXp" => 4500,
               "status" => get_assessment_status(user, &1)
             }
           )
@@ -118,6 +120,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> sign_in(user)
           |> get(build_url())
           |> json_response(200)
+          |> Enum.map(&Map.delete(&1, "xp"))
+          |> Enum.map(&Map.delete(&1, "grade"))
 
         assert expected == resp
       end
@@ -148,6 +152,42 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         assert get_assessment_status(student, assessment) == resp
       end
+    end
+
+    test "renders xp for students", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: assessments
+    } do
+      assessment = assessments.mission.assessment
+
+      resp =
+        conn
+        |> sign_in(student)
+        |> get(build_url())
+        |> json_response(200)
+        |> Enum.find(&(&1["id"] == assessment.id))
+        |> Map.get("xp")
+
+      assert resp == 1000 * 3 + 500 * 3
+    end
+
+    test "renders grade for students", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: assessments
+    } do
+      assessment = assessments.mission.assessment
+
+      resp =
+        conn
+        |> sign_in(student)
+        |> get(build_url())
+        |> json_response(200)
+        |> Enum.find(&(&1["id"] == assessment.id))
+        |> Map.get("grade")
+
+      assert resp == 200 * 3 + 40 * 3
     end
   end
 

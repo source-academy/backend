@@ -124,6 +124,10 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
+            xp(:integer, "The xp earned for this assessment", required: true)
+
+            grade(:integer, "The grade earned for this assessment", required: true)
+
             coverImage(:string, "The URL to the cover picture", required: true)
           end
         end,

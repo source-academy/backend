@@ -163,8 +163,18 @@ defmodule Cadet.Assessments do
     assessments =
       Query.all_assessments_with_max_xp_and_grade()
       |> subquery()
-      |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
-      |> select([a, s], %{a | user_status: s.status})
+      |> join(
+        :left,
+        [a],
+        s in subquery(Query.all_submissions_with_xp_and_grade()),
+        a.id == s.assessment_id and s.student_id == ^user.id
+      )
+      |> select([a, s], %{
+        a
+        | xp: fragment("? + ? + ?", s.xp, s.xp_adjustment, s.xp_bonus),
+          grade: fragment("? + ?", s.grade, s.adjustment),
+          user_status: s.status
+      })
       |> where(is_published: true)
       |> order_by(:open_at)
       |> Repo.all()
@@ -363,12 +373,7 @@ defmodule Cadet.Assessments do
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
-    assessment =
-      if Ecto.assoc_loaded?(submission.assessment) do
-        submission.assessment
-      else
-        Repo.get(Assessment, submission.assessment_id)
-      end
+    assessment = submission.assessment
 
     xp_bonus =
       cond do
