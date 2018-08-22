@@ -280,7 +280,7 @@ defmodule Cadet.Updater.XMLParserTest do
         |> Path.join(location)
         |> File.mkdir_p!()
 
-        assert XMLParser.parse_and_insert(type) == {:error, "Directory containing XML is empty."}
+        assert XMLParser.parse_and_insert(type) == :ok
       end
     end
 
@@ -292,7 +292,7 @@ defmodule Cadet.Updater.XMLParserTest do
 
         path |> Path.join("Never-gonna-give-you-up.mp3") |> File.touch!()
 
-        assert XMLParser.parse_and_insert(type) == {:error, "No XML file is found."}
+        assert XMLParser.parse_and_insert(type) == :ok
       end
     end
 
