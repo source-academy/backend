@@ -4,22 +4,28 @@ defmodule Cadet.Updater.CS1101STest do
   as the target repository for Cadet.Updater.CS1101S.
   """
 
-  @remote_repo "test/remote_repo"
-  @local_repo "test/local_repo"
-  @temp_repo "test/temp_repo"
+  @remote_repo "test/fixtures/remote_repo"
+  @local_repo "test/fixtures/local_repo"
+  @temp_repo "test/fixtures/temp_repo"
 
   use Cadet.DataCase
   use ExUnit.Case, async: false
 
+  import ExUnit.CaptureLog
+
   alias Cadet.Updater.CS1101S
 
-  setup_all do
+  setup do
+    clean_dirs!([@local_repo, @remote_repo])
     :ok = File.mkdir(@remote_repo)
     {_, 0} = git_from(@remote_repo, "init", ["--bare"])
     # git pull fails on an empty --bare repo, so need to push something there first
     git_add_file("dummy_setup_all", @remote_repo)
-    on_exit(fn -> clean_dirs!([@local_repo, @remote_repo]) end)
     :ok
+  end
+
+  setup_all do
+    on_exit(fn -> clean_dirs!([@local_repo, @remote_repo]) end)
   end
 
   test "not cloned yet" do
@@ -31,13 +37,17 @@ defmodule Cadet.Updater.CS1101STest do
     assert :ok == CS1101S.clone()
     assert File.exists?(@local_repo)
     assert CS1101S.repo_cloned?()
-    :ok = clean_dirs!([@local_repo])
   end
 
   test "With update" do
     CS1101S.clone()
     assert {_, 0} = CS1101S.update()
     assert File.exists?(Path.join(@local_repo, "dummy_setup_all"))
+  end
+
+  test "handles error" do
+    :ok = clean_dirs!([@remote_repo, @local_repo])
+    assert capture_log(fn -> CS1101S.clone() end) =~ "errored with exit code"
   end
 
   # Run a git command with `loc` as the git repository root.

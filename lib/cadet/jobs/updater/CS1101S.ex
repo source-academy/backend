@@ -4,13 +4,13 @@ defmodule Cadet.Updater.CS1101S do
   """
 
   @key_file :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:cs1101s_rsa_key)
-  @local_name if Mix.env() != :test, do: "cs1101s", else: "test/local_repo"
+  @local_name if Mix.env() != :test, do: "cs1101s", else: "test/fixtures/local_repo"
   @remote_repo (if Mix.env() != :test do
                   :cadet
                   |> Application.fetch_env!(:updater)
                   |> Keyword.get(:cs1101s_repository)
                 else
-                  "test/remote_repo"
+                  "test/fixtures/remote_repo"
                 end)
 
   require Logger
@@ -42,34 +42,25 @@ defmodule Cadet.Updater.CS1101S do
     git("pull", ["origin", "master"])
   end
 
-  defp git("clone", args) do
-    {out, exit} =
-      System.cmd(
-        "git",
-        ["clone"] ++ args,
-        env: [{"GIT_SSH_COMMAND", "ssh -i #{@key_file}"}],
-        stderr_to_stdout: true
-      )
-
-    Logger.debug(fn ->
-      "git clone exited with #{exit}: #{out}"
-    end)
-
-    {out, exit}
-  end
-
   defp git(cmd, args) do
+    extra_args = if cmd == "clone", do: [], else: ["-C", @local_name]
+
     {out, exit} =
       System.cmd(
         "git",
-        ["-C", @local_name] ++ [cmd] ++ args,
+        extra_args ++ [cmd] ++ args,
         env: [{"GIT_SSH_COMMAND", "ssh -i #{@key_file}"}],
         stderr_to_stdout: true
       )
 
-    Logger.debug(fn ->
-      "git #{cmd} #{inspect(args)} exited with #{exit}: #{out}"
-    end)
+    if exit != 0 do
+      error_message = "git #{cmd} #{inspect(args)} errored with exit code #{exit}\n#{out}"
+      Logger.error(error_message)
+      Sentry.capture_message(error_message)
+    else
+      Logger.info("git #{cmd} #{inspect(args)} succeeded")
+      Logger.debug(fn -> "\n#{out}" end)
+    end
 
     {out, exit}
   end
