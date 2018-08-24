@@ -160,7 +160,8 @@ defmodule CadetWeb.GradingController do
       GradingInfo:
         swagger_schema do
           description(
-            "A list of questions with submitted answers and previous grading info if available"
+            "A list of questions with submitted answers, solution and previous grading info " <>
+              "if available"
           )
 
           type(:array)
@@ -170,6 +171,12 @@ defmodule CadetWeb.GradingController do
               properties do
                 question(Schema.ref(:Question))
                 grade(Schema.ref(:Grade))
+
+                solution(
+                  :string,
+                  "the marking scheme and model solution to this question. Only available for programming questions",
+                  required: true
+                )
 
                 maxGrade(
                   :integer,

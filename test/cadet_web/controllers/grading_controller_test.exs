@@ -144,6 +144,7 @@ defmodule CadetWeb.GradingControllerTest do
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code
                 },
+                "solution" => &1.question.question.solution,
                 "maxGrade" => &1.question.max_grade,
                 "grade" => %{
                   "grade" => &1.grade,
@@ -176,6 +177,7 @@ defmodule CadetWeb.GradingControllerTest do
                       }
                     end
                 },
+                "solution" => "",
                 "maxGrade" => &1.question.max_grade,
                 "grade" => %{
                   "grade" => &1.grade,
