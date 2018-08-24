@@ -12,7 +12,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Autograder.GradingJob
   alias Ecto.Multi
 
-  @xp_early_submission_bonus 100
+  @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
   @grading_roles ~w(staff)a
@@ -381,11 +381,11 @@ defmodule Cadet.Assessments do
           0
 
         Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: 48)) ->
-          @xp_early_submission_bonus
+          @xp_early_submission_max_bonus
 
         true ->
           deduction = Timex.diff(Timex.now(), assessment.open_at, :hours) - 48
-          Enum.max([0, @xp_early_submission_bonus - deduction])
+          Enum.max([0, @xp_early_submission_max_bonus - deduction])
       end
 
     submission

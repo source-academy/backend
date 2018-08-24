@@ -57,7 +57,11 @@ defmodule CadetWeb.UserController do
 
             story(Schema.ref(:UserStory), "Story to displayed to current user. ")
 
-            grade(:integer, "Amount of grade. Only provided for 'Student'")
+            grade(
+              :integer,
+              "Amount of grade. Only provided for 'Student'." <>
+                "Value will be 0 for non-students."
+            )
 
             maxGrade(
               :integer,
@@ -65,7 +69,10 @@ defmodule CadetWeb.UserController do
                 "Only provided for 'Student'"
             )
 
-            xp(:integer, "Amount of xp. Only provided for 'Student'")
+            xp(
+              :integer,
+              "Amount of xp. Only provided for 'Student'." <> "Value will be 0 for non-students."
+            )
           end
         end,
       UserStory:

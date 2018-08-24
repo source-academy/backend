@@ -22,7 +22,7 @@ defmodule Cadet.Assessments.Submission do
 
   @required_fields ~w(student_id assessment_id status)a
   @optional_fields ~w(xp_bonus)a
-  @xp_early_submission_bonus 100
+  @xp_early_submission_max_bonus 100
 
   def changeset(submission, params) do
     submission
@@ -30,7 +30,7 @@ defmodule Cadet.Assessments.Submission do
     |> validate_number(
       :xp_bonus,
       greater_than_or_equal_to: 0,
-      less_than_or_equal_to: @xp_early_submission_bonus
+      less_than_or_equal_to: @xp_early_submission_max_bonus
     )
     |> add_belongs_to_id_from_model([:student, :assessment], params)
     |> validate_required(@required_fields)

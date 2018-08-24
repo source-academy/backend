@@ -15,7 +15,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     Cadet.Test.Seeds.assessments()
   end
 
-  @xp_early_submission_bonus 100
+  @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
 
   test "swagger" do
@@ -625,7 +625,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           submission_db = Repo.get(Submission, submission.id)
 
           assert submission_db.status == :submitted
-          assert submission_db.xp_bonus == @xp_early_submission_bonus
+          assert submission_db.xp_bonus == @xp_early_submission_max_bonus
         end
       end
     end
@@ -665,7 +665,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           submission_db = Repo.get(Submission, submission.id)
 
           assert submission_db.status == :submitted
-          assert submission_db.xp_bonus == @xp_early_submission_bonus - (hours_after - 48)
+          assert submission_db.xp_bonus == @xp_early_submission_max_bonus - (hours_after - 48)
         end
       end
     end
