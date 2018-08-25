@@ -28,13 +28,15 @@ if Application.get_env(:cadet, :environment) == :dev do
     programming_questions =
       insert_list(3, :programming_question, %{
         assessment: assessment,
-        max_grade: 200
+        max_grade: 200,
+        max_xp: 1_000
       })
 
     mcq_questions =
       insert_list(3, :mcq_question, %{
         assessment: assessment,
-        max_grade: 40
+        max_grade: 40,
+        max_xp: 500
       })
 
     submissions =
@@ -53,6 +55,7 @@ if Application.get_env(:cadet, :environment) == :dev do
         question <- programming_questions do
       insert(:answer, %{
         grade: Enum.random(0..200),
+        xp: Enum.random(0..1_000),
         question: question,
         submission: submission,
         answer: build(:programming_answer)
@@ -64,6 +67,7 @@ if Application.get_env(:cadet, :environment) == :dev do
         question <- mcq_questions do
       insert(:answer, %{
         grade: Enum.random(0..40),
+        xp: Enum.random(0..500),
         question: question,
         submission: submission,
         answer: build(:mcq_answer)

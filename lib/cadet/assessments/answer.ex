@@ -12,6 +12,8 @@ defmodule Cadet.Assessments.Answer do
 
   schema "answers" do
     field(:grade, :integer, default: 0)
+    field(:xp, :integer, default: 0)
+    field(:xp_adjustment, :integer, default: 0)
     field(:autograding_status, AutogradingStatus, default: :none)
     field(:autograding_errors, {:array, :map}, default: [])
     field(:answer, :map)
@@ -24,7 +26,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(grade comment adjustment)a
+  @optional_fields ~w(xp xp_adjustment grade comment adjustment)a
 
   def changeset(answer, params) do
     answer
@@ -32,42 +34,56 @@ defmodule Cadet.Assessments.Answer do
     |> add_belongs_to_id_from_model([:submission, :question], params)
     |> add_question_type_from_model(params)
     |> validate_required(@required_fields)
-    |> validate_number(:grade, greater_than_or_equal_to: 0.0)
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
+    |> validate_xp_grade_adjustment_total()
   end
 
   @spec grading_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def grading_changeset(answer, params) do
     answer
-    |> cast(params, ~w(adjustment comment)a)
-    |> validate_grade_adjustment_total()
+    |> cast(params, ~w(xp_adjustment adjustment comment)a)
+    |> validate_xp_grade_adjustment_total()
   end
 
   @spec autograding_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def autograding_changeset(answer, params) do
-    cast(answer, params, ~w(grade adjustment autograding_status autograding_errors)a)
+    answer
+    |> cast(params, ~w(grade adjustment xp autograding_status autograding_errors)a)
+    |> validate_xp_grade_adjustment_total()
   end
 
-  @spec validate_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
-  defp validate_grade_adjustment_total(changeset) do
+  @spec validate_xp_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  defp validate_xp_grade_adjustment_total(changeset) do
     answer = apply_changes(changeset)
 
-    total = answer.grade + answer.adjustment
+    total_grade = answer.grade + answer.adjustment
+
+    total_xp = answer.xp + answer.xp_adjustment
 
     with {:question_id, question_id} when is_ecto_id(question_id) <-
            {:question_id, answer.question_id},
-         question <- Repo.get(Question, question_id),
-         {:total, true} <- {:total, total >= 0 and total <= question.max_grade} do
+         {:question, %{max_grade: max_grade, max_xp: max_xp}} <-
+           {:question, Repo.get(Question, question_id)},
+         {:total_grade, true} <- {:total_grade, total_grade >= 0 and total_grade <= max_grade},
+         {:total_xp, true} <- {:total_xp, total_xp >= 0 and total_xp <= max_xp} do
       changeset
     else
       {:question_id, _} ->
         add_error(changeset, :question_id, "is required")
 
-      {:total, false} ->
+      {:question, _} ->
+        add_error(changeset, :question_id, "refers to non-existent question")
+
+      {:total_grade, false} ->
         add_error(changeset, :adjustment, "must make total be between 0 and question.max_grade")
+
+      {:total_xp, false} ->
+        add_error(changeset, :xp_adjustment, "must make total be between 0 and question.max_xp")
     end
+    |> validate_number(:grade, greater_than_or_equal_to: 0)
+    |> validate_number(:xp, greater_than_or_equal_to: 0)
   end
 
   defp add_question_type_from_model(changeset, params) do

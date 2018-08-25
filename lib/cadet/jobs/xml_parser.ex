@@ -197,6 +197,7 @@ defmodule Cadet.Updater.XMLParser do
         ~x"//PROBLEMS/PROBLEM"el,
         type: ~x"./@type"o |> transform_by(&process_charlist/1),
         max_grade: ~x"./@maxgrade"oi,
+        max_xp: ~x"./@maxxp"oi,
         entity: ~x"."
       )
       |> Enum.map(fn param ->

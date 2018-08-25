@@ -6,7 +6,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   import Mock
 
   alias Cadet.Accounts.{Role, User}
-  alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus}
+  alias Cadet.Assessments.{Assessment, AssessmentType, Submission, SubmissionStatus}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Repo
   alias CadetWeb.AssessmentsController
@@ -14,6 +14,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
   setup do
     Cadet.Test.Seeds.assessments()
   end
+
+  @xp_early_submission_max_bonus 100
+  @xp_bonus_assessment_type ~w(mission sidequest)a
 
   test "swagger" do
     AssessmentsController.swagger_definitions()
@@ -58,6 +61,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
+              "maxXp" => 4500,
               "status" => get_assessment_status(user, &1)
             }
           )
@@ -67,6 +71,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> sign_in(user)
           |> get(build_url())
           |> json_response(200)
+          |> Enum.map(&Map.delete(&1, "xp"))
+          |> Enum.map(&Map.delete(&1, "grade"))
 
         assert expected == resp
       end
@@ -104,6 +110,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => "#{&1.type}",
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
+              "maxXp" => 4500,
               "status" => get_assessment_status(user, &1)
             }
           )
@@ -113,6 +120,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> sign_in(user)
           |> get(build_url())
           |> json_response(200)
+          |> Enum.map(&Map.delete(&1, "xp"))
+          |> Enum.map(&Map.delete(&1, "grade"))
 
         assert expected == resp
       end
@@ -143,6 +152,42 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         assert get_assessment_status(student, assessment) == resp
       end
+    end
+
+    test "renders xp for students", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: assessments
+    } do
+      assessment = assessments.mission.assessment
+
+      resp =
+        conn
+        |> sign_in(student)
+        |> get(build_url())
+        |> json_response(200)
+        |> Enum.find(&(&1["id"] == assessment.id))
+        |> Map.get("xp")
+
+      assert resp == 1000 * 3 + 500 * 3
+    end
+
+    test "renders grade for students", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: assessments
+    } do
+      assessment = assessments.mission.assessment
+
+      resp =
+        conn
+        |> sign_in(student)
+        |> get(build_url())
+        |> json_response(200)
+        |> Enum.find(&(&1["id"] == assessment.id))
+        |> Map.get("grade")
+
+      assert resp == 200 * 3 + 40 * 3
     end
   end
 
@@ -541,7 +586,169 @@ defmodule CadetWeb.AssessmentsControllerTest do
         # Preloading is necessary because Mock does an exact match, including metadata
         submission_db = Submission |> Repo.get(submission.id) |> Repo.preload(:assessment)
 
+        assert submission_db.status == :submitted
+
         assert_called(GradingJob.force_grade_individual_submission(submission_db))
+      end
+    end
+
+    test "submission of answer within 2 days of opening grants full XP bonus", %{conn: conn} do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        for type <- @xp_bonus_assessment_type do
+          assessment =
+            insert(
+              :assessment,
+              open_at: Timex.shift(Timex.now(), hours: -40),
+              close_at: Timex.shift(Timex.now(), days: 7),
+              is_published: true,
+              type: type
+            )
+
+          question = insert(:programming_question, assessment: assessment)
+          user = insert(:user, role: :student)
+
+          submission =
+            insert(:submission, assessment: assessment, student: user, status: :attempted)
+
+          insert(
+            :answer,
+            submission: submission,
+            question: question,
+            answer: %{code: "f => f(f);"}
+          )
+
+          conn
+          |> sign_in(user)
+          |> post(build_url_submit(assessment.id))
+          |> response(200)
+
+          submission_db = Repo.get(Submission, submission.id)
+
+          assert submission_db.status == :submitted
+          assert submission_db.xp_bonus == @xp_early_submission_max_bonus
+        end
+      end
+    end
+
+    test "submission of answer after 2 days within the next 100 hours of opening grants decaying XP bonus",
+         %{conn: conn} do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        for hours_after <- 48..148,
+            type <- @xp_bonus_assessment_type do
+          assessment =
+            insert(
+              :assessment,
+              open_at: Timex.shift(Timex.now(), hours: -hours_after),
+              close_at: Timex.shift(Timex.now(), hours: 500),
+              is_published: true,
+              type: type
+            )
+
+          question = insert(:programming_question, assessment: assessment)
+          user = insert(:user, role: :student)
+
+          submission =
+            insert(:submission, assessment: assessment, student: user, status: :attempted)
+
+          insert(
+            :answer,
+            submission: submission,
+            question: question,
+            answer: %{code: "f => f(f);"}
+          )
+
+          conn
+          |> sign_in(user)
+          |> post(build_url_submit(assessment.id))
+          |> response(200)
+
+          submission_db = Repo.get(Submission, submission.id)
+
+          assert submission_db.status == :submitted
+          assert submission_db.xp_bonus == @xp_early_submission_max_bonus - (hours_after - 48)
+        end
+      end
+    end
+
+    test "submission of answer after 2 days and after the next 100 hours yield 0 XP bonus", %{
+      conn: conn
+    } do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        for type <- @xp_bonus_assessment_type do
+          assessment =
+            insert(
+              :assessment,
+              open_at: Timex.shift(Timex.now(), hours: -150),
+              close_at: Timex.shift(Timex.now(), days: 7),
+              is_published: true,
+              type: type
+            )
+
+          question = insert(:programming_question, assessment: assessment)
+          user = insert(:user, role: :student)
+
+          submission =
+            insert(:submission, assessment: assessment, student: user, status: :attempted)
+
+          insert(
+            :answer,
+            submission: submission,
+            question: question,
+            answer: %{code: "f => f(f);"}
+          )
+
+          conn
+          |> sign_in(user)
+          |> post(build_url_submit(assessment.id))
+          |> response(200)
+
+          submission_db = Repo.get(Submission, submission.id)
+
+          assert submission_db.status == :submitted
+          assert submission_db.xp_bonus == 0
+        end
+      end
+    end
+
+    test "does not give bonus for non-bonus eligible assessment types", %{conn: conn} do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        non_eligible_types =
+          Enum.filter(AssessmentType.__enum_map__(), &(&1 not in @xp_bonus_assessment_type))
+
+        for hours_after <- 0..148,
+            type <- non_eligible_types do
+          assessment =
+            insert(
+              :assessment,
+              open_at: Timex.shift(Timex.now(), hours: -hours_after),
+              close_at: Timex.shift(Timex.now(), days: 7),
+              is_published: true,
+              type: type
+            )
+
+          question = insert(:programming_question, assessment: assessment)
+          user = insert(:user, role: :student)
+
+          submission =
+            insert(:submission, assessment: assessment, student: user, status: :attempted)
+
+          insert(
+            :answer,
+            submission: submission,
+            question: question,
+            answer: %{code: "f => f(f);"}
+          )
+
+          conn
+          |> sign_in(user)
+          |> post(build_url_submit(assessment.id))
+          |> response(200)
+
+          submission_db = Repo.get(Submission, submission.id)
+
+          assert submission_db.status == :submitted
+          assert submission_db.xp_bonus == 0
+        end
       end
     end
 

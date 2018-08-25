@@ -12,6 +12,8 @@ defmodule CadetWeb.GradingView do
   def render("submission.json", %{submission: submission}) do
     transform_map_for_view(submission, %{
       grade: :grade,
+      xp: :xp,
+      xpAdjustment: :xp_adjustment,
       adjustment: :adjustment,
       id: :id,
       student: &transform_map_for_view(&1.student, [:name, :id]),
@@ -19,6 +21,7 @@ defmodule CadetWeb.GradingView do
         &transform_map_for_view(&1.assessment, %{
           type: :type,
           maxGrade: :max_grade,
+          maxXp: :max_xp,
           id: :id,
           title: :title,
           coverImage: :cover_picture
@@ -34,9 +37,17 @@ defmodule CadetWeb.GradingView do
           :answer,
           &1.answer["code"] || &1.answer["choice_id"]
         ),
-      maxGrade: & &1.question.max_grade,
       solution: &(&1.question.question["solution"] || ""),
-      grade: &transform_map_for_view(&1, [:grade, :adjustment, :comment])
+      maxGrade: & &1.question.max_grade,
+      maxXp: & &1.question.max_xp,
+      grade:
+        &transform_map_for_view(&1, %{
+          grade: :grade,
+          adjustment: :adjustment,
+          comment: :comment,
+          xp: :xp,
+          xpAdjustment: :xp_adjustment
+        })
     })
   end
 end

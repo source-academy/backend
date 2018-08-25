@@ -37,11 +37,18 @@ defmodule CadetWeb.GradingController do
         %{
           "submissionid" => submission_id,
           "questionid" => question_id,
-          "grading" => grading
+          "grading" => raw_grading
         }
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     user = conn.assigns[:current_user]
+
+    grading =
+      if raw_grading["xpAdjustment"] do
+        Map.put(raw_grading, "xp_adjustment", raw_grading["xpAdjustment"])
+      else
+        raw_grading
+      end
 
     case Assessments.update_grading_info(
            %{submission_id: submission_id, question_id: question_id},
@@ -130,7 +137,9 @@ defmodule CadetWeb.GradingController do
           properties do
             id(:integer, "submission id", required: true)
             grade(:integer, "grade given")
-            adjustment(:integer, "adjustment given")
+            xp(:integer, "xp earned")
+            xpAdjustment(:integer, "xp adjustment given")
+            adjustment(:integer, "grade adjustment given")
             assessment(Schema.ref(:AssessmentInfo))
             student(Schema.ref(:StudentInfo))
           end
@@ -146,6 +155,12 @@ defmodule CadetWeb.GradingController do
             maxGrade(
               :integer,
               "The max grade for this assessment",
+              required: true
+            )
+
+            maxXp(
+              :integer,
+              "The max xp for this assessment",
               required: true
             )
           end
@@ -183,6 +198,12 @@ defmodule CadetWeb.GradingController do
                   "the max grade that can be given to this question",
                   required: true
                 )
+
+                maxXp(
+                  :integer,
+                  "the max xp that can be given to this question",
+                  required: true
+                )
               end
             end
           )
@@ -191,8 +212,10 @@ defmodule CadetWeb.GradingController do
         swagger_schema do
           properties do
             grade(:integer, "Grade awarded by autograder")
+            xp(:integer, "XP awarded by autograder")
             comment(:string, "comment given")
-            adjustment(:integer, "adjustment given")
+            adjustment(:integer, "grade adjustment given")
+            xpAdjustment(:integer, "xp adjustment given")
           end
         end,
       Grading:
@@ -202,7 +225,8 @@ defmodule CadetWeb.GradingController do
               Schema.new do
                 properties do
                   comment(:string, "comment given")
-                  adjustment(:integer, "adjustment given")
+                  adjustment(:integer, "grade adjustment given")
+                  xpAdjustment(:integer, "xp adjustment given")
                 end
               end
             )
