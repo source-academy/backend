@@ -79,7 +79,8 @@ defmodule Cadet.Test.Seeds do
         insert(:programming_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 200
+          max_grade: 200,
+          max_xp: 1000
         })
       end)
 
@@ -88,7 +89,8 @@ defmodule Cadet.Test.Seeds do
         insert(:mcq_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 40
+          max_grade: 40,
+          max_xp: 500
         })
       end)
 
@@ -103,6 +105,7 @@ defmodule Cadet.Test.Seeds do
         Enum.map(programming_questions, fn question ->
           insert(:answer, %{
             grade: 200,
+            xp: 1000,
             question: question,
             submission: submission,
             answer: build(:programming_answer)
@@ -115,6 +118,7 @@ defmodule Cadet.Test.Seeds do
         Enum.map(mcq_questions, fn question ->
           insert(:answer, %{
             grade: 40,
+            xp: 500,
             question: question,
             submission: submission,
             answer: build(:mcq_answer)

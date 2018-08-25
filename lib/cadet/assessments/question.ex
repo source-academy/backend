@@ -13,6 +13,7 @@ defmodule Cadet.Assessments.Question do
     field(:question, :map)
     field(:type, QuestionType)
     field(:max_grade, :integer)
+    field(:max_xp, :integer)
     field(:answer, :map, virtual: true)
     embeds_one(:library, Library)
     embeds_one(:grading_library, Library)
@@ -21,7 +22,7 @@ defmodule Cadet.Assessments.Question do
   end
 
   @required_fields ~w(question type assessment_id)a
-  @optional_fields ~w(display_order max_grade)a
+  @optional_fields ~w(display_order max_grade max_xp)a
   @required_embeds ~w(library)a
 
   def changeset(question, params) do

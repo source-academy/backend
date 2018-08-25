@@ -12,43 +12,63 @@ defmodule Cadet.Assessments do
   alias Cadet.Autograder.GradingJob
   alias Ecto.Multi
 
+  @xp_early_submission_max_bonus 100
+  @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
   @grading_role :staff
   @see_all_submissions_role :admin
   @open_all_assessment_roles ~w(staff admin)a
 
+  @spec user_total_xp(%User{}) :: integer()
+  def user_total_xp(%User{id: user_id}) when is_ecto_id(user_id) do
+    total_xp_bonus =
+      Submission
+      |> where(student_id: ^user_id)
+      |> Repo.aggregate(:sum, :xp_bonus)
+      |> case do
+        nil -> 0
+        xp when is_integer(xp) -> xp
+      end
+
+    total_xp =
+      Query.all_submissions_with_xp()
+      |> subquery()
+      |> where(student_id: ^user_id)
+      |> select([q], fragment("? + ?", sum(q.xp), sum(q.xp_adjustment)))
+      |> Repo.one()
+      |> decimal_to_integer()
+
+    total_xp_bonus + total_xp
+  end
+
   @spec user_max_grade(%User{}) :: integer()
   def user_max_grade(%User{id: user_id}) when is_ecto_id(user_id) do
-    max_grade =
-      Submission
-      |> where(status: ^:submitted)
-      |> where(student_id: ^user_id)
-      |> join(
-        :inner,
-        [s],
-        a in subquery(Query.all_assessments_with_max_grade()),
-        s.assessment_id == a.id
-      )
-      |> select([_, a], sum(a.max_grade))
-      |> Repo.one()
-
-    if max_grade do
-      Decimal.to_integer(max_grade)
-    else
-      0
-    end
+    Submission
+    |> where(status: ^:submitted)
+    |> where(student_id: ^user_id)
+    |> join(
+      :inner,
+      [s],
+      a in subquery(Query.all_assessments_with_max_grade()),
+      s.assessment_id == a.id
+    )
+    |> select([_, a], sum(a.max_grade))
+    |> Repo.one()
+    |> decimal_to_integer()
   end
 
   def user_total_grade(%User{id: user_id}) do
-    grade =
-      Query.all_submissions_with_grade()
-      |> subquery()
-      |> where(student_id: ^user_id)
-      |> select([q], fragment("? + ?", sum(q.grade), sum(q.adjustment)))
-      |> Repo.one()
+    Query.all_submissions_with_grade()
+    |> subquery()
+    |> where(student_id: ^user_id)
+    |> select([q], fragment("? + ?", sum(q.grade), sum(q.adjustment)))
+    |> Repo.one()
+    |> decimal_to_integer()
+  end
 
-    if grade do
-      Decimal.to_integer(grade)
+  defp decimal_to_integer(decimal) do
+    if Decimal.decimal?(decimal) do
+      Decimal.to_integer(decimal)
     else
       0
     end
@@ -142,10 +162,20 @@ defmodule Cadet.Assessments do
   """
   def all_published_assessments(user = %User{}) do
     assessments =
-      Query.all_assessments_with_max_grade()
+      Query.all_assessments_with_max_xp_and_grade()
       |> subquery()
-      |> join(:left, [a], s in Submission, a.id == s.assessment_id and s.student_id == ^user.id)
-      |> select([a, s], %{a | user_status: s.status})
+      |> join(
+        :left,
+        [a],
+        s in subquery(Query.all_submissions_with_xp_and_grade()),
+        a.id == s.assessment_id and s.student_id == ^user.id
+      )
+      |> select([a, s], %{
+        a
+        | xp: fragment("? + ? + ?", s.xp, s.xp_adjustment, s.xp_bonus),
+          grade: fragment("? + ?", s.grade, s.adjustment),
+          user_status: s.status
+      })
       |> where(is_published: true)
       |> order_by(:open_at)
       |> Repo.all()
@@ -316,8 +346,7 @@ defmodule Cadet.Assessments do
       with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :attempted} <- {:status, submission.status},
-           {:ok, updated_submission} <-
-             submission |> Submission.changeset(%{status: :submitted}) |> Repo.update() do
+           {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
         GradingJob.force_grade_individual_submission(updated_submission)
 
         {:ok, nil}
@@ -340,6 +369,29 @@ defmodule Cadet.Assessments do
     else
       {:error, {:forbidden, "User is not permitted to answer questions"}}
     end
+  end
+
+  @spec update_submission_status_and_xp_bonus(%Submission{}) ::
+          {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
+  defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
+    assessment = submission.assessment
+
+    xp_bonus =
+      cond do
+        assessment.type not in @xp_bonus_assessment_type ->
+          0
+
+        Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: 48)) ->
+          @xp_early_submission_max_bonus
+
+        true ->
+          deduction = Timex.diff(Timex.now(), assessment.open_at, :hours) - 48
+          Enum.max([0, @xp_early_submission_max_bonus - deduction])
+      end
+
+    submission
+    |> Submission.changeset(%{status: :submitted, xp_bonus: xp_bonus})
+    |> Repo.update()
   end
 
   def update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
@@ -373,18 +425,25 @@ defmodule Cadet.Assessments do
   def all_submissions_by_grader(grader = %User{role: role}) do
     submission_query =
       Submission
-      |> join(:inner, [s], x in subquery(Query.submissions_grade()), s.id == x.submission_id)
+      |> join(
+        :inner,
+        [s],
+        x in subquery(Query.submissions_xp_and_grade()),
+        s.id == x.submission_id
+      )
       |> join(:inner, [s], st in assoc(s, :student))
       |> join(
         :inner,
         [s],
-        a in subquery(Query.all_assessments_with_max_grade()),
+        a in subquery(Query.all_assessments_with_max_xp_and_grade()),
         s.assessment_id == a.id
       )
       |> select([s, x, st, a], %Submission{
         s
         | grade: x.grade,
           adjustment: x.adjustment,
+          xp: x.xp,
+          xp_adjustment: x.xp_adjustment,
           student: st,
           assessment: a
       })

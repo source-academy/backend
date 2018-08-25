@@ -21,6 +21,9 @@ defmodule CadetWeb.AssessmentsView do
       reading: :reading,
       status: &(&1.user_status || "not_attempted"),
       maxGrade: :max_grade,
+      maxXp: :max_xp,
+      xp: :xp,
+      grade: &(&1.grade || 0),
       coverImage: :cover_picture
     })
   end

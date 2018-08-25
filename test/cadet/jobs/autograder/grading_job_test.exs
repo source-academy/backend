@@ -311,6 +311,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
         for answer <- inserted_empty_answers do
           assert answer.grade == 0
+          assert answer.xp == 0
           assert answer.autograding_status == :success
           assert answer.answer == %{"code" => "// Question not answered by student."}
           assert answer.comment == "Question not attempted by student"
@@ -361,6 +362,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
       for answer <- answers do
         assert answer.grade == 0
+        assert answer.xp == 0
         assert answer.autograding_status == :success
         assert answer.answer == %{"choice_id" => 0}
         assert answer.comment == "Question not attempted by student"
@@ -408,8 +410,10 @@ defmodule Cadet.Autograder.GradingJobTest do
         # seeded questions have correct choice as 0
         if answer_db.answer["choice_id"] == 0 do
           assert answer_db.grade == question.max_grade
+          assert answer_db.xp == question.max_xp
         else
           assert answer_db.grade == 0
+          assert answer_db.xp == 0
         end
 
         assert answer_db.autograding_status == :success
