@@ -287,26 +287,150 @@ defmodule CadetWeb.GradingControllerTest do
   end
 
   describe "GET /, admin" do
-    @tag authenticate: :admin
-    test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url())
-      assert response(conn, 401) =~ "User is not permitted to grade."
+    @tag authenticate: :staff
+    test "can see all submissions", %{conn: conn} do
+      %{
+        mission: mission,
+        submissions: submissions
+      } = seed_db(conn)
+
+      admin = insert(:user, role: :admin)
+
+      conn =
+        conn
+        |> sign_in(admin)
+        |> get(build_url())
+
+      expected =
+        Enum.map(submissions, fn submission ->
+          %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
+            "grade" => 800,
+            "adjustment" => -400,
+            "id" => submission.id,
+            "student" => %{
+              "name" => submission.student.name,
+              "id" => submission.student.id
+            },
+            "assessment" => %{
+              "type" => "mission",
+              "maxGrade" => 800,
+              "maxXp" => 4000,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => mission.cover_picture
+            }
+          }
+        end)
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
     end
   end
 
   describe "GET /:submissionid, admin" do
-    @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url(1))
-      assert response(conn, 401) =~ "User is not permitted to grade."
+    @tag authenticate: :admin
+    test "successful", %{conn: conn} do
+      %{
+        submissions: submissions,
+        answers: answers
+      } = seed_db(conn)
+
+      submission = List.first(submissions)
+
+      conn = get(conn, build_url(submission.id))
+
+      expected =
+        answers
+        |> Enum.filter(&(&1.submission.id == submission.id))
+        |> Enum.sort_by(& &1.question.display_order)
+        |> Enum.map(
+          &case &1.question.type do
+            :programming ->
+              %{
+                "question" => %{
+                  "solutionTemplate" => &1.question.question.solution_template,
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "content" => &1.question.question.content,
+                  "answer" => &1.answer.code
+                },
+                "solution" => &1.question.question.solution,
+                "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
+                }
+              }
+
+            :mcq ->
+              %{
+                "question" => %{
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "content" => &1.question.question.content,
+                  "answer" => &1.answer.choice_id,
+                  "choices" =>
+                    for choice <- &1.question.question.choices do
+                      %{
+                        "content" => choice.content,
+                        "hint" => choice.hint,
+                        "id" => choice.choice_id
+                      }
+                    end
+                },
+                "solution" => "",
+                "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
+                }
+              }
+          end
+        )
+
+      assert expected == json_response(conn, 200)
     end
   end
 
   describe "POST /:submissionid/:questionid, admin" do
     @tag authenticate: :admin
-    test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{"grading" => %{}})
-      assert response(conn, 401) =~ "User is not permitted to grade."
+    test "succeeds", %{conn: conn} do
+      %{answers: answers} = seed_db(conn)
+
+      answer = List.first(answers)
+
+      conn =
+        post(conn, build_url(answer.submission.id, answer.question.id), %{
+          "grading" => %{"adjustment" => -10, "comment" => "Never gonna give you up"}
+        })
+
+      assert response(conn, 200) == "OK"
+      assert %{adjustment: -10, comment: "Never gonna give you up"} = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :admin
