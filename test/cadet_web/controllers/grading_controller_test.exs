@@ -304,6 +304,8 @@ defmodule CadetWeb.GradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
             "grade" => 800,
             "adjustment" => -400,
             "id" => submission.id,
@@ -314,6 +316,7 @@ defmodule CadetWeb.GradingControllerTest do
             "assessment" => %{
               "type" => "mission",
               "maxGrade" => 800,
+              "maxXp" => 4000,
               "id" => mission.id,
               "title" => mission.title,
               "coverImage" => mission.cover_picture
@@ -362,10 +365,13 @@ defmodule CadetWeb.GradingControllerTest do
                 },
                 "solution" => &1.question.question.solution,
                 "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
                 }
               }
 
@@ -395,10 +401,13 @@ defmodule CadetWeb.GradingControllerTest do
                 },
                 "solution" => "",
                 "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
                 }
               }
           end
