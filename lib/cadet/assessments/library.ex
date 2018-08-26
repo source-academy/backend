@@ -10,7 +10,7 @@ defmodule Cadet.Assessments.Library do
   embedded_schema do
     field(:chapter, :integer, default: 1)
     field(:globals, :map, default: %{})
-    embeds_one(:external, ExternalLibrary)
+    embeds_one(:external, ExternalLibrary, on_replace: :update)
   end
 
   @required_fields ~w(chapter)a

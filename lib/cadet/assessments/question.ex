@@ -15,8 +15,8 @@ defmodule Cadet.Assessments.Question do
     field(:max_grade, :integer)
     field(:max_xp, :integer)
     field(:answer, :map, virtual: true)
-    embeds_one(:library, Library)
-    embeds_one(:grading_library, Library)
+    embeds_one(:library, Library, on_replace: :update)
+    embeds_one(:grading_library, Library, on_replace: :update)
     belongs_to(:assessment, Assessment)
     timestamps()
   end
