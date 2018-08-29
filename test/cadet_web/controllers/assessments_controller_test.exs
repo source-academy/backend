@@ -283,6 +283,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "solution"))
             |> Enum.map(&Map.delete(&1, "library"))
             |> Enum.map(&Map.delete(&1, "comment"))
+            |> Enum.map(&Map.delete(&1, "xp"))
+            |> Enum.map(&Map.delete(&1, "grade"))
 
           assert expected_questions == resp_questions
         end
@@ -364,6 +366,48 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Enum.sort()
 
         assert expected_solutions == resp_solutions
+      end
+    end
+
+    test "it renders xp, grade for students", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      for role <- Role.__enum_map__() do
+        user = Map.get(users, role)
+
+        for {_type,
+             %{
+               assessment: assessment,
+               mcq_answers: [mcq_answers | _],
+               programming_answers: [programming_answers | _]
+             }} <- assessments do
+          expected =
+            if role == :student do
+              Enum.map(
+                programming_answers ++ mcq_answers,
+                &%{
+                  "xp" => &1.xp + &1.xp_adjustment,
+                  "grade" => &1.grade + &1.adjustment
+                }
+              )
+            else
+              fn -> %{"xp" => 0, "grade" => 0} end
+              |> Stream.repeatedly()
+              |> Enum.take(length(programming_answers) + length(mcq_answers))
+            end
+
+          resp =
+            conn
+            |> sign_in(user)
+            |> get(build_url(assessment.id))
+            |> json_response(200)
+            |> Map.get("questions", [])
+            |> Enum.map(&%{"xp" => &1["xp"], "grade" => &1["grade"]})
+
+          assert expected == resp
+        end
       end
     end
 

@@ -120,7 +120,12 @@ defmodule CadetWeb.AssessmentsView do
         :mcq -> & &1.answer["choice_id"]
       end
 
-    transform_map_for_view(answer, %{answer: answer_getter, comment: :comment})
+    transform_map_for_view(answer, %{
+      answer: answer_getter,
+      comment: :comment,
+      xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
+      grade: &((&1.grade || 0) + (&1.adjustment || 0))
+    })
   end
 
   def build_choice(%{choice: choice}) do
