@@ -188,6 +188,9 @@ defmodule CadetWeb.AssessmentsController do
             )
 
             solution_template(:string, "Solution template for programming questions")
+
+            xp(:integer, "Final XP given to this question. Only provided for students.")
+            grade(:integer, "Final grade given to this question. Only provided for students.")
           end
         end,
       MCQChoice:
