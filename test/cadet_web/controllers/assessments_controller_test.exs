@@ -404,7 +404,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> get(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
-            |> Enum.map(&%{"xp" => &1["xp"], "grade" => &1["grade"]})
+            |> Enum.map(&Map.take(&1, ~w(xp grade)))
 
           assert expected == resp
         end
