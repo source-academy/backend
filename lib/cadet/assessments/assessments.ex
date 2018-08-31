@@ -17,6 +17,7 @@ defmodule Cadet.Assessments do
   @submit_answer_roles ~w(student)a
   @grading_role :staff
   @see_all_submissions_role :admin
+  @see_all_submissions_roles [:staff, :admin]
   @open_all_assessment_roles ~w(staff admin)a
 
   @spec user_total_xp(%User{}) :: integer()
@@ -422,7 +423,7 @@ defmodule Cadet.Assessments do
 
   @spec all_submissions_by_grader(%User{}) ::
           {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
-  def all_submissions_by_grader(grader = %User{role: role}) do
+  def all_submissions_by_grader(%User{role: role}) do
     submission_query =
       Submission
       |> join(
@@ -448,59 +449,32 @@ defmodule Cadet.Assessments do
           assessment: a
       })
 
-    case role do
-      @grading_role ->
-        students = Cadet.Accounts.Query.students_of(grader)
-
-        submissions =
-          submission_query
-          |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
-          |> Repo.all()
-
-        {:ok, submissions}
-
-      @see_all_submissions_role ->
-        submissions = Repo.all(submission_query)
-
-        {:ok, submissions}
-
-      _ ->
-        {:error, {:unauthorized, "User is not permitted to grade."}}
+    if role in @see_all_submissions_roles do
+      submissions = Repo.all(submission_query)
+      {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
-  def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
+  def get_answers_in_submission(id, %User{role: role}) when is_ecto_id(id) do
     answer_query =
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> preload([a, q], question: q)
 
-    case role do
-      @grading_role ->
-        students = Cadet.Accounts.Query.students_of(grader)
-
-        answers =
-          answer_query
-          |> join(:inner, [a], s in Submission, a.submission_id == s.id)
-          |> join(:inner, [a, _, s], t in subquery(students), t.id == s.student_id)
-          |> Repo.all()
-          |> Enum.sort_by(& &1.question.display_order)
-
-        {:ok, answers}
-
-      @see_all_submissions_role ->
-        answers =
+    if role in @see_all_submissions_roles do
+      answers =
           answer_query
           |> Repo.all()
           |> Enum.sort_by(& &1.question.display_order)
 
-        {:ok, answers}
-
-      _ ->
-        {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:ok, answers}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
