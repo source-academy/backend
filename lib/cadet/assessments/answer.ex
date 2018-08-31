@@ -12,6 +12,7 @@ defmodule Cadet.Assessments.Answer do
 
   schema "answers" do
     field(:grade, :integer, default: 0)
+    field(:adjustment, :integer, default: 0)
     field(:xp, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
     field(:autograding_status, AutogradingStatus, default: :none)
@@ -19,7 +20,6 @@ defmodule Cadet.Assessments.Answer do
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
     field(:comment, :string)
-    field(:adjustment, :integer, default: 0)
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
     timestamps()
