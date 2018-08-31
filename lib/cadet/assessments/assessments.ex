@@ -15,6 +15,7 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
+  @admin_role :admin
   @see_all_submissions_roles [:staff, :admin]
   @open_all_assessment_roles ~w(staff admin)a
 
@@ -421,7 +422,7 @@ defmodule Cadet.Assessments do
 
   @spec all_submissions_by_grader(%User{}) ::
           {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
-  def all_submissions_by_grader(%User{role: role}) do
+  def all_submissions_by_grader(grader = %User{role: role}, group_only \\ false) do
     submission_query =
       Submission
       |> join(
@@ -448,7 +449,10 @@ defmodule Cadet.Assessments do
       })
 
     if role in @see_all_submissions_roles do
-      submissions = Repo.all(submission_query)
+      submissions =
+        (group_only && role != @admin_role && submissions_by_group(grader, submission_query)) ||
+          Repo.all(submission_query)
+
       {:ok, submissions}
     else
       {:error, {:unauthorized, "User is not permitted to grade."}}
@@ -579,5 +583,13 @@ defmodule Cadet.Assessments do
       :programming ->
         %{code: raw_answer}
     end
+  end
+
+  defp submissions_by_group(grader, submission_query) do
+    students = Cadet.Accounts.Query.students_of(grader)
+
+    submission_query
+    |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
+    |> Repo.all()
   end
 end
