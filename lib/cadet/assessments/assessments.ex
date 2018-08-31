@@ -15,8 +15,6 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
-  @grading_role :staff
-  @see_all_submissions_role :admin
   @see_all_submissions_roles [:staff, :admin]
   @open_all_assessment_roles ~w(staff admin)a
 
@@ -488,29 +486,16 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        grader = %User{role: role}
+        %User{role: role}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
-    if role in [@grading_role, @see_all_submissions_role] do
+    if role in @see_all_submissions_roles do
       answer_query =
         Answer
         |> where(submission_id: ^submission_id)
         |> where(question_id: ^question_id)
 
-      answer =
-        role
-        |> case do
-          @grading_role ->
-            students = Cadet.Accounts.Query.students_of(grader)
-
-            answer_query
-            |> join(:inner, [a], s in assoc(a, :submission))
-            |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
-
-          @see_all_submissions_role ->
-            answer_query
-        end
-        |> Repo.one()
+      answer = Repo.one(answer_query)
 
       with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
            {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
