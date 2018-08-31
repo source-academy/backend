@@ -88,7 +88,7 @@ defmodule CadetWeb.GradingController do
   swagger_path :index do
     get("/grading")
 
-    summary("Get a list of all submissions with current user as the grader. ")
+    summary("Get a list of all submissions")
 
     security([%{JWT: []}])
 
@@ -113,6 +113,19 @@ defmodule CadetWeb.GradingController do
 
     response(200, "OK", Schema.ref(:GradingInfo))
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :group do
+    get("/group")
+
+    summary("Get a list of all submissions with current user as the grader. ")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    response(200, "OK", Schema.ref(:Submissions))
     response(401, "Unauthorised")
   end
 
