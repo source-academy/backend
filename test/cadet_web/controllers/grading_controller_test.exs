@@ -224,7 +224,7 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "pure mentor gets an empty list", %{conn: conn} do
+    test "pure mentor gets to view all submissions", %{conn: conn} do
       %{mentor: mentor, submissions: submissions, answers: answers} = seed_db(conn)
 
       submission = List.first(submissions)
@@ -547,9 +547,48 @@ defmodule CadetWeb.GradingControllerTest do
     end
   end
 
+  describe "GET /group, staff" do
+    @tag authenticate: :staff
+    test "successful", %{conn: conn} do
+      %{
+        mission: mission,
+        submissions: submissions
+      } = seed_db(conn)
+
+      conn = get(conn, build_url_group())
+
+      expected =
+        Enum.map(submissions, fn submission ->
+          %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
+            "grade" => 800,
+            "adjustment" => -400,
+            "id" => submission.id,
+            "student" => %{
+              "name" => submission.student.name,
+              "id" => submission.student.id
+            },
+            "assessment" => %{
+              "type" => "mission",
+              "maxGrade" => 800,
+              "maxXp" => 4000,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => mission.cover_picture
+            }
+          }
+        end)
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+    end
+  end
+
   defp build_url, do: "/v1/grading/"
   defp build_url(submission_id), do: "#{build_url()}#{submission_id}/"
   defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}#{question_id}"
+
+  defp build_url_group, do: "/v1/group"
 
   defp seed_db(conn) do
     grader = conn.assigns[:current_user]
