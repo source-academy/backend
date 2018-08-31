@@ -328,7 +328,9 @@ defmodule CadetWeb.GradingControllerTest do
         })
 
       assert response(conn, 200) == "OK"
-      assert %{adjustment: -10, comment: "Never gonna give you up"} = Repo.get(Answer, answer.id)
+
+      assert %{adjustment: -10, comment: "Never gonna give you up", xp_adjustment: -10} =
+               Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
@@ -362,7 +364,7 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "staff who isn't the grader of said answer fails", %{conn: conn} do
+    test "staff who isn't the grader of said answer can still grade submission", %{conn: conn} do
       %{mentor: mentor, answers: answers} = seed_db(conn)
 
       answer = List.first(answers)
@@ -371,10 +373,17 @@ defmodule CadetWeb.GradingControllerTest do
         conn
         |> sign_in(mentor)
         |> post(build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"adjustment" => -100}
+          "grading" => %{
+            "adjustment" => -100,
+            "comment" => "Your awesome",
+            "xpAdjustment" => -100
+          }
         })
 
-      assert response(conn, 400) == "Answer not found or user not permitted to grade."
+      assert response(conn, 200) == "OK"
+
+      assert %{adjustment: -100, comment: "Your awesome", xp_adjustment: -100} =
+               Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
