@@ -468,9 +468,9 @@ defmodule Cadet.Assessments do
 
     if role in @see_all_submissions_roles do
       answers =
-          answer_query
-          |> Repo.all()
-          |> Enum.sort_by(& &1.question.display_order)
+        answer_query
+        |> Repo.all()
+        |> Enum.sort_by(& &1.question.display_order)
 
       {:ok, answers}
     else
