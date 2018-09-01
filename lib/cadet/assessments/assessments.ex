@@ -513,11 +513,15 @@ defmodule Cadet.Assessments do
             answer_query
             |> join(:inner, [a], s in assoc(a, :submission))
             |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
+            |> Repo.one()
 
           role in @see_all_submissions_roles ->
             answer_query
+            |> Repo.one()
+
+          true ->
+            []
         end
-        |> Repo.one()
 
       with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
            {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
