@@ -555,7 +555,7 @@ defmodule CadetWeb.GradingControllerTest do
         submissions: submissions
       } = seed_db(conn)
 
-      conn = get(conn, build_url_group())
+      conn = get(conn, build_url(), %{"group" => true})
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -587,8 +587,6 @@ defmodule CadetWeb.GradingControllerTest do
   defp build_url, do: "/v1/grading/"
   defp build_url(submission_id), do: "#{build_url()}#{submission_id}/"
   defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}#{question_id}"
-
-  defp build_url_group, do: "/v1/group"
 
   defp seed_db(conn) do
     grader = conn.assigns[:current_user]
