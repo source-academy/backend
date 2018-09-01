@@ -15,6 +15,7 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
+  @grading_roles ~w()a
   @admin_role :admin
   @see_all_submissions_roles [:staff, :admin]
   @open_all_assessment_roles ~w(staff admin)a
@@ -448,14 +449,19 @@ defmodule Cadet.Assessments do
           assessment: a
       })
 
-    if role in @see_all_submissions_roles do
-      submissions =
-        (group_only && role != @admin_role && submissions_by_group(grader, submission_query)) ||
-          Repo.all(submission_query)
+    cond do
+      role in @grading_roles ->
+        {:ok, submissions_by_group(grader, submission_query)}
 
-      {:ok, submissions}
-    else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+      role in @see_all_submissions_roles ->
+        submissions =
+          (group_only && role != @admin_role && submissions_by_group(grader, submission_query)) ||
+            Repo.all(submission_query)
+
+        {:ok, submissions}
+
+      true ->
+        {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
@@ -490,16 +496,28 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %User{role: role}
+        grader = %User{role: role}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
-    if role in @see_all_submissions_roles do
+    if role in (@grading_roles ++ @see_all_submissions_roles) do
       answer_query =
         Answer
         |> where(submission_id: ^submission_id)
         |> where(question_id: ^question_id)
 
-      answer = Repo.one(answer_query)
+      answer =
+        cond do
+          role in @grading_roles ->
+            students = Cadet.Accounts.Query.students_of(grader)
+
+            answer_query
+            |> join(:inner, [a], s in assoc(a, :submission))
+            |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
+
+          role in @see_all_submissions_roles ->
+            answer_query
+        end
+        |> Repo.one()
 
       with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
            {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
