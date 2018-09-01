@@ -4,6 +4,20 @@ defmodule CadetWeb.GradingController do
 
   alias Cadet.Assessments
 
+  def index(conn, %{"group" => group}) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.all_submissions_by_grader(user, group) do
+      {:ok, submissions} ->
+        render(conn, "index.json", submissions: submissions)
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   def index(conn, _) do
     user = conn.assigns[:current_user]
 
@@ -69,20 +83,6 @@ defmodule CadetWeb.GradingController do
     conn
     |> put_status(:bad_request)
     |> text("Missing parameter")
-  end
-
-  def group(conn, _) do
-    user = conn.assigns[:current_user]
-
-    case Assessments.all_submissions_by_grader(user, true) do
-      {:ok, submissions} ->
-        render(conn, "index.json", submissions: submissions)
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
   end
 
   swagger_path :index do
