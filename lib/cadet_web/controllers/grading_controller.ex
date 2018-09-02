@@ -4,7 +4,7 @@ defmodule CadetWeb.GradingController do
 
   alias Cadet.Assessments
 
-  def index(conn, %{"group" => group}) do
+  def index(conn, %{"group" => group}) when is_boolean(group) do
     user = conn.assigns[:current_user]
 
     case Assessments.all_submissions_by_grader(user, group) do
@@ -19,17 +19,7 @@ defmodule CadetWeb.GradingController do
   end
 
   def index(conn, _) do
-    user = conn.assigns[:current_user]
-
-    case Assessments.all_submissions_by_grader(user) do
-      {:ok, submissions} ->
-        render(conn, "index.json", submissions: submissions)
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
+    index(conn, %{"group" => false})
   end
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
@@ -95,7 +85,12 @@ defmodule CadetWeb.GradingController do
     produces("application/json")
 
     parameters do
-      group(:body, :boolean, "Boolean to show group under grader", required: false)
+      group(
+        :body,
+        :boolean,
+        "Show only students in the grader's group when true",
+        required: false
+      )
     end
 
     response(200, "OK", Schema.ref(:Submissions))

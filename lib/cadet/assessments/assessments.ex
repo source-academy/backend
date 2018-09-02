@@ -421,6 +421,16 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
+  @doc """
+  Function returning submissions under a grader. 
+
+  The input parameters are the user and group_only. 
+  group_only is used to check whether only the groups under the grader should be returned. 
+  The parameter is a boolean which is false by default.
+
+  The return value is {:ok, submissions} if no errors else its 
+  {:error, {:unauthorized, "User is not permitted to grade."}}
+  """
   @spec all_submissions_by_grader(%User{}) ::
           {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader(grader = %User{role: role}, group_only \\ false) do
@@ -455,8 +465,11 @@ defmodule Cadet.Assessments do
 
       role in @see_all_submissions_roles ->
         submissions =
-          (group_only && role != @admin_role && submissions_by_group(grader, submission_query)) ||
+          if group_only && role != @admin_role do
+            submissions_by_group(grader, submission_query)
+          else
             Repo.all(submission_query)
+          end
 
         {:ok, submissions}
 
@@ -467,22 +480,36 @@ defmodule Cadet.Assessments do
 
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
-  def get_answers_in_submission(id, %User{role: role}) when is_ecto_id(id) do
+  def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
     answer_query =
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> preload([a, q], question: q)
 
-    if role in @see_all_submissions_roles do
-      answers =
-        answer_query
-        |> Repo.all()
-        |> Enum.sort_by(& &1.question.display_order)
+    cond do
+      role in @grading_roles ->
+        students = Cadet.Accounts.Query.students_of(grader)
 
-      {:ok, answers}
-    else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+        answers =
+          answer_query
+          |> join(:inner, [a], s in Submission, a.submission_id == s.id)
+          |> join(:inner, [a, _, s], t in subquery(students), t.id == s.student_id)
+          |> Repo.all()
+          |> Enum.sort_by(& &1.question.display_order)
+
+        {:ok, answers}
+
+      role in @see_all_submissions_roles ->
+        answers =
+          answer_query
+          |> Repo.all()
+          |> Enum.sort_by(& &1.question.display_order)
+
+        {:ok, answers}
+
+      true ->
+        {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
@@ -505,23 +532,18 @@ defmodule Cadet.Assessments do
         |> where(submission_id: ^submission_id)
         |> where(question_id: ^question_id)
 
-      answer =
-        cond do
-          role in @grading_roles ->
-            students = Cadet.Accounts.Query.students_of(grader)
+      answer_query =
+        if role in @grading_roles do
+          students = Cadet.Accounts.Query.students_of(grader)
 
-            answer_query
-            |> join(:inner, [a], s in assoc(a, :submission))
-            |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
-            |> Repo.one()
-
-          role in @see_all_submissions_roles ->
-            answer_query
-            |> Repo.one()
-
-          true ->
-            []
+          answer_query
+          |> join(:inner, [a], s in assoc(a, :submission))
+          |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
+        else
+          answer_query
         end
+
+      answer = Repo.one(answer_query)
 
       with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
            {:valid, changeset = %Ecto.Changeset{valid?: true}} <-

@@ -41,6 +41,14 @@ defmodule CadetWeb.GradingControllerTest do
     end
   end
 
+  describe "GET /?group=true, student" do
+    @tag authenticate: :student
+    test "unauthorized", %{conn: conn} do
+      conn = get(conn, build_url(), %{"group" => true})
+      assert response(conn, 401) =~ "User is not permitted to grade."
+    end
+  end
+
   describe "GET /:submissionid, student" do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
@@ -107,6 +115,43 @@ defmodule CadetWeb.GradingControllerTest do
         conn
         |> sign_in(mentor)
         |> get(build_url())
+
+      expected =
+        Enum.map(submissions, fn submission ->
+          %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
+            "grade" => 800,
+            "adjustment" => -400,
+            "id" => submission.id,
+            "student" => %{
+              "name" => submission.student.name,
+              "id" => submission.student.id
+            },
+            "assessment" => %{
+              "type" => "mission",
+              "maxGrade" => 800,
+              "maxXp" => 4000,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => mission.cover_picture
+            }
+          }
+        end)
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+    end
+  end
+
+  describe "GET /?group=true, staff" do
+    @tag authenticate: :staff
+    test "successful", %{conn: conn} do
+      %{
+        mission: mission,
+        submissions: submissions
+      } = seed_db(conn)
+
+      conn = get(conn, build_url(), %{"group" => true})
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -435,6 +480,43 @@ defmodule CadetWeb.GradingControllerTest do
     end
   end
 
+  describe "GET /?group=true, admin" do
+    @tag authenticate: :admin
+    test "successful", %{conn: conn} do
+      %{
+        mission: mission,
+        submissions: submissions
+      } = seed_db(conn)
+
+      conn = get(conn, build_url(), %{"group" => true})
+
+      expected =
+        Enum.map(submissions, fn submission ->
+          %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
+            "grade" => 800,
+            "adjustment" => -400,
+            "id" => submission.id,
+            "student" => %{
+              "name" => submission.student.name,
+              "id" => submission.student.id
+            },
+            "assessment" => %{
+              "type" => "mission",
+              "maxGrade" => 800,
+              "maxXp" => 4000,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => mission.cover_picture
+            }
+          }
+        end)
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+    end
+  end
+
   describe "GET /:submissionid, admin" do
     @tag authenticate: :admin
     test "successful", %{conn: conn} do
@@ -544,43 +626,6 @@ defmodule CadetWeb.GradingControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, build_url(1, 3), %{})
       assert response(conn, 400) =~ "Missing parameter"
-    end
-  end
-
-  describe "GET /group, staff" do
-    @tag authenticate: :staff
-    test "successful", %{conn: conn} do
-      %{
-        mission: mission,
-        submissions: submissions
-      } = seed_db(conn)
-
-      conn = get(conn, build_url(), %{"group" => true})
-
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 4000,
-            "xpAdjustment" => -2000,
-            "grade" => 800,
-            "adjustment" => -400,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.name,
-              "id" => submission.student.id
-            },
-            "assessment" => %{
-              "type" => "mission",
-              "maxGrade" => 800,
-              "maxXp" => 4000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "coverImage" => mission.cover_picture
-            }
-          }
-        end)
-
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
     end
   end
 
