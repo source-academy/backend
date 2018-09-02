@@ -563,7 +563,7 @@ defmodule Cadet.Assessments do
   end
 
   def update_grading_info(
-        %{submission_id: submission_id, question_id: question_id},
+        _,
         _,
         _
       )
