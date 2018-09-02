@@ -4,10 +4,10 @@ defmodule CadetWeb.GradingController do
 
   alias Cadet.Assessments
 
-  def index(conn, _) do
+  def index(conn, %{"group" => group}) when is_boolean(group) do
     user = conn.assigns[:current_user]
 
-    case Assessments.all_submissions_by_grader(user) do
+    case Assessments.all_submissions_by_grader(user, group) do
       {:ok, submissions} ->
         render(conn, "index.json", submissions: submissions)
 
@@ -16,6 +16,10 @@ defmodule CadetWeb.GradingController do
         |> put_status(status)
         |> text(message)
     end
+  end
+
+  def index(conn, _) do
+    index(conn, %{"group" => false})
   end
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
@@ -74,11 +78,20 @@ defmodule CadetWeb.GradingController do
   swagger_path :index do
     get("/grading")
 
-    summary("Get a list of all submissions with current user as the grader. ")
+    summary("Get a list of all submissions with current user as the grader.")
 
     security([%{JWT: []}])
 
     produces("application/json")
+
+    parameters do
+      group(
+        :body,
+        :boolean,
+        "Show only students in the grader's group when true",
+        required: false
+      )
+    end
 
     response(200, "OK", Schema.ref(:Submissions))
     response(401, "Unauthorised")

@@ -15,8 +15,8 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
-  @grading_role :staff
-  @see_all_submissions_role :admin
+  @grading_roles ~w()a
+  @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
 
   @spec user_total_xp(%User{}) :: integer()
@@ -420,9 +420,19 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
+  @doc """
+  Function returning submissions under a grader. 
+
+  The input parameters are the user and group_only. 
+  group_only is used to check whether only the groups under the grader should be returned. 
+  The parameter is a boolean which is false by default.
+
+  The return value is {:ok, submissions} if no errors else its 
+  {:error, {:unauthorized, "User is not permitted to grade."}}
+  """
   @spec all_submissions_by_grader(%User{}) ::
           {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
-  def all_submissions_by_grader(grader = %User{role: role}) do
+  def all_submissions_by_grader(grader = %User{role: role}, group_only \\ false) do
     submission_query =
       Submission
       |> join(
@@ -448,23 +458,21 @@ defmodule Cadet.Assessments do
           assessment: a
       })
 
-    case role do
-      @grading_role ->
-        students = Cadet.Accounts.Query.students_of(grader)
+    cond do
+      role in @grading_roles ->
+        {:ok, submissions_by_group(grader, submission_query)}
 
+      role in @see_all_submissions_roles ->
         submissions =
-          submission_query
-          |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
-          |> Repo.all()
+          if group_only do
+            submissions_by_group(grader, submission_query)
+          else
+            Repo.all(submission_query)
+          end
 
         {:ok, submissions}
 
-      @see_all_submissions_role ->
-        submissions = Repo.all(submission_query)
-
-        {:ok, submissions}
-
-      _ ->
+      true ->
         {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
@@ -478,8 +486,8 @@ defmodule Cadet.Assessments do
       |> join(:inner, [a], q in assoc(a, :question))
       |> preload([a, q], question: q)
 
-    case role do
-      @grading_role ->
+    cond do
+      role in @grading_roles ->
         students = Cadet.Accounts.Query.students_of(grader)
 
         answers =
@@ -491,7 +499,7 @@ defmodule Cadet.Assessments do
 
         {:ok, answers}
 
-      @see_all_submissions_role ->
+      role in @see_all_submissions_roles ->
         answers =
           answer_query
           |> Repo.all()
@@ -499,7 +507,7 @@ defmodule Cadet.Assessments do
 
         {:ok, answers}
 
-      _ ->
+      true ->
         {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
@@ -516,46 +524,50 @@ defmodule Cadet.Assessments do
         attrs,
         grader = %User{role: role}
       )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
-    if role in [@grading_role, @see_all_submissions_role] do
-      answer_query =
-        Answer
-        |> where(submission_id: ^submission_id)
-        |> where(question_id: ^question_id)
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) and
+             (role in @grading_roles or role in @see_all_submissions_roles) do
+    answer_query =
+      Answer
+      |> where(submission_id: ^submission_id)
+      |> where(question_id: ^question_id)
 
-      answer =
-        role
-        |> case do
-          @grading_role ->
-            students = Cadet.Accounts.Query.students_of(grader)
+    # checks if role is in @grading_roles or @see_all_submissions_roles
+    answer_query =
+      if role in @grading_roles do
+        students = Cadet.Accounts.Query.students_of(grader)
 
-            answer_query
-            |> join(:inner, [a], s in assoc(a, :submission))
-            |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
-
-          @see_all_submissions_role ->
-            answer_query
-        end
-        |> Repo.one()
-
-      with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
-           {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
-             {:valid, Answer.grading_changeset(answer, attrs)},
-           {:ok, _} <- Repo.update(changeset) do
-        {:ok, nil}
+        answer_query
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
       else
-        {:answer_found?, false} ->
-          {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
-
-        {:valid, changeset} ->
-          {:error, {:bad_request, full_error_messages(changeset.errors)}}
-
-        {:error, _} ->
-          {:error, {:internal_server_error, "Please try again later."}}
+        answer_query
       end
+
+    answer = Repo.one(answer_query)
+
+    with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
+         {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
+           {:valid, Answer.grading_changeset(answer, attrs)},
+         {:ok, _} <- Repo.update(changeset) do
+      {:ok, nil}
     else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:answer_found?, false} ->
+        {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
+
+      {:valid, changeset} ->
+        {:error, {:bad_request, full_error_messages(changeset.errors)}}
+
+      {:error, _} ->
+        {:error, {:internal_server_error, "Please try again later."}}
     end
+  end
+
+  def update_grading_info(
+        _,
+        _,
+        _
+      ) do
+    {:error, {:unauthorized, "User is not permitted to grade."}}
   end
 
   defp find_submission(user = %User{}, assessment = %Assessment{}) do
@@ -620,5 +632,17 @@ defmodule Cadet.Assessments do
       :programming ->
         %{code: raw_answer}
     end
+  end
+
+  defp submissions_by_group(grader = %User{role: :staff}, submission_query) do
+    students = Cadet.Accounts.Query.students_of(grader)
+
+    submission_query
+    |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
+    |> Repo.all()
+  end
+
+  defp submissions_by_group(%User{role: :admin}, submission_query) do
+    Repo.all(submission_query)
   end
 end

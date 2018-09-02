@@ -41,6 +41,14 @@ defmodule CadetWeb.GradingControllerTest do
     end
   end
 
+  describe "GET /?group=true, student" do
+    @tag authenticate: :student
+    test "unauthorized", %{conn: conn} do
+      conn = get(conn, build_url(), %{"group" => true})
+      assert response(conn, 401) =~ "User is not permitted to grade."
+    end
+  end
+
   describe "GET /:submissionid, student" do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
@@ -65,7 +73,7 @@ defmodule CadetWeb.GradingControllerTest do
 
   describe "GET /, staff" do
     @tag authenticate: :staff
-    test "avenger gets his students submissions", %{conn: conn} do
+    test "avenger gets to see all students submissions", %{conn: conn} do
       %{
         mission: mission,
         submissions: submissions
@@ -100,15 +108,75 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "pure mentor gets an empty list", %{conn: conn} do
-      %{mentor: mentor} = seed_db(conn)
+    test "pure mentor gets to see all students submissions", %{conn: conn} do
+      %{mentor: mentor, submissions: submissions, mission: mission} = seed_db(conn)
 
       conn =
         conn
         |> sign_in(mentor)
         |> get(build_url())
 
-      assert json_response(conn, 200) == []
+      expected =
+        Enum.map(submissions, fn submission ->
+          %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
+            "grade" => 800,
+            "adjustment" => -400,
+            "id" => submission.id,
+            "student" => %{
+              "name" => submission.student.name,
+              "id" => submission.student.id
+            },
+            "assessment" => %{
+              "type" => "mission",
+              "maxGrade" => 800,
+              "maxXp" => 4000,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => mission.cover_picture
+            }
+          }
+        end)
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+    end
+  end
+
+  describe "GET /?group=true, staff" do
+    @tag authenticate: :staff
+    test "successful", %{conn: conn} do
+      %{
+        mission: mission,
+        submissions: submissions
+      } = seed_db(conn)
+
+      conn = get(conn, build_url(), %{"group" => true})
+
+      expected =
+        Enum.map(submissions, fn submission ->
+          %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
+            "grade" => 800,
+            "adjustment" => -400,
+            "id" => submission.id,
+            "student" => %{
+              "name" => submission.student.name,
+              "id" => submission.student.id
+            },
+            "assessment" => %{
+              "type" => "mission",
+              "maxGrade" => 800,
+              "maxXp" => 4000,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => mission.cover_picture
+            }
+          }
+        end)
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
     end
   end
 
@@ -201,15 +269,90 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "pure mentor gets an empty list", %{conn: conn} do
-      %{mentor: mentor} = seed_db(conn)
+    test "pure mentor gets to view all submissions", %{conn: conn} do
+      %{mentor: mentor, submissions: submissions, answers: answers} = seed_db(conn)
+
+      submission = List.first(submissions)
 
       conn =
         conn
         |> sign_in(mentor)
-        |> get(build_url())
+        |> get(build_url(submission.id))
 
-      assert json_response(conn, 200) == []
+      expected =
+        answers
+        |> Enum.filter(&(&1.submission.id == submission.id))
+        |> Enum.sort_by(& &1.question.display_order)
+        |> Enum.map(
+          &case &1.question.type do
+            :programming ->
+              %{
+                "question" => %{
+                  "solutionTemplate" => &1.question.question.solution_template,
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "content" => &1.question.question.content,
+                  "answer" => &1.answer.code
+                },
+                "solution" => &1.question.question.solution,
+                "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
+                }
+              }
+
+            :mcq ->
+              %{
+                "question" => %{
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "content" => &1.question.question.content,
+                  "answer" => &1.answer.choice_id,
+                  "choices" =>
+                    for choice <- &1.question.question.choices do
+                      %{
+                        "content" => choice.content,
+                        "hint" => choice.hint,
+                        "id" => choice.choice_id
+                      }
+                    end
+                },
+                "solution" => "",
+                "maxGrade" => &1.question.max_grade,
+                "maxXp" => &1.question.max_xp,
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "comment" => &1.comment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment
+                }
+              }
+          end
+        )
+
+      assert expected == json_response(conn, 200)
     end
   end
 
@@ -230,7 +373,9 @@ defmodule CadetWeb.GradingControllerTest do
         })
 
       assert response(conn, 200) == "OK"
-      assert %{adjustment: -10, comment: "Never gonna give you up"} = Repo.get(Answer, answer.id)
+
+      assert %{adjustment: -10, comment: "Never gonna give you up", xp_adjustment: -10} =
+               Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
@@ -264,7 +409,7 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "staff who isn't the grader of said answer fails", %{conn: conn} do
+    test "staff who isn't the grader of said answer can still grade submission", %{conn: conn} do
       %{mentor: mentor, answers: answers} = seed_db(conn)
 
       answer = List.first(answers)
@@ -273,10 +418,17 @@ defmodule CadetWeb.GradingControllerTest do
         conn
         |> sign_in(mentor)
         |> post(build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"adjustment" => -100}
+          "grading" => %{
+            "adjustment" => -100,
+            "comment" => "Your awesome",
+            "xpAdjustment" => -100
+          }
         })
 
-      assert response(conn, 400) == "Answer not found or user not permitted to grade."
+      assert response(conn, 200) == "OK"
+
+      assert %{adjustment: -100, comment: "Your awesome", xp_adjustment: -100} =
+               Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
@@ -300,6 +452,43 @@ defmodule CadetWeb.GradingControllerTest do
         conn
         |> sign_in(admin)
         |> get(build_url())
+
+      expected =
+        Enum.map(submissions, fn submission ->
+          %{
+            "xp" => 4000,
+            "xpAdjustment" => -2000,
+            "grade" => 800,
+            "adjustment" => -400,
+            "id" => submission.id,
+            "student" => %{
+              "name" => submission.student.name,
+              "id" => submission.student.id
+            },
+            "assessment" => %{
+              "type" => "mission",
+              "maxGrade" => 800,
+              "maxXp" => 4000,
+              "id" => mission.id,
+              "title" => mission.title,
+              "coverImage" => mission.cover_picture
+            }
+          }
+        end)
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+    end
+  end
+
+  describe "GET /?group=true, admin" do
+    @tag authenticate: :admin
+    test "successful", %{conn: conn} do
+      %{
+        mission: mission,
+        submissions: submissions
+      } = seed_db(conn)
+
+      conn = get(conn, build_url(), %{"group" => true})
 
       expected =
         Enum.map(submissions, fn submission ->
