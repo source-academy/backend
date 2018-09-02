@@ -16,7 +16,7 @@ defmodule Cadet.Assessments do
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
   @grading_roles ~w()a
-  @see_all_submissions_roles [:staff, :admin]
+  @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
 
   @spec user_total_xp(%User{}) :: integer()
@@ -524,44 +524,51 @@ defmodule Cadet.Assessments do
         attrs,
         grader = %User{role: role}
       )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
-    if role in (@grading_roles ++ @see_all_submissions_roles) do
-      answer_query =
-        Answer
-        |> where(submission_id: ^submission_id)
-        |> where(question_id: ^question_id)
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) and
+             (role in @grading_roles or role in @see_all_submissions_roles) do
+    answer_query =
+      Answer
+      |> where(submission_id: ^submission_id)
+      |> where(question_id: ^question_id)
 
-      answer_query =
-        if role in @grading_roles do
-          students = Cadet.Accounts.Query.students_of(grader)
+    # checks if role is in @grading_roles or @see_all_submissions_roles
+    answer_query =
+      if role in @grading_roles do
+        students = Cadet.Accounts.Query.students_of(grader)
 
-          answer_query
-          |> join(:inner, [a], s in assoc(a, :submission))
-          |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
-        else
-          answer_query
-        end
-
-      answer = Repo.one(answer_query)
-
-      with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
-           {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
-             {:valid, Answer.grading_changeset(answer, attrs)},
-           {:ok, _} <- Repo.update(changeset) do
-        {:ok, nil}
+        answer_query
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
       else
-        {:answer_found?, false} ->
-          {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
-
-        {:valid, changeset} ->
-          {:error, {:bad_request, full_error_messages(changeset.errors)}}
-
-        {:error, _} ->
-          {:error, {:internal_server_error, "Please try again later."}}
+        answer_query
       end
+
+    answer = Repo.one(answer_query)
+
+    with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
+         {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
+           {:valid, Answer.grading_changeset(answer, attrs)},
+         {:ok, _} <- Repo.update(changeset) do
+      {:ok, nil}
     else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:answer_found?, false} ->
+        {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
+
+      {:valid, changeset} ->
+        {:error, {:bad_request, full_error_messages(changeset.errors)}}
+
+      {:error, _} ->
+        {:error, {:internal_server_error, "Please try again later."}}
     end
+  end
+
+  def update_grading_info(
+        %{submission_id: submission_id, question_id: question_id},
+        _,
+        _
+      )
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
+    {:error, {:unauthorized, "User is not permitted to grade."}}
   end
 
   defp find_submission(user = %User{}, assessment = %Assessment{}) do

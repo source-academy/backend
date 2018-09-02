@@ -78,7 +78,7 @@ defmodule CadetWeb.GradingController do
   swagger_path :index do
     get("/grading")
 
-    summary("Get a list of all submissions")
+    summary("Get a list of all submissions with current user as the grader.")
 
     security([%{JWT: []}])
 
