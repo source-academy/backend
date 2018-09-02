@@ -16,7 +16,6 @@ defmodule Cadet.Assessments do
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
   @grading_roles ~w()a
-  @admin_role :admin
   @see_all_submissions_roles [:staff, :admin]
   @open_all_assessment_roles ~w(staff admin)a
 
@@ -465,7 +464,7 @@ defmodule Cadet.Assessments do
 
       role in @see_all_submissions_roles ->
         submissions =
-          if group_only && role != @admin_role do
+          if group_only do
             submissions_by_group(grader, submission_query)
           else
             Repo.all(submission_query)
@@ -629,11 +628,15 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp submissions_by_group(grader, submission_query) do
+  defp submissions_by_group(grader = %User{role: :staff}, submission_query) do
     students = Cadet.Accounts.Query.students_of(grader)
 
     submission_query
     |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
     |> Repo.all()
+  end
+
+  defp submissions_by_group(%User{role: :admin}, submission_query) do
+    Repo.all(submission_query)
   end
 end
