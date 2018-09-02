@@ -4,8 +4,10 @@ defmodule CadetWeb.GradingController do
 
   alias Cadet.Assessments
 
-  def index(conn, %{"group" => group}) when is_boolean(group) do
+  def index(conn, %{"group" => group}) when group in ["true", "false"] do
     user = conn.assigns[:current_user]
+
+    group = String.to_atom(group)
 
     case Assessments.all_submissions_by_grader(user, group) do
       {:ok, submissions} ->
@@ -19,7 +21,7 @@ defmodule CadetWeb.GradingController do
   end
 
   def index(conn, _) do
-    index(conn, %{"group" => false})
+    index(conn, %{"group" => "false"})
   end
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
