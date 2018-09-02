@@ -86,7 +86,7 @@ defmodule CadetWeb.GradingController do
 
     parameters do
       group(
-        :body,
+        :query,
         :boolean,
         "Show only students in the grader's group when true",
         required: false
