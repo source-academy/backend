@@ -566,8 +566,7 @@ defmodule Cadet.Assessments do
         _,
         _,
         _
-      )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
+      ) do
     {:error, {:unauthorized, "User is not permitted to grade."}}
   end
 
