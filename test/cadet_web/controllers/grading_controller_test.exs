@@ -44,7 +44,7 @@ defmodule CadetWeb.GradingControllerTest do
   describe "GET /?group=true, student" do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url(), %{"group" => true})
+      conn = get(conn, build_url(), %{"group" => "true"})
       assert response(conn, 401) =~ "User is not permitted to grade."
     end
   end
@@ -145,13 +145,29 @@ defmodule CadetWeb.GradingControllerTest do
 
   describe "GET /?group=true, staff" do
     @tag authenticate: :staff
-    test "successful", %{conn: conn} do
+    test "staff not leading a group to get empty", %{conn: conn} do
+      seed_db(conn)
+
+      resp =
+        conn
+        |> sign_in(insert(:user, role: :staff))
+        |> get(build_url(), %{"group" => "true"})
+        |> json_response(200)
+
+      assert resp == []
+    end
+
+    @tag authenticate: :staff
+    test "filtered by its own group", %{conn: conn} do
       %{
         mission: mission,
         submissions: submissions
       } = seed_db(conn)
 
-      conn = get(conn, build_url(), %{"group" => true})
+      # just to insert more submissions
+      seed_db(conn, insert(:user, role: :staff))
+
+      conn = get(conn, build_url(), %{"group" => "true"})
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -488,7 +504,7 @@ defmodule CadetWeb.GradingControllerTest do
         submissions: submissions
       } = seed_db(conn)
 
-      conn = get(conn, build_url(), %{"group" => true})
+      conn = get(conn, build_url(), %{"group" => "true"})
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -633,8 +649,8 @@ defmodule CadetWeb.GradingControllerTest do
   defp build_url(submission_id), do: "#{build_url()}#{submission_id}/"
   defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}#{question_id}"
 
-  defp seed_db(conn) do
-    grader = conn.assigns[:current_user]
+  defp seed_db(conn, override_grader \\ nil) do
+    grader = override_grader || conn.assigns[:current_user]
     mentor = insert(:user, role: :staff)
 
     group =
