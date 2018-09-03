@@ -44,7 +44,7 @@ defmodule CadetWeb.GradingControllerTest do
   describe "GET /?group=true, student" do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url(), %{"group" => true})
+      conn = get(conn, build_url(), %{"group" => "true"})
       assert response(conn, 401) =~ "User is not permitted to grade."
     end
   end
@@ -504,7 +504,7 @@ defmodule CadetWeb.GradingControllerTest do
         submissions: submissions
       } = seed_db(conn)
 
-      conn = get(conn, build_url(), %{"group" => true})
+      conn = get(conn, build_url(), %{"group" => "true"})
 
       expected =
         Enum.map(submissions, fn submission ->
