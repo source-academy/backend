@@ -442,20 +442,22 @@ defmodule Cadet.Assessments do
         s.id == x.submission_id
       )
       |> join(:inner, [s], st in assoc(s, :student))
+      |> join(:inner, [s, x, st], g in assoc(st, :group))
       |> join(
         :inner,
         [s],
         a in subquery(Query.all_assessments_with_max_xp_and_grade()),
         s.assessment_id == a.id
       )
-      |> select([s, x, st, a], %Submission{
+      |> select([s, x, st, g, a], %Submission{
         s
         | grade: x.grade,
           adjustment: x.adjustment,
           xp: x.xp,
           xp_adjustment: x.xp_adjustment,
           student: st,
-          assessment: a
+          assessment: a,
+          group: g.name
       })
 
     cond do

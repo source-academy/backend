@@ -25,7 +25,8 @@ defmodule CadetWeb.GradingView do
           id: :id,
           title: :title,
           coverImage: :cover_picture
-        })
+        }),
+      group: :group
     })
   end
 
