@@ -10,7 +10,9 @@ defmodule Cadet.Autograder.GradingJob do
   require Logger
 
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
-  alias Cadet.Autograder.Utilities
+  alias Cadet.Autograder.{Utilities, PlagiarismChecker}
+
+  @check_for_plagiarism [:mission, :sidequest]
 
   def grade_all_due_yesterday do
     Logger.info("Started autograding")
@@ -28,6 +30,10 @@ defmodule Cadet.Autograder.GradingJob do
       |> Enum.each(fn submission ->
         grade_individual_submission(submission, assessment)
       end)
+
+      if assessment.type in @check_for_plagiarism do
+        Que.add(PlagiarismChecker, assessment.id)
+      end
     end
   end
 
