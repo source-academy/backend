@@ -11,7 +11,7 @@ defmodule Cadet.Assessments.Submission do
     field(:xp, :integer, virtual: true)
     field(:xp_adjustment, :integer, virtual: true)
     field(:xp_bonus, :integer, default: 0)
-    field(:group, :string, virtual: true)
+    field(:group_name, :string, virtual: true)
     field(:status, SubmissionStatus, default: :attempting)
 
     belongs_to(:assessment, Assessment)

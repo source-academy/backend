@@ -442,7 +442,7 @@ defmodule Cadet.Assessments do
         s.id == x.submission_id
       )
       |> join(:inner, [s], st in assoc(s, :student))
-      |> join(:inner, [s, x, st], g in assoc(st, :group))
+      |> join(:inner, [_, _, st], g in assoc(st, :group))
       |> join(
         :inner,
         [s],
@@ -457,7 +457,7 @@ defmodule Cadet.Assessments do
           xp_adjustment: x.xp_adjustment,
           student: st,
           assessment: a,
-          group: g.name
+          group_name: g.name
       })
 
     cond do
