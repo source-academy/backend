@@ -100,7 +100,8 @@ defmodule CadetWeb.GradingControllerTest do
               "id" => mission.id,
               "title" => mission.title,
               "coverImage" => mission.cover_picture
-            }
+            },
+            "groupName" => submission.student.group.name
           }
         end)
 
@@ -135,7 +136,8 @@ defmodule CadetWeb.GradingControllerTest do
               "id" => mission.id,
               "title" => mission.title,
               "coverImage" => mission.cover_picture
-            }
+            },
+            "groupName" => submission.student.group.name
           }
         end)
 
@@ -188,7 +190,8 @@ defmodule CadetWeb.GradingControllerTest do
               "id" => mission.id,
               "title" => mission.title,
               "coverImage" => mission.cover_picture
-            }
+            },
+            "groupName" => submission.student.group.name
           }
         end)
 
@@ -488,7 +491,8 @@ defmodule CadetWeb.GradingControllerTest do
               "id" => mission.id,
               "title" => mission.title,
               "coverImage" => mission.cover_picture
-            }
+            },
+            "groupName" => submission.student.group.name
           }
         end)
 
@@ -525,7 +529,8 @@ defmodule CadetWeb.GradingControllerTest do
               "id" => mission.id,
               "title" => mission.title,
               "coverImage" => mission.cover_picture
-            }
+            },
+            "groupName" => submission.student.group.name
           }
         end)
 

@@ -155,6 +155,7 @@ defmodule CadetWeb.GradingController do
             xp(:integer, "xp earned")
             xpAdjustment(:integer, "xp adjustment given")
             adjustment(:integer, "grade adjustment given")
+            groupName(:string, "name of student's group")
             assessment(Schema.ref(:AssessmentInfo))
             student(Schema.ref(:StudentInfo))
           end
