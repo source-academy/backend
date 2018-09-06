@@ -43,6 +43,8 @@ config :ex_aws,
   ],
   region: "ap-southeast-1"
 
+config :ex_aws, :hackney_opts, recv_timeout: 30_000
+
 # Configures Sentry
 config :sentry,
   included_environments: [:prod],
