@@ -30,7 +30,7 @@ defmodule Cadet.Autograder.PlagiarismChecker do
   end
 
   defp store(assessment_id) when is_ecto_id(assessment_id) do
-    file_name = "assessment_#{assessment_id}.zip"
+    file_name = "submissions/assessment_#{assessment_id}.zip"
 
     assessment_title =
       Cadet.Assessments.Assessment
@@ -40,11 +40,10 @@ defmodule Cadet.Autograder.PlagiarismChecker do
 
     response =
       @bucket_name
-      |> ExAws.S3.put_object("/reports/assessment-#{assessment_title}", File.read!(file_name))
+      |> ExAws.S3.put_object("/reports/assessment-#{assessment_title}.zip", File.read!(file_name))
       |> ExAws.request!()
 
-    # if response status < 400, the transaction was successful.
-    if Map.get(response, :status_code) < 400 do
+    if Map.get(response, :status_code) == 200 do
       File.rm(file_name)
       File.rm_rf("submissions")
     else
@@ -53,18 +52,16 @@ defmodule Cadet.Autograder.PlagiarismChecker do
   end
 
   defp zip_results(assessment_id) do
-    {_, zip_result} =
-      System.cmd("zip", [
-        "-r",
-        "assessment_#{assessment_id}.zip",
-        "submissions/assessment#{assessment_id}/report/",
-        "submissions/assessment#{assessment_id}/assessment_report_#{assessment_id}.html"
-      ])
-
-    if zip_result == 0 do
-      assessment_id
-    else
-      raise "Files cannot be zipped. Please check directories."
+    "zip"
+    |> System.cmd([
+      "-r",
+      "submissions/assessment_#{assessment_id}.zip",
+      "submissions/assessment#{assessment_id}/report/",
+      "submissions/assessment#{assessment_id}/assessment_report_#{assessment_id}.html"
+    ])
+    |> case do
+      {_, 0} -> assessment_id
+      {_, _} -> raise "Files cannot be zipped. Please check directories."
     end
   end
 end
