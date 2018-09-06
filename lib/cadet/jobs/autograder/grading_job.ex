@@ -97,7 +97,7 @@ defmodule Cadet.Autograder.GradingJob do
     |> where(assessment_id: ^assessment.id)
     |> select([q], q.type)
     |> Repo.all()
-    |> Enum.any?(& &1 == :programming)
+    |> Enum.any?(&(&1 == :programming))
   end
 
   defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do
