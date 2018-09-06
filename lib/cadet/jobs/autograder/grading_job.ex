@@ -95,9 +95,12 @@ defmodule Cadet.Autograder.GradingJob do
   def assessment_requires_plagiarism_check(assessment = %Assessment{}) do
     Question
     |> where(assessment_id: ^assessment.id)
-    |> select([q], q.type)
-    |> Repo.all()
-    |> Enum.any?(&(&1 == :programming))
+    |> where(type: ^:programming)
+    |> Repo.aggregate(:count, :id)
+    |> case do
+      0 -> false
+      _ -> true
+    end
   end
 
   defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do
