@@ -10,7 +10,7 @@ defmodule Cadet.Autograder.GradingJob do
   require Logger
 
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
-  alias Cadet.Autograder.{Utilities, PlagiarismChecker}
+  alias Cadet.Autograder.{PlagiarismChecker, Utilities}
 
   def grade_all_due_yesterday do
     Logger.info("Started autograding")
@@ -95,9 +95,9 @@ defmodule Cadet.Autograder.GradingJob do
   def assessment_requires_plagiarism_check(assessment = %Assessment{}) do
     Question
     |> where(assessment_id: ^assessment.id)
-    |> select([:type])
+    |> select([q], q.type)
     |> Repo.all()
-    |> Enum.any?(fn %Question{type: type} -> type == :programming end)
+    |> Enum.any?(& &1 == :programming)
   end
 
   defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do

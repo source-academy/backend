@@ -13,23 +13,21 @@ defmodule Cadet.Autograder.PlagiarismChecker do
   # TODO: change to env var
   @bucket_name "stg-cadet-plagiarism-reports"
   # TODO: change to env var
-  @plagiarism_script_path "../grader/TA_CS1101S/mosspy_submission.py"
+  @plagiarism_script_path "../plag/TA_CS1101S/mosspy_submission.py"
 
   def perform(assessment_id) when is_ecto_id(assessment_id) do
     Logger.info("Running plagiarism check on Assessment #{assessment_id}")
 
-    script_result =
+    {:ok, script_result} =
       System.cmd("python", [@plagiarism_script_path, "--assessment_id", to_string(assessment_id)])
 
     script_result
-    |> elem(1)
     |> zip_results()
     |> store()
   end
 
   def store(assessment_id) when is_ecto_id(assessment_id) do
     file_name = "assessment_#{assessment_id}.zip"
-
     assessment_title =
       Cadet.Assessments.Assessment
       |> where(id: ^assessment_id)
@@ -51,13 +49,17 @@ defmodule Cadet.Autograder.PlagiarismChecker do
   end
 
   defp zip_results(assessment_id) do
-    System.cmd("zip", [
-      "-r",
-      "assessment_#{assessment_id}.zip",
-      "submissions/assessment#{assessment_id}/report/",
-      "submissions/assessment#{assessment_id}/assessment_report_#{assessment_id}.html"
-    ])
-
-    assessment_id
+    {:ok, zip_result} =
+      System.cmd("zip", [
+        "-r",
+        "assessment_#{assessment_id}.zip",
+        "submissions/assessment#{assessment_id}/report/",
+        "submissions/assessment#{assessment_id}/assessment_report_#{assessment_id}.html"
+      ])
+    if zip_result == 0 do
+      assessment_id
+    else
+      raise "Files cannot be zipped. Please check directories."
+    end
   end
 end
