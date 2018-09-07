@@ -21,12 +21,21 @@ defmodule Cadet.Autograder.PlagiarismChecker do
   def perform(assessment_id) when is_ecto_id(assessment_id) do
     Logger.info("Running plagiarism check on Assessment #{assessment_id}")
 
-    {_, exit_result} =
-      System.cmd("python", [@plagiarism_script_path, "--assessment_id", to_string(assessment_id)])
+    case System.cmd("python", [
+           @plagiarism_script_path,
+           "--assessment_id",
+           to_string(assessment_id)
+         ]) do
+      {result, 0} ->
+        result
+        |> Jason.decode!()
+        |> Map.get("assessment_id")
+        |> zip_results()
+        |> store()
 
-    exit_result
-    |> zip_results()
-    |> store()
+      _ ->
+        raise "Error running script, please check again"
+    end
   end
 
   defp store(assessment_id) when is_ecto_id(assessment_id) do
@@ -52,14 +61,12 @@ defmodule Cadet.Autograder.PlagiarismChecker do
   end
 
   defp zip_results(assessment_id) do
-    "zip"
-    |> System.cmd([
-      "-r",
-      "submissions/assessment_#{assessment_id}.zip",
-      "submissions/assessment#{assessment_id}/report/",
-      "submissions/assessment#{assessment_id}/assessment_report_#{assessment_id}.html"
-    ])
-    |> case do
+    case System.cmd("zip", [
+           "-r",
+           "submissions/assessment_#{assessment_id}.zip",
+           "submissions/assessment#{assessment_id}/report/",
+           "submissions/assessment#{assessment_id}/assessment_report_#{assessment_id}.html"
+         ]) do
       {_, 0} -> assessment_id
       {_, _} -> raise "Files cannot be zipped. Please check directories."
     end
