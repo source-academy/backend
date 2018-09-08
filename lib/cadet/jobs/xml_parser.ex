@@ -190,6 +190,7 @@ defmodule Cadet.Updater.XMLParser do
   @spec process_questions(String.t()) :: {:ok, [map()]} | :error
   defp process_questions(xml) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
+    default_grading_library = xpath(xml, ~x"//TASK/GRADERDEPLOYMENT"e)
 
     questions_params =
       xml
@@ -205,7 +206,7 @@ defmodule Cadet.Updater.XMLParser do
                {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
-               process_question_library(question, default_library),
+               process_question_library(question, default_library, default_grading_library),
              question when is_map(question) <- Map.delete(question, :entity) do
           question
         else
@@ -280,10 +281,12 @@ defmodule Cadet.Updater.XMLParser do
     :error
   end
 
-  @spec process_question_library(map(), any()) :: map() | :error
-  defp process_question_library(question, default_library) do
+  @spec process_question_library(map(), any(), any()) :: map() | :error
+  defp process_question_library(question, default_library, default_grading_library) do
     library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
-    grading_library = xpath(question[:entity], ~x"./GRADERDEPLOYMENT"o) || library
+
+    grading_library =
+      xpath(question[:entity], ~x"./GRADERDEPLOYMENT"o) || default_grading_library || library
 
     if library do
       question
