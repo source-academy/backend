@@ -36,3 +36,9 @@ config :cadet, Cadet.Auth.Guardian,
   secret_key: "4ZxeVrSvCJlmndrFL7tBpnZsTc/rOQygVIyscAMY1oKKzkKi7hkjXl9F1f28Jap8"
 
 config :arc, definition: Arc.Storage.Local
+
+config :cadet,
+  plagiarism_check_vars: [
+    bucket_name: "plagiarism-reports",
+    plagiarism_script_path: "../path/to/plagiarism/script"
+  ]
