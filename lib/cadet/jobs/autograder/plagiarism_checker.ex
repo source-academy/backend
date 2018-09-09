@@ -6,9 +6,11 @@ defmodule Cadet.Autograder.PlagiarismChecker do
   use Cadet, :context
   use Que.Worker
 
+  import Ecto.Query
+
   require Logger
 
-  import Ecto.Query
+  alias Cadet.Assessments.Assessment
 
   @bucket_name :cadet
                |> Application.fetch_env!(:plagiarism_check_vars)
@@ -33,8 +35,8 @@ defmodule Cadet.Autograder.PlagiarismChecker do
         |> zip_results()
         |> store()
 
-      _ ->
-        raise "Error running script, please check again"
+      {output, exit_code} ->
+        raise "Error running script with exit code #{exit_code}: #{output}"
     end
   end
 
@@ -42,10 +44,9 @@ defmodule Cadet.Autograder.PlagiarismChecker do
     file_name = "submissions/assessment_#{assessment_id}.zip"
 
     assessment_title =
-      Cadet.Assessments.Assessment
-      |> where(id: ^assessment_id)
+      Assessment
       |> select([a], a.title)
-      |> Repo.one()
+      |> Repo.get(assessment_id)
 
     response =
       @bucket_name
@@ -53,7 +54,6 @@ defmodule Cadet.Autograder.PlagiarismChecker do
       |> ExAws.request!()
 
     if Map.get(response, :status_code) == 200 do
-      File.rm(file_name)
       File.rm_rf("submissions")
     else
       raise inspect(response)
@@ -67,8 +67,11 @@ defmodule Cadet.Autograder.PlagiarismChecker do
            "submissions/assessment#{assessment_id}/report/",
            "submissions/assessment#{assessment_id}/assessment_report_#{assessment_id}.html"
          ]) do
-      {_, 0} -> assessment_id
-      {_, _} -> raise "Files cannot be zipped. Please check directories."
+      {_, 0} ->
+        assessment_id
+
+      {output, exit_code} ->
+        raise "Error running script with exit code #{exit_code}: #{output}"
     end
   end
 end
