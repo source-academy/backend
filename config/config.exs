@@ -43,7 +43,7 @@ config :ex_aws,
   ],
   region: "ap-southeast-1"
 
-config :ex_aws, :hackney_opts, recv_timeout: 60_000
+config :ex_aws, :hackney_opts, recv_timeout: 660_000
 
 # Configures Sentry
 config :sentry,
