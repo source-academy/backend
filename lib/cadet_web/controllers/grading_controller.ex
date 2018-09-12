@@ -156,6 +156,12 @@ defmodule CadetWeb.GradingController do
             xpAdjustment(:integer, "xp adjustment given")
             adjustment(:integer, "grade adjustment given")
             groupName(:string, "name of student's group")
+
+            status(
+              :string,
+              "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user"
+            )
+
             assessment(Schema.ref(:AssessmentInfo))
             student(Schema.ref(:StudentInfo))
           end
