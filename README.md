@@ -66,6 +66,12 @@ We follow this style guide: https://github.com/lexmag/elixir-style-guide and htt
 Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
 
 
+## Entity-Relationship Diagram
+
+Last generated on 13 September 2018
+
+![Entity-Relationship Diagram for cadet](schema.png)
+
 ## License
 
 MIT
