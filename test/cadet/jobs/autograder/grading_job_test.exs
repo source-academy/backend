@@ -7,7 +7,7 @@ defmodule Cadet.Autograder.GradingJobTest do
   alias Que.Persistence, as: JobsQueue
 
   alias Cadet.Assessments.{Answer, Question, Submission}
-  alias Cadet.Autograder.{GradingJob, LambdaWorker}
+  alias Cadet.Autograder.{GradingJob, LambdaWorker, PlagiarismChecker}
 
   defp assert_dispatched(answer_question_list) do
     for {answer, question} <- answer_question_list do
@@ -16,6 +16,14 @@ defmodule Cadet.Autograder.GradingJobTest do
           question: Repo.get(Question, question.id),
           answer: Repo.get(Answer, answer.id)
         })
+      )
+    end
+  end
+
+  defp assert_plagiarism_for(assessments_list) do
+    for {assessment} <- assessments_list do
+      assert_called(
+        Que.add(PlagiarismChecker, assessment.id)
       )
     end
   end
@@ -158,6 +166,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert_dispatched(Enum.zip(answers, questions))
+        assert_plagiarism_for(assessments)
       end
     end
 
@@ -201,6 +210,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         for submission <- submissions do
           assert Repo.get(Submission, submission.id).status == :submitted
         end
+        assert_plagiarism_for(assessments)
       end
     end
 
@@ -221,6 +231,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
           assert submission && submission.status == :submitted
         end
+        assert_plagiarism_for(assessments)
       end
     end
 
@@ -229,31 +240,34 @@ defmodule Cadet.Autograder.GradingJobTest do
          %{
            assessments: assessments
          } do
-      student = insert(:user, %{role: :student})
+      with_mock Que, add: fn _, _ -> nil end do
+        student = insert(:user, %{role: :student})
 
-      for {assessment, _} <- assessments do
-        insert(:submission, %{student: student, assessment: assessment, status: :attempting})
+        for {assessment, _} <- assessments do
+          insert(:submission, %{student: student, assessment: assessment, status: :attempting})
+        end
+
+        GradingJob.grade_all_due_yesterday()
+
+        answers =
+          Submission
+          |> where(student_id: ^student.id)
+          |> join(:inner, [s], a in assoc(s, :answers))
+          |> select([_, a], a)
+          |> Repo.all()
+
+        assert Enum.count(answers) == 9
+
+        for answer <- answers do
+          assert answer.grade == 0
+          assert answer.autograding_status == :success
+          assert answer.answer == %{"code" => "// Question not answered by student."}
+          assert answer.comment == "Question not attempted by student"
+        end
+
+        assert Enum.empty?(JobsQueue.all(LambdaWorker))
+        assert_plagiarism_for(assessments)
       end
-
-      GradingJob.grade_all_due_yesterday()
-
-      answers =
-        Submission
-        |> where(student_id: ^student.id)
-        |> join(:inner, [s], a in assoc(s, :answers))
-        |> select([_, a], a)
-        |> Repo.all()
-
-      assert Enum.count(answers) == 9
-
-      for answer <- answers do
-        assert answer.grade == 0
-        assert answer.autograding_status == :success
-        assert answer.answer == %{"code" => "// Question not answered by student."}
-        assert answer.comment == "Question not attempted by student"
-      end
-
-      assert Enum.empty?(JobsQueue.all(LambdaWorker))
     end
 
     # Test unanswered question behaviour of two finger walk
@@ -299,6 +313,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert_dispatched(Enum.zip(answers_submitted, questions_answered))
+        assert_plagiarism_for(assessments)
         unanswered_question_ids = questions |> Enum.take_every(3) |> Enum.map(& &1.id)
 
         inserted_empty_answers =
