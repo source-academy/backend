@@ -1,13 +1,13 @@
 [
   {
     "request": {
-      "body": "PK\u0003\u0004\n\u0000\u0000\u0000\u0000\u0000\u001c�3M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u001c\u0000submissions/assessment66/report/UT\t\u0000\u0003hJ�[hJ�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0003\u0004\n\u0000\u0000\u0000\u0000\u0000\u001c�3M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00002\u0000\u001c\u0000submissions/assessment66/assessment_report_66.htmlUT\t\u0000\u0003hJ�[hJ�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0001\u0002\u001e\u0003\n\u0000\u0000\u0000\u0000\u0000\u001c�3M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000�A\u0000\u0000\u0000\u0000submissions/assessment66/report/UT\u0005\u0000\u0003hJ�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0001\u0002\u001e\u0003\n\u0000\u0000\u0000\u0000\u0000\u001c�3M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00002\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000��Z\u0000\u0000\u0000submissions/assessment66/assessment_report_66.htmlUT\u0005\u0000\u0003hJ�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0005\u0006\u0000\u0000\u0000\u0000\u0002\u0000\u0002\u0000�\u0000\u0000\u0000�\u0000\u0000\u0000\u0000\u0000",
+      "body": "PK\u0003\u0004\n\u0000\u0000\u0000\u0000\u0000\u0014�3M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u001c\u0000submissions/assessment66/report/UT\t\u0000\u0003�O�[�O�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0003\u0004\n\u0000\u0000\u0000\u0000\u0000\u0014�3M\f~�\u0004\u0000\u0000\u0000\u0004\u0000\u0000\u00002\u0000\u001c\u0000submissions/assessment66/assessment_report_66.htmlUT\t\u0000\u0003�O�[�O�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000testPK\u0001\u0002\u001e\u0003\n\u0000\u0000\u0000\u0000\u0000\u0014�3M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000�A\u0000\u0000\u0000\u0000submissions/assessment66/report/UT\u0005\u0000\u0003�O�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0001\u0002\u001e\u0003\n\u0000\u0000\u0000\u0000\u0000\u0014�3M\f~�\u0004\u0000\u0000\u0000\u0004\u0000\u0000\u00002\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0001\u0000\u0000\u0000��Z\u0000\u0000\u0000submissions/assessment66/assessment_report_66.htmlUT\u0005\u0000\u0003�O�[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0005\u0006\u0000\u0000\u0000\u0000\u0002\u0000\u0002\u0000�\u0000\u0000\u0000�\u0000\u0000\u0000\u0000\u0000",
       "headers": {
-        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAIUYB7X3ASLCOYYTQ/20180919/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=3b978354cd8e521027a3ae9d48f76deaa160c623a7b6266563479086fe591585",
+        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAIUYB7X3ASLCOYYTQ/20180919/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=a73eb8ed217c193e5ddb6ba369ef96f6baa9bf4c1668ae6862d571d90d12bb31",
         "host": "s3-ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20180919T130856Z",
-        "content-length": "442",
-        "x-amz-content-sha256": "56b084d382f58797474ba0f83e0af11dfe8f667732c33ed6affc2a2d8f8695c6"
+        "x-amz-date": "20180919T133240Z",
+        "content-length": "446",
+        "x-amz-content-sha256": "c2d7deabd64d7660012c224c9382a7e234bca93a08f67060bea82115079a8c2b"
       },
       "method": "put",
       "options": {
@@ -15,16 +15,16 @@
         "recv_timeout": 30000
       },
       "request_body": "",
-      "url": "https://s3-ap-southeast-1.amazonaws.com/plagiarism-reports-test/reports/assessment-A%20little%20more%20than%20kin,%20and%20less%20than%20kind..zip"
+      "url": "https://s3-ap-southeast-1.amazonaws.com/plagiarism-reports-test/reports/assessment-Not%20the%20droids%20you%20are%20looking%20for.zip"
     },
     "response": {
       "binary": false,
       "body": "",
       "headers": {
-        "x-amz-id-2": "bv2ho6Gm4oFSYPvJWgKz/dW80dSuTYWIDlEc8LUNC96a7gipGOrMpglizRmFS6V+jwis0O47rGk=",
-        "x-amz-request-id": "71C0DF93D51936AF",
-        "Date": "Wed, 19 Sep 2018 13:08:57 GMT",
-        "ETag": "\"6e90d6b8dc77ae96961bc3603b1674c8\"",
+        "x-amz-id-2": "KkNe9oApTREW24BVhOt9MqIx5Sfl8Oxe+SH+zEDEpOLRycUqLwhS06hABw49JaOWepiaSom2qiA=",
+        "x-amz-request-id": "F9497E55C1EF1047",
+        "Date": "Wed, 19 Sep 2018 13:32:41 GMT",
+        "ETag": "\"f8abb10d05ff006afdaddbc471ec3065\"",
         "Content-Length": "0",
         "Server": "AmazonS3"
       },

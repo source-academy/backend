@@ -11,7 +11,8 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
 
     assessment =
       insert(:assessment, %{
-        id: 66
+        id: 66,
+        title: "Not the droids you are looking for"
       })
 
     programming_question =
