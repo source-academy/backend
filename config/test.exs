@@ -39,6 +39,6 @@ config :arc, definition: Arc.Storage.Local
 
 config :cadet,
   plagiarism_check_vars: [
-    bucket_name: "plagiarism-reports",
-    plagiarism_script_path: "../path/to/plagiarism/script"
+    bucket_name: "plagiarism-reports-test",
+    plagiarism_script_path: "test/fixtures/mock_plagiarism_script.py"
   ]
