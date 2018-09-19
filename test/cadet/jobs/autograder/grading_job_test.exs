@@ -182,7 +182,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
       GradingJob.grade_all_due_yesterday()
 
-      assert Enum.empty?(JobsQueue.all())
+      assert Enum.empty?(JobsQueue.all(LambdaWorker))
     end
 
     test "all assessments attempted, should update all submission statuses", %{
@@ -253,7 +253,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.comment == "Question not attempted by student"
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert Enum.empty?(JobsQueue.all(LambdaWorker))
     end
 
     # Test unanswered question behaviour of two finger walk
@@ -368,7 +368,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.comment == "Question not attempted by student"
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert Enum.empty?(JobsQueue.all(LambdaWorker))
     end
 
     test "all assessments attempted, all questions answered, " <>
@@ -419,7 +419,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer_db.autograding_status == :success
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert Enum.empty?(JobsQueue.all(LambdaWorker))
     end
   end
 end
