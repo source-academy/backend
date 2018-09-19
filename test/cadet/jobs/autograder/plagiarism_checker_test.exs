@@ -50,7 +50,18 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
           "submissions/assessment_#{assessment.id}.zip"
         ]
 
-        assert PlagiarismChecker.perform(assessment.id) == {:ok, deleted_files}
+        result = PlagiarismChecker.perform(assessment.id)
+
+        case result do
+          {:ok, _} ->
+            assert result
+                   |> elem(1)
+                   |> MapSet.new()
+                   |> MapSet.equal?(MapSet.new(deleted_files))
+
+          _ ->
+            flunk("Plagiarism Check failed")
+        end
       end
     end
   end
