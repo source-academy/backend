@@ -11,7 +11,7 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
 
     assessment =
       insert(:assessment, %{
-          id: 66
+        id: 66
       })
 
     programming_question =
@@ -28,7 +28,7 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
     insert(:mcq_question, %{
       assessment: assessment
     })
-  
+
     insert(:answer, %{
       submission: submission,
       question: programming_question,
@@ -46,11 +46,11 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
           "submissions/assessment#{assessment.id}",
           "submissions/assessment#{assessment.id}/report",
           "submissions/assessment#{assessment.id}/assessment_report_#{assessment.id}.html",
-          "submissions/assessment_#{assessment.id}.zip",
+          "submissions/assessment_#{assessment.id}.zip"
         ]
-          
+
         assert PlagiarismChecker.perform(assessment.id) == {:ok, deleted_files}
       end
     end
   end
-end     
+end

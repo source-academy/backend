@@ -22,9 +22,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   defp assert_plagiarism_for(assessments_list) do
     for {assessment} <- assessments_list do
-      assert_called(
-        Que.add(PlagiarismChecker, assessment.id)
-      )
+      assert_called(Que.add(PlagiarismChecker, assessment.id))
     end
   end
 
@@ -210,6 +208,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         for submission <- submissions do
           assert Repo.get(Submission, submission.id).status == :submitted
         end
+
         assert_plagiarism_for(assessments)
       end
     end
@@ -231,6 +230,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
           assert submission && submission.status == :submitted
         end
+
         assert_plagiarism_for(assessments)
       end
     end
