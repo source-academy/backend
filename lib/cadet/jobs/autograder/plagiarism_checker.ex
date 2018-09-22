@@ -28,10 +28,8 @@ defmodule Cadet.Autograder.PlagiarismChecker do
            "--assessment_id",
            to_string(assessment_id)
          ]) do
-      {result, 0} ->
-        result
-        |> Jason.decode!()
-        |> Map.get("assessment_id")
+      {_, 0} ->
+        assessment_id
         |> zip_results()
         |> store()
 
