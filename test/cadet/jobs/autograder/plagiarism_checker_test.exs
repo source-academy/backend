@@ -39,16 +39,7 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
   describe "#perform" do
     test "calls script", %{assessment: assessment} do
       use_cassette "plagiarism/report_storage", custom: true do
-        deleted_files = [
-          "submissions",
-          "submissions/assessment#{assessment.id}",
-          "submissions/assessment#{assessment.id}/report",
-          "submissions/assessment#{assessment.id}/assessment_report_#{assessment.id}.html",
-          "submissions/assessment_#{assessment.id}.zip"
-        ]
-
-        {:ok, deleted_files_actual} = PlagiarismChecker.perform(assessment.id)
-        assert MapSet.equal?(MapSet.new(deleted_files), MapSet.new(deleted_files_actual))
+        assert assessment.id == PlagiarismChecker.perform(assessment.id)
       end
     end
   end

@@ -51,8 +51,10 @@ defmodule Cadet.Autograder.PlagiarismChecker do
       |> ExAws.S3.put_object("/reports/assessment-#{assessment_title}.zip", File.read!(file_name))
       |> ExAws.request!()
 
+    File.rm_rf("submissions")
+
     if Map.get(response, :status_code) == 200 do
-      File.rm_rf("submissions")
+      assessment_id
     else
       raise inspect(response)
     end
