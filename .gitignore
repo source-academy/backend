@@ -107,11 +107,7 @@ erl_crash.dump
 # VSCode Elixir language support
 .elixir_ls/
 
-# asdf version control
-.tool-versions
-
 # plag check
 config.ini
-assessment3.zip
 /submissions/
 .env
