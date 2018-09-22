@@ -21,9 +21,7 @@ defmodule Cadet.Autograder.GradingJobTest do
   end
 
   defp assert_plagiarism_for(assessments_list) do
-    for {assessment} <- assessments_list do
-      assert_called(Que.add(PlagiarismChecker, assessment.id))
-    end
+    Enum.each(assessments_list, fn a -> assert_called(Que.add(PlagiarismChecker, a.id)) end)
   end
 
   describe "#force_grade_individual_submission, all programming questions" do
@@ -164,7 +162,10 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert_dispatched(Enum.zip(answers, questions))
-        assert_plagiarism_for(assessments)
+
+        assessments
+        |> Enum.map(fn {a, _} -> a end)
+        |> assert_plagiarism_for()
       end
     end
 
@@ -209,7 +210,9 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert Repo.get(Submission, submission.id).status == :submitted
         end
 
-        assert_plagiarism_for(assessments)
+        assessments
+        |> Enum.map(fn {a, _} -> a end)
+        |> assert_plagiarism_for()
       end
     end
 
@@ -231,7 +234,9 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert submission && submission.status == :submitted
         end
 
-        assert_plagiarism_for(assessments)
+        assessments
+        |> Enum.map(fn {a, _} -> a end)
+        |> assert_plagiarism_for()
       end
     end
 
@@ -266,7 +271,10 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert Enum.empty?(JobsQueue.all(LambdaWorker))
-        assert_plagiarism_for(assessments)
+
+        assessments
+        |> Enum.map(fn {a, _} -> a end)
+        |> assert_plagiarism_for()
       end
     end
 
@@ -313,7 +321,11 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert_dispatched(Enum.zip(answers_submitted, questions_answered))
-        assert_plagiarism_for(assessments)
+
+        assessments
+        |> Enum.map(fn {a, _} -> a end)
+        |> assert_plagiarism_for()
+
         unanswered_question_ids = questions |> Enum.take_every(3) |> Enum.map(& &1.id)
 
         inserted_empty_answers =

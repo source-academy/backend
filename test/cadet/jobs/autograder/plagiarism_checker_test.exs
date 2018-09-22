@@ -2,8 +2,6 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
   use Cadet.DataCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  import ExUnit.CaptureLog
-
   alias Cadet.Autograder.PlagiarismChecker
 
   setup do
@@ -50,18 +48,8 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
           "submissions/assessment_#{assessment.id}.zip"
         ]
 
-        result = PlagiarismChecker.perform(assessment.id)
-
-        case result do
-          {:ok, _} ->
-            assert result
-                   |> elem(1)
-                   |> MapSet.new()
-                   |> MapSet.equal?(MapSet.new(deleted_files))
-
-          _ ->
-            flunk("Plagiarism Check failed")
-        end
+        {:ok, deleted_files_actual} = PlagiarismChecker.perform(assessment.id)
+        assert MapSet.equal?(MapSet.new(deleted_files), MapSet.new(deleted_files_actual))
       end
     end
   end
