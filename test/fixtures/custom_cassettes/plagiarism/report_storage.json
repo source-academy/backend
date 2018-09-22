@@ -1,0 +1,35 @@
+[
+  {
+    "request": {
+      "body": "PK\u0003\u0004\n\u0000\u0000\u0000\u0000\u0000�i6M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u001c\u0000submissions/assessment66/report/UT\t\u0000\u0003>ϥ[>ϥ[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0003\u0004\n\u0000\u0000\u0000\u0000\u0000�i6M\f~�\u0004\u0000\u0000\u0000\u0004\u0000\u0000\u00002\u0000\u001c\u0000submissions/assessment66/assessment_report_66.htmlUT\t\u0000\u0003>ϥ[>ϥ[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000testPK\u0001\u0002\u001e\u0003\n\u0000\u0000\u0000\u0000\u0000�i6M\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 \u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0010\u0000�A\u0000\u0000\u0000\u0000submissions/assessment66/report/UT\u0005\u0000\u0003>ϥ[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0001\u0002\u001e\u0003\n\u0000\u0000\u0000\u0000\u0000�i6M\f~�\u0004\u0000\u0000\u0000\u0004\u0000\u0000\u00002\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0001\u0000\u0000\u0000��Z\u0000\u0000\u0000submissions/assessment66/assessment_report_66.htmlUT\u0005\u0000\u0003>ϥ[ux\u000b\u0000\u0001\u0004�\u0001\u0000\u0000\u0004\u0014\u0000\u0000\u0000PK\u0005\u0006\u0000\u0000\u0000\u0000\u0002\u0000\u0002\u0000�\u0000\u0000\u0000�\u0000\u0000\u0000\u0000\u0000",
+      "headers": {
+        "Authorization": "AWS4-HMAC-SHA256 Credential=hello/20180922/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=4f114d0a2571752f36e311c815c2523f1eedc2351f0af3c42356e1ca5a6296b2",
+        "host": "s3-ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20180922T051230Z",
+        "content-length": "446",
+        "x-amz-content-sha256": "ba06431309264b1cdad4264fd92cb682d5cf4d86a41f513bd5ee1b1da3de382a"
+      },
+      "method": "put",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "~r/https://s3-ap-southeast-1.amazonaws.com/plagiarism-reports-test/reports/assessment-.*.zip/"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "x-amz-id-2": "Py3d9f5auUJL5Igum2l7eq2t5Vt75AEYuUvJz3k+IvuRnDcD/SBH9SqLXeF5iasejUdbphRNrGg=",
+        "x-amz-request-id": "9F5D9B6639DAB954",
+        "Date": "Sat, 22 Sep 2018 05:12:31 GMT",
+        "ETag": "\"027fc753c5327839cdebf5fef504a08d\"",
+        "Content-Length": "0",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

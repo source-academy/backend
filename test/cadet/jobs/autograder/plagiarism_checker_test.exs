@@ -9,7 +9,6 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
 
     assessment =
       insert(:assessment, %{
-        id: 66,
         title: "Not the droids you are looking for"
       })
 
@@ -39,7 +38,7 @@ defmodule Cadet.Autograder.PlagiarismCheckerTest do
 
   describe "#perform" do
     test "calls script", %{assessment: assessment} do
-      use_cassette "plagiarism/report_storage" do
+      use_cassette "plagiarism/report_storage", custom: true do
         deleted_files = [
           "submissions",
           "submissions/assessment#{assessment.id}",
