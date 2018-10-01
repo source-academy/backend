@@ -73,3 +73,9 @@ config :git_hooks,
       ]
     ]
   ]
+
+config :cadet,
+  plagiarism_check_vars: [
+    bucket_name: "stg-cadet-plagiarism-reports-test",
+    plagiarism_script_path: "../TA_CS1101S/plagiarism_script.py"
+  ]
