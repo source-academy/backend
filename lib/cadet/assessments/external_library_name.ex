@@ -5,5 +5,6 @@ defenum(Cadet.Assessments.Library.ExternalLibraryName, :external_library_name, [
   :two_dim_runes,
   :three_dim_runes,
   :curves,
-  :sound
+  :sound,
+  :streams
 ])
