@@ -12,7 +12,7 @@ defmodule Cadet.Autograder.GradingJob do
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Autograder.Utilities
 
-  def grade_and_make_empty_submission(assessment = %Assessment{id: id}) do
+  def close_and_make_empty_submission(assessment = %Assessment{id: id}) do
     id
     |> Utilities.fetch_submissions()
     |> Enum.map(fn %{student_id: student_id, submission: submission} ->
@@ -22,16 +22,17 @@ defmodule Cadet.Autograder.GradingJob do
         insert_empty_submission(%{student_id: student_id, assessment: assessment})
       end
     end)
-    |> Enum.each(fn submission ->
-      grade_individual_submission(submission, assessment)
-    end)
   end
 
   def grade_all_due_yesterday do
     Logger.info("Started autograding")
 
     for assessment <- Utilities.fetch_assessments_due_yesterday() do
-      grade_and_make_empty_submission(assessment)
+      assessment
+      |> close_and_make_empty_submission()
+      |> Enum.each(fn submission ->
+        grade_individual_submission(submission, assessment)
+      end)
     end
   end
 
