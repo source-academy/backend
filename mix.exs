@@ -44,7 +44,6 @@ defmodule Cadet.Mixfile do
     [
       {:arc, "~> 0.10.0"},
       {:arc_ecto, "~> 0.10.0"},
-      {:cowboy, "~> 1.0"},
       {:csv, "~> 2.0.0"},
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.0"},
@@ -63,6 +62,7 @@ defmodule Cadet.Mixfile do
       {:phoenix, "~> 1.3.0"},
       {:phoenix_ecto, "~> 3.2"},
       {:phoenix_swagger, "~> 0.8"},
+      {:plug_cowboy, "~> 1.0"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.3.0"},
       {:que, "~> 0.5.0"},
