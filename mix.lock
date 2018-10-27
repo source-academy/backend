@@ -24,7 +24,7 @@
   "ex_aws_kms": {:hex, :ex_aws_kms, "2.0.0", "35221e9b306c2b80be692eb006e9e6fc3d7c35da010e4595c6f27e9686e15092", [:mix], [{:ex_aws, "~> 2.0.0", [hex: :ex_aws, repo: "hexpm", optional: false]}], "hexpm"},
   "ex_aws_lambda": {:hex, :ex_aws_lambda, "2.0.0", "df0d6f278e364d6e1790787923c612ecedf6c189d73e5ef26a4295d3a10c8155", [:mix], [{:ex_aws, "~> 2.0.0", [hex: :ex_aws, repo: "hexpm", optional: false]}], "hexpm"},
   "ex_json_schema": {:hex, :ex_json_schema, "0.5.7", "14a1bcd716e432badb19e5f54fd0f3f0be47b34d1b5957944702be90d66a6cf6", [:mix], [], "hexpm"},
-  "ex_machina": {:hex, :ex_machina, "2.2.0", "fec496331e04fc2db2a1a24fe317c12c0c4a50d2beb8ebb3531ed1f0d84be0ed", [:mix], [{:ecto, "~> 2.1", [hex: :ecto, repo: "hexpm", optional: true]}], "hexpm"},
+  "ex_machina": {:hex, :ex_machina, "2.2.1", "df84d0b23487aaa8570c35e586d7f9f197a7787e1121344a41d8832a7ea41edf", [:mix], [{:ecto, "~> 2.1", [hex: :ecto, repo: "hexpm", optional: true]}], "hexpm"},
   "ex_utils": {:hex, :ex_utils, "0.1.7", "2c133e0bcdc49a858cf8dacf893308ebc05bc5fba501dc3d2935e65365ec0bf3", [:mix], [], "hexpm"},
   "exactor": {:hex, :exactor, "2.2.4", "5efb4ddeb2c48d9a1d7c9b465a6fffdd82300eb9618ece5d34c3334d5d7245b1", [:mix], [], "hexpm"},
   "excoveralls": {:hex, :excoveralls, "0.10.1", "407d50ac8fc63dfee9175ccb4548e6c5512b5052afa63eedb9cd452a32a91495", [:mix], [{:hackney, "~> 1.13", [hex: :hackney, repo: "hexpm", optional: false]}, {:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm"},
