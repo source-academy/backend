@@ -153,6 +153,7 @@ defmodule CadetWeb.GradingController do
             id(:integer, "submission id", required: true)
             grade(:integer, "grade given")
             xp(:integer, "xp earned")
+            xpBonus(:integer, "bonus xp for a given submission")
             xpAdjustment(:integer, "xp adjustment given")
             adjustment(:integer, "grade adjustment given")
             groupName(:string, "name of student's group")

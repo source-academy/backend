@@ -86,6 +86,7 @@ defmodule CadetWeb.GradingControllerTest do
           %{
             "xp" => 4000,
             "xpAdjustment" => -2000,
+            "xpBonus" => 100,
             "grade" => 800,
             "adjustment" => -400,
             "id" => submission.id,
@@ -123,6 +124,7 @@ defmodule CadetWeb.GradingControllerTest do
           %{
             "xp" => 4000,
             "xpAdjustment" => -2000,
+            "xpBonus" => 100,
             "grade" => 800,
             "adjustment" => -400,
             "id" => submission.id,
@@ -178,6 +180,7 @@ defmodule CadetWeb.GradingControllerTest do
           %{
             "xp" => 4000,
             "xpAdjustment" => -2000,
+            "xpBonus" => 100,
             "grade" => 800,
             "adjustment" => -400,
             "id" => submission.id,
@@ -480,6 +483,7 @@ defmodule CadetWeb.GradingControllerTest do
           %{
             "xp" => 4000,
             "xpAdjustment" => -2000,
+            "xpBonus" => 100,
             "grade" => 800,
             "adjustment" => -400,
             "id" => submission.id,
@@ -519,6 +523,7 @@ defmodule CadetWeb.GradingControllerTest do
           %{
             "xp" => 4000,
             "xpAdjustment" => -2000,
+            "xpBonus" => 100,
             "grade" => 800,
             "adjustment" => -400,
             "id" => submission.id,
@@ -691,7 +696,7 @@ defmodule CadetWeb.GradingControllerTest do
     submissions =
       students
       |> Enum.take(2)
-      |> Enum.map(&insert(:submission, %{assessment: mission, student: &1}))
+      |> Enum.map(&insert(:submission, %{assessment: mission, student: &1, xp_bonus: 100}))
 
     answers =
       for submission <- submissions,

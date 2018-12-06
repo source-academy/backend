@@ -14,6 +14,7 @@ defmodule CadetWeb.GradingView do
       grade: :grade,
       xp: :xp,
       xpAdjustment: :xp_adjustment,
+      xpBonus: :xp_bonus,
       adjustment: :adjustment,
       id: :id,
       student: &transform_map_for_view(&1.student, [:name, :id]),
