@@ -31,6 +31,7 @@ defmodule CadetWeb.Router do
 
     resources("/assessments", AssessmentsController, only: [:index, :show])
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
+
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
     get("/grading", GradingController, :index)

@@ -17,6 +17,18 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
+  def unsubmit(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
+    case Assessments.unsubmit_submission(submission_id, conn.assigns.current_user) do
+      {:ok, _nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   def index(conn, _) do
     user = conn.assigns[:current_user]
     {:ok, assessments} = Assessments.all_published_assessments(user)
@@ -45,6 +57,21 @@ defmodule CadetWeb.AssessmentsController do
     response(200, "OK")
     response(400, "Invalid parameters")
     response(403, "User not permitted to answer questions or assessment not open")
+    response(404, "Submission not found")
+  end
+
+  swagger_path :unsubmit do
+    post("/assessments/{submissionId}/unsubmit")
+    summary("Unsubmit submission for an assessment")
+    security([%{JWT: []}])
+
+    parameters do
+      submissionId(:path, :integer, "submission id", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(403, "User not permitted to unsubmit assessment or assessment not open")
     response(404, "Submission not found")
   end
 

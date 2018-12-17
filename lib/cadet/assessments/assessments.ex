@@ -15,6 +15,7 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
+  @unsubmit_assessment_role ~w(staff)a
   @grading_roles ~w()a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
@@ -371,6 +372,78 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def unsubmit_submission(submission_id, avenger = %User{role: role, id: user_id})
+      when is_ecto_id(submission_id) do
+    if role in @unsubmit_assessment_role do
+      submission =
+        Submission
+        |> where(id: ^submission_id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+
+      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+           {:is_open?, true} <- is_open?(submission.assessment),
+           {:status, :submitted} <- {:status, submission.status},
+           {:avenger_of?, true} <- {:avenger_of?, is_avenger_of(avenger, submission.student_id)} do
+        rollback_submission_status(submission)
+        rollback_grading_answers(submission)
+
+        {:ok, nil}
+      else
+        {:submission_found?, false} ->
+          {:error, {:not_found, "Submission not found"}}
+
+        {:is_open?, false} ->
+          {:error, {:forbidden, "Assessment not open"}}
+
+        {:status, :attempting} ->
+          {:error, {:bad_request, "Some questions have not been attempted"}}
+
+        {:status, :attempted} ->
+          {:error, {:forbidden, "Assessment has not been submitted"}}
+
+        {:avenger_of, false} ->
+          {:error, {:forbidden, "Only avenger of student is allowed to unsubmit"}}
+
+        _ ->
+          {:error, {:internal_server_error, "Please try again later."}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+
+  def is_avenger_of(avenger, student_id) do
+    Cadet.Accounts.Query.students_of(avenger)
+    |> where(id: ^student_id)
+    |> Repo.one()
+    |> is_nil()
+    |> Kernel.not()
+  end
+
+  def rollback_submission_status(submission = %Submission{}) do
+    submission
+    |> Submission.changeset(%{status: :attempted, xp_bonus: 0})
+    |> Repo.update()
+  end
+
+  def rollback_grading_answers(submission = %Submission{}) do
+    Answer
+    |> where(submission_id: ^submission.id)
+    |> Repo.update_all(
+         set: [
+           grade: 0,
+           adjustment: 0,
+           xp: 0,
+           xp_adjustment: 0,
+           autograding_status: :none,
+           autograding_errors: [],
+           comment: nil
+         ]
+       )
+  end
+
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
@@ -421,13 +494,13 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Function returning submissions under a grader. 
+  Function returning submissions under a grader.
 
-  The input parameters are the user and group_only. 
-  group_only is used to check whether only the groups under the grader should be returned. 
+  The input parameters are the user and group_only.
+  group_only is used to check whether only the groups under the grader should be returned.
   The parameter is a boolean which is false by default.
 
-  The return value is {:ok, submissions} if no errors else its 
+  The return value is {:ok, submissions} if no errors else its
   {:error, {:unauthorized, "User is not permitted to grade."}}
   """
   @spec all_submissions_by_grader(%User{}) ::
