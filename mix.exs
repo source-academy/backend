@@ -59,7 +59,7 @@ defmodule Cadet.Mixfile do
       {:inch_ex, "~> 1.0", only: [:dev, :test]},
       {:jason, "~> 1.1"},
       {:jsx, "~> 2.8"},
-      {:phoenix, "~> 1.3.0"},
+      {:phoenix, "~> 1.4.0"},
       {:phoenix_ecto, "~> 3.2"},
       {:phoenix_swagger, "~> 0.8"},
       {:plug_cowboy, "~> 1.0"},
