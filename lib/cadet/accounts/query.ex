@@ -28,7 +28,9 @@ defmodule Cadet.Accounts.Query do
   end
 
   def is_avenger_of(avenger, student_id) do
-    students_of(avenger)
+    students = students_of(avenger)
+
+    students
     |> Repo.get(student_id)
     |> case do
       nil -> false

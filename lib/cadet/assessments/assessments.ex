@@ -400,7 +400,8 @@ defmodule Cadet.Assessments do
           |> where(submission_id: ^submission.id)
           |> Repo.all()
           |> Enum.each(fn answer ->
-            Answer.reset(answer, %{
+            answer
+            |> Answer.reset(%{
               grade: 0,
               adjustment: 0,
               xp: 0,
