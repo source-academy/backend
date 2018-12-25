@@ -399,7 +399,7 @@ defmodule Cadet.Assessments do
           Answer
           |> where(submission_id: ^submission.id)
           |> Repo.all()
-          |> Enum.map(fn answer ->
+          |> Enum.each(fn answer ->
             Answer.reset(answer, %{
               grade: 0,
               adjustment: 0,
