@@ -15,6 +15,7 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
+  @unsubmit_assessment_role ~w(staff)a
   @grading_roles ~w()a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
@@ -368,6 +369,72 @@ defmodule Cadet.Assessments do
       end
     else
       {:error, {:forbidden, "User is not permitted to answer questions"}}
+    end
+  end
+
+  def unsubmit_submission(submission_id, avenger = %User{role: role})
+      when is_ecto_id(submission_id) do
+    if role in @unsubmit_assessment_role do
+      submission =
+        Submission
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.get(submission_id)
+
+      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+           {:is_open?, true} <- is_open?(submission.assessment),
+           {:status, :submitted} <- {:status, submission.status},
+           {:avenger_of?, true} <-
+             {:avenger_of?, Cadet.Accounts.Query.is_avenger_of(avenger, submission.student_id)} do
+        Ecto.Multi.new()
+        |> Multi.run(
+          :rollback_submission,
+          fn _ ->
+            submission
+            |> Submission.changeset(%{status: :attempted, xp_bonus: 0})
+            |> Repo.update()
+          end
+        )
+        |> Multi.run(:rollback_answers, fn _ ->
+          Answer
+          |> where(submission_id: ^submission.id)
+          |> Repo.all()
+          |> Enum.map(fn answer ->
+            Answer.reset(answer, %{
+              grade: 0,
+              adjustment: 0,
+              xp: 0,
+              xp_adjustment: 0,
+              autograding_status: :none,
+              autograding_errors: [],
+              comment: nil
+            })
+            |> Repo.update()
+          end)
+
+          {:ok, nil}
+        end)
+        |> Repo.transaction()
+
+        {:ok, nil}
+      else
+        {:submission_found?, false} ->
+          {:error, {:not_found, "Submission not found"}}
+
+        {:is_open?, false} ->
+          {:error, {:forbidden, "Assessment not open"}}
+
+        {:status, :attempting} ->
+          {:error, {:bad_request, "Some questions have not been attempted"}}
+
+        {:status, :attempted} ->
+          {:error, {:forbidden, "Assessment has not been submitted"}}
+
+        _ ->
+          {:error, {:internal_server_error, "Please try again later."}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to unsubmit questions"}}
     end
   end
 
