@@ -62,7 +62,7 @@ defmodule Cadet.Mixfile do
       {:phoenix, "~> 1.4.0"},
       {:phoenix_ecto, "~> 3.2"},
       {:phoenix_swagger, "~> 0.8"},
-      {:plug_cowboy, "~> 1.0"},
+      {:plug_cowboy, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.3.0"},
       {:que, "~> 0.5.0"},
