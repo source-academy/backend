@@ -78,7 +78,8 @@ defmodule CadetWeb.GradingController do
   end
 
   def unsubmit(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
-    case Assessments.unsubmit_submission(submission_id, conn.assigns.current_user) do
+    user = conn.assigns[:current_user]
+    case Assessments.unsubmit_submission(submission_id, user) do
       {:ok, nil} ->
         text(conn, "OK")
 

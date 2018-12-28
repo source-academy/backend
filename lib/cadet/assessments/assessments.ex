@@ -436,7 +436,7 @@ defmodule Cadet.Assessments do
           {:error, {:bad_request, "Some questions have not been attempted"}}
 
         {:status, :attempted} ->
-          {:error, {:forbidden, "Assessment has not been submitted"}}
+          {:error, {:bad_request, "Assessment has not been submitted"}}
 
         _ ->
           {:error, {:internal_server_error, "Please try again later."}}
