@@ -27,7 +27,7 @@ defmodule Cadet.Accounts.Query do
     |> where([_, g], g.leader_id == ^id)
   end
 
-  def is_avenger_of(avenger, student_id) do
+  def avenger_of?(avenger, student_id) do
     students = students_of(avenger)
 
     students

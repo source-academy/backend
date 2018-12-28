@@ -385,8 +385,8 @@ defmodule Cadet.Assessments do
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :submitted} <- {:status, submission.status},
            {:avenger_of?, true} <-
-             {:avenger_of?, Cadet.Accounts.Query.is_avenger_of(avenger, submission.student_id)} do
-        Ecto.Multi.new()
+             {:avenger_of?, Cadet.Accounts.Query.avenger_of?(avenger, submission.student_id)} do
+        Multi.new()
         |> Multi.run(
           :rollback_submission,
           fn _ ->
@@ -397,23 +397,30 @@ defmodule Cadet.Assessments do
         )
         |> Multi.run(:rollback_answers, fn _ ->
           Answer
+          |> join(:inner, [a], q in assoc(a, :question))
+          |> preload([_, q], question: q)
           |> where(submission_id: ^submission.id)
           |> Repo.all()
-          |> Enum.each(fn answer ->
-            answer
-            |> Answer.reset(%{
-              grade: 0,
-              adjustment: 0,
-              xp: 0,
-              xp_adjustment: 0,
-              autograding_status: :none,
-              autograding_errors: [],
-              comment: nil
-            })
-            |> Repo.update()
-          end)
+          |> Enum.reduce_while({:ok, nil}, fn answer, acc ->
+            case acc do
+              {:error, _} ->
+                {:halt, acc}
 
-          {:ok, nil}
+              {:ok, _} ->
+                {:cont,
+                 answer
+                 |> Answer.reset_changeset(%{
+                   grade: 0,
+                   adjustment: 0,
+                   xp: 0,
+                   xp_adjustment: 0,
+                   autograding_status: :none,
+                   autograding_errors: [],
+                   comment: nil
+                 })
+                 |> Repo.update()}
+            end
+          end)
         end)
         |> Repo.transaction()
 

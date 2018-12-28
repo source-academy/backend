@@ -119,7 +119,7 @@ defmodule CadetWeb.GradingController do
 
   swagger_path :unsubmit do
     post("/grading/{submissionId}/unsubmit")
-    summary("Unsubmit submission for an assessment by Avenger of student.")
+    summary("Unsubmit submission. Can only be done by the Avenger of a student.")
     security([%{JWT: []}])
 
     parameters do
