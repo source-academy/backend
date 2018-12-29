@@ -40,15 +40,6 @@ defmodule Cadet.Assessments.Answer do
     |> validate_xp_grade_adjustment_total()
   end
 
-  def reset_changeset(answer, params) do
-    answer
-    |> cast(params, @required_fields ++ @optional_fields)
-    |> foreign_key_constraint(:submission_id)
-    |> foreign_key_constraint(:question_id)
-    |> validate_answer_content()
-    |> validate_xp_grade_adjustment_total()
-  end
-
   @spec grading_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def grading_changeset(answer, params) do
     answer

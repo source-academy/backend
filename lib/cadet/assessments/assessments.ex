@@ -398,7 +398,8 @@ defmodule Cadet.Assessments do
         |> Multi.run(:rollback_answers, fn _ ->
           Answer
           |> join(:inner, [a], q in assoc(a, :question))
-          |> preload([_, q], question: q)
+          |> join(:inner, [a, _], s in assoc(a, :submission))
+          |> preload([_, q, s], question: q, submission: s)
           |> where(submission_id: ^submission.id)
           |> Repo.all()
           |> Enum.reduce_while({:ok, nil}, fn answer, acc ->
@@ -409,7 +410,7 @@ defmodule Cadet.Assessments do
               {:ok, _} ->
                 {:cont,
                  answer
-                 |> Answer.reset_changeset(%{
+                 |> Answer.changeset(%{
                    grade: 0,
                    adjustment: 0,
                    xp: 0,
