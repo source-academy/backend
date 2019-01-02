@@ -285,6 +285,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "comment"))
             |> Enum.map(&Map.delete(&1, "xp"))
             |> Enum.map(&Map.delete(&1, "grade"))
+            |> Enum.map(&Map.delete(&1, "gradedBy"))
 
           assert expected_questions == resp_questions
         end

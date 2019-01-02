@@ -123,6 +123,7 @@ defmodule CadetWeb.AssessmentsView do
     transform_map_for_view(answer, %{
       answer: answer_getter,
       comment: :comment,
+      gradedBy: & &1.grader[:name],
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
       grade: &((&1.grade || 0) + (&1.adjustment || 0))
     })

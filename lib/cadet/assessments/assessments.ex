@@ -145,7 +145,8 @@ defmodule Cadet.Assessments do
         Question
         |> where(assessment_id: ^id)
         |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
-        |> select([q, a], %{q | answer: a})
+        |> join(:left, [q, a], g in assoc(a, :grader))
+        |> select([q, a, g], %{q | answer: %Answer{a | grader: g}})
         |> order_by(:display_order)
         |> Repo.all()
 
@@ -524,10 +525,12 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        grader = %User{role: role}
+        grader = %User{id: grader_id, role: role}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) and
              (role in @grading_roles or role in @see_all_submissions_roles) do
+    attrs = Map.put(attrs, "grader_id", grader_id)
+
     answer_query =
       Answer
       |> where(submission_id: ^submission_id)
