@@ -386,6 +386,8 @@ defmodule CadetWeb.GradingControllerTest do
     test "successful", %{conn: conn} do
       %{answers: answers} = seed_db(conn)
 
+      grader_id = conn.assigns[:current_user].id
+
       answer = List.first(answers)
 
       conn =
@@ -399,8 +401,12 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert response(conn, 200) == "OK"
 
-      assert %{adjustment: -10, comment: "Never gonna give you up", xp_adjustment: -10} =
-               Repo.get(Answer, answer.id)
+      assert %{
+               adjustment: -10,
+               comment: "Never gonna give you up",
+               xp_adjustment: -10,
+               grader_id: ^grader_id
+             } = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
@@ -471,6 +477,8 @@ defmodule CadetWeb.GradingControllerTest do
         submissions: submissions
       } = seed_db(conn)
 
+      grader_id = conn.assigns[:current_user].id
+
       admin = insert(:user, role: :admin)
 
       conn =
@@ -500,7 +508,8 @@ defmodule CadetWeb.GradingControllerTest do
               "coverImage" => mission.cover_picture
             },
             "groupName" => submission.student.group.name,
-            "status" => Atom.to_string(submission.status)
+            "status" => Atom.to_string(submission.status),
+            "grader_id" => grader_id
           }
         end)
 
