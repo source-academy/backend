@@ -188,7 +188,7 @@ defmodule CadetWeb.AssessmentsController do
             )
 
             solutionTemplate(:string, "Solution template for programming questions")
-            gradedBy(:string, "Name of Avenger that last graded the answer.")
+            gradedBy(:string, "Name of Avenger who last graded the answer.")
 
             xp(:integer, "Final XP given to this question. Only provided for students.")
             grade(:integer, "Final grade given to this question. Only provided for students.")
