@@ -3,8 +3,20 @@ defmodule CadetWeb.ViewHelpers do
   Helper functions shared throughout views
   """
 
+  alias Timex.Timezone
+
   def format_datetime(datetime) do
-    Timex.format!(DateTime.truncate(datetime, :millisecond), "{ISO:Extended}")
+    datetime
+    |> DateTime.truncate(:millisecond)
+    |> Timex.format!("{ISO:Extended}")
+  end
+
+  def format_naive_datetime(datetime) do
+    timezone = Timezone.get("Asia/Singapore", Timex.now())
+
+    datetime
+    |> Timex.to_datetime(timezone)
+    |> format_datetime()
   end
 
   @doc """

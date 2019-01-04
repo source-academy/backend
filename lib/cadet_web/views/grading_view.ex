@@ -43,14 +43,41 @@ defmodule CadetWeb.GradingView do
       solution: &(&1.question.question["solution"] || ""),
       maxGrade: & &1.question.max_grade,
       maxXp: & &1.question.max_xp,
-      grade:
-        &transform_map_for_view(&1, %{
-          grade: :grade,
-          adjustment: :adjustment,
-          comment: :comment,
-          xp: :xp,
-          xpAdjustment: :xp_adjustment
-        })
+      grade: &build_grade(&1)
+    })
+  end
+
+  defp build_grade(answer = %{grader: grader}) do
+    grader_getter =
+      case grader do
+        nil ->
+          nil
+
+        _ ->
+          fn %{grader: grader} ->
+            transform_map_for_view(grader, [:name, :id])
+          end
+      end
+
+    graded_at_getter =
+      case grader do
+        nil ->
+          nil
+
+        _ ->
+          fn %{updated_at: updated_at} ->
+            format_naive_datetime(updated_at)
+          end
+      end
+
+    transform_map_for_view(answer, %{
+      grader: grader_getter,
+      gradedAt: graded_at_getter,
+      grade: :grade,
+      adjustment: :adjustment,
+      comment: :comment,
+      xp: :xp,
+      xpAdjustment: :xp_adjustment
     })
   end
 end

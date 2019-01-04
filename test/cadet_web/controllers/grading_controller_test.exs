@@ -209,6 +209,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
       %{
+        grader: grader,
         submissions: submissions,
         answers: answers
       } = seed_db(conn)
@@ -248,7 +249,12 @@ defmodule CadetWeb.GradingControllerTest do
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_naive_datetime(&1.updated_at)
                 }
               }
 
@@ -284,7 +290,12 @@ defmodule CadetWeb.GradingControllerTest do
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_naive_datetime(&1.updated_at)
                 }
               }
           end
@@ -295,7 +306,8 @@ defmodule CadetWeb.GradingControllerTest do
 
     @tag authenticate: :staff
     test "pure mentor gets to view all submissions", %{conn: conn} do
-      %{mentor: mentor, submissions: submissions, answers: answers} = seed_db(conn)
+      %{mentor: mentor, grader: grader, submissions: submissions, answers: answers} =
+        seed_db(conn)
 
       submission = List.first(submissions)
 
@@ -335,7 +347,12 @@ defmodule CadetWeb.GradingControllerTest do
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_naive_datetime(&1.updated_at)
                 }
               }
 
@@ -371,7 +388,12 @@ defmodule CadetWeb.GradingControllerTest do
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_naive_datetime(&1.updated_at)
                 }
               }
           end
@@ -384,9 +406,9 @@ defmodule CadetWeb.GradingControllerTest do
   describe "POST /:submissionid/:questionid, staff" do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
-      %{answers: answers} = seed_db(conn)
+      %{grader: grader, answers: answers} = seed_db(conn)
 
-      grader_id = conn.assigns[:current_user].id
+      grader_id = grader.id
 
       answer = List.first(answers)
 
@@ -443,6 +465,8 @@ defmodule CadetWeb.GradingControllerTest do
     test "staff who isn't the grader of said answer can still grade submission", %{conn: conn} do
       %{mentor: mentor, answers: answers} = seed_db(conn)
 
+      mentor_id = mentor.id
+
       answer = List.first(answers)
 
       conn =
@@ -458,8 +482,12 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert response(conn, 200) == "OK"
 
-      assert %{adjustment: -100, comment: "Your awesome", xp_adjustment: -100} =
-               Repo.get(Answer, answer.id)
+      assert %{
+               adjustment: -100,
+               comment: "Your awesome",
+               xp_adjustment: -100,
+               grader_id: ^mentor_id
+             } = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
@@ -476,8 +504,6 @@ defmodule CadetWeb.GradingControllerTest do
         mission: mission,
         submissions: submissions
       } = seed_db(conn)
-
-      grader_id = conn.assigns[:current_user].id
 
       admin = insert(:user, role: :admin)
 
@@ -508,8 +534,7 @@ defmodule CadetWeb.GradingControllerTest do
               "coverImage" => mission.cover_picture
             },
             "groupName" => submission.student.group.name,
-            "status" => Atom.to_string(submission.status),
-            "grader_id" => grader_id
+            "status" => Atom.to_string(submission.status)
           }
         end)
 
@@ -561,6 +586,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :admin
     test "successful", %{conn: conn} do
       %{
+        grader: grader,
         submissions: submissions,
         answers: answers
       } = seed_db(conn)
@@ -600,7 +626,12 @@ defmodule CadetWeb.GradingControllerTest do
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_naive_datetime(&1.updated_at)
                 }
               }
 
@@ -636,7 +667,12 @@ defmodule CadetWeb.GradingControllerTest do
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_naive_datetime(&1.updated_at)
                 }
               }
           end
@@ -711,6 +747,7 @@ defmodule CadetWeb.GradingControllerTest do
       for submission <- submissions,
           question <- questions do
         insert(:answer, %{
+          grader_id: grader.id,
           grade: 200,
           adjustment: -100,
           xp: 1000,

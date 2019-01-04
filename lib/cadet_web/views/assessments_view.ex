@@ -108,22 +108,42 @@ defmodule CadetWeb.AssessmentsView do
     end
   end
 
+  defp build_answer(question_type) do
+    case question_type do
+      :programming -> & &1.answer["code"]
+      :mcq -> & &1.answer["choice_id"]
+    end
+  end
+
+  defp build_grader(nil), do: nil
+
+  defp build_grader(_) do
+    fn %{grader: grader} ->
+      transform_map_for_view(grader, [:name, :id])
+    end
+  end
+
+  defp build_graded_at(nil), do: nil
+
+  defp build_graded_at(_) do
+    fn %{updated_at: updated_at} ->
+      format_naive_datetime(updated_at)
+    end
+  end
+
   defp build_answer_fields_by_question_type(%{
          question: %{answer: answer, type: question_type}
        }) do
     # No need to check if answer exists since empty answer would be a
     # `%Answer{..., answer: nil}` and nil["anything"] = nil
 
-    answer_getter =
-      case question_type do
-        :programming -> & &1.answer["code"]
-        :mcq -> & &1.answer["choice_id"]
-      end
+    %{grader: grader} = answer
 
     transform_map_for_view(answer, %{
-      answer: answer_getter,
+      answer: build_answer(question_type),
       comment: :comment,
-      gradedBy: & &1.grader[:name],
+      grader: build_grader(grader),
+      gradedAt: build_graded_at(grader),
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
       grade: &((&1.grade || 0) + (&1.adjustment || 0))
     })
