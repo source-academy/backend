@@ -28,7 +28,7 @@ defmodule CadetWeb.ViewHelpers do
   end
 
   def format_datetime(datetime = %NaiveDateTime{}) do
-    timezone = Timezone.get("Asia/Singapore", Timex.now())
+    timezone = Timezone.get("Etc/UTC", Timex.now())
 
     datetime
     |> Timex.to_datetime(timezone)
