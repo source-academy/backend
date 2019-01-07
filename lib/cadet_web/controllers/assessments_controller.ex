@@ -243,13 +243,6 @@ defmodule CadetWeb.AssessmentsController do
               "The external library for this question"
             )
           end
-        end,
-      GraderInfo:
-        swagger_schema do
-          properties do
-            id(:integer, "grader id", required: true)
-            name(:string, "grader name", required: true)
-          end
         end
     }
   end
