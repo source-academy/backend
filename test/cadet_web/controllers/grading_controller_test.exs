@@ -462,7 +462,8 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "staff who isn't the grader of said answer can still grade submission", %{conn: conn} do
+    test "staff who isn't the grader of said answer can still grade submission and grader field is updated correctly",
+         %{conn: conn} do
       %{mentor: mentor, answers: answers} = seed_db(conn)
 
       mentor_id = mentor.id
