@@ -5,13 +5,29 @@ defmodule CadetWeb.ViewHelpers do
 
   alias Timex.Timezone
 
-  def format_datetime(datetime) do
+  def grader_builder(nil), do: nil
+
+  def grader_builder(_) do
+    fn %{grader: grader} ->
+      transform_map_for_view(grader, [:name, :id])
+    end
+  end
+
+  def graded_at_builder(nil), do: nil
+
+  def graded_at_builder(_) do
+    fn %{updated_at: updated_at} ->
+      format_datetime(updated_at)
+    end
+  end
+
+  def format_datetime(datetime = %DateTime{}) do
     datetime
     |> DateTime.truncate(:millisecond)
     |> Timex.format!("{ISO:Extended}")
   end
 
-  def format_naive_datetime(datetime) do
+  def format_datetime(datetime = %NaiveDateTime{}) do
     timezone = Timezone.get("Asia/Singapore", Timex.now())
 
     datetime

@@ -254,7 +254,7 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_naive_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at)
                 }
               }
 
@@ -295,7 +295,7 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_naive_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at)
                 }
               }
           end
@@ -352,7 +352,7 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_naive_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at)
                 }
               }
 
@@ -393,7 +393,7 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_naive_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at)
                 }
               }
           end
@@ -631,7 +631,7 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_naive_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at)
                 }
               }
 
@@ -672,7 +672,7 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_naive_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at)
                 }
               }
           end
