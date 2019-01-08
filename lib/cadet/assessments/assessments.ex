@@ -488,7 +488,6 @@ defmodule Cadet.Assessments do
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> join(:left, [a, _], g in assoc(a, :grader))
-
       |> join(:inner, [a, _, _], s in Submission, a.submission_id == s.id)
       |> join(:inner, [a, _, _, s], st in User, s.student_id == st.id)
       |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
