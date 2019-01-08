@@ -255,6 +255,10 @@ defmodule CadetWeb.GradingControllerTest do
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
 
@@ -296,6 +300,10 @@ defmodule CadetWeb.GradingControllerTest do
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
           end
@@ -353,6 +361,10 @@ defmodule CadetWeb.GradingControllerTest do
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
 
@@ -394,6 +406,10 @@ defmodule CadetWeb.GradingControllerTest do
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
           end
@@ -633,6 +649,10 @@ defmodule CadetWeb.GradingControllerTest do
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
 
@@ -674,6 +694,10 @@ defmodule CadetWeb.GradingControllerTest do
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
           end
