@@ -187,7 +187,10 @@ defmodule CadetWeb.AssessmentsController do
               "The library used for this question"
             )
 
-            solution_template(:string, "Solution template for programming questions")
+            solutionTemplate(:string, "Solution template for programming questions")
+
+            grader(Schema.ref(:GraderInfo))
+            gradedAt(:string, "Last graded at", format: "date-time", required: false)
 
             xp(:integer, "Final XP given to this question. Only provided for students.")
             grade(:integer, "Final grade given to this question. Only provided for students.")
