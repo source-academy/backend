@@ -3,8 +3,6 @@ defmodule CadetWeb.ViewHelpers do
   Helper functions shared throughout views
   """
 
-  alias Timex.Timezone
-
   def grader_builder(nil), do: nil
 
   def grader_builder(_) do
@@ -28,10 +26,8 @@ defmodule CadetWeb.ViewHelpers do
   end
 
   def format_datetime(datetime = %NaiveDateTime{}) do
-    timezone = Timezone.get("Etc/UTC", Timex.now())
-
     datetime
-    |> Timex.to_datetime(timezone)
+    |> Timex.to_datetime()
     |> format_datetime()
   end
 
