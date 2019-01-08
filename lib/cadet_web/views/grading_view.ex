@@ -43,14 +43,19 @@ defmodule CadetWeb.GradingView do
       solution: &(&1.question.question["solution"] || ""),
       maxGrade: & &1.question.max_grade,
       maxXp: & &1.question.max_xp,
-      grade:
-        &transform_map_for_view(&1, %{
-          grade: :grade,
-          adjustment: :adjustment,
-          comment: :comment,
-          xp: :xp,
-          xpAdjustment: :xp_adjustment
-        })
+      grade: &build_grade/1
+    })
+  end
+
+  defp build_grade(answer = %{grader: grader}) do
+    transform_map_for_view(answer, %{
+      grader: grader_builder(grader),
+      gradedAt: graded_at_builder(grader),
+      grade: :grade,
+      adjustment: :adjustment,
+      comment: :comment,
+      xp: :xp,
+      xpAdjustment: :xp_adjustment
     })
   end
 end

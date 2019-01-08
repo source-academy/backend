@@ -6,6 +6,7 @@ defmodule Cadet.Assessments.Answer do
   use Cadet, :model
 
   alias Cadet.Repo
+  alias Cadet.Accounts.User
   alias Cadet.Assessments.Answer.AutogradingStatus
   alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer}
   alias Cadet.Assessments.{Question, QuestionType, Submission}
@@ -20,13 +21,16 @@ defmodule Cadet.Assessments.Answer do
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
     field(:comment, :string)
+
+    belongs_to(:grader, User)
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
+
     timestamps()
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment grade comment adjustment)a
+  @optional_fields ~w(xp xp_adjustment grade comment adjustment grader_id)a
 
   def changeset(answer, params) do
     answer
@@ -43,7 +47,9 @@ defmodule Cadet.Assessments.Answer do
   @spec grading_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def grading_changeset(answer, params) do
     answer
-    |> cast(params, ~w(xp_adjustment adjustment comment)a)
+    |> cast(params, ~w(grader_id xp_adjustment adjustment comment)a)
+    |> add_belongs_to_id_from_model(:grader, params)
+    |> foreign_key_constraint(:grader_id)
     |> validate_xp_grade_adjustment_total()
   end
 
