@@ -487,9 +487,9 @@ defmodule Cadet.Assessments do
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
-      |> join(:left, [a, _], g in assoc(a, :grader))
-      |> join(:inner, [a, _, _], s in Submission, a.submission_id == s.id)
-      |> join(:inner, [a, _, _, s], st in User, s.student_id == st.id)
+      |> join(:left, [a, ...], g in assoc(a, :grader))
+      |> join(:inner, [a, ...], s in assoc(a, :submission))
+      |> join(:inner, [a, _, _, s], st in assoc(s, :student))
       |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
 
     cond do
@@ -498,7 +498,7 @@ defmodule Cadet.Assessments do
 
         answers =
           answer_query
-          |> join(:inner, [_, _, _, s, _], t in subquery(students), t.id == s.student_id)
+          |> join(:inner, [..., s, _], t in subquery(students), t.id == s.student_id)
           |> Repo.all()
           |> Enum.sort_by(& &1.question.display_order)
 
