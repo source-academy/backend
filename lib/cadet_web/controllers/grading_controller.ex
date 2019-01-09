@@ -216,6 +216,7 @@ defmodule CadetWeb.GradingController do
               properties do
                 question(Schema.ref(:Question))
                 grade(Schema.ref(:Grade))
+                student(Schema.ref(:StudentInfo))
 
                 solution(
                   :string,
