@@ -62,7 +62,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "maxXp" => 4500,
-              "status" => get_assessment_status(user, &1)
+              "status" => get_assessment_status(user, &1),
+              "gradingStatus" => "none"
             }
           )
 
@@ -111,7 +112,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "maxXp" => 4500,
-              "status" => get_assessment_status(user, &1)
+              "status" => get_assessment_status(user, &1),
+              "gradingStatus" => "none"
             }
           )
 
