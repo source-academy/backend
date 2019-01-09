@@ -489,7 +489,7 @@ defmodule Cadet.Assessments do
       |> join(:inner, [a], q in assoc(a, :question))
       |> join(:left, [a, ...], g in assoc(a, :grader))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
-      |> join(:inner, [a, _, _, s], st in assoc(s, :student))
+      |> join(:inner, [a, ..., s], st in assoc(s, :student))
       |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
 
     cond do
