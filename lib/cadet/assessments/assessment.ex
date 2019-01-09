@@ -6,7 +6,7 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Assessments.{AssessmentType, Question, SubmissionStatus, GradingStatus, Upload}
+  alias Cadet.Assessments.{AssessmentType, Question, SubmissionStatus, Upload}
 
   schema "assessments" do
     field(:max_grade, :integer, virtual: true)
@@ -14,7 +14,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:max_xp, :integer, virtual: true)
     field(:xp, :integer, virtual: true, default: 0)
     field(:user_status, SubmissionStatus, virtual: true)
-    field(:grading_status, GradingStatus, virtual: true)
+    field(:grading_status, :string, virtual: true)
     field(:question_count, :integer, virtual: true)
     field(:graded_count, :integer, virtual: true)
     field(:title, :string)
