@@ -34,6 +34,7 @@ defmodule CadetWeb.GradingView do
 
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
+      student: &transform_map_for_view(&1.submission.student, [:name, :id]),
       question:
         &Map.put(
           CadetWeb.AssessmentsView.build_question(%{question: &1.question}),
