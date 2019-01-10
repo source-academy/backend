@@ -171,17 +171,46 @@ defmodule Cadet.Assessments do
         s in subquery(Query.all_submissions_with_xp_and_grade()),
         a.id == s.assessment_id and s.student_id == ^user.id
       )
-      |> select([a, s], %{
+      |> join(
+        :left,
+        [a, _],
+        q_count in subquery(Query.assessments_question_count()),
+        a.id == q_count.assessment_id
+      )
+      |> join(
+        :left,
+        [_, s, _],
+        a_count in subquery(Query.submissions_graded_count()),
+        s.id == a_count.submission_id
+      )
+      |> select([a, s, q_count, a_count], %{
         a
         | xp: fragment("? + ? + ?", s.xp, s.xp_adjustment, s.xp_bonus),
           grade: fragment("? + ?", s.grade, s.adjustment),
-          user_status: s.status
+          user_status: s.status,
+          question_count: q_count.count,
+          graded_count: a_count.count
       })
       |> where(is_published: true)
       |> order_by(:open_at)
       |> Repo.all()
+      |> Enum.map(fn assessment = %Assessment{} ->
+        %{
+          assessment
+          | grading_status:
+              build_grading_status(assessment.question_count, assessment.graded_count)
+        }
+      end)
 
     {:ok, assessments}
+  end
+
+  defp build_grading_status(q_count, g_count) do
+    cond do
+      g_count < q_count -> :grading
+      g_count == q_count -> :graded
+      true -> :none
+    end
   end
 
   def create_assessment(params) do
