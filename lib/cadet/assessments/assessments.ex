@@ -173,7 +173,7 @@ defmodule Cadet.Assessments do
       )
       |> join(
         :left,
-        [a, s],
+        [a, _],
         q_count in subquery(Query.assessments_question_count()),
         a.id == q_count.assessment_id
       )
@@ -207,7 +207,6 @@ defmodule Cadet.Assessments do
 
   defp build_grading_status(q_count, g_count) do
     cond do
-      g_count == nil || g_count == 0 -> :none
       g_count < q_count -> :grading
       g_count == q_count -> :graded
       true -> :none

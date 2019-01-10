@@ -885,25 +885,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
         type: :mission
       )
 
-    question_one = insert(:programming_question, assessment: assessment)
-    question_two = insert(:programming_question, assessment: assessment)
+    [question_one, question_two] = insert_list(2, :programming_question, assessment: assessment)
 
     user = insert(:user, role: :student)
 
     submission = insert(:submission, assessment: assessment, student: user, status: :submitted)
 
-    insert(
-      :answer,
-      submission: submission,
-      question: question_one,
-      answer: %{code: "f => f(f);"}
-    )
-
-    insert(
-      :answer,
-      submission: submission,
-      question: question_two,
-      answer: %{code: "f => f(f);"}
+    Enum.each(
+      [question_one, question_two],
+      &insert(:answer, submission: submission, question: &1, answer: %{code: "f => f(f);"})
     )
 
     get_grading_status = fn ->
