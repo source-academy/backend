@@ -119,4 +119,23 @@ defmodule Cadet.Assessments.Query do
       max_xp: sum(q.max_xp)
     })
   end
+
+  def assessments_question_count do
+    Question
+    |> group_by(:assessment_id)
+    |> select([q], %{
+      assessment_id: q.assessment_id,
+      count: count(q.id)
+    })
+  end
+
+  def submissions_graded_count do
+    Answer
+    |> where([a], not is_nil(a.grader_id))
+    |> group_by(:submission_id)
+    |> select([a], %{
+      submission_id: a.submission_id,
+      count: count(a.id)
+    })
+  end
 end

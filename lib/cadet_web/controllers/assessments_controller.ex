@@ -112,6 +112,12 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
+            gradingStatus(
+              :string,
+              "one of 'none/grading/graded' indicating whether the assessment has been fully graded",
+              required: true
+            )
+
             maxGrade(
               :integer,
               "The maximum Grade for this assessment",
