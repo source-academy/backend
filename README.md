@@ -42,7 +42,7 @@ $ mix phx.server
 ```
 
 5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can
-   also be accessed at http://localhost:4000/.
+   also be accessed at http://localhost:4000/swagger.
 
 
 ### Obtaining `access_token` in dev environment
