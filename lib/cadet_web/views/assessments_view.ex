@@ -90,7 +90,9 @@ defmodule CadetWeb.AssessmentsView do
     transform_map_for_view(question, %{
       id: :id,
       type: :type,
-      library: &build_library(%{library: &1.library})
+      library: &build_library(%{library: &1.library}),
+      maxXp: :max_xp,
+      maxGrade: :max_grade
     })
   end
 

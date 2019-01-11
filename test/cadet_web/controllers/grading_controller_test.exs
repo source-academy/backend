@@ -238,12 +238,12 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code
                 },
                 "solution" => &1.question.question.solution,
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
@@ -275,6 +275,8 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
                   "choices" =>
@@ -287,8 +289,6 @@ defmodule CadetWeb.GradingControllerTest do
                     end
                 },
                 "solution" => "",
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
@@ -344,12 +344,12 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code
                 },
                 "solution" => &1.question.question.solution,
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
@@ -381,6 +381,8 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
                   "choices" =>
@@ -393,8 +395,6 @@ defmodule CadetWeb.GradingControllerTest do
                     end
                 },
                 "solution" => "",
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
@@ -632,12 +632,12 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code
                 },
                 "solution" => &1.question.question.solution,
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
@@ -671,6 +671,8 @@ defmodule CadetWeb.GradingControllerTest do
                   },
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "choices" =>
                     for choice <- &1.question.question.choices do
                       %{
@@ -681,8 +683,6 @@ defmodule CadetWeb.GradingControllerTest do
                     end
                 },
                 "solution" => "",
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
