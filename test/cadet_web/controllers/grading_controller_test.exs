@@ -1,7 +1,7 @@
 defmodule CadetWeb.GradingControllerTest do
   use CadetWeb.ConnCase
 
-  alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
   alias CadetWeb.GradingController
 
@@ -29,6 +29,13 @@ defmodule CadetWeb.GradingControllerTest do
   describe "POST /:submissionid/:questionid, unauthenticated" do
     test "unauthorized", %{conn: conn} do
       conn = post(conn, build_url(1, 3), %{})
+      assert response(conn, 401) =~ "Unauthorised"
+    end
+  end
+
+  describe "GET /:submissionid/unsubmit, unauthenticated" do
+    test "unauthorized", %{conn: conn} do
+      conn = post(conn, build_url_unsubmit(1))
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
@@ -68,6 +75,14 @@ defmodule CadetWeb.GradingControllerTest do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, build_url(1, 3), %{})
       assert response(conn, 400) =~ "Missing parameter"
+    end
+  end
+
+  describe "GET /:submissionid/unsubmit, student" do
+    @tag authenticate: :student
+    test "unauthorized", %{conn: conn} do
+      conn = post(conn, build_url_unsubmit(1))
+      assert response(conn, 403) =~ "User is not permitted to unsubmit questions"
     end
   end
 
@@ -514,6 +529,162 @@ defmodule CadetWeb.GradingControllerTest do
     end
   end
 
+  describe "POST /:submissionid/unsubmit, staff" do
+    @tag authenticate: :staff
+    test "succeeds", %{conn: conn} do
+      %{grader: grader, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :submitted)
+
+      answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"}
+        )
+
+      conn
+      |> sign_in(grader)
+      |> post(build_url_unsubmit(submission.id))
+      |> response(200)
+
+      submission_db = Repo.get(Submission, submission.id)
+      answer_db = Repo.get(Answer, answer.id)
+
+      assert submission_db.status == :attempted
+
+      assert answer_db.comment == nil
+      assert answer_db.autograding_status == :none
+      assert answer_db.autograding_errors == []
+      assert answer_db.grader_id == nil
+      assert answer_db.xp == 0
+      assert answer_db.xp_adjustment == 0
+      assert answer_db.grade == 0
+      assert answer_db.adjustment == 0
+    end
+
+    @tag authenticate: :staff
+    test "assessments which have not been submitted should not be allowed to unsubmit", %{
+      conn: conn
+    } do
+      %{grader: grader, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :attempted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> sign_in(grader)
+        |> post(build_url_unsubmit(submission.id))
+
+      assert response(conn, 400) =~ "Assessment has not been submitted"
+    end
+
+    @tag authenticate: :staff
+    test "assessment that is not open anymore cannot be unsubmited", %{conn: conn} do
+      %{grader: grader, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: 1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :submitted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> sign_in(grader)
+        |> post(build_url_unsubmit(submission.id))
+
+      assert response(conn, 403) =~ "Assessment not open"
+    end
+
+    @tag authenticate: :staff
+    test "avenger should not be allowed to unsubmit for students outside of their group", %{
+      conn: conn
+    } do
+      %{students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      other_grader = insert(:user, role: :staff)
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :submitted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> sign_in(other_grader)
+        |> post(build_url_unsubmit(submission.id))
+
+      assert response(conn, 403) =~ "Only Avenger of student is permitted to unsubmit"
+    end
+  end
+
   describe "GET /, admin" do
     @tag authenticate: :staff
     test "can see all submissions", %{conn: conn} do
@@ -733,6 +904,7 @@ defmodule CadetWeb.GradingControllerTest do
   defp build_url, do: "/v1/grading/"
   defp build_url(submission_id), do: "#{build_url()}#{submission_id}/"
   defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}#{question_id}"
+  defp build_url_unsubmit(submission_id), do: "#{build_url(submission_id)}/unsubmit"
 
   defp seed_db(conn, override_grader \\ nil) do
     grader = override_grader || conn.assigns[:current_user]

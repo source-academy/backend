@@ -47,7 +47,10 @@ defmodule Cadet.Assessments.Answer do
   @spec grading_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def grading_changeset(answer, params) do
     answer
-    |> cast(params, ~w(grader_id xp_adjustment adjustment comment)a)
+    |> cast(
+      params,
+      ~w(grader_id xp xp_adjustment grade adjustment autograding_errors autograding_status comment)a
+    )
     |> add_belongs_to_id_from_model(:grader, params)
     |> foreign_key_constraint(:grader_id)
     |> validate_xp_grade_adjustment_total()

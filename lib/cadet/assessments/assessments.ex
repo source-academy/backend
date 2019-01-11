@@ -440,14 +440,15 @@ defmodule Cadet.Assessments do
               {:ok, _} ->
                 {:cont,
                  answer
-                 |> Answer.changeset(%{
+                 |> Answer.grading_changeset(%{
                    grade: 0,
                    adjustment: 0,
                    xp: 0,
                    xp_adjustment: 0,
                    autograding_status: :none,
                    autograding_errors: [],
-                   comment: nil
+                   comment: nil,
+                   grader_id: nil
                  })
                  |> Repo.update()}
             end
@@ -468,6 +469,9 @@ defmodule Cadet.Assessments do
 
         {:status, :attempted} ->
           {:error, {:bad_request, "Assessment has not been submitted"}}
+
+        {:avenger_of?, false} ->
+          {:error, {:forbidden, "Only Avenger of student is permitted to unsubmit"}}
 
         _ ->
           {:error, {:internal_server_error, "Please try again later."}}
