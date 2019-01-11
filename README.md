@@ -59,6 +59,14 @@ For more information, run
 $ mix help cadet.token
 ```
 
+### Handling CORS Preflight Request
+
+We recommend setting up nginx to handle preflight checks using the following 
+[config file](https://github.com/source-academy/tools/blob/master/demo-assessments/templates/nginx.conf).
+
+If you do this, do remember to point cadet-frontend to port `4001` instead of `4000`
+
+
 ### Style Guide
 
 We follow this style guide: https://github.com/lexmag/elixir-style-guide and https://github.com/christopheradams/elixir_style_guide
@@ -68,7 +76,7 @@ Where there is a conflict between the two, the first one (lexmag) shall be the o
 
 ## Entity-Relationship Diagram
 
-Last generated on 13 September 2018
+Last generated on 1 January 2019
 
 ![Entity-Relationship Diagram for cadet](schema.png)
 

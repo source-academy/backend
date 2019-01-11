@@ -112,6 +112,12 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
+            gradingStatus(
+              :string,
+              "one of 'none/grading/graded' indicating whether the assessment has been fully graded",
+              required: true
+            )
+
             maxGrade(
               :integer,
               "The maximum Grade for this assessment",
@@ -187,10 +193,25 @@ defmodule CadetWeb.AssessmentsController do
               "The library used for this question"
             )
 
-            solution_template(:string, "Solution template for programming questions")
+            solutionTemplate(:string, "Solution template for programming questions")
+
+            grader(Schema.ref(:GraderInfo))
+            gradedAt(:string, "Last graded at", format: "date-time", required: false)
 
             xp(:integer, "Final XP given to this question. Only provided for students.")
             grade(:integer, "Final grade given to this question. Only provided for students.")
+
+            maxGrade(
+              :integer,
+              "The max grade for this question",
+              required: true
+            )
+
+            maxXp(
+              :integer,
+              "The max xp for this question",
+              required: true
+            )
           end
         end,
       MCQChoice:
