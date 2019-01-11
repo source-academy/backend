@@ -70,4 +70,8 @@ defmodule CadetWeb.Router do
       swagger_file: "swagger.json"
     )
   end
+
+  scope "/", CadetWeb do
+    get("/", DefaultController, :index)
+  end
 end
