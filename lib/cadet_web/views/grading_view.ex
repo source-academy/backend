@@ -42,8 +42,6 @@ defmodule CadetWeb.GradingView do
           &1.answer["code"] || &1.answer["choice_id"]
         ),
       solution: &(&1.question.question["solution"] || ""),
-      maxGrade: & &1.question.max_grade,
-      maxXp: & &1.question.max_xp,
       grade: &build_grade/1
     })
   end
