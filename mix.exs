@@ -65,7 +65,7 @@ defmodule Cadet.Mixfile do
       {:plug_cowboy, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.3.0"},
-      {:que, "~> 0.5.0"},
+      {:que, "~> 0.8.0"},
       {:sentry, "~> 6.4"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
