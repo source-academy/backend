@@ -43,7 +43,7 @@ defmodule Cadet.Application do
         children
       end
 
-    :ok = :error_logger.add_report_handler(Sentry.Logger)
+    {:ok, _} = Logger.add_backend(Sentry.LoggerBackend)
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
