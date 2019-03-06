@@ -56,7 +56,7 @@ defmodule Cadet.Mixfile do
       {:guardian, "~> 1.0"},
       {:guardian_db, "~> 1.0"},
       {:httpoison, "~> 1.0", override: true},
-      {:inch_ex, "~> 1.0", only: [:dev, :test]},
+      {:inch_ex, "~> 2.0", only: [:dev, :test]},
       {:jason, "~> 1.1"},
       {:jsx, "~> 2.8"},
       {:phoenix, "~> 1.4.0"},
@@ -65,8 +65,8 @@ defmodule Cadet.Mixfile do
       {:plug_cowboy, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.3.0"},
-      {:que, "~> 0.5.0"},
-      {:sentry, "~> 6.4"},
+      {:que, "~> 0.8.0"},
+      {:sentry, "~> 7.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
       {:timex_ecto, "~> 3.0"},
@@ -80,7 +80,9 @@ defmodule Cadet.Mixfile do
       {:exvcr, "~> 0.10", only: :test},
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
-      {:mock, "~> 0.3.0", only: :test}
+      {:mock, "~> 0.3.0", only: :test},
+      # TODO: Remove when que is updated to use new version of Mememto v0.3.0
+      {:memento, "~> 0.3.0", override: true}
     ]
   end
 
