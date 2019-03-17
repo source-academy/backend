@@ -10,23 +10,13 @@ Cadet is the web application powering Source Academy.
 
 ### System Requirements
 
-1. Elixir 1.6
+1. Elixir 1.8
 2. Erlang/OTP 21
 3. PostgreSQL (>= 9.6)
 
 ### Setting Up Local Development Environment
 
-1. Install Elixir dependencies
-```bash
-$ mix deps.get
-```
-
-2. Initialise development database
-```bash
-$ mix ecto.setup
-```
-
-3. Setup the developement secrets (replace the values appropriately)
+1. Setup the development secrets (replace the values appropriately)
 ```bash
 $ cp config/secrets.exs.example config/secrets.exs
 $ vim config/secrets.exs
@@ -35,6 +25,16 @@ $ vim config/secrets.exs
   - A valid `cs1101s_repository`, `cs1101s_rsa_key`, `guest_username`, and `guest_password`
     is required for the application to run with the `--updater` flag. Otherwise, the default
     values will suffice.
+
+2. Install Elixir dependencies
+```bash
+$ mix deps.get
+```
+
+3. Initialise development database
+```bash
+$ mix ecto.setup
+```
 
 4. Run the server in your local machine
 ```bash
