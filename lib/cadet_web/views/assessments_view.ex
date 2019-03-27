@@ -135,10 +135,10 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   defp build_results(%{results: results}) do
-    if !is_nil(results) do
-      &Enum.map(&1.autograding_results, fn result -> build_result(%{result: result}) end)
-    else
+    if is_nil(results) do
       results
+    else
+      &Enum.map(&1.autograding_results, fn result -> build_result(%{result: result}) end)
     end
   end
 
@@ -153,10 +153,10 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   defp build_errors(%{errors: errors}) do
-    if !is_nil(errors) do
-      &Enum.map(&1["errors"], fn error -> build_error(%{error: error}) end)
-    else
+    if is_nil(errors) do
       errors
+    else
+      &Enum.map(&1["errors"], fn error -> build_error(%{error: error}) end)
     end
   end
 
