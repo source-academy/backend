@@ -2,7 +2,7 @@
   {
     "request": {
       "body":
-        "{\"studentProgram\":\"const f = i => f(i);\",\"library\":{\"globals\":[],\"external\":{\"symbols\":[],\"name\":\"NONE\"},\"chapter\":7},\"graderPrograms\":[\"function ek0chei0y1() {\\n    return f(0) === 0 ? 1 : 0;\\n  }\\n\\n  ek0chei0y1();\",\"function ek0chei0y1() {\\n    const test1 = f(7) === 13;\\n    const test2 = f(10) === 55;\\n    const test3 = f(12) === 144;\\n    return test1 && test2 && test3 ? 4 : 0;\\n  }\\n\\n  ek0chei0y1();\"]}",
+        "{\r\n  \"library\": {\r\n    \"chapter\": 2,\r\n    \"external\": {\r\n      \"name\": \"NONE\",\r\n      \"symbols\": []\r\n    },\r\n    \"globals\": []\r\n  },\r\n  \"prependProgram\": \"\",\r\n  \"studentProgram\": \"const f = i => f(i);\",\r\n  \"postpendProgram\": \"\",\r\n  \"testCases\": [\r\n     {\r\n      \"answer\": \"1\",\r\n      \"program\": \"f(1);\",\r\n      \"score\": 1\r\n    },\r\n    {\r\n      \"answer\": \"55\",\r\n      \"program\": \"f(10);\",\r\n      \"score\": 1\r\n    }\r\n  ]\r\n}",      
       "headers": {
         "Authorization": "hello_world",
         "host": "lambda.ap-southeast-1.amazonaws.com",
@@ -21,7 +21,7 @@
     "response": {
       "binary": false,
       "body":
-        "{\"errorMessage\":\"2018-08-09T09:55:45.692Z 6049db71-33fa-4faa-88c4-38f57b6754f3 Task timed out after 1.00 seconds\"}",
+        "{\r\n  \"totalScore\": 0,\r\n  \"results\": [\r\n    {\r\n      \"resultType\": \"error\",\r\n      \"errors\": [\r\n        {\r\n          \"errorType\": \"timeout\"\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"resultType\": \"error\",\r\n      \"errors\": [\r\n        {\r\n          \"errorType\": \"timeout\"\r\n        }\r\n      ]\r\n    }\r\n  ]\r\n}",
       "headers": {
         "Date": "Thu, 09 Aug 2018 09:55:45 GMT",
         "Content-Type": "application/json",

@@ -27,13 +27,25 @@ defmodule Cadet.Assessments.QuestionFactory do
 
       def programming_question_content_factory do
         %{
+          prepend: Faker.Pokemon.location(),
           content: Faker.Pokemon.name(),
-          solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
+          postpend: Faker.Pokemon.location(),
+          template: Faker.Lorem.Shakespeare.as_you_like_it(),
           solution: Faker.Lorem.Shakespeare.hamlet(),
-          autograder:
-            (&Faker.Lorem.Shakespeare.king_richard_iii/0)
-            |> Stream.repeatedly()
-            |> Enum.take(Enum.random(0..2))
+          public: [
+            %{
+              score: :rand.uniform(5),
+              answer: Faker.StarWars.character(),
+              program: Faker.Lorem.Shakespeare.king_richard_iii()
+            }
+          ],
+          private: [
+            %{
+              score: :rand.uniform(5),
+              answer: Faker.StarWars.character(),
+              program: Faker.Lorem.Shakespeare.king_richard_iii()
+            }
+          ]
         }
       end
 

@@ -20,6 +20,9 @@ defmodule Cadet.Autograder.LambdaWorker do
   def perform(params = %{answer: answer = %Answer{}, question: %Question{}}) do
     lambda_params = build_request_params(params)
 
+    # params |> IO.inspect()
+    # lambda_params |> IO.inspect()
+
     response =
       @lambda_name
       |> ExAws.Lambda.invoke(lambda_params, %{})
@@ -27,16 +30,12 @@ defmodule Cadet.Autograder.LambdaWorker do
 
     # If the lambda crashes, results are in the format of:
     # %{"errorMessage" => "${message}"}
-    if is_map(response) do
-      raise inspect(response)
-    else
-      result =
-        response
-        |> parse_response(lambda_params)
-        |> Map.put(:status, :success)
+    result =
+      response
+      |> parse_response()
+      |> Map.put(:status, :success)
 
-      Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
-    end
+    Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
   end
 
   def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do
@@ -55,8 +54,17 @@ defmodule Cadet.Autograder.LambdaWorker do
         result: %{
           grade: 0,
           status: :failed,
-          errors: [
-            %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
+          result: [
+            %{
+              "resultType" => "error",
+              "errors" => [
+                %{
+                  "errorType" => "systemError",
+                  "errorMessage" =>
+                    "Autograder runtime error. Please contact a system administrator"
+                }
+              ]
+            }
           ]
         }
       }
@@ -65,6 +73,7 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
     question_content = question.question
+    # |> IO.inspect()
 
     {_, upcased_name_external} =
       question.grading_library.external
@@ -75,8 +84,11 @@ defmodule Cadet.Autograder.LambdaWorker do
       )
 
     %{
-      graderPrograms: question_content["autograder"],
-      studentProgram: answer.answer["code"],
+      prependProgram: Map.get(question_content, "prepend", ""),
+      studentProgram: Map.get(answer.answer, "code"),
+      postpendProgram: Map.get(question_content, "postpend", ""),
+      testcases:
+        Map.get(question_content, "public", []) ++ Map.get(question_content, "private", []),
       library: %{
         chapter: question.grading_library.chapter,
         external: upcased_name_external,
@@ -85,23 +97,24 @@ defmodule Cadet.Autograder.LambdaWorker do
     }
   end
 
-  def parse_response(response, %{graderPrograms: grader_programs}) do
-    response
-    |> Enum.zip(grader_programs)
-    |> Enum.reduce(
-      %{grade: 0, errors: []},
-      fn {result, grader_program}, %{grade: grade, errors: errors} ->
-        if result["resultType"] == "pass" do
-          %{grade: grade + result["grade"], errors: errors}
-        else
-          error_result = %{
-            grader_program: grader_program,
-            errors: result["errors"]
+  def parse_response(response) do
+    if Map.has_key?(response, "errorMessage") do
+      %{
+        grade: 0,
+        status: :failed,
+        result: [
+          %{
+            "resultType" => "error",
+            "errors" => [
+              %{"errorType" => "systemError", "errorMessage" => response["errorMessage"]}
+            ]
           }
-
-          %{grade: grade, errors: errors ++ [error_result]}
-        end
-      end
-    )
+        ]
+      }
+    else
+      %{grade: response["totalScore"], result: response["results"], status: :success}
+    end
   end
 end
+
+# ############# EDIT CASSETTE #############

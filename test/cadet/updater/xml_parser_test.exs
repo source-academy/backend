@@ -40,7 +40,7 @@ defmodule Cadet.Updater.XMLParserTest do
     test "XML Parser happy path", %{assessments: assessments, questions: questions} do
       for assessment <- assessments do
         xml = XMLGenerator.generate_xml_for(assessment, questions)
-
+        # xml |> IO.inspect()
         assert XMLParser.parse_xml(xml) == :ok
 
         number = assessment.number
@@ -66,6 +66,8 @@ defmodule Cadet.Updater.XMLParserTest do
           |> Repo.all()
 
         for {question, question_db} <- Enum.zip(questions, questions_db) do
+          # question |> IO.inspect()
+          # question_db |> IO.inspect()
           assert_map_keys(
             Map.from_struct(question_db),
             Map.from_struct(question),
@@ -357,6 +359,20 @@ defmodule Cadet.Updater.XMLParserTest do
   defp stringify(string) when is_binary(string), do: string
 
   defp assert_map_keys(map1, map2, keys) when is_map(map1) and is_map(map2) do
+    # POSSIBLE ISSUE OF NIL KEYS NOT BEING ASSERTED PROPERLY?
+
+    # "############ MAP 1 ############"
+    # |> IO.inspect
+
+    # map1
+    # |> IO.inspect
+
+    # "############ MAP 2 ############"
+    # |> IO.inspect
+
+    # map2
+    # |> IO.inspect
+
     for key <- keys do
       assert_error_message =
         "key: #{inspect(key)}, map1[key]: #{inspect(map1[key])}, map2[key]: #{inspect(map2[key])}"

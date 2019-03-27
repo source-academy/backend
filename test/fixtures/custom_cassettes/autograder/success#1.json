@@ -2,7 +2,7 @@
   {
     "request": {
       "body":
-        "{\"studentProgram\":\"const f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);\",\"library\":{\"globals\":[],\"external\":{\"symbols\":[],\"name\":\"NONE\"},\"chapter\":9},\"graderPrograms\":[\"function ek0chei0y1() {\\n    return f(0) === 0 ? 1 : 0;\\n  }\\n\\n  ek0chei0y1();\",\"function ek0chei0y1() {\\n    const test1 = f(7) === 13;\\n    const test2 = f(10) === 55;\\n    const test3 = f(12) === 144;\\n    return test1 && test2 && test3 ? 4 : 0;\\n  }\\n\\n  ek0chei0y1();\"]}",
+        "{\r\n  \"library\": {\r\n    \"chapter\": 2,\r\n    \"external\": {\r\n      \"name\": \"NONE\",\r\n      \"symbols\": []\r\n    },\r\n    \"globals\": []\r\n  },\r\n  \"prependProgram\": \"\",\r\n  \"studentProgram\": \"const f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);\",\r\n  \"postpendProgram\": \"\",\r\n  \"testCases\": [\r\n     {\r\n      \"answer\": \"1\",\r\n      \"program\": \"f(1);\",\r\n      \"score\": 1\r\n    },\r\n    {\r\n      \"answer\": \"55\",\r\n      \"program\": \"f(10);\",\r\n      \"score\": 1\r\n    }\r\n  ]\r\n}",
       "headers": {
         "Authorization":
           "AWS4-HMAC-SHA256 Credential=AKIAIAHN5DV7RTRUVP6A/20180809/ap-southeast-1/lambda/aws4_request,SignedHeaders=content-type;host;x-amz-content-sha256;x-amz-date,Signature=5bb3b478cc5669bfd3a6188dd7a72590fd71b0f557673dec67b6b3bc81b3dd94",
@@ -22,7 +22,7 @@
     "response": {
       "binary": false,
       "body":
-        "[{\"resultType\":\"pass\",\"grade\":1},{\"resultType\":\"pass\",\"grade\":4}]",
+        "{\r\n  \"totalScore\": 2,\r\n  \"results\": [\r\n    {\r\n      \"resultType\": \"pass\",\r\n      \"score\": 1\r\n    },\r\n    {\r\n      \"resultType\": \"pass\",\r\n      \"score\": 1\r\n    }\r\n  ]\r\n}",
       "headers": {
         "Date": "Thu, 09 Aug 2018 09:50:53 GMT",
         "Content-Type": "application/json",
