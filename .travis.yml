@@ -20,3 +20,6 @@ script:
   - mix credo
   - mix inch.report
   - mix format --check-formatted
+branches:
+  only:
+    - master
