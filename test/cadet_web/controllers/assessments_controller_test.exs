@@ -248,7 +248,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "id" => &1.id,
                 "type" => "#{&1.type}",
                 "content" => &1.question.content,
-                "template" => &1.question.template,
+                "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
                 "postpend" => &1.question.postpend,
                 "testcases" =>

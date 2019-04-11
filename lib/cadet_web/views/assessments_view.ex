@@ -192,7 +192,7 @@ defmodule CadetWeb.AssessmentsView do
         transform_map_for_view(question, %{
           content: "content",
           prepend: "prepend",
-          template: "template",
+          solutionTemplate: "template",
           postpend: "postpend",
           testcases:
             &Enum.map(&1["public"], fn testcase -> build_testcase(%{testcase: testcase}) end)

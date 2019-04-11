@@ -236,7 +236,7 @@ defmodule CadetWeb.GradingControllerTest do
                         for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
                       end
                     ),
-                  "template" => &1.question.question.template,
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
@@ -351,7 +351,7 @@ defmodule CadetWeb.GradingControllerTest do
                         for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
                       end
                     ),
-                  "template" => &1.question.question.template,
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
@@ -648,7 +648,7 @@ defmodule CadetWeb.GradingControllerTest do
                         for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
                       end
                     ),
-                  "template" => &1.question.question.template,
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
