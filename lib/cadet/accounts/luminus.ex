@@ -66,7 +66,6 @@ defmodule Cadet.Accounts.Luminus do
       {:ok, %{status_code: 400}} ->
         # LumiNUS responds with 400 if APIKey is invalid
         {:error, :bad_request}
-
     end
   end
 

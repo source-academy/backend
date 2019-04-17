@@ -1,0 +1,27 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Ocp-Apim-Subscription-Key": "",
+        "Authorization": "Bearer t0k3n"
+      },
+      "method": "get",
+      "options": [],
+      "request_body": "",
+      "url": "https://luminus.azure-api.net/module?"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Content-Length": "0",
+        "Request-Context": "appId=cid-v1:39c1440f-8bb9-4f84-8e1a-9632485a2390",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Wed, 17 Apr 2019 17:18:38 GMT"
+      },
+      "status_code": 401,
+      "type": "ok"
+    }
+  }
+]
