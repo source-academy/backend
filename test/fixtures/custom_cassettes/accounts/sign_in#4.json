@@ -2,52 +2,26 @@
   {
     "request": {
       "body": "",
-      "headers": [],
-      "method": "get",
-      "options": [],
-      "request_body": "",
-      "url": "~r/https://ivle.nus.edu.sg/api/Lapi.svc/UserName_Get.*/"
-    },
-    "response": {
-      "binary": false,
-      "body": "\"Evit Areti\"",
       "headers": {
-        "Cache-Control": "private",
-        "Content-Type": "application/json",
-        "Server": "Microsoft-IIS/8.5",
-        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
-        "Set-Cookie": "ASP.NET_SessionId=fnv34x442q05f44zvblbdvhk; path=/; HttpOnly",
-        "X-AspNet-Version": "4.0.30319",
-        "X-Powered-By": "ASP.NET",
-        "Date": "Tue, 26 Jun 2018 09:15:22 GMT",
-        "Content-Length": "12"
+        "Ocp-Apim-Subscription-Key": "",
+        "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6ImEzck1VZ01Gdjl0UGNsTGE2eUYzekFrZnF1RSIsImtpZCI6ImEzck1VZ01Gdjl0UGNsTGE2eUYzekFrZnF1RSJ9.eyJpc3MiOiJodHRwczovL2x1bWludXMubnVzLmVkdS5zZy92Mi9hdXRoIiwiYXVkIjoiaHR0cHM6Ly9sdW1pbnVzLm51cy5lZHUuc2cvdjIvYXV0aC9yZXNvdXJjZXMiLCJleHAiOjE1NTU0MjcyMzcsIm5iZiI6MTU1NTQyMzYzNywiY2xpZW50X2lkIjoibnVzX2FwcHMiLCJzY29wZSI6InByb2ZpbGUiLCJzdWIiOiI3ZWYzNjhkMy05NjU4LTQzOWQtYTIwNC1lY2RiZmFjYjc0ZGYiLCJhdXRoX3RpbWUiOjE1NTU0MjAwNjQsImlkcCI6Imlkc3J2IiwiZ2l2ZW5fbmFtZSI6IkxJT1cgSklBIENIRU4iLCJpZCI6ImUwMzEwODE3Iiwicm9sZSI6WyJTdHVkZW50IiwiRGFzaGJvYXJkTmV3c1N0dWRlbnQuVmlldyJdLCJhbXIiOlsicGFzc3dvcmQiXX0.gyhb3qFb2bIMxvndGa-xpHoVODFlzFFh00XkT5VCcrvXcv7S1N06Hw_ZOexQC36QwaC9KlAm5Lc8GI28KmsFVTr0WxuyQC9h6AB76ctu4eKxMNrL2PZ_BSWFsaARM5hi65HouYcBDuDDX5tHPSWRClad0ylFFbeyp0auvoE2zbLtVZr8LBl2d7K7smPQ-dOgKzJgWMMzMmiwkJ_Ff8uWBW8Dgd3GAfFelSTzZmnx-AavVCVRGKQgjnscjqW6UKiltztUmnzwZsbXqqqz3awR2tQ82bUvtUKO353pWqCQH-Btu-gvWBWRDSsdjrsxGAkzMb9Bc8XTkx1FyLEivFBZJg"
       },
-      "status_code": 200,
-      "type": "ok"
-    }
-  },
-  {
-    "request": {
-      "body": "",
-      "headers": [],
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "~r/https://ivle.nus.edu.sg/api/Lapi.svc/Modules.*/"
+      "url": "https://luminus.azure-api.net/module?"
     },
     "response": {
       "binary": false,
-      "body": "{\"Results\":[{\"Announcements\":[],\"Forums\":[],\"Workbins\":[],\"Webcasts\":[],\"Gradebooks\":[],\"Polls\":[],\"Multimedia\":[],\"LessonPlan\":[],\"ID\":\"a6579f36-4d7d-41fb-b394-92a00b78148b\",\"CourseLevel\":\"1\",\"CourseCode\":\"CS1101S\",\"CourseName\":\"PROGRAMMING METHODOLOGY\",\"CourseDepartment\":\"\",\"CourseSemester\":\"Semester 1\",\"CourseAcadYear\":\"2018/2019\",\"CourseOpenDate\":\"\\/Date(1526486400000+0800)\\/\",\"CourseOpenDate_js\":\"2018-05-17T00:00:00\",\"CourseCloseDate\":\"\\/Date(1545494340000+0800)\\/\",\"CourseCloseDate_js\":\"2018-12-22T23:59:00\",\"CourseMC\":\"0\",\"isActive\":\"Y\",\"Permission\":\"O\",\"Creator\":{\"UserID\":\"dcsmjh\",\"Name\":\"Martin Henz\",\"Email\":null,\"Title\":null,\"UserGuid\":\"4dce39fc-432c-4e4c-aef1-8bb187fcbcc0\",\"AccountType\":null,\"Photo\":null},\"hasGradebookItems\":false,\"hasTimetableItems\":false,\"hasGroupsItems\":false,\"hasClassGroupsForSignUp\":false,\"hasGuestRosterItems\":false,\"hasClassRosterItems\":false,\"hasWeblinkItems\":false,\"hasLecturerItems\":false,\"hasDescriptionItems\":false,\"hasReadingItems\":false,\"hasAnnouncementItems\":false,\"hasProjectGroupItems\":false,\"hasProjectGroupsForSignUp\":false,\"hasConsultationItems\":false,\"hasConsultationSlotsForSignUp\":false,\"hasLessonPlanItems\":false,\"Badge\":3,\"BadgeAnnouncement\":3,\"WebLinks\":[],\"Lecturers\":[],\"Descriptions\":[],\"ReadingFormatted\":[],\"ReadingUnformatted\":[]}],\"Comments\":\"Valid login!\",\"LastUpdate\":\"\\/Date(1530004522754+0800)\\/\",\"LastUpdate_js\":\"2018-06-26T17:15:22.7548599+08:00\"}",
+      "body": "{\"status\":\"success\",\"code\":200,\"total\":5,\"offset\":0,\"data\":[{\"id\":\"57290e55-335a-4c09-b904-a795572d6cda\",\"createdDate\":\"2019-02-21T17:38:57.437+08:00\",\"creatorID\":\"4dce39fc-432c-4e4c-aef1-8bb187fcbcc0\",\"lastUpdatedDate\":\"2019-04-09T12:59:58.673+08:00\",\"lastUpdatedBy\":\"4dce39fc-432c-4e4c-aef1-8bb187fcbcc0\",\"name\":\"CS1101S\",\"startDate\":\"2019-02-21T17:37:27.277+08:00\",\"endDate\":\"2020-01-04T23:59:00+08:00\",\"publish\":true,\"parentID\":\"57290e55-335a-4c09-b904-a795572d6cda\",\"resourceID\":\"00000000-0000-0000-0000-000000000000\",\"access\":{\"access_Full\":true,\"access_Read\":true,\"access_Create\":true,\"access_Update\":true,\"access_Delete\":true,\"access_Settings_Read\":true,\"access_Settings_Update\":true},\"courseName\":\"Programming Methodology\",\"facultyCode\":\"39\",\"departmentCode\":\"252\",\"term\":\"1910\",\"acadCareer\":\"UGRD\",\"courseSearchable\":true,\"allowAnonFeedback\":\"N\",\"displayLibGuide\":false,\"copyFromID\":\"8722e9a5-abc5-4160-820d-bf69d8a63c6f\",\"l3\":false,\"enableLearningFlow\":false,\"usedNusCalendar\":false,\"isCorporateCourse\":false},{\"id\":\"0b4a75e2-1ab2-49a7-a3ed-1e612dd42880\",\"createdDate\":\"2018-12-29T00:22:38.65+08:00\",\"creatorID\":\"27d31529-8a25-42c3-b160-4e9e79c73a2d\",\"lastUpdatedDate\":\"2019-03-08T20:20:36.72+08:00\",\"lastUpdatedBy\":\"27d31529-8a25-42c3-b160-4e9e79c73a2d\",\"name\":\"MA1101R\",\"startDate\":\"2018-12-29T00:21:08.173+08:00\",\"endDate\":\"2019-05-25T11:59:00+08:00\",\"publish\":true,\"parentID\":\"0b4a75e2-1ab2-49a7-a3ed-1e612dd42880\",\"resourceID\":\"00000000-0000-0000-0000-000000000000\",\"access\":{\"access_Full\":false,\"access_Read\":true,\"access_Create\":false,\"access_Update\":false,\"access_Delete\":false,\"access_Settings_Read\":false,\"access_Settings_Update\":false},\"courseName\":\"Linear Algebra I\",\"facultyCode\":\"32\",\"departmentCode\":\"146\",\"term\":\"1820\",\"acadCareer\":\"UGRD\",\"courseSearchable\":true,\"allowAnonFeedback\":\"N\",\"displayLibGuide\":false,\"copyFromID\":\"00000000-0000-0000-0000-000000000000\",\"l3\":false,\"enableLearningFlow\":true,\"usedNusCalendar\":false,\"isCorporateCourse\":false},{\"id\":\"fcf16e75-d357-4107-933e-b9205ec6e0a7\",\"createdDate\":\"2019-01-08T18:59:59.53+08:00\",\"creatorID\":\"6f91c682-d6d4-4018-9695-2b5866ee059e\",\"lastUpdatedDate\":\"2019-01-08T19:00:23.907+08:00\",\"lastUpdatedBy\":\"6f91c682-d6d4-4018-9695-2b5866ee059e\",\"name\":\"CS1231\",\"startDate\":\"2019-01-08T18:59:36.877+08:00\",\"endDate\":\"2019-05-25T23:59:00+08:00\",\"publish\":true,\"parentID\":\"fcf16e75-d357-4107-933e-b9205ec6e0a7\",\"resourceID\":\"00000000-0000-0000-0000-000000000000\",\"access\":{\"access_Full\":false,\"access_Read\":true,\"access_Create\":false,\"access_Update\":false,\"access_Delete\":false,\"access_Settings_Read\":false,\"access_Settings_Update\":false},\"courseName\":\"Discrete Structures\",\"facultyCode\":\"39\",\"departmentCode\":\"252\",\"term\":\"1820\",\"acadCareer\":\"UGRD\",\"courseSearchable\":true,\"allowAnonFeedback\":\"N\",\"displayLibGuide\":true,\"copyFromID\":\"00000000-0000-0000-0000-000000000000\",\"l3\":false,\"enableLearningFlow\":true,\"usedNusCalendar\":true,\"isCorporateCourse\":false},{\"id\":\"50af15da-4c10-423c-bbe8-499d3590d72f\",\"createdDate\":\"2019-01-02T09:12:16.357+08:00\",\"creatorID\":\"af295c2d-fb03-49fe-94e7-99e9a35ee389\",\"lastUpdatedDate\":\"2019-01-02T09:12:32.007+08:00\",\"lastUpdatedBy\":\"af295c2d-fb03-49fe-94e7-99e9a35ee389\",\"name\":\"CS2040\",\"startDate\":\"2019-01-02T09:11:03.64+08:00\",\"endDate\":\"2019-05-25T23:59:00+08:00\",\"publish\":true,\"parentID\":\"50af15da-4c10-423c-bbe8-499d3590d72f\",\"resourceID\":\"00000000-0000-0000-0000-000000000000\",\"access\":{\"access_Full\":false,\"access_Read\":true,\"access_Create\":false,\"access_Update\":false,\"access_Delete\":false,\"access_Settings_Read\":false,\"access_Settings_Update\":false},\"courseName\":\"Data Structures and Algorithms\",\"facultyCode\":\"39\",\"departmentCode\":\"252\",\"term\":\"1820\",\"acadCareer\":\"UGRD\",\"courseSearchable\":true,\"allowAnonFeedback\":\"N\",\"displayLibGuide\":true,\"copyFromID\":\"00000000-0000-0000-0000-000000000000\",\"l3\":false,\"enableLearningFlow\":true,\"usedNusCalendar\":true,\"isCorporateCourse\":false},{\"id\":\"087b320f-aeb8-4cb9-92d9-59a0f0845043\",\"createdDate\":\"2019-01-02T09:07:43.09+08:00\",\"creatorID\":\"fd9cc1ac-826c-4755-a027-bc7fee923d1a\",\"lastUpdatedDate\":\"2019-01-02T09:07:43.09+08:00\",\"lastUpdatedBy\":\"fd9cc1ac-826c-4755-a027-bc7fee923d1a\",\"name\":\"CS2030\",\"startDate\":\"2019-01-02T09:07:30.1+08:00\",\"endDate\":\"2019-05-25T23:59:00+08:00\",\"publish\":true,\"parentID\":\"087b320f-aeb8-4cb9-92d9-59a0f0845043\",\"resourceID\":\"00000000-0000-0000-0000-000000000000\",\"access\":{\"access_Full\":false,\"access_Read\":true,\"access_Create\":false,\"access_Update\":false,\"access_Delete\":false,\"access_Settings_Read\":false,\"access_Settings_Update\":false},\"courseName\":\"Programming Methodology II\",\"facultyCode\":\"39\",\"departmentCode\":\"252\",\"term\":\"1820\",\"acadCareer\":\"UGRD\",\"courseSearchable\":true,\"allowAnonFeedback\":\"N\",\"displayLibGuide\":true,\"copyFromID\":\"00000000-0000-0000-0000-000000000000\",\"l3\":false,\"enableLearningFlow\":true,\"usedNusCalendar\":false,\"isCorporateCourse\":false}]}",
       "headers": {
-        "Cache-Control": "private",
-        "Content-Type": "application/json",
-        "Server": "Microsoft-IIS/8.5",
-        "Request-Context": "appId=cid-v1:9bebd252-0be2-48b7-a1db-8e2b70524944",
-        "Set-Cookie": "ASP.NET_SessionId=ib0aeoyf5y52wewqnqap3vki; path=/; HttpOnly",
-        "X-AspNet-Version": "4.0.30319",
+        "Cache-Control": "no-store,no-cache",
+        "Pragma": "no-cache",
+        "Transfer-Encoding": "chunked",
+        "Content-Type": "application/json; charset=utf-8",
+        "Request-Context": "appId=cid-v1:39c1440f-8bb9-4f84-8e1a-9632485a2390",
         "X-Powered-By": "ASP.NET",
-        "Date": "Tue, 26 Jun 2018 09:15:22 GMT",
-        "Content-Length": "1423"
+        "Date": "Tue, 16 Apr 2019 14:07:18 GMT"
       },
       "status_code": 200,
       "type": "ok"

@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.Form.Registration do
   @moduledoc """
   The Accounts.Form entity represents an entry from a /auth call, where the
-  IVLE authentication token corresponds to a user who has not been registered
+  LumiNUS authentication token corresponds to a user who has not been registered
   in our database.
   """
 

@@ -1,21 +1,20 @@
 defmodule CadetWeb.AuthControllerTest do
   @moduledoc """
   Some tests in this module use pre-recorded HTTP responses saved by ExVCR.
-  this allows testing without the use of actual external IVLE API calls.
+  this allows testing without the use of actual external LumiNUS API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set the config variables `:ivle_key` (used as a module attribute in
-  `Cadet.Accounts.IVLE`) and environment variable TOKEN (used here). Don't
+  to set the config variables `luminus_api_key`, `luminus_client_id`,
+  `luminus_client_secret` and `luminus_redirect_url` (used as a module attribute
+  in `Cadet.Accounts.Luminus`) and environment variable CODE (used here). Don't
   forget to delete the cassette files, otherwise ExVCR will not override the
-  cassettes. You can set the TOKEN environment variable like so,
+  cassettes. You can set the CODE environment variable like so,
 
-    TOKEN=very_long_token_here mix test
+    CODE=auth_code_goes_here
 
-  Token refers to the user's authentication token. Please see the IVLE API docs:
-  https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
-  To quickly obtain a token, simply supply a dummy url to a login call:
-      https://ivle.nus.edu.sg/api/login/?apikey=YOUR_API_KEY&url=http://localhost
-  then copy down the token from your browser's address bar.
+  Code refers to the authorization code generated via the OAuth Authorization Grant Type.
+  More information can be found here
+  https://wiki.nus.edu.sg/pages/viewpage.action?pageId=235638755.
   """
 
   use CadetWeb.ConnCase
@@ -26,7 +25,7 @@ defmodule CadetWeb.AuthControllerTest do
   alias Cadet.Auth.Guardian
   alias CadetWeb.AuthController
 
-  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
+  @token if System.get_env("CODE"), do: System.get_env("CODE"), else: "code"
 
   setup_all do
     HTTPoison.start()
@@ -44,7 +43,7 @@ defmodule CadetWeb.AuthControllerTest do
       use_cassette "auth_controller/v1/auth#1" do
         conn =
           post(conn, "/v1/auth", %{
-            "login" => %{"ivle_token" => @token}
+            "login" => %{"luminus_code" => @token}
           })
 
         assert response(conn, 200)
@@ -60,7 +59,7 @@ defmodule CadetWeb.AuthControllerTest do
     test "blank token", %{conn: conn} do
       conn =
         post(conn, "/v1/auth", %{
-          "login" => %{"ivle_token" => ""}
+          "login" => %{"luminus_code" => ""}
         })
 
       assert response(conn, 400) == "Missing parameter"
@@ -70,23 +69,10 @@ defmodule CadetWeb.AuthControllerTest do
       use_cassette "auth_controller/v1/auth#2" do
         conn =
           post(conn, "/v1/auth", %{
-            "login" => %{"ivle_token" => @token <> "Z"}
+            "login" => %{"luminus_code" => @token <> "Z"}
           })
 
-        assert response(conn, 400) == "Unable to fetch NUSNET ID from IVLE."
-      end
-    end
-
-    test "invalid nusnet id", %{conn: conn} do
-      # an invalid nusnet id == ~s("") is typically caught by IVLE.fetch_nusnet_id
-      # the custom cassette skips this step so that we can test Accounts.sign_in
-      use_cassette "auth_controller/v1/auth#1", custom: true do
-        conn =
-          post(conn, "/v1/auth", %{
-            "login" => %{"ivle_token" => "token"}
-          })
-
-        assert response(conn, 400) == "Unable to retrieve user"
+        assert response(conn, 400) == "Unable to fetch NUSNET ID from LumiNUS."
       end
     end
   end
