@@ -51,7 +51,7 @@ defmodule Cadet.Mixfile do
       {:ex_aws_lambda, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.3"},
-      {:floki, "~> 0.20.0"},
+      {:floki, "~> 0.21.0"},
       {:gettext, "~> 0.11"},
       {:guardian, "~> 1.0"},
       {:guardian_db, "~> 1.0"},
