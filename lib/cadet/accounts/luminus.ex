@@ -3,7 +3,8 @@ defmodule Cadet.Accounts.Luminus do
   This module provides abstractions for various LumiNUS API calls.
 
   This module depends on the config variables
-    `:luminus_api_key`, `luminus_client_secret`,  `luminus_client_secret`, `luminus_redirect_url`, being set.
+  `:luminus_api_key`, `luminus_client_secret`, `luminus_client_secret`,
+  `luminus_redirect_url`, being set.
 
   `:luminus_api_key` can be obtained from https://luminus.portal.azure-api.net/
   """
@@ -46,6 +47,17 @@ defmodule Cadet.Accounts.Luminus do
       {:ok, "12742174091894830298409823098098"}
   """
 
+  def fetch_luminus_token!(nil) do
+    "token"
+  end
+
+  def fetch_luminus_token!(code) do
+    case fetch_luminus_token(code) do
+      {:error, :bad_request} -> "token"
+      {:ok, token} -> token
+    end
+  end
+
   def fetch_luminus_token(code) do
     queries =
       %{
@@ -60,7 +72,7 @@ defmodule Cadet.Accounts.Luminus do
     headers = [{"Content-type", "application/x-www-form-urlencoded"}]
 
     case HTTPoison.post(@api_token_url, queries, headers) do
-      {:ok, %{body: body, status_code: 200}} when body != ~s("") ->
+      {:ok, %{body: body, status_code: 200}} ->
         {:ok, body |> Jason.decode!() |> Map.get("access_token")}
 
       {:ok, %{status_code: 400}} ->
@@ -89,7 +101,7 @@ defmodule Cadet.Accounts.Luminus do
 
   """
   def fetch_details(token) do
-    case api_call("user/Profile", Token: token) do
+    case api_call("user/Profile", token: token) do
       {:ok, %{"userID" => nusnet_id, "userNameOriginal" => name}} -> {:ok, nusnet_id, name}
       _ -> {:error, :bad_request}
     end
@@ -128,7 +140,7 @@ defmodule Cadet.Accounts.Luminus do
   """
 
   def fetch_role(token) do
-    case api_call("module", Token: token) do
+    case api_call("module", token: token) do
       {:ok, modules} ->
         parse_modules(modules)
 
@@ -137,34 +149,21 @@ defmodule Cadet.Accounts.Luminus do
     end
   end
 
-  defp parse_cs1101s(cs1101s) do
-    {:ok, access} = cs1101s |> Map.fetch("access")
-
-    case access do
-      %{"access_Full" => true} ->
-        {:ok, :admin}
-
-      %{"access_Create" => true} ->
-        {:ok, :staff}
-
-      %{"access_Read" => true} ->
-        {:ok, :student}
-
-      _ ->
-        {:error, :bad_request}
-    end
-  end
+  defp parse_cs1101s(%{"access" => %{"access_Full" => true}}), do: {:ok, :admin}
+  defp parse_cs1101s(%{"access" => %{"access_Create" => true}}), do: {:ok, :staff}
+  defp parse_cs1101s(%{"access" => %{"access_Read" => true}}), do: {:ok, :student}
+  defp parse_cs1101s(_), do: {:error, :bad_request}
 
   defp parse_modules(modules) do
     cs1101s =
       modules["data"]
       |> Enum.find(fn module ->
-        module["name"] == "CS1101S" and
-          module["id"] != "00000000-0000-0000-0000-000000000000"
+        # TODO: we need to check if module is active
+        module["name"] == "CS1101S"
       end)
 
     case cs1101s do
-      nil -> {:error, :bad_request}
+      nil -> {:error, :forbidden}
       cs1101s -> parse_cs1101s(cs1101s)
     end
   end
@@ -175,8 +174,8 @@ defmodule Cadet.Accounts.Luminus do
   returns...
 
     - {:ok, body} - valid token
-    - {:error, :internal_server_error} - Invalid API key
-    - {:error, :bad_request} - Invalid token
+    - {:error, :internal_server_error} - server side error
+    - {:error, :bad_request} - invalid token
 
   ## Parameters
 
@@ -184,15 +183,15 @@ defmodule Cadet.Accounts.Luminus do
     - queries: [Keyword], key-value pair of parameters to send
 
   """
-  def api_call(method, queries \\ [], Token: token) do
-    headers = [{'Ocp-Apim-Subscription-Key', @api_key}, {"Authorization", "Bearer #{token}"}]
+  def api_call(method, queries \\ [], token: token) do
+    headers = [{"Ocp-Apim-Subscription-Key", @api_key}, {"Authorization", "Bearer #{token}"}]
 
     case HTTPoison.get(api_url(method, queries), headers) do
-      {:ok, %{body: body, status_code: 200}} when body != ~s("") ->
+      {:ok, %{body: body, status_code: 200}} ->
         {:ok, Jason.decode!(body)}
 
       {:ok, %{status_code: 500}} ->
-        # LumiNUS responds with 500 if APIKey is invalid
+        # LumiNUS responds with 500 if there is a server error
         {:error, :internal_server_error}
 
       {:ok, %{status_code: 401}} ->
@@ -200,11 +199,7 @@ defmodule Cadet.Accounts.Luminus do
         {:error, :bad_request}
 
       {:ok, %{status_code: 404}} ->
-        # LumiNUS responds with 404 if APIKey is invalid
-        {:error, :bad_request}
-
-      {:ok, %{body: ~s(""), status_code: 200}} ->
-        # LumiNUS responds 200 with body == ~s("") if token is invalid
+        # LumiNUS responds with 404 if method is invalid
         {:error, :bad_request}
     end
   end

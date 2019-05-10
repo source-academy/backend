@@ -10,7 +10,7 @@ defmodule Cadet.Accounts.LuminusTest do
   forget to delete the cassette files, otherwise ExVCR will not override the
   cassettes. You can set the CODE environment variable like so,
 
-    CODE=auth_code_goes_here
+    CODE=auth_code_goes_here mix test
 
   Code refers to the authorization code generated via the OAuth Authorization Grant Type.
   More information can be found here
@@ -22,32 +22,24 @@ defmodule Cadet.Accounts.LuminusTest do
 
   alias Cadet.Accounts.Luminus
 
-  @token if System.get_env("CODE"),
-           do: elem(Luminus.fetch_luminus_token(System.get_env("CODE")), 1),
-           else: "token"
+  @code System.get_env("CODE") || nil
+  @token Luminus.fetch_luminus_token!(@code)
 
   setup_all do
     HTTPoison.start()
   end
 
   describe "Do an API call; methods with empty string for invalid token" do
-    test "With one parameter token" do
-      use_cassette "luminus/api_call#1" do
-        assert {:ok, resp} = Luminus.api_call("user/Profile", Token: @token)
-        assert resp != %{}
-      end
-    end
-
     test "With a valid token" do
-      use_cassette "luminus/api_call#2" do
-        assert {:ok, resp} = Luminus.api_call("module", Token: @token)
+      use_cassette "luminus/api_call#1" do
+        assert {:ok, resp} = Luminus.api_call("module", token: @token)
         assert %{"data" => _} = resp
       end
     end
 
     test "With an invalid token" do
-      use_cassette "luminus/api_call#3" do
-        assert {:error, :bad_request} = Luminus.api_call("UserName_Get", Token: @token <> "Z")
+      use_cassette "luminus/api_call#2" do
+        assert {:error, :bad_request} = Luminus.api_call("module", token: @token <> "Z")
       end
     end
   end
@@ -63,8 +55,7 @@ defmodule Cadet.Accounts.LuminusTest do
 
     test "Using an invalid token" do
       use_cassette "luminus/fetch_details#2" do
-        assert {:error, resp} = Luminus.fetch_details(@token <> "Z")
-        assert resp == :bad_request
+        assert {:error, :bad_request} = Luminus.fetch_details(@token <> "Z")
       end
     end
   end
@@ -73,7 +64,7 @@ defmodule Cadet.Accounts.LuminusTest do
     test "Using a valid token" do
       use_cassette "luminus/fetch_role#1" do
         assert {:ok, role} = Luminus.fetch_role(@token)
-        assert Enum.member?([:student, :staff, :admin], role)
+        assert role in [:student, :staff, :admin]
       end
     end
 
@@ -97,7 +88,7 @@ defmodule Cadet.Accounts.LuminusTest do
       end
     end
 
-    test ~s(Permission "S" maps to :student) do
+    test ~s(Read access maps to :student) do
       use_cassette "luminus/fetch_role#5", custom: true do
         assert {:ok, :student} = Luminus.fetch_role(@token)
       end

@@ -10,7 +10,7 @@ defmodule CadetWeb.AuthControllerTest do
   forget to delete the cassette files, otherwise ExVCR will not override the
   cassettes. You can set the CODE environment variable like so,
 
-    CODE=auth_code_goes_here
+    CODE=auth_code_goes_here mix test
 
   Code refers to the authorization code generated via the OAuth Authorization Grant Type.
   More information can be found here
@@ -25,7 +25,7 @@ defmodule CadetWeb.AuthControllerTest do
   alias Cadet.Auth.Guardian
   alias CadetWeb.AuthController
 
-  @token if System.get_env("CODE"), do: System.get_env("CODE"), else: "code"
+  @code System.get_env("CODE") || "code"
 
   setup_all do
     HTTPoison.start()
@@ -43,7 +43,7 @@ defmodule CadetWeb.AuthControllerTest do
       use_cassette "auth_controller/v1/auth#1" do
         conn =
           post(conn, "/v1/auth", %{
-            "login" => %{"luminus_code" => @token}
+            "login" => %{"luminus_code" => @code}
           })
 
         assert response(conn, 200)
@@ -56,7 +56,7 @@ defmodule CadetWeb.AuthControllerTest do
       assert response(conn, 400) == "Missing parameter"
     end
 
-    test "blank token", %{conn: conn} do
+    test "blank code", %{conn: conn} do
       conn =
         post(conn, "/v1/auth", %{
           "login" => %{"luminus_code" => ""}
@@ -65,11 +65,11 @@ defmodule CadetWeb.AuthControllerTest do
       assert response(conn, 400) == "Missing parameter"
     end
 
-    test "invalid token", %{conn: conn} do
+    test "invalid code", %{conn: conn} do
       use_cassette "auth_controller/v1/auth#2" do
         conn =
           post(conn, "/v1/auth", %{
-            "login" => %{"luminus_code" => @token <> "Z"}
+            "login" => %{"luminus_code" => @code <> "Z"}
           })
 
         assert response(conn, 400) == "Unable to fetch NUSNET ID from LumiNUS."

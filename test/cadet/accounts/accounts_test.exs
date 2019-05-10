@@ -9,9 +9,11 @@ defmodule Cadet.AccountsTest do
   forget to delete the cassette files, otherwise ExVCR will not override the
   cassettes. You can set the TOKEN environment variable like so,
 
-    CODE=auth_code_goes_here
+    CODE=auth_code_goes_here mix test
 
-  Code refers to the authorization code generated via the OAuth Authorization Grant Type. More information can be found here
+  Code refers to the authorization code generated via the OAuth Authorization
+  Grant Type. More information can be found here
+
   https://wiki.nus.edu.sg/pages/viewpage.action?pageId=235638755.
   """
 
@@ -21,9 +23,8 @@ defmodule Cadet.AccountsTest do
   alias Cadet.{Accounts, Repo}
   alias Cadet.Accounts.{Query, Luminus, User}
 
-  @token if System.get_env("CODE"),
-           do: elem(Luminus.fetch_luminus_token(System.get_env("CODE")), 1),
-           else: "token"
+  @code System.get_env("CODE") || nil
+  @token Luminus.fetch_luminus_token!(@code)
 
   setup_all do
     HTTPoison.start()
@@ -166,13 +167,13 @@ defmodule Cadet.AccountsTest do
 
     test ~s(user cs1101s module is inactive) do
       use_cassette "accounts/sign_in#6", custom: true do
-        assert {:error, :bad_request} = Accounts.sign_in("e012345", "TOM", @token)
+        assert {:error, :forbidden} = Accounts.sign_in("e012345", "TOM", @token)
       end
     end
 
     test ~s(user does not read cs1101s) do
       use_cassette "accounts/sign_in#7", custom: true do
-        assert {:error, :bad_request} = Accounts.sign_in("e012345", "TOM", @token)
+        assert {:error, :forbidden} = Accounts.sign_in("e012345", "TOM", @token)
       end
     end
   end
