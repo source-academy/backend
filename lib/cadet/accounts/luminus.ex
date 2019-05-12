@@ -114,8 +114,7 @@ defmodule Cadet.Accounts.Luminus do
   returns...
 
     - {:ok, nusnet_id, name} - valid token, nusnet_id are name are strings
-    - {:error, :bad_request} - invalid token
-    - {:error, :internal_server_error} - the luminus_client_secret is invalid
+    - {:error, :bad_request} - invalid token or luminus_client_secret is invalid
 
   ## Parameters
 
@@ -137,24 +136,23 @@ defmodule Cadet.Accounts.Luminus do
   @doc """
   Get the role of the user corresponding to this token.
 
+  We check the end date of the module to ensure student is currently taking or teaching CS1101S
+  Roles:
+    student permission -> :student
+    manager / read manager permissions -> :staff
+    owner / co-owner -> :admin
+
   returns...
 
-    - {:ok, :student} - valid token, access_Full set to true
-    - {:ok, :admin} - valid token, access_Create set to true
-    - {:ok, :staff} - valid token, access_Read set to true
-    - {:error, :bad_request} - invalid token, or not taking the module
-    - {:error, :internal_server_error} - the lumiNUS_client_secret is invalid
+    - {:ok, :student} - valid token, has student permissions
+    - {:ok, :staff} - valid token, has manager or read manager permissions
+    - {:ok, :admin} - valid token, has owner or co-owner permissions
+    - {:error, :forbidden} - valid token, user does not currently read cs1101s
+    - {:error, :bad_request} - invalid token or luminus_client_secret is invalid
 
   ## Parameters
 
     - token: String, the LumiNUS authentication token
-
-  This function assumes that inactive modules have an ID of
-  `"00000000-0000-0000-0000-000000000000"`, and that there is only one active
-  module with the course code `"CS1101S"`. (So far, these assumptions have been
-  true).
-
-  (^need to check if this is still a thing in lumiNUS)
 
   ## Parameters
 
@@ -176,11 +174,6 @@ defmodule Cadet.Accounts.Luminus do
     end
   end
 
-  defp parse_cs1101s(%{"access" => @admin_access}), do: {:ok, :admin}
-  defp parse_cs1101s(%{"access" => @staff_access}), do: {:ok, :staff}
-  defp parse_cs1101s(%{"access" => @student_access}), do: {:ok, :student}
-  defp parse_cs1101s(_), do: {:error, :bad_request}
-
   defp moduleActive?(endDate) do
     Timex.before?(Timex.now(), Timex.parse!(endDate, "{ISO:Extended}"))
   end
@@ -198,7 +191,10 @@ defmodule Cadet.Accounts.Luminus do
 
     case cs1101s do
       nil -> {:error, :forbidden}
-      cs1101s -> parse_cs1101s(cs1101s)
+      %{"access" => @admin_access} -> {:ok, :admin}
+      %{"access" => @staff_access} -> {:ok, :staff}
+      %{"access" => @student_access} -> {:ok, :student}
+      _ -> {:error, :bad_request}
     end
   end
 
@@ -208,7 +204,6 @@ defmodule Cadet.Accounts.Luminus do
   returns...
 
     - {:ok, body} - valid token
-    - {:error, :internal_server_error} - server side error
     - {:error, :bad_request} - invalid token
 
   ## Parameters
