@@ -44,7 +44,7 @@ defmodule Cadet.Accounts.LuminusTest do
     end
   end
 
-  describe "Fetch an details" do
+  describe "Fetch details" do
     test "Using a valid token" do
       use_cassette "luminus/fetch_details#1" do
         assert {:ok, nusnet_id, name} = Luminus.fetch_details(@token)
@@ -76,21 +76,45 @@ defmodule Cadet.Accounts.LuminusTest do
   end
 
   describe "Map access rights to correct role" do
-    test ~s(Full Access maps to :admin) do
+    test "User does not read CS1101S" do
       use_cassette "luminus/fetch_role#3", custom: true do
-        assert {:ok, :admin} = Luminus.fetch_role(@token)
+        assert {:error, :forbidden} = Luminus.fetch_role(@token)
       end
     end
 
-    test ~s(Create Access maps to :staff) do
+    test "User no longer reads read CS1101S" do
       use_cassette "luminus/fetch_role#4", custom: true do
+        assert {:error, :forbidden} = Luminus.fetch_role(@token)
+      end
+    end
+
+    test "Student role maps to :student" do
+      use_cassette "luminus/fetch_role#5", custom: true do
+        assert {:ok, :student} = Luminus.fetch_role(@token)
+      end
+    end
+
+    test "Read Manager role maps to :staff" do
+      use_cassette "luminus/fetch_role#6", custom: true do
         assert {:ok, :staff} = Luminus.fetch_role(@token)
       end
     end
 
-    test ~s(Read access maps to :student) do
-      use_cassette "luminus/fetch_role#5", custom: true do
-        assert {:ok, :student} = Luminus.fetch_role(@token)
+    test "Manager role maps to :staff" do
+      use_cassette "luminus/fetch_role#7", custom: true do
+        assert {:ok, :staff} = Luminus.fetch_role(@token)
+      end
+    end
+
+    test "Owner/Co-owner role maps to :admin" do
+      use_cassette "luminus/fetch_role#8", custom: true do
+        assert {:ok, :admin} = Luminus.fetch_role(@token)
+      end
+    end
+
+    test "Unknown access role" do
+      use_cassette "luminus/fetch_role#9", custom: true do
+        assert {:error, :bad_request} = Luminus.fetch_role(@token)
       end
     end
   end

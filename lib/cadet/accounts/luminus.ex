@@ -9,12 +9,39 @@ defmodule Cadet.Accounts.Luminus do
   `:luminus_api_key` can be obtained from https://luminus.portal.azure-api.net/
   """
 
+  use Timex
+
   @api_key :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_api_key)
   @client_id :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_client_id)
   @client_secret :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_client_secret)
   @redirect_url :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_redirect_url)
   @api_token_url "https://luminus.nus.edu.sg/v2/auth/connect/token"
   @api_url "https://luminus.azure-api.net/"
+
+  @student_access %{
+    "access_Full" => false,
+    "access_Create" => false,
+    "access_Read" => true,
+    "access_Update" => false,
+    "access_Delete" => false,
+    "access_Settings_Read" => false,
+    "access_Settings_Update" => false
+  }
+
+  @staff_access %{
+    "access_Full" => false,
+    "access_Settings_Read" => true
+  }
+
+  @admin_access %{
+    "access_Full" => true,
+    "access_Create" => true,
+    "access_Read" => true,
+    "access_Update" => true,
+    "access_Delete" => true,
+    "access_Settings_Read" => true,
+    "access_Settings_Update" => true
+  }
 
   # Construct a valid URL with the module attributes, and given params
   # The authentication token parameter must be provided explicitly rather than
@@ -149,17 +176,24 @@ defmodule Cadet.Accounts.Luminus do
     end
   end
 
-  defp parse_cs1101s(%{"access" => %{"access_Full" => true}}), do: {:ok, :admin}
-  defp parse_cs1101s(%{"access" => %{"access_Create" => true}}), do: {:ok, :staff}
-  defp parse_cs1101s(%{"access" => %{"access_Read" => true}}), do: {:ok, :student}
+  defp parse_cs1101s(%{"access" => @admin_access}), do: {:ok, :admin}
+  defp parse_cs1101s(%{"access" => @staff_access}), do: {:ok, :staff}
+  defp parse_cs1101s(%{"access" => @student_access}), do: {:ok, :student}
   defp parse_cs1101s(_), do: {:error, :bad_request}
+
+  defp moduleActive?(endDate) do
+    Timex.before?(Timex.now(), Timex.parse!(endDate, "{ISO:Extended}"))
+  end
+
+  defp cs1101s?(name) do
+    name == "CS1101S"
+  end
 
   defp parse_modules(modules) do
     cs1101s =
       modules["data"]
       |> Enum.find(fn module ->
-        # TODO: we need to check if module is active
-        module["name"] == "CS1101S"
+        cs1101s?(module["name"]) && moduleActive?(module["endDate"])
       end)
 
     case cs1101s do
