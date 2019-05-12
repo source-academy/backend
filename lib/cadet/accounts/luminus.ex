@@ -74,11 +74,11 @@ defmodule Cadet.Accounts.Luminus do
       {:ok, "12742174091894830298409823098098"}
   """
 
-  def fetch_luminus_token!(nil) do
+  def fetch_luminus_token_or_return_default(nil) do
     "token"
   end
 
-  def fetch_luminus_token!(code) do
+  def fetch_luminus_token_or_return_default(code) do
     case fetch_luminus_token(code) do
       {:error, :bad_request} -> "token"
       {:ok, token} -> token
@@ -87,14 +87,13 @@ defmodule Cadet.Accounts.Luminus do
 
   def fetch_luminus_token(code) do
     queries =
-      %{
+      URI.encode_query(%{
         client_id: @client_id,
         client_secret: @client_secret,
         grant_type: "authorization_code",
         code: code,
         redirect_uri: @redirect_url
-      }
-      |> URI.encode_query()
+      })
 
     headers = [{"Content-type", "application/x-www-form-urlencoded"}]
 

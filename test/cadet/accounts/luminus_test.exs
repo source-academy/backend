@@ -22,8 +22,7 @@ defmodule Cadet.Accounts.LuminusTest do
 
   alias Cadet.Accounts.Luminus
 
-  @code System.get_env("CODE") || nil
-  @token Luminus.fetch_luminus_token!(@code)
+  @token Luminus.fetch_luminus_token_or_return_default(System.get_env("CODE"))
 
   setup_all do
     HTTPoison.start()

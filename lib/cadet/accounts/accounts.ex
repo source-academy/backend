@@ -139,7 +139,6 @@ defmodule Cadet.Accounts do
           {:error, :bad_request}
 
         {:error, _} ->
-          # Luminus.fetch_role/1 responds with :internal_server_error if API key is invalid
           # register/2 returns {:error, changeset} if changeset is invalid
           {:error, :internal_server_error}
       end

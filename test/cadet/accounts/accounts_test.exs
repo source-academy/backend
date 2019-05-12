@@ -4,7 +4,7 @@ defmodule Cadet.AccountsTest do
   this allows testing without the use of actual external LumiNUS API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set all the luminus config vars (used as a module attribute in
+  to set all the luminus config variables (used as a module attribute in
   `Cadet.Accounts.Luminus`) and environment variable CODE (used here). Don't
   forget to delete the cassette files, otherwise ExVCR will not override the
   cassettes. You can set the TOKEN environment variable like so,
@@ -23,8 +23,7 @@ defmodule Cadet.AccountsTest do
   alias Cadet.{Accounts, Repo}
   alias Cadet.Accounts.{Query, Luminus, User}
 
-  @code System.get_env("CODE") || nil
-  @token Luminus.fetch_luminus_token!(@code)
+  @token Luminus.fetch_luminus_token_or_return_default(System.get_env("CODE"))
 
   setup_all do
     HTTPoison.start()
