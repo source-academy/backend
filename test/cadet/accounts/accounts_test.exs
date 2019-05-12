@@ -150,28 +150,35 @@ defmodule Cadet.AccountsTest do
   end
 
   describe "sign in with unregistered user gets the right roles" do
-    test ~s(user has full access) do
+    test ~s(user has admin access) do
       use_cassette "accounts/sign_in#4", custom: true do
         assert {:ok, user} = Accounts.sign_in("e012345", "TOM", @token)
         assert %{role: :admin} = user
       end
     end
 
-    test ~s(user has create access) do
+    test ~s(user has staff access) do
       use_cassette "accounts/sign_in#5", custom: true do
         assert {:ok, user} = Accounts.sign_in("e012345", "TOM", @token)
         assert %{role: :staff} = user
       end
     end
 
-    test ~s(user cs1101s module is inactive) do
+    test ~s(user has student access) do
       use_cassette "accounts/sign_in#6", custom: true do
+        assert {:ok, user} = Accounts.sign_in("e012345", "TOM", @token)
+        assert %{role: :student} = user
+      end
+    end
+
+    test ~s(user cs1101s module is inactive) do
+      use_cassette "accounts/sign_in#7", custom: true do
         assert {:error, :forbidden} = Accounts.sign_in("e012345", "TOM", @token)
       end
     end
 
     test ~s(user does not read cs1101s) do
-      use_cassette "accounts/sign_in#7", custom: true do
+      use_cassette "accounts/sign_in#8", custom: true do
         assert {:error, :forbidden} = Accounts.sign_in("e012345", "TOM", @token)
       end
     end
