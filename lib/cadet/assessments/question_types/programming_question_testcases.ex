@@ -16,7 +16,7 @@ defmodule Cadet.Assessments.QuestionTypes.Testcase do
   def changeset(question, params \\ %{}) do
     question
     |> cast(params, @required_fields)
-    |> validate_required([:program, :answer])
+    |> validate_required([:program, :answer, :score])
     |> validate_number(:score, greater_than_or_equal_to: 0)
   end
 end
