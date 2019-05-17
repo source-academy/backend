@@ -20,9 +20,6 @@ defmodule Cadet.Autograder.LambdaWorker do
   def perform(params = %{answer: answer = %Answer{}, question: %Question{}}) do
     lambda_params = build_request_params(params)
 
-    # params |> IO.inspect()
-    # lambda_params |> IO.inspect()
-
     response =
       @lambda_name
       |> ExAws.Lambda.invoke(lambda_params, %{})
@@ -73,7 +70,6 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
     question_content = question.question
-    # |> IO.inspect()
 
     {_, upcased_name_external} =
       question.grading_library.external
@@ -116,5 +112,3 @@ defmodule Cadet.Autograder.LambdaWorker do
     end
   end
 end
-
-# ############# EDIT CASSETTE #############
