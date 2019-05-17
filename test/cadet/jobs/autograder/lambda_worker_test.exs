@@ -120,26 +120,10 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         end
       end
     end
-
-    # test "lambda errors", %{question: question, answer: answer} do
-    #   error_response = %{"errorMessage" => "Some error message"}
-
-    #   with_mock ExAws, request!: fn _ -> error_response end do
-    #     expected_error = inspect(error_response)
-
-    #     assert_raise RuntimeError, expected_error, fn ->
-    #       LambdaWorker.perform(%{
-    #         question: Repo.get(Question, question.id),
-    #         answer: Repo.get(Answer, answer.id)
-    #       })
-    #       end
-    #   end
-    # end
   end
 
   describe "on_failure" do
     test "it stores error message", %{question: question, answer: answer} do
-      # question |> IO.inspect()
       with_mock Que, add: fn _, _ -> nil end do
         error = %{"errorMessage" => "Task timed out after 1.00 seconds"}
 
@@ -185,7 +169,6 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
 
   describe "#build_request_params" do
     test "it should build correct params", %{question: question, answer: answer} do
-      # question |> IO.inspect()
       expected = %{
         prependProgram: question.question.prepend,
         postpendProgram: question.question.postpend,
