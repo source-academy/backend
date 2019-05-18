@@ -92,7 +92,7 @@ defmodule Cadet.Autograder.LambdaWorker do
     }
   end
 
-  def parse_response(response) do
+  def parse_response(response) when is_map(response) do
     if Map.has_key?(response, "errorMessage") do
       %{
         grade: 0,
