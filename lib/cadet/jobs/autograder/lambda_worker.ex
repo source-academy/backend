@@ -30,7 +30,6 @@ defmodule Cadet.Autograder.LambdaWorker do
     result =
       response
       |> parse_response()
-      |> Map.put(:status, :success)
 
     Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
   end
