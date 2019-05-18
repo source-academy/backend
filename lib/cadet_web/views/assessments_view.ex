@@ -135,32 +135,30 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   defp build_results(%{results: results}) do
-    if is_nil(results) do
-      results
-    else
-      &Enum.map(&1.autograding_results, fn result -> build_result(%{result: result}) end)
+    case results do
+      nil -> nil
+      _ -> &Enum.map(&1.autograding_results, fn result -> build_result(result) end)
     end
   end
 
-  defp build_result(%{result: result}) do
+  defp build_result(result) do
     transform_map_for_view(result, %{
       resultType: "resultType",
       expected: "expected",
       actual: "actual",
       errorType: "errorType",
-      errors: build_errors(%{errors: result["errors"]})
+      errors: build_errors(result["errors"])
     })
   end
 
-  defp build_errors(%{errors: errors}) do
-    if is_nil(errors) do
-      errors
-    else
-      &Enum.map(&1["errors"], fn error -> build_error(%{error: error}) end)
+  defp build_errors(errors) do
+    case errors do
+      nil -> nil
+      _ -> &Enum.map(&1["errors"], fn error -> build_error(error) end)
     end
   end
 
-  defp build_error(%{error: error}) do
+  defp build_error(error) do
     transform_map_for_view(error, %{
       errorType: "errorType",
       line: "line",
@@ -170,7 +168,7 @@ defmodule CadetWeb.AssessmentsView do
     })
   end
 
-  defp build_choice(%{choice: choice}) do
+  defp build_choice(choice) do
     transform_map_for_view(choice, %{
       id: "choice_id",
       content: "content",
@@ -178,7 +176,7 @@ defmodule CadetWeb.AssessmentsView do
     })
   end
 
-  defp build_testcase(%{testcase: testcase}) do
+  defp build_testcase(testcase) do
     transform_map_for_view(testcase, %{
       answer: "answer",
       score: "score",
@@ -194,14 +192,13 @@ defmodule CadetWeb.AssessmentsView do
           prepend: "prepend",
           solutionTemplate: "template",
           postpend: "postpend",
-          testcases:
-            &Enum.map(&1["public"], fn testcase -> build_testcase(%{testcase: testcase}) end)
+          testcases: &Enum.map(&1["public"], fn testcase -> build_testcase(testcase) end)
         })
 
       :mcq ->
         transform_map_for_view(question, %{
           content: "content",
-          choices: &Enum.map(&1["choices"], fn choice -> build_choice(%{choice: choice}) end)
+          choices: &Enum.map(&1["choices"], fn choice -> build_choice(choice) end)
         })
     end
   end
