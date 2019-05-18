@@ -32,6 +32,22 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTestcaseTest do
         },
         :invalid
       )
+
+      assert_changeset(
+        %{
+          answer: "asd",
+          program: "asd"
+        },
+        :invalid
+      )
+
+      assert_changeset(
+        %{
+          score: 1,
+          program: "asd"
+        },
+        :invalid
+      )
     end
   end
 end
