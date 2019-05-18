@@ -27,9 +27,7 @@ defmodule Cadet.Autograder.LambdaWorker do
 
     # If the lambda crashes, results are in the format of:
     # %{"errorMessage" => "${message}"}
-    result =
-      response
-      |> parse_response()
+    result = parse_response(response)
 
     Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
   end
