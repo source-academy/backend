@@ -25,8 +25,6 @@ defmodule Cadet.Autograder.LambdaWorker do
       |> ExAws.Lambda.invoke(lambda_params, %{})
       |> ExAws.request!()
 
-    # If the lambda crashes, results are in the format of:
-    # %{"errorMessage" => "${message}"}
     result = parse_response(response)
 
     Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
@@ -91,6 +89,8 @@ defmodule Cadet.Autograder.LambdaWorker do
   end
 
   def parse_response(response) when is_map(response) do
+    # If the lambda crashes, results are in the format of:
+    # %{"errorMessage" => "${message}"}
     if Map.has_key?(response, "errorMessage") do
       %{
         grade: 0,
