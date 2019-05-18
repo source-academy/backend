@@ -88,7 +88,7 @@ defmodule Cadet.Autograder.LambdaWorker do
     }
   end
 
-  def parse_response(response) when is_map(response) do
+  defp parse_response(response) when is_map(response) do
     # If the lambda crashes, results are in the format of:
     # %{"errorMessage" => "${message}"}
     if Map.has_key?(response, "errorMessage") do
