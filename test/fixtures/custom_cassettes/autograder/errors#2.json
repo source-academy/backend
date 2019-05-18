@@ -21,8 +21,8 @@
     "response": {
       "binary": false,
       "body":
-        "{\r\n  \"totalScore\": 0,\r\n  \"results\": [\r\n    {\r\n      \"resultType\": \"error\",\r\n      \"errors\": [\r\n        {\r\n          \"errorType\": \"timeout\"\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"resultType\": \"error\",\r\n      \"errors\": [\r\n        {\r\n          \"errorType\": \"timeout\"\r\n        }\r\n      ]\r\n    }\r\n  ]\r\n}",
-      "headers": {
+        "{\"errorMessage\": \"2019-05-18T05:26:11.299Z 21606396-02e0-4fd5-a294-963bb7994e75 Task timed out after 10.01 seconds\"}",
+        "headers": {
         "Date": "Thu, 09 Aug 2018 09:55:45 GMT",
         "Content-Type": "application/json",
         "Content-Length": "114",

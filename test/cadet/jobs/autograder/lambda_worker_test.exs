@@ -120,6 +120,39 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         end
       end
     end
+
+    test "lambda errors", %{question: question, answer: answer} do
+      use_cassette "autograder/errors#2", custom: true do
+        with_mock Que, add: fn _, _ -> nil end do
+          LambdaWorker.perform(%{
+            question: Repo.get(Question, question.id),
+            answer: Repo.get(Answer, answer.id)
+          })
+
+          assert_called(
+            Que.add(ResultStoreWorker, %{
+              answer_id: answer.id,
+              result: %{
+                grade: 0,
+                status: :failed,
+                result: [
+                  %{
+                    "resultType" => "error",
+                    "errors" => [
+                      %{
+                        "errorType" => "systemError",
+                        "errorMessage" =>
+                          "2019-05-18T05:26:11.299Z 21606396-02e0-4fd5-a294-963bb7994e75 Task timed out after 10.01 seconds"
+                      }
+                    ]
+                  }
+                ]
+              }
+            })
+          )
+        end
+      end
+    end
   end
 
   describe "on_failure" do
