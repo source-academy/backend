@@ -22,7 +22,7 @@ defmodule Cadet.Accounts.LuminusTest do
 
   alias Cadet.Accounts.Luminus
 
-  @token Luminus.fetch_luminus_token_or_return_default(System.get_env("CODE"))
+  @token "CODE" |> System.get_env() |> Luminus.fetch_luminus_token!()
 
   setup_all do
     HTTPoison.start()

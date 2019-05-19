@@ -131,11 +131,11 @@ defmodule Cadet.Accounts do
         sign_in(nusnet_id, name, token)
       else
         {:error, :forbidden} ->
-          # Luminus.fetch_*/1 responds with :forbidden if student does not read CS1101S
+          # Luminus.fetch_role/1 responds with :forbidden if student does not read CS1101S
           {:error, :forbidden}
 
         {:error, :bad_request} ->
-          # Luminus.fetch_*/1 responds with :bad_request if token is invalid
+          # Luminus.fetch_role/1 responds with :bad_request if token is invalid
           {:error, :bad_request}
 
         {:error, _} ->

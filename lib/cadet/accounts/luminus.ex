@@ -74,15 +74,13 @@ defmodule Cadet.Accounts.Luminus do
       {:ok, "12742174091894830298409823098098"}
   """
 
-  def fetch_luminus_token_or_return_default(nil) do
+  def fetch_luminus_token!(nil) do
     "token"
   end
 
-  def fetch_luminus_token_or_return_default(code) do
-    case fetch_luminus_token(code) do
-      {:error, :bad_request} -> "token"
-      {:ok, token} -> token
-    end
+  def fetch_luminus_token!(code) do
+    {:ok, token} = fetch_luminus_token(code)
+    token
   end
 
   def fetch_luminus_token(code) do
@@ -173,19 +171,15 @@ defmodule Cadet.Accounts.Luminus do
     end
   end
 
-  defp moduleActive?(endDate) do
-    Timex.before?(Timex.now(), Timex.parse!(endDate, "{ISO:Extended}"))
-  end
-
-  defp cs1101s?(name) do
-    name == "CS1101S"
+  defp moduleActive?(end_date) do
+    Timex.before?(Timex.now(), Timex.parse!(end_date, "{ISO:Extended}"))
   end
 
   defp parse_modules(modules) do
     cs1101s =
       modules["data"]
       |> Enum.find(fn module ->
-        cs1101s?(module["name"]) && moduleActive?(module["endDate"])
+        module["name"] == "CS1101S" && moduleActive?(module["endDate"])
       end)
 
     case cs1101s do
