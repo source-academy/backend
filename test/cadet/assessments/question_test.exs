@@ -15,7 +15,9 @@ defmodule Cadet.Assessments.QuestionTest do
       library: build(:library),
       question: %{
         content: Faker.Pokemon.name(),
-        solution_template: Faker.Lorem.Shakespeare.as_you_like_it(),
+        prepend: "",
+        template: Faker.Lorem.Shakespeare.as_you_like_it(),
+        postpend: "",
         solution: Faker.Lorem.Shakespeare.hamlet()
       }
     }

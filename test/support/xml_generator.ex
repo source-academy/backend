@@ -108,7 +108,11 @@ defmodule Cadet.Test.XMLGenerator do
         end
 
       :programming ->
-        template_field = [template(question.question.solution_template)]
+        prepend_field = [prepend(question.question.prepend)]
+
+        template_field = [template(question.question.template)]
+
+        postpend_field = [postpend(question.question.postpend)]
 
         solution_field =
           if question.question[:solution] do
@@ -117,14 +121,27 @@ defmodule Cadet.Test.XMLGenerator do
             []
           end
 
-        grader_fields =
-          if question.question[:autograder] do
-            Enum.map(question.question[:autograder], &grader/1)
-          else
-            []
-          end
+        testcases_fields = [
+          testcases(
+            [
+              for testcase <- question.question[:public] do
+                public(%{score: testcase.score, answer: testcase.answer}, testcase.program)
+              end
+            ] ++
+              [
+                for testcase <- question.question[:private] do
+                  private(%{score: testcase.score, answer: testcase.answer}, testcase.program)
+                end
+              ]
+          )
+        ]
 
-        [snippet(template_field ++ solution_field ++ grader_fields)]
+        [
+          snippet(
+            prepend_field ++
+              template_field ++ postpend_field ++ solution_field ++ testcases_fields
+          )
+        ]
     end
   end
 
@@ -227,16 +244,32 @@ defmodule Cadet.Test.XMLGenerator do
     {"SNIPPET", nil, children}
   end
 
+  defp prepend(content) do
+    {"PREPEND", nil, content}
+  end
+
   defp template(content) do
     {"TEMPLATE", nil, content}
+  end
+
+  defp postpend(content) do
+    {"POSTPEND", nil, content}
   end
 
   defp solution(content) do
     {"SOLUTION", nil, content}
   end
 
-  defp grader(content) do
-    {"GRADER", nil, content}
+  defp testcases(children) do
+    {"TESTCASES", nil, children}
+  end
+
+  defp public(raw_attrs, content) do
+    {"PUBLIC", map_permit_keys(raw_attrs, ~w(score answer)a), content}
+  end
+
+  defp private(raw_attrs, content) do
+    {"PRIVATE", map_permit_keys(raw_attrs, ~w(score answer)a), content}
   end
 
   defp map_permit_keys(map, keys) when is_map(map) and is_list(keys) do

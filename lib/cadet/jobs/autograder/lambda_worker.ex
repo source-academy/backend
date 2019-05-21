@@ -25,18 +25,9 @@ defmodule Cadet.Autograder.LambdaWorker do
       |> ExAws.Lambda.invoke(lambda_params, %{})
       |> ExAws.request!()
 
-    # If the lambda crashes, results are in the format of:
-    # %{"errorMessage" => "${message}"}
-    if is_map(response) do
-      raise inspect(response)
-    else
-      result =
-        response
-        |> parse_response(lambda_params)
-        |> Map.put(:status, :success)
+    result = parse_response(response)
 
-      Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
-    end
+    Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
   end
 
   def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do
@@ -55,8 +46,17 @@ defmodule Cadet.Autograder.LambdaWorker do
         result: %{
           grade: 0,
           status: :failed,
-          errors: [
-            %{"systemError" => "Autograder runtime error. Please contact a system administrator"}
+          result: [
+            %{
+              "resultType" => "error",
+              "errors" => [
+                %{
+                  "errorType" => "systemError",
+                  "errorMessage" =>
+                    "Autograder runtime error. Please contact a system administrator"
+                }
+              ]
+            }
           ]
         }
       }
@@ -75,8 +75,11 @@ defmodule Cadet.Autograder.LambdaWorker do
       )
 
     %{
-      graderPrograms: question_content["autograder"],
-      studentProgram: answer.answer["code"],
+      prependProgram: Map.get(question_content, "prepend", ""),
+      studentProgram: Map.get(answer.answer, "code"),
+      postpendProgram: Map.get(question_content, "postpend", ""),
+      testcases:
+        Map.get(question_content, "public", []) ++ Map.get(question_content, "private", []),
       library: %{
         chapter: question.grading_library.chapter,
         external: upcased_name_external,
@@ -85,23 +88,24 @@ defmodule Cadet.Autograder.LambdaWorker do
     }
   end
 
-  def parse_response(response, %{graderPrograms: grader_programs}) do
-    response
-    |> Enum.zip(grader_programs)
-    |> Enum.reduce(
-      %{grade: 0, errors: []},
-      fn {result, grader_program}, %{grade: grade, errors: errors} ->
-        if result["resultType"] == "pass" do
-          %{grade: grade + result["grade"], errors: errors}
-        else
-          error_result = %{
-            grader_program: grader_program,
-            errors: result["errors"]
+  defp parse_response(response) when is_map(response) do
+    # If the lambda crashes, results are in the format of:
+    # %{"errorMessage" => "${message}"}
+    if Map.has_key?(response, "errorMessage") do
+      %{
+        grade: 0,
+        status: :failed,
+        result: [
+          %{
+            "resultType" => "error",
+            "errors" => [
+              %{"errorType" => "systemError", "errorMessage" => response["errorMessage"]}
+            ]
           }
-
-          %{grade: grade, errors: errors ++ [error_result]}
-        end
-      end
-    )
+        ]
+      }
+    else
+      %{grade: response["totalScore"], result: response["results"], status: :success}
+    end
   end
 end
