@@ -17,7 +17,7 @@ defmodule Cadet.Assessments.Answer do
     field(:xp, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
     field(:autograding_status, AutogradingStatus, default: :none)
-    field(:autograding_errors, {:array, :map}, default: [])
+    field(:autograding_results, {:array, :map}, default: [])
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
     field(:comment, :string)
@@ -56,7 +56,7 @@ defmodule Cadet.Assessments.Answer do
   @spec autograding_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def autograding_changeset(answer, params) do
     answer
-    |> cast(params, ~w(grade adjustment xp autograding_status autograding_errors)a)
+    |> cast(params, ~w(grade adjustment xp autograding_status autograding_results)a)
     |> validate_xp_grade_adjustment_total()
   end
 

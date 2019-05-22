@@ -248,7 +248,16 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "id" => &1.id,
                 "type" => "#{&1.type}",
                 "content" => &1.question.content,
-                "solutionTemplate" => &1.question.solution_template
+                "solutionTemplate" => &1.question.template,
+                "prepend" => &1.question.prepend,
+                "postpend" => &1.question.postpend,
+                "testcases" =>
+                  Enum.map(
+                    &1.question.public,
+                    fn testcase ->
+                      for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                    end
+                  )
               }
             )
 
@@ -291,6 +300,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "maxGrade"))
             |> Enum.map(&Map.delete(&1, "grader"))
             |> Enum.map(&Map.delete(&1, "gradedAt"))
+            |> Enum.map(&Map.delete(&1, "autogradingResults"))
+            |> Enum.map(&Map.delete(&1, "autogradingStatus"))
 
           assert expected_questions == resp_questions
         end
