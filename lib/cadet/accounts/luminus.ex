@@ -74,13 +74,17 @@ defmodule Cadet.Accounts.Luminus do
       {:ok, "12742174091894830298409823098098"}
   """
 
-  def fetch_luminus_token!(nil) do
-    "token"
+  def fetch_luminus_token!(code, default \\ "token") do
+    {:ok, token} = fetch_luminus_token(code, default)
+    token
   end
 
-  def fetch_luminus_token!(code) do
-    {:ok, token} = fetch_luminus_token(code)
-    token
+  def fetch_luminus_token(nil, default) do
+    {:ok, default}
+  end
+
+  def fetch_luminus_token(code, _) do
+    fetch_luminus_token(code)
   end
 
   def fetch_luminus_token(code) do
