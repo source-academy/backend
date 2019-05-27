@@ -134,7 +134,7 @@ defmodule CadetWeb.AssessmentsView do
     })
   end
 
-  defp build_results(%{results: results}) do
+  def build_results(%{results: results}) do
     case results do
       nil -> nil
       _ -> &Enum.map(&1.autograding_results, fn result -> build_result(result) end)

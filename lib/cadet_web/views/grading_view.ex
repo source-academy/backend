@@ -54,7 +54,10 @@ defmodule CadetWeb.GradingView do
       adjustment: :adjustment,
       comment: :comment,
       xp: :xp,
-      xpAdjustment: :xp_adjustment
+      xpAdjustment: :xp_adjustment,
+      autogradingStatus: :autograding_status,
+      autogradingResults:
+        CadetWeb.AssessmentsView.build_results(%{results: answer.autograding_results})
     })
   end
 end
