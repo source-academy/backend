@@ -8,14 +8,20 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestionTest do
       assert_changeset(
         %{
           content: "asd",
-          solution_template: "asd"
+          template: "asd"
         },
         :valid
       )
     end
 
     test "invalid changesets" do
-      assert_changeset(%{content: "asd"}, :invalid)
+      assert_changeset(
+        %{
+          content: 1,
+          template: "asd"
+        },
+        :invalid
+      )
 
       assert_changeset(
         %{

@@ -61,7 +61,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
       grade: result.grade,
       xp: xp,
       autograding_status: status,
-      autograding_errors: result.errors
+      autograding_results: result.result
     }
 
     answer

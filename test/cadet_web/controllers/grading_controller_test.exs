@@ -227,7 +227,16 @@ defmodule CadetWeb.GradingControllerTest do
             :programming ->
               %{
                 "question" => %{
-                  "solutionTemplate" => &1.question.question.solution_template,
+                  "prepend" => &1.question.question.prepend,
+                  "postpend" => &1.question.question.postpend,
+                  "testcases" =>
+                    Enum.map(
+                      &1.question.question.public,
+                      fn testcase ->
+                        for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                      end
+                    ),
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
@@ -333,7 +342,16 @@ defmodule CadetWeb.GradingControllerTest do
             :programming ->
               %{
                 "question" => %{
-                  "solutionTemplate" => &1.question.question.solution_template,
+                  "prepend" => &1.question.question.prepend,
+                  "postpend" => &1.question.question.postpend,
+                  "testcases" =>
+                    Enum.map(
+                      &1.question.question.public,
+                      fn testcase ->
+                        for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                      end
+                    ),
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
@@ -621,7 +639,16 @@ defmodule CadetWeb.GradingControllerTest do
             :programming ->
               %{
                 "question" => %{
-                  "solutionTemplate" => &1.question.question.solution_template,
+                  "prepend" => &1.question.question.prepend,
+                  "postpend" => &1.question.question.postpend,
+                  "testcases" =>
+                    Enum.map(
+                      &1.question.question.public,
+                      fn testcase ->
+                        for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                      end
+                    ),
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
