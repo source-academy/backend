@@ -263,7 +263,9 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -308,7 +310,9 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -378,7 +382,9 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -423,7 +429,9 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -675,7 +683,9 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -720,7 +730,9 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
