@@ -20,9 +20,11 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         %{
           question:
             build(:programming_question_content, %{
-              autograder: [
-                "function ek0chei0y1() {\n    return f(0) === 0 ? 1 : 0;\n  }\n\n  ek0chei0y1();",
-                "function ek0chei0y1() {\n    const test1 = f(7) === 13;\n    const test2 = f(10) === 55;\n    const test3 = f(12) === 144;\n    return test1 && test2 && test3 ? 4 : 0;\n  }\n\n  ek0chei0y1();"
+              public: [
+                %{"score" => 1, "answer" => "1", "program" => "f(1);"}
+              ],
+              private: [
+                %{"score" => 1, "answer" => "45", "program" => "f(10);"}
               ]
             })
         }
@@ -56,7 +58,14 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
           assert_called(
             Que.add(ResultStoreWorker, %{
               answer_id: answer.id,
-              result: %{errors: [], grade: 5, status: :success}
+              result: %{
+                result: [
+                  %{"resultType" => "pass", "score" => 1},
+                  %{"resultType" => "pass", "score" => 1}
+                ],
+                grade: 2,
+                status: :success
+              }
             })
           )
         end
@@ -75,16 +84,32 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
             Que.add(ResultStoreWorker, %{
               answer_id: answer.id,
               result: %{
-                errors: [
+                result: [
                   %{
-                    errors: [%{"errorType" => "syntax", "line" => 1, "location" => "student"}],
-                    grader_program:
-                      "function ek0chei0y1() {\n    return f(0) === 0 ? 1 : 0;\n  }\n\n  ek0chei0y1();"
+                    "resultType" => "error",
+                    "errors" => [
+                      %{
+                        "errorType" => "syntax",
+                        "line" => 1,
+                        "location" => "student",
+                        "errorLine" =>
+                          "consst f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);",
+                        "errorExplanation" => "SyntaxError: Unexpected token (2:7)"
+                      }
+                    ]
                   },
                   %{
-                    errors: [%{"errorType" => "syntax", "line" => 1, "location" => "student"}],
-                    grader_program:
-                      "function ek0chei0y1() {\n    const test1 = f(7) === 13;\n    const test2 = f(10) === 55;\n    const test3 = f(12) === 144;\n    return test1 && test2 && test3 ? 4 : 0;\n  }\n\n  ek0chei0y1();"
+                    "resultType" => "error",
+                    "errors" => [
+                      %{
+                        "errorType" => "syntax",
+                        "line" => 1,
+                        "location" => "student",
+                        "errorLine" =>
+                          "consst f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);",
+                        "errorExplanation" => "SyntaxError: Unexpected token (2:7)"
+                      }
+                    ]
                   }
                 ],
                 grade: 0,
@@ -97,16 +122,34 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
     end
 
     test "lambda errors", %{question: question, answer: answer} do
-      error_response = %{"errorMessage" => "Some error message"}
-
-      with_mock ExAws, request!: fn _ -> error_response end do
-        expected_error = inspect(error_response)
-
-        assert_raise RuntimeError, expected_error, fn ->
+      use_cassette "autograder/errors#2", custom: true do
+        with_mock Que, add: fn _, _ -> nil end do
           LambdaWorker.perform(%{
             question: Repo.get(Question, question.id),
             answer: Repo.get(Answer, answer.id)
           })
+
+          assert_called(
+            Que.add(ResultStoreWorker, %{
+              answer_id: answer.id,
+              result: %{
+                grade: 0,
+                status: :failed,
+                result: [
+                  %{
+                    "resultType" => "error",
+                    "errors" => [
+                      %{
+                        "errorType" => "systemError",
+                        "errorMessage" =>
+                          "2019-05-18T05:26:11.299Z 21606396-02e0-4fd5-a294-963bb7994e75 Task timed out after 10.01 seconds"
+                      }
+                    ]
+                  }
+                ]
+              }
+            })
+          )
         end
       end
     end
@@ -130,19 +173,28 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         assert log =~ "Task timed out after 1.00 seconds"
 
         assert_called(
-          Que.add(ResultStoreWorker, %{
-            answer_id: answer.id,
-            result: %{
-              errors: [
-                %{
-                  "systemError" =>
-                    "Autograder runtime error. Please contact a system administrator"
-                }
-              ],
-              grade: 0,
-              status: :failed
+          Que.add(
+            ResultStoreWorker,
+            %{
+              answer_id: answer.id,
+              result: %{
+                grade: 0,
+                status: :failed,
+                result: [
+                  %{
+                    "resultType" => "error",
+                    "errors" => [
+                      %{
+                        "errorType" => "systemError",
+                        "errorMessage" =>
+                          "Autograder runtime error. Please contact a system administrator"
+                      }
+                    ]
+                  }
+                ]
+              }
             }
-          })
+          )
         )
       end
     end
@@ -151,8 +203,10 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
   describe "#build_request_params" do
     test "it should build correct params", %{question: question, answer: answer} do
       expected = %{
-        graderPrograms: question.question["autograder"],
-        studentProgram: answer.answer["code"],
+        prependProgram: question.question.prepend,
+        postpendProgram: question.question.postpend,
+        testcases: question.question.public ++ question.question.private,
+        studentProgram: answer.answer.code,
         library: %{
           chapter: question.grading_library.chapter,
           external: %{
@@ -163,7 +217,10 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         }
       }
 
-      assert LambdaWorker.build_request_params(%{question: question, answer: answer}) == expected
+      assert LambdaWorker.build_request_params(%{
+               question: Repo.get(Question, question.id),
+               answer: Repo.get(Answer, answer.id)
+             }) == expected
     end
   end
 end

@@ -247,15 +247,31 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   defp process_question_entity_by_type(entity, "programming") do
-    entity
-    |> xpath(
-      ~x"."e,
-      content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-      solution_template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
-      solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
-      autograder:
-        ~x"./SNIPPET/GRADER/text()"l
-        |> transform_by(&Enum.map(&1, fn charlist -> process_charlist(charlist) end))
+    Map.merge(
+      entity
+      |> xpath(
+        ~x"."e,
+        content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+        prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
+        template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
+        postpend: ~x"./SNIPPET/POSTPEND/text()" |> transform_by(&process_charlist/1),
+        solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1)
+      ),
+      entity
+      |> xmap(
+        public: [
+          ~x"./SNIPPET/TESTCASES/PUBLIC"l,
+          score: ~x"./@score"oi,
+          answer: ~x"./@answer" |> transform_by(&process_charlist/1),
+          program: ~x"./text()" |> transform_by(&process_charlist/1)
+        ],
+        private: [
+          ~x"./SNIPPET/TESTCASES/PRIVATE"l,
+          score: ~x"./@score"oi,
+          answer: ~x"./@answer" |> transform_by(&process_charlist/1),
+          program: ~x"./text()" |> transform_by(&process_charlist/1)
+        ]
+      )
     )
   end
 

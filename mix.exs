@@ -44,14 +44,14 @@ defmodule Cadet.Mixfile do
     [
       {:arc, "~> 0.10.0"},
       {:arc_ecto, "~> 0.10.0"},
-      {:csv, "~> 2.2.0"},
+      {:csv, "~> 2.3.0"},
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.0"},
       {:ex_aws_kms, "~> 2.0"},
       {:ex_aws_lambda, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.3"},
-      {:floki, "~> 0.20.0"},
+      {:floki, "~> 0.21.0"},
       {:gettext, "~> 0.11"},
       {:guardian, "~> 1.0"},
       {:guardian_db, "~> 1.0"},
@@ -65,7 +65,7 @@ defmodule Cadet.Mixfile do
       {:plug_cowboy, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 2.3.0"},
-      {:que, "~> 0.8.0"},
+      {:que, "~> 0.10.0"},
       {:sentry, "~> 7.0"},
       {:sweet_xml, "~> 0.6.6"},
       {:timex, "~> 3.0"},
@@ -79,10 +79,8 @@ defmodule Cadet.Mixfile do
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:faker, "~> 0.10", only: [:dev, :test]},
-      {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
-      {:mock, "~> 0.3.0", only: :test},
-      # TODO: Remove when que is updated to use new version of Mememto v0.3.0
-      {:memento, "~> 0.3.0", override: true}
+      {:git_hooks, "~> 0.3.0", only: [:dev, :test]},
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 
