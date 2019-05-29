@@ -145,7 +145,8 @@ defmodule Cadet.Assessments do
         Question
         |> where(assessment_id: ^id)
         |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
-        |> select([q, a], %{q | answer: a})
+        |> join(:left, [_, a], g in assoc(a, :grader))
+        |> select([q, a, g], %{q | answer: %Answer{a | grader: g}})
         |> order_by(:display_order)
         |> Repo.all()
 
@@ -170,17 +171,46 @@ defmodule Cadet.Assessments do
         s in subquery(Query.all_submissions_with_xp_and_grade()),
         a.id == s.assessment_id and s.student_id == ^user.id
       )
-      |> select([a, s], %{
+      |> join(
+        :left,
+        [a, _],
+        q_count in subquery(Query.assessments_question_count()),
+        a.id == q_count.assessment_id
+      )
+      |> join(
+        :left,
+        [_, s, _],
+        a_count in subquery(Query.submissions_graded_count()),
+        s.id == a_count.submission_id
+      )
+      |> select([a, s, q_count, a_count], %{
         a
         | xp: fragment("? + ? + ?", s.xp, s.xp_adjustment, s.xp_bonus),
           grade: fragment("? + ?", s.grade, s.adjustment),
-          user_status: s.status
+          user_status: s.status,
+          question_count: q_count.count,
+          graded_count: a_count.count
       })
       |> where(is_published: true)
       |> order_by(:open_at)
       |> Repo.all()
+      |> Enum.map(fn assessment = %Assessment{} ->
+        %{
+          assessment
+          | grading_status:
+              build_grading_status(assessment.question_count, assessment.graded_count)
+        }
+      end)
 
     {:ok, assessments}
+  end
+
+  defp build_grading_status(q_count, g_count) do
+    cond do
+      g_count < q_count -> :grading
+      g_count == q_count -> :graded
+      true -> :none
+    end
   end
 
   def create_assessment(params) do
@@ -486,7 +516,10 @@ defmodule Cadet.Assessments do
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
-      |> preload([a, q], question: q)
+      |> join(:left, [a, ...], g in assoc(a, :grader))
+      |> join(:inner, [a, ...], s in assoc(a, :submission))
+      |> join(:inner, [a, ..., s], st in assoc(s, :student))
+      |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
 
     cond do
       role in @grading_roles ->
@@ -494,8 +527,7 @@ defmodule Cadet.Assessments do
 
         answers =
           answer_query
-          |> join(:inner, [a], s in Submission, a.submission_id == s.id)
-          |> join(:inner, [a, _, s], t in subquery(students), t.id == s.student_id)
+          |> join(:inner, [..., s, _], t in subquery(students), t.id == s.student_id)
           |> Repo.all()
           |> Enum.sort_by(& &1.question.display_order)
 
@@ -524,10 +556,12 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        grader = %User{role: role}
+        grader = %User{id: grader_id, role: role}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) and
              (role in @grading_roles or role in @see_all_submissions_roles) do
+    attrs = Map.put(attrs, "grader_id", grader_id)
+
     answer_query =
       Answer
       |> where(submission_id: ^submission_id)

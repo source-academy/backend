@@ -112,6 +112,12 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
+            gradingStatus(
+              :string,
+              "one of 'none/grading/graded' indicating whether the assessment has been fully graded",
+              required: true
+            )
+
             maxGrade(
               :integer,
               "The maximum Grade for this assessment",
@@ -187,10 +193,50 @@ defmodule CadetWeb.AssessmentsController do
               "The library used for this question"
             )
 
-            solution_template(:string, "Solution template for programming questions")
+            prepend(:string, "Prepend program for programming questions")
+
+            template(:string, "Solution template for programming questions")
+
+            postpend(:string, "Postpend program for programming questions")
+
+            testcases(
+              Schema.new do
+                type(:array)
+                items(Schema.ref(:Testcase))
+              end,
+              "Testcase programs for programming questions"
+            )
+
+            grader(Schema.ref(:GraderInfo))
+
+            gradedAt(:string, "Last graded at", format: "date-time", required: false)
 
             xp(:integer, "Final XP given to this question. Only provided for students.")
             grade(:integer, "Final grade given to this question. Only provided for students.")
+
+            maxGrade(
+              :integer,
+              "The max grade for this question",
+              required: true
+            )
+
+            maxXp(
+              :integer,
+              "The max xp for this question",
+              required: true
+            )
+
+            autogradingStatus(
+              :string,
+              "One of none/processing/success/failed"
+            )
+
+            autogradingResults(
+              Schema.new do
+                type(:array)
+                items(Schema.ref(:AutogradingResult))
+              end
+            )
           end
         end,
       MCQChoice:
@@ -239,6 +285,22 @@ defmodule CadetWeb.AssessmentsController do
               Schema.ref(:ExternalLibrary),
               "The external library for this question"
             )
+          end
+        end,
+      Testcase:
+        swagger_schema do
+          properties do
+            answer(:string)
+            score(:integer)
+            program(:string)
+          end
+        end,
+      AutogradingResult:
+        swagger_schema do
+          properties do
+            resultType(:string, "One of pass/fail/error")
+            expected(:string)
+            actual(:string)
           end
         end
     }

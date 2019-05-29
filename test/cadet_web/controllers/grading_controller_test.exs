@@ -209,6 +209,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
       %{
+        grader: grader,
         submissions: submissions,
         answers: answers
       } = seed_db(conn)
@@ -226,7 +227,16 @@ defmodule CadetWeb.GradingControllerTest do
             :programming ->
               %{
                 "question" => %{
-                  "solutionTemplate" => &1.question.question.solution_template,
+                  "prepend" => &1.question.question.prepend,
+                  "postpend" => &1.question.question.postpend,
+                  "testcases" =>
+                    Enum.map(
+                      &1.question.question.public,
+                      fn testcase ->
+                        for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                      end
+                    ),
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
@@ -237,18 +247,27 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code
                 },
                 "solution" => &1.question.question.solution,
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
 
@@ -265,6 +284,8 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
                   "choices" =>
@@ -277,14 +298,21 @@ defmodule CadetWeb.GradingControllerTest do
                     end
                 },
                 "solution" => "",
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
           end
@@ -295,7 +323,8 @@ defmodule CadetWeb.GradingControllerTest do
 
     @tag authenticate: :staff
     test "pure mentor gets to view all submissions", %{conn: conn} do
-      %{mentor: mentor, submissions: submissions, answers: answers} = seed_db(conn)
+      %{mentor: mentor, grader: grader, submissions: submissions, answers: answers} =
+        seed_db(conn)
 
       submission = List.first(submissions)
 
@@ -313,7 +342,16 @@ defmodule CadetWeb.GradingControllerTest do
             :programming ->
               %{
                 "question" => %{
-                  "solutionTemplate" => &1.question.question.solution_template,
+                  "prepend" => &1.question.question.prepend,
+                  "postpend" => &1.question.question.postpend,
+                  "testcases" =>
+                    Enum.map(
+                      &1.question.question.public,
+                      fn testcase ->
+                        for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                      end
+                    ),
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
@@ -324,18 +362,27 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code
                 },
                 "solution" => &1.question.question.solution,
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
 
@@ -352,6 +399,8 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
                   "choices" =>
@@ -364,14 +413,21 @@ defmodule CadetWeb.GradingControllerTest do
                     end
                 },
                 "solution" => "",
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
           end
@@ -384,7 +440,9 @@ defmodule CadetWeb.GradingControllerTest do
   describe "POST /:submissionid/:questionid, staff" do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
-      %{answers: answers} = seed_db(conn)
+      %{grader: grader, answers: answers} = seed_db(conn)
+
+      grader_id = grader.id
 
       answer = List.first(answers)
 
@@ -399,8 +457,12 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert response(conn, 200) == "OK"
 
-      assert %{adjustment: -10, comment: "Never gonna give you up", xp_adjustment: -10} =
-               Repo.get(Answer, answer.id)
+      assert %{
+               adjustment: -10,
+               comment: "Never gonna give you up",
+               xp_adjustment: -10,
+               grader_id: ^grader_id
+             } = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
@@ -434,8 +496,11 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "staff who isn't the grader of said answer can still grade submission", %{conn: conn} do
+    test "staff who isn't the grader of said answer can still grade submission and grader field is updated correctly",
+         %{conn: conn} do
       %{mentor: mentor, answers: answers} = seed_db(conn)
+
+      mentor_id = mentor.id
 
       answer = List.first(answers)
 
@@ -452,8 +517,12 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert response(conn, 200) == "OK"
 
-      assert %{adjustment: -100, comment: "Your awesome", xp_adjustment: -100} =
-               Repo.get(Answer, answer.id)
+      assert %{
+               adjustment: -100,
+               comment: "Your awesome",
+               xp_adjustment: -100,
+               grader_id: ^mentor_id
+             } = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
@@ -552,6 +621,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :admin
     test "successful", %{conn: conn} do
       %{
+        grader: grader,
         submissions: submissions,
         answers: answers
       } = seed_db(conn)
@@ -569,7 +639,16 @@ defmodule CadetWeb.GradingControllerTest do
             :programming ->
               %{
                 "question" => %{
-                  "solutionTemplate" => &1.question.question.solution_template,
+                  "prepend" => &1.question.question.prepend,
+                  "postpend" => &1.question.question.postpend,
+                  "testcases" =>
+                    Enum.map(
+                      &1.question.question.public,
+                      fn testcase ->
+                        for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                      end
+                    ),
+                  "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
                   "library" => %{
@@ -580,18 +659,27 @@ defmodule CadetWeb.GradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code
                 },
                 "solution" => &1.question.question.solution,
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
 
@@ -610,6 +698,8 @@ defmodule CadetWeb.GradingControllerTest do
                   },
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
                   "choices" =>
                     for choice <- &1.question.question.choices do
                       %{
@@ -620,14 +710,21 @@ defmodule CadetWeb.GradingControllerTest do
                     end
                 },
                 "solution" => "",
-                "maxGrade" => &1.question.max_grade,
-                "maxXp" => &1.question.max_xp,
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
                   "comment" => &1.comment,
                   "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at)
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
                 }
               }
           end
@@ -702,6 +799,7 @@ defmodule CadetWeb.GradingControllerTest do
       for submission <- submissions,
           question <- questions do
         insert(:answer, %{
+          grader_id: grader.id,
           grade: 200,
           adjustment: -100,
           xp: 1000,

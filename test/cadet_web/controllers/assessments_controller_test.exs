@@ -5,10 +5,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
   import Ecto.Query
   import Mock
 
+  alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Assessments.{Assessment, AssessmentType, Submission, SubmissionStatus}
   alias Cadet.Autograder.GradingJob
-  alias Cadet.Repo
   alias CadetWeb.AssessmentsController
 
   setup do
@@ -62,7 +62,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "maxXp" => 4500,
-              "status" => get_assessment_status(user, &1)
+              "status" => get_assessment_status(user, &1),
+              "gradingStatus" => "none"
             }
           )
 
@@ -111,7 +112,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "maxXp" => 4500,
-              "status" => get_assessment_status(user, &1)
+              "status" => get_assessment_status(user, &1),
+              "gradingStatus" => "none"
             }
           )
 
@@ -246,7 +248,16 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "id" => &1.id,
                 "type" => "#{&1.type}",
                 "content" => &1.question.content,
-                "solutionTemplate" => &1.question.solution_template
+                "solutionTemplate" => &1.question.template,
+                "prepend" => &1.question.prepend,
+                "postpend" => &1.question.postpend,
+                "testcases" =>
+                  Enum.map(
+                    &1.question.public,
+                    fn testcase ->
+                      for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                    end
+                  )
               }
             )
 
@@ -285,6 +296,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "comment"))
             |> Enum.map(&Map.delete(&1, "xp"))
             |> Enum.map(&Map.delete(&1, "grade"))
+            |> Enum.map(&Map.delete(&1, "maxXp"))
+            |> Enum.map(&Map.delete(&1, "maxGrade"))
+            |> Enum.map(&Map.delete(&1, "grader"))
+            |> Enum.map(&Map.delete(&1, "gradedAt"))
+            |> Enum.map(&Map.delete(&1, "autogradingResults"))
+            |> Enum.map(&Map.delete(&1, "autogradingStatus"))
 
           assert expected_questions == resp_questions
         end
@@ -866,6 +883,58 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       assert response(conn, 403) == "Assessment not open"
     end
+  end
+
+  test "grading status is updated when assessment is graded", %{
+    conn: conn,
+    users: %{staff: avenger}
+  } do
+    assessment =
+      insert(
+        :assessment,
+        open_at: Timex.shift(Timex.now(), hours: -2),
+        close_at: Timex.shift(Timex.now(), days: 7),
+        is_published: true,
+        type: :mission
+      )
+
+    [question_one, question_two] = insert_list(2, :programming_question, assessment: assessment)
+
+    user = insert(:user, role: :student)
+
+    submission = insert(:submission, assessment: assessment, student: user, status: :submitted)
+
+    Enum.each(
+      [question_one, question_two],
+      &insert(:answer, submission: submission, question: &1, answer: %{code: "f => f(f);"})
+    )
+
+    get_grading_status = fn ->
+      conn
+      |> sign_in(user)
+      |> get(build_url())
+      |> json_response(200)
+      |> Enum.find(&(&1["id"] == assessment.id))
+      |> Map.get("gradingStatus")
+    end
+
+    grade_question = fn question ->
+      Assessments.update_grading_info(
+        %{submission_id: submission.id, question_id: question.id},
+        %{"adjustment" => 0, "comment" => ""},
+        avenger
+      )
+    end
+
+    assert get_grading_status.() == "none"
+
+    grade_question.(question_one)
+
+    assert get_grading_status.() == "grading"
+
+    grade_question.(question_two)
+
+    assert get_grading_status.() == "graded"
   end
 
   defp build_url, do: "/v1/assessments/"

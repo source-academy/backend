@@ -1,5 +1,5 @@
 language: elixir
-elixir: 1.6.6
+elixir: 1.8.1
 otp_release: '21.0'
 env:
   - MIX_ENV=test
@@ -20,3 +20,6 @@ script:
   - mix credo
   - mix inch.report
   - mix format --check-formatted
+branches:
+  only:
+    - master

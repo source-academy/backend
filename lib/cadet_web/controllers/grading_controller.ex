@@ -195,6 +195,13 @@ defmodule CadetWeb.GradingController do
             name(:string, "student name", required: true)
           end
         end,
+      GraderInfo:
+        swagger_schema do
+          properties do
+            id(:integer, "grader id", required: true)
+            name(:string, "grader name", required: true)
+          end
+        end,
       GradingInfo:
         swagger_schema do
           description(
@@ -209,6 +216,7 @@ defmodule CadetWeb.GradingController do
               properties do
                 question(Schema.ref(:Question))
                 grade(Schema.ref(:Grade))
+                student(Schema.ref(:StudentInfo))
 
                 solution(
                   :string,
@@ -239,6 +247,8 @@ defmodule CadetWeb.GradingController do
             comment(:string, "comment given")
             adjustment(:integer, "grade adjustment given")
             xpAdjustment(:integer, "xp adjustment given")
+            grader(Schema.ref(:GraderInfo))
+            gradedAt(:string, "Last graded at", format: "date-time", required: false)
           end
         end,
       Grading:

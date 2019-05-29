@@ -20,6 +20,7 @@ defmodule CadetWeb.AssessmentsView do
       number: :number,
       reading: :reading,
       status: &(&1.user_status || "not_attempted"),
+      gradingStatus: &(&1.grading_status || "none"),
       maxGrade: :max_grade,
       maxXp: :max_xp,
       xp: &(&1.xp || 0),
@@ -89,7 +90,9 @@ defmodule CadetWeb.AssessmentsView do
     transform_map_for_view(question, %{
       id: :id,
       type: :type,
-      library: &build_library(%{library: &1.library})
+      library: &build_library(%{library: &1.library}),
+      maxXp: :max_xp,
+      maxGrade: :max_grade
     })
   end
 
@@ -108,31 +111,76 @@ defmodule CadetWeb.AssessmentsView do
     end
   end
 
+  defp answer_builder_for(:programming), do: & &1.answer["code"]
+  defp answer_builder_for(:mcq), do: & &1.answer["choice_id"]
+
   defp build_answer_fields_by_question_type(%{
          question: %{answer: answer, type: question_type}
        }) do
     # No need to check if answer exists since empty answer would be a
     # `%Answer{..., answer: nil}` and nil["anything"] = nil
 
-    answer_getter =
-      case question_type do
-        :programming -> & &1.answer["code"]
-        :mcq -> & &1.answer["choice_id"]
-      end
+    %{grader: grader} = answer
 
     transform_map_for_view(answer, %{
-      answer: answer_getter,
+      answer: answer_builder_for(question_type),
       comment: :comment,
+      grader: grader_builder(grader),
+      gradedAt: graded_at_builder(grader),
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
-      grade: &((&1.grade || 0) + (&1.adjustment || 0))
+      grade: &((&1.grade || 0) + (&1.adjustment || 0)),
+      autogradingStatus: :autograding_status,
+      autogradingResults: build_results(%{results: answer.autograding_results})
     })
   end
 
-  def build_choice(%{choice: choice}) do
+  defp build_results(%{results: results}) do
+    case results do
+      nil -> nil
+      _ -> &Enum.map(&1.autograding_results, fn result -> build_result(result) end)
+    end
+  end
+
+  defp build_result(result) do
+    transform_map_for_view(result, %{
+      resultType: "resultType",
+      expected: "expected",
+      actual: "actual",
+      errorType: "errorType",
+      errors: build_errors(result["errors"])
+    })
+  end
+
+  defp build_errors(errors) do
+    case errors do
+      nil -> nil
+      _ -> &Enum.map(&1["errors"], fn error -> build_error(error) end)
+    end
+  end
+
+  defp build_error(error) do
+    transform_map_for_view(error, %{
+      errorType: "errorType",
+      line: "line",
+      location: "location",
+      errorLine: "errorLine",
+      errorExplanation: "errorExplanation"
+    })
+  end
+
+  defp build_choice(choice) do
     transform_map_for_view(choice, %{
       id: "choice_id",
       content: "content",
       hint: "hint"
+    })
+  end
+
+  defp build_testcase(testcase) do
+    transform_map_for_view(testcase, %{
+      answer: "answer",
+      score: "score",
+      program: "program"
     })
   end
 
@@ -141,13 +189,16 @@ defmodule CadetWeb.AssessmentsView do
       :programming ->
         transform_map_for_view(question, %{
           content: "content",
-          solutionTemplate: "solution_template"
+          prepend: "prepend",
+          solutionTemplate: "template",
+          postpend: "postpend",
+          testcases: &Enum.map(&1["public"], fn testcase -> build_testcase(testcase) end)
         })
 
       :mcq ->
         transform_map_for_view(question, %{
           content: "content",
-          choices: &Enum.map(&1["choices"], fn choice -> build_choice(%{choice: choice}) end)
+          choices: &Enum.map(&1["choices"], fn choice -> build_choice(choice) end)
         })
     end
   end
