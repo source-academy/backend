@@ -13,9 +13,11 @@ defmodule Cadet.Assessments.Submission do
     field(:xp_bonus, :integer, default: 0)
     field(:group_name, :string, virtual: true)
     field(:status, SubmissionStatus, default: :attempting)
+    field(:unsubmit_at, Timex.Ecto.DateTime)
 
     belongs_to(:assessment, Assessment)
     belongs_to(:student, User)
+    belongs_to(:unsubmit_by, User)
     has_many(:answers, Answer)
 
     timestamps()
