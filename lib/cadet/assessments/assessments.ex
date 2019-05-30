@@ -402,7 +402,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def unsubmit_submission(submission_id, avenger = %User{role: role})
+  def unsubmit_submission(submission_id, avenger = %User{id: staff_id, role: role})
       when is_ecto_id(submission_id) do
     if role in @unsubmit_assessment_role do
       submission =
@@ -421,7 +421,12 @@ defmodule Cadet.Assessments do
           :rollback_submission,
           fn _ ->
             submission
-            |> Submission.changeset(%{status: :attempted, xp_bonus: 0})
+            |> Submission.changeset(%{
+              status: :attempted,
+              xp_bonus: 0,
+              unsubmitted_by_id: staff_id,
+              unsubmitted_at: Timex.now()
+            })
             |> Repo.update()
           end
         )
@@ -551,15 +556,16 @@ defmodule Cadet.Assessments do
         x in subquery(Query.submissions_xp_and_grade()),
         s.id == x.submission_id
       )
-      |> join(:inner, [s], st in assoc(s, :student))
+      |> join(:inner, [s, _], st in assoc(s, :student))
       |> join(:inner, [_, _, st], g in assoc(st, :group))
+      |> join(:left, [s, _, _, g], u in assoc(s, :unsubmitted_by))
       |> join(
         :inner,
-        [s],
+        [s, _, _, _, _],
         a in subquery(Query.all_assessments_with_max_xp_and_grade()),
         s.assessment_id == a.id
       )
-      |> select([s, x, st, g, a], %Submission{
+      |> select([s, x, st, g, u, a], %Submission{
         s
         | grade: x.grade,
           adjustment: x.adjustment,
@@ -567,7 +573,8 @@ defmodule Cadet.Assessments do
           xp_adjustment: x.xp_adjustment,
           student: st,
           assessment: a,
-          group_name: g.name
+          group_name: g.name,
+          unsubmitted_by: u
       })
 
     cond do

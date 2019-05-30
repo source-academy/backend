@@ -28,7 +28,9 @@ defmodule CadetWeb.GradingView do
           coverImage: :cover_picture
         }),
       groupName: :group_name,
-      status: :status
+      status: :status,
+      unsubmittedBy: &unsubmitted_by_builder(&1.unsubmitted_by),
+      unsubmittedAt: &format_datetime(&1.unsubmitted_at)
     })
   end
 

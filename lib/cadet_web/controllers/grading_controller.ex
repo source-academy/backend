@@ -200,6 +200,9 @@ defmodule CadetWeb.GradingController do
 
             assessment(Schema.ref(:AssessmentInfo))
             student(Schema.ref(:StudentInfo))
+
+            unsubmittedBy(Schema.ref(:GraderInfo))
+            unsubmittedAt(:string, "Last unsubmitted at", format: "date-time", required: false)
           end
         end,
       AssessmentInfo:

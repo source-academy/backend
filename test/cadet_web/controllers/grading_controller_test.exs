@@ -118,7 +118,9 @@ defmodule CadetWeb.GradingControllerTest do
               "coverImage" => mission.cover_picture
             },
             "groupName" => submission.student.group.name,
-            "status" => Atom.to_string(submission.status)
+            "status" => Atom.to_string(submission.status),
+            "unsubmittedBy" => nil,
+            "unsubmittedAt" => nil
           }
         end)
 
@@ -156,7 +158,9 @@ defmodule CadetWeb.GradingControllerTest do
               "coverImage" => mission.cover_picture
             },
             "groupName" => submission.student.group.name,
-            "status" => Atom.to_string(submission.status)
+            "status" => Atom.to_string(submission.status),
+            "unsubmittedAt" => nil,
+            "unsubmittedBy" => nil
           }
         end)
 
@@ -212,7 +216,9 @@ defmodule CadetWeb.GradingControllerTest do
               "coverImage" => mission.cover_picture
             },
             "groupName" => submission.student.group.name,
-            "status" => Atom.to_string(submission.status)
+            "status" => Atom.to_string(submission.status),
+            "unsubmittedAt" => nil,
+            "unsubmittedBy" => nil
           }
         end)
 
@@ -584,6 +590,8 @@ defmodule CadetWeb.GradingControllerTest do
       answer_db = Repo.get(Answer, answer.id)
 
       assert submission_db.status == :attempted
+      assert submission_db.unsubmitted_by_id === grader.id
+      assert submission_db.unsubmitted_at != nil
 
       assert answer_db.comment == nil
       assert answer_db.autograding_status == :none
@@ -632,7 +640,7 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "assessment that is not open anymore cannot be unsubmited", %{conn: conn} do
+    test "assessment that is not open anymore cannot be unsubmitted", %{conn: conn} do
       %{grader: grader, students: students} = seed_db(conn)
 
       assessment =
@@ -740,7 +748,9 @@ defmodule CadetWeb.GradingControllerTest do
               "coverImage" => mission.cover_picture
             },
             "groupName" => submission.student.group.name,
-            "status" => Atom.to_string(submission.status)
+            "status" => Atom.to_string(submission.status),
+            "unsubmittedAt" => nil,
+            "unsubmittedBy" => nil
           }
         end)
 
@@ -780,7 +790,9 @@ defmodule CadetWeb.GradingControllerTest do
               "coverImage" => mission.cover_picture
             },
             "groupName" => submission.student.group.name,
-            "status" => Atom.to_string(submission.status)
+            "status" => Atom.to_string(submission.status),
+            "unsubmittedAt" => nil,
+            "unsubmittedBy" => nil
           }
         end)
 
