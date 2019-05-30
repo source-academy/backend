@@ -35,15 +35,23 @@ defmodule CadetWeb.GradingView do
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
       student: &transform_map_for_view(&1.submission.student, [:name, :id]),
-      question:
-        &Map.put(
-          CadetWeb.AssessmentsView.build_question(%{question: &1.question}),
-          :answer,
-          &1.answer["code"] || &1.answer["choice_id"]
-        ),
+      question: &build_grading_question/1,
       solution: &(&1.question.question["solution"] || ""),
       grade: &build_grade/1
     })
+  end
+
+  defp build_grading_question(answer) do
+    results =
+      case answer.autograding_results do
+        nil -> nil
+        results -> Enum.map(results, &CadetWeb.AssessmentsView.build_result/1)
+      end
+
+    CadetWeb.AssessmentsView.build_question(%{question: answer.question})
+    |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
+    |> Map.put(:autogradingStatus, answer.autograding_status)
+    |> Map.put(:autogradingResults, results)
   end
 
   defp build_grade(answer = %{grader: grader}) do
@@ -54,10 +62,7 @@ defmodule CadetWeb.GradingView do
       adjustment: :adjustment,
       comment: :comment,
       xp: :xp,
-      xpAdjustment: :xp_adjustment,
-      autogradingStatus: :autograding_status,
-      autogradingResults:
-        CadetWeb.AssessmentsView.build_results(%{results: answer.autograding_results})
+      xpAdjustment: :xp_adjustment
     })
   end
 end

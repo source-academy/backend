@@ -249,18 +249,6 @@ defmodule CadetWeb.GradingController do
             xpAdjustment(:integer, "xp adjustment given")
             grader(Schema.ref(:GraderInfo))
             gradedAt(:string, "Last graded at", format: "date-time", required: false)
-
-            autogradingStatus(
-              :string,
-              "One of none/processing/success/failed"
-            )
-
-            autogradingResults(
-              Schema.new do
-                type(:array)
-                items(Schema.ref(:AutogradingResult))
-              end
-            )
           end
         end,
       Grading:

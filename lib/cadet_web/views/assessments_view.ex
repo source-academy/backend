@@ -134,14 +134,14 @@ defmodule CadetWeb.AssessmentsView do
     })
   end
 
-  def build_results(%{results: results}) do
+  defp build_results(%{results: results}) do
     case results do
       nil -> nil
       _ -> &Enum.map(&1.autograding_results, fn result -> build_result(result) end)
     end
   end
 
-  defp build_result(result) do
+  def build_result(result) do
     transform_map_for_view(result, %{
       resultType: "resultType",
       expected: "expected",
