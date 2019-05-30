@@ -48,7 +48,8 @@ defmodule CadetWeb.GradingView do
         results -> Enum.map(results, &CadetWeb.AssessmentsView.build_result/1)
       end
 
-    CadetWeb.AssessmentsView.build_question(%{question: answer.question})
+    %{question: answer.question}
+    |> CadetWeb.AssessmentsView.build_question()
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
     |> Map.put(:autogradingStatus, answer.autograding_status)
     |> Map.put(:autogradingResults, results)
