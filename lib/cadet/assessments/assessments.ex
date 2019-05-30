@@ -446,7 +446,7 @@ defmodule Cadet.Assessments do
                    xp: 0,
                    xp_adjustment: 0,
                    autograding_status: :none,
-                   autograding_errors: [],
+                   autograding_results: [],
                    comment: nil,
                    grader_id: nil
                  })

@@ -587,7 +587,7 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert answer_db.comment == nil
       assert answer_db.autograding_status == :none
-      assert answer_db.autograding_errors == []
+      assert answer_db.autograding_results == []
       assert answer_db.grader_id == nil
       assert answer_db.xp == 0
       assert answer_db.xp_adjustment == 0
