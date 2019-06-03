@@ -38,6 +38,9 @@ defmodule CadetWeb.Router do
     post("/grading/:submissionid/unsubmit", GradingController, :unsubmit)
     post("/grading/:submissionid/:questionid", GradingController, :update)
 
+    get("/notification", NotificationController, :index)
+    post("/notification/:notificationId/acknowledge", NotificationController, :acknowledge)
+
     get("/user", UserController, :index)
   end
 

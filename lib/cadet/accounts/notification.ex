@@ -40,8 +40,13 @@ defmodule Cadet.Accounts.Notification do
   @doc """
   Fetches all notifications belonging to a user as an array
   """
-  @spec fetch(:any) :: {:ok, {:array, Notification}}
-  def fetch(params) do
+  @spec fetch(%User{}) :: {:ok, {:array, Notification}}
+  def fetch(user = %User{}) do
+    IO.puts("Fetch called")
+    IO.inspect(user)
+
+    # Test
+    {:ok, []}
   end
 
   @doc """
@@ -49,12 +54,21 @@ defmodule Cadet.Accounts.Notification do
   """
   @spec write(:any) :: Ecto.Changeset.t()
   def write(params) do
+    IO.puts("Write called")
   end
 
   @doc """
   Changes a notification's read status from false to true
   """
-  @spec acknowledge(:any) :: Ecto.Changeset.t()
-  def acknowledge(params) do
+  @spec acknowledge(:integer, %User{}) :: {:ok} | {:error, Ecto.Changeset.t()}
+  def acknowledge(notification_id, user = %User{}) do
+    IO.puts("Acknowledge called")
+    IO.puts("with notification id: ")
+    IO.inspect(notification_id)
+    IO.puts("with user: ")
+    IO.inspect(user)
+
+    # Test
+    {:ok, nil}
   end
 end
