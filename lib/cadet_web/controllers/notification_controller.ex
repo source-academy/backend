@@ -51,7 +51,7 @@ defmodule CadetWeb.NotificationController do
   end
 
   swagger_path :acknowledge do
-    post("/notification/{notificiationId}/acknowledge")
+    post("/notification/{notificationId}/acknowledge")
     summary("Finalise submission for an assessment")
     security([%{JWT: []}])
 
