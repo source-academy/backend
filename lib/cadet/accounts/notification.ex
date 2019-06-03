@@ -5,27 +5,27 @@ defmodule Cadet.Accounts.Notification do
   alias Cadet.Accounts.NotificationType
   alias Cadet.Accounts.User
   alias Cadet.Assessments.Question
-  alias Cadet.Assessments.Submission
+  alias Cadet.Assessments.Assessment
 
   schema "notification" do
     field(:type, NotificationType)
     field(:read, :boolean)
 
     belongs_to(:user, User)
-    belongs_to(:submission, Submission)
+    belongs_to(:assessment, Assessment)
     belongs_to(:question, Question)
 
     timestamps()
   end
 
-  @required_fields ~w(type read user_id submission_id question_id)a
+  @required_fields ~w(type read user_id assessment_id)a
 
   def changeset(answer, params) do
     answer
-    |> cast(params, @required_fields)
+    |> cast(params, @required_fields ++ [:question_id])
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:user)
-    |> foreign_key_constraint(:submission_id)
+    |> foreign_key_constraint(:assessment_id)
     |> foreign_key_constraint(:question_id)
   end
 

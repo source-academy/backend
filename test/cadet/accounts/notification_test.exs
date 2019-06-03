@@ -3,34 +3,35 @@ defmodule Cadet.Accounts.NotificationTest do
 
   use Cadet.ChangesetCase, entity: Notification
 
-  @required_fields ~w(type read user_id submission_id question_id)a
+  @required_fields ~w(type read user_id assessment_id)a
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
     student = insert(:user, %{role: :student})
-    submission = insert(:submission, %{student: student, assessment: assessment})
-    programming_question = insert(:programming_question, %{assessment: assessment})
 
     valid_notification_params = %{
       type: :new,
       read: false,
       user_id: student.id,
-      submission_id: submission.id,
-      question_id: programming_question.id
+      assessment_id: assessment.id
     }
 
     {:ok,
      %{
        assessment: assessment,
-       programming_question: programming_question,
        student: student,
-       submission: submission,
        valid_notification_params: valid_notification_params
      }}
   end
 
   describe "changeset" do
     test "valid notification params", %{valid_notification_params: params} do
+      assert_changeset(params, :valid)
+    end
+
+    test "valid notification params with question id", %{valid_notification_params: params} do
+      params = Map.put(params, :question_id, 12345)
+
       assert_changeset(params, :valid)
     end
 
