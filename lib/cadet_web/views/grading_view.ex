@@ -42,17 +42,19 @@ defmodule CadetWeb.GradingView do
   end
 
   defp build_grading_question(answer) do
-    results =
-      case answer.autograding_results do
-        nil -> nil
-        results -> Enum.map(results, &CadetWeb.AssessmentsView.build_result/1)
-      end
+    results = build_autograding_results(answer.autograding_results)
 
     %{question: answer.question}
     |> CadetWeb.AssessmentsView.build_question()
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
     |> Map.put(:autogradingStatus, answer.autograding_status)
     |> Map.put(:autogradingResults, results)
+  end
+
+  defp build_autograding_results(nil), do: nil
+
+  defp build_autograding_results(results) do
+    Enum.map(results, &CadetWeb.AssessmentsView.build_result/1)
   end
 
   defp build_grade(answer = %{grader: grader}) do
