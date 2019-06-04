@@ -3,44 +3,79 @@ defmodule Cadet.Accounts.NotificationTest do
 
   use Cadet.ChangesetCase, entity: Notification
 
-  @required_fields ~w(type read user_id assessment_id)a
+  @required_fields ~w(type read user_id)a
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
+    avenger = insert(:user, %{role: :staff})
     student = insert(:user, %{role: :student})
+    submission = insert(:submission, %{student: student, assessment: assessment})
 
-    valid_notification_params = %{
+    valid_params_for_student = %{
       type: :new,
       read: false,
+      role: student.role,
       user_id: student.id,
       assessment_id: assessment.id
+    }
+
+    valid_params_for_avenger = %{
+      type: :submitted,
+      read: false,
+      role: avenger.role,
+      user_id: avenger.id,
+      submission_id: submission.id
     }
 
     {:ok,
      %{
        assessment: assessment,
        student: student,
-       valid_notification_params: valid_notification_params
+       submission: submission,
+       valid_params_for_student: valid_params_for_student,
+       valid_params_for_avenger: valid_params_for_avenger
      }}
   end
 
   describe "changeset" do
-    test "valid notification params", %{valid_notification_params: params} do
+    test "valid notification params for student", %{valid_params_for_student: params} do
       assert_changeset(params, :valid)
     end
 
-    test "valid notification params with question id", %{valid_notification_params: params} do
+    test "valid notification params for avenger", %{valid_params_for_avenger: params} do
+      assert_changeset(params, :valid)
+    end
+
+    test "valid notification params with question id", %{valid_params_for_student: params} do
       params = Map.put(params, :question_id, 12345)
 
       assert_changeset(params, :valid)
     end
 
-    test "invalid changeset missing required params", %{valid_notification_params: params} do
-      for field <- @required_fields do
+    test "invalid changeset missing required params for student", %{
+      valid_params_for_student: params
+    } do
+      for field <- @required_fields ++ [:assessment_id] do
         params_missing_field = Map.delete(params, field)
 
         assert_changeset(params_missing_field, :invalid)
       end
+    end
+
+    test "invalid changeset missing required params for avenger", %{
+      valid_params_for_avenger: params
+    } do
+      for field <- @required_fields ++ [:submission_id] do
+        params_missing_field = Map.delete(params, field)
+
+        assert_changeset(params_missing_field, :invalid)
+      end
+    end
+
+    test "invalid role", %{valid_params_for_avenger: params} do
+      params = Map.put(params, :role, :admin)
+
+      assert_changeset(params, :invalid)
     end
   end
 
