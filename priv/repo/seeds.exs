@@ -73,5 +73,29 @@ if Application.get_env(:cadet, :environment) == :dev do
         answer: build(:mcq_answer)
       })
     end
+
+    # Notifications
+    for submission <- submissions do
+      case submission.status do
+        :submitted ->
+          insert(:notification, %{
+            type: :submitted,
+            read: false,
+            user_id: avenger.id,
+            submission_id: submission.id
+          })
+
+        _ ->
+          nil
+      end
+    end
+
+    for student <- students do
+      insert(:notification, %{
+        type: :new,
+        user_id: student.id,
+        assessment_id: assessment.id
+      })
+    end
   end
 end
