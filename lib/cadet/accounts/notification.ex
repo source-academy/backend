@@ -2,11 +2,8 @@ defmodule Cadet.Accounts.Notification do
   use Cadet, :model
 
   alias Cadet.Repo
-  alias Cadet.Accounts.NotificationType
-  alias Cadet.Accounts.Role
-  alias Cadet.Accounts.User
-  alias Cadet.Assessments.Question
-  alias Cadet.Assessments.Assessment
+  alias Cadet.Accounts.{NotificationType, Role, User}
+  alias Cadet.Assessments.{Assessment, Question, Submission}
 
   schema "notifications" do
     field(:type, NotificationType)
