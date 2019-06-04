@@ -66,10 +66,10 @@ config :git_hooks,
   hooks: [
     pre_push: [
       verbose: true,
-      mix_tasks: [
-        "format --check-formatted",
-        "test",
-        "credo"
+      tasks: [
+        "mix format --check-formatted",
+        "mix test",
+        "mix credo"
       ]
     ]
   ]
