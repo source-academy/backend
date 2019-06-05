@@ -15,6 +15,7 @@ defmodule Cadet.Accounts.Luminus do
   @client_id :cadet |> Application.fetch_env!(:luminus) |> Keyword.get(:client_id)
   @client_secret :cadet |> Application.fetch_env!(:luminus) |> Keyword.get(:client_secret)
   @redirect_url :cadet |> Application.fetch_env!(:luminus) |> Keyword.get(:redirect_url)
+  @module_code :cadet |> Application.fetch_env!(:module_code)
   @api_token_url "https://luminus.nus.edu.sg/v2/auth/connect/token"
   @api_url "https://luminus.azure-api.net/"
 
@@ -183,7 +184,7 @@ defmodule Cadet.Accounts.Luminus do
     cs1101s =
       modules["data"]
       |> Enum.find(fn module ->
-        module["name"] == "CS1101S" && moduleActive?(module["endDate"])
+        module["name"] == @module_code && moduleActive?(module["endDate"])
       end)
 
     case cs1101s do

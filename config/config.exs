@@ -7,7 +7,8 @@ use Mix.Config
 
 # General application configuration
 config :cadet,
-  ecto_repos: [Cadet.Repo]
+  ecto_repos: [Cadet.Repo],
+  module_code: "CS1101S"
 
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Jobs.Scheduler,
