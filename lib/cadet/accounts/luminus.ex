@@ -11,10 +11,10 @@ defmodule Cadet.Accounts.Luminus do
 
   use Timex
 
-  @api_key :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_api_key)
-  @client_id :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_client_id)
-  @client_secret :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_client_secret)
-  @redirect_url :cadet |> Application.fetch_env!(:updater) |> Keyword.get(:luminus_redirect_url)
+  @api_key :cadet |> Application.fetch_env!(:luminus) |> Keyword.get(:api_key)
+  @client_id :cadet |> Application.fetch_env!(:luminus) |> Keyword.get(:client_id)
+  @client_secret :cadet |> Application.fetch_env!(:luminus) |> Keyword.get(:client_secret)
+  @redirect_url :cadet |> Application.fetch_env!(:luminus) |> Keyword.get(:redirect_url)
   @api_token_url "https://luminus.nus.edu.sg/v2/auth/connect/token"
   @api_url "https://luminus.azure-api.net/"
 
