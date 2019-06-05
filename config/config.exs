@@ -7,9 +7,7 @@ use Mix.Config
 
 # General application configuration
 config :cadet,
-  ecto_repos: [Cadet.Repo],
-  # milliseconds
-  updater: [interval: 1 * 60 * 1000]
+  ecto_repos: [Cadet.Repo]
 
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Jobs.Scheduler,
@@ -78,7 +76,7 @@ config :guardian, Guardian.DB,
   # default: 60 minute
   sweep_interval: 60
 
-# Import secrets, such as the IVLE key, or guest account credentials
+# Import secrets, such as the LumiNUS key, or guest account credentials
 # The secret.exs file holds secrets that are useful even in development, and
 # so is kept separate from the prod.secret.exs file, which holds secrets useful
 # only for configuring the production build.

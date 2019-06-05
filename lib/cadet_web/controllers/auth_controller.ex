@@ -6,7 +6,7 @@ defmodule CadetWeb.AuthController do
 
   alias Cadet.Accounts
   alias Cadet.Accounts.Form.Login
-  alias Cadet.Accounts.{IVLE, User}
+  alias Cadet.Accounts.{Luminus, User}
   alias Cadet.Auth.Guardian
 
   @doc """
@@ -21,8 +21,10 @@ defmodule CadetWeb.AuthController do
 
     with valid = changeset.valid?,
          {:changes, login} when valid <- {:changes, apply_changes(changeset)},
-         {:fetch, {:ok, nusnet_id}} <- {:fetch, IVLE.fetch_nusnet_id(login.ivle_token)},
-         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, login.ivle_token)} do
+         {:fetch, {:ok, token}} <-
+           {:fetch, Luminus.fetch_luminus_token(login.luminus_code)},
+         {:fetch, {:ok, nusnet_id, name}} <- {:fetch, Luminus.fetch_details(token)},
+         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, name, token)} do
       render(conn, "token.json", generate_tokens(user))
     else
       {:changes, _} ->
@@ -34,7 +36,7 @@ defmodule CadetWeb.AuthController do
         # reason can be :bad_request or :internal_server_error
         conn
         |> put_status(reason)
-        |> text("Unable to fetch NUSNET ID from IVLE.")
+        |> text("Unable to fetch NUSNET ID from LumiNUS.")
 
       {:signin, {:error, reason}} ->
         # reason can be :bad_request or :internal_server_error
@@ -113,7 +115,7 @@ defmodule CadetWeb.AuthController do
 
     description(
       "Get a set of access and refresh tokens, using the authentication token " <>
-        "from IVLE. When accessing resources, pass the access token in the " <>
+        "from LumiNUS. When accessing resources, pass the access token in the " <>
         "Authorization HTTP header using the Bearer schema: `Authorization: " <>
         "Bearer <token>`. The access token expires 1 hour after issuance while " <>
         "the refresh token expires 1 week after issuance. When access token " <>
@@ -177,7 +179,7 @@ defmodule CadetWeb.AuthController do
             login(
               Schema.new do
                 properties do
-                  ivle_token(:string, "IVLE authentication token", required: true)
+                  luminus_code(:string, "LumiNUS Authorization Code", required: true)
                 end
               end
             )
@@ -187,15 +189,7 @@ defmodule CadetWeb.AuthController do
 
           example(%{
             login: %{
-              ivle_token:
-                "058DA4D1692CEA834A9311G704BA438P9BA2E1829D3N1B5F39F25556FBDB2B" <>
-                  "0FA7B08361C77A75127908704BF2CIDC034F7N4B1217441412B0E3CB5B544E" <>
-                  "EBP2ED8D0D2ABAF2F6A021B7F4GE5F648F64E02B3E36B1V755CC776EEAE38C" <>
-                  "D58D46D1493426C4BC17F276L4E74C835C2C5338C01APFF1DE580D3D559A9A" <>
-                  "7FB3013A0FE7DED7ADC45654ABB5C170460F308F42UECF2D76F2CCC0B21B1F" <>
-                  "IE5B5892D398F4670658V87A6DBA1E16F64AEEB8PD51B1FD7C858F8BECE8G4" <>
-                  "E62DD0EB54F761C1F6T0290FABC27AEB1B707FB4BD1B466C32CE08FDAEB25B" <>
-                  "D9B6F3D75CE9A086ACBD72641EBCC1E3A3A7WA82FDFA8D"
+              luminus_code: "a28caaa2330ea656d3012403f00bcb1e"
             }
           })
         end,
