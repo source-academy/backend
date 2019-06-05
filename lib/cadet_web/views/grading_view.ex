@@ -1,6 +1,8 @@
 defmodule CadetWeb.GradingView do
   use CadetWeb, :view
 
+  import CadetWeb.AssessmentsHelpers
+
   def render("index.json", %{submissions: submissions}) do
     render_many(submissions, CadetWeb.GradingView, "submission.json", as: :submission)
   end
@@ -45,7 +47,7 @@ defmodule CadetWeb.GradingView do
     results = build_autograding_results(answer.autograding_results)
 
     %{question: answer.question}
-    |> CadetWeb.AssessmentsView.build_question()
+    |> build_question()
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
     |> Map.put(:autogradingStatus, answer.autograding_status)
     |> Map.put(:autogradingResults, results)
@@ -54,7 +56,7 @@ defmodule CadetWeb.GradingView do
   defp build_autograding_results(nil), do: nil
 
   defp build_autograding_results(results) do
-    Enum.map(results, &CadetWeb.AssessmentsView.build_result/1)
+    Enum.map(results, &build_result/1)
   end
 
   defp build_grade(answer = %{grader: grader}) do
