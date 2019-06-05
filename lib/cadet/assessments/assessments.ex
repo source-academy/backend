@@ -15,6 +15,7 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
+  @unsubmit_assessment_role ~w(staff)a
   @grading_roles ~w()a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
@@ -401,6 +402,90 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def unsubmit_submission(submission_id, avenger = %User{id: staff_id, role: role})
+      when is_ecto_id(submission_id) do
+    if role in @unsubmit_assessment_role do
+      submission =
+        Submission
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.get(submission_id)
+
+      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+           {:is_open?, true} <- is_open?(submission.assessment),
+           {:status, :submitted} <- {:status, submission.status},
+           {:avenger_of?, true} <-
+             {:avenger_of?, Cadet.Accounts.Query.avenger_of?(avenger, submission.student_id)} do
+        Multi.new()
+        |> Multi.run(
+          :rollback_submission,
+          fn _ ->
+            submission
+            |> Submission.changeset(%{
+              status: :attempted,
+              xp_bonus: 0,
+              unsubmitted_by_id: staff_id,
+              unsubmitted_at: Timex.now()
+            })
+            |> Repo.update()
+          end
+        )
+        |> Multi.run(:rollback_answers, fn _ ->
+          Answer
+          |> join(:inner, [a], q in assoc(a, :question))
+          |> join(:inner, [a, _], s in assoc(a, :submission))
+          |> preload([_, q, s], question: q, submission: s)
+          |> where(submission_id: ^submission.id)
+          |> Repo.all()
+          |> Enum.reduce_while({:ok, nil}, fn answer, acc ->
+            case acc do
+              {:error, _} ->
+                {:halt, acc}
+
+              {:ok, _} ->
+                {:cont,
+                 answer
+                 |> Answer.grading_changeset(%{
+                   grade: 0,
+                   adjustment: 0,
+                   xp: 0,
+                   xp_adjustment: 0,
+                   autograding_status: :none,
+                   autograding_results: [],
+                   comment: nil,
+                   grader_id: nil
+                 })
+                 |> Repo.update()}
+            end
+          end)
+        end)
+        |> Repo.transaction()
+
+        {:ok, nil}
+      else
+        {:submission_found?, false} ->
+          {:error, {:not_found, "Submission not found"}}
+
+        {:is_open?, false} ->
+          {:error, {:forbidden, "Assessment not open"}}
+
+        {:status, :attempting} ->
+          {:error, {:bad_request, "Some questions have not been attempted"}}
+
+        {:status, :attempted} ->
+          {:error, {:bad_request, "Assessment has not been submitted"}}
+
+        {:avenger_of?, false} ->
+          {:error, {:forbidden, "Only Avenger of student is permitted to unsubmit"}}
+
+        _ ->
+          {:error, {:internal_server_error, "Please try again later."}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to unsubmit questions"}}
+    end
+  end
+
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
@@ -471,15 +556,16 @@ defmodule Cadet.Assessments do
         x in subquery(Query.submissions_xp_and_grade()),
         s.id == x.submission_id
       )
-      |> join(:inner, [s], st in assoc(s, :student))
+      |> join(:inner, [s, _], st in assoc(s, :student))
       |> join(:inner, [_, _, st], g in assoc(st, :group))
+      |> join(:left, [s, _, _, g], u in assoc(s, :unsubmitted_by))
       |> join(
         :inner,
-        [s],
+        [s, _, _, _, _],
         a in subquery(Query.all_assessments_with_max_xp_and_grade()),
         s.assessment_id == a.id
       )
-      |> select([s, x, st, g, a], %Submission{
+      |> select([s, x, st, g, u, a], %Submission{
         s
         | grade: x.grade,
           adjustment: x.adjustment,
@@ -487,7 +573,8 @@ defmodule Cadet.Assessments do
           xp_adjustment: x.xp_adjustment,
           student: st,
           assessment: a,
-          group_name: g.name
+          group_name: g.name,
+          unsubmitted_by: u
       })
 
     cond do

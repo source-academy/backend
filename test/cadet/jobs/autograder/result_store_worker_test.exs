@@ -8,19 +8,33 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
 
   setup do
     answer = insert(:answer, %{question: insert(:question), submission: insert(:submission)})
-    success_no_errors = %{status: :success, grade: 10, errors: []}
+    success_no_errors = %{status: :success, grade: 10, result: []}
 
     success_with_errors = %{
-      errors: [
+      result: [
         %{
-          errors: [%{"errorType" => "syntax", "line" => 1, "location" => "student"}],
-          grader_program:
-            "function ek0chei0y1() {\n    return f(0) === 0 ? 1 : 0;\n  }\n\n  ek0chei0y1();"
+          "resultType" => "error",
+          "errors" => [
+            %{
+              "errorType" => "syntax",
+              "line" => 1,
+              "location" => "student",
+              "errorLine" => "consst f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);",
+              "errorExplanation" => "SyntaxError: Unexpected token (2:7)"
+            }
+          ]
         },
         %{
-          errors: [%{"errorType" => "syntax", "line" => 1, "location" => "student"}],
-          grader_program:
-            "function ek0chei0y1() {\n    const test1 = f(7) === 13;\n    const test2 = f(10) === 55;\n    const test3 = f(12) === 144;\n    return test1 && test2 && test3 ? 4 : 0;\n  }\n\n  ek0chei0y1();"
+          "resultType" => "error",
+          "errors" => [
+            %{
+              "errorType" => "syntax",
+              "line" => 1,
+              "location" => "student",
+              "errorLine" => "consst f = i => i === 0 ? 0 : i < 3 ? 1 : f(i-1) + f(i-2);",
+              "errorExplanation" => "SyntaxError: Unexpected token (2:7)"
+            }
+          ]
         }
       ],
       grade: 0,
@@ -28,7 +42,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
     }
 
     failed = %{
-      errors: [
+      result: [
         %{
           "systemError" => "Autograder runtime error. Please contact a system administrator"
         }
@@ -63,7 +77,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
           |> Repo.get(answer.id)
 
         errors_string_keys =
-          Enum.map(result.errors, fn err ->
+          Enum.map(result.result, fn err ->
             Enum.reduce(err, %{}, fn {k, v}, acc ->
               Map.put(acc, "#{k}", v)
             end)
@@ -83,7 +97,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
         end
 
         assert answer.autograding_status == result.status
-        assert answer.autograding_errors == errors_string_keys
+        assert answer.autograding_results == errors_string_keys
       end
     end
   end
