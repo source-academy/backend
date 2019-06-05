@@ -3,21 +3,29 @@ defmodule CadetWeb.ViewHelpers do
   Helper functions shared throughout views
   """
 
+  defp build_staff(user) do
+    transform_map_for_view(user, [:name, :id])
+  end
+
+  def unsubmitted_by_builder(nil), do: nil
+
+  def unsubmitted_by_builder(staff) do
+    build_staff(staff)
+  end
+
   def grader_builder(nil), do: nil
 
   def grader_builder(_) do
-    fn %{grader: grader} ->
-      transform_map_for_view(grader, [:name, :id])
-    end
+    fn %{grader: grader} -> build_staff(grader) end
   end
 
   def graded_at_builder(nil), do: nil
 
   def graded_at_builder(_) do
-    fn %{updated_at: updated_at} ->
-      format_datetime(updated_at)
-    end
+    fn %{updated_at: updated_at} -> format_datetime(updated_at) end
   end
+
+  def format_datetime(nil), do: nil
 
   def format_datetime(datetime = %DateTime{}) do
     datetime
