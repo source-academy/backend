@@ -184,7 +184,7 @@ defmodule Cadet.Accounts.Luminus do
     cs1101s =
       modules["data"]
       |> Enum.find(fn module ->
-        (module["name"] == @module_code) && moduleActive?(module["endDate"])
+        module["name"] == @module_code && moduleActive?(module["endDate"])
       end)
 
     case cs1101s do
