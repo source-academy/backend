@@ -23,7 +23,7 @@ defmodule Cadet.Accounts.Query do
   @spec students_of(%User{}) :: Ecto.Query.t()
   def students_of(%User{id: id, role: :staff}) do
     User
-    |> join(:inner, [u], g in Group, u.group_id == g.id)
+    |> join(:inner, [u], g in Group, on: u.group_id == g.id)
     |> where([_, g], g.leader_id == ^id)
   end
 

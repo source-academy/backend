@@ -17,6 +17,8 @@ defmodule Cadet do
       import Ecto.Changeset
       import Cadet.ModelHelper
       import Cadet.SharedHelper
+
+      @derive Jason.Encoder
     end
   end
 
