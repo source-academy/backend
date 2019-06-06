@@ -5,11 +5,11 @@ defmodule Cadet.Accounts.LoginTest do
 
   describe "Changesets" do
     test "valid changeset" do
-      assert_changeset(%{ivle_token: "T0K3N"}, :valid)
+      assert_changeset(%{luminus_code: "C0dE"}, :valid)
     end
 
     test "invalid changeset" do
-      assert_changeset(%{ivle_token: ""}, :invalid)
+      assert_changeset(%{luminus_code: ""}, :invalid)
       assert_changeset(%{}, :invalid)
     end
   end

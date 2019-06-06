@@ -1,14 +1,14 @@
 defmodule Cadet.Course do
   @moduledoc """
   Course context contains domain logic for Course administration
-  management such as discussion groups, materials, and announcements
+  management such as discussion groups and materials
   """
   use Cadet, :context
 
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Announcement, Group, Material, Upload}
+  alias Cadet.Course.{Group, Material, Upload}
 
   @doc """
   Get a group based on the group name or create one if it doesn't exist
@@ -45,54 +45,6 @@ defmodule Cadet.Course do
         Group.changeset(group, params)
     end
     |> Repo.insert_or_update()
-  end
-
-  @doc """
-  Create announcement entity using specified user as poster
-  """
-  def create_announcement(poster = %User{}, attrs = %{}) do
-    changeset =
-      %Announcement{}
-      |> Announcement.changeset(attrs)
-      |> put_assoc(:poster, poster)
-
-    Repo.insert(changeset)
-  end
-
-  @doc """
-  Edit Announcement with specified ID entity by specifying changes
-  """
-  def edit_announcement(id, changes = %{}) when is_ecto_id(id) do
-    announcement = Repo.get(Announcement, id)
-
-    if announcement == nil do
-      {:error, :not_found}
-    else
-      changeset = Announcement.changeset(announcement, changes)
-      Repo.update(changeset)
-    end
-  end
-
-  @doc """
-  Get Announcement with specified ID
-  """
-  def get_announcement(id) when is_ecto_id(id) do
-    Announcement
-    |> Repo.get(id)
-    |> Repo.preload(:poster)
-  end
-
-  @doc """
-  Delete Announcement with specified ID
-  """
-  def delete_announcement(id) when is_ecto_id(id) do
-    announcement = Repo.get(Announcement, id)
-
-    if announcement == nil do
-      {:error, :not_found}
-    else
-      Repo.delete(announcement)
-    end
   end
 
   # @doc """

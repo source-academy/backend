@@ -77,6 +77,26 @@ defmodule CadetWeb.GradingController do
     |> text("Missing parameter")
   end
 
+  def unsubmit(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.unsubmit_submission(submission_id, user) do
+      {:ok, nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def unsubmit(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> text("Missing parameter")
+  end
+
   swagger_path :index do
     get("/grading")
 
@@ -97,6 +117,21 @@ defmodule CadetWeb.GradingController do
 
     response(200, "OK", Schema.ref(:Submissions))
     response(401, "Unauthorised")
+  end
+
+  swagger_path :unsubmit do
+    post("/grading/{submissionId}/unsubmit")
+    summary("Unsubmit submission. Can only be done by the Avenger of a student.")
+    security([%{JWT: []}])
+
+    parameters do
+      submissionId(:path, :integer, "submission id", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(403, "User not permitted to unsubmit assessment or assessment not open")
+    response(404, "Submission not found")
   end
 
   swagger_path :show do
@@ -165,6 +200,9 @@ defmodule CadetWeb.GradingController do
 
             assessment(Schema.ref(:AssessmentInfo))
             student(Schema.ref(:StudentInfo))
+
+            unsubmittedBy(Schema.ref(:GraderInfo))
+            unsubmittedAt(:string, "Last unsubmitted at", format: "date-time", required: false)
           end
         end,
       AssessmentInfo:
