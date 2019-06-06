@@ -69,7 +69,6 @@ defmodule Cadet.Mixfile do
       {:sentry, "~> 7.0"},
       {:sweet_xml, "~> 0.6.6"},
       {:timex, "~> 3.0"},
-      {:timex_ecto, "~> 3.0"},
       # TODO: Remove the override once ex_aws released the new version
       #       without the dependency on xml_builder. Waste my time urgh
       {:xml_builder, "~> 2.0", override: true},
