@@ -422,7 +422,7 @@ defmodule Cadet.Assessments do
         Multi.new()
         |> Multi.run(
           :rollback_submission,
-          fn _ ->
+          fn _repo, _ ->
             submission
             |> Submission.changeset(%{
               status: :attempted,
@@ -433,7 +433,7 @@ defmodule Cadet.Assessments do
             |> Repo.update()
           end
         )
-        |> Multi.run(:rollback_answers, fn _ ->
+        |> Multi.run(:rollback_answers, fn _repo, _ ->
           Answer
           |> join(:inner, [a], q in assoc(a, :question))
           |> join(:inner, [a, _], s in assoc(a, :submission))
