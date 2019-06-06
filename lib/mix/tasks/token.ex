@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Cadet.Token do
 
   import Ecto.Query
   import IO.ANSI
-  import Mix.Ecto
+  import Mix.EctoSQL
 
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Auth.Guardian

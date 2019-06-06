@@ -1,5 +1,5 @@
 defmodule Cadet.Repo do
-  use Ecto.Repo, otp_app: :cadet
+  use Ecto.Repo, otp_app: :cadet, adapter: Ecto.Adapters.Postgres
 
   alias ExAws.KMS
 

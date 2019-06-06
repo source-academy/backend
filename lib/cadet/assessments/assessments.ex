@@ -50,7 +50,7 @@ defmodule Cadet.Assessments do
       :inner,
       [s],
       a in subquery(Query.all_assessments_with_max_grade()),
-      s.assessment_id == a.id
+      on: s.assessment_id == a.id
     )
     |> select([_, a], sum(a.max_grade))
     |> Repo.one()
@@ -77,8 +77,10 @@ defmodule Cadet.Assessments do
   def user_current_story(user = %User{}) do
     {:ok, %{result: story}} =
       Multi.new()
-      |> Multi.run(:unattempted, fn _ -> {:ok, get_user_story_by_type(user, :unattempted)} end)
-      |> Multi.run(:result, fn %{unattempted: unattempted_story} ->
+      |> Multi.run(:unattempted, fn _repo, _ ->
+        {:ok, get_user_story_by_type(user, :unattempted)}
+      end)
+      |> Multi.run(:result, fn _repo, %{unattempted: unattempted_story} ->
         if unattempted_story do
           {:ok, %{play_story?: true, story: unattempted_story}}
         else
@@ -109,7 +111,7 @@ defmodule Cadet.Assessments do
     |> where(is_published: true)
     |> where([a], not is_nil(a.story))
     |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
-    |> join(:left, [a], s in Submission, s.assessment_id == a.id and s.student_id == ^user_id)
+    |> join(:left, [a], s in Submission, on: s.assessment_id == a.id and s.student_id == ^user_id)
     |> filter_and_sort.()
     |> order_by([a], a.type)
     |> select([a], a.story)
@@ -144,7 +146,7 @@ defmodule Cadet.Assessments do
       questions =
         Question
         |> where(assessment_id: ^id)
-        |> join(:left, [q], a in subquery(answer_query), q.id == a.question_id)
+        |> join(:left, [q], a in subquery(answer_query), on: q.id == a.question_id)
         |> join(:left, [_, a], g in assoc(a, :grader))
         |> select([q, a, g], %{q | answer: %Answer{a | grader: g}})
         |> order_by(:display_order)
@@ -169,19 +171,19 @@ defmodule Cadet.Assessments do
         :left,
         [a],
         s in subquery(Query.all_submissions_with_xp_and_grade()),
-        a.id == s.assessment_id and s.student_id == ^user.id
+        on: a.id == s.assessment_id and s.student_id == ^user.id
       )
       |> join(
         :left,
         [a, _],
         q_count in subquery(Query.assessments_question_count()),
-        a.id == q_count.assessment_id
+        on: a.id == q_count.assessment_id
       )
       |> join(
         :left,
         [_, s, _],
         a_count in subquery(Query.submissions_graded_count()),
-        s.id == a_count.submission_id
+        on: s.id == a_count.submission_id
       )
       |> select([a, s, q_count, a_count], %{
         a
@@ -233,7 +235,8 @@ defmodule Cadet.Assessments do
     questions_params
     |> Enum.with_index(1)
     |> Enum.reduce(assessment_multi, fn {question_params, index}, multi ->
-      Multi.run(multi, String.to_atom("question#{index}"), fn %{assessment: %Assessment{id: id}} ->
+      Multi.run(multi, String.to_atom("question#{index}"), fn _repo,
+                                                              %{assessment: %Assessment{id: id}} ->
         question_params
         |> Map.put(:display_order, index)
         |> build_question_changeset_for_assessment_id(id)
@@ -434,13 +437,13 @@ defmodule Cadet.Assessments do
     end
 
     Multi.new()
-    |> Multi.run(:assessment, fn _ ->
+    |> Multi.run(:assessment, fn _repo, _ ->
       {:ok, model_assoc_count.(Assessment, :questions, assessment.id)}
     end)
-    |> Multi.run(:submission, fn _ ->
+    |> Multi.run(:submission, fn _repo, _ ->
       {:ok, model_assoc_count.(Submission, :answers, submission.id)}
     end)
-    |> Multi.run(:update, fn %{submission: s_count, assessment: a_count} ->
+    |> Multi.run(:update, fn _repo, %{submission: s_count, assessment: a_count} ->
       if s_count == a_count do
         submission |> Submission.changeset(%{status: :attempted}) |> Repo.update()
       else
@@ -451,13 +454,13 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Function returning submissions under a grader. 
+  Function returning submissions under a grader.
 
-  The input parameters are the user and group_only. 
-  group_only is used to check whether only the groups under the grader should be returned. 
+  The input parameters are the user and group_only.
+  group_only is used to check whether only the groups under the grader should be returned.
   The parameter is a boolean which is false by default.
 
-  The return value is {:ok, submissions} if no errors else its 
+  The return value is {:ok, submissions} if no errors else its
   {:error, {:unauthorized, "User is not permitted to grade."}}
   """
   @spec all_submissions_by_grader(%User{}) ::
@@ -469,7 +472,7 @@ defmodule Cadet.Assessments do
         :inner,
         [s],
         x in subquery(Query.submissions_xp_and_grade()),
-        s.id == x.submission_id
+        on: s.id == x.submission_id
       )
       |> join(:inner, [s], st in assoc(s, :student))
       |> join(:inner, [_, _, st], g in assoc(st, :group))
@@ -477,7 +480,7 @@ defmodule Cadet.Assessments do
         :inner,
         [s],
         a in subquery(Query.all_assessments_with_max_xp_and_grade()),
-        s.assessment_id == a.id
+        on: s.assessment_id == a.id
       )
       |> select([s, x, st, g, a], %Submission{
         s
@@ -527,7 +530,7 @@ defmodule Cadet.Assessments do
 
         answers =
           answer_query
-          |> join(:inner, [..., s, _], t in subquery(students), t.id == s.student_id)
+          |> join(:inner, [..., s, _], t in subquery(students), on: t.id == s.student_id)
           |> Repo.all()
           |> Enum.sort_by(& &1.question.display_order)
 
@@ -574,7 +577,7 @@ defmodule Cadet.Assessments do
 
         answer_query
         |> join(:inner, [a], s in assoc(a, :submission))
-        |> join(:inner, [a, s], t in subquery(students), t.id == s.student_id)
+        |> join(:inner, [a, s], t in subquery(students), on: t.id == s.student_id)
       else
         answer_query
       end
@@ -674,7 +677,7 @@ defmodule Cadet.Assessments do
     students = Cadet.Accounts.Query.students_of(grader)
 
     submission_query
-    |> join(:inner, [s], st in subquery(students), s.student_id == st.id)
+    |> join(:inner, [s], st in subquery(students), on: s.student_id == st.id)
     |> Repo.all()
   end
 

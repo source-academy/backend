@@ -9,7 +9,7 @@ defmodule Mix.Tasks.Cadet.Assessments.Import do
 
   require Logger
 
-  import Mix.Ecto
+  import Mix.EctoSQL
 
   alias Cadet.Updater.XMLParser
   alias Cadet.Repo

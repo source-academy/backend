@@ -17,8 +17,8 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
   def perform(%{answer_id: answer_id, result: result}) when is_ecto_id(answer_id) do
     Multi.new()
-    |> Multi.run(:fetch, fn _ -> fetch_answer(answer_id) end)
-    |> Multi.run(:update, fn %{fetch: answer} -> update_answer(answer, result) end)
+    |> Multi.run(:fetch, fn _repo, _ -> fetch_answer(answer_id) end)
+    |> Multi.run(:update, fn _repo, %{fetch: answer} -> update_answer(answer, result) end)
     |> Repo.transaction()
     |> case do
       {:ok, _} ->

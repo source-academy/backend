@@ -28,7 +28,7 @@ defmodule Cadet.Autograder.Utilities do
       :left,
       [u],
       s in Submission,
-      u.id == s.student_id and s.assessment_id == ^assessment_id
+      on: u.id == s.student_id and s.assessment_id == ^assessment_id
     )
     |> select([u, s], %{student_id: u.id, submission: s})
     |> Repo.all()
