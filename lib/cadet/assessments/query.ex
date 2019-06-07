@@ -13,7 +13,7 @@ defmodule Cadet.Assessments.Query do
   @spec all_submissions_with_xp_and_grade :: Ecto.Query.t()
   def all_submissions_with_xp_and_grade do
     Submission
-    |> join(:inner, [s], q in subquery(submissions_xp_and_grade()), s.id == q.submission_id)
+    |> join(:inner, [s], q in subquery(submissions_xp_and_grade()), on: s.id == q.submission_id)
     |> select([s, q], %Submission{
       s
       | xp: q.xp,
@@ -30,7 +30,7 @@ defmodule Cadet.Assessments.Query do
   @spec all_submissions_with_xp :: Ecto.Query.t()
   def all_submissions_with_xp do
     Submission
-    |> join(:inner, [s], q in subquery(submissions_xp()), s.id == q.submission_id)
+    |> join(:inner, [s], q in subquery(submissions_xp()), on: s.id == q.submission_id)
     |> select([s, q], %Submission{s | xp: q.xp, xp_adjustment: q.xp_adjustment})
   end
 
@@ -41,7 +41,7 @@ defmodule Cadet.Assessments.Query do
   @spec all_submissions_with_grade :: Ecto.Query.t()
   def all_submissions_with_grade do
     Submission
-    |> join(:inner, [s], q in subquery(submissions_grade()), s.id == q.submission_id)
+    |> join(:inner, [s], q in subquery(submissions_grade()), on: s.id == q.submission_id)
     |> select([s, q], %Submission{s | grade: q.grade, adjustment: q.adjustment})
   end
 
@@ -52,7 +52,9 @@ defmodule Cadet.Assessments.Query do
   @spec all_assessments_with_max_xp_and_grade :: Ecto.Query.t()
   def all_assessments_with_max_xp_and_grade do
     Assessment
-    |> join(:inner, [a], q in subquery(assessments_max_xp_and_grade()), a.id == q.assessment_id)
+    |> join(:inner, [a], q in subquery(assessments_max_xp_and_grade()),
+      on: a.id == q.assessment_id
+    )
     |> select([a, q], %Assessment{a | max_grade: q.max_grade, max_xp: q.max_xp})
   end
 
@@ -63,7 +65,7 @@ defmodule Cadet.Assessments.Query do
   @spec all_assessments_with_max_grade :: Ecto.Query.t()
   def all_assessments_with_max_grade do
     Assessment
-    |> join(:inner, [a], q in subquery(assessments_max_grade()), a.id == q.assessment_id)
+    |> join(:inner, [a], q in subquery(assessments_max_grade()), on: a.id == q.assessment_id)
     |> select([a, q], %Assessment{a | max_grade: q.max_grade})
   end
 

@@ -1,30 +1,29 @@
 defmodule Cadet.AccountsTest do
   @moduledoc """
   Some tests in this module use pre-recorded HTTP responses saved by ExVCR.
-  this allows testing without the use of actual external IVLE API calls.
+  this allows testing without the use of actual external LumiNUS API calls.
 
   In the case that you need to change the recorded responses, you will need
-  to set the config variables `:ivle_key` (used as a module attribute in
-  `Cadet.Accounts.IVLE`) and environment variable TOKEN (used here). Don't
+  to set all the luminus config variables (used as a module attribute in
+  `Cadet.Accounts.Luminus`) and environment variable CODE (used here). Don't
   forget to delete the cassette files, otherwise ExVCR will not override the
   cassettes. You can set the TOKEN environment variable like so,
 
-    TOKEN=very_long_token_here mix test
+    CODE=auth_code_goes_here mix test
 
-  Token refers to the user's authentication token. Please see the IVLE API docs:
-  https://wiki.nus.edu.sg/display/ivlelapi/Getting+Started
-  To quickly obtain a token, simply supply a dummy url to a login call:
-      https://ivle.nus.edu.sg/api/login/?apikey=YOUR_API_KEY&url=http://localhost
-  then copy down the token from your browser's address bar.
+  Code refers to the authorization code generated via the OAuth Authorization
+  Grant Type. More information can be found here
+
+  https://wiki.nus.edu.sg/pages/viewpage.action?pageId=235638755.
   """
 
   use Cadet.DataCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias Cadet.{Accounts, Repo}
-  alias Cadet.Accounts.{Query, User}
+  alias Cadet.Accounts.{Query, Luminus, User}
 
-  @token if System.get_env("TOKEN"), do: System.get_env("TOKEN"), else: "token"
+  @token "CODE" |> System.get_env() |> Luminus.fetch_luminus_token!()
 
   setup_all do
     HTTPoison.start()
@@ -121,7 +120,7 @@ defmodule Cadet.AccountsTest do
   describe "sign in using nusnet_id" do
     test "unregistered user" do
       use_cassette "accounts/sign_in#1" do
-        {:ok, _} = Accounts.sign_in("e012345", @token)
+        {:ok, _} = Accounts.sign_in("e012345", "TOM", @token)
         assert Repo.one(Query.nusnet_id("e012345")).uid == "e012345"
       end
     end
@@ -134,73 +133,53 @@ defmodule Cadet.AccountsTest do
         user: user
       })
 
-      assert {:ok, user} == Accounts.sign_in("e012345", @token)
+      assert {:ok, user} == Accounts.sign_in("e012345", "TOM", @token)
     end
 
     test "invalid token" do
       use_cassette "accounts/sign_in#2" do
-        assert {:error, :bad_request} == Accounts.sign_in("A0123456", "t0k3n")
+        assert {:error, :bad_request} == Accounts.sign_in("A0123456", "TOM", "t0k3n")
       end
     end
 
     test "invalid nusnet id" do
       use_cassette "accounts/sign_in#3" do
-        assert {:error, :internal_server_error} == Accounts.sign_in("", @token)
+        assert {:error, :internal_server_error} == Accounts.sign_in("", "TOM", @token)
       end
     end
   end
 
   describe "sign in with unregistered user gets the right roles" do
-    test ~s(user has permission "O") do
+    test ~s(user has admin access) do
       use_cassette "accounts/sign_in#4", custom: true do
-        assert {:ok, user} = Accounts.sign_in("e012345", @token)
+        assert {:ok, user} = Accounts.sign_in("e012345", "TOM", @token)
         assert %{role: :admin} = user
       end
     end
 
-    test ~s(user has permission "F") do
+    test ~s(user has staff access) do
       use_cassette "accounts/sign_in#5", custom: true do
-        assert {:ok, user} = Accounts.sign_in("e012345", @token)
-        assert %{role: :admin} = user
+        assert {:ok, user} = Accounts.sign_in("e012345", "TOM", @token)
+        assert %{role: :staff} = user
       end
     end
 
-    test ~s(user has permission "M") do
+    test ~s(user has student access) do
       use_cassette "accounts/sign_in#6", custom: true do
-        assert {:ok, user} = Accounts.sign_in("e012345", @token)
-        assert %{role: :staff} = user
-      end
-    end
-
-    test ~s(user has permission "R") do
-      use_cassette "accounts/sign_in#7", custom: true do
-        assert {:ok, user} = Accounts.sign_in("e012345", @token)
-        assert %{role: :staff} = user
-      end
-    end
-
-    test ~s(user has permission "S") do
-      use_cassette "accounts/sign_in#8", custom: true do
-        assert {:ok, user} = Accounts.sign_in("e012345", @token)
+        assert {:ok, user} = Accounts.sign_in("e012345", "TOM", @token)
         assert %{role: :student} = user
       end
     end
 
-    test ~s(user has unknown permission "A") do
-      use_cassette "accounts/sign_in#9", custom: true do
-        assert {:error, :bad_request} = Accounts.sign_in("e012345", @token)
-      end
-    end
-
     test ~s(user cs1101s module is inactive) do
-      use_cassette "accounts/sign_in#10", custom: true do
-        assert {:error, :bad_request} = Accounts.sign_in("e012345", @token)
+      use_cassette "accounts/sign_in#7", custom: true do
+        assert {:error, :forbidden} = Accounts.sign_in("e012345", "TOM", @token)
       end
     end
 
     test ~s(user does not read cs1101s) do
-      use_cassette "accounts/sign_in#11", custom: true do
-        assert {:error, :bad_request} = Accounts.sign_in("e012345", @token)
+      use_cassette "accounts/sign_in#8", custom: true do
+        assert {:error, :forbidden} = Accounts.sign_in("e012345", "TOM", @token)
       end
     end
   end

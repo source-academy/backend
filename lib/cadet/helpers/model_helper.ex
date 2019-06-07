@@ -18,7 +18,7 @@ defmodule Cadet.ModelHelper do
       date =
         params[field]
         |> String.to_integer()
-        |> Timex.from_unix()
+        |> Timex.from_unix(:second)
         |> Timezone.convert(timezone)
 
       Map.put(params, field, date)

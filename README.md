@@ -21,10 +21,10 @@ Cadet is the web application powering Source Academy.
 $ cp config/secrets.exs.example config/secrets.exs
 $ vim config/secrets.exs
 ```    
-  - A valid `ivle_key` is required for the application to properly authenticate with IVLE.
-  - A valid `cs1101s_repository`, `cs1101s_rsa_key`, `guest_username`, and `guest_password`
-    is required for the application to run with the `--updater` flag. Otherwise, the default
-    values will suffice.
+  - A valid `luminus_api_key`, `luminus_client_id`, `luminus_client_secret` and 
+    `luminus_redirect_url` are required for the application to properly authenticate with LumiNUS.
+  - A valid `cs1101s_repository`, `cs1101s_rsa_key` is required for the application to 
+    run with the `--updater` flag. Otherwise, the default values will suffice.
 
 2. Install Elixir dependencies
 ```bash
