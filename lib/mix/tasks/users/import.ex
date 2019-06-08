@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Cadet.Users.Import do
 
   require Logger
 
-  import Mix.Ecto
+  import Mix.EctoSQL
 
   alias Cadet.{Accounts, Course, Repo}
   alias Cadet.Course.Group

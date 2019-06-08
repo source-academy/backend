@@ -7,7 +7,7 @@ defmodule Cadet.Accounts do
   import Ecto.Query
 
   alias Cadet.Accounts.Form.Registration
-  alias Cadet.Accounts.{Authorization, IVLE, Query, User}
+  alias Cadet.Accounts.{Authorization, Luminus, Query, User}
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration
@@ -118,7 +118,7 @@ defmodule Cadet.Accounts do
   @doc """
   Sign in using given NUSNET_ID
   """
-  def sign_in(nusnet_id, token) do
+  def sign_in(nusnet_id, name, token) do
     auth = Repo.one(Query.nusnet_id(nusnet_id))
 
     if auth do
@@ -126,17 +126,19 @@ defmodule Cadet.Accounts do
       {:ok, auth.user}
     else
       # user is not registered in our database
-      with {:ok, name} <- IVLE.fetch_name(token),
-           {:ok, role} <- IVLE.fetch_role(token),
+      with {:ok, role} <- Luminus.fetch_role(token),
            {:ok, _} <- register(%{name: name, nusnet_id: nusnet_id}, role) do
-        sign_in(nusnet_id, token)
+        sign_in(nusnet_id, name, token)
       else
+        {:error, :forbidden} ->
+          # Luminus.fetch_role/1 responds with :forbidden if student does not read CS1101S
+          {:error, :forbidden}
+
         {:error, :bad_request} ->
-          # IVLE.fetch_*/1 responds with :bad_request if token is invalid
+          # Luminus.fetch_role/1 responds with :bad_request if token is invalid
           {:error, :bad_request}
 
         {:error, _} ->
-          # IVLE.fetch_*/1 responds with :internal_server_error if API key is invalid
           # register/2 returns {:error, changeset} if changeset is invalid
           {:error, :internal_server_error}
       end

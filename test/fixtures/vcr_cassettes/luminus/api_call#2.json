@@ -3,8 +3,8 @@
     "request": {
       "body": "",
       "headers": {
-        "Ocp-Apim-Subscription-Key": "",
-        "Authorization": "Bearer t0k3n"
+        "Ocp-Apim-Subscription-Key": "88c6f9331128436cb1002c9f1d10051d",
+        "Authorization": "Bearer tokenZ"
       },
       "method": "get",
       "options": [],
@@ -18,7 +18,7 @@
         "Content-Length": "0",
         "Request-Context": "appId=cid-v1:39c1440f-8bb9-4f84-8e1a-9632485a2390",
         "X-Powered-By": "ASP.NET",
-        "Date": "Wed, 17 Apr 2019 17:18:38 GMT"
+        "Date": "Wed, 08 May 2019 12:58:55 GMT"
       },
       "status_code": 401,
       "type": "ok"
