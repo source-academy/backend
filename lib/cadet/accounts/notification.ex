@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.Notification do
   schema "notifications" do
     field(:type, NotificationType)
     field(:read, :boolean)
-    field(:role, Role)
+    field(:role, Role, virtual: true)
 
     belongs_to(:user, User)
     belongs_to(:assessment, Assessment)
