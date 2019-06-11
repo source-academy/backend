@@ -66,10 +66,11 @@ defmodule Cadet.Accounts.Notification do
   def fetch(user = %User{}) do
     IO.puts("Fetch called")
     IO.inspect(user)
+
     Cadet.Accounts.Notification
     |> where(user_id: ^user.id)
     |> Repo.all()
-    |> fn (array) -> {:ok, array} end.()
+    |> (fn array -> {:ok, array} end).()
   end
 
   @doc """
@@ -78,6 +79,7 @@ defmodule Cadet.Accounts.Notification do
   @spec write(:any) :: Ecto.Changeset.t()
   def write(params) do
     IO.puts("Write called")
+
     %Cadet.Accounts.Notification{}
     |> Cadet.Accounts.Notification.changeset(params)
     |> Repo.insert!()
@@ -91,12 +93,14 @@ defmodule Cadet.Accounts.Notification do
     IO.puts("Acknowledge called")
     IO.inspect(notification_id, label: "with notification_id")
     IO.inspect(user, label: "with user")
+
     Cadet.Accounts.Notification
     |> where(user_id: ^user.id)
     |> where(id: ^notification_id)
     |> where(read: false)
     |> Repo.one!()
-    |> fn (notif) -> %{notif | read: true} end.()
+    |> (fn notif -> %{notif | read: true} end).()
+
     # Test
     {:ok, nil}
   end
