@@ -1,5 +1,11 @@
 defmodule Cadet.Accounts.Notification do
+  @moduledoc """
+  Provides the Notification schema as well as functions to
+  fetch, write and acknowledge notifications
+  """
   use Cadet, :model
+
+  import Ecto.Query
 
   alias Cadet.Repo
   alias Cadet.Accounts.{NotificationType, Role, User}
@@ -8,7 +14,7 @@ defmodule Cadet.Accounts.Notification do
   schema "notifications" do
     field(:type, NotificationType)
     field(:read, :boolean)
-    field(:role, Role)
+    field(:role, Role, virtual: true)
 
     belongs_to(:user, User)
     belongs_to(:assessment, Assessment)
@@ -19,7 +25,7 @@ defmodule Cadet.Accounts.Notification do
   end
 
   @required_fields ~w(type read role user_id)a
-  @optional_fields ~w(assessment_id submission_id question_id)
+  @optional_fields ~w(assessment_id submission_id question_id)a
 
   def changeset(answer, params) do
     answer
@@ -60,9 +66,10 @@ defmodule Cadet.Accounts.Notification do
   def fetch(user = %User{}) do
     IO.puts("Fetch called")
     IO.inspect(user)
-
-    # Test
-    {:ok, []}
+    Cadet.Accounts.Notification
+    |> where(user_id: ^user.id)
+    |> Repo.all()
+    |> fn (array) -> {:ok, array} end.()
   end
 
   @doc """
@@ -71,6 +78,9 @@ defmodule Cadet.Accounts.Notification do
   @spec write(:any) :: Ecto.Changeset.t()
   def write(params) do
     IO.puts("Write called")
+    %Cadet.Accounts.Notification{}
+    |> Cadet.Accounts.Notification.changeset(params)
+    |> Repo.insert!()
   end
 
   @doc """
@@ -79,11 +89,14 @@ defmodule Cadet.Accounts.Notification do
   @spec acknowledge(:integer, %User{}) :: {:ok} | {:error, Ecto.Changeset.t()}
   def acknowledge(notification_id, user = %User{}) do
     IO.puts("Acknowledge called")
-    IO.puts("with notification id: ")
-    IO.inspect(notification_id)
-    IO.puts("with user: ")
-    IO.inspect(user)
-
+    IO.inspect(notification_id, label: "with notification_id")
+    IO.inspect(user, label: "with user")
+    Cadet.Accounts.Notification
+    |> where(user_id: ^user.id)
+    |> where(id: ^notification_id)
+    |> where(read: false)
+    |> Repo.one!()
+    |> fn (notif) -> %{notif | read: true} end.()
     # Test
     {:ok, nil}
   end
