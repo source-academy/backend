@@ -42,8 +42,8 @@ defmodule Cadet.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:arc, "~> 0.10.0"},
-      {:arc_ecto, "~> 0.10.0"},
+      {:arc, "~> 0.11.0"},
+      {:arc_ecto, "~> 0.11.0"},
       {:csv, "~> 2.3.0"},
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.0"},
@@ -54,13 +54,13 @@ defmodule Cadet.Mixfile do
       {:floki, "~> 0.21.0"},
       {:gettext, "~> 0.11"},
       {:guardian, "~> 1.0"},
-      {:guardian_db, "~> 1.0"},
+      {:guardian_db, "~> 2.0"},
       {:httpoison, "~> 1.0", override: true},
       {:inch_ex, "~> 2.0", only: [:dev, :test]},
       {:jason, "~> 1.1"},
       {:jsx, "~> 2.8"},
       {:phoenix, "~> 1.4.0"},
-      {:phoenix_ecto, "~> 3.2"},
+      {:phoenix_ecto, "~> 4.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:plug_cowboy, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
@@ -69,7 +69,6 @@ defmodule Cadet.Mixfile do
       {:sentry, "~> 7.0"},
       {:sweet_xml, "~> 0.6.6"},
       {:timex, "~> 3.0"},
-      {:timex_ecto, "~> 3.0"},
       # TODO: Remove the override once ex_aws released the new version
       #       without the dependency on xml_builder. Waste my time urgh
       {:xml_builder, "~> 2.0", override: true},
@@ -79,7 +78,7 @@ defmodule Cadet.Mixfile do
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:faker, "~> 0.10", only: [:dev, :test]},
-      {:git_hooks, "~> 0.3.0", only: [:dev, :test]},
+      {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
       {:mock, "~> 0.3.0", only: :test}
     ]
   end

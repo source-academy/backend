@@ -1,9 +1,0 @@
-{
-  "editor.formatOnSave": true,
-  "editor.rulers": [80],
-  "tslint.enable": true,
-  "tslint.run": "onSave",
-  "tslint.autoFixOnSave": true,
-  "tslint.nodePath": "./frontend/node_modules",
-  "typescript.tsdk": "./frontend/node_modules/typescript/lib"
-}

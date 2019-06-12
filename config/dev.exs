@@ -51,7 +51,6 @@ config :phoenix, :stacktrace_depth, 20
 
 # Configure your database
 config :cadet, Cadet.Repo,
-  adapter: Ecto.Adapters.Postgres,
   username: "postgres",
   password: "postgres",
   database: "cadet_dev",
@@ -66,10 +65,10 @@ config :git_hooks,
   hooks: [
     pre_push: [
       verbose: true,
-      tasks: [
-        "mix format --check-formatted",
-        "mix test",
-        "mix credo"
+      mix_tasks: [
+        "format --check-formatted",
+        "test",
+        "credo"
       ]
     ]
   ]
