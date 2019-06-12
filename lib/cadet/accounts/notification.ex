@@ -94,14 +94,11 @@ defmodule Cadet.Accounts.Notification do
     IO.inspect(notification_id, label: "with notification_id")
     IO.inspect(user, label: "with user")
 
-    Cadet.Accounts.Notification
-    |> where(user_id: ^user.id)
-    |> where(id: ^notification_id)
-    |> where(read: false)
+    from(n in Cadet.Accounts.Notification,
+      where: n.user_id == ^user.id and n.id == ^notification_id
+    )
     |> Repo.one!()
-    |> (fn notif -> %{notif | read: true} end).()
-
-    # Test
-    {:ok, nil}
+    |> (fn to_be_acknowledged -> changeset(to_be_acknowledged, %{read: true}) end).()
+    |> Repo.update()
   end
 end
