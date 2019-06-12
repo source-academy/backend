@@ -47,7 +47,7 @@ defmodule Cadet.Accounts.NotificationTest do
     end
 
     test "valid notification params with question id", %{valid_params_for_student: params} do
-      params = Map.put(params, :question_id, 12345)
+      params = Map.put(params, :question_id, 12_345)
 
       assert_changeset(params, :valid)
     end
