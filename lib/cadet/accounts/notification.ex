@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.Notification do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{NotificationType, Role, User}
+  alias Cadet.Accounts.{Notification, NotificationType, Role, User}
   alias Cadet.Assessments.{Assessment, Question, Submission}
 
   schema "notifications" do
@@ -51,26 +51,18 @@ defmodule Cadet.Accounts.Notification do
     end
   end
 
-  """
-  # Consider another time
-  @spec poll :: {:ok, :integer}
-  def poll() do
-
-  end
-  """
-
   @doc """
   Fetches all notifications belonging to a user as an array
   """
   @spec fetch(%User{}) :: {:ok, {:array, Notification}}
   def fetch(user = %User{}) do
-    IO.puts("Fetch called")
-    IO.inspect(user)
+    notifications =
+      Notification
+      |> where(user_id: ^user.id)
+      |> where(read: false)
+      |> Repo.all()
 
-    Cadet.Accounts.Notification
-    |> where(user_id: ^user.id)
-    |> Repo.all()
-    |> (fn array -> {:ok, array} end).()
+    {:ok, notifications}
   end
 
   @doc """
@@ -78,27 +70,26 @@ defmodule Cadet.Accounts.Notification do
   """
   @spec write(:any) :: Ecto.Changeset.t()
   def write(params) do
-    IO.puts("Write called")
-
-    %Cadet.Accounts.Notification{}
-    |> Cadet.Accounts.Notification.changeset(params)
+    %Notification{}
+    |> changeset(params)
     |> Repo.insert!()
   end
 
   @doc """
   Changes a notification's read status from false to true
   """
-  @spec acknowledge(:integer, %User{}) :: {:ok} | {:error, Ecto.Changeset.t()}
+  @spec acknowledge(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, :any}
   def acknowledge(notification_id, user = %User{}) do
-    IO.puts("Acknowledge called")
-    IO.inspect(notification_id, label: "with notification_id")
-    IO.inspect(user, label: "with user")
+    notification = Repo.get_by(Notification, id: notification_id, user_id: user.id)
 
-    from(n in Cadet.Accounts.Notification,
-      where: n.user_id == ^user.id and n.id == ^notification_id
-    )
-    |> Repo.one!()
-    |> (fn to_be_acknowledged -> changeset(to_be_acknowledged, %{read: true}) end).()
-    |> Repo.update()
+    case notification do
+      nil ->
+        {:error, {:not_found, "Notification does not exist or does not belong to user"}}
+
+      notification ->
+        notification
+        |> changeset(%{role: user.role, read: true})
+        |> Repo.update()
+    end
   end
 end

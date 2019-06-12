@@ -21,8 +21,6 @@ defmodule CadetWeb.NotificationController do
 
   def acknowledge(conn, %{"notificationId" => notification_id})
       when is_ecto_id(notification_id) do
-    user = conn.assigns.current_user
-
     case Notification.acknowledge(
            notification_id,
            conn.assigns.current_user
@@ -34,6 +32,11 @@ defmodule CadetWeb.NotificationController do
         conn
         |> put_status(status)
         |> text(message)
+
+      {:error, _} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> text("Please try again later")
     end
   end
 
@@ -61,7 +64,6 @@ defmodule CadetWeb.NotificationController do
 
     response(200, "OK")
     response(400, "Invalid parameters")
-    response(403, "User not permitted to acknowledge notification")
     response(404, "Notification not found")
   end
 
