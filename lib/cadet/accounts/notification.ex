@@ -68,11 +68,11 @@ defmodule Cadet.Accounts.Notification do
   @doc """
   Writes a new notification into the database
   """
-  @spec write(:any) :: Ecto.Changeset.t()
+  @spec write(:any) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write(params) do
     %Notification{}
     |> changeset(params)
-    |> Repo.insert!()
+    |> Repo.insert()
   end
 
   @doc """
