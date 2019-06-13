@@ -64,7 +64,9 @@ defmodule CadetWeb.NotificationController do
 
     response(200, "OK")
     response(400, "Invalid parameters")
-    response(404, "Notification not found")
+    response(401, "Unauthorised")
+    response(404, "Notification does not exist or does not belong to
+    user")
   end
 
   def swagger_definitions do
