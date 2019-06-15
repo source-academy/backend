@@ -464,6 +464,11 @@ defmodule Cadet.Assessments do
         end)
         |> Repo.transaction()
 
+        Cadet.Accounts.Notification.handle_unsubmit_notifications(
+          submission.assessment.id,
+          Cadet.Accounts.get_user(submission.student_id)
+        )
+
         {:ok, nil}
       else
         {:submission_found?, false} ->
