@@ -68,7 +68,7 @@ defmodule Cadet.Accounts.Notification do
   @doc """
   Writes a new notification into the database, or updates an existing one
   """
-  @spec write(:any) :: Ecto.Changeset.t()
+  @spec write(:any) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write(params = %{role: role}) do
     case role do
       :student -> write_student(params)

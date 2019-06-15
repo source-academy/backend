@@ -3,7 +3,7 @@ defmodule Cadet.Accounts.NotificationTest do
 
   use Cadet.ChangesetCase, entity: Notification
 
-  @required_fields ~w(type read user_id)a
+  @required_fields ~w(type role read user_id)a
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
@@ -30,6 +30,7 @@ defmodule Cadet.Accounts.NotificationTest do
     {:ok,
      %{
        assessment: assessment,
+       avenger: avenger,
        student: student,
        submission: submission,
        valid_params_for_student: valid_params_for_student,
@@ -80,28 +81,119 @@ defmodule Cadet.Accounts.NotificationTest do
   end
 
   describe "repo" do
-    test "fetch notifications when there are none" do
-      # TODO
+    test "fetch notifications when there are none", %{avenger: avenger, student: student} do
+      {:ok, notifications_avenger} = Notification.fetch(avenger)
+      {:ok, notifications_student} = Notification.fetch(student)
+
+      assert notifications_avenger == []
+      assert notifications_student == []
     end
 
-    test "fetch notifications when there are some" do
-      # TODO
+    test "fetch notifications when all unread", %{assessment: assessment, student: student} do
+      notifications =
+        insert_list(3, :notification, %{
+          read: false,
+          assessment_id: assessment.id,
+          user_id: student.id
+        })
+
+      expected = Enum.sort(notifications, &(&1.id < &2.id))
+
+      {:ok, notifications_db} = Notification.fetch(student)
+
+      results = Enum.sort(notifications_db, &(&1.id < &2.id))
+
+      assert results == expected
     end
 
-    test "fetch notifications when all read" do
-      # TODO
+    test "fetch notifications when all read", %{assessment: assessment, student: student} do
+      insert_list(3, :notification, %{
+        read: true,
+        assessment_id: assessment.id,
+        user_id: student.id
+      })
+
+      {:ok, notifications_db} = Notification.fetch(student)
+
+      assert notifications_db == []
     end
 
-    test "create notification" do
-      # TODO
+    test "write notification valid params", %{
+      assessment: assessment,
+      avenger: avenger,
+      student: student,
+      submission: submission
+    } do
+      params_student = %{
+        type: :new,
+        read: false,
+        role: student.role,
+        user_id: student.id,
+        assessment_id: assessment.id
+      }
+
+      params_avenger = %{
+        type: :submitted,
+        read: false,
+        role: avenger.role,
+        user_id: avenger.id,
+        submission_id: submission.id
+      }
+
+      assert {:ok, _} = Notification.write(params_student)
+      assert {:ok, _} = Notification.write(params_avenger)
     end
 
-    test "acknowledge notification when not read" do
-      # TODO
+    test "write notification missing params", %{
+      assessment: assessment,
+      student: student
+    } do
+      params_student = %{
+        type: :new,
+        read: false,
+        role: student.role,
+        user_id: student.id,
+        assessment_id: assessment.id
+      }
+
+      for field <- @required_fields do
+        params = Map.delete(params_student, field)
+
+        {:error, changeset} = Notification.write(params)
+
+        assert changeset.valid? == false
+      end
     end
 
-    test "acknowledge notification when read" do
-      # TODO
+    test "acknowledge notification valid user", %{
+      assessment: assessment,
+      student: student
+    } do
+      notification =
+        insert(:notification, %{
+          read: false,
+          assessment_id: assessment.id,
+          user_id: student.id
+        })
+
+      {:ok, notification_db} = Notification.acknowledge(notification.id, student)
+
+      assert %{read: true} = notification_db
+    end
+
+    test "acknowledge notification invalid user", %{
+      assessment: assessment,
+      avenger: avenger,
+      student: student
+    } do
+      notification =
+        insert(:notification, %{
+          read: false,
+          assessment_id: assessment.id,
+          user_id: student.id
+        })
+
+      assert {:error, _} = Notification.acknowledge(notification.id, avenger)
     end
   end
 end

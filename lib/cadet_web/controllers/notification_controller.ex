@@ -55,7 +55,7 @@ defmodule CadetWeb.NotificationController do
 
   swagger_path :acknowledge do
     post("/notification/{notificationId}/acknowledge")
-    summary("Finalise submission for an assessment")
+    summary("Acknowledge a notification")
     security([%{JWT: []}])
 
     parameters do
@@ -64,7 +64,9 @@ defmodule CadetWeb.NotificationController do
 
     response(200, "OK")
     response(400, "Invalid parameters")
-    response(404, "Notification not found")
+    response(401, "Unauthorised")
+    response(404, "Notification does not exist or does not belong to
+    user")
   end
 
   def swagger_definitions do
