@@ -3,7 +3,7 @@ defmodule Cadet.Accounts.NotificationTest do
 
   use Cadet.ChangesetCase, entity: Notification
 
-  @required_fields ~w(type role read user_id)a
+  @required_fields ~w(type role user_id)a
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
@@ -194,6 +194,15 @@ defmodule Cadet.Accounts.NotificationTest do
         })
 
       assert {:error, _} = Notification.acknowledge(notification.id, avenger)
+    end
+
+    test "handle unsubmit works properly", %{
+      assessment: assessment,
+      student: student
+    } do
+      {:ok, notification_db} = Notification.handle_unsubmit_notifications(assessment.id, student)
+
+      assert %{type: :unsubmitted} = notification_db
     end
   end
 end

@@ -169,7 +169,8 @@ defmodule Cadet.Accounts.Notification do
   @doc """
   Function that handles notifications when a submission is unsubmitted.
   """
-  @spec handle_unsubmit_notifications(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  @spec handle_unsubmit_notifications(:integer, %User{}) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unsubmit_notifications(assessment_id, student = %User{})
       when is_ecto_id(assessment_id) do
     # Fetch and delete all notifications of :autograded and :graded
