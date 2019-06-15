@@ -165,4 +165,26 @@ defmodule Cadet.Accounts.Notification do
         |> Repo.update()
     end
   end
+
+  @doc """
+  Function that handles notifications when a submission is unsubmitted.
+  """
+  def handle_unsubmit_notifications(assessment_id, student = %User{})
+      when is_ecto_id(assessment_id) do
+    # Fetch and delete all notifications of :autograded and :graded
+    # Add new notification :unsubmitted
+
+    Notification
+    |> where(user_id: ^student.id)
+    |> where(assessment_id: ^assessment_id)
+    |> where([n], n.type in ^[:autograded, :graded])
+    |> Repo.delete_all()
+
+    write(%{
+      type: :unsubmitted,
+      role: student.role,
+      user_id: student.id,
+      assessment_id: assessment_id
+    })
+  end
 end
