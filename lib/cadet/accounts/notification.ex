@@ -13,7 +13,7 @@ defmodule Cadet.Accounts.Notification do
 
   schema "notifications" do
     field(:type, NotificationType)
-    field(:read, :boolean)
+    field(:read, :boolean, default: false)
     field(:role, Role, virtual: true)
 
     belongs_to(:user, User)
@@ -66,17 +66,90 @@ defmodule Cadet.Accounts.Notification do
   end
 
   @doc """
-  Writes a new notification into the database
+  Writes a new notification into the database, or updates an existing one
   """
   @spec write(:any) :: Ecto.Changeset.t()
-  def write(params) do
-    %Notification{}
-    |> changeset(params)
-    |> Repo.insert!()
+  def write(params = %{role: role}) do
+    case role do
+      :student -> write_student(params)
+      :staff -> write_avenger(params)
+      _ -> {:error, changeset(%Notification{}, params)}
+    end
+  end
+
+  def write(params), do: {:error, changeset(%Notification{}, params)}
+
+  defp write_student(
+         params = %{
+           user_id: user_id,
+           assessment_id: assessment_id,
+           type: type
+         }
+       ) do
+    question_id = Map.get(params, :question_id)
+
+    Notification
+    |> where(user_id: ^user_id)
+    |> where(assessment_id: ^assessment_id)
+    |> where(type: ^type)
+    |> query_question_id(question_id)
+    |> Repo.one()
+    |> case do
+      nil ->
+        changeset(%Notification{}, params)
+
+      notification ->
+        notification
+        |> changeset(%{
+          read: false,
+          role: :student
+        })
+    end
+    |> Repo.insert_or_update()
+  end
+
+  defp write_student(params), do: {:error, changeset(%Notification{}, params)}
+
+  defp write_avenger(
+         params = %{
+           user_id: user_id,
+           submission_id: submission_id,
+           type: type
+         }
+       ) do
+    question_id = Map.get(params, :question_id)
+
+    Notification
+    |> where(user_id: ^user_id)
+    |> where(submission_id: ^submission_id)
+    |> query_question_id(question_id)
+    |> where(type: ^type)
+    |> Repo.one()
+    |> case do
+      nil ->
+        changeset(%Notification{}, params)
+
+      notification ->
+        notification
+        |> changeset(%{
+          read: false,
+          role: :staff
+        })
+    end
+    |> Repo.insert_or_update()
+  end
+
+  defp write_avenger(params), do: {:error, changeset(%Notification{}, params)}
+
+  defp query_question_id(query, question_id) do
+    case question_id do
+      nil -> query
+      question_id -> where(query, question_id: ^question_id)
+    end
   end
 
   @doc """
-  Changes a notification's read status from false to true
+  Changes a notification's read status from false to true.
   """
   @spec acknowledge(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, :any}
   def acknowledge(notification_id, user = %User{}) do
