@@ -10,7 +10,7 @@ defmodule CadetWeb.ChatController do
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    {:ok, token} = get_token(user)
+    {:ok, token} = get_token(user.nusnet_id)
 
     render(
       conn,
