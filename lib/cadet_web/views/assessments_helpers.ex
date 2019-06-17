@@ -97,13 +97,17 @@ defmodule CadetWeb.AssessmentsHelpers do
   end
 
   def build_result(result) do
-    transform_map_for_view(result, %{
+    result
+    |> transform_map_for_view(%{
       resultType: "resultType",
+      score: "score",
       expected: "expected",
       actual: "actual",
       errorType: "errorType",
       errors: build_errors(result["errors"])
     })
+    |> Enum.reject(fn {_, v} -> is_nil(v) end)
+    |> Enum.into(%{})
   end
 
   defp build_errors(errors) do
@@ -114,13 +118,16 @@ defmodule CadetWeb.AssessmentsHelpers do
   end
 
   defp build_error(error) do
-    transform_map_for_view(error, %{
+    error
+    |> transform_map_for_view(%{
       errorType: "errorType",
       line: "line",
       location: "location",
       errorLine: "errorLine",
       errorExplanation: "errorExplanation"
     })
+    |> Enum.reject(fn {_, v} -> is_nil(v) end)
+    |> Enum.into(%{})
   end
 
   defp build_choice(choice) do
