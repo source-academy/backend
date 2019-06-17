@@ -579,19 +579,17 @@ defmodule Cadet.Assessments do
           unsubmitted_by: u
       })
 
-    cond do
-      role in @see_all_submissions_roles ->
-        submissions =
-          if group_only do
-            submissions_by_group(grader, submission_query)
-          else
-            Repo.all(submission_query)
-          end
+    if role in @see_all_submissions_roles do
+      submissions =
+        if group_only do
+          submissions_by_group(grader, submission_query)
+        else
+          Repo.all(submission_query)
+        end
 
-        {:ok, submissions}
-
-      true ->
-        {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:ok, submissions}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
@@ -607,17 +605,15 @@ defmodule Cadet.Assessments do
       |> join(:inner, [a, ..., s], st in assoc(s, :student))
       |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
 
-    cond do
-      role in @see_all_submissions_roles ->
-        answers =
-          answer_query
-          |> Repo.all()
-          |> Enum.sort_by(& &1.question.display_order)
+    if role in @see_all_submissions_roles do
+      answers =
+        answer_query
+        |> Repo.all()
+        |> Enum.sort_by(& &1.question.display_order)
 
-        {:ok, answers}
-
-      true ->
-        {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:ok, answers}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
