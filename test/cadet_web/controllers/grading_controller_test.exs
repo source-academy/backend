@@ -10,6 +10,7 @@ defmodule CadetWeb.GradingControllerTest do
     GradingController.swagger_path_index(nil)
     GradingController.swagger_path_show(nil)
     GradingController.swagger_path_update(nil)
+    GradingController.swagger_path_unsubmit(nil)
   end
 
   describe "GET /, unauthenticated" do
