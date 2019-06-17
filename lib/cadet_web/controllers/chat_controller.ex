@@ -1,6 +1,7 @@
 defmodule CadetWeb.ChatController do
   @moduledoc """
-  Provides information about a user.
+  Provides token for connection to ChatKit's server.
+  Refer to ChatKit's API here: https://pusher.com/docs/chatkit
   """
 
   use CadetWeb, :controller
