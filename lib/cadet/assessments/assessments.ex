@@ -680,6 +680,8 @@ defmodule Cadet.Assessments do
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
+      # try to send a notification to the student
+      Cadet.Accounts.Notification.write_notification_when_manually_graded(submission_id)
       {:ok, nil}
     else
       {:answer_found?, false} ->

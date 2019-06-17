@@ -136,6 +136,9 @@ defmodule Cadet.Autograder.GradingJob do
       autograding_status: :success
     })
     |> Repo.update()
+
+    # Attempt to send a notification for successful autograding of submission
+    Cadet.Accounts.Notification.write_notification_when_autograded(Map.get(answer, :id))
   end
 
   defp insert_empty_answer(
