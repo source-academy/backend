@@ -136,9 +136,6 @@ defmodule Cadet.Autograder.GradingJob do
       autograding_status: :success
     })
     |> Repo.update()
-
-    # Attempt to send a notification for successful autograding of submission
-    Cadet.Accounts.Notification.write_notification_when_autograded(Map.get(answer, :id))
   end
 
   defp insert_empty_answer(
@@ -213,6 +210,8 @@ defmodule Cadet.Autograder.GradingJob do
     )
   end
 
-  defp grade_submission_question_answer_lists(_, [], [], _) do
+  defp grade_submission_question_answer_lists(submission_id, [], [], _) do
+    # The entire question-answer list has been graded, so we can send a notification
+    Cadet.Accounts.Notification.write_notification_when_manually_graded(submission_id)
   end
 end

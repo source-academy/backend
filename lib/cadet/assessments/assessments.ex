@@ -641,6 +641,32 @@ defmodule Cadet.Assessments do
     end
   end
 
+  defp check_grading_status_for_notifications(submission_id) do
+    submission =
+      Submission
+      |> Repo.get_by(id: submission_id)
+
+    question_count =
+      Question
+      |> where(assessment_id: ^submission.assessment_id)
+      |> select([q], count(q.id))
+      |> Repo.one()
+
+    graded_count =
+      Answer
+      |> where([a], submission_id: ^submission_id)
+      |> where([a], not is_nil(a.grader_id))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    if question_count == graded_count do
+      # Every answer in this submission has been graded manually
+      Cadet.Accounts.Notification.write_notification_when_manually_graded(submission_id)
+    else
+      # Manual grading for the entire submission has not been completed
+    end
+  end
+
   @spec update_grading_info(
           %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
           %{},
@@ -680,8 +706,8 @@ defmodule Cadet.Assessments do
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
-      # try to send a notification to the student
-      Cadet.Accounts.Notification.write_notification_when_manually_graded(submission_id)
+      # We check whether we can send a notification or not
+      check_grading_status_for_notifications(submission_id)
       {:ok, nil}
     else
       {:answer_found?, false} ->
@@ -717,7 +743,11 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+  @doc """
+  Checks if an assessment is open and published.
+  """
+  @spec is_open?(%Assessment{}) :: {:is_open?, boolean()}
+  def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
     {:is_open?, Timex.between?(Timex.now(), open_at, close_at) and is_published}
   end
 

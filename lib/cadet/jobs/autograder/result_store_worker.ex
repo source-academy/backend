@@ -22,8 +22,6 @@ defmodule Cadet.Autograder.ResultStoreWorker do
     |> Repo.transaction()
     |> case do
       {:ok, _} ->
-        # Attempt to send a notification for successful autograding of submission
-        Cadet.Accounts.Notification.write_notification_when_autograded(answer_id)
         nil
 
       {:error, failed_operation, failed_value, _} ->

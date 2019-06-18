@@ -1,17 +1,20 @@
 import EctoEnum
 
 defenum(Cadet.Accounts.NotificationType, :notification_type, [
-  # Notifications for New assessments
+  # Notifications for new assessments
   :new,
+
   # Notifications for deadlines
   :deadline,
+
   # Notifications for autograded assessments
   :autograded,
+
   # Notifications for manually graded assessments
   :graded,
   # Notifications for unsubmitted submissions
   :unsubmitted,
 
-  # Notifications for Submitted assessments
+  # Notifications for submitted assessments
   :submitted
 ])
