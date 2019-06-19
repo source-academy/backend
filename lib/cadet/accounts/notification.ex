@@ -225,9 +225,10 @@ defmodule Cadet.Accounts.Notification do
       User
       |> where(role: ^:student)
       |> Repo.all()
-      |> Enum.reduce_while({:ok, nil}, fn student, acc ->
-        case acc do
-          {:ok, _} ->
+      |> Enum.reduce_while(
+        {:ok, nil},
+        fn student, acc ->
+          with {:ok, _} <- acc do
             {:cont,
              write(%{
                type: :new,
@@ -236,11 +237,11 @@ defmodule Cadet.Accounts.Notification do
                user_id: student.id,
                assessment_id: assessment_id
              })}
-
-          {:error, _} ->
-            {:halt, acc}
+          else
+            _ -> {:halt, acc}
+          end
         end
-      end)
+      )
     end)
     |> Repo.transaction()
   end
