@@ -222,6 +222,9 @@ defmodule Cadet.Assessments do
     |> Repo.insert()
   end
 
+  @doc """
+  The main function that inserts or updates assessments from the XML Parser
+  """
   @spec insert_or_update_assessments_and_questions(map(), [map()]) ::
           {:ok, any()}
           | {:error, Ecto.Multi.name(), any(), %{optional(Ecto.Multi.name()) => any()}}
@@ -243,6 +246,9 @@ defmodule Cadet.Assessments do
         |> build_question_changeset_for_assessment_id(id)
         |> Repo.insert()
       end)
+    end)
+    |> Multi.run(:notifications, fn _repo, %{assessment: %Assessment{id: id}} ->
+      Notification.write_notification_for_new_assessment(id)
     end)
     |> Repo.transaction()
   end
@@ -302,8 +308,6 @@ defmodule Cadet.Assessments do
 
   def publish_assessment(id) do
     update_assessment(id, %{is_published: true})
-    # Send a notification for new assessment
-    Notification.write_notification_for_new_assessment(id)
   end
 
   def create_question_for_assessment(params, assessment_id) when is_ecto_id(assessment_id) do
@@ -382,9 +386,8 @@ defmodule Cadet.Assessments do
       with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :attempted} <- {:status, submission.status},
-           {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
-        # Send a notification to the student's grader
-        Notification.write_notification_when_student_submits(submission)
+           {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission),
+           {:ok, _} <- Notification.write_notification_when_student_submits(submission) do
         # Begin autograding job
         GradingJob.force_grade_individual_submission(updated_submission)
 
@@ -646,7 +649,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp check_grading_status_for_notifications(submission_id) do
+  defp is_fully_graded?(%Answer{submission_id: submission_id}) do
     submission =
       Submission
       |> Repo.get_by(id: submission_id)
@@ -664,12 +667,7 @@ defmodule Cadet.Assessments do
       |> select([a], count(a.id))
       |> Repo.one()
 
-    if question_count == graded_count do
-      # Every answer in this submission has been graded manually
-      Notification.write_notification_when_manually_graded(submission_id)
-    else
-      # Manual grading for the entire submission has not been completed
-    end
+    question_count == graded_count
   end
 
   @spec update_grading_info(
@@ -711,9 +709,12 @@ defmodule Cadet.Assessments do
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
-      # We check whether we can send a notification or not
-      check_grading_status_for_notifications(submission_id)
-      {:ok, nil}
+      if is_fully_graded?(answer) do
+        # Every answer in this submission has been graded manually
+        Notification.write_notification_when_graded(submission_id, :graded)
+      else
+        {:ok, nil}
+      end
     else
       {:answer_found?, false} ->
         {:error, {:bad_request, "Answer not found or user not permitted to grade."}}

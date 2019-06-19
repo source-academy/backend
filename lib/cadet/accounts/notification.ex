@@ -196,96 +196,61 @@ defmodule Cadet.Accounts.Notification do
 
   @doc """
   Writes a notification that a student's submission has been
-  autograded successfully. (for the student)
+  graded successfully. (for the student)
   """
-  @spec write_notification_when_autograded(integer() | String.t()) :: Ecto.Changeset.t()
-  def write_notification_when_autograded(submission_id) do
+  @spec write_notification_when_graded(integer(), any()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def write_notification_when_graded(submission_id, type) when type in [:graded, :autograded] do
     submission =
       Submission
       |> Repo.get_by(id: submission_id)
 
-    params = %{
-      type: :autograded,
+    write(%{
+      type: type,
       read: false,
       role: :student,
       user_id: submission.student_id,
-      assessment_id: submission.assessment_id,
-      submission_id: submission_id
-    }
-
-    write(params)
-  end
-
-  @doc """
-  Writes a notification that a student's submission has been
-  manually graded successfully by an Avenger or other teaching staff.
-  (for the student)
-  """
-  @spec write_notification_when_manually_graded(integer() | String.t()) :: Ecto.Changeset.t()
-  def write_notification_when_manually_graded(submission_id) do
-    submission =
-      Submission
-      |> Repo.get_by(id: submission_id)
-
-    params = %{
-      type: :graded,
-      read: false,
-      role: :student,
-      user_id: submission.student_id,
-      assessment_id: submission.assessment_id,
-      submission_id: submission_id
-    }
-
-    write(params)
+      assessment_id: submission.assessment_id
+    })
   end
 
   @doc """
   Writes a notification to all students that a new assessment is available.
   """
-  @spec write_notification_for_new_assessment(integer() | String.t()) ::
-          {:ok, any()}
-          | {:error, any()}
-          | {:error, Ecto.Multi.name(), any(), %{required(Ecto.Multi.name()) => any()}}
-  def write_notification_for_new_assessment(assessment_id) do
-    assessment =
-      Assessment
-      |> Repo.get_by(id: assessment_id)
-
-    notification_multi = Multi.new()
-
-    if Cadet.Assessments.is_open?(assessment) do
+  @spec write_notification_for_new_assessment(integer()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def write_notification_for_new_assessment(assessment_id) when is_ecto_id(assessment_id) do
+    Multi.new()
+    |> Multi.run(:insert_all, fn _repo, _ ->
       User
       |> where(role: ^:student)
       |> Repo.all()
-      |> Enum.each(fn %User{id: student_id} ->
-        params = %{
-          type: :new,
-          read: false,
-          role: :student,
-          user_id: student_id,
-          assessment_id: assessment_id
-        }
+      |> Enum.reduce_while({:ok, nil}, fn student, acc ->
+        case acc do
+          {:ok, _} ->
+            {:cont,
+             write(%{
+               type: :new,
+               read: false,
+               role: :student,
+               user_id: student.id,
+               assessment_id: assessment_id
+             })}
 
-        changes =
-          %Notification{}
-          |> changeset(params)
-
-        Multi.insert(
-          notification_multi,
-          String.to_atom("notify_new_for_student_#{student_id}"),
-          changes
-        )
+          {:error, _} ->
+            {:halt, acc}
+        end
       end)
-
-      Repo.transaction(notification_multi)
-    end
+    end)
+    |> Repo.transaction()
   end
 
   @doc """
   When a student has finalized a submission, writes a notification to the corresponding
   grader (Avenger) in charge of the student.
   """
-  @spec write_notification_when_student_submits(%Submission{}) :: Ecto.Changeset.t()
+  @spec write_notification_when_student_submits(%Submission{}) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_when_student_submits(submission = %Submission{}) do
     leader_id =
       User
@@ -294,15 +259,12 @@ defmodule Cadet.Accounts.Notification do
       |> Map.get(:group)
       |> Map.get(:leader_id)
 
-    params = %{
+    write(%{
       type: :submitted,
       read: false,
       role: :staff,
       user_id: leader_id,
-      assessment_id: submission.assessment_id,
       submission_id: submission.id
-    }
-
-    write(params)
+    })
   end
 end
