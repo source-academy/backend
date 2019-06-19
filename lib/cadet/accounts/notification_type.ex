@@ -4,9 +4,6 @@ defenum(Cadet.Accounts.NotificationType, :notification_type, [
   # Notifications for new assessments
   :new,
 
-  # Notifications for deadlines
-  :deadline,
-
   # Notifications for autograded assessments
   :autograded,
 
