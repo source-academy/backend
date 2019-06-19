@@ -9,7 +9,6 @@ defmodule CadetWeb.NotificationController do
   alias Cadet.Accounts.Notifications
 
   def index(conn, _) do
-    # TODO
     {:ok, notifications} = Notifications.fetch(conn.assigns.current_user)
 
     render(

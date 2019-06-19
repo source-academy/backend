@@ -140,8 +140,60 @@ defmodule Cadet.Accounts.NotificationTest do
         submission_id: submission.id
       }
 
+      question = insert(:programming_question, %{assessment: assessment})
+
       assert {:ok, _} = Notifications.write(params_student)
       assert {:ok, _} = Notifications.write(params_avenger)
+
+      assert {:ok, _} =
+               params_student
+               |> Map.put(:question_id, question.id)
+               |> Notifications.write()
+    end
+
+    test "write notification and ensure no duplicates", %{
+      assessment: assessment,
+      avenger: avenger,
+      student: student,
+      submission: submission
+    } do
+      params_student = %{
+        type: :new,
+        read: false,
+        role: student.role,
+        user_id: student.id,
+        assessment_id: assessment.id
+      }
+
+      params_avenger = %{
+        type: :submitted,
+        read: false,
+        role: avenger.role,
+        user_id: avenger.id,
+        submission_id: submission.id
+      }
+
+      Notifications.write(params_student)
+      Notifications.write(params_student)
+
+      assert Repo.one(
+               from(n in Notification,
+                 where:
+                   n.type == ^:new and n.user_id == ^student.id and
+                     n.assessment_id == ^assessment.id
+               )
+             )
+
+      Notifications.write(params_avenger)
+      Notifications.write(params_avenger)
+
+      assert Repo.one(
+               from(n in Notification,
+                 where:
+                   n.type == ^:submitted and n.user_id == ^avenger.id and
+                     n.submission_id == ^submission.id
+               )
+             )
     end
 
     test "write notification missing params", %{
