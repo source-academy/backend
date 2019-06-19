@@ -204,5 +204,70 @@ defmodule Cadet.Accounts.NotificationTest do
 
       assert %{type: :unsubmitted} = notification_db
     end
+
+    test "receives notification when submitted" do
+      assessment = insert(:assessment, %{is_published: true})
+      avenger = insert(:user, %{role: :staff})
+      group = insert(:group, %{leader: avenger})
+      student = insert(:user, %{role: :student, group: group})
+      submission = insert(:submission, %{student: student, assessment: assessment})
+
+      Notification.write_notification_when_student_submits(submission)
+
+      notification =
+        Repo.get_by(Notification,
+          user_id: avenger.id,
+          type: :submitted,
+          submission_id: submission.id
+        )
+
+      assert %{type: :submitted} = notification
+    end
+
+    test "receives notification when autograded", %{
+      assessment: assessment,
+      student: student,
+      submission: submission
+    } do
+      Notification.write_notification_when_graded(submission.id, :autograded)
+
+      notification =
+        Repo.get_by(Notification,
+          user_id: student.id,
+          type: :autograded,
+          assessment_id: assessment.id
+        )
+
+      assert %{type: :autograded} = notification
+    end
+
+    test "receives notification when manually graded", %{
+      assessment: assessment,
+      student: student,
+      submission: submission
+    } do
+      Notification.write_notification_when_graded(submission.id, :graded)
+
+      notification =
+        Repo.get_by(Notification, user_id: student.id, type: :graded, assessment_id: assessment.id)
+
+      assert %{type: :graded} = notification
+    end
+
+    test "every student receives notifications when a new assessment is published", %{
+      assessment: assessment,
+      student: student
+    } do
+      students = [student | insert_list(3, :user, %{role: :student})]
+
+      Notification.write_notification_for_new_assessment(assessment.id)
+
+      for student <- students do
+        notification =
+          Repo.get_by(Notification, user_id: student.id, type: :new, assessment_id: assessment.id)
+
+        assert %{type: :new} = notification
+      end
+    end
   end
 end
