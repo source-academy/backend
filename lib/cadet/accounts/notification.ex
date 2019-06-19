@@ -252,18 +252,21 @@ defmodule Cadet.Accounts.Notification do
   @spec write_notification_when_student_submits(%Submission{}) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_when_student_submits(submission = %Submission{}) do
-    leader_id =
+    avenger_id =
       User
       |> Repo.get_by(id: submission.student_id)
       |> Repo.preload(:group)
       |> Map.get(:group)
-      |> Map.get(:leader_id)
+      |> case do
+        nil -> nil
+        group -> Map.get(group, :leader_id)
+      end
 
     write(%{
       type: :submitted,
       read: false,
       role: :staff,
-      user_id: leader_id,
+      user_id: avenger_id,
       submission_id: submission.id
     })
   end
