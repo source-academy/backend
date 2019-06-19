@@ -632,7 +632,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       with_mock GradingJob,
         force_grade_individual_submission: fn _ -> nil end do
-        user = insert(:user, %{role: :student})
+        group = insert(:group)
+        user = insert(:user, %{role: :student, group: group})
 
         submission =
           insert(:submission, %{student: user, assessment: assessment, status: :attempted})
@@ -666,7 +667,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
             )
 
           question = insert(:programming_question, assessment: assessment)
-          user = insert(:user, role: :student)
+
+          group = insert(:group)
+          user = insert(:user, %{role: :student, group: group})
 
           submission =
             insert(:submission, assessment: assessment, student: user, status: :attempted)
@@ -706,7 +709,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
             )
 
           question = insert(:programming_question, assessment: assessment)
-          user = insert(:user, role: :student)
+
+          group = insert(:group)
+          user = insert(:user, %{role: :student, group: group})
 
           submission =
             insert(:submission, assessment: assessment, student: user, status: :attempted)
@@ -746,7 +751,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
             )
 
           question = insert(:programming_question, assessment: assessment)
-          user = insert(:user, role: :student)
+
+          group = insert(:group)
+          user = insert(:user, %{role: :student, group: group})
 
           submission =
             insert(:submission, assessment: assessment, student: user, status: :attempted)
@@ -788,7 +795,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
             )
 
           question = insert(:programming_question, assessment: assessment)
-          user = insert(:user, role: :student)
+
+          group = insert(:group)
+          user = insert(:user, %{role: :student, group: group})
 
           submission =
             insert(:submission, assessment: assessment, student: user, status: :attempted)
