@@ -31,6 +31,7 @@ defmodule Cadet.Autograder.GradingJob do
       assessment
       |> close_and_make_empty_submission()
       |> Enum.each(fn submission ->
+        Cadet.Accounts.Notification.write_notification_when_student_submits(submission)
         grade_individual_submission(submission, assessment)
       end)
     end
