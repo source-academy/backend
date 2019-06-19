@@ -13,6 +13,7 @@ defmodule Cadet.Accounts.Notification do
   alias Cadet.Repo
   alias Cadet.Accounts.{Notification, NotificationType, Role, User}
   alias Cadet.Assessments.{Assessment, Question, Submission}
+  alias Ecto.Multi
 
   schema "notifications" do
     field(:type, NotificationType)
@@ -241,17 +242,22 @@ defmodule Cadet.Accounts.Notification do
   @doc """
   Writes a notification to all students that a new assessment is available.
   """
-  @spec write_notification_for_new_assessment(integer() | String.t()) :: Ecto.Changeset.t()
+  @spec write_notification_for_new_assessment(integer() | String.t()) ::
+          {:ok, any()}
+          | {:error, any()}
+          | {:error, Ecto.Multi.name(), any(), %{required(Ecto.Multi.name()) => any()}}
   def write_notification_for_new_assessment(assessment_id) do
     assessment =
       Assessment
       |> Repo.get_by(id: assessment_id)
 
+    notification_multi = Multi.new()
+
     if Cadet.Assessments.is_open?(assessment) do
       User
       |> where(role: ^:student)
       |> Repo.all()
-      |> Enum.map(fn %User{id: student_id} ->
+      |> Enum.each(fn %User{id: student_id} ->
         params = %{
           type: :new,
           read: false,
@@ -260,8 +266,43 @@ defmodule Cadet.Accounts.Notification do
           assessment_id: assessment_id
         }
 
-        write(params)
+        changes =
+          %Notification{}
+          |> changeset(params)
+
+        Multi.insert(
+          notification_multi,
+          String.to_atom("notify_new_for_student_#{student_id}"),
+          changes
+        )
       end)
+
+      Repo.transaction(notification_multi)
     end
+  end
+
+  @doc """
+  When a student has finalized a submission, writes a notification to the corresponding
+  grader (Avenger) in charge of the student.
+  """
+  @spec write_notification_when_student_submits(%Submission{}) :: Ecto.Changeset.t()
+  def write_notification_when_student_submits(submission = %Submission{}) do
+    leader_id =
+      User
+      |> Repo.get_by(id: submission.student_id)
+      |> Repo.preload(:group)
+      |> Map.get(:group)
+      |> Map.get(:leader_id)
+
+    params = %{
+      type: :submitted,
+      read: false,
+      role: :staff,
+      user_id: leader_id,
+      assessment_id: submission.assessment_id,
+      submission_id: submission.id
+    }
+
+    write(params)
   end
 end

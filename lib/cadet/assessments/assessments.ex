@@ -7,7 +7,7 @@ defmodule Cadet.Assessments do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.User
+  alias Cadet.Accounts.{Notification, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
   alias Ecto.Multi
@@ -302,6 +302,8 @@ defmodule Cadet.Assessments do
 
   def publish_assessment(id) do
     update_assessment(id, %{is_published: true})
+    # Send a notification for new assessment
+    Notification.write_notification_for_new_assessment(id)
   end
 
   def create_question_for_assessment(params, assessment_id) when is_ecto_id(assessment_id) do
@@ -381,6 +383,9 @@ defmodule Cadet.Assessments do
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :attempted} <- {:status, submission.status},
            {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
+        # Send a notification to the student's grader
+        Notification.write_notification_when_student_submits(submission)
+        # Begin autograding job
         GradingJob.force_grade_individual_submission(updated_submission)
 
         {:ok, nil}
@@ -661,7 +666,7 @@ defmodule Cadet.Assessments do
 
     if question_count == graded_count do
       # Every answer in this submission has been graded manually
-      Cadet.Accounts.Notification.write_notification_when_manually_graded(submission_id)
+      Notification.write_notification_when_manually_graded(submission_id)
     else
       # Manual grading for the entire submission has not been completed
     end
