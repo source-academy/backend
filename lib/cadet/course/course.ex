@@ -157,12 +157,11 @@ defmodule Cadet.Course do
   @doc """
   Upload a material file to designated folder
   """
-  def upload_material_file(folder = %Material{}, uploader = %User{}, attr = %{}) do
+  def upload_material_file(uploader = %User{}, attr = %{}) do
     changeset =
       %Material{}
       |> Material.changeset(attr)
       |> put_assoc(:uploader, uploader)
-      |> put_assoc(:parent, folder)
 
     Repo.insert(changeset)
   end

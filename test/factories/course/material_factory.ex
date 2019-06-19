@@ -9,7 +9,7 @@ defmodule Cadet.Course.MaterialFactory do
 
       def material_folder_factory do
         %Material{
-          name: Faker.Cat.name(),
+          title: Faker.Cat.name(),
           description: Faker.Cat.breed(),
           uploader: build(:user, %{role: :staff})
         }
@@ -17,10 +17,9 @@ defmodule Cadet.Course.MaterialFactory do
 
       def material_file_factory do
         %Material{
-          name: Faker.StarWars.character(),
+          title: Faker.StarWars.character(),
           description: Faker.StarWars.planet(),
           file: build(:upload),
-          parent: build(:material_folder),
           uploader: build(:user, %{role: :staff})
         }
       end
