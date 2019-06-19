@@ -29,13 +29,14 @@ defmodule Cadet.Assessments.Assessment do
     field(:number, :string)
     field(:story, :string)
     field(:reading, :string)
+    field(:password, :string)
 
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
   @required_fields ~w(type title open_at close_at number)a
-  @optional_fields ~w(reading summary_short summary_long is_published story cover_picture)a
+  @optional_fields ~w(reading summary_short summary_long is_published story cover_picture password)a
   @optional_file_fields ~w(mission_pdf)a
 
   def changeset(assessment, params) do
