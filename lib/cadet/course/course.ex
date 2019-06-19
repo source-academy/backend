@@ -8,7 +8,7 @@ defmodule Cadet.Course do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Group, Material, Upload}
+  alias Cadet.Course.{Group, Material, Upload, Sourcecast}
 
   @doc """
   Get a group based on the group name or create one if it doesn't exist
@@ -97,6 +97,18 @@ defmodule Cadet.Course do
   #   |> Repo.all()
   #   |> Repo.preload([:student])
   # end
+
+  @doc """
+  Upload a sourcecast file
+  """
+  def upload_sourcecast_file(uploader = %User{}, attrs = %{}) do
+    changeset =
+      %Sourcecast{}
+      |> Sourcecast.changeset(attrs)
+      |> put_assoc(:uploader, uploader)
+
+    Repo.insert(changeset)
+  end
 
   @doc """
   Create a new folder to put material files in
