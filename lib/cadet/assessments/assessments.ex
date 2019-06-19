@@ -7,7 +7,7 @@ defmodule Cadet.Assessments do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.{Notification, User}
+  alias Cadet.Accounts.{Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
   alias Ecto.Multi
@@ -248,7 +248,7 @@ defmodule Cadet.Assessments do
       end)
     end)
     |> Multi.run(:notifications, fn _repo, %{assessment: %Assessment{id: id}} ->
-      Notification.write_notification_for_new_assessment(id)
+      Notifications.write_notification_for_new_assessment(id)
     end)
     |> Repo.transaction()
   end
@@ -387,7 +387,7 @@ defmodule Cadet.Assessments do
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :attempted} <- {:status, submission.status},
            {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission),
-           {:ok, _} <- Notification.write_notification_when_student_submits(submission) do
+           {:ok, _} <- Notifications.write_notification_when_student_submits(submission) do
         # Begin autograding job
         GradingJob.force_grade_individual_submission(updated_submission)
 
@@ -472,7 +472,7 @@ defmodule Cadet.Assessments do
         end)
         |> Repo.transaction()
 
-        Cadet.Accounts.Notification.handle_unsubmit_notifications(
+        Cadet.Accounts.Notifications.handle_unsubmit_notifications(
           submission.assessment.id,
           Cadet.Accounts.get_user(submission.student_id)
         )
@@ -711,7 +711,7 @@ defmodule Cadet.Assessments do
          {:ok, _} <- Repo.update(changeset) do
       if is_fully_graded?(answer) do
         # Every answer in this submission has been graded manually
-        Notification.write_notification_when_graded(submission_id, :graded)
+        Notifications.write_notification_when_graded(submission_id, :graded)
       else
         {:ok, nil}
       end

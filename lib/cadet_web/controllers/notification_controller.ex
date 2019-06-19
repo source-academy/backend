@@ -1,16 +1,16 @@
 defmodule CadetWeb.NotificationController do
   @moduledoc """
-  Provides information about a notification.
+  Provides information about a Notifications.
   """
 
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.Accounts.Notification
+  alias Cadet.Accounts.Notifications
 
   def index(conn, _) do
     # TODO
-    {:ok, notifications} = Notification.fetch(conn.assigns.current_user)
+    {:ok, notifications} = Notifications.fetch(conn.assigns.current_user)
 
     render(
       conn,
@@ -21,7 +21,7 @@ defmodule CadetWeb.NotificationController do
 
   def acknowledge(conn, %{"notificationId" => notification_id})
       when is_ecto_id(notification_id) do
-    case Notification.acknowledge(
+    case Notifications.acknowledge(
            notification_id,
            conn.assigns.current_user
          ) do

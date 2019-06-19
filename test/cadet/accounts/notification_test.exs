@@ -1,5 +1,5 @@
 defmodule Cadet.Accounts.NotificationTest do
-  alias Cadet.Accounts.Notification
+  alias Cadet.Accounts.{Notification, Notifications}
 
   use Cadet.ChangesetCase, entity: Notification
 
@@ -82,8 +82,8 @@ defmodule Cadet.Accounts.NotificationTest do
 
   describe "repo" do
     test "fetch notifications when there are none", %{avenger: avenger, student: student} do
-      {:ok, notifications_avenger} = Notification.fetch(avenger)
-      {:ok, notifications_student} = Notification.fetch(student)
+      {:ok, notifications_avenger} = Notifications.fetch(avenger)
+      {:ok, notifications_student} = Notifications.fetch(student)
 
       assert notifications_avenger == []
       assert notifications_student == []
@@ -99,7 +99,7 @@ defmodule Cadet.Accounts.NotificationTest do
 
       expected = Enum.sort(notifications, &(&1.id < &2.id))
 
-      {:ok, notifications_db} = Notification.fetch(student)
+      {:ok, notifications_db} = Notifications.fetch(student)
 
       results = Enum.sort(notifications_db, &(&1.id < &2.id))
 
@@ -113,7 +113,7 @@ defmodule Cadet.Accounts.NotificationTest do
         user_id: student.id
       })
 
-      {:ok, notifications_db} = Notification.fetch(student)
+      {:ok, notifications_db} = Notifications.fetch(student)
 
       assert notifications_db == []
     end
@@ -140,8 +140,8 @@ defmodule Cadet.Accounts.NotificationTest do
         submission_id: submission.id
       }
 
-      assert {:ok, _} = Notification.write(params_student)
-      assert {:ok, _} = Notification.write(params_avenger)
+      assert {:ok, _} = Notifications.write(params_student)
+      assert {:ok, _} = Notifications.write(params_avenger)
     end
 
     test "write notification missing params", %{
@@ -159,7 +159,7 @@ defmodule Cadet.Accounts.NotificationTest do
       for field <- @required_fields do
         params = Map.delete(params_student, field)
 
-        {:error, changeset} = Notification.write(params)
+        {:error, changeset} = Notifications.write(params)
 
         assert changeset.valid? == false
       end
@@ -176,7 +176,7 @@ defmodule Cadet.Accounts.NotificationTest do
           user_id: student.id
         })
 
-      {:ok, notification_db} = Notification.acknowledge(notification.id, student)
+      {:ok, notification_db} = Notifications.acknowledge(notification.id, student)
 
       assert %{read: true} = notification_db
     end
@@ -193,14 +193,14 @@ defmodule Cadet.Accounts.NotificationTest do
           user_id: student.id
         })
 
-      assert {:error, _} = Notification.acknowledge(notification.id, avenger)
+      assert {:error, _} = Notifications.acknowledge(notification.id, avenger)
     end
 
     test "handle unsubmit works properly", %{
       assessment: assessment,
       student: student
     } do
-      {:ok, notification_db} = Notification.handle_unsubmit_notifications(assessment.id, student)
+      {:ok, notification_db} = Notifications.handle_unsubmit_notifications(assessment.id, student)
 
       assert %{type: :unsubmitted} = notification_db
     end
@@ -212,7 +212,7 @@ defmodule Cadet.Accounts.NotificationTest do
       student = insert(:user, %{role: :student, group: group})
       submission = insert(:submission, %{student: student, assessment: assessment})
 
-      Notification.write_notification_when_student_submits(submission)
+      Notifications.write_notification_when_student_submits(submission)
 
       notification =
         Repo.get_by(Notification,
@@ -229,7 +229,7 @@ defmodule Cadet.Accounts.NotificationTest do
       student: student,
       submission: submission
     } do
-      Notification.write_notification_when_graded(submission.id, :autograded)
+      Notifications.write_notification_when_graded(submission.id, :autograded)
 
       notification =
         Repo.get_by(Notification,
@@ -246,7 +246,7 @@ defmodule Cadet.Accounts.NotificationTest do
       student: student,
       submission: submission
     } do
-      Notification.write_notification_when_graded(submission.id, :graded)
+      Notifications.write_notification_when_graded(submission.id, :graded)
 
       notification =
         Repo.get_by(Notification, user_id: student.id, type: :graded, assessment_id: assessment.id)
@@ -260,7 +260,7 @@ defmodule Cadet.Accounts.NotificationTest do
     } do
       students = [student | insert_list(3, :user, %{role: :student})]
 
-      Notification.write_notification_for_new_assessment(assessment.id)
+      Notifications.write_notification_for_new_assessment(assessment.id)
 
       for student <- students do
         notification =

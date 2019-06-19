@@ -31,7 +31,7 @@ defmodule Cadet.Autograder.GradingJob do
       assessment
       |> close_and_make_empty_submission()
       |> Enum.each(fn submission ->
-        Cadet.Accounts.Notification.write_notification_when_student_submits(submission)
+        Cadet.Accounts.Notifications.write_notification_when_student_submits(submission)
         grade_individual_submission(submission, assessment)
       end)
     end
@@ -213,6 +213,6 @@ defmodule Cadet.Autograder.GradingJob do
 
   defp grade_submission_question_answer_lists(submission_id, [], [], _) do
     # The entire question-answer list has been graded, so we can send a notification
-    Cadet.Accounts.Notification.write_notification_when_graded(submission_id, :autograded)
+    Cadet.Accounts.Notifications.write_notification_when_graded(submission_id, :autograded)
   end
 end
