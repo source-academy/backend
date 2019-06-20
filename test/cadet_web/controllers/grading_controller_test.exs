@@ -271,7 +271,9 @@ defmodule CadetWeb.GradingControllerTest do
                   "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
-                  "answer" => &1.answer.code
+                  "answer" => &1.answer.code,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "solution" => &1.question.question.solution,
                 "grade" => %{
@@ -316,7 +318,9 @@ defmodule CadetWeb.GradingControllerTest do
                         "hint" => choice.hint,
                         "id" => choice.choice_id
                       }
-                    end
+                    end,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "solution" => "",
                 "grade" => %{
@@ -386,7 +390,9 @@ defmodule CadetWeb.GradingControllerTest do
                   "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
-                  "answer" => &1.answer.code
+                  "answer" => &1.answer.code,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "solution" => &1.question.question.solution,
                 "grade" => %{
@@ -431,7 +437,9 @@ defmodule CadetWeb.GradingControllerTest do
                         "hint" => choice.hint,
                         "id" => choice.choice_id
                       }
-                    end
+                    end,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "solution" => "",
                 "grade" => %{
@@ -845,7 +853,9 @@ defmodule CadetWeb.GradingControllerTest do
                   "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
-                  "answer" => &1.answer.code
+                  "answer" => &1.answer.code,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "solution" => &1.question.question.solution,
                 "grade" => %{
@@ -890,7 +900,9 @@ defmodule CadetWeb.GradingControllerTest do
                         "hint" => choice.hint,
                         "id" => choice.choice_id
                       }
-                    end
+                    end,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results
                 },
                 "solution" => "",
                 "grade" => %{
