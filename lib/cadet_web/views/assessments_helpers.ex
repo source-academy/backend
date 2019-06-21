@@ -163,8 +163,4 @@ defmodule CadetWeb.AssessmentsHelpers do
     |> Enum.find(&Map.get(&1, "is_correct"))
     |> Map.get("choice_id")
   end
-
-  defp password_protected?(nil), do: false
-
-  defp password_protected?(_), do: true
 end
