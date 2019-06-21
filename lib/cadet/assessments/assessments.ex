@@ -120,7 +120,36 @@ defmodule Cadet.Assessments do
     |> Repo.one()
   end
 
-  def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{password: nil},
+        user = %User{},
+        nil
+      ) do
+    assessment_with_questions_and_answers(assessment, user)
+  end
+
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{password: nil},
+        user = %User{},
+        _
+      ) do
+    assessment_with_questions_and_answers(assessment, user)
+  end
+
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{password: password},
+        user = %User{},
+        given_password
+      ) do
+    case given_password do
+      nil -> {:error, {:bad_request, "Missing Password."}}
+      ^password -> assessment_with_questions_and_answers(assessment, user)
+      _ -> {:error, {:forbidden, "Invalid Password."}}
+    end
+  end
+
+  def assessment_with_questions_and_answers(id, user = %User{}, password)
+      when is_ecto_id(id) do
     assessment =
       Assessment
       |> where(id: ^id)
@@ -128,7 +157,7 @@ defmodule Cadet.Assessments do
       |> Repo.one()
 
     if assessment do
-      assessment_with_questions_and_answers(assessment, user)
+      assessment_with_questions_and_answers(assessment, user, password)
     else
       {:error, {:bad_request, "Assessment not found"}}
     end
@@ -158,6 +187,10 @@ defmodule Cadet.Assessments do
     else
       {:error, {:unauthorized, "Assessment not open"}}
     end
+  end
+
+  def assessment_with_questions_and_answers(id, user = %User{}) do
+    assessment_with_questions_and_answers(id, user, nil)
   end
 
   @doc """

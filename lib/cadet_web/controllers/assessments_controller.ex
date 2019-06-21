@@ -24,10 +24,11 @@ defmodule CadetWeb.AssessmentsController do
     render(conn, "index.json", assessments: assessments)
   end
 
-  def show(conn, %{"id" => assessment_id}) when is_ecto_id(assessment_id) do
+  def show(conn, params = %{"id" => assessment_id}) when is_ecto_id(assessment_id) do
     user = conn.assigns[:current_user]
+    password = params |> Map.get("password")
 
-    case Assessments.assessment_with_questions_and_answers(assessment_id, user) do
+    case Assessments.assessment_with_questions_and_answers(assessment_id, user, password) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
@@ -62,7 +63,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :show do
-    get("/assessments/{assessmentId}")
+    get("/assessments/{assessmentId}/{password}")
 
     summary("Get information about one particular assessment.")
 
@@ -72,11 +73,13 @@ defmodule CadetWeb.AssessmentsController do
 
     parameters do
       assessmentId(:path, :integer, "assessment id", required: true)
+      password(:path, :string, "password", required: false)
     end
 
     response(200, "OK", Schema.ref(:Assessment))
     response(400, "Missing parameter(s) or invalid assessmentId")
     response(401, "Unauthorised")
+    response(403, "Password incorrect")
   end
 
   def swagger_definitions do
@@ -135,6 +138,8 @@ defmodule CadetWeb.AssessmentsController do
             grade(:integer, "The grade earned for this assessment", required: true)
 
             coverImage(:string, "The URL to the cover picture", required: true)
+
+            passwordProtected(:boolean, "Is this assessment password protected?", required: true)
           end
         end,
       Assessment:

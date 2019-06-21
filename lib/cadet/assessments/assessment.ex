@@ -29,7 +29,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:number, :string)
     field(:story, :string)
     field(:reading, :string)
-    field(:password, :string)
+    field(:password, :string, default: nil)
 
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
