@@ -19,7 +19,7 @@ defmodule CadetWeb.AuthController do
   def create(conn, %{"login" => attrs}) do
     changeset = Login.changeset(%Login{}, attrs)
 
-    with valid = changeset.valid?,
+    with valid <- changeset.valid?,
          {:changes, login} when valid <- {:changes, apply_changes(changeset)},
          {:fetch, {:ok, token}} <-
            {:fetch, Luminus.fetch_luminus_token(login.luminus_code)},
