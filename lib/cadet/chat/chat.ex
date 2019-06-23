@@ -24,7 +24,7 @@ defmodule Cadet.Chat do
   Generates a token for user with admin rights to enable superuser permissions.
   Returns {:ok, token}
   """
-  def get_superuser_token() do
+  def get_superuser_token do
     get_token("admin", true)
   end
 
@@ -38,7 +38,7 @@ defmodule Cadet.Chat do
 
     payload = %{
       "instance" => @instance_id,
-      "iss" => "api_keys/" <> @key_id,
+      "iss" => "api_keys/#{@key_id}",
       "exp" => curr_time_epoch + @token_ttl,
       "iat" => curr_time_epoch,
       "sub" => user_id,
