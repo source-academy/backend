@@ -1,9 +1,10 @@
 defmodule CadetWeb.ChatView do
   use CadetWeb, :view
 
-  def render("index.json", %{token: token}) do
+  def render("index.json", %{access_token: token, expires_in: ttl}) do
     %{
-      token: token
+      access_token: token,
+      expires_in: ttl
     }
   end
 end

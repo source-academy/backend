@@ -40,7 +40,7 @@ defmodule CadetWeb.Router do
 
     get("/user", UserController, :index)
 
-    get("/chat/token", ChatController, :index)
+    post("/chat/token", ChatController, :index)
   end
 
   # Other scopes may use custom stacks.

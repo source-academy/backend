@@ -11,19 +11,21 @@ defmodule CadetWeb.ChatController do
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    {:ok, token} = get_token(user.nusnet_id)
+    {:ok, token} = get_token(to_string(user.id))
+    ttl = get_ttl()
 
     render(
       conn,
       "index.json",
-      token: token
+      access_token: token,
+      expires_in: ttl
     )
   end
 
   swagger_path :index do
-    get("/chat/token")
+    post("/chat/token")
 
-    summary("Get the ChatKit bearer token of a user")
+    summary("Get the ChatKit bearer token of a user. Token expires in 24 hours.")
 
     security([%{JWT: []}])
 
@@ -40,7 +42,9 @@ defmodule CadetWeb.ChatController do
           description("Token used for connection to ChatKit's server")
 
           properties do
-            token(:string, "Bearer token", required: true)
+            access_token(:string, "Bearer token", required: true)
+
+            expires_in(:string, "TTL of token", required: true)
           end
         end
     }

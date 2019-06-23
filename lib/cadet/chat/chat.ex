@@ -13,7 +13,7 @@ defmodule Cadet.Chat do
 
   Returns {:ok, token} on success, otherwise {:error, error_message}
   """
-  def get_token(username) do
+  def get_token(user_id, su \\ false) do
     curr_time_epoch = DateTime.to_unix(DateTime.utc_now())
 
     payload = %{
@@ -21,12 +21,17 @@ defmodule Cadet.Chat do
       "iss" => "api_keys/" <> @key_id,
       "exp" => curr_time_epoch + @time_to_live,
       "iat" => curr_time_epoch,
-      "sub" => username
+      "sub" => user_id,
+      "su" => su
     }
 
     Joken.Signer.sign(
       payload,
       Joken.Signer.create("HS256", @key_secret)
     )
+  end
+
+  def get_ttl() do
+    @time_to_live
   end
 end
