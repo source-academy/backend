@@ -25,7 +25,7 @@ defmodule Cadet.Chat do
   Returns {:ok, token}
   """
   def get_superuser_token() do
-    get_token("Admin", true)
+    get_token("admin", true)
   end
 
   @doc """
