@@ -6,7 +6,7 @@ defmodule Cadet.Chat do
   @instance_id :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:instance_id)
   @key_id :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:key_id)
   @key_secret :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:key_secret)
-  @time_to_live 86400
+  @time_to_live 86_400
 
   @doc """
   Generates new bearer token for connection to ChatKit's ChatManager.
@@ -31,7 +31,7 @@ defmodule Cadet.Chat do
     )
   end
 
-  def get_ttl() do
+  def get_ttl do
     @time_to_live
   end
 end
