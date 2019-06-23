@@ -11,8 +11,7 @@ defmodule CadetWeb.ChatController do
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    {:ok, token} = get_token(to_string(user.id))
-    ttl = get_ttl()
+    {:ok, token, ttl} = get_user_token(user)
 
     render(
       conn,
