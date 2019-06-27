@@ -760,6 +760,40 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def get_answer(%{submission_id: submission_id, question_id: question_id}) do
+    answer_query =
+      Answer
+      |> where(submission_id: ^submission_id)
+      |> where(question_id: ^question_id)
+    Repo.one(answer_query)
+  end
+
+  def get_comment_from_question(%{submission_id: submission_id, question_id: question_id}) do
+    answer = get_answer(%{submission_id: submission_id, question_id: question_id})
+    answer.comment
+  end
+
+  def insert_or_update_comment(submission = %Submission{}, question = %Question{}, new_comment) do
+    answer = get_answer(%{submission_id: submission.id, question_id: question.id})
+
+    answer_changeset =
+      %Answer{}
+      |> Answer.changeset(%{
+        answer: answer.answer,
+        comment: new_comment,
+        question_id: question.id,
+        submission_id: submission.id,
+        type: question.type
+      })
+
+    Repo.insert(
+      answer_changeset,
+      on_conflict: [set: [comment: get_change(answer_changeset, :comment),answer: get_change(answer_changeset, :answer)]],
+      conflict_target: [:submission_id, :question_id]
+    )
+  end
+
+
   defp submissions_by_group(grader = %User{role: :staff}, submission_query) do
     students = Cadet.Accounts.Query.students_of(grader)
 
