@@ -185,6 +185,7 @@ defmodule Cadet.Accounts.Notifications do
       |> Enum.reduce_while(
         {:ok, nil},
         fn student, acc ->
+          # credo:disable-for-next-line
           with {:ok, _} <- acc do
             {:cont,
              write(%{
