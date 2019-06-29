@@ -182,10 +182,10 @@ defmodule Cadet.Accounts.Notifications do
       User
       |> where(role: ^:student)
       |> Repo.all()
-      |> Enum.reduce_while(
-        {:ok, nil},
-        fn student, acc ->
-          with {:ok, _} <- acc do
+      |> Enum.reduce_while({:ok, nil}, fn student, acc ->
+        # credo:disable-for-next-line
+        case acc do
+          {:ok, _} ->
             {:cont,
              write(%{
                type: :new,
@@ -194,11 +194,11 @@ defmodule Cadet.Accounts.Notifications do
                user_id: student.id,
                assessment_id: assessment_id
              })}
-          else
-            _ -> {:halt, acc}
-          end
+
+          _ ->
+            {:halt, acc}
         end
-      )
+      end)
     end)
     |> Repo.transaction()
   end
