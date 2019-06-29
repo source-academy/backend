@@ -15,7 +15,7 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
-  @unsubmit_assessment_role ~w(staff)a
+  @unsubmit_assessment_role ~w(staff admin)a
   @grading_roles ~w()a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
@@ -413,7 +413,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def unsubmit_submission(submission_id, avenger = %User{id: staff_id, role: role})
+  def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
       when is_ecto_id(submission_id) do
     if role in @unsubmit_assessment_role do
       submission =
@@ -425,8 +425,9 @@ defmodule Cadet.Assessments do
       with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :submitted} <- {:status, submission.status},
-           {:avenger_of?, true} <-
-             {:avenger_of?, Cadet.Accounts.Query.avenger_of?(avenger, submission.student_id)} do
+           {:allowed_to_unsubmit?, true} <-
+             {:allowed_to_unsubmit?,
+              role == :admin || Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
         Multi.new()
         |> Multi.run(
           :rollback_submission,
@@ -435,7 +436,7 @@ defmodule Cadet.Assessments do
             |> Submission.changeset(%{
               status: :attempted,
               xp_bonus: 0,
-              unsubmitted_by_id: staff_id,
+              unsubmitted_by_id: user_id,
               unsubmitted_at: Timex.now()
             })
             |> Repo.update()
@@ -491,8 +492,8 @@ defmodule Cadet.Assessments do
         {:status, :attempted} ->
           {:error, {:bad_request, "Assessment has not been submitted"}}
 
-        {:avenger_of?, false} ->
-          {:error, {:forbidden, "Only Avenger of student is permitted to unsubmit"}}
+        {:allowed_to_unsubmit?, false} ->
+          {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
 
         _ ->
           {:error, {:internal_server_error, "Please try again later."}}
