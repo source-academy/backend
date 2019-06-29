@@ -11,7 +11,8 @@ defmodule CadetWeb.NotificationView do
       type: :type,
       read: :read,
       assessment_id: :assessment_id,
-      question_id: :question_id
+      question_id: :question_id,
+      submission_id: :submission_id
     })
   end
 end

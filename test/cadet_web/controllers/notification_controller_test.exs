@@ -66,6 +66,7 @@ defmodule CadetWeb.NotificationControllerTest do
             "id" => &1.id,
             "assessment_id" => &1.assessment_id,
             "question_id" => &1.question_id,
+            "submission_id" => nil,
             "read" => &1.read,
             "type" => Atom.to_string(&1.type)
           }
@@ -74,6 +75,44 @@ defmodule CadetWeb.NotificationControllerTest do
       results =
         conn
         |> sign_in(student)
+        |> get(build_url())
+        |> json_response(200)
+        |> Enum.sort(&(&1["id"] < &2["id"]))
+
+      assert results == expected
+    end
+
+    test "avenger fetches unread notifications", %{
+      conn: conn,
+      avenger: avenger,
+      submission: submission
+    } do
+      notifications =
+        insert_list(3, :notification, %{
+          type: :submitted,
+          read: false,
+          submission_id: submission.id,
+          user_id: avenger.id
+        })
+
+      expected =
+        notifications
+        |> Enum.filter(&(!&1.read))
+        |> Enum.sort(&(&1.id < &2.id))
+        |> Enum.map(
+          &%{
+            "id" => &1.id,
+            "assessment_id" => nil,
+            "submission_id" => &1.submission_id,
+            "question_id" => &1.question_id,
+            "read" => &1.read,
+            "type" => Atom.to_string(&1.type)
+          }
+        )
+
+      results =
+        conn
+        |> sign_in(avenger)
         |> get(build_url())
         |> json_response(200)
         |> Enum.sort(&(&1["id"] < &2["id"]))
