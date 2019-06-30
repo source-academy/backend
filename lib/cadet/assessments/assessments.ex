@@ -5,6 +5,7 @@ defmodule Cadet.Assessments do
   """
   use Cadet, [:context, :display]
 
+  import Cadet.Chat
   import Ecto.Query
 
   alias Cadet.Accounts.User
@@ -139,6 +140,12 @@ defmodule Cadet.Assessments do
         user = %User{role: role}
       ) do
     if Timex.after?(Timex.now(), assessment.open_at) or role in @open_all_assessment_roles do
+      # ChatKit - create chatrooms if they don't exist
+      Submission
+      |> where(assessment_id: ^id)
+      |> Repo.all()
+      |> Enum.each(fn submission -> create_rooms(submission) end)
+
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
@@ -152,6 +159,8 @@ defmodule Cadet.Assessments do
         |> select([q, a, g], %{q | answer: %Answer{a | grader: g}})
         |> order_by(:display_order)
         |> Repo.all()
+
+      IO.puts(questions)
 
       assessment = Map.put(assessment, :questions, questions)
       {:ok, assessment}
@@ -455,7 +464,6 @@ defmodule Cadet.Assessments do
                    xp_adjustment: 0,
                    autograding_status: :none,
                    autograding_results: [],
-                   comment: nil,
                    grader_id: nil
                  })
                  |> Repo.update()}
@@ -602,6 +610,9 @@ defmodule Cadet.Assessments do
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
   def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
+    # ChatKit - create chatrooms if they don't exist
+    create_rooms(Submission |> where(id: ^id) |> Repo.one())
+
     answer_query =
       Answer
       |> where(submission_id: ^id)
@@ -743,11 +754,22 @@ defmodule Cadet.Assessments do
         type: question.type
       })
 
-    Repo.insert(
-      answer_changeset,
-      on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
-      conflict_target: [:submission_id, :question_id]
-    )
+    case Repo.insert(
+           answer_changeset,
+           on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
+           conflict_target: [:submission_id, :question_id]
+         ) do
+      {:error, struct} ->
+        {:error, struct}
+
+      {:ok, struct} ->
+        # ChatKit - create chatrooms if they don't exist
+        create_rooms(submission)
+
+        # Return {:ok, _} regardless of success/failure.
+        # Failure likely due to service's internal error.
+        {:ok, struct}
+    end
   end
 
   defp build_answer_content(raw_answer, question_type) do
