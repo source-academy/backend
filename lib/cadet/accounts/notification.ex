@@ -40,7 +40,7 @@ defmodule Cadet.Accounts.Notification do
   defp validate_assessment_or_submission(changeset) do
     case get_change(changeset, :role) do
       :staff ->
-        validate_required(changeset, [:submission_id])
+        validate_required(changeset, [:submission_id, :assessment_id])
 
       :student ->
         validate_required(changeset, [:assessment_id])
