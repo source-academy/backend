@@ -21,6 +21,7 @@ defmodule Cadet.Accounts.Notifications do
       Notification
       |> where(user_id: ^user.id)
       |> where(read: false)
+      |> preload(:assessment)
       |> Repo.all()
 
     {:ok, notifications}
