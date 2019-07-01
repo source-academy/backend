@@ -82,7 +82,8 @@ if Application.get_env(:cadet, :environment) == :dev do
             type: :submitted,
             read: false,
             user_id: avenger.id,
-            submission_id: submission.id
+            submission_id: submission.id,
+            assessment_id: assessment.id
           })
 
         _ ->
