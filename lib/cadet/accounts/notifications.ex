@@ -225,6 +225,7 @@ defmodule Cadet.Accounts.Notifications do
       read: false,
       role: :staff,
       user_id: avenger_id,
+      assessment_id: submission.assessment_id,
       submission_id: submission.id
     })
   end
