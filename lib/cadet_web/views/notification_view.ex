@@ -9,10 +9,14 @@ defmodule CadetWeb.NotificationView do
     transform_map_for_view(notification, %{
       id: :id,
       type: :type,
-      read: :read,
       assessment_id: :assessment_id,
       question_id: :question_id,
-      submission_id: :submission_id
+      submission_id: :submission_id,
+      assessment:
+        &transform_map_for_view(&1.assessment, %{
+          type: :type,
+          title: :title
+        })
     })
   end
 end

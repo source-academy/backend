@@ -89,6 +89,8 @@ defmodule CadetWeb.NotificationController do
             assessmentId(:integer, "the submission id the notification references", required: true)
 
             questionId(:integer, "the question id the notification references")
+
+            assessment(Schema.ref(:AssessmentInfo))
           end
         end
     }
