@@ -63,7 +63,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :show do
-    get("/assessments/{assessmentId}/{password}")
+    post("/assessments/{assessmentId}")
 
     summary("Get information about one particular assessment.")
 
@@ -73,7 +73,7 @@ defmodule CadetWeb.AssessmentsController do
 
     parameters do
       assessmentId(:path, :integer, "assessment id", required: true)
-      password(:path, :string, "password", required: false)
+      password(:body, :string, "password", required: false)
     end
 
     response(200, "OK", Schema.ref(:Assessment))
@@ -139,7 +139,7 @@ defmodule CadetWeb.AssessmentsController do
 
             coverImage(:string, "The URL to the cover picture", required: true)
 
-            passwordProtected(:boolean, "Is this assessment password protected?", required: true)
+            private(:boolean, "Is this an private assessment?", required: true)
           end
         end,
       Assessment:

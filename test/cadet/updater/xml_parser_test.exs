@@ -9,7 +9,13 @@ defmodule Cadet.Updater.XMLParserTest do
   import ExUnit.CaptureLog
 
   @local_name "test/fixtures/local_repo"
-  @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
+  @locations %{
+    mission: "missions",
+    sidequest: "quests",
+    path: "paths",
+    contest: "contests",
+    practical: "practicals"
+  }
   @time_fields ~w(open_at close_at)a
 
   setup do
@@ -54,7 +60,7 @@ defmodule Cadet.Updater.XMLParserTest do
           Map.from_struct(assessment),
           Map.from_struct(assessment_db),
           ~w(title is_published type summary_short summary_long open_at close_at)a ++
-            ~w(number story reading)a
+            ~w(number story reading password)a
         )
 
         assessment_id = assessment_db.id

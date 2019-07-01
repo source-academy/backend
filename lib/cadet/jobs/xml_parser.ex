@@ -3,9 +3,15 @@ defmodule Cadet.Updater.XMLParser do
   Parser for XML files from the cs1101s repository.
   """
   @local_name if Mix.env() != :test, do: "cs1101s", else: "test/fixtures/local_repo"
-  @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
+  @locations %{
+    mission: "missions",
+    sidequest: "quests",
+    path: "paths",
+    contest: "contests",
+    practical: "practicals"
+  }
 
-  @type assessment_type :: :mission | :sidequest | :path | :contest
+  @type assessment_type :: :mission | :sidequest | :path | :contest | :practical
 
   use Cadet, [:display]
 
@@ -138,6 +144,7 @@ defmodule Cadet.Updater.XMLParser do
       xml
       |> xpath(
         ~x"//TASK"e,
+        access: ~x"./@access"s |> transform_by(&process_access/1),
         type: ~x"./@kind"s |> transform_by(&change_quest_to_sidequest/1),
         title: ~x"./@title"s,
         open_at: ~x"./@startdate"s |> transform_by(&Timex.parse!(&1, "{ISO:Extended}")),
@@ -148,9 +155,17 @@ defmodule Cadet.Updater.XMLParser do
         reading: ~x"//READING/text()" |> transform_by(&process_charlist/1),
         summary_short: ~x"//WEBSUMMARY/text()" |> transform_by(&process_charlist/1),
         summary_long: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-        password: ~x"//PASSWORD/text()"s |> transform_by(&process_charlist/1)
+        password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1)
       )
       |> Map.put(:is_published, true)
+
+    if assessment_params.access === "public" do
+      Map.put(assessment_params, :password, nil)
+    end
+
+    if assessment_params.access === "private" and assessment_params.password === nil do
+      Map.put(assessment_params, :password, "")
+    end
 
     if verify_has_time_offset(assessment_params) do
       {:ok, assessment_params}
@@ -167,6 +182,14 @@ defmodule Cadet.Updater.XMLParser do
     Protocol.UndefinedError ->
       Logger.error("Missing TASK")
       :error
+  end
+
+  def process_access("private") do
+    "private"
+  end
+
+  def process_access(_) do
+    "public"
   end
 
   @spec change_quest_to_sidequest(String.t()) :: String.t()

@@ -64,7 +64,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
               "gradingStatus" => "none",
-              "passwordProtected" => false
+              "private" => false
             }
           )
 
@@ -115,7 +115,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
               "gradingStatus" => "none",
-              "passwordProtected" => false
+              "private" => false
             }
           )
 
@@ -150,7 +150,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> get(build_url())
           |> json_response(200)
           |> Enum.find(&(&1["type"] == "mission"))
-          |> Map.get("passwordProtected")
+          |> Map.get("private")
 
         assert resp == true
       end

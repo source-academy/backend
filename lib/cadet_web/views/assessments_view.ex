@@ -26,7 +26,7 @@ defmodule CadetWeb.AssessmentsView do
       xp: &(&1.xp || 0),
       grade: &(&1.grade || 0),
       coverImage: :cover_picture,
-      passwordProtected: &password_protected?(&1.password)
+      private: &password_protected?(&1.password)
     })
   end
 
