@@ -24,6 +24,7 @@ defmodule Cadet.Accounts.NotificationTest do
       read: false,
       role: avenger.role,
       user_id: avenger.id,
+      assessment_id: assessment.id,
       submission_id: submission.id
     }
 
@@ -138,6 +139,7 @@ defmodule Cadet.Accounts.NotificationTest do
         read: false,
         role: avenger.role,
         user_id: avenger.id,
+        assessment_id: assessment.id,
         submission_id: submission.id
       }
 
@@ -171,6 +173,7 @@ defmodule Cadet.Accounts.NotificationTest do
         read: false,
         role: avenger.role,
         user_id: avenger.id,
+        assessment_id: assessment.id,
         submission_id: submission.id
       }
 

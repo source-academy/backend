@@ -55,6 +55,7 @@ defmodule CadetWeb.NotificationControllerTest do
     test "student fetches unread notifications", %{
       conn: conn,
       student: student,
+      assessment: assessment,
       notifications: notifications
     } do
       expected =
@@ -67,8 +68,11 @@ defmodule CadetWeb.NotificationControllerTest do
             "assessment_id" => &1.assessment_id,
             "question_id" => &1.question_id,
             "submission_id" => nil,
-            "read" => &1.read,
-            "type" => Atom.to_string(&1.type)
+            "type" => Atom.to_string(&1.type),
+            "assessment" => %{
+              "type" => Atom.to_string(assessment.type),
+              "title" => assessment.title
+            }
           }
         )
 
@@ -85,12 +89,14 @@ defmodule CadetWeb.NotificationControllerTest do
     test "avenger fetches unread notifications", %{
       conn: conn,
       avenger: avenger,
+      assessment: assessment,
       submission: submission
     } do
       notifications =
         insert_list(3, :notification, %{
           type: :submitted,
           read: false,
+          assessment_id: assessment.id,
           submission_id: submission.id,
           user_id: avenger.id
         })
@@ -102,11 +108,14 @@ defmodule CadetWeb.NotificationControllerTest do
         |> Enum.map(
           &%{
             "id" => &1.id,
-            "assessment_id" => nil,
+            "assessment_id" => &1.assessment_id,
             "submission_id" => &1.submission_id,
             "question_id" => &1.question_id,
-            "read" => &1.read,
-            "type" => Atom.to_string(&1.type)
+            "type" => Atom.to_string(&1.type),
+            "assessment" => %{
+              "type" => Atom.to_string(assessment.type),
+              "title" => assessment.title
+            }
           }
         )
 
