@@ -94,6 +94,7 @@ defmodule Cadet.Accounts.NotificationTest do
         insert_list(3, :notification, %{
           read: false,
           assessment_id: assessment.id,
+          assessment: assessment,
           user_id: student.id
         })
 
