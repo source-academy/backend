@@ -608,9 +608,6 @@ defmodule Cadet.Assessments do
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
   def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
-    # ChatKit - create chatrooms if they don't exist
-    create_rooms(Submission |> where(id: ^id) |> Repo.one())
-
     answer_query =
       Answer
       |> where(submission_id: ^id)
@@ -619,6 +616,11 @@ defmodule Cadet.Assessments do
       |> join(:inner, [a, ...], s in assoc(a, :submission))
       |> join(:inner, [a, ..., s], st in assoc(s, :student))
       |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
+
+    if role in @grading_roles or role in @see_all_submissions_roles do
+      # ChatKit - create chatrooms if they don't exist
+      create_rooms(Submission |> where(id: ^id) |> Repo.one())
+    end
 
     cond do
       role in @grading_roles ->
