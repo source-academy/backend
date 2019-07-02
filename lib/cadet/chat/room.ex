@@ -38,6 +38,9 @@ defmodule Cadet.Chat.Room do
             comment: room_id
           })
           |> Repo.update()
+
+        {:error, _} ->
+          nil
       end
     end)
   end
@@ -69,11 +72,11 @@ defmodule Cadet.Chat.Room do
         Poison.decode(body)
 
       {:ok, _} ->
-        :error
+        {:error, nil}
 
       {:error, %HTTPoison.Error{reason: error}} ->
         Logger.error("error: #{inspect(error, pretty: true)}")
-        :error
+        {:error, nil}
     end
   end
 
