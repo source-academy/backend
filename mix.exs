@@ -75,7 +75,7 @@ defmodule Cadet.Mixfile do
       {:xml_builder, "~> 2.0", override: true},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0.0-rc.2", only: [:dev, :test], runtime: false},
-      {:distillery, "~> 2.0.2", runtime: false},
+      {:distillery, "~> 2.1.0", runtime: false},
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:faker, "~> 0.10", only: [:dev, :test]},
