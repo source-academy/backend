@@ -6,7 +6,7 @@ defmodule Cadet.Repo.Migrations.CreateSourcecast do
       add(:name, :string, null: false)
       add(:uploader_id, references(:users, on_delete: :nilify_all))
       add(:audio, :string)
-      add(:deltas, :string)
+      add(:deltas, :text)
       timestamps()
     end
 
