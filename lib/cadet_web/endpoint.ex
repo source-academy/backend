@@ -13,10 +13,9 @@ defmodule CadetWeb.Endpoint do
   # For uploaded files
   plug(
     Plug.Static,
-    at: "/",
-    from: :cadet,
-    gzip: false,
-    only: ~w(uploads)
+    at: "/uploads",
+    from: "uploads/",
+    gzip: false
   )
 
   # Serve assets files from priv/assets directory as-is.
