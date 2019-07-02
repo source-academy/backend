@@ -5,6 +5,7 @@ defmodule Cadet.Assessments do
   """
   use Cadet, [:context, :display]
 
+  import Cadet.Chat.Room
   import Ecto.Query
 
   alias Cadet.Accounts.User
@@ -139,6 +140,12 @@ defmodule Cadet.Assessments do
         user = %User{role: role}
       ) do
     if Timex.after?(Timex.now(), assessment.open_at) or role in @open_all_assessment_roles do
+      # ChatKit - create chatrooms if they don't exist
+      Submission
+      |> where(assessment_id: ^id)
+      |> Repo.all()
+      |> Enum.each(fn submission -> create_rooms(submission) end)
+
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
@@ -456,7 +463,6 @@ defmodule Cadet.Assessments do
                    xp_adjustment: 0,
                    autograding_status: :none,
                    autograding_results: [],
-                   comment: nil,
                    grader_id: nil
                  })
                  |> Repo.update()}
@@ -612,6 +618,11 @@ defmodule Cadet.Assessments do
       |> join(:inner, [a, ..., s], st in assoc(s, :student))
       |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
 
+    if role in @grading_roles or role in @see_all_submissions_roles do
+      # ChatKit - create chatrooms if they don't exist
+      create_rooms(Submission |> where(id: ^id) |> Repo.one())
+    end
+
     cond do
       role in @grading_roles ->
         students = Cadet.Accounts.Query.students_of(grader)
@@ -744,11 +755,22 @@ defmodule Cadet.Assessments do
         type: question.type
       })
 
-    Repo.insert(
-      answer_changeset,
-      on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
-      conflict_target: [:submission_id, :question_id]
-    )
+    case Repo.insert(
+           answer_changeset,
+           on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
+           conflict_target: [:submission_id, :question_id]
+         ) do
+      {:error, struct} ->
+        {:error, struct}
+
+      {:ok, struct} ->
+        # ChatKit - create chatrooms if they don't exist
+        create_rooms(submission)
+
+        # Return {:ok, _} regardless of success/failure.
+        # Failure likely due to service's internal error.
+        {:ok, struct}
+    end
   end
 
   defp build_answer_content(raw_answer, question_type) do

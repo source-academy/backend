@@ -1,6 +1,6 @@
-defmodule Cadet.Chat do
+defmodule Cadet.Chat.Token do
   @moduledoc """
-  Contains logic to supplement ChatKit, an external service engaged for Source Academy.
+  Contains logic pertaining to the generation of tokens to supplement the usage of ChatKit, an external service engaged for Source Academy.
   ChatKit's API can be found here: https://pusher.com/docs/chatkit
   """
 
@@ -28,11 +28,6 @@ defmodule Cadet.Chat do
     get_token("admin", true)
   end
 
-  @doc """
-  Generates a new token for connection to ChatKit's API.
-  Returns {:ok, token} on success, otherwise {:error, error_message}
-  Note: dialyzer says it will always be successful, so no error handling required
-  """
   defp get_token(user_id, su \\ false) when is_binary(user_id) do
     curr_time_epoch = DateTime.to_unix(DateTime.utc_now())
 
@@ -45,6 +40,7 @@ defmodule Cadet.Chat do
       "su" => su
     }
 
+    # Note: dialyzer says signing only returns {:ok, token}
     Joken.Signer.sign(
       payload,
       Joken.Signer.create("HS256", @key_secret)
