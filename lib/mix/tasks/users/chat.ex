@@ -4,8 +4,12 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
     User creation: https://pusher.com/docs/chatkit/reference/api-v3#create-a-user
     Status codes: https://pusher.com/docs/chatkit/reference/api-v3#response-and-error-codes
 
-    Note: this task is to be run after `import`.
-    Assumption: "admin" must already exist in the ChatKit instance.
+    Note:
+    - Task is to run after `import` (i.e. db is populated)
+    - user_id from User is used as the unique identifier for Chatkit
+
+    Assumption
+    - User with the id "admin" already exist in the ChatKit instance.
   """
   use Mix.Task
 
