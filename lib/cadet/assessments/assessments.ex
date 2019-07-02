@@ -788,6 +788,7 @@ defmodule Cadet.Assessments do
       Answer
       |> where(submission_id: ^submission_id)
       |> where(question_id: ^question_id)
+
     Repo.one(answer_query)
   end
 
@@ -811,11 +812,15 @@ defmodule Cadet.Assessments do
 
     Repo.insert(
       answer_changeset,
-      on_conflict: [set: [comment: get_change(answer_changeset, :comment),answer: get_change(answer_changeset, :answer)]],
+      on_conflict: [
+        set: [
+          comment: get_change(answer_changeset, :comment),
+          answer: get_change(answer_changeset, :answer)
+        ]
+      ],
       conflict_target: [:submission_id, :question_id]
     )
   end
-
 
   defp submissions_by_group(grader = %User{role: :staff}, submission_query) do
     students = Cadet.Accounts.Query.students_of(grader)

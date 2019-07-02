@@ -601,7 +601,7 @@ defmodule CadetWeb.GradingControllerTest do
       assert submission_db.unsubmitted_by_id === grader.id
       assert submission_db.unsubmitted_at != nil
 
-      # Chatkit roomid should not be removed when a student unsubmits
+      # Chatkit roomid should not be removed when a submission is unsubmitted
       assert answer_db.comment == answer.comment
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
@@ -761,7 +761,8 @@ defmodule CadetWeb.GradingControllerTest do
       assert submission_db.unsubmitted_by_id === admin.id
       assert submission_db.unsubmitted_at != nil
 
-      assert answer_db.comment == nil
+      # Chatkit roomid should not be removed when a submission is unsubmitted
+      assert answer_db.comment == answer.comment
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
       assert answer_db.grader_id == nil
