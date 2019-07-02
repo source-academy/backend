@@ -7,7 +7,7 @@ defmodule CadetWeb.ChatController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  import Cadet.Chat
+  import Cadet.Chat.Token
 
   def index(conn, _) do
     user = conn.assigns.current_user

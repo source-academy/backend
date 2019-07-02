@@ -11,7 +11,7 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
 
   require Logger
 
-  import Cadet.Chat
+  import Cadet.Chat.Token
   import Mix.EctoSQL
 
   alias Cadet.Repo

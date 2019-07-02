@@ -5,7 +5,7 @@ defmodule Cadet.Assessments do
   """
   use Cadet, [:context, :display]
 
-  import Cadet.Chat
+  import Cadet.Chat.Room
   import Ecto.Query
 
   alias Cadet.Accounts.User
@@ -159,8 +159,6 @@ defmodule Cadet.Assessments do
         |> select([q, a, g], %{q | answer: %Answer{a | grader: g}})
         |> order_by(:display_order)
         |> Repo.all()
-
-      IO.puts(questions)
 
       assessment = Map.put(assessment, :questions, questions)
       {:ok, assessment}
