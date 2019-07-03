@@ -27,7 +27,7 @@ $ vim config/secrets.exs
     run with the `--updater` flag. Otherwise, the default values will suffice.
   - A valid `instance_id`, `key_id` and `key_secret` are required to use ChatKit's services. Otherwise, the placeholder values can be left as they are.
 
-1. Install Elixir dependencies
+2. Install Elixir dependencies
 ```bash
 $ mix deps.get
 ```
