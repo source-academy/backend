@@ -45,8 +45,12 @@ defmodule CadetWeb.NotificationControllerTest do
   end
 
   describe "POST /, unaunthenticated" do
-    test "/notification/:notification_id/acknowledge", %{conn: conn} do
-      conn = post(conn, build_url(1))
+    test "/notification/acknowledge", %{conn: conn} do
+      conn =
+        post(conn, build_acknowledge_url(), %{
+          "notificationIds" => [1]
+        })
+
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
@@ -130,7 +134,7 @@ defmodule CadetWeb.NotificationControllerTest do
     end
   end
 
-  describe "POST /notification/:notificationId/acknowledge" do
+  describe "POST /notification/acknowledge" do
     test "student acknowledges own notification", %{
       conn: conn,
       student: student,
@@ -139,7 +143,9 @@ defmodule CadetWeb.NotificationControllerTest do
       conn =
         conn
         |> sign_in(student)
-        |> post(build_url(Enum.random(notifications).id))
+        |> post(build_acknowledge_url(), %{
+          "notificationIds" => [Enum.random(notifications).id]
+        })
 
       assert response(conn, 200) == "OK"
     end
@@ -152,12 +158,14 @@ defmodule CadetWeb.NotificationControllerTest do
       conn =
         conn
         |> sign_in(avenger)
-        |> post(build_url(Enum.random(notifications).id))
+        |> post(build_acknowledge_url(), %{
+          "notificationIds" => [Enum.random(notifications).id]
+        })
 
       assert response(conn, 404) == "Notification does not exist or does not belong to user"
     end
   end
 
   defp build_url, do: "/v1/notification"
-  defp build_url(notification_id), do: "/v1/notification/#{notification_id}/acknowledge"
+  defp build_acknowledge_url, do: "/v1/notification/acknowledge"
 end

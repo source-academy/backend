@@ -232,9 +232,31 @@ defmodule Cadet.Accounts.NotificationTest do
           user_id: student.id
         })
 
-      {:ok, notification_db} = Notifications.acknowledge(notification.id, student)
+      Notifications.acknowledge([notification.id], student)
+
+      notification_db = Repo.get_by(Notification, id: notification.id)
 
       assert %{read: true} = notification_db
+    end
+
+    test "acknowledge multiple notifications valid user", %{
+      assessment: assessment,
+      student: student
+    } do
+      notifications =
+        insert_list(3, :notification, %{
+          read: false,
+          assessment_id: assessment.id,
+          user_id: student.id
+        })
+
+      notifications
+      |> Enum.map(& &1.id)
+      |> Notifications.acknowledge(student)
+
+      for n <- notifications do
+        assert %{read: true} = Repo.get_by(Notification, id: n.id)
+      end
     end
 
     test "acknowledge notification invalid user", %{

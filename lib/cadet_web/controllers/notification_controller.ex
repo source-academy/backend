@@ -18,16 +18,15 @@ defmodule CadetWeb.NotificationController do
     )
   end
 
-  def acknowledge(conn, %{"notificationId" => notification_id})
-      when is_ecto_id(notification_id) do
+  def acknowledge(conn, %{"notificationIds" => notification_ids}) do
     case Notifications.acknowledge(
-           notification_id,
+           notification_ids,
            conn.assigns.current_user
          ) do
       {:ok, _nil} ->
         text(conn, "OK")
 
-      {:error, {status, message}} ->
+      {:error, _, {status, message}, _} ->
         conn
         |> put_status(status)
         |> text(message)
@@ -53,12 +52,14 @@ defmodule CadetWeb.NotificationController do
   end
 
   swagger_path :acknowledge do
-    post("/notification/{notificationId}/acknowledge")
-    summary("Acknowledge a notification")
+    post("/notification/acknowledge")
+    summary("Acknowledge notification(s)")
     security([%{JWT: []}])
 
+    consumes("application/json")
+
     parameters do
-      notificationId(:path, :integer, "notification id", required: true)
+      notificationIds(:body, Schema.ref(:NotificationIds), "notification ids", required: true)
     end
 
     response(200, "OK")
@@ -91,6 +92,12 @@ defmodule CadetWeb.NotificationController do
             questionId(:integer, "the question id the notification references")
 
             assessment(Schema.ref(:AssessmentInfo))
+          end
+        end,
+      NotificationIds:
+        swagger_schema do
+          properties do
+            notificationIds(Schema.array(:integer), "the notification ids")
           end
         end
     }

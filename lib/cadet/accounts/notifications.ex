@@ -111,8 +111,26 @@ defmodule Cadet.Accounts.Notifications do
   end
 
   @doc """
-  Changes a notification's read status from false to true.
+  Changes read status of notification(s) from false to true.
   """
+  @spec acknowledge({:array, :integer}, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, :any}
+  def acknowledge(notification_ids, user = %User{}) when is_list(notification_ids) do
+    Multi.new()
+    |> Multi.run(:update_all, fn _repo, _ ->
+      Enum.reduce_while(notification_ids, {:ok, nil}, fn n_id, acc ->
+        # credo:disable-for-next-line
+        case acc do
+          {:ok, _} ->
+            {:cont, acknowledge(n_id, user)}
+
+          _ ->
+            {:halt, acc}
+        end
+      end)
+    end)
+    |> Repo.transaction()
+  end
+
   @spec acknowledge(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, :any}
   def acknowledge(notification_id, user = %User{}) do
     notification = Repo.get_by(Notification, id: notification_id, user_id: user.id)
