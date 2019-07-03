@@ -12,8 +12,7 @@ defmodule CadetWeb.SourcecastController do
 
   def create(conn, %{"sourcecast" => sourcecast}) do
     IO.inspect(sourcecast)
-    user = Cadet.Repo.get(Cadet.Accounts.User, 1)
-    result = Course.upload_sourcecast_file(user, sourcecast)
+    result = Course.upload_sourcecast_file(conn.assigns.current_user, sourcecast)
     IO.inspect(result)
 
     case result do

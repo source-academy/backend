@@ -16,11 +16,6 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
-  # Dev
-  scope "/v1", CadetWeb do
-    resources("/sourcecast", SourcecastController, only: [:index, :create, :update, :delete])
-  end
-
   # Public Pages
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
