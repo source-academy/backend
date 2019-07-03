@@ -5,12 +5,12 @@ defmodule Cadet.Assessments do
   """
   use Cadet, [:context, :display]
 
-  import Cadet.Chat.Room
   import Ecto.Query
 
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
+  alias Cadet.Chat.Room
   alias Ecto.Multi
 
   @xp_early_submission_max_bonus 100
@@ -144,7 +144,7 @@ defmodule Cadet.Assessments do
       Submission
       |> where(assessment_id: ^id)
       |> Repo.all()
-      |> Enum.each(fn submission -> create_rooms(submission) end)
+      |> Enum.each(fn submission -> Room.create_rooms(submission) end)
 
       answer_query =
         Answer
@@ -620,7 +620,7 @@ defmodule Cadet.Assessments do
 
     if role in @grading_roles or role in @see_all_submissions_roles do
       # ChatKit - create chatrooms if they don't exist
-      create_rooms(Submission |> where(id: ^id) |> Repo.one())
+      Room.create_rooms(Submission |> where(id: ^id) |> Repo.one())
     end
 
     cond do
@@ -765,7 +765,7 @@ defmodule Cadet.Assessments do
 
       {:ok, struct} ->
         # ChatKit - create chatrooms if they don't exist
-        create_rooms(submission)
+        Room.create_rooms(submission)
 
         # Return {:ok, _} regardless of success/failure.
         # Failure likely due to service's internal error.
