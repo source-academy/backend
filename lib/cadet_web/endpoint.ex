@@ -34,7 +34,7 @@ defmodule CadetWeb.Endpoint do
     Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
-    json_decoder: Poison
+    json_decoder: Jason
   )
 
   plug(Plug.MethodOverride)
