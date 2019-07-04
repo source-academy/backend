@@ -1,8 +1,8 @@
 defmodule Mix.Tasks.Cadet.Users.Chat do
   @moduledoc """
     Creates ChatKit accounts for all users in the database.
-    User creation: https://pusher.com/docs/chatkit/reference/api-v3#create-a-user
-    Status codes: https://pusher.com/docs/chatkit/reference/api-v3#response-and-error-codes
+    User creation: https://pusher.com/docs/chatkit/reference/api#create-a-user
+    Status codes: https://pusher.com/docs/chatkit/reference/api#response-and-error-codes
 
     Note:
     - Task is to run after `import` (i.e. db is populated)
@@ -15,11 +15,11 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
 
   require Logger
 
-  import Cadet.Chat.Token
   import Mix.EctoSQL
 
   alias Cadet.Repo
   alias Cadet.Accounts.User
+  alias Cadet.Chat.Token
 
   @instance_id :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:instance_id)
 
@@ -29,7 +29,7 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
 
     url = "https://us1.pusherplatform.io/services/chatkit/v4/#{@instance_id}/users"
 
-    {:ok, token} = get_superuser_token()
+    {:ok, token} = Token.get_superuser_token()
     headers = [Authorization: "Bearer #{token}"]
 
     User
