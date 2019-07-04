@@ -67,11 +67,11 @@ We recommend setting up nginx to handle preflight checks using the following
 
 If you do this, do remember to point cadet-frontend to port `4001` instead of `4000`
 
-### ChatKit
+### Chatkit
 
-The chat functionality replacing the previous comment field found in assignments is built on top of ChatKit. Its documentation can be found [here](https://pusher.com/docs/chatkit).
+The chat functionality replacing the previous comment field found in assignments is built on top of Chatkit. Its documentation can be found [here](https://pusher.com/docs/chatkit).
 
-If you are using ChatKit, obtain your instance ID, key ID and secret key from your account, and set them inInstructions to that are [here](https://pusher.com/docs/chatkit/authentication#chatkit-key-and-instance-id).
+If you are using Chatkit, obtain your instance ID, key ID and secret key from your account, and set them inInstructions to that are [here](https://pusher.com/docs/chatkit/authentication#chatkit-key-and-instance-id).
 
 Internet connection is required for usage.
 
