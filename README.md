@@ -71,7 +71,7 @@ If you do this, do remember to point cadet-frontend to port `4001` instead of `4
 
 The chat functionality replacing the previous comment field found in assignments is built on top of Chatkit. Its documentation can be found [here](https://pusher.com/docs/chatkit).
 
-If you are using Chatkit, obtain your instance ID, key ID and secret key from your account, and set them inInstructions to that are [here](https://pusher.com/docs/chatkit/authentication#chatkit-key-and-instance-id).
+If you are using Chatkit, obtain your instance ID, key ID and secret key from your account, and set them in. Instructions to that are found [here](https://pusher.com/docs/chatkit/authentication#chatkit-key-and-instance-id).
 
 Internet connection is required for usage.
 
