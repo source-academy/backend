@@ -19,38 +19,41 @@ defmodule Cadet.Chat.Room do
   Creates a chatroom for every answer, and updates db with the chatroom id.
   Takes in Submission struct
   """
-  def create_rooms(%Submission{
-        id: id,
-        student_id: student_id,
-        assessment_id: assessment_id
-      }) do
-    IO.puts("yay")
-    student = User |> where(id: ^student_id) |> Repo.one()
+  def create_rooms(
+        submission = %Submission{
+          id: submission_id,
+          student_id: student_id
+        }
+      ) do
+    user = User |> where(id: ^student_id) |> Repo.one()
 
     Answer
-    |> where(submission_id: ^id)
+    |> where(submission_id: ^submission_id)
     |> Repo.all()
     |> Enum.filter(fn answer ->
       answer.comment == "" or answer.comment == nil
     end)
-    |> Enum.each(fn answer ->
-      case create_room(assessment_id, answer.question_id, student) do
-        {:ok, %{"id" => room_id}} ->
-          answer
-          |> Answer.comment_changeset(%{
-            comment: room_id
-          })
-          |> Repo.update()
-
-        {:error, _} ->
-          nil
-      end
-    end)
+    |> Enum.each(fn answer -> create_rooms(submission, answer, user) end)
   end
 
-  def create_rooms(_) do
-    IO.puts("nil")
-    nil
+  @doc """
+  Creates a chatroom for every answer, and updates db with the chatroom id.
+  Takes in Submission, Answer and User struct
+  """
+  def create_rooms(
+        %Submission{
+          assessment_id: assessment_id
+        },
+        answer = %Answer{question_id: question_id},
+        user
+      ) do
+    with {:ok, %{"id" => room_id}} <- create_room(assessment_id, question_id, user) do
+      answer
+      |> Answer.comment_changeset(%{
+        comment: room_id
+      })
+      |> Repo.update()
+    end
   end
 
   defp create_room(
@@ -90,8 +93,8 @@ defmodule Cadet.Chat.Room do
 
   defp get_staff_admin_user_ids do
     User
+    |> where([u], u.role in ^[:staff, :admin])
     |> Repo.all()
-    |> Enum.filter(fn user -> user.role == :staff or user.role == :admin end)
     |> Enum.map(fn user -> to_string(user.id) end)
   end
 end

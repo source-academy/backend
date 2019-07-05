@@ -352,9 +352,13 @@ defmodule Cadet.Assessments do
            {:is_open?, true} <- is_open?(question.assessment),
            {:ok, submission} <- find_or_create_submission(user, question.assessment),
            {:status, true} <- {:status, submission.status != :submitted},
-           {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+           {:ok, answer} <- insert_or_update_answer(submission, question, raw_answer) do
         update_submission_status(submission, question.assessment)
-        Room.create_rooms(submission)
+
+        if answer.comment == "" or answer.comment == nil do
+          Room.create_rooms(submission, answer, user)
+        end
+
         {:ok, nil}
       else
         {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
