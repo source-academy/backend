@@ -574,7 +574,19 @@ defmodule Cadet.Assessments do
         a in subquery(Query.all_assessments_with_max_xp_and_grade()),
         on: s.assessment_id == a.id
       )
-      |> select([s, x, st, g, u, a], %Submission{
+      |> join(
+        :inner,
+        [_, _, _, _, _, a],
+        q_count in subquery(Query.assessments_question_count()),
+        on: a.id == q_count.assessment_id
+      )
+      |> join(
+        :left,
+        [s, _, _, _, _, a, _],
+        g_count in subquery(Query.submissions_graded_count()),
+        on: s.id == g_count.submission_id
+      )
+      |> select([s, x, st, g, u, a, q_count, g_count], %Submission{
         s
         | grade: x.grade,
           adjustment: x.adjustment,
@@ -583,12 +595,16 @@ defmodule Cadet.Assessments do
           student: st,
           assessment: a,
           group_name: g.name,
-          unsubmitted_by: u
+          unsubmitted_by: u,
+          question_count: q_count.count,
+          graded_count: g_count.count
       })
 
     cond do
       role in @grading_roles ->
-        {:ok, submissions_by_group(grader, submission_query)}
+        submissions = submissions_by_group(grader, submission_query)
+        
+        {:ok, build_submission_grading_status(submissions)}
 
       role in @see_all_submissions_roles ->
         submissions =
@@ -598,13 +614,25 @@ defmodule Cadet.Assessments do
             Repo.all(submission_query)
           end
 
-        {:ok, submissions}
+        {:ok, build_submission_grading_status(submissions)}
 
       true ->
         {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
+  # Constructs grading status for each submission
+  defp build_submission_grading_status(submissions) do
+    submissions
+    |> Enum.map(fn s = %Submission{} ->
+       %{
+        s
+        | grading_status:
+          build_grading_status(s.status, s.assessment.type, s.question_count, s.graded_count)
+        }
+    end)
+  end
+  
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
   def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
