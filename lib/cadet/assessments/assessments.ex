@@ -143,8 +143,9 @@ defmodule Cadet.Assessments do
       # ChatKit - create chatrooms
       Submission
       |> where(assessment_id: ^id)
-      |> Repo.all()
-      |> Enum.each(fn submission -> Room.create_rooms(submission) end)
+      |> where(student_id: ^user.id)
+      |> Repo.one()
+      |> Room.create_rooms()
 
       answer_query =
         Answer
