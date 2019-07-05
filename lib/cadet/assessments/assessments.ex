@@ -201,18 +201,23 @@ defmodule Cadet.Assessments do
         %{
           assessment
           | grading_status:
-              build_grading_status(assessment.question_count, assessment.graded_count)
+              build_grading_status(assessment.user_status, assessment.type, assessment.question_count, assessment.graded_count)
         }
       end)
 
     {:ok, assessments}
   end
 
-  defp build_grading_status(q_count, g_count) do
-    cond do
-      g_count < q_count -> :grading
-      g_count == q_count -> :graded
-      true -> :none
+  defp build_grading_status(submission_status, a_type, q_count, g_count) do
+    case a_type do
+      type when type in [:mission, :sidequest] ->
+        cond do
+          submission_status != :submitted -> :excluded
+          g_count < q_count -> :grading
+          g_count == q_count -> :graded
+          true -> :none
+        end
+      _ -> :excluded
     end
   end
 
