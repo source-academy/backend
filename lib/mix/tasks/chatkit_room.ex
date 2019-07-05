@@ -9,6 +9,7 @@ defmodule Mix.Tasks.Cadet.ChatkitRoom do
   """
   use Mix.Task
 
+  import Ecto.Query
   import Mix.EctoSQL
 
   alias Cadet.Repo
@@ -20,6 +21,7 @@ defmodule Mix.Tasks.Cadet.ChatkitRoom do
     HTTPoison.start()
 
     Submission
+    |> where(status: ^:submitted)
     |> Repo.all()
     |> Enum.each(fn submission -> Room.create_rooms(submission) end)
   end

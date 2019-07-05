@@ -53,8 +53,6 @@ defmodule Cadet.Chat.Room do
         comment: room_id
       })
       |> Repo.update()
-    else
-      {:error, _} -> nil
     end
   end
 
