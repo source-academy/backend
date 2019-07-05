@@ -488,7 +488,7 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert %{
                adjustment: -10,
-               comment: "Never gonna give you up",
+               comment: answer.comment,
                xp_adjustment: -10,
                grader_id: ^grader_id
              } = Repo.get(Answer, answer.id)
@@ -548,7 +548,7 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert %{
                adjustment: -100,
-               comment: "Your awesome",
+               comment: answer.comment,
                xp_adjustment: -100,
                grader_id: ^mentor_id
              } = Repo.get(Answer, answer.id)
@@ -996,7 +996,7 @@ defmodule CadetWeb.GradingControllerTest do
         })
 
       assert response(conn, 200) == "OK"
-      assert %{adjustment: -10, comment: "Never gonna give you up"} = Repo.get(Answer, answer.id)
+      assert %{adjustment: -10, comment: answer.comment} = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :admin
