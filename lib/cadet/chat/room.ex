@@ -6,12 +6,12 @@ defmodule Cadet.Chat.Room do
 
   require Logger
 
-  import Cadet.Chat.Token
   import Ecto.Query
 
   alias Cadet.Repo
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Accounts.User
+  alias Cadet.Chat.Token
 
   @instance_id :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:instance_id)
 
@@ -34,7 +34,7 @@ defmodule Cadet.Chat.Room do
       case create_room(assessment_id, answer.question_id, student) do
         {:ok, %{"id" => room_id}} ->
           answer
-          |> Answer.grading_changeset(%{
+          |> Answer.comment_changeset(%{
             comment: room_id
           })
           |> Repo.update()
@@ -57,7 +57,7 @@ defmodule Cadet.Chat.Room do
 
     url = "https://us1.pusherplatform.io/services/chatkit/v4/#{@instance_id}/rooms"
 
-    {:ok, token} = get_superuser_token()
+    {:ok, token} = Token.get_superuser_token()
     headers = [Authorization: "Bearer #{token}"]
 
     body =
