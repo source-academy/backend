@@ -29,7 +29,9 @@ defmodule Cadet.Chat.Room do
     Answer
     |> where(submission_id: ^id)
     |> Repo.all()
-    |> Enum.filter(fn answer -> answer.comment == "" or answer.comment == nil end)
+    |> Enum.filter(fn answer ->
+      answer.comment == "" or answer.comment == nil or answer.comment == :undefined
+    end)
     |> Enum.each(fn answer ->
       case create_room(assessment_id, answer.question_id, student) do
         {:ok, %{"id" => room_id}} ->

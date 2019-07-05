@@ -30,7 +30,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment grade comment adjustment grader_id)a
+  @optional_fields ~w(xp xp_adjustment grade adjustment grader_id)a
 
   def changeset(answer, params) do
     answer
@@ -63,8 +63,9 @@ defmodule Cadet.Assessments.Answer do
     |> validate_xp_grade_adjustment_total()
   end
 
+  @spec comment_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def comment_changeset(answer, params) do
-    answer |> cast(params, ~w(comment)a)
+    cast(answer, params, ~w(comment)a)
   end
 
   @spec validate_xp_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
