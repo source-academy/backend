@@ -34,7 +34,7 @@ defmodule Cadet.Accounts.Notifications do
   def write(params = %{role: role}) do
     case role do
       :student -> write_student(params)
-      :staff -> write_avenger(params)
+      :staff -> write_staff(params)
       _ -> {:error, Notification.changeset(%Notification{}, params)}
     end
   end
@@ -72,7 +72,7 @@ defmodule Cadet.Accounts.Notifications do
 
   defp write_student(params), do: {:error, Notification.changeset(%Notification{}, params)}
 
-  defp write_avenger(
+  defp write_staff(
          params = %{
            user_id: user_id,
            submission_id: submission_id,
@@ -101,7 +101,7 @@ defmodule Cadet.Accounts.Notifications do
     |> Repo.insert_or_update()
   end
 
-  defp write_avenger(params), do: {:error, Notification.changeset(%Notification{}, params)}
+  defp write_staff(params), do: {:error, Notification.changeset(%Notification{}, params)}
 
   defp query_question_id(query, question_id) do
     case question_id do
