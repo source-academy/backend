@@ -140,13 +140,6 @@ defmodule Cadet.Assessments do
         user = %User{role: role}
       ) do
     if Timex.after?(Timex.now(), assessment.open_at) or role in @open_all_assessment_roles do
-      # ChatKit - create chatrooms
-      Submission
-      |> where(assessment_id: ^id)
-      |> where(student_id: ^user.id)
-      |> Repo.one()
-      |> Room.create_rooms()
-
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
@@ -361,6 +354,7 @@ defmodule Cadet.Assessments do
            {:status, true} <- {:status, submission.status != :submitted},
            {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
         update_submission_status(submission, question.assessment)
+        Room.create_rooms(submission)
         {:ok, nil}
       else
         {:question_found?, false} -> {:error, {:not_found, "Question not found"}}

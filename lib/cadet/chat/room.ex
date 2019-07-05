@@ -24,6 +24,7 @@ defmodule Cadet.Chat.Room do
         student_id: student_id,
         assessment_id: assessment_id
       }) do
+    IO.puts("yay")
     student = User |> where(id: ^student_id) |> Repo.one()
 
     Answer
@@ -48,6 +49,7 @@ defmodule Cadet.Chat.Room do
   end
 
   def create_rooms(_) do
+    IO.puts("nil")
     nil
   end
 
