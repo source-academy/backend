@@ -7,7 +7,6 @@ defmodule Cadet.Chat.RoomTest do
   use Cadet.DataCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  import Cadet.Factory
   import Ecto.Query
   import ExUnit.CaptureLog
 

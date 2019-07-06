@@ -18,11 +18,17 @@ defmodule Mix.Tasks.Cadet.ChatkitRoom do
 
   def run(_args) do
     ensure_started(Repo, [])
-    HTTPoison.start()
 
     Submission
-    |> where(status: ^:submitted)
+    |> join(:left, [s], a in assoc(s, :answers))
+    |> join(:inner, [s], u in assoc(s, :student))
+    |> preload([_, a, u], answers: a, student: u)
+    |> where([_, a], is_nil(a.comment))
     |> Repo.all()
-    |> Enum.each(fn submission -> Room.create_rooms(submission) end)
+    |> Enum.each(fn submission ->
+      Enum.each(submission.answers, fn answer ->
+        Room.create_rooms(submission, answer, submission.student)
+      end)
+    end)
   end
 end
