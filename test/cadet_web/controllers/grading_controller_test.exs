@@ -119,6 +119,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedBy" => nil,
             "unsubmittedAt" => nil
           }
@@ -159,6 +162,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -217,6 +223,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -811,6 +820,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -853,6 +865,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
