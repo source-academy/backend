@@ -201,7 +201,12 @@ defmodule Cadet.Assessments do
         %{
           assessment
           | grading_status:
-              build_grading_status(assessment.user_status, assessment.type, assessment.question_count, assessment.graded_count)
+              build_grading_status(
+                assessment.user_status,
+                assessment.type,
+                assessment.question_count,
+                assessment.graded_count
+              )
         }
       end)
 
@@ -217,7 +222,9 @@ defmodule Cadet.Assessments do
           g_count == q_count -> :graded
           true -> :none
         end
-      _ -> :excluded
+
+      _ ->
+        :excluded
     end
   end
 
@@ -603,7 +610,7 @@ defmodule Cadet.Assessments do
     cond do
       role in @grading_roles ->
         submissions = submissions_by_group(grader, submission_query)
-        
+
         {:ok, build_submission_grading_status(submissions)}
 
       role in @see_all_submissions_roles ->
@@ -625,14 +632,14 @@ defmodule Cadet.Assessments do
   defp build_submission_grading_status(submissions) do
     submissions
     |> Enum.map(fn s = %Submission{} ->
-       %{
+      %{
         s
         | grading_status:
-          build_grading_status(s.status, s.assessment.type, s.question_count, s.graded_count)
-        }
+            build_grading_status(s.status, s.assessment.type, s.question_count, s.graded_count)
+      }
     end)
   end
-  
+
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
   def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
