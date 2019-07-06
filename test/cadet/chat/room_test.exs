@@ -43,7 +43,7 @@ defmodule Cadet.Chat.RoomTest do
       submission: submission,
       student: student
     } do
-      use_cassette "chatkit/create/room#1" do
+      use_cassette "chatkit/room#1" do
         Room.create_rooms(submission, answer, student)
 
         answer_db =
@@ -64,7 +64,7 @@ defmodule Cadet.Chat.RoomTest do
       submission: submission,
       student: student
     } do
-      use_cassette "chatkit/create/room#2" do
+      use_cassette "chatkit/room#2" do
         error = "services/chatkit/bad_request/users_not_found"
         error_description = "1 out of 2 users (including the room creator) could not be found"
         status_code = 400
@@ -95,7 +95,7 @@ defmodule Cadet.Chat.RoomTest do
       submission: submission,
       student: student
     } do
-      use_cassette "chatkit/create/room#3" do
+      use_cassette "chatkit/room#3" do
         error = "services/chatkit_authorizer/authorization/missing_permission"
         error_description = "User does not have access to requested resource"
         status_code = 401
@@ -121,7 +121,7 @@ defmodule Cadet.Chat.RoomTest do
     end
   end
 
-  describe "do not create a rom on chatkit if answer has a comment" do
+  describe "do not create a room on chatkit if answer has a comment" do
     test "success", %{
       student: student
     } do

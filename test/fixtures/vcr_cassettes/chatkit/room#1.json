@@ -1,14 +1,12 @@
 [
   {
     "request": {
-      "body": "{\"user_ids\":[\"1\",\"2\",\"3\"],\"private\":true,\"name\":\"room_name\"}",
-      "headers": {
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NjI0OTAwNDcsImlhdCI6MTU2MjQwMzY0NywiaW5zdGFuY2UiOiI0MmNmNTkyZS1lNjhhLTQwMDktYTEzNS01YWM4Nzg0NjE2Y2UiLCJpc3MiOiJhcGlfa2V5cy8zM2Q5ODljNy03MzQ5LTQ5NmUtODkyNy1jNzg4YTc1YjZjMjIiLCJzdSI6dHJ1ZSwic3ViIjoiYWRtaW4ifQ.PXSeNVZkPx3v1S3Vr15JK00RcmoJ4mUtNwCC9oHDJUU"
-      },
+      "body": "",
+      "headers": {},
       "method": "post",
       "options": [],
       "request_body": "",
-      "url": "https://us1.pusherplatform.io/services/chatkit/v4/42cf592e-e68a-4009-a135-5ac8784616ce/rooms"
+      "url": "https://us1.pusherplatform.io/services/chatkit/v4/instance_id/rooms"
     },
     "response": {
       "binary": false,

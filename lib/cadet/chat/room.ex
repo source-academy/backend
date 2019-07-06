@@ -13,7 +13,11 @@ defmodule Cadet.Chat.Room do
   alias Cadet.Accounts.User
   alias Cadet.Chat.Token
 
-  @instance_id :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:instance_id)
+  @instance_id (if(Mix.env() != :test) do
+                  :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:instance_id)
+                else
+                  "instance_id"
+                end)
 
   @doc """
   Creates a chatroom for every answer, and updates db with the chatroom id.
@@ -22,10 +26,11 @@ defmodule Cadet.Chat.Room do
         %Submission{
           assessment_id: assessment_id
         },
-        answer = %Answer{question_id: question_id},
+        answer = %Answer{question_id: question_id, comment: comment},
         user
       ) do
-    with {:ok, %{"id" => room_id}} <- create_room(assessment_id, question_id, user) do
+    with true <- comment == nil,
+         {:ok, %{"id" => room_id}} <- create_room(assessment_id, question_id, user) do
       answer
       |> Answer.comment_changeset(%{
         comment: room_id
