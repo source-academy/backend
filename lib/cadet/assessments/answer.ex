@@ -63,7 +63,7 @@ defmodule Cadet.Assessments.Answer do
     |> validate_xp_grade_adjustment_total()
   end
 
-  # TODO: refactor this with some sort of validation.
+  # TODO: add some validation
   @spec comment_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def comment_changeset(answer, params) do
     cast(answer, params, ~w(comment)a)

@@ -13,7 +13,7 @@ defmodule Cadet.Chat.Room do
   alias Cadet.Accounts.User
   alias Cadet.Chat.Token
 
-  @instance_id (if(Mix.env() != :test) do
+  @instance_id (if Mix.env() != :test do
                   :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:instance_id)
                 else
                   "instance_id"
