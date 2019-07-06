@@ -1,0 +1,30 @@
+[
+  {
+    "request": {
+      "body": "{\"user_ids\":[\"1\",\"2\",\"3\"],\"private\":true,\"name\":\"room_name\"}",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NjI0OTAwNDcsImlhdCI6MTU2MjQwMzY0NywiaW5zdGFuY2UiOiI0MmNmNTkyZS1lNjhhLTQwMDktYTEzNS01YWM4Nzg0NjE2Y2UiLCJpc3MiOiJhcGlfa2V5cy8zM2Q5ODljNy03MzQ5LTQ5NmUtODkyNy1jNzg4YTc1YjZjMjIiLCJzdSI6dHJ1ZSwic3ViIjoiYWRtaW4ifQ.PXSeNVZkPx3v1S3Vr15JK00RcmoJ4mUtNwCC9oHDJUU"
+      },
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://us1.pusherplatform.io/services/chatkit/v4/42cf592e-e68a-4009-a135-5ac8784616ce/rooms"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"created_at\":\"2019-07-06T09:00:47Z\",\"created_by_id\":\"admin\",\"id\":\"19420137\",\"member_user_ids\":[\"admin\",\"1\",\"2\",\"3\"],\"name\":\"room_name\",\"private\":true,\"updated_at\":\"2019-07-06T09:00:47Z\"}",
+      "headers": {
+        "access-control-expose-headers": "Server, Access-Control-Expose-Headers, X-Request-Id, Date, X-Envoy-Upstream-Service-Time, Access-Control-Max-Age",
+        "access-control-max-age": "86400",
+        "content-type": "application/json",
+        "date": "Sat, 06 Jul 2019 09:00:47 GMT",
+        "server": "istio-envoy",
+        "x-envoy-upstream-service-time": "44",
+        "x-request-id": "f61cc0eb-2261-4817-a8a6-1637c5202a96",
+        "content-length": "187"
+      },
+      "status_code": 201,
+      "type": "ok"
+    }
+  }
+]

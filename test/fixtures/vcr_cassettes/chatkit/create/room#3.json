@@ -1,0 +1,29 @@
+[
+  {
+    "request": {
+      "body": "{\"user_ids\":[\"56695\"],\"private\":true,\"name\":\"E0002401_45753_Q91364\"}",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1NjI0OTgyNDMsImlhdCI6MTU2MjQxMTg0MywiaW5zdGFuY2UiOiI0MmNmNTkyZS1lNjhhLTQwMDktYTEzNS01YWM4Nzg0NjE2Y2UiLCJpc3MiOiJhcGlfa2V5cy8zM2Q5ODljNy03MzQ5LTQ5NmUtODkyNy1jNzg4YTc1YjZjMjIiLCJzdSI6ZmFsc2UsInN1YiI6Im5vdCBhZG1pbiJ9.EkC5NVMhVLHxqCGVqRSmtTZFjodzsVEkTgRxntZ9L6Y"
+      },
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://us1.pusherplatform.io/services/chatkit/v4/42cf592e-e68a-4009-a135-5ac8784616ce/rooms"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"error\":\"services/chatkit_authorizer/authorization/missing_permission\",\"error_description\":\"User does not have access to requested resource\",\"error_uri\":\"https://docs.pusher.com/errors/services/chatkit_authorizer/authorization/missing_permission\"}",
+      "headers": {
+        "access-control-expose-headers": "Access-Control-Max-Age",
+        "access-control-max-age": "86400",
+        "content-type": "application/json",
+        "content-length": "248",
+        "date": "Sat, 06 Jul 2019 11:17:23 GMT",
+        "x-envoy-upstream-service-time": "13",
+        "server": "istio-envoy"
+      },
+      "status_code": 401,
+      "type": "ok"
+    }
+  }
+]

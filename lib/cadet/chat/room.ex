@@ -29,9 +29,7 @@ defmodule Cadet.Chat.Room do
     Answer
     |> where(submission_id: ^submission_id)
     |> Repo.all()
-    |> Enum.filter(fn answer ->
-      answer.comment == "" or answer.comment == nil
-    end)
+    |> Enum.filter(fn answer -> answer.comment == nil end)
     |> Enum.each(fn answer -> create_rooms(submission, answer, user) end)
   end
 

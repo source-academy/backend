@@ -7,11 +7,11 @@ defmodule CadetWeb.ChatController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  import Cadet.Chat.Token
+  alias Cadet.Chat.Token
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    {:ok, token, ttl} = get_user_token(user)
+    {:ok, token, ttl} = Token.get_user_token(user)
 
     render(
       conn,
