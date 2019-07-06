@@ -11,6 +11,7 @@ defmodule Cadet.Course.Sourcecast do
   schema "sourcecasts" do
     field(:name, :string)
     field(:deltas, :string)
+    field(:description, :string)
     field(:audio, Upload.Type)
 
     belongs_to(:uploader, User)
@@ -18,8 +19,8 @@ defmodule Cadet.Course.Sourcecast do
     timestamps()
   end
 
-  @required_fields ~w(name)a
-  @optional_fields ~w(deltas)a
+  @required_fields ~w(name deltas)a
+  @optional_fields ~w(description)a
   @optional_file_fields ~w(audio)a
 
   def changeset(sourcecast, attrs \\ %{}) do

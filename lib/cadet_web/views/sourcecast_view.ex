@@ -1,8 +1,6 @@
 defmodule CadetWeb.SourcecastView do
   use CadetWeb, :view
 
-  import CadetWeb.AssessmentsHelpers
-
   def render("index.json", %{sourcecasts: sourcecasts}) do
     render_many(sourcecasts, CadetWeb.SourcecastView, "show.json", as: :sourcecast)
   end
@@ -10,6 +8,7 @@ defmodule CadetWeb.SourcecastView do
   def render("show.json", %{sourcecast: sourcecast}) do
     transform_map_for_view(sourcecast, %{
       name: :name,
+      description: :description,
       inserted_at: :inserted_at,
       updated_at: :updated_at,
       audio: :audio,

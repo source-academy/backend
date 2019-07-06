@@ -4,6 +4,7 @@ defmodule Cadet.Repo.Migrations.CreateSourcecast do
   def change do
     create table(:sourcecasts) do
       add(:name, :string, null: false)
+      add(:description, :string)
       add(:uploader_id, references(:users, on_delete: :nilify_all))
       add(:audio, :string)
       add(:deltas, :text)
