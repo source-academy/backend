@@ -19,24 +19,6 @@ defmodule Cadet.Chat.Room do
   Creates a chatroom for every answer, and updates db with the chatroom id.
   """
   def create_rooms(
-        submission = %Submission{
-          id: submission_id,
-          student_id: student_id
-        }
-      ) do
-    user = User |> where(id: ^student_id) |> Repo.one()
-
-    Answer
-    |> where(submission_id: ^submission_id)
-    |> Repo.all()
-    |> Enum.filter(fn answer -> answer.comment == nil end)
-    |> Enum.each(fn answer -> create_rooms(submission, answer, user) end)
-  end
-
-  @doc """
-  Creates a chatroom for every answer, and updates db with the chatroom id.
-  """
-  def create_rooms(
         %Submission{
           assessment_id: assessment_id
         },
@@ -82,9 +64,9 @@ defmodule Cadet.Chat.Room do
         response_body = Poison.decode!(body)
 
         Logger.error(
-          "Room creation failed: #{response_body["error"]}, #{response_body["error_description"]} (status code #{
-            status_code
-          }) [user_id: #{student_id}, assessment_id: #{assessment_id}, question_id: #{question_id}]"
+          "Room creation failed: #{response_body["error"]}, " <>
+            "#{response_body["error_description"]} (status code #{status_code}) " <>
+            "[user_id: #{student_id}, assessment_id: #{assessment_id}, question_id: #{question_id}]"
         )
 
         {:error, nil}

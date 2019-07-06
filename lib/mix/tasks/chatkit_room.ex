@@ -20,7 +20,7 @@ defmodule Mix.Tasks.Cadet.ChatkitRoom do
     ensure_started(Repo, [])
 
     Submission
-    |> join(:left, [s], a in assoc(s, :answers))
+    |> join(:inner, [s], a in assoc(s, :answers))
     |> join(:inner, [s], u in assoc(s, :student))
     |> preload([_, a, u], answers: a, student: u)
     |> where([_, a], is_nil(a.comment))
