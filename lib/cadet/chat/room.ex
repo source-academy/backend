@@ -17,7 +17,6 @@ defmodule Cadet.Chat.Room do
 
   @doc """
   Creates a chatroom for every answer, and updates db with the chatroom id.
-  Takes in Submission struct
   """
   def create_rooms(
         submission = %Submission{
@@ -38,7 +37,6 @@ defmodule Cadet.Chat.Room do
 
   @doc """
   Creates a chatroom for every answer, and updates db with the chatroom id.
-  Takes in Submission, Answer and User struct
   """
   def create_rooms(
         %Submission{
@@ -82,7 +80,15 @@ defmodule Cadet.Chat.Room do
       {:ok, %HTTPoison.Response{body: body, status_code: 201}} ->
         Poison.decode(body)
 
-      {:ok, _} ->
+      {:ok, %HTTPoison.Response{body: body, status_code: status_code}} ->
+        response_body = Poison.decode!(body)
+
+        Logger.error(
+          "Room creation failed: #{response_body["error"]}, #{response_body["error_description"]} (status code #{
+            status_code
+          }) [user_id: #{student_id}, assessment_id: #{assessment_id}, question_id: #{question_id}]"
+        )
+
         {:error, nil}
 
       {:error, %HTTPoison.Error{reason: error}} ->

@@ -10,6 +10,7 @@ defmodule Cadet.Chat.Token do
   @key_id :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:key_id)
   @key_secret :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:key_secret)
   @token_ttl 86_400
+  @admin_user_id "admin"
 
   @doc """
   Generates user token for connection to ChatKit's ChatManager.
@@ -25,7 +26,7 @@ defmodule Cadet.Chat.Token do
   Returns {:ok, token}
   """
   def get_superuser_token do
-    get_token("admin", true)
+    get_token(@admin_user_id, true)
   end
 
   defp get_token(user_id, su \\ false) when is_binary(user_id) do
