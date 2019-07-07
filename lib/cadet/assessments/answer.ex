@@ -30,7 +30,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment grade comment adjustment grader_id)a
+  @optional_fields ~w(xp xp_adjustment grade adjustment grader_id)a
 
   def changeset(answer, params) do
     answer
@@ -49,7 +49,7 @@ defmodule Cadet.Assessments.Answer do
     answer
     |> cast(
       params,
-      ~w(grader_id xp xp_adjustment grade adjustment autograding_results autograding_status comment)a
+      ~w(grader_id xp xp_adjustment grade adjustment autograding_results autograding_status)a
     )
     |> add_belongs_to_id_from_model(:grader, params)
     |> foreign_key_constraint(:grader_id)
@@ -61,6 +61,12 @@ defmodule Cadet.Assessments.Answer do
     answer
     |> cast(params, ~w(grade adjustment xp autograding_status autograding_results)a)
     |> validate_xp_grade_adjustment_total()
+  end
+
+  # TODO: add some validation
+  @spec comment_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
+  def comment_changeset(answer, params) do
+    cast(answer, params, ~w(comment)a)
   end
 
   @spec validate_xp_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()

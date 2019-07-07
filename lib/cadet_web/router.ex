@@ -39,6 +39,8 @@ defmodule CadetWeb.Router do
     post("/grading/:submissionid/:questionid", GradingController, :update)
 
     get("/user", UserController, :index)
+
+    post("/chat/token", ChatController, :index)
   end
 
   # Other scopes may use custom stacks.
