@@ -10,6 +10,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Accounts.{Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
+  alias Cadet.Chat.Room
   alias Ecto.Multi
 
   @xp_early_submission_max_bonus 100
@@ -201,18 +202,30 @@ defmodule Cadet.Assessments do
         %{
           assessment
           | grading_status:
-              build_grading_status(assessment.question_count, assessment.graded_count)
+              build_grading_status(
+                assessment.user_status,
+                assessment.type,
+                assessment.question_count,
+                assessment.graded_count
+              )
         }
       end)
 
     {:ok, assessments}
   end
 
-  defp build_grading_status(q_count, g_count) do
-    cond do
-      g_count < q_count -> :grading
-      g_count == q_count -> :graded
-      true -> :none
+  defp build_grading_status(submission_status, a_type, q_count, g_count) do
+    case a_type do
+      type when type in [:mission, :sidequest] ->
+        cond do
+          submission_status != :submitted -> :excluded
+          g_count < q_count -> :grading
+          g_count == q_count -> :graded
+          true -> :none
+        end
+
+      _ ->
+        :excluded
     end
   end
 
@@ -357,8 +370,13 @@ defmodule Cadet.Assessments do
            {:is_open?, true} <- is_open?(question.assessment),
            {:ok, submission} <- find_or_create_submission(user, question.assessment),
            {:status, true} <- {:status, submission.status != :submitted},
-           {:ok, _} <- insert_or_update_answer(submission, question, raw_answer) do
+           {:ok, answer} <- insert_or_update_answer(submission, question, raw_answer) do
         update_submission_status(submission, question.assessment)
+
+        if answer.comment == nil do
+          Room.create_rooms(submission, answer, user)
+        end
+
         {:ok, nil}
       else
         {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
@@ -464,7 +482,6 @@ defmodule Cadet.Assessments do
                    xp_adjustment: 0,
                    autograding_status: :none,
                    autograding_results: [],
-                   comment: nil,
                    grader_id: nil
                  })
                  |> Repo.update()}
@@ -582,7 +599,19 @@ defmodule Cadet.Assessments do
         a in subquery(Query.all_assessments_with_max_xp_and_grade()),
         on: s.assessment_id == a.id
       )
-      |> select([s, x, st, g, u, a], %Submission{
+      |> join(
+        :inner,
+        [_, _, _, _, _, a],
+        q_count in subquery(Query.assessments_question_count()),
+        on: a.id == q_count.assessment_id
+      )
+      |> join(
+        :left,
+        [s, _, _, _, _, a, _],
+        g_count in subquery(Query.submissions_graded_count()),
+        on: s.id == g_count.submission_id
+      )
+      |> select([s, x, st, g, u, a, q_count, g_count], %Submission{
         s
         | grade: x.grade,
           adjustment: x.adjustment,
@@ -591,12 +620,16 @@ defmodule Cadet.Assessments do
           student: st,
           assessment: a,
           group_name: g.name,
-          unsubmitted_by: u
+          unsubmitted_by: u,
+          question_count: q_count.count,
+          graded_count: g_count.count
       })
 
     cond do
       role in @grading_roles ->
-        {:ok, submissions_by_group(grader, submission_query)}
+        submissions = submissions_by_group(grader, submission_query)
+
+        {:ok, build_submission_grading_status(submissions)}
 
       role in @see_all_submissions_roles ->
         submissions =
@@ -606,11 +639,23 @@ defmodule Cadet.Assessments do
             Repo.all(submission_query)
           end
 
-        {:ok, submissions}
+        {:ok, build_submission_grading_status(submissions)}
 
       true ->
         {:error, {:unauthorized, "User is not permitted to grade."}}
     end
+  end
+
+  # Constructs grading status for each submission
+  defp build_submission_grading_status(submissions) do
+    submissions
+    |> Enum.map(fn s = %Submission{} ->
+      %{
+        s
+        | grading_status:
+            build_grading_status(s.status, s.assessment.type, s.question_count, s.graded_count)
+      }
+    end)
   end
 
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::

@@ -114,7 +114,7 @@ defmodule CadetWeb.AssessmentsController do
 
             gradingStatus(
               :string,
-              "one of 'none/grading/graded' indicating whether the assessment has been fully graded",
+              "'excluded' if the assessment does not yet require grading, otherwise one of 'none/grading/graded' indicating the extent to which it has been fully graded",
               required: true
             )
 
