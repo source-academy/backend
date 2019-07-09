@@ -63,7 +63,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxGrade" => 720,
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
-              "gradingStatus" => "none",
+              "gradingStatus" => "excluded",
               "private" => false
             }
           )
@@ -114,7 +114,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxGrade" => 720,
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
-              "gradingStatus" => "none",
+              "gradingStatus" => "excluded",
               "private" => false
             }
           )

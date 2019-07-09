@@ -1,0 +1,27 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {},
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://us1.pusherplatform.io/services/chatkit/v4/instance_id/rooms"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"error\":\"services/chatkit_authorizer/authorization/missing_permission\",\"error_description\":\"User does not have access to requested resource\",\"error_uri\":\"https://docs.pusher.com/errors/services/chatkit_authorizer/authorization/missing_permission\"}",
+      "headers": {
+        "access-control-expose-headers": "Access-Control-Max-Age",
+        "access-control-max-age": "86400",
+        "content-type": "application/json",
+        "content-length": "248",
+        "date": "Sat, 06 Jul 2019 11:17:23 GMT",
+        "x-envoy-upstream-service-time": "13",
+        "server": "istio-envoy"
+      },
+      "status_code": 401,
+      "type": "ok"
+    }
+  }
+]

@@ -2,6 +2,7 @@ defmodule CadetWeb.AnswerControllerTest do
   use CadetWeb.ConnCase
 
   import Ecto.Query
+  import Mock
 
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
@@ -22,6 +23,12 @@ defmodule CadetWeb.AnswerControllerTest do
       mcq_question: mcq_question,
       programming_question: programming_question
     }
+  end
+
+  setup_with_mocks([
+    {Cadet.Chat.Room, [], [create_rooms: fn _submission, _answer, _student -> nil end]}
+  ]) do
+    :ok
   end
 
   describe "POST /assessments/question/{questionId}/submit/, Unauthenticated" do
