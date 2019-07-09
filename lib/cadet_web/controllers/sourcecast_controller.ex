@@ -6,7 +6,7 @@ defmodule CadetWeb.SourcecastController do
   alias Cadet.Course.{Sourcecast}
 
   def index(conn, _params) do
-    sourcecasts = Repo.all(Sourcecast)
+    sourcecasts = Sourcecast |> Repo.all() |> Repo.preload(:uploader)
     render(conn, "index.json", sourcecasts: sourcecasts)
   end
 

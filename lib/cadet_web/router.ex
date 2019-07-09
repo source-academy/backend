@@ -20,6 +20,7 @@ defmodule CadetWeb.Router do
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
 
+    get("/sourcecast", SourcecastController, :index)
     post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/logout", AuthController, :logout)
@@ -29,7 +30,7 @@ defmodule CadetWeb.Router do
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
-    resources("/sourcecast", SourcecastController, only: [:index, :create, :update, :delete])
+    resources("/sourcecast", SourcecastController, only: [:create, :update, :delete])
 
     resources("/assessments", AssessmentsController, only: [:index, :show])
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
