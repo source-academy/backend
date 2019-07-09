@@ -216,15 +216,7 @@ defmodule Cadet.Accounts.Notifications do
   @spec write_notification_when_student_submits(%Submission{}) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_when_student_submits(submission = %Submission{}) do
-    avenger_id =
-      User
-      |> Repo.get_by(id: submission.student_id)
-      |> Repo.preload(:group)
-      |> Map.get(:group)
-      |> case do
-        nil -> nil
-        group -> Map.get(group, :leader_id)
-      end
+    avenger_id = get_avenger_id_of(submission.student_id)
 
     write(%{
       type: :submitted,
@@ -234,5 +226,57 @@ defmodule Cadet.Accounts.Notifications do
       assessment_id: submission.assessment_id,
       submission_id: submission.id
     })
+  end
+
+  @doc """
+  When a student enters a message in chatkit, the student's avenger is notified
+  """
+  @spec write_notification_for_chatkit_avenger(%User{}, integer()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def write_notification_for_chatkit_avenger(user = %User{}, assessment_id)
+      when is_ecto_id(assessment_id) do
+    submission = Repo.get_by(Submission, assessment_id: assessment_id, student_id: user.id)
+
+    write(%{
+      type: :new_message,
+      role: :staff,
+      user_id: get_avenger_id_of(user.id),
+      assessment_id: submission.assessment_id,
+      submission_id: submission.id
+    })
+  end
+
+  def write_notification_for_chatkit_avenger(_, assessment_id),
+    do: write(%{assessment_id: assessment_id})
+
+  @doc """
+  Similarly, when an avenger enters a message in chatkit, the student of the submission
+  the chatkit is in will be notified
+  """
+  @spec write_notification_for_chatkit_student(%User{}, integer()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def write_notification_for_chatkit_student(_, submission_id) when is_ecto_id(submission_id) do
+    submission = Repo.get_by(Submission, id: submission_id)
+
+    write(%{
+      type: :new_message,
+      role: :student,
+      user_id: submission.student_id,
+      assessment_id: submission.assessment_id
+    })
+  end
+
+  def write_notification_for_chatkit_student(_, submission_id),
+    do: write(%{submission_id: submission_id})
+
+  defp get_avenger_id_of(student_id) when is_ecto_id(student_id) do
+    User
+    |> Repo.get_by(id: student_id)
+    |> Repo.preload(:group)
+    |> Map.get(:group)
+    |> case do
+      nil -> nil
+      group -> Map.get(group, :leader_id)
+    end
   end
 end

@@ -13,5 +13,8 @@ defenum(Cadet.Accounts.NotificationType, :notification_type, [
   :unsubmitted,
 
   # Notifications for submitted assessments
-  :submitted
+  :submitted,
+
+  # Notifications for chatkit
+  :new_message
 ])
