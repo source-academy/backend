@@ -965,7 +965,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "Password protected assessments render properly" do
-    test "returns 400 when trying to access a password protected assessment without a password",
+    test "returns 403 when trying to access a password protected assessment without a password",
          %{
            conn: conn,
            users: users,
@@ -980,7 +980,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       for {_role, user} <- users do
         conn = conn |> sign_in(user) |> post(build_url(assessment.id))
-        assert response(conn, 400) == "Missing Password."
+        assert response(conn, 403) == "Missing Password."
       end
     end
 

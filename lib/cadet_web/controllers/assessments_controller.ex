@@ -69,6 +69,7 @@ defmodule CadetWeb.AssessmentsController do
 
     security([%{JWT: []}])
 
+    consumes("application/json")
     produces("application/json")
 
     parameters do

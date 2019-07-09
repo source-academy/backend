@@ -142,7 +142,7 @@ defmodule Cadet.Assessments do
         given_password
       ) do
     case given_password do
-      nil -> {:error, {:bad_request, "Missing Password."}}
+      nil -> {:error, {:forbidden, "Missing Password."}}
       ^password -> assessment_with_questions_and_answers(assessment, user)
       _ -> {:error, {:forbidden, "Invalid Password."}}
     end
