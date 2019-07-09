@@ -8,7 +8,6 @@ defmodule Cadet.Repo.Migrations.AddNotifications do
       add(:user_id, references(:users), null: false)
       add(:assessment_id, references(:assessments), null: true)
       add(:submission_id, references(:submissions), null: true)
-      add(:question_id, references(:questions), null: true)
       timestamps()
     end
 

@@ -48,13 +48,10 @@ defmodule Cadet.Accounts.Notifications do
            type: type
          }
        ) do
-    question_id = Map.get(params, :question_id)
-
     Notification
     |> where(user_id: ^user_id)
     |> where(assessment_id: ^assessment_id)
     |> where(type: ^type)
-    |> query_question_id(question_id)
     |> Repo.one()
     |> case do
       nil ->
@@ -79,12 +76,9 @@ defmodule Cadet.Accounts.Notifications do
            type: type
          }
        ) do
-    question_id = Map.get(params, :question_id)
-
     Notification
     |> where(user_id: ^user_id)
     |> where(submission_id: ^submission_id)
-    |> query_question_id(question_id)
     |> where(type: ^type)
     |> Repo.one()
     |> case do
@@ -102,13 +96,6 @@ defmodule Cadet.Accounts.Notifications do
   end
 
   defp write_staff(params), do: {:error, Notification.changeset(%Notification{}, params)}
-
-  defp query_question_id(query, question_id) do
-    case question_id do
-      nil -> query
-      question_id -> where(query, question_id: ^question_id)
-    end
-  end
 
   @doc """
   Changes read status of notification(s) from false to true.

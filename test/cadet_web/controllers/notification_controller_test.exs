@@ -70,7 +70,6 @@ defmodule CadetWeb.NotificationControllerTest do
           &%{
             "id" => &1.id,
             "assessment_id" => &1.assessment_id,
-            "question_id" => &1.question_id,
             "submission_id" => nil,
             "type" => Atom.to_string(&1.type),
             "assessment" => %{
@@ -114,7 +113,6 @@ defmodule CadetWeb.NotificationControllerTest do
             "id" => &1.id,
             "assessment_id" => &1.assessment_id,
             "submission_id" => &1.submission_id,
-            "question_id" => &1.question_id,
             "type" => Atom.to_string(&1.type),
             "assessment" => %{
               "type" => Atom.to_string(assessment.type),

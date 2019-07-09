@@ -18,13 +18,12 @@ defmodule Cadet.Accounts.Notification do
     belongs_to(:user, User)
     belongs_to(:assessment, Assessment)
     belongs_to(:submission, Submission)
-    belongs_to(:question, Question)
 
     timestamps()
   end
 
   @required_fields ~w(type read role user_id)a
-  @optional_fields ~w(assessment_id submission_id question_id)a
+  @optional_fields ~w(assessment_id submission_id)a
 
   def changeset(answer, params) do
     answer
@@ -34,7 +33,6 @@ defmodule Cadet.Accounts.Notification do
     |> foreign_key_constraint(:user)
     |> foreign_key_constraint(:assessment_id)
     |> foreign_key_constraint(:submission_id)
-    |> foreign_key_constraint(:question_id)
   end
 
   defp validate_assessment_or_submission(changeset) do

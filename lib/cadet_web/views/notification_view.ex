@@ -10,7 +10,6 @@ defmodule CadetWeb.NotificationView do
       id: :id,
       type: :type,
       assessment_id: :assessment_id,
-      question_id: :question_id,
       submission_id: :submission_id,
       assessment:
         &transform_map_for_view(&1.assessment, %{

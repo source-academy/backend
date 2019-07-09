@@ -48,12 +48,6 @@ defmodule Cadet.Accounts.NotificationTest do
       assert_changeset(params, :valid)
     end
 
-    test "valid notification params with question id", %{valid_params_for_student: params} do
-      params = Map.put(params, :question_id, 12_345)
-
-      assert_changeset(params, :valid)
-    end
-
     test "invalid changeset missing required params for student", %{
       valid_params_for_student: params
     } do
@@ -143,15 +137,8 @@ defmodule Cadet.Accounts.NotificationTest do
         submission_id: submission.id
       }
 
-      question = insert(:programming_question, %{assessment: assessment})
-
       assert {:ok, _} = Notifications.write(params_student)
       assert {:ok, _} = Notifications.write(params_avenger)
-
-      assert {:ok, _} =
-               params_student
-               |> Map.put(:question_id, question.id)
-               |> Notifications.write()
     end
 
     test "write notification and ensure no duplicates", %{
