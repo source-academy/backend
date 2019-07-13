@@ -111,6 +111,15 @@ defmodule Cadet.Course do
   end
 
   @doc """
+  Delete a sourcecast file.
+  """
+  def delete_sourcecast_file(id) do
+    sourcecast = Repo.get(Sourcecast, id)
+    Upload.delete({sourcecast.file, sourcecast})
+    Repo.delete(sourcecast)
+  end
+
+  @doc """
   Create a new folder to put material files in
   """
   def create_material_folder(uploader = %User{}, attrs = %{}) do

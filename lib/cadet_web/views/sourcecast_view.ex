@@ -7,12 +7,12 @@ defmodule CadetWeb.SourcecastView do
 
   def render("show.json", %{sourcecast: sourcecast}) do
     transform_map_for_view(sourcecast, %{
-      name: :name,
+      title: :title,
       description: :description,
       inserted_at: :inserted_at,
       updated_at: :updated_at,
       audio: :audio,
-      deltas: :deltas,
+      playbackData: :playbackData,
       id: :id,
       uploader: &transform_map_for_view(&1.uploader, [:name, :id]),
       url: &Cadet.Course.Upload.url({&1.audio, &1})

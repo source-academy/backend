@@ -5,12 +5,12 @@ defmodule Cadet.Course.Upload do
   use Arc.Definition
   use Arc.Ecto.Definition
 
-  @extension_whitelist ~w(.wav)
+  @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .wav)
   @versions [:original]
 
   def storage_dir(_, _) do
     env = Application.get_env(:cadet, :environment)
-    "uploads/#{env}/sourcecast"
+    "uploads/#{env}/materials"
   end
 
   def validate({file, _}) do

@@ -11,9 +11,7 @@ defmodule CadetWeb.SourcecastController do
   end
 
   def create(conn, %{"sourcecast" => sourcecast}) do
-    IO.inspect(sourcecast)
     result = Course.upload_sourcecast_file(conn.assigns.current_user, sourcecast)
-    IO.inspect(result)
 
     case result do
       {:ok, _nil} ->
@@ -27,7 +25,7 @@ defmodule CadetWeb.SourcecastController do
   end
 
   def delete(conn, %{"id" => id}) do
-    result = Course.delete_material(id)
+    result = Course.delete_sourcecast_file(id)
 
     case result do
       {:ok, _nil} ->
@@ -89,6 +87,7 @@ defmodule CadetWeb.SourcecastController do
         swagger_schema do
           properties do
             name(:string, "name", required: true)
+            description(:string, "description", required: false)
             audio(:file, "audio file", required: true)
             deltas(:string, "playback deltas", required: true)
           end

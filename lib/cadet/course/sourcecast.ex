@@ -9,8 +9,8 @@ defmodule Cadet.Course.Sourcecast do
   alias Cadet.Course.Upload
 
   schema "sourcecasts" do
-    field(:name, :string)
-    field(:deltas, :string)
+    field(:title, :string)
+    field(:playbackData, :string)
     field(:description, :string)
     field(:audio, Upload.Type)
 
@@ -19,20 +19,20 @@ defmodule Cadet.Course.Sourcecast do
     timestamps()
   end
 
-  @required_fields ~w(name deltas)a
+  @required_fields ~w(title playbackData)a
   @optional_fields ~w(description)a
-  @optional_file_fields ~w(audio)a
+  @required_file_fields ~w(audio)a
 
   def changeset(sourcecast, attrs \\ %{}) do
     sourcecast
-    |> cast_attachments(attrs, @optional_file_fields)
+    |> cast_attachments(attrs, @required_file_fields)
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_changeset
   end
 
   defp validate_changeset(changeset) do
     changeset
-    |> validate_required(@required_fields)
+    |> validate_required(@required_fields ++ @required_file_fields)
     |> foreign_key_constraint(:uploader_id)
   end
 end
