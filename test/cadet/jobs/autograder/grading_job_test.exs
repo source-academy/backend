@@ -250,7 +250,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.grade == 0
         assert answer.autograding_status == :success
         assert answer.answer == %{"code" => "// Question not answered by student."}
-        assert answer.comment == nil
+        assert answer.room_id == nil
       end
 
       assert Enum.empty?(JobsQueue.all())
@@ -314,7 +314,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert answer.xp == 0
           assert answer.autograding_status == :success
           assert answer.answer == %{"code" => "// Question not answered by student."}
-          assert answer.comment == nil
+          assert answer.room_id == nil
         end
       end
     end
@@ -365,7 +365,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.xp == 0
         assert answer.autograding_status == :success
         assert answer.answer == %{"choice_id" => 0}
-        assert answer.comment == nil
+        assert answer.room_id == nil
       end
 
       assert Enum.empty?(JobsQueue.all())

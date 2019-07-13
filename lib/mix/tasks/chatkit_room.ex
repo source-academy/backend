@@ -23,7 +23,7 @@ defmodule Mix.Tasks.Cadet.ChatkitRoom do
     |> join(:inner, [s], a in assoc(s, :answers))
     |> join(:inner, [s], u in assoc(s, :student))
     |> preload([_, a, u], answers: a, student: u)
-    |> where([_, a], is_nil(a.comment))
+    |> where([_, a], is_nil(a.room_id))
     |> Repo.all()
     |> Enum.each(fn submission ->
       Enum.each(submission.answers, fn answer ->

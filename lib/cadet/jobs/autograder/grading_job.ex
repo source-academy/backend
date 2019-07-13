@@ -155,7 +155,6 @@ defmodule Cadet.Autograder.GradingJob do
       question_id: question_id,
       submission_id: submission_id,
       type: question_type,
-      comment: "Question not attempted by student"
     })
     |> Answer.autograding_changeset(%{grade: 0, autograding_status: :success})
     |> Repo.insert()

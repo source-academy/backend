@@ -26,14 +26,14 @@ defmodule Cadet.Chat.Room do
         %Submission{
           assessment_id: assessment_id
         },
-        answer = %Answer{question_id: question_id, comment: comment},
+        answer = %Answer{question_id: question_id, room_id: room_id},
         user
       ) do
-    with true <- comment == nil,
+    with true <- room_id == nil,
          {:ok, %{"id" => room_id}} <- create_room(assessment_id, question_id, user) do
       answer
-      |> Answer.comment_changeset(%{
-        comment: room_id
+      |> Answer.room_id_changeset(%{
+        room_id: room_id
       })
       |> Repo.update()
     end
