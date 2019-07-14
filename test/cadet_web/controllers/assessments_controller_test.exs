@@ -293,7 +293,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "answer"))
             |> Enum.map(&Map.delete(&1, "solution"))
             |> Enum.map(&Map.delete(&1, "library"))
-            |> Enum.map(&Map.delete(&1, "room_id"))
+            |> Enum.map(&Map.delete(&1, "roomId"))
             |> Enum.map(&Map.delete(&1, "xp"))
             |> Enum.map(&Map.delete(&1, "grade"))
             |> Enum.map(&Map.delete(&1, "maxXp"))
@@ -508,7 +508,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "it renders room_id", %{
+    test "it renders roomId", %{
       conn: conn,
       users: %{student: student},
       assessments: assessments
@@ -521,7 +521,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
            }} <- assessments do
         # Programming questions should come first due to seeding order
         expected_room_id =
-          Enum.map(programming_answers ++ mcq_answers, &%{"room_id" => &1.room_id})
+          Enum.map(programming_answers ++ mcq_answers, &%{"roomId" => &1.room_id})
 
         resp_room_id =
           conn
@@ -529,7 +529,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> get(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions", [])
-          |> Enum.map(&Map.take(&1, ["room_id"]))
+          |> Enum.map(&Map.take(&1, ["roomId"]))
 
         assert expected_room_id == resp_room_id
       end

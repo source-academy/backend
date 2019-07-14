@@ -288,6 +288,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -334,6 +335,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -405,6 +407,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -451,6 +454,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -920,6 +924,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -966,6 +971,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
