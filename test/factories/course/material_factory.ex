@@ -5,11 +5,11 @@ defmodule Cadet.Course.MaterialFactory do
 
   defmacro __using__(_opts) do
     quote do
-      alias Cadet.Course.Material
+      alias Cadet.Course.{Category, Material}
 
       def material_folder_factory do
-        %Material{
-          title: Faker.Cat.name(),
+        %Category{
+          name: Faker.Cat.name(),
           description: Faker.Cat.breed(),
           uploader: build(:user, %{role: :staff})
         }

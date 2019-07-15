@@ -6,7 +6,7 @@ defmodule Cadet.Course.Material do
   use Arc.Ecto.Schema
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.Upload
+  alias Cadet.Course.{Material, Upload, Category}
 
   schema "materials" do
     field(:title, :string)
@@ -14,6 +14,7 @@ defmodule Cadet.Course.Material do
     field(:file, Upload.Type)
 
     belongs_to(:uploader, User)
+    belongs_to(:category, Category)
 
     timestamps()
   end
@@ -39,5 +40,6 @@ defmodule Cadet.Course.Material do
     changeset
     |> validate_required(@required_fields ++ @required_file_fields)
     |> foreign_key_constraint(:uploader_id)
+    |> foreign_key_constraint(:category_id)
   end
 end

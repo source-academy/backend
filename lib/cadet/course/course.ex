@@ -8,7 +8,7 @@ defmodule Cadet.Course do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Group, Material, Upload, Sourcecast}
+  alias Cadet.Course.{Category, Group, Material, Sourcecast, Upload}
 
   @upload_file_roles ~w(admin staff)a
 
@@ -141,13 +141,13 @@ defmodule Cadet.Course do
   """
   def create_material_folder(parent, uploader = %User{}, attrs = %{}) do
     changeset =
-      %Material{}
-      |> Material.folder_changeset(attrs)
+      %Category{}
+      |> Category.changeset(attrs)
       |> put_assoc(:uploader, uploader)
 
     case parent do
-      %Material{} ->
-        Repo.insert(put_assoc(changeset, :parent, parent))
+      %Category{} ->
+        Repo.insert(put_assoc(changeset, :category, parent))
 
       _ ->
         Repo.insert(changeset)
@@ -157,18 +157,22 @@ defmodule Cadet.Course do
   @doc """
   Upload a material file to designated folder
   """
-  def upload_material_file(uploader = %User{}, attr = %{}) do
+  def upload_material_file(
+        uploader = %User{},
+        category = %Category{},
+        attr = %{}
+      ) do
     changeset =
       %Material{}
       |> Material.changeset(attr)
       |> put_assoc(:uploader, uploader)
+      |> put_assoc(:category, category)
 
     Repo.insert(changeset)
   end
 
   @doc """
-  Delete a material file/directory. A directory tree
-  is deleted recursively
+  Delete a material file.
   """
   def delete_material(id) when is_ecto_id(id) do
     material = Repo.get(Material, id)
@@ -184,10 +188,27 @@ defmodule Cadet.Course do
   end
 
   @doc """
+  Delete a category. A directory tree
+  is deleted recursively
+  """
+  def delete_category(id) when is_ecto_id(id) do
+    category = Repo.get(Category, id)
+    delete_category(category)
+  end
+
+  def delete_category(category = %Category{}) do
+    Repo.delete(category)
+  end
+
+  @doc """
   List material folder content
   """
-  def list_material_folders(folder = %Material{}) do
-    import Cadet.Course.Query, only: [material_folder_files: 1]
-    Repo.all(material_folder_files(folder.id))
+  def list_material_folders(folder = %Category{}) do
+    import Cadet.Course.Query
+
+    mat = Repo.all(material_folder_files(folder.id))
+    cat = Repo.all(category_folder_files(folder.id))
+
+    Enum.concat(mat, cat)
   end
 end

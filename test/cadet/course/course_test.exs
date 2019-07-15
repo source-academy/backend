@@ -18,10 +18,10 @@ defmodule Cadet.CourseTest do
           description: "This is where the notes"
         })
 
-      assert {:ok, material} = result
-      assert material.uploader == uploader
-      assert material.name == "Lecture Notes"
-      assert material.description == "This is where the notes"
+      assert {:ok, category} = result
+      assert category.uploader == uploader
+      assert category.name == "Lecture Notes"
+      assert category.description == "This is where the notes"
     end
 
     test "create folder with parent valid" do
@@ -34,7 +34,7 @@ defmodule Cadet.CourseTest do
         })
 
       assert {:ok, material} = result
-      assert material.parent_id == parent.id
+      assert material.category_id == parent.id
     end
 
     test "create folder invalid" do
@@ -61,8 +61,8 @@ defmodule Cadet.CourseTest do
       }
 
       result =
-        Course.upload_material_file(folder, uploader, %{
-          name: "Test Upload",
+        Course.upload_material_file(uploader, folder, %{
+          title: "Test Upload",
           file: upload
         })
 
@@ -77,10 +77,10 @@ defmodule Cadet.CourseTest do
 
     test "list folder content" do
       folder = insert(:material_folder)
-      folder2 = insert(:material_folder, %{parent: folder})
-      _ = insert(:material_file, %{parent: folder2})
-      _ = insert(:material_file, %{parent: folder2})
-      file3 = insert(:material_file, %{parent: folder})
+      folder2 = insert(:material_folder, %{category: folder})
+      _ = insert(:material_file, %{category: folder2})
+      _ = insert(:material_file, %{category: folder2})
+      file3 = insert(:material_file, %{category: folder})
 
       result = Course.list_material_folders(folder)
 
@@ -97,12 +97,12 @@ defmodule Cadet.CourseTest do
 
     test "delete a folder" do
       folder = insert(:material_folder)
-      folder2 = insert(:material_folder, %{parent: folder})
-      file1 = insert(:material_file, %{parent: folder2})
-      file2 = insert(:material_file, %{parent: folder2})
-      file3 = insert(:material_file, %{parent: folder})
+      folder2 = insert(:material_folder, %{category: folder})
+      file1 = insert(:material_file, %{category: folder2})
+      file2 = insert(:material_file, %{category: folder2})
+      file3 = insert(:material_file, %{category: folder})
 
-      assert {:ok, _} = Course.delete_material(folder.id)
+      assert {:ok, _} = Course.delete_category(folder.id)
 
       [file1, file2, file3, folder, folder2]
       |> Enum.each(&assert(Repo.get(Material, &1.id) == nil))
