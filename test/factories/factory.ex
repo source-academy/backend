@@ -14,7 +14,7 @@ defmodule Cadet.Factory do
     SubmissionFactory
   }
 
-  use Cadet.Course.{GroupFactory, MaterialFactory}
+  use Cadet.Course.{GroupFactory, MaterialFactory, SourcecastFactory}
 
   def upload_factory do
     %Plug.Upload{

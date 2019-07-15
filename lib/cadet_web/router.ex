@@ -30,7 +30,7 @@ defmodule CadetWeb.Router do
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
-    resources("/sourcecast", SourcecastController, only: [:create, :update, :delete])
+    resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
     resources("/assessments", AssessmentsController, only: [:index, :show])
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)

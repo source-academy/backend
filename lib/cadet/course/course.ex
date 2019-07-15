@@ -10,6 +10,8 @@ defmodule Cadet.Course do
   alias Cadet.Accounts.User
   alias Cadet.Course.{Group, Material, Upload, Sourcecast}
 
+  @upload_file_roles ~w(admin staff)a
+
   @doc """
   Get a group based on the group name or create one if it doesn't exist
   """
@@ -101,22 +103,30 @@ defmodule Cadet.Course do
   @doc """
   Upload a sourcecast file
   """
-  def upload_sourcecast_file(uploader = %User{}, attrs = %{}) do
-    changeset =
-      %Sourcecast{}
-      |> Sourcecast.changeset(attrs)
-      |> put_assoc(:uploader, uploader)
+  def upload_sourcecast_file(uploader = %User{role: role}, attrs = %{}) do
+    if role in @upload_file_roles do
+      changeset =
+        %Sourcecast{}
+        |> Sourcecast.changeset(attrs)
+        |> put_assoc(:uploader, uploader)
 
-    Repo.insert(changeset)
+      Repo.insert(changeset)
+    else
+      {:error, {:forbidden, "User is not permitted to upload"}}
+    end
   end
 
   @doc """
   Delete a sourcecast file.
   """
-  def delete_sourcecast_file(id) do
-    sourcecast = Repo.get(Sourcecast, id)
-    Upload.delete({sourcecast.file, sourcecast})
-    Repo.delete(sourcecast)
+  def delete_sourcecast_file(_deleter = %User{role: role}, id) do
+    if role in @upload_file_roles do
+      sourcecast = Repo.get(Sourcecast, id)
+      Upload.delete({sourcecast.audio, sourcecast})
+      Repo.delete(sourcecast)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
+    end
   end
 
   @doc """

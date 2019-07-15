@@ -2,7 +2,7 @@ defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
   alias Cadet.{Course, Repo}
-  alias Cadet.Course.{Group, Material, Upload}
+  alias Cadet.Course.{Group, Material, Sourcecast, Upload}
 
   describe "Material" do
     setup do
@@ -106,6 +106,39 @@ defmodule Cadet.CourseTest do
 
       [file1, file2, file3, folder, folder2]
       |> Enum.each(&assert(Repo.get(Material, &1.id) == nil))
+    end
+  end
+
+  describe "Sourcecast" do
+    setup do
+      on_exit(fn -> File.rm_rf!("uploads/test/materials") end)
+    end
+
+    test "upload file to folder then delete it" do
+      uploader = insert(:user, %{role: :staff})
+
+      upload = %Plug.Upload{
+        content_type: "audio/wav",
+        filename: "upload.wav",
+        path: "test/fixtures/upload.wav"
+      }
+
+      result =
+        Course.upload_sourcecast_file(uploader, %{
+          title: "Test Upload",
+          audio: upload,
+          playbackData:
+            "{\"init\":{\"editorValue\":\"// Type your program in here!\"},\"inputs\":[]}"
+        })
+
+      assert {:ok, sourcecast} = result
+      path = Upload.url({sourcecast.audio, sourcecast})
+      assert path =~ "/uploads/test/materials/upload.wav"
+
+      deleter = insert(:user, %{role: :staff})
+      assert {:ok, _} = Course.delete_sourcecast_file(deleter, sourcecast.id)
+      assert Repo.get(Sourcecast, sourcecast.id) == nil
+      refute File.exists?("uploads/test/materials/upload.wav")
     end
   end
 

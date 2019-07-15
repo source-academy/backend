@@ -15,7 +15,7 @@ defmodule CadetWeb.SourcecastController do
 
     case result do
       {:ok, _nil} ->
-        send_resp(conn, 200, "")
+        send_resp(conn, 200, "OK")
 
       {:error, {status, message}} ->
         conn
@@ -24,12 +24,16 @@ defmodule CadetWeb.SourcecastController do
     end
   end
 
+  def create(conn, _params) do
+    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+  end
+
   def delete(conn, %{"id" => id}) do
-    result = Course.delete_sourcecast_file(id)
+    result = Course.delete_sourcecast_file(conn.assigns.current_user, id)
 
     case result do
       {:ok, _nil} ->
-        send_resp(conn, 200, "")
+        send_resp(conn, 200, "OK")
 
       {:error, {status, message}} ->
         conn
