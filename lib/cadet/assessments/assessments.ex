@@ -367,7 +367,7 @@ defmodule Cadet.Assessments do
            {:ok, answer} <- insert_or_update_answer(submission, question, raw_answer) do
         update_submission_status(submission, question.assessment)
 
-        if answer.comment == nil do
+        if answer.room_id == nil do
           Room.create_rooms(submission, answer, user)
         end
 

@@ -293,7 +293,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "answer"))
             |> Enum.map(&Map.delete(&1, "solution"))
             |> Enum.map(&Map.delete(&1, "library"))
-            |> Enum.map(&Map.delete(&1, "comment"))
+            |> Enum.map(&Map.delete(&1, "roomId"))
             |> Enum.map(&Map.delete(&1, "xp"))
             |> Enum.map(&Map.delete(&1, "grade"))
             |> Enum.map(&Map.delete(&1, "maxXp"))
@@ -508,7 +508,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "it renders comment", %{
+    test "it renders roomId", %{
       conn: conn,
       users: %{student: student},
       assessments: assessments
@@ -520,18 +520,18 @@ defmodule CadetWeb.AssessmentsControllerTest do
              programming_answers: [programming_answers | _]
            }} <- assessments do
         # Programming questions should come first due to seeding order
-        expected_comments =
-          Enum.map(programming_answers ++ mcq_answers, &%{"comment" => &1.comment})
+        expected_room_id =
+          Enum.map(programming_answers ++ mcq_answers, &%{"roomId" => &1.room_id})
 
-        resp_comments =
+        resp_room_id =
           conn
           |> sign_in(student)
           |> get(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions", [])
-          |> Enum.map(&Map.take(&1, ["comment"]))
+          |> Enum.map(&Map.take(&1, ["roomId"]))
 
-        assert expected_comments == resp_comments
+        assert expected_room_id == resp_room_id
       end
     end
 
@@ -921,7 +921,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     grade_question = fn question ->
       Assessments.update_grading_info(
         %{submission_id: submission.id, question_id: question.id},
-        %{"adjustment" => 0, "comment" => ""},
+        %{"adjustment" => 0},
         avenger
       )
     end
