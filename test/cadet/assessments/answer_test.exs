@@ -124,7 +124,7 @@ defmodule Cadet.Assessments.AnswerTest do
   end
 
   describe "grading_changeset" do
-    test "changeset total grade < 0", %{
+    test "changeset total grade < 0 when adjustment is changed", %{
       valid_mcq_params: valid_mcq_params,
       mcq_question: mcq_question,
       valid_programming_params: valid_programming_params,
@@ -142,7 +142,7 @@ defmodule Cadet.Assessments.AnswerTest do
       end
     end
 
-    test "changeset total grade > max_grade", %{
+    test "changeset total grade > max_grade when adjustment is changed", %{
       valid_mcq_params: valid_mcq_params,
       mcq_question: mcq_question,
       valid_programming_params: valid_programming_params,
@@ -159,6 +159,49 @@ defmodule Cadet.Assessments.AnswerTest do
 
         assert changeset.valid?
         assert 1 == get_change(changeset, :adjustment)
+      end
+    end
+
+    test "changeset total grade < 0 when grade is changed", %{
+      valid_mcq_params: valid_mcq_params,
+      mcq_question: mcq_question,
+      valid_programming_params: valid_programming_params,
+      programming_question: programming_question
+    } do
+      for {question, params} <- [
+            {mcq_question, valid_mcq_params},
+            {programming_question, valid_programming_params}
+          ] do
+        params = Map.put(params, :adjustment, -1)
+
+        answer = insert(:answer, %{params | question_id: question.id, grade: 1})
+
+        changeset = Answer.grading_changeset(answer, %{grade: 0})
+
+        assert changeset.valid?
+        assert 0 == get_change(changeset, :adjustment)
+      end
+    end
+
+    test "changeset total grade > max_grade when grade is changed", %{
+      valid_mcq_params: valid_mcq_params,
+      mcq_question: mcq_question,
+      valid_programming_params: valid_programming_params,
+      programming_question: programming_question
+    } do
+      for {question, params} <- [
+            {mcq_question, valid_mcq_params},
+            {programming_question, valid_programming_params}
+          ] do
+        params = Map.put(params, :adjustment, 1)
+
+        answer =
+          insert(:answer, %{params | question_id: question.id, grade: question.max_grade - 1})
+
+        changeset = Answer.grading_changeset(answer, %{grade: question.max_grade})
+
+        assert changeset.valid?
+        assert 0 == get_change(changeset, :adjustment)
       end
     end
 
