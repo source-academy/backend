@@ -21,7 +21,7 @@ EOF
 resource "aws_lambda_function" "grader" {
   filename         = "${var.lambda_filename}"
   function_name    = "${var.env}-cadet-grader"
-  handler          = "index.runAll"
+  handler          = "build/index.runAll"
   role             = "${aws_iam_role.grader.arn}"
   runtime          = "nodejs10.x"
   timeout          = "${var.lambda_timeout}"
