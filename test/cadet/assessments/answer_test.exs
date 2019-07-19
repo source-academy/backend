@@ -124,7 +124,7 @@ defmodule Cadet.Assessments.AnswerTest do
   end
 
   describe "grading_changeset" do
-    test "invalid changeset total grade < 0", %{
+    test "changeset total grade < 0", %{
       valid_mcq_params: valid_mcq_params,
       mcq_question: mcq_question,
       valid_programming_params: valid_programming_params,
@@ -135,12 +135,14 @@ defmodule Cadet.Assessments.AnswerTest do
             {programming_question, valid_programming_params}
           ] do
         answer = insert(:answer, %{params | question_id: question.id, grade: 1})
+        changeset = Answer.grading_changeset(answer, %{adjustment: -2})
 
-        refute Answer.grading_changeset(answer, %{adjustment: -2}).valid?
+        assert changeset.valid?
+        assert -1 == get_change(changeset, :adjustment)
       end
     end
 
-    test "invalid changeset total grade > max_grade", %{
+    test "changeset total grade > max_grade", %{
       valid_mcq_params: valid_mcq_params,
       mcq_question: mcq_question,
       valid_programming_params: valid_programming_params,
@@ -150,9 +152,13 @@ defmodule Cadet.Assessments.AnswerTest do
             {mcq_question, valid_mcq_params},
             {programming_question, valid_programming_params}
           ] do
-        answer = insert(:answer, %{params | question_id: question.id, grade: question.max_grade})
+        answer =
+          insert(:answer, %{params | question_id: question.id, grade: question.max_grade - 1})
 
-        refute Answer.grading_changeset(answer, %{adjustment: 1}).valid?
+        changeset = Answer.grading_changeset(answer, %{adjustment: 10_000})
+
+        assert changeset.valid?
+        assert 1 == get_change(changeset, :adjustment)
       end
     end
 

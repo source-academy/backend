@@ -504,36 +504,6 @@ defmodule CadetWeb.GradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "invalid adjustment fails", %{conn: conn} do
-      %{answers: answers} = seed_db(conn)
-
-      answer = List.first(answers)
-
-      conn =
-        post(conn, build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"adjustment" => -9_999_999_999}
-        })
-
-      assert response(conn, 400) ==
-               "adjustment must make total be between 0 and question.max_grade"
-    end
-
-    @tag authenticate: :staff
-    test "invalid xp_adjustment fails", %{conn: conn} do
-      %{answers: answers} = seed_db(conn)
-
-      answer = List.first(answers)
-
-      conn =
-        post(conn, build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"xpAdjustment" => -9_999_999_999}
-        })
-
-      assert response(conn, 400) ==
-               "xp_adjustment must make total be between 0 and question.max_xp"
-    end
-
-    @tag authenticate: :staff
     test "staff who isn't the grader of said answer can still grade submission and grader field is updated correctly",
          %{conn: conn} do
       %{mentor: mentor, answers: answers} = seed_db(conn)

@@ -80,25 +80,38 @@ defmodule Cadet.Assessments.Answer do
     with {:question_id, question_id} when is_ecto_id(question_id) <-
            {:question_id, answer.question_id},
          {:question, %{max_grade: max_grade, max_xp: max_xp}} <-
-           {:question, Repo.get(Question, question_id)},
-         {:total_grade, true} <- {:total_grade, total_grade >= 0 and total_grade <= max_grade},
-         {:total_xp, true} <- {:total_xp, total_xp >= 0 and total_xp <= max_xp} do
+           {:question, Repo.get(Question, question_id)} do
       changeset
+      |> put_change(
+        :adjustment,
+        cast_adjustment(answer.adjustment, answer.grade, total_grade, max_grade)
+      )
+      |> put_change(
+        :xp_adjustment,
+        cast_adjustment(answer.xp_adjustment, answer.xp, total_xp, max_xp)
+      )
     else
       {:question_id, _} ->
         add_error(changeset, :question_id, "is required")
 
       {:question, _} ->
         add_error(changeset, :question_id, "refers to non-existent question")
-
-      {:total_grade, false} ->
-        add_error(changeset, :adjustment, "must make total be between 0 and question.max_grade")
-
-      {:total_xp, false} ->
-        add_error(changeset, :xp_adjustment, "must make total be between 0 and question.max_xp")
     end
     |> validate_number(:grade, greater_than_or_equal_to: 0)
     |> validate_number(:xp, greater_than_or_equal_to: 0)
+  end
+
+  defp cast_adjustment(
+         current_adjustment,
+         current_grade_or_xp,
+         total_grade_or_xp,
+         max_grade_or_xp
+       ) do
+    cond do
+      total_grade_or_xp > max_grade_or_xp -> max_grade_or_xp - current_grade_or_xp
+      total_grade_or_xp < 0 -> 0 - current_grade_or_xp
+      true -> current_adjustment
+    end
   end
 
   defp add_question_type_from_model(changeset, params) do
