@@ -79,7 +79,7 @@ defmodule Cadet.AccountsTest do
     {:error, changeset} = Accounts.add_nusnet_id(user2, "teddy@happy.mail")
     assert %{uid: ["has already been taken"]} = errors_on(changeset)
   end
-  
+
   test "create authorization" do
     user = insert(:user)
 
