@@ -109,7 +109,7 @@ defmodule Cadet.Accounts do
 
       for authorization <- authorizations do
         authorization
-        |> change(%{nusnet_id: nusnet_id})
+        |> change(%{provider: :nusnet_id, uid: nusnet_id})
         |> Repo.update!()
       end
     end)
