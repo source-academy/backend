@@ -57,7 +57,6 @@ defmodule Cadet.Autograder.ResultStoreWorker do
       end
 
     changes = %{
-      adjustment: 0,
       grade: result.grade,
       xp: xp,
       autograding_status: status,

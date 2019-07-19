@@ -84,7 +84,6 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
           end)
 
         assert answer.grade == result.grade
-        assert answer.adjustment == 0
 
         if answer.question.max_grade == 0 do
           assert answer.xp == 0
