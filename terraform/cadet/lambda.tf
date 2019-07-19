@@ -34,7 +34,7 @@ resource "aws_lambda_function" "grader" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "example" {
+resource "aws_cloudwatch_log_group" "grader" {
   name              = "/aws/lambda/${var.lambda_function_name}"
   retention_in_days = 14
 }
