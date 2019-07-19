@@ -18,16 +18,20 @@ defmodule Cadet.Autograder.LambdaWorker do
   storage job.
   """
   def perform(params = %{answer: answer = %Answer{}, question: %Question{}}) do
-    lambda_params = build_request_params(params)
+    with lambda_params <- build_request_params(params),
+         {:hasTestcases?, true} <- {:hasTestcases?, !Enum.empty?(lambda_params.testcases)} do
+      response =
+        @lambda_name
+        |> ExAws.Lambda.invoke(lambda_params, %{})
+        |> ExAws.request!()
 
-    response =
-      @lambda_name
-      |> ExAws.Lambda.invoke(lambda_params, %{})
-      |> ExAws.request!()
+      result = parse_response(response)
 
-    result = parse_response(response)
-
-    Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
+      Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
+    else
+      {:hasTestcases?, false} ->
+        Logger.warn("No testcases found. Skipping autograding for answer_id: #{answer.id}")
+    end
   end
 
   def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do
