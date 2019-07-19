@@ -23,7 +23,7 @@ resource "aws_lambda_function" "grader" {
   function_name    = "${var.env}-cadet-grader"
   handler          = "index.runAll"
   role             = "${aws_iam_role.grader.arn}"
-  runtime          = "nodejs8.10"
+  runtime          = "nodejs10.x"
   timeout          = "${var.lambda_timeout}"
   source_code_hash = "${base64sha256(file("${var.lambda_filename}"))}"
 
@@ -32,4 +32,9 @@ resource "aws_lambda_function" "grader" {
       TIMEOUT = "${var.grader_timeout}"
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "example" {
+  name              = "/aws/lambda/${var.lambda_function_name}"
+  retention_in_days = 14
 }
