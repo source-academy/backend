@@ -22,14 +22,19 @@ defmodule CadetWeb.ChatController do
     )
   end
 
-  def notify(conn, %{"assessmentId" => assessment_id, "submissionId" => submission_id}) do
+  def notify(conn, params = %{}) do
     user = conn.assigns.current_user
 
     result =
       case user.role do
-        :student -> Notifications.write_notification_for_chatkit_avenger(user, assessment_id)
-        :staff -> Notifications.write_notification_for_chatkit_student(user, submission_id)
-        _ -> {:error, {:bad_request, "Invalid Role"}}
+        :student ->
+          Notifications.write_notification_for_chatkit_avenger(user, params["assessmentId"])
+
+        :staff ->
+          Notifications.write_notification_for_chatkit_student(user, params["submissionId"])
+
+        _ ->
+          {:error, {:bad_request, "Invalid Role"}}
       end
 
     case result do

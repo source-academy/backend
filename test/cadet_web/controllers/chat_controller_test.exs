@@ -24,8 +24,7 @@ defmodule CadetWeb.ChatControllerTest do
     test "/chat/notify", %{conn: conn} do
       conn =
         post(conn, build_notify_url(), %{
-          "assessmentId" => 1,
-          "submissionId" => nil
+          "assessmentId" => 1
         })
 
       assert response(conn, 401) =~ "Unauthorised"
@@ -44,8 +43,7 @@ defmodule CadetWeb.ChatControllerTest do
         conn
         |> sign_in(student)
         |> post(build_notify_url(), %{
-          "assessmentId" => assessment.id,
-          "submissionId" => nil
+          "assessmentId" => assessment.id
         })
 
       assert response(conn, 200) == "OK"
@@ -71,7 +69,6 @@ defmodule CadetWeb.ChatControllerTest do
         conn
         |> sign_in(avenger)
         |> post(build_notify_url(), %{
-          "assessmentId" => nil,
           "submissionId" => submission.id
         })
 
@@ -93,7 +90,6 @@ defmodule CadetWeb.ChatControllerTest do
     } do
       conn =
         post(conn, build_notify_url(), %{
-          "assessmentId" => nil,
           "submissionId" => 12_345
         })
 
@@ -104,11 +100,7 @@ defmodule CadetWeb.ChatControllerTest do
     test "bad parameters, student", %{
       conn: conn
     } do
-      conn =
-        post(conn, build_notify_url(), %{
-          "assessmentId" => nil,
-          "submissionId" => nil
-        })
+      conn = post(conn, build_notify_url(), %{})
 
       assert response(conn, 500) =~ "Internal server error"
     end
@@ -117,11 +109,7 @@ defmodule CadetWeb.ChatControllerTest do
     test "bad parameters, staff", %{
       conn: conn
     } do
-      conn =
-        post(conn, build_notify_url(), %{
-          "assessmentId" => nil,
-          "submissionId" => nil
-        })
+      conn = post(conn, build_notify_url(), %{})
 
       assert response(conn, 500) =~ "Internal server error"
     end
