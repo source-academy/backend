@@ -67,12 +67,11 @@ defmodule Cadet.Chat.Room do
 
       {:ok, %HTTPoison.Response{body: body, status_code: status_code}} ->
         response_body = Poison.decode!(body)
-
-        Logger.error(
-          "Room creation failed: #{response_body["error"]}, " <>
+        error_message = "Room creation failed: #{response_body["error"]}, " <>
             "#{response_body["error_description"]} (status code #{status_code}) " <>
             "[user_id: #{student_id}, assessment_id: #{assessment_id}, question_id: #{question_id}]"
-        )
+        Logger.error(error_message)
+        Sentry.capture_message(error_message)
 
         {:error, nil}
 
