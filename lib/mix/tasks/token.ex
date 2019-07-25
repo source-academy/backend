@@ -18,7 +18,6 @@ defmodule Mix.Tasks.Cadet.Token do
 
   import Ecto.Query
   import IO.ANSI
-  import Mix.EctoSQL
 
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Auth.Guardian
@@ -31,7 +30,7 @@ defmodule Mix.Tasks.Cadet.Token do
     Logger.configure(level: :error)
 
     # Required for Ecto to work properly, from Mix.Ecto
-    ensure_started(Repo, [])
+    Mix.Task.run("app.start")
 
     roles = Enum.filter(Role.__valid_values__(), &is_binary/1)
     role = List.first(args)

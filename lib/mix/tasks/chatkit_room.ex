@@ -10,14 +10,13 @@ defmodule Mix.Tasks.Cadet.ChatkitRoom do
   use Mix.Task
 
   import Ecto.Query
-  import Mix.EctoSQL
 
   alias Cadet.Repo
   alias Cadet.Assessments.Submission
   alias Cadet.Chat.Room
 
   def run(_args) do
-    ensure_started(Repo, [])
+    Mix.Task.run("app.start")
 
     Submission
     |> join(:inner, [s], a in assoc(s, :answers))

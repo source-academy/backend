@@ -15,8 +15,6 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
 
   require Logger
 
-  import Mix.EctoSQL
-
   alias Cadet.Repo
   alias Cadet.Accounts.User
   alias Cadet.Chat.Token
@@ -24,7 +22,7 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
   @instance_id :cadet |> Application.fetch_env!(:chat) |> Keyword.get(:instance_id)
 
   def run(_args) do
-    ensure_started(Repo, [])
+    Mix.Task.run("app.start")
     HTTPoison.start()
 
     url = "https://us1.pusherplatform.io/services/chatkit/v4/#{@instance_id}/users"
