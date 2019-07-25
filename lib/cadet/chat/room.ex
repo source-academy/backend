@@ -57,19 +57,29 @@ defmodule Cadet.Chat.Room do
     body =
       Poison.encode!(%{
         "name" => "#{nusnet_id}_#{assessment_id}_Q#{question_id}",
-        "private" => true,
-        "user_ids" => get_staff_admin_user_ids() ++ [to_string(student_id)]
+        "private" => true
       })
 
     case HTTPoison.post(url, body, headers) do
       {:ok, %HTTPoison.Response{body: body, status_code: 201}} ->
-        Poison.decode(body)
+        response_body = Poison.decode!(body)
+
+        add_users_to_room(
+          response_body["id"],
+          headers,
+          get_staff_admin_user_ids() ++ [to_string(student_id)]
+        )
+
+        {:ok, response_body}
 
       {:ok, %HTTPoison.Response{body: body, status_code: status_code}} ->
         response_body = Poison.decode!(body)
-        error_message = "Room creation failed: #{response_body["error"]}, " <>
+
+        error_message =
+          "Room creation failed: #{response_body["error"]}, " <>
             "#{response_body["error_description"]} (status code #{status_code}) " <>
             "[user_id: #{student_id}, assessment_id: #{assessment_id}, question_id: #{question_id}]"
+
         Logger.error(error_message)
         Sentry.capture_message(error_message)
 
@@ -87,4 +97,36 @@ defmodule Cadet.Chat.Room do
     |> Repo.all()
     |> Enum.map(fn user -> to_string(user.id) end)
   end
+
+  defp add_users_to_room(room_id, headers, user_list = [_ | _]) do
+    url =
+      "https://us1.pusherplatform.io/services/chatkit/v4/#{@instance_id}/rooms/#{room_id}/users/add"
+
+    body =
+      Poison.encode!(%{
+        "user_ids" => Enum.slice(user_list, 0..9)
+      })
+
+    case HTTPoison.post(url, body, headers) do
+      {:ok, %HTTPoison.Response{status_code: 204}} ->
+        nil
+
+      {:ok, %HTTPoison.Response{body: body, status_code: status_code}} ->
+        response_body = Poison.decode!(body)
+
+        error_message =
+          "Failed to add users to room id #{room_id}: #{response_body["error"]}, " <>
+            "#{response_body["error_description"]} (status code #{status_code})"
+
+        Logger.error(error_message)
+        Sentry.capture_message(error_message)
+
+      {:error, %HTTPoison.Error{reason: error}} ->
+        Logger.error("error: #{inspect(error, pretty: true)}")
+    end
+
+    add_users_to_room(room_id, headers, Enum.slice(user_list, 10..-1))
+  end
+
+  defp add_users_to_room(_, _, []), do: nil
 end

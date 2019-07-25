@@ -24,5 +24,31 @@
       "status_code": 201,
       "type": "ok"
     }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {},
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://us1.pusherplatform.io/services/chatkit/v4/instance_id/rooms/19420137/users/add"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "access-control-expose-headers": "Server, Access-Control-Expose-Headers, X-Request-Id, Date, X-Envoy-Upstream-Service-Time, Access-Control-Max-Age",
+        "access-control-max-age": "86400",
+        "content-type": "application/json",
+        "date": "Sat, 06 Jul 2019 09:00:47 GMT",
+        "server": "istio-envoy",
+        "x-envoy-upstream-service-time": "44",
+        "x-request-id": "f61cc0eb-2261-4817-a8a6-1637c5202a96",
+        "content-length": "187"
+      },
+      "status_code": 204,
+      "type": "ok"
+    }
   }
 ]
