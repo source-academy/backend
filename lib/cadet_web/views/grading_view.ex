@@ -31,6 +31,9 @@ defmodule CadetWeb.GradingView do
         }),
       groupName: :group_name,
       status: :status,
+      questionCount: :question_count,
+      gradedCount: &(&1.graded_count || 0),
+      gradingStatus: &(&1.grading_status || "excluded"),
       unsubmittedBy: &unsubmitted_by_builder(&1.unsubmitted_by),
       unsubmittedAt: &format_datetime(&1.unsubmitted_at)
     })

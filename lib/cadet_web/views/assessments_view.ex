@@ -20,7 +20,7 @@ defmodule CadetWeb.AssessmentsView do
       number: :number,
       reading: :reading,
       status: &(&1.user_status || "not_attempted"),
-      gradingStatus: &(&1.grading_status || "none"),
+      gradingStatus: &(&1.grading_status || "excluded"),
       maxGrade: :max_grade,
       maxXp: :max_xp,
       xp: &(&1.xp || 0),

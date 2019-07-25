@@ -13,6 +13,9 @@ defmodule Cadet.Assessments.Submission do
     field(:xp_bonus, :integer, default: 0)
     field(:group_name, :string, virtual: true)
     field(:status, SubmissionStatus, default: :attempting)
+    field(:question_count, :integer, virtual: true)
+    field(:graded_count, :integer, virtual: true, default: 0)
+    field(:grading_status, :string, virtual: true)
     field(:unsubmitted_at, :utc_datetime_usec)
 
     belongs_to(:assessment, Assessment)

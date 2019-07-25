@@ -120,6 +120,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedBy" => nil,
             "unsubmittedAt" => nil
           }
@@ -160,6 +163,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -218,6 +224,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -489,7 +498,7 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert %{
                adjustment: -10,
-               comment: "Never gonna give you up",
+               comment: comment,
                xp_adjustment: -10,
                grader_id: ^grader_id
              } = Repo.get(Answer, answer.id)
@@ -549,7 +558,7 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert %{
                adjustment: -100,
-               comment: "Your awesome",
+               comment: comment,
                xp_adjustment: -100,
                grader_id: ^mentor_id
              } = Repo.get(Answer, answer.id)
@@ -602,7 +611,8 @@ defmodule CadetWeb.GradingControllerTest do
       assert submission_db.unsubmitted_by_id === grader.id
       assert submission_db.unsubmitted_at != nil
 
-      assert answer_db.comment == nil
+      # Chatkit roomid should not be removed when a submission is unsubmitted
+      assert answer_db.comment == answer.comment
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
       assert answer_db.grader_id == nil
@@ -716,7 +726,60 @@ defmodule CadetWeb.GradingControllerTest do
         |> sign_in(other_grader)
         |> post(build_url_unsubmit(submission.id))
 
-      assert response(conn, 403) =~ "Only Avenger of student is permitted to unsubmit"
+      assert response(conn, 403) =~ "Only Avenger of student or Admin is permitted to unsubmit"
+    end
+
+    @tag authenticate: :admin
+    test "admin should be allowed to unsubmit", %{
+      conn: conn
+    } do
+      %{students: students} = seed_db(conn)
+
+      admin = insert(:user, %{role: :admin})
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :submitted)
+
+      answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"}
+        )
+
+      conn
+      |> sign_in(admin)
+      |> post(build_url_unsubmit(submission.id))
+
+      submission_db = Repo.get(Submission, submission.id)
+      answer_db = Repo.get(Answer, answer.id)
+
+      assert submission_db.status == :attempted
+      assert submission_db.unsubmitted_by_id === admin.id
+      assert submission_db.unsubmitted_at != nil
+
+      # Chatkit roomid should not be removed when a submission is unsubmitted
+      assert answer_db.comment == answer.comment
+      assert answer_db.autograding_status == :none
+      assert answer_db.autograding_results == []
+      assert answer_db.grader_id == nil
+      assert answer_db.xp == 0
+      assert answer_db.xp_adjustment == 0
+      assert answer_db.grade == 0
+      assert answer_db.adjustment == 0
     end
   end
 
@@ -758,6 +821,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -800,6 +866,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -943,7 +1012,7 @@ defmodule CadetWeb.GradingControllerTest do
         })
 
       assert response(conn, 200) == "OK"
-      assert %{adjustment: -10, comment: "Never gonna give you up"} = Repo.get(Answer, answer.id)
+      assert %{adjustment: -10, comment: comment} = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :admin

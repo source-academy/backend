@@ -21,15 +21,13 @@ defmodule Mix.Tasks.Cadet.Users.Import do
 
   require Logger
 
-  import Mix.EctoSQL
-
-  alias Cadet.{Accounts, Course, Repo}
+  alias Cadet.{Accounts, Course}
   alias Cadet.Course.Group
   alias Cadet.Accounts.User
 
   def run(_args) do
     # Required for Ecto to work properly, from Mix.Ecto
-    ensure_started(Repo, [])
+    Mix.Task.run("app.start")
 
     students_csv_path = trimmed_gets("Path to students csv (leave blank to skip): ")
     leaders_csv_path = trimmed_gets("Path to leaders csv (leave blank to skip): ")
