@@ -611,7 +611,7 @@ defmodule Cadet.Assessments do
         on: s.id == x.submission_id
       )
       |> join(:inner, [s, _], st in assoc(s, :student))
-      |> join(:inner, [_, _, st], g in assoc(st, :group))
+      |> join(:left, [_, _, st], g in assoc(st, :group))
       |> join(:left, [s, _, _, g], u in assoc(s, :unsubmitted_by))
       |> join(
         :inner,
