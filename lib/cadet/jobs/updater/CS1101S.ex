@@ -31,7 +31,7 @@ defmodule Cadet.Updater.CS1101S do
     if repo_cloned?() do
       Logger.info("CS1101S is already cloned.")
     else
-      git("clone", [@remote_repo, @local_name])
+      git("clone", ["--recursive", @remote_repo, @local_name])
     end
 
     Logger.info("Cloning CS1101S: Done")
@@ -39,7 +39,8 @@ defmodule Cadet.Updater.CS1101S do
 
   def update do
     Logger.info("Updating CS1101S...")
-    git("pull", ["origin", "master"])
+    git("pull", ["--recurse-submodules", "origin", "master"])
+    git("submodule", ["update", "--remote", "--recursive"])
   end
 
   defp git(cmd, args) do
