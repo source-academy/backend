@@ -31,6 +31,7 @@ defmodule Cadet.Autograder.GradingJob do
       assessment
       |> close_and_make_empty_submission()
       |> Enum.each(fn submission ->
+        Cadet.Accounts.Notifications.write_notification_when_student_submits(submission)
         grade_individual_submission(submission, assessment)
       end)
     end
@@ -154,8 +155,7 @@ defmodule Cadet.Autograder.GradingJob do
       answer: answer_content,
       question_id: question_id,
       submission_id: submission_id,
-      type: question_type,
-      comment: "Question not attempted by student"
+      type: question_type
     })
     |> Answer.autograding_changeset(%{grade: 0, autograding_status: :success})
     |> Repo.insert()
@@ -210,6 +210,8 @@ defmodule Cadet.Autograder.GradingJob do
     )
   end
 
-  defp grade_submission_question_answer_lists(_, [], [], _) do
+  defp grade_submission_question_answer_lists(submission_id, [], [], _) do
+    # The entire question-answer list has been graded, so we can send a notification
+    Cadet.Accounts.Notifications.write_notification_when_graded(submission_id, :autograded)
   end
 end

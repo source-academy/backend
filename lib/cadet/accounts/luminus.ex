@@ -176,7 +176,7 @@ defmodule Cadet.Accounts.Luminus do
     end
   end
 
-  defp moduleActive?(end_date) do
+  defp module_active?(end_date) do
     Timex.before?(Timex.now(), Timex.parse!(end_date, "{ISO:Extended}"))
   end
 
@@ -184,7 +184,7 @@ defmodule Cadet.Accounts.Luminus do
     cs1101s =
       modules["data"]
       |> Enum.find(fn module ->
-        module["name"] == @module_code && moduleActive?(module["endDate"])
+        module["name"] == @module_code && module_active?(module["endDate"])
       end)
 
     case cs1101s do

@@ -101,21 +101,6 @@ defmodule Cadet.Accounts do
   end
 
   @doc """
-  Associate a NUSNET_ID to an existing `%User{}`
-  """
-  def set_nusnet_id(user = %User{}, nusnet_id) do
-    Repo.transaction(fn ->
-      authorizations = Repo.all(Query.user_nusnet_ids(user.id))
-
-      for authorization <- authorizations do
-        authorization
-        |> change(%{nusnet_id: nusnet_id})
-        |> Repo.update!()
-      end
-    end)
-  end
-
-  @doc """
   Sign in using given NUSNET_ID
   """
   def sign_in(nusnet_id, name, token) do
