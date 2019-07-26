@@ -66,7 +66,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
   end
 
   describe "#perform, valid answer_id" do
-    test "it updates result correctly", %{answer: answer, results: results} do
+    test "before manual grading", %{answer: answer, results: results} do
       for result <- results do
         ResultStoreWorker.perform(%{answer_id: answer.id, result: result})
 
@@ -85,6 +85,51 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
 
         assert answer.grade == result.grade
         assert answer.adjustment == 0
+
+        if answer.question.max_grade == 0 do
+          assert answer.xp == 0
+        else
+          assert answer.xp ==
+                   Integer.floor_div(
+                     answer.question.max_xp * answer.grade,
+                     answer.question.max_grade
+                   )
+        end
+
+        assert answer.autograding_status == result.status
+        assert answer.autograding_results == errors_string_keys
+      end
+    end
+
+    test "after manual grading", %{results: results} do
+      grader = insert(:user, %{role: :staff})
+
+      answer =
+        insert(:answer, %{
+          question: insert(:question),
+          submission: insert(:submission),
+          adjustment: 5,
+          grader_id: grader.id
+        })
+
+      for result <- results do
+        ResultStoreWorker.perform(%{answer_id: answer.id, result: result})
+
+        answer =
+          Answer
+          |> join(:inner, [a], q in assoc(a, :question))
+          |> preload([_, q], question: q)
+          |> Repo.get(answer.id)
+
+        errors_string_keys =
+          Enum.map(result.result, fn err ->
+            Enum.reduce(err, %{}, fn {k, v}, acc ->
+              Map.put(acc, "#{k}", v)
+            end)
+          end)
+
+        assert answer.grade == result.grade
+        assert answer.adjustment == 5 - result.grade
 
         if answer.question.max_grade == 0 do
           assert answer.xp == 0
