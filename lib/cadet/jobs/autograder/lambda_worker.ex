@@ -20,14 +20,18 @@ defmodule Cadet.Autograder.LambdaWorker do
   def perform(params = %{answer: answer = %Answer{}, question: %Question{}}) do
     lambda_params = build_request_params(params)
 
-    response =
-      @lambda_name
-      |> ExAws.Lambda.invoke(lambda_params, %{})
-      |> ExAws.request!()
+    if Enum.empty?(lambda_params.testcases) do
+      Logger.warn("No testcases found. Skipping autograding for answer_id: #{answer.id}")
+    else
+      response =
+        @lambda_name
+        |> ExAws.Lambda.invoke(lambda_params, %{})
+        |> ExAws.request!()
 
-    result = parse_response(response)
+      result = parse_response(response)
 
-    Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
+      Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
+    end
   end
 
   def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do

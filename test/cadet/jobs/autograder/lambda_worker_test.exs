@@ -153,6 +153,30 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         end
       end
     end
+
+    test "should not run with no testcases", %{answer: answer} do
+      question =
+        insert(
+          :programming_question,
+          %{
+            question:
+              build(:programming_question_content, %{
+                public: [],
+                private: []
+              })
+          }
+        )
+
+      log =
+        capture_log(fn ->
+          LambdaWorker.perform(%{
+            question: Repo.get(Question, question.id),
+            answer: Repo.get(Answer, answer.id)
+          })
+        end)
+
+      assert log =~ "No testcases found. Skipping autograding for answer_id: #{answer.id}"
+    end
   end
 
   describe "on_failure" do
