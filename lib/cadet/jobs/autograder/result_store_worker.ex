@@ -56,8 +56,15 @@ defmodule Cadet.Autograder.ResultStoreWorker do
         Integer.floor_div(answer.question.max_xp * result.grade, answer.question.max_grade)
       end
 
+    new_adjustment =
+      if answer.grader_id do
+        answer.adjustment - result.grade
+      else
+        0
+      end
+
     changes = %{
-      adjustment: 0,
+      adjustment: new_adjustment,
       grade: result.grade,
       xp: xp,
       autograding_status: status,

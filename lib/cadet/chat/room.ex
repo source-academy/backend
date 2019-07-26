@@ -6,8 +6,6 @@ defmodule Cadet.Chat.Room do
 
   require Logger
 
-  import Ecto.Query
-
   alias Cadet.Repo
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Accounts.User
@@ -56,9 +54,7 @@ defmodule Cadet.Chat.Room do
 
     body =
       Poison.encode!(%{
-        "name" => "#{nusnet_id}_#{assessment_id}_Q#{question_id}",
-        "private" => true,
-        "user_ids" => get_staff_admin_user_ids() ++ [to_string(student_id)]
+        "name" => "#{nusnet_id}_#{assessment_id}_Q#{question_id}"
       })
 
     case HTTPoison.post(url, body, headers) do
@@ -68,11 +64,13 @@ defmodule Cadet.Chat.Room do
       {:ok, %HTTPoison.Response{body: body, status_code: status_code}} ->
         response_body = Poison.decode!(body)
 
-        Logger.error(
+        error_message =
           "Room creation failed: #{response_body["error"]}, " <>
             "#{response_body["error_description"]} (status code #{status_code}) " <>
             "[user_id: #{student_id}, assessment_id: #{assessment_id}, question_id: #{question_id}]"
-        )
+
+        Logger.error(error_message)
+        Sentry.capture_message(error_message)
 
         {:error, nil}
 
@@ -80,12 +78,5 @@ defmodule Cadet.Chat.Room do
         Logger.error("error: #{inspect(error, pretty: true)}")
         {:error, nil}
     end
-  end
-
-  defp get_staff_admin_user_ids do
-    User
-    |> where([u], u.role in ^[:staff, :admin])
-    |> Repo.all()
-    |> Enum.map(fn user -> to_string(user.id) end)
   end
 end
