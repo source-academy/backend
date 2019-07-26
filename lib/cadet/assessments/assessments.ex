@@ -246,7 +246,7 @@ defmodule Cadet.Assessments do
       Multi.insert_or_update(
         Multi.new(),
         :assessment,
-        insert_or_update_assessment_changeset(assessment_params)
+        insert_or_update_assessment_changeset(assessment_params, questions_params)
       )
 
     questions_params
@@ -266,8 +266,10 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
-  @spec insert_or_update_assessment_changeset(map()) :: Ecto.Changeset.t()
-  defp insert_or_update_assessment_changeset(params = %{number: number}) do
+  @spec insert_or_update_assessment_changeset(map(), map()) :: Ecto.Changeset.t()
+  defp insert_or_update_assessment_changeset(params = %{number: number}, questions_params) do
+    new_question_count = Enum.count(questions_params)
+
     Assessment
     |> where(number: ^number)
     |> Repo.one()
@@ -276,18 +278,24 @@ defmodule Cadet.Assessments do
         Assessment.changeset(%Assessment{}, params)
 
       assessment ->
-        if Timex.after?(assessment.open_at, Timex.now()) do
-          # Delete all existing questions
-          %{id: assessment_id} = assessment
+        %{id: assessment_id} = assessment
 
+        question_count =
+          Question |> where(assessment_id: ^assessment_id) |> Repo.aggregate(:count, :id)
+
+        if Timex.after?(assessment.open_at, Timex.now()) or question_count == new_question_count do
+          # Delete all existing questions
           Question
           |> where(assessment_id: ^assessment_id)
           |> Repo.delete_all()
 
           Assessment.changeset(assessment, params)
         else
-          # if the assessment is already open, don't mess with it
-          create_invalid_changeset_with_error(:assessment, "is already open")
+          # if the assessment is already open and questions are added or removed, don't mess with it
+          create_invalid_changeset_with_error(
+            :assessment,
+            "is already open, cannot add or remove questions"
+          )
         end
     end
   end

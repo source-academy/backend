@@ -185,25 +185,109 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
-    test "existing already open assessment", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
-        already_open_assessment =
-          Map.from_struct(%{
-            assessment
-            | open_at: Timex.shift(Timex.now(), days: -2),
-              close_at: Timex.shift(Timex.now(), days: 2)
-          })
+    test "existing already open assessment without adding or removing questions", %{
+      questions: questions
+    } do
+      assessment = build(:assessment, type: :mission, is_published: true)
 
+      already_open_assessment =
+        Map.from_struct(%{
+          assessment
+          | open_at: Timex.shift(Timex.now(), days: -2),
+            close_at: Timex.shift(Timex.now(), days: 2)
+        })
+
+      %{id: id} =
         %Assessment{}
         |> Assessment.changeset(already_open_assessment)
         |> Repo.insert!()
 
-        xml = XMLGenerator.generate_xml_for(assessment, questions)
+      for question <- questions do
+        q =
+          Map.from_struct(%{
+            question
+            | assessment_id: id
+          })
 
-        assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :ok end) =~
-                 "Assessment already open, ignoring..."
+        %Question{}
+        |> Question.changeset(q)
+        |> Repo.insert!()
       end
+
+      xml = XMLGenerator.generate_xml_for(assessment, questions)
+
+      assert XMLParser.parse_xml(xml) == :ok
     end
+  end
+
+  test "add question to existing already open assessment", %{questions: questions} do
+    assessment = build(:assessment, type: :mission, is_published: true)
+
+    already_open_assessment =
+      Map.from_struct(%{
+        assessment
+        | open_at: Timex.shift(Timex.now(), days: -2),
+          close_at: Timex.shift(Timex.now(), days: 2)
+      })
+
+    %{id: id} =
+      %Assessment{}
+      |> Assessment.changeset(already_open_assessment)
+      |> Repo.insert!()
+
+    for question <- questions do
+      q =
+        Map.from_struct(%{
+          question
+          | assessment_id: id
+        })
+
+      %Question{}
+      |> Question.changeset(q)
+      |> Repo.insert!()
+    end
+
+    xml =
+      XMLGenerator.generate_xml_for(
+        assessment,
+        questions ++ [build(:question, assessment_id: id)]
+      )
+
+    assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :error end) =~
+             "is already open, cannot add or remove questions"
+  end
+
+  test "remove question to existing already open assessment", %{questions: questions} do
+    assessment = build(:assessment, type: :mission, is_published: true)
+
+    already_open_assessment =
+      Map.from_struct(%{
+        assessment
+        | open_at: Timex.shift(Timex.now(), days: -2),
+          close_at: Timex.shift(Timex.now(), days: 2)
+      })
+
+    %{id: id} =
+      %Assessment{}
+      |> Assessment.changeset(already_open_assessment)
+      |> Repo.insert!()
+
+    for question <- questions do
+      q =
+        Map.from_struct(%{
+          question
+          | assessment_id: id
+        })
+
+      %Question{}
+      |> Question.changeset(q)
+      |> Repo.insert!()
+    end
+
+    xml = XMLGenerator.generate_xml_for(assessment, List.delete_at(questions, 0))
+
+    assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :error end) =~
+             "is already open, cannot add or remove questions"
   end
 
   describe "XML file processing" do
