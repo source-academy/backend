@@ -79,7 +79,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
     transform_map_for_view(answer, %{
       answer: answer_builder_for(question_type),
-      comment: :comment,
+      roomId: :room_id,
       grader: grader_builder(grader),
       gradedAt: graded_at_builder(grader),
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),

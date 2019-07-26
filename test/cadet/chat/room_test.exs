@@ -20,25 +20,25 @@ defmodule Cadet.Chat.RoomTest do
     submission = insert(:submission, %{student: student, assessment: assessment})
     question = insert(:question, %{assessment: assessment})
 
-    answer_no_comment =
+    answer_no_room_id =
       insert(:answer, %{
         submission_id: submission.id,
         question_id: question.id,
-        comment: nil
+        room_id: nil
       })
 
     {:ok,
      %{
        student: student,
-       answer_no_comment: answer_no_comment,
+       answer_no_room_id: answer_no_room_id,
        assessment: assessment,
        submission: submission
      }}
   end
 
-  describe "create a room on chatkit if answer does not have a comment" do
+  describe "create a room on chatkit if answer does not have a room_id" do
     test "success", %{
-      answer_no_comment: answer,
+      answer_no_room_id: answer,
       assessment: assessment,
       submission: submission,
       student: student
@@ -54,12 +54,12 @@ defmodule Cadet.Chat.RoomTest do
           |> select([_, a], a)
           |> Repo.one()
 
-        assert answer_db.comment == "19420137"
+        assert answer_db.room_id == "19420137"
       end
     end
 
     test "user does not exist", %{
-      answer_no_comment: answer,
+      answer_no_room_id: answer,
       assessment: assessment,
       submission: submission,
       student: student
@@ -90,7 +90,7 @@ defmodule Cadet.Chat.RoomTest do
     end
 
     test "user does not have permission", %{
-      answer_no_comment: answer,
+      answer_no_room_id: answer,
       assessment: assessment,
       submission: submission,
       student: student
@@ -121,7 +121,7 @@ defmodule Cadet.Chat.RoomTest do
     end
   end
 
-  describe "do not create a room on chatkit if answer has a comment" do
+  describe "do not create a room on chatkit if answer has a room_id" do
     test "success", %{
       student: student
     } do
@@ -129,13 +129,13 @@ defmodule Cadet.Chat.RoomTest do
       submission = insert(:submission, %{student: student, assessment: assessment})
       question = insert(:question, %{assessment: assessment})
 
-      answer_with_comment =
+      answer_with_room_id =
         insert(:answer, %{
           submission_id: submission.id,
           question_id: question.id
         })
 
-      Room.create_rooms(submission, answer_with_comment, student)
+      Room.create_rooms(submission, answer_with_room_id, student)
 
       answer_db =
         Submission
@@ -145,7 +145,7 @@ defmodule Cadet.Chat.RoomTest do
         |> select([_, a], a)
         |> Repo.one()
 
-      assert answer_db.comment == answer_with_comment.comment
+      assert answer_db.room_id == answer_with_room_id.room_id
     end
   end
 end
