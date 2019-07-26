@@ -20,7 +20,7 @@ defmodule Cadet.Assessments.Answer do
     field(:autograding_results, {:array, :map}, default: [])
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
-    field(:comment, :string)
+    field(:room_id, :string)
 
     belongs_to(:grader, User)
     belongs_to(:submission, Submission)
@@ -64,9 +64,9 @@ defmodule Cadet.Assessments.Answer do
   end
 
   # TODO: add some validation
-  @spec comment_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
-  def comment_changeset(answer, params) do
-    cast(answer, params, ~w(comment)a)
+  @spec room_id_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
+  def room_id_changeset(answer, params) do
+    cast(answer, params, ~w(room_id)a)
   end
 
   @spec validate_xp_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()

@@ -4,7 +4,7 @@ defmodule Cadet.Factory do
   """
   use ExMachina.Ecto, repo: Cadet.Repo
 
-  use Cadet.Accounts.{AuthorizationFactory, UserFactory}
+  use Cadet.Accounts.{AuthorizationFactory, NotificationFactory, UserFactory}
 
   use Cadet.Assessments.{
     AnswerFactory,

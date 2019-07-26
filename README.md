@@ -69,7 +69,7 @@ If you do this, do remember to point cadet-frontend to port `4001` instead of `4
 
 ### Chatkit
 
-The chat functionality replacing the previous comment field found in assignments is built on top of Chatkit. Its documentation can be found [here](https://pusher.com/docs/chatkit).
+The chat functionality is built on top of Chatkit and provides two-way communication between cadets and avengers. This replaces the previous comment field found in assignments. Its documentation can be found [here](https://pusher.com/docs/chatkit).
 
 If you are using Chatkit, obtain your instance ID, key ID and secret key from your account, and set them in. Instructions to that are found [here](https://pusher.com/docs/chatkit/authentication#chatkit-key-and-instance-id).
 

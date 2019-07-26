@@ -10,20 +10,19 @@ defmodule Mix.Tasks.Cadet.ChatkitRoom do
   use Mix.Task
 
   import Ecto.Query
-  import Mix.EctoSQL
 
   alias Cadet.Repo
   alias Cadet.Assessments.Submission
   alias Cadet.Chat.Room
 
   def run(_args) do
-    ensure_started(Repo, [])
+    Mix.Task.run("app.start")
 
     Submission
     |> join(:inner, [s], a in assoc(s, :answers))
     |> join(:inner, [s], u in assoc(s, :student))
     |> preload([_, a, u], answers: a, student: u)
-    |> where([_, a], is_nil(a.comment))
+    |> where([_, a], is_nil(a.room_id))
     |> Repo.all()
     |> Enum.each(fn submission ->
       Enum.each(submission.answers, fn answer ->
