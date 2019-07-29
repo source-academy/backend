@@ -2,11 +2,11 @@ defmodule Mix.Tasks.Cadet.Token do
   @moduledoc """
   Helper to generate access_token to ease development.
 
-  Usage: `mix task cadet.token <role>`
+  Usage: `mix cadet.token <role>`
 
   where <role> in #{inspect(Enum.filter(Cadet.Accounts.Role.__valid_values__(), &is_binary/1))}
 
-  For example: `mix task cadet.token student`
+  For example: `mix cadet.token student`
 
   Caveat emptor!!! The list of roles here is generated at compile-time.
   To get the most up-to-date list, please recompile by running `mix`

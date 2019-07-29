@@ -8,7 +8,9 @@ defmodule Cadet.Course do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Group, Material, Upload}
+  alias Cadet.Course.{Group, Material, Upload, Sourcecast}
+
+  @upload_file_roles ~w(admin staff)a
 
   @doc """
   Get a group based on the group name or create one if it doesn't exist
@@ -97,6 +99,35 @@ defmodule Cadet.Course do
   #   |> Repo.all()
   #   |> Repo.preload([:student])
   # end
+
+  @doc """
+  Upload a sourcecast file
+  """
+  def upload_sourcecast_file(uploader = %User{role: role}, attrs = %{}) do
+    if role in @upload_file_roles do
+      changeset =
+        %Sourcecast{}
+        |> Sourcecast.changeset(attrs)
+        |> put_assoc(:uploader, uploader)
+
+      Repo.insert(changeset)
+    else
+      {:error, {:forbidden, "User is not permitted to upload"}}
+    end
+  end
+
+  @doc """
+  Delete a sourcecast file.
+  """
+  def delete_sourcecast_file(_deleter = %User{role: role}, id) do
+    if role in @upload_file_roles do
+      sourcecast = Repo.get(Sourcecast, id)
+      Upload.delete({sourcecast.audio, sourcecast})
+      Repo.delete(sourcecast)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
+    end
+  end
 
   @doc """
   Create a new folder to put material files in
