@@ -16,6 +16,7 @@ defmodule Cadet.Assessments.Answer do
     field(:adjustment, :integer, default: 0)
     field(:xp, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
+    field(:comments, :string)
     field(:autograding_status, AutogradingStatus, default: :none)
     field(:autograding_results, {:array, :map}, default: [])
     field(:answer, :map)
@@ -30,7 +31,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment grade adjustment grader_id)a
+  @optional_fields ~w(xp xp_adjustment grade adjustment grader_id comments)a
 
   def changeset(answer, params) do
     answer
@@ -49,7 +50,7 @@ defmodule Cadet.Assessments.Answer do
     answer
     |> cast(
       params,
-      ~w(grader_id xp xp_adjustment grade adjustment autograding_results autograding_status)a
+      ~w(grader_id xp xp_adjustment grade adjustment autograding_results autograding_status comments)a
     )
     |> add_belongs_to_id_from_model(:grader, params)
     |> foreign_key_constraint(:grader_id)
