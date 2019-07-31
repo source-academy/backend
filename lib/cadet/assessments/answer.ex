@@ -50,7 +50,16 @@ defmodule Cadet.Assessments.Answer do
     answer
     |> cast(
       params,
-      ~w(grader_id xp xp_adjustment grade adjustment autograding_results autograding_status comments)a
+      ~w(
+        grader_id
+        xp
+        xp_adjustment
+        grade
+        adjustment
+        autograding_results
+        autograding_status
+        comments
+      )a
     )
     |> add_belongs_to_id_from_model(:grader, params)
     |> foreign_key_constraint(:grader_id)
