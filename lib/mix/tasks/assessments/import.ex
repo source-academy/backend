@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Cadet.Assessments.Import do
 
     Logger.info("Importing assessments...")
 
-    case XMLParser.parse_and_insert(:all) do
+    case XMLParser.parse_and_insert() do
       :ok ->
         Logger.info("Successfully updated assessments.")
 
