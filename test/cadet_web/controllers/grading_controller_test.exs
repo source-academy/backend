@@ -119,6 +119,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedBy" => nil,
             "unsubmittedAt" => nil
           }
@@ -159,6 +162,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -217,6 +223,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -279,7 +288,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -326,7 +335,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -398,7 +407,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -445,7 +454,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -479,7 +488,6 @@ defmodule CadetWeb.GradingControllerTest do
         post(conn, build_url(answer.submission.id, answer.question.id), %{
           "grading" => %{
             "adjustment" => -10,
-            "comment" => "Never gonna give you up",
             "xpAdjustment" => -10
           }
         })
@@ -488,7 +496,6 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert %{
                adjustment: -10,
-               comment: "Never gonna give you up",
                xp_adjustment: -10,
                grader_id: ^grader_id
              } = Repo.get(Answer, answer.id)
@@ -539,7 +546,6 @@ defmodule CadetWeb.GradingControllerTest do
         |> post(build_url(answer.submission.id, answer.question.id), %{
           "grading" => %{
             "adjustment" => -100,
-            "comment" => "Your awesome",
             "xpAdjustment" => -100
           }
         })
@@ -548,7 +554,6 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert %{
                adjustment: -100,
-               comment: "Your awesome",
                xp_adjustment: -100,
                grader_id: ^mentor_id
              } = Repo.get(Answer, answer.id)
@@ -601,7 +606,7 @@ defmodule CadetWeb.GradingControllerTest do
       assert submission_db.unsubmitted_by_id === grader.id
       assert submission_db.unsubmitted_at != nil
 
-      assert answer_db.comment == nil
+      assert answer_db.room_id == answer.room_id
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
       assert answer_db.grader_id == nil
@@ -760,7 +765,7 @@ defmodule CadetWeb.GradingControllerTest do
       assert submission_db.unsubmitted_by_id === admin.id
       assert submission_db.unsubmitted_at != nil
 
-      assert answer_db.comment == nil
+      assert answer_db.room_id == answer.room_id
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
       assert answer_db.grader_id == nil
@@ -809,6 +814,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -851,6 +859,9 @@ defmodule CadetWeb.GradingControllerTest do
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
+            "questionCount" => 4,
+            "gradedCount" => 4,
+            "gradingStatus" => "excluded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -913,7 +924,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -960,7 +971,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "comment" => &1.comment,
+                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -990,11 +1001,11 @@ defmodule CadetWeb.GradingControllerTest do
 
       conn =
         post(conn, build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"adjustment" => -10, "comment" => "Never gonna give you up"}
+          "grading" => %{"adjustment" => -10, "room_id" => "19422040"}
         })
 
       assert response(conn, 200) == "OK"
-      assert %{adjustment: -10, comment: "Never gonna give you up"} = Repo.get(Answer, answer.id)
+      assert %{adjustment: -10, room_id: room_id} = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :admin

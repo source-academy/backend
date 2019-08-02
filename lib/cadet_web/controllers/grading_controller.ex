@@ -155,9 +155,7 @@ defmodule CadetWeb.GradingController do
   swagger_path :update do
     post("/grading/{submissionId}/{questionId}")
 
-    summary(
-      "Update comment and/or marks given to the answer of a particular querstion in a submission"
-    )
+    summary("Update marks given to the answer of a particular querstion in a submission")
 
     security([%{JWT: []}])
 
@@ -167,7 +165,7 @@ defmodule CadetWeb.GradingController do
     parameters do
       submissionId(:path, :integer, "submission id", required: true)
       questionId(:path, :integer, "question id", required: true)
-      grading(:body, Schema.ref(:Grading), "comment given for a question", required: true)
+      grading(:body, Schema.ref(:Grading), "adjustments for a question", required: true)
     end
 
     response(200, "OK")
@@ -282,7 +280,7 @@ defmodule CadetWeb.GradingController do
           properties do
             grade(:integer, "Grade awarded by autograder")
             xp(:integer, "XP awarded by autograder")
-            comment(:string, "comment given")
+            roomId(:string, "associated chatkit room id")
             adjustment(:integer, "grade adjustment given")
             xpAdjustment(:integer, "xp adjustment given")
             grader(Schema.ref(:GraderInfo))
@@ -295,7 +293,6 @@ defmodule CadetWeb.GradingController do
             grading(
               Schema.new do
                 properties do
-                  comment(:string, "comment given")
                   adjustment(:integer, "grade adjustment given")
                   xpAdjustment(:integer, "xp adjustment given")
                 end

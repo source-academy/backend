@@ -9,7 +9,7 @@ defmodule Cadet.Course.GroupFactory do
 
       def group_factory do
         %Group{
-          name: Faker.Company.name(),
+          name: sequence("group"),
           leader: build(:user, role: :staff)
         }
       end

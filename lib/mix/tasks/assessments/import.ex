@@ -9,19 +9,16 @@ defmodule Mix.Tasks.Cadet.Assessments.Import do
 
   require Logger
 
-  import Mix.EctoSQL
-
   alias Cadet.Updater.XMLParser
-  alias Cadet.Repo
 
   def run(_args) do
     # Required for Ecto to work properly, from Mix.Ecto
-    ensure_started(Repo, [])
+    Mix.Task.run("app.start")
     Application.ensure_all_started(:timex)
 
     Logger.info("Importing assessments...")
 
-    case XMLParser.parse_and_insert(:all) do
+    case XMLParser.parse_and_insert() do
       :ok ->
         Logger.info("Successfully updated assessments.")
 

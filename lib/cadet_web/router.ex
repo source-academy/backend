@@ -20,6 +20,7 @@ defmodule CadetWeb.Router do
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
 
+    get("/sourcecast", SourcecastController, :index)
     post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/logout", AuthController, :logout)
@@ -28,6 +29,8 @@ defmodule CadetWeb.Router do
   # Authenticated Pages
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
+
+    resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
     get("/assessments", AssessmentsController, :index)
     post("/assessments/:id", AssessmentsController, :show)
@@ -39,7 +42,13 @@ defmodule CadetWeb.Router do
     post("/grading/:submissionid/unsubmit", GradingController, :unsubmit)
     post("/grading/:submissionid/:questionid", GradingController, :update)
 
+    get("/notification", NotificationController, :index)
+    post("/notification/acknowledge", NotificationController, :acknowledge)
+
     get("/user", UserController, :index)
+
+    post("/chat/token", ChatController, :index)
+    post("/chat/notify", ChatController, :notify)
   end
 
   # Other scopes may use custom stacks.

@@ -4,7 +4,7 @@ defmodule Cadet.Factory do
   """
   use ExMachina.Ecto, repo: Cadet.Repo
 
-  use Cadet.Accounts.{AuthorizationFactory, UserFactory}
+  use Cadet.Accounts.{AuthorizationFactory, NotificationFactory, UserFactory}
 
   use Cadet.Assessments.{
     AnswerFactory,
@@ -14,7 +14,7 @@ defmodule Cadet.Factory do
     SubmissionFactory
   }
 
-  use Cadet.Course.{GroupFactory, MaterialFactory}
+  use Cadet.Course.{GroupFactory, MaterialFactory, SourcecastFactory}
 
   def upload_factory do
     %Plug.Upload{

@@ -3,15 +3,6 @@ defmodule Cadet.Updater.XMLParser do
   Parser for XML files from the cs1101s repository.
   """
   @local_name if Mix.env() != :test, do: "cs1101s", else: "test/fixtures/local_repo"
-  @locations %{
-    mission: "missions",
-    sidequest: "quests",
-    path: "paths",
-    contest: "contests",
-    practical: "practicals"
-  }
-
-  @type assessment_type :: :mission | :sidequest | :path | :contest | :practical
 
   use Cadet, [:display]
 
@@ -25,54 +16,34 @@ defmodule Cadet.Updater.XMLParser do
     quote do: is_list(unquote(term)) and unquote(term) != []
   end
 
-  @spec parse_and_insert(:all) :: :ok | {:error, [{assessment_type(), String.t()}]}
-  @spec parse_and_insert(assessment_type()) :: :ok | {:error, String.t()}
+  @spec parse_and_insert(String.t()) :: :ok | {:error, String.t()}
 
-  def parse_and_insert(:all) do
-    errors =
-      for {key, _} <- @locations do
-        {key, parse_and_insert(key)}
-      end
-      |> Enum.filter(fn
-        {_, {:error, _}} -> true
-        {_, :ok} -> false
-      end)
-      |> Enum.map(fn {type, {:error, reason}} -> {type, reason} end)
+  def parse_and_insert(root \\ @local_name) do
+    Logger.info("Exploring folder \"#{root}\"")
 
-    if Enum.empty?(errors) do
-      :ok
-    else
-      {:error, errors}
-    end
-  end
-
-  def parse_and_insert(type) do
-    with {:assessment_type, true} <- {:assessment_type, type in Map.keys(@locations)},
-         {:cloned?, {:ok, root}} when is_non_empty_list(root) <- {:cloned?, File.ls(@local_name)},
-         {:type, true} <- {:type, @locations[type] in root},
-         {:listing, {:ok, listing}} when is_non_empty_list(listing) <-
-           {:listing, @local_name |> Path.join(@locations[type]) |> File.ls()},
+    with {:cloned?, true} <- {:cloned?, File.exists?(root)},
+         {:listing, {:ok, listing}} when is_non_empty_list(listing) <- {:listing, File.ls(root)},
+         {:listing_folders, folders} <-
+           {:listing_folders, Enum.reject(listing, &String.starts_with?(&1, "."))},
+         {:join_path, folders} <- {:join_path, Enum.map(folders, &Path.join(root, &1))},
+         {:filter_folders, folders} <- {:filter_folders, Enum.filter(folders, &File.dir?(&1))},
+         {:process_folders, _} <-
+           {:process_folders, Enum.map(folders, &parse_and_insert(&1))},
          {:filter, xml_files} when is_non_empty_list(xml_files) <-
            {:filter, Enum.filter(listing, &String.ends_with?(&1, ".xml"))},
          {:process, :ok} <-
-           {:process, process_xml_files(Path.join(@local_name, @locations[type]), xml_files)} do
+           {:process, process_xml_files(root, xml_files)} do
       :ok
     else
-      {:assessment_type, false} ->
-        {:error, "XML location of assessment type is not defined."}
-
-      {:cloned?, _} ->
+      {:cloned?, false} ->
         {:error, "Local copy of repository is either missing or empty."}
 
-      {:type, false} ->
-        {:error, "Directory containing XML is not found."}
-
       {:listing, _} ->
-        Logger.info("Directory containing XML is empty for type #{type}.")
+        Logger.info("Directory empty #{root}.")
         :ok
 
       {:filter, _} ->
-        Logger.info("No XML file is found for type #{type}.")
+        Logger.info("No XML file is found for folder #{root}.")
         :ok
 
       {:process, :error} ->

@@ -10,6 +10,14 @@ defmodule CadetWeb.Endpoint do
     only: ~w(js css favicon.ico robots.txt cache_manifest.json)
   )
 
+  # For uploaded files
+  plug(
+    Plug.Static,
+    at: "/uploads",
+    from: "uploads/",
+    gzip: false
+  )
+
   # Serve assets files from priv/assets directory as-is.
   plug(Plug.Static, at: "/lib", from: {:cadet, "priv/assets"}, gzip: false)
 

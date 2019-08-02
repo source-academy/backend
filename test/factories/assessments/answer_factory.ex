@@ -11,7 +11,7 @@ defmodule Cadet.Assessments.AnswerFactory do
         %Answer{
           answer: %{},
           autograding_status: :none,
-          comment: Faker.Lorem.Shakespeare.En.romeo_and_juliet()
+          room_id: Faker.Code.issn()
         }
       end
 

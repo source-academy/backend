@@ -80,20 +80,6 @@ defmodule Cadet.AccountsTest do
     assert %{uid: ["has already been taken"]} = errors_on(changeset)
   end
 
-  test "setting user nusnet_id without e-mail" do
-    user = insert(:user)
-    assert {:ok, []} = Accounts.set_nusnet_id(user, "E012345")
-  end
-
-  test "setting user nusnet_id with multiple e-mails" do
-    user = insert(:user)
-    insert(:nusnet_id, user: user)
-    insert(:nusnet_id, user: user)
-    assert {:ok, auths} = Accounts.set_nusnet_id(user, "E012345")
-    assert length(auths) == 2
-    assert Enum.all?(auths, &(&1.user_id == user.id))
-  end
-
   test "create authorization" do
     user = insert(:user)
 

@@ -25,6 +25,7 @@ $ vim config/secrets.exs
     `luminus_redirect_url` are required for the application to properly authenticate with LumiNUS.
   - A valid `cs1101s_repository`, `cs1101s_rsa_key` is required for the application to 
     run with the `--updater` flag. Otherwise, the default values will suffice.
+  - A valid `instance_id`, `key_id` and `key_secret` are required to use ChatKit's services. Otherwise, the placeholder values can be left as they are.
 
 2. Install Elixir dependencies
 ```bash
@@ -65,6 +66,14 @@ We recommend setting up nginx to handle preflight checks using the following
 [config file](https://github.com/source-academy/tools/blob/master/demo-assessments/templates/nginx.conf).
 
 If you do this, do remember to point cadet-frontend to port `4001` instead of `4000`
+
+### Chatkit
+
+The chat functionality is built on top of Chatkit and provides two-way communication between cadets and avengers. This replaces the previous comment field found in assignments. Its documentation can be found [here](https://pusher.com/docs/chatkit).
+
+If you are using Chatkit, obtain your instance ID, key ID and secret key from your account, and set them in. Instructions to that are found [here](https://pusher.com/docs/chatkit/authentication#chatkit-key-and-instance-id).
+
+Internet connection is required for usage.
 
 
 ### Style Guide

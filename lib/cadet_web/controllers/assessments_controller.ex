@@ -118,7 +118,7 @@ defmodule CadetWeb.AssessmentsController do
 
             gradingStatus(
               :string,
-              "one of 'none/grading/graded' indicating whether the assessment has been fully graded",
+              "'excluded' if the assessment does not yet require grading, otherwise one of 'none/grading/graded' indicating the extent to which it has been fully graded",
               required: true
             )
 
@@ -176,7 +176,7 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The question id", required: true)
             type(:string, "The question type (mcq/programming)", required: true)
             content(:string, "The question content", required: true)
-            comment(:string, "Comment given by group leader. Might be null.")
+            roomId(:string, "Chatkit room id.")
 
             choices(
               Schema.new do

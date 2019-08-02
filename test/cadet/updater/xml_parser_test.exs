@@ -9,13 +9,7 @@ defmodule Cadet.Updater.XMLParserTest do
   import ExUnit.CaptureLog
 
   @local_name "test/fixtures/local_repo"
-  @locations %{
-    mission: "missions",
-    sidequest: "quests",
-    path: "paths",
-    contest: "contests",
-    practical: "practicals"
-  }
+  # @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
   @time_fields ~w(open_at close_at)a
 
   setup do
@@ -218,12 +212,12 @@ defmodule Cadet.Updater.XMLParserTest do
       questions: questions
     } do
       for {type, assessment} <- assessments_with_type do
+        type_string = Atom.to_string(type)
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-        path = Path.join(@local_name, @locations[type])
+        path = Path.join(@local_name, type_string)
 
-        file_name =
-          (type |> Atom.to_string() |> String.capitalize()) <> "-#{assessment.number}.xml"
+        file_name = String.capitalize(type_string) <> "-#{assessment.number}.xml"
 
         location = Path.join(path, file_name)
 
@@ -231,9 +225,7 @@ defmodule Cadet.Updater.XMLParserTest do
         File.write!(location, xml)
       end
 
-      for type <- AssessmentType.__enum_map__() do
-        assert XMLParser.parse_and_insert(type) == :ok
-      end
+      assert XMLParser.parse_and_insert(@local_name) == :ok
     end
 
     test "happy path process all", %{
@@ -243,7 +235,7 @@ defmodule Cadet.Updater.XMLParserTest do
       for {type, assessment} <- assessments_with_type do
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-        path = Path.join(@local_name, @locations[type])
+        path = Path.join(@local_name, Atom.to_string(type))
 
         file_name =
           (type |> Atom.to_string() |> String.capitalize()) <> "-#{assessment.number}.xml"
@@ -254,56 +246,36 @@ defmodule Cadet.Updater.XMLParserTest do
         File.write!(location, xml)
       end
 
-      assert XMLParser.parse_and_insert(:all) == :ok
-    end
-
-    test "wrong assessment type" do
-      assert XMLParser.parse_and_insert(:lambda) ==
-               {:error, "XML location of assessment type is not defined."}
+      assert XMLParser.parse_and_insert(@local_name) == :ok
     end
 
     test "repository not cloned" do
       for type <- AssessmentType.__enum_map__() do
-        assert XMLParser.parse_and_insert(type) ==
+        location = Atom.to_string(type)
+
+        assert XMLParser.parse_and_insert(location) ==
                  {:error, "Local copy of repository is either missing or empty."}
       end
     end
 
-    test "directory containing xml not found" do
-      File.mkdir_p!(@local_name)
-
-      @local_name |> Path.join("never-gonna-give-you-up.mp3") |> File.touch!()
-
-      for type <- AssessmentType.__enum_map__() do
-        assert XMLParser.parse_and_insert(type) ==
-                 {:error, "Directory containing XML is not found."}
-      end
-    end
-
-    test "directory containing xml is empty" do
-      for {type, location} <- @locations do
-        @local_name
-        |> Path.join(location)
-        |> File.mkdir_p!()
-
-        assert XMLParser.parse_and_insert(type) == :ok
-      end
-    end
-
     test "no xml file is found" do
-      for {type, location} <- @locations do
+      for type <- AssessmentType.__enum_map__() do
+        location = Atom.to_string(type)
+
         path = Path.join(@local_name, location)
 
         File.mkdir_p!(path)
 
         path |> Path.join("Never-gonna-give-you-up.mp3") |> File.touch!()
 
-        assert XMLParser.parse_and_insert(type) == :ok
+        assert XMLParser.parse_and_insert(path) == :ok
       end
     end
 
     test "empty xml file" do
-      for {type, location} <- @locations do
+      for type <- AssessmentType.__enum_map__() do
+        location = Atom.to_string(type)
+
         path = Path.join(@local_name, location)
 
         File.mkdir_p!(path)
@@ -311,14 +283,15 @@ defmodule Cadet.Updater.XMLParserTest do
         path |> Path.join("lambda.xml") |> File.touch!()
 
         assert capture_log(fn ->
-                 assert XMLParser.parse_and_insert(type) ==
+                 assert XMLParser.parse_and_insert(path) ==
                           {:error, "Error processing XML files."}
                end) =~ ":expected_element_start_tag"
       end
     end
 
     test "valid xml file but invalid assessment xml" do
-      for {type, location} <- @locations do
+      for type <- AssessmentType.__enum_map__() do
+        location = Atom.to_string(type)
         path = Path.join(@local_name, location)
 
         File.mkdir_p!(path)
@@ -335,8 +308,38 @@ defmodule Cadet.Updater.XMLParserTest do
         """)
 
         assert capture_log(fn ->
-                 XMLParser.parse_and_insert(type) == {:error, "Error processing XML files."}
+                 XMLParser.parse_and_insert(path) == {:error, "Error processing XML files."}
                end) =~ "Missing TASK"
+      end
+    end
+
+    test "hidden folders are ignored" do
+      for type <- AssessmentType.__enum_map__() do
+        location = Atom.to_string(type)
+
+        path = Path.join([@local_name, ".hidden", location])
+
+        File.mkdir_p!(path)
+
+        path |> Path.join("lambda.xml") |> File.touch!()
+
+        assert XMLParser.parse_and_insert(@local_name) == :ok
+      end
+    end
+
+    test "recursive folders and explored and parsed" do
+      for type <- AssessmentType.__enum_map__() do
+        location = Atom.to_string(type)
+
+        path = Path.join([@local_name, "recursive", location])
+
+        File.mkdir_p!(path)
+
+        path |> Path.join("lambda.xml") |> File.touch!()
+
+        assert capture_log(fn ->
+                 assert XMLParser.parse_and_insert(@local_name) == :ok
+               end) =~ ":expected_element_start_tag"
       end
     end
   end
