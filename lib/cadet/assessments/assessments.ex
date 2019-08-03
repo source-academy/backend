@@ -482,7 +482,8 @@ defmodule Cadet.Assessments do
                    xp_adjustment: 0,
                    autograding_status: :none,
                    autograding_results: [],
-                   grader_id: nil
+                   grader_id: nil,
+                   comments: nil
                  })
                  |> Repo.update()}
             end

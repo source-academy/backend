@@ -285,6 +285,7 @@ defmodule CadetWeb.GradingController do
             xpAdjustment(:integer, "xp adjustment given")
             grader(Schema.ref(:GraderInfo))
             gradedAt(:string, "Last graded at", format: "date-time", required: false)
+            comments(:string, "Comments given by grader")
           end
         end,
       Grading:
