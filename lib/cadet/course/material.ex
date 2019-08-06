@@ -6,7 +6,7 @@ defmodule Cadet.Course.Material do
   use Arc.Ecto.Schema
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Material, Upload, Category}
+  alias Cadet.Course.{Category, Upload}
 
   schema "materials" do
     field(:title, :string)

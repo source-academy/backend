@@ -5,7 +5,7 @@ defmodule Cadet.Course.Category do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Course.{Material, Upload, Category}
+  alias Cadet.Course.{Category, Material}
   alias Cadet.Accounts.{User}
 
   schema "categories" do
@@ -23,9 +23,9 @@ defmodule Cadet.Course.Category do
   @required_fields ~w(name)a
   @optional_fields ~w(description)a
 
-  def changeset(category, params \\ %{}) do
+  def changeset(category, attrs \\ %{}) do
     category
-    |> cast(params, [:name, :description])
+    |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
   end
 end
