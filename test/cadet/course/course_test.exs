@@ -61,7 +61,7 @@ defmodule Cadet.CourseTest do
       }
 
       result =
-        Course.upload_material_file(uploader, folder, %{
+        Course.upload_material_file(folder, uploader, %{
           title: "Test Upload",
           file: upload
         })

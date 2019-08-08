@@ -157,18 +157,23 @@ defmodule Cadet.Course do
   @doc """
   Upload a material file to designated folder
   """
-  def upload_material_file(
-        uploader = %User{},
-        category = %Category{},
-        attr = %{}
-      ) do
+  def upload_material_file(uploader = %User{}, attrs = %{}) do
+    upload_material_file(nil, uploader, attrs)
+  end
+
+  def upload_material_file(category, uploader = %User{}, attrs = %{}) do
     changeset =
       %Material{}
-      |> Material.changeset(attr)
+      |> Material.changeset(attrs)
       |> put_assoc(:uploader, uploader)
-      |> put_assoc(:category, category)
 
-    Repo.insert(changeset)
+    case category do
+      %Material{} ->
+        Repo.insert(put_assoc(changeset, :category, category))
+
+      _ ->
+        Repo.insert(changeset)
+    end
   end
 
   @doc """

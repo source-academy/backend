@@ -17,13 +17,17 @@ defmodule CadetWeb.MaterialController do
 
     case result do
       {:ok, _nil} ->
-        send_resp(conn, 200, "")
+        send_resp(conn, 200, "OK")
 
       {:error, {status, message}} ->
         conn
         |> put_status(status)
         |> text(message)
     end
+  end
+
+  def create(conn, _params) do
+    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
   def delete(conn, %{"id" => id}) do

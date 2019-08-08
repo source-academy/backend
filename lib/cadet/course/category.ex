@@ -5,8 +5,8 @@ defmodule Cadet.Course.Category do
   use Cadet, :model
   use Arc.Ecto.Schema
 
+  alias Cadet.Accounts.User
   alias Cadet.Course.{Category, Material}
-  alias Cadet.Accounts.{User}
 
   schema "categories" do
     field(:name, :string)
