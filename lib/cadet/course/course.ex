@@ -161,40 +161,40 @@ defmodule Cadet.Course do
     upload_material_file(nil, uploader, attrs)
   end
 
-  def upload_material_file(category, uploader = %User{}, attrs = %{}) do
-    changeset =
-      %Material{}
-      |> Material.changeset(attrs)
-      |> put_assoc(:uploader, uploader)
+  def upload_material_file(category, uploader = %User{role: role}, attrs = %{}) do
+    if role in @upload_file_roles do
+      changeset =
+        %Material{}
+        |> Material.changeset(attrs)
+        |> put_assoc(:uploader, uploader)
 
-    case category do
-      %Material{} ->
-        Repo.insert(put_assoc(changeset, :category, category))
+      case category do
+        %Material{} ->
+          Repo.insert(put_assoc(changeset, :category, category))
 
-      _ ->
-        Repo.insert(changeset)
+        _ ->
+          Repo.insert(changeset)
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to upload"}}
     end
   end
 
   @doc """
   Delete a material file.
   """
-  def delete_material(id) when is_ecto_id(id) do
-    material = Repo.get(Material, id)
-    delete_material(material)
-  end
-
-  def delete_material(material = %Material{}) do
-    if material.file do
+  def delete_material(_deleter = %User{role: role}, id) do
+    if role in @upload_file_roles do
+      material = Repo.get(Material, id)
       Upload.delete({material.file, material})
+      Repo.delete(material)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
     end
-
-    Repo.delete(material)
   end
 
   @doc """
-  Delete a category. A directory tree
-  is deleted recursively
+  Delete a category. A directory tree is deleted recursively
   """
   def delete_category(id) when is_ecto_id(id) do
     category = Repo.get(Category, id)

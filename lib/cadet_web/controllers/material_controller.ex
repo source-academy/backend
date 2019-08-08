@@ -31,11 +31,11 @@ defmodule CadetWeb.MaterialController do
   end
 
   def delete(conn, %{"id" => id}) do
-    result = Course.delete_material(id)
+    result = Course.delete_material(conn.assigns.current_user, id)
 
     case result do
       {:ok, _nil} ->
-        send_resp(conn, 200, "")
+        send_resp(conn, 200, "OK")
 
       {:error, {status, message}} ->
         conn

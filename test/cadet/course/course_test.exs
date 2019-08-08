@@ -70,7 +70,8 @@ defmodule Cadet.CourseTest do
       path = Upload.url({material.file, material})
       assert path =~ "/uploads/test/materials/upload.txt"
 
-      assert {:ok, _} = Course.delete_material(material)
+      deleter = insert(:user, %{role: :staff})
+      assert {:ok, _} = Course.delete_material(deleter, material.id)
       assert Repo.get(Material, material.id) == nil
       refute File.exists?("uploads/test/materials/upload.txt")
     end
