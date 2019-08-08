@@ -85,7 +85,8 @@ defmodule CadetWeb.AssessmentsHelpers do
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
       grade: &((&1.grade || 0) + (&1.adjustment || 0)),
       autogradingStatus: :autograding_status,
-      autogradingResults: build_results(%{results: answer.autograding_results})
+      autogradingResults: build_results(%{results: answer.autograding_results}),
+      comments: :comments
     })
   end
 

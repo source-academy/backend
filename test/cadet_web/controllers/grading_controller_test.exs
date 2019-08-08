@@ -295,7 +295,8 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -342,7 +343,8 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -414,7 +416,8 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -461,7 +464,8 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -614,6 +618,7 @@ defmodule CadetWeb.GradingControllerTest do
       assert answer_db.xp_adjustment == 0
       assert answer_db.grade == 0
       assert answer_db.adjustment == 0
+      assert answer_db.comments == nil
     end
 
     @tag authenticate: :staff
@@ -931,7 +936,8 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,
@@ -978,7 +984,8 @@ defmodule CadetWeb.GradingControllerTest do
                     "name" => grader.name,
                     "id" => grader.id
                   },
-                  "gradedAt" => format_datetime(&1.updated_at)
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
                 },
                 "student" => %{
                   "name" => &1.submission.student.name,

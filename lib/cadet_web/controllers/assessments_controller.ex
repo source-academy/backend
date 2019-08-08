@@ -219,6 +219,7 @@ defmodule CadetWeb.AssessmentsController do
 
             xp(:integer, "Final XP given to this question. Only provided for students.")
             grade(:integer, "Final grade given to this question. Only provided for students.")
+            comments(:string, "String of comments given for a student's answer", required: false)
 
             maxGrade(
               :integer,

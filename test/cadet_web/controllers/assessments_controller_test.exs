@@ -329,6 +329,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "gradedAt"))
             |> Enum.map(&Map.delete(&1, "autogradingResults"))
             |> Enum.map(&Map.delete(&1, "autogradingStatus"))
+            |> Enum.map(&Map.delete(&1, "comments"))
 
           assert expected_questions == resp_questions
         end

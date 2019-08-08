@@ -72,7 +72,8 @@ defmodule CadetWeb.GradingView do
       adjustment: :adjustment,
       roomId: :room_id,
       xp: :xp,
-      xpAdjustment: :xp_adjustment
+      xpAdjustment: :xp_adjustment,
+      comments: :comments
     })
   end
 end
