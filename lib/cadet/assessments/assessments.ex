@@ -142,10 +142,18 @@ defmodule Cadet.Assessments do
         user = %User{},
         given_password
       ) do
-    case given_password do
-      nil -> {:error, {:forbidden, "Missing Password."}}
-      ^password -> assessment_with_questions_and_answers(assessment, user)
-      _ -> {:error, {:forbidden, "Invalid Password."}}
+    cond do
+      Timex.after?(Timex.now(), assessment.close_at) ->
+        assessment_with_questions_and_answers(assessment, user)
+
+      given_password == nil ->
+        {:error, {:forbidden, "Missing Password."}}
+
+      password == given_password ->
+        assessment_with_questions_and_answers(assessment, user)
+
+      true ->
+        {:error, {:forbidden, "Invalid Password."}}
     end
   end
 

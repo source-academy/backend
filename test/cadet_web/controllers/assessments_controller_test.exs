@@ -1056,6 +1056,26 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assert conn["id"] == assessment.id
       end
     end
+
+    test "permit global access to private assessment after closed", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: %{mission: mission}
+    } do
+      mission.assessment
+      |> Assessment.changeset(%{
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: -1)
+      })
+      |> Repo.update!()
+
+      conn =
+        conn
+        |> sign_in(student)
+        |> post(build_url(mission.assessment.id))
+
+      assert response(conn, 200)
+    end
   end
 
   defp build_url, do: "/v1/assessments/"
