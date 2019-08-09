@@ -9,7 +9,7 @@ defmodule Cadet.Course.Category do
   alias Cadet.Course.{Category, Material}
 
   schema "categories" do
-    field(:name, :string)
+    field(:title, :string)
     field(:description, :string)
 
     belongs_to(:uploader, User)
@@ -20,7 +20,7 @@ defmodule Cadet.Course.Category do
     timestamps()
   end
 
-  @required_fields ~w(name)a
+  @required_fields ~w(title)a
   @optional_fields ~w(description)a
 
   def changeset(category, attrs \\ %{}) do

@@ -9,7 +9,7 @@ defmodule Cadet.Course.MaterialFactory do
 
       def material_folder_factory do
         %Category{
-          name: Faker.Cat.name(),
+          title: Faker.Cat.name(),
           description: Faker.Cat.breed(),
           uploader: build(:user, %{role: :staff})
         }

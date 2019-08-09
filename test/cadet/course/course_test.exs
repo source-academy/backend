@@ -14,13 +14,13 @@ defmodule Cadet.CourseTest do
 
       result =
         Course.create_material_folder(uploader, %{
-          name: "Lecture Notes",
+          title: "Lecture Notes",
           description: "This is where the notes"
         })
 
       assert {:ok, category} = result
       assert category.uploader == uploader
-      assert category.name == "Lecture Notes"
+      assert category.title == "Lecture Notes"
       assert category.description == "This is where the notes"
     end
 
@@ -30,7 +30,7 @@ defmodule Cadet.CourseTest do
 
       result =
         Course.create_material_folder(parent, uploader, %{
-          name: "Lecture Notes"
+          title: "Lecture Notes"
         })
 
       assert {:ok, material} = result
@@ -42,11 +42,11 @@ defmodule Cadet.CourseTest do
 
       assert {:error, changeset} =
                Course.create_material_folder(uploader, %{
-                 name: ""
+                 title: ""
                })
 
       assert errors_on(changeset) == %{
-               name: ["can't be blank"]
+               title: ["can't be blank"]
              }
     end
 

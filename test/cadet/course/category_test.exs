@@ -7,7 +7,7 @@ defmodule Cadet.Course.CategoryTest do
     test "valid changesets" do
       assert_changeset(
         %{
-          name: "Category",
+          title: "Category",
           description: "Some description"
         },
         :valid
@@ -15,7 +15,7 @@ defmodule Cadet.Course.CategoryTest do
     end
 
     test "invalid changeset" do
-      assert_changeset(%{name: "", description: "some description"}, :invalid)
+      assert_changeset(%{title: "", description: "some description"}, :invalid)
     end
   end
 end

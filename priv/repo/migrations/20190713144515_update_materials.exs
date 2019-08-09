@@ -7,6 +7,7 @@ defmodule Cadet.Repo.Migrations.UpdateMaterials do
 
     alter table(:materials) do
       remove(:parent_id)
+      add(:category_id, references(:categories, on_delete: :delete_all))
     end
 
     rename(table(:materials), :name, to: :title)

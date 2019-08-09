@@ -31,6 +31,7 @@ defmodule CadetWeb.Router do
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
+    resources("/category", CategoryController, only: [:create, :update, :delete])
     resources("/material", MaterialController, only: [:create, :update, :delete])
 
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
