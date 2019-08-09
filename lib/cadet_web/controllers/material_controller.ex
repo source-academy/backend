@@ -5,10 +5,12 @@ defmodule CadetWeb.MaterialController do
   alias Cadet.{Repo, Course}
   alias Cadet.Course.{Category, Material}
 
+  def index(conn, %{"id" => id}) do
+    render(conn, "index.json", materials: Course.list_material_folders(id))
+  end
+
   def index(conn, _params) do
-    materials = Material |> Repo.all() |> Repo.preload(:uploader)
-    categories = Category |> Repo.all() |> Repo.preload(:uploader)
-    render(conn, "index.json", materials: Enum.concat(materials, categories))
+    render(conn, "index.json", materials: Course.list_material_folders(nil))
   end
 
   def create(conn, %{"material" => material}) do

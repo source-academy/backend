@@ -211,8 +211,8 @@ defmodule Cadet.Course do
   def list_material_folders(id) do
     import Cadet.Course.Query
 
-    mat = Repo.all(material_folder_files(id))
-    cat = Repo.all(category_folder_files(id))
+    mat = Repo.all(material_folder_files(id)) |> Repo.preload(:uploader)
+    cat = Repo.all(category_folder_files(id)) |> Repo.preload(:uploader)
 
     Enum.concat(mat, cat)
   end
