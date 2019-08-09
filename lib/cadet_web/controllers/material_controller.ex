@@ -3,11 +3,12 @@ defmodule CadetWeb.MaterialController do
   use PhoenixSwagger
 
   alias Cadet.{Repo, Course}
-  alias Cadet.Course.{Material}
+  alias Cadet.Course.{Category, Material}
 
   def index(conn, _params) do
     materials = Material |> Repo.all() |> Repo.preload(:uploader)
-    render(conn, "index.json", materials: materials)
+    categories = Category |> Repo.all() |> Repo.preload(:uploader)
+    render(conn, "index.json", materials: Enum.concat(materials, categories))
   end
 
   def create(conn, %{"material" => material}) do

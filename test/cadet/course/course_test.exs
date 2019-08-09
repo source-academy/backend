@@ -83,7 +83,7 @@ defmodule Cadet.CourseTest do
       _ = insert(:material_file, %{category: folder2})
       file3 = insert(:material_file, %{category: folder})
 
-      result = Course.list_material_folders(folder)
+      result = Course.list_material_folders(folder.id)
 
       assert Enum.count(result) == 2
 

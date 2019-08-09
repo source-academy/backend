@@ -2,8 +2,7 @@ defmodule CadetWeb.CategoryController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.{Repo, Course}
-  alias Cadet.Course.{Material}
+  alias Cadet.{Course}
 
   def create(conn, %{"title" => title}) do
     result = Course.create_material_folder(conn.assigns.current_user, %{title: title})
@@ -37,27 +36,14 @@ defmodule CadetWeb.CategoryController do
     end
   end
 
-  swagger_path :index do
-    get("/category")
-    description("Lists all material files")
-    produces("application/json")
-    summary("Shows all files")
-    security([%{JWT: []}])
-
-    response(200, "Success")
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorised")
-  end
-
   swagger_path :create do
     post("/category")
-    description("Uploads file")
-    summary("Upload file")
-    consumes("multipart/form-data")
+    description("Create folder")
+    summary("Create folder")
     security([%{JWT: []}])
 
     parameters do
-      material(:body, Schema.ref(:Material), "material object", required: true)
+      material(:body, Schema.ref(:Category), "folder details", required: true)
     end
 
     response(200, "Success")
@@ -67,12 +53,12 @@ defmodule CadetWeb.CategoryController do
 
   swagger_path :delete do
     PhoenixSwagger.Path.delete("/category/{id}")
-    description("Deletes file by specifying the file id")
-    summary("Delete file")
+    description("Deletes folder by specifying the folder id")
+    summary("Delete folder")
     security([%{JWT: []}])
 
     parameters do
-      id(:path, :integer, "file id", required: true)
+      id(:path, :integer, "folder id", required: true)
     end
 
     response(200, "Success")
@@ -82,11 +68,11 @@ defmodule CadetWeb.CategoryController do
 
   def swagger_definitions do
     %{
-      Material:
+      Category:
         swagger_schema do
           properties do
-            name(:string, "name", required: true)
-            file(:file, "binary file", required: true)
+            title(:string, "title", required: true)
+            description(:string, "description", required: false)
           end
         end
     }

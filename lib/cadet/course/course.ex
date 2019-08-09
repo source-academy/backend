@@ -208,11 +208,11 @@ defmodule Cadet.Course do
   @doc """
   List material folder content
   """
-  def list_material_folders(folder = %Category{}) do
+  def list_material_folders(id) do
     import Cadet.Course.Query
 
-    mat = Repo.all(material_folder_files(folder.id))
-    cat = Repo.all(category_folder_files(folder.id))
+    mat = Repo.all(material_folder_files(id))
+    cat = Repo.all(category_folder_files(id))
 
     Enum.concat(mat, cat)
   end
