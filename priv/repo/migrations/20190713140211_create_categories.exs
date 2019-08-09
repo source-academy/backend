@@ -9,5 +9,7 @@ defmodule Cadet.Repo.Migrations.CreateCategories do
       add(:category_id, references(:categories, on_delete: :delete_all))
       timestamps()
     end
+
+    create(index(:categories, [:uploader_id]))
   end
 end
