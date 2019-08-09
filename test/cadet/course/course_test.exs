@@ -103,7 +103,8 @@ defmodule Cadet.CourseTest do
       file2 = insert(:material_file, %{category: folder2})
       file3 = insert(:material_file, %{category: folder})
 
-      assert {:ok, _} = Course.delete_category(folder.id)
+      deleter = insert(:user, %{role: :staff})
+      assert {:ok, _} = Course.delete_category(deleter, folder.id)
 
       [file1, file2, file3, folder, folder2]
       |> Enum.each(&assert(Repo.get(Material, &1.id) == nil))

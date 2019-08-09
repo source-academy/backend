@@ -196,13 +196,13 @@ defmodule Cadet.Course do
   @doc """
   Delete a category. A directory tree is deleted recursively
   """
-  def delete_category(id) when is_ecto_id(id) do
-    category = Repo.get(Category, id)
-    delete_category(category)
-  end
-
-  def delete_category(category = %Category{}) do
-    Repo.delete(category)
+  def delete_category(_deleter = %User{role: role}, id) do
+    if role in @upload_file_roles do
+      category = Repo.get(Category, id)
+      Repo.delete(category)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
+    end
   end
 
   @doc """

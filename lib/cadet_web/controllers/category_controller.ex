@@ -23,7 +23,7 @@ defmodule CadetWeb.CategoryController do
   end
 
   def delete(conn, %{"id" => id}) do
-    result = Course.delete_material(conn.assigns.current_user, id)
+    result = Course.delete_category(conn.assigns.current_user, id)
 
     case result do
       {:ok, _nil} ->
