@@ -2,10 +2,18 @@ defmodule CadetWeb.CategoryController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.Course
+  alias Cadet.{Course, Repo}
+  alias Course.Category
 
-  def create(conn, %{"title" => title}) do
-    result = Course.create_material_folder(conn.assigns.current_user, %{title: title})
+  def create(conn, %{"title" => title, "parentId" => category_id}) do
+    category =
+      if category_id do
+        Repo.get(Category, category_id)
+      else
+        nil
+      end
+
+    result = Course.create_material_folder(category, conn.assigns.current_user, %{title: title})
 
     case result do
       {:ok, _nil} ->

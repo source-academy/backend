@@ -139,15 +139,15 @@ defmodule Cadet.Course do
   @doc """
   Create a new folder to put material files in
   """
-  def create_material_folder(parent, uploader = %User{}, attrs = %{}) do
+  def create_material_folder(category, uploader = %User{}, attrs = %{}) do
     changeset =
       %Category{}
       |> Category.changeset(attrs)
       |> put_assoc(:uploader, uploader)
 
-    case parent do
+    case category do
       %Category{} ->
-        Repo.insert(put_assoc(changeset, :category, parent))
+        Repo.insert(put_assoc(changeset, :category, category))
 
       _ ->
         Repo.insert(changeset)

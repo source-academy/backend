@@ -19,7 +19,6 @@ defmodule CadetWeb.MaterialController do
   end
 
   def create(conn, %{"material" => material}) do
-    IO.inspect(material)
     category_id = material["parentId"]
 
     category =
@@ -30,7 +29,6 @@ defmodule CadetWeb.MaterialController do
       end
 
     result = Course.upload_material_file(category, conn.assigns.current_user, material)
-    IO.inspect(result)
 
     case result do
       {:ok, _nil} ->
