@@ -2,7 +2,8 @@ defmodule CadetWeb.MaterialController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.Course
+  alias Cadet.{Course, Repo}
+  alias Course.Category
 
   def index(conn, %{"id" => id}) do
     directory_tree = Course.construct_hierarchy(id)
@@ -19,7 +20,16 @@ defmodule CadetWeb.MaterialController do
 
   def create(conn, %{"material" => material}) do
     IO.inspect(material)
-    result = Course.upload_material_file(conn.assigns.current_user, material)
+    category_id = material["parentId"]
+
+    category =
+      if category_id do
+        Repo.get(Category, category_id)
+      else
+        nil
+      end
+
+    result = Course.upload_material_file(category, conn.assigns.current_user, material)
     IO.inspect(result)
 
     case result do

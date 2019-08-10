@@ -40,5 +40,6 @@ defmodule Cadet.Course.Material do
     changeset
     |> validate_required(@required_fields ++ @required_file_fields)
     |> foreign_key_constraint(:uploader_id)
+    |> foreign_key_constraint(:category_id)
   end
 end

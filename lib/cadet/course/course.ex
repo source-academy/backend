@@ -169,7 +169,7 @@ defmodule Cadet.Course do
         |> put_assoc(:uploader, uploader)
 
       case category do
-        %Material{} ->
+        %Category{} ->
           Repo.insert(put_assoc(changeset, :category, category))
 
         _ ->
