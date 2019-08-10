@@ -27,5 +27,13 @@ defmodule Cadet.Course.Category do
     category
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> validate_changeset
+  end
+
+  defp validate_changeset(changeset) do
+    changeset
+    |> validate_required(@required_fields)
+    |> foreign_key_constraint(:uploader_id)
+    |> foreign_key_constraint(:category_id)
   end
 end
