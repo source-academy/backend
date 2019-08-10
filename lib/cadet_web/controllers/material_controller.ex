@@ -2,15 +2,19 @@ defmodule CadetWeb.MaterialController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.{Repo, Course}
-  alias Cadet.Course.{Category, Material}
+  alias Cadet.Course
 
   def index(conn, %{"id" => id}) do
-    render(conn, "index.json", materials: Course.list_material_folders(id))
+    directory_tree = Course.construct_hierarchy(id)
+
+    render(conn, "index.json",
+      materials: Course.list_material_folders(id),
+      directory_tree: directory_tree
+    )
   end
 
   def index(conn, _params) do
-    render(conn, "index.json", materials: Course.list_material_folders(nil))
+    render(conn, "index.json", materials: Course.list_material_folders(nil), directory_tree: [])
   end
 
   def create(conn, %{"material" => material}) do

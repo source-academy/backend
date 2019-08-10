@@ -2,7 +2,7 @@ defmodule CadetWeb.CategoryController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.{Course}
+  alias Cadet.Course
 
   def create(conn, %{"title" => title}) do
     result = Course.create_material_folder(conn.assigns.current_user, %{title: title})

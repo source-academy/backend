@@ -1,8 +1,11 @@
 defmodule CadetWeb.MaterialView do
   use CadetWeb, :view
 
-  def render("index.json", %{materials: materials}) do
-    render_many(materials, CadetWeb.MaterialView, "show.json", as: :material)
+  def render("index.json", %{materials: materials, directory_tree: directory_tree}) do
+    %{
+      index: render_many(materials, CadetWeb.MaterialView, "show.json", as: :material),
+      directory_tree: directory_tree |> Enum.map(&%{id: &1.id, title: &1.title})
+    }
   end
 
   def render("show.json", %{material: material}) do

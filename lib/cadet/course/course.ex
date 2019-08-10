@@ -216,4 +216,16 @@ defmodule Cadet.Course do
 
     Enum.concat(mat, cat)
   end
+
+  @doc """
+  Construct directory tree for current folder
+  """
+  def construct_hierarchy(id) do
+    if is_nil(id) do
+      []
+    else
+      category = Repo.get(Category, id)
+      construct_hierarchy(category.category_id) ++ [category]
+    end
+  end
 end
