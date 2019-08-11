@@ -8,7 +8,7 @@ defmodule Cadet.Course do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Group, Material, Upload, Sourcecast}
+  alias Cadet.Course.{Category, Group, Material, Sourcecast, Upload}
 
   @upload_file_roles ~w(admin staff)a
 
@@ -50,7 +50,7 @@ defmodule Cadet.Course do
   end
 
   # @doc """
-  # Reassign a student to a discussion group.
+  # Reassign a student to a discussion group
   # This will un-assign student from the current discussion group
   # """
   # def assign_group(leader = %User{}, student = %User{}) do
@@ -117,7 +117,7 @@ defmodule Cadet.Course do
   end
 
   @doc """
-  Delete a sourcecast file.
+  Delete a sourcecast file
   """
   def delete_sourcecast_file(_deleter = %User{role: role}, id) do
     if role in @upload_file_roles do
@@ -136,18 +136,15 @@ defmodule Cadet.Course do
     create_material_folder(nil, uploader, attrs)
   end
 
-  @doc """
-  Create a new folder to put material files in
-  """
-  def create_material_folder(parent, uploader = %User{}, attrs = %{}) do
+  def create_material_folder(category, uploader = %User{}, attrs = %{}) do
     changeset =
-      %Material{}
-      |> Material.folder_changeset(attrs)
+      %Category{}
+      |> Category.changeset(attrs)
       |> put_assoc(:uploader, uploader)
 
-    case parent do
-      %Material{} ->
-        Repo.insert(put_assoc(changeset, :parent, parent))
+    case category do
+      %Category{} ->
+        Repo.insert(put_assoc(changeset, :category, category))
 
       _ ->
         Repo.insert(changeset)
@@ -157,38 +154,76 @@ defmodule Cadet.Course do
   @doc """
   Upload a material file to designated folder
   """
-  def upload_material_file(folder = %Material{}, uploader = %User{}, attr = %{}) do
-    changeset =
-      %Material{}
-      |> Material.changeset(attr)
-      |> put_assoc(:uploader, uploader)
-      |> put_assoc(:parent, folder)
+  def upload_material_file(uploader = %User{}, attrs = %{}) do
+    upload_material_file(nil, uploader, attrs)
+  end
 
-    Repo.insert(changeset)
+  def upload_material_file(category, uploader = %User{role: role}, attrs = %{}) do
+    if role in @upload_file_roles do
+      changeset =
+        %Material{}
+        |> Material.changeset(attrs)
+        |> put_assoc(:uploader, uploader)
+
+      case category do
+        %Category{} ->
+          Repo.insert(put_assoc(changeset, :category, category))
+
+        _ ->
+          Repo.insert(changeset)
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to upload"}}
+    end
   end
 
   @doc """
-  Delete a material file/directory. A directory tree
-  is deleted recursively
+  Delete a material file
   """
-  def delete_material(id) when is_ecto_id(id) do
-    material = Repo.get(Material, id)
-    delete_material(material)
+  def delete_material(_deleter = %User{role: role}, id) do
+    if role in @upload_file_roles do
+      material = Repo.get(Material, id)
+      Upload.delete({material.file, material})
+      Repo.delete(material)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
+    end
   end
 
-  def delete_material(material = %Material{}) do
-    if material.file do
-      Upload.delete({material.file, material})
+  @doc """
+  Delete a category
+  A directory tree is deleted recursively
+  """
+  def delete_category(_deleter = %User{role: role}, id) do
+    if role in @upload_file_roles do
+      category = Repo.get(Category, id)
+      Repo.delete(category)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
     end
-
-    Repo.delete(material)
   end
 
   @doc """
   List material folder content
   """
-  def list_material_folders(folder = %Material{}) do
-    import Cadet.Course.Query, only: [material_folder_files: 1]
-    Repo.all(material_folder_files(folder.id))
+  def list_material_folders(id) do
+    import Cadet.Course.Query
+
+    mat = id |> material_folder_files() |> Repo.all() |> Repo.preload(:uploader)
+    cat = id |> category_folder_files() |> Repo.all() |> Repo.preload(:uploader)
+
+    Enum.concat(mat, cat)
+  end
+
+  @doc """
+  Construct directory tree for current folder
+  """
+  def construct_hierarchy(id) do
+    if is_nil(id) do
+      []
+    else
+      category = Repo.get(Category, id)
+      construct_hierarchy(category.category_id) ++ [category]
+    end
   end
 end

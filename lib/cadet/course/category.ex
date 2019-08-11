@@ -1,38 +1,38 @@
-defmodule Cadet.Course.Material do
+defmodule Cadet.Course.Category do
   @moduledoc """
-  Material represents a hierarchical file system structure
+  Category represents a Material category
   """
   use Cadet, :model
   use Arc.Ecto.Schema
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Category, Upload}
+  alias Cadet.Course.{Category, Material}
 
-  schema "materials" do
+  schema "categories" do
     field(:title, :string)
     field(:description, :string)
-    field(:file, Upload.Type)
 
     belongs_to(:uploader, User)
     belongs_to(:category, Category)
 
+    has_many(:child, Material)
+    has_many(:sub_category, Category)
     timestamps()
   end
 
   @required_fields ~w(title)a
   @optional_fields ~w(description)a
-  @required_file_fields ~w(file)a
 
-  def changeset(material, attrs \\ %{}) do
-    material
-    |> cast_attachments(attrs, @required_file_fields)
+  def changeset(category, attrs \\ %{}) do
+    category
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> validate_required(@required_fields)
     |> validate_changeset
   end
 
   defp validate_changeset(changeset) do
     changeset
-    |> validate_required(@required_fields ++ @required_file_fields)
+    |> validate_required(@required_fields)
     |> foreign_key_constraint(:uploader_id)
     |> foreign_key_constraint(:category_id)
   end
