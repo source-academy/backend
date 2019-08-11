@@ -50,7 +50,7 @@ defmodule Cadet.Course do
   end
 
   # @doc """
-  # Reassign a student to a discussion group.
+  # Reassign a student to a discussion group
   # This will un-assign student from the current discussion group
   # """
   # def assign_group(leader = %User{}, student = %User{}) do
@@ -117,7 +117,7 @@ defmodule Cadet.Course do
   end
 
   @doc """
-  Delete a sourcecast file.
+  Delete a sourcecast file
   """
   def delete_sourcecast_file(_deleter = %User{role: role}, id) do
     if role in @upload_file_roles do
@@ -136,9 +136,6 @@ defmodule Cadet.Course do
     create_material_folder(nil, uploader, attrs)
   end
 
-  @doc """
-  Create a new folder to put material files in
-  """
   def create_material_folder(category, uploader = %User{}, attrs = %{}) do
     changeset =
       %Category{}
@@ -181,7 +178,7 @@ defmodule Cadet.Course do
   end
 
   @doc """
-  Delete a material file.
+  Delete a material file
   """
   def delete_material(_deleter = %User{role: role}, id) do
     if role in @upload_file_roles do
@@ -194,7 +191,8 @@ defmodule Cadet.Course do
   end
 
   @doc """
-  Delete a category. A directory tree is deleted recursively
+  Delete a category
+  A directory tree is deleted recursively
   """
   def delete_category(_deleter = %User{role: role}, id) do
     if role in @upload_file_roles do

@@ -2,7 +2,7 @@ defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
   alias Cadet.{Course, Repo}
-  alias Cadet.Course.{Group, Material, Sourcecast, Upload}
+  alias Cadet.Course.{Category, Group, Material, Sourcecast, Upload}
 
   describe "Material" do
     setup do
@@ -96,6 +96,25 @@ defmodule Cadet.CourseTest do
       assert MapSet.member?(set, file3.id)
     end
 
+    test "construct directory tree" do
+      folder = insert(:material_folder)
+      folder2 = insert(:material_folder, %{category: folder})
+      folder3 = insert(:material_folder, %{category: folder2})
+      folder4 = insert(:material_folder, %{category: folder3})
+
+      result = Course.construct_hierarchy(folder4.id)
+
+      assert Enum.count(result) == 4
+
+      set =
+        result
+        |> Enum.map(& &1.id)
+        |> MapSet.new()
+
+      [folder, folder2, folder3, folder4]
+      |> Enum.each(&assert(MapSet.member?(set, &1.id)))
+    end
+
     test "delete a folder" do
       folder = insert(:material_folder)
       folder2 = insert(:material_folder, %{category: folder})
@@ -106,8 +125,11 @@ defmodule Cadet.CourseTest do
       deleter = insert(:user, %{role: :staff})
       assert {:ok, _} = Course.delete_category(deleter, folder.id)
 
-      [file1, file2, file3, folder, folder2]
+      [file1, file2, file3]
       |> Enum.each(&assert(Repo.get(Material, &1.id) == nil))
+
+      [folder, folder2]
+      |> Enum.each(&assert(Repo.get(Category, &1.id) == nil))
     end
   end
 
