@@ -50,6 +50,26 @@ defmodule Cadet.CourseTest do
              }
     end
 
+    test "upload file to root folder" do
+      uploader = insert(:user, %{role: :staff})
+
+      upload = %Plug.Upload{
+        content_type: "text/plain",
+        filename: "upload.txt",
+        path: "test/fixtures/upload.txt"
+      }
+
+      result =
+        Course.upload_material_file(uploader, %{
+          title: "Test Upload",
+          file: upload
+        })
+
+      assert {:ok, material} = result
+      path = Upload.url({material.file, material})
+      assert path =~ "/uploads/test/materials/upload.txt"
+    end
+
     test "upload file to folder then delete it" do
       uploader = insert(:user, %{role: :staff})
       folder = insert(:material_folder)
@@ -74,6 +94,26 @@ defmodule Cadet.CourseTest do
       assert {:ok, _} = Course.delete_material(deleter, material.id)
       assert Repo.get(Material, material.id) == nil
       refute File.exists?("uploads/test/materials/upload.txt")
+    end
+
+    test "list root folder content" do
+      folder = insert(:material_folder)
+      folder2 = insert(:material_folder)
+      file1 = insert(:material_file)
+      file2 = insert(:material_file)
+      file3 = insert(:material_file)
+
+      result = Course.list_material_folders(nil)
+
+      assert Enum.count(result) == 5
+
+      set =
+        result
+        |> Enum.map(& &1.id)
+        |> MapSet.new()
+
+      [file1, file2, file3, folder, folder2]
+      |> Enum.each(&assert(MapSet.member?(set, &1.id)))
     end
 
     test "list folder content" do
