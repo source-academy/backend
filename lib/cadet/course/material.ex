@@ -23,12 +23,6 @@ defmodule Cadet.Course.Material do
   @optional_fields ~w(description)a
   @required_file_fields ~w(file)a
 
-  def folder_changeset(material, attrs \\ %{}) do
-    material
-    |> cast(attrs, @required_fields ++ @optional_fields)
-    |> validate_changeset
-  end
-
   def changeset(material, attrs \\ %{}) do
     material
     |> cast_attachments(attrs, @required_file_fields)
