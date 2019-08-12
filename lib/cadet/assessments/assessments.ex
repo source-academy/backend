@@ -666,10 +666,15 @@ defmodule Cadet.Assessments do
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
+      |> join(:inner, [_, q], ast in assoc(q, :assessment))
       |> join(:left, [a, ...], g in assoc(a, :grader))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
       |> join(:inner, [a, ..., s], st in assoc(s, :student))
-      |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
+      |> preload([_, q, ast, g, s, st],
+        question: {q, assessment: ast},
+        grader: g,
+        submission: {s, student: st}
+      )
 
     cond do
       role in @grading_roles ->

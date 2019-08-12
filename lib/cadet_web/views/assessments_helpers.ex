@@ -19,10 +19,16 @@ defmodule CadetWeb.AssessmentsHelpers do
     transform_map_for_view(external_library, [:name, :symbols])
   end
 
-  def build_question(%{question: question}) do
+  def build_question_by_assessment_type(%{
+        question: question,
+        assessment_type: assessment_type
+      }) do
     Map.merge(
       build_generic_question_fields(%{question: question}),
-      build_question_content_by_type(%{question: question})
+      build_question_content_by_type(%{
+        question: question,
+        assessment_type: assessment_type
+      })
     )
   end
 
@@ -31,7 +37,10 @@ defmodule CadetWeb.AssessmentsHelpers do
         assessment: assessment
       }) do
     components = [
-      build_question(%{question: question}),
+      build_question_by_assessment_type(%{
+        question: question,
+        assessment_type: assessment.type
+      }),
       build_answer_fields_by_question_type(%{question: question}),
       build_solution_if_ungraded_by_type(%{question: question, assessment: assessment})
     ]
@@ -132,15 +141,33 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_testcase(testcase) do
+  defp build_testcase(testcase, type) do
     transform_map_for_view(testcase, %{
       answer: "answer",
       score: "score",
-      program: "program"
+      program: "program",
+      # Create a 1-arity function to return the type of the testcase as a string
+      type: &Kernel.apply(fn _testcase -> type end, [&1])
     })
   end
 
-  defp build_question_content_by_type(%{question: %{question: question, type: question_type}}) do
+  defp build_testcases(%{assessment_type: assessment_type}) do
+    case assessment_type do
+      :path ->
+        &Enum.concat(
+          Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
+          Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
+        )
+
+      _ ->
+        &Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end)
+    end
+  end
+
+  defp build_question_content_by_type(%{
+         question: %{question: question, type: question_type},
+         assessment_type: assessment_type
+       }) do
     case question_type do
       :programming ->
         transform_map_for_view(question, %{
@@ -148,7 +175,7 @@ defmodule CadetWeb.AssessmentsHelpers do
           prepend: "prepend",
           solutionTemplate: "template",
           postpend: "postpend",
-          testcases: &Enum.map(&1["public"], fn testcase -> build_testcase(testcase) end)
+          testcases: build_testcases(%{assessment_type: assessment_type})
         })
 
       :mcq ->
