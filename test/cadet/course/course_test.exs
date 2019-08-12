@@ -2,7 +2,7 @@ defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
   alias Cadet.{Course, Repo}
-  alias Cadet.Course.{Group, Material, Sourcecast, Upload}
+  alias Cadet.Course.{Category, Group, Material, Sourcecast, Upload}
 
   describe "Material" do
     setup do
@@ -14,14 +14,14 @@ defmodule Cadet.CourseTest do
 
       result =
         Course.create_material_folder(uploader, %{
-          name: "Lecture Notes",
+          title: "Lecture Notes",
           description: "This is where the notes"
         })
 
-      assert {:ok, material} = result
-      assert material.uploader == uploader
-      assert material.name == "Lecture Notes"
-      assert material.description == "This is where the notes"
+      assert {:ok, category} = result
+      assert category.uploader == uploader
+      assert category.title == "Lecture Notes"
+      assert category.description == "This is where the notes"
     end
 
     test "create folder with parent valid" do
@@ -30,11 +30,11 @@ defmodule Cadet.CourseTest do
 
       result =
         Course.create_material_folder(parent, uploader, %{
-          name: "Lecture Notes"
+          title: "Lecture Notes"
         })
 
       assert {:ok, material} = result
-      assert material.parent_id == parent.id
+      assert material.category_id == parent.id
     end
 
     test "create folder invalid" do
@@ -42,12 +42,32 @@ defmodule Cadet.CourseTest do
 
       assert {:error, changeset} =
                Course.create_material_folder(uploader, %{
-                 name: ""
+                 title: ""
                })
 
       assert errors_on(changeset) == %{
-               name: ["can't be blank"]
+               title: ["can't be blank"]
              }
+    end
+
+    test "upload file to root folder" do
+      uploader = insert(:user, %{role: :staff})
+
+      upload = %Plug.Upload{
+        content_type: "text/plain",
+        filename: "upload.txt",
+        path: "test/fixtures/upload.txt"
+      }
+
+      result =
+        Course.upload_material_file(uploader, %{
+          title: "Test Upload",
+          file: upload
+        })
+
+      assert {:ok, material} = result
+      path = Upload.url({material.file, material})
+      assert path =~ "/uploads/test/materials/upload.txt"
     end
 
     test "upload file to folder then delete it" do
@@ -62,7 +82,7 @@ defmodule Cadet.CourseTest do
 
       result =
         Course.upload_material_file(folder, uploader, %{
-          name: "Test Upload",
+          title: "Test Upload",
           file: upload
         })
 
@@ -70,19 +90,40 @@ defmodule Cadet.CourseTest do
       path = Upload.url({material.file, material})
       assert path =~ "/uploads/test/materials/upload.txt"
 
-      assert {:ok, _} = Course.delete_material(material)
+      deleter = insert(:user, %{role: :staff})
+      assert {:ok, _} = Course.delete_material(deleter, material.id)
       assert Repo.get(Material, material.id) == nil
       refute File.exists?("uploads/test/materials/upload.txt")
     end
 
+    test "list root folder content" do
+      folder = insert(:material_folder)
+      folder2 = insert(:material_folder)
+      file1 = insert(:material_file)
+      file2 = insert(:material_file)
+      file3 = insert(:material_file)
+
+      result = Course.list_material_folders(nil)
+
+      assert Enum.count(result) == 5
+
+      set =
+        result
+        |> Enum.map(& &1.id)
+        |> MapSet.new()
+
+      [file1, file2, file3, folder, folder2]
+      |> Enum.each(&assert(MapSet.member?(set, &1.id)))
+    end
+
     test "list folder content" do
       folder = insert(:material_folder)
-      folder2 = insert(:material_folder, %{parent: folder})
-      _ = insert(:material_file, %{parent: folder2})
-      _ = insert(:material_file, %{parent: folder2})
-      file3 = insert(:material_file, %{parent: folder})
+      folder2 = insert(:material_folder, %{category: folder})
+      _ = insert(:material_file, %{category: folder2})
+      _ = insert(:material_file, %{category: folder2})
+      file3 = insert(:material_file, %{category: folder})
 
-      result = Course.list_material_folders(folder)
+      result = Course.list_material_folders(folder.id)
 
       assert Enum.count(result) == 2
 
@@ -95,17 +136,40 @@ defmodule Cadet.CourseTest do
       assert MapSet.member?(set, file3.id)
     end
 
+    test "construct directory tree" do
+      folder = insert(:material_folder)
+      folder2 = insert(:material_folder, %{category: folder})
+      folder3 = insert(:material_folder, %{category: folder2})
+      folder4 = insert(:material_folder, %{category: folder3})
+
+      result = Course.construct_hierarchy(folder4.id)
+
+      assert Enum.count(result) == 4
+
+      set =
+        result
+        |> Enum.map(& &1.id)
+        |> MapSet.new()
+
+      [folder, folder2, folder3, folder4]
+      |> Enum.each(&assert(MapSet.member?(set, &1.id)))
+    end
+
     test "delete a folder" do
       folder = insert(:material_folder)
-      folder2 = insert(:material_folder, %{parent: folder})
-      file1 = insert(:material_file, %{parent: folder2})
-      file2 = insert(:material_file, %{parent: folder2})
-      file3 = insert(:material_file, %{parent: folder})
+      folder2 = insert(:material_folder, %{category: folder})
+      file1 = insert(:material_file, %{category: folder2})
+      file2 = insert(:material_file, %{category: folder2})
+      file3 = insert(:material_file, %{category: folder})
 
-      assert {:ok, _} = Course.delete_material(folder.id)
+      deleter = insert(:user, %{role: :staff})
+      assert {:ok, _} = Course.delete_category(deleter, folder.id)
 
-      [file1, file2, file3, folder, folder2]
+      [file1, file2, file3]
       |> Enum.each(&assert(Repo.get(Material, &1.id) == nil))
+
+      [folder, folder2]
+      |> Enum.each(&assert(Repo.get(Category, &1.id) == nil))
     end
   end
 

@@ -5,7 +5,7 @@ defmodule Cadet.Course.Upload do
   use Arc.Definition
   use Arc.Ecto.Definition
 
-  @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .wav)
+  @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .wav .xls .xlsx)
   @versions [:original]
 
   def storage_dir(_, _) do

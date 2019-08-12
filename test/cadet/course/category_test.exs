@@ -1,14 +1,14 @@
-defmodule Cadet.Course.MaterialTest do
-  alias Cadet.Course.Material
+defmodule Cadet.Course.CategoryTest do
+  alias Cadet.Course.Category
 
-  use Cadet.ChangesetCase, entity: Material
+  use Cadet.ChangesetCase, entity: Category
 
   describe "Changesets" do
     test "valid changesets" do
       assert_changeset(
         %{
-          title: "File",
-          file: build_upload("test/fixtures/upload.txt", "text/plain")
+          title: "Category",
+          description: "Some description"
         },
         :valid
       )
