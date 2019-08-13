@@ -6,5 +6,5 @@ defenum(Cadet.Assessments.Library.ExternalLibraryName, :external_library_name, [
   :curves,
   :sounds,
   :binarytrees,
-  :"pix&flix"
+  :pixnflix
 ])
