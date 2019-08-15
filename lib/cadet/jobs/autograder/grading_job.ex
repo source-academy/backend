@@ -210,9 +210,6 @@ defmodule Cadet.Autograder.GradingJob do
     )
   end
 
-  defp grade_submission_question_answer_lists(submission_id, [], [], _) do
-    # The entire question-answer list has been graded, so we can send a notification
-    # TODO: Fix 'autograded' notifications
-    # Cadet.Accounts.Notifications.write_notification_when_graded(submission_id, :autograded)
+  defp grade_submission_question_answer_lists(_, [], [], _) do
   end
 end

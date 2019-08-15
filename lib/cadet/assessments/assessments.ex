@@ -260,10 +260,6 @@ defmodule Cadet.Assessments do
         |> Repo.insert()
       end)
     end)
-    # TODO: Fix 'new' notifications
-    # |> Multi.run(:notifications, fn _repo, %{assessment: %Assessment{id: id}} ->
-    #   Notifications.write_notification_for_new_assessment(id)
-    # end)
     |> Repo.transaction()
   end
 
