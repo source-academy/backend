@@ -250,7 +250,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "content" => &1.question.content,
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
-                "postpend" => &1.question.postpend,
+                "postpend" =>
+                  if assessment.type == :path do
+                    &1.question.postpend
+                  else
+                    ""
+                  end,
                 "testcases" =>
                   Enum.map(
                     &1.question.public,
