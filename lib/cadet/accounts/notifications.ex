@@ -218,14 +218,18 @@ defmodule Cadet.Accounts.Notifications do
   def write_notification_when_student_submits(submission = %Submission{}) do
     avenger_id = get_avenger_id_of(submission.student_id)
 
-    write(%{
-      type: :submitted,
-      read: false,
-      role: :staff,
-      user_id: avenger_id,
-      assessment_id: submission.assessment_id,
-      submission_id: submission.id
-    })
+    if is_nil(avenger_id) do
+      {:ok, nil}
+    else
+      write(%{
+        type: :submitted,
+        read: false,
+        role: :staff,
+        user_id: avenger_id,
+        assessment_id: submission.assessment_id,
+        submission_id: submission.id
+      })
+    end
   end
 
   @doc """
