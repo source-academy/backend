@@ -226,6 +226,9 @@ defmodule Cadet.Accounts.Notifications do
       assessment_id: submission.assessment_id,
       submission_id: submission.id
     })
+
+    # TODO: Guard Clause when avenger_id is nil (due to students not belonging to groups)
+    {:ok, nil}
   end
 
   @doc """
