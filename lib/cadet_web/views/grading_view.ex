@@ -51,8 +51,8 @@ defmodule CadetWeb.GradingView do
   defp build_grading_question(answer) do
     results = build_autograding_results(answer.autograding_results)
 
-    %{question: answer.question}
-    |> build_question()
+    %{question: answer.question, assessment_type: answer.question.assessment.type}
+    |> build_question_by_assessment_type()
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
     |> Map.put(:autogradingStatus, answer.autograding_status)
     |> Map.put(:autogradingResults, results)
