@@ -146,6 +146,9 @@ defmodule Cadet.Assessments do
       Timex.after?(Timex.now(), assessment.close_at) ->
         assessment_with_questions_and_answers(assessment, user)
 
+      match?({:ok, _}, find_submission(user, assessment)) ->
+        assessment_with_questions_and_answers(assessment, user)
+
       given_password == nil ->
         {:error, {:forbidden, "Missing Password."}}
 

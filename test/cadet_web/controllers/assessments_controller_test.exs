@@ -997,15 +997,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "returns 403 when trying to access a password protected assessment without a password",
          %{
            conn: conn,
-           users: users,
-           assessments: assessments
+           users: users
          } do
-      assessment = assessments.mission.assessment
+      assessment = insert(:assessment, %{type: "practical", is_published: true})
 
-      {:ok, _} =
-        assessment
-        |> Assessment.changeset(%{password: "mysupersecretpassword"})
-        |> Repo.update()
+      assessment
+      |> Assessment.changeset(%{
+        password: "mysupersecretpassword",
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: +1)
+      })
+      |> Repo.update!()
 
       for {_role, user} <- users do
         conn = conn |> sign_in(user) |> post(build_url(assessment.id))
@@ -1015,15 +1017,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
     test "returns 403 when password is wrong/invalid", %{
       conn: conn,
-      users: users,
-      assessments: assessments
+      users: users
     } do
-      assessment = assessments.mission.assessment
+      assessment = insert(:assessment, %{type: "practical", is_published: true})
 
-      {:ok, _} =
-        assessment
-        |> Assessment.changeset(%{password: "mysupersecretpassword"})
-        |> Repo.update()
+      assessment
+      |> Assessment.changeset(%{
+        password: "mysupersecretpassword",
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: +1)
+      })
+      |> Repo.update!()
 
       for {_role, user} <- users do
         conn =
@@ -1033,6 +1037,26 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         assert response(conn, 403) == "Invalid Password."
       end
+    end
+
+    test "allow users with preexisting submission to access private assessment without a password",
+         %{
+           conn: conn,
+           users: %{student: student}
+         } do
+      assessment = insert(:assessment, %{type: "practical", is_published: true})
+
+      assessment
+      |> Assessment.changeset(%{
+        password: "mysupersecretpassword",
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: +1)
+      })
+      |> Repo.update!()
+
+      insert(:submission, %{assessment: assessment, student: student})
+      conn = conn |> sign_in(student) |> post(build_url(assessment.id))
+      assert response(conn, 200)
     end
 
     test "ignore password when assessment is not password protected", %{
