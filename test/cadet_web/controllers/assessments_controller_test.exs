@@ -277,14 +277,33 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "content" => &1.question.content,
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
-                "postpend" => &1.question.postpend,
+                "postpend" =>
+                  if assessment.type == :path do
+                    &1.question.postpend
+                  else
+                    ""
+                  end,
                 "testcases" =>
                   Enum.map(
                     &1.question.public,
                     fn testcase ->
-                      for {k, v} <- testcase, into: %{}, do: {Atom.to_string(k), v}
+                      for {k, v} <- testcase,
+                          into: %{"type" => "public"},
+                          do: {Atom.to_string(k), v}
                     end
-                  )
+                  ) ++
+                    if assessment.type == :path do
+                      Enum.map(
+                        &1.question.private,
+                        fn testcase ->
+                          for {k, v} <- testcase,
+                              into: %{"type" => "hidden"},
+                              do: {Atom.to_string(k), v}
+                        end
+                      )
+                    else
+                      []
+                    end
               }
             )
 
