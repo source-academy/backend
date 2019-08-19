@@ -601,7 +601,7 @@ defmodule CadetWeb.GradingControllerTest do
           }
         })
 
-      assert response(conn, 400) =~ "Submission is not submitted yet."
+      assert response(conn, 405) =~ "Submission is not submitted yet."
     end
   end
 

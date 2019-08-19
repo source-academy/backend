@@ -773,7 +773,7 @@ defmodule Cadet.Assessments do
         {:error, {:bad_request, full_error_messages(changeset.errors)}}
 
       {:status, _} ->
-        {:error, {:bad_request, "Submission is not submitted yet."}}
+        {:error, {:method_not_allowed, "Submission is not submitted yet."}}
 
       {:error, _} ->
         {:error, {:internal_server_error, "Please try again later."}}
