@@ -294,6 +294,7 @@ defmodule CadetWeb.AssessmentsController do
             answer(:string)
             score(:integer)
             program(:string)
+            type(:string, "One of public/hidden/private")
           end
         end,
       AutogradingResult:

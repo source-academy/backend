@@ -260,9 +260,6 @@ defmodule Cadet.Assessments do
         |> Repo.insert()
       end)
     end)
-    |> Multi.run(:notifications, fn _repo, %{assessment: %Assessment{id: id}} ->
-      Notifications.write_notification_for_new_assessment(id)
-    end)
     |> Repo.transaction()
   end
 
@@ -404,8 +401,9 @@ defmodule Cadet.Assessments do
       with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
            {:is_open?, true} <- is_open?(submission.assessment),
            {:status, :attempted} <- {:status, submission.status},
-           {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission),
-           {:ok, _} <- Notifications.write_notification_when_student_submits(submission) do
+           {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
+        # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
+        Notifications.write_notification_when_student_submits(submission)
         # Begin autograding job
         GradingJob.force_grade_individual_submission(updated_submission)
 
@@ -666,10 +664,15 @@ defmodule Cadet.Assessments do
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
+      |> join(:inner, [_, q], ast in assoc(q, :assessment))
       |> join(:left, [a, ...], g in assoc(a, :grader))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
       |> join(:inner, [a, ..., s], st in assoc(s, :student))
-      |> preload([_, q, g, s, st], question: q, grader: g, submission: {s, student: st})
+      |> preload([_, q, ast, g, s, st],
+        question: {q, assessment: ast},
+        grader: g,
+        submission: {s, student: st}
+      )
 
     cond do
       role in @grading_roles ->
