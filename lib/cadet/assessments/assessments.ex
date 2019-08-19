@@ -748,11 +748,14 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a, s], t in subquery(students), on: t.id == s.student_id)
       else
         answer_query
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> preload([_, s], submission: s)
       end
 
     answer = Repo.one(answer_query)
 
     with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
+         {:status, :submitted} <- {:status, answer.submission.status},
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
@@ -768,6 +771,9 @@ defmodule Cadet.Assessments do
 
       {:valid, changeset} ->
         {:error, {:bad_request, full_error_messages(changeset.errors)}}
+
+      {:status, _} ->
+        {:error, {:bad_request, "Submission is not submitted yet."}}
 
       {:error, _} ->
         {:error, {:internal_server_error, "Please try again later."}}
