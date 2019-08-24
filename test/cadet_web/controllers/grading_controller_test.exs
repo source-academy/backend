@@ -121,7 +121,7 @@ defmodule CadetWeb.GradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "excluded",
+            "gradingStatus" => "graded",
             "unsubmittedBy" => nil,
             "unsubmittedAt" => nil
           }
@@ -164,7 +164,7 @@ defmodule CadetWeb.GradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "excluded",
+            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -225,7 +225,7 @@ defmodule CadetWeb.GradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "excluded",
+            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -606,6 +606,41 @@ defmodule CadetWeb.GradingControllerTest do
       conn = post(conn, build_url(1, 3), %{})
       assert response(conn, 400) =~ "Missing parameter"
     end
+
+    @tag authenticate: :staff
+    test "submission is not :submitted", %{conn: conn} do
+      %{grader: grader, mission: mission, questions: questions} = seed_db(conn)
+
+      submission = insert(:submission, %{assessment: mission, status: :attempting})
+
+      question = List.first(questions)
+
+      answer =
+        insert(:answer, %{
+          grader_id: grader.id,
+          grade: 200,
+          adjustment: -100,
+          xp: 1000,
+          xp_adjustment: -500,
+          question: question,
+          submission: submission,
+          answer:
+            case question.type do
+              :programming -> build(:programming_answer)
+              :mcq -> build(:mcq_answer)
+            end
+        })
+
+      conn =
+        post(conn, build_url(answer.submission_id, answer.question_id), %{
+          "grading" => %{
+            "adjustment" => -100,
+            "xpAdjustment" => -100
+          }
+        })
+
+      assert response(conn, 405) =~ "Submission is not submitted yet."
+    end
   end
 
   describe "POST /:submissionid/unsubmit, staff" do
@@ -859,7 +894,7 @@ defmodule CadetWeb.GradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "excluded",
+            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -904,7 +939,7 @@ defmodule CadetWeb.GradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "excluded",
+            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -1116,7 +1151,14 @@ defmodule CadetWeb.GradingControllerTest do
     submissions =
       students
       |> Enum.take(2)
-      |> Enum.map(&insert(:submission, %{assessment: mission, student: &1, xp_bonus: 100}))
+      |> Enum.map(
+        &insert(:submission, %{
+          assessment: mission,
+          student: &1,
+          xp_bonus: 100,
+          status: :submitted
+        })
+      )
 
     answers =
       for submission <- submissions,
