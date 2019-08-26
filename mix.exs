@@ -53,7 +53,7 @@ defmodule Cadet.Mixfile do
       {:ex_machina, "~> 2.3"},
       {:floki, "~> 0.22.0"},
       {:gettext, "~> 0.11"},
-      {:guardian, "~> 1.0"},
+      {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},
       {:httpoison, "~> 1.0", override: true},
       {:inch_ex, "~> 2.0", only: [:dev, :test]},
