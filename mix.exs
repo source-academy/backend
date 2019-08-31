@@ -51,9 +51,9 @@ defmodule Cadet.Mixfile do
       {:ex_aws_lambda, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.3"},
-      {:floki, "~> 0.21.0"},
+      {:floki, "~> 0.22.0"},
       {:gettext, "~> 0.11"},
-      {:guardian, "~> 1.0"},
+      {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},
       {:httpoison, "~> 1.0", override: true},
       {:inch_ex, "~> 2.0", only: [:dev, :test]},
@@ -79,7 +79,7 @@ defmodule Cadet.Mixfile do
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:faker, "~> 0.10", only: [:dev, :test]},
-      {:git_hooks, "~> 0.2.0", only: [:dev, :test]},
+      {:git_hooks, "~> 0.3.1", only: [:dev, :test]},
       {:mock, "~> 0.3.0", only: :test}
     ]
   end
