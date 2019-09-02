@@ -54,7 +54,7 @@ defmodule Cadet.Updater.XMLParserTest do
           Map.from_struct(assessment),
           Map.from_struct(assessment_db),
           ~w(title is_published type summary_short summary_long open_at close_at)a ++
-            ~w(number story reading)a
+            ~w(number story reading password)a
         )
 
         assessment_id = assessment_db.id

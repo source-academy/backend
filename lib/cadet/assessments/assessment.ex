@@ -6,9 +6,10 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Assessments.{AssessmentType, Question, SubmissionStatus, Upload}
+  alias Cadet.Assessments.{AssessmentAccess, AssessmentType, Question, SubmissionStatus, Upload}
 
   schema "assessments" do
+    field(:access, AssessmentAccess, virtual: true, default: :public)
     field(:max_grade, :integer, virtual: true)
     field(:grade, :integer, virtual: true, default: 0)
     field(:max_xp, :integer, virtual: true)
@@ -29,13 +30,15 @@ defmodule Cadet.Assessments.Assessment do
     field(:number, :string)
     field(:story, :string)
     field(:reading, :string)
+    field(:password, :string, default: nil)
 
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
   @required_fields ~w(type title open_at close_at number)a
-  @optional_fields ~w(reading summary_short summary_long is_published story cover_picture)a
+  @optional_fields ~w(reading summary_short summary_long
+    is_published story cover_picture access password)a
   @optional_file_fields ~w(mission_pdf)a
 
   def changeset(assessment, params) do

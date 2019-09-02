@@ -25,7 +25,8 @@ defmodule CadetWeb.AssessmentsView do
       maxXp: :max_xp,
       xp: &(&1.xp || 0),
       grade: &(&1.grade || 0),
-      coverImage: :cover_picture
+      coverImage: :cover_picture,
+      private: &password_protected?(&1.password)
     })
   end
 
@@ -51,4 +52,8 @@ defmodule CadetWeb.AssessmentsView do
       }
     )
   end
+
+  defp password_protected?(nil), do: false
+
+  defp password_protected?(_), do: true
 end

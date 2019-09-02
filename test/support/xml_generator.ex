@@ -39,6 +39,7 @@ defmodule Cadet.Test.XMLGenerator do
       content([
         task(
           map_convert_keys(assessment, %{
+            access: :access,
             type: :kind,
             number: :number,
             open_at: :startdate,
@@ -47,6 +48,7 @@ defmodule Cadet.Test.XMLGenerator do
             story: :story
           }),
           [
+            password(assessment.password),
             reading(assessment.reading),
             websummary(assessment.summary_short),
             text(assessment.summary_long),
@@ -213,7 +215,12 @@ defmodule Cadet.Test.XMLGenerator do
         type -> type
       end)
 
-    {"TASK", map_permit_keys(attrs, ~w(kind number startdate duedate title story)a), children}
+    {"TASK", map_permit_keys(attrs, ~w(kind number startdate duedate title story access)a),
+     children}
+  end
+
+  defp password(content) do
+    {"PASSWORD", nil, content}
   end
 
   defp reading(content) do

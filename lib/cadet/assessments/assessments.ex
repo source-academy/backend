@@ -121,7 +121,47 @@ defmodule Cadet.Assessments do
     |> Repo.one()
   end
 
-  def assessment_with_questions_and_answers(id, user = %User{}) when is_ecto_id(id) do
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{password: nil},
+        user = %User{},
+        nil
+      ) do
+    assessment_with_questions_and_answers(assessment, user)
+  end
+
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{password: nil},
+        user = %User{},
+        _
+      ) do
+    assessment_with_questions_and_answers(assessment, user)
+  end
+
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{password: password},
+        user = %User{},
+        given_password
+      ) do
+    cond do
+      Timex.after?(Timex.now(), assessment.close_at) ->
+        assessment_with_questions_and_answers(assessment, user)
+
+      match?({:ok, _}, find_submission(user, assessment)) ->
+        assessment_with_questions_and_answers(assessment, user)
+
+      given_password == nil ->
+        {:error, {:forbidden, "Missing Password."}}
+
+      password == given_password ->
+        assessment_with_questions_and_answers(assessment, user)
+
+      true ->
+        {:error, {:forbidden, "Invalid Password."}}
+    end
+  end
+
+  def assessment_with_questions_and_answers(id, user = %User{}, password)
+      when is_ecto_id(id) do
     assessment =
       Assessment
       |> where(id: ^id)
@@ -129,7 +169,7 @@ defmodule Cadet.Assessments do
       |> Repo.one()
 
     if assessment do
-      assessment_with_questions_and_answers(assessment, user)
+      assessment_with_questions_and_answers(assessment, user, password)
     else
       {:error, {:bad_request, "Assessment not found"}}
     end
@@ -159,6 +199,10 @@ defmodule Cadet.Assessments do
     else
       {:error, {:unauthorized, "Assessment not open"}}
     end
+  end
+
+  def assessment_with_questions_and_answers(id, user = %User{}) do
+    assessment_with_questions_and_answers(id, user, nil)
   end
 
   @doc """

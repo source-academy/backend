@@ -32,9 +32,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id, unauthenticated" do
+  describe "POST /:assessment_id, unauthenticated" do
     test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url(1))
+      conn = post(conn, build_url(1))
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
@@ -63,7 +63,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxGrade" => 720,
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
-              "gradingStatus" => "excluded"
+              "gradingStatus" => "excluded",
+              "private" => false
             }
           )
 
@@ -113,7 +114,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxGrade" => 720,
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
-              "gradingStatus" => "excluded"
+              "gradingStatus" => "excluded",
+              "private" => false
             }
           )
 
@@ -126,6 +128,31 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Enum.map(&Map.delete(&1, "grade"))
 
         assert expected == resp
+      end
+    end
+
+    test "render password protected assessments properly", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      for {_role, user} <- users do
+        mission = assessments.mission
+
+        {:ok, _} =
+          mission.assessment
+          |> Assessment.changeset(%{password: "mysupersecretpassword"})
+          |> Repo.update()
+
+        resp =
+          conn
+          |> sign_in(user)
+          |> get(build_url())
+          |> json_response(200)
+          |> Enum.find(&(&1["type"] == "mission"))
+          |> Map.get("private")
+
+        assert resp == true
       end
     end
   end
@@ -193,7 +220,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "GET /assessment_id, all roles" do
+  describe "POST /assessment_id, all roles" do
     test "it renders assessment details", %{
       conn: conn,
       users: users,
@@ -217,7 +244,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_assessments =
             conn
             |> sign_in(user)
-            |> get(build_url(assessment.id))
+            |> post(build_url(assessment.id))
             |> json_response(200)
             |> Map.delete("questions")
 
@@ -306,7 +333,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_questions =
             conn
             |> sign_in(user)
-            |> get(build_url(assessment.id))
+            |> post(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.delete(&1, "answer"))
@@ -361,7 +388,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_libraries =
             conn
             |> sign_in(user)
-            |> get(build_url(assessment.id))
+            |> post(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, "library"))
@@ -396,7 +423,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp_solutions =
           conn
           |> sign_in(user)
-          |> get(build_url(assessment.id))
+          |> post(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["solution"]))
@@ -438,7 +465,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp =
             conn
             |> sign_in(user)
-            |> get(build_url(assessment.id))
+            |> post(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.take(&1, ~w(xp grade)))
@@ -463,7 +490,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_solutions =
             conn
             |> sign_in(user)
-            |> get(build_url(assessment.id))
+            |> post(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["solution"]))
@@ -489,14 +516,14 @@ defmodule CadetWeb.AssessmentsControllerTest do
         conn =
           conn
           |> sign_in(user)
-          |> get(build_url(mission.assessment.id))
+          |> post(build_url(mission.assessment.id))
 
         assert response(conn, 400) == "Assessment not found"
       end
     end
   end
 
-  describe "GET /assessment_id, student" do
+  describe "POST /assessment_id, student" do
     test "it renders previously submitted answers", %{
       conn: conn,
       users: %{student: student},
@@ -519,7 +546,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp_answers =
           conn
           |> sign_in(student)
-          |> get(build_url(assessment.id))
+          |> post(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["answer"]))
@@ -546,7 +573,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp_room_id =
           conn
           |> sign_in(student)
-          |> get(build_url(assessment.id))
+          |> post(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["roomId"]))
@@ -570,13 +597,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn =
         conn
         |> sign_in(student)
-        |> get(build_url(mission.assessment.id))
+        |> post(build_url(mission.assessment.id))
 
       assert response(conn, 401) == "Assessment not open"
     end
   end
 
-  describe "GET /assessment_id, non-students" do
+  describe "POST /assessment_id, non-students" do
     test "it renders empty answers", %{
       conn: conn,
       users: users,
@@ -589,7 +616,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_answers =
             conn
             |> sign_in(user)
-            |> get(build_url(assessment.id))
+            |> post(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["answer"]))
@@ -617,7 +644,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp =
           conn
           |> sign_in(user)
-          |> get(build_url(mission.assessment.id))
+          |> post(build_url(mission.assessment.id))
           |> json_response(200)
 
         assert resp["id"] == mission.assessment.id
@@ -964,6 +991,134 @@ defmodule CadetWeb.AssessmentsControllerTest do
     grade_question.(question_two)
 
     assert get_grading_status.() == "graded"
+  end
+
+  describe "Password protected assessments render properly" do
+    test "returns 403 when trying to access a password protected assessment without a password",
+         %{
+           conn: conn,
+           users: users
+         } do
+      assessment = insert(:assessment, %{type: "practical", is_published: true})
+
+      assessment
+      |> Assessment.changeset(%{
+        password: "mysupersecretpassword",
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: +1)
+      })
+      |> Repo.update!()
+
+      for {_role, user} <- users do
+        conn = conn |> sign_in(user) |> post(build_url(assessment.id))
+        assert response(conn, 403) == "Missing Password."
+      end
+    end
+
+    test "returns 403 when password is wrong/invalid", %{
+      conn: conn,
+      users: users
+    } do
+      assessment = insert(:assessment, %{type: "practical", is_published: true})
+
+      assessment
+      |> Assessment.changeset(%{
+        password: "mysupersecretpassword",
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: +1)
+      })
+      |> Repo.update!()
+
+      for {_role, user} <- users do
+        conn =
+          conn
+          |> sign_in(user)
+          |> post(build_url(assessment.id), %{:password => "wrong"})
+
+        assert response(conn, 403) == "Invalid Password."
+      end
+    end
+
+    test "allow users with preexisting submission to access private assessment without a password",
+         %{
+           conn: conn,
+           users: %{student: student}
+         } do
+      assessment = insert(:assessment, %{type: "practical", is_published: true})
+
+      assessment
+      |> Assessment.changeset(%{
+        password: "mysupersecretpassword",
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: +1)
+      })
+      |> Repo.update!()
+
+      insert(:submission, %{assessment: assessment, student: student})
+      conn = conn |> sign_in(student) |> post(build_url(assessment.id))
+      assert response(conn, 200)
+    end
+
+    test "ignore password when assessment is not password protected", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      assessment = assessments.mission.assessment
+
+      for {_role, user} <- users do
+        conn =
+          conn
+          |> sign_in(user)
+          |> post(build_url(assessment.id), %{:password => "wrong"})
+          |> json_response(200)
+
+        assert conn["id"] == assessment.id
+      end
+    end
+
+    test "render assessment when password is correct", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      assessment = assessments.mission.assessment
+
+      {:ok, _} =
+        assessment
+        |> Assessment.changeset(%{password: "mysupersecretpassword"})
+        |> Repo.update()
+
+      for {_role, user} <- users do
+        conn =
+          conn
+          |> sign_in(user)
+          |> post(build_url(assessment.id), %{:password => "mysupersecretpassword"})
+          |> json_response(200)
+
+        assert conn["id"] == assessment.id
+      end
+    end
+
+    test "permit global access to private assessment after closed", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: %{mission: mission}
+    } do
+      mission.assessment
+      |> Assessment.changeset(%{
+        open_at: Timex.shift(Timex.now(), days: -2),
+        close_at: Timex.shift(Timex.now(), days: -1)
+      })
+      |> Repo.update!()
+
+      conn =
+        conn
+        |> sign_in(student)
+        |> post(build_url(mission.assessment.id))
+
+      assert response(conn, 200)
+    end
   end
 
   defp build_url, do: "/v1/assessments/"
