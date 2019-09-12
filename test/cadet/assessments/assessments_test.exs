@@ -12,8 +12,7 @@ defmodule Cadet.AssessmentsTest do
         Assessments.create_assessment(%{
           title: title_string,
           type: type,
-          number:
-            "#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{Enum.random(0..10)}",
+          number: "#{type |> Atom.to_string() |> String.upcase()}#{Enum.random(0..10)}",
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: 7)
         })
