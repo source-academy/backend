@@ -11,6 +11,7 @@ data "aws_iam_policy_document" "assets" {
       "${aws_lambda_function.grader.arn}",
       "${aws_s3_bucket.assets.arn}",
       "${aws_s3_bucket.assets.arn}/*",
+      "${aws_s3_bucket.materials.arn}",
     ]
   }
 }
