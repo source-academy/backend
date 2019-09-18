@@ -28,7 +28,7 @@ defmodule CadetWeb.SourcecastControllerTest do
               "name" => &1.uploader.name,
               "id" => &1.uploader.id
             },
-            "url" => Cadet.Course.Upload.url({&1.audio, &1})
+            "url" => Cadet.Course.SourcecastUpload.url({&1.audio, &1})
           }
         )
 
@@ -76,7 +76,7 @@ defmodule CadetWeb.SourcecastControllerTest do
               "name" => &1.uploader.name,
               "id" => &1.uploader.id
             },
-            "url" => Cadet.Course.Upload.url({&1.audio, &1})
+            "url" => Cadet.Course.SourcecastUpload.url({&1.audio, &1})
           }
         )
 
