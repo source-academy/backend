@@ -10,12 +10,23 @@ resource "aws_s3_bucket" "assets" {
 }
 
 resource "aws_s3_bucket" "materials" {
-  bucket        = "${var.env}-cadet-materials"
+  bucket        = "cadet-materials"
   acl           = "public-read"
   force_destroy = true
 
   tags {
     Name        = "${title(var.env)} Cadet Materials"
+    Environment = "${var.env}"
+  }
+}
+
+resource "aws_s3_bucket" "sourcecasts" {
+  bucket        = "cadet-sourcecasts"
+  acl           = "public-read"
+  force_destroy = true
+
+  tags {
+    Name        = "${title(var.env)} Cadet Sourcecasts"
     Environment = "${var.env}"
   }
 }

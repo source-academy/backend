@@ -12,6 +12,7 @@ data "aws_iam_policy_document" "assets" {
       "${aws_s3_bucket.assets.arn}",
       "${aws_s3_bucket.assets.arn}/*",
       "${aws_s3_bucket.materials.arn}",
+      "${aws_s3_bucket.sourcecasts.arn}",
     ]
   }
 }

@@ -22,7 +22,7 @@ defmodule CadetWeb.MaterialView do
 
   defp url_builder(material) do
     if Map.has_key?(material, :file) do
-      Cadet.Course.Upload.url({material.file, material})
+      Cadet.Course.MaterialUpload.url({material.file, material})
     else
       nil
     end

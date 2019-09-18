@@ -8,7 +8,7 @@ defmodule Cadet.Course do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Category, Group, Material, Sourcecast, Upload}
+  alias Cadet.Course.{Category, Group, Material, MaterialUpload, Sourcecast, SourcecastUpload}
 
   @upload_file_roles ~w(admin staff)a
 
@@ -122,7 +122,7 @@ defmodule Cadet.Course do
   def delete_sourcecast_file(_deleter = %User{role: role}, id) do
     if role in @upload_file_roles do
       sourcecast = Repo.get(Sourcecast, id)
-      Upload.delete({sourcecast.audio, sourcecast})
+      SourcecastUpload.delete({sourcecast.audio, sourcecast})
       Repo.delete(sourcecast)
     else
       {:error, {:forbidden, "User is not permitted to delete"}}
@@ -183,7 +183,7 @@ defmodule Cadet.Course do
   def delete_material(_deleter = %User{role: role}, id) do
     if role in @upload_file_roles do
       material = Repo.get(Material, id)
-      Upload.delete({material.file, material})
+      MaterialUpload.delete({material.file, material})
       Repo.delete(material)
     else
       {:error, {:forbidden, "User is not permitted to delete"}}

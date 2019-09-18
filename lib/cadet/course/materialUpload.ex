@@ -1,12 +1,14 @@
-defmodule Cadet.Course.Upload do
+defmodule Cadet.Course.MaterialUpload do
   @moduledoc """
-  Represents an uploaded file
+  Represents an uploaded file for Material
   """
   use Arc.Definition
   use Arc.Ecto.Definition
 
-  @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .wav .xls .xlsx)
+  @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .xls .xlsx)
   @versions [:original]
+
+  def bucket, do: "cadet-materials"
 
   def storage_dir(_, _) do
     env = Application.get_env(:cadet, :environment)
