@@ -10,7 +10,7 @@ resource "aws_s3_bucket" "assets" {
 }
 
 resource "aws_s3_bucket" "materials" {
-  bucket        = "cadet-materials"
+  bucket        = "${var.env}-cadet-materials"
   acl           = "public-read"
   force_destroy = true
 
@@ -21,7 +21,7 @@ resource "aws_s3_bucket" "materials" {
 }
 
 resource "aws_s3_bucket" "sourcecasts" {
-  bucket        = "cadet-sourcecasts"
+  bucket        = "${var.env}-cadet-sourcecasts"
   acl           = "public-read"
   force_destroy = true
 

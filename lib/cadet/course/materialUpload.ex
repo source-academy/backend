@@ -8,7 +8,7 @@ defmodule Cadet.Course.MaterialUpload do
   @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .xls .xlsx)
   @versions [:original]
 
-  def bucket, do: "cadet-materials"
+  def bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:materials_bucket)
 
   def storage_dir(_, _) do
     env = Application.get_env(:cadet, :environment)

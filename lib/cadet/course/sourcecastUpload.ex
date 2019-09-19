@@ -8,7 +8,7 @@ defmodule Cadet.Course.SourcecastUpload do
   @extension_whitelist ~w(.wav)
   @versions [:original]
 
-  def bucket, do: "cadet-sourcecasts"
+  def bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:sourcecasts_bucket)
 
   def storage_dir(_, _) do
     env = Application.get_env(:cadet, :environment)
