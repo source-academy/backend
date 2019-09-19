@@ -27,6 +27,11 @@ $ vim config/secrets.exs
   - A valid `cs1101s_repository`, `cs1101s_rsa_key` is required for the application to 
     run with the `--updater` flag. Otherwise, the default values will suffice.
   - A valid `instance_id`, `key_id` and `key_secret` are required to use ChatKit's services. Otherwise, the placeholder values can be left as they are.
+```bash
+$ cp config/dev.secrets.exs.example config/dev.secrets.exs
+$ vim config/dev.secrets.exs
+```
+  - Uncomment the relevant section to switch between local storage and AWS S3 storage for development.
 
 2. Install Elixir dependencies
 ```bash
