@@ -153,6 +153,7 @@ defmodule Cadet.Assessments do
         {:error, {:forbidden, "Missing Password."}}
 
       password == given_password ->
+        find_or_create_submission(user, assessment)
         assessment_with_questions_and_answers(assessment, user)
 
       true ->
