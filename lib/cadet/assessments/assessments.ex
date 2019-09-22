@@ -261,7 +261,7 @@ defmodule Cadet.Assessments do
 
   defp build_grading_status(submission_status, a_type, q_count, g_count) do
     case a_type do
-      type when type in [:mission, :sidequest] ->
+      type when type in [:mission, :sidequest, :practical] ->
         cond do
           submission_status != :submitted -> :excluded
           g_count < q_count -> :grading
