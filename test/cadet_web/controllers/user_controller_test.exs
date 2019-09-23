@@ -59,6 +59,7 @@ defmodule CadetWeb.UserControllerTest do
       expected = %{
         "name" => user.name,
         "role" => "#{user.role}",
+        "group" => nil,
         "xp" => 110,
         "grade" => 40,
         "maxGrade" => question.max_grade
@@ -210,6 +211,7 @@ defmodule CadetWeb.UserControllerTest do
       expected = %{
         "name" => user.name,
         "role" => "#{user.role}",
+        "group" => nil,
         "grade" => 0,
         "maxGrade" => 0,
         "xp" => 0

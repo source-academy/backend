@@ -5,6 +5,11 @@ defmodule CadetWeb.UserView do
     %{
       name: user.name,
       role: user.role,
+      group:
+        case user.group do
+          nil -> nil
+          _ -> user.group.name
+        end,
       grade: grade,
       xp: xp,
       maxGrade: max_grade,

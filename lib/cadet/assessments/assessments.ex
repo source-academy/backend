@@ -76,6 +76,12 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def user_with_group(%User{id: id}) do
+    User
+    |> preload(:group)
+    |> Repo.get(id)
+  end
+
   def user_current_story(user = %User{}) do
     {:ok, %{result: story}} =
       Multi.new()

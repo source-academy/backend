@@ -9,7 +9,7 @@ defmodule CadetWeb.UserController do
   import Cadet.Assessments
 
   def index(conn, _) do
-    user = conn.assigns.current_user
+    user = user_with_group(conn.assigns.current_user)
     grade = user_total_grade(user)
     max_grade = user_max_grade(user)
     story = user_current_story(user)
@@ -29,7 +29,7 @@ defmodule CadetWeb.UserController do
   swagger_path :index do
     get("/user")
 
-    summary("Get the name and role of a user")
+    summary("Get the name, role and group of a user")
 
     security([%{JWT: []}])
 
@@ -55,23 +55,29 @@ defmodule CadetWeb.UserController do
               required: true
             )
 
+            group(
+              :string,
+              "Group the user belongs to. May be null if the user does not belong to any group.",
+              required: true
+            )
+
             story(Schema.ref(:UserStory), "Story to displayed to current user. ")
 
             grade(
               :integer,
-              "Amount of grade. Only provided for 'Student'." <>
+              "Amount of grade. Only provided for 'Student'. " <>
                 "Value will be 0 for non-students."
             )
 
             maxGrade(
               :integer,
-              "Total maximum grade achievable based on submitted assessments." <>
+              "Total maximum grade achievable based on submitted assessments. " <>
                 "Only provided for 'Student'"
             )
 
             xp(
               :integer,
-              "Amount of xp. Only provided for 'Student'." <> "Value will be 0 for non-students."
+              "Amount of xp. Only provided for 'Student'. " <> "Value will be 0 for non-students."
             )
           end
         end,
