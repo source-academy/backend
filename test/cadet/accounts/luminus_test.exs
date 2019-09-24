@@ -31,14 +31,14 @@ defmodule Cadet.Accounts.LuminusTest do
   describe "Do an API call; methods with empty string for invalid token" do
     test "With a valid token" do
       use_cassette "luminus/api_call#1" do
-        assert {:ok, resp} = Luminus.api_call("module", token: @token)
+        assert {:ok, resp} = Luminus.api_call("modulev3", token: @token)
         assert %{"data" => _} = resp
       end
     end
 
     test "With an invalid token" do
       use_cassette "luminus/api_call#2" do
-        assert {:error, :bad_request} = Luminus.api_call("module", token: @token <> "Z")
+        assert {:error, :bad_request} = Luminus.api_call("modulev3", token: @token <> "Z")
       end
     end
   end

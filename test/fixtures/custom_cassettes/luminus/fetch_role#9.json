@@ -9,7 +9,7 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://luminus.azure-api.net/module?"
+      "url": "https://luminus.azure-api.net/modulev3?"
     },
     "response": {
       "binary": false,
