@@ -129,7 +129,7 @@ defmodule Cadet.Accounts.Luminus do
 
   """
   def fetch_details(token) do
-    case api_call("user/Profile", token: token) do
+    case api_call("userv3/Profile", token: token) do
       {:ok, %{"userID" => nusnet_id, "userNameOriginal" => name}} -> {:ok, nusnet_id, name}
       _ -> {:error, :bad_request}
     end
@@ -167,7 +167,7 @@ defmodule Cadet.Accounts.Luminus do
   """
 
   def fetch_role(token) do
-    case api_call("module", token: token) do
+    case api_call("modulev3", token: token) do
       {:ok, modules} ->
         parse_modules(modules)
 
@@ -212,8 +212,9 @@ defmodule Cadet.Accounts.Luminus do
   """
   def api_call(method, queries \\ [], token: token) do
     headers = [{"Ocp-Apim-Subscription-Key", @api_key}, {"Authorization", "Bearer #{token}"}]
+    options = [recv_timeout: 1000]
 
-    case HTTPoison.get(api_url(method, queries), headers) do
+    case HTTPoison.get(api_url(method, queries), headers, options) do
       {:ok, %{body: body, status_code: 200}} ->
         {:ok, Jason.decode!(body)}
 

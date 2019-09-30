@@ -9,7 +9,7 @@
       "method": "get",
       "options": [],
       "request_body": "",
-      "url": "https://luminus.azure-api.net/user/Profile?"
+      "url": "https://luminus.azure-api.net/userv3/Profile?"
     },
     "response": {
       "binary": false,
