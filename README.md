@@ -91,4 +91,6 @@ Generated with [DBeaver](https://dbeaver.io/) on 8 September 2019
 
 ## License
 
-MIT
+Apache License 2.0
+
+For more information on the open-source license used, please [click here](https://github.com/source-academy/cadet/blob/master/LICENSE).
