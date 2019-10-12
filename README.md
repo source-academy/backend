@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/source-academy/cadet.svg?branch=master)](https://travis-ci.org/source-academy/cadet)
 [![Coverage Status](https://coveralls.io/repos/github/source-academy/cadet/badge.svg?branch=master)](https://coveralls.io/github/source-academy/cadet?branch=master)
 [![Inline docs](http://inch-ci.org/github/source-academy/cadet.svg)](http://inch-ci.org/github/source-academy/cadet)
+[![License](https://img.shields.io/github/license/source-academy/cadet)](https://github.com/source-academy/cadet/blob/master/LICENSE)
 
 Cadet is the web application powering Source Academy.
 
@@ -88,7 +89,3 @@ Where there is a conflict between the two, the first one (lexmag) shall be the o
 Generated with [DBeaver](https://dbeaver.io/) on 8 September 2019
 
 ![Entity-Relationship Diagram for cadet](schema.png)
-
-## License
-
-MIT
