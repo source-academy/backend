@@ -136,18 +136,22 @@ defmodule Cadet.Course do
     create_material_folder(nil, uploader, attrs)
   end
 
-  def create_material_folder(category, uploader = %User{}, attrs = %{}) do
-    changeset =
-      %Category{}
-      |> Category.changeset(attrs)
-      |> put_assoc(:uploader, uploader)
+  def create_material_folder(category, uploader = %User{role: role}, attrs = %{}) do
+    if role in @upload_file_roles do
+      changeset =
+        %Category{}
+        |> Category.changeset(attrs)
+        |> put_assoc(:uploader, uploader)
 
-    case category do
-      %Category{} ->
-        Repo.insert(put_assoc(changeset, :category, category))
+      case category do
+        %Category{} ->
+          Repo.insert(put_assoc(changeset, :category, category))
 
-      _ ->
-        Repo.insert(changeset)
+        _ ->
+          Repo.insert(changeset)
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to create folder"}}
     end
   end
 
