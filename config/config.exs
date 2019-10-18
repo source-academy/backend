@@ -51,6 +51,11 @@ config :ex_aws,
 
 config :ex_aws, :hackney_opts, recv_timeout: 660_000
 
+# Configure Arc File Upload
+config :arc, virtual_host: true
+# Or uncomment below to use local storage
+# config :arc, storage: Arc.Storage.Local
+
 # Configures Sentry
 config :sentry,
   included_environments: [:prod],
