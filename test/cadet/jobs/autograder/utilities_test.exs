@@ -38,25 +38,6 @@ defmodule Cadet.Autograder.UtilitiesTest do
                get_assessments_ids(Utilities.fetch_assessments_due_yesterday())
     end
 
-    test "it return only paths, missions, sidequests" do
-      assessments =
-        for type <- AssessmentType.__enum_map__() do
-          insert(:assessment, %{
-            is_published: true,
-            open_at: Timex.shift(Timex.now(), days: -5),
-            close_at: Timex.shift(Timex.now(), hours: -4),
-            type: type
-          })
-        end
-
-      for assessment <- assessments do
-        insert_list(2, :programming_question, %{assessment: assessment})
-      end
-
-      assert get_assessments_ids(Enum.filter(assessments, &(&1.type != :contest))) ==
-               get_assessments_ids(Utilities.fetch_assessments_due_yesterday())
-    end
-
     test "it returns assessment questions in sorted order" do
       assessment =
         insert(:assessment, %{

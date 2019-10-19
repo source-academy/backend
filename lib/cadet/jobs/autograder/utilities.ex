@@ -38,7 +38,6 @@ defmodule Cadet.Autograder.Utilities do
     Assessment
     |> where(is_published: true)
     |> where([a], a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1))
-    |> where([a], a.type != "contest")
     |> join(:inner, [a], q in assoc(a, :questions))
     |> preload([_, q], questions: q)
     |> Repo.all()
