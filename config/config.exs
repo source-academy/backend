@@ -42,9 +42,19 @@ config :ex_aws,
     {:system, "AWS_SECRET_ACCESS_KEY"},
     {:awscli, "default", 30}
   ],
-  region: "ap-southeast-1"
+  region: "ap-southeast-1",
+  s3: [
+    scheme: "https://",
+    host: "s3.ap-southeast-1.amazonaws.com",
+    region: "ap-southeast-1"
+  ]
 
 config :ex_aws, :hackney_opts, recv_timeout: 660_000
+
+# Configure Arc File Upload
+config :arc, virtual_host: true
+# Or uncomment below to use local storage
+# config :arc, storage: Arc.Storage.Local
 
 # Configures Sentry
 config :sentry,
@@ -53,9 +63,6 @@ config :sentry,
   enable_source_code_context: true,
   root_source_code_path: File.cwd!(),
   context_lines: 5
-
-# Configure Arc File Upload
-config :arc, storage: Arc.Storage.Local
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

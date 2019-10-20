@@ -2,7 +2,7 @@ defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
   alias Cadet.{Course, Repo}
-  alias Cadet.Course.{Category, Group, Material, Sourcecast, Upload}
+  alias Cadet.Course.{Category, Group, Material, MaterialUpload, Sourcecast, SourcecastUpload}
 
   describe "Material" do
     setup do
@@ -66,7 +66,7 @@ defmodule Cadet.CourseTest do
         })
 
       assert {:ok, material} = result
-      path = Upload.url({material.file, material})
+      path = MaterialUpload.url({material.file, material})
       assert path =~ "/uploads/test/materials/upload.txt"
     end
 
@@ -87,7 +87,7 @@ defmodule Cadet.CourseTest do
         })
 
       assert {:ok, material} = result
-      path = Upload.url({material.file, material})
+      path = MaterialUpload.url({material.file, material})
       assert path =~ "/uploads/test/materials/upload.txt"
 
       deleter = insert(:user, %{role: :staff})
@@ -175,7 +175,7 @@ defmodule Cadet.CourseTest do
 
   describe "Sourcecast" do
     setup do
-      on_exit(fn -> File.rm_rf!("uploads/test/materials") end)
+      on_exit(fn -> File.rm_rf!("uploads/test/sourcecasts") end)
     end
 
     test "upload file to folder then delete it" do
@@ -196,13 +196,13 @@ defmodule Cadet.CourseTest do
         })
 
       assert {:ok, sourcecast} = result
-      path = Upload.url({sourcecast.audio, sourcecast})
-      assert path =~ "/uploads/test/materials/upload.wav"
+      path = SourcecastUpload.url({sourcecast.audio, sourcecast})
+      assert path =~ "/uploads/test/sourcecasts/upload.wav"
 
       deleter = insert(:user, %{role: :staff})
       assert {:ok, _} = Course.delete_sourcecast_file(deleter, sourcecast.id)
       assert Repo.get(Sourcecast, sourcecast.id) == nil
-      refute File.exists?("uploads/test/materials/upload.wav")
+      refute File.exists?("uploads/test/sourcecasts/upload.wav")
     end
   end
 

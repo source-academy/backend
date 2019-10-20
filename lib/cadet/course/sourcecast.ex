@@ -6,13 +6,13 @@ defmodule Cadet.Course.Sourcecast do
   use Arc.Ecto.Schema
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.Upload
+  alias Cadet.Course.SourcecastUpload
 
   schema "sourcecasts" do
     field(:title, :string)
     field(:playbackData, :string)
     field(:description, :string)
-    field(:audio, Upload.Type)
+    field(:audio, SourcecastUpload.Type)
 
     belongs_to(:uploader, User)
 
