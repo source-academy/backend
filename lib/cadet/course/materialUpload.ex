@@ -11,8 +11,12 @@ defmodule Cadet.Course.MaterialUpload do
   def bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:materials_bucket)
 
   def storage_dir(_, _) do
-    env = Application.get_env(:cadet, :environment)
-    "uploads/#{env}/materials"
+    if Mix.env() != :test do
+      ""
+    else
+      env = Application.get_env(:cadet, :environment)
+      "uploads/#{env}/materials"
+    end
   end
 
   def validate({file, _}) do
