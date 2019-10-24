@@ -12,8 +12,8 @@ defmodule CadetWeb.MaterialView do
     transform_map_for_view(material, %{
       title: :title,
       description: :description,
-      inserted_at: :inserted_at,
-      updated_at: :updated_at,
+      inserted_at: &format_datetime(&1.inserted_at),
+      updated_at: &format_datetime(&1.updated_at),
       id: :id,
       uploader: &transform_map_for_view(&1.uploader, [:name, :id]),
       url: &url_builder(&1)
