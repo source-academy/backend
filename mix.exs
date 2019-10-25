@@ -84,7 +84,7 @@ defmodule Cadet.Mixfile do
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.3.1", only: [:dev, :test]},
       {:mock, "~> 0.3.0", only: :test},
-      {:cors_plug, "~> 1.5"}
+      {:cors_plug, "~> 2.0"}
     ]
   end
 
