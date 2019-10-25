@@ -52,8 +52,8 @@ config :phoenix, :stacktrace_depth, 20
 # Configure your database
 config :cadet, Cadet.Repo,
   username: "postgres",
-  password: "password",
-  database: "cadet",
+  password: "postgres",
+  database: "cadet_dev",
   hostname: "localhost",
   pool_size: 10
 

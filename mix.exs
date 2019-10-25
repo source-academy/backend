@@ -83,8 +83,7 @@ defmodule Cadet.Mixfile do
       {:exvcr, "~> 0.10", only: :test},
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.3.1", only: [:dev, :test]},
-      {:mock, "~> 0.3.0", only: :test},
-      {:cors_plug, "~> 1.5"}
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 
