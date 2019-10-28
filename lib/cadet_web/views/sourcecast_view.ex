@@ -10,12 +10,12 @@ defmodule CadetWeb.SourcecastView do
       id: :id,
       title: :title,
       description: :description,
-      inserted_at: :inserted_at,
-      updated_at: :updated_at,
+      inserted_at: &format_datetime(&1.inserted_at),
+      updated_at: &format_datetime(&1.updated_at),
       audio: :audio,
       playbackData: :playbackData,
       uploader: &transform_map_for_view(&1.uploader, [:name, :id]),
-      url: &Cadet.Course.Upload.url({&1.audio, &1})
+      url: &Cadet.Course.SourcecastUpload.url({&1.audio, &1})
     })
   end
 end
