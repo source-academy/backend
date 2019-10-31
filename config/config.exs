@@ -84,7 +84,7 @@ config :guardian, Guardian.DB,
   # store all token types if not set
   token_types: ["refresh"],
   # default: 60 minute
-  sweep_interval: 60
+  sweep_interval: 180
 
 # Import secrets, such as the LumiNUS key, or guest account credentials
 # The secret.exs file holds secrets that are useful even in development, and
