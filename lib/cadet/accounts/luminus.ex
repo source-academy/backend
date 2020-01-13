@@ -212,7 +212,7 @@ defmodule Cadet.Accounts.Luminus do
   """
   def api_call(method, queries \\ [], token: token) do
     headers = [{"Ocp-Apim-Subscription-Key", @api_key}, {"Authorization", "Bearer #{token}"}]
-    options = [recv_timeout: 1000]
+    options = [recv_timeout: 10_000]
 
     case HTTPoison.get(api_url(method, queries), headers, options) do
       {:ok, %{body: body, status_code: 200}} ->
