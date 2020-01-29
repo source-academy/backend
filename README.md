@@ -23,10 +23,12 @@ $ cp config/secrets.exs.example config/secrets.exs
 $ vim config/secrets.exs
 ```    
   - A valid `luminus_api_key`, `luminus_client_id`, `luminus_client_secret` and 
-    `luminus_redirect_url` are required for the application to properly authenticate with LumiNUS.
+    `luminus_redirect_url` are required for the application to properly authenticate with LumiNUS.\*
   - A valid `cs1101s_repository`, `cs1101s_rsa_key` is required for the application to 
     run with the `--updater` flag. Otherwise, the default values will suffice.
   - A valid `instance_id`, `key_id` and `key_secret` are required to use ChatKit's services. Otherwise, the placeholder values can be left as they are.
+  
+  \*If you require access to Luminus keys please email Prof Henz at henz@comp.nus.edu.sg to request for a with the email subject heading "Request for Luminus API Keys".
 
 2. Install Elixir dependencies
 ```bash
