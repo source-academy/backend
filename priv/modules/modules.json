@@ -1,0 +1,8 @@
+{
+  "module_dirs": {
+    "BASE": "base_env",
+    "RUNES": "library_runes",
+    "CURVES": "library_curves",
+    "SOUNDS": "library_sounds"
+  }
+}

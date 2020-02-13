@@ -1,0 +1,48 @@
+{
+  "module_name": "CURVES",
+  "module_prefix": "cv",
+  "module_source_files": [
+    "src/gl-matrix.js",
+    "src/webGLhi_graph.js",
+    "src/webGLhi_graph_ce.js",
+    "src/webGLgraphics.js",
+    "src/webGLcurve.js",
+    "src/webGLinit.js"
+  ],
+  "module_symbols": [
+    "make_point",
+    "draw_points_on",
+    "draw_connected",
+    "draw_points_squeezed_to_window",
+    "draw_connected_squeezed_to_window",
+    "draw_connected_full_view",
+    "draw_connected_full_view_proportional",
+    "x_of",
+    "y_of",
+    "unit_line",
+    "unit_line_at",
+    "unit_circle",
+    "connect_rigidly",
+    "connect_ends",
+    "put_in_standard_position",
+    "translate",
+    "scale",
+    "rotate_pi_over_2",
+    "scale_x_y",
+    "gosperize",
+    "gosper_curve",
+    "show_connected_gosper",
+    "repeated",
+    "param_gosper",
+    "param_gosperize",
+    "rotate_around_origin",
+    "arc",
+    "invert"
+  ],
+  "module_undocumented_symbols": [
+    "alternative_unit_circle",
+    "full_view_proportional",
+    "squeeze_full_view",
+    "squeeze_rectangular_portion"
+  ]
+}

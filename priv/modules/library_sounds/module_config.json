@@ -1,0 +1,42 @@
+{
+  "module_name": "SOUND",
+  "module_prefix": "sd",
+  "module_source_files": [
+    "src/microphone.js",
+    "src/riffwave.js",
+    "src/sounds.js",
+    "src/soundToneMatrix.js"
+  ],
+  "module_symbols": [
+    "adsr",
+    "bell",
+    "cello",
+    "consecutively",
+    "get_duration",
+    "get_wave",
+    "init_record",
+    "is_sound",
+    "letter_name_to_frequency",
+    "letter_name_to_midi_note",
+    "make_sound",
+    "midi_note_to_frequency",
+    "noise_sound",
+    "piano",
+    "play",
+    "play_concurrently",
+    "record",
+    "record_for",
+    "sawtooth_sound",
+    "silence_sound",
+    "simultaneously",
+    "sine_sound",
+    "square_sound",
+    "stacking_adsr",
+    "stop",
+    "triangle_sound",
+    "trombone",
+    "violin"
+  ],
+  "module_undocumented_symbols": [
+  ]
+}

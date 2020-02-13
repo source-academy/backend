@@ -16,6 +16,10 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
+  pipeline :static do
+    plug(Plug.Static, at: "/static", from: "priv")
+  end
+
   # Public Pages
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
@@ -53,6 +57,11 @@ defmodule CadetWeb.Router do
 
     post("/chat/token", ChatController, :index)
     post("/chat/notify", ChatController, :notify)
+  end
+
+  scope "/static", CadetWeb do
+    pipe_through(:static)
+    get "/*path", ErrorController, :notfound
   end
 
   # Other scopes may use custom stacks.

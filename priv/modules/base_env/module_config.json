@@ -1,0 +1,50 @@
+{
+  "module_name": "BASE",
+  "module_prefix": "",
+  "module_source_files": [
+    "src/list.js",
+    "src/tree.js",
+    "src/core.js"
+  ],
+  "module_symbols": [
+    "pair",
+    "is_pair",
+    "head",
+    "tail",
+    "is_null",
+    "is_list",
+    "list",
+    "length",
+    "map",
+    "reverse",
+    "append",
+    "member",
+    "remove",
+    "equal",
+    "filter",
+    "enum_list",
+    "list_ref",
+    "accumulate",
+    "set_head",
+    "set_tail",
+    "make_empty_tree",
+    "is_tree",
+    "make_tree",
+    "is_empty_tree",
+    "entry",
+    "left_branch",
+    "right_branch",
+    "display",
+    "math_abs"
+  ],
+  "module_undocumented_symbols": [
+    "array_test",
+    "list_to_vector",
+    "vector_to_list",
+    "build_list",
+    "build",
+    "for_each",
+    "remove_all",
+    "assoc"
+  ]
+}
