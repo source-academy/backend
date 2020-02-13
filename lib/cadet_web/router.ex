@@ -61,7 +61,7 @@ defmodule CadetWeb.Router do
 
   scope "/static", CadetWeb do
     pipe_through(:static)
-    get "/*path", ErrorController, :notfound
+    get("/*path", ErrorController, :notfound)
   end
 
   # Other scopes may use custom stacks.
