@@ -96,3 +96,4 @@ Generated with [DBeaver](https://dbeaver.io/) on 8 September 2019
 
 We will use this branch `sa_2021` for the development of the backend of Source
 Academy 2021. Please only target this branch in your SA-2021-related PRs.
+
