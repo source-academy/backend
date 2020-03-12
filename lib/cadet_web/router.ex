@@ -17,7 +17,7 @@ defmodule CadetWeb.Router do
   end
 
   pipeline :static do
-    plug(Plug.Static, at: "/static", from: "priv")
+    plug(Plug.Static, at: "/static", from: "priv/static")
   end
 
   # Public Pages
@@ -61,7 +61,7 @@ defmodule CadetWeb.Router do
 
   scope "/static", CadetWeb do
     pipe_through(:static)
-    get("/*path", ErrorController, :notfound)
+    get("/*path", ErrorController, :not_found)
   end
 
   # Other scopes may use custom stacks.
