@@ -249,7 +249,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       for answer <- answers do
         assert answer.grade == 0
         assert answer.autograding_status == :success
-        assert answer.answer == %{"code" => "// Question not answered by student."}
+        assert answer.answer == %{"code" => "// Question was left blank by the student."}
         assert answer.room_id == nil
       end
 
@@ -313,7 +313,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert answer.grade == 0
           assert answer.xp == 0
           assert answer.autograding_status == :success
-          assert answer.answer == %{"code" => "// Question not answered by student."}
+          assert answer.answer == %{"code" => "// Question was left blank by the student."}
           assert answer.room_id == nil
         end
       end

@@ -146,7 +146,7 @@ defmodule Cadet.Autograder.GradingJob do
        when is_ecto_id(submission_id) do
     answer_content =
       case question_type do
-        :programming -> %{code: "// Question not answered by student."}
+        :programming -> %{code: "// Question was left blank by the student."}
         :mcq -> %{choice_id: 0}
       end
 
