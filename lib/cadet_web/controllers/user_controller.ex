@@ -7,6 +7,7 @@ defmodule CadetWeb.UserController do
   use PhoenixSwagger
 
   import Cadet.Assessments
+  import Cadet.Collectibles
 
   def index(conn, _) do
     user = conn.assigns.current_user
@@ -15,6 +16,8 @@ defmodule CadetWeb.UserController do
     story = user_current_story(user)
     xp = user_total_xp(user)
 
+    collectibles = user_collectibles(user)
+
     render(
       conn,
       "index.json",
@@ -22,7 +25,28 @@ defmodule CadetWeb.UserController do
       grade: grade,
       max_grade: max_grade,
       story: story,
-      xp: xp
+      xp: xp,
+      collectibles: collectibles,
+    )
+  end
+
+  def addCollectibles(conn, pic_nickname, pic_name) do
+    user = conn.assigns.current_user
+    grade = user_total_grade(user)
+    max_grade = user_max_grade(user)
+    story = user_current_story(user)
+    xp = user_total_xp(user)
+    collectibles = add_user_collectibles(user, pic_nickname, pic_name)
+
+    render(
+      conn,
+      "index.json",
+      user: user,
+      grade: grade,
+      max_grade: max_grade,
+      story: story,
+      xp: xp,
+      collectibles: collectibles,
     )
   end
 
@@ -36,6 +60,15 @@ defmodule CadetWeb.UserController do
     produces("application/json")
 
     response(200, "OK", Schema.ref(:UserInfo))
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :addCollectibles do
+    post("/user")
+    summary("add one collectible to the user")
+    security([%{JWT: []}])
+    response(200, "OK")
+    response(400, "Invalid parameters")
     response(401, "Unauthorised")
   end
 
@@ -72,6 +105,11 @@ defmodule CadetWeb.UserController do
             xp(
               :integer,
               "Amount of xp. Only provided for 'Student'." <> "Value will be 0 for non-students."
+            )
+
+            collectibles(
+              :map,
+              "Collectibles users obtained in story." <> " Value will be empty map for non-students."
             )
           end
         end,
