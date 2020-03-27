@@ -1,7 +1,7 @@
 defmodule CadetWeb.UserView do
   use CadetWeb, :view
 
-  def render("index.json", %{user: user, grade: grade, max_grade: max_grade, xp: xp, story: story}) do
+  def render("index.json", %{user: user, grade: grade, max_grade: max_grade, xp: xp, story: story, collectibles: collectibles}) do
     %{
       name: user.name,
       role: user.role,
@@ -12,7 +12,8 @@ defmodule CadetWeb.UserView do
         transform_map_for_view(story, %{
           story: :story,
           playStory: :play_story?
-        })
+        }),
+      collectibles: collectibles
     }
   end
 end
