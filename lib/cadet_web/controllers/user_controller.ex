@@ -6,6 +6,8 @@ defmodule CadetWeb.UserController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
+  import Ecto.Changeset
+
   import Cadet.Assessments
   import Cadet.Collectibles
 
@@ -15,7 +17,6 @@ defmodule CadetWeb.UserController do
     max_grade = user_max_grade(user)
     story = user_current_story(user)
     xp = user_total_xp(user)
-
     collectibles = user_collectibles(user)
 
     render(
@@ -28,26 +29,7 @@ defmodule CadetWeb.UserController do
       xp: xp,
       collectibles: collectibles,
     )
-  end
 
-  def addCollectibles(conn, pic_nickname, pic_name) do
-    user = conn.assigns.current_user
-    grade = user_total_grade(user)
-    max_grade = user_max_grade(user)
-    story = user_current_story(user)
-    xp = user_total_xp(user)
-    collectibles = add_user_collectibles(user, pic_nickname, pic_name)
-
-    render(
-      conn,
-      "index.json",
-      user: user,
-      grade: grade,
-      max_grade: max_grade,
-      story: story,
-      xp: xp,
-      collectibles: collectibles,
-    )
   end
 
   swagger_path :index do
@@ -63,14 +45,36 @@ defmodule CadetWeb.UserController do
     response(401, "Unauthorised")
   end
 
-  swagger_path :addCollectibles do
+  def collectiblesUpdate(conn, %{"picnickname" => pic_nickname, "picname" => pic_name}) do
+    user = conn.assigns[:current_user]
+    case Collectibles.update_collectibles(pic_nickname, pic_name, user) do
+      {:ok, _} ->
+        text(conn, "OK")
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  swagger_path :collectiblesUpdate do
     post("/user")
     summary("add one collectible to the user")
     security([%{JWT: []}])
+    consumes("application/json")
+    produces("application/json")
+    parameters do
+      picNickname(:path, :string, "picture nickname", required: true)
+      questionId(:path, :string, "picture name", required: true)
+    end
     response(200, "OK")
     response(400, "Invalid parameters")
     response(401, "Unauthorised")
   end
+
+
+
+
 
   def swagger_definitions do
     %{
