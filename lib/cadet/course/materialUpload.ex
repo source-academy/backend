@@ -5,7 +5,7 @@ defmodule Cadet.Course.MaterialUpload do
   use Arc.Definition
   use Arc.Ecto.Definition
 
-  @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .xls .xlsx)
+  @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .xls .xlsx .xml)
   @versions [:original]
 
   def bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:materials_bucket)
