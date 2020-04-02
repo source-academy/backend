@@ -6,10 +6,11 @@ defmodule CadetWeb.UserController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  import Ecto.Changeset
+  # import Ecto.Changeset
 
   import Cadet.Assessments
-  import Cadet.Collectibles
+  import Cadet.GameStates
+  import Ecto.Repo
 
   def index(conn, _) do
     user = conn.assigns.current_user
@@ -17,8 +18,7 @@ defmodule CadetWeb.UserController do
     max_grade = user_max_grade(user)
     story = user_current_story(user)
     xp = user_total_xp(user)
-    collectibles = user_collectibles(user)
-
+    game_states = user_game_states(user)
     render(
       conn,
       "index.json",
@@ -27,9 +27,8 @@ defmodule CadetWeb.UserController do
       max_grade: max_grade,
       story: story,
       xp: xp,
-      collectibles: collectibles,
+      game_states: game_states
     )
-
   end
 
   swagger_path :index do
@@ -45,9 +44,14 @@ defmodule CadetWeb.UserController do
     response(401, "Unauthorised")
   end
 
-  def collectiblesUpdate(conn, %{"picnickname" => pic_nickname, "picname" => pic_name}) do
+  def collectibles_update(conn, %{"picnickname" => pic_nickname, "picname" => pic_name}) do
     user = conn.assigns[:current_user]
-    case Collectibles.update_collectibles(pic_nickname, pic_name, user) do
+    Cadet.GameStates.update_collectibles(pic_nickname, pic_name, user)
+    '''
+
+    # Error reporting part, to be further implemented.
+
+    case Cadet.GameStates.update_collectibles(pic_nickname, pic_name, user) do
       {:ok, _} ->
         text(conn, "OK")
       {:error, {status, message}} ->
@@ -55,10 +59,11 @@ defmodule CadetWeb.UserController do
         |> put_status(status)
         |> text(message)
     end
+    '''
   end
 
-  swagger_path :collectiblesUpdate do
-    post("/user")
+  swagger_path :collectibles_update do
+    put("/user/collectibles")
     summary("add one collectible to the user")
     security([%{JWT: []}])
     consumes("application/json")
@@ -72,9 +77,16 @@ defmodule CadetWeb.UserController do
     response(401, "Unauthorised")
   end
 
+  '''
+  # to do
+  def save_data_update do
 
+  end
 
+  swagger_path :save_data_update do
 
+  end
+  '''
 
   def swagger_definitions do
     %{
@@ -111,9 +123,9 @@ defmodule CadetWeb.UserController do
               "Amount of xp. Only provided for 'Student'." <> "Value will be 0 for non-students."
             )
 
-            collectibles(
+            game_states(
               :map,
-              "Collectibles users obtained in story." <> " Value will be empty map for non-students."
+              "States for user's game, including users' collectibles and save data." <> " Value will be a map of empty maps for non-students."
             )
           end
         end,
