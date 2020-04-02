@@ -50,8 +50,9 @@ defmodule CadetWeb.Router do
     post("/notification/acknowledge", NotificationController, :acknowledge)
 
     get("/user", UserController, :index)
-    post("/user", UserController, :collectiblesUpdate)
-    
+    put("/user/collectibles", UserController, :collectible_update)
+    put("/user/game_states", UserController, :save_data_update)
+
     post("/chat/token", ChatController, :index)
     post("/chat/notify", ChatController, :notify)
   end
