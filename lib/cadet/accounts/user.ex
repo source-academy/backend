@@ -14,7 +14,7 @@ defmodule Cadet.Accounts.User do
     field(:name, :string)
     field(:role, Role)
     field(:nusnet_id, :string)
-    field(:collectibles, :map)
+    field(:game_states, :map)
     belongs_to(:group, Group)
     timestamps()
   end
