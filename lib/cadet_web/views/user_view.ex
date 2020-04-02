@@ -1,7 +1,7 @@
 defmodule CadetWeb.UserView do
   use CadetWeb, :view
 
-  def render("index.json", %{user: user, grade: grade, max_grade: max_grade, xp: xp, story: story, collectibles: collectibles}) do
+  def render("index.json", %{user: user, grade: grade, max_grade: max_grade, xp: xp, story: story, game_states: game_states}) do
     %{
       name: user.name,
       role: user.role,
@@ -13,7 +13,7 @@ defmodule CadetWeb.UserView do
           story: :story,
           playStory: :play_story?
         }),
-      collectibles: collectibles
+      game_states: game_states
     }
   end
 end
