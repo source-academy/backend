@@ -5834,7 +5834,9 @@
     var flattened_rune_list = generateFlattenedRuneList(rune);
     drawWithWebGL(flattened_rune_list, drawRune);
     copy_viewport(gl.canvas, frame);
-    return new ShapeDrawn(frame);
+    const panel = document.getElementById('journey-library-panel');
+    panel.innerHTML = '';
+    panel.appendChild(frame)
   }
 
   /**
