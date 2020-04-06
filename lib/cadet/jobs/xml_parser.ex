@@ -77,14 +77,15 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
-  @spec parse_xml(String.t()) :: :ok | :error
-  def parse_xml(xml) do
+  @spec parse_xml(String.t(), boolean()) :: :ok | {:ok, String.t} | {:error, {atom(), String.t}}
+  def parse_xml(xml, force_update \\ false) do
     with {:ok, assessment_params} <- process_assessment(xml),
          {:ok, questions_params} <- process_questions(xml),
          {:ok, %{assessment: assessment}} <-
            Assessments.insert_or_update_assessments_and_questions(
              assessment_params,
-             questions_params
+             questions_params,
+             force_update
            ) do
       Logger.info(
         "Created/updated assessment with id: #{assessment.id}, with #{length(questions_params)} questions."
@@ -92,25 +93,49 @@ defmodule Cadet.Updater.XMLParser do
 
       :ok
     else
-      :error ->
-        :error
-
       {:error, stage, %{errors: [assessment: {"is already open", []}]}, _} when is_atom(stage) ->
         Logger.warn("Assessment already open, ignoring...")
-        :ok
+        {:ok, "Assessment already open, ignoring..."}
+
+      {:error, errmsg} ->
+        log_and_return_badrequest(errmsg)
 
       {:error, stage, changeset, _} when is_atom(stage) ->
         log_error_bad_changeset(changeset, stage)
-        :error
+        changeset_error = 
+          changeset
+          |> Map.get(:errors)
+          |> extract_changeset_error_message
+        error_message = "Invalid #{stage} changeset " <> changeset_error
+        log_and_return_badrequest(error_message)
     end
   catch
     # the :erlsom library used by SweetXml will exit if XML is invalid
-    :exit, _ ->
-      :error
+    :exit, parse_error ->
+      error_message = 
+        parse_error
+        |> nested_tuple_to_list()
+        |> List.flatten()
+        |> Enum.reduce("", fn x, acc -> acc <> to_string(x) <> " " end)
+      {:error, {:bad_request, "Invalid XML " <> error_message}}
   end
 
-  @spec process_assessment(String.t()) :: {:ok, map()} | :error
+  defp extract_changeset_error_message(errors_list) do
+    errors_list
+    |> Enum.map(fn {field, {error, _}} -> to_string(field) <> " " <> error end)
+    |> List.foldr("", fn x, acc -> acc <> x <> " " end)
+  end
+
+  @spec process_assessment(String.t()) :: {:ok, map()} | {:error, String.t}
   defp process_assessment(xml) do
+    open_at = 
+      Timex.now()
+      |> Timex.beginning_of_day()
+      |> Timex.shift(days: 3)
+      |> Timex.shift(hours: 4)
+
+    close_at = Timex.shift(open_at, days: 7)
+
     assessment_params =
       xml
       |> xpath(
@@ -118,8 +143,6 @@ defmodule Cadet.Updater.XMLParser do
         access: ~x"./@access"s |> transform_by(&process_access/1),
         type: ~x"./@kind"s |> transform_by(&change_quest_to_sidequest/1),
         title: ~x"./@title"s,
-        open_at: ~x"./@startdate"s |> transform_by(&Timex.parse!(&1, "{ISO:Extended}")),
-        close_at: ~x"./@duedate"s |> transform_by(&Timex.parse!(&1, "{ISO:Extended}")),
         number: ~x"./@number"s,
         story: ~x"./@story"s,
         cover_picture: ~x"./@coverimage"s,
@@ -128,7 +151,9 @@ defmodule Cadet.Updater.XMLParser do
         summary_long: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
         password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1)
       )
-      |> Map.put(:is_published, true)
+      |> Map.put(:is_published, false)
+      |> Map.put(:open_at, open_at)
+      |> Map.put(:close_at, close_at)
 
     if assessment_params.access === "public" do
       Map.put(assessment_params, :password, nil)
@@ -138,21 +163,12 @@ defmodule Cadet.Updater.XMLParser do
       Map.put(assessment_params, :password, "")
     end
 
-    if verify_has_time_offset(assessment_params) do
-      {:ok, assessment_params}
-    else
-      Logger.error("Time does not have offset specified.")
-      :error
-    end
+    {:ok, assessment_params}
+    
   rescue
-    e in Timex.Parse.ParseError ->
-      Logger.error("Time does not conform to ISO8601 DateTime: #{e.message}")
-      :error
-
     # This error is raised by xpath/3 when TASK does not exist (hence is equal to nil)
     Protocol.UndefinedError ->
-      Logger.error("Missing TASK")
-      :error
+      {:error, "Missing TASK"}
   end
 
   def process_access("private") do
@@ -172,17 +188,7 @@ defmodule Cadet.Updater.XMLParser do
     type
   end
 
-  @spec verify_has_time_offset(%{
-          :open_at => DateTime.t() | NaiveDateTime.t(),
-          :close_at => DateTime.t() | NaiveDateTime.t(),
-          optional(atom()) => any()
-        }) :: boolean()
-  defp verify_has_time_offset(%{open_at: open_at, close_at: close_at}) do
-    # Timex.parse!/2 returns NaiveDateTime when offset is not specified, or DateTime otherwise.
-    open_at.__struct__ != NaiveDateTime and close_at.__struct__ != NaiveDateTime
-  end
-
-  @spec process_questions(String.t()) :: {:ok, [map()]} | :error
+  @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t}
   defp process_questions(xml) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
     default_grading_library = xpath(xml, ~x"//TASK/GRADERDEPLOYMENT"e)
@@ -206,16 +212,16 @@ defmodule Cadet.Updater.XMLParser do
           question
         else
           {:no_missing_attr?, false} ->
-            Logger.error("Missing attribute(s) on PROBLEM")
-            :error
-
-          :error ->
-            :error
+            {:error, "Missing attribute(s) on PROBLEM"}
+          
+          {:error, errmsg} ->
+            {:error, errmsg}
         end
       end)
 
-    if Enum.any?(questions_params, &(&1 == :error)) do
-      :error
+    if Enum.any?(questions_params, &(!is_map(&1))) do
+      error = Enum.find(questions_params, &(!is_map(&1)))
+      error
     else
       {:ok, questions_params}
     end
@@ -228,7 +234,7 @@ defmodule Cadet.Updater.XMLParser do
     Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
   end
 
-  @spec process_question_by_question_type(map()) :: map() | :error
+  @spec process_question_by_question_type(map()) :: map() | {:error, String.t}
   defp process_question_by_question_type(question) do
     question[:entity]
     |> process_question_entity_by_type(question[:type])
@@ -236,8 +242,8 @@ defmodule Cadet.Updater.XMLParser do
       question_map when is_map(question_map) ->
         Map.put(question, :question, question_map)
 
-      :error ->
-        :error
+      {:error, errmsg} ->
+        {:error, errmsg}
     end
   end
 
@@ -288,11 +294,10 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   defp process_question_entity_by_type(_, _) do
-    Logger.error("Invalid question type.")
-    :error
+    {:error, "Invalid question type"}
   end
 
-  @spec process_question_library(map(), any(), any()) :: map() | :error
+  @spec process_question_library(map(), any(), any()) :: map() | {:error, String.t}
   defp process_question_library(question, default_library, default_grading_library) do
     library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
 
@@ -304,8 +309,7 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:library, process_question_library(library))
       |> Map.put(:grading_library, process_question_library(grading_library))
     else
-      Logger.error("Missing DEPLOYMENT")
-      :error
+      {:error, "Missing DEPLOYMENT"}
     end
   end
 
@@ -350,4 +354,15 @@ defmodule Cadet.Updater.XMLParser do
     |> to_string()
     |> String.trim()
   end
+
+  defp log_and_return_badrequest(error_message) do
+    Logger.error(error_message)
+    {:error, {:bad_request, error_message}}
+  end
+
+  defp nested_tuple_to_list(tuple) when is_tuple(tuple) do
+    tuple |> Tuple.to_list |> Enum.map(&nested_tuple_to_list/1)
+  end
+
+  defp nested_tuple_to_list(x), do: x
 end
