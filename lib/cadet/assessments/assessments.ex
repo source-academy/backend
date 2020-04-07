@@ -258,6 +258,10 @@ defmodule Cadet.Assessments do
     assessment_with_questions_and_answers(id, user, nil)
   end
 
+  @doc """
+  Returns a list of assessments with all fields and an indicator showing whether it has been attempted
+  by the supplied user
+  """
   def all_assessments(user = %User{}) do
     assessments =
       Query.all_assessments_with_max_xp_and_grade()
