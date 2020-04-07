@@ -36,6 +36,8 @@ defmodule CadetWeb.Router do
 
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
+    resources("/chapter", ChaptersController, only: [:index, :update])
+
     get("/assessments", AssessmentsController, :index)
     post("/assessments/:id", AssessmentsController, :show)
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
@@ -55,6 +57,8 @@ defmodule CadetWeb.Router do
 
     post("/chat/token", ChatController, :index)
     post("/chat/notify", ChatController, :notify)
+
+    post("/chapter/update/:id", ChaptersController, :update)
   end
 
   # Other scopes may use custom stacks.
