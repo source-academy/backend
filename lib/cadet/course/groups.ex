@@ -7,7 +7,8 @@ defmodule Cadet.Course.Groups do
   # Returns a map where the group names are the key and the value is
   # another map with "avengerName" and "id" as the key
   def get_group_info() do
-    Repo.all(Group)
+    Group
+    |> Repo.all()
     |> Enum.reduce(%{}, fn group, map -> Map.put(map, group.name, map_group_info(group))end)
   end
 
