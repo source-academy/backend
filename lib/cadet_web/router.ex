@@ -51,7 +51,8 @@ defmodule CadetWeb.Router do
 
     get("/user", UserController, :index)
     put("/user/collectibles", UserController, :collectible_update)
-    put("/user/game_states", UserController, :save_data_update)
+    put("/user/save_data/update", UserController, :save_data_update)
+    put("/user/save_data/clear_up", UserController, :save_data_clear_up)
 
     post("/chat/token", ChatController, :index)
     post("/chat/notify", ChatController, :notify)
