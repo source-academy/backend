@@ -47,19 +47,6 @@ defmodule CadetWeb.UserController do
   def collectibles_update(conn, %{"picnickname" => pic_nickname, "picname" => pic_name}) do
     user = conn.assigns[:current_user]
     Cadet.GameStates.update_collectibles(pic_nickname, pic_name, user)
-    '''
-
-    # Error reporting part, to be further implemented.
-
-    case Cadet.GameStates.update_collectibles(pic_nickname, pic_name, user) do
-      {:ok, _} ->
-        text(conn, "OK")
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-    '''
   end
 
   swagger_path :collectibles_update do
@@ -77,16 +64,41 @@ defmodule CadetWeb.UserController do
     response(401, "Unauthorised")
   end
 
-  '''
-  # to do
-  def save_data_update do
-
+  def save_data_update(conn, %{[] => action_sequence, "" => start_location}) do
+    user = conn.assigns[:current_user]
+    Cadet.GameStates.update_save_data(action_sequence, start_location, user)
   end
 
   swagger_path :save_data_update do
-
+    put("/user/save_data/update")
+    summary("update users' game data saved")
+    security([%{JWT: []}])
+    consumes("application/json")
+    produces("application/json")
+    parameters do
+      action(:path, :array, "action sequence", required: true)
+      startLocation(:path, :string, "start location", required: true)
+    end
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(401, "Unauthorised")
   end
-  '''
+
+  def game_state_clear_up(conn, _params) do
+    user = conn.assigns[:current_user]
+    Cadet.GameStates.clear_up(user)
+  end
+
+  swagger_path :save_data_clear_up do
+    put("/user/save_data/clear_up")
+    summary("clear up users' game data saved")
+    security([%{JWT: []}])
+    consumes("application/json")
+    produces("application/json")
+    response(200, "OK")
+    response(401, "Unauthorised")
+  end
+
 
   def swagger_definitions do
     %{
@@ -125,7 +137,10 @@ defmodule CadetWeb.UserController do
 
             game_states(
               :map,
-              "States for user's game, including users' collectibles and save data." <> " Value will be a map of empty maps for non-students."
+              "States for user's game, including users' collectibles and save data.\n"
+              <> "collectibles is a map, and save data is a map with elements action sequence and start location\n"
+              <> "action sequence is an array of string, and start location is a string.\n"
+              <> " Value will be a map of empty maps for non-students."
             )
           end
         end,
