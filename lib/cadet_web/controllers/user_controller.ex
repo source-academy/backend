@@ -5,9 +5,6 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
-
-  # import Ecto.Changeset
-
   import Cadet.Assessments
   import Cadet.GameStates
   import Ecto.Repo
@@ -18,6 +15,7 @@ defmodule CadetWeb.UserController do
     max_grade = user_max_grade(user)
     story = user_current_story(user)
     xp = user_total_xp(user)
+    update(user, %{ collectibles: %{haha: "haha"}, completed_quests: ["haha"]})
     game_states = user_game_states(user)
     render(
       conn,
@@ -33,64 +31,42 @@ defmodule CadetWeb.UserController do
 
   swagger_path :index do
     get("/user")
-
     summary("Get the name and role of a user")
-
     security([%{JWT: []}])
-
     produces("application/json")
-
     response(200, "OK", Schema.ref(:UserInfo))
     response(401, "Unauthorised")
   end
 
-  def collectibles_update(conn, %{"picnickname" => pic_nickname, "picname" => pic_name}) do
+  def update_game_states(conn, new_game_states) do
     user = conn.assigns[:current_user]
-    Cadet.GameStates.update_collectibles(pic_nickname, pic_name, user)
+    Cadet.GameStates.update(new_game_states, user)
   end
 
-  swagger_path :collectibles_update do
-    put("/user/collectibles")
-    summary("add one collectible to the user")
+
+  swagger_path :update_game_states do
+    put("/user/game_states/save")
+    summary("update user's game states")
     security([%{JWT: []}])
     consumes("application/json")
     produces("application/json")
+
     parameters do
-      picNickname(:path, :string, "picture nickname", required: true)
-      questionId(:path, :string, "picture name", required: true)
+      pic_nicname(:path, :map, "new game states", required: true)
     end
     response(200, "OK")
     response(400, "Invalid parameters")
     response(401, "Unauthorised")
   end
 
-  def save_data_update(conn, %{[] => action_sequence, "" => start_location}) do
+
+  def clear_up_game_states(conn, _) do
     user = conn.assigns[:current_user]
-    Cadet.GameStates.update_save_data(action_sequence, start_location, user)
+    Cadet.GameStates.clear(user)
   end
 
-  swagger_path :save_data_update do
-    put("/user/save_data/update")
-    summary("update users' game data saved")
-    security([%{JWT: []}])
-    consumes("application/json")
-    produces("application/json")
-    parameters do
-      action(:path, :array, "action sequence", required: true)
-      startLocation(:path, :string, "start location", required: true)
-    end
-    response(200, "OK")
-    response(400, "Invalid parameters")
-    response(401, "Unauthorised")
-  end
-
-  def game_state_clear_up(conn, _params) do
-    user = conn.assigns[:current_user]
-    Cadet.GameStates.clear_up(user)
-  end
-
-  swagger_path :save_data_clear_up do
-    put("/user/save_data/clear_up")
+  swagger_path :clear_up_game_states do
+    put("/user/game_states/clear")
     summary("clear up users' game data saved")
     security([%{JWT: []}])
     consumes("application/json")
@@ -137,10 +113,10 @@ defmodule CadetWeb.UserController do
 
             game_states(
               :map,
-              "States for user's game, including users' collectibles and save data.\n"
-              <> "collectibles is a map, and save data is a map with elements action sequence and start location\n"
-              <> "action sequence is an array of string, and start location is a string.\n"
-              <> " Value will be a map of empty maps for non-students."
+              "States for user's game, including users' collectibles and completed quests.\n"
+              <> "Collectibles are a map.\n"
+              <> "Completed quests are an array of strings"
+
             )
           end
         end,
