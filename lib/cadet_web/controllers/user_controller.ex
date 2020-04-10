@@ -41,6 +41,7 @@ defmodule CadetWeb.UserController do
   def update_game_states(conn, new_game_states) do
     user = conn.assigns[:current_user]
     Cadet.GameStates.update(new_game_states, user)
+    conn
   end
 
 
@@ -63,6 +64,7 @@ defmodule CadetWeb.UserController do
   def clear_up_game_states(conn, _) do
     user = conn.assigns[:current_user]
     Cadet.GameStates.clear(user)
+    conn
   end
 
   swagger_path :clear_up_game_states do
