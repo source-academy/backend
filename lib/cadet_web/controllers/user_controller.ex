@@ -15,7 +15,7 @@ defmodule CadetWeb.UserController do
     max_grade = user_max_grade(user)
     story = user_current_story(user)
     xp = user_total_xp(user)
-    update(user, %{ collectibles: %{haha: "haha"}, completed_quests: ["haha"]})
+
     game_states = user_game_states(user)
     render(
       conn,
@@ -40,7 +40,7 @@ defmodule CadetWeb.UserController do
 
   def update_game_states(conn, new_game_states) do
     user = conn.assigns[:current_user]
-    Cadet.GameStates.update(new_game_states, user)
+    Cadet.GameStates.update(user, new_game_states)
     conn
   end
 
@@ -53,7 +53,7 @@ defmodule CadetWeb.UserController do
     produces("application/json")
 
     parameters do
-      pic_nicname(:path, :map, "new game states", required: true)
+      new_game_states(:path, :map, "new game states", required: true)
     end
     response(200, "OK")
     response(400, "Invalid parameters")
@@ -116,8 +116,8 @@ defmodule CadetWeb.UserController do
             game_states(
               :map,
               "States for user's game, including users' collectibles and completed quests.\n"
-              <> "Collectibles are a map.\n"
-              <> "Completed quests are an array of strings"
+              <> "Collectibles is a map.\n"
+              <> "Completed quests is an array of strings"
 
             )
           end
