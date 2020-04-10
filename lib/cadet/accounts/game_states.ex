@@ -1,6 +1,9 @@
 defmodule Cadet.GameStates do
   import Ecto.Repo
 
+  # currently in this module no error handling function
+  # has been implemented yet
+
   # simply return the game states of the user
   def user_game_states(user) do
     user.game_states
@@ -17,41 +20,41 @@ defmodule Cadet.GameStates do
   end
 
   def update_collectibles(pic_nickname, pic_name, user) do
-    # to do
     changeset =
       Ecto.Changeset.cast(user, %{game_states: %{collectibles: Map.put(user_collectibles(user), pic_nickname, pic_name),
       save_data: user_save_data(user)}},[:game_states])
       Cadet.Repo.update!(changeset)
-      # really simple error handling action, to be further implemented
-    '''
-      with {:ok, _} <- Repo.update(changeset) do
-          {:ok, nil}
-      else
-        {:error, _} ->
-          {:error, {:internal_server_error, "Please try again later."}}
-      end
-      '''
   end
 
-  # should be idle since we are not going to delete students' collectibles
-  # but provide the function delete_collectibles here for future extension
+  def update_save_data(action_sequence, start_location, user) do
+    changeset =
+    Ecto.Changeset.cast(user, %{game_states: %{collectibles: user_collectibles(user),
+      save_data: %{
+      action_sequence: action_sequence,
+      start_location: start_location
+    }}},[:game_states])
+    Cadet.Repo.update!(changeset)
+  end
+
+  # functions below are for debugging and testing purposes
+  def clear_up(user) do
+    changeset =
+      Ecto.Changeset.cast(user, %{game_states: %{collectibles: %{},
+      save_data: %{action_sequence: [], start_location: ""}}},[:game_states])
+    Cadet.Repo.update!(changeset)
+  end
+
   def delete_all_collectibles(user) do
     changeset =
     Ecto.Changeset.cast(user, %{game_states: %{collectibles: %{}, save_data: user_save_data(user)}},[:game_states])
     Cadet.Repo.update!(changeset)
   end
 
-  '''
-  # to implement when needed
-
-  def update_save_data() do
-  ... # to do the actual implementation
+  def delete_save_data(user) do
+    changeset =
+      Ecto.Changeset.cast(user, %{game_states: %{collectibles: user_collectibles(user),
+      save_data: %{action_sequence: [], start_location: ""}}},[:game_states])
+    Cadet.Repo.update!(changeset)
   end
-
-  def delete_all_save_data() do
-  ... # to do the actual implementation
-  end
-
-  '''
 
 end
