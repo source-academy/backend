@@ -5829,14 +5829,18 @@
    * the REPL displays it graphically, instead of textually.
    */
   function show(rune) {
-    const frame = open_pixmap('frame', viewport_size, viewport_size, true);
-    clear_viewport();
-    var flattened_rune_list = generateFlattenedRuneList(rune);
-    drawWithWebGL(flattened_rune_list, drawRune);
-    copy_viewport(gl.canvas, frame);
-    const panel = document.getElementById('journey-library-panel');
-    panel.innerHTML = '';
-    panel.appendChild(frame)
+    const panel = document.getElementById('journey-frontend-lib-panel');
+    if (panel === null) {
+      return 'Please switch to library panel and run again!';
+    } else {
+      const frame = open_pixmap('frame', viewport_size, viewport_size, true);
+      clear_viewport();
+      var flattened_rune_list = generateFlattenedRuneList(rune);
+      drawWithWebGL(flattened_rune_list, drawRune);
+      copy_viewport(gl.canvas, frame);
+      panel.innerHTML = '';
+      panel.appendChild(frame);
+    }
   }
 
   /**
@@ -6303,6 +6307,16 @@
     return overlay_frac(0.5, rune1, rune2)
   }
 
+  function animate(rune_list) {
+    function aux(index) {
+      show(rune_list[index]);
+      setTimeout(() => {
+        aux((index + 1) % rune_list.length);
+      }, 500);
+    }
+    aux(0);
+  }
+
   /*
   function stereogram(rune) {
     clear_viewport()
@@ -6393,6 +6407,7 @@
   getReadyWebGLForCanvas('3d');
 
   exports.anaglyph = anaglyph;
+  exports.animate = animate;
   exports.beside = beside;
   exports.beside_frac = beside_frac;
   exports.black = black;
