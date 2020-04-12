@@ -1,8 +1,0 @@
-{
-  "module_dirs": {
-    "BINARYTREE": "library_binarytree",
-    "RUNES": "library_runes",
-    "CURVES": "library_curves",
-    "SOUNDS": "library_sounds"
-  }
-}
