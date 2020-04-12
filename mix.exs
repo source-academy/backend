@@ -73,6 +73,8 @@ defmodule Cadet.Mixfile do
       {:sentry, "~> 7.0"},
       {:sweet_xml, "~> 0.6.6"},
       {:timex, "~> 3.0"},
+      {:gh_webhook_plug, "~> 0.0.5"},
+      {:git_cli, "~> 0.3"},
       # TODO: Remove the override once ex_aws released the new version
       #       without the dependency on xml_builder. Waste my time urgh
       {:xml_builder, "~> 2.0", override: true},
