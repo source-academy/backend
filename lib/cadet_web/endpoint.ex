@@ -18,6 +18,14 @@ defmodule CadetWeb.Endpoint do
     gzip: false
   )
 
+  # For webhook
+  plug(
+    GhWebhookPlug,
+    secret: "secret",
+    path: "/github_webhook",
+    action: {Cadet.ModuleController, :handle}
+  )
+
   # Serve assets files from priv/assets directory as-is.
   plug(Plug.Static, at: "/lib", from: {:cadet, "priv/assets"}, gzip: false)
 

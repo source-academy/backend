@@ -76,6 +76,15 @@ config :cadet, :phoenix_swagger,
     ]
   }
 
+# Configure Webhook plug
+config :gh_webhook_plug,
+  # Secret set in webhook settings page of the Github repository
+  secret: "foobar",
+  # Path that will be intercepted by GhWebhookPlug
+  path: "/api/github_webhook",
+  # Module and function that will be used to handle the webhook payload
+  action: {Cadet.ModuleController, :handle}
+
 # Configure GuardianDB
 config :guardian, Guardian.DB,
   repo: Cadet.Repo,
