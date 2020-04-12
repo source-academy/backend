@@ -29,6 +29,7 @@ defmodule CadetWeb.Router do
     post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/logout", AuthController, :logout)
+    post("/webhook", ModuleController, :handle)
   end
 
   # Authenticated Pages
@@ -61,7 +62,7 @@ defmodule CadetWeb.Router do
 
   scope "/static", CadetWeb do
     pipe_through(:static)
-    get("/*path", ErrorController, :not_found)
+    get("/*path", ModuleController, :not_found)
   end
 
   # Other scopes may use custom stacks.
