@@ -1,19 +1,13 @@
 defmodule CadetWeb.GroupController do
-  @moduledoc """
-  Provides information about groups.
-  """
-
   use CadetWeb, :controller
+
   use PhoenixSwagger
 
-  import Cadet.Course.Groups
+  alias Cadet.Course.Groups
 
   def index(conn, _) do
-    group_info = get_group_info()
+    groups = Groups.get_group_overviews()
 
-    json(
-      conn,
-      group_info
-    )
+    render(conn, "index.json", groups: groups)
   end
 end

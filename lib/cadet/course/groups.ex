@@ -3,16 +3,18 @@ defmodule Cadet.Course.Groups do
 
   alias Cadet.Course.Group
   import Cadet.Accounts  
-  
-  # Returns a map where the group names are the key and the value is
-  # another map with "avengerName" and "id" as the key
-  def get_group_info() do
+
+  def get_group_overviews() do
     Group
     |> Repo.all()
-    |> Enum.reduce(%{}, fn group, map -> Map.put(map, group.name, map_group_info(group))end)
+    |> Enum.map(fn group_info -> get_group_info(group_info) end)
   end
 
-  defp map_group_info(group) do
-    %{"avengerName" => get_user(group.leader_id).name, "id" => group.id}
+  defp get_group_info(group_info) do
+    %{
+      id: group_info.id, 
+      avenger_name: get_user(group_info.leader_id).name,
+      name: group_info.name
+    }
   end
 end
