@@ -87,7 +87,7 @@ defmodule Cadet.Mixfile do
       {:git_hooks, "~> 0.3.1", only: [:dev, :test]},
       {:mock, "~> 0.3.0", only: :test},
       # TODO: Remove it when I implement an real API for modules
-      {:cors_plug, "~> 2.0", only: [:dev, :test]}
+      # {:cors_plug, "~> 2.0", only: [:dev, :test]}
     ]
   end
 

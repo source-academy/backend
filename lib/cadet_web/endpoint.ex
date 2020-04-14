@@ -62,7 +62,7 @@ defmodule CadetWeb.Endpoint do
     signing_salt: "d3lEE99u"
   )
 
-  plug(CORSPlug)
+  # plug(CORSPlug)
 
   plug(CadetWeb.Router)
 
