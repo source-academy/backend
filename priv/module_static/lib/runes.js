@@ -6307,14 +6307,20 @@
     return overlay_frac(0.5, rune1, rune2)
   }
 
-  function animate(rune_list) {
-    function aux(index) {
-      show(rune_list[index]);
-      setTimeout(() => {
-        aux((index + 1) % rune_list.length);
-      }, 500);
+  function animated_show(rune_list, delay, loop) {
+    function aux(xs) {
+      if (xs !== null) {
+        show(xs[0]);
+        setTimeout(() => aux(xs[1]), delay);
+      } else if (loop) {
+        aux(rune_list);
+      }
     }
-    aux(0);
+    aux(rune_list);
+  }
+
+  function stop_animation() {
+    clearTimeout();
   }
 
   /*
@@ -6407,7 +6413,7 @@
   getReadyWebGLForCanvas('3d');
 
   exports.anaglyph = anaglyph;
-  exports.animate = animate;
+  exports.animated_show = animated_show;
   exports.beside = beside;
   exports.beside_frac = beside_frac;
   exports.black = black;
@@ -6446,6 +6452,7 @@
   exports.stack = stack;
   exports.stack_frac = stack_frac;
   exports.stackn = stackn;
+  exports.stop_animation = stop_animation;
   exports.translate = translate;
   exports.turn_upside_down = turn_upside_down;
   exports.white = white;
