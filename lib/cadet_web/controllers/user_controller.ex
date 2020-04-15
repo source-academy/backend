@@ -15,7 +15,6 @@ defmodule CadetWeb.UserController do
     max_grade = user_max_grade(user)
     story = user_current_story(user)
     xp = user_total_xp(user)
-
     game_states = user_game_states(user)
     render(
       conn,
@@ -38,12 +37,17 @@ defmodule CadetWeb.UserController do
     response(401, "Unauthorised")
   end
 
-  def update_game_states(conn, new_game_states) do
+  def update_game_states(conn, %{"gameStates" => new_game_states}) do
     user = conn.assigns[:current_user]
-    Cadet.GameStates.update(user, new_game_states)
-    conn
+    case Cadet.GameStates.update(user, new_game_states) do
+      {:ok, nil} ->
+        text(conn, "OK")
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
   end
-
 
   swagger_path :update_game_states do
     put("/user/game_states/save")
@@ -51,20 +55,26 @@ defmodule CadetWeb.UserController do
     security([%{JWT: []}])
     consumes("application/json")
     produces("application/json")
-
     parameters do
       new_game_states(:path, :map, "new game states", required: true)
     end
-    response(200, "OK")
+    response(200, "OK", Schema.ref(:UserInfo))
+    response(201, "Created")
+    response(204, "No Content")
     response(400, "Invalid parameters")
     response(401, "Unauthorised")
   end
 
-
   def clear_up_game_states(conn, _) do
     user = conn.assigns[:current_user]
-    Cadet.GameStates.clear(user)
-    conn
+    case Cadet.GameStates.clear(user) do
+      {:ok, nil} ->
+        text(conn, "OK")
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
   end
 
   swagger_path :clear_up_game_states do
@@ -73,7 +83,9 @@ defmodule CadetWeb.UserController do
     security([%{JWT: []}])
     consumes("application/json")
     produces("application/json")
-    response(200, "OK")
+    response(200, "OK", Schema.ref(:UserInfo))
+    response(201, "Created")
+    response(204, "No Content")
     response(401, "Unauthorised")
   end
 
