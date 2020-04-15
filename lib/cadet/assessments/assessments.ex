@@ -360,7 +360,7 @@ defmodule Cadet.Assessments do
         insert_or_update_assessment_changeset(assessment_params, force_update)
       )
 
-    if force_update and check_question_count(assessment_multi, questions_params) do
+    if force_update and invalid_force_update(assessment_multi, questions_params) do
       {:error, "Question count is different"}
     else
       questions_params
@@ -370,6 +370,7 @@ defmodule Cadet.Assessments do
                                                                 %{assessment: %Assessment{id: id}} ->
           question_exists =
             Repo.exists?(where(Question, [q], q.assessment_id == ^id and q.display_order == ^index))
+          # the !question_exists check allows for force updating of brand new assessments
           if !force_update or !question_exists do
             question_params
             |> Map.put(:display_order, index)
@@ -385,12 +386,16 @@ defmodule Cadet.Assessments do
               end)
               |> Map.put(:display_order, index)
 
-            %{id: question_id} =
+            %{id: question_id, type: type} =
               where(Question, [q], q.display_order == ^index and q.assessment_id == ^id)
               |> Repo.one()
 
-            changeset = Question.changeset(%Question{assessment_id: id, id: question_id}, params)
-            Repo.update(changeset)
+            if question_params.type != Atom.to_string(type) do
+              {:error, create_invalid_changeset_with_error(:question, "Question types should remain the same")}
+            else
+              changeset = Question.changeset(%Question{assessment_id: id, id: question_id}, params)
+              Repo.update(changeset)
+            end
           end
         end)
       end)
@@ -398,24 +403,31 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp check_question_count(assessment_multi, questions_params) do
+  # Function that checks if the force update is invalid. The force update is only invalid
+  # if the new question count is different from the old question count.
+  defp invalid_force_update(assessment_multi, questions_params) do
     assessment_id =
       (assessment_multi.operations
       |> List.first()
       |> elem(1)
       |> elem(1)).data.id
 
+    # check if assessment already exists
     if !assessment_id do
       false
     else
-      existing_questions_count =
-      where(Question, [q], q.assessment_id == ^assessment_id)
-      |> Repo.all()
-      |> Enum.count
-
-      new_questions_count = Enum.count(questions_params)
-
-      existing_questions_count != new_questions_count
+      open_date = Repo.get(Assessment, assessment_id).open_at
+      # check if assessment is already opened
+      if Timex.after?(open_date, Timex.now()) do
+        false
+      else
+        existing_questions_count =
+          where(Question, [q], q.assessment_id == ^assessment_id)
+          |> Repo.all()
+          |> Enum.count
+        new_questions_count = Enum.count(questions_params)
+        existing_questions_count != new_questions_count
+      end
     end
   end
 
@@ -445,6 +457,7 @@ defmodule Cadet.Assessments do
               params
               |> Map.delete(:open_at)
               |> Map.delete(:close_at)
+              |> Map.delete(:is_published)
 
             Assessment.changeset(assessment, new_params)
 
