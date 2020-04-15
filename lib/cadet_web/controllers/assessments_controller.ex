@@ -35,8 +35,8 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  def update(conn, %{"id" => id, "bool" => bool}) do
-    result = Assessments.toggle_publish_assessment(conn.assigns.current_user, id, bool)
+  def update(conn, %{"id" => id, "togglePublishTo" => toggle_publish_to}) do
+    result = Assessments.toggle_publish_assessment(conn.assigns.current_user, id, toggle_publish_to)
 
     case result do
       {:ok, _nil} ->
@@ -82,7 +82,7 @@ defmodule CadetWeb.AssessmentsController do
   def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
     file = assessment["file"].path
       |> File.read!()
-    result = 
+    result =
       case force_update do
         "true" -> parse_xml(file, true)
         "false" -> parse_xml(file, false)

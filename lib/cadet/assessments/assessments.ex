@@ -29,7 +29,7 @@ defmodule Cadet.Assessments do
       assessment = Repo.get(Assessment, id)
       previous_open_time = assessment.open_at
       cond do
-        Timex.before?(close_at, open_at) -> 
+        Timex.before?(close_at, open_at) ->
           {:error, {:bad_request, "New end date should occur after new opening date"}}
 
         Timex.before?(close_at, Timex.now()) ->
@@ -40,7 +40,7 @@ defmodule Cadet.Assessments do
 
         Timex.before?(open_at, Timex.now()) ->
           {:error, {:bad_request, "New Opening date should occur after current time"}}
-        
+
         true ->
           {:error, {:forbidden, "Assessment is already opened"}}
       end
@@ -49,9 +49,9 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def toggle_publish_assessment(_publisher = %User{role: role}, id, bool) do
+  def toggle_publish_assessment(_publisher = %User{role: role}, id, toggle_publish_to) do
     if role in @publish_assessment_role do
-      update_assessment(id, %{is_published: bool})
+      update_assessment(id, %{is_published: toggle_publish_to})
     else
       {:error, {:forbidden, "User is not permitted to publish"}}
     end
@@ -317,7 +317,7 @@ defmodule Cadet.Assessments do
     {:ok, assessments}
   end
 
-  def filter_published_assessments(assessments, user) do 
+  def filter_published_assessments(assessments, user) do
     role = user.role
     case role do
       :student -> where(assessments, is_published: true)
@@ -368,16 +368,16 @@ defmodule Cadet.Assessments do
       |> Enum.reduce(assessment_multi, fn {question_params, index}, multi ->
         Multi.run(multi, String.to_atom("question#{index}"), fn _repo,
                                                                 %{assessment: %Assessment{id: id}} ->
-          question_exists = 
+          question_exists =
             Repo.exists?(where(Question, [q], q.assessment_id == ^id and q.display_order == ^index))
-          if !force_update or !question_exists do 
+          if !force_update or !question_exists do
             question_params
             |> Map.put(:display_order, index)
             |> build_question_changeset_for_assessment_id(id)
             |> Repo.insert()
           else
-            params = 
-              (if !question_params.max_xp do 
+            params =
+              (if !question_params.max_xp do
                 question_params
                 |> Map.put(:max_xp, 0)
               else
@@ -385,7 +385,7 @@ defmodule Cadet.Assessments do
               end)
               |> Map.put(:display_order, index)
 
-            %{id: question_id} = 
+            %{id: question_id} =
               where(Question, [q], q.display_order == ^index and q.assessment_id == ^id)
               |> Repo.one()
 
@@ -405,10 +405,10 @@ defmodule Cadet.Assessments do
       |> elem(1)
       |> elem(1)).data.id
 
-    if !assessment_id do 
-      false 
+    if !assessment_id do
+      false
     else
-      existing_questions_count = 
+      existing_questions_count =
       where(Question, [q], q.assessment_id == ^assessment_id)
       |> Repo.all()
       |> Enum.count
@@ -416,7 +416,7 @@ defmodule Cadet.Assessments do
       new_questions_count = Enum.count(questions_params)
 
       existing_questions_count != new_questions_count
-    end    
+    end
   end
 
   @spec insert_or_update_assessment_changeset(map(), boolean()) :: Ecto.Changeset.t()
@@ -441,7 +441,7 @@ defmodule Cadet.Assessments do
 
           force_update ->
             # Maintain the same open/close date when force updating an assessment
-            new_params = 
+            new_params =
               params
               |> Map.delete(:open_at)
               |> Map.delete(:close_at)
