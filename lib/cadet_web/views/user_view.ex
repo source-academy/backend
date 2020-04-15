@@ -13,7 +13,7 @@ defmodule CadetWeb.UserView do
           story: :story,
           playStory: :play_story?
         }),
-      game_states: game_states
+      gameStates: game_states
     }
   end
 end
