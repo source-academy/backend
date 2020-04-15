@@ -21,6 +21,7 @@ defmodule Cadet.GameStates do
       Ecto.Changeset.cast(user, %{game_states:
       new_game_states},[:game_states])
     Cadet.Repo.update!(changeset)
+    {:ok, nil}
   end
 
   def clear(user) do
@@ -28,5 +29,6 @@ defmodule Cadet.GameStates do
       Ecto.Changeset.cast(user, %{game_states: %{collectibles: %{},
       completed_quests: []}},[:game_states])
     Cadet.Repo.update!(changeset)
+    {:ok, nil}
   end
 end
