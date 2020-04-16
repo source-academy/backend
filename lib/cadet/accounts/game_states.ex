@@ -8,7 +8,6 @@ defmodule Cadet.GameStates do
     user.game_states
   end
 
-  @spec user_collectibles(atom | %{game_states: nil | maybe_improper_list | map}) :: any
   def user_collectibles(user) do
     user.game_states["collectibles"]
   end
