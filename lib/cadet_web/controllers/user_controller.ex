@@ -42,6 +42,7 @@ defmodule CadetWeb.UserController do
     case Cadet.GameStates.update(user, new_game_states) do
       {:ok, nil} ->
         text(conn, "OK")
+
       {:error, {status, message}} ->
         conn
         |> put_status(status)
