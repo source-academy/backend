@@ -17,7 +17,7 @@ defmodule Cadet.GameStates do
   end
 
   def update(user, new_game_states) do
-    if user.role == "student" do
+    if user.role == :student do
       changeset =
         Ecto.Changeset.cast(user, %{game_states:
         new_game_states},[:game_states])
@@ -29,7 +29,7 @@ defmodule Cadet.GameStates do
   end
 
   def clear(user) do
-    if user.role == "student" do
+    if user.role == :student do
       changeset =
         Ecto.Changeset.cast(user, %{game_states: %{collectibles: %{},
         completed_quests: []}},[:game_states])
