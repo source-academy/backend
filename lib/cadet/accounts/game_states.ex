@@ -8,6 +8,7 @@ defmodule Cadet.GameStates do
     user.game_states
   end
 
+  @spec user_collectibles(atom | %{game_states: nil | maybe_improper_list | map}) :: any
   def user_collectibles(user) do
     user.game_states["collectibles"]
   end
@@ -17,18 +18,26 @@ defmodule Cadet.GameStates do
   end
 
   def update(user, new_game_states) do
-    changeset =
-      Ecto.Changeset.cast(user, %{game_states:
-      new_game_states},[:game_states])
-    Cadet.Repo.update!(changeset)
-    {:ok, nil}
+    if user.role == "student" do
+      changeset =
+        Ecto.Changeset.cast(user, %{game_states:
+        new_game_states},[:game_states])
+      Cadet.Repo.update!(changeset)
+      {:ok, nil}
+    else
+      {:error, {:forbidden, "Please try again later."}}
+    end
   end
 
   def clear(user) do
-    changeset =
-      Ecto.Changeset.cast(user, %{game_states: %{collectibles: %{},
-      completed_quests: []}},[:game_states])
-    Cadet.Repo.update!(changeset)
-    {:ok, nil}
+    if user.role == "student" do
+      changeset =
+        Ecto.Changeset.cast(user, %{game_states: %{collectibles: %{},
+        completed_quests: []}},[:game_states])
+      Cadet.Repo.update!(changeset)
+      {:ok, nil}
+    else
+      {:error, {:forbidden, "Please try again later."}}
+    end
   end
 end
