@@ -42,7 +42,7 @@ defmodule Cadet.Assessments do
           {:error, {:bad_request, "New Opening date should occur after current time"}}
 
         true ->
-          {:error, {:forbidden, "Assessment is already opened"}}
+          {:error, {:unauthorized, "Assessment is already opened"}}
       end
     else
       {:error, {:forbidden, "User is not permitted to edit"}}

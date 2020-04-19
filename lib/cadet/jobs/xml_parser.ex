@@ -102,33 +102,33 @@ defmodule Cadet.Updater.XMLParser do
 
       {:error, stage, changeset, _} when is_atom(stage) ->
         log_error_bad_changeset(changeset, stage)
-        changeset_error = 
+        changeset_error =
           changeset
           |> Map.get(:errors)
           |> extract_changeset_error_message
-        error_message = "Invalid #{stage} changeset " <> changeset_error
+        error_message = "Invalid #{stage} changeset #{changeset_error}"
         log_and_return_badrequest(error_message)
     end
   catch
     # the :erlsom library used by SweetXml will exit if XML is invalid
     :exit, parse_error ->
-      error_message = 
+      error_message =
         parse_error
         |> nested_tuple_to_list()
         |> List.flatten()
-        |> Enum.reduce("", fn x, acc -> acc <> to_string(x) <> " " end)
-      {:error, {:bad_request, "Invalid XML " <> error_message}}
+        |> Enum.reduce("", fn x, acc -> "#{acc <> to_string(x)} " end)
+      {:error, {:bad_request, "Invalid XML #{error_message}"}}
   end
 
   defp extract_changeset_error_message(errors_list) do
     errors_list
-    |> Enum.map(fn {field, {error, _}} -> to_string(field) <> " " <> error end)
-    |> List.foldr("", fn x, acc -> acc <> x <> " " end)
+    |> Enum.map(fn {field, {error, _}} -> "#{to_string(field)} #{error}" end)
+    |> List.foldr("", fn x, acc -> "#{acc <> x} " end)
   end
 
   @spec process_assessment(String.t()) :: {:ok, map()} | {:error, String.t}
   defp process_assessment(xml) do
-    open_at = 
+    open_at =
       Timex.now()
       |> Timex.beginning_of_day()
       |> Timex.shift(days: 3)
@@ -164,7 +164,7 @@ defmodule Cadet.Updater.XMLParser do
     end
 
     {:ok, assessment_params}
-    
+
   rescue
     # This error is raised by xpath/3 when TASK does not exist (hence is equal to nil)
     Protocol.UndefinedError ->
@@ -213,7 +213,7 @@ defmodule Cadet.Updater.XMLParser do
         else
           {:no_missing_attr?, false} ->
             {:error, "Missing attribute(s) on PROBLEM"}
-          
+
           {:error, errmsg} ->
             {:error, errmsg}
         end

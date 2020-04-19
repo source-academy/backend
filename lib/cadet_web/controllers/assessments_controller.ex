@@ -35,7 +35,7 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  def update(conn, %{"id" => id, "togglePublishTo" => toggle_publish_to}) do
+  def publish(conn, %{"id" => id, "togglePublishTo" => toggle_publish_to}) do
     result = Assessments.toggle_publish_assessment(conn.assigns.current_user, id, toggle_publish_to)
 
     case result do
@@ -80,27 +80,32 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
-    file = assessment["file"].path
+    role = conn.assigns[:current_user].role
+    if role == :student do
+      send_resp(conn, :forbidden, "User not allowed to create")
+    else
+      file = assessment["file"].path
       |> File.read!()
-    result =
-      case force_update do
-        "true" -> parse_xml(file, true)
-        "false" -> parse_xml(file, false)
-      end
-
-    case result do
-      :ok ->
-        if (force_update == "true") do
-          send_resp(conn, 200, "Force Update OK")
-        else
-          send_resp(conn, 200, "OK")
+      result =
+        case force_update do
+          "true" -> parse_xml(file, true)
+          "false" -> parse_xml(file, false)
         end
 
-      {:ok, warning_message} ->
-        send_resp(conn, 200, warning_message)
+      case result do
+        :ok ->
+          if (force_update == "true") do
+            send_resp(conn, 200, "Force Update OK")
+          else
+            send_resp(conn, 200, "OK")
+          end
 
-      {:error, {status, message}} ->
-        send_resp(conn, status, message)
+        {:ok, warning_message} ->
+          send_resp(conn, 200, warning_message)
+
+        {:error, {status, message}} ->
+          send_resp(conn, status, message)
+      end
     end
   end
 
@@ -151,6 +156,72 @@ defmodule CadetWeb.AssessmentsController do
     response(400, "Missing parameter(s) or invalid assessmentId")
     response(401, "Unauthorised")
     response(403, "Password incorrect")
+  end
+
+  swagger_path :create do
+    post("/assessments")
+
+    summary("Creates a new assessment or updates an existing assessment")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessment(:body, :file, "assessment to create or update", required: true)
+      forceUpdate(:body, :boolean, "force update", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "XML parse error")
+    response(403, "User not allowed to create")
+  end
+
+  swagger_path :delete do
+    PhoenixSwagger.Path.delete("/assessments/:id")
+
+    summary("Deletes an assessment")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "assessment id", required: true)
+    end
+
+    response(200, "OK")
+    response(403, "User is not permitted to delete")
+  end
+
+  swagger_path :publish do
+    post("/assessments/publish/:id")
+
+    summary("Toggles an assessment between published and unpublished")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "assessment id", required: true)
+      togglePublishTo(:body, :boolean, "toggles assessment publish state", required: true)
+    end
+
+    response(200, "OK")
+    response(403, "User is not permitted to publish")
+  end
+
+  swagger_path :update do
+    post("/assessments/update/:id")
+
+    summary("Changes the open/close date of an assessment")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "assessment id", required: true)
+      closeAt(:body, :string, "open date", required: true)
+      openAt(:body, :string, "close date", required: true)
+    end
+
+    response(200, "OK")
+    response(401, "Assessment is already opened")
+    response(403, "User is not permitted to edit")
   end
 
   def swagger_definitions do
