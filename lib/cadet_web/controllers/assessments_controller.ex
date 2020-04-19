@@ -36,7 +36,8 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def publish(conn, %{"id" => id, "togglePublishTo" => toggle_publish_to}) do
-    result = Assessments.toggle_publish_assessment(conn.assigns.current_user, id, toggle_publish_to)
+    result =
+      Assessments.toggle_publish_assessment(conn.assigns.current_user, id, toggle_publish_to)
 
     case result do
       {:ok, _nil} ->
@@ -52,7 +53,14 @@ defmodule CadetWeb.AssessmentsController do
   def update(conn, %{"id" => id, "closeAt" => close_at, "openAt" => open_at}) do
     formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
     formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
-    result = Assessments.change_dates_assessment(conn.assigns.current_user, id, formatted_close_date, formatted_open_date)
+
+    result =
+      Assessments.change_dates_assessment(
+        conn.assigns.current_user,
+        id,
+        formatted_close_date,
+        formatted_open_date
+      )
 
     case result do
       {:ok, _nil} ->
@@ -81,11 +89,14 @@ defmodule CadetWeb.AssessmentsController do
 
   def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
     role = conn.assigns[:current_user].role
+
     if role == :student do
       send_resp(conn, :forbidden, "User not allowed to create")
     else
-      file = assessment["file"].path
-      |> File.read!()
+      file =
+        assessment["file"].path
+        |> File.read!()
+
       result =
         case force_update do
           "true" -> parse_xml(file, true)
@@ -94,7 +105,7 @@ defmodule CadetWeb.AssessmentsController do
 
       case result do
         :ok ->
-          if (force_update == "true") do
+          if force_update == "true" do
             send_resp(conn, 200, "Force Update OK")
           else
             send_resp(conn, 200, "OK")

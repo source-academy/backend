@@ -77,7 +77,8 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
-  @spec parse_xml(String.t(), boolean()) :: :ok | {:ok, String.t} | {:error, {atom(), String.t}}
+  @spec parse_xml(String.t(), boolean()) ::
+          :ok | {:ok, String.t()} | {:error, {atom(), String.t()}}
   def parse_xml(xml, force_update \\ false) do
     with {:ok, assessment_params} <- process_assessment(xml),
          {:ok, questions_params} <- process_questions(xml),
@@ -102,10 +103,12 @@ defmodule Cadet.Updater.XMLParser do
 
       {:error, stage, changeset, _} when is_atom(stage) ->
         log_error_bad_changeset(changeset, stage)
+
         changeset_error =
           changeset
           |> Map.get(:errors)
           |> extract_changeset_error_message
+
         error_message = "Invalid #{stage} changeset #{changeset_error}"
         log_and_return_badrequest(error_message)
     end
@@ -117,6 +120,7 @@ defmodule Cadet.Updater.XMLParser do
         |> nested_tuple_to_list()
         |> List.flatten()
         |> Enum.reduce("", fn x, acc -> "#{acc <> to_string(x)} " end)
+
       {:error, {:bad_request, "Invalid XML #{error_message}"}}
   end
 
@@ -126,7 +130,7 @@ defmodule Cadet.Updater.XMLParser do
     |> List.foldr("", fn x, acc -> "#{acc <> x} " end)
   end
 
-  @spec process_assessment(String.t()) :: {:ok, map()} | {:error, String.t}
+  @spec process_assessment(String.t()) :: {:ok, map()} | {:error, String.t()}
   defp process_assessment(xml) do
     open_at =
       Timex.now()
@@ -164,7 +168,6 @@ defmodule Cadet.Updater.XMLParser do
     end
 
     {:ok, assessment_params}
-
   rescue
     # This error is raised by xpath/3 when TASK does not exist (hence is equal to nil)
     Protocol.UndefinedError ->
@@ -188,7 +191,7 @@ defmodule Cadet.Updater.XMLParser do
     type
   end
 
-  @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t}
+  @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   defp process_questions(xml) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
     default_grading_library = xpath(xml, ~x"//TASK/GRADERDEPLOYMENT"e)
@@ -234,7 +237,7 @@ defmodule Cadet.Updater.XMLParser do
     Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
   end
 
-  @spec process_question_by_question_type(map()) :: map() | {:error, String.t}
+  @spec process_question_by_question_type(map()) :: map() | {:error, String.t()}
   defp process_question_by_question_type(question) do
     question[:entity]
     |> process_question_entity_by_type(question[:type])
@@ -297,7 +300,7 @@ defmodule Cadet.Updater.XMLParser do
     {:error, "Invalid question type"}
   end
 
-  @spec process_question_library(map(), any(), any()) :: map() | {:error, String.t}
+  @spec process_question_library(map(), any(), any()) :: map() | {:error, String.t()}
   defp process_question_library(question, default_library, default_grading_library) do
     library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
 
@@ -361,7 +364,7 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   defp nested_tuple_to_list(tuple) when is_tuple(tuple) do
-    tuple |> Tuple.to_list |> Enum.map(&nested_tuple_to_list/1)
+    tuple |> Tuple.to_list() |> Enum.map(&nested_tuple_to_list/1)
   end
 
   defp nested_tuple_to_list(x), do: x

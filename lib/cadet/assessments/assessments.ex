@@ -28,6 +28,7 @@ defmodule Cadet.Assessments do
     if role in @change_dates_assessment_role do
       assessment = Repo.get(Assessment, id)
       previous_open_time = assessment.open_at
+
       cond do
         Timex.before?(close_at, open_at) ->
           {:error, {:bad_request, "New end date should occur after new opening date"}}
@@ -209,6 +210,7 @@ defmodule Cadet.Assessments do
   def assessment_with_questions_and_answers(id, user = %User{}, password)
       when is_ecto_id(id) do
     role = user.role
+
     assessment =
       if role in @open_all_assessment_roles do
         Assessment
@@ -313,6 +315,7 @@ defmodule Cadet.Assessments do
 
   def filter_published_assessments(assessments, user) do
     role = user.role
+
     case role do
       :student -> where(assessments, is_published: true)
       _ -> assessments
@@ -346,7 +349,11 @@ defmodule Cadet.Assessments do
   @spec insert_or_update_assessments_and_questions(map(), [map()], boolean()) ::
           {:ok, any()}
           | {:error, Ecto.Multi.name(), any(), %{optional(Ecto.Multi.name()) => any()}}
-  def insert_or_update_assessments_and_questions(assessment_params, questions_params, force_update) do
+  def insert_or_update_assessments_and_questions(
+        assessment_params,
+        questions_params,
+        force_update
+      ) do
     assessment_multi =
       Multi.insert_or_update(
         Multi.new(),
@@ -363,7 +370,10 @@ defmodule Cadet.Assessments do
         Multi.run(multi, String.to_atom("question#{index}"), fn _repo,
                                                                 %{assessment: %Assessment{id: id}} ->
           question_exists =
-            Repo.exists?(where(Question, [q], q.assessment_id == ^id and q.display_order == ^index))
+            Repo.exists?(
+              where(Question, [q], q.assessment_id == ^id and q.display_order == ^index)
+            )
+
           # the !question_exists check allows for force updating of brand new assessments
           if !force_update or !question_exists do
             question_params
@@ -372,12 +382,12 @@ defmodule Cadet.Assessments do
             |> Repo.insert()
           else
             params =
-              (if !question_params.max_xp do
+              if !question_params.max_xp do
                 question_params
                 |> Map.put(:max_xp, 0)
               else
                 question_params
-              end)
+              end
               |> Map.put(:display_order, index)
 
             %{id: question_id, type: type} =
@@ -385,9 +395,15 @@ defmodule Cadet.Assessments do
               |> Repo.one()
 
             if question_params.type != Atom.to_string(type) do
-              {:error, create_invalid_changeset_with_error(:question, "Question types should remain the same")}
+              {:error,
+               create_invalid_changeset_with_error(
+                 :question,
+                 "Question types should remain the same"
+               )}
             else
-              changeset = Question.changeset(%Question{assessment_id: id, id: question_id}, params)
+              changeset =
+                Question.changeset(%Question{assessment_id: id, id: question_id}, params)
+
               Repo.update(changeset)
             end
           end
@@ -402,9 +418,9 @@ defmodule Cadet.Assessments do
   defp invalid_force_update(assessment_multi, questions_params) do
     assessment_id =
       (assessment_multi.operations
-      |> List.first()
-      |> elem(1)
-      |> elem(1)).data.id
+       |> List.first()
+       |> elem(1)
+       |> elem(1)).data.id
 
     # check if assessment already exists
     if !assessment_id do
@@ -418,7 +434,8 @@ defmodule Cadet.Assessments do
         existing_questions_count =
           where(Question, [q], q.assessment_id == ^assessment_id)
           |> Repo.all()
-          |> Enum.count
+          |> Enum.count()
+
         new_questions_count = Enum.count(questions_params)
         existing_questions_count != new_questions_count
       end
@@ -433,6 +450,7 @@ defmodule Cadet.Assessments do
     |> case do
       nil ->
         Assessment.changeset(%Assessment{}, params)
+
       assessment ->
         cond do
           Timex.after?(assessment.open_at, Timex.now()) ->
