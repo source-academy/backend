@@ -64,58 +64,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
               "gradingStatus" => "excluded",
-              "private" => false
-            }
-          )
-
-        resp =
-          conn
-          |> sign_in(user)
-          |> get(build_url())
-          |> json_response(200)
-          |> Enum.map(&Map.delete(&1, "xp"))
-          |> Enum.map(&Map.delete(&1, "grade"))
-
-        assert expected == resp
-      end
-    end
-
-    test "does not render unpublished assessments", %{
-      conn: conn,
-      users: users,
-      assessments: assessments
-    } do
-      for {_role, user} <- users do
-        mission = assessments.mission
-
-        {:ok, _} =
-          mission.assessment
-          |> Assessment.changeset(%{is_published: false})
-          |> Repo.update()
-
-        expected =
-          assessments
-          |> Map.delete(:mission)
-          |> Map.values()
-          |> Enum.map(fn a -> a.assessment end)
-          |> Enum.sort(&open_at_asc_comparator/2)
-          |> Enum.map(
-            &%{
-              "id" => &1.id,
-              "title" => &1.title,
-              "shortSummary" => &1.summary_short,
-              "story" => &1.story,
-              "number" => &1.number,
-              "reading" => &1.reading,
-              "openAt" => format_datetime(&1.open_at),
-              "closeAt" => format_datetime(&1.close_at),
-              "type" => "#{&1.type}",
-              "coverImage" => &1.cover_picture,
-              "maxGrade" => 720,
-              "maxXp" => 4500,
-              "status" => get_assessment_status(user, &1),
-              "gradingStatus" => "excluded",
-              "private" => false
+              "private" => false,
+              "isPublished" => &1.is_published
             }
           )
 
@@ -158,6 +108,56 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "GET /, student only" do
+    test "does not render unpublished assessments", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: assessments
+    } do
+      mission = assessments.mission
+
+      {:ok, _} =
+        mission.assessment
+        |> Assessment.changeset(%{is_published: false})
+        |> Repo.update()
+
+      expected =
+        assessments
+        |> Map.delete(:mission)
+        |> Map.values()
+        |> Enum.map(fn a -> a.assessment end)
+        |> Enum.sort(&open_at_asc_comparator/2)
+        |> Enum.map(
+          &%{
+            "id" => &1.id,
+            "title" => &1.title,
+            "shortSummary" => &1.summary_short,
+            "story" => &1.story,
+            "number" => &1.number,
+            "reading" => &1.reading,
+            "openAt" => format_datetime(&1.open_at),
+            "closeAt" => format_datetime(&1.close_at),
+            "type" => "#{&1.type}",
+            "coverImage" => &1.cover_picture,
+            "maxGrade" => 720,
+            "maxXp" => 4500,
+            "status" => get_assessment_status(student, &1),
+            "gradingStatus" => "excluded",
+            "private" => false,
+            "isPublished" => &1.is_published
+          }
+        )
+
+      resp =
+        conn
+        |> sign_in(student)
+        |> get(build_url())
+        |> json_response(200)
+        |> Enum.map(&Map.delete(&1, "xp"))
+        |> Enum.map(&Map.delete(&1, "grade"))
+
+      assert expected == resp
+    end
+
     test "renders student submission status in overview", %{
       conn: conn,
       users: %{student: student},
@@ -217,6 +217,65 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> Map.get("grade")
 
       assert resp == 200 * 3 + 40 * 3
+    end
+  end
+
+  describe "GET /, non-students" do
+    test "renders unpublished assessments", %{
+      conn: conn,
+      users: users,
+      assessments: assessments
+    } do
+      for role <- ~w(staff admin)a do
+        user = Map.get(users, role)
+        mission = assessments.mission
+
+        {:ok, _} =
+          mission.assessment
+          |> Assessment.changeset(%{is_published: false})
+          |> Repo.update()
+
+        resp =
+          conn
+          |> sign_in(user)
+          |> get(build_url())
+          |> json_response(200)
+          |> Enum.map(&Map.delete(&1, "xp"))
+          |> Enum.map(&Map.delete(&1, "grade"))
+
+        expected =
+          assessments
+          |> Map.values()
+          |> Enum.map(fn a -> a.assessment end)
+          |> Enum.sort(&open_at_asc_comparator/2)
+          |> Enum.map(
+            &%{
+              "id" => &1.id,
+              "title" => &1.title,
+              "shortSummary" => &1.summary_short,
+              "story" => &1.story,
+              "number" => &1.number,
+              "reading" => &1.reading,
+              "openAt" => format_datetime(&1.open_at),
+              "closeAt" => format_datetime(&1.close_at),
+              "type" => "#{&1.type}",
+              "coverImage" => &1.cover_picture,
+              "maxGrade" => 720,
+              "maxXp" => 4500,
+              "status" => get_assessment_status(user, &1),
+              "gradingStatus" => "excluded",
+              "private" => false,
+              "isPublished" =>
+                if &1.type == :mission do
+                  false
+                else
+                  &1.is_published
+                end
+            }
+          )
+
+        assert expected == resp
+      end
     end
   end
 
@@ -499,28 +558,6 @@ defmodule CadetWeb.AssessmentsControllerTest do
         end
       end
     end
-
-    test "it does not permit access to unpublished assessments", %{
-      conn: conn,
-      users: users,
-      assessments: %{mission: mission}
-    } do
-      for role <- Role.__enum_map__() do
-        user = Map.get(users, role)
-
-        {:ok, _} =
-          mission.assessment
-          |> Assessment.changeset(%{is_published: false})
-          |> Repo.update()
-
-        conn =
-          conn
-          |> sign_in(user)
-          |> post(build_url(mission.assessment.id))
-
-        assert response(conn, 400) == "Assessment not found"
-      end
-    end
   end
 
   describe "POST /assessment_id, student" do
@@ -601,6 +638,24 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       assert response(conn, 401) == "Assessment not open"
     end
+
+    test "it does not permit access to unpublished assessments", %{
+      conn: conn,
+      users: %{student: student},
+      assessments: %{mission: mission}
+    } do
+      {:ok, _} =
+        mission.assessment
+        |> Assessment.changeset(%{is_published: false})
+        |> Repo.update()
+
+      conn =
+        conn
+        |> sign_in(student)
+        |> post(build_url(mission.assessment.id))
+
+      assert response(conn, 400) == "Assessment not found"
+    end
   end
 
   describe "POST /assessment_id, non-students" do
@@ -640,6 +695,29 @@ defmodule CadetWeb.AssessmentsControllerTest do
           close_at: Timex.shift(Timex.now(), days: 10)
         })
         |> Repo.update!()
+
+        resp =
+          conn
+          |> sign_in(user)
+          |> post(build_url(mission.assessment.id))
+          |> json_response(200)
+
+        assert resp["id"] == mission.assessment.id
+      end
+    end
+
+    test "it permits access to unpublished assessments", %{
+      conn: conn,
+      users: users,
+      assessments: %{mission: mission}
+    } do
+      for role <- ~w(staff admin)a do
+        user = Map.get(users, role)
+
+        {:ok, _} =
+          mission.assessment
+          |> Assessment.changeset(%{is_published: false})
+          |> Repo.update()
 
         resp =
           conn
