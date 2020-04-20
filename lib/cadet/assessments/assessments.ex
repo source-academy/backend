@@ -61,6 +61,11 @@ defmodule Cadet.Assessments do
   def delete_assessment(_deleter = %User{role: role}, id) do
     if role in @delete_assessment_role do
       assessment = Repo.get(Assessment, id)
+
+      Submission
+      |> where(assessment_id: ^id)
+      |> Repo.delete_all()
+
       Repo.delete(assessment)
     else
       {:error, {:forbidden, "User is not permitted to delete"}}
