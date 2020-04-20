@@ -393,16 +393,13 @@ defmodule Cadet.Assessments do
             |> Repo.insert()
           else
             params =
-              if !question_params.max_xp do
-                question_params
-                |> Map.put(:max_xp, 0)
-              else
-                question_params
-              end
+              question_params
+              |> Map.put_new(:max_xp, 0)
               |> Map.put(:display_order, index)
 
             %{id: question_id, type: type} =
-              where(Question, [q], q.display_order == ^index and q.assessment_id == ^id)
+              Question
+              |> where([q], q.display_order == ^index and q.assessment_id == ^id)
               |> Repo.one()
 
             if question_params.type != Atom.to_string(type) do
@@ -433,23 +430,23 @@ defmodule Cadet.Assessments do
        |> elem(1)
        |> elem(1)).data.id
 
-    # check if assessment already exists
-    if !assessment_id do
-      false
-    else
+    if assessment_id do
       open_date = Repo.get(Assessment, assessment_id).open_at
       # check if assessment is already opened
       if Timex.after?(open_date, Timex.now()) do
         false
       else
         existing_questions_count =
-          where(Question, [q], q.assessment_id == ^assessment_id)
+          Question
+          |> where([q], q.assessment_id == ^assessment_id)
           |> Repo.all()
           |> Enum.count()
 
         new_questions_count = Enum.count(questions_params)
         existing_questions_count != new_questions_count
       end
+    else
+      false
     end
   end
 
