@@ -293,6 +293,8 @@ defmodule CadetWeb.AssessmentsController do
             coverImage(:string, "The URL to the cover picture", required: true)
 
             private(:boolean, "Is this an private assessment?", required: true)
+
+            isPublished(:boolean, "Is the assessment published?", required: true)
           end
         end,
       Assessment:
