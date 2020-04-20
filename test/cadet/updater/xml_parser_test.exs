@@ -10,7 +10,6 @@ defmodule Cadet.Updater.XMLParserTest do
 
   @local_name "test/fixtures/local_repo"
   # @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
-  @time_fields ~w(open_at close_at)a
 
   setup do
     File.rm_rf!(@local_name)
@@ -50,8 +49,22 @@ defmodule Cadet.Updater.XMLParserTest do
           |> where(number: ^number)
           |> Repo.one()
 
+        open_at =
+          Timex.now()
+          |> Timex.beginning_of_day()
+          |> Timex.shift(days: 3)
+          |> Timex.shift(hours: 4)
+
+        close_at = Timex.shift(open_at, days: 7)
+
+        expected_assesment =
+          assessment
+          |> Map.put(:open_at, open_at)
+          |> Map.put(:close_at, close_at)
+          |> Map.put(:is_published, false)
+
         assert_map_keys(
-          Map.from_struct(assessment),
+          Map.from_struct(expected_assesment),
           Map.from_struct(assessment_db),
           ~w(title is_published type summary_short summary_long open_at close_at)a ++
             ~w(number story reading password)a
@@ -97,51 +110,17 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
-    test "open and close dates not in ISO8601 DateTime", %{
-      assessments: assessments,
-      questions: questions
-    } do
-      date_strings =
-        Enum.map(
-          ~w({ISO:Basic} {ISOdate} {RFC822} {RFC1123} {ANSIC} {UNIX}),
-          &{&1, Timex.format!(Timex.now(), &1)}
-        )
-
-      for assessment <- assessments,
-          {date_format_string, date_string} <- date_strings,
-          time_field <- @time_fields do
-        assessment_wrong_date_format = %{assessment | time_field => date_string}
-
-        xml = XMLGenerator.generate_xml_for(assessment_wrong_date_format, questions)
-
-        assert capture_log(fn ->
-                 assert(
-                   XMLParser.parse_xml(xml) == :error,
-                   inspect({date_format_string, date_string}, pretty: true)
-                 )
-               end) =~ "Time does not conform to ISO8601 DateTime"
-      end
-    end
-
-    test "open and close time without offset", %{assessments: assessments, questions: questions} do
-      datetime_string = Timex.format!(Timex.now(), "{YYYY}-{0M}-{0D}T{h24}:{m}:{s}")
-
-      for assessment <- assessments,
-          time_field <- @time_fields do
-        assessment_time_without_offset = %{assessment | time_field => datetime_string}
-        xml = XMLGenerator.generate_xml_for(assessment_time_without_offset, questions)
-
-        assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :error end) =~
-                 "Time does not have offset specified."
-      end
-    end
-
     test "PROBLEM with missing type", %{assessments: assessments, questions: questions} do
       for assessment <- assessments do
         xml =
           XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(maxgrade)a)
 
-        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+        assert capture_log(fn ->
+                 assert(
+                   XMLParser.parse_xml(xml) ==
+                     {:error, {:bad_request, "Missing attribute(s) on PROBLEM"}}
+                 )
+               end) =~
                  "Missing attribute(s) on PROBLEM"
       end
     end
@@ -150,7 +129,12 @@ defmodule Cadet.Updater.XMLParserTest do
       for assessment <- assessments do
         xml = XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(type)a)
 
-        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+        assert capture_log(fn ->
+                 assert(
+                   XMLParser.parse_xml(xml) ==
+                     {:error, {:bad_request, "Missing attribute(s) on PROBLEM"}}
+                 )
+               end) =~
                  "Missing attribute(s) on PROBLEM"
       end
     end
@@ -159,7 +143,11 @@ defmodule Cadet.Updater.XMLParserTest do
       for assessment <- assessments do
         xml = XMLGenerator.generate_xml_for(assessment, questions, override_type: "anu")
 
-        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+        assert capture_log(fn ->
+                 assert(
+                   XMLParser.parse_xml(xml) == {:error, {:bad_request, "Invalid question type."}}
+                 )
+               end) =~
                  "Invalid question type."
       end
     end
@@ -171,7 +159,10 @@ defmodule Cadet.Updater.XMLParserTest do
 
         xml = XMLGenerator.generate_xml_for(assessment, questions_without_content)
 
-        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+        # the error message can be quite convoluted
+        assert capture_log(fn ->
+                 assert({:error, {:bad_request, _error_message}} = XMLParser.parse_xml(xml))
+               end) =~
                  ~r/Invalid \b.*\b changeset\./
       end
     end
@@ -180,7 +171,11 @@ defmodule Cadet.Updater.XMLParserTest do
       for assessment <- assessments do
         xml = XMLGenerator.generate_xml_for(assessment, questions, no_deployment: true)
 
-        assert capture_log(fn -> assert(XMLParser.parse_xml(xml) == :error) end) =~
+        assert capture_log(fn ->
+                 assert(
+                   XMLParser.parse_xml(xml) == {:error, {:bad_request, "Missing DEPLOYMENT"}}
+                 )
+               end) =~
                  "Missing DEPLOYMENT"
       end
     end
@@ -200,7 +195,9 @@ defmodule Cadet.Updater.XMLParserTest do
 
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-        assert capture_log(fn -> assert XMLParser.parse_xml(xml) == :ok end) =~
+        assert capture_log(fn ->
+                 assert XMLParser.parse_xml(xml) == {:ok, "Assessment already open, ignoring..."}
+               end) =~
                  "Assessment already open, ignoring..."
       end
     end
@@ -308,7 +305,7 @@ defmodule Cadet.Updater.XMLParserTest do
         """)
 
         assert capture_log(fn ->
-                 XMLParser.parse_and_insert(path) == {:error, "Error processing XML files."}
+                 XMLParser.parse_and_insert(path) == {:error, {:bad_request, "Missing TASK"}}
                end) =~ "Missing TASK"
       end
     end
