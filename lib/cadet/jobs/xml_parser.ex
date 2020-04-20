@@ -68,6 +68,10 @@ defmodule Cadet.Updater.XMLParser do
           Logger.error(error_message)
           Sentry.capture_message(error_message)
           :error
+
+        {:error, {_status, error_message}} ->
+          Sentry.capture_message(error_message)
+          :error
       end
     end
     |> Enum.any?(&(&1 == :error))
@@ -98,8 +102,8 @@ defmodule Cadet.Updater.XMLParser do
         Logger.warn("Assessment already open, ignoring...")
         {:ok, "Assessment already open, ignoring..."}
 
-      {:error, errmsg} ->
-        log_and_return_badrequest(errmsg)
+      {:error, error_message} ->
+        log_and_return_badrequest(error_message)
 
       {:error, stage, changeset, _} when is_atom(stage) ->
         log_error_bad_changeset(changeset, stage)
@@ -115,6 +119,7 @@ defmodule Cadet.Updater.XMLParser do
   catch
     # the :erlsom library used by SweetXml will exit if XML is invalid
     :exit, parse_error ->
+      # error info is stored in multiple nested tuples
       error_message =
         parse_error
         |> nested_tuple_to_list()
@@ -217,8 +222,8 @@ defmodule Cadet.Updater.XMLParser do
           {:no_missing_attr?, false} ->
             {:error, "Missing attribute(s) on PROBLEM"}
 
-          {:error, errmsg} ->
-            {:error, errmsg}
+          {:error, error_message} ->
+            {:error, error_message}
         end
       end)
 
@@ -245,8 +250,8 @@ defmodule Cadet.Updater.XMLParser do
       question_map when is_map(question_map) ->
         Map.put(question, :question, question_map)
 
-      {:error, errmsg} ->
-        {:error, errmsg}
+      {:error, error_message} ->
+        {:error, error_message}
     end
   end
 
@@ -297,7 +302,7 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   defp process_question_entity_by_type(_, _) do
-    {:error, "Invalid question type"}
+    {:error, "Invalid question type."}
   end
 
   @spec process_question_library(map(), any(), any()) :: map() | {:error, String.t()}
