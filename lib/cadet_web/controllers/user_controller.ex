@@ -16,6 +16,7 @@ defmodule CadetWeb.UserController do
     story = user_current_story(user)
     xp = user_total_xp(user)
     game_states = user_game_states(user)
+
     render(
       conn,
       "index.json",
@@ -39,6 +40,7 @@ defmodule CadetWeb.UserController do
 
   def update_game_states(conn, %{"gameStates" => new_game_states}) do
     user = conn.assigns[:current_user]
+
     case Cadet.GameStates.update(user, new_game_states) do
       {:ok, nil} ->
         text(conn, "OK")
@@ -56,9 +58,11 @@ defmodule CadetWeb.UserController do
     security([%{JWT: []}])
     consumes("application/json")
     produces("application/json")
+
     parameters do
       new_game_states(:path, :map, "new game states", required: true)
     end
+
     response(200, "OK", Schema.ref(:UserInfo))
     response(201, "Created")
     response(204, "No Content")
@@ -68,9 +72,11 @@ defmodule CadetWeb.UserController do
 
   def clear_up_game_states(conn, _) do
     user = conn.assigns[:current_user]
+
     case Cadet.GameStates.clear(user) do
       {:ok, nil} ->
         text(conn, "OK")
+
       {:error, {status, message}} ->
         conn
         |> put_status(status)
@@ -89,7 +95,6 @@ defmodule CadetWeb.UserController do
     response(204, "No Content")
     response(401, "Unauthorised")
   end
-
 
   def swagger_definitions do
     %{
@@ -128,10 +133,9 @@ defmodule CadetWeb.UserController do
 
             game_states(
               :map,
-              "States for user's game, including users' collectibles and completed quests.\n"
-              <> "Collectibles is a map.\n"
-              <> "Completed quests is an array of strings"
-
+              "States for user's game, including users' collectibles and completed quests.\n" <>
+                "Collectibles is a map.\n" <>
+                "Completed quests is an array of strings"
             )
           end
         end,
