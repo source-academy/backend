@@ -11,7 +11,7 @@
 # and so on) as they will fail if something goes wrong.
 import Cadet.Factory
 alias Cadet.Assessments.SubmissionStatus
- 
+
 # insert default chapter
 Cadet.Repo.insert!(%Cadet.Chapters.Chapter{chapterno: 1})
 
@@ -23,8 +23,6 @@ if Application.get_env(:cadet, :environment) == :dev do
   students = insert_list(5, :student, %{group: group})
   admin = insert(:user, %{name: "admin", role: :admin})
   Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
-
-  # // Cadet.Repo.insert!(%Cadet.SomeSchema{})
 
   # Assessments
   for _ <- 1..5 do
@@ -104,5 +102,4 @@ if Application.get_env(:cadet, :environment) == :dev do
       })
     end
   end
-
 end
