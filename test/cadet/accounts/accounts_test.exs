@@ -106,7 +106,7 @@ defmodule Cadet.AccountsTest do
   describe "sign in using nusnet_id" do
     test "unregistered user" do
       use_cassette "accounts/sign_in#1" do
-        {:ok, user} = Accounts.sign_in("e012345", "TOM", @token)
+        {:ok, _user} = Accounts.sign_in("e012345", "TOM", @token)
         assert Repo.one(Query.nusnet_id("e012345")).uid == "e012345"
       end
     end
