@@ -16,10 +16,61 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
   @submit_answer_roles ~w(student)a
+  @change_dates_assessment_role ~w(staff admin)a
+  @delete_assessment_role ~w(staff admin)a
+  @publish_assessment_role ~w(staff admin)a
   @unsubmit_assessment_role ~w(staff admin)a
   @grading_roles ~w()a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
+
+  def change_dates_assessment(_user = %User{role: role}, id, close_at, open_at) do
+    if role in @change_dates_assessment_role do
+      assessment = Repo.get(Assessment, id)
+      previous_open_time = assessment.open_at
+
+      cond do
+        Timex.before?(close_at, open_at) ->
+          {:error, {:bad_request, "New end date should occur after new opening date"}}
+
+        Timex.before?(close_at, Timex.now()) ->
+          {:error, {:bad_request, "New end date should occur after current time"}}
+
+        Timex.equal?(previous_open_time, open_at) or Timex.after?(previous_open_time, Timex.now()) ->
+          update_assessment(id, %{close_at: close_at, open_at: open_at})
+
+        Timex.before?(open_at, Timex.now()) ->
+          {:error, {:bad_request, "New Opening date should occur after current time"}}
+
+        true ->
+          {:error, {:unauthorized, "Assessment is already opened"}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to edit"}}
+    end
+  end
+
+  def toggle_publish_assessment(_publisher = %User{role: role}, id, toggle_publish_to) do
+    if role in @publish_assessment_role do
+      update_assessment(id, %{is_published: toggle_publish_to})
+    else
+      {:error, {:forbidden, "User is not permitted to publish"}}
+    end
+  end
+
+  def delete_assessment(_deleter = %User{role: role}, id) do
+    if role in @delete_assessment_role do
+      assessment = Repo.get(Assessment, id)
+
+      Submission
+      |> where(assessment_id: ^id)
+      |> Repo.delete_all()
+
+      Repo.delete(assessment)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
+    end
+  end
 
   @spec user_total_xp(%User{}) :: integer()
   def user_total_xp(%User{id: user_id}) when is_ecto_id(user_id) do
@@ -163,11 +214,19 @@ defmodule Cadet.Assessments do
 
   def assessment_with_questions_and_answers(id, user = %User{}, password)
       when is_ecto_id(id) do
+    role = user.role
+
     assessment =
-      Assessment
-      |> where(id: ^id)
-      |> where(is_published: true)
-      |> Repo.one()
+      if role in @open_all_assessment_roles do
+        Assessment
+        |> where(id: ^id)
+        |> Repo.one()
+      else
+        Assessment
+        |> where(id: ^id)
+        |> where(is_published: true)
+        |> Repo.one()
+      end
 
     if assessment do
       assessment_with_questions_and_answers(assessment, user, password)
@@ -210,7 +269,7 @@ defmodule Cadet.Assessments do
   Returns a list of assessments with all fields and an indicator showing whether it has been attempted
   by the supplied user
   """
-  def all_published_assessments(user = %User{}) do
+  def all_assessments(user = %User{}) do
     assessments =
       Query.all_assessments_with_max_xp_and_grade()
       |> subquery()
@@ -240,7 +299,7 @@ defmodule Cadet.Assessments do
           question_count: q_count.count,
           graded_count: a_count.count
       })
-      |> where(is_published: true)
+      |> filter_published_assessments(user)
       |> order_by(:open_at)
       |> Repo.all()
       |> Enum.map(fn assessment = %Assessment{} ->
@@ -257,6 +316,15 @@ defmodule Cadet.Assessments do
       end)
 
     {:ok, assessments}
+  end
+
+  def filter_published_assessments(assessments, user) do
+    role = user.role
+
+    case role do
+      :student -> where(assessments, is_published: true)
+      _ -> assessments
+    end
   end
 
   defp build_grading_status(submission_status, a_type, q_count, g_count) do
@@ -283,33 +351,101 @@ defmodule Cadet.Assessments do
   @doc """
   The main function that inserts or updates assessments from the XML Parser
   """
-  @spec insert_or_update_assessments_and_questions(map(), [map()]) ::
+  @spec insert_or_update_assessments_and_questions(map(), [map()], boolean()) ::
           {:ok, any()}
           | {:error, Ecto.Multi.name(), any(), %{optional(Ecto.Multi.name()) => any()}}
-  def insert_or_update_assessments_and_questions(assessment_params, questions_params) do
+  def insert_or_update_assessments_and_questions(
+        assessment_params,
+        questions_params,
+        force_update
+      ) do
     assessment_multi =
       Multi.insert_or_update(
         Multi.new(),
         :assessment,
-        insert_or_update_assessment_changeset(assessment_params)
+        insert_or_update_assessment_changeset(assessment_params, force_update)
       )
 
-    questions_params
-    |> Enum.with_index(1)
-    |> Enum.reduce(assessment_multi, fn {question_params, index}, multi ->
-      Multi.run(multi, String.to_atom("question#{index}"), fn _repo,
-                                                              %{assessment: %Assessment{id: id}} ->
-        question_params
-        |> Map.put(:display_order, index)
-        |> build_question_changeset_for_assessment_id(id)
-        |> Repo.insert()
+    if force_update and invalid_force_update(assessment_multi, questions_params) do
+      {:error, "Question count is different"}
+    else
+      questions_params
+      |> Enum.with_index(1)
+      |> Enum.reduce(assessment_multi, fn {question_params, index}, multi ->
+        Multi.run(multi, String.to_atom("question#{index}"), fn _repo,
+                                                                %{assessment: %Assessment{id: id}} ->
+          question_exists =
+            Repo.exists?(
+              where(Question, [q], q.assessment_id == ^id and q.display_order == ^index)
+            )
+
+          # the !question_exists check allows for force updating of brand new assessments
+          if !force_update or !question_exists do
+            question_params
+            |> Map.put(:display_order, index)
+            |> build_question_changeset_for_assessment_id(id)
+            |> Repo.insert()
+          else
+            params =
+              question_params
+              |> Map.put_new(:max_xp, 0)
+              |> Map.put(:display_order, index)
+
+            %{id: question_id, type: type} =
+              Question
+              |> where([q], q.display_order == ^index and q.assessment_id == ^id)
+              |> Repo.one()
+
+            if question_params.type != Atom.to_string(type) do
+              {:error,
+               create_invalid_changeset_with_error(
+                 :question,
+                 "Question types should remain the same"
+               )}
+            else
+              changeset =
+                Question.changeset(%Question{assessment_id: id, id: question_id}, params)
+
+              Repo.update(changeset)
+            end
+          end
+        end)
       end)
-    end)
-    |> Repo.transaction()
+      |> Repo.transaction()
+    end
   end
 
-  @spec insert_or_update_assessment_changeset(map()) :: Ecto.Changeset.t()
-  defp insert_or_update_assessment_changeset(params = %{number: number}) do
+  # Function that checks if the force update is invalid. The force update is only invalid
+  # if the new question count is different from the old question count.
+  defp invalid_force_update(assessment_multi, questions_params) do
+    assessment_id =
+      (assessment_multi.operations
+       |> List.first()
+       |> elem(1)
+       |> elem(1)).data.id
+
+    if assessment_id do
+      open_date = Repo.get(Assessment, assessment_id).open_at
+      # check if assessment is already opened
+      if Timex.after?(open_date, Timex.now()) do
+        false
+      else
+        existing_questions_count =
+          Question
+          |> where([q], q.assessment_id == ^assessment_id)
+          |> Repo.all()
+          |> Enum.count()
+
+        new_questions_count = Enum.count(questions_params)
+        existing_questions_count != new_questions_count
+      end
+    else
+      false
+    end
+  end
+
+  @spec insert_or_update_assessment_changeset(map(), boolean()) :: Ecto.Changeset.t()
+  defp insert_or_update_assessment_changeset(params = %{number: number}, force_update) do
     Assessment
     |> where(number: ^number)
     |> Repo.one()
@@ -318,18 +454,30 @@ defmodule Cadet.Assessments do
         Assessment.changeset(%Assessment{}, params)
 
       assessment ->
-        if Timex.after?(assessment.open_at, Timex.now()) do
-          # Delete all existing questions
-          %{id: assessment_id} = assessment
+        cond do
+          Timex.after?(assessment.open_at, Timex.now()) ->
+            # Delete all existing questions
+            %{id: assessment_id} = assessment
 
-          Question
-          |> where(assessment_id: ^assessment_id)
-          |> Repo.delete_all()
+            Question
+            |> where(assessment_id: ^assessment_id)
+            |> Repo.delete_all()
 
-          Assessment.changeset(assessment, params)
-        else
-          # if the assessment is already open, don't mess with it
-          create_invalid_changeset_with_error(:assessment, "is already open")
+            Assessment.changeset(assessment, params)
+
+          force_update ->
+            # Maintain the same open/close date when force updating an assessment
+            new_params =
+              params
+              |> Map.delete(:open_at)
+              |> Map.delete(:close_at)
+              |> Map.delete(:is_published)
+
+            Assessment.changeset(assessment, new_params)
+
+          true ->
+            # if the assessment is already open, don't mess with it
+            create_invalid_changeset_with_error(:assessment, "is already open")
         end
     end
   end

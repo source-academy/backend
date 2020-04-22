@@ -37,7 +37,11 @@ defmodule CadetWeb.Router do
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
     get("/assessments", AssessmentsController, :index)
+    post("/assessments", AssessmentsController, :create)
+    delete("/assessments/:id", AssessmentsController, :delete)
     post("/assessments/:id", AssessmentsController, :show)
+    post("/assessments/publish/:id", AssessmentsController, :publish)
+    post("/assessments/update/:id", AssessmentsController, :update)
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
@@ -49,11 +53,9 @@ defmodule CadetWeb.Router do
     get("/notification", NotificationController, :index)
     post("/notification/acknowledge", NotificationController, :acknowledge)
 
-
     get("/user", UserController, :index)
     put("/user/game_states/clear", UserController, :clear_up_game_states)
     put("/user/game_states/save", UserController, :update_game_states)
-
 
     post("/chat/token", ChatController, :index)
     post("/chat/notify", ChatController, :notify)

@@ -4,6 +4,7 @@ defmodule CadetWeb.AssessmentsController do
   use PhoenixSwagger
 
   alias Cadet.Assessments
+  import Cadet.Updater.XMLParser, only: [parse_xml: 2]
 
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
@@ -19,7 +20,7 @@ defmodule CadetWeb.AssessmentsController do
 
   def index(conn, _) do
     user = conn.assigns[:current_user]
-    {:ok, assessments} = Assessments.all_published_assessments(user)
+    {:ok, assessments} = Assessments.all_assessments(user)
 
     render(conn, "index.json", assessments: assessments)
   end
@@ -31,6 +32,91 @@ defmodule CadetWeb.AssessmentsController do
     case Assessments.assessment_with_questions_and_answers(assessment_id, user, password) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
       {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
+  def publish(conn, %{"id" => id, "togglePublishTo" => toggle_publish_to}) do
+    result =
+      Assessments.toggle_publish_assessment(conn.assigns.current_user, id, toggle_publish_to)
+
+    case result do
+      {:ok, _nil} ->
+        send_resp(conn, 200, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def update(conn, %{"id" => id, "closeAt" => close_at, "openAt" => open_at}) do
+    formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
+    formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
+
+    result =
+      Assessments.change_dates_assessment(
+        conn.assigns.current_user,
+        id,
+        formatted_close_date,
+        formatted_open_date
+      )
+
+    case result do
+      {:ok, _nil} ->
+        send_resp(conn, 200, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    result = Assessments.delete_assessment(conn.assigns.current_user, id)
+
+    case result do
+      {:ok, _nil} ->
+        send_resp(conn, 200, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
+    role = conn.assigns[:current_user].role
+
+    if role == :student do
+      send_resp(conn, :forbidden, "User not allowed to create")
+    else
+      file =
+        assessment["file"].path
+        |> File.read!()
+
+      result =
+        case force_update do
+          "true" -> parse_xml(file, true)
+          "false" -> parse_xml(file, false)
+        end
+
+      case result do
+        :ok ->
+          if force_update == "true" do
+            send_resp(conn, 200, "Force Update OK")
+          else
+            send_resp(conn, 200, "OK")
+          end
+
+        {:ok, warning_message} ->
+          send_resp(conn, 200, warning_message)
+
+        {:error, {status, message}} ->
+          send_resp(conn, status, message)
+      end
     end
   end
 
@@ -81,6 +167,72 @@ defmodule CadetWeb.AssessmentsController do
     response(400, "Missing parameter(s) or invalid assessmentId")
     response(401, "Unauthorised")
     response(403, "Password incorrect")
+  end
+
+  swagger_path :create do
+    post("/assessments")
+
+    summary("Creates a new assessment or updates an existing assessment")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessment(:body, :file, "assessment to create or update", required: true)
+      forceUpdate(:body, :boolean, "force update", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "XML parse error")
+    response(403, "User not allowed to create")
+  end
+
+  swagger_path :delete do
+    PhoenixSwagger.Path.delete("/assessments/:id")
+
+    summary("Deletes an assessment")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "assessment id", required: true)
+    end
+
+    response(200, "OK")
+    response(403, "User is not permitted to delete")
+  end
+
+  swagger_path :publish do
+    post("/assessments/publish/:id")
+
+    summary("Toggles an assessment between published and unpublished")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "assessment id", required: true)
+      togglePublishTo(:body, :boolean, "toggles assessment publish state", required: true)
+    end
+
+    response(200, "OK")
+    response(403, "User is not permitted to publish")
+  end
+
+  swagger_path :update do
+    post("/assessments/update/:id")
+
+    summary("Changes the open/close date of an assessment")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "assessment id", required: true)
+      closeAt(:body, :string, "open date", required: true)
+      openAt(:body, :string, "close date", required: true)
+    end
+
+    response(200, "OK")
+    response(401, "Assessment is already opened")
+    response(403, "User is not permitted to edit")
   end
 
   def swagger_definitions do
@@ -141,6 +293,8 @@ defmodule CadetWeb.AssessmentsController do
             coverImage(:string, "The URL to the cover picture", required: true)
 
             private(:boolean, "Is this an private assessment?", required: true)
+
+            isPublished(:boolean, "Is the assessment published?", required: true)
           end
         end,
       Assessment:
