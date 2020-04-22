@@ -224,6 +224,189 @@ defmodule CadetWeb.UserControllerTest do
       conn = get(conn, "/v1/user", nil)
       assert response(conn, 401) =~ "Unauthorised"
     end
+
+    @tag authenticate: :student
+    test "success, student adding collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+      Cadet.GameStates.update(user, new_game_states)
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+      assert new_game_states == resp["gameStates"]
+    end
+
+    @tag authenticate: :student
+    test "success, student deleting collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+      Cadet.GameStates.update(user, new_game_states)
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+      assert new_game_states == resp["gameStates"]
+
+      Cadet.GameStates.clear(user)
+      resp_2 =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        assert %{
+          "completed_quests" => [],
+          "collectibles" => %{}
+        } == resp_2["gameStates"]
+    end
+
+    @tag authenticate: :student
+    test "success, student retrieving collectibles", %{conn: conn} do
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+      assert %{
+        "completed_quests" => [],
+        "collectibles" => %{}
+      } == resp["gameStates"]
+    end
+
+
+    @tag authenticate: :staff
+    test "forbidden, staff adding collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+      assert %{
+        "completed_quests" => [],
+        "collectibles" => %{}
+      } == resp["gameStates"]
+    end
+
+    @tag authenticate: :staff
+    test "forbidden, staff deleting collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        assert %{
+          "completed_quests" => [],
+          "collectibles" => %{}
+        } == resp["gameStates"]
+
+        assert Cadet.GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
+      resp_2 =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        assert %{
+          "completed_quests" => [],
+          "collectibles" => %{}
+        } == resp_2["gameStates"]
+    end
+
+    @tag authenticate: :staff
+    test "success, staff retrieving collectibles", %{conn: conn} do
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+      assert %{
+        "completed_quests" => [],
+        "collectibles" => %{}
+      } == resp["gameStates"]
+    end
+
+    @tag authenticate: :admin
+    test "forbidden, admin adding collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+      assert %{
+        "completed_quests" => [],
+        "collectibles" => %{}
+      } == resp["gameStates"]
+    end
+
+    @tag authenticate: :admin
+    test "forbidden, admin deleting collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        assert %{
+          "completed_quests" => [],
+          "collectibles" => %{}
+        } == resp["gameStates"]
+
+        assert Cadet.GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
+      resp_2 =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+        assert %{
+          "completed_quests" => [],
+          "collectibles" => %{}
+        } == resp_2["gameStates"]
+    end
+
+    @tag authenticate: :admin
+    test "success, admin retrieving collectibles", %{conn: conn} do
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+      assert %{
+        "completed_quests" => [],
+        "collectibles" => %{}
+      } == resp["gameStates"]
+    end
   end
 
   defp build_assessments_starting_at(time) do
