@@ -17,7 +17,7 @@ defmodule CadetWeb.Router do
   end
 
   pipeline :static do
-    plug(Plug.Static, at: "/static", from: "priv/module_static")
+    plug(Plug.Static, at: "/static", from: "priv/modules")
   end
 
   # Public Pages

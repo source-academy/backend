@@ -9,7 +9,7 @@ defmodule CadetWeb.ModuleController do
     use PhoenixSwagger
   
     def handle(conn, _payload) do
-      repo = Git.new("priv/module_static")
+      repo = Git.new("priv/modules")
       IO.puts(Git.status!(repo))
       Git.pull(repo, ~w(origin master))
       IO.puts(Git.log!(repo)) 
