@@ -108,3 +108,6 @@ erl_crash.dump
 .elixir_ls/
 
 .env
+
+# module files
+priv/modules/*
