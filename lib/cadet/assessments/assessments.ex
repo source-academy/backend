@@ -7,7 +7,7 @@ defmodule Cadet.Assessments do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.{Notifications, User}
+  alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Chat.Room
@@ -64,13 +64,30 @@ defmodule Cadet.Assessments do
 
       Submission
       |> where(assessment_id: ^id)
-      |> Repo.delete_all()
+      |> delete_submission_assocation(id)
 
       Repo.delete(assessment)
     else
       {:error, {:forbidden, "User is not permitted to delete"}}
     end
   end
+
+  defp delete_submission_assocation(submissions, assessment_id) do
+    submissions
+    |> Repo.all()
+    |> Enum.each(fn submission ->
+      Answer
+      |> where(submission_id: ^submission.id)
+      |> Repo.delete_all()
+    end)
+
+    Notification
+    |> where(assessment_id: ^assessment_id)
+    |> Repo.delete_all()
+
+    Repo.delete_all(submissions)
+  end
+
 
   @spec user_total_xp(%User{}) :: integer()
   def user_total_xp(%User{id: user_id}) when is_ecto_id(user_id) do
