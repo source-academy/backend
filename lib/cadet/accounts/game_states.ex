@@ -1,6 +1,8 @@
 defmodule Cadet.Accounts.GameStates do
-  import Ecto.Repo
+  use Cadet, :context
+  alias Cadet.Accounts.User
 
+  @update_gamestate_roles ~w(student)a
   # currently in this module no error handling function
   # has been implemented yet
 
@@ -16,24 +18,24 @@ defmodule Cadet.Accounts.GameStates do
     user.game_states["completed_quests"]
   end
 
-  def update(user, new_game_states) do
-    if user.role == :student do
-      changeset = Ecto.Changeset.cast(user, %{game_states: new_game_states}, [:game_states])
-      Cadet.Repo.update!(changeset)
+  def update(user = %User{role: role}, new_game_states) do
+    if role in @update_gamestate_roles do
+      changeset = cast(user, %{game_states: new_game_states}, [:game_states])
+      Repo.update!(changeset)
       {:ok, nil}
     else
       {:error, {:forbidden, "Please try again later."}}
     end
   end
 
-  def clear(user) do
-    if user.role == :student do
+  def clear(user = %User{role: role}) do
+    if role in @update_gamestate_roles do
       changeset =
-        Ecto.Changeset.cast(user, %{game_states: %{collectibles: %{}, completed_quests: []}}, [
+        cast(user, %{game_states: %{collectibles: %{}, completed_quests: []}}, [
           :game_states
         ])
 
-      Cadet.Repo.update!(changeset)
+      Repo.update!(changeset)
       {:ok, nil}
     else
       {:error, {:forbidden, "Please try again later."}}

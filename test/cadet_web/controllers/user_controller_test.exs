@@ -6,6 +6,7 @@ defmodule CadetWeb.UserControllerTest do
   alias Cadet.Repo
   alias CadetWeb.UserController
   alias Cadet.Assessments.{Assessment, AssessmentType, Submission}
+  alias Cadet.Accounts.GameStates
 
   test "swagger" do
     assert is_map(UserController.swagger_definitions())
@@ -234,7 +235,7 @@ defmodule CadetWeb.UserControllerTest do
           "HAHA" => "HAHA.png"
         }
       }
-      Cadet.GameStates.update(user, new_game_states)
+      GameStates.update(user, new_game_states)
       resp =
         conn
         |> get("/v1/user")
@@ -251,14 +252,14 @@ defmodule CadetWeb.UserControllerTest do
           "HAHA" => "HAHA.png"
         }
       }
-      Cadet.GameStates.update(user, new_game_states)
+      GameStates.update(user, new_game_states)
       resp =
         conn
         |> get("/v1/user")
         |> json_response(200)
       assert new_game_states == resp["gameStates"]
 
-      Cadet.GameStates.clear(user)
+      GameStates.clear(user)
       resp_2 =
         conn
         |> get("/v1/user")
@@ -292,7 +293,7 @@ defmodule CadetWeb.UserControllerTest do
         }
       }
 
-      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      assert GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
       resp =
         conn
         |> get("/v1/user")
@@ -312,7 +313,7 @@ defmodule CadetWeb.UserControllerTest do
           "HAHA" => "HAHA.png"
         }
       }
-      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      assert GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
       resp =
         conn
         |> get("/v1/user")
@@ -322,7 +323,7 @@ defmodule CadetWeb.UserControllerTest do
           "collectibles" => %{}
         } == resp["gameStates"]
 
-        assert Cadet.GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
+        assert GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
       resp_2 =
         conn
         |> get("/v1/user")
@@ -355,7 +356,7 @@ defmodule CadetWeb.UserControllerTest do
         }
       }
 
-      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      assert GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
       resp =
         conn
         |> get("/v1/user")
@@ -375,7 +376,7 @@ defmodule CadetWeb.UserControllerTest do
           "HAHA" => "HAHA.png"
         }
       }
-      assert Cadet.GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
+      assert GameStates.update(user, new_game_states) == {:error, {:forbidden, "Please try again later."}}
       resp =
         conn
         |> get("/v1/user")
@@ -385,7 +386,7 @@ defmodule CadetWeb.UserControllerTest do
           "collectibles" => %{}
         } == resp["gameStates"]
 
-        assert Cadet.GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
+        assert GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
       resp_2 =
         conn
         |> get("/v1/user")

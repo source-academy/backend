@@ -6,8 +6,7 @@ defmodule CadetWeb.UserController do
   use CadetWeb, :controller
   use PhoenixSwagger
   import Cadet.Assessments
-  import Cadet.GameStates
-  import Ecto.Repo
+  import Cadet.Accounts.GameStates
 
   def index(conn, _) do
     user = conn.assigns.current_user
@@ -29,19 +28,10 @@ defmodule CadetWeb.UserController do
     )
   end
 
-  swagger_path :index do
-    get("/user")
-    summary("Get the name and role of a user")
-    security([%{JWT: []}])
-    produces("application/json")
-    response(200, "OK", Schema.ref(:UserInfo))
-    response(401, "Unauthorised")
-  end
-
   def update_game_states(conn, %{"gameStates" => new_game_states}) do
     user = conn.assigns[:current_user]
 
-    case Cadet.GameStates.update(user, new_game_states) do
+    case update(user, new_game_states) do
       {:ok, nil} ->
         text(conn, "OK")
 
@@ -51,6 +41,30 @@ defmodule CadetWeb.UserController do
         |> text(message)
     end
   end
+
+  def clear_up_game_states(conn, _) do
+    user = conn.assigns[:current_user]
+
+    case clear(user) do
+      {:ok, nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  swagger_path :index do
+    get("/user")
+    summary("Get the name and role of a user")
+    security([%{JWT: []}])
+    produces("application/json")
+    response(200, "OK", Schema.ref(:UserInfo))
+    response(401, "Unauthorised")
+  end
+
 
   swagger_path :update_game_states do
     put("/user/game_states/save")
@@ -68,20 +82,6 @@ defmodule CadetWeb.UserController do
     response(204, "No Content")
     response(400, "Invalid parameters")
     response(401, "Unauthorised")
-  end
-
-  def clear_up_game_states(conn, _) do
-    user = conn.assigns[:current_user]
-
-    case Cadet.GameStates.clear(user) do
-      {:ok, nil} ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
   end
 
   swagger_path :clear_up_game_states do
