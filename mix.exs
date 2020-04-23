@@ -86,8 +86,6 @@ defmodule Cadet.Mixfile do
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.3.1", only: [:dev, :test]},
       {:mock, "~> 0.3.0", only: :test},
-      # TODO: Remove it when I implement an real API for modules
-      # {:cors_plug, "~> 2.0", only: [:dev, :test]}
     ]
   end
 
@@ -99,12 +97,13 @@ defmodule Cadet.Mixfile do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+      "ecto.setup": ["ecto.create", "ecto.migrate", "cadet.webhook", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate", "test"],
       "phx.server": ["cadet.server"],
       "phx.digest": ["cadet.digest"],
-      sentry_recompile: ["deps.compile sentry --force", "compile"]
+      sentry_recompile: ["deps.compile sentry --force", "compile"],
+      init_modules: ["cadet.webhook"]
     ]
   end
 end
