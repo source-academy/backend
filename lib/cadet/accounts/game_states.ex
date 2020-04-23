@@ -1,4 +1,4 @@
-defmodule Cadet.GameStates do
+defmodule Cadet.Accounts.GameStates do
   import Ecto.Repo
 
   # currently in this module no error handling function
