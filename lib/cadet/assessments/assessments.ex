@@ -88,7 +88,6 @@ defmodule Cadet.Assessments do
     Repo.delete_all(submissions)
   end
 
-
   @spec user_total_xp(%User{}) :: integer()
   def user_total_xp(%User{id: user_id}) when is_ecto_id(user_id) do
     total_xp_bonus =
