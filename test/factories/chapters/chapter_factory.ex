@@ -9,7 +9,8 @@ defmodule Cadet.Chapters.ChapterFactory do
 
       def chapter_factory do
         %Chapter{
-          chapterno: 1
+          chapterno: 1,
+          variant: "default"
         }
       end
     end

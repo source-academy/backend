@@ -18,8 +18,8 @@ defmodule CadetWeb.ChaptersController do
     )
   end
 
-  def update(conn, %{"id" => _id, "chapterno" => chapterno}) do
-    {:ok, chapter} = Chapters.update_chapter(chapterno)
+  def update(conn, %{"id" => _id, "chapterno" => chapterno, "variant" => variant}) do
+    {:ok, chapter} = Chapters.update_chapter(chapterno, variant)
 
     render(
       conn,
