@@ -25,6 +25,7 @@ defmodule CadetWeb.Router do
     post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/logout", AuthController, :logout)
+    get("/chapter", ChaptersController, :index)
   end
 
   # Authenticated Pages
@@ -35,8 +36,6 @@ defmodule CadetWeb.Router do
     resources("/material", MaterialController, only: [:create, :update, :delete])
 
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
-
-    resources("/chapter", ChaptersController, only: [:index, :update])
 
     get("/assessments", AssessmentsController, :index)
     post("/assessments/:id", AssessmentsController, :show)
