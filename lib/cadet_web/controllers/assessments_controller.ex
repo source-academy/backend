@@ -37,58 +37,6 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  def publish(conn, %{"id" => id, "togglePublishTo" => toggle_publish_to}) do
-    result =
-      Assessments.toggle_publish_assessment(conn.assigns.current_user, id, toggle_publish_to)
-
-    case result do
-      {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def update(conn, %{"id" => id, "closeAt" => close_at, "openAt" => open_at}) do
-    formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
-    formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
-
-    result =
-      Assessments.change_dates_assessment(
-        conn.assigns.current_user,
-        id,
-        formatted_close_date,
-        formatted_open_date
-      )
-
-    case result do
-      {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def delete(conn, %{"id" => id}) do
-    result = Assessments.delete_assessment(conn.assigns.current_user, id)
-
-    case result do
-      {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
   def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
     role = conn.assigns[:current_user].role
 
@@ -119,6 +67,62 @@ defmodule CadetWeb.AssessmentsController do
       end
     else
       send_resp(conn, :forbidden, "User not allowed to create assessment")
+    end
+  end
+
+  def delete(conn, %{"assessmentid" => assessment_id}) do
+    result = Assessments.delete_assessment(conn.assigns.current_user, assessment_id)
+
+    case result do
+      {:ok, _nil} ->
+        send_resp(conn, 200, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def publish(conn, %{"assessmentid" => assessment_id, "togglePublishTo" => toggle_publish_to}) do
+    result =
+      Assessments.toggle_publish_assessment(
+        conn.assigns.current_user,
+        assessment_id,
+        toggle_publish_to
+      )
+
+    case result do
+      {:ok, _nil} ->
+        send_resp(conn, 200, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def update(conn, %{"assessmentid" => assessment_id, "closeAt" => close_at, "openAt" => open_at}) do
+    formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
+    formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
+
+    result =
+      Assessments.change_dates_assessment(
+        conn.assigns.current_user,
+        assessment_id,
+        formatted_close_date,
+        formatted_open_date
+      )
+
+    case result do
+      {:ok, _nil} ->
+        send_resp(conn, 200, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
@@ -178,6 +182,8 @@ defmodule CadetWeb.AssessmentsController do
 
     security([%{JWT: []}])
 
+    consumes("application/json")
+
     parameters do
       assessment(:body, :file, "assessment to create or update", required: true)
       forceUpdate(:body, :boolean, "force update", required: true)
@@ -189,7 +195,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/assessments/:id")
+    PhoenixSwagger.Path.delete("/assessments/:assessmentid")
 
     summary("Deletes an assessment")
 
@@ -204,11 +210,13 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :publish do
-    post("/assessments/publish/:id")
+    post("/assessments/publish/:assessmentid")
 
     summary("Toggles an assessment between published and unpublished")
 
     security([%{JWT: []}])
+
+    consumes("application/json")
 
     parameters do
       assessmentId(:path, :integer, "assessment id", required: true)
@@ -220,11 +228,13 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :update do
-    post("/assessments/update/:id")
+    post("/assessments/update/:assessmentid")
 
     summary("Changes the open/close date of an assessment")
 
     security([%{JWT: []}])
+
+    consumes("application/json")
 
     parameters do
       assessmentId(:path, :integer, "assessment id", required: true)
