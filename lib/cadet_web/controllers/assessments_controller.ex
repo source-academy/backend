@@ -6,6 +6,8 @@ defmodule CadetWeb.AssessmentsController do
   alias Cadet.Assessments
   import Cadet.Updater.XMLParser, only: [parse_xml: 2]
 
+  @create_assessment_roles ~w(staff admin)a
+
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
       {:ok, _nil} ->
@@ -90,9 +92,7 @@ defmodule CadetWeb.AssessmentsController do
   def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
     role = conn.assigns[:current_user].role
 
-    if role == :student do
-      send_resp(conn, :forbidden, "User not allowed to create")
-    else
+    if role in @create_assessment_roles do
       file =
         assessment["file"].path
         |> File.read!()
@@ -117,6 +117,8 @@ defmodule CadetWeb.AssessmentsController do
         {:error, {status, message}} ->
           send_resp(conn, status, message)
       end
+    else
+      send_resp(conn, :forbidden, "User not allowed to create assessment")
     end
   end
 
