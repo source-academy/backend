@@ -54,19 +54,23 @@ defmodule CadetWeb.AssessmentsController do
       case result do
         :ok ->
           if force_update == "true" do
-            send_resp(conn, 200, "Force Update OK")
+            text(conn, "Force Update OK")
           else
-            send_resp(conn, 200, "OK")
+            text(conn, "OK")
           end
 
         {:ok, warning_message} ->
-          send_resp(conn, 200, warning_message)
+          text(conn, warning_message)
 
         {:error, {status, message}} ->
-          send_resp(conn, status, message)
+          conn
+          |> put_status(status)
+          |> text(message)
       end
     else
-      send_resp(conn, :forbidden, "User not allowed to create assessment")
+      conn
+      |> put_status(:forbidden)
+      |> text("User not allowed to create assessment")
     end
   end
 
@@ -75,7 +79,7 @@ defmodule CadetWeb.AssessmentsController do
 
     case result do
       {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
+        text(conn, "OK")
 
       {:error, {status, message}} ->
         conn
@@ -94,7 +98,7 @@ defmodule CadetWeb.AssessmentsController do
 
     case result do
       {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
+        text(conn, "OK")
 
       {:error, {status, message}} ->
         conn
@@ -117,7 +121,7 @@ defmodule CadetWeb.AssessmentsController do
 
     case result do
       {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
+        text(conn, "OK")
 
       {:error, {status, message}} ->
         conn
