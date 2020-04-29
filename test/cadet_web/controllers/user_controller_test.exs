@@ -226,6 +226,28 @@ defmodule CadetWeb.UserControllerTest do
       assert response(conn, 401) =~ "Unauthorised"
     end
 
+    defp build_assessments_starting_at(time) do
+      type_order_map =
+        AssessmentType.__enum_map__()
+        |> Enum.with_index()
+        |> Enum.reduce(%{}, fn {type, idx}, acc -> Map.put(acc, type, idx) end)
+
+      AssessmentType.__enum_map__()
+      |> Enum.map(
+        &build(:assessment, %{
+          type: &1,
+          is_published: true,
+          open_at: time,
+          close_at: Timex.shift(time, days: 10)
+        })
+      )
+      |> Enum.shuffle()
+      |> Enum.map(&insert(&1))
+      |> Enum.sort(&(type_order_map[&1.type] < type_order_map[&2.type]))
+    end
+  end
+
+  describe "PUT /user" do
     @tag authenticate: :student
     test "success, student adding collectibles", %{conn: conn} do
       user = conn.assigns.current_user
@@ -408,25 +430,5 @@ defmodule CadetWeb.UserControllerTest do
         "collectibles" => %{}
       } == resp["gameStates"]
     end
-  end
-
-  defp build_assessments_starting_at(time) do
-    type_order_map =
-      AssessmentType.__enum_map__()
-      |> Enum.with_index()
-      |> Enum.reduce(%{}, fn {type, idx}, acc -> Map.put(acc, type, idx) end)
-
-    AssessmentType.__enum_map__()
-    |> Enum.map(
-      &build(:assessment, %{
-        type: &1,
-        is_published: true,
-        open_at: time,
-        close_at: Timex.shift(time, days: 10)
-      })
-    )
-    |> Enum.shuffle()
-    |> Enum.map(&insert(&1))
-    |> Enum.sort(&(type_order_map[&1.type] < type_order_map[&2.type]))
   end
 end
