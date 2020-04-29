@@ -71,29 +71,21 @@ defmodule CadetWeb.UserController do
     summary("update user's game states")
     security([%{JWT: []}])
     consumes("application/json")
-    produces("application/json")
-
+    
     parameters do
-      new_game_states(:path, :map, "new game states", required: true)
+      new_game_states(:body, :map, "new game states", required: true)
     end
 
-    response(200, "OK", Schema.ref(:UserInfo))
-    response(201, "Created")
-    response(204, "No Content")
-    response(400, "Invalid parameters")
-    response(401, "Unauthorised")
+    response(200, "OK")
+    response(403, "Please try again later.")
   end
 
   swagger_path :clear_up_game_states do
     put("/user/game_states/clear")
     summary("clear up users' game data saved")
     security([%{JWT: []}])
-    consumes("application/json")
-    produces("application/json")
-    response(200, "OK", Schema.ref(:UserInfo))
-    response(201, "Created")
-    response(204, "No Content")
-    response(401, "Unauthorised")
+    response(200, "OK")
+    response(403, "Please try again later.")
   end
 
   def swagger_definitions do
