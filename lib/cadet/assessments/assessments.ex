@@ -50,9 +50,10 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def toggle_publish_assessment(_publisher = %User{role: role}, id, toggle_publish_to) do
+  def toggle_publish_assessment(_publisher = %User{role: role}, id) do
     if role in @publish_assessment_role do
-      update_assessment(id, %{is_published: toggle_publish_to})
+      assessment = Repo.get(Assessment, id)
+      update_assessment(id, %{is_published: !assessment.is_published})
     else
       {:error, {:forbidden, "User is not permitted to publish"}}
     end

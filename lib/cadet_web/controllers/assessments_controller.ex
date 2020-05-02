@@ -88,12 +88,11 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  def publish(conn, %{"assessmentid" => assessment_id, "togglePublishTo" => toggle_publish_to}) do
+  def publish(conn, %{"assessmentid" => assessment_id}) do
     result =
       Assessments.toggle_publish_assessment(
         conn.assigns.current_user,
-        assessment_id,
-        toggle_publish_to
+        assessment_id
       )
 
     case result do
