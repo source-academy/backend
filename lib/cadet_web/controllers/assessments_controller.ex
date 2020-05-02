@@ -219,11 +219,8 @@ defmodule CadetWeb.AssessmentsController do
 
     security([%{JWT: []}])
 
-    consumes("application/json")
-
     parameters do
       assessmentId(:path, :integer, "assessment id", required: true)
-      togglePublishTo(:body, :boolean, "toggles assessment publish state", required: true)
     end
 
     response(200, "OK")
