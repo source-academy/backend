@@ -11,7 +11,7 @@ defmodule Cadet.Course.Groups do
   @doc """
   Returns a list of groups containing information on the each group's id, avenger name and group name
   """
-  @type group_overview :: %{id: integer, avenger_name: String.t, name: String.t}
+  @type group_overview :: %{id: integer, avenger_name: String.t(), name: String.t()}
 
   @spec get_group_overviews(%User{}) :: [group_overview]
   def get_group_overviews(_user = %User{role: role}) do
@@ -20,6 +20,7 @@ defmodule Cadet.Course.Groups do
         Group
         |> Repo.all()
         |> Enum.map(fn group_info -> get_group_info(group_info) end)
+
       {:ok, overviews}
     else
       {:error, {:unauthorized, "Unauthorized"}}

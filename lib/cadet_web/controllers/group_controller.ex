@@ -18,7 +18,6 @@ defmodule CadetWeb.GroupController do
         |> put_status(status)
         |> text(message)
     end
-    
   end
 
   swagger_path :index do
