@@ -3,7 +3,7 @@ defmodule CadetWeb.SourcecastController do
   use PhoenixSwagger
 
   alias Cadet.{Repo, Course}
-  alias Cadet.Course.{Sourcecast}
+  alias Cadet.Course.Sourcecast
 
   def index(conn, _params) do
     sourcecasts = Sourcecast |> Repo.all() |> Repo.preload(:uploader)

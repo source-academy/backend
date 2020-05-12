@@ -20,7 +20,10 @@ defmodule CadetWeb.ConnCase do
   using do
     quote do
       # Import conveniences for testing with connections
-      use Phoenix.ConnTest
+      # This line causes a false positive with MultiAliasImportRequireUse
+      # credo:disable-for-next-line
+      import Plug.Conn
+      import Phoenix.ConnTest
       import CadetWeb.Router.Helpers
       import Cadet.Factory
 

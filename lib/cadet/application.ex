@@ -16,6 +16,7 @@ defmodule Cadet.Application do
       supervisor(Cadet.Repo, []),
       # Start the endpoint when the application starts
       supervisor(CadetWeb.Endpoint, []),
+      {Phoenix.PubSub, [name: Cadet.PubSub, adapter: Phoenix.PubSub.PG2]},
       # Start your own worker by calling: Cadet.Worker.start_link(arg1, arg2, arg3)
       # worker(Cadet.Worker, [arg1, arg2, arg3]),
       # Start the GuardianDB sweeper

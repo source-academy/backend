@@ -53,16 +53,16 @@ defmodule Cadet.Chat.Room do
     headers = [Authorization: "Bearer #{token}"]
 
     body =
-      Poison.encode!(%{
+      Jason.encode!(%{
         "name" => "#{nusnet_id}_#{assessment_id}_Q#{question_id}"
       })
 
     case HTTPoison.post(url, body, headers) do
       {:ok, %HTTPoison.Response{body: body, status_code: 201}} ->
-        Poison.decode(body)
+        Jason.decode(body)
 
       {:ok, %HTTPoison.Response{body: body, status_code: status_code}} ->
-        response_body = Poison.decode!(body)
+        response_body = Jason.decode!(body)
 
         error_message =
           "Room creation failed: #{response_body["error"]}, " <>

@@ -33,7 +33,7 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
     User
     |> Repo.all()
     |> Enum.each(fn user ->
-      body = Poison.encode!(%{"name" => user.name, "id" => to_string(user.id)})
+      body = Jason.encode!(%{"name" => user.name, "id" => to_string(user.id)})
 
       case HTTPoison.post(url, body, headers) do
         {:ok, %HTTPoison.Response{status_code: 201}} ->
@@ -41,7 +41,7 @@ defmodule Mix.Tasks.Cadet.Users.Chat do
 
         {:ok, %HTTPoison.Response{body: body}} ->
           Logger.error("Unable to create user (name: #{user.name}, user_id: #{user.id})")
-          Logger.error("error: #{Poison.decode!(body)["error_description"]}")
+          Logger.error("error: #{Jason.decode!(body)["error_description"]}")
 
         {:error, %HTTPoison.Error{reason: error}} ->
           Logger.error("error: #{inspect(error, pretty: true)}")

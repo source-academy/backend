@@ -27,7 +27,11 @@ config :cadet, CadetWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "ueV6EWi+7MCMcJH/WZZVKPZbQxFix7tF1Xv9ajD4AN4jLowHbdUX33rmKWPvEEgz",
   render_errors: [view: CadetWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Cadet.PubSub, adapter: Phoenix.PubSub.PG2]
+  pubsub_server: Cadet.PubSub
+
+# Set Phoenix JSON library
+config :phoenix, :json_library, Jason
+config :phoenix_swagger, json_library: Jason
 
 # Configures Elixir's Logger
 config :logger, :console,
