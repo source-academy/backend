@@ -52,7 +52,7 @@ defmodule Cadet.Mixfile do
       {:ex_aws_s3, "~> 2.0"},
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.3"},
-      {:floki, "~> 0.23.0"},
+      {:floki, "~> 0.26.0"},
       {:gettext, "~> 0.11"},
       {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},
