@@ -12,7 +12,7 @@ defmodule Cadet.Repo do
   AWS KMS (only in production).
   """
   def init(_, opts) do
-    if @env == :prod do
+    if @env == :prod and not Keyword.has_key?(opts, :password) do
       cipher_text =
         :cadet
         |> Application.fetch_env!(:aws)
