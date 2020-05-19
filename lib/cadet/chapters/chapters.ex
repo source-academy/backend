@@ -11,14 +11,27 @@ defmodule Cadet.Chapters do
   def get_chapter do
     # Chapters table should only have 1 entry (as seeded).
     # However, if table has more than 1 entry, the last created chapter entry will be returned.
-    chapter = Chapter |> order_by(desc: :id) |> limit(1) |> Repo.one()
-    {:ok, chapter}
+    {:ok, retrieve_chapter() || %Chapter{chapterno: 1, variant: "default"}}
   end
 
   def update_chapter(chapterno, variant) do
-    {:ok, chapter} = get_chapter()
-    changeset = Chapter.changeset(chapter, %{chapterno: chapterno, variant: variant})
-    Repo.update!(changeset)
-    get_chapter()
+    new_chapter =
+      case retrieve_chapter() do
+        nil ->
+          %Chapter{}
+          |> Chapter.changeset(%{chapterno: chapterno, variant: variant})
+          |> Repo.insert!()
+
+        chapter ->
+          chapter
+          |> Chapter.changeset(%{chapterno: chapterno, variant: variant})
+          |> Repo.update!()
+      end
+
+    {:ok, new_chapter}
+  end
+
+  defp retrieve_chapter do
+    Chapter |> order_by(desc: :id) |> limit(1) |> Repo.one()
   end
 end

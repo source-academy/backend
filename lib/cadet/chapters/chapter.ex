@@ -6,8 +6,8 @@ defmodule Cadet.Chapters.Chapter do
   use Arc.Ecto.Schema
 
   schema "chapters" do
-    field(:chapterno, :integer, default: :public)
-    field(:variant, :string, default: :public)
+    field(:chapterno, :integer)
+    field(:variant, :string)
   end
 
   @required_fields ~w(chapterno variant)a
