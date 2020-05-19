@@ -5,13 +5,14 @@ defmodule Cadet.Course.MaterialUpload do
   use Arc.Definition
   use Arc.Ecto.Definition
 
+  @env Mix.env()
   @extension_whitelist ~w(.doc .docx .jpg .pdf .png .ppt .pptx .txt .xls .xlsx)
   @versions [:original]
 
   def bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:materials_bucket)
 
   def storage_dir(_, _) do
-    if Mix.env() != :test do
+    if @env != :test do
       ""
     else
       env = Application.get_env(:cadet, :environment)
