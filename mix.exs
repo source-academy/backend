@@ -18,7 +18,12 @@ defmodule Cadet.Mixfile do
       ],
       aliases: aliases(),
       deps: deps(),
-      dialyzer: [plt_add_apps: [:mix, :ex_unit]]
+      dialyzer: [plt_add_apps: [:mix, :ex_unit]],
+      releases: [
+        cadet: [
+          steps: [:assemble, :tar]
+        ]
+      ]
     ]
   end
 
