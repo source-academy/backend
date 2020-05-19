@@ -11,12 +11,9 @@ defmodule CadetWeb.ChaptersControllerTest do
         |> get(build_url())
         |> json_response(200)
 
-      with %{"chapter" => %{"chapterno" => chapterno, "variant" => variant}} <- resp do
-        assert chapterno == 1
-        assert variant == "default"
-      else
-        _ -> assert false
-      end
+      %{"chapter" => %{"chapterno" => chapterno, "variant" => variant}} = resp
+      assert chapterno == 1
+      assert variant == "default"
     end
   end
 
@@ -35,12 +32,9 @@ defmodule CadetWeb.ChaptersControllerTest do
         })
         |> json_response(200)
 
-      with %{"chapter" => %{"chapterno" => chapterno, "variant" => variant}} <- resp do
-        assert chapterno == no
-        assert variant == "default"
-      else
-        _ -> assert false
-      end
+      %{"chapter" => %{"chapterno" => chapterno, "variant" => variant}} = resp
+      assert chapterno == no
+      assert variant == "default"
     end
   end
 

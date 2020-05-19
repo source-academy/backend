@@ -3,7 +3,11 @@ defmodule CadetWeb.ChaptersView do
 
   def render("show.json", %{chapter: chapter}) do
     %{
-      chapter: chapter
+      chapter:
+        transform_map_for_view(chapter, %{
+          chapterno: :chapterno,
+          variant: :variant
+        })
     }
   end
 end
