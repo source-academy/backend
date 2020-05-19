@@ -3,11 +3,11 @@ defmodule CadetWeb.GroupController do
 
   use PhoenixSwagger
 
-  alias Cadet.Course.Groups
+  alias Cadet.Course
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    result = Groups.get_group_overviews(user)
+    result = Course.get_group_overviews(user)
 
     case result do
       {:ok, groups} ->
