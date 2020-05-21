@@ -1502,7 +1502,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
 
     @tag authenticate: :staff
-    test "not allowed to set close time to before current time", %{conn: conn} do
+    test "successful, set close time to before current time", %{conn: conn} do
       open_at =
         Timex.now()
         |> Timex.beginning_of_day()
@@ -1531,12 +1531,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> post(build_url_update(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 400) == "New end date should occur after current time"
-      assert [assessment.open_at, assessment.close_at] == [open_at, close_at]
+      assert response(conn, 200) == "OK"
+      assert [assessment.open_at, assessment.close_at] == [open_at, new_close_at]
     end
 
     @tag authenticate: :staff
-    test "not allowed to set open time to before current time", %{conn: conn} do
+    test "successful, set open time to before current time", %{conn: conn} do
       open_at =
         Timex.now()
         |> Timex.beginning_of_day()
@@ -1565,8 +1565,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> post(build_url_update(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 400) == "New Opening date should occur after current time"
-      assert [assessment.open_at, assessment.close_at] == [open_at, close_at]
+      assert response(conn, 200) == "OK"
+      assert [assessment.open_at, assessment.close_at] == [new_open_at, close_at]
     end
   end
 
