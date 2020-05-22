@@ -8,7 +8,7 @@ defmodule Cadet.Course do
   import Ecto.Query
 
   alias Cadet.{Accounts, Accounts.User}
-  alias Cadet.Course.{Category, Group, Material, MaterialUpload, Sourcecast, SourcecastUpload}
+  alias Cadet.Course.{Group, Sourcecast, SourcecastUpload}
 
   @upload_file_roles ~w(admin staff)a
   @get_overviews_role ~w(staff admin)a
@@ -154,108 +154,6 @@ defmodule Cadet.Course do
       Repo.delete(sourcecast)
     else
       {:error, {:forbidden, "User is not permitted to delete"}}
-    end
-  end
-
-  @doc """
-  Create a new folder to put material files in
-  """
-  def create_material_folder(uploader = %User{}, attrs = %{}) do
-    create_material_folder(nil, uploader, attrs)
-  end
-
-  def create_material_folder(category, uploader = %User{role: role}, attrs = %{}) do
-    if role in @upload_file_roles do
-      changeset =
-        %Category{}
-        |> Category.changeset(attrs)
-        |> put_assoc(:uploader, uploader)
-
-      case category do
-        %Category{} ->
-          Repo.insert(put_assoc(changeset, :category, category))
-
-        _ ->
-          Repo.insert(changeset)
-      end
-    else
-      {:error, {:forbidden, "User is not permitted to create folder"}}
-    end
-  end
-
-  @doc """
-  Upload a material file to designated folder
-  """
-  def upload_material_file(uploader = %User{}, attrs = %{}) do
-    upload_material_file(nil, uploader, attrs)
-  end
-
-  def upload_material_file(category, uploader = %User{role: role}, attrs = %{}) do
-    if role in @upload_file_roles do
-      changeset =
-        %Material{}
-        |> Material.changeset(attrs)
-        |> put_assoc(:uploader, uploader)
-
-      case category do
-        %Category{} ->
-          Repo.insert(put_assoc(changeset, :category, category))
-
-        _ ->
-          Repo.insert(changeset)
-      end
-    else
-      {:error, {:forbidden, "User is not permitted to upload"}}
-    end
-  end
-
-  @doc """
-  Delete a material file
-  """
-  def delete_material(_deleter = %User{role: role}, id) do
-    if role in @upload_file_roles do
-      material = Repo.get(Material, id)
-      MaterialUpload.delete({material.file, material})
-      Repo.delete(material)
-    else
-      {:error, {:forbidden, "User is not permitted to delete"}}
-    end
-  end
-
-  @doc """
-  Delete a category
-  A directory tree is deleted recursively
-  """
-  def delete_category(_deleter = %User{role: role}, id) do
-    if role in @upload_file_roles do
-      category = Repo.get(Category, id)
-      Repo.delete(category)
-    else
-      {:error, {:forbidden, "User is not permitted to delete"}}
-    end
-  end
-
-  @doc """
-  List material folder content
-  """
-  def list_material_folders(id) do
-    import Cadet.Course.Query
-
-    mat = id |> material_folder_files() |> Repo.all() |> Repo.preload(:uploader)
-    cat = id |> category_folder_files() |> Repo.all() |> Repo.preload(:uploader)
-
-    Enum.concat(mat, cat)
-  end
-
-  @doc """
-  Construct directory tree for current folder
-  """
-  def construct_hierarchy(id) do
-    if is_nil(id) do
-      []
-    else
-      category = Repo.get(Category, id)
-      construct_hierarchy(category.category_id) ++ [category]
     end
   end
 end

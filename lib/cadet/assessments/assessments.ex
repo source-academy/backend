@@ -10,7 +10,6 @@ defmodule Cadet.Assessments do
   alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
-  alias Cadet.Chat.Room
   alias Ecto.Multi
 
   @xp_early_submission_max_bonus 100
@@ -569,12 +568,8 @@ defmodule Cadet.Assessments do
            {:is_open?, true} <- is_open?(question.assessment),
            {:ok, submission} <- find_or_create_submission(user, question.assessment),
            {:status, true} <- {:status, submission.status != :submitted},
-           {:ok, answer} <- insert_or_update_answer(submission, question, raw_answer) do
+           {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer) do
         update_submission_status(submission, question.assessment)
-
-        if answer.room_id == nil do
-          Room.create_rooms(submission, answer, user)
-        end
 
         {:ok, nil}
       else
