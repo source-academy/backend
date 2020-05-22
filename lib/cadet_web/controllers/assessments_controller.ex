@@ -342,7 +342,6 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The question id", required: true)
             type(:string, "The question type (mcq/programming)", required: true)
             content(:string, "The question content", required: true)
-            roomId(:string, "Chatkit room id.")
 
             choices(
               Schema.new do

@@ -334,42 +334,5 @@ defmodule Cadet.Accounts.NotificationTest do
         assert %{type: :new} = notification
       end
     end
-
-    test "avenger receives notification when student writes a message" do
-      assessment = insert(:assessment, %{is_published: true})
-      avenger = insert(:user, %{role: :staff})
-      group = insert(:group, %{leader: avenger})
-      student = insert(:user, %{role: :student, group: group})
-      submission = insert(:submission, %{student: student, assessment: assessment})
-
-      Notifications.write_notification_for_chatkit_avenger(student, assessment.id)
-
-      notification =
-        Repo.get_by(Notification,
-          user_id: avenger.id,
-          type: :new_message,
-          submission_id: submission.id
-        )
-
-      assert %{type: :new_message} = notification
-    end
-
-    test "student receives notification when avenger writes a message", %{
-      assessment: assessment,
-      avenger: avenger,
-      student: student,
-      submission: submission
-    } do
-      Notifications.write_notification_for_chatkit_student(avenger, submission.id)
-
-      notification =
-        Repo.get_by(Notification,
-          user_id: student.id,
-          type: :new_message,
-          assessment_id: assessment.id
-        )
-
-      assert %{type: :new_message} = notification
-    end
   end
 end

@@ -16,8 +16,6 @@ config :cadet, Cadet.Jobs.Scheduler,
   overlap: false,
   jobs: [
     {"@hourly", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}},
-    # Create Chatkit rooms if they do not already exist at 1am
-    {"0 1 * * *", {Mix.Tasks.Cadet.ChatkitRoom, :run, [nil]}},
     # Grade previous day's submission at 3am
     {"1 0 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}}
   ]

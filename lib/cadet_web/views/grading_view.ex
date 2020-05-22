@@ -70,7 +70,6 @@ defmodule CadetWeb.GradingView do
       gradedAt: graded_at_builder(grader),
       grade: :grade,
       adjustment: :adjustment,
-      roomId: :room_id,
       xp: :xp,
       xpAdjustment: :xp_adjustment,
       comments: :comments

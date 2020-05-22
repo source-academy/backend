@@ -11,7 +11,6 @@ defmodule Cadet.Assessments.AnswerFactory do
         %Answer{
           answer: %{},
           autograding_status: :none,
-          room_id: Faker.Code.issn(),
           comments: Faker.Food.dish()
         }
       end

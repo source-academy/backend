@@ -307,7 +307,6 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -355,7 +354,6 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -447,7 +445,6 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -495,7 +492,6 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -683,7 +679,6 @@ defmodule CadetWeb.GradingControllerTest do
       assert submission_db.unsubmitted_by_id === grader.id
       assert submission_db.unsubmitted_at != nil
 
-      assert answer_db.room_id == answer.room_id
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
       assert answer_db.grader_id == nil
@@ -843,7 +838,6 @@ defmodule CadetWeb.GradingControllerTest do
       assert submission_db.unsubmitted_by_id === admin.id
       assert submission_db.unsubmitted_at != nil
 
-      assert answer_db.room_id == answer.room_id
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
       assert answer_db.grader_id == nil
@@ -1021,7 +1015,6 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -1069,7 +1062,6 @@ defmodule CadetWeb.GradingControllerTest do
                 "grade" => %{
                   "grade" => &1.grade,
                   "adjustment" => &1.adjustment,
-                  "roomId" => &1.room_id,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
@@ -1100,11 +1092,11 @@ defmodule CadetWeb.GradingControllerTest do
 
       conn =
         post(conn, build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"adjustment" => -10, "room_id" => "19422040"}
+          "grading" => %{"adjustment" => -10}
         })
 
       assert response(conn, 200) == "OK"
-      assert %{adjustment: -10, room_id: room_id} = Repo.get(Answer, answer.id)
+      assert %{adjustment: -10} = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :admin

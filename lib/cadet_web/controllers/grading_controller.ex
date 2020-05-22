@@ -280,7 +280,6 @@ defmodule CadetWeb.GradingController do
           properties do
             grade(:integer, "Grade awarded by autograder")
             xp(:integer, "XP awarded by autograder")
-            roomId(:string, "associated chatkit room id")
             adjustment(:integer, "grade adjustment given")
             xpAdjustment(:integer, "xp adjustment given")
             grader(Schema.ref(:GraderInfo))
