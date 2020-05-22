@@ -1434,7 +1434,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
 
     @tag authenticate: :staff
-    test "not allowed to change open time of opened assessments", %{conn: conn} do
+    test "allowed to change open time of opened assessments", %{conn: conn} do
       open_at =
         Timex.now()
         |> Timex.beginning_of_day()
@@ -1463,8 +1463,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> post(build_url_update(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 401) == "Assessment is already opened"
-      assert [assessment.open_at, assessment.close_at] == [open_at, close_at]
+      assert response(conn, 200) == "OK"
+      assert [assessment.open_at, assessment.close_at] == [new_open_at, close_at]
     end
 
     @tag authenticate: :staff

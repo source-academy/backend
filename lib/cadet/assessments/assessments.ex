@@ -26,18 +26,10 @@ defmodule Cadet.Assessments do
 
   def change_dates_assessment(_user = %User{role: role}, id, close_at, open_at) do
     if role in @change_dates_assessment_role do
-      assessment = Repo.get(Assessment, id)
-      previous_open_time = assessment.open_at
-
-      cond do
-        Timex.before?(close_at, open_at) ->
-          {:error, {:bad_request, "New end date should occur after new opening date"}}
-
-        Timex.equal?(previous_open_time, open_at) or Timex.after?(previous_open_time, Timex.now()) ->
-          update_assessment(id, %{close_at: close_at, open_at: open_at})
-
-        true ->
-          {:error, {:unauthorized, "Assessment is already opened"}}
+      if Timex.before?(close_at, open_at) do
+        {:error, {:bad_request, "New end date should occur after new opening date"}}
+      else
+        update_assessment(id, %{close_at: close_at, open_at: open_at})
       end
     else
       {:error, {:forbidden, "User is not permitted to edit"}}
