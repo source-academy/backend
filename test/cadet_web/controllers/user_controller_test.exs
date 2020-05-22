@@ -6,6 +6,7 @@ defmodule CadetWeb.UserControllerTest do
   alias Cadet.Repo
   alias CadetWeb.UserController
   alias Cadet.Assessments.{Assessment, AssessmentType, Submission}
+  alias Cadet.Accounts.GameStates
 
   test "swagger" do
     assert is_map(UserController.swagger_definitions())
@@ -62,7 +63,8 @@ defmodule CadetWeb.UserControllerTest do
         "group" => nil,
         "xp" => 110,
         "grade" => 40,
-        "maxGrade" => question.max_grade
+        "maxGrade" => question.max_grade,
+        "gameStates" => %{"collectibles" => %{}, "completed_quests" => []}
       }
 
       assert expected == resp
@@ -214,7 +216,8 @@ defmodule CadetWeb.UserControllerTest do
         "group" => nil,
         "grade" => 0,
         "maxGrade" => 0,
-        "xp" => 0
+        "xp" => 0,
+        "gameStates" => %{"collectibles" => %{}, "completed_quests" => []}
       }
 
       assert expected == resp
@@ -224,25 +227,244 @@ defmodule CadetWeb.UserControllerTest do
       conn = get(conn, "/v1/user", nil)
       assert response(conn, 401) =~ "Unauthorised"
     end
+
+    defp build_assessments_starting_at(time) do
+      type_order_map =
+        AssessmentType.__enum_map__()
+        |> Enum.with_index()
+        |> Enum.reduce(%{}, fn {type, idx}, acc -> Map.put(acc, type, idx) end)
+
+      AssessmentType.__enum_map__()
+      |> Enum.map(
+        &build(:assessment, %{
+          type: &1,
+          is_published: true,
+          open_at: time,
+          close_at: Timex.shift(time, days: 10)
+        })
+      )
+      |> Enum.shuffle()
+      |> Enum.map(&insert(&1))
+      |> Enum.sort(&(type_order_map[&1.type] < type_order_map[&2.type]))
+    end
   end
 
-  defp build_assessments_starting_at(time) do
-    type_order_map =
-      AssessmentType.__enum_map__()
-      |> Enum.with_index()
-      |> Enum.reduce(%{}, fn {type, idx}, acc -> Map.put(acc, type, idx) end)
+  describe "PUT /user" do
+    @tag authenticate: :student
+    test "success, student adding collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
 
-    AssessmentType.__enum_map__()
-    |> Enum.map(
-      &build(:assessment, %{
-        type: &1,
-        is_published: true,
-        open_at: time,
-        close_at: Timex.shift(time, days: 10)
-      })
-    )
-    |> Enum.shuffle()
-    |> Enum.map(&insert(&1))
-    |> Enum.sort(&(type_order_map[&1.type] < type_order_map[&2.type]))
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      GameStates.update(user, new_game_states)
+
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert new_game_states == resp["gameStates"]
+    end
+
+    @tag authenticate: :student
+    test "success, student deleting collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      GameStates.update(user, new_game_states)
+
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert new_game_states == resp["gameStates"]
+
+      GameStates.clear(user)
+
+      resp_2 =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp_2["gameStates"]
+    end
+
+    @tag authenticate: :student
+    test "success, student retrieving collectibles", %{conn: conn} do
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp["gameStates"]
+    end
+
+    @tag authenticate: :staff
+    test "forbidden, staff adding collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      assert GameStates.update(user, new_game_states) ==
+               {:error, {:forbidden, "Please try again later."}}
+
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp["gameStates"]
+    end
+
+    @tag authenticate: :staff
+    test "forbidden, staff deleting collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      assert GameStates.update(user, new_game_states) ==
+               {:error, {:forbidden, "Please try again later."}}
+
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp["gameStates"]
+
+      assert GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
+
+      resp_2 =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp_2["gameStates"]
+    end
+
+    @tag authenticate: :staff
+    test "success, staff retrieving collectibles", %{conn: conn} do
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp["gameStates"]
+    end
+
+    @tag authenticate: :admin
+    test "forbidden, admin adding collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      assert GameStates.update(user, new_game_states) ==
+               {:error, {:forbidden, "Please try again later."}}
+
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp["gameStates"]
+    end
+
+    @tag authenticate: :admin
+    test "forbidden, admin deleting collectibles", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      new_game_states = %{
+        "completed_quests" => ["haha"],
+        "collectibles" => %{
+          "HAHA" => "HAHA.png"
+        }
+      }
+
+      assert GameStates.update(user, new_game_states) ==
+               {:error, {:forbidden, "Please try again later."}}
+
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp["gameStates"]
+
+      assert GameStates.clear(user) == {:error, {:forbidden, "Please try again later."}}
+
+      resp_2 =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp_2["gameStates"]
+    end
+
+    @tag authenticate: :admin
+    test "success, admin retrieving collectibles", %{conn: conn} do
+      resp =
+        conn
+        |> get("/v1/user")
+        |> json_response(200)
+
+      assert %{
+               "completed_quests" => [],
+               "collectibles" => %{}
+             } == resp["gameStates"]
+    end
   end
 end

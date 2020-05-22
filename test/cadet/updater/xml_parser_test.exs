@@ -9,6 +9,7 @@ defmodule Cadet.Updater.XMLParserTest do
   import ExUnit.CaptureLog
 
   @local_name "test/fixtures/local_repo"
+
   # @locations %{mission: "missions", sidequest: "quests", path: "paths", contest: "contests"}
 
   setup do

@@ -14,6 +14,7 @@ defmodule Cadet.Accounts.User do
     field(:name, :string)
     field(:role, Role)
     field(:nusnet_id, :string)
+    field(:game_states, :map, default: %{"collectibles" => %{}, "completed_quests" => []})
     belongs_to(:group, Group)
     timestamps()
   end
