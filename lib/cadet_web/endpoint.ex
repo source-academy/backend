@@ -1,6 +1,16 @@
 defmodule CadetWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :cadet
 
+  plug(
+    Corsica,
+    origins: config[:cors_endpoints] || "*",
+    allow_methods: :all,
+    allow_headers: :all,
+    expose_headers: ~w(Content-Length Content-Range),
+    allow_credentials: true,
+    max_age: 86_400
+  )
+
   # Digest and serve the files in priv/static directory using compression
   plug(
     Plug.Static,
