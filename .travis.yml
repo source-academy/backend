@@ -23,4 +23,3 @@ script:
 branches:
   only:
     - master
-    - sa_2021
