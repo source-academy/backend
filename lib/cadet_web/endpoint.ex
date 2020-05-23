@@ -11,15 +11,6 @@ defmodule CadetWeb.Endpoint do
     max_age: 86_400
   )
 
-  # Digest and serve the files in priv/static directory using compression
-  plug(
-    Plug.Static,
-    at: "/",
-    from: :cadet,
-    gzip: true,
-    only: ~w(js css favicon.ico robots.txt cache_manifest.json)
-  )
-
   # For uploaded files
   plug(
     Plug.Static,
@@ -28,8 +19,6 @@ defmodule CadetWeb.Endpoint do
     gzip: false
   )
 
-  # Serve assets files from priv/assets directory as-is.
-  plug(Plug.Static, at: "/lib", from: {:cadet, "priv/assets"}, gzip: false)
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
