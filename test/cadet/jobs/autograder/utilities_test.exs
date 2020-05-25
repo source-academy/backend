@@ -109,7 +109,10 @@ defmodule Cadet.Autograder.UtilitiesTest do
       expected_student_ids = Enum.map(students, & &1.id)
 
       results = Utilities.fetch_submissions(assessment.id)
-      assert Enum.map(results, & &1.student_id) == expected_student_ids
+
+      assert results |> Enum.map(& &1.student_id) |> Enum.sort() ==
+               Enum.sort(expected_student_ids)
+
       assert results |> Enum.map(& &1.submission) |> Enum.uniq() == [nil]
     end
   end
