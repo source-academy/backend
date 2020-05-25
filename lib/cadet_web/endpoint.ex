@@ -19,7 +19,6 @@ defmodule CadetWeb.Endpoint do
     gzip: false
   )
 
-
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
