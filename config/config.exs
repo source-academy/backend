@@ -24,7 +24,7 @@ config :cadet, Cadet.Jobs.Scheduler,
 config :cadet, CadetWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "ueV6EWi+7MCMcJH/WZZVKPZbQxFix7tF1Xv9ajD4AN4jLowHbdUX33rmKWPvEEgz",
-  render_errors: [view: CadetWeb.ErrorView, accepts: ~w(html json)],
+  render_errors: [view: CadetWeb.ErrorView, accepts: ~w(json)],
   pubsub_server: Cadet.PubSub
 
 # Set Phoenix JSON library
