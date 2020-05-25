@@ -56,20 +56,13 @@ defmodule Cadet.Mixfile do
       {:ex_aws_kms, "~> 2.0"},
       {:ex_aws_lambda, "~> 2.0"},
       {:ex_aws_s3, "~> 2.0"},
-      {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.3"},
-      {:floki, "~> 0.26"},
-      {:gettext, "~> 0.11"},
       {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},
       {:hackney, "~> 1.6"},
       {:httpoison, "~> 1.6"},
-      {:inch_ex, "~> 2.0", only: [:dev, :test]},
-      {:joken, "~> 2.0"},
       {:jason, "~> 1.2"},
-      {:jsx, "~> 2.10", override: true},
       {:phoenix, "~> 1.5"},
-      {:phoenix_html, "~> 2.14"},
       {:phoenix_ecto, "~> 4.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:plug_cowboy, "~> 2.0"},
@@ -79,17 +72,24 @@ defmodule Cadet.Mixfile do
       {:sentry, "~> 7.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
-      # TODO: Remove the override once ex_aws released the new version
-      #       without the dependency on xml_builder. Waste my time urgh
-      {:xml_builder, "~> 2.0", override: true},
+
+      # development dependencies
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:distillery, "~> 2.1", runtime: false},
-      {:excoveralls, "~> 0.8", only: :test},
-      {:exvcr, "~> 0.10", only: :test},
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.4", only: [:dev, :test]},
-      {:mock, "~> 0.3.0", only: :test}
+      {:inch_ex, "~> 2.0", only: [:dev, :test]},
+
+      # unit testing dependencies
+      {:excoveralls, "~> 0.8", only: :test},
+      {:exvcr, "~> 0.10", only: :test},
+      {:mock, "~> 0.3.0", only: :test},
+
+      # The following are indirect dependencies, but we need to override the
+      # versions due to conflicts
+      {:jsx, "~> 2.10", override: true},
+      {:xml_builder, "~> 2.0", override: true}
     ]
   end
 
