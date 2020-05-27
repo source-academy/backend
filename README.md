@@ -7,51 +7,57 @@
 
 Cadet is the web application powering Source Academy.
 
-## Developer Setup
+## Developer setup
 
-### System Requirements
+### System requirements
 
-1. Elixir 1.8
-2. Erlang/OTP 21
-3. PostgreSQL (>= 9.6)
+1. Elixir 1.10.3
+2. Erlang/OTP 22.3.4
+3. PostgreSQL 11.8
 
-### Setting Up Local Development Environment
+It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but
+using a different version of Elixir may result in differences in e.g. `mix
+format`.
 
-1. Setup the development secrets (replace the values appropriately)
-```bash
-$ cp config/secrets.exs.example config/secrets.exs
-$ vim config/secrets.exs
-```
-  - A valid `luminus_api_key`, `luminus_client_id`, `luminus_client_secret` and
-    `luminus_redirect_url` are required for the application to properly authenticate with LumiNUS.\*
-  - A valid `cs1101s_repository`, `cs1101s_rsa_key` is required for the application to
-    run with the `--updater` flag. Otherwise, the default values will suffice.
-  - A valid `instance_id`, `key_id` and `key_secret` are required to use ChatKit's services. Otherwise, the placeholder values can be left as they are.
+### Setting up your local development environment
 
-  \*If you require access to Luminus keys please email Prof Henz at henz@comp.nus.edu.sg to request for a with the email subject heading "Request for Luminus API Keys".
+1. Set up the development secrets (replace the values appropriately)
+
+   ```bash
+   $ cp config/secrets.exs.example config/secrets.exs
+   $ vim config/secrets.exs
+   ```
+
+  - To use LumiNUS authentication, specify a valid LumiNUS `api_key`. Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
+  - A valid `cs1101s_repository`, `cs1101s_rsa_key` is required for the
+    application to run with the `--updater` flag. Otherwise, you can leave the default values.
 
 2. Install Elixir dependencies
-```bash
-$ mix deps.get
-```
+
+   ```bash
+   $ mix deps.get
+   ```
 
 3. Initialise development database
-```bash
-$ mix ecto.setup
-```
 
-4. Run the server in your local machine
-```bash
-$ mix phx.server
-```
+   ```bash
+   $ mix ecto.setup
+   ```
 
-5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can
-   also be accessed at http://localhost:4000/swagger.
+4. Run the server on your local machine
+
+   ```bash
+   $ mix phx.server
+   ```
+
+5. You may now make API calls to the server locally via `localhost:4000`. The
+   API documentation can also be accessed at http://localhost:4000/swagger.
 
 
 ### Obtaining `access_token` in dev environment
 
-You can obtain `access_token` JWT of a user with a given role by simply running:
+You can obtain an `access_token` JWT for a user with a given role by simply
+running:
 
 ```bash
 $ mix cadet.token <role>
