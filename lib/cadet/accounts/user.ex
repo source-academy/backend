@@ -13,14 +13,14 @@ defmodule Cadet.Accounts.User do
   schema "users" do
     field(:name, :string)
     field(:role, Role)
-    field(:nusnet_id, :string)
+    field(:username, :string)
     field(:game_states, :map, default: %{"collectibles" => %{}, "completed_quests" => []})
     belongs_to(:group, Group)
     timestamps()
   end
 
   @required_fields ~w(name role)a
-  @optional_fields ~w(nusnet_id group_id)a
+  @optional_fields ~w(username group_id)a
 
   def changeset(user, params \\ %{}) do
     user

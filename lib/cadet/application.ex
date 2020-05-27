@@ -44,6 +44,12 @@ defmodule Cadet.Application do
         children
       end
 
+    children =
+      case Application.get_env(:cadet, :openid_connect_providers) do
+        nil -> children
+        providers -> children ++ [worker(OpenIDConnect.Worker, [providers])]
+      end
+
     {:ok, _} = Logger.add_backend(Sentry.LoggerBackend)
 
     # See https://hexdocs.pm/elixir/Supervisor.html

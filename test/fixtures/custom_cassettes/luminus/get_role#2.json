@@ -1,0 +1,30 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Ocp-Apim-Subscription-Key": "API_KEY",
+        "Authorization": "Bearer TOKENZ"
+      },
+      "method": "get",
+      "options": {
+        "recv_timeout": 10000,
+        "connect_timeout": 10000
+      },
+      "request_body": "",
+      "url": "https://luminus.azure-api.net/module"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Transfer-Encoding": "chunked",
+        "X-Powered-By": "ASP.NET",
+        "WWW-Authenticate": "Bearer error=\"invalid_token\", error_description=\"The signature is invalid\", Bearer error=\"invalid_token\", error_description=\"The signature is invalid\"",
+        "Date": "Wed, 27 May 2020 12:44:28 GMT"
+      },
+      "status_code": 401,
+      "type": "ok"
+    }
+  }
+]

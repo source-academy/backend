@@ -11,7 +11,7 @@ defmodule Cadet.Accounts.UserFactory do
         %User{
           name: Faker.Name.En.name(),
           role: Enum.random(Role.__enum_map__()),
-          nusnet_id:
+          username:
             sequence(
               :nusnet_id,
               &"E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
@@ -23,7 +23,7 @@ defmodule Cadet.Accounts.UserFactory do
         %User{
           name: Faker.Name.En.name(),
           role: :student,
-          nusnet_id:
+          username:
             sequence(
               :nusnet_id,
               &"E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"

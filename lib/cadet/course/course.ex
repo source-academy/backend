@@ -55,7 +55,8 @@ defmodule Cadet.Course do
   """
   @type group_overview :: %{id: integer, avenger_name: String.t(), name: String.t()}
 
-  @spec get_group_overviews(%User{}) :: [group_overview]
+  @spec get_group_overviews(%User{}) ::
+          {:ok, [group_overview]} | {:error, {:unauthorized, String.t()}}
   def get_group_overviews(_user = %User{role: role}) do
     if role in @get_overviews_role do
       overviews =

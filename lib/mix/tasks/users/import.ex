@@ -8,9 +8,12 @@ defmodule Mix.Tasks.Cadet.Users.Import do
   3. List of all the mentors together with their group names
 
   For all the files, they must be comma-separated csv and in this format:
+
   ```
-  name,nusnet_id,group_name
+  name,username,group_name
   ```
+
+  (Username could be e.g. NUSNET ID)
 
   Note that group names must be unique.
   """
@@ -44,11 +47,11 @@ defmodule Mix.Tasks.Cadet.Users.Import do
     if File.exists?(path) do
       csv_stream = path |> File.stream!() |> CSV.decode()
 
-      for {:ok, [name, nusnet_id, group_name]} <- csv_stream do
+      for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, group = %Group{}} <- Course.get_or_create_group(group_name),
              {:ok, %User{}} <-
                Accounts.insert_or_update_user(%{
-                 nusnet_id: nusnet_id,
+                 username: username,
                  name: name,
                  role: :student,
                  group: group
@@ -57,7 +60,7 @@ defmodule Mix.Tasks.Cadet.Users.Import do
         else
           error ->
             Logger.error(
-              "Unable to insert student (name: #{name}, nusnet_id: #{nusnet_id}, " <>
+              "Unable to insert student (name: #{name}, username: #{username}, " <>
                 "group_name: #{group_name})"
             )
 
@@ -75,15 +78,15 @@ defmodule Mix.Tasks.Cadet.Users.Import do
     if File.exists?(path) do
       csv_stream = path |> File.stream!() |> CSV.decode()
 
-      for {:ok, [name, nusnet_id, group_name]} <- csv_stream do
+      for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, leader = %User{}} <-
-               Accounts.insert_or_update_user(%{nusnet_id: nusnet_id, name: name, role: :staff}),
+               Accounts.insert_or_update_user(%{username: username, name: name, role: :staff}),
              {:ok, %Group{}} <- Course.insert_or_update_group(%{name: group_name, leader: leader}) do
           :ok
         else
           error ->
             Logger.error(
-              "Unable to insert leader (name: #{name}, nusnet_id: #{nusnet_id}, " <>
+              "Unable to insert leader (name: #{name}, username: #{username}, " <>
                 "group_name: #{group_name})"
             )
 
@@ -101,15 +104,15 @@ defmodule Mix.Tasks.Cadet.Users.Import do
     if File.exists?(path) do
       csv_stream = path |> File.stream!() |> CSV.decode()
 
-      for {:ok, [name, nusnet_id, group_name]} <- csv_stream do
+      for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, mentor = %User{}} <-
-               Accounts.insert_or_update_user(%{nusnet_id: nusnet_id, name: name, role: :staff}),
+               Accounts.insert_or_update_user(%{username: username, name: name, role: :staff}),
              {:ok, %Group{}} <- Course.insert_or_update_group(%{name: group_name, mentor: mentor}) do
           :ok
         else
           error ->
             Logger.error(
-              "Unable to insert mentor (name: #{name}, nusnet_id: #{nusnet_id}, " <>
+              "Unable to insert mentor (name: #{name}, username: #{username}, " <>
                 "group_name: #{group_name})"
             )
 

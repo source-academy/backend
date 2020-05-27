@@ -1,0 +1,27 @@
+[
+  {
+    "request": {
+      "body": "client_id=CLIENT_ID&code=CODE&grant_type=authorization_code&redirect_uri=REDIRECT_URI",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Ocp-Apim-Subscription-Key": "API_KEY"
+      },
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://luminus.azure-api.net/login/adfstoken"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Transfer-Encoding": "chunked",
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Powered-By": "ASP.NET",
+        "Date": "Wed, 27 May 2020 12:27:57 GMT"
+      },
+      "status_code": 500,
+      "type": "ok"
+    }
+  }
+]

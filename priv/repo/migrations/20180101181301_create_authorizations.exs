@@ -1,10 +1,8 @@
 defmodule Cadet.Repo.Migrations.CreateAuthorizations do
   use Ecto.Migration
 
-  alias Cadet.Accounts.Provider
-
   def up do
-    Provider.create_type()
+    Ecto.Migration.execute("CREATE TYPE provider AS ENUM ('nusnet_id')")
 
     create table(:authorizations) do
       add(:provider, :provider, null: false)
@@ -21,6 +19,6 @@ defmodule Cadet.Repo.Migrations.CreateAuthorizations do
 
   def down do
     drop(table(:authorizations))
-    Provider.drop_type()
+    Ecto.Migration.execute("DROP TYPE provider")
   end
 end

@@ -2,12 +2,9 @@ defmodule CadetWeb.AuthController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  import Ecto.Changeset
-
   alias Cadet.Accounts
-  alias Cadet.Accounts.Form.Login
-  alias Cadet.Accounts.{Luminus, User}
-  alias Cadet.Auth.Guardian
+  alias Cadet.Accounts.User
+  alias Cadet.Auth.{Guardian, Provider}
 
   @doc """
   Receives a /login request with valid attributes (`Login form`).
@@ -16,33 +13,41 @@ defmodule CadetWeb.AuthController do
   the user has not been registered before, register the user, then return the
   `Tokens`.
   """
-  def create(conn, %{"login" => attrs}) do
-    changeset = Login.changeset(%Login{}, attrs)
+  def create(
+        conn,
+        params = %{
+          "code" => code,
+          "provider" => provider
+        }
+      ) do
+    client_id = Map.get(params, "client_id")
+    redirect_uri = Map.get(params, "redirect_uri")
 
-    with valid <- changeset.valid?,
-         {:changes, login} when valid <- {:changes, apply_changes(changeset)},
-         {:fetch, {:ok, token}} <-
-           {:fetch, Luminus.fetch_luminus_token(login.luminus_code)},
-         {:fetch, {:ok, nusnet_id, name}} <- {:fetch, Luminus.fetch_details(token)},
-         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(nusnet_id, name, token)} do
+    with {:authorise, {:ok, %{token: token, username: username}}} <-
+           {:authorise, Provider.authorise(provider, code, client_id, redirect_uri)},
+         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(username, token, provider)} do
       render(conn, "token.json", generate_tokens(user))
     else
-      {:changes, _} ->
+      {:authorise, {:error, :upstream, reason}} ->
         conn
         |> put_status(:bad_request)
-        |> text("Missing parameter")
+        |> text("Unable to retrieve token from ADFS: #{reason}")
 
-      {:fetch, {:error, reason}} ->
+      {:authorise, {:error, :invalid_credentials, reason}} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Unable to validate token: #{reason}")
+
+      {:authorise, {:error, _, reason}} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> text("Unknown error: #{reason}")
+
+      {:signin, {:error, status, reason}} ->
         # reason can be :bad_request or :internal_server_error
         conn
-        |> put_status(reason)
-        |> text("Unable to fetch NUSNET ID from LumiNUS.")
-
-      {:signin, {:error, reason}} ->
-        # reason can be :bad_request or :internal_server_error
-        conn
-        |> put_status(reason)
-        |> text("Unable to retrieve user")
+        |> put_status(status)
+        |> text("Unable to retrieve user: #{reason}")
     end
   end
 
@@ -114,29 +119,30 @@ defmodule CadetWeb.AuthController do
     summary("Obtain access and refresh tokens to authenticate user.")
 
     description(
-      "Get a set of access and refresh tokens, using the authentication token " <>
-        "from LumiNUS. When accessing resources, pass the access token in the " <>
-        "Authorization HTTP header using the Bearer schema: `Authorization: " <>
-        "Bearer <token>`. The access token expires 1 hour after issuance while " <>
-        "the refresh token expires 1 week after issuance. When access token " <>
-        "expires, the refresh token can be used to obtain a new access token. "
+      "Get a set of access and refresh tokens, using the authentication code " <>
+        "from the OAuth2 provider. When accessing resources, pass the access " <>
+        "token in the Authorization HTTP header using the Bearer schema: " <>
+        "`Authorization: Bearer <token>`."
     )
 
     consumes("application/json")
     produces("application/json")
 
     parameters do
-      login(:body, Schema.ref(:FormLogin), "login attributes", required: true)
+      code(:body, :string, "OAuth2 code", required: true)
+      provider(:body, :string, "OAuth2 provider ID", required: true)
+      client_id(:body, :string, "OAuth2 client ID", required: false)
+      redirect_uri(:body, :string, "OAuth2 redirect URI", required: false)
     end
 
     response(200, "OK", Schema.ref(:Tokens))
-    response(400, "Missing or invalid parameter")
+    response(400, "Missing or invalid parameters or credentials, or upstream error")
     response(500, "Internal server error")
   end
 
   swagger_path :refresh do
     post("/auth/refresh")
-    summary("Obtain new access token after expiry of the old one through refresh token")
+    summary("Obtain a new access token using a refresh token")
     consumes("application/json")
     produces("application/json")
 
@@ -170,36 +176,13 @@ defmodule CadetWeb.AuthController do
 
   def swagger_definitions do
     %{
-      FormLogin:
-        swagger_schema do
-          title("Login form")
-          description("Authentication")
-
-          properties do
-            login(
-              Schema.new do
-                properties do
-                  luminus_code(:string, "LumiNUS Authorization Code", required: true)
-                end
-              end
-            )
-          end
-
-          required(:login)
-
-          example(%{
-            login: %{
-              luminus_code: "a28caaa2330ea656d3012403f00bcb1e"
-            }
-          })
-        end,
       Tokens:
         swagger_schema do
           title("Tokens")
 
           properties do
             access_token(:string, "Access token with TTL of 1 hour")
-            refresh_token(:string, "Refresh token with TTL of 1 year")
+            refresh_token(:string, "Refresh token with TTL of 1 week")
           end
         end,
       RefreshToken:

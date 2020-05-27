@@ -6,48 +6,16 @@ defmodule Cadet.Accounts do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.Form.Registration
-  alias Cadet.Accounts.{Authorization, Luminus, Query, User}
+  alias Cadet.Accounts.{Query, User}
+  alias Cadet.Auth.Provider
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration
 
   Returns {:ok, user} on success, otherwise {:error, changeset}
   """
-  def register(attrs = %{nusnet_id: nusnet_id}, role) when is_binary(nusnet_id) do
-    changeset = Registration.changeset(%Registration{}, attrs)
-
-    if changeset.valid? do
-      registration = apply_changes(changeset)
-
-      Repo.transaction(fn ->
-        attrs_with_role = Map.put(attrs, :role, role)
-        {:ok, user} = insert_or_update_user(attrs_with_role)
-
-        {:ok, _} =
-          create_authorization(
-            %{
-              provider: :nusnet_id,
-              uid: registration.nusnet_id
-            },
-            user
-          )
-
-        user
-      end)
-    else
-      {:error, changeset}
-    end
-  end
-
-  @doc """
-  Creates Authorization entity with specified attributes.
-  """
-  def create_authorization(attrs = %{}, user = %User{}) do
-    %Authorization{}
-    |> Authorization.changeset(attrs)
-    |> put_assoc(:user, user)
-    |> Repo.insert()
+  def register(attrs = %{username: username}, role) when is_binary(username) do
+    attrs |> Map.put(:role, role) |> insert_or_update_user()
   end
 
   @doc """
@@ -64,9 +32,9 @@ defmodule Cadet.Accounts do
   create one.
   """
   @spec insert_or_update_user(map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def insert_or_update_user(attrs = %{nusnet_id: nusnet_id}) when is_binary(nusnet_id) do
+  def insert_or_update_user(attrs = %{username: username}) when is_binary(username) do
     User
-    |> where(nusnet_id: ^nusnet_id)
+    |> where(username: ^username)
     |> Repo.one()
     |> case do
       nil ->
@@ -85,48 +53,32 @@ defmodule Cadet.Accounts do
     Repo.get(User, id)
   end
 
+  @spec sign_in(String.t(), Provider.token(), Provider.provider_instance()) ::
+          {:error, :bad_request | :forbidden | :internal_server_error, String.t()} | {:ok, any}
   @doc """
-  Associate NUSTNET_ID with an existing `%User{}`
+  Sign in using given user ID
   """
-  def add_nusnet_id(user = %User{}, nusnet_id) do
-    changeset =
-      %Authorization{}
-      |> Authorization.changeset(%{
-        provider: :nusnet_id,
-        uid: nusnet_id
-      })
-      |> put_assoc(:user, user)
+  def sign_in(username, token, provider) do
+    case Repo.one(Query.username(username)) do
+      nil ->
+        # user is not registered in our database
+        with {:ok, role} <- Provider.get_role(provider, token),
+             {:ok, name} <- Provider.get_name(provider, token),
+             {:ok, _} <- register(%{name: name, username: username}, role) do
+          sign_in(username, name, token)
+        else
+          {:error, :invalid_credentials, err} ->
+            {:error, :forbidden, err}
 
-    Repo.insert(changeset)
-  end
+          {:error, :upstream, err} ->
+            {:error, :bad_request, err}
 
-  @doc """
-  Sign in using given NUSNET_ID
-  """
-  def sign_in(nusnet_id, name, token) do
-    auth = Repo.one(Query.nusnet_id(nusnet_id))
+          {:error, _err} ->
+            {:error, :internal_server_error}
+        end
 
-    if auth do
-      auth = Repo.preload(auth, :user)
-      {:ok, auth.user}
-    else
-      # user is not registered in our database
-      with {:ok, role} <- Luminus.fetch_role(token),
-           {:ok, _} <- register(%{name: name, nusnet_id: nusnet_id}, role) do
-        sign_in(nusnet_id, name, token)
-      else
-        {:error, :forbidden} ->
-          # Luminus.fetch_role/1 responds with :forbidden if student does not read CS1101S
-          {:error, :forbidden}
-
-        {:error, :bad_request} ->
-          # Luminus.fetch_role/1 responds with :bad_request if token is invalid
-          {:error, :bad_request}
-
-        {:error, _} ->
-          # register/2 returns {:error, changeset} if changeset is invalid
-          {:error, :internal_server_error}
-      end
+      user ->
+        {:ok, user}
     end
   end
 end

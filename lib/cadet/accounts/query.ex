@@ -4,20 +4,13 @@ defmodule Cadet.Accounts.Query do
   """
   import Ecto.Query
 
-  alias Cadet.Accounts.{Authorization, User}
+  alias Cadet.Accounts.User
   alias Cadet.Course.Group
   alias Cadet.Repo
 
-  def user_nusnet_ids(user_id) do
-    Authorization
-    |> nusnet_ids
-    |> of_user(user_id)
-  end
-
-  def nusnet_id(uid) do
-    Authorization
-    |> nusnet_ids
-    |> of_uid(uid)
+  def username(username) do
+    User
+    |> of_username(username)
   end
 
   @spec students_of(%User{}) :: Ecto.Query.t()
@@ -38,15 +31,7 @@ defmodule Cadet.Accounts.Query do
     end
   end
 
-  defp nusnet_ids(query) do
-    query |> where([a], a.provider == "nusnet_id")
-  end
-
-  defp of_user(query, user_id) do
-    query |> where([a], a.user_id == ^user_id)
-  end
-
-  defp of_uid(query, uid) do
-    query |> where([a], a.uid == ^uid)
+  defp of_username(query, username) do
+    query |> where([a], a.username == ^username)
   end
 end

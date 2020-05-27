@@ -44,7 +44,6 @@ defmodule Cadet.Test.Seeds do
       group = insert(:group, %{leader: avenger, mentor: mentor})
       students = insert_list(5, :student, %{group: group})
       admin = insert(:user, %{name: "admin", role: :admin})
-      Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
 
       assessments =
         Enum.reduce(

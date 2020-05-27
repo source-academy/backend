@@ -22,7 +22,7 @@ if Application.get_env(:cadet, :environment) == :dev do
   group = insert(:group, %{leader: avenger, mentor: mentor})
   students = insert_list(5, :student, %{group: group})
   admin = insert(:user, %{name: "admin", role: :admin})
-  Enum.each([avenger, mentor] ++ students, &insert(:nusnet_id, %{user: &1}))
+  Enum.each([avenger, mentor] ++ students, &insert(:username, %{user: &1}))
 
   # Assessments
   for _ <- 1..5 do

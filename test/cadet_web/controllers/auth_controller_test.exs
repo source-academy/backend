@@ -1,31 +1,12 @@
 defmodule CadetWeb.AuthControllerTest do
-  @moduledoc """
-  Some tests in this module use pre-recorded HTTP responses saved by ExVCR.
-  this allows testing without the use of actual external LumiNUS API calls.
-
-  In the case that you need to change the recorded responses, you will need
-  to set the config variables `luminus_api_key`, `luminus_client_id`,
-  `luminus_client_secret` and `luminus_redirect_url` (used as a module attribute
-  in `Cadet.Accounts.Luminus`) and environment variable CODE (used here). Don't
-  forget to delete the cassette files, otherwise ExVCR will not override the
-  cassettes. You can set the CODE environment variable like so,
-
-    CODE=auth_code_goes_here mix test
-
-  Code refers to the authorization code generated via the OAuth Authorization Grant Type.
-  More information can be found here
-  https://wiki.nus.edu.sg/pages/viewpage.action?pageId=235638755.
-  """
-
   use CadetWeb.ConnCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   import Cadet.Factory
+  import Mock
 
   alias Cadet.Auth.Guardian
   alias CadetWeb.AuthController
-
-  @code System.get_env("CODE") || "code"
 
   setup_all do
     HTTPoison.start()
@@ -40,14 +21,15 @@ defmodule CadetWeb.AuthControllerTest do
 
   describe "POST /auth" do
     test "success", %{conn: conn} do
-      use_cassette "auth_controller/v1/auth#1" do
-        conn =
-          post(conn, "/v1/auth", %{
-            "login" => %{"luminus_code" => @code}
-          })
+      conn =
+        post(conn, "/v1/auth", %{
+          "code" => "student_code",
+          "provider" => "test",
+          "redirect_uri" => "",
+          "client_id" => ""
+        })
 
-        assert response(conn, 200)
-      end
+      assert response(conn, 200)
     end
 
     test "missing parameter", %{conn: conn} do
@@ -56,24 +38,64 @@ defmodule CadetWeb.AuthControllerTest do
       assert response(conn, 400) == "Missing parameter"
     end
 
-    test "blank code", %{conn: conn} do
+    test "invalid code", %{conn: conn} do
       conn =
         post(conn, "/v1/auth", %{
-          "login" => %{"luminus_code" => ""}
+          "code" => "invalid code",
+          "provider" => "test",
+          "redirect_uri" => "",
+          "client_id" => ""
         })
 
-      assert response(conn, 400) == "Missing parameter"
+      assert response(conn, 400) == "Unable to validate token: Invalid code"
     end
 
-    test "invalid code", %{conn: conn} do
-      use_cassette "auth_controller/v1/auth#2" do
-        conn =
-          post(conn, "/v1/auth", %{
-            "login" => %{"luminus_code" => @code <> "Z"}
-          })
+    test_with_mock "upstream error from Provider.authorise",
+                   %{conn: conn},
+                   Cadet.Auth.Provider,
+                   [],
+                   authorise: fn _, _, _, _ -> {:error, :upstream, "Upstream error"} end do
+      conn =
+        post(conn, "/v1/auth", %{
+          "code" => "invalid code",
+          "provider" => "test",
+          "redirect_uri" => "",
+          "client_id" => ""
+        })
 
-        assert response(conn, 400) == "Unable to fetch NUSNET ID from LumiNUS."
-      end
+      assert response(conn, 400) == "Unable to retrieve token from ADFS: Upstream error"
+    end
+
+    test_with_mock "unknown error from Provider.authorise",
+                   %{conn: conn},
+                   Cadet.Auth.Provider,
+                   [],
+                   authorise: fn _, _, _, _ -> {:error, :other, "Unknown error"} end do
+      conn =
+        post(conn, "/v1/auth", %{
+          "code" => "code",
+          "provider" => "test",
+          "redirect_uri" => "",
+          "client_id" => ""
+        })
+
+      assert response(conn, 500) == "Unknown error: Unknown error"
+    end
+
+    test_with_mock "failure in Accounts.sign_in",
+                   %{conn: conn},
+                   Cadet.Accounts,
+                   [],
+                   sign_in: fn _, _, _ -> {:error, :internal_server_error, "Unknown error"} end do
+      conn =
+        post(conn, "/v1/auth", %{
+          "code" => "student_code",
+          "provider" => "test",
+          "redirect_uri" => "",
+          "client_id" => ""
+        })
+
+      assert response(conn, 500) == "Unable to retrieve user: Unknown error"
     end
   end
 

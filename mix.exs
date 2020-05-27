@@ -62,6 +62,7 @@ defmodule Cadet.Mixfile do
       {:hackney, "~> 1.6"},
       {:httpoison, "~> 1.6"},
       {:jason, "~> 1.2"},
+      {:openid_connect, "~> 0.2"},
       {:phoenix, "~> 1.5"},
       {:phoenix_ecto, "~> 4.0"},
       {:phoenix_swagger, "~> 0.8"},
@@ -82,6 +83,11 @@ defmodule Cadet.Mixfile do
       {:inch_ex, "~> 2.0", only: [:dev, :test]},
 
       # unit testing dependencies
+      # using Bypass git as the current released version emits warnings on Elixir 1.10
+      {:bypass,
+       git: "https://github.com/PSPDFKit-labs/bypass",
+       ref: "c4d18ab4a1ccd8a0b46828913f55ae3f147100c2",
+       only: :test},
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:mock, "~> 0.3.0", only: :test},
