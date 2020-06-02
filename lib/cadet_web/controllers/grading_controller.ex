@@ -9,7 +9,7 @@ defmodule CadetWeb.GradingController do
 
     group = String.to_atom(group)
 
-    case Assessments.all_submissions_by_grader(user, group) do
+    case Assessments.all_submissions_by_grader_for_index(user, group) do
       {:ok, submissions} ->
         render(conn, "index.json", submissions: submissions)
 
@@ -209,7 +209,6 @@ defmodule CadetWeb.GradingController do
             id(:integer, "assessment id", required: true)
             type(:string, "Either mission/sidequest/path/contest", required: true)
             title(:string, "Mission title", required: true)
-            coverImage(:string, "The URL to the cover picture", required: true)
 
             maxGrade(
               :integer,

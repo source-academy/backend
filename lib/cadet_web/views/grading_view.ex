@@ -26,8 +26,7 @@ defmodule CadetWeb.GradingView do
           maxGrade: :max_grade,
           maxXp: :max_xp,
           id: :id,
-          title: :title,
-          coverImage: :cover_picture
+          title: :title
         }),
       groupName: :group_name,
       status: :status,

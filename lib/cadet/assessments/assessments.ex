@@ -768,18 +768,21 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Function returning submissions under a grader.
+  Function returning submissions under a grader. This function returns only the
+  fields that are exposed in the /grading endpoint. The reason we select only
+  those fields is to reduce the memory usage especially when the number of
+  submissions is large i.e. > 25000 submissions.
 
-  The input parameters are the user and group_only.
-  group_only is used to check whether only the groups under the grader should be returned.
-  The parameter is a boolean which is false by default.
+  The input parameters are the user and group_only. group_only is used to check
+  whether only the groups under the grader should be returned. The parameter is
+  a boolean which is false by default.
 
-  The return value is {:ok, submissions} if no errors else its
-  {:error, {:unauthorized, "User is not permitted to grade."}}
+  The return value is {:ok, submissions} if no errors else its {:error,
+  {:unauthorized, "User is not permitted to grade."}}
   """
-  @spec all_submissions_by_grader(%User{}) ::
+  @spec all_submissions_by_grader_for_index(%User{}) ::
           {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
-  def all_submissions_by_grader(grader = %User{role: role}, group_only \\ false) do
+  def all_submissions_by_grader_for_index(grader = %User{role: role}, group_only \\ false) do
     submission_query =
       Submission
       |> join(
@@ -815,10 +818,22 @@ defmodule Cadet.Assessments do
           adjustment: x.adjustment,
           xp: x.xp,
           xp_adjustment: x.xp_adjustment,
-          student: st,
-          assessment: a,
+          student: %User{
+            id: st.id,
+            name: st.name
+          },
+          assessment: %Assessment{
+            id: a.id,
+            type: a.type,
+            max_grade: a.max_grade,
+            max_xp: a.max_xp,
+            title: a.title
+          },
           group_name: g.name,
-          unsubmitted_by: u,
+          unsubmitted_by: %User{
+            id: u.id,
+            name: u.name
+          },
           question_count: q_count.count,
           graded_count: g_count.count
       })
@@ -827,7 +842,7 @@ defmodule Cadet.Assessments do
       role in @grading_roles ->
         submissions = submissions_by_group(grader, submission_query)
 
-        {:ok, build_submission_grading_status(submissions)}
+        {:ok, post_process_submissions(submissions)}
 
       role in @see_all_submissions_roles ->
         submissions =
@@ -837,20 +852,21 @@ defmodule Cadet.Assessments do
             Repo.all(submission_query)
           end
 
-        {:ok, build_submission_grading_status(submissions)}
+        {:ok, post_process_submissions(submissions)}
 
       true ->
         {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
-  # Constructs grading status for each submission
-  defp build_submission_grading_status(submissions) do
+  # Constructs grading status for each submission and removes empty fields
+  defp post_process_submissions(submissions) do
     submissions
     |> Enum.map(fn s = %Submission{} ->
       %{
         s
-        | grading_status:
+        | unsubmitted_by: if(is_nil(s.unsubmitted_by.id), do: nil, else: s.unsubmitted_by),
+          grading_status:
             build_grading_status(s.status, s.assessment.type, s.question_count, s.graded_count)
       }
     end)

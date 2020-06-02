@@ -114,8 +114,7 @@ defmodule CadetWeb.GradingControllerTest do
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title,
-              "coverImage" => mission.cover_picture
+              "title" => mission.title
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
@@ -157,8 +156,7 @@ defmodule CadetWeb.GradingControllerTest do
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title,
-              "coverImage" => mission.cover_picture
+              "title" => mission.title
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
@@ -218,8 +216,7 @@ defmodule CadetWeb.GradingControllerTest do
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title,
-              "coverImage" => mission.cover_picture
+              "title" => mission.title
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
@@ -881,8 +878,7 @@ defmodule CadetWeb.GradingControllerTest do
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title,
-              "coverImage" => mission.cover_picture
+              "title" => mission.title
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
@@ -926,8 +922,7 @@ defmodule CadetWeb.GradingControllerTest do
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title,
-              "coverImage" => mission.cover_picture
+              "title" => mission.title
             },
             "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
