@@ -1,4 +1,6 @@
 defmodule Cadet.Autograder.LambdaWorker do
+  # Suppress no_match from macro
+  @dialyzer {:no_match, __after_compile__: 2}
   @moduledoc """
   This module submits the answer to the autograder and creates a job for the ResultStoreWorker to
   write the received result to db.

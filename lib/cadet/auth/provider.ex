@@ -24,7 +24,7 @@ defmodule Cadet.Auth.Provider do
   @doc "Retrieves the role of the user with the associated token."
   @callback get_role(any(), token) :: {:ok, Role.t()} | {:error, error(), String.t()}
 
-  @spec get_instance_config(provider_instance) :: {Module.t(), any()} | nil
+  @spec get_instance_config(provider_instance) :: {module(), any()} | nil
   def get_instance_config(instance) do
     Application.get_env(:cadet, :identity_providers, %{})[instance]
   end

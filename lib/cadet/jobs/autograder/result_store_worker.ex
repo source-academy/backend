@@ -1,4 +1,6 @@
 defmodule Cadet.Autograder.ResultStoreWorker do
+  # Suppress no_match from macro
+  @dialyzer {:no_match, __after_compile__: 2}
   @moduledoc """
   This module writes results from the autograder to db. Separate worker is created with lower
   concurrency on the assumption that autograding time >> db IO time so as to reduce db load.

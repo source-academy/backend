@@ -70,7 +70,7 @@ defmodule Cadet.Auth.Providers.OpenID.ClaimExtractor do
   @moduledoc """
   A behaviour for modules that extract fields from JWT token claims.
   """
-  @callback get_username(Map.t()) :: String.t() | nil
-  @callback get_name(Map.t()) :: String.t() | nil
-  @callback get_role(Map.t()) :: String.t() | nil
+  @callback get_username(%{}) :: String.t() | nil
+  @callback get_name(%{}) :: String.t() | nil
+  @callback get_role(%{}) :: String.t() | nil
 end

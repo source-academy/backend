@@ -100,7 +100,10 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Changes read status of notification(s) from false to true.
   """
-  @spec acknowledge({:array, :integer}, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, :any}
+  @spec acknowledge({:array, :integer}, %User{}) ::
+          {:ok, Ecto.Schema.t()}
+          | {:error, any}
+          | {:error, Ecto.Multi.name(), any, %{Ecto.Multi.name() => any}}
   def acknowledge(notification_ids, user = %User{}) when is_list(notification_ids) do
     Multi.new()
     |> Multi.run(:update_all, fn _repo, _ ->
@@ -118,7 +121,7 @@ defmodule Cadet.Accounts.Notifications do
     |> Repo.transaction()
   end
 
-  @spec acknowledge(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, :any}
+  @spec acknowledge(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, any()}
   def acknowledge(notification_id, user = %User{}) do
     notification = Repo.get_by(Notification, id: notification_id, user_id: user.id)
 
@@ -136,7 +139,7 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Function that handles notifications when a submission is unsubmitted.
   """
-  @spec handle_unsubmit_notifications(:integer, %User{}) ::
+  @spec handle_unsubmit_notifications(integer(), %User{}) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unsubmit_notifications(assessment_id, student = %User{})
       when is_ecto_id(assessment_id) do

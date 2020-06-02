@@ -7,6 +7,7 @@ cache:
   directories:
     - _build
     - deps
+    - priv/plts
 before_install:
   - sudo systemctl stop 'postgresql@*.service' 'postgresql.service'
   - sudo apt-get -qqy remove '*postgresql*'
@@ -18,10 +19,11 @@ before_install:
 before_script:
   - mix ecto.setup
 script:
-  - mix coveralls.travis
-  - mix credo
-  - mix inch.report
   - mix format --check-formatted
+  - mix credo
+  - mix coveralls.travis
+  - mix dialyzer
+  - mix inch.report
 branches:
   only:
     - master

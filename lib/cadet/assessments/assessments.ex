@@ -19,7 +19,9 @@ defmodule Cadet.Assessments do
   @delete_assessment_role ~w(staff admin)a
   @publish_assessment_role ~w(staff admin)a
   @unsubmit_assessment_role ~w(staff admin)a
-  @grading_roles ~w()a
+  # @grading_roles is a placeholder for a future "grader" role
+  # no_roles is so Dialyzer does not complain about checks that are always false
+  @grading_roles ~w(no_roles)a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
 

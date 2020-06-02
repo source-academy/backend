@@ -63,13 +63,9 @@ defmodule Cadet.Updater.XMLParser do
           Logger.info("Imported #{file} successfully.\n")
           :ok
 
-        :error ->
-          error_message = "Failed to import #{file}.\n"
-          Logger.error(error_message)
-          Sentry.capture_message(error_message)
-          :error
-
         {:error, {_status, error_message}} ->
+          error_message = "Failed to import #{file}: #{error_message}\n"
+          Logger.error(error_message)
           Sentry.capture_message(error_message)
           :error
       end
