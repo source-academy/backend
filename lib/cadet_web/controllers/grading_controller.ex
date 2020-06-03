@@ -11,7 +11,10 @@ defmodule CadetWeb.GradingController do
 
     case Assessments.all_submissions_by_grader_for_index(user, group) do
       {:ok, submissions} ->
-        render(conn, "index.json", submissions: submissions)
+        conn
+        |> put_status(:ok)
+        |> put_resp_content_type("application/json")
+        |> text(submissions)
 
       {:error, {status, message}} ->
         conn
@@ -189,11 +192,14 @@ defmodule CadetWeb.GradingController do
             xpBonus(:integer, "bonus xp for a given submission")
             xpAdjustment(:integer, "xp adjustment given")
             adjustment(:integer, "grade adjustment given")
-            groupName(:string, "name of student's group")
 
             status(
               :string,
               "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user"
+            )
+
+            gradedCount(:integer, "number of questions in this submission that have been graded",
+              required: true
             )
 
             assessment(Schema.ref(:AssessmentInfo))
@@ -221,6 +227,8 @@ defmodule CadetWeb.GradingController do
               "The max xp for this assessment",
               required: true
             )
+
+            questionCount(:integer, "number of questions in this assessment", required: true)
           end
         end,
       StudentInfo:
@@ -228,6 +236,7 @@ defmodule CadetWeb.GradingController do
           properties do
             id(:integer, "student id", required: true)
             name(:string, "student name", required: true)
+            groupName(:string, "name of student's group")
           end
         end,
       GraderInfo:

@@ -107,20 +107,19 @@ defmodule CadetWeb.GradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
-              "id" => submission.student.id
+              "id" => submission.student.id,
+              "groupName" => submission.student.group.name
             },
             "assessment" => %{
               "type" => "mission",
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title
+              "title" => mission.title,
+              "questionCount" => 4
             },
-            "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
-            "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "graded",
             "unsubmittedBy" => nil,
             "unsubmittedAt" => nil
           }
@@ -149,20 +148,19 @@ defmodule CadetWeb.GradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
-              "id" => submission.student.id
+              "id" => submission.student.id,
+              "groupName" => submission.student.group.name
             },
             "assessment" => %{
               "type" => "mission",
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title
+              "title" => mission.title,
+              "questionCount" => 4
             },
-            "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
-            "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -209,20 +207,19 @@ defmodule CadetWeb.GradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
-              "id" => submission.student.id
+              "id" => submission.student.id,
+              "groupName" => submission.student.group.name
             },
             "assessment" => %{
               "type" => "mission",
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title
+              "title" => mission.title,
+              "questionCount" => 4
             },
-            "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
-            "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -871,20 +868,19 @@ defmodule CadetWeb.GradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
-              "id" => submission.student.id
+              "id" => submission.student.id,
+              "groupName" => submission.student.group.name
             },
             "assessment" => %{
               "type" => "mission",
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title
+              "title" => mission.title,
+              "questionCount" => 4
             },
-            "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
-            "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }
@@ -915,20 +911,19 @@ defmodule CadetWeb.GradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
-              "id" => submission.student.id
+              "id" => submission.student.id,
+              "groupName" => submission.student.group.name
             },
             "assessment" => %{
               "type" => "mission",
               "maxGrade" => 800,
               "maxXp" => 4000,
               "id" => mission.id,
-              "title" => mission.title
+              "title" => mission.title,
+              "questionCount" => 4
             },
-            "groupName" => submission.student.group.name,
             "status" => Atom.to_string(submission.status),
-            "questionCount" => 4,
             "gradedCount" => 4,
-            "gradingStatus" => "graded",
             "unsubmittedAt" => nil,
             "unsubmittedBy" => nil
           }

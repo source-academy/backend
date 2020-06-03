@@ -3,39 +3,8 @@ defmodule CadetWeb.GradingView do
 
   import CadetWeb.AssessmentsHelpers
 
-  def render("index.json", %{submissions: submissions}) do
-    render_many(submissions, CadetWeb.GradingView, "submission.json", as: :submission)
-  end
-
   def render("show.json", %{answers: answers}) do
     render_many(answers, CadetWeb.GradingView, "grading_info.json", as: :answer)
-  end
-
-  def render("submission.json", %{submission: submission}) do
-    transform_map_for_view(submission, %{
-      grade: :grade,
-      xp: :xp,
-      xpAdjustment: :xp_adjustment,
-      xpBonus: :xp_bonus,
-      adjustment: :adjustment,
-      id: :id,
-      student: &transform_map_for_view(&1.student, [:name, :id]),
-      assessment:
-        &transform_map_for_view(&1.assessment, %{
-          type: :type,
-          maxGrade: :max_grade,
-          maxXp: :max_xp,
-          id: :id,
-          title: :title
-        }),
-      groupName: :group_name,
-      status: :status,
-      questionCount: :question_count,
-      gradedCount: &(&1.graded_count || 0),
-      gradingStatus: &(&1.grading_status || "excluded"),
-      unsubmittedBy: &unsubmitted_by_builder(&1.unsubmitted_by),
-      unsubmittedAt: &format_datetime(&1.unsubmitted_at)
-    })
   end
 
   def render("grading_info.json", %{answer: answer}) do
