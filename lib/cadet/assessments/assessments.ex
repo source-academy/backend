@@ -19,9 +19,6 @@ defmodule Cadet.Assessments do
   @delete_assessment_role ~w(staff admin)a
   @publish_assessment_role ~w(staff admin)a
   @unsubmit_assessment_role ~w(staff admin)a
-  # @grading_roles is a placeholder for a future "grader" role
-  # no_roles is so Dialyzer does not complain about checks that are always false
-  @grading_roles ~w(no_roles)a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
 
@@ -783,7 +780,7 @@ defmodule Cadet.Assessments do
   @spec all_submissions_by_grader_for_index(%User{}) ::
           {:ok, String.t()} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader_for_index(grader = %User{role: role}, group_only \\ false) do
-    if role in @see_all_submissions_roles or role in @grading_roles do
+    if role in @see_all_submissions_roles do
       show_all = role in @see_all_submissions_roles and not group_only
 
       group_where =
@@ -855,7 +852,7 @@ defmodule Cadet.Assessments do
 
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
-  def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
+  def get_answers_in_submission(id, %User{role: role}) when is_ecto_id(id) do
     answer_query =
       Answer
       |> where(submission_id: ^id)
@@ -870,28 +867,15 @@ defmodule Cadet.Assessments do
         submission: {s, student: st}
       )
 
-    cond do
-      role in @grading_roles ->
-        students = Cadet.Accounts.Query.students_of(grader)
+    if role in @see_all_submissions_roles do
+      answers =
+        answer_query
+        |> Repo.all()
+        |> Enum.sort_by(& &1.question.display_order)
 
-        answers =
-          answer_query
-          |> join(:inner, [..., s, _], t in subquery(students), on: t.id == s.student_id)
-          |> Repo.all()
-          |> Enum.sort_by(& &1.question.display_order)
-
-        {:ok, answers}
-
-      role in @see_all_submissions_roles ->
-        answers =
-          answer_query
-          |> Repo.all()
-          |> Enum.sort_by(& &1.question.display_order)
-
-        {:ok, answers}
-
-      true ->
-        {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:ok, answers}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
@@ -926,10 +910,10 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        grader = %User{id: grader_id, role: role}
+        %User{id: grader_id, role: role}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) and
-             (role in @grading_roles or role in @see_all_submissions_roles) do
+             role in @see_all_submissions_roles do
     attrs = Map.put(attrs, "grader_id", grader_id)
 
     answer_query =
@@ -937,19 +921,10 @@ defmodule Cadet.Assessments do
       |> where(submission_id: ^submission_id)
       |> where(question_id: ^question_id)
 
-    # checks if role is in @grading_roles or @see_all_submissions_roles
     answer_query =
-      if role in @grading_roles do
-        students = Cadet.Accounts.Query.students_of(grader)
-
-        answer_query
-        |> join(:inner, [a], s in assoc(a, :submission))
-        |> join(:inner, [a, s], t in subquery(students), on: t.id == s.student_id)
-      else
-        answer_query
-        |> join(:inner, [a], s in assoc(a, :submission))
-        |> preload([_, s], submission: s)
-      end
+      answer_query
+      |> join(:inner, [a], s in assoc(a, :submission))
+      |> preload([_, s], submission: s)
 
     answer = Repo.one(answer_query)
 
