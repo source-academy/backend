@@ -309,18 +309,6 @@ defmodule Cadet.Assessments do
       |> filter_published_assessments(user)
       |> order_by(:open_at)
       |> Repo.all()
-      |> Enum.map(fn assessment = %Assessment{} ->
-        %{
-          assessment
-          | grading_status:
-              build_grading_status(
-                assessment.user_status,
-                assessment.type,
-                assessment.question_count,
-                assessment.graded_count
-              )
-        }
-      end)
 
     {:ok, assessments}
   end
@@ -331,21 +319,6 @@ defmodule Cadet.Assessments do
     case role do
       :student -> where(assessments, is_published: true)
       _ -> assessments
-    end
-  end
-
-  defp build_grading_status(submission_status, a_type, q_count, g_count) do
-    case a_type do
-      type when type in [:mission, :sidequest, :practical] ->
-        cond do
-          submission_status != :submitted -> :excluded
-          g_count < q_count -> :grading
-          g_count == q_count -> :graded
-          true -> :none
-        end
-
-      _ ->
-        :excluded
     end
   end
 
