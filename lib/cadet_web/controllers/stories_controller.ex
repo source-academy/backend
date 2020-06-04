@@ -25,4 +25,33 @@ defmodule CadetWeb.StoriesController do
     render(conn, "show.json", story: story)
   end
 
+
+  swagger_path :index do
+    get("/stories")
+
+    summary("Get a list of all stories")
+
+    security([%{JWT: []}])
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(403, "User not permitted to answer questions or assessment not open")
+    response(404, "Submission not found")
+  end
+
+  def swagger_definitions do
+    %{
+      Story:
+        swagger_schema do
+          properties do
+            filename(:string, "The filename", required: true)
+            openAt(:string, "The opening date", format: "date-time", required: true)
+            closeAt(:string, "The closing date", format: "date-time", required: true)
+            isPublished(:boolean, "Whether or not is published", required: true)
+          end
+        end
+    }
+  end
+
+
 end
