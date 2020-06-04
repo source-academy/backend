@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
@@ -69,10 +69,6 @@ config :cadet,
          }
        ]}
   },
-  updater: [
-    cs1101s_repository: "git@dummy:dummy.git",
-    cs1101s_rsa_key: "/home/test/dummy"
-  ],
   autograder: [
     lambda_name: "dummy"
   ],
