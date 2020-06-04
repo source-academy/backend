@@ -6,7 +6,7 @@ defmodule Cadet.Repo.Migrations.CreateStoriesTable do
       add(:filename, :string, null: false)
       add(:open_at, :timestamp, null: false)
       add(:close_at, :timestamp, null: false)
-      add(:is_published, :timestamp, null: false)
+      add(:is_published, :boolean, null: false)
       timestamps()
     end
 

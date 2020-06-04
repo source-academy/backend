@@ -42,6 +42,8 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
+    get("/stories", StoriesController, :index)
+
     get("/grading", GradingController, :index)
     get("/grading/:submissionid", GradingController, :show)
     post("/grading/:submissionid/unsubmit", GradingController, :unsubmit)
