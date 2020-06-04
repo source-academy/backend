@@ -28,9 +28,9 @@ format`.
    $ vim config/secrets.exs
    ```
 
-  - To use LumiNUS authentication, specify a valid LumiNUS `api_key`. Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
-  - A valid `cs1101s_repository`, `cs1101s_rsa_key` is required for the
-    application to run with the `--updater` flag. Otherwise, you can leave the default values.
+  - To use LumiNUS authentication, specify a valid LumiNUS `api_key`. Note that
+    the frontend will supply the ADFS client ID and redirect URL (so you will
+    need that too, but not here).
 
 2. Install Elixir dependencies
 
@@ -71,9 +71,11 @@ $ mix help cadet.token
 
 ### Style Guide
 
-We follow this style guide: https://github.com/lexmag/elixir-style-guide and https://github.com/christopheradams/elixir_style_guide
+We follow this style guide: https://github.com/lexmag/elixir-style-guide and
+https://github.com/christopheradams/elixir_style_guide
 
-Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
+Where there is a conflict between the two, the first one (lexmag) shall be the
+one followed.
 
 ## Entity-Relationship Diagram
 
