@@ -7,7 +7,6 @@ defmodule Cadet.Assessments.Image do
   @versions [:original]
 
   def storage_dir(_, _) do
-    env = Application.get_env(:cadet, :environment)
-    "uploads/#{env}/mission_images"
+    "uploads/#{Cadet.Env.env()}/mission_images"
   end
 end

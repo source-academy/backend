@@ -15,7 +15,7 @@ alias Cadet.Assessments.SubmissionStatus
 # insert default source version
 Cadet.Repo.insert!(%Cadet.Chapters.Chapter{chapterno: 1, variant: "default"})
 
-if Application.get_env(:cadet, :environment) == :dev do
+if Cadet.Env.env() == :dev do
   # User and Group
   avenger = insert(:user, %{name: "avenger", role: :staff})
   mentor = insert(:user, %{name: "mentor", role: :staff})

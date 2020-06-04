@@ -5,6 +5,8 @@
 # is restricted to this project.
 use Mix.Config
 
+config :cadet, environment: Mix.env()
+
 # General application configuration
 config :cadet,
   ecto_repos: [Cadet.Repo]
