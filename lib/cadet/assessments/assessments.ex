@@ -19,9 +19,6 @@ defmodule Cadet.Assessments do
   @delete_assessment_role ~w(staff admin)a
   @publish_assessment_role ~w(staff admin)a
   @unsubmit_assessment_role ~w(staff admin)a
-  # @grading_roles is a placeholder for a future "grader" role
-  # no_roles is so Dialyzer does not complain about checks that are always false
-  @grading_roles ~w(no_roles)a
   @see_all_submissions_roles ~w(staff admin)a
   @open_all_assessment_roles ~w(staff admin)a
 
@@ -312,18 +309,6 @@ defmodule Cadet.Assessments do
       |> filter_published_assessments(user)
       |> order_by(:open_at)
       |> Repo.all()
-      |> Enum.map(fn assessment = %Assessment{} ->
-        %{
-          assessment
-          | grading_status:
-              build_grading_status(
-                assessment.user_status,
-                assessment.type,
-                assessment.question_count,
-                assessment.graded_count
-              )
-        }
-      end)
 
     {:ok, assessments}
   end
@@ -334,21 +319,6 @@ defmodule Cadet.Assessments do
     case role do
       :student -> where(assessments, is_published: true)
       _ -> assessments
-    end
-  end
-
-  defp build_grading_status(submission_status, a_type, q_count, g_count) do
-    case a_type do
-      type when type in [:mission, :sidequest, :practical] ->
-        cond do
-          submission_status != :submitted -> :excluded
-          g_count < q_count -> :grading
-          g_count == q_count -> :graded
-          true -> :none
-        end
-
-      _ ->
-        :excluded
     end
   end
 
@@ -777,104 +747,85 @@ defmodule Cadet.Assessments do
   whether only the groups under the grader should be returned. The parameter is
   a boolean which is false by default.
 
-  The return value is {:ok, submissions} if no errors else its {:error,
+  The return value is {:ok, submissions} if no errors, else it is {:error,
   {:unauthorized, "User is not permitted to grade."}}
   """
   @spec all_submissions_by_grader_for_index(%User{}) ::
-          {:ok, [%Submission{}]} | {:error, {:unauthorized, String.t()}}
+          {:ok, String.t()} | {:error, {:unauthorized, String.t()}}
   def all_submissions_by_grader_for_index(grader = %User{role: role}, group_only \\ false) do
-    submission_query =
-      Submission
-      |> join(
-        :inner,
-        [s],
-        x in subquery(Query.submissions_xp_and_grade()),
-        on: s.id == x.submission_id
-      )
-      |> join(:inner, [s, _], st in assoc(s, :student))
-      |> join(:left, [_, _, st], g in assoc(st, :group))
-      |> join(:left, [s, _, _, g], u in assoc(s, :unsubmitted_by))
-      |> join(
-        :inner,
-        [s, _, _, _, _],
-        a in subquery(Query.all_assessments_with_max_xp_and_grade()),
-        on: s.assessment_id == a.id
-      )
-      |> join(
-        :inner,
-        [_, _, _, _, _, a],
-        q_count in subquery(Query.assessments_question_count()),
-        on: a.id == q_count.assessment_id
-      )
-      |> join(
-        :left,
-        [s, _, _, _, _, a, _],
-        g_count in subquery(Query.submissions_graded_count()),
-        on: s.id == g_count.submission_id
-      )
-      |> select([s, x, st, g, u, a, q_count, g_count], %Submission{
-        s
-        | grade: x.grade,
-          adjustment: x.adjustment,
-          xp: x.xp,
-          xp_adjustment: x.xp_adjustment,
-          student: %User{
-            id: st.id,
-            name: st.name
-          },
-          assessment: %Assessment{
-            id: a.id,
-            type: a.type,
-            max_grade: a.max_grade,
-            max_xp: a.max_xp,
-            title: a.title
-          },
-          group_name: g.name,
-          unsubmitted_by: %User{
-            id: u.id,
-            name: u.name
-          },
-          question_count: q_count.count,
-          graded_count: g_count.count
-      })
+    if role in @see_all_submissions_roles do
+      show_all = role in @see_all_submissions_roles and not group_only
 
-    cond do
-      role in @grading_roles ->
-        submissions = submissions_by_group(grader, submission_query)
+      group_where =
+        if show_all,
+          do: "",
+          else:
+            "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1)"
 
-        {:ok, post_process_submissions(submissions)}
+      params = if show_all, do: [], else: [grader.id]
 
-      role in @see_all_submissions_roles ->
-        submissions =
-          if group_only do
-            submissions_by_group(grader, submission_query)
-          else
-            Repo.all(submission_query)
-          end
+      # We bypass Ecto here and use a raw query to generate JSON directly from
+      # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
-        {:ok, post_process_submissions(submissions)}
-
-      true ->
-        {:error, {:unauthorized, "User is not permitted to grade."}}
+      case Repo.query(
+             """
+             select json_agg(q)::TEXT from
+             (
+               select
+                 s.id,
+                 s.status,
+                 s."unsubmittedAt",
+                 s.grade,
+                 s.adjustment,
+                 s.xp,
+                 s."xpAdjustment",
+                 s."xpBonus",
+                 s."gradedCount",
+                 assts.jsn AS assessment,
+                 students.jsn as student,
+                 unsubmitters.jsn as "unsubmittedBy"
+               from
+                 (select
+                   s.id,
+                   s.student_id,
+                   s.assessment_id,
+                   s.status,
+                   s.unsubmitted_at as "unsubmittedAt",
+                   s.unsubmitted_by_id,
+                   sum(ans.grade) as grade,
+                   sum(ans.adjustment) as adjustment,
+                   sum(ans.xp) as xp,
+                   sum(ans.xp_adjustment) as "xpAdjustment",
+                   s.xp_bonus as "xpBonus",
+                   count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
+                 from submissions s
+                   left join
+                   answers ans on s.id = ans.submission_id
+                 #{group_where}
+                 group by s.id) s
+               inner join
+                 (select
+                   a.id, to_json(a) as jsn
+                 from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
+               inner join
+                 (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
+               left join
+                 (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+             ) q
+             """,
+             params
+           ) do
+        {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
+        {:ok, %{rows: [[json]]}} -> {:ok, json}
+      end
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
-  end
-
-  # Constructs grading status for each submission and removes empty fields
-  defp post_process_submissions(submissions) do
-    submissions
-    |> Enum.map(fn s = %Submission{} ->
-      %{
-        s
-        | unsubmitted_by: if(is_nil(s.unsubmitted_by.id), do: nil, else: s.unsubmitted_by),
-          grading_status:
-            build_grading_status(s.status, s.assessment.type, s.question_count, s.graded_count)
-      }
-    end)
   end
 
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
           {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
-  def get_answers_in_submission(id, grader = %User{role: role}) when is_ecto_id(id) do
+  def get_answers_in_submission(id, %User{role: role}) when is_ecto_id(id) do
     answer_query =
       Answer
       |> where(submission_id: ^id)
@@ -889,28 +840,15 @@ defmodule Cadet.Assessments do
         submission: {s, student: st}
       )
 
-    cond do
-      role in @grading_roles ->
-        students = Cadet.Accounts.Query.students_of(grader)
+    if role in @see_all_submissions_roles do
+      answers =
+        answer_query
+        |> Repo.all()
+        |> Enum.sort_by(& &1.question.display_order)
 
-        answers =
-          answer_query
-          |> join(:inner, [..., s, _], t in subquery(students), on: t.id == s.student_id)
-          |> Repo.all()
-          |> Enum.sort_by(& &1.question.display_order)
-
-        {:ok, answers}
-
-      role in @see_all_submissions_roles ->
-        answers =
-          answer_query
-          |> Repo.all()
-          |> Enum.sort_by(& &1.question.display_order)
-
-        {:ok, answers}
-
-      true ->
-        {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:ok, answers}
+    else
+      {:error, {:unauthorized, "User is not permitted to grade."}}
     end
   end
 
@@ -945,10 +883,10 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        grader = %User{id: grader_id, role: role}
+        %User{id: grader_id, role: role}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) and
-             (role in @grading_roles or role in @see_all_submissions_roles) do
+             role in @see_all_submissions_roles do
     attrs = Map.put(attrs, "grader_id", grader_id)
 
     answer_query =
@@ -956,19 +894,10 @@ defmodule Cadet.Assessments do
       |> where(submission_id: ^submission_id)
       |> where(question_id: ^question_id)
 
-    # checks if role is in @grading_roles or @see_all_submissions_roles
     answer_query =
-      if role in @grading_roles do
-        students = Cadet.Accounts.Query.students_of(grader)
-
-        answer_query
-        |> join(:inner, [a], s in assoc(a, :submission))
-        |> join(:inner, [a, s], t in subquery(students), on: t.id == s.student_id)
-      else
-        answer_query
-        |> join(:inner, [a], s in assoc(a, :submission))
-        |> preload([_, s], submission: s)
-      end
+      answer_query
+      |> join(:inner, [a], s in assoc(a, :submission))
+      |> preload([_, s], submission: s)
 
     answer = Repo.one(answer_query)
 
@@ -1072,17 +1001,5 @@ defmodule Cadet.Assessments do
       :programming ->
         %{code: raw_answer}
     end
-  end
-
-  defp submissions_by_group(grader = %User{role: :staff}, submission_query) do
-    students = Cadet.Accounts.Query.students_of(grader)
-
-    submission_query
-    |> join(:inner, [s], st in subquery(students), on: s.student_id == st.id)
-    |> Repo.all()
-  end
-
-  defp submissions_by_group(%User{role: :admin}, submission_query) do
-    Repo.all(submission_query)
   end
 end

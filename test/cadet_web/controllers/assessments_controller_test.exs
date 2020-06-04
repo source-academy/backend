@@ -73,9 +73,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxGrade" => 720,
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
-              "gradingStatus" => "excluded",
               "private" => false,
-              "isPublished" => &1.is_published
+              "isPublished" => &1.is_published,
+              "gradedCount" => 0,
+              "questionCount" => 6
             }
           )
 
@@ -151,9 +152,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "maxGrade" => 720,
             "maxXp" => 4500,
             "status" => get_assessment_status(student, &1),
-            "gradingStatus" => "excluded",
             "private" => false,
-            "isPublished" => &1.is_published
+            "isPublished" => &1.is_published,
+            "gradedCount" => 0,
+            "questionCount" => 6
           }
         )
 
@@ -273,8 +275,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxGrade" => 720,
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
-              "gradingStatus" => "excluded",
               "private" => false,
+              "gradedCount" => 0,
+              "questionCount" => 6,
               "isPublished" =>
                 if &1.type == :mission do
                   false
@@ -1001,7 +1004,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  test "grading status is updated when assessment is graded", %{
+  test "graded count is updated when assessment is graded", %{
     conn: conn,
     users: %{staff: avenger}
   } do
@@ -1025,13 +1028,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
       &insert(:answer, submission: submission, question: &1, answer: %{code: "f => f(f);"})
     )
 
-    get_grading_status = fn ->
+    get_graded_count = fn ->
       conn
       |> sign_in(user)
       |> get(build_url())
       |> json_response(200)
       |> Enum.find(&(&1["id"] == assessment.id))
-      |> Map.get("gradingStatus")
+      |> Map.get("gradedCount")
     end
 
     grade_question = fn question ->
@@ -1042,15 +1045,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
       )
     end
 
-    assert get_grading_status.() == "none"
+    assert get_graded_count.() == 0
 
     grade_question.(question_one)
 
-    assert get_grading_status.() == "grading"
+    assert get_graded_count.() == 1
 
     grade_question.(question_two)
 
-    assert get_grading_status.() == "graded"
+    assert get_graded_count.() == 2
   end
 
   describe "Password protected assessments render properly" do
