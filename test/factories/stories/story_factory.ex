@@ -1,6 +1,6 @@
 defmodule Cadet.Stories.StoryFactory do
   @moduledoc """
-  Factory for the Assessment entity
+  Factory for the Story entity
   """
 
   defmacro __using__(_opts) do
