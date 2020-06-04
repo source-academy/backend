@@ -3,26 +3,6 @@ defmodule Cadet.Assessments.QueryTest do
 
   alias Cadet.Assessments.Query
 
-  test "all_submissions_with_grade/1" do
-    submission = insert(:submission)
-    assessment = insert(:assessment)
-    questions = insert_list(5, :question, assessment: assessment)
-
-    Enum.each(
-      questions,
-      &insert(:answer, submission: submission, grade: 200, adjustment: -100, question: &1)
-    )
-
-    result =
-      Query.all_submissions_with_grade()
-      |> where(id: ^submission.id)
-      |> Repo.one()
-
-    submission_id = submission.id
-
-    assert %{grade: 1000, adjustment: -500, id: ^submission_id} = result
-  end
-
   test "all_assessments_with_max_grade" do
     assessment = insert(:assessment)
     insert_list(5, :question, assessment: assessment, max_grade: 200)
@@ -35,24 +15,6 @@ defmodule Cadet.Assessments.QueryTest do
     assessment_id = assessment.id
 
     assert %{max_grade: 1000, id: ^assessment_id} = result
-  end
-
-  test "submissions_grade" do
-    submission = insert(:submission)
-    assessment = insert(:assessment)
-    questions = insert_list(5, :question, assessment: assessment)
-
-    Enum.each(
-      questions,
-      &insert(:answer, submission: submission, grade: 200, adjustment: -100, question: &1)
-    )
-
-    result =
-      Query.submissions_grade()
-      |> Repo.all()
-      |> Enum.find(&(&1.submission_id == submission.id))
-
-    assert %{grade: 1000, adjustment: -500, submission_id: submission.id} == result
   end
 
   test "assessments_max_grade" do
