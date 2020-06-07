@@ -7,6 +7,8 @@ defmodule CadetWeb.StoriesController do
   alias Cadet.Repo
   alias Cadet.Stories.Story
 
+  @view_stories_role ~w(staff admin)a
+
   def index(conn, _) do
     stories =
       Story
@@ -24,6 +26,8 @@ defmodule CadetWeb.StoriesController do
 
     render(conn, "show.json", story: story)
   end
+
+  def create(conn, params= )
 
 
   swagger_path :index do

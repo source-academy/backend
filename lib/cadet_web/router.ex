@@ -44,6 +44,7 @@ defmodule CadetWeb.Router do
 
     get("/stories", StoriesController, :index)
     get("/stories/:id", StoriesController, :show)
+    post("/stories/:id", StoriesController, :create)
 
     get("/grading", GradingController, :index)
     get("/grading/:submissionid", GradingController, :show)
