@@ -41,6 +41,10 @@ config :logger, level: :info
 #     config :cadet, CadetWeb.Endpoint, server: true
 #
 
+config :ex_aws,
+  access_key_id: [:instance_role],
+  secret_access_key: [:instance_role]
+
 # Finally import the config/prod.secret.exs
 # which should be versioned separately.
 import_config "prod.secrets.exs"
