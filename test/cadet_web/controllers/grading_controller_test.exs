@@ -1096,7 +1096,54 @@ defmodule CadetWeb.GradingControllerTest do
     end
   end
 
+  describe "GET /summary" do
+    @tag authenticate: :admin
+    test "admin can see summary", %{conn: conn} do
+      %{
+        submissions: submissions,
+        group: group,
+        grader: grader,
+        answers: answers
+      } = seed_db(conn)
+
+      conn = get(conn, build_url_summary())
+
+      expected = [
+        %{
+          "groupName" => group.name,
+          "leaderName" => grader.name,
+          "submittedMissions" => count_submissions(submissions, answers, :mission),
+          "submittedSidequests" => count_submissions(submissions, answers, :sidequest),
+          "ungradedMissions" => count_submissions(submissions, answers, :mission, true),
+          "ungradedSidequests" => count_submissions(submissions, answers, :sidequest, true)
+        }
+      ]
+
+      assert expected == Enum.sort_by(json_response(conn, 200), & &1["groupName"])
+    end
+
+    @tag authenticate: :student
+    test "student cannot see summary", %{conn: conn} do
+      resp = conn |> get(build_url_summary()) |> text_response(401)
+
+      assert "User is not permitted to view the grading summary." == resp
+    end
+  end
+
+  defp count_submissions(submissions, answers, type, only_ungraded \\ false) do
+    submissions
+    |> Enum.filter(fn s ->
+      s.status == :submitted and s.assessment.type == type and
+        (not only_ungraded or
+           answers
+           |> Enum.filter(fn a -> a.submission == s and is_nil(a.grader_id) end)
+           |> length() > 0)
+    end)
+    |> length()
+  end
+
   defp build_url, do: "/v1/grading/"
+  defp build_url_summary, do: "/v1/grading/summary"
   defp build_url(submission_id), do: "#{build_url()}#{submission_id}/"
   defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}#{question_id}"
   defp build_url_unsubmit(submission_id), do: "#{build_url(submission_id)}/unsubmit"
