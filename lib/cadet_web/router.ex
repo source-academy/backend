@@ -42,7 +42,9 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
-    get("/assets/:key", AssetsController, :index)
+    get("/assets/:folder_name", AssetsController, :index)
+    post("/assets/upload", AssetsController, :upload)
+    delete("/assets/delete", AssetsController, :delete)
 
     get("/grading", GradingController, :index)
     get("/grading/:submissionid", GradingController, :show)
