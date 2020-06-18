@@ -4,91 +4,94 @@ defmodule CadetWeb.AssetsController do
   use PhoenixSwagger
   alias Cadet.Assets
 
-  @manage_assets_role ~w(staff admin)a
-
-  @accessible_folders ~w(images locations objects avatars ui stories testFolder)
-  @accepted_file_types ~w(.jpg .jpeg .gif .JPG .txt .jpeg .wav .mp3 .png)
-
-  @bucket_name "source-academy-assets"
   @fetch_limit 1500
 
-  def index(conn, _params = %{"folder_name" => folder_name}) do
-    validate_assets_role(conn)
-    validate_folder_name(conn, folder_name)
-
-    assets =
-      ExAws.S3.list_objects(@bucket_name, [prefix: folder_name <> "/"])
-      |> ExAws.stream!
-      |> Enum.take(@fetch_limit)
-    render(conn, "index.json", assets: assets)
-
+  def index(conn, _params = %{"foldername" => folder_name}) do
+    with :ok <- Assets.validate_assets_role(conn),
+         :ok <- Assets.validate_folder_name(folder_name)
+    do
+      assets = Assets.list_assets(folder_name, @fetch_limit)
+      render(conn, "index.json", assets: assets)
+    else
+      {:error, {status, message}} -> conn|> put_status(status) |> text(message)
+    end
   end
 
 
-  def delete(conn, _params = %{"folder_name" => folder_name, "filename"=> filename}) do
-    validate_assets_role(conn)
-    validate_folder_name(conn, folder_name)
-
-    s3_path = folder_name <> "/" <> filename
-
-    ExAws.S3.delete_object(@bucket_name, s3_path)
-      |> ExAws.request!
-
-    resp = "ok"
-    render(conn, "s3_response.json", resp: resp)
-
+  def delete(conn, _params = %{"folderName" => folder_name, "filename"=> filename}) do
+    with :ok <- Assets.validate_assets_role(conn),
+         :ok <- Assets.validate_folder_name(folder_name)
+    do
+      Assets.delete_object(folder_name, filename)
+      render(conn, "s3_response.json", resp: :ok)
+    else
+      {:error, {status, message}} -> conn |> put_status(status) |> text(message)
+    end
   end
 
-  def upload(conn, %{"uploadParams" => upload_params, "details" => details}) do
-    validate_assets_role(conn)
+  def upload(conn, %{"upload" => upload_params, "details" => details}) do
 
     {:ok, details} = Jason.decode(details)
-    {:ok, folder_name} = Map.fetch(details, "folderName")
-    validate_folder_name(conn, folder_name)
+    %{"folderName" => folder_name, "filename" => filename} = details
 
-    resp = upload_to_s3(upload_params, folder_name)
-    render(conn, "s3_response.json", resp: resp)
-  end
+    with :ok <- Assets.validate_assets_role(conn),
+         :ok <- Assets.validate_folder_name(folder_name),
+         :ok <- Assets.validate_filetype(filename)
+    do
+      filename = if Map.has_key?(details, "filename") do
+        details["filename"]
+      else
+        upload_params.filename
+      end
 
-  def upload_to_s3(upload_params, folder_name) do
-    file = upload_params.path
-    s3_path = folder_name <> "/" <> upload_params.filename
-
-    file
-      |> ExAws.S3.Upload.stream_file
-      |> ExAws.S3.upload(@bucket_name, s3_path)
-      |> ExAws.request!
-
-    s3_url = "http://#{@bucket_name}.s3.amazonaws.com/#{s3_path}"
-    %{
-      s3_url: s3_url
-    }
-  end
-
-  def validate_assets_role(conn) do
-    role = conn.assigns[:current_user].role
-    if not role in @manage_assets_role do
-      conn
-       |> put_status(:forbidden)
-       |> text("User not allowed to upload assets")
+      resp = Assets.upload_to_s3(upload_params, folder_name, filename)
+      render(conn, "s3_response.json", resp: resp)
+    else
+      {:error, {status, message}} -> conn |> put_status(status) |> text(message)
     end
   end
 
-  def validate_filetype(conn, filename) do
-    if not Enum.member?(@accepted_file_types, Path.extname(filename)) do
-      conn
-      |> put_status(:bad_request)
-      |> text("Bad file type")
-    end
+
+  swagger_path :index do
+    get("/assets/:folder_name")
+
+    summary("Get a list of all assets in a foldername")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    response(200, "OK")
+    response(400, "Bad Request")
+    response(401, "Unauthorised")
   end
 
-  def validate_folder_name(conn, folder_name) do
-    if not Enum.member?(@accessible_folders, folder_name) do
-      conn
-      |> put_status(:bad_request)
-      |> text("No such folder")
-    end
+  swagger_path :upload do
+    post("/assets/upload")
+
+    summary("Upload a file to an asset folder")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    response(200, "OK")
+    response(400, "Bad Request")
+    response(401, "Unauthorised")
   end
 
+  swagger_path :delete do
+    post("assets/delete")
+
+    summary("Delete a file from an asset folder")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    response(200, "OK")
+    response(400, "Bad Request")
+    response(401, "Unauthorised")
+  end
 
 end
