@@ -11,11 +11,6 @@ config :cadet, environment: :test
 # Print only warnings and errors during test
 config :logger, level: :warn, compile_time_purge_matching: [[level_lower_than: :warn]]
 
-config :ex_aws,
-  access_key_id: "AKIAYNU6ZMFN4W7LMWVS",
-  secret_access_key: "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",
-  region: "ap-southeast-1"
-
 # Don't save secret keys in ExVCR cassettes
 config :exvcr,
   filter_url_params: true,

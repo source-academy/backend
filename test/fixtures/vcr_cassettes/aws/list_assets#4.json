@@ -1,0 +1,67 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAYNU6ZMFN4T7KXT56/20200619/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=64e6a95ce0cfd6008af2c6584f44e57a2bfe1fc94ca215028f25d23c128a1e1c",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200619T054437Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "method": "post",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/upload.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>source-academy-assets</Bucket><Key>testFolder/upload.png</Key><UploadId>ys7s8ZeiIZs7NhLGGXSa77hSdaHkkm.JvAZOXSK6_fkc2o.hflA7IeUZ_BhflgOQNny1sRAjTmXAueReFDEFUj53Ye8RCJJkuSsdYuZn3l_IK0DND4eQAn8AwfOT1bWMmCFLHZI3RkCHQ1_L3AThpA--</UploadId></InitiateMultipartUploadResult>",
+      "headers": {
+        "x-amz-id-2": "k1dJQ5kJa990QiUzyC1a5hDIiGeCKuV9n2xZjoSySMLwtg3q4HkKL7tbn280azTeScsdzlqqjEw=",
+        "x-amz-request-id": "70BDD2A776E92B3A",
+        "Date": "Fri, 19 Jun 2020 05:44:38 GMT",
+        "Transfer-Encoding": "chunked",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "�PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0001\u0001\u0003\u0000\u0000\u0000%�V�\u0000\u0000\u0000\u0003PLTE�M\u0000\\58\u0000\u0000\u0000\u0001tRNS��4V�\u0000\u0000\u0000\nIDATx�cb\u0000\u0000\u0000\u0006\u0000\u000367|�\u0000\u0000\u0000\u0000IEND�B`�",
+      "headers": {
+        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAYNU6ZMFN4T7KXT56/20200619/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=adeaa97cf411571de939eb65e788f67f03c861afbafab2f867213cea46cb8818",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200619T054437Z",
+        "content-length": "95",
+        "x-amz-content-sha256": "18c327afa903633f86c3efcf12b77f098077eacaa8be101bb007846fd74f8b93"
+      },
+      "method": "put",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/upload.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "x-amz-id-2": "Eoz0bZEcrbu/xieFoLxbitQi0TSZMEmWrZ1JLsRo9zIVJmYCHY0mIRVCcggMANVxxZ/ks2GPKgc=",
+        "x-amz-request-id": "359E7EB53E2AC427",
+        "Date": "Fri, 19 Jun 2020 05:44:38 GMT",
+        "ETag": "\"60cf42b4d05caf10cf8bb15c0817a7b4\"",
+        "Content-Length": "0",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

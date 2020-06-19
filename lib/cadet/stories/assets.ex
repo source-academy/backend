@@ -1,4 +1,4 @@
-defmodule Cadet.Assets do
+defmodule Cadet.Stories.Assets do
   @moduledoc """
   Assessments context contains domain logic for assets management
   for Source academy's game component
@@ -9,9 +9,10 @@ defmodule Cadet.Assets do
   @accepted_file_types ~w(.jpg .jpeg .gif .JPG .txt .jpeg .wav .mp3 .png)
 
   @bucket_name "source-academy-assets"
+  @fetch_limit 2000
 
   def validate_assets_role(conn) do
-    if conn.assigns[:current_role] not in @manage_assets_role do
+    if conn.assigns[:current_user].role in @manage_assets_role do
       :ok
     else
       {:error, {:forbidden, "User not allowed to manage assets"}}
@@ -28,7 +29,7 @@ defmodule Cadet.Assets do
 
   def validate_filetype(filename) do
     if Enum.member?(@accepted_file_types, Path.extname(filename)) do
-     :ok
+      :ok
     else
       {:error, {:bad_request, "Invalid file type"}}
     end
@@ -40,26 +41,26 @@ defmodule Cadet.Assets do
     s3_path = folder_name <> "/" <> filename
 
     file
-      |> ExAws.S3.Upload.stream_file
-      |> ExAws.S3.upload(@bucket_name, s3_path)
-      |> ExAws.request!
+    |> ExAws.S3.Upload.stream_file()
+    |> ExAws.S3.upload(@bucket_name, s3_path)
+    |> ExAws.request!()
 
     s3_url = "http://#{@bucket_name}.s3.amazonaws.com/#{s3_path}"
+
     %{
       s3_url: s3_url
-     }
+    }
   end
 
-  def list_assets(folder_name, fetch_limit) do
-    ExAws.S3.list_objects(@bucket_name, [prefix: folder_name <> "/"])
-    |> ExAws.stream!
-    |> Enum.take(fetch_limit)
-    |> Enum.map(fn(file)->file.key end)
+  def list_assets(folder_name) do
+    ExAws.S3.list_objects(@bucket_name, prefix: folder_name <> "/")
+    |> ExAws.stream!()
+    |> Enum.take(@fetch_limit)
+    |> Enum.map(fn file -> file.key end)
   end
 
   def delete_object(folder_name, filename) do
     ExAws.S3.delete_object(@bucket_name, folder_name <> "/" <> filename)
-    |> ExAws.request!
+    |> ExAws.request!()
   end
-
 end

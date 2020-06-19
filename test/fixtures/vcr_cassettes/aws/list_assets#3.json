@@ -1,0 +1,33 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAYNU6ZMFN4T7KXT56/20200619/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=084d3daf821483a0cbf54c656c2dbe7d584c196593a9096cc52b5f39268d3eac",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200619T042631Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "method": "delete",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "x-amz-id-2": "/RAqIBt1jjZeK6U5HzIcKATQWZBSEoCVceZjrD0tZoguThCVAIwXn23UmReT1Tj4EEUb/AVwIew=",
+        "x-amz-request-id": "31DDB579F2CC548E",
+        "Date": "Fri, 19 Jun 2020 04:26:33 GMT",
+        "Server": "AmazonS3"
+      },
+      "status_code": 204,
+      "type": "ok"
+    }
+  }
+]
