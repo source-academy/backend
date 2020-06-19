@@ -10,6 +10,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
+  alias Cadet.Course.Group
   alias Ecto.Multi
 
   @xp_early_submission_max_bonus 100
@@ -20,6 +21,7 @@ defmodule Cadet.Assessments do
   @publish_assessment_role ~w(staff admin)a
   @unsubmit_assessment_role ~w(staff admin)a
   @see_all_submissions_roles ~w(staff admin)a
+  @group_grading_summary_roles @see_all_submissions_roles
   @open_all_assessment_roles ~w(staff admin)a
 
   def change_dates_assessment(_user = %User{role: role}, id, close_at, open_at) do
@@ -955,6 +957,59 @@ defmodule Cadet.Assessments do
   @spec is_open?(%Assessment{}) :: {:is_open?, boolean()}
   def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
     {:is_open?, Timex.between?(Timex.now(), open_at, close_at) and is_published}
+  end
+
+  @type group_summary_entry :: %{
+          group_name: String.t(),
+          leader_name: String.t(),
+          ungraded_missions: integer(),
+          submitted_missions: integer(),
+          ungraded_sidequests: number(),
+          submitted_sidequests: number()
+        }
+
+  @spec get_group_grading_summary(%User{}) ::
+          {:ok, [group_summary_entry()]} | {:error, {atom(), String.t()}}
+  def get_group_grading_summary(%User{role: role}) do
+    if role in @group_grading_summary_roles do
+      subs =
+        Answer
+        |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
+        |> join(:left, [ans, s], st in User, on: s.student_id == st.id)
+        |> join(:left, [ans, s, st], a in Assessment, on: a.id == s.assessment_id)
+        |> where(
+          [ans, s, st, a],
+          not is_nil(st.group_id) and s.status == ^:submitted and
+            a.type in ^[:mission, :sidequest]
+        )
+        |> group_by([ans, s, st, a], s.id)
+        |> select([ans, s, st, a], %{
+          group_id: max(st.group_id),
+          type: max(a.type),
+          num_submitted: count(),
+          num_ungraded: filter(count(), is_nil(ans.grader_id))
+        })
+
+      rows =
+        subs
+        |> subquery()
+        |> join(:left, [t], g in Group, on: t.group_id == g.id)
+        |> join(:left, [t, g], l in User, on: l.id == g.leader_id)
+        |> group_by([t, g, l], [t.group_id, g.name, l.name])
+        |> select([t, g, l], %{
+          group_name: g.name,
+          leader_name: l.name,
+          ungraded_missions: filter(count(), t.type == ^:mission and t.num_ungraded > 0),
+          submitted_missions: filter(count(), t.type == ^:mission),
+          ungraded_sidequests: filter(count(), t.type == ^:sidequest and t.num_ungraded > 0),
+          submitted_sidequests: filter(count(), t.type == ^:sidequest)
+        })
+        |> Repo.all()
+
+      {:ok, rows}
+    else
+      {:error, {:unauthorized, "User is not permitted to view the grading summary."}}
+    end
   end
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do

@@ -100,6 +100,20 @@ defmodule CadetWeb.GradingController do
     |> text("Missing parameter")
   end
 
+  def grading_summary(conn, _params) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.get_group_grading_summary(user) do
+      {:ok, summary} ->
+        render(conn, "grading_summary.json", summary: summary)
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   swagger_path :index do
     get("/grading")
 

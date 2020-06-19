@@ -16,6 +16,21 @@ defmodule CadetWeb.GradingView do
     })
   end
 
+  def render("grading_summary.json", %{summary: summary}) do
+    render_many(summary, CadetWeb.GradingView, "grading_summary_entry.json", as: :entry)
+  end
+
+  def render("grading_summary_entry.json", %{entry: entry}) do
+    transform_map_for_view(entry, %{
+      groupName: :group_name,
+      leaderName: :leader_name,
+      ungradedMissions: :ungraded_missions,
+      submittedMissions: :submitted_missions,
+      ungradedSidequests: :ungraded_sidequests,
+      submittedSidequests: :submitted_sidequests
+    })
+  end
+
   defp build_grading_question(answer) do
     results = build_autograding_results(answer.autograding_results)
 
