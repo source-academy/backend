@@ -15,21 +15,21 @@ defmodule Cadet.Achievements.Achievement do
     field(:open_at, :utc_datetime_usec, default: DateTime.utc_now)
     field(:close_at, :utc_datetime_usec, default: DateTime.utc_now)
     field(:is_task, :boolean, default: false)
-    field(:prerequisiteIDs, {:array, :integer})
+    field(:prerequisite_ids, {:array, :integer})
     field(:goal, :integer, default: 0)
     field(:progress, :integer, default: 0)
 
-    field(:modalImageUrl, :string)
+    field(:modal_image_url, :string)
     field(:description, :string)
-    field(:goalText, :string)
-    field(:completionText, :string)
+    field(:goal_text, :string)
+    field(:completion_text, :string)
 
     timestamps()
   end
 
   @required_fields ~w(title ability exp is_task goal progress)a
-  @optional_fields ~w(icon open_at close_at prerequisiteIDs
-    modalImageUrl description goalText completionText)a
+  @optional_fields ~w(icon open_at close_at prerequisite_ids
+    modal_image_url description goal_text completion_text)a
 
   def changeset(assessment, params) do
     params =
