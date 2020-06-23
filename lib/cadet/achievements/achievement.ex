@@ -8,6 +8,7 @@ defmodule Cadet.Achievements.Achievement do
   alias Cadet.Achievements.AchievementAbility
 
   schema "achievements" do
+    field(:inferencer_id, :integer)
     field(:title, :string, default: 'New Achievement')
     field(:ability, AchievementAbility, default: :academic)
     field(:icon, :string, default: nil)

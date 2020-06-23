@@ -14,8 +14,8 @@ defmodule CadetWeb.AchievementsController do
     render(conn, "index.json", achievements: achievements)
   end
 
-  def add(conn) do
-    result = Achievements.add_achievement(conn.assigns.current_user)
+  def edit(conn, %{"new_achievements" => new_achievements}) do
+    result = Achievements.update_achievements(conn.assigns.current_user, new_achievements)
 
     case result do
       {:ok, _nil} ->
@@ -27,34 +27,5 @@ defmodule CadetWeb.AchievementsController do
         |> text(message)
     end
   end
-
-  def edit(conn, %{"achievementid" => achievement_id, "params" => params}) do
-    result = Achievements.edit_achievement(conn.assigns.current_user, achievement_id, params)
-
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def delete(conn, %{"achievementid" => achievement_id}) do
-    result = Achievements.delete_achievement(conn.assigns.current_user, achievement_id)
-
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
 
 end 

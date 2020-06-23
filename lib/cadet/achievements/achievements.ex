@@ -13,24 +13,12 @@ defmodule Cadet.Achievements do
     Achievement.Repo.all 
   end 
 
-  def add_achievement() do
-    %Achievement{}
-    |> Achievement.changeset()
-    |> Repo.update 
-  end 
+  def update_achievements(new_achievements) do 
+    from(old_achievement in Achievement, where: old_achievement.xp >= 0) |> Cadet.Repo.delete_all
 
-  def edit_achievement(id, params) do 
-    simple_update(
-      Achievement, 
-      id, 
-      using: Achievement.changeset(), 
-      params: params
-    )
-  end 
-
-  def delete_achievement(id) do
-    achievement = Repo.get(Achievement, id)
-    Repo.delete(achievement)
+    for new_achievement <- new_achievements do
+      Cadet.Repo.insert(:achievement, new_achievement)
+    end 
   end 
 end
 

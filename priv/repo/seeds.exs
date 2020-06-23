@@ -24,8 +24,8 @@ if Cadet.Env.env() == :dev do
   admin = insert(:user, %{name: "admin", role: :admin})
 
   # Achievements 
-  for _ <- 1..5 do 
-    insert(:achievement)
+  for x <- 1..5 do 
+    insert(:achievement, %{inferencer_id: x})
   end 
 
   # Assessments

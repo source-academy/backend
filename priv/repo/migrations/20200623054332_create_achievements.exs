@@ -8,6 +8,7 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
 
     create table(:achievements) do
       add(:title, :string)
+      add(:inferencer_id, :integer)
       add(:ability, :achievement_ability)
       add(:icon, :string)
       add(:exp, :integer)
@@ -20,8 +21,8 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
 
       add(:modal_image_url, :string)
       add(:description, :string)
-      add(:goal_text, :string)
-      add(:completion_text, :string)
+      add(:goal_text, :text)
+      add(:completion_text, :text)
 
       timestamps()
     end
