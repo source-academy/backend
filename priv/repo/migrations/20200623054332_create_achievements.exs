@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
 
   alias Cadet.Achievements.AchievementAbility
 
-  def up do
+  def change do
     AchievementAbility.create_type()
 
     create table(:achievements) do
@@ -30,11 +30,5 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
     create(index(:achievements, [:close_at]))
     create(index(:achievements, [:is_task]))
     create(index(:achievements, [:ability]))
-  end
-
-  def down do
-    drop(table(:achievements))
-
-    AchievementAbility.drop_type()
   end
 end
