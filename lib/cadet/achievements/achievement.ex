@@ -5,7 +5,7 @@ defmodule Cadet.Achievements.Achievement do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Achievements.{AchievementAbility, AchievementModal}
+  alias Cadet.Achievements.{AchievementAbility}
 
   schema "achievements" do
     field(:title, :string, default: 'New Achievement')
