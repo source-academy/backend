@@ -9,22 +9,27 @@ defmodule Cadet.Achievements.Achievement do
 
   schema "achievements" do
     field(:title, :string, default: 'New Achievement')
-    field(:ability, AchievementAbility, default: AchievementAbility.academic)
+    field(:ability, AchievementAbility)
     field(:icon, :string, default: nil)
     field(:exp, :integer, default: 0)
-    field(:open_at, :utc_datetime_usec, default: DateTime.now)
-    field(:close_at, :utc_datetime_usec, default: DateTime.now)
+    field(:open_at, :utc_datetime_usec)
+    field(:close_at, :utc_datetime_usec)
     field(:is_task, :boolean, default: false)
-    field(:prerequisiteIDs, :integer[], default: [])
+    field(:prerequisiteIDs, {:array, :integer})
     field(:goal, :integer, default: 0)
     field(:progress, :integer, default: 0)
 
-    has_one(:modal, AchievementModal, on_delete: :delete_all)
+    field(:modalImageUrl, :string)
+    field(:description, :string)
+    field(:goalText, :string)
+    field(:completionText, :string)
+
     timestamps()
   end
 
-  @required_fields ~w(title ability exp is_task prerequisiteIDs goal progress)a
-  @optional_fields ~w(icon open_at close_at)a
+  @required_fields ~w(title ability exp is_task goal progress)a
+  @optional_fields ~w(icon open_at close_at prerequisiteIDs
+    modalImageUrl description goalText completionText)a
 
   def changeset(assessment, params) do
     params =

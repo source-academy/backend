@@ -1,8 +1,8 @@
-defmodule Cadet.Achievements.Achievement do
+defmodule Cadet.Achievements do
   @moduledoc """
   The Achievement entity stores metadata of a students' assessment
   """
-
+  
   use Cadet, [:context, :display]
 
   alias Cadet.Achievements.Achievement
@@ -14,17 +14,16 @@ defmodule Cadet.Achievements.Achievement do
   end 
 
   def add_achievement() do
-    new_achievement -> 
-      achievement
-      |> Achievement.changeset()
-      |> Repo.update 
+    %Achievement{}
+    |> Achievement.changeset()
+    |> Repo.update 
   end 
 
   def edit_achievement(id, params) do 
     simple_update(
       Achievement, 
       id, 
-      using: &Achievement.changeset, 
+      using: Achievement.changeset(), 
       params: params
     )
   end 

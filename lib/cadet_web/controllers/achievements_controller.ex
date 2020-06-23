@@ -1,4 +1,5 @@
 defmodule CadetWeb.AchievementsController do
+  
   use CadetWeb, :controller
 
   use PhoenixSwagger
@@ -13,7 +14,7 @@ defmodule CadetWeb.AchievementsController do
     render(conn, "index.json", achievements: achievements)
   end
 
-  def add(conn, ) do
+  def add(conn) do
     result = Achievements.add_achievement(conn.assigns.current_user)
 
     case result do
@@ -28,7 +29,7 @@ defmodule CadetWeb.AchievementsController do
   end
 
   def edit(conn, %{"achievementid" => achievement_id, "params" => params}) do
-    result = Achievements.edit_achievement(conn.assigns.current_user, assessment_id, params)
+    result = Achievements.edit_achievement(conn.assigns.current_user, achievement_id, params)
 
     case result do
       {:ok, _nil} ->
@@ -42,7 +43,7 @@ defmodule CadetWeb.AchievementsController do
   end
 
   def delete(conn, %{"achievementid" => achievement_id}) do
-    result = Achievements.delete_achievement(conn.assigns.current_user, assessment_id)
+    result = Achievements.delete_achievement(conn.assigns.current_user, achievement_id)
 
     case result do
       {:ok, _nil} ->

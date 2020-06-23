@@ -1,4 +1,5 @@
 defmodule CadetWeb.AchievementsView do
+  
   use CadetWeb, :view
   use Timex
 
@@ -9,7 +10,7 @@ defmodule CadetWeb.AchievementsView do
   end
 
   def render("overview.json", %{achievement: achievement}) do
-    transform_map_for_view(assessment, %{
+    transform_map_for_view(achievement, %{
       id: :id,
       title: :title,
       ability: :ability, 
@@ -21,7 +22,6 @@ defmodule CadetWeb.AchievementsView do
       prerequisiteIDs: :prerequisiteIDs, 
       goal: :goal, 
       progress: :progress
-      modal: :modal
     })
   end
 end
