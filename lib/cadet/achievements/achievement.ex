@@ -5,15 +5,15 @@ defmodule Cadet.Achievements.Achievement do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Achievements.{AchievementAbility}
+  alias Cadet.Achievements.AchievementAbility
 
   schema "achievements" do
     field(:title, :string, default: 'New Achievement')
-    field(:ability, AchievementAbility)
+    field(:ability, AchievementAbility, default: :academic)
     field(:icon, :string, default: nil)
     field(:exp, :integer, default: 0)
-    field(:open_at, :utc_datetime_usec)
-    field(:close_at, :utc_datetime_usec)
+    field(:open_at, :utc_datetime_usec, default: DateTime.utc_now)
+    field(:close_at, :utc_datetime_usec, default: DateTime.utc_now)
     field(:is_task, :boolean, default: false)
     field(:prerequisiteIDs, {:array, :integer})
     field(:goal, :integer, default: 0)

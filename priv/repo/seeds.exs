@@ -23,6 +23,11 @@ if Cadet.Env.env() == :dev do
   students = insert_list(5, :student, %{group: group})
   admin = insert(:user, %{name: "admin", role: :admin})
 
+  # Achievements 
+  for _ <- 1..5 do 
+    insert(:achievement)
+  end 
+
   # Assessments
   for _ <- 1..5 do
     assessment = insert(:assessment, %{is_published: true})

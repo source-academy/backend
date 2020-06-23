@@ -16,6 +16,8 @@ defmodule Cadet.Factory do
 
   use Cadet.Stories.{StoryFactory}
 
+  use Cadet.Achievements.{AchievementFactory}
+
   use Cadet.Chapters.{ChapterFactory}
 
   use Cadet.Course.{GroupFactory, SourcecastFactory}
