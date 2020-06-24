@@ -10,7 +10,7 @@ defmodule Cadet.Achievements do
   import Ecto.Query
 
   def all_achievements() do
-    Achievement.Repo.all 
+    Cadet.Repo.all(Achievement)
   end 
 
   def update_achievements(new_achievements) do 

@@ -9,9 +9,9 @@ defmodule Cadet.Achievements.Achievement do
 
   schema "achievements" do
     field(:inferencer_id, :integer)
-    field(:title, :string, default: 'New Achievement')
+    field(:title, :string, default: "New Achievement")
     field(:ability, AchievementAbility, default: :academic)
-    field(:icon, :string, default: nil)
+    field(:icon, :string, default: "Sample Text")
     field(:exp, :integer, default: 0)
     field(:open_at, :utc_datetime_usec, default: DateTime.utc_now)
     field(:close_at, :utc_datetime_usec, default: DateTime.utc_now)
@@ -20,10 +20,10 @@ defmodule Cadet.Achievements.Achievement do
     field(:goal, :integer, default: 0)
     field(:progress, :integer, default: 0)
 
-    field(:modal_image_url, :string)
-    field(:description, :string)
-    field(:goal_text, :string)
-    field(:completion_text, :string)
+    field(:modal_image_url, :string, default: "https://dummyimage.com/300.png/09f/fff")
+    field(:description, :string, default: "Description")
+    field(:goal_text, :string, default: "Goal")
+    field(:completion_text, :string, default: "Completion")
 
     timestamps()
   end
