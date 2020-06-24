@@ -44,11 +44,6 @@ defmodule CadetWeb.AchievementsController do
       Achievements:
         swagger_schema do
           properties do
-            inferencer_id(
-              :integer,
-              "id used for reference by inferencer"
-
-            )
 
             title(
               :string,
@@ -82,58 +77,58 @@ defmodule CadetWeb.AchievementsController do
 
             open_at(
               :string,
-              "id used for reference by inferencer"
+              "open date of achievement"
 
             )
 
             close_at(
               :string,
-              "id used for reference by inferencer"
+              "close date of achievement"
 
             )
 
             is_task(
               :boolean,
-              "id used for reference by inferencer"
+              "if the achievement is a task or not"
 
             )
 
             prerequisite_ids(
               :array,
-              "id used for reference by inferencer"
+              "id of the prerequisites of the achievement"
             )
 
             goal(
               :integer,
-              "id used for reference by inferencer"
+              "goal value"
 
             )
 
             progress(
               :integer,
-              "id used for reference by inferencer"
+              "progress of the achievement"
 
             )
 
             modal_image_url(
               :string,
-              "id used for reference by inferencer"
+              "url of the image for the modal"
 
             )
 
             description(
               :string,
-              "id used for reference by inferencer"
+              "description of the achievement"
             )
 
             goal_text(
               :string,
-              "id used for reference by inferencer"
+              "text to reach the goal of the achievement"
             )
 
             completion_text(
               :string,
-              "id used for reference by inferencer"
+              "text to show when goal is met"
             )
 
 

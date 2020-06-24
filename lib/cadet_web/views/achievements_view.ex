@@ -11,6 +11,7 @@ defmodule CadetWeb.AchievementsView do
 
   def render("overview.json", %{achievement: achievement}) do
     transform_map_for_view(achievement, %{
+      inferencer_id: :inferencer_id, 
       id: :id,
       title: :title,
       ability: :ability, 
@@ -18,10 +19,15 @@ defmodule CadetWeb.AchievementsView do
       exp: :exp,
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
-      is_task: :is_task, 
-      prerequisite_ids: :prerequisite_ids, 
+      isTask: :is_task, 
+      prerequisiteIDs: :prerequisite_ids, 
       goal: :goal, 
-      progress: :progress
+      progress: :progress, 
+
+      modalImageUrl: :modal_image_url, 
+      description: :description, 
+      goalText: :goal_text, 
+      completionText: :completion_text
     })
   end
 end

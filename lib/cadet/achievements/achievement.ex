@@ -10,7 +10,7 @@ defmodule Cadet.Achievements.Achievement do
   schema "achievements" do
     field(:inferencer_id, :integer)
     field(:title, :string, default: "New Achievement")
-    field(:ability, AchievementAbility, default: :academic)
+    field(:ability, AchievementAbility, default: :Academic)
     field(:icon, :string, default: "Sample Text")
     field(:exp, :integer, default: 0)
     field(:open_at, :utc_datetime_usec, default: DateTime.utc_now)
