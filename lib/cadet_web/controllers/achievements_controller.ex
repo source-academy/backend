@@ -15,11 +15,11 @@ defmodule CadetWeb.AchievementsController do
     render(conn, "index.json", achievements: achievements)
   end
 
-  def edit(conn, %{"new_achievements" => new_achievements}) do
-    result = Achievements.update_achievements(new_achievements)
+  def update(conn, %{"achievements" => achievements}) do
+    result = Achievements.update_achievements(achievements)
 
     case result do
-      {:ok, _nil} ->
+      :ok->
         text(conn, "OK")
 
       {:error, {status, message}} ->

@@ -14,11 +14,13 @@ defmodule Cadet.Achievements do
   end 
 
   def update_achievements(new_achievements) do 
-    from(old_achievement in Achievement, where: old_achievement.xp >= 0) |> Cadet.Repo.delete_all
+    Cadet.Repo.delete_all(Achievement)
 
     for new_achievement <- new_achievements do
       Cadet.Repo.insert(:achievement, new_achievement)
     end 
+
+    :ok
   end 
 end
 
