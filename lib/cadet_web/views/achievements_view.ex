@@ -20,7 +20,7 @@ defmodule CadetWeb.AchievementsView do
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
       isTask: :is_task, 
-      prerequisiteIDs: :prerequisite_ids, 
+      prerequisiteIds: :prerequisite_ids, 
       goal: :goal, 
       progress: :progress, 
 
