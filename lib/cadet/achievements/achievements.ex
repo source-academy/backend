@@ -36,7 +36,7 @@ defmodule Cadet.Achievements do
         progress: new_achievement["completionProgress"], 
   
         modal_image_url: new_achievement["modal"]["modalImageUrl"], 
-        description: new_achievement["modal"]["modalImageUrl"], 
+        description: new_achievement["modal"]["description"], 
         goal_text: new_achievement["modal"]["goalText"], 
         completion_text: new_achievement["modal"]["completionText"]
       }
@@ -59,7 +59,7 @@ defmodule Cadet.Achievements do
           progress: new_achievement["completionProgress"], 
     
           modal_image_url: new_achievement["modal"]["modalImageUrl"], 
-          description: new_achievement["modal"]["modalImageUrl"], 
+          description: new_achievement["modal"]["description"], 
           goal_text: new_achievement["modal"]["goalText"], 
           completion_text: new_achievement["modal"]["completionText"]
         ]
