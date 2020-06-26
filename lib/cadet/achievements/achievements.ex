@@ -46,30 +46,30 @@ defmodule Cadet.Achievements do
   end 
 
   def update_achievement(new_achievement) do 
-    query = from(achievement in Achievement, where: u.inferencer_id == new_achievement["id"])
+    from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
+      |>  Cadet.Repo.update_all(
+        set: [
+          inferencer_id: new_achievement["id"], 
+          title: new_achievement["title"],
+          ability: new_achievement["ability"], 
+          exp: new_achievement["exp"],
+          is_task: new_achievement["isTask"], 
+          prerequisite_ids: new_achievement["prerequisiteIds"], 
+          goal: new_achievement["completionGoal"], 
+          progress: new_achievement["completionProgress"], 
+    
+          modal_image_url: new_achievement["modal"]["modalImageUrl"], 
+          description: new_achievement["modal"]["modalImageUrl"], 
+          goal_text: new_achievement["modal"]["goalText"], 
+          completion_text: new_achievement["modal"]["completionText"]
+        ]
+      )
 
-    Ecto.Repo.update_all(query,
-      set: [
-        inferencer_id: new_achievement["id"], 
-        title: new_achievement["title"],
-        ability: new_achievement["ability"], 
-        exp: new_achievement["exp"],
-        is_task: new_achievement["isTask"], 
-        prerequisite_ids: new_achievement["prerequisiteIds"], 
-        goal: new_achievement["completionGoal"], 
-        progress: new_achievement["completionProgress"], 
-  
-        modal_image_url: new_achievement["modal"]["modalImageUrl"], 
-        description: new_achievement["modal"]["modalImageUrl"], 
-        goal_text: new_achievement["modal"]["goalText"], 
-        completion_text: new_achievement["modal"]["completionText"]
-      ]
-    )
     :ok
   end 
 
   def delete_achievement(new_achievement) do
-    from(achievement in Achievement, where: u.inferencer_id == new_achievement["id"])
+    from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
       |> Cadet.Repo.delete_all
     :ok
   end 
