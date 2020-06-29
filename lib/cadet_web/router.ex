@@ -47,11 +47,10 @@ defmodule CadetWeb.Router do
     delete("/assets/:foldername/*filename", AssetsController, :delete)
 
     get("/grading", GradingController, :index)
+    get("/grading/summary", GradingController, :grading_summary)
     get("/grading/:submissionid", GradingController, :show)
     post("/grading/:submissionid/unsubmit", GradingController, :unsubmit)
     post("/grading/:submissionid/:questionid", GradingController, :update)
-
-    get("/groups", GroupController, :index)
 
     get("/notification", NotificationController, :index)
     post("/notification/acknowledge", NotificationController, :acknowledge)

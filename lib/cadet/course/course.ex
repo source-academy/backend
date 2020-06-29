@@ -7,11 +7,10 @@ defmodule Cadet.Course do
 
   import Ecto.Query
 
-  alias Cadet.{Accounts, Accounts.User}
+  alias Cadet.Accounts.User
   alias Cadet.Course.{Group, Sourcecast, SourcecastUpload}
 
   @upload_file_roles ~w(admin staff)a
-  @get_overviews_role ~w(staff admin)a
 
   @doc """
   Get a group based on the group name or create one if it doesn't exist
@@ -48,34 +47,6 @@ defmodule Cadet.Course do
         Group.changeset(group, params)
     end
     |> Repo.insert_or_update()
-  end
-
-  @doc """
-  Returns a list of groups containing information on the each group's id, avenger name and group name
-  """
-  @type group_overview :: %{id: integer, avenger_name: String.t(), name: String.t()}
-
-  @spec get_group_overviews(%User{}) ::
-          {:ok, [group_overview]} | {:error, {:unauthorized, String.t()}}
-  def get_group_overviews(_user = %User{role: role}) do
-    if role in @get_overviews_role do
-      overviews =
-        Group
-        |> Repo.all()
-        |> Enum.map(fn group_info -> get_group_info(group_info) end)
-
-      {:ok, overviews}
-    else
-      {:error, {:unauthorized, "Unauthorized"}}
-    end
-  end
-
-  defp get_group_info(group_info) do
-    %{
-      id: group_info.id,
-      avenger_name: Accounts.get_user(group_info.leader_id).name,
-      name: group_info.name
-    }
   end
 
   # @doc """
