@@ -10,8 +10,7 @@ defmodule CadetWeb.AssetsView do
     asset
   end
 
-  def render("s3_response.json", %{resp: resp}) do
+  def render("show.json", %{resp: resp}) do
     resp
   end
-
 end

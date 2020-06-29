@@ -8,11 +8,11 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test.png"
     },
     "response": {
       "binary": false,
-      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>source-academy-assets</Bucket><Key>testFolder/test1.png</Key><UploadId>CkT3yJui4r8nFY.BfM5sFoJDCPzzsGRauMNcAdW2S38JKFf1dUeLlOZfcwsOx8iwIpM9DYkjVqR84EVfn6C2batMiwxgnP_4XqFLafWmPiuOlmMzvej60k0MeBifLZ4aW8GusMj7lP6Es8BMzTzpfg--</UploadId></InitiateMultipartUploadResult>",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>source-academy-assets</Bucket><Key>testFolder/test.png</Key><UploadId>g.F8iJiVk4PFoQri5_jKCJEUbEbJ_M.DvF0g1ril6OenzbOhGKW7qDjp45yp1Dm6YjlPkNkFG4S516uqd3JAjE9TAAFvYTzO1MeivWXiw.CSIdAEq2Z4_hKwGK_ZdAmxPE3zNPWu4dcGFNv1T7NCNA--</UploadId></InitiateMultipartUploadResult>",
       "status_code": 200,
       "type": "ok"
     }
@@ -26,7 +26,7 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test.png"
     },
     "response": {
       "binary": false,
@@ -44,15 +44,15 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test.png"
     },
     "response": {
       "binary": false,
       "body": "",
       "headers": {
-        "x-amz-id-2": "3TbKvgc/s3gdE0AfEvh/8namHC8/lc8yRFUamrTYs1waDtx5ndBmetO5fiAJ+g1F0/tlIvD2UNI=",
-        "x-amz-request-id": "CBA59795864DEAFF",
-        "Date": "Mon, 29 Jun 2020 07:30:06 GMT",
+        "x-amz-id-2": "s3n9TeV+P0fn0S84I4vIHWSaC9cj7q9gcILHO8lke7gzrgTIfpJP1+dttYMWxtGrygglwDb0uqw=",
+        "x-amz-request-id": "3B7730DB891AD825",
+        "Date": "Mon, 29 Jun 2020 08:27:22 GMT",
         "ETag": "\"60cf42b4d05caf10cf8bb15c0817a7b4\"",
         "Content-Length": "0",
         "Server": "AmazonS3"

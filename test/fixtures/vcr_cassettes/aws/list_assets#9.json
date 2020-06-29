@@ -8,12 +8,12 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test2.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/nestedFolder/test2.png"
     },
     "response": {
       "binary": false,
       "body": null,
-      "status_code": 200,
+      "status_code": 404,
       "type": "ok"
     }
   }

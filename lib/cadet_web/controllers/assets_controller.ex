@@ -2,12 +2,12 @@ defmodule CadetWeb.AssetsController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
-  alias Cadet.Stories.Assets
+  alias Cadet.Assets.Assets
 
-  def index(conn, _params = %{"foldername" => folder_name}) do
+  def index(conn, _params = %{"foldername" => foldername}) do
     with :ok <- Assets.validate_assets_role(conn),
-         :ok <- Assets.validate_folder_name(folder_name) do
-      assets = Assets.list_assets(folder_name)
+         :ok <- Assets.validate_folder_name(foldername) do
+      assets = Assets.list_assets(foldername)
       render(conn, "index.json", assets: assets)
     else
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
@@ -15,39 +15,40 @@ defmodule CadetWeb.AssetsController do
   end
 
   @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def delete(conn, _params = %{"folderName" => folder_name, "filename" => filename}) do
+  def delete(conn, _params = %{"foldername" => foldername, "filename" => filename}) do
+    filename = Enum.join(filename, "/")
+
     with :ok <- Assets.validate_assets_role(conn),
-         :ok <- Assets.validate_folder_name(folder_name) do
-      Assets.delete_object(folder_name, filename)
-      render(conn, "s3_response.json", resp: :ok)
+         :ok <- Assets.filename_not_empty(filename),
+         :ok <- Assets.validate_folder_name(foldername) do
+      Assets.delete_object(foldername, filename)
+      conn |> put_status(204) |> text('')
     else
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
     end
   end
 
-  def upload(conn, %{"upload" => upload_params, "details" => details}) do
-    {:ok, details} = Jason.decode(details)
-    %{"folderName" => folder_name} = details
-
-    filename =
-      if Map.has_key?(details, "filename") do
-        details["filename"]
-      else
-        upload_params.filename
-      end
+  def upload(conn, %{
+        "upload" => upload_params,
+        "filename" => filename,
+        "foldername" => foldername
+      }) do
+    filename = Enum.join(filename, "/")
+    filetype = Path.extname(filename)
 
     with :ok <- Assets.validate_assets_role(conn),
-         :ok <- Assets.validate_folder_name(folder_name),
-         :ok <- Assets.validate_filetype(filename) do
-      resp = Assets.upload_to_s3(upload_params, folder_name, filename)
-      render(conn, "s3_response.json", resp: resp)
+         :ok <- Assets.filename_not_empty(filename),
+         :ok <- Assets.validate_folder_name(foldername),
+         :ok <- Assets.validate_filetype(filetype) do
+      resp = Assets.upload_to_s3(upload_params, foldername, filename)
+      render(conn, "show.json", resp: resp)
     else
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
     end
   end
 
   swagger_path :index do
-    get("/assets/:folder_name")
+    get("/assets/:foldername")
 
     summary("Get a list of all assets in a foldername")
 
@@ -61,7 +62,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :delete do
-    post("assets/delete")
+    post("assets/:foldername/*filename")
 
     summary("Delete a file from an asset folder")
 
@@ -75,7 +76,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :upload do
-    post("/assets/upload")
+    post("/assets/:foldername/*filename")
 
     summary("Upload a file to an asset folder")
 

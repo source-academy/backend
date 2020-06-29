@@ -16,5 +16,23 @@
       "status_code": 200,
       "type": "ok"
     }
+  },
+  {
+    "request": {
+      "body": "",
+      "method": "delete",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test2.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "status_code": 204,
+      "type": "ok"
+    }
   }
 ]

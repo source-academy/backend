@@ -3,9 +3,9 @@
     "request": {
       "body": "",
       "headers": {
-        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAYNU6ZMFN4T7KXT56/20200629/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=098246190a5b3d3adce47a92b0d4eb4a64b165d1c91561e9164946043fe9fafb",
+        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAYNU6ZMFN4T7KXT56/20200629/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=1abd21ba50e858ae0ee0f2af985f9fbcbd989e63c54af83a9875892328c0a4b4",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20200629T071937Z",
+        "x-amz-date": "20200629T082722Z",
         "content-length": "0",
         "x-amz-content-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
@@ -15,17 +15,17 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test4.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/nestedFolder/test2.png"
     },
     "response": {
       "binary": false,
       "body": null,
       "headers": {
-        "x-amz-request-id": "427E8762FF4FC63D",
-        "x-amz-id-2": "sX/mph43AHto1DAtwBdHFXOuo+xVm4RLbZ1Wn1tDo36/+XYAoyn0hSQloF00b3BJefBaB+CafKE=",
+        "x-amz-request-id": "C1B7D9E88CC1F1F7",
+        "x-amz-id-2": "q6L/mz8Nq+cZ2GKyxyNEJLTAlnFNubhlnSVs2uTmNNZYtEOjnvG731vLrNcRVK5ruQFZI3ZFVIk=",
         "Content-Type": "application/xml",
         "Transfer-Encoding": "chunked",
-        "Date": "Mon, 29 Jun 2020 07:19:37 GMT",
+        "Date": "Mon, 29 Jun 2020 08:27:21 GMT",
         "Server": "AmazonS3"
       },
       "status_code": 404,

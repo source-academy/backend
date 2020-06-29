@@ -2,12 +2,6 @@
   {
     "request": {
       "body": "",
-      "headers": {
-        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAYNU6ZMFN4T7KXT56/20200618/ap-southeast-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date,Signature=783344163f92bbabdd70ddbebee15216cbba3ce153b6e47c4bc61ee3785ede96",
-        "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20200618T190535Z",
-        "x-amz-content-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      },
       "method": "get",
       "options": {
         "with_body": "true",
@@ -19,15 +13,6 @@
     "response": {
       "binary": false,
       "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Name>source-academy-assets</Name><Prefix>testFolder/</Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>testFolder/</Key><LastModified>2020-06-17T14:09:59.000Z</LastModified><ETag>&quot;c0897134f122b9ca291e36f592f8146b-1&quot;</ETag><Size>5406</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>testFolder/test.png</Key><LastModified>2020-06-17T14:13:46.000Z</LastModified><ETag>&quot;c0897134f122b9ca291e36f592f8146b-1&quot;</ETag><Size>5406</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>testFolder/test2.png</Key><LastModified>2020-06-17T14:13:34.000Z</LastModified><ETag>&quot;c0897134f122b9ca291e36f592f8146b-1&quot;</ETag><Size>5406</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>",
-      "headers": {
-        "x-amz-id-2": "2AiHd1Md3txOOGQAO7TdQJJGTaykwXc0lnDoQ3D1dqgvsH6xqkW/GuQiMdx3bsXppcB74p0lDu0=",
-        "x-amz-request-id": "B4953FA69D4D00E5",
-        "Date": "Thu, 18 Jun 2020 19:05:37 GMT",
-        "x-amz-bucket-region": "ap-southeast-1",
-        "Content-Type": "application/xml",
-        "Transfer-Encoding": "chunked",
-        "Server": "AmazonS3"
-      },
       "status_code": 200,
       "type": "ok"
     }
