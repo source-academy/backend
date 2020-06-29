@@ -2,13 +2,6 @@
   {
     "request": {
       "body": "",
-      "headers": {
-        "Authorization": "AWS4-HMAC-SHA256 Credential=AKIAYNU6ZMFN4T7KXT56/20200629/ap-southeast-1/s3/aws4_request,SignedHeaders=content-length;host;x-amz-content-sha256;x-amz-date,Signature=1abd21ba50e858ae0ee0f2af985f9fbcbd989e63c54af83a9875892328c0a4b4",
-        "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20200629T082722Z",
-        "content-length": "0",
-        "x-amz-content-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      },
       "method": "head",
       "options": {
         "with_body": "true",
