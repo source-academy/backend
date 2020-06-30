@@ -2,7 +2,6 @@ defmodule Cadet.Achievements do
   @moduledoc """
   The Achievement entity stores metadata of a students' assessment
   """
-  
   use Cadet, [:context, :display]
 
   alias Cadet.Achievements.Achievement
@@ -23,6 +22,7 @@ defmodule Cadet.Achievements do
     :ok
   end 
 
+  # Adds a new Achievement to the table
   def add_achievement(new_achievement) do 
     Cadet.Repo.insert(
       %Achievement{
@@ -46,6 +46,7 @@ defmodule Cadet.Achievements do
     :ok
   end 
 
+  # Updates an Exisitng Achievement to the table
   def update_achievement(new_achievement) do 
     from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
       |>  Cadet.Repo.update_all(

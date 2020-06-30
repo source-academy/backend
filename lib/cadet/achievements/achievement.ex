@@ -41,7 +41,6 @@ defmodule Cadet.Achievements.Achievement do
       |> convert_date(:close_at)
 
     assessment
-    |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_open_close_date
