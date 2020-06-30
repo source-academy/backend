@@ -67,12 +67,15 @@ defmodule Cadet.Achievements do
 
     :ok
   end 
+  
+  def insert_or_update_achievement(new_achievement) do
+    query = Repo.exists?(from u in Achievement, where: u.inferencer_id == ^new_achievement["id"])
+    if query do 
+      update_achievement(new_achievement)
+    else 
+      add_achievement(new_achievement)
+    end 
 
-  def delete_achievement(new_achievement) do
-    from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
-      |> Cadet.Repo.delete_all
-    :ok
   end 
 
 end
-

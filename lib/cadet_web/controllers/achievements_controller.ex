@@ -29,36 +29,8 @@ defmodule CadetWeb.AchievementsController do
     end
   end
 
-  def add(conn, %{"achievement" => achievement}) do
-    result = Achievements.add_achievement(achievement)
-
-    case result do
-      :ok->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
   def edit(conn, %{"achievement" => achievement}) do
-    result = Achievements.update_achievement(achievement)
-
-    case result do
-      :ok->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def delete(conn, %{"achievement" => achievement}) do
-    result = Achievements.delete_achievement(achievement)
+    result = Achievements.insert_or_update_achievement(achievement)
 
     case result do
       :ok->
