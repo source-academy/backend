@@ -18,6 +18,7 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
       add(:prerequisite_ids, {:array, :integer})
       add(:goal, :integer)
       add(:progress, :integer)
+      add(:position, :integer)
       add(:modal_image_url, :string)
       add(:description, :string)
       add(:goal_text, :text)

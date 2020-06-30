@@ -20,6 +20,8 @@ defmodule Cadet.Achievements.Achievement do
     field(:goal, :integer, default: 0)
     field(:progress, :integer, default: 0)
 
+    field(:position, :integer, default: 0)
+
     field(:modal_image_url, :string, default: "https://dummyimage.com/300.png/09f/fff")
     field(:description, :string, default: "Description")
     field(:goal_text, :string, default: "Goal")
@@ -28,7 +30,7 @@ defmodule Cadet.Achievements.Achievement do
     timestamps()
   end
 
-  @required_fields ~w(title ability exp is_task goal progress)a
+  @required_fields ~w(title ability exp is_task goal progress position)a
   @optional_fields ~w(icon open_at close_at prerequisite_ids
     modal_image_url description goal_text completion_text)a
 

@@ -10,7 +10,7 @@ defmodule Cadet.Achievements do
   import Ecto.Query
 
   def all_achievements() do
-    Cadet.Repo.all(Achievement)
+    Cadet.Repo.all(from a in Achievement, order_by: a.inferencer_id)
   end 
 
   def update_achievements(new_achievements) do 
@@ -34,6 +34,7 @@ defmodule Cadet.Achievements do
         prerequisite_ids: new_achievement["prerequisiteIds"], 
         goal: new_achievement["completionGoal"], 
         progress: new_achievement["completionProgress"], 
+        position: new_achievement["position"], 
   
         modal_image_url: new_achievement["modal"]["modalImageUrl"], 
         description: new_achievement["modal"]["description"], 
@@ -57,6 +58,7 @@ defmodule Cadet.Achievements do
           prerequisite_ids: new_achievement["prerequisiteIds"], 
           goal: new_achievement["completionGoal"], 
           progress: new_achievement["completionProgress"], 
+          position: new_achievement["position"], 
     
           modal_image_url: new_achievement["modal"]["modalImageUrl"], 
           description: new_achievement["modal"]["description"], 

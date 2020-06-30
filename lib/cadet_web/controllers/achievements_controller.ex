@@ -62,7 +62,6 @@ defmodule CadetWeb.AchievementsController do
             title(
               :string,
               "title of the achievement"
-
             )
 
             ability(
@@ -74,37 +73,31 @@ defmodule CadetWeb.AchievementsController do
             icon(
               :string,
               "icon name"
-
             )
 
             inferencer_id(
               :integer,
               "id used for reference by inferencer"
-
             )
 
             exp(
               :integer,
               "exp awarded for the achievement"
-
             )
 
             open_at(
               :string,
               "open date of achievement"
-
             )
 
             close_at(
               :string,
               "close date of achievement"
-
             )
 
             is_task(
               :boolean,
               "if the achievement is a task or not"
-
             )
 
             prerequisite_ids(
@@ -115,19 +108,21 @@ defmodule CadetWeb.AchievementsController do
             goal(
               :integer,
               "goal value"
-
             )
 
             progress(
               :integer,
               "progress of the achievement"
+            )
 
+            position(
+              :position, 
+              "position of achievement in the list"
             )
 
             modal_image_url(
               :string,
               "url of the image for the modal"
-
             )
 
             description(

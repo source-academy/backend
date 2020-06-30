@@ -23,6 +23,7 @@ defmodule CadetWeb.AchievementsView do
       prerequisiteIds: :prerequisite_ids, 
       goal: :goal, 
       progress: :progress, 
+      position: :position, 
 
       modalImageUrl: :modal_image_url, 
       description: :description, 
