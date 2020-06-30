@@ -44,7 +44,7 @@
   "inch_ex": {:hex, :inch_ex, "2.0.0", "24268a9284a1751f2ceda569cd978e1fa394c977c45c331bb52a405de544f4de", [:mix], [{:bunt, "~> 0.2", [hex: :bunt, repo: "hexpm", optional: false]}, {:jason, "~> 1.0", [hex: :jason, repo: "hexpm", optional: false]}], "hexpm", "96d0ec5ecac8cf63142d02f16b7ab7152cf0f0f1a185a80161b758383c9399a8"},
   "jason": {:hex, :jason, "1.2.1", "12b22825e22f468c02eb3e4b9985f3d0cb8dc40b9bd704730efa11abd2708c44", [:mix], [{:decimal, "~> 1.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "b659b8571deedf60f79c5a608e15414085fa141344e2716fbd6988a084b5f993"},
   "jose": {:hex, :jose, "1.10.1", "16d8e460dae7203c6d1efa3f277e25b5af8b659febfc2f2eb4bacf87f128b80a", [:mix, :rebar3], [], "hexpm", "3c7ddc8a9394b92891db7c2771da94bf819834a1a4c92e30857b7d582e2f8257"},
-  "jsx": {:hex, :jsx, "2.11.0", "08154624050333919b4ac1b789667d5f4db166dc50e190c4d778d1587f102ee0", [:rebar3], [], "hexpm", "eed26a0d04d217f9eecefffb89714452556cf90eb38f290a27a4d45b9988f8c0"},
+  "jsx": {:hex, :jsx, "3.0.0", "20a170abd4335fc6db24d5fad1e5d677c55dadf83d1b20a8a33b5fe159892a39", [:rebar3], [], "hexpm", "37beca0435f5ca8a2f45f76a46211e76418fbef80c36f0361c249fc75059dc6d"},
   "meck": {:hex, :meck, "0.8.13", "ffedb39f99b0b99703b8601c6f17c7f76313ee12de6b646e671e3188401f7866", [:rebar3], [], "hexpm", "d34f013c156db51ad57cc556891b9720e6a1c1df5fe2e15af999c84d6cebeb1a"},
   "memento": {:hex, :memento, "0.3.1", "b2909390820550d8b90b68ec96f9e15ff8a45a28b6f97fa4a62ef50e87c2f9d9", [:mix], [], "hexpm", "ff8fc66255d21dcd539c5d77a0b5458715bf3efec91b389dd06017bbb4e2e916"},
   "metrics": {:hex, :metrics, "1.0.1", "25f094dea2cda98213cecc3aeff09e940299d950904393b2a29d191c346a8486", [:rebar3], [], "hexpm", "69b09adddc4f74a40716ae54d140f93beb0fb8978d8636eaded0c31b6f099f16"},
