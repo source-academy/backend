@@ -1,23 +1,23 @@
-defmodule Cadet.Chapters.ChapterTest do
-  alias Cadet.Chapters.Chapter
+defmodule Cadet.Settings.SublanguageTest do
+  alias Cadet.Settings.Sublanguage
 
-  use Cadet.ChangesetCase, entity: Chapter
+  use Cadet.ChangesetCase, entity: Sublanguage
 
   describe "Changesets" do
     test "valid changeset" do
       assert_changeset(
         %{
-          chapterno: 1,
-          variant: "default"
+          chapter: 4,
+          variant: "gpu"
         },
         :valid
       )
     end
 
-    test "invalid changeset for chapterno" do
+    test "invalid changeset for chapter number" do
       assert_changeset(
         %{
-          chapterno: 5,
+          chapter: 5,
           variant: "default"
         },
         :invalid

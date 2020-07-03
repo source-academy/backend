@@ -24,7 +24,7 @@ defmodule CadetWeb.Router do
     post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/logout", AuthController, :logout)
-    get("/chapter", ChaptersController, :index)
+    get("/settings/sublanguage", SettingsController, :index)
   end
 
   # Authenticated Pages
@@ -55,7 +55,7 @@ defmodule CadetWeb.Router do
     put("/user/game_states/clear", UserController, :clear_up_game_states)
     put("/user/game_states/save", UserController, :update_game_states)
 
-    post("/chapter/update/:id", ChaptersController, :update)
+    put("/settings/sublanguage", SettingsController, :update)
   end
 
   # Other scopes may use custom stacks.

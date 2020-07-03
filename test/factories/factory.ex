@@ -14,7 +14,7 @@ defmodule Cadet.Factory do
     SubmissionFactory
   }
 
-  use Cadet.Chapters.{ChapterFactory}
+  use Cadet.Settings.{SublanguageFactory}
 
   use Cadet.Course.{GroupFactory, SourcecastFactory}
 
