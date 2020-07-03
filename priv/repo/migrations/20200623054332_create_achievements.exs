@@ -10,7 +10,7 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
       add(:title, :string)
       add(:inferencer_id, :integer)
       add(:ability, :achievement_ability)
-      add(:icon, :string)
+      add(:background_image_url, :string)
       add(:exp, :integer)
       add(:open_at, :timestamp)
       add(:close_at, :timestamp)

@@ -67,12 +67,11 @@ defmodule CadetWeb.AchievementsController do
             ability(
               AchievementAbility,
               "ability"
-
             )
 
-            icon(
+            background_image_url(
               :string,
-              "icon name"
+              "URL of the achievement's background image"
             )
 
             inferencer_id(

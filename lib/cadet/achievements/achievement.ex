@@ -11,7 +11,7 @@ defmodule Cadet.Achievements.Achievement do
     field(:inferencer_id, :integer)
     field(:title, :string, default: "New Achievement")
     field(:ability, AchievementAbility, default: :Academic)
-    field(:icon, :string, default: "Sample Text")
+    field(:background_image_url, :string, default: "https://dummyimage.com/300.png/09f/fff")
     field(:exp, :integer, default: 0)
     field(:open_at, :utc_datetime_usec, default: DateTime.utc_now)
     field(:close_at, :utc_datetime_usec, default: DateTime.utc_now)
@@ -31,7 +31,7 @@ defmodule Cadet.Achievements.Achievement do
   end
 
   @required_fields ~w(title ability exp is_task goal progress position)a
-  @optional_fields ~w(icon open_at close_at prerequisite_ids
+  @optional_fields ~w(background_image_url open_at close_at prerequisite_ids
     modal_image_url description goal_text completion_text)a
 
   def changeset(assessment, params) do

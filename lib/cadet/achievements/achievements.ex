@@ -29,7 +29,7 @@ defmodule Cadet.Achievements do
         inferencer_id: new_achievement["id"], 
         title: new_achievement["title"],
         ability: new_achievement["ability"], 
-        icon: new_achievement["icon"], 
+        background_image_url: new_achievement["backgroundImageUrl"], 
         exp: new_achievement["exp"],
         is_task: new_achievement["isTask"], 
         prerequisite_ids: new_achievement["prerequisiteIds"], 
@@ -54,7 +54,7 @@ defmodule Cadet.Achievements do
         set: [
           inferencer_id: new_achievement["id"], 
           title: new_achievement["title"],
-          icon: new_achievement["icon"], 
+          background_image_url: new_achievement["backgroundImageUrl"], 
           ability: new_achievement["ability"], 
           exp: new_achievement["exp"],
           is_task: new_achievement["isTask"], 
