@@ -15,7 +15,6 @@ defmodule CadetWeb.AchievementsView do
       id: :id,
       title: :title,
       ability: :ability, 
-      backgroundImageUrl: :background_image_url,
       exp: :exp,
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
@@ -24,6 +23,7 @@ defmodule CadetWeb.AchievementsView do
       goal: :goal, 
       progress: :progress, 
       position: :position, 
+      backgroundImageUrl: :background_image_url, 
 
       modalImageUrl: :modal_image_url, 
       description: :description, 
