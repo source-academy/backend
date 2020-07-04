@@ -9,6 +9,7 @@ defmodule CadetWeb.AssetsControllerTest do
   end
 
   test "swagger" do
+    AssetsController.swagger_definitions()
     AssetsController.swagger_path_index(nil)
     AssetsController.swagger_path_upload(nil)
     AssetsController.swagger_path_delete(nil)
