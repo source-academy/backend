@@ -11,10 +11,10 @@ defmodule Cadet.Achievements.Achievement do
     field(:inferencer_id, :integer)
     field(:title, :string, default: "New Achievement")
     field(:ability, AchievementAbility, default: :Academic)
-    field(:background_image_url, :string, default: "https://dummyimage.com/300.png/09f/fff")
+    field(:background_image_url, :string, default: "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg")
     field(:exp, :integer, default: 0)
-    field(:open_at, :utc_datetime_usec, default: DateTime.utc_now)
-    field(:close_at, :utc_datetime_usec, default: DateTime.utc_now)
+    field(:open_at, :utc_datetime , default: DateTime.utc_now)
+    field(:close_at, :utc_datetime , default: DateTime.utc_now)
     field(:is_task, :boolean, default: false)
     field(:prerequisite_ids, {:array, :integer})
     field(:goal, :integer, default: 0)
@@ -22,7 +22,7 @@ defmodule Cadet.Achievements.Achievement do
 
     field(:position, :integer, default: 0)
 
-    field(:modal_image_url, :string, default: "https://dummyimage.com/300.png/09f/fff")
+    field(:modal_image_url, :string, default: "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg")
     field(:description, :string, default: "Description")
     field(:goal_text, :string, default: "Goal")
     field(:completion_text, :string, default: "Completion")

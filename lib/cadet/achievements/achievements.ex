@@ -22,6 +22,19 @@ defmodule Cadet.Achievements do
     :ok
   end 
 
+  def get_date(date) do 
+    result = Elixir.Timex.Parse.DateTime.Parser.parse(date, "{ISO:Extended:Z}")
+
+    case result do
+      {:ok, date} ->
+        date
+        |> DateTime.truncate(:second)
+
+      {:error, {status, message}} ->
+        {:error, {status, message}}
+    end
+  end 
+
   # Adds a new Achievement to the table
   def add_achievement(new_achievement) do 
     Cadet.Repo.insert(
@@ -29,7 +42,6 @@ defmodule Cadet.Achievements do
         inferencer_id: new_achievement["id"], 
         title: new_achievement["title"],
         ability: new_achievement["ability"], 
-        background_image_url: new_achievement["backgroundImageUrl"], 
         exp: new_achievement["exp"],
         is_task: new_achievement["isTask"], 
         prerequisite_ids: new_achievement["prerequisiteIds"], 
@@ -38,8 +50,8 @@ defmodule Cadet.Achievements do
         position: new_achievement["position"], 
         background_image_url: new_achievement["backgroundImageUrl"], 
 
-        close_at: new_achievement["deadline"], 
-        open_at: new_achievement["release"], 
+        close_at: get_date(new_achievement["deadline"]),
+        open_at: get_date(new_achievement["release"]),
   
         modal_image_url: new_achievement["modal"]["modalImageUrl"], 
         description: new_achievement["modal"]["description"], 
@@ -58,7 +70,6 @@ defmodule Cadet.Achievements do
         set: [
           inferencer_id: new_achievement["id"], 
           title: new_achievement["title"],
-          background_image_url: new_achievement["backgroundImageUrl"], 
           ability: new_achievement["ability"], 
           exp: new_achievement["exp"],
           is_task: new_achievement["isTask"], 
