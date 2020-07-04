@@ -49,7 +49,7 @@ defmodule Cadet.Assets.Assets do
       |> S3.upload(@bucket_name, s3_path)
       |> ExAws.request!()
 
-      "http://#{@bucket_name}.s3.amazonaws.com/#{s3_path}"
+      "https://#{@bucket_name}.s3.amazonaws.com/#{s3_path}"
     end
   end
 

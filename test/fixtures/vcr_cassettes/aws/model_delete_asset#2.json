@@ -2,6 +2,13 @@
   {
     "request": {
       "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T185901Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
       "method": "head",
       "options": {
         "with_body": "true",
@@ -13,6 +20,15 @@
     "response": {
       "binary": false,
       "body": null,
+      "headers": {
+        "Date": "Sat, 04 Jul 2020 18:59:02 GMT",
+        "Last-Modified": "Sat, 04 Jul 2020 18:58:52 GMT",
+        "ETag": "\"3104001edec38fadeb925b9dbddab198\"",
+        "Accept-Ranges": "bytes",
+        "Content-Type": "image/png",
+        "Content-Length": "8035",
+        "Server": "AmazonS3"
+      },
       "status_code": 200,
       "type": "ok"
     }
@@ -20,6 +36,13 @@
   {
     "request": {
       "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T185901Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
       "method": "delete",
       "options": {
         "with_body": "true",
@@ -32,9 +55,7 @@
       "binary": false,
       "body": "",
       "headers": {
-        "x-amz-id-2": "EcluRVTOjdEOAr8S+yk+hjUidIglTORI9VU04O1DW7nGmC7MhcavDWMkgaIoRrcmZdHYph4LD3c=",
-        "x-amz-request-id": "99FEB34ABAC0FFD8",
-        "Date": "Mon, 29 Jun 2020 07:21:04 GMT",
+        "Date": "Sat, 04 Jul 2020 18:59:02 GMT",
         "Server": "AmazonS3"
       },
       "status_code": 204,
