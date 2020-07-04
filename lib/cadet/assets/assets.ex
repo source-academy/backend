@@ -10,8 +10,6 @@ defmodule Cadet.Assets.Assets do
   @accessible_folders ~w(images locations objects avatars ui stories testFolder)
   @accepted_file_types ~w(.jpg .jpeg .gif .png .wav .mp3 .txt)
 
-  @bucket_name "source-academy-assets"
-
   def validate_assets_role(conn) do
     if conn.assigns[:current_user].role in @manage_assets_role do
       :ok
@@ -46,15 +44,15 @@ defmodule Cadet.Assets.Assets do
 
       file
       |> Upload.stream_file()
-      |> S3.upload(@bucket_name, s3_path)
+      |> S3.upload(bucket(), s3_path)
       |> ExAws.request!()
 
-      "https://#{@bucket_name}.s3.amazonaws.com/#{s3_path}"
+      "https://#{bucket()}.s3.amazonaws.com/#{s3_path}"
     end
   end
 
   def list_assets(folder_name) do
-    @bucket_name
+    bucket()
     |> S3.list_objects(prefix: folder_name <> "/")
     |> ExAws.stream!()
     |> Enum.map(fn file -> file.key end)
@@ -62,7 +60,7 @@ defmodule Cadet.Assets.Assets do
 
   def delete_object(folder_name, filename) do
     if object_exists?(folder_name, filename) do
-      @bucket_name
+      bucket()
       |> S3.delete_object(folder_name <> "/" <> filename)
       |> ExAws.request!()
 
@@ -74,7 +72,7 @@ defmodule Cadet.Assets.Assets do
 
   @spec object_exists?(binary, binary) :: boolean()
   def object_exists?(folder_name, filename) do
-    response = @bucket_name |> S3.head_object(folder_name <> "/" <> filename) |> ExAws.request()
+    response = bucket() |> S3.head_object(folder_name <> "/" <> filename) |> ExAws.request()
 
     case response do
       {:error, _error} -> false
@@ -89,4 +87,6 @@ defmodule Cadet.Assets.Assets do
       {:error, {:bad_request, "Empty file name"}}
     end
   end
+
+  defp bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_bucket)
 end

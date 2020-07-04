@@ -75,7 +75,7 @@ config :cadet,
     lambda_name: "dummy"
   ],
   uploader: [
-    materials_bucket: "test-cadet-materials",
+    assets_bucket: "source-academy-assets",
     sourcecasts_bucket: "test-cadet-sourcecasts"
   ]
 
