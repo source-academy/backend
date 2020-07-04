@@ -8,7 +8,7 @@ defmodule Cadet.Assets.Assets do
   @manage_assets_role ~w(staff admin)a
 
   @accessible_folders ~w(images locations objects avatars ui stories testFolder)
-  @accepted_file_types ~w(.jpg .jpeg .gif .JPG .txt .jpeg .wav .mp3 .png)
+  @accepted_file_types ~w(.jpg .jpeg .gif .png .wav .mp3 .txt)
 
   @bucket_name "source-academy-assets"
 
@@ -29,7 +29,7 @@ defmodule Cadet.Assets.Assets do
   end
 
   def validate_filetype(filetype) do
-    if filetype in @accepted_file_types do
+    if String.downcase(filetype) in @accepted_file_types do
       :ok
     else
       {:error, {:bad_request, "Invalid file type"}}
