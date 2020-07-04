@@ -1,4 +1,6 @@
 defmodule Cadet.Assets.Assets do
+  alias ExAws.{S3, S3.Upload}
+
   @moduledoc """
   Assessments context contains domain logic for assets management
   for Source academy's game component
@@ -35,7 +37,7 @@ defmodule Cadet.Assets.Assets do
   end
 
   def upload_to_s3(upload_params, folder_name, filename) do
-    if does_object_exist(folder_name, filename) === :exists do
+    if object_exists?(folder_name, filename) do
       {:error, {:bad_request, "File already exists"}}
     else
       file = upload_params.path
@@ -43,8 +45,8 @@ defmodule Cadet.Assets.Assets do
       s3_path = folder_name <> "/" <> filename
 
       file
-      |> ExAws.S3.Upload.stream_file()
-      |> ExAws.S3.upload(@bucket_name, s3_path)
+      |> Upload.stream_file()
+      |> S3.upload(@bucket_name, s3_path)
       |> ExAws.request!()
 
       "http://#{@bucket_name}.s3.amazonaws.com/#{s3_path}"
@@ -52,14 +54,16 @@ defmodule Cadet.Assets.Assets do
   end
 
   def list_assets(folder_name) do
-    ExAws.S3.list_objects(@bucket_name, prefix: folder_name <> "/")
+    @bucket_name
+    |> S3.list_objects(prefix: folder_name <> "/")
     |> ExAws.stream!()
     |> Enum.map(fn file -> file.key end)
   end
 
   def delete_object(folder_name, filename) do
-    if does_object_exist(folder_name, filename) === :exists do
-      ExAws.S3.delete_object(@bucket_name, folder_name <> "/" <> filename)
+    if object_exists?(folder_name, filename) do
+      @bucket_name
+      |> S3.delete_object(folder_name <> "/" <> filename)
       |> ExAws.request!()
 
       :ok
@@ -68,14 +72,13 @@ defmodule Cadet.Assets.Assets do
     end
   end
 
-  @spec does_object_exist(binary, binary) :: :does_not_exist | :exists
-  def does_object_exist(folder_name, filename) do
-    with {:error, _error} <-
-           ExAws.S3.head_object(@bucket_name, folder_name <> "/" <> filename)
-           |> ExAws.request() do
-      :does_not_exist
-    else
-      _resp -> :exists
+  @spec object_exists?(binary, binary) :: boolean()
+  def object_exists?(folder_name, filename) do
+    response = @bucket_name |> S3.head_object(folder_name <> "/" <> filename) |> ExAws.request()
+
+    case response do
+      {:error, _error} -> false
+      _ -> true
     end
   end
 
