@@ -60,14 +60,14 @@ defmodule CadetWeb.AssetsControllerTest do
     @tag authenticate: :staff
     test "index files", %{conn: conn} do
       conn = get(conn, build_url("wrongFolder"))
-      assert response(conn, 400) =~ "Bad request"
+      assert response(conn, 400) =~ "Invalid top-level folder name"
     end
 
     @tag authenticate: :staff
     test "delete file", %{conn: conn} do
       conn = delete(conn, build_url("wrongFolder/randomFile"))
 
-      assert response(conn, 400) =~ "Bad request"
+      assert response(conn, 400) =~ "Invalid top-level folder name"
     end
 
     @tag authenticate: :staff
@@ -77,7 +77,7 @@ defmodule CadetWeb.AssetsControllerTest do
           "upload" => build_upload("test/fixtures/upload.png")
         })
 
-      assert response(conn, 400) =~ "Bad request"
+      assert response(conn, 400) =~ "Invalid top-level folder name"
     end
   end
 
