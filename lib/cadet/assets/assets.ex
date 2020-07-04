@@ -7,7 +7,8 @@ defmodule Cadet.Assets.Assets do
   """
   @manage_assets_role ~w(staff admin)a
 
-  @accessible_folders ~w(images locations objects avatars ui stories testFolder)
+  @accessible_folders ~w(images locations objects avatars ui stories) ++
+                        if(Mix.env() == :test, do: ["testFolder"], else: [])
   @accepted_file_types ~w(.jpg .jpeg .gif .png .wav .mp3 .txt)
 
   def validate_assets_role(conn) do
