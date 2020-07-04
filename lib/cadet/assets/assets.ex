@@ -24,7 +24,7 @@ defmodule Cadet.Assets.Assets do
     if folder_name in @accessible_folders do
       :ok
     else
-      {:error, {:bad_request, "Bad Request"}}
+      {:error, {:bad_request, "Bad request"}}
     end
   end
 
