@@ -3,8 +3,8 @@ defmodule CadetWeb.AchievementsView do
   use CadetWeb, :view
   use Timex
 
-  import CadetWeb.AssessmentsHelpers
-
+  alias Cadet.Achievements.AchievementGoal
+  
   def render("index.json", %{achievements: achievements}) do
     render_many(achievements, CadetWeb.AchievementsView, "overview.json", as: :achievement)
   end
@@ -20,15 +20,22 @@ defmodule CadetWeb.AchievementsView do
       closeAt: &format_datetime(&1.close_at),
       isTask: :is_task, 
       prerequisiteIds: :prerequisite_ids, 
-      goal: :goal, 
-      progress: :progress, 
       position: :position, 
       backgroundImageUrl: :background_image_url, 
 
       modalImageUrl: :modal_image_url, 
       description: :description, 
       goalText: :goal_text, 
-      completionText: :completion_text
+      completionText: :completion_text, 
+
+      goals: &Enum.map(&1.goals, fn goal ->
+        transform_map_for_view(goal, %{
+          goalId: goal.goal_id, 
+          goalText: goal.goal_text, 
+          goalProgress: goal.goal_progress, 
+          goalTarget: goal.goal_target
+        })
+      end)
     })
   end
 end

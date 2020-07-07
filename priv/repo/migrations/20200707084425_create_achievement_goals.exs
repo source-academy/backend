@@ -1,0 +1,18 @@
+defmodule Cadet.Repo.Migrations.CreateAchievementGoals do
+  use Ecto.Migration
+
+  alias Cadet.Achievements.{AchievementGoal, Achievement}
+
+  def change do
+    create table(:achievement_goals) do
+      add(:goal_id, :integer)
+      add(:goal_text, :string)
+      add(:goal_progress, :integer)
+      add(:goal_target, :integer)
+
+      add(:achievement_id, references(:achievements), null: false)
+  
+      timestamps()
+    end
+  end
+end

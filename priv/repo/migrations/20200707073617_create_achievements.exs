@@ -1,7 +1,7 @@
 defmodule Cadet.Repo.Migrations.CreateAchievements do
   use Ecto.Migration
 
-  alias Cadet.Achievements.AchievementAbility
+  alias Cadet.Achievements.{AchievementAbility, AchievementGoal}
 
   def change do
     AchievementAbility.create_type()
@@ -16,8 +16,6 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
       add(:close_at, :timestamp)
       add(:is_task, :boolean)
       add(:prerequisite_ids, {:array, :integer})
-      add(:goal, :integer)
-      add(:progress, :integer)
       add(:position, :integer)
       add(:modal_image_url, :string)
       add(:description, :string)

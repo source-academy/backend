@@ -5,7 +5,7 @@ defmodule Cadet.Achievements.Achievement do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Achievements.AchievementAbility
+  alias Cadet.Achievements.{AchievementAbility, AchievementGoal} 
 
   schema "achievements" do
     field(:inferencer_id, :integer)
@@ -17,8 +17,6 @@ defmodule Cadet.Achievements.Achievement do
     field(:close_at, :utc_datetime , default: DateTime.utc_now)
     field(:is_task, :boolean, default: false)
     field(:prerequisite_ids, {:array, :integer})
-    field(:goal, :integer, default: 0)
-    field(:progress, :integer, default: 0)
 
     field(:position, :integer, default: 0)
 
@@ -27,20 +25,22 @@ defmodule Cadet.Achievements.Achievement do
     field(:goal_text, :string, default: "Goal")
     field(:completion_text, :string, default: "Completion")
 
+    has_many(:goals, AchievementGoal, on_delete: :delete_all)
+
     timestamps()
   end
 
-  @required_fields ~w(title ability exp is_task goal progress position)a
+  @required_fields ~w(title ability exp is_task position)a
   @optional_fields ~w(background_image_url open_at close_at prerequisite_ids
     modal_image_url description goal_text completion_text)a
 
-  def changeset(assessment, params) do
+  def changeset(achievement, params) do
     params =
       params
       |> convert_date(:open_at)
       |> convert_date(:close_at)
 
-    assessment
+    achievement
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_open_close_date

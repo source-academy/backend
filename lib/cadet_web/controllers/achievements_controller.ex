@@ -9,6 +9,8 @@ defmodule CadetWeb.AchievementsController do
 
   @create_achievement_roles ~w(staff admin)a
 
+  # TODO: ???
+
   def index(conn, _) do
     achievements = Achievements.all_achievements()
 
@@ -102,16 +104,6 @@ defmodule CadetWeb.AchievementsController do
             prerequisite_ids(
               :array,
               "id of the prerequisites of the achievement"
-            )
-
-            goal(
-              :integer,
-              "goal value"
-            )
-
-            progress(
-              :integer,
-              "progress of the achievement"
             )
 
             position(
