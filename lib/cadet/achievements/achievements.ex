@@ -107,6 +107,9 @@ defmodule Cadet.Achievements do
     this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
       |> Repo.one()
 
+    from(a in AchievementGoal, where: a.achievement_id == ^this_achievement.id)
+      |> Repo.delete_all()
+
     for goal <- new_achievement["goals"] do
       query = Repo.exists?(from a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id)
       if not query do 
