@@ -2,8 +2,6 @@ defmodule CadetWeb.AchievementsView do
   
   use CadetWeb, :view
   use Timex
-
-  alias Cadet.Achievements.AchievementGoal
   
   def render("index.json", %{achievements: achievements}) do
     render_many(achievements, CadetWeb.AchievementsView, "overview.json", as: :achievement)

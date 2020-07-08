@@ -16,6 +16,7 @@ defmodule Cadet.Achievements do
   end 
 
   def update_achievements(new_achievements) do 
+    Cadet.Repo.delete_all(AchievementGoal)
     Cadet.Repo.delete_all(Achievement)
 
     for new_achievement <- new_achievements do

@@ -7,8 +7,6 @@ defmodule CadetWeb.AchievementsController do
   alias Cadet.Achievements
   alias Cadet.Achievements.AchievementAbility
 
-  @create_achievement_roles ~w(staff admin)a
-
   # TODO: ???
 
   def index(conn, _) do

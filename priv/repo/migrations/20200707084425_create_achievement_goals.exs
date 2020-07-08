@@ -10,7 +10,7 @@ defmodule Cadet.Repo.Migrations.CreateAchievementGoals do
       add(:goal_progress, :integer)
       add(:goal_target, :integer)
 
-      add(:achievement_id, references(:achievements), null: false)
+      add(:achievement_id, references(:achievements), on_delete: :delete_all)
   
       timestamps()
     end
