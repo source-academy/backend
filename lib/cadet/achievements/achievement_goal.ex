@@ -2,6 +2,8 @@ defmodule Cadet.Achievements.AchievementGoal do
 
   use Cadet, :model
   use Arc.Ecto.Schema
+
+  alias Cadet.Achievements.Achievement
   
   schema "achievement_goals" do
     field(:goal_id, :integer)
@@ -20,5 +22,6 @@ defmodule Cadet.Achievements.AchievementGoal do
     assessment
     |> cast(params, @required_fields)
     |> validate_required(@required_fields)
+    |> foreign_key_constraint(:achievement_id)
   end
 end 

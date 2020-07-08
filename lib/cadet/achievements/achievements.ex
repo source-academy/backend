@@ -4,13 +4,14 @@ defmodule Cadet.Achievements do
   """
   use Cadet, [:context, :display]
 
-  alias Cadet.Achievements.Achievement
+  alias Cadet.Achievements.{Achievement, AchievementGoal}
 
   import Ecto.Query
 
   def all_achievements() do
-    Repo.all(Achievement)
-      |> Repo.preload(:goals)
+    Achievement
+      |> Repo.all()
+      |> Repo.preload([goals: [:achievement]])
   end 
 
   def update_achievements(new_achievements) do 
@@ -59,6 +60,14 @@ defmodule Cadet.Achievements do
       }
     )
 
+    xd =  from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
+            |> Repo.one()
+
+
+    IO.puts(xd.id)
+    IO.puts(new_achievement["goals"][0])
+    IO.puts("\n\n\n")
+
     :ok
   end 
 
@@ -86,6 +95,31 @@ defmodule Cadet.Achievements do
         ]
       )
 
+    this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
+            |> Repo.one()
+
+    for goal <- new_achievement["goals"] do
+      query = Repo.exists?(from a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id)
+      if not query do 
+        Cadet.Repo.insert(%AchievementGoal{
+          goal_id: goal["goalId"], 
+          goal_text: goal["goalText"], 
+          goal_progress: goal["goalProgress"], 
+          goal_target: goal["goalTarget"], 
+          achievement_id: this_achievement.id
+        })
+      else 
+        from(a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id)
+          |> Cadet.Repo.update_all(set: [
+            goal_id: goal["goalId"], 
+            goal_text: goal["goalText"], 
+            goal_progress: goal["goalProgress"], 
+            goal_target: goal["goalTarget"], 
+            achievement_id: this_achievement.id
+          ])
+      end 
+    end 
+        
     :ok
   end 
   
@@ -96,7 +130,6 @@ defmodule Cadet.Achievements do
     else 
       add_achievement(new_achievement)
     end 
-
   end 
 
 end

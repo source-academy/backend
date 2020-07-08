@@ -28,14 +28,15 @@ defmodule CadetWeb.AchievementsView do
       goalText: :goal_text, 
       completionText: :completion_text, 
 
-      goals: &Enum.map(&1.goals, fn goal ->
+      goals: &Enum.map((&1.goals), fn goal ->
         transform_map_for_view(goal, %{
-          goalId: goal.goal_id, 
-          goalText: goal.goal_text, 
-          goalProgress: goal.goal_progress, 
-          goalTarget: goal.goal_target
+          goalId: :goal_id, 
+          goalText: :goal_text, 
+          goalProgress: :goal_progress, 
+          goalTarget: :goal_target
         })
       end)
     })
   end
+
 end
