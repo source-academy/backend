@@ -10,6 +10,7 @@ defmodule Cadet.Achievements do
 
   def all_achievements() do
     Achievement
+      |> order_by([a], [a.inferencer_id])
       |> Repo.all()
       |> Repo.preload([goals: [:achievement]])
   end 
