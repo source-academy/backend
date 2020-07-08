@@ -61,14 +61,7 @@ defmodule Cadet.Achievements do
       }
     )
 
-    xd =  from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
-            |> Repo.one()
-
-
-    IO.puts(xd.id)
-    IO.puts(new_achievement["goals"][0])
-    IO.puts("\n\n\n")
-
+    update_goals(new_achievement)
     :ok
   end 
 
@@ -96,31 +89,7 @@ defmodule Cadet.Achievements do
         ]
       )
 
-    this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
-            |> Repo.one()
-
-    for goal <- new_achievement["goals"] do
-      query = Repo.exists?(from a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id)
-      if not query do 
-        Cadet.Repo.insert(%AchievementGoal{
-          goal_id: goal["goalId"], 
-          goal_text: goal["goalText"], 
-          goal_progress: goal["goalProgress"], 
-          goal_target: goal["goalTarget"], 
-          achievement_id: this_achievement.id
-        })
-      else 
-        from(a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id)
-          |> Cadet.Repo.update_all(set: [
-            goal_id: goal["goalId"], 
-            goal_text: goal["goalText"], 
-            goal_progress: goal["goalProgress"], 
-            goal_target: goal["goalTarget"], 
-            achievement_id: this_achievement.id
-          ])
-      end 
-    end 
-        
+      update_goals(new_achievement)
     :ok
   end 
   
@@ -130,6 +99,33 @@ defmodule Cadet.Achievements do
       update_achievement(new_achievement)
     else 
       add_achievement(new_achievement)
+    end 
+  end 
+
+  def update_goals(new_achievement) do 
+    this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
+      |> Repo.one()
+
+    for goal <- new_achievement["goals"] do
+      query = Repo.exists?(from a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id)
+      if not query do 
+      Cadet.Repo.insert(%AchievementGoal{
+        goal_id: goal["goalId"], 
+        goal_text: goal["goalText"], 
+        goal_progress: goal["goalProgress"], 
+        goal_target: goal["goalTarget"], 
+        achievement_id: this_achievement.id
+      })
+      else 
+      from(a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id)
+        |> Cadet.Repo.update_all(set: [
+          goal_id: goal["goalId"], 
+          goal_text: goal["goalText"], 
+          goal_progress: goal["goalProgress"], 
+          goal_target: goal["goalTarget"], 
+          achievement_id: this_achievement.id
+        ])
+      end 
     end 
   end 
 
