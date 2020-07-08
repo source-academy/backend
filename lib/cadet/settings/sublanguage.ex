@@ -16,7 +16,17 @@ defmodule Cadet.Settings.Sublanguage do
   def changeset(sublanguage, params) do
     sublanguage
     |> cast(params, @required_fields)
-    |> validate_inclusion(:chapter, 1..4)
-    |> validate_inclusion(:variant, ["default", "concurrent", "gpu", "lazy", "non-det", "wasm"])
+    |> validate_required(@required_fields)
+    |> validate_allowed_combination()
+  end
+
+  defp validate_allowed_combination(changeset) do
+    case get_field(changeset, :chapter) do
+      1 -> validate_inclusion(changeset, :variant, ["default", "lazy", "wasm"])
+      2 -> validate_inclusion(changeset, :variant, ["default", "lazy"])
+      3 -> validate_inclusion(changeset, :variant, ["default", "concurrent", "non-det"])
+      4 -> validate_inclusion(changeset, :variant, ["default", "gpu"])
+      _ -> add_error(changeset, :chapter, "Invalid chapter number")
+    end
   end
 end

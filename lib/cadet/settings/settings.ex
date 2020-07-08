@@ -1,6 +1,6 @@
 defmodule Cadet.Settings do
   @moduledoc """
-  Settings context contains the configured settings for Academy-wide
+  The Settings context contains the configured settings for Academy-wide
   options.
   """
   use Cadet, [:context, :display]
@@ -16,20 +16,17 @@ defmodule Cadet.Settings do
   end
 
   def update_sublanguage(chapter, variant) do
-    new_sublanguage =
-      case retrieve_sublanguage() do
-        nil ->
-          %Sublanguage{}
-          |> Sublanguage.changeset(%{chapter: chapter, variant: variant})
-          |> Repo.insert!()
+    case retrieve_sublanguage() do
+      nil ->
+        %Sublanguage{}
+        |> Sublanguage.changeset(%{chapter: chapter, variant: variant})
+        |> Repo.insert()
 
-        sublanguage ->
-          sublanguage
-          |> Sublanguage.changeset(%{chapter: chapter, variant: variant})
-          |> Repo.update!()
-      end
-
-    {:ok, new_sublanguage}
+      sublanguage ->
+        sublanguage
+        |> Sublanguage.changeset(%{chapter: chapter, variant: variant})
+        |> Repo.update()
+    end
   end
 
   defp retrieve_sublanguage do
