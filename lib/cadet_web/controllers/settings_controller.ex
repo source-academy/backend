@@ -1,4 +1,7 @@
 defmodule CadetWeb.SettingsController do
+  @moduledoc """
+  Receives all requests involving Academy-wide configuration settings.
+  """
   use CadetWeb, :controller
   use PhoenixSwagger
 
@@ -6,12 +9,22 @@ defmodule CadetWeb.SettingsController do
 
   @set_sublanguage_roles ~w(staff admin)a
 
+  @doc """
+  Receives a /settings/sublanguage GET request.
+
+  Returns the default Source sublanguage of the Playground.
+  """
   def index(conn, _) do
     {:ok, sublanguage} = Settings.get_sublanguage()
 
     render(conn, "show.json", sublanguage: sublanguage)
   end
 
+  @doc """
+  Receives a /settings/sublanguage PUT request with valid attributes.
+
+  Overrides the stored default Source sublanguage of the Playground.
+  """
   def update(conn, %{"chapter" => chapter, "variant" => variant}) do
     role = conn.assigns[:current_user].role
 
