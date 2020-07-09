@@ -32,7 +32,7 @@ defmodule CadetWeb.SettingsController do
     end
   end
 
-  def logout(conn, _) do
+  def update(conn, _) do
     send_resp(conn, :bad_request, "Missing parameter(s)")
   end
 end

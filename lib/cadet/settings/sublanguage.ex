@@ -26,7 +26,7 @@ defmodule Cadet.Settings.Sublanguage do
       2 -> validate_inclusion(changeset, :variant, ["default", "lazy"])
       3 -> validate_inclusion(changeset, :variant, ["default", "concurrent", "non-det"])
       4 -> validate_inclusion(changeset, :variant, ["default", "gpu"])
-      _ -> add_error(changeset, :chapter, "Invalid chapter number")
+      _ -> add_error(changeset, :chapter, "is invalid")
     end
   end
 end

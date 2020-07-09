@@ -2,41 +2,29 @@ defmodule CadetWeb.SettingsControllerTest do
   use CadetWeb.ConnCase
 
   describe "GET /settings/sublanguage" do
-    test "success", %{conn: conn} do
+    test "succeeds", %{conn: conn} do
       insert(:sublanguage, %{chapter: 2, variant: "lazy"})
 
-      resp =
-        conn
-        |> get(build_url())
-        |> json_response(200)
+      resp = conn |> get(build_url()) |> json_response(200)
 
-      %{"sublanguage" => %{"chapter" => chapter, "variant" => variant}} = resp
-      assert chapter == 2
-      assert variant == "lazy"
+      assert %{"sublanguage" => %{"chapter" => 2, "variant" => "lazy"}} = resp
     end
 
-    test "success when no default sublanguage entry exists", %{conn: conn} do
-      resp =
-        conn
-        |> get(build_url())
-        |> json_response(200)
+    test "succeeds when no default sublanguage entry exists", %{conn: conn} do
+      resp = conn |> get(build_url()) |> json_response(200)
 
-      %{"sublanguage" => %{"chapter" => chapter, "variant" => variant}} = resp
-      assert chapter == 1
-      assert variant == "default"
+      assert %{"sublanguage" => %{"chapter" => 1, "variant" => "default"}} = resp
     end
   end
 
   describe "PUT /settings/sublanguage" do
     @tag authenticate: :admin
-    test "success", %{conn: conn} do
-      insert(:sublanguage, %{chapter: 1, variant: "wasm"})
-
-      new_chapter = Enum.random(1..4)
+    test "succeeds", %{conn: conn} do
+      insert(:sublanguage, %{chapter: 4, variant: "gpu"})
 
       conn =
         put(conn, build_url(), %{
-          "chapter" => new_chapter,
+          "chapter" => Enum.random(1..4),
           "variant" => "default"
         })
 
@@ -44,12 +32,10 @@ defmodule CadetWeb.SettingsControllerTest do
     end
 
     @tag authenticate: :staff
-    test "success when no default sublanguage entry exists", %{conn: conn} do
-      new_chapter = Enum.random(1..4)
-
+    test "succeeds when no default sublanguage entry exists", %{conn: conn} do
       conn =
         put(conn, build_url(), %{
-          "chapter" => new_chapter,
+          "chapter" => Enum.random(1..4),
           "variant" => "default"
         })
 
@@ -58,15 +44,23 @@ defmodule CadetWeb.SettingsControllerTest do
 
     @tag authenticate: :student
     test "rejects forbidden request for non-staff users", %{conn: conn} do
-      new_chapter = Enum.random(1..4)
-
-      conn =
-        put(conn, build_url(), %{
-          "chapter" => new_chapter,
-          "variant" => "default"
-        })
+      conn = put(conn, build_url(), %{"chapter" => 3, "variant" => "concurrent"})
 
       assert response(conn, 403) == "User not allowed to set default Playground sublanguage."
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with invalid params", %{conn: conn} do
+      conn = put(conn, build_url(), %{"chapter" => 4, "variant" => "wasm"})
+
+      assert response(conn, 400) == "Invalid parameter(s)"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with missing params", %{conn: conn} do
+      conn = put(conn, build_url(), %{"variant" => "default"})
+
+      assert response(conn, 400) == "Missing parameter(s)"
     end
   end
 
