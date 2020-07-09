@@ -27,8 +27,6 @@ defmodule CadetWeb.StoriesController do
     render(conn, "show.json", story: story)
   end
 
-  def create(conn, params= )
-
 
   swagger_path :index do
     get("/stories")
