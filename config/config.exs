@@ -1,9 +1,11 @@
 # This file is responsible for configuring your application
-# and its dependencies with the aid of the Mix.Config module.
+# and its dependencies with the aid of the Config module.
 #
 # This configuration file is loaded before any dependency and
 # is restricted to this project.
-use Mix.Config
+import Config
+
+config :cadet, environment: Mix.env()
 
 # General application configuration
 config :cadet,
@@ -14,7 +16,6 @@ config :cadet, Cadet.Jobs.Scheduler,
   timezone: "Asia/Singapore",
   overlap: false,
   jobs: [
-    {"@hourly", {Mix.Tasks.Cadet.Assessments.Update, :run, [nil]}},
     # Grade previous day's submission at 3am
     {"1 0 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}}
   ]
@@ -37,11 +38,11 @@ config :logger, :console,
 
 # Configure ExAWS
 config :ex_aws,
-  access_key_id: [:instance_role, {:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}],
+  access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :instance_role],
   secret_access_key: [
-    :instance_role,
     {:system, "AWS_SECRET_ACCESS_KEY"},
-    {:awscli, "default", 30}
+    {:awscli, "default", 30},
+    :instance_role
   ],
   region: "ap-southeast-1",
   s3: [

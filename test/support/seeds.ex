@@ -37,7 +37,7 @@ defmodule Cadet.Test.Seeds do
   """
 
   def assessments do
-    if Application.get_env(:cadet, :environment) == :test do
+    if Cadet.Env.env() == :test do
       # User and Group
       avenger = insert(:user, %{name: "avenger", role: :staff})
       mentor = insert(:user, %{name: "mentor", role: :staff})

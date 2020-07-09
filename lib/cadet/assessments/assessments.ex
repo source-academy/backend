@@ -10,6 +10,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
   alias Cadet.Autograder.GradingJob
+  alias Cadet.Course.Group
   alias Ecto.Multi
 
   @xp_early_submission_max_bonus 100
@@ -20,6 +21,7 @@ defmodule Cadet.Assessments do
   @publish_assessment_role ~w(staff admin)a
   @unsubmit_assessment_role ~w(staff admin)a
   @see_all_submissions_roles ~w(staff admin)a
+  @group_grading_summary_roles @see_all_submissions_roles
   @open_all_assessment_roles ~w(staff admin)a
 
   def change_dates_assessment(_user = %User{role: role}, id, close_at, open_at) do
@@ -73,28 +75,6 @@ defmodule Cadet.Assessments do
     Repo.delete_all(submissions)
   end
 
-  @spec user_total_xp(%User{}) :: integer()
-  def user_total_xp(%User{id: user_id}) when is_ecto_id(user_id) do
-    total_xp_bonus =
-      Submission
-      |> where(student_id: ^user_id)
-      |> Repo.aggregate(:sum, :xp_bonus)
-      |> case do
-        nil -> 0
-        xp when is_integer(xp) -> xp
-      end
-
-    total_xp =
-      Query.all_submissions_with_xp()
-      |> subquery()
-      |> where(student_id: ^user_id)
-      |> select([q], fragment("? + ?", sum(q.xp), sum(q.xp_adjustment)))
-      |> Repo.one()
-      |> decimal_to_integer()
-
-    total_xp_bonus + total_xp
-  end
-
   @spec user_max_grade(%User{}) :: integer()
   def user_max_grade(%User{id: user_id}) when is_ecto_id(user_id) do
     Submission
@@ -111,13 +91,29 @@ defmodule Cadet.Assessments do
     |> decimal_to_integer()
   end
 
-  def user_total_grade(%User{id: user_id}) do
-    Query.all_submissions_with_grade()
-    |> subquery()
-    |> where(student_id: ^user_id)
-    |> select([q], fragment("? + ?", sum(q.grade), sum(q.adjustment)))
-    |> Repo.one()
-    |> decimal_to_integer()
+  def user_total_grade_xp(%User{id: user_id}) do
+    submission_grade_xp =
+      Submission
+      |> where(student_id: ^user_id)
+      |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
+      |> group_by([s], s.id)
+      |> select([s, a], %{
+        total_grade: sum(a.grade) + sum(a.adjustment),
+        # grouping by submission, so s.xp_bonus will be the same, but we need an
+        # aggregate function
+        total_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
+      })
+
+    total =
+      submission_grade_xp
+      |> subquery
+      |> select([s], %{
+        total_grade: sum(s.total_grade),
+        total_xp: sum(s.total_xp)
+      })
+      |> Repo.one()
+
+    for {key, val} <- total, into: %{}, do: {key, decimal_to_integer(val)}
   end
 
   defp decimal_to_integer(decimal) do
@@ -277,34 +273,40 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(user = %User{}) do
+    submission_aggregates =
+      Submission
+      |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
+      |> where([s], s.student_id == ^user.id)
+      |> group_by([s], s.assessment_id)
+      |> select([s, ans], %{
+        assessment_id: s.assessment_id,
+        grade: fragment("? + ?", sum(ans.grade), sum(ans.adjustment)),
+        # s.xp_bonus should be the same across the group, but we need an aggregate function here
+        xp: fragment("? + ? + ?", sum(ans.xp), sum(ans.xp_adjustment), max(s.xp_bonus)),
+        graded_count: ans.id |> count() |> filter(not is_nil(ans.grader_id))
+      })
+
+    submission_status =
+      Submission
+      |> where([s], s.student_id == ^user.id)
+      |> select([s], [:assessment_id, :status])
+
     assessments =
-      Query.all_assessments_with_max_xp_and_grade()
+      Query.all_assessments_with_aggregates()
       |> subquery()
       |> join(
         :left,
         [a],
-        s in subquery(Query.all_submissions_with_xp_and_grade()),
-        on: a.id == s.assessment_id and s.student_id == ^user.id
+        sa in subquery(submission_aggregates),
+        on: a.id == sa.assessment_id
       )
-      |> join(
-        :left,
-        [a, _],
-        q_count in subquery(Query.assessments_question_count()),
-        on: a.id == q_count.assessment_id
-      )
-      |> join(
-        :left,
-        [_, s, _],
-        a_count in subquery(Query.submissions_graded_count()),
-        on: s.id == a_count.submission_id
-      )
-      |> select([a, s, q_count, a_count], %{
+      |> join(:left, [a, _], s in subquery(submission_status), on: a.id == s.assessment_id)
+      |> select([a, sa, s], %{
         a
-        | xp: fragment("? + ? + ?", s.xp, s.xp_adjustment, s.xp_bonus),
-          grade: fragment("? + ?", s.grade, s.adjustment),
-          user_status: s.status,
-          question_count: q_count.count,
-          graded_count: a_count.count
+        | xp: sa.xp,
+          grade: sa.grade,
+          graded_count: sa.graded_count,
+          user_status: s.status
       })
       |> filter_published_assessments(user)
       |> order_by(:open_at)
@@ -955,6 +957,59 @@ defmodule Cadet.Assessments do
   @spec is_open?(%Assessment{}) :: {:is_open?, boolean()}
   def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
     {:is_open?, Timex.between?(Timex.now(), open_at, close_at) and is_published}
+  end
+
+  @type group_summary_entry :: %{
+          group_name: String.t(),
+          leader_name: String.t(),
+          ungraded_missions: integer(),
+          submitted_missions: integer(),
+          ungraded_sidequests: number(),
+          submitted_sidequests: number()
+        }
+
+  @spec get_group_grading_summary(%User{}) ::
+          {:ok, [group_summary_entry()]} | {:error, {atom(), String.t()}}
+  def get_group_grading_summary(%User{role: role}) do
+    if role in @group_grading_summary_roles do
+      subs =
+        Answer
+        |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
+        |> join(:left, [ans, s], st in User, on: s.student_id == st.id)
+        |> join(:left, [ans, s, st], a in Assessment, on: a.id == s.assessment_id)
+        |> where(
+          [ans, s, st, a],
+          not is_nil(st.group_id) and s.status == ^:submitted and
+            a.type in ^[:mission, :sidequest]
+        )
+        |> group_by([ans, s, st, a], s.id)
+        |> select([ans, s, st, a], %{
+          group_id: max(st.group_id),
+          type: max(a.type),
+          num_submitted: count(),
+          num_ungraded: filter(count(), is_nil(ans.grader_id))
+        })
+
+      rows =
+        subs
+        |> subquery()
+        |> join(:left, [t], g in Group, on: t.group_id == g.id)
+        |> join(:left, [t, g], l in User, on: l.id == g.leader_id)
+        |> group_by([t, g, l], [t.group_id, g.name, l.name])
+        |> select([t, g, l], %{
+          group_name: g.name,
+          leader_name: l.name,
+          ungraded_missions: filter(count(), t.type == ^:mission and t.num_ungraded > 0),
+          submitted_missions: filter(count(), t.type == ^:mission),
+          ungraded_sidequests: filter(count(), t.type == ^:sidequest and t.num_ungraded > 0),
+          submitted_sidequests: filter(count(), t.type == ^:sidequest)
+        })
+        |> Repo.all()
+
+      {:ok, rows}
+    else
+      {:error, {:unauthorized, "User is not permitted to view the grading summary."}}
+    end
   end
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do

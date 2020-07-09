@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
@@ -19,6 +19,8 @@ config :ex_aws,
 # Don't save secret keys in ExVCR cassettes
 config :exvcr,
   filter_url_params: true,
+  filter_request_headers: ["Authorization", "x-amz-content-sha256"],
+  response_headers_blacklist: ["x-amz-id-2", "x-amz-request-id"],
   vcr_cassette_library_dir: "test/fixtures/vcr_cassettes",
   custom_cassette_library_dir: "test/fixtures/custom_cassettes"
 
@@ -69,15 +71,11 @@ config :cadet,
          }
        ]}
   },
-  updater: [
-    cs1101s_repository: "git@dummy:dummy.git",
-    cs1101s_rsa_key: "/home/test/dummy"
-  ],
   autograder: [
     lambda_name: "dummy"
   ],
   uploader: [
-    materials_bucket: "test-cadet-materials",
+    assets_bucket: "source-academy-assets",
     sourcecasts_bucket: "test-cadet-sourcecasts"
   ]
 

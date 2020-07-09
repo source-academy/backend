@@ -7,7 +7,6 @@ defmodule Cadet.Assessments.Upload do
   @versions [:original]
 
   def storage_dir(_, _) do
-    env = Application.get_env(:cadet, :environment)
-    "uploads/#{env}/mission_pdf"
+    "uploads/#{Cadet.Env.env()}/mission_pdf"
   end
 end

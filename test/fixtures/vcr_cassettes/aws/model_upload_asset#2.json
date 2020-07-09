@@ -1,0 +1,94 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T185904Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "post",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test1.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>source-academy-assets</Bucket><Key>testFolder/test1.png</Key><UploadId>k8EvSsT6HeF7fdv2d6pqVl6lvkJ71x4A9uXwfzMe5GAvJOiXm5p0X26mo_1H5N9vhjTgLrsAJAE.ZcUz_vytv86yvm6AqbYNmokRv6QxLGPiJPAzE.7JhveH7r9mSVpmnpzWdshDvE.idoUKH1.2QA--</UploadId></InitiateMultipartUploadResult>",
+      "headers": {
+        "Date": "Sat, 04 Jul 2020 18:59:05 GMT",
+        "Transfer-Encoding": "chunked",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T185904Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "head",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test1.png"
+    },
+    "response": {
+      "binary": false,
+      "body": null,
+      "headers": {
+        "Content-Type": "application/xml",
+        "Transfer-Encoding": "chunked",
+        "Date": "Sat, 04 Jul 2020 18:59:03 GMT",
+        "Server": "AmazonS3"
+      },
+      "status_code": 404,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "�PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0001\u0001\u0003\u0000\u0000\u0000%�V�\u0000\u0000\u0000\u0003PLTE�M\u0000\\58\u0000\u0000\u0000\u0001tRNS��4V�\u0000\u0000\u0000\nIDATx�cb\u0000\u0000\u0000\u0006\u0000\u000367|�\u0000\u0000\u0000\u0000IEND�B`�",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T185904Z",
+        "content-length": "95",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "put",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test1.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Date": "Sat, 04 Jul 2020 18:59:05 GMT",
+        "ETag": "\"60cf42b4d05caf10cf8bb15c0817a7b4\"",
+        "Content-Length": "0",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

@@ -10,10 +10,9 @@ defmodule CadetWeb.UserController do
 
   def index(conn, _) do
     user = user_with_group(conn.assigns.current_user)
-    grade = user_total_grade(user)
+    %{total_grade: grade, total_xp: xp} = user_total_grade_xp(user)
     max_grade = user_max_grade(user)
     story = user_current_story(user)
-    xp = user_total_xp(user)
     game_states = user_game_states(user)
 
     render(

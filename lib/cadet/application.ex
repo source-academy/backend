@@ -3,8 +3,6 @@ defmodule Cadet.Application do
 
   use Application
 
-  alias Cadet.Updater
-
   # See https://hexdocs.pm/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
@@ -22,27 +20,6 @@ defmodule Cadet.Application do
       # Start the GuardianDB sweeper
       worker(Guardian.DB.Token.SweeperServer, [])
     ]
-
-    # To supply command line args to phx.server, you must use the elixir/iex bin
-    #     $ elixir --erl "--updater" -S mix phx.server
-    #     $ iex --erl "--updater" -S mix phx.server
-    # In the compiled binary howver, this is much simpler
-    #     $ bin/cadet start --updater
-    children =
-      if Enum.any?(
-           :init.get_plain_arguments(),
-           &(&1 |> to_string() |> String.contains?("--updater"))
-         ) do
-        Task.async(&Updater.CS1101S.clone/0)
-
-        children ++
-          [
-            # worker(Updater.Public, []),
-            worker(Cadet.Jobs.Scheduler, [])
-          ]
-      else
-        children
-      end
 
     children =
       case Application.get_env(:cadet, :openid_connect_providers) do
