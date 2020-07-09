@@ -35,4 +35,50 @@ defmodule CadetWeb.SettingsController do
   def update(conn, _) do
     send_resp(conn, :bad_request, "Missing parameter(s)")
   end
+
+  swagger_path :index do
+    get("/settings/sublanguage")
+
+    summary("Retrieves the default Source sublanguage of the Playground.")
+
+    produces("application/json")
+
+    response(200, "OK", Schema.ref(:Sublanguage))
+  end
+
+  swagger_path :update do
+    put("/settings/sublanguage")
+
+    summary("Updates the default Source sublanguage of the Playground.")
+
+    security([%{JWT: []}])
+
+    consumes("application/json")
+
+    parameters do
+      sublanguage(:body, Schema.ref(:Sublanguage), "sublanguage object", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Missing or invalid parameter(s)")
+    response(401, "Unauthorised")
+    response(403, "User not allowed to set default Playground sublanguage.")
+  end
+
+  def swagger_definitions do
+    %{
+      Sublanguage:
+        swagger_schema do
+          title("Sublanguage")
+
+          properties do
+            chapter(:integer, "Chapter number from 1 to 4", required: true)
+
+            variant(:string, "Variant name, one of default/concurrent/gpu/lazy/non-det/wasm",
+              required: true
+            )
+          end
+        end
+    }
+  end
 end
