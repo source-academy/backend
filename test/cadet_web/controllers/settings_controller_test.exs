@@ -1,6 +1,14 @@
 defmodule CadetWeb.SettingsControllerTest do
   use CadetWeb.ConnCase
 
+  alias CadetWeb.SettingsController
+
+  test "swagger" do
+    SettingsController.swagger_definitions()
+    SettingsController.swagger_path_index(nil)
+    SettingsController.swagger_path_update(nil)
+  end
+
   describe "GET /settings/sublanguage" do
     test "succeeds", %{conn: conn} do
       insert(:sublanguage, %{chapter: 2, variant: "lazy"})
