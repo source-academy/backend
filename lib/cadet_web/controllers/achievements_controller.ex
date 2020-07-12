@@ -10,7 +10,8 @@ defmodule CadetWeb.AchievementsController do
   # TODO: ???
 
   def index(conn, _) do
-    achievements = Achievements.all_achievements()
+    user = conn.assigns.current_user
+    achievements = Achievements.all_achievements(user)
 
     render(conn, "index.json", achievements: achievements)
   end
