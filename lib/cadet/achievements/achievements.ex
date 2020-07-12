@@ -9,13 +9,7 @@ defmodule Cadet.Achievements do
 
   import Ecto.Query
 
-  def get_yser_goals(user, achievement) do 
-    AchievementGoal
-      |> where([g], g.achievement_id == ^achievement.id)
-      |> where([g], g.user_id == ^user.id)
-      |> Repo.all()
-  end 
-
+  # Gets all achieveemnts of a particular user
   def all_achievements(user) do
     achievements = Achievement
       |> order_by([a], [a.inferencer_id])
@@ -41,7 +35,7 @@ defmodule Cadet.Achievements do
         goal_text: a.goal_text, 
         completion_text: a.completion_text, 
 
-        goals: get_yser_goals(user, a)
+        goals: get_user_goals(user, a)
       }
     end)
   end 
@@ -54,6 +48,7 @@ defmodule Cadet.Achievements do
     :ok
   end 
 
+  # Deletes an achievement in the table 
   def delete_achievement(achievement) do 
     this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^achievement["id"])
       |> Repo.one()
@@ -65,19 +60,6 @@ defmodule Cadet.Achievements do
       |> Repo.delete_all()
 
     :ok
-  end 
-
-  def get_date(date) do 
-    result = Elixir.Timex.Parse.DateTime.Parser.parse(date, "{ISO:Extended:Z}")
-
-    case result do
-      {:ok, date} ->
-        date
-        |> DateTime.truncate(:second)
-
-      {:error, {status, message}} ->
-        {:error, {status, message}}
-    end
   end 
 
   # Adds a new Achievement to the table
@@ -135,6 +117,7 @@ defmodule Cadet.Achievements do
     :ok
   end 
   
+  # Inserts a new achievement, or updates it if it already exists
   def insert_or_update_achievement(new_achievement) do
     query = Repo.exists?(from u in Achievement, where: u.inferencer_id == ^new_achievement["id"])
     if query do 
@@ -144,6 +127,7 @@ defmodule Cadet.Achievements do
     end 
   end 
 
+  # Deletes a goal of an achievement 
   def delete_goal(goal, achievement) do
     this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^achievement["id"])
       |> Repo.one()
@@ -154,6 +138,8 @@ defmodule Cadet.Achievements do
     :ok
   end 
 
+  # Update All the goals of that achievement 
+  # NOTE: All achievements are assumed to be in the original table 
   def update_goals(new_achievement) do 
     this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
       |> Repo.one()
@@ -188,6 +174,28 @@ defmodule Cadet.Achievements do
         end 
       end 
     end 
+  end 
+
+  # Helper functions to get the goals for that particular user 
+  def get_user_goals(user, achievement) do 
+    AchievementGoal
+      |> where([g], g.achievement_id == ^achievement.id)
+      |> where([g], g.user_id == ^user.id)
+      |> Repo.all()
+  end 
+
+  # Helper function to parse date for opening and closing times of the achievement
+  def get_date(date) do 
+    result = Elixir.Timex.Parse.DateTime.Parser.parse(date, "{ISO:Extended:Z}")
+
+    case result do
+      {:ok, date} ->
+        date
+        |> DateTime.truncate(:second)
+
+      {:error, {status, message}} ->
+        {:error, {status, message}}
+    end
   end 
 
 end
