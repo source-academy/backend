@@ -16,7 +16,6 @@ defmodule Cadet.Achievements do
   end 
 
   def update_achievements(new_achievements) do 
-    Cadet.Repo.delete_all(AchievementGoal)
     Cadet.Repo.delete_all(Achievement)
 
     for new_achievement <- new_achievements do
@@ -101,6 +100,16 @@ defmodule Cadet.Achievements do
     else 
       add_achievement(new_achievement)
     end 
+  end 
+
+  def delete_goal(goal, achievement) do
+    this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^achievement["id"])
+      |> Repo.one()
+
+    from(a in AchievementGoal, where: a.achievement_id == ^this_achievement.id and a.goal_id == ^goal["goalId"])
+      |> Repo.delete_all()
+
+    :ok
   end 
 
   def update_goals(new_achievement) do 

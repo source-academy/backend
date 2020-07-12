@@ -43,6 +43,20 @@ defmodule CadetWeb.AchievementsController do
     end
   end
 
+  def delete_goal(conn, %{"goal" => goal, "achievement" => achievement}) do
+    result = Achievements.delete_goal(goal, achievement)
+
+    case result do
+      :ok->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   swagger_path :index do
     get("/achievements")
 
