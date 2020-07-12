@@ -36,6 +36,7 @@ defmodule CadetWeb.Router do
     get("/achievements/", AchievementsController, :index)
     post("/achievements/", AchievementsController, :update)
     post("/achievements/update/", AchievementsController, :edit)    
+    delete("/achievements/", AchievementsController, :delete)  
 
     delete("/achievements/goals/", AchievementsController, :delete_goal)   
 

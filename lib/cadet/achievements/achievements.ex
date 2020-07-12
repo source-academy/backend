@@ -9,7 +9,7 @@ defmodule Cadet.Achievements do
 
   import Ecto.Query
 
-  def filter_goal(user, achievement) do 
+  def get_yser_goals(user, achievement) do 
     AchievementGoal
       |> where([g], g.achievement_id == ^achievement.id)
       |> where([g], g.user_id == ^user.id)
@@ -41,7 +41,7 @@ defmodule Cadet.Achievements do
         goal_text: a.goal_text, 
         completion_text: a.completion_text, 
 
-        goals: filter_goal(user, a)
+        goals: get_yser_goals(user, a)
       }
     end)
   end 
@@ -50,6 +50,19 @@ defmodule Cadet.Achievements do
     for new_achievement <- new_achievements do
       update_achievement(new_achievement)
     end 
+
+    :ok
+  end 
+
+  def delete_achievement(achievement) do 
+    this_achievement =  from(achievement in Achievement, where: achievement.inferencer_id == ^achievement["id"])
+      |> Repo.one()
+
+    from(a in AchievementGoal, where: a.achievement_id == ^this_achievement.id)
+      |> Repo.delete_all()
+
+    from(a in Achievement, where: a.id == ^this_achievement.id)
+      |> Repo.delete_all()
 
     :ok
   end 
@@ -151,11 +164,9 @@ defmodule Cadet.Achievements do
     for goal <- new_achievement["goals"] do 
     
       for user <- users do 
-
         query = Repo.exists?(from a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id and a.user_id == ^user.id)
 
         if query do 
-
           from(a in AchievementGoal, where: a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id and a.user_id == ^user.id) 
             |> Cadet.Repo.update_all(set: [
               goal_id: goal["goalId"], 
@@ -165,9 +176,7 @@ defmodule Cadet.Achievements do
               achievement_id: this_achievement.id,
               user_id: user.id
             ])
-
         else 
-
           Cadet.Repo.insert(%AchievementGoal{
             goal_id: goal["goalId"], 
             goal_text: goal["goalText"], 
@@ -176,7 +185,6 @@ defmodule Cadet.Achievements do
             achievement_id: this_achievement.id,
             user_id: user.id
           })
-
         end 
       end 
     end 
