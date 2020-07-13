@@ -26,19 +26,30 @@ defmodule Cadet.StoriesTest do
     test "valid params", %{valid_params: params} do
       assert_changeset_db(params, :valid)
     end
+
+    test "invalid params", %{valid_params: params} do
+      invalid_params = %{params | :open_at => Timex.shift(Timex.now(), years: 1)}
+      assert_changeset_db(invalid_params, :invalid)
+    end
   end
 
   describe "List stories" do
-    @tag authenticate: :staff
-    test "list stories" do
+    test "All stories" do
       story1 = insert(:story)
       story2 = insert(:story)
       assert Stories.list_stories(%User{role: :staff}) == [story1, story2]
     end
+
+    test "Only published stories", %{valid_params: params} do
+      # unpublished
+      insert(:story)
+
+      published_story = insert(:story, %{params | :is_published => true})
+      assert Stories.list_stories(%User{role: :student}) == [published_story]
+    end
   end
 
   describe "Create story" do
-    @tag authenticate: :staff
     test "create story", %{valid_params: params} do
       {:ok, story} = Stories.create_story(%User{role: :staff}, params)
       assert story |> Map.take(params |> Map.keys()) == params
@@ -46,7 +57,6 @@ defmodule Cadet.StoriesTest do
   end
 
   describe "Update story" do
-    @tag authenticate: :staff
     test "update story", %{updated_params: updated_params} do
       story = insert(:story)
       {:ok, story} = Stories.update_story(%User{role: :staff}, updated_params, story.id)
@@ -56,7 +66,6 @@ defmodule Cadet.StoriesTest do
   end
 
   describe "Delete story" do
-    @tag authenticate: :staff
     test "delete story" do
       story = insert(:story)
       {:ok, story} = Stories.delete_story(%User{role: :staff}, story.id)

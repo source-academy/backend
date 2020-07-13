@@ -11,7 +11,6 @@ defmodule CadetWeb.AssetsController do
     end
   end
 
-  @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
   def delete(conn, _params = %{"foldername" => foldername, "filename" => filename}) do
     filename = Enum.join(filename, "/")
 

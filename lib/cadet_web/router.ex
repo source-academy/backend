@@ -44,8 +44,8 @@ defmodule CadetWeb.Router do
 
     get("/stories", StoriesController, :index)
     post("/stories/new", StoriesController, :create)
-    delete("/stories/:id", StoriesController, :delete)
-    post("/stories/update/:id", StoriesController, :update)
+    delete("/stories/:storyid", StoriesController, :delete)
+    post("/stories/:storyid", StoriesController, :update)
 
     get("/assets/:foldername", AssetsController, :index)
     post("/assets/:foldername/*filename", AssetsController, :upload)

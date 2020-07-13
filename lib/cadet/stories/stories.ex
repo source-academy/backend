@@ -16,7 +16,9 @@ defmodule Cadet.Stories.Stories do
     if role in @manage_stories_role do
       Repo.all(Story)
     else
-      {:error, {:forbidden, "User not allowed to manage stories"}}
+      Story
+      |> where(is_published: ^true)
+      |> Repo.all()
     end
   end
 
