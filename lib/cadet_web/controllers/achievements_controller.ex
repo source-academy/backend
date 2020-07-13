@@ -19,11 +19,6 @@ defmodule CadetWeb.AchievementsController do
     case result do
       :ok ->
         text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 
@@ -33,11 +28,6 @@ defmodule CadetWeb.AchievementsController do
     case result do
       :ok ->
         text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 
@@ -47,11 +37,6 @@ defmodule CadetWeb.AchievementsController do
     case result do
       :ok ->
         text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 
@@ -61,11 +46,6 @@ defmodule CadetWeb.AchievementsController do
     case result do
       :ok ->
         text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 

@@ -71,23 +71,22 @@ defmodule Cadet.Achievements do
 
   # Adds a new Achievement to the table
   def add_achievement(new_achievement) do
-    achievement =
-      Repo.insert(%Achievement{
-        inferencer_id: new_achievement["id"],
-        title: new_achievement["title"],
-        ability: new_achievement["ability"],
-        exp: new_achievement["exp"],
-        is_task: new_achievement["isTask"],
-        prerequisite_ids: new_achievement["prerequisiteIds"],
-        position: new_achievement["position"],
-        background_image_url: new_achievement["backgroundImageUrl"],
-        close_at: get_date(new_achievement["deadline"]),
-        open_at: get_date(new_achievement["release"]),
-        modal_image_url: new_achievement["modal"]["modalImageUrl"],
-        description: new_achievement["modal"]["description"],
-        goal_text: new_achievement["modal"]["goalText"],
-        completion_text: new_achievement["modal"]["completionText"]
-      })
+    Repo.insert(%Achievement{
+      inferencer_id: new_achievement["id"],
+      title: new_achievement["title"],
+      ability: new_achievement["ability"],
+      exp: new_achievement["exp"],
+      is_task: new_achievement["isTask"],
+      prerequisite_ids: new_achievement["prerequisiteIds"],
+      position: new_achievement["position"],
+      background_image_url: new_achievement["backgroundImageUrl"],
+      close_at: get_date(new_achievement["deadline"]),
+      open_at: get_date(new_achievement["release"]),
+      modal_image_url: new_achievement["modal"]["modalImageUrl"],
+      description: new_achievement["modal"]["description"],
+      goal_text: new_achievement["modal"]["goalText"],
+      completion_text: new_achievement["modal"]["completionText"]
+    })
 
     update_goals(new_achievement)
     :ok
@@ -98,26 +97,25 @@ defmodule Cadet.Achievements do
     query =
       from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
 
-    achievements =
-      query
-      |> Repo.update_all(
-        set: [
-          inferencer_id: new_achievement["id"],
-          title: new_achievement["title"],
-          ability: new_achievement["ability"],
-          exp: new_achievement["exp"],
-          is_task: new_achievement["isTask"],
-          prerequisite_ids: new_achievement["prerequisiteIds"],
-          position: new_achievement["position"],
-          background_image_url: new_achievement["backgroundImageUrl"],
-          close_at: new_achievement["deadline"],
-          open_at: new_achievement["release"],
-          modal_image_url: new_achievement["modal"]["modalImageUrl"],
-          description: new_achievement["modal"]["description"],
-          goal_text: new_achievement["modal"]["goalText"],
-          completion_text: new_achievement["modal"]["completionText"]
-        ]
-      )
+    query
+    |> Repo.update_all(
+      set: [
+        inferencer_id: new_achievement["id"],
+        title: new_achievement["title"],
+        ability: new_achievement["ability"],
+        exp: new_achievement["exp"],
+        is_task: new_achievement["isTask"],
+        prerequisite_ids: new_achievement["prerequisiteIds"],
+        position: new_achievement["position"],
+        background_image_url: new_achievement["backgroundImageUrl"],
+        close_at: new_achievement["deadline"],
+        open_at: new_achievement["release"],
+        modal_image_url: new_achievement["modal"]["modalImageUrl"],
+        description: new_achievement["modal"]["description"],
+        goal_text: new_achievement["modal"]["goalText"],
+        completion_text: new_achievement["modal"]["completionText"]
+      ]
+    )
 
     update_goals(new_achievement)
     :ok
