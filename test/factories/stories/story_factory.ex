@@ -8,11 +8,13 @@ defmodule Cadet.Stories.StoryFactory do
       alias Cadet.Stories.Story
 
       def story_factory do
-
         %Story{
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
-          is_published: false
+          is_published: false,
+          filenames: ["mission-1.txt"],
+          title: "Mission1",
+          image_url: "http://example.com"
         }
       end
     end

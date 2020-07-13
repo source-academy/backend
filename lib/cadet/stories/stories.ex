@@ -12,6 +12,14 @@ defmodule Cadet.Stories.Stories do
 
   @manage_stories_role ~w(staff admin)a
 
+  def list_stories(_user = %User{role: role}) do
+    if role in @manage_stories_role do
+      Repo.all(Story)
+    else
+      {:error, {:forbidden, "User not allowed to manage stories"}}
+    end
+  end
+
   def create_story(_user = %User{role: role}, attrs = %{}) do
     if role in @manage_stories_role do
       changeset =
@@ -20,7 +28,7 @@ defmodule Cadet.Stories.Stories do
 
       Repo.insert(changeset)
     else
-      {:error, {:forbidden, "User is not permitted to upload"}}
+      {:error, {:forbidden, "User not allowed to manage stories"}}
     end
   end
 
@@ -32,7 +40,18 @@ defmodule Cadet.Stories.Stories do
       |> Story.changeset(attrs)
       |> Repo.update()
     else
-      {:error, {:forbidden, "User is not permitted to upload"}}
+      {:error, {:forbidden, "User not allowed to manage stories"}}
+    end
+  end
+
+  def delete_story(_user = %User{role: role}, id) do
+    if role in @manage_stories_role do
+      Story
+      |> where(id: ^id)
+      |> Repo.one()
+      |> Repo.delete()
+    else
+      {:error, {:forbidden, "User not allowed to manage stories"}}
     end
   end
 end
