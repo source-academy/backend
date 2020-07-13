@@ -47,16 +47,23 @@ defmodule Cadet.Achievements do
     :ok
   end
 
-  # Deletes an achievement in the table 
+  # Deletes an achievement in the table
   def delete_achievement(achievement) do
-    this_achievement =
+    query =
       from(achievement in Achievement, where: achievement.inferencer_id == ^achievement["id"])
+
+    this_achievement =
+      query
       |> Repo.one()
 
-    from(a in AchievementGoal, where: a.achievement_id == ^this_achievement.id)
+    goal_query = from(a in AchievementGoal, where: a.achievement_id == ^this_achievement.id)
+
+    goal_query
     |> Repo.delete_all()
 
-    from(a in Achievement, where: a.id == ^this_achievement.id)
+    achievement_query = from(a in Achievement, where: a.id == ^this_achievement.id)
+
+    achievement_query
     |> Repo.delete_all()
 
     :ok
@@ -64,32 +71,8 @@ defmodule Cadet.Achievements do
 
   # Adds a new Achievement to the table
   def add_achievement(new_achievement) do
-    Cadet.Repo.insert(%Achievement{
-      inferencer_id: new_achievement["id"],
-      title: new_achievement["title"],
-      ability: new_achievement["ability"],
-      exp: new_achievement["exp"],
-      is_task: new_achievement["isTask"],
-      prerequisite_ids: new_achievement["prerequisiteIds"],
-      position: new_achievement["position"],
-      background_image_url: new_achievement["backgroundImageUrl"],
-      close_at: get_date(new_achievement["deadline"]),
-      open_at: get_date(new_achievement["release"]),
-      modal_image_url: new_achievement["modal"]["modalImageUrl"],
-      description: new_achievement["modal"]["description"],
-      goal_text: new_achievement["modal"]["goalText"],
-      completion_text: new_achievement["modal"]["completionText"]
-    })
-
-    update_goals(new_achievement)
-    :ok
-  end
-
-  # Updates an Exisitng Achievement to the table
-  def update_achievement(new_achievement) do
-    from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
-    |> Cadet.Repo.update_all(
-      set: [
+    achievement =
+      Repo.insert(%Achievement{
         inferencer_id: new_achievement["id"],
         title: new_achievement["title"],
         ability: new_achievement["ability"],
@@ -98,14 +81,43 @@ defmodule Cadet.Achievements do
         prerequisite_ids: new_achievement["prerequisiteIds"],
         position: new_achievement["position"],
         background_image_url: new_achievement["backgroundImageUrl"],
-        close_at: new_achievement["deadline"],
-        open_at: new_achievement["release"],
+        close_at: get_date(new_achievement["deadline"]),
+        open_at: get_date(new_achievement["release"]),
         modal_image_url: new_achievement["modal"]["modalImageUrl"],
         description: new_achievement["modal"]["description"],
         goal_text: new_achievement["modal"]["goalText"],
         completion_text: new_achievement["modal"]["completionText"]
-      ]
-    )
+      })
+
+    update_goals(new_achievement)
+    :ok
+  end
+
+  # Updates an Exisitng Achievement to the table
+  def update_achievement(new_achievement) do
+    query =
+      from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
+
+    achievements =
+      query
+      |> Repo.update_all(
+        set: [
+          inferencer_id: new_achievement["id"],
+          title: new_achievement["title"],
+          ability: new_achievement["ability"],
+          exp: new_achievement["exp"],
+          is_task: new_achievement["isTask"],
+          prerequisite_ids: new_achievement["prerequisiteIds"],
+          position: new_achievement["position"],
+          background_image_url: new_achievement["backgroundImageUrl"],
+          close_at: new_achievement["deadline"],
+          open_at: new_achievement["release"],
+          modal_image_url: new_achievement["modal"]["modalImageUrl"],
+          description: new_achievement["modal"]["description"],
+          goal_text: new_achievement["modal"]["goalText"],
+          completion_text: new_achievement["modal"]["completionText"]
+        ]
+      )
 
     update_goals(new_achievement)
     :ok
@@ -122,25 +134,38 @@ defmodule Cadet.Achievements do
     end
   end
 
-  # Deletes a goal of an achievement 
+  # Deletes a goal of an achievement
   def delete_goal(goal, achievement) do
+    achievement_query =
+      from(achievement in Achievement,
+        where: achievement.inferencer_id == ^achievement["id"]
+      )
+
     this_achievement =
-      from(achievement in Achievement, where: achievement.inferencer_id == ^achievement["id"])
+      achievement_query
       |> Repo.one()
 
-    from(a in AchievementGoal,
-      where: a.achievement_id == ^this_achievement.id and a.goal_id == ^goal["goalId"]
-    )
+    goal_query =
+      from(a in AchievementGoal,
+        where: a.achievement_id == ^this_achievement.id and a.goal_id == ^goal["goalId"]
+      )
+
+    goal_query
     |> Repo.delete_all()
 
     :ok
   end
 
-  # Update All the goals of that achievement 
-  # NOTE: All achievements are assumed to be in the original table 
+  # Update All the goals of that achievement
+  # NOTE: All achievements are assumed to be in the original table
   def update_goals(new_achievement) do
+    achievement_query =
+      from(achievement in Achievement,
+        where: achievement.inferencer_id == ^new_achievement["id"]
+      )
+
     this_achievement =
-      from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
+      achievement_query
       |> Repo.one()
 
     users =
@@ -159,12 +184,15 @@ defmodule Cadet.Achievements do
           )
 
         if query do
-          from(a in AchievementGoal,
-            where:
-              a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id and
-                a.user_id == ^user.id
-          )
-          |> Cadet.Repo.update_all(
+          new_goals =
+            from(a in AchievementGoal,
+              where:
+                a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id and
+                  a.user_id == ^user.id
+            )
+
+          new_goals
+          |> Repo.update_all(
             set: [
               goal_id: goal["goalId"],
               goal_text: goal["goalText"],
@@ -175,7 +203,7 @@ defmodule Cadet.Achievements do
             ]
           )
         else
-          Cadet.Repo.insert(%AchievementGoal{
+          Repo.insert(%AchievementGoal{
             goal_id: goal["goalId"],
             goal_text: goal["goalText"],
             goal_progress: goal["goalProgress"],
@@ -188,7 +216,7 @@ defmodule Cadet.Achievements do
     end
   end
 
-  # Helper functions to get the goals for that particular user 
+  # Helper functions to get the goals for that particular user
   def get_user_goals(user, achievement) do
     AchievementGoal
     |> where([g], g.achievement_id == ^achievement.id)

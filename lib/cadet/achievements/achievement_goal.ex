@@ -1,4 +1,7 @@
 defmodule Cadet.Achievements.AchievementGoal do
+  @moduledoc """
+  The AchievementGoal entity stores metadata of a goal associated to a specific achievement
+  """
   use Cadet, :model
   use Arc.Ecto.Schema
 

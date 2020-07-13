@@ -6,8 +6,6 @@ defmodule CadetWeb.AchievementsController do
   alias Cadet.Achievements
   alias Cadet.Achievements.{AchievementGoal, AchievementAbility}
 
-  # TODO: ???
-
   def index(conn, _) do
     user = conn.assigns.current_user
     achievements = Achievements.all_achievements(user)
