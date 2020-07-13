@@ -71,7 +71,7 @@ defmodule Cadet.Achievements do
 
   # Adds a new Achievement to the table
   def add_achievement(new_achievement) do
-    Repo.insert(%Achievement{
+    _achievements = Repo.insert(%Achievement{
       inferencer_id: new_achievement["id"],
       title: new_achievement["title"],
       ability: new_achievement["ability"],
