@@ -5,22 +5,31 @@ defmodule Cadet.Achievements.Achievement do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Achievements.{AchievementAbility, AchievementGoal} 
+  alias Cadet.Achievements.{AchievementAbility, AchievementGoal}
 
   schema "achievements" do
     field(:inferencer_id, :integer)
     field(:title, :string, default: "New Achievement")
     field(:ability, AchievementAbility, default: :Core)
-    field(:background_image_url, :string, default: "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg")
+
+    field(:background_image_url, :string,
+      default:
+        "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
+    )
+
     field(:exp, :integer, default: 0)
-    field(:open_at, :utc_datetime , default: DateTime.utc_now)
-    field(:close_at, :utc_datetime , default: DateTime.utc_now)
+    field(:open_at, :utc_datetime, default: DateTime.utc_now())
+    field(:close_at, :utc_datetime, default: DateTime.utc_now())
     field(:is_task, :boolean, default: false)
     field(:prerequisite_ids, {:array, :integer})
 
     field(:position, :integer, default: 0)
 
-    field(:modal_image_url, :string, default: "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg")
+    field(:modal_image_url, :string,
+      default:
+        "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
+    )
+
     field(:description, :string, default: "Description")
     field(:goal_text, :string, default: "Goal")
     field(:completion_text, :string, default: "Completion")

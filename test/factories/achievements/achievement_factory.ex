@@ -8,7 +8,7 @@ defmodule Cadet.Achievements.AchievementFactory do
       alias Cadet.Achievements.{Achievement, AchievementAbility}
 
       def achievement_factory do
-        %Achievement {
+        %Achievement{
           title: Faker.Food.dish()
         }
       end

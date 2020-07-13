@@ -7,10 +7,10 @@ defmodule Cadet.Achievments.AchievementTest do
     test "valid changesets" do
       assert_changeset(
         %{
-          inferencer_id: 0, 
+          inferencer_id: 0,
           id: 0,
           title: "Hello World",
-          ability: :Core, 
+          ability: :Core,
           exp: 0,
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
@@ -23,10 +23,10 @@ defmodule Cadet.Achievments.AchievementTest do
     test "invalid changesets" do
       assert_changeset(
         %{
-          inferencer_id: 0, 
+          inferencer_id: 0,
           id: 0,
           title: "Hello World",
-          ability: :Core, 
+          ability: :Core,
           exp: 0,
           open_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.to_unix() |> Integer.to_string()

@@ -1,5 +1,4 @@
 defmodule CadetWeb.AchievementsController do
-  
   use CadetWeb, :controller
 
   use PhoenixSwagger
@@ -20,7 +19,7 @@ defmodule CadetWeb.AchievementsController do
     result = Achievements.update_achievements(achievements)
 
     case result do
-      :ok->
+      :ok ->
         text(conn, "OK")
 
       {:error, {status, message}} ->
@@ -34,7 +33,7 @@ defmodule CadetWeb.AchievementsController do
     result = Achievements.insert_or_update_achievement(achievement)
 
     case result do
-      :ok->
+      :ok ->
         text(conn, "OK")
 
       {:error, {status, message}} ->
@@ -48,7 +47,7 @@ defmodule CadetWeb.AchievementsController do
     result = Achievements.delete_achievement(achievement)
 
     case result do
-      :ok->
+      :ok ->
         text(conn, "OK")
 
       {:error, {status, message}} ->
@@ -62,7 +61,7 @@ defmodule CadetWeb.AchievementsController do
     result = Achievements.delete_goal(goal, achievement)
 
     case result do
-      :ok->
+      :ok ->
         text(conn, "OK")
 
       {:error, {status, message}} ->
@@ -145,89 +144,105 @@ defmodule CadetWeb.AchievementsController do
       Achievements:
         swagger_schema do
           description("The Achievements a Student needs to gain exp")
+
           properties do
             title(
               :string,
               "title of the achievement"
             )
+
             ability(
               AchievementAbility,
               "ability"
             )
+
             background_image_url(
               :string,
               "URL of the achievement's background image"
             )
+
             inferencer_id(
               :integer,
               "id used for reference by inferencer"
             )
+
             exp(
               :integer,
               "exp awarded for the achievement"
             )
+
             open_at(
               :string,
               "open date of achievement"
             )
+
             close_at(
               :string,
               "close date of achievement"
             )
+
             is_task(
               :boolean,
               "if the achievement is a task or not"
             )
+
             prerequisite_ids(
               :array,
               "id of the prerequisites of the achievement"
             )
+
             position(
-              :position, 
+              :position,
               "position of achievement in the list"
             )
+
             modal_image_url(
               :string,
               "url of the image for the modal"
             )
+
             description(
               :string,
               "description of the achievement"
             )
+
             goal_text(
               :string,
               "text to reach the goal of the achievement"
             )
+
             completion_text(
               :string,
               "text to show when goal is met"
             )
           end
-        end, 
-
+        end,
       AchievementGoal:
         swagger_schema do
           description("The Goals to fulfill a particular Achievement")
+
           properties do
             goal_id(
               :integer,
               "id of the goal for the particular achievement"
             )
+
             goal_text(
               :string,
               "text to show when goal is met"
             )
+
             goal_progress(
               :integer,
               "student's progress for the goal"
             )
+
             goal_target(
               :string,
               "target exp needed for the student to complete the goal"
             )
-          end 
-        end,
+          end
+        end
     }
   end
-
-end 
+end
