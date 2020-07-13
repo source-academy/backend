@@ -12,7 +12,7 @@ defmodule Cadet.Repo.Migrations.CreateAchievementGoals do
 
       add(:achievement_id, references(:achievements), on_delete: :delete_all)
       add(:user_id, references(:users), on_delete: :delete_all)
-  
+
       timestamps()
     end
   end
