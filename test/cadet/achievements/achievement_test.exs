@@ -11,7 +11,6 @@ defmodule Cadet.Achievments.AchievementTest do
           id: 0,
           title: "Hello World",
           ability: :Core,
-          exp: 0,
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
           is_task: false
@@ -27,7 +26,6 @@ defmodule Cadet.Achievments.AchievementTest do
           id: 0,
           title: "Hello World",
           ability: :Core,
-          exp: 0,
           open_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.to_unix() |> Integer.to_string()
         },

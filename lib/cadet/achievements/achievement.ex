@@ -27,7 +27,7 @@ defmodule Cadet.Achievements.Achievement do
     timestamps()
   end
 
-  @required_fields ~w(title ability exp is_task position)a
+  @required_fields ~w(title ability is_task position)a
   @optional_fields ~w(background_image_url open_at close_at prerequisite_ids
     modal_image_url description completion_text)a
 

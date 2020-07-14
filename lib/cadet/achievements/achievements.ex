@@ -65,7 +65,7 @@ defmodule Cadet.Achievements do
 
   # Inserts a new achievement, or updates it if it already exists
   def insert_or_update_achievement(attrs) do
-    achievement =
+    _achievement =
       Achievement
       |> where(inferencer_id: ^attrs.inferencer_id)
       |> Repo.one()
@@ -111,7 +111,7 @@ defmodule Cadet.Achievements do
       goal_params = get_goal_params_from_json(goal_json)
 
       for user <- users do
-        achievement_goal =
+        _achievement_goal =
           AchievementGoal
           |> where([a], a.goal_id == ^goal_params.goal_id)
           |> where([a], a.achievement_id == ^this_achievement.id)
