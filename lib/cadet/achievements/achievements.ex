@@ -90,10 +90,8 @@ defmodule Cadet.Achievements do
 
   # Updates an Exisitng Achievement to the table
   def update_achievement(new_achievement) do
-    query =
-      from(achievement in Achievement, where: achievement.inferencer_id == ^new_achievement["id"])
-
-    query
+    Achievement
+    |> where([a], a.inferencer_id == ^new_achievement["id"])
     |> Repo.update_all(
       set: [
         inferencer_id: new_achievement["id"],
@@ -118,9 +116,12 @@ defmodule Cadet.Achievements do
 
   # Inserts a new achievement, or updates it if it already exists
   def insert_or_update_achievement(new_achievement) do
-    query = Repo.exists?(from(u in Achievement, where: u.inferencer_id == ^new_achievement["id"]))
+    does_achievement_exist =
+      Achievement
+      |> where([a], a.inferencer_id == ^new_achievement["id"])
+      |> Repo.exists?()
 
-    if query do
+    if does_achievement_exist do
       update_achievement(new_achievement)
     else
       add_achievement(new_achievement)
@@ -147,13 +148,9 @@ defmodule Cadet.Achievements do
   # Update All the goals of that achievement
   # NOTE: All achievements are assumed to be in the original table
   def update_goals(new_achievement) do
-    achievement_query =
-      from(achievement in Achievement,
-        where: achievement.inferencer_id == ^new_achievement["id"]
-      )
-
     this_achievement =
-      achievement_query
+      Achievement
+      |> where([a], a.inferencer_id == ^new_achievement["id"])
       |> Repo.one()
 
     users =
@@ -162,24 +159,18 @@ defmodule Cadet.Achievements do
 
     for goal <- new_achievement["goals"] do
       for user <- users do
-        query =
-          Repo.exists?(
-            from(a in AchievementGoal,
-              where:
-                a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id and
-                  a.user_id == ^user.id
-            )
-          )
+        does_goal_and_user_exist =
+          AchievementGoal
+          |> where([a], a.goal_id == ^goal["goalId"])
+          |> where([a], a.achievement_id == ^this_achievement.id)
+          |> where([a], a.user_id == ^user.id)
+          |> Repo.exists?()
 
-        if query do
-          new_goals =
-            from(a in AchievementGoal,
-              where:
-                a.goal_id == ^goal["goalId"] and a.achievement_id == ^this_achievement.id and
-                  a.user_id == ^user.id
-            )
-
-          new_goals
+        if does_goal_and_user_exist do
+          AchievementGoal
+          |> where([a], a.goal_id == ^goal["goalId"])
+          |> where([a], a.achievement_id == ^this_achievement.id)
+          |> where([a], a.user_id == ^user.id)
           |> Repo.update_all(
             set: [
               goal_id: goal["goalId"],
