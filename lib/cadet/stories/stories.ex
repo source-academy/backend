@@ -1,7 +1,6 @@
 defmodule Cadet.Stories.Stories do
   @moduledoc """
-  Assessments context contains domain logic for stories management
-  for Source academy's game component
+  Manages stories for the Source Academy game
   """
 
   import Ecto.Query
