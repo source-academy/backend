@@ -31,8 +31,8 @@ defmodule CadetWeb.AchievementsController do
     end
   end
 
-  def delete(conn, %{"achievement" => achievement}) do
-    result = Achievements.delete_achievement(achievement)
+  def delete(conn, %{"id" => inferencer_id}) do
+    result = Achievements.delete_achievement(inferencer_id)
 
     case result do
       :ok ->
@@ -40,8 +40,8 @@ defmodule CadetWeb.AchievementsController do
     end
   end
 
-  def delete_goal(conn, %{"goal" => goal, "achievement" => achievement}) do
-    result = Achievements.delete_goal(goal, achievement)
+  def delete_goal(conn, %{"id" => inferencer_id, "goalId" => goal_id}) do
+    result = Achievements.delete_goal(goal_id, inferencer_id)
 
     case result do
       :ok ->

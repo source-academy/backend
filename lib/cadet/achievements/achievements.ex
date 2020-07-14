@@ -48,22 +48,23 @@ defmodule Cadet.Achievements do
   end
 
   # Deletes an achievement in the table
-  def delete_achievement(achievement) do
+  def delete_achievement(inferencer_id) do
     query =
-      from(achievement in Achievement, where: achievement.inferencer_id == ^achievement["id"])
+      Achievement
+      |> where([a], a.inferencer_id == ^inferencer_id)
 
     this_achievement =
       query
       |> Repo.one()
 
-    goal_query = from(a in AchievementGoal, where: a.achievement_id == ^this_achievement.id)
+    goal_query =
+      AchievementGoal
+      |> where([a], a.achievement_id == ^this_achievement.id)
 
     goal_query
     |> Repo.delete_all()
 
-    achievement_query = from(a in Achievement, where: a.id == ^this_achievement.id)
-
-    achievement_query
+    query
     |> Repo.delete_all()
 
     :ok
@@ -133,20 +134,18 @@ defmodule Cadet.Achievements do
   end
 
   # Deletes a goal of an achievement
-  def delete_goal(goal, achievement) do
+  def delete_goal(goal_id, inferencer_id) do
     achievement_query =
-      from(achievement in Achievement,
-        where: achievement.inferencer_id == ^achievement["id"]
-      )
+      Achievement
+      |> where([a], a.inferencer_id == ^inferencer_id)
 
     this_achievement =
       achievement_query
       |> Repo.one()
 
     goal_query =
-      from(a in AchievementGoal,
-        where: a.achievement_id == ^this_achievement.id and a.goal_id == ^goal["goalId"]
-      )
+      AchievementGoal
+      |> where([a], a.achievement_id == ^this_achievement.id and a.goal_id == ^goal_id)
 
     goal_query
     |> Repo.delete_all()
