@@ -8,15 +8,17 @@ defmodule CadetWeb.AchievementsController do
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    achievements = Achievements.all_achievements(user)
 
+    achievements = Achievements.all_achievements(user)
     render(conn, "index.json", achievements: achievements)
   end
 
   def edit_achievements(conn, %{"achievements" => achievements}) do
+    user = conn.assigns.current_user
+
     for achievement <- achievements do
       achievement_params = Achievements.get_achievement_params_from_json(achievement)
-      result = Achievements.insert_or_update_achievement(achievement_params)
+      result = Achievements.insert_or_update_achievement(user, achievement_params)
 
       case result do
         {:ok, _achievement} ->
@@ -43,12 +45,14 @@ defmodule CadetWeb.AchievementsController do
   end
 
   def edit(conn, %{"achievement" => achievement}) do
+    user = conn.assigns.current_user
+
     achievement_params = Achievements.get_achievement_params_from_json(achievement)
-    result = Achievements.insert_or_update_achievement(achievement_params)
+    result = Achievements.insert_or_update_achievement(user, achievement_params)
 
     case result do
       {:ok, _achievement} ->
-        final_result = Achievements.update_goals(achievement_params)
+        final_result = Achievements.update_goals(user, achievement_params)
 
         case final_result do
           {:ok, _goal} ->
@@ -68,20 +72,34 @@ defmodule CadetWeb.AchievementsController do
   end
 
   def delete(conn, %{"id" => inferencer_id}) do
-    result = Achievements.delete_achievement(inferencer_id)
+    user = conn.assigns.current_user
+
+    result = Achievements.delete_achievement(user, inferencer_id)
 
     case result do
       :ok ->
         text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
   def delete_goal(conn, %{"id" => inferencer_id, "goalId" => goal_id}) do
-    result = Achievements.delete_goal(goal_id, inferencer_id)
+    user = conn.assigns.current_user
+
+    result = Achievements.delete_goal(user, goal_id, inferencer_id)
 
     case result do
       :ok ->
         text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
@@ -214,7 +232,7 @@ defmodule CadetWeb.AchievementsController do
               :string,
               "description of the achievement"
             )
-            
+
             completion_text(
               :string,
               "text to show when goal is met"

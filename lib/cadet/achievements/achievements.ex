@@ -9,6 +9,8 @@ defmodule Cadet.Achievements do
 
   import Ecto.Query
 
+  @edit_all_assessment_roles ~w(staff admin)a
+
   # Gets all achieveemnts of a particular user
   def all_achievements(user) do
     achievements =
@@ -44,88 +46,104 @@ defmodule Cadet.Achievements do
   end
 
   # Deletes an achievement in the table
-  def delete_achievement(inferencer_id) do
-    this_achievement =
-      Achievement
-      |> where([a], a.inferencer_id == ^inferencer_id)
-      |> Repo.one()
+  def delete_achievement(user, inferencer_id) do
+    if user.role in @edit_all_assessment_roles do
+      this_achievement =
+        Achievement
+        |> where([a], a.inferencer_id == ^inferencer_id)
+        |> Repo.one()
 
-    goal_query =
-      AchievementGoal
-      |> where([a], a.achievement_id == ^this_achievement.id)
+      goal_query =
+        AchievementGoal
+        |> where([a], a.achievement_id == ^this_achievement.id)
 
-    goal_query
-    |> Repo.delete_all()
+      goal_query
+      |> Repo.delete_all()
 
-    this_achievement
-    |> Repo.delete_all()
+      this_achievement
+      |> Repo.delete_all()
 
-    :ok
+      :ok
+    else
+      {:error, {:forbidden, "User is not permitted to edit achievements"}}
+    end
   end
 
   # Inserts a new achievement, or updates it if it already exists
-  def insert_or_update_achievement(attrs) do
-    _achievement =
-      Achievement
-      |> where(inferencer_id: ^attrs.inferencer_id)
-      |> Repo.one()
-      |> case do
-        nil ->
-          Achievement.changeset(%Achievement{}, attrs)
+  def insert_or_update_achievement(user, attrs) do
+    if user.role in @edit_all_assessment_roles do
+      _achievement =
+        Achievement
+        |> where(inferencer_id: ^attrs.inferencer_id)
+        |> Repo.one()
+        |> case do
+          nil ->
+            Achievement.changeset(%Achievement{}, attrs)
 
-        achievement ->
-          Achievement.changeset(achievement, attrs)
-      end
-      |> Repo.insert_or_update()
+          achievement ->
+            Achievement.changeset(achievement, attrs)
+        end
+        |> Repo.insert_or_update()
+    else
+      {:error, {:forbidden, "User is not permitted to edit achievements"}}
+    end
   end
 
   # Deletes a goal of an achievement
-  def delete_goal(goal_id, inferencer_id) do
-    this_achievement =
-      Achievement
-      |> where([a], a.inferencer_id == ^inferencer_id)
-      |> Repo.one()
+  def delete_goal(user, goal_id, inferencer_id) do
+    if user.role in @edit_all_assessment_roles do
+      this_achievement =
+        Achievement
+        |> where([a], a.inferencer_id == ^inferencer_id)
+        |> Repo.one()
 
-    goal_query =
-      AchievementGoal
-      |> where([a], a.achievement_id == ^this_achievement.id and a.goal_id == ^goal_id)
+      goal_query =
+        AchievementGoal
+        |> where([a], a.achievement_id == ^this_achievement.id and a.goal_id == ^goal_id)
 
-    goal_query
-    |> Repo.delete_all()
+      goal_query
+      |> Repo.delete_all()
 
-    :ok
+      :ok
+    else
+      {:error, {:forbidden, "User is not permitted to edit achievements"}}
+    end
   end
 
   # Update All the goals of that achievement
-  def update_goals(attrs) do
-    this_achievement =
-      Achievement
-      |> where([a], a.inferencer_id == ^attrs.inferencer_id)
-      |> Repo.one()
+  def update_goals(user, attrs) do
+    if user.role in @edit_all_assessment_roles do
+      this_achievement =
+        Achievement
+        |> where([a], a.inferencer_id == ^attrs.inferencer_id)
+        |> Repo.one()
 
-    users =
-      User
-      |> Repo.all()
+      users =
+        User
+        |> Repo.all()
 
-    for goal_json <- attrs.goals do
-      goal_params = get_goal_params_from_json(goal_json)
+      for goal_json <- attrs.goals do
+        goal_params = get_goal_params_from_json(goal_json)
 
-      for user <- users do
-        _achievement_goal =
-          AchievementGoal
-          |> where([a], a.goal_id == ^goal_params.goal_id)
-          |> where([a], a.achievement_id == ^this_achievement.id)
-          |> where([a], a.user_id == ^user.id)
-          |> Repo.one()
-          |> case do
-            nil ->
-              AchievementGoal.changeset(%AchievementGoal{}, goal_params)
+        for user <- users do
+          _achievement_goal =
+            AchievementGoal
+            |> where([a], a.goal_id == ^goal_params.goal_id)
+            |> where([a], a.achievement_id == ^this_achievement.id)
+            |> where([a], a.user_id == ^user.id)
+            |> Repo.one()
+            |> case do
+              nil ->
+                AchievementGoal.changeset(%AchievementGoal{}, goal_params)
 
-            achievement_goal ->
-              AchievementGoal.changeset(achievement_goal, goal_params)
-          end
-          |> Repo.insert_or_update()
+              achievement_goal ->
+                AchievementGoal.changeset(achievement_goal, goal_params)
+            end
+            |> Repo.insert_or_update()
+        end
       end
+    else
+      {:error, {:forbidden, "User is not permitted to edit achievements"}}
     end
   end
 
