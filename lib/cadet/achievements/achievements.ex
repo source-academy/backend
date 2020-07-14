@@ -38,14 +38,6 @@ defmodule Cadet.Achievements do
     end)
   end
 
-  def update_achievements(new_achievements) do
-    for new_achievement <- new_achievements do
-      update_achievement(new_achievement)
-    end
-
-    :ok
-  end
-
   # Deletes an achievement in the table
   def delete_achievement(inferencer_id) do
     this_achievement =
@@ -66,66 +58,20 @@ defmodule Cadet.Achievements do
     :ok
   end
 
-  # Adds a new Achievement to the table
-  def add_achievement(new_achievement) do
-    Repo.insert(%Achievement{
-      inferencer_id: new_achievement["id"],
-      title: new_achievement["title"],
-      ability: new_achievement["ability"],
-      exp: new_achievement["exp"],
-      is_task: new_achievement["isTask"],
-      prerequisite_ids: new_achievement["prerequisiteIds"],
-      position: new_achievement["position"],
-      background_image_url: new_achievement["backgroundImageUrl"],
-      close_at: get_date(new_achievement["deadline"]),
-      open_at: get_date(new_achievement["release"]),
-      modal_image_url: new_achievement["modal"]["modalImageUrl"],
-      description: new_achievement["modal"]["description"],
-      completion_text: new_achievement["modal"]["completionText"]
-    })
-
-    update_goals(new_achievement)
-    :ok
-  end
-
-  # Updates an Exisitng Achievement to the table
-  def update_achievement(new_achievement) do
-    Achievement
-    |> where([a], a.inferencer_id == ^new_achievement["id"])
-    |> Repo.update_all(
-      set: [
-        inferencer_id: new_achievement["id"],
-        title: new_achievement["title"],
-        ability: new_achievement["ability"],
-        exp: new_achievement["exp"],
-        is_task: new_achievement["isTask"],
-        prerequisite_ids: new_achievement["prerequisiteIds"],
-        position: new_achievement["position"],
-        background_image_url: new_achievement["backgroundImageUrl"],
-        close_at: new_achievement["deadline"],
-        open_at: new_achievement["release"],
-        modal_image_url: new_achievement["modal"]["modalImageUrl"],
-        description: new_achievement["modal"]["description"],
-        completion_text: new_achievement["modal"]["completionText"]
-      ]
-    )
-
-    update_goals(new_achievement)
-    :ok
-  end
-
   # Inserts a new achievement, or updates it if it already exists
-  def insert_or_update_achievement(new_achievement) do
-    does_achievement_exist =
+  def insert_or_update_achievement(attrs) do
+    achievement =
       Achievement
-      |> where([a], a.inferencer_id == ^new_achievement["id"])
-      |> Repo.exists?()
+      |> where(inferencer_id: ^attrs.inferencer_id)
+      |> Repo.one()
+      |> case do
+        nil ->
+          Achievement.changeset(%Achievement{}, attrs)
 
-    if does_achievement_exist do
-      update_achievement(new_achievement)
-    else
-      add_achievement(new_achievement)
-    end
+        achievement ->
+          Achievement.changeset(achievement, attrs)
+      end
+      |> Repo.insert_or_update()
   end
 
   # Deletes a goal of an achievement
@@ -146,53 +92,63 @@ defmodule Cadet.Achievements do
   end
 
   # Update All the goals of that achievement
-  # NOTE: All achievements are assumed to be in the original table
-  def update_goals(new_achievement) do
+  def update_goals(attrs) do
     this_achievement =
       Achievement
-      |> where([a], a.inferencer_id == ^new_achievement["id"])
+      |> where([a], a.inferencer_id == ^attrs.inferencer_id)
       |> Repo.one()
 
     users =
       User
       |> Repo.all()
 
-    for goal <- new_achievement["goals"] do
-      for user <- users do
-        does_goal_and_user_exist =
-          AchievementGoal
-          |> where([a], a.goal_id == ^goal["goalId"])
-          |> where([a], a.achievement_id == ^this_achievement.id)
-          |> where([a], a.user_id == ^user.id)
-          |> Repo.exists?()
+    for goal_json <- attrs.goals do
+      goal_params = get_goal_params_from_json(goal_json)
 
-        if does_goal_and_user_exist do
+      for user <- users do
+        achievement_goal =
           AchievementGoal
-          |> where([a], a.goal_id == ^goal["goalId"])
+          |> where([a], a.goal_id == ^goal_params.goal_id)
           |> where([a], a.achievement_id == ^this_achievement.id)
           |> where([a], a.user_id == ^user.id)
-          |> Repo.update_all(
-            set: [
-              goal_id: goal["goalId"],
-              goal_text: goal["goalText"],
-              goal_progress: goal["goalProgress"],
-              goal_target: goal["goalTarget"],
-              achievement_id: this_achievement.id,
-              user_id: user.id
-            ]
-          )
-        else
-          Repo.insert(%AchievementGoal{
-            goal_id: goal["goalId"],
-            goal_text: goal["goalText"],
-            goal_progress: goal["goalProgress"],
-            goal_target: goal["goalTarget"],
-            achievement_id: this_achievement.id,
-            user_id: user.id
-          })
-        end
+          |> Repo.one()
+          |> case do
+            nil ->
+              AchievementGoal.changeset(%AchievementGoal{}, goal_params)
+
+            achievement_goal ->
+              AchievementGoal.changeset(achievement_goal, goal_params)
+          end
+          |> Repo.insert_or_update()
       end
     end
+  end
+
+  def get_achievement_params_from_json(json) do
+    %{
+      inferencer_id: json["id"],
+      title: json["title"],
+      ability: json["ability"],
+      is_task: json["isTask"],
+      prerequisite_ids: json["prerequisiteIds"],
+      position: json["position"],
+      background_image_url: json["backgroundImageUrl"],
+      close_at: get_date(json["deadline"]),
+      open_at: get_date(json["release"]),
+      modal_image_url: json["modal"]["modalImageUrl"],
+      description: json["modal"]["description"],
+      completion_text: json["modal"]["completionText"],
+      goals: json["goals"]
+    }
+  end
+
+  def get_goal_params_from_json(goal) do
+    %{
+      goal_id: json["goalId"],
+      goal_text: json["goalText"],
+      goal_progress: json["goalProgress"],
+      goal_target: json["goalTarget"]
+    }
   end
 
   # Helper functions to update goals for a newly adder user
@@ -233,7 +189,8 @@ defmodule Cadet.Achievements do
 
   # Helper function to parse date for opening and closing times of the achievement
   def get_date(date) do
-    result = Elixir.Timex.Parse.DateTime.Parser.parse(date, "{ISO:Extended:Z}")
+    # result = Elixir.Timex.Parse.DateTime.Parser.parse(date, "{ISO:Extended:Z}")
+    result = Timex.parse(date, "{ISO:Extended:Z}")
 
     case result do
       {:ok, date} ->

@@ -13,21 +13,57 @@ defmodule CadetWeb.AchievementsController do
     render(conn, "index.json", achievements: achievements)
   end
 
-  def update(conn, %{"achievements" => achievements}) do
-    result = Achievements.update_achievements(achievements)
+  def edit_achievements(conn, %{"achievements" => achievements}) do
+    for achievement <- achievements do
+      achievement_params = Achievements.get_achievement_params_from_json(achievement)
+      result = Achievements.insert_or_update_achievement(achievement_params)
 
-    case result do
-      :ok ->
-        text(conn, "OK")
+      case result do
+        {:ok, _achievement} ->
+          final_result = Achievements.update_goals(achievement_params)
+
+          case final_result do
+            {:ok, _goal} ->
+              IO.puts("Success!")
+
+            {:error, {status, message}} ->
+              conn
+              |> put_status(status)
+              |> text(message)
+          end
+
+        {:error, {status, message}} ->
+          conn
+          |> put_status(status)
+          |> text(message)
+      end
     end
+
+    text(conn, "OK")
   end
 
   def edit(conn, %{"achievement" => achievement}) do
-    result = Achievements.insert_or_update_achievement(achievement)
+    achievement_params = Achievements.get_achievement_params_from_json(achievement)
+    result = Achievements.insert_or_update_achievement(achievement_params)
 
     case result do
-      :ok ->
-        text(conn, "OK")
+      {:ok, _achievement} ->
+        final_result = Achievements.update_goals(achievement_params)
+
+        case final_result do
+          {:ok, _goal} ->
+            text(conn, "OK")
+
+          {:error, {status, message}} ->
+            conn
+            |> put_status(status)
+            |> text(message)
+        end
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 

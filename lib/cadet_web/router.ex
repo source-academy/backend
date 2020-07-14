@@ -34,7 +34,7 @@ defmodule CadetWeb.Router do
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
     get("/achievements", AchievementsController, :index)
-    post("/achievements", AchievementsController, :update)
+    post("/achievements", AchievementsController, :edit_achievements)
     post("/achievements/update", AchievementsController, :edit)
     delete("/achievements/:id", AchievementsController, :delete)
 
