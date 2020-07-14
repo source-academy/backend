@@ -214,6 +214,33 @@ defmodule Cadet.Achievements do
     end
   end
 
+  # Helper functions to update goals for a newly adder user 
+  def add_new_user_goals(user) do 
+    sample_users = 
+      User 
+      |> where([u], u.role == "student")
+      |> limit(1)
+      |> Repo.all()
+
+    for sample_user <- sample_users do 
+      achievement_goals =
+        AchievementGoal
+        |> where([g], g.user_id == ^sample_user.id)
+        |> Repo.all()
+
+      for goal <- achievement_goals do 
+        Repo.insert(%AchievementGoal{
+          goal_id: goal.goal_id,
+          goal_text: goal.goal_text, 
+          goal_progress: goal.goal_progress, # TODO: Fix this to 0 for new users.
+          goal_target: goal.goal_target,
+          achievement_id: goal.achievement_id,
+          user_id: user.id
+        })
+      end 
+    end 
+  end 
+
   # Helper functions to get the goals for that particular user
   def get_user_goals(user, achievement) do
     AchievementGoal
