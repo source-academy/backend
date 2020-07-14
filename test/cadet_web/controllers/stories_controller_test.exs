@@ -133,6 +133,11 @@ defmodule CadetWeb.StoriesControllerTest do
     test "deletes story", %{conn: conn} do
       to_be_deleted = insert(:story)
       resp = delete(conn, build_url(to_be_deleted.id), %{})
+
+      assert Story
+             |> where(id: ^to_be_deleted.id)
+             |> Repo.one() == nil
+
       assert response(resp, 204) == ""
     end
   end
