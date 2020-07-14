@@ -29,7 +29,6 @@ defmodule Cadet.Achievements do
         id: :id,
         title: a.title,
         ability: a.ability,
-        exp: a.exp,
         open_at: a.open_at,
         close_at: a.close_at,
         is_task: a.is_task,

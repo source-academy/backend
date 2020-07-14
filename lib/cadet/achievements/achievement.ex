@@ -12,7 +12,6 @@ defmodule Cadet.Achievements.Achievement do
     field(:ability, AchievementAbility)
     field(:background_image_url, :string)
 
-    field(:exp, :integer)
     field(:open_at, :utc_datetime)
     field(:close_at, :utc_datetime)
     field(:is_task, :boolean)

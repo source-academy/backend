@@ -180,11 +180,6 @@ defmodule CadetWeb.AchievementsController do
               "id used for reference by inferencer"
             )
 
-            exp(
-              :integer,
-              "exp awarded for the achievement"
-            )
-
             open_at(
               :string,
               "open date of achievement"
@@ -219,12 +214,7 @@ defmodule CadetWeb.AchievementsController do
               :string,
               "description of the achievement"
             )
-
-            goal_text(
-              :string,
-              "text to reach the goal of the achievement"
-            )
-
+            
             completion_text(
               :string,
               "text to show when goal is met"

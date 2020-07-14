@@ -12,7 +12,6 @@ defmodule CadetWeb.AchievementsView do
       id: :id,
       title: :title,
       ability: :ability,
-      exp: :exp,
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
       isTask: :is_task,

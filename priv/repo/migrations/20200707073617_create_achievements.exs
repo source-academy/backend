@@ -11,7 +11,6 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
       add(:inferencer_id, :integer)
       add(:ability, :achievement_ability, default: "Core")
       add(:background_image_url, :string)
-      add(:exp, :integer, default: 0)
       add(:open_at, :timestamp, default: fragment("NOW()"))
       add(:close_at, :timestamp, default: fragment("NOW()"))
       add(:is_task, :boolean, default: false)
