@@ -3,7 +3,6 @@ defmodule Cadet.Achievements.Achievement do
   The Achievement entity stores metadata of a students' assessment
   """
   use Cadet, :model
-  use Arc.Ecto.Schema
 
   alias Cadet.Achievements.{AchievementAbility, AchievementGoal}
 
