@@ -10,7 +10,10 @@ defmodule CadetWeb.StoriesController do
   end
 
   def create(conn, story) do
-    result = Stories.create_story(conn.assigns.current_user, story)
+    result =
+      story
+      |> snake_casify_keys()
+      |> Stories.create_story(conn.assigns.current_user)
 
     case result do
       {:ok, _story} ->
@@ -24,7 +27,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   def update(conn, _params = %{"storyid" => id, "story" => story}) do
-    result = Stories.update_story(conn.assigns.current_user, story, id)
+    result = story |> snake_casify_keys() |> Stories.update_story(id, conn.assigns.current_user)
 
     case result do
       {:ok, _story} ->
@@ -38,7 +41,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   def delete(conn, _params = %{"storyid" => id}) do
-    result = Stories.delete_story(conn.assigns.current_user, id)
+    result = Stories.delete_story(id, conn.assigns.current_user)
 
     case result do
       {:ok, _nil} ->
@@ -63,7 +66,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :create do
-    post("/stories/new")
+    post("/stories")
 
     summary("Creates a new story")
 
@@ -75,7 +78,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/stories/:storyid")
+    PhoenixSwagger.Path.delete("/stories/{storyid}")
 
     summary("Delete a story from database by id")
 
@@ -87,10 +90,11 @@ defmodule CadetWeb.StoriesController do
 
     response(204, "OK")
     response(403, "User not allowed to manage stories")
+    response(404, "Story not found")
   end
 
   swagger_path :update do
-    post("/stories")
+    post("/stories/{storyid}")
 
     summary("Update details regarding a story")
 
@@ -104,6 +108,7 @@ defmodule CadetWeb.StoriesController do
 
     response(200, "OK", :Story)
     response(403, "User not allowed to manage stories")
+    response(404, "Story not found")
   end
 
   @spec swagger_definitions :: %{Story: any}
@@ -114,7 +119,7 @@ defmodule CadetWeb.StoriesController do
           properties do
             filenames(:string, "Filenames of txt files", required: true)
             title(:string, "Title shown in Chapter Select Screen", required: true)
-            image_url(:string, "Path to image shown in Chapter Select Screen", required: false)
+            imageUrl(:string, "Path to image shown in Chapter Select Screen", required: false)
             openAt(:string, "The opening date", format: "date-time", required: true)
             closeAt(:string, "The closing date", format: "date-time", required: true)
             isPublished(:boolean, "Whether or not is published", required: false)

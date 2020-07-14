@@ -3,7 +3,6 @@ defmodule Cadet.Stories.Story do
   The Story entity stores metadata of a story
   """
   use Cadet, :model
-  use Arc.Ecto.Schema
 
   schema "stories" do
     field(:open_at, :utc_datetime_usec)
@@ -22,6 +21,7 @@ defmodule Cadet.Stories.Story do
   def changeset(story, attrs \\ %{}) do
     story
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> validate_required(@required_fields)
     |> validate_open_close_date
   end
 

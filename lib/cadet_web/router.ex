@@ -43,7 +43,7 @@ defmodule CadetWeb.Router do
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
     get("/stories", StoriesController, :index)
-    post("/stories/new", StoriesController, :create)
+    post("/stories", StoriesController, :create)
     delete("/stories/:storyid", StoriesController, :delete)
     post("/stories/:storyid", StoriesController, :update)
 

@@ -145,13 +145,13 @@ defmodule CadetWeb.StoriesControllerTest do
   describe "POST /stories/new" do
     @tag authenticate: :student
     test "student permission, forbidden", %{conn: conn, valid_params: params} do
-      conn = post(conn, build_url("new"), params)
+      conn = post(conn, build_url(), params)
       assert response(conn, 403) =~ "User not allowed to manage stories"
     end
 
     @tag authenticate: :staff
     test "creates a new story", %{conn: conn, valid_params: params} do
-      conn = post(conn, build_url("new"), params)
+      conn = post(conn, build_url(), params)
 
       assert Story
              |> where(title: ^params.title)
@@ -181,6 +181,6 @@ defmodule CadetWeb.StoriesControllerTest do
     end
   end
 
-  defp build_url, do: "/v1/stories/"
+  defp build_url, do: "/v1/stories"
   defp build_url(url), do: "#{build_url()}/#{url}"
 end
