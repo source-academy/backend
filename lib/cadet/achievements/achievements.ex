@@ -195,7 +195,7 @@ defmodule Cadet.Achievements do
     end
   end
 
-  # Helper functions to update goals for a newly adder user 
+  # Helper functions to update goals for a newly adder user
   def add_new_user_goals(user) do
     sample_users =
       User
