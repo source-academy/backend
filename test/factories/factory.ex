@@ -14,6 +14,8 @@ defmodule Cadet.Factory do
     SubmissionFactory
   }
 
+  use Cadet.Stories.{StoryFactory}
+
   use Cadet.Chapters.{ChapterFactory}
 
   use Cadet.Course.{GroupFactory, SourcecastFactory}
