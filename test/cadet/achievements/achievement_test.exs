@@ -11,8 +11,8 @@ defmodule Cadet.Achievments.AchievementTest do
           id: 0,
           title: "Hello World",
           ability: :Core,
-          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-          close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
+          open_at: DateTime.from_naive!(~N[2016-05-24 13:26:08.003], "Etc/UTC"),
+          close_at: DateTime.from_naive!(~N[2016-05-27 13:26:08.003], "Etc/UTC"),
           is_task: false
         },
         :valid
@@ -26,8 +26,8 @@ defmodule Cadet.Achievments.AchievementTest do
           id: 0,
           title: "Hello World",
           ability: :Core,
-          open_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
-          close_at: Timex.now() |> Timex.to_unix() |> Integer.to_string()
+          open_at: DateTime.from_naive!(~N[2016-05-27 13:26:08.003], "Etc/UTC"),
+          close_at: DateTime.from_naive!(~N[2016-05-24 13:26:08.003], "Etc/UTC")
         },
         :invalid
       )

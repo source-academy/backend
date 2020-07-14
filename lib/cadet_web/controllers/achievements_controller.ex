@@ -22,7 +22,7 @@ defmodule CadetWeb.AchievementsController do
 
       case result do
         {:ok, _achievement} ->
-          final_result = Achievements.update_goals(achievement_params)
+          final_result = Achievements.update_goals(user, achievement_params)
 
           case final_result do
             {:ok, _goal} ->
