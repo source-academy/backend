@@ -4,20 +4,23 @@ defmodule Cadet.Stories.Stories do
   for Source academy's game component
   """
 
-  alias Cadet.Repo
   import Ecto.Query
 
+  alias Cadet.Repo
   alias Cadet.Accounts.User
   alias Cadet.Stories.Story
 
   @manage_stories_role ~w(staff admin)a
 
   def list_stories(_user = %User{role: role}) do
+    date_today = Timex.now()
+
     if role in @manage_stories_role do
       Repo.all(Story)
     else
       Story
       |> where(is_published: ^true)
+      |> where([s], s.open_at <= ^date_today)
       |> Repo.all()
     end
   end

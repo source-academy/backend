@@ -10,8 +10,8 @@ defmodule CadetWeb.StoriesView do
       id: :id,
       title: :title,
       filenames: :filenames,
-      image_url: :image_url,
-      is_published: :is_published,
+      imageUrl: :image_url,
+      isPublished: :is_published,
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at)
     })

@@ -6,8 +6,8 @@ defmodule Cadet.StoriesTest do
 
   setup do
     valid_params = %{
-      open_at: Timex.now(),
-      close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
+      open_at: Timex.shift(Timex.now(), days: 1),
+      close_at: Timex.shift(Timex.now(), days: Enum.random(2..30)),
       is_published: false,
       filenames: ["mission-1.txt"],
       title: "Mission1",
@@ -40,12 +40,17 @@ defmodule Cadet.StoriesTest do
       assert Stories.list_stories(%User{role: :staff}) == [story1, story2]
     end
 
-    test "Only published stories", %{valid_params: params} do
-      # unpublished
-      insert(:story)
+    test "Only show published and open stories", %{valid_params: params} do
+      one_week_ago = Timex.shift(Timex.now(), weeks: -1)
 
-      published_story = insert(:story, %{params | :is_published => true})
-      assert Stories.list_stories(%User{role: :student}) == [published_story]
+      insert(:story)
+      insert(:story, %{params | :is_published => true})
+      insert(:story, %{params | :open_at => one_week_ago})
+
+      published_open_story =
+        insert(:story, %{params | :is_published => true, :open_at => one_week_ago})
+
+      assert Stories.list_stories(%User{role: :student}) == [published_open_story]
     end
   end
 

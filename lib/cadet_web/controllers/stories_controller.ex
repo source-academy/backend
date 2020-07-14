@@ -13,8 +13,8 @@ defmodule CadetWeb.StoriesController do
     result = Stories.create_story(conn.assigns.current_user, story)
 
     case result do
-      {:ok, story} ->
-        render(conn, "show.json", story: story)
+      {:ok, _story} ->
+        conn |> put_status(200) |> text('')
 
       {:error, {status, message}} ->
         conn
@@ -23,12 +23,12 @@ defmodule CadetWeb.StoriesController do
     end
   end
 
-  def update(conn, story, _params = %{"storyid" => id}) do
+  def update(conn, _params = %{"storyid" => id, "story" => story}) do
     result = Stories.update_story(conn.assigns.current_user, story, id)
 
     case result do
-      {:ok, story} ->
-        render(conn, "show.json", story: story)
+      {:ok, _story} ->
+        conn |> put_status(200) |> text('')
 
       {:error, {status, message}} ->
         conn

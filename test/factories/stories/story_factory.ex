@@ -9,8 +9,8 @@ defmodule Cadet.Stories.StoryFactory do
 
       def story_factory do
         %Story{
-          open_at: Timex.now(),
-          close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
+          open_at: Timex.shift(Timex.now(), days: 1),
+          close_at: Timex.shift(Timex.now(), days: Enum.random(2..30)),
           is_published: false,
           filenames: ["mission-1.txt"],
           title: "Mission1",
