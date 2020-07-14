@@ -14,10 +14,16 @@ defmodule Cadet.Achievements do
     achievements =
       Achievement
       |> order_by([a], [a.inferencer_id])
+      |> join(:full, [a], g in AchievementGoal, on: a.id == g.achievement_id)
+      |> where([a, g], g.user_id == ^user.id)
+
+    distinct_achievements =
+      achievements
+      |> distinct([a, g], [a.inferencer_id])
       |> Repo.all()
       |> Repo.preload(goals: [:achievement, :user])
 
-    Enum.map(achievements, fn a ->
+    Enum.map(distinct_achievements, fn a ->
       %{
         inferencer_id: a.inferencer_id,
         id: :id,
@@ -33,7 +39,7 @@ defmodule Cadet.Achievements do
         modal_image_url: a.modal_image_url,
         description: a.description,
         completion_text: a.completion_text,
-        goals: get_user_goals(user, a)
+        goals: get_user_goals(achievements, a)
       }
     end)
   end
@@ -142,7 +148,7 @@ defmodule Cadet.Achievements do
     }
   end
 
-  def get_goal_params_from_json(goal) do
+  def get_goal_params_from_json(json) do
     %{
       goal_id: json["goalId"],
       goal_text: json["goalText"],
@@ -180,11 +186,21 @@ defmodule Cadet.Achievements do
   end
 
   # Helper functions to get the goals for that particular user
-  def get_user_goals(user, achievement) do
-    AchievementGoal
-    |> where([g], g.achievement_id == ^achievement.id)
-    |> where([g], g.user_id == ^user.id)
-    |> Repo.all()
+  def get_user_goals(goal_achievements, achievement) do
+    user_goals =
+      goal_achievements
+      |> where([a, g], a.id == ^achievement.id)
+      |> select([a, g], g)
+      |> Repo.all()
+
+    Enum.map(user_goals, fn goal ->
+      %{
+        goal_id: goal.goal_id,
+        goal_text: goal.goal_text,
+        goal_progress: goal.goal_progress,
+        goal_target: goal.goal_target
+      }
+    end)
   end
 
   # Helper function to parse date for opening and closing times of the achievement
