@@ -8,9 +8,7 @@ defmodule Cadet.Achievements.AchievementGoalFactory do
       alias Cadet.Achievements.AchievementGoal
 
       def achievement_goal_factory do
-        %AchievementGoal{
-
-        }
+        %AchievementGoal{}
       end
     end
   end

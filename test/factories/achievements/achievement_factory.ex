@@ -9,10 +9,11 @@ defmodule Cadet.Achievements.AchievementFactory do
 
       def achievement_factory do
         %Achievement{
-          title: Faker.Food.dish(), 
+          title: Faker.Food.dish(),
           description: Faker.Lorem.Shakespeare.En.king_richard_iii(),
-          completion_text: Faker.Lorem.Shakespeare.En.romeo_and_juliet(), 
-          modal_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/canvas/annotated-canvas.png"
+          completion_text: Faker.Lorem.Shakespeare.En.romeo_and_juliet(),
+          modal_image_url:
+            "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/canvas/annotated-canvas.png"
         }
       end
     end
