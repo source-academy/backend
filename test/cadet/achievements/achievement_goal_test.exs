@@ -10,6 +10,8 @@ defmodule Cadet.Achievments.AchievementGoalTest do
     valid_params = %{
       goal_id: 0,
       goal_text: "Sample Text",
+      goal_progress: 0,
+      goal_target: 0,
       user_id: user.id,
       achievement_id: achievement.id
     }
@@ -27,6 +29,8 @@ defmodule Cadet.Achievments.AchievementGoalTest do
         %{
           goal_id: 0,
           goal_text: "Sample Text",
+          goal_progress: 0,
+          goal_target: 0,
           user_id: user.id,
           achievement_id: achievement.id
         },
