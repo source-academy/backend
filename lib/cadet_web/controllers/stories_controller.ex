@@ -12,7 +12,7 @@ defmodule CadetWeb.StoriesController do
   def create(conn, story) do
     result =
       story
-      |> snake_casify_keys()
+      |> snake_casify_string_keys()
       |> Stories.create_story(conn.assigns.current_user)
 
     case result do
@@ -27,7 +27,10 @@ defmodule CadetWeb.StoriesController do
   end
 
   def update(conn, _params = %{"storyid" => id, "story" => story}) do
-    result = story |> snake_casify_keys() |> Stories.update_story(id, conn.assigns.current_user)
+    result =
+      story
+      |> snake_casify_string_keys()
+      |> Stories.update_story(id, conn.assigns.current_user)
 
     case result do
       {:ok, _story} ->

@@ -9,7 +9,9 @@ defmodule Cadet.SharedHelper do
     end
   end
 
-  def snake_casify_keys(map = %{}) do
-    for {key, val} <- map, into: %{}, do: {Recase.to_snake(key), val}
+  def snake_casify_string_keys(map = %{}) do
+    for {key, val} <- map,
+        into: %{},
+        do: {if(is_binary(key), do: Recase.to_snake(key), else: key), val}
   end
 end

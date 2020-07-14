@@ -151,11 +151,14 @@ defmodule CadetWeb.StoriesControllerTest do
 
     @tag authenticate: :staff
     test "creates a new story", %{conn: conn, valid_params: params} do
-      conn = post(conn, build_url(), params)
+      conn = post(conn, build_url(), stringify_camelise_keys(params))
 
-      assert Story
-             |> where(title: ^params.title)
-             |> Repo.one() != nil
+      inserted_story =
+        Story
+        |> where(title: ^params.title)
+        |> Repo.one()
+
+      assert inserted_story |> Map.take(Map.keys(params)) == params
 
       assert response(conn, 200) == ""
     end
@@ -171,11 +174,13 @@ defmodule CadetWeb.StoriesControllerTest do
     @tag authenticate: :staff
     test "updates a story", %{conn: conn, updated_params: updated_params} do
       story = insert(:story)
-      conn = post(conn, build_url(story.id), %{"story" => updated_params})
 
-      assert Story
-             |> where(title: ^updated_params.title)
-             |> Repo.one() != nil
+      conn =
+        post(conn, build_url(story.id), %{"story" => stringify_camelise_keys(updated_params)})
+
+      updated_story = Repo.get(Story, story.id)
+
+      assert updated_story |> Map.take(Map.keys(updated_params)) == updated_params
 
       assert response(conn, 200) == ""
     end
@@ -183,4 +188,8 @@ defmodule CadetWeb.StoriesControllerTest do
 
   defp build_url, do: "/v1/stories"
   defp build_url(url), do: "#{build_url()}/#{url}"
+
+  defp stringify_camelise_keys(map) do
+    for {key, value} <- map, into: %{}, do: {key |> Atom.to_string() |> Recase.to_camel(), value}
+  end
 end
