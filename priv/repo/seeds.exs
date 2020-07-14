@@ -118,6 +118,7 @@ if Cadet.Env.env() == :dev do
     is_task: true,
     prerequisite_ids: [2, 1],
     position: 1, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
   })
 
   achievement_1 = insert(:achievement, %{
@@ -127,6 +128,7 @@ if Cadet.Env.env() == :dev do
     is_task: false,
     prerequisite_ids: [],
     position: 0, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/btsd-tile.png",
     open_at: ~U[2020-07-16 16:00:00Z], 
     close_at: ~U[2020-07-20 16:00:00Z]
   })
@@ -138,6 +140,7 @@ if Cadet.Env.env() == :dev do
     is_task: false,
     prerequisite_ids: [],
     position: 0, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/colorful-carpet-tile.png",
     open_at: ~U[2020-07-11 16:00:00Z], 
     close_at: ~U[2020-07-15 16:00:00Z]
   })
@@ -148,7 +151,8 @@ if Cadet.Env.env() == :dev do
     ability: :Core,
     is_task: false,
     prerequisite_ids: [],
-    position: 0
+    position: 0, 
+    background_image_url: "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
   })
 
   achievement_4 = insert(:achievement, %{
@@ -158,6 +162,7 @@ if Cadet.Env.env() == :dev do
     is_task: true,
     prerequisite_ids: [5, 6],
     position: 4, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-wizard-tile.png",
     open_at: ~U[2020-07-31 16:00:00Z], 
     close_at: ~U[2020-08-04 16:00:00Z]
   })
@@ -169,6 +174,7 @@ if Cadet.Env.env() == :dev do
     is_task: false,
     prerequisite_ids: [],
     position: 0, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-introduction-tile.png",
     open_at: ~U[2020-07-23 16:00:00Z], 
     close_at: ~U[2020-07-27 16:00:00Z]
   })
@@ -180,6 +186,7 @@ if Cadet.Env.env() == :dev do
     is_task: false,
     prerequisite_ids: [],
     position: 0, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-manipulation-tile.png",
     open_at: ~U[2020-07-31 16:00:00Z], 
     close_at: ~U[2020-08-04 16:00:00Z]
   })
@@ -191,6 +198,7 @@ if Cadet.Env.env() == :dev do
     is_task: true,
     prerequisite_ids: [],
     position: 3, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/the-source-rer-tile.png",
     open_at: ~U[2020-07-16 16:00:00Z], 
     close_at: ~U[2020-07-20 16:00:00Z]
   })
@@ -202,6 +210,7 @@ if Cadet.Env.env() == :dev do
     is_task: true,
     prerequisite_ids: [9],
     position: 2, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/power-of-friendship-tile.png",
     open_at: ~U[2020-07-16 16:00:00Z], 
     close_at: ~U[2020-07-20 16:00:00Z]
   })
@@ -212,16 +221,18 @@ if Cadet.Env.env() == :dev do
     ability: :Community,
     is_task: false,
     prerequisite_ids: [],
-    position: 0
+    position: 0, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/piazza-guru-tile.png"
   })
 
   achievement_10 = insert(:achievement, %{
     inferencer_id: 10, 
-    title: "That's the Spirit",
+    title: "Thats the Spirit",
     ability: :Exploration,
     is_task: true,
     prerequisite_ids: [],
-    position: 5
+    position: 5, 
+    background_image_url: "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/annotated-tile.png"
   })
 
   # Inserting Custom Achievement Goals
