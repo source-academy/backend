@@ -32,7 +32,6 @@ defmodule Cadet.Achievements do
         background_image_url: a.background_image_url,
         modal_image_url: a.modal_image_url,
         description: a.description,
-        goal_text: a.goal_text,
         completion_text: a.completion_text,
         goals: get_user_goals(user, a)
       }
@@ -49,12 +48,9 @@ defmodule Cadet.Achievements do
 
   # Deletes an achievement in the table
   def delete_achievement(inferencer_id) do
-    query =
+    this_achievement =
       Achievement
       |> where([a], a.inferencer_id == ^inferencer_id)
-
-    this_achievement =
-      query
       |> Repo.one()
 
     goal_query =
@@ -64,7 +60,7 @@ defmodule Cadet.Achievements do
     goal_query
     |> Repo.delete_all()
 
-    query
+    this_achievement
     |> Repo.delete_all()
 
     :ok
@@ -85,7 +81,6 @@ defmodule Cadet.Achievements do
       open_at: get_date(new_achievement["release"]),
       modal_image_url: new_achievement["modal"]["modalImageUrl"],
       description: new_achievement["modal"]["description"],
-      goal_text: new_achievement["modal"]["goalText"],
       completion_text: new_achievement["modal"]["completionText"]
     })
 
@@ -113,7 +108,6 @@ defmodule Cadet.Achievements do
         open_at: new_achievement["release"],
         modal_image_url: new_achievement["modal"]["modalImageUrl"],
         description: new_achievement["modal"]["description"],
-        goal_text: new_achievement["modal"]["goalText"],
         completion_text: new_achievement["modal"]["completionText"]
       ]
     )
@@ -135,12 +129,9 @@ defmodule Cadet.Achievements do
 
   # Deletes a goal of an achievement
   def delete_goal(goal_id, inferencer_id) do
-    achievement_query =
+    this_achievement =
       Achievement
       |> where([a], a.inferencer_id == ^inferencer_id)
-
-    this_achievement =
-      achievement_query
       |> Repo.one()
 
     goal_query =

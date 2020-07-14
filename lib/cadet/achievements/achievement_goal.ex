@@ -11,8 +11,8 @@ defmodule Cadet.Achievements.AchievementGoal do
   schema "achievement_goals" do
     field(:goal_id, :integer)
     field(:goal_text, :string)
-    field(:goal_progress, :integer, default: 0)
-    field(:goal_target, :integer, default: 0)
+    field(:goal_progress, :integer)
+    field(:goal_target, :integer)
 
     belongs_to(:achievement, Achievement)
     belongs_to(:user, User)

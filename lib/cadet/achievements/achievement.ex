@@ -9,39 +9,29 @@ defmodule Cadet.Achievements.Achievement do
 
   schema "achievements" do
     field(:inferencer_id, :integer)
-    field(:title, :string, default: "New Achievement")
-    field(:ability, AchievementAbility, default: :Core)
+    field(:title, :string)
+    field(:ability, AchievementAbility)
+    field(:background_image_url, :string)
 
-    field(:background_image_url, :string,
-      default:
-        "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
-    )
-
-    field(:exp, :integer, default: 0)
-    field(:open_at, :utc_datetime, default: DateTime.utc_now())
-    field(:close_at, :utc_datetime, default: DateTime.utc_now())
-    field(:is_task, :boolean, default: false)
+    field(:exp, :integer)
+    field(:open_at, :utc_datetime)
+    field(:close_at, :utc_datetime)
+    field(:is_task, :boolean)
     field(:prerequisite_ids, {:array, :integer})
-
     field(:position, :integer, default: 0)
 
-    field(:modal_image_url, :string,
-      default:
-        "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
-    )
+    field(:modal_image_url, :string)
+    field(:description, :string)
+    field(:completion_text, :string)
 
-    field(:description, :string, default: "Description")
-    field(:goal_text, :string, default: "Goal")
-    field(:completion_text, :string, default: "Completion")
-
-    has_many(:goals, AchievementGoal, on_delete: :delete_all)
+    has_many(:goals, AchievementGoal)
 
     timestamps()
   end
 
   @required_fields ~w(title ability exp is_task position)a
   @optional_fields ~w(background_image_url open_at close_at prerequisite_ids
-    modal_image_url description goal_text completion_text)a
+    modal_image_url description completion_text)a
 
   def changeset(achievement, params) do
     params =

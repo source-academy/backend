@@ -9,17 +9,21 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
     create table(:achievements) do
       add(:title, :string)
       add(:inferencer_id, :integer)
-      add(:ability, :achievement_ability)
+      add(:ability, :achievement_ability, default: "Core")
       add(:background_image_url, :string)
-      add(:exp, :integer)
-      add(:open_at, :timestamp)
-      add(:close_at, :timestamp)
-      add(:is_task, :boolean)
+      add(:exp, :integer, default: 0)
+      add(:open_at, :timestamp, default: fragment("NOW()"))
+      add(:close_at, :timestamp, default: fragment("NOW()"))
+      add(:is_task, :boolean, default: false)
       add(:prerequisite_ids, {:array, :integer})
       add(:position, :integer)
-      add(:modal_image_url, :string)
+
+      add(:modal_image_url, :string,
+        default:
+          "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
+      )
+
       add(:description, :string)
-      add(:goal_text, :text)
       add(:completion_text, :text)
 
       timestamps()

@@ -21,7 +21,6 @@ defmodule CadetWeb.AchievementsView do
       backgroundImageUrl: :background_image_url,
       modalImageUrl: :modal_image_url,
       description: :description,
-      goalText: :goal_text,
       completionText: :completion_text,
       goals:
         &Enum.map(&1.goals, fn goal ->
