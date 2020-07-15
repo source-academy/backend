@@ -2,7 +2,7 @@ defmodule Cadet.AchievementsTest do
   use Cadet.DataCase
 
   alias Cadet.Achievements
-  alias Cadet.Achievements.{AchievementAbility}
+  alias Cadet.Achievements.AchievementAbility
 
   test "create achievements" do
     user = insert(:user, %{name: "admin", role: :admin})
