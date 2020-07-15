@@ -52,9 +52,12 @@ defmodule Cadet.Achievements do
   # Deletes an achievement in the table
   def delete_achievement(user, inferencer_id) do
     if user.role in @edit_all_achievement_roles do
-      this_achievement =
+      achievement_query =
         Achievement
         |> where([a], a.inferencer_id == ^inferencer_id)
+
+      this_achievement =
+        achievement_query
         |> Repo.one()
 
       goal_query =
@@ -71,7 +74,7 @@ defmodule Cadet.Achievements do
       goal_query
       |> Repo.delete_all()
 
-      this_achievement
+      achievement_query
       |> Repo.delete_all()
 
       :ok
