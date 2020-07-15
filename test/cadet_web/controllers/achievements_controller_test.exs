@@ -196,7 +196,9 @@ defmodule CadetWeb.AchievementsControllerTest do
       }
     }
 
-    conn = post(conn, "v1/achievements/#{achievement.inferencer_id}", %{achievement: new_achievement})
+    conn =
+      post(conn, "v1/achievements/#{achievement.inferencer_id}", %{achievement: new_achievement})
+
     assert response(conn, 200) == "OK"
     assert Repo.get(Achievement, achievement.id).title == "New Title"
   end
