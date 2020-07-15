@@ -122,16 +122,18 @@ defmodule Cadet.Achievements do
   end
 
   # Update All the prerequisites of that achievement
-  def update_prerequisites(user, fields = %{ inferencer_id: inferencer_id, prerequisites: prerequisites}) do
+  def update_prerequisites(
+        user,
+        _fields = %{inferencer_id: inferencer_id, prerequisites: prerequisites}
+      ) do
     if user.role in @edit_all_achievement_roles do
-      this_achievement =
-        Achievement
-        |> where([a], a.inferencer_id == ^inferencer_id)
-        |> Repo.one()
+      Achievement
+      |> where([a], a.inferencer_id == ^inferencer_id)
+      |> Repo.one()
 
       for prereq <- prerequisites do
         goal_params = %{
-          inferencer_id: prereq, 
+          inferencer_id: prereq,
           achievement_id: inferencer_id
         }
 
@@ -215,18 +217,18 @@ defmodule Cadet.Achievements do
       goal_id: json["goalId"],
       goal_text: json["goalText"],
       goal_progress: json["goalProgress"],
-      goal_target: json["goalTarget"], 
-      achievement_id: achievement_id, 
+      goal_target: json["goalTarget"],
+      achievement_id: achievement_id,
       user_id: user_id
     }
   end
 
-  def get_prereq_fields_from_json(json) do 
+  def get_prereq_fields_from_json(json) do
     %{
       inferencer_id: json["id"],
       prerequisites: json["prerequisiteIds"]
     }
-  end 
+  end
 
   # Helper functions to update goals for a newly adder user
   def add_new_user_goals(user) do

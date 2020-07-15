@@ -32,7 +32,7 @@ defmodule CadetWeb.AchievementsController do
               case prereq_result do
                 :ok ->
                   IO.puts("Success!")
-    
+
                 {:error, {status, message}} ->
                   conn
                   |> put_status(status)
@@ -73,7 +73,7 @@ defmodule CadetWeb.AchievementsController do
             case prereq_result do
               :ok ->
                 text(conn, "OK")
-  
+
               {:error, {status, message}} ->
                 conn
                 |> put_status(status)
