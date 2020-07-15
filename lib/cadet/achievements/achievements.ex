@@ -130,18 +130,18 @@ defmodule Cadet.Achievements do
         _fields = %{inferencer_id: inferencer_id, prerequisites: prerequisites}
       ) do
     if user.role in @edit_all_achievement_roles do
-      Achievement
+      achievement = Achievement
       |> where([a], a.inferencer_id == ^inferencer_id)
       |> Repo.one()
 
       for prereq <- prerequisites do
         goal_params = %{
           inferencer_id: prereq,
-          achievement_id: inferencer_id
+          achievement_id: achievement.id
         }
 
         AchievementPrerequisite
-        |> where([a], a.achievement_id == ^inferencer_id)
+        |> where([a], a.achievement_id == ^achievement.id)
         |> where([a], a.inferencer_id == ^prereq)
         |> Repo.one()
         |> case do
