@@ -5,7 +5,7 @@ defmodule CadetWeb.AchievementsControllerTest do
 
   alias Cadet.Repo
   alias CadetWeb.AchievementsController
-  alias Cadet.Achievements.{AchievementGoal, AchievementAbility}
+  alias Cadet.Achievements.{Achievement, AchievementGoal}
 
   test "swagger" do
     assert is_map(AchievementsController.swagger_definitions())
@@ -65,4 +65,68 @@ defmodule CadetWeb.AchievementsControllerTest do
              "title" => "Test"
            }
   end
+
+  @tag authenticate: :staff
+  test "staff can delete achievement", %{conn: conn} do
+    achievement =
+      insert(:achievement, %{
+        inferencer_id: 69,
+        title: "Test",
+        ability: :Core,
+        is_task: false,
+        position: 0
+      })
+
+    conn = delete(conn, build_delete_achievement_url(achievement.inferencer_id))
+    assert response(conn, 200) == "OK"
+    assert Repo.get(Achievement, achievement.id) == nil
+  end
+
+  @tag authenticate: :student
+  test "student cannot delete achievement", %{conn: conn} do
+    achievement =
+      insert(:achievement, %{
+        inferencer_id: 69,
+        title: "Test",
+        ability: :Core,
+        is_task: false,
+        position: 0
+      })
+
+    conn = delete(conn, build_delete_achievement_url(achievement.inferencer_id))
+    assert response(conn, 403) =~ "User is not permitted to edit achievements"
+  end
+
+  @tag authenticate: :staff
+  test "staff can delete goal", %{conn: conn} do
+    user = conn.assigns.current_user
+
+    achievement =
+      insert(:achievement, %{
+        inferencer_id: 69,
+        title: "Test",
+        ability: :Core,
+        is_task: false,
+        position: 0
+      })
+
+    goal =
+      insert(:achievement_goal, %{
+        goal_id: 1,
+        goal_text: "Score earned from Curve Introduction mission",
+        goal_progress: 70,
+        goal_target: 200,
+        achievement_id: achievement.id,
+        user_id: user.id
+      })
+
+    conn = delete(conn, build_delete_goal_url(achievement.inferencer_id, goal.goal_id))
+    assert response(conn, 200) == "OK"
+    assert Repo.get(AchievementGoal, goal.id) == nil
+  end
+
+  defp build_delete_achievement_url(inferencer_id), do: "/v1/achievements/#{inferencer_id}"
+
+  defp build_delete_goal_url(inferencer_id, goal_id),
+    do: "/v1/achievements/#{inferencer_id}/goals/#{goal_id}"
 end

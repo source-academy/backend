@@ -211,7 +211,14 @@ defmodule Cadet.AchievementsTest do
         user,
         %{
           inferencer_id: achievement.inferencer_id,
-          goals: []
+          goals: [
+            %{
+              "goalId" => 1,
+              "goalText" => "Hello World",
+              "goalProgress" => 1,
+              "goalTarget" => 1
+            }
+          ]
         }
       )
 
@@ -219,7 +226,7 @@ defmodule Cadet.AchievementsTest do
 
     student = insert(:user, %{name: "student", role: :student})
 
-    result = Achievements.add_new_user_goals(user)
+    result = Achievements.add_new_user_goals(student)
 
     assert result == :ok
   end
