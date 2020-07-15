@@ -27,7 +27,7 @@ defmodule CadetWeb.AchievementsController do
 
           case final_result do
             :ok ->
-              IO.puts("Success!")
+              :ok
 
             {:error, {status, message}} ->
               conn
@@ -39,7 +39,7 @@ defmodule CadetWeb.AchievementsController do
 
           case prereq_result do
             :ok ->
-              IO.puts("Success!")
+              :ok
 
             {:error, {status, message}} ->
               conn
@@ -70,7 +70,7 @@ defmodule CadetWeb.AchievementsController do
 
         case final_result do
           :ok ->
-            IO.puts("Success!")
+            :ok
 
           {:error, {status, message}} ->
             conn

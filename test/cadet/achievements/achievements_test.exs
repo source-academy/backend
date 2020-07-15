@@ -225,9 +225,10 @@ defmodule Cadet.AchievementsTest do
     assert result == :ok
 
     student = insert(:user, %{name: "student", role: :student})
+    Achievements.add_new_user_goals(student)
 
-    result = Achievements.add_new_user_goals(student)
-
+    student_2 = insert(:user, %{name: "student", role: :student})
+    result = Achievements.add_new_user_goals(student_2)
     assert result == :ok
   end
 
@@ -255,5 +256,41 @@ defmodule Cadet.AchievementsTest do
 
     Achievements.delete_goal(user, goal.goal_id, achievement.inferencer_id)
     assert Repo.get(AchievementGoal, goal.id) == nil
+  end
+
+  test "achievement json parsing" do
+    sample_json = %{
+      "id" => 0,
+      "title" => "Sample",
+      "ability" => "Core",
+      "isTask" => false,
+      "position" => 0,
+      "backgroundImageUrl" => nil,
+      "deadline" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
+      "release" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
+      "goals" => [],
+      "modal" => %{
+        "modalImageUrl" => nil,
+        "description" => "",
+        "completionText" => ""
+      }
+    }
+
+    sample_achievement = %{
+      inferencer_id: 0,
+      title: "Sample",
+      ability: "Core",
+      is_task: false,
+      position: 0,
+      background_image_url: nil,
+      close_at: DateTime.truncate(DateTime.utc_now(), :second),
+      open_at: DateTime.truncate(DateTime.utc_now(), :second),
+      modal_image_url: nil,
+      description: "",
+      completion_text: "",
+      goals: []
+    }
+
+    assert sample_achievement == Achievements.get_achievement_params_from_json(sample_json)
   end
 end

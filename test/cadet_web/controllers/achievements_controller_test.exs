@@ -125,6 +125,82 @@ defmodule CadetWeb.AchievementsControllerTest do
     assert Repo.get(AchievementGoal, goal.id) == nil
   end
 
+  @tag authenticate: :staff
+  test "staff is able to edit achievements", %{conn: conn} do
+    achievement =
+      insert(:achievement, %{
+        inferencer_id: 69,
+        title: "Test",
+        ability: :Core,
+        is_task: false,
+        position: 0
+      })
+
+    new_achievements = [
+      %{
+        "id" => 69,
+        "title" => "New Title",
+        "ability" => "Core",
+        "isTask" => false,
+        "position" => 0,
+        "backgroundImageUrl" => nil,
+        "deadline" =>
+          DateTime.to_string(
+            DateTime.truncate(DateTime.add(DateTime.utc_now(), 3600, :second), :second)
+          ),
+        "release" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
+        "goals" => [],
+        "prerequisiteIds" => [],
+        "modal" => %{
+          "modalImageUrl" => nil,
+          "description" => "",
+          "completionText" => ""
+        }
+      }
+    ]
+
+    conn = post(conn, "v1/achievements", %{achievements: new_achievements})
+    assert response(conn, 200) == "OK"
+    assert Repo.get(Achievement, achievement.id).title == "New Title"
+  end
+
+  @tag authenticate: :staff
+  test "staff is able to edit single achievement", %{conn: conn} do
+    achievement =
+      insert(:achievement, %{
+        inferencer_id: 69,
+        title: "Test",
+        ability: :Core,
+        is_task: false,
+        position: 0
+      })
+
+    new_achievement = %{
+      "id" => 69,
+      "title" => "New Title",
+      "ability" => "Core",
+      "isTask" => false,
+      "position" => 0,
+      "backgroundImageUrl" => nil,
+      "deadline" =>
+        DateTime.to_string(
+          DateTime.truncate(DateTime.add(DateTime.utc_now(), 3600, :second), :second)
+        ),
+      "release" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
+      "goals" => [],
+      "prerequisiteIds" => [],
+      "modal" => %{
+        "modalImageUrl" => nil,
+        "description" => "",
+        "completionText" => ""
+      }
+    }
+
+    conn = post(conn, "v1/achievements/update", %{achievement: new_achievement})
+    assert response(conn, 200) == "OK"
+    assert Repo.get(Achievement, achievement.id).title == "New Title"
+  end
+
   defp build_delete_achievement_url(inferencer_id), do: "/v1/achievements/#{inferencer_id}"
 
   defp build_delete_goal_url(inferencer_id, goal_id),
