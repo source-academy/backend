@@ -3,7 +3,6 @@ defmodule Cadet.Achievements.AchievementGoal do
   The AchievementGoal entity stores metadata of a goal associated to a specific achievement
   """
   use Cadet, :model
-  use Arc.Ecto.Schema
 
   alias Cadet.Achievements.Achievement
   alias Cadet.Accounts.User

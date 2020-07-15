@@ -16,7 +16,11 @@ defmodule Cadet.Factory do
 
   use Cadet.Stories.{StoryFactory}
 
-  use Cadet.Achievements.{AchievementFactory, AchievementGoalFactory}
+  use Cadet.Achievements.{
+    AchievementFactory,
+    AchievementGoalFactory,
+    AchievementPrerequisiteFactory
+  }
 
   use Cadet.Chapters.{ChapterFactory}
 

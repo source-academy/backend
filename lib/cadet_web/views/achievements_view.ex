@@ -7,6 +7,9 @@ defmodule CadetWeb.AchievementsView do
   end
 
   def render("overview.json", %{achievement: achievement}) do
+    IO.puts("\n\n")
+    IO.puts(achievement.prerequisite_ids)
+
     transform_map_for_view(achievement, %{
       inferencer_id: :inferencer_id,
       id: :id,

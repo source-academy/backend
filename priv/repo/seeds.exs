@@ -117,7 +117,6 @@ if Cadet.Env.env() == :dev do
       title: "Rune Master",
       ability: :Core,
       is_task: true,
-      prerequisite_ids: [2, 1],
       position: 1,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png"
@@ -129,7 +128,6 @@ if Cadet.Env.env() == :dev do
       title: "Beyond the Second Dimension",
       ability: :Core,
       is_task: false,
-      prerequisite_ids: [],
       position: 0,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/btsd-tile.png",
@@ -143,7 +141,6 @@ if Cadet.Env.env() == :dev do
       title: "Colorful Carpet",
       ability: :Core,
       is_task: false,
-      prerequisite_ids: [],
       position: 0,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/colorful-carpet-tile.png",
@@ -157,7 +154,6 @@ if Cadet.Env.env() == :dev do
       title: "Unpublished",
       ability: :Core,
       is_task: false,
-      prerequisite_ids: [],
       position: 0,
       background_image_url:
         "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
@@ -169,7 +165,6 @@ if Cadet.Env.env() == :dev do
       title: "Curve Wizard",
       ability: :Core,
       is_task: true,
-      prerequisite_ids: [5, 6],
       position: 4,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-wizard-tile.png",
@@ -183,7 +178,6 @@ if Cadet.Env.env() == :dev do
       title: "Curve Introduction",
       ability: :Core,
       is_task: false,
-      prerequisite_ids: [],
       position: 0,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-introduction-tile.png",
@@ -197,7 +191,6 @@ if Cadet.Env.env() == :dev do
       title: "Curve Manipulation",
       ability: :Core,
       is_task: false,
-      prerequisite_ids: [],
       position: 0,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-manipulation-tile.png",
@@ -211,7 +204,6 @@ if Cadet.Env.env() == :dev do
       title: "The Source-rer",
       ability: :Effort,
       is_task: true,
-      prerequisite_ids: [],
       position: 3,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/the-source-rer-tile.png",
@@ -225,7 +217,6 @@ if Cadet.Env.env() == :dev do
       title: "Power of Friendship",
       ability: :Community,
       is_task: true,
-      prerequisite_ids: [9],
       position: 2,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/power-of-friendship-tile.png",
@@ -239,7 +230,6 @@ if Cadet.Env.env() == :dev do
       title: "Piazza Guru",
       ability: :Community,
       is_task: false,
-      prerequisite_ids: [],
       position: 0,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/piazza-guru-tile.png"
@@ -251,7 +241,6 @@ if Cadet.Env.env() == :dev do
       title: "Thats the Spirit",
       ability: :Exploration,
       is_task: true,
-      prerequisite_ids: [],
       position: 5,
       background_image_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/annotated-tile.png"
@@ -430,4 +419,29 @@ if Cadet.Env.env() == :dev do
       user_id: student.id
     })
   end
+
+  insert(:achievement_prerequisite, %{
+    inferencer_id: 9,
+    achievement_id: achievement_8.id
+  })
+
+  insert(:achievement_prerequisite, %{
+    inferencer_id: 5,
+    achievement_id: achievement_4.id
+  })
+
+  insert(:achievement_prerequisite, %{
+    inferencer_id: 6,
+    achievement_id: achievement_4.id
+  })
+
+  insert(:achievement_prerequisite, %{
+    inferencer_id: 1,
+    achievement_id: achievement_0.id
+  })
+
+  insert(:achievement_prerequisite, %{
+    inferencer_id: 2,
+    achievement_id: achievement_0.id
+  })
 end

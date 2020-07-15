@@ -14,7 +14,6 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
       add(:open_at, :timestamp, default: fragment("NOW()"))
       add(:close_at, :timestamp, default: fragment("NOW()"))
       add(:is_task, :boolean, default: false)
-      add(:prerequisite_ids, {:array, :integer})
       add(:position, :integer)
 
       add(:modal_image_url, :string,

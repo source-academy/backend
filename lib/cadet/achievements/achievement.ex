@@ -4,7 +4,7 @@ defmodule Cadet.Achievements.Achievement do
   """
   use Cadet, :model
 
-  alias Cadet.Achievements.{AchievementAbility, AchievementGoal}
+  alias Cadet.Achievements.{AchievementAbility, AchievementGoal, AchievementPrerequisite}
 
   schema "achievements" do
     field(:inferencer_id, :integer)
@@ -15,20 +15,20 @@ defmodule Cadet.Achievements.Achievement do
     field(:open_at, :utc_datetime)
     field(:close_at, :utc_datetime)
     field(:is_task, :boolean)
-    field(:prerequisite_ids, {:array, :integer})
     field(:position, :integer, default: 0)
 
     field(:modal_image_url, :string)
     field(:description, :string)
     field(:completion_text, :string)
 
+    has_many(:prerequisites, AchievementPrerequisite)
     has_many(:goals, AchievementGoal)
 
     timestamps()
   end
 
   @required_fields ~w(title ability is_task position)a
-  @optional_fields ~w(background_image_url open_at close_at prerequisite_ids
+  @optional_fields ~w(background_image_url open_at close_at
     modal_image_url description completion_text)a
 
   def changeset(achievement, params) do

@@ -26,7 +26,17 @@ defmodule CadetWeb.AchievementsController do
 
           case final_result do
             {:ok, _goal} ->
-              IO.puts("Success!")
+              prereq_result = Achievements.update_prerequisites(user, achievement_params)
+
+              case prereq_result do
+                {:ok, _goal} ->
+                  IO.puts("Success!")
+
+                {:error, {status, message}} ->
+                  conn
+                  |> put_status(status)
+                  |> text(message)
+              end
 
             {:error, {status, message}} ->
               conn
@@ -56,7 +66,17 @@ defmodule CadetWeb.AchievementsController do
 
         case final_result do
           {:ok, _goal} ->
-            text(conn, "OK")
+            prereq_result = Achievements.update_prerequisites(user, achievement_params)
+
+            case prereq_result do
+              {:ok, _goal} ->
+                text(conn, "OK")
+
+              {:error, {status, message}} ->
+                conn
+                |> put_status(status)
+                |> text(message)
+            end
 
           {:error, {status, message}} ->
             conn
@@ -211,11 +231,6 @@ defmodule CadetWeb.AchievementsController do
             is_task(
               :boolean,
               "if the achievement is a task or not"
-            )
-
-            prerequisite_ids(
-              :array,
-              "id of the prerequisites of the achievement"
             )
 
             position(

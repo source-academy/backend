@@ -4,12 +4,12 @@ defmodule Cadet.Achievements do
   """
   use Cadet, [:context, :display]
 
-  alias Cadet.Achievements.{Achievement, AchievementGoal}
+  alias Cadet.Achievements.{Achievement, AchievementGoal, AchievementPrerequisite}
   alias Cadet.Accounts.User
 
   import Ecto.Query
 
-  @edit_all_assessment_roles ~w(staff admin)a
+  @edit_all_achievement_roles ~w(staff admin)a
 
   # Gets all achieveemnts of a particular user
   def all_achievements(user) do
@@ -23,6 +23,7 @@ defmodule Cadet.Achievements do
       achievements
       |> distinct([a, g], [a.inferencer_id])
       |> Repo.all()
+      |> Repo.preload(prerequisites: [:achievement])
       |> Repo.preload(goals: [:achievement, :user])
 
     Enum.map(distinct_achievements, fn a ->
@@ -34,7 +35,10 @@ defmodule Cadet.Achievements do
         open_at: a.open_at,
         close_at: a.close_at,
         is_task: a.is_task,
-        prerequisite_ids: a.prerequisite_ids,
+        prerequisite_ids:
+          Enum.map(a.prerequisites, fn p ->
+            p.inferencer_id
+          end),
         position: a.position,
         background_image_url: a.background_image_url,
         modal_image_url: a.modal_image_url,
@@ -47,7 +51,7 @@ defmodule Cadet.Achievements do
 
   # Deletes an achievement in the table
   def delete_achievement(user, inferencer_id) do
-    if user.role in @edit_all_assessment_roles do
+    if user.role in @edit_all_achievement_roles do
       this_achievement =
         Achievement
         |> where([a], a.inferencer_id == ^inferencer_id)
@@ -56,6 +60,13 @@ defmodule Cadet.Achievements do
       goal_query =
         AchievementGoal
         |> where([a], a.achievement_id == ^this_achievement.id)
+
+      prereq_query =
+        AchievementPrerequisite
+        |> where([a], a.achievement_id == ^this_achievement.id)
+
+      prereq_query
+      |> Repo.delete_all()
 
       goal_query
       |> Repo.delete_all()
@@ -71,7 +82,7 @@ defmodule Cadet.Achievements do
 
   # Inserts a new achievement, or updates it if it already exists
   def insert_or_update_achievement(user, attrs) do
-    if user.role in @edit_all_assessment_roles do
+    if user.role in @edit_all_achievement_roles do
       _achievement =
         Achievement
         |> where(inferencer_id: ^attrs.inferencer_id)
@@ -91,7 +102,7 @@ defmodule Cadet.Achievements do
 
   # Deletes a goal of an achievement
   def delete_goal(user, goal_id, inferencer_id) do
-    if user.role in @edit_all_assessment_roles do
+    if user.role in @edit_all_achievement_roles do
       this_achievement =
         Achievement
         |> where([a], a.inferencer_id == ^inferencer_id)
@@ -110,9 +121,41 @@ defmodule Cadet.Achievements do
     end
   end
 
+  # Update ALL the prerequisites of that achievement 
+  def update_prerequisites(user, attrs) do
+    if user.role in @edit_all_achievement_roles do
+      this_achievement =
+        Achievement
+        |> where([a], a.inferencer_id == ^attrs.inferencer_id)
+        |> Repo.one()
+
+      for prereq <- attrs.prerequisite_ids do
+        prereq_params = %{
+          inferencer_id: prereq.inferencer_id,
+          achievement_id: this_achievement.id
+        }
+
+        AchievementPrerequisite
+        |> where([a], a.inferencer_id == ^prereq.inferencer_id)
+        |> where([a], a.achievement_id == ^this_achievement.id)
+        |> Repo.one()
+        |> case do
+          nil ->
+            AchievementPrerequisite.changeset(%AchievementPrerequisite{}, prereq_params)
+
+          this_prereq ->
+            AchievementPrerequisite.changeset(this_prereq, prereq_params)
+        end
+        |> Repo.insert_or_update()
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to edit achievements"}}
+    end
+  end
+
   # Update All the goals of that achievement
   def update_goals(user, attrs) do
-    if user.role in @edit_all_assessment_roles do
+    if user.role in @edit_all_achievement_roles do
       this_achievement =
         Achievement
         |> where([a], a.inferencer_id == ^attrs.inferencer_id)
@@ -153,7 +196,6 @@ defmodule Cadet.Achievements do
       title: json["title"],
       ability: json["ability"],
       is_task: json["isTask"],
-      prerequisite_ids: json["prerequisiteIds"],
       position: json["position"],
       background_image_url: json["backgroundImageUrl"],
       close_at: get_date(json["deadline"]),
