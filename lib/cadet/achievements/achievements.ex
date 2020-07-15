@@ -259,6 +259,8 @@ defmodule Cadet.Achievements do
         })
       end
     end
+
+    :ok
   end
 
   # Helper functions to get the goals for that particular user
