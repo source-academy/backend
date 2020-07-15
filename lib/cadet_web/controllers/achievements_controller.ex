@@ -57,7 +57,7 @@ defmodule CadetWeb.AchievementsController do
     text(conn, "OK")
   end
 
-  def edit(conn, %{"achievement" => achievement}) do
+  def edit(conn, %{"id" => _inferencer_id, "achievement" => achievement}) do
     user = conn.assigns.current_user
 
     achievement_params = Achievements.get_achievement_params_from_json(achievement)
