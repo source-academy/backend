@@ -27,7 +27,7 @@ defmodule Cadet.Achievements.Achievement do
     timestamps()
   end
 
-  @required_fields ~w(title ability is_task position)a
+  @required_fields ~w(title ability is_task position inferencer_id)a
   @optional_fields ~w(background_image_url open_at close_at
     modal_image_url description completion_text)a
 
@@ -40,16 +40,5 @@ defmodule Cadet.Achievements.Achievement do
     achievement
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_open_close_date
-  end
-
-  defp validate_open_close_date(changeset) do
-    validate_change(changeset, :open_at, fn :open_at, open_at ->
-      if Timex.before?(open_at, get_field(changeset, :close_at)) do
-        []
-      else
-        [open_at: "Open date must be before close date"]
-      end
-    end)
   end
 end
