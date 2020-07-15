@@ -8,9 +8,7 @@ defmodule Cadet.Achievements.AchievementPrerequisite do
 
   schema "achievement_prerequisites" do
     field(:inferencer_id, :integer)
-
     belongs_to(:achievement, Achievement)
-
     timestamps()
   end
 

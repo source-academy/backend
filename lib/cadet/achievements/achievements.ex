@@ -121,33 +121,35 @@ defmodule Cadet.Achievements do
     end
   end
 
-  # Update ALL the prerequisites of that achievement 
-  def update_prerequisites(user, attrs) do
+  # Update All the prerequisites of that achievement
+  def update_prerequisites(user, fields = %{ inferencer_id: inferencer_id, prerequisites: prerequisites}) do
     if user.role in @edit_all_achievement_roles do
       this_achievement =
         Achievement
-        |> where([a], a.inferencer_id == ^attrs.inferencer_id)
+        |> where([a], a.inferencer_id == ^inferencer_id)
         |> Repo.one()
 
-      for prereq <- attrs.prerequisite_ids do
-        prereq_params = %{
-          inferencer_id: prereq.inferencer_id,
-          achievement_id: this_achievement.id
+      for prereq <- prerequisites do
+        goal_params = %{
+          inferencer_id: prereq, 
+          achievement_id: inferencer_id
         }
 
         AchievementPrerequisite
-        |> where([a], a.inferencer_id == ^prereq.inferencer_id)
-        |> where([a], a.achievement_id == ^this_achievement.id)
+        |> where([a], a.achievement_id == ^inferencer_id)
+        |> where([a], a.inferencer_id == ^prereq)
         |> Repo.one()
         |> case do
           nil ->
-            AchievementPrerequisite.changeset(%AchievementPrerequisite{}, prereq_params)
+            AchievementPrerequisite.changeset(%AchievementPrerequisite{}, goal_params)
 
-          this_prereq ->
-            AchievementPrerequisite.changeset(this_prereq, prereq_params)
+          achievement_prereq ->
+            AchievementPrerequisite.changeset(achievement_prereq, goal_params)
         end
         |> Repo.insert_or_update()
       end
+
+      :ok
     else
       {:error, {:forbidden, "User is not permitted to edit achievements"}}
     end
@@ -166,25 +168,26 @@ defmodule Cadet.Achievements do
         |> Repo.all()
 
       for goal_json <- attrs.goals do
-        goal_params = get_goal_params_from_json(goal_json)
-
         for user <- users do
-          _achievement_goal =
-            AchievementGoal
-            |> where([a], a.goal_id == ^goal_params.goal_id)
-            |> where([a], a.achievement_id == ^this_achievement.id)
-            |> where([a], a.user_id == ^user.id)
-            |> Repo.one()
-            |> case do
-              nil ->
-                AchievementGoal.changeset(%AchievementGoal{}, goal_params)
+          goal_params = get_goal_params_from_json(goal_json, this_achievement.id, user.id)
 
-              achievement_goal ->
-                AchievementGoal.changeset(achievement_goal, goal_params)
-            end
-            |> Repo.insert_or_update()
+          AchievementGoal
+          |> where([a], a.goal_id == ^goal_params.goal_id)
+          |> where([a], a.achievement_id == ^this_achievement.id)
+          |> where([a], a.user_id == ^user.id)
+          |> Repo.one()
+          |> case do
+            nil ->
+              AchievementGoal.changeset(%AchievementGoal{}, goal_params)
+
+            achievement_goal ->
+              AchievementGoal.changeset(achievement_goal, goal_params)
+          end
+          |> Repo.insert_or_update()
         end
       end
+
+      :ok
     else
       {:error, {:forbidden, "User is not permitted to edit achievements"}}
     end
@@ -207,14 +210,23 @@ defmodule Cadet.Achievements do
     }
   end
 
-  def get_goal_params_from_json(json) do
+  def get_goal_params_from_json(json, achievement_id, user_id) do
     %{
       goal_id: json["goalId"],
       goal_text: json["goalText"],
       goal_progress: json["goalProgress"],
-      goal_target: json["goalTarget"]
+      goal_target: json["goalTarget"], 
+      achievement_id: achievement_id, 
+      user_id: user_id
     }
   end
+
+  def get_prereq_fields_from_json(json) do 
+    %{
+      inferencer_id: json["id"],
+      prerequisites: json["prerequisiteIds"]
+    }
+  end 
 
   # Helper functions to update goals for a newly adder user
   def add_new_user_goals(user) do

@@ -18,6 +18,7 @@ defmodule CadetWeb.AchievementsController do
 
     for achievement <- achievements do
       achievement_params = Achievements.get_achievement_params_from_json(achievement)
+      prereq_fields = Achievements.get_prereq_fields_from_json(achievement)
       result = Achievements.insert_or_update_achievement(user, achievement_params)
 
       case result do
@@ -25,13 +26,13 @@ defmodule CadetWeb.AchievementsController do
           final_result = Achievements.update_goals(user, achievement_params)
 
           case final_result do
-            {:ok, _goal} ->
-              prereq_result = Achievements.update_prerequisites(user, achievement_params)
+            :ok ->
+              prereq_result = Achievements.update_prerequisites(user, prereq_fields)
 
               case prereq_result do
-                {:ok, _goal} ->
+                :ok ->
                   IO.puts("Success!")
-
+    
                 {:error, {status, message}} ->
                   conn
                   |> put_status(status)
@@ -58,6 +59,7 @@ defmodule CadetWeb.AchievementsController do
     user = conn.assigns.current_user
 
     achievement_params = Achievements.get_achievement_params_from_json(achievement)
+    prereq_fields = Achievements.get_prereq_fields_from_json(achievement)
     result = Achievements.insert_or_update_achievement(user, achievement_params)
 
     case result do
@@ -65,13 +67,13 @@ defmodule CadetWeb.AchievementsController do
         final_result = Achievements.update_goals(user, achievement_params)
 
         case final_result do
-          {:ok, _goal} ->
-            prereq_result = Achievements.update_prerequisites(user, achievement_params)
+          :ok ->
+            prereq_result = Achievements.update_prerequisites(user, prereq_fields)
 
             case prereq_result do
-              {:ok, _goal} ->
+              :ok ->
                 text(conn, "OK")
-
+  
               {:error, {status, message}} ->
                 conn
                 |> put_status(status)
