@@ -27,17 +27,19 @@ defmodule CadetWeb.AchievementsController do
 
           case final_result do
             :ok ->
-              prereq_result = Achievements.update_prerequisites(user, prereq_fields)
+              IO.puts("Success!")
 
-              case prereq_result do
-                :ok ->
-                  IO.puts("Success!")
+            {:error, {status, message}} ->
+              conn
+              |> put_status(status)
+              |> text(message)
+          end
 
-                {:error, {status, message}} ->
-                  conn
-                  |> put_status(status)
-                  |> text(message)
-              end
+          prereq_result = Achievements.update_prerequisites(user, prereq_fields)
+
+          case prereq_result do
+            :ok ->
+              IO.puts("Success!")
 
             {:error, {status, message}} ->
               conn
@@ -68,17 +70,19 @@ defmodule CadetWeb.AchievementsController do
 
         case final_result do
           :ok ->
-            prereq_result = Achievements.update_prerequisites(user, prereq_fields)
+            IO.puts("Success!")
 
-            case prereq_result do
-              :ok ->
-                text(conn, "OK")
+          {:error, {status, message}} ->
+            conn
+            |> put_status(status)
+            |> text(message)
+        end
 
-              {:error, {status, message}} ->
-                conn
-                |> put_status(status)
-                |> text(message)
-            end
+        prereq_result = Achievements.update_prerequisites(user, prereq_fields)
+
+        case prereq_result do
+          :ok ->
+            text(conn, "OK")
 
           {:error, {status, message}} ->
             conn
