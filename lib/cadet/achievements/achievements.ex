@@ -135,6 +135,10 @@ defmodule Cadet.Achievements do
         |> where([a], a.inferencer_id == ^inferencer_id)
         |> Repo.one()
 
+      AchievementPrerequisite
+      |> where([p], p.achievement_id == ^inferencer_id)
+      |> Repo.delete_all()
+
       for prereq <- prerequisites do
         goal_params = %{
           inferencer_id: prereq,
