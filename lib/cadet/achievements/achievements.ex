@@ -84,11 +84,11 @@ defmodule Cadet.Achievements do
   end
 
   # Inserts a new achievement, or updates it if it already exists
-  def insert_or_update_achievement(user, attrs) do
+  def insert_or_update_achievement(user, inferencer_id, attrs) do
     if user.role in @edit_all_achievement_roles do
       _achievement =
         Achievement
-        |> where(inferencer_id: ^attrs.inferencer_id)
+        |> where(inferencer_id: ^inferencer_id)
         |> Repo.one()
         |> case do
           nil ->
