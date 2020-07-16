@@ -18,6 +18,7 @@ defmodule Cadet.AchievementsTest do
       {_res, achievement} =
         Achievements.insert_or_update_achievement(
           user,
+          0,
           %{
             inferencer_id: 0,
             title: title_string,
@@ -120,6 +121,7 @@ defmodule Cadet.AchievementsTest do
     {_res, achievement} =
       Achievements.insert_or_update_achievement(
         user,
+        69,
         %{
           inferencer_id: 69,
           title: "New String",

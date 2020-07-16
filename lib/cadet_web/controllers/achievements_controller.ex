@@ -13,50 +13,6 @@ defmodule CadetWeb.AchievementsController do
     render(conn, "index.json", achievements: achievements)
   end
 
-  def edit_achievements(conn, %{"achievements" => achievements}) do
-    user = conn.assigns.current_user
-
-    for achievement <- achievements do
-      achievement_params = Achievements.get_achievement_params_from_json(achievement)
-      prereq_fields = Achievements.get_prereq_fields_from_json(achievement)
-      result = Achievements.insert_or_update_achievement(user, achievement_params)
-
-      case result do
-        {:ok, _achievement} ->
-          final_result = Achievements.update_goals(user, achievement_params)
-
-          case final_result do
-            :ok ->
-              :ok
-
-            {:error, {status, message}} ->
-              conn
-              |> put_status(status)
-              |> text(message)
-          end
-
-          prereq_result = Achievements.update_prerequisites(user, prereq_fields)
-
-          case prereq_result do
-            :ok ->
-              :ok
-
-            {:error, {status, message}} ->
-              conn
-              |> put_status(status)
-              |> text(message)
-          end
-
-        {:error, {status, message}} ->
-          conn
-          |> put_status(status)
-          |> text(message)
-      end
-    end
-
-    text(conn, "OK")
-  end
-
   def edit(conn, %{"id" => inferencer_id, "achievement" => achievement}) do
     user = conn.assigns.current_user
 
