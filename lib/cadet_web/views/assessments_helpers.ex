@@ -19,16 +19,22 @@ defmodule CadetWeb.AssessmentsHelpers do
     transform_map_for_view(external_library, [:name, :symbols])
   end
 
-  def build_question_by_assessment_type(%{
-        question: question,
-        assessment_type: assessment_type
-      }) do
+  def build_question_by_assessment_type(
+        %{
+          question: question,
+          assessment_type: assessment_type
+        },
+        all_testcases? \\ false
+      ) do
     Map.merge(
       build_generic_question_fields(%{question: question}),
-      build_question_content_by_type(%{
-        question: question,
-        assessment_type: assessment_type
-      })
+      build_question_content_by_type(
+        %{
+          question: question,
+          assessment_type: assessment_type
+        },
+        all_testcases?
+      )
     )
   end
 
@@ -146,19 +152,25 @@ defmodule CadetWeb.AssessmentsHelpers do
       score: "score",
       program: "program",
       # Create a 1-arity function to return the type of the testcase as a string
-      type: &Kernel.apply(fn _testcase -> type end, [&1])
+      type: fn _ -> type end
     })
   end
 
-  defp build_testcases(%{assessment_type: assessment_type}) do
-    case assessment_type do
-      :path ->
+  defp build_testcases(%{assessment_type: assessment_type}, all_testcases?) do
+    cond do
+      all_testcases? ->
+        &Enum.concat(
+          Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
+          Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "private") end)
+        )
+
+      assessment_type == :path ->
         &Enum.concat(
           Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
         )
 
-      _ ->
+      true ->
         &Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end)
     end
   end
@@ -167,14 +179,17 @@ defmodule CadetWeb.AssessmentsHelpers do
     case assessment_type do
       :path -> & &1["postpend"]
       # Create a 1-arity function to return an empty postpend for non-paths
-      _ -> &Kernel.apply(fn _question -> "" end, [&1])
+      _ -> fn _question -> "" end
     end
   end
 
-  defp build_question_content_by_type(%{
-         question: %{question: question, type: question_type},
-         assessment_type: assessment_type
-       }) do
+  defp build_question_content_by_type(
+         %{
+           question: %{question: question, type: question_type},
+           assessment_type: assessment_type
+         },
+         all_testcases?
+       ) do
     case question_type do
       :programming ->
         transform_map_for_view(question, %{
@@ -182,7 +197,7 @@ defmodule CadetWeb.AssessmentsHelpers do
           prepend: "prepend",
           solutionTemplate: "template",
           postpend: build_postpend(%{assessment_type: assessment_type}),
-          testcases: build_testcases(%{assessment_type: assessment_type})
+          testcases: build_testcases(%{assessment_type: assessment_type}, all_testcases?)
         })
 
       :mcq ->
