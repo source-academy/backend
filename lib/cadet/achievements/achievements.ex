@@ -210,10 +210,10 @@ defmodule Cadet.Achievements do
       ability: json["ability"],
       is_task: json["isTask"],
       position: json["position"],
-      card_tile_url: json["backgroundImageUrl"],
+      card_tile_url: json["cardTileUrl"],
       close_at: get_date(json["deadline"]),
       open_at: get_date(json["release"]),
-      canvas_url: json["modal"]["modalImageUrl"],
+      canvas_url: json["modal"]["canvasUrl"],
       description: json["modal"]["description"],
       completion_text: json["modal"]["completionText"],
       goals: json["goals"]

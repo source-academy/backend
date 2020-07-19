@@ -46,7 +46,7 @@ defmodule CadetWeb.AchievementsControllerTest do
 
     assert resp_achievement == %{
              "ability" => "Core",
-             "backgroundImageUrl" => nil,
+             "cardTileUrl" => nil,
              "goals" => [
                %{
                  "goalId" => 1,
@@ -58,7 +58,7 @@ defmodule CadetWeb.AchievementsControllerTest do
              "id" => "id",
              "inferencer_id" => 69,
              "isTask" => false,
-             "modalImageUrl" =>
+             "canvasUrl" =>
                "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/canvas/annotated-canvas.png",
              "position" => 0,
              "prerequisiteIds" => [],
@@ -142,7 +142,7 @@ defmodule CadetWeb.AchievementsControllerTest do
       "ability" => "Core",
       "isTask" => false,
       "position" => 0,
-      "backgroundImageUrl" => nil,
+      "canvasUrl" => nil,
       "deadline" =>
         DateTime.to_string(
           DateTime.truncate(DateTime.add(DateTime.utc_now(), 3600, :second), :second)
@@ -151,7 +151,7 @@ defmodule CadetWeb.AchievementsControllerTest do
       "goals" => [],
       "prerequisiteIds" => [],
       "modal" => %{
-        "modalImageUrl" => nil,
+        "cardTileUrl" => nil,
         "description" => "",
         "completionText" => ""
       }

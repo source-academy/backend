@@ -267,12 +267,12 @@ defmodule Cadet.AchievementsTest do
       "ability" => "Core",
       "isTask" => false,
       "position" => 0,
-      "backgroundImageUrl" => nil,
+      "cardTileUrl" => nil,
       "deadline" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
       "release" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
       "goals" => [],
       "modal" => %{
-        "modalImageUrl" => nil,
+        "canvasUrl" => nil,
         "description" => "",
         "completionText" => ""
       }
