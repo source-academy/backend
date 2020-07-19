@@ -271,7 +271,7 @@ defmodule Cadet.AchievementsTest do
       "deadline" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
       "release" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
       "goals" => [],
-      "modal" => %{
+      "view" => %{
         "canvasUrl" => nil,
         "description" => "",
         "completionText" => ""

@@ -150,7 +150,7 @@ defmodule CadetWeb.AchievementsControllerTest do
       "release" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
       "goals" => [],
       "prerequisiteIds" => [],
-      "modal" => %{
+      "view" => %{
         "cardTileUrl" => nil,
         "description" => "",
         "completionText" => ""

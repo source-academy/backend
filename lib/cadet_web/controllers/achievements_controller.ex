@@ -202,7 +202,7 @@ defmodule CadetWeb.AchievementsController do
 
             canvas_url(
               :string,
-              "url of the image for the modal"
+              "url of the image for the view"
             )
 
             description(
