@@ -10,13 +10,13 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
       add(:title, :string)
       add(:inferencer_id, :integer)
       add(:ability, :achievement_ability, default: "Core")
-      add(:background_image_url, :string)
+      add(:card_tile_url, :string)
       add(:open_at, :timestamp, default: fragment("NOW()"))
       add(:close_at, :timestamp, default: fragment("NOW()"))
       add(:is_task, :boolean, default: false)
       add(:position, :integer)
 
-      add(:modal_image_url, :string,
+      add(:canvas_url, :string,
         default:
           "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
       )

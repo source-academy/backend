@@ -118,7 +118,7 @@ if Cadet.Env.env() == :dev do
       ability: :Core,
       is_task: true,
       position: 1,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png"
     })
 
@@ -129,7 +129,7 @@ if Cadet.Env.env() == :dev do
       ability: :Core,
       is_task: false,
       position: 0,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/btsd-tile.png",
       open_at: ~U[2020-07-16 16:00:00Z],
       close_at: ~U[2020-07-20 16:00:00Z]
@@ -142,7 +142,7 @@ if Cadet.Env.env() == :dev do
       ability: :Core,
       is_task: false,
       position: 0,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/colorful-carpet-tile.png",
       open_at: ~U[2020-07-11 16:00:00Z],
       close_at: ~U[2020-07-15 16:00:00Z]
@@ -155,7 +155,7 @@ if Cadet.Env.env() == :dev do
       ability: :Core,
       is_task: false,
       position: 0,
-      background_image_url:
+      card_tile_url:
         "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
     })
 
@@ -166,7 +166,7 @@ if Cadet.Env.env() == :dev do
       ability: :Core,
       is_task: true,
       position: 4,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-wizard-tile.png",
       open_at: ~U[2020-07-31 16:00:00Z],
       close_at: ~U[2020-08-04 16:00:00Z]
@@ -179,7 +179,7 @@ if Cadet.Env.env() == :dev do
       ability: :Core,
       is_task: false,
       position: 0,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-introduction-tile.png",
       open_at: ~U[2020-07-23 16:00:00Z],
       close_at: ~U[2020-07-27 16:00:00Z]
@@ -192,7 +192,7 @@ if Cadet.Env.env() == :dev do
       ability: :Core,
       is_task: false,
       position: 0,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-manipulation-tile.png",
       open_at: ~U[2020-07-31 16:00:00Z],
       close_at: ~U[2020-08-04 16:00:00Z]
@@ -205,7 +205,7 @@ if Cadet.Env.env() == :dev do
       ability: :Effort,
       is_task: true,
       position: 3,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/the-source-rer-tile.png",
       open_at: ~U[2020-07-16 16:00:00Z],
       close_at: ~U[2020-07-20 16:00:00Z]
@@ -218,7 +218,7 @@ if Cadet.Env.env() == :dev do
       ability: :Community,
       is_task: true,
       position: 2,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/power-of-friendship-tile.png",
       open_at: ~U[2020-07-16 16:00:00Z],
       close_at: ~U[2020-07-20 16:00:00Z]
@@ -231,7 +231,7 @@ if Cadet.Env.env() == :dev do
       ability: :Community,
       is_task: false,
       position: 0,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/piazza-guru-tile.png"
     })
 
@@ -242,7 +242,7 @@ if Cadet.Env.env() == :dev do
       ability: :Exploration,
       is_task: true,
       position: 5,
-      background_image_url:
+      card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/annotated-tile.png"
     })
 

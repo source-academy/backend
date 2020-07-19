@@ -49,8 +49,8 @@ defmodule Cadet.AchievementsTest do
         ability: :Core,
         is_task: false,
         position: 0,
-        background_image_url: "",
-        modal_image_url: "",
+        card_tile_url: "",
+        canvas_url: "",
         description: "",
         completion_text: ""
       })
@@ -83,7 +83,7 @@ defmodule Cadet.AchievementsTest do
     assert [
              %{
                ability: :Core,
-               background_image_url: "",
+               card_tile_url: "",
                completion_text: "",
                description: "",
                goals: [
@@ -97,7 +97,7 @@ defmodule Cadet.AchievementsTest do
                id: :id,
                inferencer_id: 0,
                is_task: false,
-               modal_image_url: "",
+               canvas_url: "",
                position: 0,
                prerequisite_ids: [1],
                title: "Test"
@@ -284,10 +284,10 @@ defmodule Cadet.AchievementsTest do
       ability: "Core",
       is_task: false,
       position: 0,
-      background_image_url: nil,
+      card_tile_url: nil,
       close_at: DateTime.truncate(DateTime.utc_now(), :second),
       open_at: DateTime.truncate(DateTime.utc_now(), :second),
-      modal_image_url: nil,
+      canvas_url: nil,
       description: "",
       completion_text: "",
       goals: []

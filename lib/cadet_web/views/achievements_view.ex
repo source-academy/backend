@@ -17,8 +17,8 @@ defmodule CadetWeb.AchievementsView do
       isTask: :is_task,
       prerequisiteIds: :prerequisite_ids,
       position: :position,
-      backgroundImageUrl: :background_image_url,
-      modalImageUrl: :modal_image_url,
+      cardTileUrl: :card_tile_url,
+      canvasUrl: :canvas_url,
       description: :description,
       completionText: :completion_text,
       goals:

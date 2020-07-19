@@ -40,8 +40,8 @@ defmodule Cadet.Achievements do
             p.inferencer_id
           end),
         position: a.position,
-        background_image_url: a.background_image_url,
-        modal_image_url: a.modal_image_url,
+        card_tile_url: a.card_tile_url,
+        canvas_url: a.canvas_url,
         description: a.description,
         completion_text: a.completion_text,
         goals: get_user_goals(achievements, a)
@@ -210,10 +210,10 @@ defmodule Cadet.Achievements do
       ability: json["ability"],
       is_task: json["isTask"],
       position: json["position"],
-      background_image_url: json["backgroundImageUrl"],
+      card_tile_url: json["backgroundImageUrl"],
       close_at: get_date(json["deadline"]),
       open_at: get_date(json["release"]),
-      modal_image_url: json["modal"]["modalImageUrl"],
+      canvas_url: json["modal"]["modalImageUrl"],
       description: json["modal"]["description"],
       completion_text: json["modal"]["completionText"],
       goals: json["goals"]

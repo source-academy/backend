@@ -10,14 +10,14 @@ defmodule Cadet.Achievements.Achievement do
     field(:inferencer_id, :integer)
     field(:title, :string)
     field(:ability, AchievementAbility)
-    field(:background_image_url, :string)
+    field(:card_tile_url, :string)
 
     field(:open_at, :utc_datetime)
     field(:close_at, :utc_datetime)
     field(:is_task, :boolean)
     field(:position, :integer, default: 0)
 
-    field(:modal_image_url, :string)
+    field(:canvas_url, :string)
     field(:description, :string)
     field(:completion_text, :string)
 
@@ -28,8 +28,8 @@ defmodule Cadet.Achievements.Achievement do
   end
 
   @required_fields ~w(title ability is_task position inferencer_id)a
-  @optional_fields ~w(background_image_url open_at close_at
-    modal_image_url description completion_text)a
+  @optional_fields ~w(card_tile_url open_at close_at
+    canvas_url description completion_text)a
 
   def changeset(achievement, params) do
     params =

@@ -170,7 +170,7 @@ defmodule CadetWeb.AchievementsController do
               "ability"
             )
 
-            background_image_url(
+            card_tile_url(
               :string,
               "URL of the achievement's background image"
             )
@@ -200,7 +200,7 @@ defmodule CadetWeb.AchievementsController do
               "position of achievement in the list"
             )
 
-            modal_image_url(
+            canvas_url(
               :string,
               "url of the image for the modal"
             )
