@@ -1,4 +1,5 @@
 defmodule CadetWeb.Endpoint do
+  use Sentry.PlugCapture
   use Phoenix.Endpoint, otp_app: :cadet
 
   plug(
@@ -38,6 +39,8 @@ defmodule CadetWeb.Endpoint do
     pass: ["*/*"],
     json_decoder: Jason
   )
+
+  plug(Sentry.PlugContext)
 
   plug(Plug.MethodOverride)
   plug(Plug.Head)
