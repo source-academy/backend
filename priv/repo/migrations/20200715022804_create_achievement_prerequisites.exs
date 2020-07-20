@@ -4,11 +4,16 @@ defmodule Cadet.Repo.Migrations.CreateAchievementPrerequisites do
   alias Cadet.Achievements.{AchievementPrerequisite, Achievement}
 
   def change do
-    create table(:achievement_prerequisites) do
-      add(:inferencer_id, :integer)
-      add(:achievement_id, references(:achievements), on_delete: :delete_all)
+    create table(:achievement_prerequisites, primary_key: false) do
+      add(:achievement_id, references(:achievements, on_delete: :delete_all),
+        null: false,
+        primary_key: true
+      )
 
-      timestamps()
+      add(:prerequisite_id, references(:achievements, on_delete: :delete_all),
+        null: false,
+        primary_key: true
+      )
     end
   end
 end

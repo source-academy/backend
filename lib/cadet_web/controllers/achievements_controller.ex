@@ -4,241 +4,247 @@ defmodule CadetWeb.AchievementsController do
   use PhoenixSwagger
 
   alias Cadet.Achievements
-  alias Cadet.Achievements.{AchievementGoal, AchievementAbility}
 
   def index(conn, _) do
-    user = conn.assigns.current_user
-
-    achievements = Achievements.all_achievements(user)
-    render(conn, "index.json", achievements: achievements)
+    render(conn, "index.json",
+      achievements: Achievements.get_user_achievements(conn.assigns.current_user)
+    )
   end
 
-  def edit(conn, %{"id" => inferencer_id, "achievement" => achievement}) do
-    user = conn.assigns.current_user
-
-    achievement_params = Achievements.get_achievement_params_from_json(achievement)
-    prereq_fields = Achievements.get_prereq_fields_from_json(achievement)
-    result = Achievements.insert_or_update_achievement(user, inferencer_id, achievement_params)
-
-    case result do
-      {:ok, _achievement} ->
-        final_result = Achievements.update_goals(user, achievement_params)
-
-        case final_result do
-          :ok ->
-            :ok
-
-          {:error, {status, message}} ->
-            conn
-            |> put_status(status)
-            |> text(message)
-        end
-
-        prereq_result = Achievements.update_prerequisites(user, prereq_fields)
-
-        case prereq_result do
-          :ok ->
-            text(conn, "OK")
-
-          {:error, {status, message}} ->
-            conn
-            |> put_status(status)
-            |> text(message)
-        end
+  def update(conn, %{"id" => id, "achievement" => achievement}) do
+    case Achievements.insert_or_update_achievement(
+           conn.assigns.current_user,
+           json_to_achievement(id, achievement)
+         ) do
+      {:ok, _} ->
+        send_resp(conn, 200, "Success")
 
       {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
+        send_resp(conn, status, message)
     end
   end
 
-  def delete(conn, %{"id" => inferencer_id}) do
-    user = conn.assigns.current_user
-
-    result = Achievements.delete_achievement(user, inferencer_id)
-
-    case result do
+  def delete(conn, %{"id" => id}) do
+    case Achievements.delete_achievement(conn.assigns.current_user, id) do
       :ok ->
-        text(conn, "OK")
+        send_resp(conn, :no_content, "")
 
       {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
+        send_resp(conn, status, message)
     end
   end
 
-  def delete_goal(conn, %{"id" => inferencer_id, "goalId" => goal_id}) do
-    user = conn.assigns.current_user
-
-    result = Achievements.delete_goal(user, goal_id, inferencer_id)
-
-    case result do
+  def delete_goal(conn, %{"id" => achievement_id, "order" => order}) do
+    case Achievements.delete_goal(conn.assigns.current_user, achievement_id, order) do
       :ok ->
-        text(conn, "OK")
+        send_resp(conn, :no_content, "")
 
       {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
+        send_resp(conn, status, message)
     end
+  end
+
+  defp json_to_achievement(id, json) do
+    json
+    |> snake_casify_string_keys_recursive()
+    |> rename_keys([
+      {"deadline", "close_at"},
+      {"release", "open_at"},
+      {"prerequisite_ids", "prerequisites"}
+    ])
+    |> case do
+      map = %{"view" => view} ->
+        map
+        |> Map.delete("view")
+        |> Map.merge(view |> Map.take([~w(canvas_url description completion_text)]))
+
+      map ->
+        map
+    end
+    |> case do
+      map = %{"goals" => goals} ->
+        %{map | "goals" => Enum.map(goals, &json_to_goal(&1))}
+
+      map ->
+        map
+    end
+    |> Map.put("id", id)
+  end
+
+  defp json_to_goal(json) do
+    rename_keys(json, [{"goal_id", "order"}, {"goal_text", "text"}, {"goal_target", "target"}])
   end
 
   swagger_path :index do
     get("/achievements")
 
-    summary("Get list of all achievements")
+    summary("Gets achievements, including goals and progress")
     security([%{JWT: []}])
 
-    response(200, "OK")
+    response(200, "OK", Schema.array(:Achievement))
     response(401, "Unauthorised")
   end
 
   swagger_path :update do
-    post("/achievements")
+    post("/achievements/{id}")
 
-    summary("Updates achievements with a new set")
+    summary("Inserts or updates an achievement")
 
     security([%{JWT: []}])
 
     parameters do
-      achievements(:body, :json, "Achievements to be updated", required: true)
+      achievement(
+        :body,
+        Schema.ref(:Achievement),
+        "The achievement to insert, or properties to update",
+        required: true
+      )
     end
 
     response(200, "OK")
     response(401, "Unauthorised")
-  end
-
-  swagger_path :edit do
-    post("/achievements/update")
-
-    summary("Edits an achievement")
-    security([%{JWT: []}])
-
-    parameters do
-      achievement(:body, Achievement, "Achievement to be updated", required: true)
-    end
-
-    response(200, "OK")
-    response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/achievements/")
+    PhoenixSwagger.Path.delete("/achievements/{id}")
 
     summary("Deletes an achievement")
     security([%{JWT: []}])
 
     parameters do
-      achievement(:body, Achievement, "The associated Achievement", required: true)
+      id(:path, :integer, "Achievement ID", required: true)
     end
 
-    response(200, "OK")
+    response(204, "Success")
     response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :delete_goal do
-    PhoenixSwagger.Path.delete("/achievements/goals/")
+    PhoenixSwagger.Path.delete("/achievements/{id}/goals/{goalId}")
 
-    summary("Deletes a goal of an achievement")
+    summary("Deletes an achievement goal")
     security([%{JWT: []}])
 
     parameters do
-      goal(:body, AchievementGoal, "The associated goal", required: true)
-      achievement(:body, Achievement, "The associated Achievement", required: true)
+      id(:path, :integer, "Achievement ID", required: true)
+      goalId(:path, :integer, "Goal ID", required: true)
     end
 
-    response(200, "OK")
+    response(204, "Success")
     response(401, "Unauthorised")
+    response(403, "Unauthorised")
   end
 
   def swagger_definitions do
     %{
-      Achievements:
+      Achievement:
         swagger_schema do
-          description("The Achievements a Student needs to gain exp")
+          description("An achievement")
 
           properties do
             title(
               :string,
-              "title of the achievement"
+              "Achievement title"
             )
 
             ability(
-              AchievementAbility,
-              "ability"
+              :string,
+              "Achievement ability i.e. category"
             )
 
-            card_tile_url(
+            cardTileUrl(
               :string,
               "URL of the achievement's background image"
             )
 
-            inferencer_id(
+            id(
               :integer,
-              "id used for reference by inferencer"
+              "Achievement ID"
             )
 
-            open_at(
+            release(
               :string,
-              "open date of achievement"
+              "Open date, in ISO 8601 format"
             )
 
-            close_at(
+            deadline(
               :string,
-              "close date of achievement"
+              "Close date, in ISO 8601 format"
             )
 
-            is_task(
+            isTask(
               :boolean,
-              "if the achievement is a task or not"
+              "Whether the achievement is a task"
             )
 
             position(
-              :position,
-              "position of achievement in the list"
+              :integer,
+              "Position of the achievement in the list"
             )
 
-            canvas_url(
+            view(
+              ref(:AchievementView),
+              "View properties"
+            )
+
+            goals(
+              :array,
+              "Achievement goals",
+              items: Schema.ref(:AchievementGoal)
+            )
+
+            prerequisiteIds(
+              array(:integer),
+              "Prerequisite achievement IDs"
+            )
+          end
+        end,
+      AchievementView:
+        swagger_schema do
+          description("Achievement view properties")
+
+          properties do
+            canvasUrl(
               :string,
-              "url of the image for the view"
+              "URL of the image for the view"
             )
 
             description(
               :string,
-              "description of the achievement"
+              "Achievement description"
             )
 
-            completion_text(
+            completionText(
               :string,
-              "text to show when goal is met"
+              "Text to show when achievement is completed"
             )
           end
         end,
       AchievementGoal:
         swagger_schema do
-          description("The Goals to fulfill a particular Achievement")
+          description("Goals to meet to unlock an achievement")
 
           properties do
-            goal_id(
+            goalId(
               :integer,
-              "id of the goal for the particular achievement"
+              "Goal ID"
             )
 
-            goal_text(
+            goalText(
               :string,
-              "text to show when goal is met"
+              "Text to show when goal is completed"
             )
 
-            goal_progress(
+            goalProgress(
               :integer,
-              "student's progress for the goal"
+              "Current user's progress towards completing the goal"
             )
 
-            goal_target(
+            goalTarget(
               :string,
-              "target exp needed for the student to complete the goal"
+              "Target EXP needed to complete the goal"
             )
           end
         end

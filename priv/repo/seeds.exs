@@ -12,8 +12,6 @@
 import Cadet.Factory
 
 alias Cadet.Assessments.SubmissionStatus
-alias Cadet.Achievements.AchievementAbility
-alias Cadet.Acoounts.User
 
 # insert default source version
 Cadet.Repo.insert!(%Cadet.Chapters.Chapter{chapterno: 1, variant: "default"})
@@ -105,54 +103,90 @@ if Cadet.Env.env() == :dev do
     end
   end
 
-  # Achievements 
-
-  # Note that this is handcrafted from the frontend mocks 
-  # When close to  production, this shall be more general
-
-  # Inserting Custom Achievements
+  # Achievements
   achievement_0 =
     insert(:achievement, %{
-      inferencer_id: 0,
+      id: 0,
       title: "Rune Master",
-      ability: :Core,
+      ability: "Core",
       is_task: true,
       position: 1,
       card_tile_url:
-        "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png"
+        "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Beyond the Second Dimension achievement",
+          target: 250
+        },
+        %{
+          order: 1,
+          text: "Complete Colorful Carpet achievement",
+          target: 250
+        },
+        %{
+          order: 2,
+          text: "Bonus for completing Rune Master achievement",
+          target: 250
+        }
+      ]
     })
 
   achievement_1 =
     insert(:achievement, %{
-      inferencer_id: 1,
+      id: 1,
       title: "Beyond the Second Dimension",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0,
       card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/btsd-tile.png",
       open_at: ~U[2020-07-16 16:00:00Z],
-      close_at: ~U[2020-07-20 16:00:00Z]
+      close_at: ~U[2020-07-20 16:00:00Z],
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Beyond the Second Dimension mission",
+          target: 100
+        },
+        %{
+          order: 1,
+          text: "Score earned from Beyond the Second Dimension mission",
+          target: 150
+        }
+      ]
     })
 
   achievement_2 =
     insert(:achievement, %{
-      inferencer_id: 2,
+      id: 2,
       title: "Colorful Carpet",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0,
       card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/colorful-carpet-tile.png",
       open_at: ~U[2020-07-11 16:00:00Z],
-      close_at: ~U[2020-07-15 16:00:00Z]
+      close_at: ~U[2020-07-15 16:00:00Z],
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Colorful Carpet mission",
+          target: 100
+        },
+        %{
+          order: 1,
+          text: "Score earned from Colorful Carpet mission",
+          target: 150
+        }
+      ]
     })
 
   achievement_3 =
     insert(:achievement, %{
-      inferencer_id: 3,
+      id: 3,
       title: "Unpublished",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0,
       card_tile_url:
@@ -161,287 +195,187 @@ if Cadet.Env.env() == :dev do
 
   achievement_4 =
     insert(:achievement, %{
-      inferencer_id: 4,
+      id: 4,
       title: "Curve Wizard",
-      ability: :Core,
+      ability: "Core",
       is_task: true,
       position: 4,
       card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-wizard-tile.png",
       open_at: ~U[2020-07-31 16:00:00Z],
-      close_at: ~U[2020-08-04 16:00:00Z]
+      close_at: ~U[2020-08-04 16:00:00Z],
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Curve Introduction mission",
+          target: 250
+        },
+        %{
+          order: 1,
+          text: "Complete Curve Manipulation mission",
+          target: 250
+        },
+        %{
+          order: 2,
+          text: "Bonus for completing Curve Wizard achievement",
+          target: 100
+        }
+      ]
     })
 
   achievement_5 =
     insert(:achievement, %{
-      inferencer_id: 5,
+      id: 5,
       title: "Curve Introduction",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0,
       card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-introduction-tile.png",
       open_at: ~U[2020-07-23 16:00:00Z],
-      close_at: ~U[2020-07-27 16:00:00Z]
+      close_at: ~U[2020-07-27 16:00:00Z],
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Curve Introduction mission",
+          target: 50
+        },
+        %{
+          order: 1,
+          text: "Score earned from Curve Introduction mission",
+          target: 200
+        }
+      ]
     })
 
   achievement_6 =
     insert(:achievement, %{
-      inferencer_id: 6,
+      id: 6,
       title: "Curve Manipulation",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0,
       card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/curve-manipulation-tile.png",
       open_at: ~U[2020-07-31 16:00:00Z],
-      close_at: ~U[2020-08-04 16:00:00Z]
+      close_at: ~U[2020-08-04 16:00:00Z],
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Curve Manipulation mission",
+          target: 50
+        },
+        %{
+          order: 1,
+          text: "Score earned from Curve Manipulation mission",
+          target: 200
+        }
+      ]
     })
 
   achievement_7 =
     insert(:achievement, %{
-      inferencer_id: 7,
+      id: 7,
       title: "The Source-rer",
-      ability: :Effort,
+      ability: "Effort",
       is_task: true,
       position: 3,
       card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/the-source-rer-tile.png",
       open_at: ~U[2020-07-16 16:00:00Z],
-      close_at: ~U[2020-07-20 16:00:00Z]
+      close_at: ~U[2020-07-20 16:00:00Z],
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Source 3 path",
+          target: 100
+        },
+        %{
+          order: 1,
+          text: "Score earned from Source 3 path",
+          target: 300
+        }
+      ]
     })
 
   achievement_8 =
     insert(:achievement, %{
-      inferencer_id: 8,
+      id: 8,
       title: "Power of Friendship",
-      ability: :Community,
+      ability: "Community",
       is_task: true,
       position: 2,
       card_tile_url:
         "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/power-of-friendship-tile.png",
       open_at: ~U[2020-07-16 16:00:00Z],
-      close_at: ~U[2020-07-20 16:00:00Z]
+      close_at: ~U[2020-07-20 16:00:00Z],
+      goals: [
+        %{
+          order: 0,
+          text: "Complete Piazza Guru achievement",
+          target: 100
+        }
+      ]
     })
 
   achievement_9 =
     insert(:achievement, %{
-      inferencer_id: 9,
+      id: 9,
       title: "Piazza Guru",
-      ability: :Community,
+      ability: "Community",
       is_task: false,
       position: 0,
       card_tile_url:
-        "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/piazza-guru-tile.png"
+        "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/piazza-guru-tile.png",
+      goals: [
+        %{
+          order: 0,
+          text: "Each Top Voted answer in Piazza gives 10 XP",
+          target: 100
+        }
+      ]
     })
 
   achievement_10 =
     insert(:achievement, %{
-      inferencer_id: 10,
+      id: 10,
       title: "Thats the Spirit",
-      ability: :Exploration,
+      ability: "Exploration",
       is_task: true,
       position: 5,
       card_tile_url:
-        "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/annotated-tile.png"
+        "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/annotated-tile.png",
+      goals: [
+        %{
+          order: 0,
+          text: "Submit 1 PR to Source Academy Github",
+          target: 100
+        }
+      ]
     })
-
-  # Inserting Custom Achievement Goals
-  for student <- students do
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Beyond the Second Dimension achievement",
-      goal_progress: 213,
-      goal_target: 250,
-      achievement_id: achievement_0.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Complete Colorful Carpet achievement",
-      goal_progress: 0,
-      goal_target: 250,
-      achievement_id: achievement_0.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 2,
-      goal_text: "Bonus for completing Rune Master achievement",
-      goal_progress: 0,
-      goal_target: 250,
-      achievement_id: achievement_0.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Beyond the Second Dimension mission",
-      goal_progress: 100,
-      goal_target: 100,
-      achievement_id: achievement_1.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Score earned from Beyond the Second Dimension mission",
-      goal_progress: 113,
-      goal_target: 150,
-      achievement_id: achievement_1.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Colorful Carpet mission",
-      goal_progress: 0,
-      goal_target: 100,
-      achievement_id: achievement_2.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Score earned from Colorful Carpet mission",
-      goal_progress: 0,
-      goal_target: 150,
-      achievement_id: achievement_2.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Curve Introduction mission",
-      goal_progress: 120,
-      goal_target: 250,
-      achievement_id: achievement_4.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Complete Curve Manipulation mission",
-      goal_progress: 50,
-      goal_target: 250,
-      achievement_id: achievement_4.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 2,
-      goal_text: "Bonus for completing Curve Wizard achievement",
-      goal_progress: 0,
-      goal_target: 100,
-      achievement_id: achievement_4.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Curve Introduction mission",
-      goal_progress: 50,
-      goal_target: 50,
-      achievement_id: achievement_5.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Score earned from Curve Introduction mission",
-      goal_progress: 70,
-      goal_target: 200,
-      achievement_id: achievement_5.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Curve Manipulation mission",
-      goal_progress: 50,
-      goal_target: 50,
-      achievement_id: achievement_6.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Score earned from Curve Manipulation mission",
-      goal_progress: 0,
-      goal_target: 200,
-      achievement_id: achievement_6.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Source 3 path",
-      goal_progress: 100,
-      goal_target: 100,
-      achievement_id: achievement_7.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Score earned from Source 3 path",
-      goal_progress: 89,
-      goal_target: 300,
-      achievement_id: achievement_7.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Complete Piazza Guru achievement",
-      goal_progress: 40,
-      goal_target: 100,
-      achievement_id: achievement_8.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Each Top Voted answer in Piazza gives 10 XP",
-      goal_progress: 40,
-      goal_target: 100,
-      achievement_id: achievement_9.id,
-      user_id: student.id
-    })
-
-    insert(:achievement_goal, %{
-      goal_id: 0,
-      goal_text: "Submit 1 PR to Source Academy Github",
-      goal_progress: 100,
-      goal_target: 100,
-      achievement_id: achievement_10.id,
-      user_id: student.id
-    })
-  end
 
   insert(:achievement_prerequisite, %{
-    inferencer_id: 9,
+    prerequisite_id: achievement_9.id,
     achievement_id: achievement_8.id
   })
 
   insert(:achievement_prerequisite, %{
-    inferencer_id: 5,
+    prerequisite_id: achievement_5.id,
     achievement_id: achievement_4.id
   })
 
   insert(:achievement_prerequisite, %{
-    inferencer_id: 6,
+    prerequisite_id: achievement_6.id,
     achievement_id: achievement_4.id
   })
 
   insert(:achievement_prerequisite, %{
-    inferencer_id: 1,
+    prerequisite_id: achievement_1.id,
     achievement_id: achievement_0.id
   })
 
   insert(:achievement_prerequisite, %{
-    inferencer_id: 2,
+    prerequisite_id: achievement_2.id,
     achievement_id: achievement_0.id
   })
 end

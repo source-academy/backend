@@ -8,7 +8,10 @@ defmodule Cadet.Achievements.AchievementGoalFactory do
       alias Cadet.Achievements.AchievementGoal
 
       def achievement_goal_factory do
-        %AchievementGoal{}
+        %AchievementGoal{
+          text: "Score earned from Curve Introduction mission",
+          target: Faker.random_between(1, 1000)
+        }
       end
     end
   end

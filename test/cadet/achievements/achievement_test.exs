@@ -7,10 +7,9 @@ defmodule Cadet.Achievments.AchievementTest do
     test "valid changesets" do
       assert_changeset(
         %{
-          inferencer_id: 0,
           id: 0,
           title: "Hello World",
-          ability: :Core,
+          ability: "Core",
           open_at: DateTime.from_naive!(~N[2016-05-24 13:26:08.003], "Etc/UTC"),
           close_at: DateTime.from_naive!(~N[2016-05-27 13:26:08.003], "Etc/UTC"),
           is_task: false
@@ -22,10 +21,9 @@ defmodule Cadet.Achievments.AchievementTest do
     test "invalid changesets" do
       assert_changeset(
         %{
-          inferencer_id: 0,
           id: 0,
           title: "Hello World",
-          ability: :Core,
+          ability: "Core",
           open_at: DateTime.from_naive!(~N[2016-05-27 13:26:08.003], "Etc/UTC"),
           close_at: DateTime.from_naive!(~N[2016-05-24 13:26:08.003], "Etc/UTC")
         },

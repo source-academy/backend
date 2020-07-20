@@ -8,26 +8,32 @@ defmodule CadetWeb.AchievementsView do
 
   def render("overview.json", %{achievement: achievement}) do
     transform_map_for_view(achievement, %{
-      inferencer_id: :inferencer_id,
       id: :id,
       title: :title,
       ability: :ability,
-      openAt: &format_datetime(&1.open_at),
-      closeAt: &format_datetime(&1.close_at),
+      release: &format_datetime(&1.open_at),
+      deadline: &format_datetime(&1.close_at),
       isTask: :is_task,
-      prerequisiteIds: :prerequisite_ids,
-      position: :position,
+      prerequisiteIds:
+        &Enum.map(&1.prerequisites, fn prerequisite -> prerequisite.prerequisite_id end),
       cardTileUrl: :card_tile_url,
-      canvasUrl: :canvas_url,
-      description: :description,
-      completionText: :completion_text,
+      position: :position,
+      view:
+        &%{
+          canvasUrl: &1.canvas_url,
+          description: &1.description,
+          completionText: &1.completion_text
+        },
       goals:
         &Enum.map(&1.goals, fn goal ->
           transform_map_for_view(goal, %{
-            goalId: :goal_id,
-            goalText: :goal_text,
-            goalProgress: :goal_progress,
-            goalTarget: :goal_target
+            goalId: :order,
+            goalText: :text,
+            goalProgress: fn
+              %{progress: [%{progress: progress} | _]} -> progress
+              _ -> 0
+            end,
+            goalTarget: :target
           })
         end)
     })

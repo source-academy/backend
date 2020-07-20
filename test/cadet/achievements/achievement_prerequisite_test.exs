@@ -3,27 +3,15 @@ defmodule Cadet.Achievments.AchievementPrerequisiteTest do
 
   use Cadet.ChangesetCase, entity: AchievementPrerequisite
 
-  setup do
-    achievement = insert(:achievement)
-
-    valid_params = %{
-      inferencer_id: achievement.id + 1,
-      achievement_id: achievement.id
-    }
-
-    {:ok, %{achievement: achievement, valid_params: valid_params}}
-  end
-
   describe "Changesets" do
-    test "valid params", %{valid_params: params} do
-      assert_changeset_db(params, :valid)
-    end
+    test "valid params" do
+      insert(:achievement, id: 1)
+      insert(:achievement, id: 2)
 
-    test "converts valid params with models into ids", %{achievement: achievement} do
       assert_changeset_db(
         %{
-          inferencer_id: achievement.id + 1,
-          achievement_id: achievement.id
+          prerequisite_id: 1,
+          achievement_id: 2
         },
         :valid
       )

@@ -1,15 +1,17 @@
 defmodule Cadet.Achievements.Achievement do
   @moduledoc """
-  The Achievement entity stores metadata of a students' assessment
+  Stores achievements.
   """
   use Cadet, :model
 
-  alias Cadet.Achievements.{AchievementAbility, AchievementGoal, AchievementPrerequisite}
+  alias Cadet.Achievements.{AchievementGoal, AchievementPrerequisite}
 
+  @valid_abilities ~w(Core Community Effort Exploration)
+
+  @primary_key {:id, :id, autogenerate: false}
   schema "achievements" do
-    field(:inferencer_id, :integer)
     field(:title, :string)
-    field(:ability, AchievementAbility)
+    field(:ability, :string)
     field(:card_tile_url, :string)
 
     field(:open_at, :utc_datetime)
@@ -21,15 +23,14 @@ defmodule Cadet.Achievements.Achievement do
     field(:description, :string)
     field(:completion_text, :string)
 
-    has_many(:prerequisites, AchievementPrerequisite)
+    has_many(:prerequisites, AchievementPrerequisite, on_replace: :delete)
     has_many(:goals, AchievementGoal)
 
     timestamps()
   end
 
-  @required_fields ~w(title ability is_task position inferencer_id)a
-  @optional_fields ~w(card_tile_url open_at close_at
-    canvas_url description completion_text)a
+  @required_fields ~w(id title ability is_task position)a
+  @optional_fields ~w(card_tile_url open_at close_at canvas_url description completion_text)a
 
   def changeset(achievement, params) do
     params =
@@ -40,5 +41,8 @@ defmodule Cadet.Achievements.Achievement do
     achievement
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> validate_inclusion(:ability, @valid_abilities)
+    |> cast_assoc(:prerequisites)
+    |> cast_assoc(:goals)
   end
 end

@@ -1,27 +1,25 @@
 defmodule Cadet.Repo.Migrations.CreateAchievements do
   use Ecto.Migration
 
-  alias Cadet.Achievements.{AchievementAbility, AchievementGoal}
-
   def change do
-    AchievementAbility.create_type()
+    create table(:achievements, primary_key: false) do
+      add(:id, :integer, null: false, primary_key: true)
 
-    create table(:achievements) do
-      add(:title, :string)
-      add(:inferencer_id, :integer)
-      add(:ability, :achievement_ability, default: "Core")
-      add(:card_tile_url, :string)
+      add(:title, :text, null: false)
+      add(:ability, :text, null: false, default: "Core")
+      add(:card_tile_url, :text)
+
       add(:open_at, :timestamp, default: fragment("NOW()"))
       add(:close_at, :timestamp, default: fragment("NOW()"))
-      add(:is_task, :boolean, default: false)
-      add(:position, :integer)
+      add(:is_task, :boolean, null: false, default: false)
+      add(:position, :integer, null: false)
 
-      add(:canvas_url, :string,
+      add(:canvas_url, :text,
         default:
           "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg"
       )
 
-      add(:description, :string)
+      add(:description, :text)
       add(:completion_text, :text)
 
       timestamps()
@@ -29,7 +27,5 @@ defmodule Cadet.Repo.Migrations.CreateAchievements do
 
     create(index(:achievements, [:open_at]))
     create(index(:achievements, [:close_at]))
-    create(index(:achievements, [:is_task]))
-    create(index(:achievements, [:ability]))
   end
 end

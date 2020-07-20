@@ -6,18 +6,19 @@ defmodule Cadet.Achievements.AchievementPrerequisite do
 
   alias Cadet.Achievements.Achievement
 
+  @primary_key false
   schema "achievement_prerequisites" do
-    field(:inferencer_id, :integer)
-    belongs_to(:achievement, Achievement)
-    timestamps()
+    belongs_to(:achievement, Achievement, primary_key: true)
+    belongs_to(:prerequisite, Achievement, primary_key: true)
   end
 
-  @required_fields ~w(inferencer_id achievement_id)a
+  @required_fields ~w(achievement_id prerequisite_id)a
 
-  def changeset(assessment, params) do
-    assessment
+  def changeset(prerequisite, params) do
+    prerequisite
     |> cast(params, @required_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:achievement_id)
+    |> foreign_key_constraint(:prerequisite_id)
   end
 end

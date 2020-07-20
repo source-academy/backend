@@ -19,7 +19,6 @@ defmodule Mix.Tasks.Cadet.Token do
   import Ecto.Query
   import IO.ANSI
 
-  import Cadet.Achievements
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Auth.Guardian
   alias Cadet.Repo
@@ -44,8 +43,6 @@ defmodule Mix.Tasks.Cadet.Token do
 
       {:ok, refresh_token, _} =
         Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
-
-      add_new_user_goals(user)
 
       IO.puts("#{bright()}Test user id:#{reset()} #{cyan()}#{user.id}#{reset()}")
       IO.puts("#{bright()}Test user:#{reset()}")

@@ -233,7 +233,7 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec log_error_bad_changeset(Ecto.Changeset.t(), any()) :: :ok
   defp log_error_bad_changeset(changeset, entity) do
-    Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset.errors)}")
+    Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset)}")
 
     Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
   end

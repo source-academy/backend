@@ -4,300 +4,189 @@ defmodule Cadet.Achievements do
   """
   use Cadet, [:context, :display]
 
-  alias Cadet.Achievements.{Achievement, AchievementGoal, AchievementPrerequisite}
+  alias Cadet.Achievements.{Achievement, AchievementGoal}
+
   alias Cadet.Accounts.User
 
   import Ecto.Query
 
   @edit_all_achievement_roles ~w(staff admin)a
 
-  # Gets all achieveemnts of a particular user
-  def all_achievements(user) do
-    achievements =
+  @doc """
+  Gets a user's achievements.
+
+  This returns Achievement structs with prerequisites and goals pre-loaded. The
+  goals also have the user's progress record loaded, if it exists.
+  """
+  @spec get_user_achievements(%User{}) :: [%Achievement{}]
+  def get_user_achievements(user = %User{}) do
+    Achievement
+    |> order_by([a], [a.id])
+    |> join(:left, [a], g in assoc(a, :goals))
+    |> join(:left, [a, g], p in assoc(g, :progress))
+    |> where([a, g, p], p.user_id == ^user.id or is_nil(p.user_id))
+    |> preload([a, g, p], [:prerequisites, goals: {g, progress: p}])
+    |> Repo.all()
+  end
+
+  @spec insert_or_update_achievement(%User{}, map()) ::
+          {:ok, %Achievement{}} | {:error, {:bad_request | :forbidden, String.t()}}
+  @doc """
+  Inserts a new achievement, or updates it if it already exists.
+  """
+  def insert_or_update_achievement(user = %User{}, attrs) do
+    if user.role in @edit_all_achievement_roles do
+      attrs = stringify_atom_keys_recursive(attrs)
+      id = Map.fetch!(attrs, "id")
+
+      attrs =
+        attrs
+        |> fixup_achievement_goals(id)
+        |> fixup_achievement_prerequisites(id)
+
       Achievement
-      |> order_by([a], [a.inferencer_id])
-      |> join(:full, [a], g in AchievementGoal, on: a.id == g.achievement_id)
-      |> where([a, g], g.user_id == ^user.id)
+      |> preload([a], [:prerequisites])
+      |> Repo.get(id)
+      |> case do
+        nil ->
+          Achievement.changeset(%Achievement{}, attrs)
 
-    distinct_achievements =
-      achievements
-      |> distinct([a, g], [a.inferencer_id])
-      |> Repo.all()
-      |> Repo.preload(prerequisites: [:achievement])
-      |> Repo.preload(goals: [:achievement, :user])
+        achievement ->
+          # Preload only the goals that are going to be updated
+          # (This is a no-op if inserting)
+          orders = get_goal_orders(attrs)
 
-    Enum.map(distinct_achievements, fn a ->
-      %{
-        inferencer_id: a.inferencer_id,
-        id: :id,
-        title: a.title,
-        ability: a.ability,
-        open_at: a.open_at,
-        close_at: a.close_at,
-        is_task: a.is_task,
-        prerequisite_ids:
-          Enum.map(a.prerequisites, fn p ->
-            p.inferencer_id
-          end),
-        position: a.position,
-        card_tile_url: a.card_tile_url,
-        canvas_url: a.canvas_url,
-        description: a.description,
-        completion_text: a.completion_text,
-        goals: get_user_goals(achievements, a)
-      }
-    end)
-  end
+          achievement =
+            Repo.preload(achievement, goals: AchievementGoal |> where([g], g.order in ^orders))
 
-  # Deletes an achievement in the table
-  def delete_achievement(user, inferencer_id) do
-    if user.role in @edit_all_achievement_roles do
-      achievement_query =
-        Achievement
-        |> where([a], a.inferencer_id == ^inferencer_id)
+          attrs = fixup_achievement_goal_ids(attrs, achievement)
 
-      this_achievement =
-        achievement_query
-        |> Repo.one()
+          Achievement.changeset(achievement, attrs)
+      end
+      |> Repo.insert_or_update()
+      |> case do
+        result = {:ok, _} ->
+          result
 
-      goal_query =
-        AchievementGoal
-        |> where([a], a.achievement_id == ^this_achievement.id)
-
-      prereq_query =
-        AchievementPrerequisite
-        |> where([a], a.achievement_id == ^this_achievement.id)
-
-      prereq_query
-      |> Repo.delete_all()
-
-      goal_query
-      |> Repo.delete_all()
-
-      achievement_query
-      |> Repo.delete_all()
-
-      :ok
+        {:error, changeset} ->
+          {:error, {:bad_request, full_error_messages(changeset)}}
+      end
     else
       {:error, {:forbidden, "User is not permitted to edit achievements"}}
     end
   end
 
-  # Inserts a new achievement, or updates it if it already exists
-  def insert_or_update_achievement(user, inferencer_id, attrs) do
-    if user.role in @edit_all_achievement_roles do
-      _achievement =
-        Achievement
-        |> where(inferencer_id: ^inferencer_id)
-        |> Repo.one()
+  defp get_goal_orders(attrs) do
+    for goal <- Map.get(attrs, "goals") || [],
+        order = Map.get(goal, "order"),
+        do: order
+  end
+
+  # Fix the primary keys of any goals passed in, if updating an achievement
+  # This is to let Ecto automagically update already-existing matching goals
+  defp fixup_achievement_goal_ids(attrs = %{"goals" => goals}, achievement) do
+    # we need to assign the correct primary key IDs into the goals in attrs
+    # so that Ecto automatically updates the associated goals for us
+    # this is also a no-op if inserting
+    order_to_pk = for goal <- achievement.goals, into: %{}, do: {goal.order, goal.id}
+
+    new_goals =
+      Enum.map(goals, fn goal ->
+        goal
+        |> Map.put("achievement_id", achievement.id)
         |> case do
-          nil ->
-            Achievement.changeset(%Achievement{}, attrs)
-
-          achievement ->
-            Achievement.changeset(achievement, attrs)
+          goal = %{"order" => order} -> assign_goal_primary_key(order_to_pk, goal, order)
+          # if no order, let it pass through; Ecto will mark the changeset
+          # as invalid
+          goal -> goal
         end
-        |> Repo.insert_or_update()
-    else
-      {:error, {:forbidden, "User is not permitted to edit achievements"}}
+      end)
+
+    %{attrs | "goals" => new_goals}
+  end
+
+  defp fixup_achievement_goal_ids(attrs, _), do: attrs
+
+  defp assign_goal_primary_key(map, goal, order) do
+    case Map.get(map, order) do
+      # order not in map means creating new goal, let it pass through
+      nil -> goal
+      id -> Map.put(goal, "id", id)
     end
   end
 
-  # Deletes a goal of an achievement
-  def delete_goal(user, goal_id, inferencer_id) do
-    if user.role in @edit_all_achievement_roles do
-      this_achievement =
-        Achievement
-        |> where([a], a.inferencer_id == ^inferencer_id)
-        |> Repo.one()
-
-      goal_query =
-        AchievementGoal
-        |> where([a], a.achievement_id == ^this_achievement.id and a.goal_id == ^goal_id)
-
-      goal_query
-      |> Repo.delete_all()
-
-      :ok
-    else
-      {:error, {:forbidden, "User is not permitted to edit achievements"}}
-    end
-  end
-
-  # Update All the prerequisites of that achievement
-  def update_prerequisites(
-        user,
-        _fields = %{inferencer_id: inferencer_id, prerequisites: prerequisites}
-      ) do
-    if user.role in @edit_all_achievement_roles do
-      achievement =
-        Achievement
-        |> where([a], a.inferencer_id == ^inferencer_id)
-        |> Repo.one()
-
-      AchievementPrerequisite
-      |> where([p], p.achievement_id == ^inferencer_id)
-      |> Repo.delete_all()
-
-      for prereq <- prerequisites do
-        goal_params = %{
-          inferencer_id: prereq,
-          achievement_id: achievement.id
-        }
-
-        AchievementPrerequisite
-        |> where([a], a.achievement_id == ^achievement.id)
-        |> where([a], a.inferencer_id == ^prereq)
-        |> Repo.one()
-        |> case do
-          nil ->
-            AchievementPrerequisite.changeset(%AchievementPrerequisite{}, goal_params)
-
-          achievement_prereq ->
-            AchievementPrerequisite.changeset(achievement_prereq, goal_params)
-        end
-        |> Repo.insert_or_update()
+  # Set the achievement ID on any goals passed in
+  defp fixup_achievement_goals(
+         attrs = %{"goals" => goals},
+         achievement_id
+       ) do
+    new_goals =
+      for goal <- goals do
+        Map.put(goal, "achievement_id", achievement_id)
       end
 
-      :ok
-    else
-      {:error, {:forbidden, "User is not permitted to edit achievements"}}
-    end
+    %{attrs | "goals" => new_goals}
   end
 
-  # Update All the goals of that achievement
-  def update_goals(user, attrs) do
-    if user.role in @edit_all_achievement_roles do
-      this_achievement =
-        Achievement
-        |> where([a], a.inferencer_id == ^attrs.inferencer_id)
-        |> Repo.one()
+  defp fixup_achievement_goals(attrs, _), do: attrs
 
-      users =
-        User
-        |> Repo.all()
-
-      for goal_json <- attrs.goals do
-        for user <- users do
-          goal_params = get_goal_params_from_json(goal_json, this_achievement.id, user.id)
-
-          AchievementGoal
-          |> where([a], a.goal_id == ^goal_params.goal_id)
-          |> where([a], a.achievement_id == ^this_achievement.id)
-          |> where([a], a.user_id == ^user.id)
-          |> Repo.one()
-          |> case do
-            nil ->
-              AchievementGoal.changeset(%AchievementGoal{}, goal_params)
-
-            achievement_goal ->
-              AchievementGoal.changeset(achievement_goal, goal_params)
-          end
-          |> Repo.insert_or_update()
+  # Set the achievement ID on any prerequisites passed in
+  # Also convert any bare IDs into prerequisites maps
+  defp fixup_achievement_prerequisites(
+         attrs = %{"prerequisites" => prerequisites},
+         achievement_id
+       ) do
+    new_prerequisites =
+      for prerequisite <- prerequisites do
+        if is_ecto_id(prerequisite) do
+          %{
+            "achievement_id" => achievement_id,
+            "prerequisite_id" => prerequisite
+          }
+        else
+          prerequisite
+          |> Map.put("achievement_id", achievement_id)
         end
       end
 
-      :ok
+    %{attrs | "prerequisites" => new_prerequisites}
+  end
+
+  defp fixup_achievement_prerequisites(attrs, _), do: attrs
+
+  @doc """
+  Deletes an achievement.
+  """
+  @spec delete_achievement(%User{}, integer() | String.t()) ::
+          :ok | {:error, {:not_found | :forbidden, String.t()}}
+  def delete_achievement(user = %User{}, id) when is_ecto_id(id) do
+    if user.role in @edit_all_achievement_roles do
+      case Achievement
+           |> where(id: ^id)
+           |> Repo.delete_all() do
+        {0, _} -> {:error, {:not_found, "Achievement not found"}}
+        {_, _} -> :ok
+      end
     else
       {:error, {:forbidden, "User is not permitted to edit achievements"}}
     end
   end
 
-  def get_achievement_params_from_json(json) do
-    %{
-      inferencer_id: json["id"],
-      title: json["title"],
-      ability: json["ability"],
-      is_task: json["isTask"],
-      position: json["position"],
-      card_tile_url: json["cardTileUrl"],
-      close_at: get_date(json["deadline"]),
-      open_at: get_date(json["release"]),
-      canvas_url: json["view"]["canvasUrl"],
-      description: json["view"]["description"],
-      completion_text: json["view"]["completionText"],
-      goals: json["goals"]
-    }
-  end
-
-  def get_goal_params_from_json(json, achievement_id, user_id) do
-    %{
-      goal_id: json["goalId"],
-      goal_text: json["goalText"],
-      goal_progress: json["goalProgress"],
-      goal_target: json["goalTarget"],
-      achievement_id: achievement_id,
-      user_id: user_id
-    }
-  end
-
-  def get_prereq_fields_from_json(json) do
-    %{
-      inferencer_id: json["id"],
-      prerequisites: json["prerequisiteIds"]
-    }
-  end
-
-  # Helper functions to update goals for a newly adder user
-  def add_new_user_goals(user) do
-    sample_users =
-      User
-      |> where([u], u.role == "student")
-      |> limit(1)
-      |> Repo.all()
-
-    for sample_user <- sample_users do
-      achievement_goals =
-        AchievementGoal
-        |> where([g], g.user_id == ^sample_user.id)
-        |> Repo.all()
-
-      for goal <- achievement_goals do
-        Repo.insert(%AchievementGoal{
-          goal_id: goal.goal_id,
-          goal_text: goal.goal_text,
-          # TODO: Fix this to 0 for new users.
-          goal_progress: goal.goal_progress,
-          goal_target: goal.goal_target,
-          achievement_id: goal.achievement_id,
-          user_id: user.id
-        })
+  @doc """
+  Deletes a goal of an achievement.
+  """
+  @spec delete_goal(%User{}, integer() | String.t(), integer() | String.t()) ::
+          :ok | {:error, {:not_found | :forbidden, String.t()}}
+  def delete_goal(user, achievement_id, order) do
+    if user.role in @edit_all_achievement_roles do
+      case AchievementGoal
+           |> where(achievement_id: ^achievement_id, order: ^order)
+           |> Repo.delete_all() do
+        {0, _} -> {:error, {:not_found, "Goal not found"}}
+        {_, _} -> :ok
       end
-    end
-
-    :ok
-  end
-
-  # Helper functions to get the goals for that particular user
-  def get_user_goals(goal_achievements, achievement) do
-    user_goals =
-      goal_achievements
-      |> where([a, g], a.id == ^achievement.id)
-      |> select([a, g], g)
-      |> Repo.all()
-
-    Enum.map(user_goals, fn goal ->
-      %{
-        goal_id: goal.goal_id,
-        goal_text: goal.goal_text,
-        goal_progress: goal.goal_progress,
-        goal_target: goal.goal_target
-      }
-    end)
-  end
-
-  # Helper function to parse date for opening and closing times of the achievement
-  def get_date(date) do
-    # result = Elixir.Timex.Parse.DateTime.Parser.parse(date, "{ISO:Extended:Z}")
-    result = Timex.parse(date, "{ISO:Extended:Z}")
-
-    case result do
-      {:ok, date} ->
-        date
-        |> DateTime.truncate(:second)
-
-      {:error, {status, message}} ->
-        {:error, {status, message}}
+    else
+      {:error, {:forbidden, "User is not permitted to edit achievements"}}
     end
   end
 end

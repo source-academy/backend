@@ -1,31 +1,27 @@
 defmodule Cadet.Achievements.AchievementGoal do
   @moduledoc """
-  The AchievementGoal entity stores metadata of a goal associated to a specific achievement
+  Stores achievement goals.
   """
   use Cadet, :model
 
-  alias Cadet.Achievements.Achievement
-  alias Cadet.Accounts.User
+  alias Cadet.Achievements.{Achievement, AchievementProgress}
 
   schema "achievement_goals" do
-    field(:goal_id, :integer)
-    field(:goal_text, :string)
-    field(:goal_progress, :integer)
-    field(:goal_target, :integer)
+    field(:order, :integer)
+    field(:text, :string)
+    field(:target, :integer)
 
     belongs_to(:achievement, Achievement)
-    belongs_to(:user, User)
 
-    timestamps()
+    has_many(:progress, AchievementProgress, foreign_key: :goal_id)
   end
 
-  @required_fields ~w(goal_id goal_text goal_progress goal_target achievement_id user_id)a
+  @required_fields ~w(text target order achievement_id)a
 
-  def changeset(assessment, params) do
-    assessment
+  def changeset(goal, params) do
+    goal
     |> cast(params, @required_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:achievement_id)
-    |> foreign_key_constraint(:user_id)
   end
 end

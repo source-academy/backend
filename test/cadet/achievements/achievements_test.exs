@@ -1,52 +1,122 @@
 defmodule Cadet.AchievementsTest do
   use Cadet.DataCase
 
+  alias Cadet.Accounts.User
+
   alias Cadet.Achievements
 
   alias Cadet.Achievements.{
     Achievement,
-    AchievementAbility,
-    AchievementGoal
+    AchievementGoal,
+    AchievementProgress
   }
 
   test "create achievements" do
-    user = insert(:user, %{name: "admin", role: :admin})
-
-    for ability <- AchievementAbility.__enum_map__() do
-      title_string = Atom.to_string(ability)
-
-      {_res, achievement} =
+    for {ability, id} <- Enum.with_index(~w(Core Community Effort Exploration)) do
+      {:ok, _} =
         Achievements.insert_or_update_achievement(
-          user,
-          0,
+          %User{role: :admin},
           %{
-            inferencer_id: 0,
-            title: title_string,
+            id: id,
+            title: ability,
             ability: ability,
             is_task: false,
             position: 0
           }
         )
 
-      assert %{title: ^title_string, ability: ^ability} = achievement
+      assert %{title: ^ability, ability: ^ability} = Repo.get(Achievement, id)
     end
   end
 
-  test "get achievements from user" do
-    user = insert(:user)
-    achievements = Achievements.all_achievements(user)
+  test "create achievement with goals" do
+    achievement_title = "Achievement"
+    achievement_ability = "Core"
+    goal_text = "Goal"
+    goal_target = 100
+    goal_order = 0
 
-    assert [] = achievements
+    {:ok, _} =
+      Achievements.insert_or_update_achievement(
+        %User{role: :admin},
+        %{
+          id: 0,
+          title: achievement_title,
+          ability: achievement_ability,
+          is_task: false,
+          position: 0,
+          goals: [
+            %{
+              order: goal_order,
+              target: goal_target,
+              text: goal_text
+            }
+          ]
+        }
+      )
+
+    assert %{title: ^achievement_title, ability: ^achievement_ability} = Repo.one(Achievement)
+
+    assert %{order: ^goal_order, target: ^goal_target, text: ^goal_text} =
+             Repo.one(AchievementGoal)
   end
 
-  test "get all achievement fields from user" do
+  test "create achievement with goal without order" do
+    {:error, {:bad_request, _}} =
+      Achievements.insert_or_update_achievement(
+        %User{role: :admin},
+        %{
+          id: 0,
+          title: "Achievement",
+          ability: "Core",
+          is_task: false,
+          position: 0,
+          goals: [
+            %{
+              target: 100,
+              text: "Goal"
+            }
+          ]
+        }
+      )
+  end
+
+  test "create achievement with prerequisites as id" do
+    insert(:achievement, id: 50)
+    insert(:achievement, id: 51)
+    prerequisite_ids = [50, 51]
+
+    {:ok, _} =
+      Achievements.insert_or_update_achievement(
+        %User{role: :admin},
+        %{
+          id: 0,
+          title: "Achievement",
+          ability: "Core",
+          is_task: false,
+          position: 0,
+          prerequisites: prerequisite_ids
+        }
+      )
+
+    assert prerequisite_ids == get_prerequisites(0)
+  end
+
+  test "get user achievements when no achievements" do
+    user = insert(:user)
+    achievements = Achievements.get_user_achievements(user)
+
+    assert [] == achievements
+  end
+
+  test "get user achievements" do
     user = insert(:user, %{name: "admin", role: :admin})
 
     achievement =
       insert(:achievement, %{
-        inferencer_id: 0,
+        id: 0,
         title: "Test",
-        ability: :Core,
+        ability: "Core",
         is_task: false,
         position: 0,
         card_tile_url: "",
@@ -57,81 +127,85 @@ defmodule Cadet.AchievementsTest do
 
     prereq =
       insert(:achievement, %{
-        inferencer_id: 1,
+        id: 1,
         title: "Tests",
-        ability: :Core,
+        ability: "Core",
         is_task: false,
         position: 0
       })
 
     insert(:achievement_prerequisite, %{
-      inferencer_id: prereq.inferencer_id,
+      prerequisite_id: prereq.id,
       achievement_id: achievement.id
     })
 
-    insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Score earned from Curve Introduction mission",
-      goal_progress: 70,
-      goal_target: 200,
-      achievement_id: achievement.id,
-      user_id: user.id
+    goal =
+      insert(:achievement_goal, %{
+        order: 1,
+        text: "Score earned from Curve Introduction mission",
+        target: 200,
+        achievement_id: achievement.id
+      })
+
+    Repo.insert(%AchievementProgress{
+      goal_id: goal.id,
+      user_id: user.id,
+      progress: 70
     })
 
-    achievements = Achievements.all_achievements(user)
+    achievements = Achievements.get_user_achievements(user)
 
     assert [
              %{
-               ability: :Core,
+               ability: "Core",
                card_tile_url: "",
                completion_text: "",
                description: "",
                goals: [
                  %{
-                   goal_id: 1,
-                   goal_progress: 70,
-                   goal_target: 200,
-                   goal_text: "Score earned from Curve Introduction mission"
+                   order: 1,
+                   progress: [%{progress: 70}],
+                   target: 200,
+                   text: "Score earned from Curve Introduction mission"
                  }
                ],
-               id: :id,
-               inferencer_id: 0,
+               id: 0,
                is_task: false,
                canvas_url: "",
                position: 0,
-               prerequisite_ids: [1],
+               prerequisites: [%{prerequisite_id: 1}],
                title: "Test"
              }
+             | _
            ] = achievements
   end
 
   test "update achievements" do
     user = insert(:user, %{name: "admin", role: :admin})
-
+    id = 69
     new_title = "New String"
 
     insert(:achievement, %{
-      inferencer_id: 69,
+      id: id,
       title: "Test",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0
     })
 
-    {_res, achievement} =
-      Achievements.insert_or_update_achievement(
-        user,
-        69,
-        %{
-          inferencer_id: 69,
-          title: "New String",
-          ability: :Core,
-          is_task: false,
-          position: 0
-        }
-      )
+    assert {:ok, _} =
+             Achievements.insert_or_update_achievement(
+               user,
+               %{
+                 id: id,
+                 title: "New String",
+                 ability: "Core",
+                 is_task: false,
+                 position: 0
+               }
+             )
 
-    assert %{title: ^new_title} = achievement
+    assert %{title: ^new_title} = Repo.get(Achievement, id)
   end
 
   test "update prerequisites" do
@@ -139,36 +213,57 @@ defmodule Cadet.AchievementsTest do
 
     achievement =
       insert(:achievement, %{
-        inferencer_id: 69,
+        id: 69,
         title: "Test",
-        ability: :Core,
+        ability: "Core",
         is_task: false,
         position: 0
       })
 
     insert(:achievement, %{
-      inferencer_id: 70,
+      id: 70,
       title: "Test",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0
     })
 
     insert(:achievement, %{
-      inferencer_id: 71,
+      id: 71,
       title: "Test",
-      ability: :Core,
+      ability: "Core",
       is_task: false,
       position: 0
     })
 
-    result =
-      Achievements.update_prerequisites(user, %{
-        inferencer_id: achievement.inferencer_id,
-        prerequisites: [70, 71]
-      })
+    test_change_prerequisite(user, achievement.id, [])
+    test_change_prerequisite(user, achievement.id, [70, 71])
+    test_change_prerequisite(user, achievement.id, [70])
+    test_change_prerequisite(user, achievement.id, [71])
+    test_change_prerequisite(user, achievement.id, [])
+  end
 
-    assert result == :ok
+  defp test_change_prerequisite(user, achievement_id, prerequisite_ids) do
+    assert {:ok, _} =
+             Achievements.insert_or_update_achievement(user, %{
+               id: achievement_id,
+               prerequisites: make_prerequisites(achievement_id, prerequisite_ids)
+             })
+
+    assert prerequisite_ids == get_prerequisites(achievement_id)
+  end
+
+  defp get_prerequisites(achievement_id) do
+    Achievement
+    |> preload([:prerequisites])
+    |> Repo.get(achievement_id)
+    |> Map.fetch!(:prerequisites)
+    |> Enum.map(& &1.prerequisite_id)
+    |> Enum.sort()
+  end
+
+  defp make_prerequisites(achievement_id, prerequisite_ids) do
+    Enum.map(prerequisite_ids, &%{prerequisite_id: &1, achievement_id: achievement_id})
   end
 
   test "delete achievement" do
@@ -176,15 +271,15 @@ defmodule Cadet.AchievementsTest do
 
     achievement =
       insert(:achievement, %{
-        inferencer_id: 69,
+        id: 69,
         title: "Test",
-        ability: :Core,
+        ability: "Core",
         is_task: false,
         position: 0
       })
 
-    Achievements.delete_achievement(user, achievement.inferencer_id)
-    assert Repo.get(Achievement, achievement.id) == nil
+    Achievements.delete_achievement(user, achievement.id)
+    assert Achievement |> Repo.get(achievement.id) |> is_nil()
   end
 
   test "update goals" do
@@ -192,46 +287,90 @@ defmodule Cadet.AchievementsTest do
 
     achievement =
       insert(:achievement, %{
-        inferencer_id: 69,
+        id: 69,
         title: "Test",
-        ability: :Core,
+        ability: "Core",
         is_task: false,
         position: 0
       })
 
     insert(:achievement_goal, %{
-      goal_id: 1,
-      goal_text: "Score earned from Curve Introduction mission",
-      goal_progress: 70,
-      goal_target: 200,
-      achievement_id: achievement.id,
-      user_id: user.id
+      order: 1,
+      text: "Score earned from Curve Introduction mission",
+      target: 200,
+      achievement_id: achievement.id
     })
 
-    result =
-      Achievements.update_goals(
-        user,
-        %{
-          inferencer_id: achievement.inferencer_id,
-          goals: [
-            %{
-              "goalId" => 1,
-              "goalText" => "Hello World",
-              "goalProgress" => 1,
-              "goalTarget" => 1
-            }
-          ]
-        }
-      )
+    new_text = "Hello World"
 
-    assert result == :ok
+    assert {:ok, _} =
+             Achievements.insert_or_update_achievement(
+               user,
+               %{
+                 id: achievement.id,
+                 goals: [
+                   %{
+                     order: 1,
+                     text: new_text,
+                     target: 1
+                   }
+                 ]
+               }
+             )
 
-    student = insert(:user, %{name: "student", role: :student})
-    Achievements.add_new_user_goals(student)
+    assert %{text: ^new_text} = Repo.one(AchievementGoal)
 
-    student_2 = insert(:user, %{name: "student", role: :student})
-    result = Achievements.add_new_user_goals(student_2)
-    assert result == :ok
+    new_text_2 = "Another goal"
+
+    assert {:ok, _} =
+             Achievements.insert_or_update_achievement(
+               user,
+               %{
+                 id: achievement.id,
+                 goals: [
+                   %{
+                     order: 2,
+                     text: new_text_2,
+                     target: 1
+                   }
+                 ]
+               }
+             )
+
+    assert [%{text: ^new_text}, %{text: ^new_text_2}] =
+             AchievementGoal |> order_by(:order) |> Repo.all()
+  end
+
+  test "update goal with missing order" do
+    achievement =
+      insert(:achievement, %{
+        id: 69,
+        title: "Test",
+        ability: "Core",
+        is_task: false,
+        position: 0
+      })
+
+    insert(:achievement_goal, %{
+      order: 1,
+      text: "Score earned from Curve Introduction mission",
+      target: 200,
+      achievement_id: achievement.id
+    })
+
+    assert {:error, {:bad_request, _}} =
+             Achievements.insert_or_update_achievement(
+               %User{role: :admin},
+               %{
+                 id: achievement.id,
+                 goals: [
+                   %{
+                     text: "Hello World",
+                     target: 1
+                   }
+                 ]
+               }
+             )
   end
 
   test "delete goal" do
@@ -239,60 +378,22 @@ defmodule Cadet.AchievementsTest do
 
     achievement =
       insert(:achievement, %{
-        inferencer_id: 69,
+        id: 69,
         title: "Test",
-        ability: :Core,
+        ability: "Core",
         is_task: false,
         position: 0
       })
 
     goal =
       insert(:achievement_goal, %{
-        goal_id: 1,
-        goal_text: "Score earned from Curve Introduction mission",
-        goal_progress: 70,
-        goal_target: 200,
-        achievement_id: achievement.id,
-        user_id: user.id
+        order: 1,
+        text: "Score earned from Curve Introduction mission",
+        target: 200,
+        achievement_id: achievement.id
       })
 
-    Achievements.delete_goal(user, goal.goal_id, achievement.inferencer_id)
-    assert Repo.get(AchievementGoal, goal.id) == nil
-  end
-
-  test "achievement json parsing" do
-    sample_json = %{
-      "id" => 0,
-      "title" => "Sample",
-      "ability" => "Core",
-      "isTask" => false,
-      "position" => 0,
-      "cardTileUrl" => nil,
-      "deadline" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
-      "release" => DateTime.to_string(DateTime.truncate(DateTime.utc_now(), :second)),
-      "goals" => [],
-      "view" => %{
-        "canvasUrl" => nil,
-        "description" => "",
-        "completionText" => ""
-      }
-    }
-
-    sample_achievement = %{
-      inferencer_id: 0,
-      title: "Sample",
-      ability: "Core",
-      is_task: false,
-      position: 0,
-      card_tile_url: nil,
-      close_at: DateTime.truncate(DateTime.utc_now(), :second),
-      open_at: DateTime.truncate(DateTime.utc_now(), :second),
-      canvas_url: nil,
-      description: "",
-      completion_text: "",
-      goals: []
-    }
-
-    assert sample_achievement == Achievements.get_achievement_params_from_json(sample_json)
+    Achievements.delete_goal(user, achievement.id, goal.order)
+    assert AchievementGoal |> Repo.get(goal.id) |> is_nil()
   end
 end
