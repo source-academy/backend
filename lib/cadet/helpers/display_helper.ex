@@ -13,11 +13,39 @@ defmodule Cadet.DisplayHelper do
     end
   end
 
-  @spec full_error_messages(keyword({String.t(), term()})) :: String.t()
-  def full_error_messages(errors) do
+  @spec full_error_messages(%Ecto.Changeset{}) :: String.t()
+  def full_error_messages(changeset = %Ecto.Changeset{}) do
+    changeset
+    |> traverse_errors(&process_error/1)
+    |> format_message()
+  end
+
+  def full_error_messages(changeset), do: changeset
+
+  defp process_error({msg, opts}) do
+    Enum.reduce(opts, msg, fn {key, value}, acc ->
+      String.replace(
+        acc,
+        "%{#{key}}",
+        if(is_list(value), do: Enum.join(value, ","), else: to_string(value))
+      )
+    end)
+  end
+
+  defp format_message(errors = %{}) do
     errors
-    |> Enum.map(fn {key, {message, _}} -> "#{key} #{message}" end)
-    |> Enum.join(", ")
+    |> Enum.map(fn {k, v} ->
+      message =
+        v
+        |> Enum.map(fn
+          %{} = sub -> "{#{format_message(sub)}}"
+          str -> str
+        end)
+        |> Enum.join("; ")
+
+      "#{k} #{message}"
+    end)
+    |> Enum.join("\n")
   end
 
   def create_invalid_changeset_with_error(key, message) do
