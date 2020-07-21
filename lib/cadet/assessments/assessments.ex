@@ -919,7 +919,7 @@ defmodule Cadet.Assessments do
         {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
 
       {:valid, changeset} ->
-        {:error, {:bad_request, full_error_messages(changeset.errors)}}
+        {:error, {:bad_request, full_error_messages(changeset)}}
 
       {:status, _} ->
         {:error, {:method_not_allowed, "Submission is not submitted yet."}}

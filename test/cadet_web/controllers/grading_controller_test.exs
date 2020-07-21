@@ -267,18 +267,14 @@ defmodule CadetWeb.GradingControllerTest do
                             do: {Atom.to_string(k), v}
                       end
                     ) ++
-                      if &1.question.assessment.type == :path do
-                        Enum.map(
-                          &1.question.question.private,
-                          fn testcase ->
-                            for {k, v} <- testcase,
-                                into: %{"type" => "hidden"},
-                                do: {Atom.to_string(k), v}
-                          end
-                        )
-                      else
-                        []
-                      end,
+                      Enum.map(
+                        &1.question.question.private,
+                        fn testcase ->
+                          for {k, v} <- testcase,
+                              into: %{"type" => "private"},
+                              do: {Atom.to_string(k), v}
+                        end
+                      ),
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
@@ -405,18 +401,14 @@ defmodule CadetWeb.GradingControllerTest do
                             do: {Atom.to_string(k), v}
                       end
                     ) ++
-                      if &1.question.assessment.type == :path do
-                        Enum.map(
-                          &1.question.question.private,
-                          fn testcase ->
-                            for {k, v} <- testcase,
-                                into: %{"type" => "hidden"},
-                                do: {Atom.to_string(k), v}
-                          end
-                        )
-                      else
-                        []
-                      end,
+                      Enum.map(
+                        &1.question.question.private,
+                        fn testcase ->
+                          for {k, v} <- testcase,
+                              into: %{"type" => "private"},
+                              do: {Atom.to_string(k), v}
+                        end
+                      ),
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,
@@ -971,18 +963,14 @@ defmodule CadetWeb.GradingControllerTest do
                             do: {Atom.to_string(k), v}
                       end
                     ) ++
-                      if &1.question.assessment.type == :path do
-                        Enum.map(
-                          &1.question.question.private,
-                          fn testcase ->
-                            for {k, v} <- testcase,
-                                into: %{"type" => "hidden"},
-                                do: {Atom.to_string(k), v}
-                          end
-                        )
-                      else
-                        []
-                      end,
+                      Enum.map(
+                        &1.question.question.private,
+                        fn testcase ->
+                          for {k, v} <- testcase,
+                              into: %{"type" => "private"},
+                              do: {Atom.to_string(k), v}
+                        end
+                      ),
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
                   "id" => &1.question.id,

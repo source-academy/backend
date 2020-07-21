@@ -9,7 +9,7 @@ defmodule Cadet.Accounts.UserFactory do
 
       def user_factory do
         %User{
-          name: Faker.Name.En.name(),
+          name: Faker.Person.En.name(),
           role: Enum.random(Role.__enum_map__()),
           username:
             sequence(
@@ -21,7 +21,7 @@ defmodule Cadet.Accounts.UserFactory do
 
       def student_factory do
         %User{
-          name: Faker.Name.En.name(),
+          name: Faker.Person.En.name(),
           role: :student,
           username:
             sequence(

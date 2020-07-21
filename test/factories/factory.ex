@@ -14,6 +14,14 @@ defmodule Cadet.Factory do
     SubmissionFactory
   }
 
+  use Cadet.Stories.{StoryFactory}
+
+  use Cadet.Achievements.{
+    AchievementFactory,
+    AchievementGoalFactory,
+    AchievementPrerequisiteFactory
+  }
+
   use Cadet.Settings.{SublanguageFactory}
 
   use Cadet.Course.{GroupFactory, SourcecastFactory}

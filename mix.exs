@@ -70,7 +70,8 @@ defmodule Cadet.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 3.0"},
       {:que, "~> 0.10"},
-      {:sentry, "~> 7.0"},
+      {:recase, "~> 0.6"},
+      {:sentry, "~> 8.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
 
