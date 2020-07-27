@@ -110,14 +110,14 @@ defmodule Cadet.Autograder.GradingJob do
     |> Repo.update!()
   end
 
-  defp grade_answer(answer = %Answer{}, question = %Question{type: type}) do
+  def grade_answer(answer = %Answer{}, question = %Question{type: type}) do
     case type do
       :programming -> Utilities.dispatch_programming_answer(answer, question)
       :mcq -> grade_mcq_answer(answer, question)
     end
   end
 
-  def grade_mcq_answer(answer = %Answer{}, question = %Question{question: question_content}) do
+  defp grade_mcq_answer(answer = %Answer{}, question = %Question{question: question_content}) do
     correct_choice =
       question_content["choices"]
       |> Enum.find(&Map.get(&1, "is_correct"))

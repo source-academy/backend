@@ -937,6 +937,49 @@ defmodule Cadet.Assessments do
     {:error, {:unauthorized, "User is not permitted to grade."}}
   end
 
+  @spec force_regrade_submission(integer() | String.t(), %User{}) ::
+          {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
+  def force_regrade_submission(submission_id, _requesting_user = %User{role: role})
+      when is_ecto_id(submission_id) and role in @see_all_submissions_roles do
+    case Repo.get(Submission, submission_id) do
+      nil ->
+        {:error, {:not_found, "Submission not found"}}
+
+      sub ->
+        GradingJob.force_grade_individual_submission(sub)
+        {:ok, nil}
+    end
+  end
+
+  def force_regrade_submission(_, _) do
+    {:error, {:forbidden, "User is not permitted to grade."}}
+  end
+
+  @spec force_regrade_answer(integer() | String.t(), integer() | String.t(), %User{}) ::
+          {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
+  def force_regrade_answer(submission_id, question_id, _requesting_user = %User{role: role})
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) and
+             role in @see_all_submissions_roles do
+    answer =
+      Answer
+      |> where(submission_id: ^submission_id, question_id: ^question_id)
+      |> preload([:question])
+      |> Repo.one()
+
+    case answer do
+      nil ->
+        {:error, {:not_found, "Answer not found"}}
+
+      ans ->
+        GradingJob.grade_answer(ans, ans.question)
+        {:ok, nil}
+    end
+  end
+
+  def force_regrade_answer(_, _, _) do
+    {:error, {:forbidden, "User is not permitted to grade."}}
+  end
+
   defp find_submission(user = %User{}, assessment = %Assessment{}) do
     submission =
       Submission
