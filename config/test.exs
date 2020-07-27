@@ -77,6 +77,11 @@ config :cadet,
   uploader: [
     assets_bucket: "source-academy-assets",
     sourcecasts_bucket: "test-cadet-sourcecasts"
+  ],
+  remote_execution: [
+    thing_prefix: "env-sling",
+    thing_group: "env-sling",
+    client_role_arn: "test"
   ]
 
 config :arc, storage: Arc.Storage.Local

@@ -20,7 +20,7 @@ defmodule Cadet.DataCase do
 
       import Ecto
       import Ecto.{Changeset, Query}
-      import Cadet.{DataCase, Factory}
+      import Cadet.{AssertHelper, DataCase, Factory}
     end
   end
 

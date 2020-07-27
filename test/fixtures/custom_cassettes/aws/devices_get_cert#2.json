@@ -1,0 +1,70 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "iot.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200708T202703Z"
+      },
+      "method": "post",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://iot.ap-southeast-1.amazonaws.com/keys-and-certificate?setAsActive=true"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"certificateArn\":\"arn:aws:iot:ap-southeast-1:579079856475:cert/77c95ebb335e038d743dc411d0d3ae96ac4c3c99c49df94fc56618a2aefd37be\",\"certificateId\":\"77c95ebb335e038d743dc411d0d3ae96ac4c3c99c49df94fc56618a2aefd37be\",\"certificatePem\":\"cert\",\"keyPair\":{\"PrivateKey\":\"key\",\"PublicKey\":\"\"}}",
+      "headers": {
+        "Date": "Wed, 08 Jul 2020 20:27:03 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "3686",
+        "Connection": "keep-alive",
+        "x-amzn-RequestId": "d8974503-619e-4563-9b71-f676624c3d6a",
+        "Access-Control-Allow-Origin": "*",
+        "x-amz-apigw-id": "PXvTrGPiSQ0FXsA=",
+        "X-Amzn-Trace-Id": "Root=1-5f062c17-eecca312f150dff4c950b0f0"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "iot.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200708T202703Z",
+        "x-amzn-principal": "arn:aws:iot:ap-southeast-1:579079856475:cert/77c95ebb335e038d743dc411d0d3ae96ac4c3c99c49df94fc56618a2aefd37be",
+        "x-different-request": "true"
+      },
+      "method": "put",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "~r/https://iot.ap-southeast-1.amazonaws.com/things/[^/]+/principals/"
+    },
+    "response": {
+      "binary": false,
+      "body": "{}",
+      "headers": {
+        "Date": "Wed, 08 Jul 2020 20:27:03 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+        "Connection": "keep-alive",
+        "x-amzn-RequestId": "a78d96c1-ff6a-41a2-bf03-907be299ec60",
+        "Access-Control-Allow-Origin": "*",
+        "x-amz-apigw-id": "PXvTuGO_SQ0Fp1w=",
+        "X-Amzn-Trace-Id": "Root=1-5f062c17-04e91f0aeb37a8f8133097f2"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

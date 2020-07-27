@@ -56,6 +56,7 @@ defmodule Cadet.Mixfile do
       {:ex_aws_kms, "~> 2.0"},
       {:ex_aws_lambda, "~> 2.0"},
       {:ex_aws_s3, "~> 2.0"},
+      {:ex_aws_sts, "~> 2.1"},
       {:ex_machina, "~> 2.3"},
       {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},

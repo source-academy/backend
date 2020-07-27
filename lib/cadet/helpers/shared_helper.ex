@@ -20,12 +20,24 @@ defmodule Cadet.SharedHelper do
     end)
   end
 
+  @doc """
+  Snake-casifies string keys.
+
+  Meant for use when accepting a JSON map from the frontend, where keys are
+  usually camel-case.
+  """
   def snake_casify_string_keys(map = %{}) do
     for {key, val} <- map,
         into: %{},
         do: {if(is_binary(key), do: Recase.to_snake(key), else: key), val}
   end
 
+  @doc """
+  Snake-casifies string keys, recursively.
+
+  Meant for use when accepting a JSON map from the frontend, where keys are
+  usually camel-case.
+  """
   def snake_casify_string_keys_recursive(map = %{}) when not is_struct(map) do
     for {key, val} <- map,
         into: %{},
@@ -40,6 +52,13 @@ defmodule Cadet.SharedHelper do
 
   def snake_casify_string_keys_recursive(other), do: other
 
+  @doc """
+  Stringifies atom keys, recursively.
+
+  Intended for use in a model, when receiving changes to be passed to
+  Ecto.Changeset.cast, but the changes need to be pre-processed, since the
+  changes could be keyed with either atoms or strings.
+  """
   def stringify_atom_keys_recursive(s) when is_struct(s) do
     stringify_atom_keys_recursive(Map.from_struct(s))
   end
@@ -55,4 +74,30 @@ defmodule Cadet.SharedHelper do
   end
 
   def stringify_atom_keys_recursive(other), do: other
+
+  @doc """
+  Camel-casifies atom keys and converts them to strings.
+
+  Meant for use when sending an Elixir map, which usually has snake-case keys,
+  to the frontend.
+  """
+  def camel_casify_atom_keys(map = %{}) do
+    for {key, val} <- map,
+        into: %{},
+        do: {if(is_atom(key), do: key |> Atom.to_string() |> Recase.to_camel(), else: key), val}
+  end
+
+  @doc """
+  Sends an error to Sentry. The error can be anything.
+  """
+  def send_sentry_error(error) do
+    {_, stacktrace} = Process.info(self(), :current_stacktrace)
+    # drop 2 elements off the stacktrace: the frame of Process.info, and the
+    # frame of this function
+    stacktrace = stacktrace |> Enum.drop(2)
+
+    error = Exception.normalize(:error, error, stacktrace)
+
+    Sentry.capture_exception(error, stacktrace: stacktrace)
+  end
 end

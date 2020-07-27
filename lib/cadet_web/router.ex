@@ -27,6 +27,15 @@ defmodule CadetWeb.Router do
     get("/chapter", ChaptersController, :index)
   end
 
+  scope "/v1", CadetWeb do
+    # no sessions or anything here
+
+    get("/devices/:secret/cert", DevicesController, :get_cert)
+    get("/devices/:secret/key", DevicesController, :get_key)
+    get("/devices/:secret/client_id", DevicesController, :get_client_id)
+    get("/devices/:secret/mqtt_endpoint", DevicesController, :get_mqtt_endpoint)
+  end
+
   # Authenticated Pages
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
@@ -70,6 +79,12 @@ defmodule CadetWeb.Router do
     get("/user", UserController, :index)
     put("/user/game_states/clear", UserController, :clear_up_game_states)
     put("/user/game_states/save", UserController, :update_game_states)
+
+    get("/devices", DevicesController, :index)
+    post("/devices", DevicesController, :register)
+    post("/devices/:id", DevicesController, :edit)
+    delete("/devices/:id", DevicesController, :deregister)
+    get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
 
     post("/chapter/update/:id", ChaptersController, :update)
   end

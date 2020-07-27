@@ -1,0 +1,35 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "iot.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200712T173721Z"
+      },
+      "method": "get",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://iot.ap-southeast-1.amazonaws.com/endpoint?endpointType=iot:Data-ATS"
+    },
+    "response": {
+      "binary": false,
+      "body": "{}\n",
+      "headers": {
+        "Date": "Sun, 12 Jul 2020 17:37:21 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "3",
+        "Connection": "keep-alive",
+        "x-amzn-RequestId": "8488483c-cffc-40c8-872a-4381f0c02f41",
+        "Access-Control-Allow-Origin": "*",
+        "x-amz-apigw-id": "PkiMwHfSSQ0Fkgg=",
+        "X-Amzn-Trace-Id": "Root=1-5f0b4a51-5bbf91df139713fc727aa8ca"
+      },
+      "status_code": 500,
+      "type": "ok"
+    }
+  }
+]
