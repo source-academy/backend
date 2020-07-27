@@ -111,31 +111,43 @@ defmodule CadetWeb.AchievementsControllerTest do
       conn: conn,
       achievement: achievement
     } do
+      release = DateTime.truncate(DateTime.utc_now(), :second)
+      deadline = DateTime.add(release, 3600, :second)
+
       new_achievement = %{
         "id" => achievement.id,
-        "title" => "New Title",
+        "title" => Faker.Food.En.description(),
         "ability" => "Core",
         "isTask" => false,
-        "position" => 0,
-        "canvasUrl" => nil,
-        "deadline" =>
-          format_datetime(
-            DateTime.truncate(DateTime.add(DateTime.utc_now(), 3600, :second), :second)
-          ),
-        "release" => format_datetime(DateTime.truncate(DateTime.utc_now(), :second)),
+        "position" => 124_345,
+        "cardTileUrl" => Faker.UUID.v4(),
+        "deadline" => format_datetime(deadline),
+        "release" => format_datetime(release),
         "goals" => [],
         "prerequisiteIds" => [],
         "view" => %{
-          "cardTileUrl" => nil,
-          "description" => "",
-          "completionText" => ""
+          "canvasUrl" => Faker.UUID.v4(),
+          "description" => Faker.Food.En.description(),
+          "completionText" => Faker.App.name()
         }
       }
 
       conn = post(conn, "/v1/achievements/#{achievement.id}", %{achievement: new_achievement})
 
       assert "Success" == response(conn, 200)
-      assert "New Title" == Repo.get(Achievement, achievement.id).title
+
+      inserted_achievement = Repo.get(Achievement, achievement.id)
+
+      assert new_achievement["title"] == inserted_achievement.title
+      assert new_achievement["ability"] == inserted_achievement.ability
+      assert new_achievement["isTask"] == inserted_achievement.is_task
+      assert new_achievement["position"] == inserted_achievement.position
+      assert new_achievement["cardTileUrl"] == inserted_achievement.card_tile_url
+      assert deadline == inserted_achievement.close_at
+      assert release == inserted_achievement.open_at
+      assert new_achievement["view"]["canvasUrl"] == inserted_achievement.canvas_url
+      assert new_achievement["view"]["description"] == inserted_achievement.description
+      assert new_achievement["view"]["completionText"] == inserted_achievement.completion_text
     end
 
     @tag authenticate: :staff
