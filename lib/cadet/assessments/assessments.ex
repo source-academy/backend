@@ -946,7 +946,7 @@ defmodule Cadet.Assessments do
         {:error, {:not_found, "Submission not found"}}
 
       sub ->
-        GradingJob.force_grade_individual_submission(sub)
+        GradingJob.force_grade_individual_submission(sub, true)
         {:ok, nil}
     end
   end
@@ -971,7 +971,7 @@ defmodule Cadet.Assessments do
         {:error, {:not_found, "Answer not found"}}
 
       ans ->
-        GradingJob.grade_answer(ans, ans.question)
+        GradingJob.grade_answer(ans, ans.question, true)
         {:ok, nil}
     end
   end

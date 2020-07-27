@@ -17,10 +17,13 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   alias Cadet.Repo
   alias Cadet.Assessments.Answer
 
-  def perform(%{answer_id: answer_id, result: result}) when is_ecto_id(answer_id) do
+  def perform(params = %{answer_id: answer_id, result: result})
+      when is_ecto_id(answer_id) do
     Multi.new()
     |> Multi.run(:fetch, fn _repo, _ -> fetch_answer(answer_id) end)
-    |> Multi.run(:update, fn _repo, %{fetch: answer} -> update_answer(answer, result) end)
+    |> Multi.run(:update, fn _repo, %{fetch: answer} ->
+      update_answer(answer, result, params[:overwrite] || false)
+    end)
     |> Repo.transaction()
     |> case do
       {:ok, _} ->
@@ -50,7 +53,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
     end
   end
 
-  defp update_answer(answer = %Answer{}, result = %{status: status}) do
+  defp update_answer(answer = %Answer{}, result = %{status: status}, overwrite) do
     xp =
       if answer.question.max_grade == 0 do
         0
@@ -59,7 +62,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
       end
 
     new_adjustment =
-      if answer.grader_id do
+      if not overwrite and answer.grader_id do
         answer.adjustment - result.grade
       else
         0
@@ -72,6 +75,8 @@ defmodule Cadet.Autograder.ResultStoreWorker do
       autograding_status: status,
       autograding_results: result.result
     }
+
+    changes = if(overwrite, do: Map.put(changes, :xp_adjustment, 0), else: changes)
 
     answer
     |> Answer.autograding_changeset(changes)

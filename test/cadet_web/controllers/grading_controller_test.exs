@@ -1135,7 +1135,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :staff
     test "staff can re-autograde submissions", %{conn: conn, submission: submission} do
       with_mock Cadet.Autograder.GradingJob,
-        force_grade_individual_submission: fn in_sub -> assert submission.id == in_sub.id end do
+        force_grade_individual_submission: fn in_sub, _ -> assert submission.id == in_sub.id end do
         assert conn |> post(build_url_autograde(submission.id)) |> response(204)
       end
     end
@@ -1168,7 +1168,7 @@ defmodule CadetWeb.GradingControllerTest do
       question: question
     } do
       with_mock Cadet.Autograder.GradingJob,
-        grade_answer: fn in_a, in_q ->
+        grade_answer: fn in_a, in_q, _ ->
           assert question.id == in_q.id
           assert question.id == in_a.question_id
         end do
