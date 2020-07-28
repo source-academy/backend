@@ -95,6 +95,7 @@ defmodule Cadet.Updater.XMLParser do
         password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1)
       )
       |> Map.put(:is_published, false)
+      |> Map.put(:is_recording, false)
       |> Map.put(:open_at, open_at)
       |> Map.put(:close_at, close_at)
 

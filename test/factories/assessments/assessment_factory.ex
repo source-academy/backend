@@ -35,7 +35,8 @@ defmodule Cadet.Assessments.AssessmentFactory do
           type: type,
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
-          is_published: false
+          is_published: false,
+          is_recording: false
         }
       end
     end

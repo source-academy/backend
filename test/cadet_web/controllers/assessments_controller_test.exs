@@ -74,6 +74,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "maxXp" => 4500,
               "status" => get_assessment_status(user, &1),
               "private" => false,
+              "isRecording" => false,
               "isPublished" => &1.is_published,
               "gradedCount" => 0,
               "questionCount" => 6
@@ -153,6 +154,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "maxXp" => 4500,
             "status" => get_assessment_status(student, &1),
             "private" => false,
+            "isRecording" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 6
@@ -278,6 +280,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "private" => false,
               "gradedCount" => 0,
               "questionCount" => 6,
+              "isRecording" => false,
               "isPublished" =>
                 if &1.type == :mission do
                   false

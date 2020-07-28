@@ -27,6 +27,7 @@ defmodule CadetWeb.AssessmentsView do
       coverImage: :cover_picture,
       private: &password_protected?(&1.password),
       isPublished: :is_published,
+      isRecording: :is_recording,
       questionCount: :question_count,
       gradedCount: &(&1.graded_count || 0)
     })

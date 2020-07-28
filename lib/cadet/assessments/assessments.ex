@@ -19,6 +19,7 @@ defmodule Cadet.Assessments do
   @change_dates_assessment_role ~w(staff admin)a
   @delete_assessment_role ~w(staff admin)a
   @publish_assessment_role ~w(staff admin)a
+  @record_keystrokes_role ~w(staff admin)a
   @unsubmit_assessment_role ~w(staff admin)a
   @see_all_submissions_roles ~w(staff admin)a
   @group_grading_summary_roles @see_all_submissions_roles
@@ -42,6 +43,15 @@ defmodule Cadet.Assessments do
       update_assessment(id, %{is_published: !assessment.is_published})
     else
       {:error, {:forbidden, "User is not permitted to publish"}}
+    end
+  end
+
+  def toggle_keystrokes_recording(_publisher = %User{role: role}, id) do
+    if role in @record_keystrokes_role do
+      assessment = Repo.get(Assessment, id)
+      update_assessment(id, %{is_recording: !assessment.is_recording})
+    else
+      {:error, {:forbidden, "User is not permitted to toggle recording of keystrokes"}}
     end
   end
 

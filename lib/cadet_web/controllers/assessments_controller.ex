@@ -106,6 +106,24 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
+  def record(conn, %{"assessmentid" => assessment_id}) do
+    result =
+      Assessments.toggle_keystrokes_recording(
+        conn.assigns.current_user,
+        assessment_id
+      )
+
+    case result do
+      {:ok, _nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   def update(conn, %{"assessmentid" => assessment_id, "closeAt" => close_at, "openAt" => open_at}) do
     formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
     formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)

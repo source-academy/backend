@@ -53,6 +53,7 @@ defmodule Cadet.Updater.XMLParserTest do
           |> Map.put(:open_at, open_at)
           |> Map.put(:close_at, close_at)
           |> Map.put(:is_published, false)
+          |> Map.put(:is_recording, false)
 
         assert_map_keys(
           Map.from_struct(expected_assesment),
