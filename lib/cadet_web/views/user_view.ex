@@ -10,6 +10,7 @@ defmodule CadetWeb.UserView do
         game_states: game_states
       }) do
     %{
+      userId: user.id,
       name: user.name,
       role: user.role,
       group:

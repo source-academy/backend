@@ -64,7 +64,8 @@ defmodule CadetWeb.UserControllerTest do
         "xp" => 110,
         "grade" => 40,
         "maxGrade" => question.max_grade,
-        "gameStates" => %{"collectibles" => %{}, "completed_quests" => []}
+        "gameStates" => %{"collectibles" => %{}, "completed_quests" => []},
+        "userId" => user.id
       }
 
       assert expected == resp
@@ -217,7 +218,8 @@ defmodule CadetWeb.UserControllerTest do
         "grade" => 0,
         "maxGrade" => 0,
         "xp" => 0,
-        "gameStates" => %{"collectibles" => %{}, "completed_quests" => []}
+        "gameStates" => %{"collectibles" => %{}, "completed_quests" => []},
+        "userId" => user.id
       }
 
       assert expected == resp

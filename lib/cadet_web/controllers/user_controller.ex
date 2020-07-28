@@ -96,6 +96,8 @@ defmodule CadetWeb.UserController do
           description("Basic information about the user")
 
           properties do
+            userId(:integer, "User's ID", required: true)
+
             name(:string, "Full name of the user", required: true)
 
             role(
