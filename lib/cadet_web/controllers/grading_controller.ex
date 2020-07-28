@@ -310,6 +310,7 @@ defmodule CadetWeb.GradingController do
             id(:integer, "student id", required: true)
             name(:string, "student name", required: true)
             groupName(:string, "name of student's group")
+            groupLeaderId(:integer, "user id of group leader")
           end
         end,
       GraderInfo:

@@ -810,7 +810,7 @@ defmodule Cadet.Assessments do
                    a.id, to_json(a) as jsn
                  from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
                inner join
-                 (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
+                 (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
                left join
                  (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
              ) q

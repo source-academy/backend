@@ -113,7 +113,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -154,7 +155,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -213,7 +215,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -866,7 +869,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -909,7 +913,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
