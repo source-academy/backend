@@ -790,6 +790,72 @@ defmodule CadetWeb.GradingControllerTest do
       assert response(conn, 403) =~ "Only Avenger of student or Admin is permitted to unsubmit"
     end
 
+    @tag authenticate: :staff
+    test "avenger should be allowed to unsubmit own submissions", %{
+      conn: conn
+    } do
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      grader = conn.assigns.current_user
+      question = insert(:programming_question, assessment: assessment)
+
+      submission =
+        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_unsubmit(submission.id))
+
+      assert response(conn, 200) =~ "OK"
+    end
+
+    @tag authenticate: :staff
+    test "avenger should be allowed to unsubmit own closed submissions", %{
+      conn: conn
+    } do
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: 1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      grader = conn.assigns.current_user
+      question = insert(:programming_question, assessment: assessment)
+
+      submission =
+        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_unsubmit(submission.id))
+
+      assert response(conn, 200) =~ "OK"
+    end
+
     @tag authenticate: :admin
     test "admin should be allowed to unsubmit", %{
       conn: conn

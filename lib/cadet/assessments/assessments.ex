@@ -24,6 +24,10 @@ defmodule Cadet.Assessments do
   @group_grading_summary_roles @see_all_submissions_roles
   @open_all_assessment_roles ~w(staff admin)a
 
+  # These roles can save and finalise answers for closed assessments and
+  # submitted answers
+  @bypass_closed_roles ~w(staff admin)a
+
   def change_dates_assessment(_user = %User{role: role}, id, close_at, open_at) do
     if role in @change_dates_assessment_role do
       if Timex.before?(close_at, open_at) do
@@ -529,7 +533,7 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user, raw_answer) when is_ecto_id(id) do
+  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
     # if role in @submit_answer_roles do
     question =
       Question
@@ -538,10 +542,12 @@ defmodule Cadet.Assessments do
       |> preload([_, a], assessment: a)
       |> Repo.one()
 
+    bypass = role in @bypass_closed_roles
+
     with {:question_found?, true} <- {:question_found?, is_map(question)},
-         {:is_open?, true} <- is_open?(question.assessment),
+         {:is_open?, true} <- {:is_open?, bypass or is_open?(question.assessment)},
          {:ok, submission} <- find_or_create_submission(user, question.assessment),
-         {:status, true} <- {:status, submission.status != :submitted},
+         {:status, true} <- {:status, bypass or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer) do
       update_submission_status(submission, question.assessment)
 
@@ -559,7 +565,7 @@ defmodule Cadet.Assessments do
     # end
   end
 
-  def finalise_submission(assessment_id, %User{id: user_id})
+  def finalise_submission(assessment_id, %User{id: user_id, role: role})
       when is_ecto_id(assessment_id) do
     # if role in @submit_answer_roles do
     submission =
@@ -571,7 +577,8 @@ defmodule Cadet.Assessments do
       |> Repo.one()
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-         {:is_open?, true} <- is_open?(submission.assessment),
+         {:is_open?, true} <-
+           {:is_open?, role in @bypass_closed_roles or is_open?(submission.assessment)},
          {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
       # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
@@ -611,12 +618,15 @@ defmodule Cadet.Assessments do
         |> preload([_, a], assessment: a)
         |> Repo.get(submission_id)
 
+      bypass = role in @bypass_closed_roles and submission.student_id == user_id
+
       with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-           {:is_open?, true} <- is_open?(submission.assessment),
+           {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
            {:status, :submitted} <- {:status, submission.status},
            {:allowed_to_unsubmit?, true} <-
              {:allowed_to_unsubmit?,
-              role == :admin || Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
+              role == :admin or bypass or
+                Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
         Multi.new()
         |> Multi.run(
           :rollback_submission,
@@ -764,7 +774,7 @@ defmodule Cadet.Assessments do
         if show_all,
           do: "",
           else:
-            "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1)"
+            "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
 
       params = if show_all, do: [], else: [grader.id]
 
@@ -996,12 +1006,10 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @doc """
-  Checks if an assessment is open and published.
-  """
-  @spec is_open?(%Assessment{}) :: {:is_open?, boolean()}
-  def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
-    {:is_open?, Timex.between?(Timex.now(), open_at, close_at) and is_published}
+  # Checks if an assessment is open and published.
+  @spec is_open?(%Assessment{}) :: boolean()
+  defp is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+    Timex.between?(Timex.now(), open_at, close_at) and is_published
   end
 
   @type group_summary_entry :: %{

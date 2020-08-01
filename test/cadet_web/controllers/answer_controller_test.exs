@@ -108,18 +108,34 @@ defmodule CadetWeb.AnswerControllerTest do
         assert response(conn, 200) =~ "OK"
       end
 
-      @tag authenticate: role
-      test "answering submitted question is unsuccessful", %{
-        conn: conn,
-        assessment: assessment,
-        mcq_question: mcq_question
-      } do
-        user = conn.assigns.current_user
+      if role == :student do
+        @tag authenticate: role
+        test "answering submitted question is unsuccessful", %{
+          conn: conn,
+          assessment: assessment,
+          mcq_question: mcq_question
+        } do
+          user = conn.assigns.current_user
 
-        insert(:submission, %{assessment: assessment, student: user, status: :submitted})
-        conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+          insert(:submission, %{assessment: assessment, student: user, status: :submitted})
+          conn = post(conn, build_url(mcq_question.id), %{answer: 5})
 
-        assert response(conn, 403) == "Assessment submission already finalised"
+          assert response(conn, 403) == "Assessment submission already finalised"
+        end
+      else
+        @tag authenticate: role
+        test "answering submitted question is successful", %{
+          conn: conn,
+          assessment: assessment,
+          mcq_question: mcq_question
+        } do
+          user = conn.assigns.current_user
+
+          insert(:submission, %{assessment: assessment, student: user, status: :submitted})
+          conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+
+          assert response(conn, 200) == "OK"
+        end
       end
 
       @tag authenticate: role
