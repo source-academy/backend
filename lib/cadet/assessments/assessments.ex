@@ -954,15 +954,18 @@ defmodule Cadet.Assessments do
 
   @spec force_regrade_submission(integer() | String.t(), %User{}) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
-  def force_regrade_submission(submission_id, _requesting_user = %User{role: role})
+  def force_regrade_submission(submission_id, _requesting_user = %User{id: grader_id, role: role})
       when is_ecto_id(submission_id) and role in @see_all_submissions_roles do
-    case Repo.get(Submission, submission_id) do
-      nil ->
+    with {:get, sub} when not is_nil(sub) <- {:get, Repo.get(Submission, submission_id)},
+         {:status, true} <- {:status, sub.student_id == grader_id or sub.status == :submitted} do
+      GradingJob.force_grade_individual_submission(sub, true)
+      {:ok, nil}
+    else
+      {:get, nil} ->
         {:error, {:not_found, "Submission not found"}}
 
-      sub ->
-        GradingJob.force_grade_individual_submission(sub, true)
-        {:ok, nil}
+      {:status, false} ->
+        {:error, {:bad_request, "Submission not submitted yet"}}
     end
   end
 
@@ -972,22 +975,31 @@ defmodule Cadet.Assessments do
 
   @spec force_regrade_answer(integer() | String.t(), integer() | String.t(), %User{}) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
-  def force_regrade_answer(submission_id, question_id, _requesting_user = %User{role: role})
+  def force_regrade_answer(
+        submission_id,
+        question_id,
+        _requesting_user = %User{id: grader_id, role: role}
+      )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) and
              role in @see_all_submissions_roles do
     answer =
       Answer
       |> where(submission_id: ^submission_id, question_id: ^question_id)
-      |> preload([:question])
+      |> preload([:question, :submission])
       |> Repo.one()
 
-    case answer do
-      nil ->
+    with {:get, answer} when not is_nil(answer) <- {:get, answer},
+         {:status, true} <-
+           {:status,
+            answer.submission.student_id == grader_id or answer.submission.status == :submitted} do
+      GradingJob.grade_answer(answer, answer.question, true)
+      {:ok, nil}
+    else
+      {:get, nil} ->
         {:error, {:not_found, "Answer not found"}}
 
-      ans ->
-        GradingJob.grade_answer(ans, ans.question, true)
-        {:ok, nil}
+      {:status, false} ->
+        {:error, {:bad_request, "Submission not submitted yet"}}
     end
   end
 

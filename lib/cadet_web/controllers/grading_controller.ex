@@ -189,7 +189,7 @@ defmodule CadetWeb.GradingController do
     end
 
     response(204, "Successful request")
-    response(400, "Invalid parameters")
+    response(400, "Invalid parameters or submission not submitted")
     response(403, "User not permitted to grade submissions")
     response(404, "Submission not found")
   end
@@ -205,7 +205,7 @@ defmodule CadetWeb.GradingController do
     end
 
     response(204, "Successful request")
-    response(400, "Invalid parameters")
+    response(400, "Invalid parameters or submission not submitted")
     response(403, "User not permitted to grade submissions")
     response(404, "Answer not found")
   end
