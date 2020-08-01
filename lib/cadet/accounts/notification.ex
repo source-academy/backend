@@ -22,29 +22,15 @@ defmodule Cadet.Accounts.Notification do
     timestamps()
   end
 
-  @required_fields ~w(type read role user_id)a
-  @optional_fields ~w(assessment_id submission_id)a
+  @required_fields ~w(type read role user_id assessment_id)a
+  @optional_fields ~w(submission_id)a
 
   def changeset(answer, params) do
     answer
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_assessment_or_submission()
     |> foreign_key_constraint(:user)
     |> foreign_key_constraint(:assessment_id)
     |> foreign_key_constraint(:submission_id)
-  end
-
-  defp validate_assessment_or_submission(changeset) do
-    case get_change(changeset, :role) do
-      :staff ->
-        validate_required(changeset, [:submission_id, :assessment_id])
-
-      :student ->
-        validate_required(changeset, [:assessment_id])
-
-      _ ->
-        add_error(changeset, :role, "Invalid role")
-    end
   end
 end
