@@ -15,7 +15,7 @@ defmodule Cadet.Assessments do
 
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)a
-  @submit_answer_roles ~w(student)a
+  # @submit_answer_roles ~w(student staff admin)a
   @change_dates_assessment_role ~w(staff admin)a
   @delete_assessment_role ~w(staff admin)a
   @publish_assessment_role ~w(staff admin)a
@@ -529,75 +529,77 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
-    if role in @submit_answer_roles do
-      question =
-        Question
-        |> where(id: ^id)
-        |> join(:inner, [q], assessment in assoc(q, :assessment))
-        |> preload([_, a], assessment: a)
-        |> Repo.one()
+  def answer_question(id, user, raw_answer) when is_ecto_id(id) do
+    # if role in @submit_answer_roles do
+    question =
+      Question
+      |> where(id: ^id)
+      |> join(:inner, [q], assessment in assoc(q, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.one()
 
-      with {:question_found?, true} <- {:question_found?, is_map(question)},
-           {:is_open?, true} <- is_open?(question.assessment),
-           {:ok, submission} <- find_or_create_submission(user, question.assessment),
-           {:status, true} <- {:status, submission.status != :submitted},
-           {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer) do
-        update_submission_status(submission, question.assessment)
+    with {:question_found?, true} <- {:question_found?, is_map(question)},
+         {:is_open?, true} <- is_open?(question.assessment),
+         {:ok, submission} <- find_or_create_submission(user, question.assessment),
+         {:status, true} <- {:status, submission.status != :submitted},
+         {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer) do
+      update_submission_status(submission, question.assessment)
 
-        {:ok, nil}
-      else
-        {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
-        {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
-        {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
-        {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
-        _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
-      end
+      {:ok, nil}
     else
-      {:error, {:forbidden, "User is not permitted to answer questions"}}
+      {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
+      {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
+      {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
+      {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
+      _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
+
+    # else
+    #  {:error, {:forbidden, "User is not permitted to answer questions"}}
+    # end
   end
 
-  def finalise_submission(assessment_id, %User{role: role, id: user_id})
+  def finalise_submission(assessment_id, %User{id: user_id})
       when is_ecto_id(assessment_id) do
-    if role in @submit_answer_roles do
-      submission =
-        Submission
-        |> where(assessment_id: ^assessment_id)
-        |> where(student_id: ^user_id)
-        |> join(:inner, [s], a in assoc(s, :assessment))
-        |> preload([_, a], assessment: a)
-        |> Repo.one()
+    # if role in @submit_answer_roles do
+    submission =
+      Submission
+      |> where(assessment_id: ^assessment_id)
+      |> where(student_id: ^user_id)
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.one()
 
-      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-           {:is_open?, true} <- is_open?(submission.assessment),
-           {:status, :attempted} <- {:status, submission.status},
-           {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
-        # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
-        Notifications.write_notification_when_student_submits(submission)
-        # Begin autograding job
-        GradingJob.force_grade_individual_submission(updated_submission)
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:is_open?, true} <- is_open?(submission.assessment),
+         {:status, :attempted} <- {:status, submission.status},
+         {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
+      # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
+      Notifications.write_notification_when_student_submits(submission)
+      # Begin autograding job
+      GradingJob.force_grade_individual_submission(updated_submission)
 
-        {:ok, nil}
-      else
-        {:submission_found?, false} ->
-          {:error, {:not_found, "Submission not found"}}
-
-        {:is_open?, false} ->
-          {:error, {:forbidden, "Assessment not open"}}
-
-        {:status, :attempting} ->
-          {:error, {:bad_request, "Some questions have not been attempted"}}
-
-        {:status, :submitted} ->
-          {:error, {:forbidden, "Assessment has already been submitted"}}
-
-        _ ->
-          {:error, {:internal_server_error, "Please try again later."}}
-      end
+      {:ok, nil}
     else
-      {:error, {:forbidden, "User is not permitted to answer questions"}}
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:is_open?, false} ->
+        {:error, {:forbidden, "Assessment not open"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :submitted} ->
+        {:error, {:forbidden, "Assessment has already been submitted"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
     end
+
+    # else
+    #   {:error, {:forbidden, "User is not permitted to answer questions"}}
+    # end
   end
 
   def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})

@@ -722,45 +722,36 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "POST /assessment_id/submit non-students" do
-    for role <- [:staff, :admin] do
-      @tag authenticate: role
-      test "is not permitted for #{role}", %{
-        conn: conn,
-        assessments: %{mission: %{assessment: assessment}}
-      } do
-        conn = post(conn, build_url_submit(assessment.id))
-        assert response(conn, 403) == "User is not permitted to answer questions"
-      end
-    end
-  end
-
   describe "POST /assessment_id/submit students" do
-    test "is successful for attempted assessments", %{
-      conn: conn,
-      assessments: %{mission: %{assessment: assessment}}
-    } do
-      with_mock GradingJob,
-        force_grade_individual_submission: fn _ -> nil end do
-        group = insert(:group)
-        user = insert(:user, %{role: :student, group: group})
+    for role <- ~w(student staff admin)a do
+      @tag role: role
+      test "is successful for attempted assessments for #{role}", %{
+        conn: conn,
+        assessments: %{mission: %{assessment: assessment}},
+        role: role
+      } do
+        with_mock GradingJob,
+          force_grade_individual_submission: fn _ -> nil end do
+          group = if(role == :student, do: insert(:group), else: nil)
+          user = insert(:user, %{role: role, group: group})
 
-        submission =
-          insert(:submission, %{student: user, assessment: assessment, status: :attempted})
+          submission =
+            insert(:submission, %{student: user, assessment: assessment, status: :attempted})
 
-        conn =
-          conn
-          |> sign_in(user)
-          |> post(build_url_submit(assessment.id))
+          conn =
+            conn
+            |> sign_in(user)
+            |> post(build_url_submit(assessment.id))
 
-        assert response(conn, 200) == "OK"
+          assert response(conn, 200) == "OK"
 
-        # Preloading is necessary because Mock does an exact match, including metadata
-        submission_db = Submission |> Repo.get(submission.id) |> Repo.preload(:assessment)
+          # Preloading is necessary because Mock does an exact match, including metadata
+          submission_db = Submission |> Repo.get(submission.id) |> Repo.preload(:assessment)
 
-        assert submission_db.status == :submitted
+          assert submission_db.status == :submitted
 
-        assert_called(GradingJob.force_grade_individual_submission(submission_db))
+          assert_called(GradingJob.force_grade_individual_submission(submission_db))
+        end
       end
     end
 
