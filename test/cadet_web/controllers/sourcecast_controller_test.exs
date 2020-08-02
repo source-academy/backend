@@ -23,6 +23,7 @@ defmodule CadetWeb.SourcecastControllerTest do
             "id" => &1.id,
             "title" => &1.title,
             "description" => &1.description,
+            "uid" => &1.uid,
             "playbackData" => &1.playbackData,
             "uploader" => %{
               "name" => &1.uploader.name,
@@ -71,6 +72,7 @@ defmodule CadetWeb.SourcecastControllerTest do
             "id" => &1.id,
             "title" => &1.title,
             "description" => &1.description,
+            "uid" => &1.uid,
             "playbackData" => &1.playbackData,
             "uploader" => %{
               "name" => &1.uploader.name,
@@ -212,6 +214,7 @@ defmodule CadetWeb.SourcecastControllerTest do
         insert(:sourcecast, %{
           title: "Title#{i}",
           description: "Description#{i}",
+          uid: "unique_id#{i}",
           playbackData:
             "{\"init\":{\"editorValue\":\"// Type your program in here!\"},\"inputs\":[]}",
           audio: %Plug.Upload{

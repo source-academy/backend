@@ -10,6 +10,7 @@ defmodule CadetWeb.SourcecastView do
       id: :id,
       title: :title,
       description: :description,
+      uid: :uid,
       inserted_at: &format_datetime(&1.inserted_at),
       updated_at: &format_datetime(&1.updated_at),
       audio: :audio,
