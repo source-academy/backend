@@ -15,7 +15,8 @@ defmodule Cadet.Accounts.UserFactory do
             sequence(
               :nusnet_id,
               &"E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
-            )
+            ),
+          game_states: %{}
         }
       end
 
@@ -27,7 +28,8 @@ defmodule Cadet.Accounts.UserFactory do
             sequence(
               :nusnet_id,
               &"E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
-            )
+            ),
+          game_states: %{}
         }
       end
     end

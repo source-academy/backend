@@ -2,7 +2,7 @@ defmodule Cadet.Accounts do
   @moduledoc """
   Accounts context contains domain logic for User management and Authentication
   """
-  use Cadet, :context
+  use Cadet, [:context, :display]
 
   import Ecto.Query
 
@@ -79,6 +79,15 @@ defmodule Cadet.Accounts do
 
       user ->
         {:ok, user}
+    end
+  end
+
+  def update_game_states(user = %User{}, new_game_state = %{}) do
+    case user
+         |> User.changeset(%{game_states: new_game_state})
+         |> Repo.update() do
+      result = {:ok, _} -> result
+      {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
     end
   end
 end

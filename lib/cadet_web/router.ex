@@ -77,8 +77,7 @@ defmodule CadetWeb.Router do
     post("/notification/acknowledge", NotificationController, :acknowledge)
 
     get("/user", UserController, :index)
-    put("/user/game_states/clear", UserController, :clear_up_game_states)
-    put("/user/game_states/save", UserController, :update_game_states)
+    post("/user/game_states", UserController, :update_game_states)
 
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)
