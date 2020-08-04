@@ -6,7 +6,7 @@ defmodule Cadet.Achievements.Achievement do
 
   alias Cadet.Achievements.{AchievementGoal, AchievementPrerequisite}
 
-  @valid_abilities ~w(Core Community Effort Exploration)
+  @valid_abilities ~w(Core Community Effort Exploration Flex)
 
   @primary_key {:id, :id, autogenerate: false}
   schema "achievements" do
@@ -45,4 +45,6 @@ defmodule Cadet.Achievements.Achievement do
     |> cast_assoc(:prerequisites)
     |> cast_assoc(:goals)
   end
+
+  def valid_abilities, do: @valid_abilities
 end

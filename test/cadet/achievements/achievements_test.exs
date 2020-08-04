@@ -12,7 +12,7 @@ defmodule Cadet.AchievementsTest do
   }
 
   test "create achievements" do
-    for {ability, id} <- Enum.with_index(~w(Core Community Effort Exploration)) do
+    for {ability, id} <- Enum.with_index(Achievement.valid_abilities()) do
       {:ok, _} =
         Achievements.insert_or_update_achievement(
           %User{role: :admin},
