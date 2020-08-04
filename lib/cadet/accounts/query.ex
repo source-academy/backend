@@ -8,6 +8,14 @@ defmodule Cadet.Accounts.Query do
   alias Cadet.Course.Group
   alias Cadet.Repo
 
+  # This gets all users where each and every user is a student.
+  def all_students do
+    User
+    |> where([u], u.role == "student")
+    |> preload(:group)
+    |> Repo.all()
+  end
+
   def username(username) do
     User
     |> of_username(username)

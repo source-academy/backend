@@ -16,6 +16,10 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
+  pipeline :ensure_staff do
+    plug(:ensure_role, [:staff, :admin])
+  end
+
   # Public Pages
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
@@ -88,6 +92,12 @@ defmodule CadetWeb.Router do
     post("/chapter/update/:id", ChaptersController, :update)
   end
 
+  scope "/v1/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
+
+    get("/users", AdminUserController, :index)
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", CadetWeb do
   #   pipe_through :api
@@ -116,5 +126,15 @@ defmodule CadetWeb.Router do
 
   scope "/", CadetWeb do
     get("/", DefaultController, :index)
+  end
+
+  defp ensure_role(conn, opts) do
+    if not is_nil(conn.assigns.current_user) and conn.assigns.current_user.role in opts do
+      conn
+    else
+      conn
+      |> send_resp(403, "Forbidden")
+      |> halt()
+    end
   end
 end

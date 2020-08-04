@@ -53,6 +53,23 @@ defmodule Cadet.Accounts do
     Repo.get(User, id)
   end
 
+  @doc """
+  Returns users matching a given set of criteria.
+  """
+  def get_users(filter \\ []) do
+    User
+    |> join(:left, [u], g in assoc(u, :group))
+    |> preload([u, g], group: g)
+    |> get_users(filter)
+  end
+
+  defp get_users(query, []), do: Repo.all(query)
+
+  defp get_users(query, [{:group, group} | filters]),
+    do: query |> where([u, g], g.name == ^group) |> get_users(filters)
+
+  defp get_users(query, [filter | filters]), do: query |> where(^[filter]) |> get_users(filters)
+
   @spec sign_in(String.t(), Provider.token(), Provider.provider_instance()) ::
           {:error, :bad_request | :forbidden | :internal_server_error, String.t()} | {:ok, any}
   @doc """

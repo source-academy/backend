@@ -88,6 +88,19 @@ defmodule Cadet.SharedHelper do
   end
 
   @doc """
+  Converts a map like `%{"a" => 123}` into a keyword list like
+  [a: 123].
+
+  Meant for use for GET endpoints that filter based on the query string.
+  """
+  def try_keywordise_string_keys(map) do
+    for {key, val} <- map,
+        do: {if(is_binary(key), do: String.to_existing_atom(key), else: key), val}
+  rescue
+    ArgumentError -> nil
+  end
+
+  @doc """
   Sends an error to Sentry. The error can be anything.
   """
   def send_sentry_error(error) do
