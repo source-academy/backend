@@ -1,6 +1,6 @@
 language: elixir
-elixir: 1.10.3
-otp_release: '22.3.4'
+elixir: 1.10.4
+otp_release: '23.0.3'
 env:
   - MIX_ENV=test
 cache:
@@ -22,7 +22,7 @@ script:
   - mix format --check-formatted
   - mix credo
   - mix coveralls.travis
-  - mix dialyzer
+  - travis_wait 60 mix dialyzer
   - mix inch.report
 branches:
   only:

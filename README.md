@@ -11,8 +11,8 @@ Cadet is the web application powering Source Academy.
 
 ### System requirements
 
-1. Elixir 1.10.3
-2. Erlang/OTP 22.3.4
+1. Elixir 1.10.4
+2. Erlang/OTP 23.0.3
 3. PostgreSQL 11.8
 
 It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but
