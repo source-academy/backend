@@ -1,39 +1,32 @@
 defmodule Cadet.Repo do
   use Ecto.Repo, otp_app: :cadet, adapter: Ecto.Adapters.Postgres
 
-  alias ExAws.KMS
+  alias ExAws.SecretsManager
 
   @dialyzer {:no_match, init: 2}
 
   @doc """
-  Dynamically obtains the database password from encrypted cipher text using
-  AWS KMS (only in production).
+  Dynamically obtains the database credentials from AWS Secrets Manager.
   """
   def init(_, opts) do
-    if Cadet.Env.env() == :prod and not Keyword.has_key?(opts, :password) do
-      cipher_text =
-        :cadet
-        |> Application.fetch_env!(:aws)
-        |> Keyword.get(:rds_cipher_text)
+    case Keyword.get(opts, :rds_secret_name) do
+      nil ->
+        {:ok, opts}
 
-      region =
-        :cadet
-        |> Application.fetch_env!(:aws)
-        |> Keyword.get(:region)
+      rds_secret_name ->
+        %{"SecretString" => credentials_json} =
+          rds_secret_name |> SecretsManager.get_secret_value() |> ExAws.request!()
 
-      {:ok, kms_response} =
-        cipher_text
-        |> KMS.decrypt()
-        |> ExAws.request(region: region)
+        credentials = Jason.decode!(credentials_json)
 
-      password =
-        kms_response
-        |> Map.get("Plaintext")
-        |> Base.decode64!()
-
-      {:ok, Keyword.put(opts, :password, password)}
-    else
-      {:ok, opts}
+        {:ok,
+         Keyword.merge(opts,
+           username: credentials["username"],
+           password: credentials["password"],
+           hostname: credentials["host"],
+           port: credentials["port"],
+           database: credentials["dbname"]
+         )}
     end
   end
 end
