@@ -99,11 +99,11 @@ resource "aws_security_group" "api" {
   }
 
   ingress {
-    description     = "HTTP from API Load Balancer"
+    description     = "HTTP from API Load Balancer and Bastion"
     protocol        = "tcp"
     from_port       = 4000
     to_port         = 4000
-    security_groups = [aws_security_group.lb.id]
+    security_groups = [aws_security_group.lb.id, aws_security_group.bastion.id]
   }
 
   ingress {
