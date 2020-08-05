@@ -19,6 +19,14 @@ data "aws_iam_policy_document" "grader" {
   }
 }
 
+data "aws_iam_policy_document" "db_secret" {
+  statement {
+    effect    = "Allow"
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [aws_secretsmanager_secret.db.arn]
+  }
+}
+
 data "aws_iam_policy_document" "assume_policy" {
   statement {
     effect = "Allow"
@@ -44,14 +52,20 @@ resource "aws_iam_role" "api" {
 
 resource "aws_iam_policy" "assets" {
   name        = "${var.env}-cadet-assets"
-  description = "Allows R/W access to production Sourcecasts and assets buckets"
+  description = "Allows R/W access to the ${aws_s3_bucket.sourcecasts.bucket} and ${aws_s3_bucket.assets.bucket} S3 buckets"
   policy      = data.aws_iam_policy_document.assets.json
 }
 
 resource "aws_iam_policy" "grader" {
   name        = "${var.env}-cadet-grader"
-  description = "Allows invocation of the prod-cadet-grader Lambda"
+  description = "Allows invocation of the ${aws_lambda_function.grader.function_name} Lambda"
   policy      = data.aws_iam_policy_document.grader.json
+}
+
+resource "aws_iam_policy" "db_secret" {
+  name        = "${var.env}-cadet-db_secret"
+  description = "Allows access to the ${aws_secretsmanager_secret.db.name} secret in Secrets Manager"
+  policy      = data.aws_iam_policy_document.db_secret.json
 }
 
 resource "aws_iam_role_policy_attachment" "api_assets" {
@@ -62,4 +76,9 @@ resource "aws_iam_role_policy_attachment" "api_assets" {
 resource "aws_iam_role_policy_attachment" "api_grader" {
   role       = aws_iam_role.api.name
   policy_arn = aws_iam_policy.grader.arn
+}
+
+resource "aws_iam_role_policy_attachment" "api_db_secret" {
+  role       = aws_iam_role.api.name
+  policy_arn = aws_iam_policy.db_secret.arn
 }
