@@ -43,7 +43,8 @@ config :cadet,
       {Cadet.Auth.Providers.LumiNUS,
        %{
          api_key: "API_KEY",
-         module_code: "CS1101S"
+         module_code: "CS1101S",
+         module_term: "2010"
        }},
     "test" =>
       {Cadet.Auth.Providers.Config,

@@ -34,7 +34,8 @@ defmodule Cadet.Auth.Providers.LumiNUSTest do
 
   @config %{
     api_key: "API_KEY",
-    module_code: "CS1101S"
+    module_code: "CS1101S",
+    module_term: "2010"
   }
 
   setup_all do
@@ -130,6 +131,13 @@ defmodule Cadet.Auth.Providers.LumiNUSTest do
 
     test "User no longer reads CS1101S" do
       use_cassette "luminus/get_role#4", custom: true do
+        assert {:error, :invalid_credentials, "User is not part of module"} =
+                 LumiNUS.get_role(@config, @token)
+      end
+    end
+
+    test "User is staff of CS1101S from old semester" do
+      use_cassette "luminus/get_role#10", custom: true do
         assert {:error, :invalid_credentials, "User is not part of module"} =
                  LumiNUS.get_role(@config, @token)
       end

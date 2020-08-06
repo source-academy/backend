@@ -7,7 +7,7 @@ defmodule Cadet.Auth.Providers.LumiNUS do
 
   @behaviour Provider
 
-  @type config :: %{api_key: String.t(), module_code: String.t()}
+  @type config :: %{api_key: String.t(), module_code: String.t(), module_term: String.t()}
 
   @api_url "https://luminus.azure-api.net/"
 
@@ -97,7 +97,7 @@ defmodule Cadet.Auth.Providers.LumiNUS do
   def get_role(config, token) do
     case api_call("module", token, config.api_key) do
       {:ok, modules} ->
-        parse_modules(modules, config.module_code)
+        parse_modules(modules, config.module_code, config.module_term)
 
       {:error, _, _} = error ->
         error
@@ -129,11 +129,12 @@ defmodule Cadet.Auth.Providers.LumiNUS do
     "access_Settings_Update" => true
   }
 
-  defp parse_modules(modules, module_code) do
+  defp parse_modules(modules, module_code, module_term) do
     cs1101s =
       modules["data"]
       |> Enum.find(fn module ->
-        module["name"] == module_code && module_active?(module["endDate"])
+        module["name"] == module_code && module["term"] == module_term &&
+          module_active?(module["endDate"])
       end)
 
     case cs1101s do
