@@ -358,15 +358,14 @@ defmodule Cadet.Assessments do
       questions_params
       |> Enum.with_index(1)
       |> Enum.reduce(assessment_multi, fn {question_params, index}, multi ->
-        Multi.run(multi, String.to_atom("question#{index}"), fn _repo,
-                                                                %{assessment: %Assessment{id: id}} ->
-          question_exists =
-            Repo.exists?(
-              where(Question, [q], q.assessment_id == ^id and q.display_order == ^index)
-            )
+        Multi.run(multi, "question#{index}", fn _repo, %{assessment: %Assessment{id: id}} ->
+          question =
+            Question
+            |> where([q], q.display_order == ^index and q.assessment_id == ^id)
+            |> Repo.one()
 
-          # the !question_exists check allows for force updating of brand new assessments
-          if !force_update or !question_exists do
+          # the is_nil(question) check allows for force updating of brand new assessments
+          if !force_update or is_nil(question) do
             question_params
             |> Map.put(:display_order, index)
             |> build_question_changeset_for_assessment_id(id)
@@ -377,22 +376,16 @@ defmodule Cadet.Assessments do
               |> Map.put_new(:max_xp, 0)
               |> Map.put(:display_order, index)
 
-            %{id: question_id, type: type} =
-              Question
-              |> where([q], q.display_order == ^index and q.assessment_id == ^id)
-              |> Repo.one()
-
-            if question_params.type != Atom.to_string(type) do
+            if question_params.type != Atom.to_string(question.type) do
               {:error,
                create_invalid_changeset_with_error(
                  :question,
                  "Question types should remain the same"
                )}
             else
-              changeset =
-                Question.changeset(%Question{assessment_id: id, id: question_id}, params)
-
-              Repo.update(changeset)
+              question
+              |> Question.changeset(params)
+              |> Repo.update()
             end
           end
         end)
@@ -439,12 +432,24 @@ defmodule Cadet.Assessments do
       nil ->
         Assessment.changeset(%Assessment{}, params)
 
-      assessment ->
-        cond do
-          Timex.after?(assessment.open_at, Timex.now()) ->
-            # Delete all existing questions
-            %{id: assessment_id} = assessment
+      %{id: assessment_id} = assessment ->
+        answers_exist =
+          Answer
+          |> join(:inner, [a], q in assoc(a, :question))
+          |> join(:inner, [a, q], asst in assoc(q, :assessment))
+          |> where([a, q, asst], asst.id == ^assessment_id)
+          |> Repo.exists?()
 
+        # Maintain the same open/close date when updating an assessment
+        params =
+          params
+          |> Map.delete(:open_at)
+          |> Map.delete(:close_at)
+          |> Map.delete(:is_published)
+
+        cond do
+          not answers_exist ->
+            # Delete all existing questions
             Question
             |> where(assessment_id: ^assessment_id)
             |> Repo.delete_all()
@@ -452,18 +457,11 @@ defmodule Cadet.Assessments do
             Assessment.changeset(assessment, params)
 
           force_update ->
-            # Maintain the same open/close date when force updating an assessment
-            new_params =
-              params
-              |> Map.delete(:open_at)
-              |> Map.delete(:close_at)
-              |> Map.delete(:is_published)
-
-            Assessment.changeset(assessment, new_params)
+            Assessment.changeset(assessment, params)
 
           true ->
-            # if the assessment is already open, don't mess with it
-            create_invalid_changeset_with_error(:assessment, "is already open")
+            # if the assessment has submissions, don't edit
+            create_invalid_changeset_with_error(:assessment, "has submissions")
         end
     end
   end

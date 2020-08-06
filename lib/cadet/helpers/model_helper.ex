@@ -100,7 +100,7 @@ defmodule Cadet.ModelHelper do
     end
 
     with true <- changeset.valid?,
-         {:type, type} when is_atom(type) <- {:type, get_change(changeset, :type)},
+         {:type, type} when is_atom(type) <- {:type, get_field(changeset, :type)},
          {:field_change, map} when is_map(map) <- {:field_change, get_change(changeset, field)},
          {:changeset, embed_changeset = %Ecto.Changeset{valid?: true}} <-
            {:changeset, build_changeset.(map, type)} do

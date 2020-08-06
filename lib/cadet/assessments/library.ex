@@ -46,7 +46,7 @@ defmodule Cadet.Assessments.Library do
     if external do
       changeset
     else
-      put_change(changeset, :external, %ExternalLibrary{})
+      put_change(changeset, :external, %{})
     end
   end
 end

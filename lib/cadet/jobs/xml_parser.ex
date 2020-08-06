@@ -32,14 +32,14 @@ defmodule Cadet.Updater.XMLParser do
 
       :ok
     else
-      {:error, stage, %{errors: [assessment: {"is already open", []}]}, _} when is_atom(stage) ->
-        Logger.warn("Assessment already open, ignoring...")
-        {:ok, "Assessment already open, ignoring..."}
+      {:error, stage, %{errors: [assessment: {"has submissions", []}]}, _} when is_atom(stage) ->
+        Logger.warn("Assessment has submissions, ignoring...")
+        {:ok, "Assessment has submissions, ignoring..."}
 
       {:error, error_message} ->
         log_and_return_badrequest(error_message)
 
-      {:error, stage, changeset, _} when is_atom(stage) ->
+      {:error, stage, changeset, _} ->
         log_error_bad_changeset(changeset, stage)
 
         changeset_error =

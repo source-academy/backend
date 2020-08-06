@@ -171,7 +171,7 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
-    test "existing already open assessment", %{assessments: assessments, questions: questions} do
+    test "existing assessment with submissions", %{assessments: assessments, questions: questions} do
       for assessment <- assessments do
         already_open_assessment =
           Map.from_struct(%{
@@ -180,16 +180,27 @@ defmodule Cadet.Updater.XMLParserTest do
               close_at: Timex.shift(Timex.now(), days: 2)
           })
 
-        %Assessment{}
-        |> Assessment.changeset(already_open_assessment)
-        |> Repo.insert!()
+        inserted_asst =
+          %Assessment{}
+          |> Assessment.changeset(already_open_assessment)
+          |> Repo.insert!()
+
+        question = insert(:programming_question, assessment_id: inserted_asst.id, assessment: nil)
+        submission = insert(:submission, assessment_id: inserted_asst.id, assessment: nil)
+
+        insert(:answer,
+          question_id: question.id,
+          answer: build(:programming_answer),
+          submission_id: submission.id
+        )
 
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
         assert capture_log(fn ->
-                 assert XMLParser.parse_xml(xml) == {:ok, "Assessment already open, ignoring..."}
+                 assert XMLParser.parse_xml(xml) ==
+                          {:ok, "Assessment has submissions, ignoring..."}
                end) =~
-                 "Assessment already open, ignoring..."
+                 "Assessment has submissions, ignoring..."
       end
     end
   end
