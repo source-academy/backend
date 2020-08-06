@@ -251,7 +251,7 @@ defmodule CadetWeb.UserControllerTest do
     end
   end
 
-  describe "POST /user/game_states" do
+  describe "PUT /user/game_states" do
     @tag authenticate: :student
     test "success, updating game state", %{conn: conn} do
       user = conn.assigns.current_user
@@ -262,7 +262,7 @@ defmodule CadetWeb.UserControllerTest do
       }
 
       conn
-      |> post("/v1/user/game_states", %{"gameStates" => new_game_states})
+      |> put("/v1/user/game_states", %{"gameStates" => new_game_states})
       |> response(200)
 
       updated_user = Repo.get(User, user.id)
