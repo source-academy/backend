@@ -10,7 +10,7 @@ variable "ec2_instance_type" {
 
 variable "rds_instance_class" {
   description = "RDS instance class"
-  default     = "db.t2.micro"
+  default     = "db.t3.micro"
 }
 
 variable "min_instance_count" {
