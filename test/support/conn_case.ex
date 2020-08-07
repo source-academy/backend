@@ -31,7 +31,7 @@ defmodule CadetWeb.ConnCase do
       @endpoint CadetWeb.Endpoint
 
       # Helper function for formatting datetime for views
-      import CadetWeb.ViewHelpers
+      import CadetWeb.ViewHelper
 
       # Helper function
       def sign_in(conn, user) do

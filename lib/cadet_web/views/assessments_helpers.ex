@@ -3,7 +3,7 @@ defmodule CadetWeb.AssessmentsHelpers do
   Helper functions for Assessments and Grading
   """
 
-  import CadetWeb.ViewHelpers
+  import CadetWeb.ViewHelper
 
   @graded_assessment_types ~w(mission sidequest contest)a
 
