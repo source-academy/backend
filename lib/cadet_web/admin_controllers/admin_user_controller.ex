@@ -23,7 +23,7 @@ defmodule CadetWeb.AdminUserController do
 
   def swagger_definitions do
     %{
-      UserInfo:
+      AdminUserInfo:
         swagger_schema do
           title("User")
           description("Basic information about the user")
