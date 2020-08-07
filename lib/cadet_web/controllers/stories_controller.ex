@@ -64,7 +64,7 @@ defmodule CadetWeb.StoriesController do
 
     security([%{JWT: []}])
 
-    response(200, "OK", :Stories)
+    response(200, "OK", Schema.array(:Story))
     response(403, "User not allowed to manage stories")
   end
 
