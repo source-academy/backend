@@ -100,6 +100,34 @@ defmodule CadetWeb.GradingController do
     |> text("Missing parameter")
   end
 
+  def autograde_submission(conn, %{"submissionid" => submission_id}) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.force_regrade_submission(submission_id, user) do
+      {:ok, nil} ->
+        send_resp(conn, :no_content, "")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def autograde_answer(conn, %{"submissionid" => submission_id, "questionid" => question_id}) do
+    user = conn.assigns[:current_user]
+
+    case Assessments.force_regrade_answer(submission_id, question_id, user) do
+      {:ok, nil} ->
+        send_resp(conn, :no_content, "")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   def grading_summary(conn, _params) do
     user = conn.assigns[:current_user]
 
@@ -149,6 +177,37 @@ defmodule CadetWeb.GradingController do
     response(400, "Invalid parameters")
     response(403, "User not permitted to unsubmit assessment or assessment not open")
     response(404, "Submission not found")
+  end
+
+  swagger_path :autograde_submission do
+    post("/grading/{submissionId}/autograde")
+    summary("Force re-autograding of an entire submission")
+    security([%{JWT: []}])
+
+    parameters do
+      submissionId(:path, :integer, "submission id", required: true)
+    end
+
+    response(204, "Successful request")
+    response(400, "Invalid parameters or submission not submitted")
+    response(403, "User not permitted to grade submissions")
+    response(404, "Submission not found")
+  end
+
+  swagger_path :autograde_answer do
+    post("/grading/{submissionId}/{questionId}/autograde")
+    summary("Force re-autograding of a question in a submission")
+    security([%{JWT: []}])
+
+    parameters do
+      submissionId(:path, :integer, "submission id", required: true)
+      questionId(:path, :integer, "question id", required: true)
+    end
+
+    response(204, "Successful request")
+    response(400, "Invalid parameters or submission not submitted")
+    response(403, "User not permitted to grade submissions")
+    response(404, "Answer not found")
   end
 
   swagger_path :show do
@@ -251,6 +310,7 @@ defmodule CadetWeb.GradingController do
             id(:integer, "student id", required: true)
             name(:string, "student name", required: true)
             groupName(:string, "name of student's group")
+            groupLeaderId(:integer, "user id of group leader")
           end
         end,
       GraderInfo:

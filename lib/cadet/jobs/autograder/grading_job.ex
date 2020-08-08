@@ -47,7 +47,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   Every answer will be regraded regardless of its current autograding status.
   """
-  def force_grade_individual_submission(submission = %Submission{}) do
+  def force_grade_individual_submission(submission = %Submission{}, overwrite \\ false) do
     assessment =
       if Ecto.assoc_loaded?(submission.assessment) do
         submission.assessment
@@ -56,7 +56,7 @@ defmodule Cadet.Autograder.GradingJob do
       end
 
     assessment = preprocess_assessment_for_grading(assessment)
-    grade_individual_submission(submission, assessment, true)
+    grade_individual_submission(submission, assessment, true, overwrite)
   end
 
   # This function requires that assessment questions are already preloaded in sorted
@@ -64,7 +64,8 @@ defmodule Cadet.Autograder.GradingJob do
   defp grade_individual_submission(
          %Submission{id: submission_id},
          %Assessment{questions: questions},
-         regrade \\ false
+         regrade \\ false,
+         overwrite \\ false
        ) do
     answers =
       Answer
@@ -76,7 +77,8 @@ defmodule Cadet.Autograder.GradingJob do
       submission_id,
       questions,
       answers,
-      regrade
+      regrade,
+      overwrite
     )
   end
 
@@ -110,14 +112,14 @@ defmodule Cadet.Autograder.GradingJob do
     |> Repo.update!()
   end
 
-  defp grade_answer(answer = %Answer{}, question = %Question{type: type}) do
+  def grade_answer(answer = %Answer{}, question = %Question{type: type}, overwrite \\ false) do
     case type do
-      :programming -> Utilities.dispatch_programming_answer(answer, question)
+      :programming -> Utilities.dispatch_programming_answer(answer, question, overwrite)
       :mcq -> grade_mcq_answer(answer, question)
     end
   end
 
-  def grade_mcq_answer(answer = %Answer{}, question = %Question{question: question_content}) do
+  defp grade_mcq_answer(answer = %Answer{}, question = %Question{question: question_content}) do
     correct_choice =
       question_content["choices"]
       |> Enum.find(&Map.get(&1, "is_correct"))
@@ -132,6 +134,8 @@ defmodule Cadet.Autograder.GradingJob do
 
     answer
     |> Answer.autograding_changeset(%{
+      adjustment: 0,
+      xp_adjustment: 0,
       grade: grade,
       xp: xp,
       autograding_status: :success
@@ -165,21 +169,31 @@ defmodule Cadet.Autograder.GradingJob do
   # Both lists MUST be pre-sorted by id and question_id respectively
   defp grade_submission_question_answer_lists(
          submission_id,
+         questions,
+         answers,
+         regrade,
+         overwrite
+       )
+
+  defp grade_submission_question_answer_lists(
+         submission_id,
          [question = %Question{} | question_tail],
          answers = [answer = %Answer{} | answer_tail],
-         regrade
+         regrade,
+         overwrite
        )
-       when is_boolean(regrade) and is_ecto_id(submission_id) do
+       when is_boolean(regrade) and is_boolean(overwrite) and is_ecto_id(submission_id) do
     if question.id == answer.question_id do
       if regrade || answer.autograding_status in [:none, :failed] do
-        grade_answer(answer, question)
+        grade_answer(answer, question, overwrite)
       end
 
       grade_submission_question_answer_lists(
         submission_id,
         question_tail,
         answer_tail,
-        regrade
+        regrade,
+        overwrite
       )
     else
       insert_empty_answer(submission_id, question)
@@ -188,7 +202,8 @@ defmodule Cadet.Autograder.GradingJob do
         submission_id,
         question_tail,
         answers,
-        regrade
+        regrade,
+        overwrite
       )
     end
   end
@@ -197,19 +212,21 @@ defmodule Cadet.Autograder.GradingJob do
          submission_id,
          [question = %Question{} | question_tail],
          [],
-         regrade
+         regrade,
+         overwrite
        )
-       when is_boolean(regrade) and is_ecto_id(submission_id) do
+       when is_boolean(regrade) and is_boolean(overwrite) and is_ecto_id(submission_id) do
     insert_empty_answer(submission_id, question)
 
     grade_submission_question_answer_lists(
       submission_id,
       question_tail,
       [],
-      regrade
+      regrade,
+      overwrite
     )
   end
 
-  defp grade_submission_question_answer_lists(_, [], [], _) do
+  defp grade_submission_question_answer_lists(_, [], [], _, _) do
   end
 end

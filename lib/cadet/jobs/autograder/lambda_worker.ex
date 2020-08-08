@@ -34,7 +34,11 @@ defmodule Cadet.Autograder.LambdaWorker do
 
       result = parse_response(response)
 
-      Que.add(ResultStoreWorker, %{answer_id: answer.id, result: result})
+      Que.add(ResultStoreWorker, %{
+        answer_id: answer.id,
+        result: result,
+        overwrite: params[:overwrite] || false
+      })
     end
   end
 

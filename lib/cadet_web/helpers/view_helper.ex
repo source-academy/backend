@@ -1,4 +1,4 @@
-defmodule CadetWeb.ViewHelpers do
+defmodule CadetWeb.ViewHelper do
   @moduledoc """
   Helper functions shared throughout views
   """

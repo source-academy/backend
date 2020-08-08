@@ -5,11 +5,16 @@ defmodule CadetWeb.GradingControllerTest do
   alias Cadet.Repo
   alias CadetWeb.GradingController
 
+  import Mock
+
   test "swagger" do
     GradingController.swagger_definitions()
     GradingController.swagger_path_index(nil)
     GradingController.swagger_path_show(nil)
     GradingController.swagger_path_update(nil)
+    GradingController.swagger_path_unsubmit(nil)
+    GradingController.swagger_path_autograde_submission(nil)
+    GradingController.swagger_path_autograde_answer(nil)
   end
 
   describe "GET /, unauthenticated" do
@@ -108,7 +113,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -149,7 +155,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -208,7 +215,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -782,6 +790,72 @@ defmodule CadetWeb.GradingControllerTest do
       assert response(conn, 403) =~ "Only Avenger of student or Admin is permitted to unsubmit"
     end
 
+    @tag authenticate: :staff
+    test "avenger should be allowed to unsubmit own submissions", %{
+      conn: conn
+    } do
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      grader = conn.assigns.current_user
+      question = insert(:programming_question, assessment: assessment)
+
+      submission =
+        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_unsubmit(submission.id))
+
+      assert response(conn, 200) =~ "OK"
+    end
+
+    @tag authenticate: :staff
+    test "avenger should be allowed to unsubmit own closed submissions", %{
+      conn: conn
+    } do
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: 1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          type: :mission
+        )
+
+      grader = conn.assigns.current_user
+      question = insert(:programming_question, assessment: assessment)
+
+      submission =
+        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_unsubmit(submission.id))
+
+      assert response(conn, 200) =~ "OK"
+    end
+
     @tag authenticate: :admin
     test "admin should be allowed to unsubmit", %{
       conn: conn
@@ -861,7 +935,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -904,7 +979,8 @@ defmodule CadetWeb.GradingControllerTest do
             "student" => %{
               "name" => submission.student.name,
               "id" => submission.student.id,
-              "groupName" => submission.student.group.name
+              "groupName" => submission.student.group.name,
+              "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
               "type" => "mission",
@@ -1118,6 +1194,70 @@ defmodule CadetWeb.GradingControllerTest do
     end
   end
 
+  describe "POST /grading/:submissionid/autograde" do
+    setup %{conn: conn} do
+      %{
+        submissions: [submission, _]
+      } = seed_db(conn)
+
+      %{submission: submission}
+    end
+
+    @tag authenticate: :staff
+    test "staff can re-autograde submissions", %{conn: conn, submission: submission} do
+      with_mock Cadet.Autograder.GradingJob,
+        force_grade_individual_submission: fn in_sub, _ -> assert submission.id == in_sub.id end do
+        assert conn |> post(build_url_autograde(submission.id)) |> response(204)
+      end
+    end
+
+    @tag authenticate: :student
+    test "student cannot re-autograde", %{conn: conn, submission: submission} do
+      assert conn |> post(build_url_autograde(submission.id)) |> response(403)
+    end
+
+    @tag authenticate: :student
+    test "fails if not found", %{conn: conn} do
+      assert conn |> post(build_url_autograde(2_147_483_647)) |> response(403)
+    end
+  end
+
+  describe "POST /grading/:submissionid/:questionid/autograde" do
+    setup %{conn: conn} do
+      %{
+        submissions: [submission | _],
+        questions: [question | _]
+      } = seed_db(conn)
+
+      %{submission: submission, question: question}
+    end
+
+    @tag authenticate: :staff
+    test "staff can re-autograde questions", %{
+      conn: conn,
+      submission: submission,
+      question: question
+    } do
+      with_mock Cadet.Autograder.GradingJob,
+        grade_answer: fn in_a, in_q, _ ->
+          assert question.id == in_q.id
+          assert question.id == in_a.question_id
+        end do
+        assert conn |> post(build_url_autograde(submission.id, question.id)) |> response(204)
+      end
+    end
+
+    @tag authenticate: :student
+    test "student cannot re-autograde", %{conn: conn, submission: submission, question: question} do
+      assert conn |> post(build_url_autograde(submission.id, question.id)) |> response(403)
+    end
+
+    @tag authenticate: :student
+    test "fails if not found", %{conn: conn} do
+      assert conn |> post(build_url_autograde(2_147_483_647, 123_456)) |> response(403)
+    end
+  end
+
   defp count_submissions(submissions, answers, type, only_ungraded \\ false) do
     submissions
     |> Enum.filter(fn s ->
@@ -1132,9 +1272,13 @@ defmodule CadetWeb.GradingControllerTest do
 
   defp build_url, do: "/v1/grading/"
   defp build_url_summary, do: "/v1/grading/summary"
-  defp build_url(submission_id), do: "#{build_url()}#{submission_id}/"
-  defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}#{question_id}"
+  defp build_url(submission_id), do: "#{build_url()}#{submission_id}"
+  defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}/#{question_id}"
   defp build_url_unsubmit(submission_id), do: "#{build_url(submission_id)}/unsubmit"
+  defp build_url_autograde(submission_id), do: "#{build_url(submission_id)}/autograde"
+
+  defp build_url_autograde(submission_id, question_id),
+    do: "#{build_url(submission_id, question_id)}/autograde"
 
   defp seed_db(conn, override_grader \\ nil) do
     grader = override_grader || conn.assigns[:current_user]

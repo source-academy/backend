@@ -57,22 +57,6 @@ defmodule Cadet.Accounts.NotificationTest do
         assert_changeset(params_missing_field, :invalid)
       end
     end
-
-    test "invalid changeset missing required params for avenger", %{
-      valid_params_for_avenger: params
-    } do
-      for field <- @required_fields ++ [:submission_id] do
-        params_missing_field = Map.delete(params, field)
-
-        assert_changeset(params_missing_field, :invalid)
-      end
-    end
-
-    test "invalid role", %{valid_params_for_avenger: params} do
-      params = Map.put(params, :role, :admin)
-
-      assert_changeset(params, :invalid)
-    end
   end
 
   describe "repo" do

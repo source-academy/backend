@@ -53,9 +53,10 @@ defmodule Cadet.Mixfile do
       {:csv, "~> 2.3"},
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.1", override: true},
-      {:ex_aws_kms, "~> 2.0"},
       {:ex_aws_lambda, "~> 2.0"},
       {:ex_aws_s3, "~> 2.0"},
+      {:ex_aws_secretsmanager, "~> 2.0"},
+      {:ex_aws_sts, "~> 2.1"},
       {:ex_machina, "~> 2.3"},
       {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},
@@ -76,6 +77,7 @@ defmodule Cadet.Mixfile do
       {:timex, "~> 3.0"},
 
       # development dependencies
+      {:configparser_ex, "~> 4.0", only: [:dev, :test]},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:distillery, "~> 2.1", runtime: false},

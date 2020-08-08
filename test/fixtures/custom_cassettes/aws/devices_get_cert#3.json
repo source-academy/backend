@@ -1,0 +1,35 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "iot.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200708T202703Z"
+      },
+      "method": "post",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://iot.ap-southeast-1.amazonaws.com/keys-and-certificate?setAsActive=true"
+    },
+    "response": {
+      "binary": false,
+      "body": "{}",
+      "headers": {
+        "Date": "Wed, 08 Jul 2020 20:27:03 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "2",
+        "Connection": "keep-alive",
+        "x-amzn-RequestId": "d8974503-619e-4563-9b71-f676624c3d6a",
+        "Access-Control-Allow-Origin": "*",
+        "x-amz-apigw-id": "PXvTrGPiSQ0FXsA=",
+        "X-Amzn-Trace-Id": "Root=1-5f062c17-eecca312f150dff4c950b0f0"
+      },
+      "status_code": 500,
+      "type": "ok"
+    }
+  }
+]

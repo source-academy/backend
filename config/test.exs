@@ -43,7 +43,8 @@ config :cadet,
       {Cadet.Auth.Providers.LumiNUS,
        %{
          api_key: "API_KEY",
-         module_code: "CS1101S"
+         module_code: "CS1101S",
+         module_term: "2010"
        }},
     "test" =>
       {Cadet.Auth.Providers.Config,
@@ -77,6 +78,11 @@ config :cadet,
   uploader: [
     assets_bucket: "source-academy-assets",
     sourcecasts_bucket: "test-cadet-sourcecasts"
+  ],
+  remote_execution: [
+    thing_prefix: "env-sling",
+    thing_group: "env-sling",
+    client_role_arn: "test"
   ]
 
 config :arc, storage: Arc.Storage.Local

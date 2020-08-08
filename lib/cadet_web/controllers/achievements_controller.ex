@@ -56,7 +56,7 @@ defmodule CadetWeb.AchievementsController do
       map = %{"view" => view} ->
         map
         |> Map.delete("view")
-        |> Map.merge(view |> Map.take([~w(canvas_url description completion_text)]))
+        |> Map.merge(view |> Map.take(~w(canvas_url description completion_text)))
 
       map ->
         map

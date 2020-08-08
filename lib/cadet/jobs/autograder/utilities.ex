@@ -11,14 +11,18 @@ defmodule Cadet.Autograder.Utilities do
   alias Cadet.Accounts.User
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
-  def dispatch_programming_answer(answer = %Answer{}, question = %Question{}) do
+  def dispatch_programming_answer(answer = %Answer{}, question = %Question{}, overwrite \\ false) do
     # This should never fail
     answer =
       answer
       |> Answer.autograding_changeset(%{autograding_status: :processing})
       |> Repo.update!()
 
-    Que.add(Cadet.Autograder.LambdaWorker, %{question: question, answer: answer})
+    Que.add(Cadet.Autograder.LambdaWorker, %{
+      question: question,
+      answer: answer,
+      overwrite: overwrite
+    })
   end
 
   def fetch_submissions(assessment_id) when is_ecto_id(assessment_id) do

@@ -2,7 +2,6 @@ defmodule Cadet.Updater.XMLParser do
   @moduledoc """
   Parser for XML files from the cs1101s repository.
   """
-  @local_name if Mix.env() != :test, do: "cs1101s", else: "test/fixtures/local_repo"
 
   use Cadet, [:display]
 
@@ -14,67 +13,6 @@ defmodule Cadet.Updater.XMLParser do
 
   defmacrop is_non_empty_list(term) do
     quote do: is_list(unquote(term)) and unquote(term) != []
-  end
-
-  @spec parse_and_insert(String.t()) :: :ok | {:error, String.t()}
-
-  def parse_and_insert(root \\ @local_name) do
-    Logger.info("Exploring folder \"#{root}\"")
-
-    with {:cloned?, true} <- {:cloned?, File.exists?(root)},
-         {:listing, {:ok, listing}} when is_non_empty_list(listing) <- {:listing, File.ls(root)},
-         {:listing_folders, folders} <-
-           {:listing_folders, Enum.reject(listing, &String.starts_with?(&1, "."))},
-         {:join_path, folders} <- {:join_path, Enum.map(folders, &Path.join(root, &1))},
-         {:filter_folders, folders} <- {:filter_folders, Enum.filter(folders, &File.dir?(&1))},
-         {:process_folders, _} <-
-           {:process_folders, Enum.map(folders, &parse_and_insert(&1))},
-         {:filter, xml_files} when is_non_empty_list(xml_files) <-
-           {:filter, Enum.filter(listing, &String.ends_with?(&1, ".xml"))},
-         {:process, :ok} <-
-           {:process, process_xml_files(root, xml_files)} do
-      :ok
-    else
-      {:cloned?, false} ->
-        {:error, "Local copy of repository is either missing or empty."}
-
-      {:listing, _} ->
-        Logger.info("Directory empty #{root}.")
-        :ok
-
-      {:filter, _} ->
-        Logger.info("No XML file is found for folder #{root}.")
-        :ok
-
-      {:process, :error} ->
-        {:error, "Error processing XML files."}
-    end
-  end
-
-  @spec process_xml_files(String.t(), [String.t()]) :: :ok | :error
-  defp process_xml_files(path, files) do
-    for file <- files do
-      path
-      |> Path.join(file)
-      |> File.read!()
-      |> parse_xml()
-      |> case do
-        :ok ->
-          Logger.info("Imported #{file} successfully.\n")
-          :ok
-
-        {:error, {_status, error_message}} ->
-          error_message = "Failed to import #{file}: #{error_message}\n"
-          Logger.error(error_message)
-          Sentry.capture_message(error_message)
-          :error
-      end
-    end
-    |> Enum.any?(&(&1 == :error))
-    |> case do
-      true -> :error
-      false -> :ok
-    end
   end
 
   @spec parse_xml(String.t(), boolean()) ::
@@ -94,14 +32,14 @@ defmodule Cadet.Updater.XMLParser do
 
       :ok
     else
-      {:error, stage, %{errors: [assessment: {"is already open", []}]}, _} when is_atom(stage) ->
-        Logger.warn("Assessment already open, ignoring...")
-        {:ok, "Assessment already open, ignoring..."}
+      {:error, stage, %{errors: [assessment: {"has submissions", []}]}, _} when is_atom(stage) ->
+        Logger.warn("Assessment has submissions, ignoring...")
+        {:ok, "Assessment has submissions, ignoring..."}
 
       {:error, error_message} ->
         log_and_return_badrequest(error_message)
 
-      {:error, stage, changeset, _} when is_atom(stage) ->
+      {:error, stage, changeset, _} ->
         log_error_bad_changeset(changeset, stage)
 
         changeset_error =

@@ -26,6 +26,8 @@ defmodule Cadet.Factory do
 
   use Cadet.Course.{GroupFactory, SourcecastFactory}
 
+  use Cadet.Devices.DeviceFactory
+
   def upload_factory do
     %Plug.Upload{
       content_type: "text/plain",

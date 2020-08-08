@@ -14,13 +14,13 @@ defmodule Cadet.Accounts.User do
     field(:name, :string)
     field(:role, Role)
     field(:username, :string)
-    field(:game_states, :map, default: %{"collectibles" => %{}, "completed_quests" => []})
+    field(:game_states, :map)
     belongs_to(:group, Group)
     timestamps()
   end
 
   @required_fields ~w(name role)a
-  @optional_fields ~w(username group_id)a
+  @optional_fields ~w(username group_id game_states)a
 
   def changeset(user, params \\ %{}) do
     user

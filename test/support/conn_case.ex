@@ -25,13 +25,13 @@ defmodule CadetWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import CadetWeb.Router.Helpers
-      import Cadet.Factory
+      import Cadet.{AssertHelper, Factory}
 
       # The default endpoint for testing
       @endpoint CadetWeb.Endpoint
 
       # Helper function for formatting datetime for views
-      import CadetWeb.ViewHelpers
+      import CadetWeb.ViewHelper
 
       # Helper function
       def sign_in(conn, user) do

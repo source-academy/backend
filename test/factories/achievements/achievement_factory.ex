@@ -10,7 +10,7 @@ defmodule Cadet.Achievements.AchievementFactory do
       def achievement_factory do
         %Achievement{
           title: Faker.Food.dish(),
-          ability: Enum.random(~w(Core Community Effort Exploration)),
+          ability: Enum.random(Achievement.valid_abilities()),
           is_task: false,
           position: 0,
           description: Faker.Lorem.Shakespeare.En.king_richard_iii(),
