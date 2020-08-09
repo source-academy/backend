@@ -14,7 +14,7 @@ import Cadet.Factory
 alias Cadet.Assessments.SubmissionStatus
 
 # insert default source version
-Cadet.Repo.insert!(%Cadet.Chapters.Chapter{chapterno: 1, variant: "default"})
+Cadet.Repo.insert!(%Cadet.Settings.Sublanguage{chapter: 1, variant: "default"})
 
 if Cadet.Env.env() == :dev do
   # User and Group

@@ -28,7 +28,7 @@ defmodule CadetWeb.Router do
     post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/logout", AuthController, :logout)
-    get("/chapter", ChaptersController, :index)
+    get("/settings/sublanguage", SettingsController, :index)
   end
 
   scope "/v1", CadetWeb do
@@ -89,7 +89,7 @@ defmodule CadetWeb.Router do
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
 
-    post("/chapter/update/:id", ChaptersController, :update)
+    put("/settings/sublanguage", SettingsController, :update)
   end
 
   scope "/v1/admin", CadetWeb do

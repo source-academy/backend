@@ -22,7 +22,7 @@ defmodule Cadet.Factory do
     AchievementPrerequisiteFactory
   }
 
-  use Cadet.Chapters.{ChapterFactory}
+  use Cadet.Settings.{SublanguageFactory}
 
   use Cadet.Course.{GroupFactory, SourcecastFactory}
 
