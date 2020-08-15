@@ -24,28 +24,28 @@ defmodule Mix.Tasks.Cadet.Users.Import do
 
   require Logger
 
-  alias Cadet.{Accounts, Course}
+  alias Cadet.{Accounts, Course, Repo}
   alias Cadet.Course.Group
   alias Cadet.Accounts.User
 
   def run(_args) do
     # Required for Ecto to work properly, from Mix.Ecto
-    Mix.Task.run("app.start")
+    if function_exported?(Mix.Task, :run, 2), do: Mix.Task.run("app.start")
 
     students_csv_path = trimmed_gets("Path to students csv (leave blank to skip): ")
     leaders_csv_path = trimmed_gets("Path to leaders csv (leave blank to skip): ")
     mentors_csv_path = trimmed_gets("Path to mentors csv (leave blank to skip): ")
 
-    students_csv_path != "" && process_students_csv(students_csv_path)
-
-    leaders_csv_path != "" && process_leaders_csv(leaders_csv_path)
-
-    mentors_csv_path != "" && process_mentors_csv(mentors_csv_path)
+    Repo.transaction(fn ->
+      students_csv_path != "" && process_students_csv(students_csv_path)
+      leaders_csv_path != "" && process_leaders_csv(leaders_csv_path)
+      mentors_csv_path != "" && process_mentors_csv(mentors_csv_path)
+    end)
   end
 
   defp process_students_csv(path) when is_binary(path) do
     if File.exists?(path) do
-      csv_stream = path |> File.stream!() |> CSV.decode()
+      csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
       for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, group = %Group{}} <- Course.get_or_create_group(group_name),
@@ -65,6 +65,8 @@ defmodule Mix.Tasks.Cadet.Users.Import do
             )
 
             Logger.error("error: #{inspect(error, pretty: true)}")
+
+            Repo.rollback(error)
         end
       end
 
@@ -76,12 +78,13 @@ defmodule Mix.Tasks.Cadet.Users.Import do
 
   defp process_leaders_csv(path) when is_binary(path) do
     if File.exists?(path) do
-      csv_stream = path |> File.stream!() |> CSV.decode()
+      csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
       for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, leader = %User{}} <-
                Accounts.insert_or_update_user(%{username: username, name: name, role: :staff}),
-             {:ok, %Group{}} <- Course.insert_or_update_group(%{name: group_name, leader: leader}) do
+             {:ok, %Group{}} <-
+               Course.insert_or_update_group(%{name: group_name, leader: leader}) do
           :ok
         else
           error ->
@@ -91,6 +94,8 @@ defmodule Mix.Tasks.Cadet.Users.Import do
             )
 
             Logger.error("error: #{inspect(error, pretty: true)}")
+
+            Repo.rollback(error)
         end
       end
 
@@ -102,12 +107,13 @@ defmodule Mix.Tasks.Cadet.Users.Import do
 
   defp process_mentors_csv(path) when is_binary(path) do
     if File.exists?(path) do
-      csv_stream = path |> File.stream!() |> CSV.decode()
+      csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
       for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, mentor = %User{}} <-
                Accounts.insert_or_update_user(%{username: username, name: name, role: :staff}),
-             {:ok, %Group{}} <- Course.insert_or_update_group(%{name: group_name, mentor: mentor}) do
+             {:ok, %Group{}} <-
+               Course.insert_or_update_group(%{name: group_name, mentor: mentor}) do
           :ok
         else
           error ->
@@ -117,6 +123,8 @@ defmodule Mix.Tasks.Cadet.Users.Import do
             )
 
             Logger.error("error: #{inspect(error, pretty: true)}")
+
+            Repo.rollback(error)
         end
       end
 
