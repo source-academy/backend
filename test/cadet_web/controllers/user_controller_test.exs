@@ -5,7 +5,7 @@ defmodule CadetWeb.UserControllerTest do
 
   alias Cadet.Repo
   alias CadetWeb.UserController
-  alias Cadet.Assessments.{Assessment, AssessmentType, Submission}
+  alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Accounts.User
 
   test "swagger" do
@@ -232,11 +232,11 @@ defmodule CadetWeb.UserControllerTest do
 
     defp build_assessments_starting_at(time) do
       type_order_map =
-        AssessmentType.__enum_map__()
+        Assessment.assessment_types()
         |> Enum.with_index()
         |> Enum.reduce(%{}, fn {type, idx}, acc -> Map.put(acc, type, idx) end)
 
-      AssessmentType.__enum_map__()
+      Assessment.assessment_types()
       |> Enum.map(
         &build(:assessment, %{
           type: &1,

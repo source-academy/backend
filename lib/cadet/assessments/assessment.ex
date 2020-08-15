@@ -6,7 +6,10 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
-  alias Cadet.Assessments.{AssessmentAccess, AssessmentType, Question, SubmissionStatus, Upload}
+  alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
+
+  @assessment_types ~w(contest mission path practical sidequest)
+  def assessment_types, do: @assessment_types
 
   schema "assessments" do
     field(:access, AssessmentAccess, virtual: true, default: :public)
@@ -20,7 +23,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:graded_count, :integer, virtual: true)
     field(:title, :string)
     field(:is_published, :boolean, default: false)
-    field(:type, AssessmentType)
+    field(:type, :string)
     field(:summary_short, :string)
     field(:summary_long, :string)
     field(:open_at, :utc_datetime_usec)

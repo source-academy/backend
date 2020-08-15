@@ -1,16 +1,16 @@
 defmodule Cadet.Repo.Migrations.CreateMissions do
   use Ecto.Migration
 
-  alias Cadet.Assessments.AssessmentType
-
   def up do
-    AssessmentType.create_type()
+    Ecto.Migration.execute(
+      "CREATE TYPE assessment_type AS ENUM ('path', 'mission', 'sidequest', 'contest')"
+    )
 
     create table(:assessments) do
       add(:title, :string, null: false)
       add(:summary_short, :text)
       add(:summary_long, :text)
-      add(:type, :assessment_type, null: false)
+      add(:type, :string, null: false)
       add(:open_at, :timestamp, null: false)
       add(:close_at, :timestamp, null: false)
       add(:cover_picture, :string)
@@ -31,6 +31,6 @@ defmodule Cadet.Repo.Migrations.CreateMissions do
   def down do
     drop(table(:assessments))
 
-    AssessmentType.drop_type()
+    Ecto.Migration.execute("DROP TYPE assessment_type")
   end
 end

@@ -1,5 +1,5 @@
 defmodule Cadet.Updater.XMLParserTest do
-  alias Cadet.Assessments.{Assessment, AssessmentType, Question}
+  alias Cadet.Assessments.{Assessment, Question}
   alias Cadet.Test.XMLGenerator
   alias Cadet.Updater.XMLParser
 
@@ -11,7 +11,7 @@ defmodule Cadet.Updater.XMLParserTest do
   setup do
     assessments =
       Enum.map(
-        AssessmentType.__enum_map__(),
+        Assessment.assessment_types(),
         &build(:assessment, type: &1, is_published: true)
       )
 

@@ -261,7 +261,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "question" => %{
                   "prepend" => &1.question.question.prepend,
                   "postpend" =>
-                    if &1.question.assessment.type == :path do
+                    if &1.question.assessment.type == "path" do
                       &1.question.question.postpend
                     else
                       ""
@@ -395,7 +395,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "question" => %{
                   "prepend" => &1.question.question.prepend,
                   "postpend" =>
-                    if &1.question.assessment.type == :path do
+                    if &1.question.assessment.type == "path" do
                       &1.question.question.postpend
                     else
                       ""
@@ -644,7 +644,7 @@ defmodule CadetWeb.GradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: :mission
+          type: "mission"
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -695,7 +695,7 @@ defmodule CadetWeb.GradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: :mission
+          type: "mission"
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -729,7 +729,7 @@ defmodule CadetWeb.GradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: 1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: :mission
+          type: "mission"
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -765,7 +765,7 @@ defmodule CadetWeb.GradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: :mission
+          type: "mission"
         )
 
       other_grader = insert(:user, role: :staff)
@@ -800,7 +800,7 @@ defmodule CadetWeb.GradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: :mission
+          type: "mission"
         )
 
       grader = conn.assigns.current_user
@@ -833,7 +833,7 @@ defmodule CadetWeb.GradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: 1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: :mission
+          type: "mission"
         )
 
       grader = conn.assigns.current_user
@@ -870,7 +870,7 @@ defmodule CadetWeb.GradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: :mission
+          type: "mission"
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -1025,7 +1025,7 @@ defmodule CadetWeb.GradingControllerTest do
                 "question" => %{
                   "prepend" => &1.question.question.prepend,
                   "postpend" =>
-                    if &1.question.assessment.type == :path do
+                    if &1.question.assessment.type == "path" do
                       &1.question.question.postpend
                     else
                       ""
@@ -1176,10 +1176,10 @@ defmodule CadetWeb.GradingControllerTest do
         %{
           "groupName" => group.name,
           "leaderName" => grader.name,
-          "submittedMissions" => count_submissions(submissions, answers, :mission),
-          "submittedSidequests" => count_submissions(submissions, answers, :sidequest),
-          "ungradedMissions" => count_submissions(submissions, answers, :mission, true),
-          "ungradedSidequests" => count_submissions(submissions, answers, :sidequest, true)
+          "submittedMissions" => count_submissions(submissions, answers, "mission"),
+          "submittedSidequests" => count_submissions(submissions, answers, "sidequest"),
+          "ungradedMissions" => count_submissions(submissions, answers, "mission", true),
+          "ungradedSidequests" => count_submissions(submissions, answers, "sidequest", true)
         }
       ]
 
@@ -1288,7 +1288,7 @@ defmodule CadetWeb.GradingControllerTest do
       insert(:group, %{leader_id: grader.id, leader: grader, mentor_id: mentor.id, mentor: mentor})
 
     students = insert_list(5, :student, %{group: group})
-    mission = insert(:assessment, %{title: "mission", type: :mission, is_published: true})
+    mission = insert(:assessment, %{title: "mission", type: "mission", is_published: true})
 
     questions =
       for index <- 0..2 do

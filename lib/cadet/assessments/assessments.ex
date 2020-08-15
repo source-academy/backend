@@ -14,7 +14,7 @@ defmodule Cadet.Assessments do
   alias Ecto.Multi
 
   @xp_early_submission_max_bonus 100
-  @xp_bonus_assessment_type ~w(mission sidequest)a
+  @xp_bonus_assessment_type ~w(mission sidequest)
   # @submit_answer_roles ~w(student staff admin)a
   @change_dates_assessment_role ~w(staff admin)a
   @delete_assessment_role ~w(staff admin)a
@@ -1046,7 +1046,7 @@ defmodule Cadet.Assessments do
         |> where(
           [ans, s, st, a],
           not is_nil(st.group_id) and s.status == ^:submitted and
-            a.type in ^[:mission, :sidequest]
+            a.type in ^["mission", "sidequest"]
         )
         |> group_by([ans, s, st, a], s.id)
         |> select([ans, s, st, a], %{
@@ -1065,10 +1065,10 @@ defmodule Cadet.Assessments do
         |> select([t, g, l], %{
           group_name: g.name,
           leader_name: l.name,
-          ungraded_missions: filter(count(), t.type == ^:mission and t.num_ungraded > 0),
-          submitted_missions: filter(count(), t.type == ^:mission),
-          ungraded_sidequests: filter(count(), t.type == ^:sidequest and t.num_ungraded > 0),
-          submitted_sidequests: filter(count(), t.type == ^:sidequest)
+          ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
+          submitted_missions: filter(count(), t.type == "mission"),
+          ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
+          submitted_sidequests: filter(count(), t.type == "sidequest")
         })
         |> Repo.all()
 

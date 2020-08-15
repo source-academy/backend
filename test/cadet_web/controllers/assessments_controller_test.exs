@@ -8,7 +8,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.{Role, User}
-  alias Cadet.Assessments.{Assessment, AssessmentType, Submission, SubmissionStatus}
+  alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Test.XMLGenerator
   alias CadetWeb.AssessmentsController
@@ -26,7 +26,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   @xp_early_submission_max_bonus 100
-  @xp_bonus_assessment_type ~w(mission sidequest)a
+  @xp_bonus_assessment_type ~w(mission sidequest)
 
   test "swagger" do
     AssessmentsController.swagger_definitions()
@@ -68,7 +68,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "reading" => &1.reading,
               "openAt" => format_datetime(&1.open_at),
               "closeAt" => format_datetime(&1.close_at),
-              "type" => "#{&1.type}",
+              "type" => &1.type,
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "maxXp" => 4500,
@@ -98,7 +98,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assessments: assessments
     } do
       for {_role, user} <- users do
-        mission = assessments.mission
+        mission = assessments["mission"]
 
         {:ok, _} =
           mission.assessment
@@ -124,7 +124,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       users: %{student: student},
       assessments: assessments
     } do
-      mission = assessments.mission
+      mission = assessments["mission"]
 
       {:ok, _} =
         mission.assessment
@@ -133,7 +133,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       expected =
         assessments
-        |> Map.delete(:mission)
+        |> Map.delete("mission")
         |> Map.values()
         |> Enum.map(fn a -> a.assessment end)
         |> Enum.sort(&open_at_asc_comparator/2)
@@ -147,7 +147,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "reading" => &1.reading,
             "openAt" => format_datetime(&1.open_at),
             "closeAt" => format_datetime(&1.close_at),
-            "type" => "#{&1.type}",
+            "type" => &1.type,
             "coverImage" => &1.cover_picture,
             "maxGrade" => 720,
             "maxXp" => 4500,
@@ -175,8 +175,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
       users: %{student: student},
       assessments: assessments
     } do
-      assessment = assessments.mission.assessment
-      [submission | _] = assessments.mission.submissions
+      assessment = assessments["mission"].assessment
+      [submission | _] = assessments["mission"].submissions
 
       for status <- SubmissionStatus.__enum_map__() do
         submission
@@ -200,7 +200,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       users: %{student: student},
       assessments: assessments
     } do
-      assessment = assessments.mission.assessment
+      assessment = assessments["mission"].assessment
 
       resp =
         conn
@@ -218,7 +218,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       users: %{student: student},
       assessments: assessments
     } do
-      assessment = assessments.mission.assessment
+      assessment = assessments["mission"].assessment
 
       resp =
         conn
@@ -240,7 +240,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       for role <- ~w(staff admin)a do
         user = Map.get(users, role)
-        mission = assessments.mission
+        mission = assessments["mission"]
 
         {:ok, _} =
           mission.assessment
@@ -270,7 +270,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "reading" => &1.reading,
               "openAt" => format_datetime(&1.open_at),
               "closeAt" => format_datetime(&1.close_at),
-              "type" => "#{&1.type}",
+              "type" => &1.type,
               "coverImage" => &1.cover_picture,
               "maxGrade" => 720,
               "maxXp" => 4500,
@@ -279,7 +279,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "gradedCount" => 0,
               "questionCount" => 6,
               "isPublished" =>
-                if &1.type == :mission do
+                if &1.type == "mission" do
                   false
                 else
                   &1.is_published
@@ -350,7 +350,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
                 "postpend" =>
-                  if assessment.type == :path do
+                  if assessment.type == "path" do
                     &1.question.postpend
                   else
                     ""
@@ -364,7 +364,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                           do: {Atom.to_string(k), v}
                     end
                   ) ++
-                    if assessment.type == :path do
+                    if assessment.type == "path" do
                       Enum.map(
                         &1.question.private,
                         fn testcase ->
@@ -481,7 +481,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           assessment: assessment,
           mcq_questions: mcq_questions,
           programming_questions: programming_questions
-        } = assessments.path
+        } = assessments["path"]
 
         # Seeds set solution as 0
         expected_mcq_solutions = Enum.map(mcq_questions, fn _ -> %{"solution" => 0} end)
@@ -557,7 +557,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         for {_type,
              %{
                assessment: assessment
-             }} <- Map.delete(assessments, :path) do
+             }} <- Map.delete(assessments, "path") do
           resp_solutions =
             conn
             |> sign_in(user)
@@ -607,7 +607,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "it does not permit access to not yet open assessments", %{
       conn: conn,
       users: %{student: student},
-      assessments: %{mission: mission}
+      assessments: %{"mission" => mission}
     } do
       mission.assessment
       |> Assessment.changeset(%{
@@ -627,7 +627,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "it does not permit access to unpublished assessments", %{
       conn: conn,
       users: %{student: student},
-      assessments: %{mission: mission}
+      assessments: %{"mission" => mission}
     } do
       {:ok, _} =
         mission.assessment
@@ -669,7 +669,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "it permits access to not yet open assessments", %{
       conn: conn,
       users: users,
-      assessments: %{mission: mission}
+      assessments: %{"mission" => mission}
     } do
       for role <- ~w(staff admin)a do
         user = Map.get(users, role)
@@ -694,7 +694,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "it permits access to unpublished assessments", %{
       conn: conn,
       users: users,
-      assessments: %{mission: mission}
+      assessments: %{"mission" => mission}
     } do
       for role <- ~w(staff admin)a do
         user = Map.get(users, role)
@@ -716,7 +716,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "POST /assessment_id/submit unauthenticated" do
-    test "is not permitted", %{conn: conn, assessments: %{mission: %{assessment: assessment}}} do
+    test "is not permitted", %{conn: conn, assessments: %{"mission" => %{assessment: assessment}}} do
       conn = post(conn, build_url_submit(assessment.id))
       assert response(conn, 401) == "Unauthorised"
     end
@@ -727,7 +727,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       @tag role: role
       test "is successful for attempted assessments for #{role}", %{
         conn: conn,
-        assessments: %{mission: %{assessment: assessment}},
+        assessments: %{"mission" => %{assessment: assessment}},
         role: role
       } do
         with_mock GradingJob,
@@ -882,7 +882,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "does not give bonus for non-bonus eligible assessment types", %{conn: conn} do
       with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
         non_eligible_types =
-          Enum.filter(AssessmentType.__enum_map__(), &(&1 not in @xp_bonus_assessment_type))
+          Enum.filter(Assessment.assessment_types(), &(&1 not in @xp_bonus_assessment_type))
 
         for hours_after <- 0..148,
             type <- non_eligible_types do
@@ -927,7 +927,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     # answered.
     test "is not permitted for unattempted assessments", %{
       conn: conn,
-      assessments: %{mission: %{assessment: assessment}}
+      assessments: %{"mission" => %{assessment: assessment}}
     } do
       user = insert(:user, %{role: :student})
 
@@ -941,7 +941,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
     test "is not permitted for incomplete assessments", %{
       conn: conn,
-      assessments: %{mission: %{assessment: assessment}}
+      assessments: %{"mission" => %{assessment: assessment}}
     } do
       user = insert(:user, %{role: :student})
       insert(:submission, %{student: user, assessment: assessment, status: :attempting})
@@ -956,7 +956,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
     test "is not permitted for already submitted assessments", %{
       conn: conn,
-      assessments: %{mission: %{assessment: assessment}}
+      assessments: %{"mission" => %{assessment: assessment}}
     } do
       user = insert(:user, %{role: :student})
       insert(:submission, %{student: user, assessment: assessment, status: :submitted})
@@ -1005,7 +1005,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         open_at: Timex.shift(Timex.now(), hours: -2),
         close_at: Timex.shift(Timex.now(), days: 7),
         is_published: true,
-        type: :mission
+        type: "mission"
       )
 
     [question_one, question_two] = insert_list(2, :programming_question, assessment: assessment)
@@ -1118,7 +1118,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       users: users,
       assessments: assessments
     } do
-      assessment = assessments.mission.assessment
+      assessment = assessments["mission"].assessment
 
       for {_role, user} <- users do
         conn =
@@ -1136,7 +1136,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       users: users,
       assessments: assessments
     } do
-      assessment = assessments.mission.assessment
+      assessment = assessments["mission"].assessment
 
       {:ok, _} =
         assessment
@@ -1157,7 +1157,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "permit global access to private assessment after closed", %{
       conn: conn,
       users: %{student: student},
-      assessments: %{mission: mission}
+      assessments: %{"mission" => mission}
     } do
       mission.assessment
       |> Assessment.changeset(%{
@@ -1177,7 +1177,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   describe "POST /, unauthenticated" do
     test "unauthorized", %{conn: conn} do
-      assessment = build(:assessment, type: :mission, is_published: true)
+      assessment = build(:assessment, type: "mission", is_published: true)
       questions = build_list(5, :question, assessment: nil)
       xml = XMLGenerator.generate_xml_for(assessment, questions)
       file = File.write("test/fixtures/local_repo/test.xml", xml)
@@ -1191,7 +1191,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   describe "POST /, student only" do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
-      assessment = build(:assessment, type: :mission, is_published: true)
+      assessment = build(:assessment, type: "mission", is_published: true)
       questions = build_list(5, :question, assessment: nil)
       xml = XMLGenerator.generate_xml_for(assessment, questions)
       force_update = "false"
@@ -1204,7 +1204,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   describe "POST /, staff only" do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
-      assessment = build(:assessment, type: :mission, is_published: true)
+      assessment = build(:assessment, type: "mission", is_published: true)
       questions = build_list(5, :question, assessment: nil)
 
       xml = XMLGenerator.generate_xml_for(assessment, questions)

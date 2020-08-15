@@ -8,7 +8,7 @@ defmodule Cadet.Assessments.AssessmentFactory do
       alias Cadet.Assessments.Assessment
 
       def assessment_factory do
-        type = Enum.random([:mission, :sidequest, :contest, :path])
+        type = Enum.random(Assessment.assessment_types() -- ["practical"])
 
         # These are actual story identifiers so front-end can use seeds to test more effectively
         valid_stories = [
@@ -28,7 +28,7 @@ defmodule Cadet.Assessments.AssessmentFactory do
           number:
             sequence(
               :number,
-              &"#{type |> Atom.to_string() |> String.first() |> String.upcase()}#{&1}"
+              &"#{type |> String.first() |> String.upcase()}#{&1}"
             ),
           story: Enum.random(valid_stories),
           reading: Faker.Lorem.sentence(),

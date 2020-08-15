@@ -7,7 +7,7 @@ defmodule Cadet.Assessments.AssessmentTest do
     test "valid changesets" do
       assert_changeset(
         %{
-          type: :mission,
+          type: "mission",
           title: "mission",
           number: "M#{Enum.random(0..10)}",
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
@@ -18,7 +18,7 @@ defmodule Cadet.Assessments.AssessmentTest do
 
       assert_changeset(
         %{
-          type: :mission,
+          type: "mission",
           title: "mission",
           number: "M#{Enum.random(0..10)}",
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
@@ -31,7 +31,7 @@ defmodule Cadet.Assessments.AssessmentTest do
     end
 
     test "invalid changesets" do
-      assert_changeset(%{type: :mission, title: "mission", max_grade: 100}, :invalid)
+      assert_changeset(%{type: "mission", title: "mission", max_grade: 100}, :invalid)
 
       assert_changeset(
         %{
