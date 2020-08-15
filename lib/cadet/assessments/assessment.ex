@@ -54,6 +54,7 @@ defmodule Cadet.Assessments.Assessment do
     |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> validate_inclusion(:type, @assessment_types)
     |> validate_open_close_date
   end
 
