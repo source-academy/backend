@@ -1,7 +1,7 @@
 defmodule Cadet.Autograder.UtilitiesTest do
   use Cadet.DataCase
 
-  alias Cadet.Assessments.AssessmentType
+  alias Cadet.Assessments.Assessment
   alias Cadet.Autograder.Utilities
 
   describe "fetch_assessments_due_yesterday" do
@@ -11,7 +11,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: :mission
+          type: "mission"
         })
 
       past =
@@ -19,7 +19,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), days: -4),
-          type: :mission
+          type: "mission"
         })
 
       future =
@@ -27,7 +27,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -3),
           close_at: Timex.shift(Timex.now(), days: 4),
-          type: :mission
+          type: "mission"
         })
 
       for assessment <- yesterday ++ past ++ future do
@@ -40,7 +40,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
 
     test "it return only paths, missions, sidequests" do
       assessments =
-        for type <- AssessmentType.__enum_map__() do
+        for type <- Assessment.assessment_types() do
           insert(:assessment, %{
             is_published: true,
             open_at: Timex.shift(Timex.now(), days: -5),
@@ -53,7 +53,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
         insert_list(2, :programming_question, %{assessment: assessment})
       end
 
-      assert get_assessments_ids(Enum.filter(assessments, &(&1.type != :contest))) ==
+      assert get_assessments_ids(Enum.filter(assessments, &(&1.type != "contest"))) ==
                get_assessments_ids(Utilities.fetch_assessments_due_yesterday())
     end
 
@@ -63,7 +63,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: :mission
+          type: "mission"
         })
 
       insert_list(5, :programming_question, %{assessment: assessment})

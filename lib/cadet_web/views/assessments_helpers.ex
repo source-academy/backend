@@ -5,7 +5,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
   import CadetWeb.ViewHelper
 
-  @graded_assessment_types ~w(mission sidequest contest)a
+  @graded_assessment_types ~w(mission sidequest contest)
 
   defp build_library(%{library: library}) do
     transform_map_for_view(library, %{
@@ -164,7 +164,7 @@ defmodule CadetWeb.AssessmentsHelpers do
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "private") end)
         )
 
-      assessment_type == :path ->
+      assessment_type == "path" ->
         &Enum.concat(
           Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
@@ -177,7 +177,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
   defp build_postpend(%{assessment_type: assessment_type}) do
     case assessment_type do
-      :path -> & &1["postpend"]
+      "path" -> & &1["postpend"]
       # Create a 1-arity function to return an empty postpend for non-paths
       _ -> fn _question -> "" end
     end

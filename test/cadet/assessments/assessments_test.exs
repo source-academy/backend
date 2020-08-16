@@ -2,17 +2,17 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   alias Cadet.Assessments
-  alias Cadet.Assessments.{Assessment, AssessmentType, Question}
+  alias Cadet.Assessments.{Assessment, Question}
 
   test "create assessments of all types" do
-    for type <- AssessmentType.__enum_map__() do
-      title_string = Atom.to_string(type)
+    for type <- Assessment.assessment_types() do
+      title_string = type
 
       {_res, assessment} =
         Assessments.create_assessment(%{
           title: title_string,
           type: type,
-          number: "#{type |> Atom.to_string() |> String.upcase()}#{Enum.random(0..10)}",
+          number: "#{type |> String.upcase()}#{Enum.random(0..10)}",
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: 7)
         })

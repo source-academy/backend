@@ -27,7 +27,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: :mission
+          type: "mission"
         })
 
       questions =
@@ -109,7 +109,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: :mission
+          type: "mission"
         })
 
       questions =
@@ -325,7 +325,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: :mission
+          type: "mission"
         })
 
       questions =

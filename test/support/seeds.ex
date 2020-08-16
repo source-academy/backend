@@ -47,7 +47,7 @@ defmodule Cadet.Test.Seeds do
 
       assessments =
         Enum.reduce(
-          Cadet.Assessments.AssessmentType.__enum_map__(),
+          Cadet.Assessments.Assessment.assessment_types(),
           %{},
           fn type, acc -> Map.put(acc, type, insert_assessments(type, students)) end
         )
