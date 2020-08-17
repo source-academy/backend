@@ -121,4 +121,35 @@ defmodule Cadet.ModelHelper do
         changeset
     end
   end
+
+  @spec cast_join_ids(Ecto.Changeset.t(), atom, atom, (any, any -> Ecto.Schema.t()), atom) ::
+          Ecto.Changeset.t()
+  def cast_join_ids(
+        changeset = %Ecto.Changeset{},
+        ids_field,
+        assoc_field,
+        make_assoc_fn,
+        id_field \\ :id
+      )
+      when is_atom(ids_field) and is_atom(assoc_field) and is_atom(id_field) and
+             is_function(make_assoc_fn, 2) do
+    ids_change = get_change(changeset, ids_field)
+    assoc_change = get_change(changeset, assoc_field)
+
+    case {is_nil(ids_change), is_nil(assoc_change)} do
+      {true, _} ->
+        changeset
+
+      {false, false} ->
+        add_error(changeset, ids_field, "cannot be specified when #{inspect(assoc_field)} is too")
+
+      {false, _} ->
+        my_id = get_field(changeset, id_field)
+        assoc_change = for id <- ids_change, do: make_assoc_fn.(my_id, id)
+
+        changeset
+        |> Map.update!(:params, &Map.put(&1, Atom.to_string(assoc_field), assoc_change))
+        |> cast_assoc(assoc_field)
+    end
+  end
 end

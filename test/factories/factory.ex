@@ -16,10 +16,9 @@ defmodule Cadet.Factory do
 
   use Cadet.Stories.{StoryFactory}
 
-  use Cadet.Achievements.{
+  use Cadet.Incentives.{
     AchievementFactory,
-    AchievementGoalFactory,
-    AchievementPrerequisiteFactory
+    GoalFactory
   }
 
   use Cadet.Settings.{SublanguageFactory}
