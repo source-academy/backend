@@ -32,10 +32,7 @@ defmodule Cadet.Autograder.GradingJob do
       for assessment <- Utilities.fetch_assessments_due_yesterday() do
         assessment
         |> close_and_make_empty_submission()
-        |> Enum.each(fn submission ->
-          Cadet.Accounts.Notifications.write_notification_when_student_submits(submission)
-          grade_individual_submission(submission, assessment)
-        end)
+        |> Enum.each(&grade_individual_submission(&1, assessment))
       end
     else
       Logger.info("Not grading - not leader")
@@ -111,10 +108,16 @@ defmodule Cadet.Autograder.GradingJob do
     |> Repo.insert!()
   end
 
-  defp update_submission_status_to_submitted(submission = %Submission{}) do
-    submission
-    |> Submission.changeset(%{status: :submitted})
-    |> Repo.update!()
+  defp update_submission_status_to_submitted(submission = %Submission{status: status}) do
+    if status != :submitted do
+      Cadet.Accounts.Notifications.write_notification_when_student_submits(submission)
+
+      submission
+      |> Submission.changeset(%{status: :submitted})
+      |> Repo.update!()
+    else
+      submission
+    end
   end
 
   def grade_answer(answer = %Answer{}, question = %Question{type: type}, overwrite \\ false) do

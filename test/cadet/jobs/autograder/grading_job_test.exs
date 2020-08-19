@@ -6,6 +6,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   alias Que.Persistence, as: JobsQueue
 
+  alias Cadet.Accounts.Notification
   alias Cadet.Assessments.{Answer, Question, Submission}
   alias Cadet.Autograder.{GradingJob, LambdaWorker}
 
@@ -38,7 +39,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       %{assessments: Enum.zip(assessments, questions)}
     end
 
-    test "all assessments attempted, all questions graded, should enqueue all jobs",
+    test "all assessments attempted, all questions graded, assocs preloaded, should enqueue all jobs",
          %{assessments: assessments} do
       with_mock Que, add: fn _, _ -> nil end do
         student = insert(:user, %{role: :student})
@@ -47,6 +48,8 @@ defmodule Cadet.Autograder.GradingJobTest do
 
         submission =
           insert(:submission, %{student: student, assessment: assessment, status: :attempted})
+
+        submission = Repo.preload(submission, assessment: [:questions])
 
         answers =
           Enum.map(questions, fn question ->
@@ -185,11 +188,13 @@ defmodule Cadet.Autograder.GradingJobTest do
       assert Enum.empty?(JobsQueue.all())
     end
 
-    test "all assessments attempted, should update all submission statuses", %{
-      assessments: assessments
-    } do
+    test "all assessments attempted, should update all submission statuses and create notifications",
+         %{
+           assessments: assessments
+         } do
       with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
+        group = insert(:group)
+        student = insert(:student, %{group_id: group.id})
 
         submissions =
           Enum.map(assessments, fn {assessment, _} ->
@@ -198,8 +203,37 @@ defmodule Cadet.Autograder.GradingJobTest do
 
         GradingJob.grade_all_due_yesterday()
 
-        for submission <- submissions do
-          assert Repo.get(Submission, submission.id).status == :submitted
+        for %Submission{id: id} <- submissions do
+          assert Repo.get(Submission, id).status == :submitted
+
+          refute Notification
+                 |> where(submission_id: ^id, type: ^:submitted)
+                 |> Repo.one()
+                 |> is_nil()
+        end
+      end
+    end
+
+    test "all assessments submitted, should not create notifications",
+         %{
+           assessments: assessments
+         } do
+      with_mock Que, add: fn _, _ -> nil end do
+        group = insert(:group)
+        student = insert(:student, %{group_id: group.id})
+
+        submissions =
+          Enum.map(assessments, fn {assessment, _} ->
+            insert(:submission, %{student: student, assessment: assessment, status: :submitted})
+          end)
+
+        GradingJob.grade_all_due_yesterday()
+
+        for %Submission{id: id} <- submissions do
+          assert Notification
+                 |> where(submission_id: ^id, type: ^:submitted)
+                 |> Repo.one()
+                 |> is_nil()
         end
       end
     end
