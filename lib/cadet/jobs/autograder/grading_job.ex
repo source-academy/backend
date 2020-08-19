@@ -11,6 +11,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Autograder.Utilities
+  alias Cadet.Env
 
   def close_and_make_empty_submission(assessment = %Assessment{id: id}) do
     id
@@ -25,15 +26,19 @@ defmodule Cadet.Autograder.GradingJob do
   end
 
   def grade_all_due_yesterday do
-    Logger.info("Started autograding")
+    if Env.leader?() do
+      Logger.info("Started autograding")
 
-    for assessment <- Utilities.fetch_assessments_due_yesterday() do
-      assessment
-      |> close_and_make_empty_submission()
-      |> Enum.each(fn submission ->
-        Cadet.Accounts.Notifications.write_notification_when_student_submits(submission)
-        grade_individual_submission(submission, assessment)
-      end)
+      for assessment <- Utilities.fetch_assessments_due_yesterday() do
+        assessment
+        |> close_and_make_empty_submission()
+        |> Enum.each(fn submission ->
+          Cadet.Accounts.Notifications.write_notification_when_student_submits(submission)
+          grade_individual_submission(submission, assessment)
+        end)
+      end
+    else
+      Logger.info("Not grading - not leader")
     end
   end
 

@@ -316,6 +316,47 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
       end
     end
+
+    test "all assessments attempted, all questions answered, instance not leader, should not do anything",
+         %{
+           assessments: assessments
+         } do
+      with_mock Cadet.Env, leader?: fn -> false end do
+        student = insert(:user, %{role: :student})
+
+        submissions_answers =
+          Enum.map(assessments, fn {assessment, questions} ->
+            submission =
+              insert(:submission, %{student: student, assessment: assessment, status: :attempted})
+
+            answers =
+              Enum.map(questions, fn question ->
+                insert(:answer, %{
+                  question: question,
+                  submission: submission,
+                  answer: build(:programming_answer)
+                })
+              end)
+
+            {submission, answers}
+          end)
+
+        submissions = Enum.map(submissions_answers, fn {submission, _} -> submission end)
+        answers = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
+
+        GradingJob.grade_all_due_yesterday()
+
+        for submission <- submissions do
+          assert Repo.get(Submission, submission.id).status == :attempted
+        end
+
+        for answer <- answers do
+          assert Repo.get(Answer, answer.id).autograding_status == :none
+        end
+
+        assert Enum.empty?(JobsQueue.all())
+      end
+    end
   end
 
   describe "#grade_all_due_yesterday, all mcq questions" do

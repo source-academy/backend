@@ -11,12 +11,14 @@ config :cadet, environment: Mix.env()
 config :cadet,
   ecto_repos: [Cadet.Repo]
 
+config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
+
 # Scheduler, e.g. for CS1101S
 config :cadet, Cadet.Jobs.Scheduler,
   timezone: "Asia/Singapore",
   overlap: false,
   jobs: [
-    # Grade previous day's submission at 3am
+    # Grade assessments that close in the previous day at 00:01
     {"1 0 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}}
   ]
 
