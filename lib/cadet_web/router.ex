@@ -20,6 +20,10 @@ defmodule CadetWeb.Router do
     plug(:ensure_role, [:staff, :admin])
   end
 
+  scope "/", CadetWeb do
+    get("/.well-known/jwks.json", JWKSController, :index)
+  end
+
   # Public Pages
   scope "/v1", CadetWeb do
     pipe_through([:api, :auth])
