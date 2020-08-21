@@ -175,9 +175,10 @@ defmodule CadetWeb.AssessmentsHelpers do
     end
   end
 
-  defp build_postpend(%{assessment_type: assessment_type}) do
-    case assessment_type do
-      "path" -> & &1["postpend"]
+  defp build_postpend(%{assessment_type: assessment_type}, all_testcases?) do
+    case {all_testcases?, assessment_type} do
+      {true, _} -> & &1["postpend"]
+      {_, "path"} -> & &1["postpend"]
       # Create a 1-arity function to return an empty postpend for non-paths
       _ -> fn _question -> "" end
     end
@@ -196,7 +197,7 @@ defmodule CadetWeb.AssessmentsHelpers do
           content: "content",
           prepend: "prepend",
           solutionTemplate: "template",
-          postpend: build_postpend(%{assessment_type: assessment_type}),
+          postpend: build_postpend(%{assessment_type: assessment_type}, all_testcases?),
           testcases: build_testcases(%{assessment_type: assessment_type}, all_testcases?)
         })
 

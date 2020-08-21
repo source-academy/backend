@@ -260,12 +260,7 @@ defmodule CadetWeb.GradingControllerTest do
               %{
                 "question" => %{
                   "prepend" => &1.question.question.prepend,
-                  "postpend" =>
-                    if &1.question.assessment.type == "path" do
-                      &1.question.question.postpend
-                    else
-                      ""
-                    end,
+                  "postpend" => &1.question.question.postpend,
                   "testcases" =>
                     Enum.map(
                       &1.question.question.public,
@@ -394,12 +389,7 @@ defmodule CadetWeb.GradingControllerTest do
               %{
                 "question" => %{
                   "prepend" => &1.question.question.prepend,
-                  "postpend" =>
-                    if &1.question.assessment.type == "path" do
-                      &1.question.question.postpend
-                    else
-                      ""
-                    end,
+                  "postpend" => &1.question.question.postpend,
                   "testcases" =>
                     Enum.map(
                       &1.question.question.public,
@@ -1024,12 +1014,7 @@ defmodule CadetWeb.GradingControllerTest do
               %{
                 "question" => %{
                   "prepend" => &1.question.question.prepend,
-                  "postpend" =>
-                    if &1.question.assessment.type == "path" do
-                      &1.question.question.postpend
-                    else
-                      ""
-                    end,
+                  "postpend" => &1.question.question.postpend,
                   "testcases" =>
                     Enum.map(
                       &1.question.question.public,
