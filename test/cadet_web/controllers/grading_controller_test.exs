@@ -648,7 +648,8 @@ defmodule CadetWeb.GradingControllerTest do
           :answer,
           submission: submission,
           question: question,
-          answer: %{code: "f => f(f);"}
+          answer: %{code: "f => f(f);"},
+          grader_id: grader.id
         )
 
       conn
@@ -665,12 +666,12 @@ defmodule CadetWeb.GradingControllerTest do
 
       assert answer_db.autograding_status == :none
       assert answer_db.autograding_results == []
-      assert answer_db.grader_id == nil
+      assert answer_db.grader_id == grader.id
       assert answer_db.xp == 0
       assert answer_db.xp_adjustment == 0
       assert answer_db.grade == 0
       assert answer_db.adjustment == 0
-      assert answer_db.comments == nil
+      assert answer_db.comments == answer.comments
     end
 
     @tag authenticate: :staff
