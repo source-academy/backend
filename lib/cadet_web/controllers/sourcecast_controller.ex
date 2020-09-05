@@ -44,9 +44,9 @@ defmodule CadetWeb.SourcecastController do
 
   swagger_path :index do
     get("/sourcecast")
-    description("Lists all sourcecast files")
+    description("Lists all sourcecasts")
+    summary("Show all sourcecasts")
     produces("application/json")
-    summary("Shows all files")
     security([%{JWT: []}])
 
     response(200, "Success")
@@ -56,8 +56,8 @@ defmodule CadetWeb.SourcecastController do
 
   swagger_path :create do
     post("/sourcecast")
-    description("Uploads file")
-    summary("Upload file")
+    description("Uploads sourcecast")
+    summary("Upload sourcecast")
     consumes("multipart/form-data")
     security([%{JWT: []}])
 
@@ -72,12 +72,12 @@ defmodule CadetWeb.SourcecastController do
 
   swagger_path :delete do
     PhoenixSwagger.Path.delete("/sourcecast/{id}")
-    description("Deletes file by specifying the file id")
-    summary("Delete file")
+    description("Deletes sourcecast by id")
+    summary("Delete sourcecast")
     security([%{JWT: []}])
 
     parameters do
-      id(:path, :integer, "file id", required: true)
+      id(:path, :integer, "sourcecast id", required: true)
     end
 
     response(200, "Success")
@@ -90,10 +90,11 @@ defmodule CadetWeb.SourcecastController do
       Sourcecast:
         swagger_schema do
           properties do
-            name(:string, "name", required: true)
+            title(:string, "title", required: true)
+            playbackData(:string, "playback data", required: true)
             description(:string, "description", required: false)
+            uid(:string, "uid", required: false)
             audio(:file, "audio file", required: true)
-            deltas(:string, "playback deltas", required: true)
           end
         end
     }
