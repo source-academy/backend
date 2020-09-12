@@ -3,7 +3,7 @@ defmodule Cadet.Course do
   Course context contains domain logic for Course administration
   management such as discussion groups and materials
   """
-  use Cadet, :context
+  use Cadet, [:context, :display]
 
   import Ecto.Query
 
@@ -110,7 +110,13 @@ defmodule Cadet.Course do
         |> Sourcecast.changeset(attrs)
         |> put_assoc(:uploader, uploader)
 
-      Repo.insert(changeset)
+      case Repo.insert(changeset) do
+        {:ok, sourcecast} ->
+          {:ok, sourcecast}
+
+        {:error, changeset} ->
+          {:error, {:bad_request, full_error_messages(changeset)}}
+      end
     else
       {:error, {:forbidden, "User is not permitted to upload"}}
     end
