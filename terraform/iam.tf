@@ -27,6 +27,36 @@ data "aws_iam_policy_document" "db_secret" {
   }
 }
 
+data "aws_iam_policy_document" "assume_frontend" {
+  statement {
+    effect    = "Allow"
+    actions   = ["sts:AssumeRole"]
+    resources = [aws_iam_role.frontend.arn]
+  }
+}
+
+data "aws_iam_policy_document" "sling_client" {
+  statement {
+    effect    = "Allow"
+    actions   = ["iot:Receive", "iot:Subscribe", "iot:Connect", "iot:Publish"]
+    resources = ["arn:aws:iot:*:*:topicfilter/*", "arn:aws:iot:*:*:topic/*", "arn:aws:iot:*:*:client/*"]
+  }
+}
+
+data "aws_iam_policy_document" "sling_backend" {
+  statement {
+    effect    = "Allow"
+    actions   = ["iot:CreateThing", "iot:AddThingToThingGroup"]
+    resources = ["arn:aws:iot:*:*:thinggroup/${var.env}-sling", "arn:aws:iot:*:*:thing/${var.env}-sling:*"]
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["iot:AttachThingPrincipal", "iot:CreateKeysAndCertificate", "iot:DescribeEndpoint"]
+    resources = ["*"]
+  }
+}
+
 data "aws_iam_policy_document" "assume_policy" {
   statement {
     effect = "Allow"
@@ -50,6 +80,11 @@ resource "aws_iam_role" "api" {
   assume_role_policy = data.aws_iam_policy_document.assume_policy.json
 }
 
+resource "aws_iam_role" "frontend" {
+  name               = "${var.env}-cadet-frontend"
+  assume_role_policy = data.aws_iam_policy_document.assume_policy.json
+}
+
 resource "aws_iam_policy" "assets" {
   name        = "${var.env}-cadet-assets"
   description = "Allows R/W access to the ${aws_s3_bucket.sourcecasts.bucket} and ${aws_s3_bucket.assets.bucket} S3 buckets"
@@ -68,6 +103,24 @@ resource "aws_iam_policy" "db_secret" {
   policy      = data.aws_iam_policy_document.db_secret.json
 }
 
+resource "aws_iam_policy" "sling_client" {
+  name        = "${var.env}-cadet-sling_client"
+  description = "Allows access to the AWS IoT endpoints used by the Sling client"
+  policy      = data.aws_iam_policy_document.sling_client.json
+}
+
+resource "aws_iam_policy" "sling_backend" {
+  name        = "${var.env}-cadet-sling_backend"
+  description = "Allows access to the AWS IoT endpoints needed by a Sling backend"
+  policy      = data.aws_iam_policy_document.sling_backend.json
+}
+
+resource "aws_iam_policy" "assume_frontend" {
+  name        = "${var.env}-cadet-assume_frontend"
+  description = "Allows the backend to generate AWS access tokens for the frontend"
+  policy      = data.aws_iam_policy_document.assume_frontend.json
+}
+
 resource "aws_iam_role_policy_attachment" "api_assets" {
   role       = aws_iam_role.api.name
   policy_arn = aws_iam_policy.assets.arn
@@ -81,4 +134,19 @@ resource "aws_iam_role_policy_attachment" "api_grader" {
 resource "aws_iam_role_policy_attachment" "api_db_secret" {
   role       = aws_iam_role.api.name
   policy_arn = aws_iam_policy.db_secret.arn
+}
+
+resource "aws_iam_role_policy_attachment" "api_sling_backend" {
+  role       = aws_iam_role.api.name
+  policy_arn = aws_iam_policy.sling_backend.arn
+}
+
+resource "aws_iam_role_policy_attachment" "api_assume_frontend" {
+  role       = aws_iam_role.api.name
+  policy_arn = aws_iam_policy.assume_frontend.arn
+}
+
+resource "aws_iam_role_policy_attachment" "frontend_sling_client" {
+  role       = aws_iam_role.frontend.name
+  policy_arn = aws_iam_policy.sling_client.arn
 }
