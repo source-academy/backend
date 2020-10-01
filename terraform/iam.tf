@@ -70,6 +70,24 @@ data "aws_iam_policy_document" "assume_policy" {
   }
 }
 
+data "aws_iam_policy_document" "assume_frontend_policy" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.api.arn]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
 resource "aws_iam_instance_profile" "api" {
   name = "${var.env}-cadet-api"
   role = aws_iam_role.api.name
@@ -82,7 +100,7 @@ resource "aws_iam_role" "api" {
 
 resource "aws_iam_role" "frontend" {
   name               = "${var.env}-cadet-frontend"
-  assume_role_policy = data.aws_iam_policy_document.assume_policy.json
+  assume_role_policy = data.aws_iam_policy_document.assume_frontend_policy.json
 }
 
 resource "aws_iam_policy" "assets" {
