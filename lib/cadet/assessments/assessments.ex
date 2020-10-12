@@ -13,6 +13,8 @@ defmodule Cadet.Assessments do
   alias Cadet.Course.Group
   alias Ecto.Multi
 
+  require Decimal
+
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)
   # @submit_answer_roles ~w(student staff admin)a
@@ -121,7 +123,7 @@ defmodule Cadet.Assessments do
   end
 
   defp decimal_to_integer(decimal) do
-    if Decimal.decimal?(decimal) do
+    if Decimal.is_decimal(decimal) do
       Decimal.to_integer(decimal)
     else
       0
@@ -257,9 +259,13 @@ defmodule Cadet.Assessments do
         |> where(assessment_id: ^id)
         |> join(:left, [q], a in subquery(answer_query), on: q.id == a.question_id)
         |> join(:left, [_, a], g in assoc(a, :grader))
-        |> select([q, a, g], %{q | answer: %Answer{a | grader: g}})
+        |> select([q, a, g], {q, a, g})
         |> order_by(:display_order)
         |> Repo.all()
+        |> Enum.map(fn
+          {q, nil, _} -> %{q | answer: %Answer{}}
+          {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
+        end)
 
       assessment = Map.put(assessment, :questions, questions)
       {:ok, assessment}
