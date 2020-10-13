@@ -11,11 +11,5 @@ defmodule Cadet.Assessments.Library.ExternalLibraryTest do
     test "valid changesets", %{valid_params: params} do
       assert_changeset(params, :valid)
     end
-
-    test "invalid changeset invalid name", %{valid_params: params} do
-      params
-      |> Map.put(:name, "hello_world")
-      |> assert_changeset(:invalid)
-    end
   end
 end

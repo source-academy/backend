@@ -83,7 +83,7 @@ defmodule Cadet.Autograder.LambdaWorker do
       |> Map.from_struct()
       |> Map.get_and_update(
         :name,
-        &{&1, &1 |> Atom.to_string() |> String.upcase()}
+        &{&1, &1 |> String.upcase()}
       )
 
     %{

@@ -234,7 +234,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         library: %{
           chapter: question.grading_library.chapter,
           external: %{
-            name: question.grading_library.external.name |> Atom.to_string() |> String.upcase(),
+            name: question.grading_library.external.name |> String.upcase(),
             symbols: question.grading_library.external.symbols
           },
           globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
