@@ -263,7 +263,7 @@ defmodule Cadet.Assessments do
         |> order_by(:display_order)
         |> Repo.all()
         |> Enum.map(fn
-          {q, nil, _} -> %{q | answer: %Answer{}}
+          {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
           {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
         end)
 
