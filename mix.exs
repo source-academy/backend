@@ -71,7 +71,7 @@ defmodule Cadet.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 3.0"},
       {:que, "~> 0.10"},
-      {:recase, "~> 0.6"},
+      {:recase, "~> 0.7", override: true},
       {:sentry, "~> 8.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.0"},
@@ -86,11 +86,7 @@ defmodule Cadet.Mixfile do
       {:inch_ex, "~> 2.0", only: [:dev, :test]},
 
       # unit testing dependencies
-      # using Bypass git as the current released version emits warnings on Elixir 1.10
-      {:bypass,
-       git: "https://github.com/PSPDFKit-labs/bypass",
-       ref: "c4d18ab4a1ccd8a0b46828913f55ae3f147100c2",
-       only: :test},
+      {:bypass, "~> 2.1", only: :test},
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:mock, "~> 0.3.0", only: :test},
@@ -98,7 +94,7 @@ defmodule Cadet.Mixfile do
       # The following are indirect dependencies, but we need to override the
       # versions due to conflicts
       {:jsx, "~> 3.0", override: true},
-      {:xml_builder, "~> 2.0", override: true}
+      {:xml_builder, "~> 2.1", override: true}
     ]
   end
 

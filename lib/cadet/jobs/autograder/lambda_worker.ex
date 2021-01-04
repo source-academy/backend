@@ -12,7 +12,7 @@ defmodule Cadet.Autograder.LambdaWorker do
   alias Cadet.Autograder.ResultStoreWorker
   alias Cadet.Assessments.{Answer, Question}
 
-  @lambda_name :cadet |> Application.fetch_env!(:autograder) |> Keyword.get(:lambda_name)
+  @lambda_name :cadet |> Application.compile_env!(:autograder) |> Keyword.get(:lambda_name)
 
   @doc """
   This Que callback transforms an input of %{question: %Question{}, answer: %Answer{}} into
