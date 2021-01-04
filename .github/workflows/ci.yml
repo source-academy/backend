@@ -1,0 +1,57 @@
+name: Run CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    name: Run CI
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    services:
+      postgres:
+        image: postgres:13.1
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cadet_test
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache deps
+        uses: actions/cache@v1
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            ${{ runner.os }}-mix-
+      - name: Cache _build
+        uses: actions/cache@v1
+        with:
+          path: |
+            _build
+            priv/plts
+          key: ${{ runner.os }}-erlang-23.1.4-elixir-1.11.0-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-erlang-23.1.4-elixir-1.11.0-
+      - name: Copy secrets.exs
+        run: cp config/secrets.exs.example config/secrets.exs
+      - name: Setup Elixir
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: 1.11.0
+          otp-version: 23.1.4
+      - name: Perform test
+        run: |
+          mix deps.get
+          mix ecto.setup
+          mix format --check-formatted
+          mix credo
+          mix coveralls.github
+          mix dialyzer
+          mix inch.report
