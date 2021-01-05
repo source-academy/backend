@@ -12,8 +12,6 @@ defmodule Cadet.Autograder.LambdaWorker do
   alias Cadet.Autograder.ResultStoreWorker
   alias Cadet.Assessments.{Answer, Question}
 
-  @lambda_name :cadet |> Application.compile_env!(:autograder) |> Keyword.get(:lambda_name)
-
   @doc """
   This Que callback transforms an input of %{question: %Question{}, answer: %Answer{}} into
   the correct shape to dispatch to lambda, waits for the response, parses it, and enqueues a
@@ -28,7 +26,9 @@ defmodule Cadet.Autograder.LambdaWorker do
       Process.sleep(1000)
     else
       response =
-        @lambda_name
+        :cadet
+        |> Application.fetch_env!(:autograder)
+        |> Keyword.get(:lambda_name)
         |> ExAws.Lambda.invoke(lambda_params, %{})
         |> ExAws.request!()
 

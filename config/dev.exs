@@ -72,3 +72,5 @@ config :git_hooks,
       ]
     ]
   ]
+
+import_config("dev.secrets.exs")
