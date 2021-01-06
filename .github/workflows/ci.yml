@@ -1,6 +1,8 @@
 name: Run CI
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 jobs:
@@ -39,8 +41,6 @@ jobs:
           key: ${{ runner.os }}-erlang-23.1.4-elixir-1.11.0-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-erlang-23.1.4-elixir-1.11.0-
-      - name: Copy secrets.exs
-        run: cp config/secrets.exs.example config/secrets.exs
       - name: Setup Elixir
         uses: actions/setup-elixir@v1
         with:
