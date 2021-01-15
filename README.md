@@ -24,8 +24,8 @@ format`.
 1. Set up the development secrets (replace the values appropriately)
 
    ```bash
-   $ cp config/secrets.exs.example config/secrets.exs
-   $ vim config/secrets.exs
+   $ cp config/dev.secrets.exs.example config/dev.secrets.exs
+   $ vim config/dev.secrets.exs
    ```
 
   - To use LumiNUS authentication, specify a valid LumiNUS `api_key`. Note that
