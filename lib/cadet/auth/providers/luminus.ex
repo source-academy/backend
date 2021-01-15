@@ -7,7 +7,7 @@ defmodule Cadet.Auth.Providers.LumiNUS do
 
   @behaviour Provider
 
-  @type config :: %{api_key: String.t(), module_code: String.t(), module_term: String.t()}
+  @type config :: %{api_key: String.t(), modules: %{}}
 
   @api_url "https://luminus.azure-api.net/"
 
@@ -97,7 +97,7 @@ defmodule Cadet.Auth.Providers.LumiNUS do
   def get_role(config, token) do
     case api_call("module", token, config.api_key) do
       {:ok, modules} ->
-        parse_modules(modules, config.module_code, config.module_term)
+        parse_modules(modules, config.modules)
 
       {:error, _, _} = error ->
         error
@@ -129,20 +129,40 @@ defmodule Cadet.Auth.Providers.LumiNUS do
     "access_Settings_Update" => true
   }
 
-  defp parse_modules(modules, module_code, module_term) do
-    cs1101s =
+  defp parse_modules(modules, allowed) do
+    roles =
       modules["data"]
-      |> Enum.find(fn module ->
-        module["name"] == module_code && module["term"] == module_term &&
-          module_active?(module["endDate"])
-      end)
+      |> Enum.filter(&(module_allowed?(&1, allowed) and module_active?(&1["endDate"])))
+      |> Enum.map(&module_to_role/1)
+      # NOTE: this depends on the fact that the correct role order
+      # [:admin, :staff, :student] happens to also be sorted,
+      # and that :unexpected_access sorts after any valid role
+      |> Enum.sort()
 
-    case cs1101s do
-      nil -> {:error, :invalid_credentials, "User is not part of module"}
-      %{"access" => @admin_access} -> {:ok, :admin}
-      %{"access" => @staff_access} -> {:ok, :staff}
-      %{"access" => @student_access} -> {:ok, :student}
-      _ -> {:error, :other, "Unexpected access combination"}
+    case roles do
+      [] -> {:error, :invalid_credentials, "User is not part of module"}
+      [role | _] when role in [:admin, :staff, :student] -> {:ok, role}
+      [:unexpected_access | _] -> {:error, :other, "Unexpected access combination"}
+    end
+  end
+
+  defp module_to_role(module) do
+    case module do
+      %{"access" => @admin_access} -> :admin
+      %{"access" => @staff_access} -> :staff
+      %{"access" => @student_access} -> :student
+      _ -> :unexpected_access
+    end
+  end
+
+  defp module_allowed?(module, allowed) do
+    allowed_terms = allowed[module["name"]]
+    term = module["term"]
+
+    cond do
+      is_list(allowed_terms) -> term in allowed_terms
+      is_binary(allowed_terms) -> term == allowed_terms
+      true -> false
     end
   end
 

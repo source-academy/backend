@@ -34,8 +34,7 @@ defmodule Cadet.Auth.Providers.LumiNUSTest do
 
   @config %{
     api_key: "API_KEY",
-    module_code: "CS1101S",
-    module_term: "2010"
+    modules: %{"CS1101S" => "2010"}
   }
 
   setup_all do
@@ -171,6 +170,51 @@ defmodule Cadet.Auth.Providers.LumiNUSTest do
       use_cassette "luminus/get_role#9", custom: true do
         assert {:error, :other, "Unexpected access combination"} =
                  LumiNUS.get_role(@config, @token)
+      end
+    end
+
+    test "One with multiple modules allowed (1)" do
+      use_cassette "luminus/get_role#11", custom: true do
+        assert {:ok, :staff} = LumiNUS.get_role(@config, @token)
+      end
+    end
+
+    test "One with multiple modules allowed (2)" do
+      use_cassette "luminus/get_role#11", custom: true do
+        assert {:ok, :admin} =
+                 LumiNUS.get_role(
+                   %{
+                     api_key: "API_KEY",
+                     modules: %{"XY1101Z" => "2010"}
+                   },
+                   @token
+                 )
+      end
+    end
+
+    test "Highest role of multiple modules taken" do
+      use_cassette "luminus/get_role#11", custom: true do
+        assert {:ok, :admin} =
+                 LumiNUS.get_role(
+                   %{
+                     api_key: "API_KEY",
+                     modules: %{"XY1101Z" => "2010", "CS1101S" => "2010"}
+                   },
+                   @token
+                 )
+      end
+    end
+
+    test "Multiple terms" do
+      use_cassette "luminus/get_role#10", custom: true do
+        assert {:ok, :staff} =
+                 LumiNUS.get_role(
+                   %{
+                     api_key: "API_KEY",
+                     modules: %{"CS1101S" => ["1910", "2010"]}
+                   },
+                   @token
+                 )
       end
     end
   end
