@@ -133,12 +133,9 @@ defmodule Cadet.Autograder.GradingJob do
       |> Enum.find(&Map.get(&1, "is_correct"))
       |> Map.get("choice_id")
 
-    grade = if answer.answer["choice_id"] == correct_choice, do: question.max_grade, else: 0
-
-    xp =
-      if question.max_grade == 0,
-        do: 0,
-        else: Integer.floor_div(question.max_xp * grade, question.max_grade)
+    correct? = answer.answer["choice_id"] == correct_choice
+    grade = if correct?, do: question.max_grade, else: 0
+    xp = if correct?, do: question.max_xp, else: 0
 
     answer
     |> Answer.autograding_changeset(%{
