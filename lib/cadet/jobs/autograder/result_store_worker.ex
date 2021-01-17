@@ -55,10 +55,20 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
   defp update_answer(answer = %Answer{}, result = %{status: status}, overwrite) do
     xp =
-      if answer.question.max_grade == 0 do
-        0
-      else
-        Integer.floor_div(answer.question.max_xp * result.grade, answer.question.max_grade)
+      cond do
+        answer.question.max_grade == 0 and length(result.result) > 0 ->
+          testcase_results = result.result
+
+          num_passed =
+            testcase_results |> Enum.filter(fn r -> r["resultType"] == "pass" end) |> length()
+
+          Integer.floor_div(answer.question.max_xp * num_passed, length(testcase_results))
+
+        answer.question.max_grade == 0 ->
+          0
+
+        true ->
+          Integer.floor_div(answer.question.max_xp * result.grade, answer.question.max_grade)
       end
 
     new_adjustment =
