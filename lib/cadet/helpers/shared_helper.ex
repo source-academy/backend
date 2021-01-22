@@ -53,29 +53,6 @@ defmodule Cadet.SharedHelper do
   def snake_casify_string_keys_recursive(other), do: other
 
   @doc """
-  Stringifies atom keys, recursively.
-
-  Intended for use in a model, when receiving changes to be passed to
-  Ecto.Changeset.cast, but the changes need to be pre-processed, since the
-  changes could be keyed with either atoms or strings.
-  """
-  def stringify_atom_keys_recursive(s) when is_struct(s) do
-    stringify_atom_keys_recursive(Map.from_struct(s))
-  end
-
-  def stringify_atom_keys_recursive(map = %{}) do
-    for {k, v} <- map,
-        into: %{},
-        do: {if(is_atom(k), do: Atom.to_string(k), else: k), stringify_atom_keys_recursive(v)}
-  end
-
-  def stringify_atom_keys_recursive(list) when is_list(list) do
-    for e <- list, do: stringify_atom_keys_recursive(e)
-  end
-
-  def stringify_atom_keys_recursive(other), do: other
-
-  @doc """
   Camel-casifies atom keys and converts them to strings.
 
   Meant for use when sending an Elixir map, which usually has snake-case keys,
@@ -88,8 +65,8 @@ defmodule Cadet.SharedHelper do
   end
 
   @doc """
-  Converts a map like `%{"a" => 123}` into a keyword list like
-  [a: 123].
+  Converts a map like `%{"a" => 123}` into a keyword list like [a: 123]. Returns
+  nil if any keys are not existing atoms.
 
   Meant for use for GET endpoints that filter based on the query string.
   """
