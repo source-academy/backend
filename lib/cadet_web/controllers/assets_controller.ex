@@ -60,7 +60,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :index do
-    get("/assets/{foldername}")
+    get("/admin/assets/{foldername}")
 
     summary("Get a list of all assets in a folder")
 
@@ -78,7 +78,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/assets/{foldername}/{filename}")
+    PhoenixSwagger.Path.delete("/admin/assets/{foldername}/{filename}")
 
     summary("Delete a file from an asset folder")
 
@@ -90,8 +90,6 @@ defmodule CadetWeb.AssetsController do
 
     security([%{JWT: []}])
 
-    produces("application/json")
-
     response(204, "OK")
     response(400, "Invalid folder name, file name or file type")
     response(403, "User is not allowed to manage assets")
@@ -99,7 +97,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :upload do
-    post("/assets/{foldername}/{filename}")
+    post("/admin/assets/{foldername}/{filename}")
 
     summary("Upload a file to an asset folder")
 

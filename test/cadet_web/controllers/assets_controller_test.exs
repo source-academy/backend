@@ -36,14 +36,14 @@ defmodule CadetWeb.AssetsControllerTest do
     @tag authenticate: :student
     test "GET /assets/:foldername", %{conn: conn} do
       conn = get(conn, build_url("testFolder"), %{})
-      assert response(conn, 403) =~ "User not allowed to manage assets"
+      assert response(conn, 403) =~ "Forbidden"
     end
 
     @tag authenticate: :student
     test "DELETE /assets/:foldername/*filename", %{conn: conn} do
       conn = delete(conn, build_url("testFolder/testFile.png"))
 
-      assert response(conn, 403) =~ "User not allowed to manage assets"
+      assert response(conn, 403) =~ "Forbidden"
     end
 
     @tag authenticate: :student
@@ -53,7 +53,7 @@ defmodule CadetWeb.AssetsControllerTest do
           :upload => build_upload("test/fixtures/upload.png")
         })
 
-      assert response(conn, 403) =~ "User not allowed to manage assets"
+      assert response(conn, 403) =~ "Forbidden"
     end
   end
 
@@ -170,7 +170,7 @@ defmodule CadetWeb.AssetsControllerTest do
     end
   end
 
-  defp build_url, do: "/v1/assets/"
+  defp build_url, do: "/v2/admin/assets/"
   defp build_url(url), do: "#{build_url()}/#{url}"
 
   defp build_upload(path, content_type \\ "image/png") do
