@@ -1,18 +1,18 @@
-defmodule CadetWeb.AssetsControllerTest do
+defmodule CadetWeb.AdminAssetsControllerTest do
   use CadetWeb.ConnCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  alias CadetWeb.AssetsController
+  alias CadetWeb.AdminAssetsController
 
   setup_all do
     HTTPoison.start()
   end
 
   test "swagger" do
-    AssetsController.swagger_definitions()
-    AssetsController.swagger_path_index(nil)
-    AssetsController.swagger_path_upload(nil)
-    AssetsController.swagger_path_delete(nil)
+    AdminAssetsController.swagger_definitions()
+    AdminAssetsController.swagger_path_index(nil)
+    AdminAssetsController.swagger_path_upload(nil)
+    AdminAssetsController.swagger_path_delete(nil)
   end
 
   describe "public access, unauthenticated" do

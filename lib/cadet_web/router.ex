@@ -114,9 +114,9 @@ defmodule CadetWeb.Router do
   scope "/v2/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
 
-    get("/assets/:foldername", AssetsController, :index)
-    post("/assets/:foldername/*filename", AssetsController, :upload)
-    delete("/assets/:foldername/*filename", AssetsController, :delete)
+    get("/assets/:foldername", AdminAssetsController, :index)
+    post("/assets/:foldername/*filename", AdminAssetsController, :upload)
+    delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
   end
 
   # Other scopes may use custom stacks.

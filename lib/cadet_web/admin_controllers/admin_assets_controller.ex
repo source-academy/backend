@@ -1,4 +1,4 @@
-defmodule CadetWeb.AssetsController do
+defmodule CadetWeb.AdminAssetsController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
