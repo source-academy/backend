@@ -5,7 +5,7 @@ defmodule CadetWeb.AssetsController do
   alias Cadet.Assets.Assets
 
   def index(conn, _params = %{"foldername" => foldername}) do
-    case Assets.list_assets(foldername, conn.assigns.current_user) do
+    case Assets.list_assets(foldername) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       assets -> render(conn, "index.json", assets: assets)
     end
@@ -15,7 +15,7 @@ defmodule CadetWeb.AssetsController do
   def delete(conn, _params = %{"foldername" => foldername, "filename" => filename}) do
     filename = Enum.join(filename, "/")
 
-    case Assets.delete_object(foldername, filename, conn.assigns.current_user) do
+    case Assets.delete_object(foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       _ -> conn |> put_status(204) |> text('')
     end
@@ -28,7 +28,7 @@ defmodule CadetWeb.AssetsController do
       }) do
     filename = Enum.join(filename, "/")
 
-    case Assets.upload_to_s3(upload_params, foldername, filename, conn.assigns.current_user) do
+    case Assets.upload_to_s3(upload_params, foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       resp -> render(conn, "show.json", resp: resp)
     end
