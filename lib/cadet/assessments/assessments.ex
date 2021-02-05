@@ -8,7 +8,7 @@ defmodule Cadet.Assessments do
   import Ecto.Query
 
   alias Cadet.Accounts.{Notification, Notifications, User}
-  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Course.Group
   alias Ecto.Multi
@@ -58,6 +58,10 @@ defmodule Cadet.Assessments do
       Submission
       |> where(assessment_id: ^id)
       |> delete_submission_assocation(id)
+
+      SubmissionVotes
+      |> where(assessment_id: ^id)
+      |> Repo.delete_all()
 
       Repo.delete(assessment)
     else
@@ -479,6 +483,26 @@ defmodule Cadet.Assessments do
     params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
 
     Question.changeset(%Question{}, params_with_assessment_id)
+  end
+
+  def insert_voting(voting_params, assessment_id) do
+    changesets =
+      Enum.map(voting_params, fn voting_entry ->
+        build_voting_submission_changeset_for_assessment_id(voting_entry.voting, assessment_id)
+      end)
+
+    changesets
+    |> Enum.with_index()
+    |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
+      Multi.insert(multi, Integer.to_string(index), changeset)
+    end)
+    |> Repo.transaction()
+  end
+
+  defp build_voting_submission_changeset_for_assessment_id(params, assessment_id)
+       when is_ecto_id(assessment_id) do
+    params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
+    SubmissionVotes.changeset(%SubmissionVotes{}, params_with_assessment_id)
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
