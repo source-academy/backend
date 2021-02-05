@@ -8,7 +8,7 @@ defmodule Cadet.Assessments.Assessment do
 
   alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
 
-  @assessment_types ~w(contest mission path practical sidequest)
+  @assessment_types ~w(contest mission path practical sidequest contestvoting)
   def assessment_types, do: @assessment_types
 
   schema "assessments" do

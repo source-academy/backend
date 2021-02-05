@@ -6,7 +6,7 @@ defmodule Cadet.Assessments.Question do
   use Cadet, :model
 
   alias Cadet.Assessments.{Assessment, Library, QuestionType}
-  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion}
+  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion, VotingQuestion}
 
   schema "questions" do
     field(:display_order, :integer)
@@ -39,7 +39,8 @@ defmodule Cadet.Assessments.Question do
   defp validate_question_content(changeset) do
     validate_arbitrary_embedded_struct_by_type(changeset, :question, %{
       mcq: MCQQuestion,
-      programming: ProgrammingQuestion
+      programming: ProgrammingQuestion,
+      voting: VotingQuestion
     })
   end
 end
