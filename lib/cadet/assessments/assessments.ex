@@ -85,6 +85,7 @@ defmodule Cadet.Assessments do
     Repo.delete_all(submissions)
   end
 
+
   @spec user_max_grade(%User{}) :: integer()
   def user_max_grade(%User{id: user_id}) when is_ecto_id(user_id) do
     Submission
@@ -486,23 +487,23 @@ defmodule Cadet.Assessments do
   end
 
   def insert_voting(voting_params, assessment_id) do
-    changesets =
-      Enum.map(voting_params, fn voting_entry ->
-        build_voting_submission_changeset_for_assessment_id(voting_entry.voting, assessment_id)
-      end)
+    changesets = Enum.map(voting_params, fn voting_entry ->
+      build_voting_submission_changeset_for_assessment_id(voting_entry.voting, assessment_id)
+    end)
+
 
     changesets
-    |> Enum.with_index()
-    |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
-      Multi.insert(multi, Integer.to_string(index), changeset)
-    end)
-    |> Repo.transaction()
+      |> Enum.with_index()
+      |> Enum.reduce(Multi.new(), fn ({changeset, index}, multi) ->
+        Multi.insert(multi, Integer.to_string(index), changeset) end)
+      |> Repo.transaction
+
   end
 
   defp build_voting_submission_changeset_for_assessment_id(params, assessment_id)
-       when is_ecto_id(assessment_id) do
-    params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
-    SubmissionVotes.changeset(%SubmissionVotes{}, params_with_assessment_id)
+    when is_ecto_id(assessment_id) do
+      params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
+      SubmissionVotes.changeset(%SubmissionVotes{}, params_with_assessment_id)
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
