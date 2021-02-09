@@ -33,9 +33,6 @@ defmodule CadetWeb.AdminGoalsController do
     json =
       json
       |> snake_casify_string_keys_recursive()
-      |> rename_keys([
-        {"max_exp", "max_xp"}
-      ])
 
     if is_nil(uuid) do
       json
