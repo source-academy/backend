@@ -75,6 +75,7 @@ defmodule CadetWeb.AssessmentsHelpers do
         case question_type do
           :programming -> &Map.get(&1, "solution")
           :mcq -> &find_correct_choice(&1["choices"])
+          :voting -> &Map.get(&1, "solution")
         end
 
       transform_map_for_view(question, %{solution: solution_getter})
@@ -83,6 +84,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
   defp answer_builder_for(:programming), do: & &1.answer["code"]
   defp answer_builder_for(:mcq), do: & &1.answer["choice_id"]
+  defp answer_builder_for(:voting), do: & &1.answer["rankings"]
 
   defp build_answer_fields_by_question_type(%{
          question: %{answer: answer, type: question_type}
@@ -205,6 +207,13 @@ defmodule CadetWeb.AssessmentsHelpers do
         transform_map_for_view(question, %{
           content: "content",
           choices: &Enum.map(&1["choices"], fn choice -> build_choice(choice) end)
+        })
+
+      :voting ->
+        transform_map_for_view(question, %{
+          content: "content",
+          prepend: "prepend",
+          solutionTemplate: "template"
         })
     end
   end

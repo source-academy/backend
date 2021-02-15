@@ -1,14 +1,14 @@
-defmodule Cadet.Achievements.Achievement do
+defmodule Cadet.Incentives.Achievement do
   @moduledoc """
-  Stores achievements.
+  Represents an achievement.
   """
   use Cadet, :model
 
-  alias Cadet.Achievements.{AchievementGoal, AchievementPrerequisite}
+  alias Cadet.Incentives.{AchievementPrerequisite, AchievementToGoal}
 
   @valid_abilities ~w(Core Community Effort Exploration Flex)
 
-  @primary_key {:id, :id, autogenerate: false}
+  @primary_key {:uuid, :binary_id, autogenerate: false}
   schema "achievements" do
     field(:title, :string)
     field(:ability, :string)
@@ -17,20 +17,22 @@ defmodule Cadet.Achievements.Achievement do
     field(:open_at, :utc_datetime)
     field(:close_at, :utc_datetime)
     field(:is_task, :boolean)
-    field(:position, :integer, default: 0)
+    field(:position, :integer)
 
     field(:canvas_url, :string)
     field(:description, :string)
     field(:completion_text, :string)
 
     has_many(:prerequisites, AchievementPrerequisite, on_replace: :delete)
-    has_many(:goals, AchievementGoal)
+    has_many(:goals, AchievementToGoal, on_replace: :delete)
 
-    timestamps()
+    field(:prerequisite_uuids, {:array, :binary_id}, virtual: true)
+    field(:goal_uuids, {:array, :binary_id}, virtual: true)
   end
 
-  @required_fields ~w(id title ability is_task position)a
-  @optional_fields ~w(card_tile_url open_at close_at canvas_url description completion_text)a
+  @required_fields ~w(uuid title ability is_task position)a
+  @optional_fields ~w(card_tile_url open_at close_at canvas_url description
+    completion_text prerequisite_uuids goal_uuids)a
 
   def changeset(achievement, params) do
     params =
@@ -42,8 +44,18 @@ defmodule Cadet.Achievements.Achievement do
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_inclusion(:ability, @valid_abilities)
-    |> cast_assoc(:prerequisites)
-    |> cast_assoc(:goals)
+    |> cast_join_ids(
+      :prerequisite_uuids,
+      :prerequisites,
+      &%{achievement_uuid: &1, prerequisite_uuid: &2},
+      :uuid
+    )
+    |> cast_join_ids(
+      :goal_uuids,
+      :goals,
+      &%{achievement_uuid: &1, goal_uuid: &2},
+      :uuid
+    )
   end
 
   def valid_abilities, do: @valid_abilities

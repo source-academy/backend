@@ -27,7 +27,7 @@ defmodule Cadet.DisplayHelper do
       String.replace(
         acc,
         "%{#{key}}",
-        if(is_list(value), do: Enum.join(value, ","), else: to_string(value))
+        if(is_list(value), do: Enum.join(value, ","), else: inspect(value))
       )
     end)
   end
