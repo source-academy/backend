@@ -196,15 +196,20 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   defp process_vote(voting) do
-    voting[:entity]
-    |> xpath(
-      ~x"."e,
-      user_id: ~x"./@userid"oi,
-      submission_id: ~x"./@submissionid"oi
-    )
-    |> case do
-      vote when is_map(vote) -> Map.put(voting, :voting, vote)
-      {:error, error_message} -> {:error, error_message}
+    vote =
+      voting[:entity]
+      |> xpath(
+        ~x"."e,
+        user_id: ~x"./@userid"oi,
+        submission_id: ~x"./@submissionid"oi
+      )
+
+    if is_map(vote) do
+      Logger.info(inspect(vote))
+      Map.put(voting, :voting, vote)
+    else
+      error = Enum.find(vote, &(!is_map(&1)))
+      {:error, error}
     end
   end
 

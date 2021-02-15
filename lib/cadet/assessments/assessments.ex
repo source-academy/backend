@@ -780,8 +780,6 @@ defmodule Cadet.Assessments do
   @doc """
   Function returning contest submission entries assigned to a user to vote for.
   """
-  # @spec all_submission_votes_by_assessment_id_and_user_id() ::
-  #       {:ok, String.t()}
   def all_submission_votes_by_assessment_id_and_user_id(assessment_id, user_id) do
     query =
       from(sv in SubmissionVotes,
