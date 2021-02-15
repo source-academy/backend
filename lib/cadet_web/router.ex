@@ -66,10 +66,6 @@ defmodule CadetWeb.Router do
     delete("/stories/:storyid", StoriesController, :delete)
     post("/stories/:storyid", StoriesController, :update)
 
-    get("/assets/:foldername", AssetsController, :index)
-    post("/assets/:foldername/*filename", AssetsController, :upload)
-    delete("/assets/:foldername/*filename", AssetsController, :delete)
-
     get("/grading", GradingController, :index)
     get("/grading/summary", GradingController, :grading_summary)
     get("/grading/:submissionid", GradingController, :show)
@@ -113,6 +109,14 @@ defmodule CadetWeb.Router do
     put("/goals", AdminGoalsController, :bulk_update)
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
+  end
+
+  scope "/v2/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
+
+    get("/assets/:foldername", AdminAssetsController, :index)
+    post("/assets/:foldername/*filename", AdminAssetsController, :upload)
+    delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
   end
 
   # Other scopes may use custom stacks.

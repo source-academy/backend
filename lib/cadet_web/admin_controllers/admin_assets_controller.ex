@@ -1,11 +1,11 @@
-defmodule CadetWeb.AssetsController do
+defmodule CadetWeb.AdminAssetsController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
   alias Cadet.Assets.Assets
 
   def index(conn, _params = %{"foldername" => foldername}) do
-    case Assets.list_assets(foldername, conn.assigns.current_user) do
+    case Assets.list_assets(foldername) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       assets -> render(conn, "index.json", assets: assets)
     end
@@ -15,7 +15,7 @@ defmodule CadetWeb.AssetsController do
   def delete(conn, _params = %{"foldername" => foldername, "filename" => filename}) do
     filename = Enum.join(filename, "/")
 
-    case Assets.delete_object(foldername, filename, conn.assigns.current_user) do
+    case Assets.delete_object(foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       _ -> conn |> put_status(204) |> text('')
     end
@@ -28,7 +28,7 @@ defmodule CadetWeb.AssetsController do
       }) do
     filename = Enum.join(filename, "/")
 
-    case Assets.upload_to_s3(upload_params, foldername, filename, conn.assigns.current_user) do
+    case Assets.upload_to_s3(upload_params, foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       resp -> render(conn, "show.json", resp: resp)
     end
@@ -60,7 +60,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :index do
-    get("/assets/{foldername}")
+    get("/admin/assets/{foldername}")
 
     summary("Get a list of all assets in a folder")
 
@@ -78,7 +78,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/assets/{foldername}/{filename}")
+    PhoenixSwagger.Path.delete("/admin/assets/{foldername}/{filename}")
 
     summary("Delete a file from an asset folder")
 
@@ -90,8 +90,6 @@ defmodule CadetWeb.AssetsController do
 
     security([%{JWT: []}])
 
-    produces("application/json")
-
     response(204, "OK")
     response(400, "Invalid folder name, file name or file type")
     response(403, "User is not allowed to manage assets")
@@ -99,7 +97,7 @@ defmodule CadetWeb.AssetsController do
   end
 
   swagger_path :upload do
-    post("/assets/{foldername}/{filename}")
+    post("/admin/assets/{foldername}/{filename}")
 
     summary("Upload a file to an asset folder")
 
