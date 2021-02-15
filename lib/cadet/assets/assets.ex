@@ -33,11 +33,15 @@ defmodule Cadet.Assets.Assets do
   end
 
   def list_assets(folder_name) do
-    with :ok <- validate_folder_name(folder_name) do
-      bucket()
-      |> S3.list_objects(prefix: folder_name <> "/")
-      |> ExAws.stream!()
-      |> Enum.map(fn file -> file.key end)
+    case validate_folder_name(folder_name) do
+      :ok ->
+        bucket()
+        |> S3.list_objects(prefix: folder_name <> "/")
+        |> ExAws.stream!()
+        |> Enum.map(fn file -> file.key end)
+
+      {:error, _} = error ->
+        error
     end
   end
 
