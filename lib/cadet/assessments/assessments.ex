@@ -14,6 +14,7 @@ defmodule Cadet.Assessments do
   alias Ecto.Multi
 
   require Decimal
+  require Logger
 
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)
@@ -486,6 +487,8 @@ defmodule Cadet.Assessments do
   end
 
   def insert_voting(voting_params, assessment_id) do
+    Logger.info("hi")
+
     changesets =
       Enum.map(voting_params, fn voting_entry ->
         build_voting_submission_changeset_for_assessment_id(voting_entry.voting, assessment_id)
