@@ -85,12 +85,17 @@ defmodule CadetWeb.SettingsController do
           title("Sublanguage")
 
           properties do
-            chapter(:integer, "Chapter number from 1 to 4", required: true)
+            chapter(:integer, "Chapter number from 1 to 4", required: true, minimum: 1, maximum: 4)
 
             variant(:string, "Variant name, one of default/concurrent/gpu/lazy/non-det/wasm",
               required: true
             )
           end
+
+          example %{
+            chapter: 1,
+            variant: "default"
+          }
         end
     }
   end
