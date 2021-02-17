@@ -840,7 +840,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
-          {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
+          {:ok, [%Answer{}]} | {:error, {:bad_request | :unauthorized, String.t()}}
   def get_answers_in_submission(id, %User{role: role}) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -862,7 +862,10 @@ defmodule Cadet.Assessments do
         |> Repo.all()
         |> Enum.sort_by(& &1.question.display_order)
 
-      {:ok, answers}
+        if (answers == []) do {:error, {:bad_request, "Submission is not found."}}
+        else
+          {:ok, answers}
+        end
     else
       {:error, {:unauthorized, "User is not permitted to grade."}}
     end

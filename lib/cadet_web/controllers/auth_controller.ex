@@ -1,4 +1,7 @@
 defmodule CadetWeb.AuthController do
+  @moduledoc """
+  Handles user login and authentication.
+  """
   use CadetWeb, :controller
   use PhoenixSwagger
 
@@ -51,9 +54,6 @@ defmodule CadetWeb.AuthController do
     end
   end
 
-  @doc """
-  Receives a /login request with invalid attributes.
-  """
   def create(conn, _params) do
     send_resp(conn, :bad_request, "Missing parameter")
   end
@@ -74,9 +74,6 @@ defmodule CadetWeb.AuthController do
     end
   end
 
-  @doc """
-  Receives a /refresh request with invalid attributes.
-  """
   def refresh(conn, _params) do
     send_resp(conn, :bad_request, "Missing parameter")
   end
@@ -95,9 +92,6 @@ defmodule CadetWeb.AuthController do
     end
   end
 
-  @doc """
-  Receives a /logout request with invalid attributes.
-  """
   def logout(conn, _params) do
     send_resp(conn, :bad_request, "Missing parameter")
   end

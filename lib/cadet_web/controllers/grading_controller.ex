@@ -231,7 +231,7 @@ defmodule CadetWeb.GradingController do
   swagger_path :update do
     post("/grading/{submissionId}/{questionId}")
 
-    summary("Update marks given to the answer of a particular querstion in a submission")
+    summary("Update marks given to the answer of a particular question in a submission.")
 
     security([%{JWT: []}])
 

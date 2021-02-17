@@ -349,7 +349,7 @@ defmodule CadetWeb.AssessmentsController do
 
             answer(
               :string_or_integer,
-              "Previous answer for this quesiton (string/int) depending on question type",
+              "Previous answer for this question (string/int) depending on question type",
               required: true
             )
 
@@ -359,9 +359,7 @@ defmodule CadetWeb.AssessmentsController do
             )
 
             prepend(:string, "Prepend program for programming questions")
-
             template(:string, "Solution template for programming questions")
-
             postpend(:string, "Postpend program for programming questions")
 
             testcases(
@@ -378,7 +376,7 @@ defmodule CadetWeb.AssessmentsController do
 
             xp(:integer, "Final XP given to this question. Only provided for students.")
             grade(:integer, "Final grade given to this question. Only provided for students.")
-            comments(:string, "String of comments given for a student's answer", required: false)
+            comments(:string, "String of comments given to a student's answer", required: false)
 
             maxGrade(
               :integer,
