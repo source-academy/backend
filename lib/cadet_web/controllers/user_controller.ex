@@ -53,7 +53,7 @@ defmodule CadetWeb.UserController do
 
   swagger_path :update_game_states do
     put("/user/game_states")
-    summary("update user's game states")
+    summary("Update user's game states")
     security([%{JWT: []}])
     consumes("application/json")
 
