@@ -1,6 +1,6 @@
-defmodule CadetWeb.NotificationController do
+defmodule CadetWeb.NotificationsController do
   @moduledoc """
-  Provides information about a Notifications.
+  Provides information about Notifications.
   """
 
   use CadetWeb, :controller
@@ -39,7 +39,7 @@ defmodule CadetWeb.NotificationController do
   end
 
   swagger_path :index do
-    get("/notification")
+    get("/notifications")
 
     summary("Get the unread notifications belonging to a user")
 
@@ -52,7 +52,7 @@ defmodule CadetWeb.NotificationController do
   end
 
   swagger_path :acknowledge do
-    post("/notification/acknowledge")
+    post("/notifications/acknowledge")
     summary("Acknowledge notification(s)")
     security([%{JWT: []}])
 
@@ -80,7 +80,7 @@ defmodule CadetWeb.NotificationController do
       Notification:
         swagger_schema do
           title("Notification")
-          description("Information about the notification")
+          description("Information about a single notification")
 
           properties do
             id(:integer, "the notification id", required: true)

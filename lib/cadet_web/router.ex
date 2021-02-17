@@ -74,8 +74,8 @@ defmodule CadetWeb.Router do
     post("/grading/:submissionid/:questionid", GradingController, :update)
     post("/grading/:submissionid/:questionid/autograde", GradingController, :autograde_answer)
 
-    get("/notification", NotificationController, :index)
-    post("/notification/acknowledge", NotificationController, :acknowledge)
+    get("/notifications", NotificationsController, :index)
+    post("/notifications/acknowledge", NotificationsController, :acknowledge)
 
     get("/user", UserController, :index)
     put("/user/game_states", UserController, :update_game_states)
