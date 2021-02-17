@@ -92,10 +92,10 @@ defmodule CadetWeb.SettingsController do
             )
           end
 
-          example %{
+          example(%{
             chapter: 1,
             variant: "default"
-          }
+          })
         end
     }
   end

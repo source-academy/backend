@@ -862,10 +862,11 @@ defmodule Cadet.Assessments do
         |> Repo.all()
         |> Enum.sort_by(& &1.question.display_order)
 
-        if (answers == []) do {:error, {:bad_request, "Submission is not found."}}
-        else
-          {:ok, answers}
-        end
+      if answers == [] do
+        {:error, {:bad_request, "Submission is not found."}}
+      else
+        {:ok, answers}
+      end
     else
       {:error, {:unauthorized, "User is not permitted to grade."}}
     end
