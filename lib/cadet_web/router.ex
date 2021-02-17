@@ -85,8 +85,6 @@ defmodule CadetWeb.Router do
     post("/devices/:id", DevicesController, :edit)
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
-
-    put("/settings/sublanguage", SettingsController, :update)
   end
 
   # Authenticated Pages
@@ -117,6 +115,8 @@ defmodule CadetWeb.Router do
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
     delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
+
+    put("/settings/sublanguage", AdminSettingsController, :update)
   end
 
   # Other scopes may use custom stacks.
