@@ -1,4 +1,4 @@
-defmodule CadetWeb.GradingController do
+defmodule CadetWeb.AdminGradingController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
@@ -15,11 +15,6 @@ defmodule CadetWeb.GradingController do
         |> put_status(:ok)
         |> put_resp_content_type("application/json")
         |> text(submissions)
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 
@@ -28,9 +23,7 @@ defmodule CadetWeb.GradingController do
   end
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
-    user = conn.assigns[:current_user]
-
-    case Assessments.get_answers_in_submission(submission_id, user) do
+    case Assessments.get_answers_in_submission(submission_id) do
       {:ok, answers} ->
         render(conn, "show.json", answers: answers)
 
@@ -129,16 +122,9 @@ defmodule CadetWeb.GradingController do
   end
 
   def grading_summary(conn, _params) do
-    user = conn.assigns[:current_user]
-
-    case Assessments.get_group_grading_summary(user) do
+    case Assessments.get_group_grading_summary() do
       {:ok, summary} ->
         render(conn, "grading_summary.json", summary: summary)
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 
@@ -249,6 +235,20 @@ defmodule CadetWeb.GradingController do
     response(401, "Unauthorised")
   end
 
+  swagger_path :grading_summary do
+    get("/grading/summary")
+
+    summary("Receives a summary of grading items done by this grader.")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    response(200, "OK", Schema.ref(:GradingSummary))
+    response(400, "Invalid or missing parameter(s) or submission and/or question not found")
+    response(401, "Unauthorised")
+  end
+
   def swagger_definitions do
     %{
       Submissions:
@@ -259,19 +259,19 @@ defmodule CadetWeb.GradingController do
       Submission:
         swagger_schema do
           properties do
-            id(:integer, "submission id", required: true)
-            grade(:integer, "grade given")
-            xp(:integer, "xp earned")
-            xpBonus(:integer, "bonus xp for a given submission")
-            xpAdjustment(:integer, "xp adjustment given")
-            adjustment(:integer, "grade adjustment given")
+            id(:integer, "Submission id", required: true)
+            grade(:integer, "Grade given")
+            xp(:integer, "XP earned")
+            xpBonus(:integer, "Bonus XP for a given submission")
+            xpAdjustment(:integer, "XP adjustment given")
+            adjustment(:integer, "Grade adjustment given")
 
             status(
               :string,
-              "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user"
+              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user"
             )
 
-            gradedCount(:integer, "number of questions in this submission that have been graded",
+            gradedCount(:integer, "Number of questions in this submission that have been graded",
               required: true
             )
 
@@ -357,13 +357,28 @@ defmodule CadetWeb.GradingController do
             end
           )
         end,
+      GradingSummary:
+        swagger_schema do
+          description(
+            "Summary of grading items for current user as the grader."
+          )
+          properties do
+            groupName(:string, "Name of group this grader is in")
+            leaderName(:string, "Name of group leader")
+            submittedMissions(:integer, "Number of submitted missions")
+            submittedSidequests(:integer, "Number of submitted sidequests")
+            unsubmittedMissions(:integer, "Number of unsubmitted missions")
+            unsubmittedSidequests(:integer, "Number of unsubmitted sidequests")
+          end
+
+        end,
       Grade:
         swagger_schema do
           properties do
             grade(:integer, "Grade awarded by autograder")
             xp(:integer, "XP awarded by autograder")
-            adjustment(:integer, "grade adjustment given")
-            xpAdjustment(:integer, "xp adjustment given")
+            adjustment(:integer, "Grade adjustment given")
+            xpAdjustment(:integer, "XP adjustment given")
             grader(Schema.ref(:GraderInfo))
             gradedAt(:string, "Last graded at", format: "date-time", required: false)
             comments(:string, "Comments given by grader")
@@ -375,8 +390,8 @@ defmodule CadetWeb.GradingController do
             grading(
               Schema.new do
                 properties do
-                  adjustment(:integer, "grade adjustment given")
-                  xpAdjustment(:integer, "xp adjustment given")
+                  adjustment(:integer, "Grade adjustment given")
+                  xpAdjustment(:integer, "XP adjustment given")
                 end
               end
             )
