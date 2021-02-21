@@ -11,7 +11,6 @@ defmodule CadetWeb.AdminGoalsController do
 
   def bulk_update(conn, %{"goals" => goals}) do
     goals
-    |> Jason.decode!()
     |> Enum.map(&json_to_goal(&1))
     |> Goals.upsert_many()
     |> IO.inspect()
@@ -20,7 +19,6 @@ defmodule CadetWeb.AdminGoalsController do
 
   def update(conn, %{"uuid" => uuid, "goal" => goal}) do
     goal
-    |> Jason.decode!()
     |> json_to_goal(uuid)
     |> Goals.upsert()
     |> handle_standard_result(conn)

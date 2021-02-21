@@ -15,7 +15,7 @@ defmodule CadetWeb.IncentivesView do
       deadline: &format_datetime(&1.close_at),
       isTask: :is_task,
       prerequisiteIds:
-        &Enum.map(&1.prerequisites, fn prerequisite -> prerequisite.prerequisite_id end),
+        &Enum.map(&1.prerequisites, fn prerequisite -> prerequisite.prerequisite_uuid end),
       cardBackground: :card_tile_url,
       position: :position,
       view:
@@ -24,7 +24,7 @@ defmodule CadetWeb.IncentivesView do
           description: &1.description,
           completionText: &1.completion_text
         },
-      goalUuids: &Enum.map(&1.goals, fn goal -> goal.uuid end)
+      goalUuids: &Enum.map(&1.goals, fn goal -> goal.goal_uuid end)
     })
   end
 
