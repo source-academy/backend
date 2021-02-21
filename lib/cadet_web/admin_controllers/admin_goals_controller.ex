@@ -13,7 +13,6 @@ defmodule CadetWeb.AdminGoalsController do
     goals
     |> Enum.map(&json_to_goal(&1))
     |> Goals.upsert_many()
-    |> IO.inspect()
     |> handle_standard_result(conn)
   end
 

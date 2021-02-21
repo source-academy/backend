@@ -14,7 +14,7 @@ defmodule CadetWeb.IncentivesView do
       release: &format_datetime(&1.open_at),
       deadline: &format_datetime(&1.close_at),
       isTask: :is_task,
-      prerequisiteIds:
+      prerequisiteUuids:
         &Enum.map(&1.prerequisites, fn prerequisite -> prerequisite.prerequisite_uuid end),
       cardBackground: :card_tile_url,
       position: :position,
