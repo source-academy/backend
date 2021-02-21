@@ -20,12 +20,29 @@ defmodule Cadet.Incentives.Goals do
 
   @doc """
   Returns goals with user progress.
+  Renames max_xp to maxXp in the meta
   """
   def get_with_progress(%User{id: user_id}) do
     Goal
     |> join(:left, [g], p in assoc(g, :progress), on: p.user_id == ^user_id)
     |> preload([g, p], progress: p)
     |> Repo.all()
+    |> Enum.map(&change_meta(&1))
+  end
+
+  defp change_max_xp_to_maxXp(meta) do
+    if Map.has_key?(meta, "max_xp") do
+      meta
+      |> Map.put("maxXp", Map.fetch!(meta, "max_xp"))
+      |> Map.delete("max_xp")
+    else
+      meta
+    end
+  end
+
+  defp change_meta(goal) do
+    goal
+    |> Map.put(:meta, change_max_xp_to_maxXp(goal.meta))
   end
 
   @spec upsert(map()) :: {:ok, %Goal{}} | {:error, {:bad_request, String.t()}}

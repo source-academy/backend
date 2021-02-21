@@ -5,8 +5,10 @@ defmodule CadetWeb.AdminAchievementsController do
 
   alias Cadet.Incentives.Achievements
 
+  @spec bulk_update(Plug.Conn.t(), map) :: Plug.Conn.t()
   def bulk_update(conn, %{"achievements" => achievements}) do
     achievements
+    |> Jason.decode!()
     |> Enum.map(&json_to_achievement(&1))
     |> Achievements.upsert_many()
     |> handle_standard_result(conn)
@@ -14,6 +16,7 @@ defmodule CadetWeb.AdminAchievementsController do
 
   def update(conn, %{"uuid" => uuid, "achievement" => achievement}) do
     achievement
+    |> Jason.decode!()
     |> json_to_achievement(uuid)
     |> Achievements.upsert()
     |> handle_standard_result(conn)
