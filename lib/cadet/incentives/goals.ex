@@ -42,7 +42,7 @@ defmodule Cadet.Incentives.Goals do
 
   defp change_meta(goal) do
     goal
-    |> Map.put(:meta, change_max_xp_to_maxXp(goal.meta))
+    |> Map.put(:meta, change_max_xp_name(goal.meta))
   end
 
   @spec upsert(map()) :: {:ok, %Goal{}} | {:error, {:bad_request, String.t()}}
