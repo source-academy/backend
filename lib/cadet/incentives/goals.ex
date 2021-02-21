@@ -30,7 +30,7 @@ defmodule Cadet.Incentives.Goals do
     |> Enum.map(&change_meta(&1))
   end
 
-  defp change_max_xp_to_maxXp(meta) do
+  defp change_max_xp_name(meta) do
     if Map.has_key?(meta, "max_xp") do
       meta
       |> Map.put("maxXp", Map.fetch!(meta, "max_xp"))
