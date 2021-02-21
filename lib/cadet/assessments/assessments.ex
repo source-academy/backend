@@ -210,7 +210,7 @@ defmodule Cadet.Assessments do
   end
 
   def assessment_with_questions_and_answers(id, user = %User{}, password)
-    when is_ecto_id(id) do
+      when is_ecto_id(id) do
     role = user.role
 
     assessment =
@@ -602,7 +602,7 @@ defmodule Cadet.Assessments do
   end
 
   def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
-    when is_ecto_id(submission_id) do
+      when is_ecto_id(submission_id) do
     submission =
       Submission
       |> join(:inner, [s], a in assoc(s, :assessment))
@@ -612,10 +612,10 @@ defmodule Cadet.Assessments do
     bypass = role in @bypass_closed_roles and submission.student_id == user_id
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-          {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
-          {:status, :submitted} <- {:status, submission.status},
-          {:allowed_to_unsubmit?, true} <-
-            {:allowed_to_unsubmit?,
+         {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
+         {:status, :submitted} <- {:status, submission.status},
+         {:allowed_to_unsubmit?, true} <-
+           {:allowed_to_unsubmit?,
             role == :admin or bypass or
               Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
       Multi.new()
@@ -646,16 +646,16 @@ defmodule Cadet.Assessments do
 
             {:ok, _} ->
               {:cont,
-                answer
-                |> Answer.grading_changeset(%{
-                  grade: 0,
-                  adjustment: 0,
-                  xp: 0,
-                  xp_adjustment: 0,
-                  autograding_status: :none,
-                  autograding_results: []
-                })
-                |> Repo.update()}
+               answer
+               |> Answer.grading_changeset(%{
+                 grade: 0,
+                 adjustment: 0,
+                 xp: 0,
+                 xp_adjustment: 0,
+                 autograding_status: :none,
+                 autograding_results: []
+               })
+               |> Repo.update()}
           end
         end)
       end)
@@ -767,53 +767,53 @@ defmodule Cadet.Assessments do
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
     case Repo.query(
-            """
-            select json_agg(q)::TEXT from
-            (
-              select
-                s.id,
-                s.status,
-                s."unsubmittedAt",
-                s.grade,
-                s.adjustment,
-                s.xp,
-                s."xpAdjustment",
-                s."xpBonus",
-                s."gradedCount",
-                assts.jsn AS assessment,
-                students.jsn as student,
-                unsubmitters.jsn as "unsubmittedBy"
-              from
-                (select
-                  s.id,
-                  s.student_id,
-                  s.assessment_id,
-                  s.status,
-                  s.unsubmitted_at as "unsubmittedAt",
-                  s.unsubmitted_by_id,
-                  sum(ans.grade) as grade,
-                  sum(ans.adjustment) as adjustment,
-                  sum(ans.xp) as xp,
-                  sum(ans.xp_adjustment) as "xpAdjustment",
-                  s.xp_bonus as "xpBonus",
-                  count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
-                from submissions s
-                  left join
-                  answers ans on s.id = ans.submission_id
-                #{group_where}
-                group by s.id) s
-              inner join
-                (select
-                  a.id, to_json(a) as jsn
-                from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
-              inner join
-                (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
-              left join
-                (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
-            ) q
-            """,
-            params
-          ) do
+           """
+           select json_agg(q)::TEXT from
+           (
+             select
+               s.id,
+               s.status,
+               s."unsubmittedAt",
+               s.grade,
+               s.adjustment,
+               s.xp,
+               s."xpAdjustment",
+               s."xpBonus",
+               s."gradedCount",
+               assts.jsn AS assessment,
+               students.jsn as student,
+               unsubmitters.jsn as "unsubmittedBy"
+             from
+               (select
+                 s.id,
+                 s.student_id,
+                 s.assessment_id,
+                 s.status,
+                 s.unsubmitted_at as "unsubmittedAt",
+                 s.unsubmitted_by_id,
+                 sum(ans.grade) as grade,
+                 sum(ans.adjustment) as adjustment,
+                 sum(ans.xp) as xp,
+                 sum(ans.xp_adjustment) as "xpAdjustment",
+                 s.xp_bonus as "xpBonus",
+                 count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
+               from submissions s
+                 left join
+                 answers ans on s.id = ans.submission_id
+               #{group_where}
+               group by s.id) s
+             inner join
+               (select
+                 a.id, to_json(a) as jsn
+               from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
+             inner join
+               (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
+             left join
+               (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+           ) q
+           """,
+           params
+         ) do
       {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
       {:ok, %{rows: [[json]]}} -> {:ok, json}
     end
@@ -846,7 +846,6 @@ defmodule Cadet.Assessments do
     else
       {:ok, answers}
     end
-
   end
 
   defp is_fully_graded?(%Answer{submission_id: submission_id}) do
@@ -962,7 +961,7 @@ defmodule Cadet.Assessments do
         question_id,
         _requesting_user = %User{id: grader_id}
       )
-    when is_ecto_id(submission_id) and is_ecto_id(question_id) do
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     answer =
       Answer
       |> where(submission_id: ^submission_id, question_id: ^question_id)

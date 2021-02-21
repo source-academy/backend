@@ -116,7 +116,12 @@ defmodule CadetWeb.Router do
     post("/grading/:submissionid/unsubmit", AdminGradingController, :unsubmit)
     post("/grading/:submissionid/autograde", AdminGradingController, :autograde_submission)
     post("/grading/:submissionid/:questionid", AdminGradingController, :update)
-    post("/grading/:submissionid/:questionid/autograde", AdminGradingController, :autograde_answer)
+
+    post(
+      "/grading/:submissionid/:questionid/autograde",
+      AdminGradingController,
+      :autograde_answer
+    )
   end
 
   # Other scopes may use custom stacks.

@@ -148,6 +148,7 @@ defmodule CadetWeb.AdminGradingController do
 
     response(200, "OK", Schema.ref(:Submissions))
     response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :unsubmit do
@@ -161,7 +162,7 @@ defmodule CadetWeb.AdminGradingController do
 
     response(200, "OK")
     response(400, "Invalid parameters")
-    response(403, "User not permitted to unsubmit assessment or assessment not open")
+    response(403, "Forbidden")
     response(404, "Submission not found")
   end
 
@@ -176,7 +177,7 @@ defmodule CadetWeb.AdminGradingController do
 
     response(204, "Successful request")
     response(400, "Invalid parameters or submission not submitted")
-    response(403, "User not permitted to grade submissions")
+    response(403, "Forbidden")
     response(404, "Submission not found")
   end
 
@@ -192,7 +193,7 @@ defmodule CadetWeb.AdminGradingController do
 
     response(204, "Successful request")
     response(400, "Invalid parameters or submission not submitted")
-    response(403, "User not permitted to grade submissions")
+    response(403, "Forbidden")
     response(404, "Answer not found")
   end
 
@@ -212,6 +213,7 @@ defmodule CadetWeb.AdminGradingController do
     response(200, "OK", Schema.ref(:GradingInfo))
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
     response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :update do
@@ -233,6 +235,7 @@ defmodule CadetWeb.AdminGradingController do
     response(200, "OK")
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
     response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :grading_summary do
@@ -247,6 +250,7 @@ defmodule CadetWeb.AdminGradingController do
     response(200, "OK", Schema.ref(:GradingSummary))
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
     response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   def swagger_definitions do
@@ -359,9 +363,8 @@ defmodule CadetWeb.AdminGradingController do
         end,
       GradingSummary:
         swagger_schema do
-          description(
-            "Summary of grading items for current user as the grader."
-          )
+          description("Summary of grading items for current user as the grader.")
+
           properties do
             groupName(:string, "Name of group this grader is in")
             leaderName(:string, "Name of group leader")
@@ -370,7 +373,6 @@ defmodule CadetWeb.AdminGradingController do
             unsubmittedMissions(:integer, "Number of unsubmitted missions")
             unsubmittedSidequests(:integer, "Number of unsubmitted sidequests")
           end
-
         end,
       Grade:
         swagger_schema do

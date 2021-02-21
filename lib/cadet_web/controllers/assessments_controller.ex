@@ -89,10 +89,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def publish(conn, %{"assessmentid" => assessment_id}) do
-    result =
-      Assessments.toggle_publish_assessment(
-        assessment_id
-      )
+    result = Assessments.toggle_publish_assessment(assessment_id)
 
     case result do
       {:ok, _nil} ->
