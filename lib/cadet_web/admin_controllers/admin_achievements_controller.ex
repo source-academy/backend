@@ -5,7 +5,6 @@ defmodule CadetWeb.AdminAchievementsController do
 
   alias Cadet.Incentives.Achievements
 
-  @spec bulk_update(Plug.Conn.t(), map) :: Plug.Conn.t()
   def bulk_update(conn, %{"achievements" => achievements}) do
     achievements
     |> Enum.map(&json_to_achievement(&1))
