@@ -193,7 +193,9 @@ defmodule CadetWeb.AssessmentsHelpers do
       _ -> fn _question -> "" end
     end
   end
+
   require Logger
+
   defp build_question_content_by_type(
          %{
            question: %{question: question, type: question_type},
@@ -222,7 +224,8 @@ defmodule CadetWeb.AssessmentsHelpers do
           content: "content",
           prepend: "prepend",
           solutionTemplate: "template",
-          contestEntries: &Enum.map(&1[:contestEntries], fn entry -> build_contest_entry(entry) end)
+          contestEntries:
+            &Enum.map(&1[:contestEntries], fn entry -> build_contest_entry(entry) end)
         })
     end
   end

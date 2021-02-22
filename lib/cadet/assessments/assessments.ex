@@ -273,15 +273,7 @@ defmodule Cadet.Assessments do
           {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
           {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
         end)
-        |> Enum.map(fn q -> 
-          if q.type == :voting do
-            voting_question = case all_submission_votes_by_assessment_id_and_user_id(id, user.id) do 
-              {:ok, submission_votes} -> Map.put(q.question, :contestEntries, submission_votes)
-            end
-            Map.put(q, :question, voting_question)
-          else q 
-          end 
-        end)
+        |> load_contest_voting_entries(id, user.id)
 
       assessment = Map.put(assessment, :questions, questions)
       {:ok, assessment}
@@ -573,6 +565,8 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
+  require Logger
+
   def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
     # if role in @submit_answer_roles do
     question =
@@ -787,6 +781,27 @@ defmodule Cadet.Assessments do
       end
     end)
     |> Repo.transaction()
+  end
+
+  @doc """
+  Function to populate contest entries to vote for if question is a voting question. 
+  """
+  defp load_contest_voting_entries(questions, submission_id, user_id) do
+    Enum.map(
+      questions,
+      fn q ->
+        if q.type == :voting do
+          voting_question =
+            case all_submission_votes_by_assessment_id_and_user_id(submission_id, user_id) do
+              {:ok, submission_votes} -> Map.put(q.question, :contestEntries, submission_votes)
+            end
+
+          Map.put(q, :question, voting_question)
+        else
+          q
+        end
+      end
+    )
   end
 
   @doc """
@@ -1152,23 +1167,48 @@ defmodule Cadet.Assessments do
     end
   end
 
+  require Logger
+
   defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
     answer_content = build_answer_content(raw_answer, question.type)
 
-    answer_changeset =
-      %Answer{}
-      |> Answer.changeset(%{
-        answer: answer_content,
-        question_id: question.id,
-        submission_id: submission.id,
-        type: question.type
-      })
+    if question.type == :voting do
+      Logger.debug("Voting type question")
+      insert_or_update_voting_answer(answer_content)
+    else
+      answer_changeset =
+        %Answer{}
+        |> Answer.changeset(%{
+          answer: answer_content,
+          question_id: question.id,
+          submission_id: submission.id,
+          type: question.type
+        })
 
-    Repo.insert(
-      answer_changeset,
-      on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
-      conflict_target: [:submission_id, :question_id]
-    )
+      Repo.insert(
+        answer_changeset,
+        on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
+        conflict_target: [:submission_id, :question_id]
+      )
+    end
+  end
+
+  defp insert_or_update_voting_answer(answer_content) do
+    Logger.info(answer_content)
+
+    answer_content
+    |> Enum.map(fn ans ->
+      {submission_id, score} = ans
+
+      sv =
+        SubmissionVotes
+        |> where(submission_id: ^submission_id)
+        # TODO: CONTEST VOTING need to input user_id and update time... 
+        |> where(user_id: 9)
+        |> Repo.one()
+        |> SubmissionVotes.changeset(%{score: score})
+        |> Repo.update()
+    end)
   end
 
   defp build_answer_content(raw_answer, question_type) do
@@ -1178,6 +1218,9 @@ defmodule Cadet.Assessments do
 
       :programming ->
         %{code: raw_answer}
+
+      :voting ->
+        raw_answer
     end
   end
 end
