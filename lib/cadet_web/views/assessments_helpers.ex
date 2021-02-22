@@ -140,6 +140,14 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
+  defp build_contest_entry(entry) do
+    transform_map_for_view(entry, %{
+      submission_id: :submission_id,
+      answer: :answer,
+      score: :score
+    })
+  end
+
   defp build_choice(choice) do
     transform_map_for_view(choice, %{
       id: "choice_id",
@@ -185,7 +193,7 @@ defmodule CadetWeb.AssessmentsHelpers do
       _ -> fn _question -> "" end
     end
   end
-
+  require Logger
   defp build_question_content_by_type(
          %{
            question: %{question: question, type: question_type},
@@ -213,7 +221,8 @@ defmodule CadetWeb.AssessmentsHelpers do
         transform_map_for_view(question, %{
           content: "content",
           prepend: "prepend",
-          solutionTemplate: "template"
+          solutionTemplate: "template",
+          contestEntries: &Enum.map(&1[:contestEntries], fn entry -> build_contest_entry(entry) end)
         })
     end
   end

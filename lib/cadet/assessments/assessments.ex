@@ -9,11 +9,13 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
+  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion, VotingQuestion}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Course.Group
   alias Ecto.Multi
 
   require Decimal
+  require Logger
 
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)
@@ -258,6 +260,7 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^user.id)
 
+      # is an array of %Question{}
       questions =
         Question
         |> where(assessment_id: ^id)
@@ -269,6 +272,15 @@ defmodule Cadet.Assessments do
         |> Enum.map(fn
           {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
           {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
+        end)
+        |> Enum.map(fn q -> 
+          if q.type == :voting do
+            voting_question = case all_submission_votes_by_assessment_id_and_user_id(id, user.id) do 
+              {:ok, submission_votes} -> Map.put(q.question, :contestEntries, submission_votes)
+            end
+            Map.put(q, :question, voting_question)
+          else q 
+          end 
         end)
 
       assessment = Map.put(assessment, :questions, questions)
