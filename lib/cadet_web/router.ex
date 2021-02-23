@@ -66,14 +66,6 @@ defmodule CadetWeb.Router do
     delete("/stories/:storyid", StoriesController, :delete)
     post("/stories/:storyid", StoriesController, :update)
 
-    get("/grading", GradingController, :index)
-    get("/grading/summary", GradingController, :grading_summary)
-    get("/grading/:submissionid", GradingController, :show)
-    post("/grading/:submissionid/unsubmit", GradingController, :unsubmit)
-    post("/grading/:submissionid/autograde", GradingController, :autograde_submission)
-    post("/grading/:submissionid/:questionid", GradingController, :update)
-    post("/grading/:submissionid/:questionid/autograde", GradingController, :autograde_answer)
-
     get("/notifications", NotificationsController, :index)
     post("/notifications/acknowledge", NotificationsController, :acknowledge)
 
@@ -149,6 +141,19 @@ defmodule CadetWeb.Router do
     delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
 
     put("/settings/sublanguage", AdminSettingsController, :update)
+
+    get("/grading", AdminGradingController, :index)
+    get("/grading/summary", AdminGradingController, :grading_summary)
+    get("/grading/:submissionid", AdminGradingController, :show)
+    post("/grading/:submissionid/unsubmit", AdminGradingController, :unsubmit)
+    post("/grading/:submissionid/autograde", AdminGradingController, :autograde_submission)
+    post("/grading/:submissionid/:questionid", AdminGradingController, :update)
+
+    post(
+      "/grading/:submissionid/:questionid/autograde",
+      AdminGradingController,
+      :autograde_answer
+    )
   end
 
   # Other scopes may use custom stacks.

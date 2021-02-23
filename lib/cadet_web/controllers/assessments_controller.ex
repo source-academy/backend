@@ -75,7 +75,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def delete(conn, %{"assessmentid" => assessment_id}) do
-    result = Assessments.delete_assessment(conn.assigns.current_user, assessment_id)
+    result = Assessments.delete_assessment(assessment_id)
 
     case result do
       {:ok, _nil} ->
@@ -89,11 +89,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def publish(conn, %{"assessmentid" => assessment_id}) do
-    result =
-      Assessments.toggle_publish_assessment(
-        conn.assigns.current_user,
-        assessment_id
-      )
+    result = Assessments.toggle_publish_assessment(assessment_id)
 
     case result do
       {:ok, _nil} ->
@@ -112,7 +108,6 @@ defmodule CadetWeb.AssessmentsController do
 
     result =
       Assessments.change_dates_assessment(
-        conn.assigns.current_user,
         assessment_id,
         formatted_close_date,
         formatted_open_date

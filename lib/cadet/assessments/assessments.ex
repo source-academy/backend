@@ -18,51 +18,39 @@ defmodule Cadet.Assessments do
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)
   # @submit_answer_roles ~w(student staff admin)a
-  @change_dates_assessment_role ~w(staff admin)a
-  @delete_assessment_role ~w(staff admin)a
-  @publish_assessment_role ~w(staff admin)a
-  @unsubmit_assessment_role ~w(staff admin)a
-  @see_all_submissions_roles ~w(staff admin)a
-  @group_grading_summary_roles @see_all_submissions_roles
+  # @change_dates_assessment_role ~w(staff admin)a
+  # @delete_assessment_role ~w(staff admin)a
+  # @publish_assessment_role ~w(staff admin)a
+  # @unsubmit_assessment_role ~w(staff admin)a
+  # @see_all_submissions_roles ~w(staff admin)a
+  # @group_grading_summary_roles @see_all_submissions_roles
   @open_all_assessment_roles ~w(staff admin)a
 
   # These roles can save and finalise answers for closed assessments and
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
 
-  def change_dates_assessment(_user = %User{role: role}, id, close_at, open_at) do
-    if role in @change_dates_assessment_role do
-      if Timex.before?(close_at, open_at) do
-        {:error, {:bad_request, "New end date should occur after new opening date"}}
-      else
-        update_assessment(id, %{close_at: close_at, open_at: open_at})
-      end
+  def change_dates_assessment(id, close_at, open_at) do
+    if Timex.before?(close_at, open_at) do
+      {:error, {:bad_request, "New end date should occur after new opening date"}}
     else
-      {:error, {:forbidden, "User is not permitted to edit"}}
+      update_assessment(id, %{close_at: close_at, open_at: open_at})
     end
   end
 
-  def toggle_publish_assessment(_publisher = %User{role: role}, id) do
-    if role in @publish_assessment_role do
-      assessment = Repo.get(Assessment, id)
-      update_assessment(id, %{is_published: !assessment.is_published})
-    else
-      {:error, {:forbidden, "User is not permitted to publish"}}
-    end
+  def toggle_publish_assessment(id) do
+    assessment = Repo.get(Assessment, id)
+    update_assessment(id, %{is_published: !assessment.is_published})
   end
 
-  def delete_assessment(_deleter = %User{role: role}, id) do
-    if role in @delete_assessment_role do
-      assessment = Repo.get(Assessment, id)
+  def delete_assessment(id) do
+    assessment = Repo.get(Assessment, id)
 
-      Submission
-      |> where(assessment_id: ^id)
-      |> delete_submission_assocation(id)
+    Submission
+    |> where(assessment_id: ^id)
+    |> delete_submission_assocation(id)
 
-      Repo.delete(assessment)
-    else
-      {:error, {:forbidden, "User is not permitted to delete"}}
-    end
+    Repo.delete(assessment)
   end
 
   defp delete_submission_assocation(submissions, assessment_id) do
@@ -615,92 +603,88 @@ defmodule Cadet.Assessments do
 
   def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
       when is_ecto_id(submission_id) do
-    if role in @unsubmit_assessment_role do
-      submission =
-        Submission
-        |> join(:inner, [s], a in assoc(s, :assessment))
-        |> preload([_, a], assessment: a)
-        |> Repo.get(submission_id)
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.get(submission_id)
 
-      bypass = role in @bypass_closed_roles and submission.student_id == user_id
+    bypass = role in @bypass_closed_roles and submission.student_id == user_id
 
-      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-           {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
-           {:status, :submitted} <- {:status, submission.status},
-           {:allowed_to_unsubmit?, true} <-
-             {:allowed_to_unsubmit?,
-              role == :admin or bypass or
-                Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
-        Multi.new()
-        |> Multi.run(
-          :rollback_submission,
-          fn _repo, _ ->
-            submission
-            |> Submission.changeset(%{
-              status: :attempted,
-              xp_bonus: 0,
-              unsubmitted_by_id: user_id,
-              unsubmitted_at: Timex.now()
-            })
-            |> Repo.update()
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
+         {:status, :submitted} <- {:status, submission.status},
+         {:allowed_to_unsubmit?, true} <-
+           {:allowed_to_unsubmit?,
+            role == :admin or bypass or
+              Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
+      Multi.new()
+      |> Multi.run(
+        :rollback_submission,
+        fn _repo, _ ->
+          submission
+          |> Submission.changeset(%{
+            status: :attempted,
+            xp_bonus: 0,
+            unsubmitted_by_id: user_id,
+            unsubmitted_at: Timex.now()
+          })
+          |> Repo.update()
+        end
+      )
+      |> Multi.run(:rollback_answers, fn _repo, _ ->
+        Answer
+        |> join(:inner, [a], q in assoc(a, :question))
+        |> join(:inner, [a, _], s in assoc(a, :submission))
+        |> preload([_, q, s], question: q, submission: s)
+        |> where(submission_id: ^submission.id)
+        |> Repo.all()
+        |> Enum.reduce_while({:ok, nil}, fn answer, acc ->
+          case acc do
+            {:error, _} ->
+              {:halt, acc}
+
+            {:ok, _} ->
+              {:cont,
+               answer
+               |> Answer.grading_changeset(%{
+                 grade: 0,
+                 adjustment: 0,
+                 xp: 0,
+                 xp_adjustment: 0,
+                 autograding_status: :none,
+                 autograding_results: []
+               })
+               |> Repo.update()}
           end
-        )
-        |> Multi.run(:rollback_answers, fn _repo, _ ->
-          Answer
-          |> join(:inner, [a], q in assoc(a, :question))
-          |> join(:inner, [a, _], s in assoc(a, :submission))
-          |> preload([_, q, s], question: q, submission: s)
-          |> where(submission_id: ^submission.id)
-          |> Repo.all()
-          |> Enum.reduce_while({:ok, nil}, fn answer, acc ->
-            case acc do
-              {:error, _} ->
-                {:halt, acc}
-
-              {:ok, _} ->
-                {:cont,
-                 answer
-                 |> Answer.grading_changeset(%{
-                   grade: 0,
-                   adjustment: 0,
-                   xp: 0,
-                   xp_adjustment: 0,
-                   autograding_status: :none,
-                   autograding_results: []
-                 })
-                 |> Repo.update()}
-            end
-          end)
         end)
-        |> Repo.transaction()
+      end)
+      |> Repo.transaction()
 
-        Cadet.Accounts.Notifications.handle_unsubmit_notifications(
-          submission.assessment.id,
-          Cadet.Accounts.get_user(submission.student_id)
-        )
+      Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+        submission.assessment.id,
+        Cadet.Accounts.get_user(submission.student_id)
+      )
 
-        {:ok, nil}
-      else
-        {:submission_found?, false} ->
-          {:error, {:not_found, "Submission not found"}}
-
-        {:is_open?, false} ->
-          {:error, {:forbidden, "Assessment not open"}}
-
-        {:status, :attempting} ->
-          {:error, {:bad_request, "Some questions have not been attempted"}}
-
-        {:status, :attempted} ->
-          {:error, {:bad_request, "Assessment has not been submitted"}}
-
-        {:allowed_to_unsubmit?, false} ->
-          {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
-
-        _ ->
-          {:error, {:internal_server_error, "Please try again later."}}
-      end
+      {:ok, nil}
     else
-      {:error, {:forbidden, "User is not permitted to unsubmit questions"}}
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:is_open?, false} ->
+        {:error, {:forbidden, "Assessment not open"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      {:allowed_to_unsubmit?, false} ->
+        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
     end
   end
 
@@ -764,84 +748,80 @@ defmodule Cadet.Assessments do
   a boolean which is false by default.
 
   The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:unauthorized, "User is not permitted to grade."}}
+  {:unauthorized, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(%User{}) ::
-          {:ok, String.t()} | {:error, {:unauthorized, String.t()}}
-  def all_submissions_by_grader_for_index(grader = %User{role: role}, group_only \\ false) do
-    if role in @see_all_submissions_roles do
-      show_all = role in @see_all_submissions_roles and not group_only
+          {:ok, String.t()}
+  def all_submissions_by_grader_for_index(grader = %User{}, group_only \\ false) do
+    show_all = not group_only
 
-      group_where =
-        if show_all,
-          do: "",
-          else:
-            "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
+    group_where =
+      if show_all,
+        do: "",
+        else:
+          "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
 
-      params = if show_all, do: [], else: [grader.id]
+    params = if show_all, do: [], else: [grader.id]
 
-      # We bypass Ecto here and use a raw query to generate JSON directly from
-      # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
+    # We bypass Ecto here and use a raw query to generate JSON directly from
+    # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
-      case Repo.query(
-             """
-             select json_agg(q)::TEXT from
-             (
-               select
+    case Repo.query(
+           """
+           select json_agg(q)::TEXT from
+           (
+             select
+               s.id,
+               s.status,
+               s."unsubmittedAt",
+               s.grade,
+               s.adjustment,
+               s.xp,
+               s."xpAdjustment",
+               s."xpBonus",
+               s."gradedCount",
+               assts.jsn AS assessment,
+               students.jsn as student,
+               unsubmitters.jsn as "unsubmittedBy"
+             from
+               (select
                  s.id,
+                 s.student_id,
+                 s.assessment_id,
                  s.status,
-                 s."unsubmittedAt",
-                 s.grade,
-                 s.adjustment,
-                 s.xp,
-                 s."xpAdjustment",
-                 s."xpBonus",
-                 s."gradedCount",
-                 assts.jsn AS assessment,
-                 students.jsn as student,
-                 unsubmitters.jsn as "unsubmittedBy"
-               from
-                 (select
-                   s.id,
-                   s.student_id,
-                   s.assessment_id,
-                   s.status,
-                   s.unsubmitted_at as "unsubmittedAt",
-                   s.unsubmitted_by_id,
-                   sum(ans.grade) as grade,
-                   sum(ans.adjustment) as adjustment,
-                   sum(ans.xp) as xp,
-                   sum(ans.xp_adjustment) as "xpAdjustment",
-                   s.xp_bonus as "xpBonus",
-                   count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
-                 from submissions s
-                   left join
-                   answers ans on s.id = ans.submission_id
-                 #{group_where}
-                 group by s.id) s
-               inner join
-                 (select
-                   a.id, to_json(a) as jsn
-                 from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
-               inner join
-                 (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
-               left join
-                 (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
-             ) q
-             """,
-             params
-           ) do
-        {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
-        {:ok, %{rows: [[json]]}} -> {:ok, json}
-      end
-    else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+                 s.unsubmitted_at as "unsubmittedAt",
+                 s.unsubmitted_by_id,
+                 sum(ans.grade) as grade,
+                 sum(ans.adjustment) as adjustment,
+                 sum(ans.xp) as xp,
+                 sum(ans.xp_adjustment) as "xpAdjustment",
+                 s.xp_bonus as "xpBonus",
+                 count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
+               from submissions s
+                 left join
+                 answers ans on s.id = ans.submission_id
+               #{group_where}
+               group by s.id) s
+             inner join
+               (select
+                 a.id, to_json(a) as jsn
+               from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
+             inner join
+               (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
+             left join
+               (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+           ) q
+           """,
+           params
+         ) do
+      {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
+      {:ok, %{rows: [[json]]}} -> {:ok, json}
     end
   end
 
-  @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
+  @spec get_answers_in_submission(integer() | String.t()) ::
           {:ok, [%Answer{}]} | {:error, {:bad_request | :unauthorized, String.t()}}
-  def get_answers_in_submission(id, %User{role: role}) when is_ecto_id(id) do
+  def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
       |> where(submission_id: ^id)
@@ -856,19 +836,15 @@ defmodule Cadet.Assessments do
         submission: {s, student: st}
       )
 
-    if role in @see_all_submissions_roles do
-      answers =
-        answer_query
-        |> Repo.all()
-        |> Enum.sort_by(& &1.question.display_order)
+    answers =
+      answer_query
+      |> Repo.all()
+      |> Enum.sort_by(& &1.question.display_order)
 
-      if answers == [] do
-        {:error, {:bad_request, "Submission is not found."}}
-      else
-        {:ok, answers}
-      end
+    if answers == [] do
+      {:error, {:bad_request, "Submission is not found."}}
     else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:ok, answers}
     end
   end
 
@@ -903,10 +879,9 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %User{id: grader_id, role: role}
+        %User{id: grader_id}
       )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) and
-             role in @see_all_submissions_roles do
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)
 
     answer_query =
@@ -960,8 +935,8 @@ defmodule Cadet.Assessments do
 
   @spec force_regrade_submission(integer() | String.t(), %User{}) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
-  def force_regrade_submission(submission_id, _requesting_user = %User{id: grader_id, role: role})
-      when is_ecto_id(submission_id) and role in @see_all_submissions_roles do
+  def force_regrade_submission(submission_id, _requesting_user = %User{id: grader_id})
+      when is_ecto_id(submission_id) do
     with {:get, sub} when not is_nil(sub) <- {:get, Repo.get(Submission, submission_id)},
          {:status, true} <- {:status, sub.student_id == grader_id or sub.status == :submitted} do
       GradingJob.force_grade_individual_submission(sub, true)
@@ -984,10 +959,9 @@ defmodule Cadet.Assessments do
   def force_regrade_answer(
         submission_id,
         question_id,
-        _requesting_user = %User{id: grader_id, role: role}
+        _requesting_user = %User{id: grader_id}
       )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) and
-             role in @see_all_submissions_roles do
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     answer =
       Answer
       |> where(submission_id: ^submission_id, question_id: ^question_id)
@@ -1042,48 +1016,44 @@ defmodule Cadet.Assessments do
           submitted_sidequests: number()
         }
 
-  @spec get_group_grading_summary(%User{}) ::
-          {:ok, [group_summary_entry()]} | {:error, {atom(), String.t()}}
-  def get_group_grading_summary(%User{role: role}) do
-    if role in @group_grading_summary_roles do
-      subs =
-        Answer
-        |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
-        |> join(:left, [ans, s], st in User, on: s.student_id == st.id)
-        |> join(:left, [ans, s, st], a in Assessment, on: a.id == s.assessment_id)
-        |> where(
-          [ans, s, st, a],
-          not is_nil(st.group_id) and s.status == ^:submitted and
-            a.type in ^["mission", "sidequest"]
-        )
-        |> group_by([ans, s, st, a], s.id)
-        |> select([ans, s, st, a], %{
-          group_id: max(st.group_id),
-          type: max(a.type),
-          num_submitted: count(),
-          num_ungraded: filter(count(), is_nil(ans.grader_id))
-        })
+  @spec get_group_grading_summary() ::
+          {:ok, [group_summary_entry()]}
+  def get_group_grading_summary() do
+    subs =
+      Answer
+      |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
+      |> join(:left, [ans, s], st in User, on: s.student_id == st.id)
+      |> join(:left, [ans, s, st], a in Assessment, on: a.id == s.assessment_id)
+      |> where(
+        [ans, s, st, a],
+        not is_nil(st.group_id) and s.status == ^:submitted and
+          a.type in ^["mission", "sidequest"]
+      )
+      |> group_by([ans, s, st, a], s.id)
+      |> select([ans, s, st, a], %{
+        group_id: max(st.group_id),
+        type: max(a.type),
+        num_submitted: count(),
+        num_ungraded: filter(count(), is_nil(ans.grader_id))
+      })
 
-      rows =
-        subs
-        |> subquery()
-        |> join(:left, [t], g in Group, on: t.group_id == g.id)
-        |> join(:left, [t, g], l in User, on: l.id == g.leader_id)
-        |> group_by([t, g, l], [t.group_id, g.name, l.name])
-        |> select([t, g, l], %{
-          group_name: g.name,
-          leader_name: l.name,
-          ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
-          submitted_missions: filter(count(), t.type == "mission"),
-          ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
-          submitted_sidequests: filter(count(), t.type == "sidequest")
-        })
-        |> Repo.all()
+    rows =
+      subs
+      |> subquery()
+      |> join(:left, [t], g in Group, on: t.group_id == g.id)
+      |> join(:left, [t, g], l in User, on: l.id == g.leader_id)
+      |> group_by([t, g, l], [t.group_id, g.name, l.name])
+      |> select([t, g, l], %{
+        group_name: g.name,
+        leader_name: l.name,
+        ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
+        submitted_missions: filter(count(), t.type == "mission"),
+        ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
+        submitted_sidequests: filter(count(), t.type == "sidequest")
+      })
+      |> Repo.all()
 
-      {:ok, rows}
-    else
-      {:error, {:unauthorized, "User is not permitted to view the grading summary."}}
-    end
+    {:ok, rows}
   end
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
