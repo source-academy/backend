@@ -120,6 +120,27 @@ defmodule CadetWeb.Router do
     post("/auth/logout", AuthController, :logout)
   end
 
+  scope "/v2", CadetWeb do
+    # no sessions or anything here
+
+    get("/devices/:secret/cert", DevicesController, :get_cert)
+    get("/devices/:secret/key", DevicesController, :get_key)
+    get("/devices/:secret/client_id", DevicesController, :get_client_id)
+    get("/devices/:secret/mqtt_endpoint", DevicesController, :get_mqtt_endpoint)
+  end
+
+  # Authenticated Pages
+  scope "/v2", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth])
+
+    get("/devices", DevicesController, :index)
+    post("/devices", DevicesController, :register)
+    post("/devices/:id", DevicesController, :edit)
+    delete("/devices/:id", DevicesController, :deregister)
+    get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
+  end
+
+  # Admin pages
   scope "/v2/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
 

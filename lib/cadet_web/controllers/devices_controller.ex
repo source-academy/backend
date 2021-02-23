@@ -192,7 +192,7 @@ defmodule CadetWeb.DevicesController do
   end
 
   swagger_path :get_ws_endpoint do
-    PhoenixSwagger.Path.delete("/devices/{id}/ws_endpoint")
+    get("/devices/{id}/ws_endpoint")
 
     summary("Generates a WebSocket endpoint URL for the given device.")
 
