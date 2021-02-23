@@ -4,9 +4,6 @@ defmodule CadetWeb.AssessmentsController do
   use PhoenixSwagger
 
   alias Cadet.Assessments
-  import Cadet.Updater.XMLParser, only: [parse_xml: 2]
-
-  @create_assessment_roles ~w(staff admin)a
 
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
@@ -37,104 +34,17 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
-    role = conn.assigns[:current_user].role
-
-    if role in @create_assessment_roles do
-      file =
-        assessment["file"].path
-        |> File.read!()
-
-      result =
-        case force_update do
-          "true" -> parse_xml(file, true)
-          "false" -> parse_xml(file, false)
-        end
-
-      case result do
-        :ok ->
-          if force_update == "true" do
-            text(conn, "Force Update OK")
-          else
-            text(conn, "OK")
-          end
-
-        {:ok, warning_message} ->
-          text(conn, warning_message)
-
-        {:error, {status, message}} ->
-          conn
-          |> put_status(status)
-          |> text(message)
-      end
-    else
-      conn
-      |> put_status(:forbidden)
-      |> text("User not allowed to create assessment")
-    end
-  end
-
-  def delete(conn, %{"assessmentid" => assessment_id}) do
-    result = Assessments.delete_assessment(assessment_id)
-
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def publish(conn, %{"assessmentid" => assessment_id}) do
-    result = Assessments.toggle_publish_assessment(assessment_id)
-
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def update(conn, %{"assessmentid" => assessment_id, "closeAt" => close_at, "openAt" => open_at}) do
-    formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
-    formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
-
-    result =
-      Assessments.change_dates_assessment(
-        assessment_id,
-        formatted_close_date,
-        formatted_open_date
-      )
-
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
   swagger_path :submit do
     post("/assessments/{assessmentId}/submit")
-    summary("Finalise submission for an assessment")
+    summary("Finalise submission for an assessment.")
     security([%{JWT: []}])
 
     parameters do
-      assessmentId(:path, :integer, "submission id", required: true)
+      assessmentId(:path, :integer, "Assessment ID", required: true)
     end
 
     response(200, "OK")
-    response(400, "Invalid parameters")
+    response(400, "Invalid parameters or incomplete submission (submission with unanswered questions)")
     response(403, "User not permitted to answer questions or assessment not open")
     response(404, "Submission not found")
   end
@@ -142,7 +52,7 @@ defmodule CadetWeb.AssessmentsController do
   swagger_path :index do
     get("/assessments")
 
-    summary("Get a list of all assessments")
+    summary("Get a list of all assessments.")
 
     security([%{JWT: []}])
 
@@ -163,83 +73,14 @@ defmodule CadetWeb.AssessmentsController do
     produces("application/json")
 
     parameters do
-      assessmentId(:path, :integer, "assessment id", required: true)
-      password(:body, :string, "password", required: false)
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+      password(:body, :string, "Password", required: false)
     end
 
     response(200, "OK", Schema.ref(:Assessment))
     response(400, "Missing parameter(s) or invalid assessmentId")
     response(401, "Unauthorised")
     response(403, "Password incorrect")
-  end
-
-  swagger_path :create do
-    post("/assessments")
-
-    summary("Creates a new assessment or updates an existing assessment")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      assessment(:body, :file, "assessment to create or update", required: true)
-      forceUpdate(:body, :boolean, "force update", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "XML parse error")
-    response(403, "User not allowed to create")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/assessments/:assessmentid")
-
-    summary("Deletes an assessment")
-
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentId(:path, :integer, "assessment id", required: true)
-    end
-
-    response(200, "OK")
-    response(403, "User is not permitted to delete")
-  end
-
-  swagger_path :publish do
-    post("/assessments/publish/:assessmentid")
-
-    summary("Toggles an assessment between published and unpublished")
-
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentId(:path, :integer, "assessment id", required: true)
-    end
-
-    response(200, "OK")
-    response(403, "User is not permitted to publish")
-  end
-
-  swagger_path :update do
-    post("/assessments/update/:assessmentid")
-
-    summary("Changes the open/close date of an assessment")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      assessmentId(:path, :integer, "assessment id", required: true)
-      closeAt(:body, :string, "open date", required: true)
-      openAt(:body, :string, "close date", required: true)
-    end
-
-    response(200, "OK")
-    response(401, "Assessment is already opened")
-    response(403, "User is not permitted to edit")
   end
 
   def swagger_definitions do
@@ -253,9 +94,9 @@ defmodule CadetWeb.AssessmentsController do
       AssessmentOverview:
         swagger_schema do
           properties do
-            id(:integer, "The assessment id", required: true)
+            id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
-            type(:string, "Either mission/sidequest/path/contest", required: true)
+            type(:string, "One of 'mission/sidequest/path/contest'", required: true)
             shortSummary(:string, "Short summary", required: true)
 
             number(
@@ -271,23 +112,23 @@ defmodule CadetWeb.AssessmentsController do
 
             status(
               :string,
-              "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
+              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
               required: true
             )
 
             maxGrade(
               :integer,
-              "The maximum Grade for this assessment",
+              "The maximum grade for this assessment",
               required: true
             )
 
             maxXp(
               :integer,
-              "The maximum xp for this assessment",
+              "The maximum XP for this assessment",
               required: true
             )
 
-            xp(:integer, "The xp earned for this assessment", required: true)
+            xp(:integer, "The XP earned for this assessment", required: true)
 
             grade(:integer, "The grade earned for this assessment", required: true)
 
@@ -296,14 +137,21 @@ defmodule CadetWeb.AssessmentsController do
             private(:boolean, "Is this an private assessment?", required: true)
 
             isPublished(:boolean, "Is the assessment published?", required: true)
+
+            questionCount(:integer, "The number of questions in this assessment", required: true)
+
+            gradedCount(:integer,
+              "The number of answers in the submission which have been graded",
+              required: true
+            )
           end
         end,
       Assessment:
         swagger_schema do
           properties do
-            id(:integer, "The assessment id", required: true)
+            id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
-            type(:string, "Either mission/sidequest/path/contest", required: true)
+            type(:string, "One of 'mission/sidequest/path/contest'", required: true)
 
             number(
               :string,
@@ -328,7 +176,7 @@ defmodule CadetWeb.AssessmentsController do
       Question:
         swagger_schema do
           properties do
-            id(:integer, "The question id", required: true)
+            id(:integer, "The question ID", required: true)
             type(:string, "The question type (mcq/programming)", required: true)
             content(:string, "The question content", required: true)
 

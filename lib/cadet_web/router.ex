@@ -52,13 +52,6 @@ defmodule CadetWeb.Router do
 
     get("/achievements", IncentivesController, :index_achievements)
 
-    get("/assessments", AssessmentsController, :index)
-    post("/assessments", AssessmentsController, :create)
-    delete("/assessments/:assessmentid", AssessmentsController, :delete)
-    post("/assessments/:id", AssessmentsController, :show)
-    post("/assessments/publish/:assessmentid", AssessmentsController, :publish)
-    post("/assessments/update/:assessmentid", AssessmentsController, :update)
-    post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
     get("/stories", StoriesController, :index)
@@ -125,6 +118,10 @@ defmodule CadetWeb.Router do
   scope "/v2", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
+    get("/assessments", AssessmentsController, :index)
+    post("/assessments/:id", AssessmentsController, :show)
+    post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
+
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)
     post("/devices/:id", DevicesController, :edit)
@@ -139,6 +136,11 @@ defmodule CadetWeb.Router do
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
     delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
+
+    post("/assessments", AdminAssessmentsController, :create)
+    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
+    post("/assessments/publish/:assessmentid", AdminAssessmentsController, :publish)
+    post("/assessments/update/:assessmentid", AdminAssessmentsController, :update)
 
     put("/settings/sublanguage", AdminSettingsController, :update)
 
