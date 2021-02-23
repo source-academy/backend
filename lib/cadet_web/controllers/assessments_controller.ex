@@ -24,7 +24,7 @@ defmodule CadetWeb.AssessmentsController do
     render(conn, "index.json", assessments: assessments)
   end
 
-  def show(conn, params = %{"id" => assessment_id}) when is_ecto_id(assessment_id) do
+  def show(conn, params = %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     user = conn.assigns[:current_user]
     password = params |> Map.get("password")
 
