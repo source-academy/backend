@@ -145,7 +145,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   describe "POST /:assessment_id, unauthenticated, publish" do
     test "unauthorized", %{conn: conn} do
       assessment = insert(:assessment)
-      conn = post(conn, build_url(assessment.id), %{ isPublished: true })
+      conn = post(conn, build_url(assessment.id), %{isPublished: true})
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
@@ -154,7 +154,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     @tag authenticate: :student
     test "forbidden", %{conn: conn} do
       assessment = insert(:assessment)
-      conn = post(conn, build_url(assessment.id), %{ isPublished: true })
+      conn = post(conn, build_url(assessment.id), %{isPublished: true})
       assert response(conn, 403) == "Forbidden"
     end
   end
@@ -163,7 +163,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     @tag authenticate: :staff
     test "successful toggle from published to unpublished", %{conn: conn} do
       assessment = insert(:assessment, is_published: true)
-      conn = post(conn, build_url(assessment.id), %{ isPublished: false })
+      conn = post(conn, build_url(assessment.id), %{isPublished: false})
       expected = Repo.get(Assessment, assessment.id).is_published
       assert response(conn, 200) == "OK"
       assert expected == false
@@ -172,7 +172,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     @tag authenticate: :staff
     test "successful toggle from unpublished to published", %{conn: conn} do
       assessment = insert(:assessment, is_published: false)
-      conn = post(conn, build_url(assessment.id), %{ isPublished: true })
+      conn = post(conn, build_url(assessment.id), %{isPublished: true})
       expected = Repo.get(Assessment, assessment.id).is_published
       assert response(conn, 200) == "OK"
       assert expected == true

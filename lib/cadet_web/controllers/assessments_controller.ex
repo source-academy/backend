@@ -44,7 +44,12 @@ defmodule CadetWeb.AssessmentsController do
     end
 
     response(200, "OK")
-    response(400, "Invalid parameters or incomplete submission (submission with unanswered questions)")
+
+    response(
+      400,
+      "Invalid parameters or incomplete submission (submission with unanswered questions)"
+    )
+
     response(403, "User not permitted to answer questions or assessment not open")
     response(404, "Submission not found")
   end
@@ -140,7 +145,8 @@ defmodule CadetWeb.AssessmentsController do
 
             questionCount(:integer, "The number of questions in this assessment", required: true)
 
-            gradedCount(:integer,
+            gradedCount(
+              :integer,
               "The number of answers in the submission which have been graded",
               required: true
             )
