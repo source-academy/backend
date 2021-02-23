@@ -138,9 +138,9 @@ defmodule CadetWeb.Router do
     delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
 
     post("/assessments", AdminAssessmentsController, :create)
+    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
     delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
     post("/assessments/publish/:assessmentid", AdminAssessmentsController, :publish)
-    post("/assessments/update/:assessmentid", AdminAssessmentsController, :update)
 
     put("/settings/sublanguage", AdminSettingsController, :update)
 

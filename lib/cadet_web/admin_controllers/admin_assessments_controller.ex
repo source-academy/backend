@@ -49,13 +49,22 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def publish(conn, %{"assessmentid" => assessment_id}) do
-    result = Assessments.toggle_publish_assessment(assessment_id)
+  def update(conn, params = %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
+    open_at = params |> Map.get("openAt")
+    close_at = params |> Map.get("closeAt")
+    is_published = params |> Map.get("isPublished")
 
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
+    updated_assessment =
+      if is_published == nil do
+        %{}
+      else
+        %{:is_published => is_published}
+      end
 
+    with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
+         {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment) do
+      text(conn, "OK")
+    else
       {:error, {status, message}} ->
         conn
         |> put_status(status)
@@ -63,25 +72,21 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def update(conn, %{"assessmentid" => assessment_id, "closeAt" => close_at, "openAt" => open_at}) do
-    formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
-    formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
+  defp check_dates(open_at, close_at, assessment) do
+    if open_at == nil and close_at == nil do
+      {:ok, assessment}
+    else
+      formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
+      formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
 
-    result =
-      Assessments.change_dates_assessment(
-        assessment_id,
-        formatted_close_date,
-        formatted_open_date
-      )
+      if Timex.before?(formatted_close_date, formatted_open_date) do
+        {:error, {:bad_request, "New end date should occur after new opening date"}}
+      else
+        assessment = Map.put(assessment, :open_at, formatted_open_date)
+        assessment = Map.put(assessment, :close_at, formatted_close_date)
 
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
+        {:ok, assessment}
+      end
     end
   end
 
@@ -119,34 +124,20 @@ defmodule CadetWeb.AdminAssessmentsController do
     response(403, "Forbidden")
   end
 
-  swagger_path :publish do
-    post("/assessments/publish/:assessmentid")
-
-    summary("Toggles an assessment between published and unpublished")
-
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentId(:path, :integer, "assessment id", required: true)
-    end
-
-    response(200, "OK")
-    response(403, "Forbidden")
-  end
-
   swagger_path :update do
-    post("/assessments/update/:assessmentid")
+    post("/assessments/:assessmentid")
 
-    summary("Changes the open/close date of an assessment")
+    summary("Updates an assessment.")
 
     security([%{JWT: []}])
 
     consumes("application/json")
 
     parameters do
-      assessmentId(:path, :integer, "assessment id", required: true)
-      closeAt(:body, :string, "open date", required: true)
-      openAt(:body, :string, "close date", required: true)
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+      closeAt(:body, :string, "Open date", required: false)
+      openAt(:body, :string, "Close date", required: false)
+      isPublished(:body, :boolean, "Whether the assessment is published", required: false)
     end
 
     response(200, "OK")
