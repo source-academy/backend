@@ -109,6 +109,17 @@ defmodule CadetWeb.Router do
     delete("/goals/:uuid", AdminGoalsController, :delete)
   end
 
+  # V2 API
+
+  # Public Pages
+  scope "/v2", CadetWeb do
+    pipe_through([:api, :auth])
+
+    post("/auth/login", AuthController, :create)
+    post("/auth/refresh", AuthController, :refresh)
+    post("/auth/logout", AuthController, :logout)
+  end
+
   scope "/v2/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
 
