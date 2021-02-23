@@ -10,7 +10,7 @@ defmodule CadetWeb.AuthController do
   alias Cadet.Auth.{Guardian, Provider}
 
   @doc """
-  Receives a /login request with valid attributes (`Login form`).
+  Receives a /login request with valid attributes.
 
   If the user is already registered in our database, simply return `Tokens`. If
   the user has not been registered before, register the user, then return the
@@ -70,7 +70,7 @@ defmodule CadetWeb.AuthController do
         render(conn, "token.json", generate_tokens(user))
 
       _ ->
-        send_resp(conn, :unauthorized, "Invalid Token")
+        send_resp(conn, :unauthorized, "Invalid refresh token")
     end
   end
 
@@ -88,7 +88,7 @@ defmodule CadetWeb.AuthController do
         text(conn, "OK")
 
       {:error, _} ->
-        send_resp(conn, :unauthorized, "Invalid Token")
+        send_resp(conn, :unauthorized, "Invalid token")
     end
   end
 
@@ -108,7 +108,7 @@ defmodule CadetWeb.AuthController do
   end
 
   swagger_path :create do
-    post("/auth")
+    post("/auth/login")
 
     summary("Obtain access and refresh tokens to authenticate user.")
 
@@ -144,7 +144,7 @@ defmodule CadetWeb.AuthController do
       refresh_token(
         :body,
         Schema.ref(:RefreshToken),
-        "refresh token obtained from /auth",
+        "Refresh token obtained from /auth/login",
         required: true
       )
     end
@@ -160,7 +160,7 @@ defmodule CadetWeb.AuthController do
     consumes("application/json")
 
     parameters do
-      tokens(:body, Schema.ref(:RefreshToken), "refresh token to be invalidated", required: true)
+      tokens(:body, Schema.ref(:RefreshToken), "Refresh token to be invalidated", required: true)
     end
 
     response(200, "OK")
