@@ -25,7 +25,6 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   test "swagger" do
     AdminAssessmentsController.swagger_path_create(nil)
     AdminAssessmentsController.swagger_path_delete(nil)
-    AdminAssessmentsController.swagger_path_publish(nil)
     AdminAssessmentsController.swagger_path_update(nil)
   end
 
@@ -143,28 +142,28 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "POST /publish/:assessment_id, unauthenticated" do
+  describe "POST /:assessment_id, unauthenticated, publish" do
     test "unauthorized", %{conn: conn} do
       assessment = insert(:assessment)
-      conn = post(conn, build_url_publish(assessment.id))
+      conn = post(conn, build_url(assessment.id), %{ isPublished: true })
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
-  describe "POST /publish/:assessment_id, student only" do
+  describe "POST /:assessment_id, student only, publish" do
     @tag authenticate: :student
     test "forbidden", %{conn: conn} do
       assessment = insert(:assessment)
-      conn = post(conn, build_url_publish(assessment.id))
+      conn = post(conn, build_url(assessment.id), %{ isPublished: true })
       assert response(conn, 403) == "Forbidden"
     end
   end
 
-  describe "POST /publish/:assessment_id, staff only" do
+  describe "POST /:assessment_id, staff only, publish" do
     @tag authenticate: :staff
     test "successful toggle from published to unpublished", %{conn: conn} do
       assessment = insert(:assessment, is_published: true)
-      conn = post(conn, build_url_publish(assessment.id))
+      conn = post(conn, build_url(assessment.id), %{ isPublished: false })
       expected = Repo.get(Assessment, assessment.id).is_published
       assert response(conn, 200) == "OK"
       assert expected == false
@@ -173,22 +172,22 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     @tag authenticate: :staff
     test "successful toggle from unpublished to published", %{conn: conn} do
       assessment = insert(:assessment, is_published: false)
-      conn = post(conn, build_url_publish(assessment.id))
+      conn = post(conn, build_url(assessment.id), %{ isPublished: true })
       expected = Repo.get(Assessment, assessment.id).is_published
       assert response(conn, 200) == "OK"
       assert expected == true
     end
   end
 
-  describe "POST /update/:assessment_id, unauthenticated" do
+  describe "POST /:assessment_id, unauthenticated" do
     test "unauthorized", %{conn: conn} do
       assessment = insert(:assessment)
-      conn = post(conn, build_url_update(assessment.id))
+      conn = post(conn, build_url(assessment.id))
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
-  describe "POST /update/:assessment_id, student only" do
+  describe "POST /:assessment_id, student only" do
     @tag authenticate: :student
     test "forbidden", %{conn: conn} do
       new_open_at =
@@ -209,12 +208,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_dates = %{openAt: new_open_at_string, closeAt: new_close_at_string}
       assessment = insert(:assessment)
-      conn = post(conn, build_url_update(assessment.id), new_dates)
+      conn = post(conn, build_url(assessment.id), new_dates)
       assert response(conn, 403) == "Forbidden"
     end
   end
 
-  describe "POST /update/:assessment_id, staff only" do
+  describe "POST /:assessment_id, staff only" do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
       open_at =
@@ -246,7 +245,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       conn =
         conn
-        |> post(build_url_update(assessment.id), new_dates)
+        |> post(build_url(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
       assert response(conn, 200) == "OK"
@@ -280,7 +279,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       conn =
         conn
-        |> post(build_url_update(assessment.id), new_dates)
+        |> post(build_url(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
       assert response(conn, 200) == "OK"
@@ -314,7 +313,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       conn =
         conn
-        |> post(build_url_update(assessment.id), new_dates)
+        |> post(build_url(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
       assert response(conn, 400) == "New end date should occur after new opening date"
@@ -348,7 +347,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       conn =
         conn
-        |> post(build_url_update(assessment.id), new_dates)
+        |> post(build_url(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
       assert response(conn, 200) == "OK"
@@ -382,7 +381,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       conn =
         conn
-        |> post(build_url_update(assessment.id), new_dates)
+        |> post(build_url(assessment.id), new_dates)
 
       assessment = Repo.get(Assessment, assessment.id)
       assert response(conn, 200) == "OK"
@@ -392,6 +391,4 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
   defp build_url, do: "/v2/admin/assessments/"
   defp build_url(assessment_id), do: "/v2/admin/assessments/#{assessment_id}"
-  defp build_url_publish(assessment_id), do: "/v2/admin/assessments/publish/#{assessment_id}"
-  defp build_url_update(assessment_id), do: "/v2/admin/assessments/update/#{assessment_id}"
 end

@@ -30,19 +30,6 @@ defmodule Cadet.Assessments do
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
 
-  def change_dates_assessment(id, close_at, open_at) do
-    if Timex.before?(close_at, open_at) do
-      {:error, {:bad_request, "New end date should occur after new opening date"}}
-    else
-      update_assessment(id, %{close_at: close_at, open_at: open_at})
-    end
-  end
-
-  def toggle_publish_assessment(id) do
-    assessment = Repo.get(Assessment, id)
-    update_assessment(id, %{is_published: !assessment.is_published})
-  end
-
   def delete_assessment(id) do
     assessment = Repo.get(Assessment, id)
 
