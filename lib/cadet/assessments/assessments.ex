@@ -474,7 +474,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def publish_assessment(id) do
+  def publish_assessment(id) when is_ecto_id(id) do
     update_assessment(id, %{is_published: true})
   end
 
@@ -544,7 +544,8 @@ defmodule Cadet.Assessments do
     # end
   end
 
-  def get_submission(assessment_id, user_id) do
+  def get_submission(assessment_id, %User{id: user_id})
+      when is_ecto_id(assessment_id) do
     Submission
     |> where(assessment_id: ^assessment_id)
     |> where(student_id: ^user_id)
@@ -553,7 +554,7 @@ defmodule Cadet.Assessments do
     |> Repo.one()
   end
 
-  def finalise_submission(submission) do
+  def finalise_submission(submission = %Submission{}) do
     with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
       # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent

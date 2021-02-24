@@ -12,7 +12,7 @@ defmodule CadetWeb.AssessmentsController do
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     user = conn.assigns[:current_user]
 
-    with submission <- Assessments.get_submission(assessment_id, user.id),
+    with submission <- Assessments.get_submission(assessment_id, user),
          {:submission_found?, true} <- {:submission_found?, is_map(submission)},
          {:is_open?, true} <-
            {:is_open?,
