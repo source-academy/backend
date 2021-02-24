@@ -544,21 +544,17 @@ defmodule Cadet.Assessments do
     # end
   end
 
-  def finalise_submission(assessment_id, %User{id: user_id, role: role})
-      when is_ecto_id(assessment_id) do
-    # if role in @submit_answer_roles do
-    submission =
-      Submission
-      |> where(assessment_id: ^assessment_id)
-      |> where(student_id: ^user_id)
-      |> join(:inner, [s], a in assoc(s, :assessment))
-      |> preload([_, a], assessment: a)
-      |> Repo.one()
+  def get_submission(assessment_id, user_id) do
+    Submission
+    |> where(assessment_id: ^assessment_id)
+    |> where(student_id: ^user_id)
+    |> join(:inner, [s], a in assoc(s, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
 
-    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-         {:is_open?, true} <-
-           {:is_open?, role in @bypass_closed_roles or is_open?(submission.assessment)},
-         {:status, :attempted} <- {:status, submission.status},
+  def finalise_submission(submission) do
+    with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
       # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
       Notifications.write_notification_when_student_submits(submission)
@@ -567,12 +563,6 @@ defmodule Cadet.Assessments do
 
       {:ok, nil}
     else
-      {:submission_found?, false} ->
-        {:error, {:not_found, "Submission not found"}}
-
-      {:is_open?, false} ->
-        {:error, {:forbidden, "Assessment not open"}}
-
       {:status, :attempting} ->
         {:error, {:bad_request, "Some questions have not been attempted"}}
 
@@ -582,10 +572,6 @@ defmodule Cadet.Assessments do
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
     end
-
-    # else
-    #   {:error, {:forbidden, "User is not permitted to answer questions"}}
-    # end
   end
 
   def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
@@ -990,7 +976,7 @@ defmodule Cadet.Assessments do
 
   # Checks if an assessment is open and published.
   @spec is_open?(%Assessment{}) :: boolean()
-  defp is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+  def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
     Timex.between?(Timex.now(), open_at, close_at) and is_published
   end
 
