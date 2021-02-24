@@ -5,10 +5,30 @@ defmodule CadetWeb.AssessmentsController do
 
   alias Cadet.Assessments
 
+  # These roles can save and finalise answers for closed assessments and
+  # submitted answers
+  @bypass_closed_roles ~w(staff admin)a
+
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
-    case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
-      {:ok, _nil} ->
-        text(conn, "OK")
+    user = conn.assigns[:current_user]
+
+    with submission <- Assessments.get_submission(assessment_id, user.id),
+         {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:is_open?, true} <-
+           {:is_open?,
+            user.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
+         {:ok, _nil} <- Assessments.finalise_submission(submission) do
+      text(conn, "OK")
+    else
+      {:submission_found?, false} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Submission not found")
+
+      {:is_open?, false} ->
+        conn
+        |> put_status(:forbidden)
+        |> text("Assessment not open")
 
       {:error, {status, message}} ->
         conn
