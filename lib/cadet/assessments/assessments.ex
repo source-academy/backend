@@ -1005,7 +1005,7 @@ defmodule Cadet.Assessments do
 
   @spec get_group_grading_summary() ::
           {:ok, [group_summary_entry()]}
-  def get_group_grading_summary() do
+  def get_group_grading_summary do
     subs =
       Answer
       |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
