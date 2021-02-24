@@ -213,7 +213,7 @@ defmodule CadetWeb.AnswerControllerTest do
   end
 
   defp build_url(question_id) do
-    "/v1/assessments/question/#{question_id}/submit/"
+    "/v2/assessments/question/#{question_id}/submit/"
   end
 
   defp get_answer_value(question, assessment, user) do

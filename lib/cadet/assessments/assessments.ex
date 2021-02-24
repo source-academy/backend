@@ -498,6 +498,14 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def get_question(id) when is_ecto_id(id) do
+    Question
+    |> where(id: ^id)
+    |> join(:inner, [q], assessment in assoc(q, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
   def delete_question(id) when is_ecto_id(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
@@ -512,36 +520,18 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
-    # if role in @submit_answer_roles do
-    question =
-      Question
-      |> where(id: ^id)
-      |> join(:inner, [q], assessment in assoc(q, :assessment))
-      |> preload([_, a], assessment: a)
-      |> Repo.one()
-
-    bypass = role in @bypass_closed_roles
-
-    with {:question_found?, true} <- {:question_found?, is_map(question)},
-         {:is_open?, true} <- {:is_open?, bypass or is_open?(question.assessment)},
-         {:ok, submission} <- find_or_create_submission(user, question.assessment),
-         {:status, true} <- {:status, bypass or submission.status != :submitted},
+  def answer_question(question = %Question{}, user = %User{}, raw_answer, force_submit) do
+    with {:ok, submission} <- find_or_create_submission(user, question.assessment),
+         {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer) do
       update_submission_status(submission, question.assessment)
 
       {:ok, nil}
     else
-      {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
-      {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
       {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
       {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
       _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
-
-    # else
-    #  {:error, {:forbidden, "User is not permitted to answer questions"}}
-    # end
   end
 
   def get_submission(assessment_id, %User{id: user_id})

@@ -52,8 +52,6 @@ defmodule CadetWeb.Router do
 
     get("/achievements", IncentivesController, :index_achievements)
 
-    post("/assessments/question/:questionid/submit", AnswerController, :submit)
-
     get("/stories", StoriesController, :index)
     post("/stories", StoriesController, :create)
     delete("/stories/:storyid", StoriesController, :delete)
@@ -121,6 +119,7 @@ defmodule CadetWeb.Router do
     get("/assessments", AssessmentsController, :index)
     post("/assessments/:assessmentid", AssessmentsController, :show)
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
+    post("/assessments/question/:questionid/submit", AnswerController, :submit)
 
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)

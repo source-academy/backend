@@ -5,11 +5,30 @@ defmodule CadetWeb.AnswerController do
 
   alias Cadet.Assessments
 
+  # These roles can save and finalise answers for closed assessments and
+  # submitted answers
+  @bypass_closed_roles ~w(staff admin)a
+
   def submit(conn, %{"questionid" => question_id, "answer" => answer})
       when is_ecto_id(question_id) do
-    case Assessments.answer_question(question_id, conn.assigns.current_user, answer) do
-      {:ok, _nil} ->
-        text(conn, "OK")
+    user = conn.assigns[:current_user]
+    bypass = user.role in @bypass_closed_roles
+    question = Assessments.get_question(question_id)
+
+    with {:question_found?, true} <- {:question_found?, is_map(question)},
+         {:is_open?, true} <- {:is_open?, bypass or Assessments.is_open?(question.assessment)},
+         {:ok, _nil} <- Assessments.answer_question(question, user, answer, bypass) do
+      text(conn, "OK")
+    else
+      {:question_found?, false} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Question not found")
+
+      {:is_open?, false} ->
+        conn
+        |> put_status(:forbidden)
+        |> text("Assessment not open")
 
       {:error, {status, message}} ->
         conn
@@ -18,7 +37,7 @@ defmodule CadetWeb.AnswerController do
     end
   end
 
-  def submit(conn, _parms) do
+  def submit(conn, _params) do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
@@ -43,7 +62,7 @@ defmodule CadetWeb.AnswerController do
     response(200, "OK")
     response(400, "Invalid parameters")
     response(403, "User not permitted to answer questions or assessment not open")
-    response(404, "Assessment not found")
+    response(404, "Question not found")
   end
 
   def swagger_definitions do
