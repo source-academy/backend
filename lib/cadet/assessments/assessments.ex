@@ -62,17 +62,25 @@ defmodule Cadet.Assessments do
 
       Question
       |> where(assessment_id: ^id)
-      |> Repo.all()
-      |> Enum.map(fn question ->
-        SubmissionVotes
-        |> where(question_id: ^question.id)
-        |> Repo.delete_all()
-      end)
+      |> delete_submission_votes_association()
+
 
       Repo.delete(assessment)
     else
       {:error, {:forbidden, "User is not permitted to delete"}}
     end
+  end
+
+  defp delete_submission_votes_association(questions) do
+    questions
+    |> Repo.all()
+    |> Enum.each(fn question ->
+      SubmissionVotes
+      |> where(question_id: ^question.id)
+      |> Repo.delete_all()
+    end)
+
+    Repo.delete_all(questions)
   end
 
   defp delete_submission_assocation(submissions, assessment_id) do
@@ -795,15 +803,15 @@ defmodule Cadet.Assessments do
   Function to populate contest entries to vote for if question is a voting question.
   """
   defp load_contest_voting_entries(questions, assessment_id, user_id) do
-    question =
-      Question
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
-
     Enum.map(
       questions,
       fn q ->
         if q.type == :voting do
+          question =
+            Question
+            |> where(assessment_id: ^assessment_id)
+            |> Repo.one()
+
           voting_question =
             case all_submission_votes_by_question_id_and_user_id(question.id, user_id) do
               {:ok, submission_votes} -> Map.put(q.question, :contestEntries, submission_votes)
