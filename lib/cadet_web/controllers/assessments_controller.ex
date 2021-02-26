@@ -8,6 +8,8 @@ defmodule CadetWeb.AssessmentsController do
 
   @create_assessment_roles ~w(staff admin)a
 
+  require Logger
+
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     case Assessments.finalise_submission(assessment_id, conn.assigns.current_user) do
       {:ok, _nil} ->

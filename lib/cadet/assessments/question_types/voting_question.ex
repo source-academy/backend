@@ -3,9 +3,11 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestion do
   The VotingQuestion entity represents a Voting question.
   """
   use Cadet, :model
+  alias Cadet.Assessments.QuestionTypes.ContestEntry
 
   @primary_key false
   embedded_schema do
+    embeds_many(:contestEntries, ContestEntry)
     field(:content, :string)
     field(:prepend, :string, default: "")
     field(:template, :string)

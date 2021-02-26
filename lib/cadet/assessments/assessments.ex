@@ -9,6 +9,7 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
+  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion, VotingQuestion}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Course.Group
   alias Ecto.Multi
@@ -59,9 +60,14 @@ defmodule Cadet.Assessments do
       |> where(assessment_id: ^id)
       |> delete_submission_assocation(id)
 
-      SubmissionVotes
+      Question
       |> where(assessment_id: ^id)
-      |> Repo.delete_all()
+      |> Repo.all()
+      |> Enum.map(fn question ->
+        SubmissionVotes
+        |> where(question_id: ^question.id)
+        |> Repo.delete_all()
+      end)
 
       Repo.delete(assessment)
     else
@@ -258,6 +264,7 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^user.id)
 
+      # is an array of %Question{}
       questions =
         Question
         |> where(assessment_id: ^id)
@@ -270,6 +277,7 @@ defmodule Cadet.Assessments do
           {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
           {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
         end)
+        |> load_contest_voting_entries(id, user.id)
 
       assessment = Map.put(assessment, :questions, questions)
       {:ok, assessment}
@@ -486,9 +494,14 @@ defmodule Cadet.Assessments do
   end
 
   def insert_voting(voting_params, assessment_id) do
+    question =
+      Question
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
     changesets =
       Enum.map(voting_params, fn voting_entry ->
-        build_voting_submission_changeset_for_assessment_id(voting_entry.voting, assessment_id)
+        build_voting_submission_changeset_for_assessment_id(voting_entry.voting, question.id)
       end)
 
     changesets
@@ -499,10 +512,10 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
-  defp build_voting_submission_changeset_for_assessment_id(params, assessment_id)
-       when is_ecto_id(assessment_id) do
-    params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
-    SubmissionVotes.changeset(%SubmissionVotes{}, params_with_assessment_id)
+  defp build_voting_submission_changeset_for_assessment_id(params, question_id)
+       when is_ecto_id(question_id) do
+    params_with_question_id = Map.put_new(params, :question_id, question_id)
+    SubmissionVotes.changeset(%SubmissionVotes{}, params_with_question_id)
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
@@ -561,6 +574,7 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
+
   def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
     # if role in @submit_answer_roles do
     question =
@@ -778,13 +792,39 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
+  Function to populate contest entries to vote for if question is a voting question.
+  """
+  defp load_contest_voting_entries(questions, assessment_id, user_id) do
+    question =
+      Question
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    Enum.map(
+      questions,
+      fn q ->
+        if q.type == :voting do
+          voting_question =
+            case all_submission_votes_by_question_id_and_user_id(question.id, user_id) do
+              {:ok, submission_votes} -> Map.put(q.question, :contestEntries, submission_votes)
+            end
+
+          Map.put(q, :question, voting_question)
+        else
+          q
+        end
+      end
+    )
+  end
+
+  @doc """
   Function returning contest submission entries assigned to a user to vote for.
   """
-  def all_submission_votes_by_assessment_id_and_user_id(assessment_id, user_id) do
+  def all_submission_votes_by_question_id_and_user_id(question_id, user_id) do
     query =
       from(sv in SubmissionVotes,
         where: sv.user_id == ^user_id,
-        where: sv.assessment_id == ^assessment_id,
+        where: sv.question_id == ^question_id,
         join: s in assoc(sv, :submission),
         join: ans in assoc(s, :answers),
         select: %{submission_id: sv.submission_id, answer: ans.answer, score: sv.score}
@@ -1143,20 +1183,40 @@ defmodule Cadet.Assessments do
   defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
     answer_content = build_answer_content(raw_answer, question.type)
 
-    answer_changeset =
-      %Answer{}
-      |> Answer.changeset(%{
-        answer: answer_content,
-        question_id: question.id,
-        submission_id: submission.id,
-        type: question.type
-      })
+    if question.type == :voting do
+      insert_or_update_voting_answer(answer_content)
+    else
+      answer_changeset =
+        %Answer{}
+        |> Answer.changeset(%{
+          answer: answer_content,
+          question_id: question.id,
+          submission_id: submission.id,
+          type: question.type
+        })
 
-    Repo.insert(
-      answer_changeset,
-      on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
-      conflict_target: [:submission_id, :question_id]
-    )
+      Repo.insert(
+        answer_changeset,
+        on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
+        conflict_target: [:submission_id, :question_id]
+      )
+    end
+  end
+
+  defp insert_or_update_voting_answer(answer_content) do
+    answer_content
+    |> Enum.map(fn ans ->
+      {submission_id, score} = ans
+
+      sv =
+        SubmissionVotes
+        |> where(submission_id: ^submission_id)
+        # TODO: CONTEST VOTING need to input user_id and update time...
+        |> where(user_id: 9)
+        |> Repo.one()
+        |> SubmissionVotes.changeset(%{score: score})
+        |> Repo.update()
+    end)
   end
 
   defp build_answer_content(raw_answer, question_type) do
@@ -1166,6 +1226,9 @@ defmodule Cadet.Assessments do
 
       :programming ->
         %{code: raw_answer}
+
+      :voting ->
+        raw_answer
     end
   end
 end

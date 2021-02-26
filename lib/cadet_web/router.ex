@@ -91,8 +91,6 @@ defmodule CadetWeb.Router do
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
 
     put("/settings/sublanguage", SettingsController, :update)
-
-    get("/contestvoting/:assessmentid/:userid", ContestVotingController, :show)
   end
 
   # Authenticated Pages

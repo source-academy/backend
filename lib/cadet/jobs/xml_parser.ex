@@ -205,7 +205,6 @@ defmodule Cadet.Updater.XMLParser do
       )
 
     if is_map(vote) do
-      Logger.info(inspect(vote))
       Map.put(voting, :voting, vote)
     else
       error = Enum.find(vote, &(!is_map(&1)))
