@@ -194,8 +194,6 @@ defmodule CadetWeb.AssessmentsHelpers do
     end
   end
 
-  require Logger
-
   defp build_question_content_by_type(
          %{
            question: %{question: question, type: question_type},
