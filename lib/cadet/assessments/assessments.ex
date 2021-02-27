@@ -9,7 +9,6 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
-  alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion, VotingQuestion}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Course.Group
   alias Ecto.Multi
@@ -63,7 +62,6 @@ defmodule Cadet.Assessments do
       Question
       |> where(assessment_id: ^id)
       |> delete_submission_votes_association()
-
 
       Repo.delete(assessment)
     else
@@ -583,7 +581,8 @@ defmodule Cadet.Assessments do
 
   """
 
-  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
+  def answer_question(id, user = %User{id: user_id, role: role}, raw_answer)
+      when is_ecto_id(id) do
     # if role in @submit_answer_roles do
     question =
       Question
@@ -598,7 +597,7 @@ defmodule Cadet.Assessments do
          {:is_open?, true} <- {:is_open?, bypass or is_open?(question.assessment)},
          {:ok, submission} <- find_or_create_submission(user, question.assessment),
          {:status, true} <- {:status, bypass or submission.status != :submitted},
-         {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer) do
+         {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, user_id) do
       update_submission_status(submission, question.assessment)
 
       {:ok, nil}
@@ -799,9 +798,6 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
-  @doc """
-  Function to populate contest entries to vote for if question is a voting question.
-  """
   defp load_contest_voting_entries(questions, assessment_id, user_id) do
     Enum.map(
       questions,
@@ -1188,11 +1184,16 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp insert_or_update_answer(submission = %Submission{}, question = %Question{}, raw_answer) do
+  defp insert_or_update_answer(
+         submission = %Submission{},
+         question = %Question{},
+         raw_answer,
+         user_id
+       ) do
     answer_content = build_answer_content(raw_answer, question.type)
 
     if question.type == :voting do
-      insert_or_update_voting_answer(answer_content)
+      insert_or_update_voting_answer(user_id, answer_content)
     else
       answer_changeset =
         %Answer{}
@@ -1211,20 +1212,20 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp insert_or_update_voting_answer(answer_content) do
+  defp insert_or_update_voting_answer(user_id, answer_content) do
     answer_content
-    |> Enum.map(fn ans ->
+    |> Enum.each(fn ans ->
       {submission_id, score} = ans
 
-      sv =
-        SubmissionVotes
-        |> where(submission_id: ^submission_id)
-        # TODO: CONTEST VOTING need to input user_id and update time...
-        |> where(user_id: 9)
-        |> Repo.one()
-        |> SubmissionVotes.changeset(%{score: score})
-        |> Repo.update()
+      SubmissionVotes
+      |> where(submission_id: ^submission_id)
+      |> where(user_id: ^user_id)
+      |> Repo.one()
+      |> SubmissionVotes.changeset(%{score: score})
+      |> Repo.update()
     end)
+
+    {:ok, answer_content}
   end
 
   defp build_answer_content(raw_answer, question_type) do
