@@ -8,6 +8,8 @@ defmodule Cadet.Incentives.Goals do
 
   alias Cadet.Accounts.User
 
+  alias Cadet.Incentives.GoalProgress
+
   import Ecto.Query
 
   @doc """
@@ -76,6 +78,25 @@ defmodule Cadet.Incentives.Goals do
          |> Repo.delete_all() do
       {0, _} -> {:error, {:not_found, "Goal not found"}}
       {_, _} -> :ok
+    end
+  end
+
+  def upsert_progress(attrs, goal_uuid, user_id) do
+    if (goal_uuid == nil || user_id == nil) do
+      {:error, {:bad_request, "No UUID specified in Goal"}}
+    else
+      GoalProgress
+      |> Repo.get_by(goal_uuid: goal_uuid, user_id: String.to_integer(user_id))
+      |> (&(&1 || %GoalProgress{})).()
+      |> GoalProgress.changeset(attrs)
+      |> Repo.insert_or_update()
+      |> case do
+        result = {:ok, _} ->
+          result
+
+        {:error, changeset} ->
+          {:error, {:bad_request, full_error_messages(changeset)}}
+      end
     end
   end
 end

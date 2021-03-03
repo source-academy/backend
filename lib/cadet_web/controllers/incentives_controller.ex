@@ -15,6 +15,23 @@ defmodule CadetWeb.IncentivesController do
     )
   end
 
+  def update_progress(conn, %{"uuid" => uuid, "userid" => userid, "progress" => progress}) do
+    progress
+    |> json_to_progress(uuid, userid)
+    |> Goals.upsert_progress(uuid, userid)
+    |> handle_standard_result(conn)
+  end
+
+  defp json_to_progress(json, uuid, userid) do
+  json =
+    json
+    |> snake_casify_string_keys_recursive()
+  %{xp: Map.get(json, "xp"),
+    completed: Map.get(json, "completed"),
+    goal_uuid: uuid,
+    user_id: String.to_integer(userid)}
+  end
+
   swagger_path :index_achievements do
     get("/achievements")
 
