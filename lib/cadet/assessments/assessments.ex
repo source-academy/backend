@@ -503,6 +503,8 @@ defmodule Cadet.Assessments do
     question =
       Question
       |> where(assessment_id: ^assessment_id)
+      # voting assessment only has one question
+      |> first()
       |> Repo.one()
 
     changesets =
