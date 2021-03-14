@@ -598,7 +598,7 @@ defmodule Cadet.Assessments do
          {:ok, submission} <- find_or_create_submission(user, question.assessment),
          {:status, true} <- {:status, bypass or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, user_id) do
-      update_submission_status(submission, question.assessment)
+      update_submission_status_router(submission, question)
 
       {:ok, nil}
     else
@@ -606,6 +606,7 @@ defmodule Cadet.Assessments do
       {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
       {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
       {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
+      {:error, :vote_not_unique} -> {:error, {:forbidden, "Vote is not unique!"}}
       _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
 
@@ -772,6 +773,14 @@ defmodule Cadet.Assessments do
     |> Repo.update()
   end
 
+  def update_submission_status_router(submission = %Submission{}, question = %Question{}) do
+    if question.type == :voting do
+      update_contest_voting_submission_status(submission, question)
+    else
+      update_submission_status(submission, question.assessment)
+    end
+  end
+
   def update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
     model_assoc_count = fn model, assoc, id ->
       model
@@ -796,6 +805,29 @@ defmodule Cadet.Assessments do
       end
     end)
     |> Repo.transaction()
+  end
+
+  def update_contest_voting_submission_status(submission = %Submission{}, question = %Question{}) do
+    count_entries =
+      length(
+        SubmissionVotes
+        |> where(question_id: ^question.id)
+        |> where(user_id: ^submission.student_id)
+        |> Repo.all()
+      )
+
+    count_not_nil_entries =
+      length(
+        SubmissionVotes
+        |> where(question_id: ^question.id)
+        |> where(user_id: ^submission.student_id)
+        |> where([c], not is_nil(c.score))
+        |> Repo.all()
+      )
+
+    if count_entries == count_not_nil_entries do
+      submission |> Submission.changeset(%{status: :attempted}) |> Repo.update()
+    end
   end
 
   defp load_contest_voting_entries(questions, assessment_id, user_id) do
@@ -1213,19 +1245,25 @@ defmodule Cadet.Assessments do
   end
 
   defp insert_or_update_voting_answer(user_id, answer_content) do
-    answer_content
-    |> Enum.each(fn ans ->
-      {submission_id, score} = ans
+    ans =
+      answer_content
+      |> Enum.map(fn ans ->
+        {submission_id, score} = ans
 
-      SubmissionVotes
-      |> where(submission_id: ^submission_id)
-      |> where(user_id: ^user_id)
-      |> Repo.one()
-      |> SubmissionVotes.changeset(%{score: score})
-      |> Repo.update()
-    end)
+        SubmissionVotes
+        |> where(submission_id: ^submission_id)
+        |> where(user_id: ^user_id)
+        |> Repo.one()
+        |> SubmissionVotes.changeset(%{score: score})
+        |> Repo.update()
+      end)
 
-    {:ok, answer_content}
+    [status | _] = ans
+
+    case status do
+      {:ok, answer_content} -> {:ok, answer_content}
+      {:error, _} -> {:error, :vote_not_unique}
+    end
   end
 
   defp build_answer_content(raw_answer, question_type) do

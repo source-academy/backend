@@ -122,8 +122,14 @@ defmodule Cadet.Autograder.GradingJob do
 
   def grade_answer(answer = %Answer{}, question = %Question{type: type}, overwrite \\ false) do
     case type do
-      :programming -> Utilities.dispatch_programming_answer(answer, question, overwrite)
-      :mcq -> grade_mcq_answer(answer, question)
+      :programming ->
+        Utilities.dispatch_programming_answer(answer, question, overwrite)
+
+      :mcq ->
+        grade_mcq_answer(answer, question)
+
+      :voting ->
+        nil
     end
   end
 
