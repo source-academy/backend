@@ -31,13 +31,18 @@ defmodule CadetWeb.AdminAchievementsController do
       |> snake_casify_string_keys_recursive()
       |> rename_keys([
         {"deadline", "close_at"},
-        {"release", "open_at"}
+        {"release", "open_at"},
+        {"card_background", "card_tile_url"}
       ])
       |> case do
         map = %{"view" => view} ->
           map
           |> Map.delete("view")
-          |> Map.merge(view |> Map.take(~w(canvas_url description completion_text)))
+          |> Map.merge(
+            view
+            |> rename_keys([{"cover_image", "canvas_url"}])
+            |> Map.take(~w(canvas_url description completion_text))
+          )
 
         map ->
           map

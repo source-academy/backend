@@ -30,12 +30,12 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   defp json_to_goal(json, uuid \\ nil) do
+    original_meta = json["meta"]
+
     json =
       json
       |> snake_casify_string_keys_recursive()
-      |> rename_keys([
-        {"max_exp", "max_xp"}
-      ])
+      |> Map.put("meta", original_meta)
 
     if is_nil(uuid) do
       json
