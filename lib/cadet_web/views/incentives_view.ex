@@ -14,17 +14,17 @@ defmodule CadetWeb.IncentivesView do
       release: &format_datetime(&1.open_at),
       deadline: &format_datetime(&1.close_at),
       isTask: :is_task,
-      prerequisiteIds:
-        &Enum.map(&1.prerequisites, fn prerequisite -> prerequisite.prerequisite_id end),
-      cardTileUrl: :card_tile_url,
+      prerequisiteUuids:
+        &Enum.map(&1.prerequisites, fn prerequisite -> prerequisite.prerequisite_uuid end),
+      cardBackground: :card_tile_url,
       position: :position,
       view:
         &%{
-          canvasUrl: &1.canvas_url,
+          coverImage: &1.canvas_url,
           description: &1.description,
           completionText: &1.completion_text
         },
-      goalUuids: &Enum.map(&1.goals, fn goal -> goal.uuid end)
+      goalUuids: &Enum.map(&1.goals, fn goal -> goal.goal_uuid end)
     })
   end
 
@@ -36,7 +36,7 @@ defmodule CadetWeb.IncentivesView do
     transform_map_for_view(goal, %{
       uuid: :uuid,
       text: :text,
-      exp: fn
+      xp: fn
         %{progress: [%{xp: xp}]} -> xp
         _ -> 0
       end,
@@ -44,7 +44,7 @@ defmodule CadetWeb.IncentivesView do
         %{progress: [%{completed: completed}]} -> completed
         _ -> false
       end,
-      maxExp: :max_xp,
+      maxXp: :max_xp,
       type: :type,
       meta: :meta
     })

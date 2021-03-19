@@ -58,7 +58,7 @@ defmodule CadetWeb.IncentivesController do
               "Achievement ability i.e. category"
             )
 
-            cardTileUrl(
+            cardBackground(
               :string,
               "URL of the achievement's background image"
             )
@@ -104,7 +104,7 @@ defmodule CadetWeb.IncentivesController do
           description("Achievement view properties")
 
           properties do
-            canvasUrl(
+            coverImage(
               :string,
               "URL of the image for the view"
             )
@@ -136,7 +136,7 @@ defmodule CadetWeb.IncentivesController do
               "Text to show when goal is completed"
             )
 
-            maxExp(
+            maxXp(
               :integer,
               "Total EXP for this goal"
             )
@@ -173,12 +173,12 @@ defmodule CadetWeb.IncentivesController do
               "Text to show when goal is completed"
             )
 
-            exp(
+            xp(
               :integer,
               "EXP currently attained by the user for this goal"
             )
 
-            maxExp(
+            maxXp(
               :integer,
               "Total EXP for this goal"
             )

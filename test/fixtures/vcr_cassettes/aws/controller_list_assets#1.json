@@ -14,7 +14,7 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets"
     },
     "response": {
       "binary": false,

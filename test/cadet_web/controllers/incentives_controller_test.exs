@@ -55,7 +55,7 @@ defmodule CadetWeb.IncentivesControllerTest do
       [resp_goal] = conn |> get("/v1/self/goals") |> json_response(200)
 
       assert goal_json_literal(0) = resp_goal
-      assert resp_goal["exp"] == progress.xp
+      assert resp_goal["xp"] == progress.xp
       assert resp_goal["completed"] == progress.completed
     end
 
