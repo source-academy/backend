@@ -24,7 +24,7 @@ defmodule CadetWeb.AnswerControllerTest do
     }
   end
 
-  describe "POST /assessments/question/{questionId}/submit/, Unauthenticated" do
+  describe "POST /assessments/question/{questionId}/answer/, Unauthenticated" do
     test "is disallowed", %{conn: conn, mcq_question: question} do
       conn = post(conn, build_url(question.id), %{answer: 5})
 
@@ -33,7 +33,7 @@ defmodule CadetWeb.AnswerControllerTest do
   end
 
   for role <- ~w(student staff admin)a do
-    describe "POST /assessments/question/{questionId}/submit/, #{role}" do
+    describe "POST /assessments/question/{questionId}/answer/, #{role}" do
       @tag authenticate: role
       test "valid params first submission is successful", %{
         conn: conn,
@@ -213,7 +213,7 @@ defmodule CadetWeb.AnswerControllerTest do
   end
 
   defp build_url(question_id) do
-    "/v2/assessments/question/#{question_id}/submit/"
+    "/v2/assessments/question/#{question_id}/answer/"
   end
 
   defp get_answer_value(question, assessment, user) do

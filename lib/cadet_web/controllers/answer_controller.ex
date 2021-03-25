@@ -42,7 +42,7 @@ defmodule CadetWeb.AnswerController do
   end
 
   swagger_path :submit do
-    post("/assessments/question/{questionId}/submit")
+    post("/assessments/question/{questionId}/answer")
 
     summary("Submit an answer to a question.")
 
