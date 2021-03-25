@@ -17,13 +17,6 @@ defmodule Cadet.Assessments do
 
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)
-  # @submit_answer_roles ~w(student staff admin)a
-  # @change_dates_assessment_role ~w(staff admin)a
-  # @delete_assessment_role ~w(staff admin)a
-  # @publish_assessment_role ~w(staff admin)a
-  # @unsubmit_assessment_role ~w(staff admin)a
-  # @see_all_submissions_roles ~w(staff admin)a
-  # @group_grading_summary_roles @see_all_submissions_roles
   @open_all_assessment_roles ~w(staff admin)a
 
   # These roles can save and finalise answers for closed assessments and
