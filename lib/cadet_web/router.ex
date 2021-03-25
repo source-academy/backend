@@ -139,7 +139,6 @@ defmodule CadetWeb.Router do
     post("/assessments", AdminAssessmentsController, :create)
     post("/assessments/:assessmentid", AdminAssessmentsController, :update)
     delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
-    post("/assessments/publish/:assessmentid", AdminAssessmentsController, :publish)
 
     put("/settings/sublanguage", AdminSettingsController, :update)
 
