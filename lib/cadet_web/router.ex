@@ -119,7 +119,7 @@ defmodule CadetWeb.Router do
     get("/assessments", AssessmentsController, :index)
     post("/assessments/:assessmentid", AssessmentsController, :show)
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
-    post("/assessments/question/:questionid/submit", AnswerController, :submit)
+    post("/assessments/question/:questionid/answer", AnswerController, :submit)
 
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)
