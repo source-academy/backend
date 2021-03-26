@@ -117,7 +117,8 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth])
 
     get("/assessments", AssessmentsController, :index)
-    post("/assessments/:assessmentid", AssessmentsController, :show)
+    get("/assessments/:assessmentid", AssessmentsController, :show)
+    post("/assessments/:assessmentid/unlock", AssessmentsController, :unlock)
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/answer", AnswerController, :submit)
 

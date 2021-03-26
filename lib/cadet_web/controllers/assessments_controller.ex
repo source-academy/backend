@@ -44,9 +44,17 @@ defmodule CadetWeb.AssessmentsController do
     render(conn, "index.json", assessments: assessments)
   end
 
-  def show(conn, params = %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
+  def show(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     user = conn.assigns[:current_user]
-    password = params |> Map.get("password")
+
+    case Assessments.assessment_with_questions_and_answers(assessment_id, user) do
+      {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
+  def unlock(conn, %{"assessmentid" => assessment_id, "password" => password }) when is_ecto_id(assessment_id) do
+    user = conn.assigns[:current_user]
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, user, password) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
@@ -88,9 +96,28 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :show do
-    post("/assessments/{assessmentId}")
+    get("/assessments/{assessmentId}")
 
     summary("Get information about one particular assessment.")
+
+    security([%{JWT: []}])
+
+    consumes("application/json")
+    produces("application/json")
+
+    parameters do
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:Assessment))
+    response(400, "Missing parameter(s) or invalid assessmentId")
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :unlock do
+    post("/assessments/{assessmentId}/unlock")
+
+    summary("Unlocks a password-protected assessment and returns its information")
 
     security([%{JWT: []}])
 
