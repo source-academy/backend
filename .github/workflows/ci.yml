@@ -42,7 +42,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-erlang-23.1.4-elixir-1.11.0-
       - name: Setup Elixir
-        uses: actions/setup-elixir@v1
+        uses: erlef/setup-elixir@v1
         with:
           elixir-version: 1.11.0
           otp-version: 23.1.4
