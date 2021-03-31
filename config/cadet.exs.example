@@ -111,3 +111,30 @@ config :cadet,
 
 config :sentry,
   dsn: "https://public_key/sentry.io/somethingsomething"
+
+# If you are not running on EC2, you will need to configure an AWS access token
+# for the backend to access AWS resources:
+#
+# This will make ExAWS read the values from the corresponding environment variables.
+# config :ex_aws,
+#   access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}],
+#   secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}]
+#
+# You can also just specify the values directly:
+# config :ex_aws,
+#   access_key_id: "ACCESS KEY",
+#   secret_access_key: "SECRET KEY"
+#
+# You may also want to change the AWS or S3 region used for all resources:
+# (Note, the default is ap-southeast-1 i.e. Singapore)
+# config :ex_aws,
+#   region: "ap-southeast-1",
+#   s3: [
+#     scheme: "https://",
+#     host: "s3.ap-southeast-1.amazonaws.com",
+#     region: "ap-southeast-1"
+#   ]
+
+# You may also want to change the timezone used for scheduled jobs
+# config :cadet, Cadet.Jobs.Scheduler,
+#   timezone: "Asia/Singapore",
