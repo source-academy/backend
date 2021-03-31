@@ -109,8 +109,10 @@ config :cadet,
     client_role_arn: "arn:aws:iam::12345678:role/env-cadet-frontend"
   ]
 
-config :sentry,
-  dsn: "https://public_key/sentry.io/somethingsomething"
+# Sentry DSN. This is only really useful to the NUS SoC deployments, but you can
+# specify a DSN here if you wish to track backend errors.
+# config :sentry,
+#   dsn: "https://public_key/sentry.io/somethingsomething"
 
 # If you are not running on EC2, you will need to configure an AWS access token
 # for the backend to access AWS resources:
