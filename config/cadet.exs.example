@@ -2,11 +2,18 @@
 
 import Config
 
+# See https://hexdocs.pm/phoenix/Phoenix.Endpoint.html#module-runtime-configuration
+# except for cors_endpoints, load_from_system_env which are custom
 config :cadet, CadetWeb.Endpoint,
+  # See https://hexdocs.pm/corsica/Corsica.html#module-origins
+  # Remove for "*"
   cors_endpoints: "example.com",
   server: true,
+  # If true, expects an environment variable PORT specifying the port to listen on
   load_from_system_env: true,
   url: [host: "api.example.com", port: 80],
+  # You can specify the port here instead
+  # e.g http: [compress: true, port: 4000]
   http: [compress: true],
   secret_key_base: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
@@ -15,8 +22,16 @@ config :cadet, Cadet.Auth.Guardian,
   secret_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 config :cadet, Cadet.Repo,
+  # Do not change this, only Postgres is supported
+  # (This is here because of how configuration works in Elixir.)
   adapter: Ecto.Adapters.Postgres,
+  # The AWS Secrets Manager secret name containing the database connection details
   rds_secret_name: "prod-cadet-db",
+  # Alternatively, you can include the credentials here:
+  # username: "postgres",
+  # password: "postgres",
+  # database: "cadet_stg",
+  # hostname: "localhost",
   pool_size: 10
 
 config :cadet,
