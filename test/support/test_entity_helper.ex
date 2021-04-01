@@ -21,10 +21,10 @@ defmodule Cadet.TestEntityHelper do
       "ability" => "Core",
       "position" => id,
       "title" => "Achievement #{id}",
-      "cardTileUrl" => "http://hello#{id}",
+      "cardBackground" => "http://hello#{id}",
       "isTask" => false,
       "view" => %{
-        "canvasUrl" => "http://bye#{id}",
+        "coverImage" => "http://bye#{id}",
         "completionText" => "Done #{id}",
         "description" => "Test #{id}"
       }
@@ -42,7 +42,7 @@ defmodule Cadet.TestEntityHelper do
 
   defmacro goal_json_literal(id) do
     Macro.escape(%{
-      "maxExp" => id,
+      "maxXp" => id,
       "meta" => %{"id" => id},
       "text" => "Sample #{id}",
       "type" => "type_#{id}"
