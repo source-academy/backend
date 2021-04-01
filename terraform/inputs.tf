@@ -1,6 +1,5 @@
 variable "env" {
   description = "Environment identifier"
-  default     = "prod"
 }
 
 variable "ec2_instance_type" {
@@ -53,4 +52,8 @@ variable "api_ssh_key_name" {
 
 variable "bastion_ssh_key_name" {
   description = "SSH key that the bastion should authorise (must already exist in AWS)"
+}
+
+variable "assets_bucket" {
+  description = "The S3 bucket containing the story assets."
 }
