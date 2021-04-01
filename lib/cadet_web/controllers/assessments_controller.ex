@@ -54,8 +54,8 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def unlock(conn, %{"assessmentid" => assessment_id, "password" => password})
-    when is_ecto_id(assessment_id) do
-      user = conn.assigns[:current_user]
+      when is_ecto_id(assessment_id) do
+    user = conn.assigns[:current_user]
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, user, password) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
