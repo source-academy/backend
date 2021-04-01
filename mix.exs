@@ -75,7 +75,7 @@ defmodule Cadet.Mixfile do
       {:recase, "~> 0.7", override: true},
       {:sentry, "~> 8.0"},
       {:sweet_xml, "~> 0.6"},
-      {:timex, "~> 3.0"},
+      {:timex, "3.6.4"},
 
       # development dependencies
       {:configparser_ex, "~> 4.0", only: [:dev, :test]},
