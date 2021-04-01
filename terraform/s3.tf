@@ -9,7 +9,7 @@ resource "aws_s3_bucket" "sourcecasts" {
 }
 
 resource "aws_s3_bucket" "assets" {
-  bucket = "source-academy-assets"
+  bucket = var.assets_bucket
   acl    = "public-read"
 
   tags = {
