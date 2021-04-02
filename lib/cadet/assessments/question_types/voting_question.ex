@@ -7,7 +7,7 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestion do
 
   @primary_key false
   embedded_schema do
-    embeds_many(:contestEntries, ContestEntry)
+    embeds_many(:contest_entries, ContestEntry)
     field(:content, :string)
     field(:prepend, :string, default: "")
     field(:template, :string)

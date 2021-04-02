@@ -2,7 +2,7 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   alias Cadet.Assessments
-  alias Cadet.Assessments.{Assessment, Question}
+  alias Cadet.Assessments.{Assessment, Question, SubmissionVotes}
 
   test "create assessments of all types" do
     for type <- Assessment.assessment_types() do
@@ -62,6 +62,24 @@ defmodule Cadet.AssessmentsTest do
     assert %{type: :mcq} = question
   end
 
+  test "create voting question" do
+    assessment = insert(:assessment)
+
+    {:ok, question} =
+      Assessments.create_question_for_assessment(
+        %{
+          type: :voting,
+          library: build(:library),
+          question: %{
+            content: Faker.Pokemon.name()
+          }
+        },
+        assessment.id
+      )
+
+    assert %{type: :voting} = question
+  end
+
   test "create question when there already exists questions" do
     assessment = insert(:assessment)
     _ = insert(:mcq_question, assessment: assessment, display_order: 1)
@@ -116,5 +134,47 @@ defmodule Cadet.AssessmentsTest do
     question = insert(:question)
     Assessments.delete_question(question.id)
     assert Repo.get(Question, question.id) == nil
+  end
+
+  test "insert votes into submission_votes table" do
+    assessment = insert(:assessment, type: "contest")
+    question = insert(:voting_question)
+    users = Enum.map(0..5, fn _x -> insert(:user) end)
+
+    Enum.map(users, fn user ->
+      insert(:submission, student: user, assessment: assessment, status: "submitted")
+    end)
+
+    usernames = Enum.map(users, fn user -> %{username: user.username} end)
+
+    Assessments.insert_voting(assessment.number, usernames, question.id)
+    assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 30
+  end
+
+  test "create voting parameters with invalid contest number" do
+    question = insert(:voting_question)
+
+    {status, _} = Assessments.insert_voting("", [], question.id)
+
+    assert status == :error
+  end
+
+  test "delete submission_votes when assessment is deleted" do
+    contest_assessment = insert(:assessment, type: "contest")
+    voting_assessment = insert(:assessment, type: "practical")
+    question = insert(:voting_question, assessment: voting_assessment)
+    users = Enum.map(0..5, fn _x -> insert(:user) end)
+
+    Enum.map(users, fn user ->
+      insert(:submission, student: user, assessment: contest_assessment, status: "submitted")
+    end)
+
+    usernames = Enum.map(users, fn user -> %{username: user.username} end)
+
+    Assessments.insert_voting(contest_assessment.number, usernames, question.id)
+
+    admin = insert(:user, role: "admin")
+    Assessments.delete_assessment(admin, voting_assessment.id)
+    assert Repo.exists?(SubmissionVotes, question_id: question.id) == false
   end
 end

@@ -61,7 +61,10 @@ defmodule Cadet.Assessments do
 
       Question
       |> where(assessment_id: ^id)
-      |> delete_submission_votes_association()
+      |> Repo.all()
+      |> Enum.each(fn q ->
+        delete_submission_votes_association(q)
+      end)
 
       Repo.delete(assessment)
     else
@@ -69,16 +72,10 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp delete_submission_votes_association(questions) do
-    questions
-    |> Repo.all()
-    |> Enum.each(fn question ->
-      SubmissionVotes
-      |> where(question_id: ^question.id)
-      |> Repo.delete_all()
-    end)
-
-    Repo.delete_all(questions)
+  def delete_submission_votes_association(question) do
+    SubmissionVotes
+    |> where(question_id: ^question.id)
+    |> Repo.delete_all()
   end
 
   defp delete_submission_assocation(submissions, assessment_id) do
@@ -283,7 +280,7 @@ defmodule Cadet.Assessments do
           {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
           {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
         end)
-        |> load_contest_voting_entries(id, user.id)
+        |> load_contest_voting_entries(user.id)
 
       assessment = Map.put(assessment, :questions, questions)
       {:ok, assessment}
@@ -390,10 +387,21 @@ defmodule Cadet.Assessments do
 
           # the is_nil(question) check allows for force updating of brand new assessments
           if !force_update or is_nil(question) do
-            question_params
-            |> Map.put(:display_order, index)
-            |> build_question_changeset_for_assessment_id(id)
-            |> Repo.insert()
+            {status, new_question} =
+              question_params
+              |> Map.put(:display_order, index)
+              |> build_question_changeset_for_assessment_id(id)
+              |> Repo.insert()
+
+            if status == :ok and new_question.type == :voting do
+              insert_voting(
+                question_params.question.contest_number,
+                question_params.question.usernames,
+                new_question.id
+              )
+            else
+              {status, new_question}
+            end
           else
             params =
               question_params
@@ -499,31 +507,94 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, params_with_assessment_id)
   end
 
-  def insert_voting(voting_params, assessment_id) do
-    question =
-      Question
-      |> where(assessment_id: ^assessment_id)
-      # voting assessment only has one question
-      |> first()
-      |> Repo.one()
+  def insert_voting(
+        contest_number,
+        usernames,
+        question_id
+      ) do
+    contest_assessment = Repo.get_by(Assessment, number: contest_number)
 
-    changesets =
-      Enum.map(voting_params, fn voting_entry ->
-        build_voting_submission_changeset_for_assessment_id(voting_entry.voting, question.id)
+    if contest_assessment != nil do
+      contest_submission_ids =
+        Submission
+        |> where(assessment_id: ^contest_assessment.id)
+        |> where(status: "submitted")
+        |> Repo.all()
+        |> Enum.map(fn x -> x.id end)
+
+      user_ids = Enum.map(usernames, fn x -> Repo.get_by(User, username: x.username).id end)
+
+      votes_per_user = min(length(contest_submission_ids), 10)
+
+      votes_per_submission =
+        trunc(Float.ceil(votes_per_user * length(usernames) / length(contest_submission_ids)))
+
+      submission_id_map =
+        contest_submission_ids
+        |> Enum.map(fn id -> {id, votes_per_submission} end)
+        |> Map.new()
+
+      {_submission_map, submission_votes_changesets} =
+        user_ids
+        |> Enum.reduce({submission_id_map, []}, fn user_id, acc ->
+          {submission_map, submission_votes} = acc
+
+          user_contest_submission =
+            Repo.get_by(Submission, student_id: user_id, assessment_id: contest_assessment.id)
+
+          {user_submission_id_votes_left, submission_map} =
+            if is_nil(user_contest_submission) do
+              {nil, submission_map}
+            else
+              user_submission_id_votes_left = Map.get(submission_map, user_contest_submission.id)
+              submission_map = Map.delete(submission_map, user_contest_submission.id)
+              {user_submission_id_votes_left, submission_map}
+            end
+
+          submission_ids = Enum.take_random(submission_map, votes_per_user)
+
+          new_submission_map =
+            submission_ids
+            |> Enum.reduce(submission_map, fn {s_id, votes_left}, acc ->
+              if votes_left - 1 == 0 do
+                Map.delete(acc, s_id)
+              else
+                Map.update(acc, s_id, 0, fn v -> v - 1 end)
+              end
+            end)
+
+          new_submission_votes =
+            submission_ids
+            |> Enum.reduce(submission_votes, fn {s_id, _votes_left}, acc ->
+              [
+                %SubmissionVotes{user_id: user_id, submission_id: s_id, question_id: question_id}
+                | acc
+              ]
+            end)
+
+          new_submission_map =
+            if user_submission_id_votes_left != nil do
+              Map.put(
+                new_submission_map,
+                user_contest_submission.id,
+                user_submission_id_votes_left
+              )
+            else
+              new_submission_map
+            end
+
+          {new_submission_map, new_submission_votes}
+        end)
+
+      submission_votes_changesets
+      |> Enum.with_index()
+      |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
+        Multi.insert(multi, Integer.to_string(index), changeset)
       end)
-
-    changesets
-    |> Enum.with_index()
-    |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
-      Multi.insert(multi, Integer.to_string(index), changeset)
-    end)
-    |> Repo.transaction()
-  end
-
-  defp build_voting_submission_changeset_for_assessment_id(params, question_id)
-       when is_ecto_id(question_id) do
-    params_with_question_id = Map.put_new(params, :question_id, question_id)
-    SubmissionVotes.changeset(%SubmissionVotes{}, params_with_question_id)
+      |> Repo.transaction()
+    else
+      {:error, "invalid contest number."}
+    end
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
@@ -604,12 +675,23 @@ defmodule Cadet.Assessments do
 
       {:ok, nil}
     else
-      {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
-      {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
-      {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
-      {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
-      {:error, :vote_not_unique} -> {:error, {:forbidden, "Vote is not unique!"}}
-      _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+      {:question_found?, false} ->
+        {:error, {:not_found, "Question not found"}}
+
+      {:is_open?, false} ->
+        {:error, {:forbidden, "Assessment not open"}}
+
+      {:status, _} ->
+        {:error, {:forbidden, "Assessment submission already finalised"}}
+
+      {:error, :race_condition} ->
+        {:error, {:internal_server_error, "Please try again later."}}
+
+      {:error, :vote_not_unique} ->
+        {:error, {:bad_request, "Invalid vote or vote is not unique! Vote is not saved."}}
+
+      _ ->
+        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
 
     # else
@@ -776,10 +858,10 @@ defmodule Cadet.Assessments do
   end
 
   def update_submission_status_router(submission = %Submission{}, question = %Question{}) do
-    if question.type == :voting do
-      update_contest_voting_submission_status(submission, question)
-    else
-      update_submission_status(submission, question.assessment)
+    case question.type do
+      :voting -> update_contest_voting_submission_status(submission, question)
+      :mcq -> update_submission_status(submission, question.assessment)
+      :programming -> update_submission_status(submission, question.assessment)
     end
   end
 
@@ -810,42 +892,25 @@ defmodule Cadet.Assessments do
   end
 
   def update_contest_voting_submission_status(submission = %Submission{}, question = %Question{}) do
-    count_entries =
-      length(
-        SubmissionVotes
-        |> where(question_id: ^question.id)
-        |> where(user_id: ^submission.student_id)
-        |> Repo.all()
-      )
+    not_nil_entries =
+      SubmissionVotes
+      |> where(question_id: ^question.id)
+      |> where(user_id: ^submission.student_id)
+      |> where([c], is_nil(c.score))
+      |> Repo.exists?()
 
-    count_not_nil_entries =
-      length(
-        SubmissionVotes
-        |> where(question_id: ^question.id)
-        |> where(user_id: ^submission.student_id)
-        |> where([c], not is_nil(c.score))
-        |> Repo.all()
-      )
-
-    if count_entries == count_not_nil_entries do
+    if not_nil_entries == false do
       submission |> Submission.changeset(%{status: :attempted}) |> Repo.update()
     end
   end
 
-  defp load_contest_voting_entries(questions, assessment_id, user_id) do
+  def load_contest_voting_entries(questions, user_id) do
     Enum.map(
       questions,
       fn q ->
         if q.type == :voting do
-          question =
-            Question
-            |> where(assessment_id: ^assessment_id)
-            |> Repo.one()
-
-          voting_question =
-            case all_submission_votes_by_question_id_and_user_id(question.id, user_id) do
-              {:ok, submission_votes} -> Map.put(q.question, :contestEntries, submission_votes)
-            end
+          submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
+          voting_question = Map.put(q.question, :contest_entries, submission_votes)
 
           Map.put(q, :question, voting_question)
         else
@@ -855,21 +920,13 @@ defmodule Cadet.Assessments do
     )
   end
 
-  @doc """
-  Function returning contest submission entries assigned to a user to vote for.
-  """
-  def all_submission_votes_by_question_id_and_user_id(question_id, user_id) do
-    query =
-      from(sv in SubmissionVotes,
-        where: sv.user_id == ^user_id,
-        where: sv.question_id == ^question_id,
-        join: s in assoc(sv, :submission),
-        join: ans in assoc(s, :answers),
-        select: %{submission_id: sv.submission_id, answer: ans.answer, score: sv.score}
-      )
-
-    submission_votes = Repo.all(query)
-    {:ok, submission_votes}
+  defp all_submission_votes_by_question_id_and_user_id(question_id, user_id) do
+    SubmissionVotes
+    |> where([v], v.user_id == ^user_id and v.question_id == ^question_id)
+    |> join(:inner, [v], s in assoc(v, :submission))
+    |> join(:inner, [v, s], a in assoc(s, :answers))
+    |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, score: v.score})
+    |> Repo.all()
   end
 
   @doc """
@@ -1227,7 +1284,7 @@ defmodule Cadet.Assessments do
     answer_content = build_answer_content(raw_answer, question.type)
 
     if question.type == :voting do
-      insert_or_update_voting_answer(user_id, answer_content)
+      insert_or_update_voting_answer(user_id, question.id, answer_content)
     else
       answer_changeset =
         %Answer{}
@@ -1246,25 +1303,34 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp insert_or_update_voting_answer(user_id, answer_content) do
-    ans =
-      answer_content
-      |> Enum.map(fn ans ->
-        {submission_id, score} = ans
+  def insert_or_update_voting_answer(user_id, question_id, answer_content) do
+    set_score_to_nil =
+      from(SubmissionVotes,
+        where: [user_id: ^user_id, question_id: ^question_id]
+      )
 
+    voting_multi =
+      Multi.new()
+      |> Multi.update_all(:set_score_to_nil, set_score_to_nil, set: [score: nil])
+
+    answer_content
+    |> Enum.with_index(1)
+    |> Enum.reduce(voting_multi, fn {entry, index}, multi ->
+      multi
+      |> Multi.run("update#{index}", fn _repo, _ ->
         SubmissionVotes
-        |> where(submission_id: ^submission_id)
-        |> where(user_id: ^user_id)
-        |> Repo.one()
-        |> SubmissionVotes.changeset(%{score: score})
-        |> Repo.update()
+        |> Repo.get_by(
+          user_id: user_id,
+          submission_id: entry.submission_id
+        )
+        |> SubmissionVotes.changeset(%{score: entry.score})
+        |> Repo.insert_or_update()
       end)
-
-    [status | _] = ans
-
-    case status do
-      {:ok, answer_content} -> {:ok, answer_content}
-      {:error, _} -> {:error, :vote_not_unique}
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, _result} -> {:ok, nil}
+      {:error, _name, _changset, _error} -> {:error, :vote_not_unique}
     end
   end
 
@@ -1278,6 +1344,10 @@ defmodule Cadet.Assessments do
 
       :voting ->
         raw_answer
+        |> Enum.map(fn ans ->
+          ans = for {key, value} <- ans, into: %{}, do: {String.to_existing_atom(key), value}
+          ans
+        end)
     end
   end
 end
