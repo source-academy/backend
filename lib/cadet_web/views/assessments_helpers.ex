@@ -54,6 +54,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     components
     |> Enum.filter(& &1)
     |> Enum.reduce(%{}, &Map.merge/2)
+
   end
 
   defp build_generic_question_fields(%{question: question}) do
@@ -73,9 +74,14 @@ defmodule CadetWeb.AssessmentsHelpers do
     if assessment_type not in @graded_assessment_types do
       solution_getter =
         case question_type do
-          :programming -> &Map.get(&1, "solution")
-          :mcq -> &find_correct_choice(&1["choices"])
-          :voting -> &Map.get(&1, "solution")
+          :programming ->
+            &Map.get(&1, "solution")
+
+          :mcq ->
+            &find_correct_choice(&1["choices"])
+
+          :voting ->
+            nil
         end
 
       transform_map_for_view(question, %{solution: solution_getter})
@@ -84,7 +90,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
   defp answer_builder_for(:programming), do: & &1.answer["code"]
   defp answer_builder_for(:mcq), do: & &1.answer["choice_id"]
-  defp answer_builder_for(:voting), do: & &1.answer["rankings"]
+  defp answer_builder_for(:voting), do: nil
 
   defp build_answer_fields_by_question_type(%{
          question: %{answer: answer, type: question_type}
@@ -223,8 +229,9 @@ defmodule CadetWeb.AssessmentsHelpers do
           prepend: "prepend",
           solutionTemplate: "template",
           contestEntries:
-            &Enum.map(&1[:contestEntries], fn entry -> build_contest_entry(entry) end)
+            &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end)
         })
+
     end
   end
 
