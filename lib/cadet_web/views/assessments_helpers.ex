@@ -54,7 +54,6 @@ defmodule CadetWeb.AssessmentsHelpers do
     components
     |> Enum.filter(& &1)
     |> Enum.reduce(%{}, &Map.merge/2)
-
   end
 
   defp build_generic_question_fields(%{question: question}) do
@@ -231,7 +230,6 @@ defmodule CadetWeb.AssessmentsHelpers do
           contestEntries:
             &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end)
         })
-
     end
   end
 
