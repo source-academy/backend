@@ -1,6 +1,6 @@
 defmodule Cadet.Assessments.QuestionTypes.ContestEntry do
   @moduledoc """
-  The Assessments.QuestionTypes.ContestEntry entity represents an Contest Entry.
+  The Assessments.QuestionTypes.ContestEntry entity represents a Contest Entry.
   """
   use Cadet, :model
 

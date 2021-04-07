@@ -267,7 +267,6 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^user.id)
 
-      # is an array of %Question{}
       questions =
         Question
         |> where(assessment_id: ^id)
@@ -527,7 +526,11 @@ defmodule Cadet.Assessments do
       votes_per_user = min(length(contest_submission_ids), 10)
 
       votes_per_submission =
-        trunc(Float.ceil(votes_per_user * length(usernames) / length(contest_submission_ids)))
+        if Enum.empty?(contest_submission_ids) do
+          0
+        else
+          trunc(Float.ceil(votes_per_user * length(usernames) / length(contest_submission_ids)))
+        end
 
       submission_id_map =
         contest_submission_ids
@@ -579,8 +582,6 @@ defmodule Cadet.Assessments do
                 user_contest_submission.id,
                 user_submission_id_votes_left
               )
-            else
-              new_submission_map
             end
 
           {new_submission_map, new_submission_votes}
@@ -593,7 +594,9 @@ defmodule Cadet.Assessments do
       end)
       |> Repo.transaction()
     else
-      {:error, "invalid contest number."}
+      changeset = change(%Assessment{}, %{number: ""})
+      error_changeset = Ecto.Changeset.add_error(changeset, :number, "invalid contest number")
+      {:error, error_changeset}
     end
   end
 
@@ -910,8 +913,8 @@ defmodule Cadet.Assessments do
       fn q ->
         if q.type == :voting do
           submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
-          voting_question = Map.put(q.question, :contest_entries, submission_votes)
 
+          voting_question = Map.put(q.question, :contest_entries, submission_votes)
           Map.put(q, :question, voting_question)
         else
           q

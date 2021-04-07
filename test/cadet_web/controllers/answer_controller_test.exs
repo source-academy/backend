@@ -3,7 +3,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
   import Ecto.Query
 
-  alias Cadet.Assessments.{Answer, Submission}
+  alias Cadet.Assessments.{Answer, Submission, SubmissionVotes}
   alias Cadet.Repo
   alias CadetWeb.AnswerController
 
@@ -16,11 +16,13 @@ defmodule CadetWeb.AnswerControllerTest do
     assessment = insert(:assessment, %{is_published: true})
     mcq_question = insert(:mcq_question, %{assessment: assessment})
     programming_question = insert(:programming_question, %{assessment: assessment})
+    voting_question = insert(:voting_question, %{assessment: assessment})
 
     %{
       assessment: assessment,
       mcq_question: mcq_question,
-      programming_question: programming_question
+      programming_question: programming_question,
+      voting_question: voting_question
     }
   end
 
@@ -39,7 +41,8 @@ defmodule CadetWeb.AnswerControllerTest do
         conn: conn,
         assessment: assessment,
         mcq_question: mcq_question,
-        programming_question: programming_question
+        programming_question: programming_question,
+        voting_question: voting_question
       } do
         user = conn.assigns.current_user
         mcq_conn = post(conn, build_url(mcq_question.id), %{answer: 5})
@@ -51,6 +54,25 @@ defmodule CadetWeb.AnswerControllerTest do
 
         assert response(programming_conn, 200) =~ "OK"
         assert get_answer_value(programming_question, assessment, user) == "hello world"
+
+        contest_submission = insert(:submission)
+
+        Repo.insert(%SubmissionVotes{
+          user_id: user.id,
+          question_id: voting_question.id,
+          submission_id: contest_submission.id
+        })
+
+        voting_conn =
+          post(conn, build_url(voting_question.id), %{
+            answer: [
+              %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 3}
+            ]
+          })
+
+        assert response(voting_conn, 200) =~ "OK"
+        score = get_score_for_submission_vote(voting_question, user, contest_submission)
+        assert score == 3
       end
 
       @tag authenticate: role
@@ -58,7 +80,8 @@ defmodule CadetWeb.AnswerControllerTest do
         conn: conn,
         assessment: assessment,
         mcq_question: mcq_question,
-        programming_question: programming_question
+        programming_question: programming_question,
+        voting_question: voting_question
       } do
         user = conn.assigns.current_user
         mcq_conn = post(conn, build_url(mcq_question.id), %{answer: 5})
@@ -80,6 +103,35 @@ defmodule CadetWeb.AnswerControllerTest do
 
         assert response(updated_programming_conn, 200) =~ "OK"
         assert get_answer_value(programming_question, assessment, user) == "hello_world"
+
+        contest_submission = insert(:submission)
+
+        Repo.insert(%SubmissionVotes{
+          user_id: user.id,
+          question_id: voting_question.id,
+          submission_id: contest_submission.id
+        })
+
+        voting_conn =
+          post(conn, build_url(voting_question.id), %{
+            answer: [
+              %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 3}
+            ]
+          })
+
+        assert response(voting_conn, 200) =~ "OK"
+
+        updated_voting_conn =
+          post(conn, build_url(voting_question.id), %{
+            answer: [
+              %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 5}
+            ]
+          })
+
+        assert response(updated_voting_conn, 200) =~ "OK"
+
+        score = get_score_for_submission_vote(voting_question, user, contest_submission)
+        assert score == 5
       end
 
       @tag authenticate: role
@@ -87,11 +139,25 @@ defmodule CadetWeb.AnswerControllerTest do
         conn: conn,
         assessment: assessment,
         mcq_question: mcq_question,
-        programming_question: programming_question
+        programming_question: programming_question,
+        voting_question: voting_question
       } do
         user = conn.assigns.current_user
         post(conn, build_url(mcq_question.id), %{answer: 5})
         post(conn, build_url(programming_question.id), %{answer: "hello world"})
+        contest_submission = insert(:submission)
+
+        Repo.insert(%SubmissionVotes{
+          user_id: user.id,
+          question_id: voting_question.id,
+          submission_id: contest_submission.id
+        })
+
+        post(conn, build_url(voting_question.id), %{
+          answer: [
+            %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 3}
+          ]
+        })
 
         assessment = assessment |> Repo.preload(:questions)
 
@@ -143,7 +209,8 @@ defmodule CadetWeb.AnswerControllerTest do
         conn: conn,
         assessment: assessment,
         mcq_question: mcq_question,
-        programming_question: programming_question
+        programming_question: programming_question,
+        voting_question: voting_question
       } do
         user = conn.assigns.current_user
         missing_answer_conn = post(conn, build_url(programming_question.id), %{answ: 5})
@@ -157,6 +224,72 @@ defmodule CadetWeb.AnswerControllerTest do
         programming_conn = post(conn, build_url(mcq_question.id), %{answer: "hello world"})
         assert response(programming_conn, 400) == "Missing or invalid parameter(s)"
         assert is_nil(get_answer_value(programming_question, assessment, user))
+
+        contest_submission = insert(:submission)
+
+        Repo.insert(%SubmissionVotes{
+          user_id: user.id,
+          question_id: voting_question.id,
+          submission_id: contest_submission.id
+        })
+
+        voting_conn =
+          post(conn, build_url(voting_question.id), %{
+            answer: [
+              %{
+                "answer" => "hello world",
+                "submission_id" => contest_submission.id,
+                "score" => "a"
+              }
+            ]
+          })
+
+        assert response(voting_conn, 400) ==
+                 "Invalid vote or vote is not unique! Vote is not saved."
+      end
+
+      @tag authenticate: role
+      test "update duplicate score in submission_votes is unsuccessful", %{
+        conn: conn,
+        voting_question: voting_question
+      } do
+        user = conn.assigns.current_user
+
+        first_contest_submission = insert(:submission)
+        second_contest_submission = insert(:submission)
+
+        Repo.insert(%SubmissionVotes{
+          user_id: user.id,
+          question_id: voting_question.id,
+          submission_id: first_contest_submission.id,
+          score: 1
+        })
+
+        Repo.insert(%SubmissionVotes{
+          user_id: user.id,
+          question_id: voting_question.id,
+          submission_id: second_contest_submission.id,
+          score: 2
+        })
+
+        voting_conn =
+          post(conn, build_url(voting_question.id), %{
+            answer: [
+              %{
+                "answer" => "hello world",
+                "submission_id" => first_contest_submission.id,
+                "score" => 3
+              },
+              %{
+                "answer" => "hello world",
+                "submission_id" => second_contest_submission.id,
+                "score" => 3
+              }
+            ]
+          })
+
+        assert response(voting_conn, 400) ==
+                 "Invalid vote or vote is not unique! Vote is not saved."
       end
     end
   end
@@ -231,5 +364,14 @@ defmodule CadetWeb.AnswerControllerTest do
         :programming -> Map.get(answer.answer, "code")
       end
     end
+  end
+
+  defp get_score_for_submission_vote(question, user, submission) do
+    SubmissionVotes
+    |> where(question_id: ^question.id)
+    |> where(user_id: ^user.id)
+    |> where(submission_id: ^submission.id)
+    |> select([c], c.score)
+    |> Repo.one()
   end
 end

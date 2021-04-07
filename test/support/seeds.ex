@@ -93,6 +93,16 @@ defmodule Cadet.Test.Seeds do
         })
       end)
 
+    voting_questions =
+      Enum.map(7..9, fn id ->
+        insert(:voting_question, %{
+          display_order: id,
+          assessment: assessment,
+          max_grade: 0,
+          max_xp: 0
+        })
+      end)
+
     submissions =
       students
       |> Enum.take(2)
@@ -131,7 +141,8 @@ defmodule Cadet.Test.Seeds do
       mcq_questions: mcq_questions,
       submissions: submissions,
       programming_answers: programming_answers,
-      mcq_answers: mcq_answers
+      mcq_answers: mcq_answers,
+      voting_questions: voting_questions
     }
   end
 end

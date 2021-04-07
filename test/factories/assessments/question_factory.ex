@@ -8,7 +8,8 @@ defmodule Cadet.Assessments.QuestionFactory do
       alias Cadet.Assessments.Question
 
       def question_factory do
-        Enum.random([build(:programming_question), build(:mcq_question)])
+        # Enum.random([build(:programming_question), build(:mcq_question), build(:voting_question)])
+        build(:voting_question)
       end
 
       def programming_question_factory do
@@ -70,6 +71,27 @@ defmodule Cadet.Assessments.QuestionFactory do
         %{
           content: Faker.Pokemon.name(),
           hint: Faker.Pokemon.location()
+        }
+      end
+
+      def voting_question_factory do
+        library = build(:library)
+        contest_assessment = insert(:assessment)
+
+        %Question{
+          type: :voting,
+          max_grade: 10,
+          max_xp: 100,
+          assessment: build(:assessment, %{is_published: true}),
+          library: build(:library),
+          grading_library: Enum.random([build(:library), library]),
+          question: %{
+            content: Faker.Pokemon.name(),
+            prepend: Faker.Pokemon.location(),
+            template: Faker.Lorem.Shakespeare.as_you_like_it(),
+            contest_entries: [],
+            contest_number: contest_assessment.number
+          }
         }
       end
     end

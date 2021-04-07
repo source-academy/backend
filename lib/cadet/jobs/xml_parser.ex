@@ -20,14 +20,12 @@ defmodule Cadet.Updater.XMLParser do
   def parse_xml(xml, force_update \\ false) do
     with {:ok, assessment_params} <- process_assessment(xml),
          {:ok, questions_params} <- process_questions(xml),
-         {:ok, voting_params} <- process_voting(xml),
          {:ok, %{assessment: assessment}} <-
            Assessments.insert_or_update_assessments_and_questions(
              assessment_params,
              questions_params,
              force_update
-           ),
-         {:ok, _vote_submission} <- Assessments.insert_voting(voting_params, assessment.id) do
+           ) do
       Logger.info(
         "Created/updated assessment with id: #{assessment.id}, with #{length(questions_params)} questions."
       )
@@ -171,47 +169,6 @@ defmodule Cadet.Updater.XMLParser do
     end
   end
 
-  defp process_voting(xml) do
-    voting_params =
-      xml
-      |> xpath(
-        ~x"//VOTING/VOTE"el,
-        entity: ~x"."
-      )
-      |> Enum.map(fn param ->
-        with vote when is_map(vote) <- process_vote(param),
-             vote when is_map(vote) <- Map.delete(vote, :entity) do
-          vote
-        else
-          {:error, error_message} -> {:error, error_message}
-        end
-      end)
-
-    if Enum.any?(voting_params, &(!is_map(&1))) do
-      error = Enum.find(voting_params, &(!is_map(&1)))
-      error
-    else
-      {:ok, voting_params}
-    end
-  end
-
-  defp process_vote(voting) do
-    vote =
-      voting[:entity]
-      |> xpath(
-        ~x"."e,
-        user_id: ~x"./@userid"oi,
-        submission_id: ~x"./@submissionid"oi
-      )
-
-    if is_map(vote) do
-      Map.put(voting, :voting, vote)
-    else
-      error = Enum.find(vote, &(!is_map(&1)))
-      {:error, error}
-    end
-  end
-
   @spec log_error_bad_changeset(Ecto.Changeset.t(), any()) :: :ok
   defp log_error_bad_changeset(changeset, entity) do
     Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset)}")
@@ -279,13 +236,28 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   defp process_question_entity_by_type(entity, "voting") do
-    entity
-    |> xpath(
-      ~x"."e,
-      content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-      prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
-      template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
-      postpend: ~x"./SNIPPET/POSTPEND/text()" |> transform_by(&process_charlist/1)
+    Map.merge(
+      Map.merge(
+        entity
+        |> xpath(
+          ~x"."e,
+          content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+          prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
+          template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1)
+        ),
+        entity
+        |> xpath(
+          ~x"./VOTING"e,
+          contest_number: ~x"./@contest_number"s
+        )
+      ),
+      entity
+      |> xmap(
+        usernames: [
+          ~x"./VOTING/USER"l,
+          username: ~x"./@username"s
+        ]
+      )
     )
   end
 

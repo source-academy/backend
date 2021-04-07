@@ -76,7 +76,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "private" => false,
               "isPublished" => &1.is_published,
               "gradedCount" => 0,
-              "questionCount" => 6
+              "questionCount" => 9
             }
           )
 
@@ -155,7 +155,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
-            "questionCount" => 6
+            "questionCount" => 9
           }
         )
 
@@ -277,7 +277,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "status" => get_assessment_status(user, &1),
               "private" => false,
               "gradedCount" => 0,
-              "questionCount" => 6,
+              "questionCount" => 9,
               "isPublished" =>
                 if &1.type == "mission" do
                   false
@@ -337,7 +337,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
              %{
                assessment: assessment,
                mcq_questions: mcq_questions,
-               programming_questions: programming_questions
+               programming_questions: programming_questions,
+               voting_questions: voting_questions
              }} <- assessments do
           # Programming questions should come first due to seeding order
           expected_programming_questions =
@@ -400,7 +401,60 @@ defmodule CadetWeb.AssessmentsControllerTest do
               }
             )
 
-          expected_questions = expected_programming_questions ++ expected_mcq_questions
+          expected_voting_questions =
+            Enum.map(
+              voting_questions,
+              &%{
+                "id" => &1.id,
+                "type" => "#{&1.type}",
+                "content" => &1.question.content,
+                "solutionTemplate" => &1.question.template,
+                "prepend" => &1.question.prepend
+              }
+            )
+
+          contests_submissions =
+            Enum.map(0..2, fn _ -> Enum.map(0..2, fn _ -> insert(:submission) end) end)
+
+          contests_answers =
+            Enum.map(contests_submissions, fn contest_submissions ->
+              Enum.map(contest_submissions, fn submission ->
+                insert(:answer, %{
+                  submission: submission,
+                  answer: build(:programming_answer),
+                  question: build(:programming_question)
+                })
+              end)
+            end)
+
+          voting_questions
+          |> Enum.zip(contests_submissions)
+          |> Enum.map(fn {question, contest_submissions} ->
+            Enum.map(contest_submissions, fn submission ->
+              insert(:submission_votes, %{user: user, submission: submission, question: question})
+            end)
+          end)
+
+          contests_entries =
+            Enum.map(contests_answers, fn contest_answers ->
+              Enum.map(contest_answers, fn answer ->
+                %{
+                  "submission_id" => answer.submission.id,
+                  "answer" => %{"code" => answer.answer.code},
+                  "score" => nil
+                }
+              end)
+            end)
+
+          expected_voting_questions =
+            expected_voting_questions
+            |> Enum.zip(contests_entries)
+            |> Enum.map(fn {question, contest_entries} ->
+              Map.put(question, "contestEntries", contest_entries)
+            end)
+
+          expected_questions =
+            expected_programming_questions ++ expected_mcq_questions ++ expected_voting_questions
 
           resp_questions =
             conn
@@ -438,12 +492,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
              %{
                assessment: assessment,
                mcq_questions: mcq_questions,
-               programming_questions: programming_questions
+               programming_questions: programming_questions,
+               voting_question: voting_questions
              }} <- assessments do
           # Programming questions should come first due to seeding order
 
           expected_libraries =
-            (programming_questions ++ mcq_questions)
+            (programming_questions ++ mcq_questions ++ voting_questions)
             |> Enum.map(&Map.get(&1, :library))
             |> Enum.map(
               &%{
@@ -480,7 +535,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         %{
           assessment: assessment,
           mcq_questions: mcq_questions,
-          programming_questions: programming_questions
+          programming_questions: programming_questions,
+          voting_questions: voting_questions
         } = assessments["path"]
 
         # Seeds set solution as 0
@@ -489,7 +545,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
         expected_programming_solutions =
           Enum.map(programming_questions, &%{"solution" => &1.question.solution})
 
-        expected_solutions = Enum.sort(expected_mcq_solutions ++ expected_programming_solutions)
+        # No solution in a voting question
+        expected_voting_solutions = Enum.map(voting_questions, fn _ -> %{"solution" => nil} end)
+
+        expected_solutions =
+          Enum.sort(
+            expected_mcq_solutions ++ expected_programming_solutions ++ expected_voting_solutions
+          )
 
         resp_solutions =
           conn
@@ -532,6 +594,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
               |> Stream.repeatedly()
               |> Enum.take(length(programming_answers) + length(mcq_answers))
             end
+
+          # voting question has no answer, hence xp = 0, grade = 0.
+          # There are 3 seeded voting questions.
+          expected_voting_answer = Enum.map(0..2, fn _ -> %{"xp" => 0, "grade" => 0} end)
+
+          expected = expected ++ expected_voting_answer
 
           resp =
             conn
@@ -585,12 +653,16 @@ defmodule CadetWeb.AssessmentsControllerTest do
              programming_answers: [programming_answers | _]
            }} <- assessments do
         # Programming questions should come first due to seeding order
-
         expected_programming_answers =
           Enum.map(programming_answers, &%{"answer" => &1.answer.code})
 
         expected_mcq_answers = Enum.map(mcq_answers, &%{"answer" => &1.answer.choice_id})
-        expected_answers = expected_programming_answers ++ expected_mcq_answers
+
+        # Voting question has no answers. There are 3 seeded voting questions.
+        expected_voting_answers = Enum.map(0..2, fn _ -> %{"answer" => nil} end)
+
+        expected_answers =
+          expected_programming_answers ++ expected_mcq_answers ++ expected_voting_answers
 
         resp_answers =
           conn

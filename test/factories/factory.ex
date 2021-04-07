@@ -11,7 +11,8 @@ defmodule Cadet.Factory do
     AssessmentFactory,
     LibraryFactory,
     QuestionFactory,
-    SubmissionFactory
+    SubmissionFactory,
+    SubmissionVotesFactory
   }
 
   use Cadet.Stories.{StoryFactory}

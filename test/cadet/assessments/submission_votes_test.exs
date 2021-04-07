@@ -69,15 +69,12 @@ defmodule Cadet.Assessments.SubmissionVotesTest do
       {:ok, _} = Repo.insert(first_entry)
       new_submission = insert(:submission)
 
-      second_entry = %{
-        user_id: params.user_id,
-        submission_id: new_submission.id,
-        question_id: params.question_id,
-        score: params.score
-      }
+      second_entry =
+        first_entry
+        |> Map.delete(:submission_id)
+        |> Map.put(:submission_id, new_submission.id)
 
-      changeset = SubmissionVotes.changeset(%SubmissionVotes{}, second_entry)
-      {:error, changeset} = Repo.insert(changeset)
+      {:error, changeset} = Repo.insert(second_entry)
       refute changeset.valid?
     end
   end
