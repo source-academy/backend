@@ -8,8 +8,7 @@ defmodule Cadet.Assessments.QuestionFactory do
       alias Cadet.Assessments.Question
 
       def question_factory do
-        # Enum.random([build(:programming_question), build(:mcq_question), build(:voting_question)])
-        build(:voting_question)
+        Enum.random([build(:programming_question), build(:mcq_question), build(:voting_question)])
       end
 
       def programming_question_factory do
