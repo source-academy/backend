@@ -12,15 +12,15 @@ defmodule CadetWeb.AssessmentsController do
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     user = conn.assigns[:current_user]
 
-    with submission <- Assessments.get_submission(assessment_id, user),
-         {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+    with {:submission, submission} when not is_nil(submission) <-
+           {:submission, Assessments.get_submission(assessment_id, user)},
          {:is_open?, true} <-
            {:is_open?,
             user.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
          {:ok, _nil} <- Assessments.finalise_submission(submission) do
       text(conn, "OK")
     else
-      {:submission_found?, false} ->
+      {:submission, nil} ->
         conn
         |> put_status(:not_found)
         |> text("Submission not found")

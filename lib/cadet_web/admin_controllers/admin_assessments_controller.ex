@@ -97,7 +97,7 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     security([%{JWT: []}])
 
-    consumes("application/json")
+    consumes("multipart/form-data")
 
     parameters do
       assessment(:body, :file, "Assessment to create or update", required: true)

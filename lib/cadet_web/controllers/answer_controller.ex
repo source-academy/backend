@@ -12,15 +12,17 @@ defmodule CadetWeb.AnswerController do
   def submit(conn, %{"questionid" => question_id, "answer" => answer})
       when is_ecto_id(question_id) do
     user = conn.assigns[:current_user]
-    bypass = user.role in @bypass_closed_roles
+    can_bypass? = user.role in @bypass_closed_roles
     question = Assessments.get_question(question_id)
 
-    with {:question_found?, true} <- {:question_found?, is_map(question)},
-         {:is_open?, true} <- {:is_open?, bypass or Assessments.is_open?(question.assessment)},
-         {:ok, _nil} <- Assessments.answer_question(question, user, answer, bypass) do
+    with {:question, question} when not is_nil(question) <-
+           {:question, Assessments.get_question(question_id)},
+         {:is_open?, true} <-
+           {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
+         {:ok, _nil} <- Assessments.answer_question(question, user, answer, can_bypass?) do
       text(conn, "OK")
     else
-      {:question_found?, false} ->
+      {:question, nil} ->
         conn
         |> put_status(:not_found)
         |> text("Question not found")
