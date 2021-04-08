@@ -52,15 +52,6 @@ defmodule CadetWeb.Router do
 
     get("/achievements", IncentivesController, :index_achievements)
 
-    get("/assessments", AssessmentsController, :index)
-    post("/assessments", AssessmentsController, :create)
-    delete("/assessments/:assessmentid", AssessmentsController, :delete)
-    post("/assessments/:id", AssessmentsController, :show)
-    post("/assessments/publish/:assessmentid", AssessmentsController, :publish)
-    post("/assessments/update/:assessmentid", AssessmentsController, :update)
-    post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
-    post("/assessments/question/:questionid/submit", AnswerController, :submit)
-
     get("/stories", StoriesController, :index)
     post("/stories", StoriesController, :create)
     delete("/stories/:storyid", StoriesController, :delete)
@@ -125,6 +116,12 @@ defmodule CadetWeb.Router do
   scope "/v2", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
+    get("/assessments", AssessmentsController, :index)
+    get("/assessments/:assessmentid", AssessmentsController, :show)
+    post("/assessments/:assessmentid/unlock", AssessmentsController, :unlock)
+    post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
+    post("/assessments/question/:questionid/answer", AnswerController, :submit)
+
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)
     post("/devices/:id", DevicesController, :edit)
@@ -139,6 +136,10 @@ defmodule CadetWeb.Router do
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
     delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
+
+    post("/assessments", AdminAssessmentsController, :create)
+    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
+    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
 
     put("/settings/sublanguage", AdminSettingsController, :update)
 

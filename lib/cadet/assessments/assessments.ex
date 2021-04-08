@@ -17,31 +17,11 @@ defmodule Cadet.Assessments do
 
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)
-  # @submit_answer_roles ~w(student staff admin)a
-  # @change_dates_assessment_role ~w(staff admin)a
-  # @delete_assessment_role ~w(staff admin)a
-  # @publish_assessment_role ~w(staff admin)a
-  # @unsubmit_assessment_role ~w(staff admin)a
-  # @see_all_submissions_roles ~w(staff admin)a
-  # @group_grading_summary_roles @see_all_submissions_roles
   @open_all_assessment_roles ~w(staff admin)a
 
   # These roles can save and finalise answers for closed assessments and
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
-
-  def change_dates_assessment(id, close_at, open_at) do
-    if Timex.before?(close_at, open_at) do
-      {:error, {:bad_request, "New end date should occur after new opening date"}}
-    else
-      update_assessment(id, %{close_at: close_at, open_at: open_at})
-    end
-  end
-
-  def toggle_publish_assessment(id) do
-    assessment = Repo.get(Assessment, id)
-    update_assessment(id, %{is_published: !assessment.is_published})
-  end
 
   def delete_assessment(id) do
     assessment = Repo.get(Assessment, id)
@@ -487,7 +467,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def publish_assessment(id) do
+  def publish_assessment(id) when is_ecto_id(id) do
     update_assessment(id, %{is_published: true})
   end
 
@@ -511,6 +491,14 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def get_question(id) when is_ecto_id(id) do
+    Question
+    |> where(id: ^id)
+    |> join(:inner, [q], assessment in assoc(q, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
   def delete_question(id) when is_ecto_id(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
@@ -525,53 +513,32 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(id, user = %User{role: role}, raw_answer) when is_ecto_id(id) do
-    # if role in @submit_answer_roles do
-    question =
-      Question
-      |> where(id: ^id)
-      |> join(:inner, [q], assessment in assoc(q, :assessment))
-      |> preload([_, a], assessment: a)
-      |> Repo.one()
-
-    bypass = role in @bypass_closed_roles
-
-    with {:question_found?, true} <- {:question_found?, is_map(question)},
-         {:is_open?, true} <- {:is_open?, bypass or is_open?(question.assessment)},
-         {:ok, submission} <- find_or_create_submission(user, question.assessment),
-         {:status, true} <- {:status, bypass or submission.status != :submitted},
+  def answer_question(question = %Question{}, user = %User{}, raw_answer, force_submit) do
+    with {:ok, submission} <- find_or_create_submission(user, question.assessment),
+         {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer) do
       update_submission_status(submission, question.assessment)
 
       {:ok, nil}
     else
-      {:question_found?, false} -> {:error, {:not_found, "Question not found"}}
-      {:is_open?, false} -> {:error, {:forbidden, "Assessment not open"}}
       {:status, _} -> {:error, {:forbidden, "Assessment submission already finalised"}}
       {:error, :race_condition} -> {:error, {:internal_server_error, "Please try again later."}}
       _ -> {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
-
-    # else
-    #  {:error, {:forbidden, "User is not permitted to answer questions"}}
-    # end
   end
 
-  def finalise_submission(assessment_id, %User{id: user_id, role: role})
+  def get_submission(assessment_id, %User{id: user_id})
       when is_ecto_id(assessment_id) do
-    # if role in @submit_answer_roles do
-    submission =
-      Submission
-      |> where(assessment_id: ^assessment_id)
-      |> where(student_id: ^user_id)
-      |> join(:inner, [s], a in assoc(s, :assessment))
-      |> preload([_, a], assessment: a)
-      |> Repo.one()
+    Submission
+    |> where(assessment_id: ^assessment_id)
+    |> where(student_id: ^user_id)
+    |> join(:inner, [s], a in assoc(s, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
 
-    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-         {:is_open?, true} <-
-           {:is_open?, role in @bypass_closed_roles or is_open?(submission.assessment)},
-         {:status, :attempted} <- {:status, submission.status},
+  def finalise_submission(submission = %Submission{}) do
+    with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
       # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
       Notifications.write_notification_when_student_submits(submission)
@@ -580,12 +547,6 @@ defmodule Cadet.Assessments do
 
       {:ok, nil}
     else
-      {:submission_found?, false} ->
-        {:error, {:not_found, "Submission not found"}}
-
-      {:is_open?, false} ->
-        {:error, {:forbidden, "Assessment not open"}}
-
       {:status, :attempting} ->
         {:error, {:bad_request, "Some questions have not been attempted"}}
 
@@ -595,10 +556,6 @@ defmodule Cadet.Assessments do
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
     end
-
-    # else
-    #   {:error, {:forbidden, "User is not permitted to answer questions"}}
-    # end
   end
 
   def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
@@ -1003,7 +960,7 @@ defmodule Cadet.Assessments do
 
   # Checks if an assessment is open and published.
   @spec is_open?(%Assessment{}) :: boolean()
-  defp is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+  def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
     Timex.between?(Timex.now(), open_at, close_at) and is_published
   end
 
@@ -1016,9 +973,9 @@ defmodule Cadet.Assessments do
           submitted_sidequests: number()
         }
 
-  @spec get_group_grading_summary() ::
+  @spec get_group_grading_summary ::
           {:ok, [group_summary_entry()]}
-  def get_group_grading_summary() do
+  def get_group_grading_summary do
     subs =
       Answer
       |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
