@@ -24,18 +24,20 @@ defmodule CadetWeb.Router do
     get("/.well-known/jwks.json", JWKSController, :index)
   end
 
+  # V2 API
+
   # Public Pages
-  scope "/v1", CadetWeb do
+  scope "/v2", CadetWeb do
     pipe_through([:api, :auth])
 
     get("/sourcecast", SourcecastController, :index)
-    post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
+    post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
     get("/settings/sublanguage", SettingsController, :index)
   end
 
-  scope "/v1", CadetWeb do
+  scope "/v2", CadetWeb do
     # no sessions or anything here
 
     get("/devices/:secret/cert", DevicesController, :get_cert)
@@ -45,10 +47,16 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v1", CadetWeb do
+  scope "/v2", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
+
+    get("/assessments", AssessmentsController, :index)
+    get("/assessments/:assessmentid", AssessmentsController, :show)
+    post("/assessments/:assessmentid/unlock", AssessmentsController, :unlock)
+    post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
+    post("/assessments/question/:questionid/answer", AnswerController, :submit)
 
     get("/achievements", IncentivesController, :index_achievements)
 
@@ -71,62 +79,10 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v1/self", CadetWeb do
+  scope "/v2/self", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
     get("/goals", IncentivesController, :index_goals)
-  end
-
-  scope "/v1/admin", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
-
-    get("/users", AdminUserController, :index)
-
-    put("/achievements", AdminAchievementsController, :bulk_update)
-    put("/achievements/:uuid", AdminAchievementsController, :update)
-    delete("/achievements/:uuid", AdminAchievementsController, :delete)
-
-    get("/goals", AdminGoalsController, :index)
-    put("/goals", AdminGoalsController, :bulk_update)
-    put("/goals/:uuid", AdminGoalsController, :update)
-    delete("/goals/:uuid", AdminGoalsController, :delete)
-  end
-
-  # V2 API
-
-  # Public Pages
-  scope "/v2", CadetWeb do
-    pipe_through([:api, :auth])
-
-    post("/auth/login", AuthController, :create)
-    post("/auth/refresh", AuthController, :refresh)
-    post("/auth/logout", AuthController, :logout)
-  end
-
-  scope "/v2", CadetWeb do
-    # no sessions or anything here
-
-    get("/devices/:secret/cert", DevicesController, :get_cert)
-    get("/devices/:secret/key", DevicesController, :get_key)
-    get("/devices/:secret/client_id", DevicesController, :get_client_id)
-    get("/devices/:secret/mqtt_endpoint", DevicesController, :get_mqtt_endpoint)
-  end
-
-  # Authenticated Pages
-  scope "/v2", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth])
-
-    get("/assessments", AssessmentsController, :index)
-    get("/assessments/:assessmentid", AssessmentsController, :show)
-    post("/assessments/:assessmentid/unlock", AssessmentsController, :unlock)
-    post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
-    post("/assessments/question/:questionid/answer", AnswerController, :submit)
-
-    get("/devices", DevicesController, :index)
-    post("/devices", DevicesController, :register)
-    post("/devices/:id", DevicesController, :edit)
-    delete("/devices/:id", DevicesController, :deregister)
-    get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
   end
 
   # Admin pages
@@ -155,6 +111,19 @@ defmodule CadetWeb.Router do
       AdminGradingController,
       :autograde_answer
     )
+
+    get("/users", AdminUserController, :index)
+
+    put("/achievements", AdminAchievementsController, :bulk_update)
+    put("/achievements/:uuid", AdminAchievementsController, :update)
+    delete("/achievements/:uuid", AdminAchievementsController, :delete)
+
+    get("/goals", AdminGoalsController, :index)
+    put("/goals", AdminGoalsController, :bulk_update)
+    put("/goals/:uuid", AdminGoalsController, :update)
+    delete("/goals/:uuid", AdminGoalsController, :delete)
+
+    put("/settings/sublanguage", AdminSettingsController, :update)
   end
 
   # Other scopes may use custom stacks.
@@ -168,7 +137,7 @@ defmodule CadetWeb.Router do
         version: "1.0",
         title: "cadet"
       },
-      basePath: "/v1",
+      basePath: "/v2",
       securityDefinitions: %{
         JWT: %{
           type: "apiKey",

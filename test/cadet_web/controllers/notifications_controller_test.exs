@@ -164,6 +164,6 @@ defmodule CadetWeb.NotificationsControllerTest do
     end
   end
 
-  defp build_url, do: "/v1/notifications"
-  defp build_acknowledge_url, do: "/v1/notifications/acknowledge"
+  defp build_url, do: "/v2/notifications"
+  defp build_acknowledge_url, do: "/v2/notifications/acknowledge"
 end

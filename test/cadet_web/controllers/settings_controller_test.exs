@@ -24,5 +24,5 @@ defmodule CadetWeb.SettingsControllerTest do
     end
   end
 
-  defp build_url, do: "/v1/settings/sublanguage"
+  defp build_url, do: "/v2/settings/sublanguage"
 end
