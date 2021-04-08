@@ -13,7 +13,6 @@ defmodule CadetWeb.AnswerController do
       when is_ecto_id(question_id) do
     user = conn.assigns[:current_user]
     can_bypass? = user.role in @bypass_closed_roles
-    question = Assessments.get_question(question_id)
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
