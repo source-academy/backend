@@ -15,6 +15,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
     AdminGradingController.swagger_path_unsubmit(nil)
     AdminGradingController.swagger_path_autograde_submission(nil)
     AdminGradingController.swagger_path_autograde_answer(nil)
+    AdminGradingController.swagger_path_grading_summary(nil)
   end
 
   describe "GET /, unauthenticated" do
