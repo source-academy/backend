@@ -100,7 +100,7 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/goals/{id}")
+    PhoenixSwagger.Path.delete("/admin/goals/{uuid}")
 
     summary("Deletes a goal")
     security([%{JWT: []}])

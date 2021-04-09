@@ -134,7 +134,7 @@ defmodule CadetWeb.Router do
   def swagger_info do
     %{
       info: %{
-        version: "1.0",
+        version: "2.0",
         title: "cadet"
       },
       basePath: "/v2",
