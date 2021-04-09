@@ -512,8 +512,10 @@ defmodule Cadet.Assessments do
         question_id
       ) do
     contest_assessment = Repo.get_by(Assessment, number: contest_number)
+    users = Enum.map(usernames, fn x -> Repo.get_by(User, username: x.username) end)
+    invalid_usernames = Enum.any?(users, fn user -> user == nil end)
 
-    if contest_assessment != nil do
+    if contest_assessment != nil and !invalid_usernames do
       contest_submission_ids =
         Submission
         |> where(assessment_id: ^contest_assessment.id)
@@ -534,8 +536,7 @@ defmodule Cadet.Assessments do
 
       submission_id_map =
         contest_submission_ids
-        |> Enum.map(fn id -> {id, votes_per_submission} end)
-        |> Map.new()
+        |> Enum.into(%{}, fn id -> {id, votes_per_submission} end)
 
       {_submission_map, submission_votes_changesets} =
         user_ids
@@ -575,16 +576,20 @@ defmodule Cadet.Assessments do
               ]
             end)
 
-          new_submission_map =
-            if user_submission_id_votes_left != nil do
-              Map.put(
-                new_submission_map,
-                user_contest_submission.id,
-                user_submission_id_votes_left
-              )
-            end
+          case user_submission_id_votes_left do
+            nil ->
+              {new_submission_map, new_submission_votes}
 
-          {new_submission_map, new_submission_votes}
+            _ ->
+              new_submission_map =
+                Map.put(
+                  new_submission_map,
+                  user_contest_submission.id,
+                  user_submission_id_votes_left
+                )
+
+              {new_submission_map, new_submission_votes}
+          end
         end)
 
       submission_votes_changesets
@@ -595,7 +600,14 @@ defmodule Cadet.Assessments do
       |> Repo.transaction()
     else
       changeset = change(%Assessment{}, %{number: ""})
-      error_changeset = Ecto.Changeset.add_error(changeset, :number, "invalid contest number")
+
+      error_changeset =
+        Ecto.Changeset.add_error(
+          changeset,
+          :number,
+          "invalid contest number or invalid usernames"
+        )
+
       {:error, error_changeset}
     end
   end
