@@ -97,8 +97,6 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid", AdminAssessmentsController, :update)
     delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
 
-    put("/settings/sublanguage", AdminSettingsController, :update)
-
     get("/grading", AdminGradingController, :index)
     get("/grading/summary", AdminGradingController, :grading_summary)
     get("/grading/:submissionid", AdminGradingController, :show)
