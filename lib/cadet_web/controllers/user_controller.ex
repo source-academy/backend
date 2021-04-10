@@ -58,7 +58,7 @@ defmodule CadetWeb.UserController do
     consumes("application/json")
 
     parameters do
-      gameStates(:body, :map, "new game states", required: true)
+      gameStates(:body, Schema.ref(:UserGameStates), "new game states", required: true)
     end
 
     response(200, "OK")
@@ -108,7 +108,7 @@ defmodule CadetWeb.UserController do
             )
 
             game_states(
-              :map,
+              Schema.ref(:UserGameStates),
               "States for user's game, including users' game progress, settings and collectibles.\n"
             )
           end
@@ -128,6 +128,9 @@ defmodule CadetWeb.UserController do
                 " assets, display open world view)"
             )
           end
+        end,
+      UserGameStates:
+        swagger_schema do
         end
     }
   end
