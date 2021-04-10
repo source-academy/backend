@@ -123,10 +123,10 @@ defmodule CadetWeb.AuthController do
     produces("application/json")
 
     parameters do
-      code(:body, :string, "OAuth2 code", required: true)
-      provider(:body, :string, "OAuth2 provider ID", required: true)
-      client_id(:body, :string, "OAuth2 client ID", required: false)
-      redirect_uri(:body, :string, "OAuth2 redirect URI", required: false)
+      code(:query, :string, "OAuth2 code", required: true)
+      provider(:query, :string, "OAuth2 provider ID", required: true)
+      client_id(:query, :string, "OAuth2 client ID", required: false)
+      redirect_uri(:query, :string, "OAuth2 redirect URI", required: false)
     end
 
     response(200, "OK", Schema.ref(:Tokens))
