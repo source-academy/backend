@@ -255,6 +255,8 @@ defmodule CadetWeb.AssessmentsController do
             solution(:integer, "Solution to a mcq question if it belongs to path assessment")
 
             answer(
+              # Note: this is technically an invalid type in Swagger/OpenAPI 2.0,
+              # but represents that a string or integer could be returned.
               :string_or_integer,
               "Previous answer for this question (string/int) depending on question type",
               required: true
