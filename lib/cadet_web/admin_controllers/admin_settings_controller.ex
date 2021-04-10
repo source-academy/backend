@@ -56,8 +56,9 @@ defmodule CadetWeb.AdminSettingsController do
           properties do
             chapter(:integer, "Chapter number from 1 to 4", required: true, minimum: 1, maximum: 4)
 
-            variant(:string, "Variant name, one of default/concurrent/gpu/lazy/non-det/wasm",
-              required: true
+            variant(:string, "Variant name",
+              required: true,
+              enum: [:default, :concurrent, :gpu, :lazy, "non-det", :wasm]
             )
           end
 
