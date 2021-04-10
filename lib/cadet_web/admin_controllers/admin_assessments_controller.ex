@@ -100,8 +100,8 @@ defmodule CadetWeb.AdminAssessmentsController do
     consumes("multipart/form-data")
 
     parameters do
-      assessment(:body, :file, "Assessment to create or update", required: true)
-      forceUpdate(:body, :boolean, "Force update", required: true)
+      assessment(:formData, :file, "Assessment to create or update", required: true)
+      forceUpdate(:formData, :boolean, "Force update", required: true)
     end
 
     response(200, "OK")
