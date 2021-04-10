@@ -72,7 +72,9 @@ defmodule CadetWeb.AnswerController do
         swagger_schema do
           properties do
             answer(
-              :string_or_int,
+              # Note: this is technically an invalid type in Swagger/OpenAPI 2.0,
+              # but represents that a string or integer could be returned.
+              :string_or_integer,
               "answer of appropriate type depending on question type",
               required: true
             )

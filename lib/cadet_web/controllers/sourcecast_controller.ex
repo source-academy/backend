@@ -94,6 +94,9 @@ defmodule CadetWeb.SourcecastController do
             playbackData(:string, "playback data", required: true)
             description(:string, "description", required: false)
             uid(:string, "uid", required: false)
+
+            # Note: this is technically an invalid type in Swagger/OpenAPI 2.0,
+            # but represents that a string or integer could be returned.
             audio(:file, "audio file", required: true)
           end
         end
