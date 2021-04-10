@@ -149,7 +149,12 @@ defmodule CadetWeb.AssessmentsController do
           properties do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
-            type(:string, "One of 'mission/sidequest/path/contest'", required: true)
+
+            type(:string, "The assessment type, one of 'mission/sidequest/path/contest'",
+              required: true,
+              enum: [:mission, :sidequest, :path, :contest]
+            )
+
             shortSummary(:string, "Short summary", required: true)
 
             number(
@@ -166,7 +171,8 @@ defmodule CadetWeb.AssessmentsController do
             status(
               :string,
               "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
-              required: true
+              required: true,
+              enum: [:not_attempted, :attempting, :attempted, :submitted]
             )
 
             maxGrade(
@@ -205,7 +211,11 @@ defmodule CadetWeb.AssessmentsController do
           properties do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
-            type(:string, "One of 'mission/sidequest/path/contest'", required: true)
+
+            type(:string, "The assessment type, one of 'mission/sidequest/path/contest'",
+              required: true,
+              enum: [:mission, :sidequest, :path, :contest]
+            )
 
             number(
               :string,
@@ -289,7 +299,8 @@ defmodule CadetWeb.AssessmentsController do
 
             autogradingStatus(
               :string,
-              "One of none/processing/success/failed"
+              "The status of the autogeader, one of none/processing/success/failed",
+              enum: [:none, :processing, :success, :failed]
             )
 
             autogradingResults(
@@ -354,13 +365,13 @@ defmodule CadetWeb.AssessmentsController do
             answer(:string)
             score(:integer)
             program(:string)
-            type(:string, "One of public/hidden/private")
+            type(:string, "One of public/hidden/private", enum: [:public, :hidden, :private])
           end
         end,
       AutogradingResult:
         swagger_schema do
           properties do
-            resultType(:string, "One of pass/fail/error")
+            resultType(:string, "One of pass/fail/error", enum: [:pass, :fail, :error])
             expected(:string)
             actual(:string)
           end
