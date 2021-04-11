@@ -120,7 +120,7 @@ defmodule CadetWeb.StoriesController do
       Story:
         swagger_schema do
           properties do
-            filenames(:string, "Filenames of txt files", required: true)
+            filenames(schema_array(:string), "Filenames of txt files", required: true)
             title(:string, "Title shown in Chapter Select Screen", required: true)
             imageUrl(:string, "Path to image shown in Chapter Select Screen", required: false)
             openAt(:string, "The opening date", format: "date-time", required: true)
