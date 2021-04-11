@@ -127,7 +127,10 @@ defmodule CadetWeb.AssessmentsController do
 
     parameters do
       assessmentId(:path, :integer, "Assessment ID", required: true)
-      password(:body, :string, "Password", required: false)
+
+      password(:body, Schema.ref(:UnlockAssessmentPayload), "Password to unlock assessment",
+        required: true
+      )
     end
 
     response(200, "OK", Schema.ref(:Assessment))
@@ -376,6 +379,14 @@ defmodule CadetWeb.AssessmentsController do
             resultType(:string, "One of pass/fail/error", enum: [:pass, :fail, :error])
             expected(:string)
             actual(:string)
+          end
+        end,
+
+      # Schemas for payloads to modify data
+      UnlockAssessmentPayload:
+        swagger_schema do
+          properties do
+            password(:string, "Password", required: true)
           end
         end
     }

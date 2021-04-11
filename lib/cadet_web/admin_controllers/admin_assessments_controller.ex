@@ -135,13 +135,28 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     parameters do
       assessmentId(:path, :integer, "Assessment ID", required: true)
-      closeAt(:body, :string, "Open date", required: false)
-      openAt(:body, :string, "Close date", required: false)
-      isPublished(:body, :boolean, "Whether the assessment is published", required: false)
+
+      assessment(:body, Schema.ref(:AdminUpdateAssessmentPayload), "Updated assessment details",
+        required: true
+      )
     end
 
     response(200, "OK")
     response(401, "Assessment is already opened")
     response(403, "Forbidden")
+  end
+
+  def swagger_definitions do
+    %{
+      # Schemas for payloads to modify data
+      AdminUpdateAssessmentPayload:
+        swagger_schema do
+          properties do
+            closeAt(:string, "Open date", required: false)
+            openAt(:string, "Close date", required: false)
+            isPublished(:boolean, "Whether the assessment is published", required: false)
+          end
+        end
+    }
   end
 end
