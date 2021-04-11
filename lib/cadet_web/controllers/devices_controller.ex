@@ -143,9 +143,12 @@ defmodule CadetWeb.DevicesController do
     produces("application/json")
 
     parameters do
-      type(:body, :string, "User type", required: true)
-      title(:body, :string, "User-given device title", required: true)
-      secret(:body, :string, "Device unique secret", required: true)
+      device(
+        :body,
+        Schema.ref(:RegisterDevicePayload),
+        "Device details",
+        required: true
+      )
     end
 
     response(200, "OK", Schema.ref(:Device))
@@ -164,7 +167,7 @@ defmodule CadetWeb.DevicesController do
 
     parameters do
       id(:path, :integer, "Device ID", required: true)
-      title(:body, :string, "User-given device title", required: true)
+      device(:body, Schema.ref(:EditDevicePayload), "Device details", required: true)
     end
 
     response(204, "OK")
@@ -286,6 +289,22 @@ defmodule CadetWeb.DevicesController do
             endpoint(:string, "Endpoint URL")
             clientNamePrefix(:string, "Client name prefix to use")
             thingName(:string, "Device name")
+          end
+        end,
+
+      # Schemas for payloads to modify data
+      RegisterDevicePayload:
+        swagger_schema do
+          properties do
+            type(:string, "User type", required: true)
+            title(:string, "User-given device title", required: true)
+            secret(:string, "Device unique secret", required: true)
+          end
+        end,
+      EditDevicePayload:
+        swagger_schema do
+          properties do
+            title(:string, "User-given device title", required: true)
           end
         end
     }
