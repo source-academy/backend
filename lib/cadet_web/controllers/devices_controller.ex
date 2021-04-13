@@ -277,10 +277,10 @@ defmodule CadetWeb.DevicesController do
       Device:
         swagger_schema do
           properties do
-            id(:integer, "Device ID (unique to user)")
-            type(:string, "User type")
-            title(:string, "User-given device title")
-            secret(:string, "Device unique secret")
+            id(:integer, "Device ID (unique to user)", required: true)
+            type(:string, "User type", required: true)
+            title(:string, "User-given device title", required: true)
+            secret(:string, "Device unique secret", required: true)
           end
         end,
       WebSocketEndpoint:
