@@ -47,7 +47,7 @@ defmodule CadetWeb.NotificationsController do
 
     produces("application/json")
 
-    response(200, "OK", Schema.ref(:Notification))
+    response(200, "OK", Schema.ref(:NotificationList))
     response(401, "Unauthorised")
   end
 
