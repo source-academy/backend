@@ -271,9 +271,8 @@ defmodule CadetWeb.AdminGradingController do
             adjustment(:integer, "Grade adjustment given")
 
             status(
-              :string,
-              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
-              enum: [:not_attempted, :attempting, :attempted, :submitted]
+              Schema.ref(:AssessmentStatus),
+              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user"
             )
 
             gradedCount(:integer, "Number of questions in this submission that have been graded",
