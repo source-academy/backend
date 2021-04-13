@@ -153,10 +153,7 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
 
-            type(:string, "The assessment type, one of 'mission/sidequest/path/contest'",
-              required: true,
-              enum: [:mission, :sidequest, :path, :contest]
-            )
+            type(Schema.ref(:AssessmentType), "The assessment type", required: true)
 
             shortSummary(:string, "Short summary", required: true)
 
@@ -172,10 +169,9 @@ defmodule CadetWeb.AssessmentsController do
             closeAt(:string, "The closing date", format: "date-time", required: true)
 
             status(
-              :string,
+              Schema.ref(:AssessmentStatus),
               "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
-              required: true,
-              enum: [:not_attempted, :attempting, :attempted, :submitted]
+              required: true
             )
 
             maxGrade(
@@ -215,10 +211,7 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
 
-            type(:string, "The assessment type, one of 'mission/sidequest/path/contest'",
-              required: true,
-              enum: [:mission, :sidequest, :path, :contest]
-            )
+            type(Schema.ref(:AssessmentType), "The assessment type", required: true)
 
             number(
               :string,
@@ -233,6 +226,16 @@ defmodule CadetWeb.AssessmentsController do
 
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
           end
+        end,
+      AssessmentType:
+        swagger_schema do
+          type(:string)
+          enum([:mission, :sidequest, :path, :contest])
+        end,
+      AssessmentStatus:
+        swagger_schema do
+          type(:string)
+          enum([:not_attempted, :attempting, :attempted, :submitted])
         end,
       Questions:
         swagger_schema do
@@ -302,11 +305,7 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
-            autogradingStatus(
-              :string,
-              "The status of the autogeader, one of none/processing/success/failed",
-              enum: [:none, :processing, :success, :failed]
-            )
+            autogradingStatus(Schema.ref(:AutogradingStatus), "The status of the autograder")
 
             autogradingResults(
               Schema.new do
@@ -370,16 +369,31 @@ defmodule CadetWeb.AssessmentsController do
             answer(:string)
             score(:integer)
             program(:string)
-            type(:string, "One of public/hidden/private", enum: [:public, :hidden, :private])
+            type(Schema.ref(:TestcaseType), "One of public/hidden/private")
           end
+        end,
+      TestcaseType:
+        swagger_schema do
+          type(:string)
+          enum([:public, :hidden, :private])
         end,
       AutogradingResult:
         swagger_schema do
           properties do
-            resultType(:string, "One of pass/fail/error", enum: [:pass, :fail, :error])
+            resultType(Schema.ref(:AutogradingResultType), "One of pass/fail/error")
             expected(:string)
             actual(:string)
           end
+        end,
+      AutogradingResultType:
+        swagger_schema do
+          type(:string)
+          enum([:pass, :fail, :error])
+        end,
+      AutogradingStatus:
+        swagger_schema do
+          type(:string)
+          enum([:none, :processing, :success, :failed])
         end,
 
       # Schemas for payloads to modify data
