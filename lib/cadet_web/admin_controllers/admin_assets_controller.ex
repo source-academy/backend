@@ -60,12 +60,12 @@ defmodule CadetWeb.AdminAssetsController do
   end
 
   swagger_path :index do
-    get("/admin/assets/{foldername}")
+    get("/admin/assets/{folderName}")
 
     summary("Get a list of all assets in a folder")
 
     parameters do
-      foldername(:path, :string, "Folder name", required: true)
+      folderName(:path, :string, "Folder name", required: true)
     end
 
     security([%{JWT: []}])
@@ -78,14 +78,14 @@ defmodule CadetWeb.AdminAssetsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/assets/{foldername}/{filename}")
+    PhoenixSwagger.Path.delete("/admin/assets/{folderName}/{fileName}")
 
     summary("Delete a file from an asset folder")
 
     parameters do
-      foldername(:path, :string, "Folder name", required: true)
+      folderName(:path, :string, "Folder name", required: true)
 
-      filename(:path, :string, "File path in folder, which may contain subfolders", required: true)
+      fileName(:path, :string, "File path in folder, which may contain subfolders", required: true)
     end
 
     security([%{JWT: []}])
@@ -97,14 +97,14 @@ defmodule CadetWeb.AdminAssetsController do
   end
 
   swagger_path :upload do
-    post("/admin/assets/{foldername}/{filename}")
+    post("/admin/assets/{folderName}/{fileName}")
 
     summary("Upload a file to an asset folder")
 
     parameters do
-      foldername(:path, :string, "Folder name", required: true)
+      folderName(:path, :string, "Folder name", required: true)
 
-      filename(:path, :string, "File path in folder, which may contain subfolders", required: true)
+      fileName(:path, :string, "File path in folder, which may contain subfolders", required: true)
     end
 
     security([%{JWT: []}])

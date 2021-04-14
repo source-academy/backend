@@ -81,12 +81,12 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/stories/{storyid}")
+    PhoenixSwagger.Path.delete("/stories/{storyId}")
 
     summary("Delete a story from database by id")
 
     parameters do
-      storyid(:path, :integer, "Story Id", required: true)
+      storyId(:path, :integer, "Story Id", required: true)
     end
 
     security([%{JWT: []}])
@@ -97,12 +97,12 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :update do
-    post("/stories/{storyid}")
+    post("/stories/{storyId}")
 
     summary("Update details regarding a story")
 
     parameters do
-      storyid(:path, :integer, "Story Id", required: true)
+      storyId(:path, :integer, "Story Id", required: true)
     end
 
     security([%{JWT: []}])
