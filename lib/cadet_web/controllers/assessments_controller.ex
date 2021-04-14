@@ -229,8 +229,9 @@ defmodule CadetWeb.AssessmentsController do
         end,
       AssessmentType:
         swagger_schema do
+          description("Assessment type")
           type(:string)
-          enum([:mission, :sidequest, :path, :contest])
+          enum([:mission, :sidequest, :path, :contest, :practical])
         end,
       AssessmentStatus:
         swagger_schema do
@@ -274,7 +275,7 @@ defmodule CadetWeb.AssessmentsController do
             )
 
             prepend(:string, "Prepend program for programming questions")
-            template(:string, "Solution template for programming questions")
+            solutionTemplate(:string, "Solution template for programming questions")
             postpend(:string, "Postpend program for programming questions")
 
             testcases(

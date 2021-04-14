@@ -266,20 +266,24 @@ defmodule CadetWeb.AdminGradingController do
             id(:integer, "Submission id", required: true)
             grade(:integer, "Grade given", required: true)
             xp(:integer, "XP earned", required: true)
-            xpBonus(:integer, "Bonus XP for a given submission")
-            xpAdjustment(:integer, "XP adjustment given")
-            adjustment(:integer, "Grade adjustment given")
+            xpBonus(:integer, "Bonus XP for a given submission", required: true)
+            xpAdjustment(:integer, "XP adjustment given", required: true)
+            adjustment(:integer, "Grade adjustment given", required: true)
 
             status(
               Schema.ref(:AssessmentStatus),
-              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user"
+              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
+              required: true
             )
 
             gradedCount(:integer, "Number of questions in this submission that have been graded",
               required: true
             )
 
-            assessment(Schema.ref(:AssessmentInfo), "Assessment for which the submission is for", required: true)
+            assessment(Schema.ref(:AssessmentInfo), "Assessment for which the submission is for",
+              required: true
+            )
+
             student(Schema.ref(:StudentInfo), "Student who created the submission", required: true)
 
             unsubmittedBy(Schema.ref(:GraderInfo))
@@ -290,7 +294,11 @@ defmodule CadetWeb.AdminGradingController do
         swagger_schema do
           properties do
             id(:integer, "assessment id", required: true)
-            type(:string, "Either mission/sidequest/path/contest", required: true)
+
+            type(Schema.ref(:AssessmentType), "Either mission/sidequest/path/contest",
+              required: true
+            )
+
             title(:string, "Mission title", required: true)
 
             maxGrade(
@@ -366,12 +374,12 @@ defmodule CadetWeb.AdminGradingController do
           description("Summary of grading items for current user as the grader")
 
           properties do
-            groupName(:string, "Name of group this grader is in")
-            leaderName(:string, "Name of group leader")
-            submittedMissions(:integer, "Number of submitted missions")
-            submittedSidequests(:integer, "Number of submitted sidequests")
-            unsubmittedMissions(:integer, "Number of unsubmitted missions")
-            unsubmittedSidequests(:integer, "Number of unsubmitted sidequests")
+            groupName(:string, "Name of group this grader is in", required: true)
+            leaderName(:string, "Name of group leader", required: true)
+            submittedMissions(:integer, "Number of submitted missions", required: true)
+            submittedSidequests(:integer, "Number of submitted sidequests", required: true)
+            ungradedMissions(:integer, "Number of ungraded missions", required: true)
+            ungradedSidequests(:integer, "Number of ungraded sidequests", required: true)
           end
         end,
       Grade:
@@ -380,7 +388,7 @@ defmodule CadetWeb.AdminGradingController do
             grade(:integer, "Grade awarded by autograder")
             xp(:integer, "XP awarded by autograder")
             adjustment(:integer, "Grade adjustment given")
-            xpAdjustment(:integer, "XP adjustment given")
+            xpAdjustment(:integer, "XP adjustment given", required: true)
             grader(Schema.ref(:GraderInfo))
             gradedAt(:string, "Last graded at", format: "date-time", required: false)
             comments(:string, "Comments given by grader")
