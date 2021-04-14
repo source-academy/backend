@@ -110,7 +110,7 @@ defmodule CadetWeb.AuthController do
   swagger_path :create do
     post("/auth/login")
 
-    summary("Obtain access and refresh tokens to authenticate user.")
+    summary("Obtain access and refresh tokens to authenticate user")
 
     description(
       "Get a set of access and refresh tokens, using the authentication code " <>

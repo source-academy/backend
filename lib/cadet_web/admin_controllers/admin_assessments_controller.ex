@@ -93,7 +93,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   swagger_path :create do
     post("/admin/assessments")
 
-    summary("Creates a new assessment or updates an existing assessment.")
+    summary("Creates a new assessment or updates an existing assessment")
 
     security([%{JWT: []}])
 
@@ -112,7 +112,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   swagger_path :delete do
     PhoenixSwagger.Path.delete("/admin/assessments/{assessmentId}")
 
-    summary("Deletes an assessment.")
+    summary("Deletes an assessment")
 
     security([%{JWT: []}])
 
@@ -127,7 +127,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   swagger_path :update do
     post("/admin/assessments/{assessmentId}")
 
-    summary("Updates an assessment.")
+    summary("Updates an assessment")
 
     security([%{JWT: []}])
 

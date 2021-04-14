@@ -32,7 +32,7 @@ defmodule CadetWeb.AdminSettingsController do
   swagger_path :update do
     put("/admin/settings/sublanguage")
 
-    summary("Updates the default Source sublanguage of the Playground.")
+    summary("Updates the default Source sublanguage of the Playground")
 
     security([%{JWT: []}])
 

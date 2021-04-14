@@ -122,7 +122,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :index do
     get("/devices")
 
-    summary("Returns the devices registered by the user.")
+    summary("Returns the devices registered by the user")
 
     security([%{JWT: []}])
 
@@ -135,7 +135,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :register do
     post("/devices")
 
-    summary("Registers a new device.")
+    summary("Registers a new device")
 
     security([%{JWT: []}])
 
@@ -156,7 +156,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :edit do
     post("/devices/{id}")
 
-    summary("Edits the given device.")
+    summary("Edits the given device")
 
     security([%{JWT: []}])
 
@@ -176,7 +176,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :deregister do
     PhoenixSwagger.Path.delete("/devices/{id}")
 
-    summary("Unregisters the given device.")
+    summary("Unregisters the given device")
 
     security([%{JWT: []}])
 
@@ -194,7 +194,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_ws_endpoint do
     get("/devices/{id}/ws_endpoint")
 
-    summary("Generates a WebSocket endpoint URL for the given device.")
+    summary("Generates a WebSocket endpoint URL for the given device")
 
     security([%{JWT: []}])
 
@@ -212,7 +212,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_cert do
     get("/devices/{secret}/cert")
 
-    summary("Returns the device's PEM-encoded client certificate.")
+    summary("Returns the device's PEM-encoded client certificate")
 
     produces("text/plain")
 
@@ -227,7 +227,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_key do
     get("/devices/{secret}/key")
 
-    summary("Returns the device's PEM-encoded client key.")
+    summary("Returns the device's PEM-encoded client key")
 
     produces("text/plain")
 
@@ -242,7 +242,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_client_id do
     get("/devices/{secret}/client_id")
 
-    summary("Returns the device's MQTT client ID.")
+    summary("Returns the device's MQTT client ID")
 
     produces("text/plain")
 
@@ -257,7 +257,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_mqtt_endpoint do
     get("/devices/{secret}/mqtt_endpoint")
 
-    summary("Returns the MQTT endpoint the device should connect to.")
+    summary("Returns the MQTT endpoint the device should connect to")
 
     produces("text/plain")
 

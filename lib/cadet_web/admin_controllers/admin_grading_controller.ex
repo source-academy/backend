@@ -131,7 +131,7 @@ defmodule CadetWeb.AdminGradingController do
   swagger_path :index do
     get("/admin/grading")
 
-    summary("Get a list of all submissions with current user as the grader.")
+    summary("Get a list of all submissions with current user as the grader")
 
     security([%{JWT: []}])
 
@@ -153,7 +153,7 @@ defmodule CadetWeb.AdminGradingController do
 
   swagger_path :unsubmit do
     post("/admin/grading/{submissionId}/unsubmit")
-    summary("Unsubmit submission. Can only be done by the Avenger of a student.")
+    summary("Unsubmit submission. Can only be done by the Avenger of a student")
     security([%{JWT: []}])
 
     parameters do
@@ -200,7 +200,7 @@ defmodule CadetWeb.AdminGradingController do
   swagger_path :show do
     get("/admin/grading/{submissionId}")
 
-    summary("Get information about a specific submission to be graded.")
+    summary("Get information about a specific submission to be graded")
 
     security([%{JWT: []}])
 
@@ -219,7 +219,7 @@ defmodule CadetWeb.AdminGradingController do
   swagger_path :update do
     post("/admin/grading/{submissionId}/{questionId}")
 
-    summary("Update marks given to the answer of a particular question in a submission.")
+    summary("Update marks given to the answer of a particular question in a submission")
 
     security([%{JWT: []}])
 
@@ -241,7 +241,7 @@ defmodule CadetWeb.AdminGradingController do
   swagger_path :grading_summary do
     get("/admin/grading/summary")
 
-    summary("Receives a summary of grading items done by this grader.")
+    summary("Receives a summary of grading items done by this grader")
 
     security([%{JWT: []}])
 
@@ -363,7 +363,7 @@ defmodule CadetWeb.AdminGradingController do
         end,
       GradingSummary:
         swagger_schema do
-          description("Summary of grading items for current user as the grader.")
+          description("Summary of grading items for current user as the grader")
 
           properties do
             groupName(:string, "Name of group this grader is in")

@@ -22,7 +22,7 @@ defmodule CadetWeb.SettingsController do
   swagger_path :index do
     get("/settings/sublanguage")
 
-    summary("Retrieves the default Source sublanguage of the Playground.")
+    summary("Retrieves the default Source sublanguage of the Playground")
 
     produces("application/json")
 

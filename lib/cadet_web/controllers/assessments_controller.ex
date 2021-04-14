@@ -65,7 +65,7 @@ defmodule CadetWeb.AssessmentsController do
 
   swagger_path :submit do
     post("/assessments/{assessmentId}/submit")
-    summary("Finalise submission for an assessment.")
+    summary("Finalise submission for an assessment")
     security([%{JWT: []}])
 
     parameters do
@@ -86,7 +86,7 @@ defmodule CadetWeb.AssessmentsController do
   swagger_path :index do
     get("/assessments")
 
-    summary("Get a list of all assessments.")
+    summary("Get a list of all assessments")
 
     security([%{JWT: []}])
 
@@ -99,7 +99,7 @@ defmodule CadetWeb.AssessmentsController do
   swagger_path :show do
     get("/assessments/{assessmentId}")
 
-    summary("Get information about one particular assessment.")
+    summary("Get information about one particular assessment")
 
     security([%{JWT: []}])
 
