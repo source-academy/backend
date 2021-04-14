@@ -9,7 +9,7 @@ defmodule Cadet.Incentives.GoalTest do
       assert_changeset_db(
         %{
           uuid: UUID.generate(),
-          max_xp: 1000,
+          target_count: 1000,
           text: "Sample Text",
           type: "test_type",
           meta: %{}

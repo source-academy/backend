@@ -11,6 +11,7 @@ defmodule CadetWeb.IncentivesView do
       uuid: :uuid,
       title: :title,
       ability: :ability,
+      xp: :xp,
       release: &format_datetime(&1.open_at),
       deadline: &format_datetime(&1.close_at),
       isTask: :is_task,
@@ -36,17 +37,19 @@ defmodule CadetWeb.IncentivesView do
     transform_map_for_view(goal, %{
       uuid: :uuid,
       text: :text,
-      xp: fn
-        %{progress: [%{xp: xp}]} -> xp
+      count: fn
+        %{progress: [%{count: count}]} -> count
         _ -> 0
       end,
       completed: fn
         %{progress: [%{completed: completed}]} -> completed
         _ -> false
       end,
-      maxXp: :max_xp,
+      targetCount: :target_count,
       type: :type,
-      meta: :meta
+      meta: :meta,
+      achievementUuids:
+        &Enum.map(&1.achievements, fn achievement -> achievement.achievement_uuid end)
     })
   end
 end

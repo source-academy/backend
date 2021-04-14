@@ -12,7 +12,7 @@ defmodule Cadet.Incentives.GoalFactory do
         %Goal{
           uuid: UUID.generate(),
           text: "Score earned from Curve Introduction mission",
-          max_xp: Faker.random_between(1, 1000),
+          target_count: Faker.random_between(1, 1000),
           type: "test_type",
           meta: %{}
         }

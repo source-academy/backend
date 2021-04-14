@@ -9,7 +9,7 @@ defmodule Cadet.Incentives.GoalProgress do
 
   @primary_key false
   schema "goal_progress" do
-    field(:xp, :integer)
+    field(:count, :integer)
     field(:completed, :boolean)
 
     belongs_to(:user, User, primary_key: true)
@@ -24,7 +24,7 @@ defmodule Cadet.Incentives.GoalProgress do
     timestamps()
   end
 
-  @required_fields ~w(xp completed user_id goal_uuid)a
+  @required_fields ~w(count completed user_id goal_uuid)a
 
   def changeset(progress, params) do
     progress

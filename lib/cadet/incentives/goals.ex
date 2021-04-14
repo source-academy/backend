@@ -26,7 +26,7 @@ defmodule Cadet.Incentives.Goals do
   def get_with_progress(%User{id: user_id}) do
     Goal
     |> join(:left, [g], p in assoc(g, :progress), on: p.user_id == ^user_id)
-    |> preload([g, p], progress: p)
+    |> preload([g, p], [:achievements, progress: p])
     |> Repo.all()
   end
 

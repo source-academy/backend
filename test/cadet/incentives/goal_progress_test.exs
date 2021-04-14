@@ -12,7 +12,7 @@ defmodule Cadet.Incentives.GoalProgressTest do
         %{
           goal_uuid: goal.uuid,
           user_id: user.id,
-          xp: 500,
+          count: 500,
           completed: false
         },
         :valid

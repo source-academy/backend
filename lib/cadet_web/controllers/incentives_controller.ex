@@ -26,7 +26,7 @@ defmodule CadetWeb.IncentivesController do
   json =
     json
     |> snake_casify_string_keys_recursive()
-  %{xp: Map.get(json, "xp"),
+  %{count: Map.get(json, "count"),
     completed: Map.get(json, "completed"),
     goal_uuid: uuid,
     user_id: String.to_integer(userid)}

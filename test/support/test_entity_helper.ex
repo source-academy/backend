@@ -8,6 +8,7 @@ defmodule Cadet.TestEntityHelper do
       title: "Achievement #{id}",
       ability: "Core",
       is_task: false,
+      xp: 0,
       position: id,
       card_tile_url: "http://hello#{id}",
       canvas_url: "http://bye#{id}",
@@ -21,6 +22,7 @@ defmodule Cadet.TestEntityHelper do
       "ability" => "Core",
       "position" => id,
       "title" => "Achievement #{id}",
+      "xp" => 0,
       "cardBackground" => "http://hello#{id}",
       "isTask" => false,
       "view" => %{
@@ -33,7 +35,7 @@ defmodule Cadet.TestEntityHelper do
 
   defmacro goal_literal(id) do
     Macro.escape(%{
-      max_xp: id,
+      target_count: id,
       text: "Sample #{id}",
       type: "type_#{id}",
       meta: %{"id" => id}
@@ -42,7 +44,7 @@ defmodule Cadet.TestEntityHelper do
 
   defmacro goal_json_literal(id) do
     Macro.escape(%{
-      "maxXp" => id,
+      "targetCount" => id,
       "meta" => %{"id" => id},
       "text" => "Sample #{id}",
       "type" => "type_#{id}"

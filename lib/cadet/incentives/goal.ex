@@ -4,20 +4,21 @@ defmodule Cadet.Incentives.Goal do
   """
   use Cadet, :model
 
-  alias Cadet.Incentives.GoalProgress
+  alias Cadet.Incentives.{AchievementToGoal, GoalProgress}
 
   @primary_key {:uuid, :binary_id, autogenerate: false}
   schema "goals" do
     field(:text, :string)
-    field(:max_xp, :integer)
+    field(:target_count, :integer)
 
     field(:type, :string)
     field(:meta, :map)
 
     has_many(:progress, GoalProgress, foreign_key: :goal_uuid)
+    has_many(:achievements, AchievementToGoal, on_replace: :delete)
   end
 
-  @required_fields ~w(uuid text max_xp type meta)a
+  @required_fields ~w(uuid text target_count type meta)a
 
   def changeset(goal, params) do
     goal

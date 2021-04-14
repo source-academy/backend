@@ -47,7 +47,7 @@ defmodule CadetWeb.IncentivesControllerTest do
         %GoalProgress{
           goal_uuid: goal.uuid,
           user_id: user.id,
-          xp: 123,
+          count: 123,
           completed: true
         }
         |> Repo.insert()
