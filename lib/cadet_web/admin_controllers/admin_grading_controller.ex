@@ -247,7 +247,7 @@ defmodule CadetWeb.AdminGradingController do
 
     produces("application/json")
 
-    response(200, "OK", Schema.ref(:GradingSummary))
+    response(200, "OK", Schema.array(:GradingSummary))
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
     response(401, "Unauthorised")
     response(403, "Forbidden")
@@ -264,8 +264,8 @@ defmodule CadetWeb.AdminGradingController do
         swagger_schema do
           properties do
             id(:integer, "Submission id", required: true)
-            grade(:integer, "Grade given")
-            xp(:integer, "XP earned")
+            grade(:integer, "Grade given", required: true)
+            xp(:integer, "XP earned", required: true)
             xpBonus(:integer, "Bonus XP for a given submission")
             xpAdjustment(:integer, "XP adjustment given")
             adjustment(:integer, "Grade adjustment given")
@@ -279,8 +279,8 @@ defmodule CadetWeb.AdminGradingController do
               required: true
             )
 
-            assessment(Schema.ref(:AssessmentInfo))
-            student(Schema.ref(:StudentInfo))
+            assessment(Schema.ref(:AssessmentInfo), "Assessment for which the submission is for", required: true)
+            student(Schema.ref(:StudentInfo), "Student who created the submission", required: true)
 
             unsubmittedBy(Schema.ref(:GraderInfo))
             unsubmittedAt(:string, "Last unsubmitted at", format: "date-time", required: false)
@@ -336,9 +336,9 @@ defmodule CadetWeb.AdminGradingController do
           items(
             Schema.new do
               properties do
-                question(Schema.ref(:Question))
-                grade(Schema.ref(:Grade))
-                student(Schema.ref(:StudentInfo))
+                question(Schema.ref(:Question), "Question", required: true)
+                grade(Schema.ref(:Grade), "Grading information", required: true)
+                student(Schema.ref(:StudentInfo), "Student", required: true)
 
                 solution(
                   :string,
@@ -394,6 +394,7 @@ defmodule CadetWeb.AdminGradingController do
                 properties do
                   adjustment(:integer, "Grade adjustment given")
                   xpAdjustment(:integer, "XP adjustment given")
+                  comments(:string, "Comments given by grader")
                 end
               end
             )

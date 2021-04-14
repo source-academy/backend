@@ -166,7 +166,8 @@ defmodule CadetWeb.IncentivesController do
 
             completed(
               :boolean,
-              "Whether the goal has been completed by the user"
+              "Whether the goal has been completed by the user",
+              required: true
             )
 
             text(
@@ -176,12 +177,14 @@ defmodule CadetWeb.IncentivesController do
 
             xp(
               :integer,
-              "EXP currently attained by the user for this goal"
+              "EXP currently attained by the user for this goal",
+              required: true
             )
 
             maxXp(
               :integer,
-              "Total EXP for this goal"
+              "Total EXP for this goal",
+              required: true
             )
 
             type(
