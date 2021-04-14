@@ -71,12 +71,6 @@ defmodule CadetWeb.NotificationsController do
 
   def swagger_definitions do
     %{
-      NotificationList:
-        swagger_schema do
-          description("A list of all notifications")
-          type(:array)
-          items(Schema.ref(:Notification))
-        end,
       Notification:
         swagger_schema do
           title("Notification")
