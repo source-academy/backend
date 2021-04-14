@@ -138,7 +138,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assessment = insert(:assessment)
       conn = delete(conn, build_url(assessment.id))
       assert response(conn, 200) == "OK"
-      assert Repo.get(Assessment, assessment.id) == nil
+      assert is_nil(Repo.get(Assessment, assessment.id))
     end
   end
 
@@ -166,7 +166,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       conn = post(conn, build_url(assessment.id), %{isPublished: false})
       expected = Repo.get(Assessment, assessment.id).is_published
       assert response(conn, 200) == "OK"
-      assert expected == false
+      refute expected
     end
 
     @tag authenticate: :staff
@@ -175,7 +175,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       conn = post(conn, build_url(assessment.id), %{isPublished: true})
       expected = Repo.get(Assessment, assessment.id).is_published
       assert response(conn, 200) == "OK"
-      assert expected == true
+      assert expected
     end
   end
 

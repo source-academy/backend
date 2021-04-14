@@ -55,7 +55,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     is_published = params |> Map.get("isPublished")
 
     updated_assessment =
-      if is_published == nil do
+      if is_nil(is_published) do
         %{}
       else
         %{:is_published => is_published}
@@ -73,7 +73,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   defp check_dates(open_at, close_at, assessment) do
-    if open_at == nil and close_at == nil do
+    if is_nil(open_at) and is_nil(close_at) do
       {:ok, assessment}
     else
       formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
