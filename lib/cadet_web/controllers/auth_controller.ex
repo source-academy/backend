@@ -175,8 +175,8 @@ defmodule CadetWeb.AuthController do
           title("Tokens")
 
           properties do
-            access_token(:string, "Access token with TTL of 1 hour")
-            refresh_token(:string, "Refresh token with TTL of 1 week")
+            access_token(:string, "Access token with TTL of 1 hour", required: true)
+            refresh_token(:string, "Refresh token with TTL of 1 week", required: true)
           end
         end,
       RefreshToken:
