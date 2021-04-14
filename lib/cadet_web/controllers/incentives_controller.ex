@@ -85,7 +85,8 @@ defmodule CadetWeb.IncentivesController do
 
             view(
               ref(:AchievementView),
-              "View properties"
+              "View properties",
+              required: true
             )
 
             goalUuids(

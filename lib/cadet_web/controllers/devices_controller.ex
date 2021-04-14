@@ -286,9 +286,9 @@ defmodule CadetWeb.DevicesController do
       WebSocketEndpoint:
         swagger_schema do
           properties do
-            endpoint(:string, "Endpoint URL")
-            clientNamePrefix(:string, "Client name prefix to use")
-            thingName(:string, "Device name")
+            endpoint(:string, "Endpoint URL", required: true)
+            clientNamePrefix(:string, "Client name prefix to use", required: true)
+            thingName(:string, "Device name", required: true)
           end
         end,
 
