@@ -47,7 +47,7 @@ defmodule CadetWeb.NotificationsController do
 
     produces("application/json")
 
-    response(200, "OK", Schema.ref(:NotificationList))
+    response(200, "OK", Schema.array(:Notification))
     response(401, "Unauthorised")
   end
 
@@ -78,14 +78,17 @@ defmodule CadetWeb.NotificationsController do
 
           properties do
             id(:integer, "the notification id", required: true)
-            type(:string, "the type of the notification", required: true)
+            type(Schema.ref(:NotificationType), "the type of the notification", required: true)
             read(:boolean, "the read status of the notification", required: true)
 
-            assessmentId(:integer, "the submission id the notification references", required: true)
+            submission_id(:integer, "the submission id the notification references",
+              required: true
+            )
 
-            questionId(:integer, "the question id the notification references")
+            question_id(:integer, "the question id the notification references")
 
-            assessment(Schema.ref(:AssessmentInfo))
+            assessment_id(:integer, "the assessment id the notification references")
+            assessment(Schema.ref(:AssessmentInfo), "the assessment the notification references")
           end
         end,
       NotificationIds:
@@ -93,6 +96,11 @@ defmodule CadetWeb.NotificationsController do
           properties do
             notificationIds(Schema.array(:integer), "the notification ids")
           end
+        end,
+      NotificationType:
+        swagger_schema do
+          type(:string)
+          enum([:new, :deadline, :autograded, :graded, :submitted, :unsubmitted, :new_message])
         end
     }
   end
