@@ -15,7 +15,7 @@ defmodule Cadet.Incentives.Goal do
     field(:meta, :map)
 
     has_many(:progress, GoalProgress, foreign_key: :goal_uuid)
-    has_many(:achievements, AchievementToGoal, on_replace: :delete)
+    has_many(:achievements, AchievementToGoal, on_replace: :delete_if_exists)
   end
 
   @required_fields ~w(uuid text target_count type meta)a

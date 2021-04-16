@@ -26,7 +26,7 @@ defmodule Cadet.Incentives.Achievement do
     field(:completion_text, :string)
 
     has_many(:prerequisites, AchievementPrerequisite, on_replace: :delete)
-    has_many(:goals, AchievementToGoal, on_replace: :delete)
+    has_many(:goals, AchievementToGoal, on_replace: :delete_if_exists)
 
     field(:prerequisite_uuids, {:array, :binary_id}, virtual: true)
     field(:goal_uuids, {:array, :binary_id}, virtual: true)
