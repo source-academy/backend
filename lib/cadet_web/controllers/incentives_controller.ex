@@ -23,13 +23,16 @@ defmodule CadetWeb.IncentivesController do
   end
 
   defp json_to_progress(json, uuid, userid) do
-  json =
-    json
-    |> snake_casify_string_keys_recursive()
-  %{count: Map.get(json, "count"),
-    completed: Map.get(json, "completed"),
-    goal_uuid: uuid,
-    user_id: String.to_integer(userid)}
+    json =
+      json
+      |> snake_casify_string_keys_recursive()
+
+    %{
+      count: Map.get(json, "count"),
+      completed: Map.get(json, "completed"),
+      goal_uuid: uuid,
+      user_id: String.to_integer(userid)
+    }
   end
 
   swagger_path :index_achievements do

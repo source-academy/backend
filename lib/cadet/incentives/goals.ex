@@ -82,7 +82,7 @@ defmodule Cadet.Incentives.Goals do
   end
 
   def upsert_progress(attrs, goal_uuid, user_id) do
-    if (goal_uuid == nil || user_id == nil) do
+    if goal_uuid == nil || user_id == nil do
       {:error, {:bad_request, "No UUID specified in Goal"}}
     else
       GoalProgress
