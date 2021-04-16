@@ -21,7 +21,8 @@ defmodule Cadet.Incentives.AchievementsTest do
           ability: ability,
           is_task: false,
           position: 0,
-          xp: 0
+          xp: 0,
+          variable_xp: false
         })
 
       assert %{title: ^ability, ability: ^ability} = Repo.get(Achievement, uuid)

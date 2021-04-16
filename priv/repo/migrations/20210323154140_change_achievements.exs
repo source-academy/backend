@@ -8,6 +8,7 @@ defmodule Cadet.Repo.Migrations.ChangeAchievements do
 
     alter table(:achievements) do
       add(:xp, :integer, null: false, default: 0)
+      add(:variable_xp, :boolean, null: false, default: false)
     end
   end
 end
