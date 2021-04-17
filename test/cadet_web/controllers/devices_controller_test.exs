@@ -344,7 +344,7 @@ defmodule DevicesControllerTest do
 
   defp build_url(id \\ nil, sub \\ nil) do
     case {id, sub} do
-      {nil, _} -> "/v1/devices"
+      {nil, _} -> "/v2/devices"
       {id, nil} -> "#{build_url()}/#{id}"
       {id, sub} -> "#{build_url(id)}/#{sub}"
     end

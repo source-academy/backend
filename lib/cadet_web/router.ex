@@ -24,18 +24,20 @@ defmodule CadetWeb.Router do
     get("/.well-known/jwks.json", JWKSController, :index)
   end
 
+  # V2 API
+
   # Public Pages
-  scope "/v1", CadetWeb do
+  scope "/v2", CadetWeb do
     pipe_through([:api, :auth])
 
     get("/sourcecast", SourcecastController, :index)
-    post("/auth", AuthController, :create)
     post("/auth/refresh", AuthController, :refresh)
+    post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
     get("/settings/sublanguage", SettingsController, :index)
   end
 
-  scope "/v1", CadetWeb do
+  scope "/v2", CadetWeb do
     # no sessions or anything here
 
     get("/devices/:secret/cert", DevicesController, :get_cert)
@@ -45,41 +47,26 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v1", CadetWeb do
+  scope "/v2", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
-    get("/achievements", IncentivesController, :index_achievements)
-
     get("/assessments", AssessmentsController, :index)
-    post("/assessments", AssessmentsController, :create)
-    delete("/assessments/:assessmentid", AssessmentsController, :delete)
-    post("/assessments/:id", AssessmentsController, :show)
-    post("/assessments/publish/:assessmentid", AssessmentsController, :publish)
-    post("/assessments/update/:assessmentid", AssessmentsController, :update)
+    get("/assessments/:assessmentid", AssessmentsController, :show)
+    post("/assessments/:assessmentid/unlock", AssessmentsController, :unlock)
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
-    post("/assessments/question/:questionid/submit", AnswerController, :submit)
+    post("/assessments/question/:questionid/answer", AnswerController, :submit)
+
+    get("/achievements", IncentivesController, :index_achievements)
 
     get("/stories", StoriesController, :index)
     post("/stories", StoriesController, :create)
     delete("/stories/:storyid", StoriesController, :delete)
     post("/stories/:storyid", StoriesController, :update)
 
-    get("/assets/:foldername", AssetsController, :index)
-    post("/assets/:foldername/*filename", AssetsController, :upload)
-    delete("/assets/:foldername/*filename", AssetsController, :delete)
-
-    get("/grading", GradingController, :index)
-    get("/grading/summary", GradingController, :grading_summary)
-    get("/grading/:submissionid", GradingController, :show)
-    post("/grading/:submissionid/unsubmit", GradingController, :unsubmit)
-    post("/grading/:submissionid/autograde", GradingController, :autograde_submission)
-    post("/grading/:submissionid/:questionid", GradingController, :update)
-    post("/grading/:submissionid/:questionid/autograde", GradingController, :autograde_answer)
-
-    get("/notification", NotificationController, :index)
-    post("/notification/acknowledge", NotificationController, :acknowledge)
+    get("/notifications", NotificationsController, :index)
+    post("/notifications/acknowledge", NotificationsController, :acknowledge)
 
     get("/user", UserController, :index)
     put("/user/game_states", UserController, :update_game_states)
@@ -89,19 +76,39 @@ defmodule CadetWeb.Router do
     post("/devices/:id", DevicesController, :edit)
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
-
-    put("/settings/sublanguage", SettingsController, :update)
   end
 
   # Authenticated Pages
-  scope "/v1/self", CadetWeb do
+  scope "/v2/self", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
     get("/goals", IncentivesController, :index_goals)
   end
 
-  scope "/v1/admin", CadetWeb do
+  # Admin pages
+  scope "/v2/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
+
+    get("/assets/:foldername", AdminAssetsController, :index)
+    post("/assets/:foldername/*filename", AdminAssetsController, :upload)
+    delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
+
+    post("/assessments", AdminAssessmentsController, :create)
+    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
+    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
+
+    get("/grading", AdminGradingController, :index)
+    get("/grading/summary", AdminGradingController, :grading_summary)
+    get("/grading/:submissionid", AdminGradingController, :show)
+    post("/grading/:submissionid/unsubmit", AdminGradingController, :unsubmit)
+    post("/grading/:submissionid/autograde", AdminGradingController, :autograde_submission)
+    post("/grading/:submissionid/:questionid", AdminGradingController, :update)
+
+    post(
+      "/grading/:submissionid/:questionid/autograde",
+      AdminGradingController,
+      :autograde_answer
+    )
 
     get("/users", AdminUserController, :index)
 
@@ -113,6 +120,8 @@ defmodule CadetWeb.Router do
     put("/goals", AdminGoalsController, :bulk_update)
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
+
+    put("/settings/sublanguage", AdminSettingsController, :update)
   end
 
   # Other scopes may use custom stacks.
@@ -123,10 +132,10 @@ defmodule CadetWeb.Router do
   def swagger_info do
     %{
       info: %{
-        version: "1.0",
+        version: "2.0",
         title: "cadet"
       },
-      basePath: "/v1",
+      basePath: "/v2",
       securityDefinitions: %{
         JWT: %{
           type: "apiKey",

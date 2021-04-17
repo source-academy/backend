@@ -18,13 +18,13 @@ defmodule CadetWeb.IncentivesControllerTest do
     test "succeeds if authenticated", %{conn: conn} do
       insert(:achievement, achievement_literal(0))
 
-      resp = conn |> get("/v1/achievements") |> json_response(200)
+      resp = conn |> get("/v2/achievements") |> json_response(200)
 
       assert [achievement_json_literal(0)] = resp
     end
 
     test "401 if unauthenticated", %{conn: conn} do
-      conn |> get("/v1/achievements") |> response(401)
+      conn |> get("/v2/achievements") |> response(401)
     end
   end
 
@@ -33,7 +33,7 @@ defmodule CadetWeb.IncentivesControllerTest do
     test "succeeds if authenticated", %{conn: conn} do
       insert(:goal, goal_literal(0))
 
-      resp = conn |> get("/v1/self/goals") |> json_response(200)
+      resp = conn |> get("/v2/self/goals") |> json_response(200)
 
       assert [goal_json_literal(0)] = resp
     end
@@ -52,7 +52,7 @@ defmodule CadetWeb.IncentivesControllerTest do
         }
         |> Repo.insert()
 
-      [resp_goal] = conn |> get("/v1/self/goals") |> json_response(200)
+      [resp_goal] = conn |> get("/v2/self/goals") |> json_response(200)
 
       assert goal_json_literal(0) = resp_goal
       assert resp_goal["xp"] == progress.xp
@@ -60,7 +60,7 @@ defmodule CadetWeb.IncentivesControllerTest do
     end
 
     test "401 if unauthenticated", %{conn: conn} do
-      conn |> get("/v1/self/goals") |> response(401)
+      conn |> get("/v2/self/goals") |> response(401)
     end
   end
 end

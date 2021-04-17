@@ -1,10 +1,10 @@
-defmodule CadetWeb.GradingView do
+defmodule CadetWeb.AdminGradingView do
   use CadetWeb, :view
 
   import CadetWeb.AssessmentsHelpers
 
   def render("show.json", %{answers: answers}) do
-    render_many(answers, CadetWeb.GradingView, "grading_info.json", as: :answer)
+    render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
   end
 
   def render("grading_info.json", %{answer: answer}) do
@@ -17,7 +17,7 @@ defmodule CadetWeb.GradingView do
   end
 
   def render("grading_summary.json", %{summary: summary}) do
-    render_many(summary, CadetWeb.GradingView, "grading_summary_entry.json", as: :entry)
+    render_many(summary, CadetWeb.AdminGradingView, "grading_summary_entry.json", as: :entry)
   end
 
   def render("grading_summary_entry.json", %{entry: entry}) do

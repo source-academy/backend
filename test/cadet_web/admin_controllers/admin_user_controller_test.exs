@@ -17,7 +17,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       resp =
         conn
-        |> get("/v1/admin/users")
+        |> get("/v2/admin/users")
         |> json_response(200)
 
       assert 2 == Enum.count(resp)
@@ -29,7 +29,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       resp =
         conn
-        |> get("/v1/admin/users?role=student")
+        |> get("/v2/admin/users?role=student")
         |> json_response(200)
 
       assert 1 == Enum.count(resp)
@@ -43,7 +43,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       resp =
         conn
-        |> get("/v1/admin/users?group=#{group.name}")
+        |> get("/v2/admin/users?group=#{group.name}")
         |> json_response(200)
 
       assert 1 == Enum.count(resp)
@@ -53,13 +53,13 @@ defmodule CadetWeb.AdminUserControllerTest do
     @tag authenticate: :student
     test "forbidden, when student retrieves users", %{conn: conn} do
       assert conn
-             |> get("/v1/admin/users")
+             |> get("/v2/admin/users")
              |> response(403)
     end
 
     test "401 when not logged in", %{conn: conn} do
       assert conn
-             |> get("/v1/admin/users")
+             |> get("/v2/admin/users")
              |> response(401)
     end
   end

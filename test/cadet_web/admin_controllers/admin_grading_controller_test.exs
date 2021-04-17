@@ -1,20 +1,21 @@
-defmodule CadetWeb.GradingControllerTest do
+defmodule CadetWeb.AdminGradingControllerTest do
   use CadetWeb.ConnCase
 
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
-  alias CadetWeb.GradingController
+  alias CadetWeb.AdminGradingController
 
   import Mock
 
   test "swagger" do
-    GradingController.swagger_definitions()
-    GradingController.swagger_path_index(nil)
-    GradingController.swagger_path_show(nil)
-    GradingController.swagger_path_update(nil)
-    GradingController.swagger_path_unsubmit(nil)
-    GradingController.swagger_path_autograde_submission(nil)
-    GradingController.swagger_path_autograde_answer(nil)
+    AdminGradingController.swagger_definitions()
+    AdminGradingController.swagger_path_index(nil)
+    AdminGradingController.swagger_path_show(nil)
+    AdminGradingController.swagger_path_update(nil)
+    AdminGradingController.swagger_path_unsubmit(nil)
+    AdminGradingController.swagger_path_autograde_submission(nil)
+    AdminGradingController.swagger_path_autograde_answer(nil)
+    AdminGradingController.swagger_path_grading_summary(nil)
   end
 
   describe "GET /, unauthenticated" do
@@ -49,7 +50,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
       conn = get(conn, build_url())
-      assert response(conn, 401) =~ "User is not permitted to grade."
+      assert response(conn, 403) =~ "Forbidden"
     end
   end
 
@@ -57,7 +58,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
       conn = get(conn, build_url(), %{"group" => "true"})
-      assert response(conn, 401) =~ "User is not permitted to grade."
+      assert response(conn, 403) =~ "Forbidden"
     end
   end
 
@@ -65,7 +66,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
       conn = get(conn, build_url(1))
-      assert response(conn, 401) =~ "User is not permitted to grade."
+      assert response(conn, 403) =~ "Forbidden"
     end
   end
 
@@ -73,13 +74,13 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
       conn = post(conn, build_url(1, 3), %{"grading" => %{}})
-      assert response(conn, 401) =~ "User is not permitted to grade."
+      assert response(conn, 403) =~ "Forbidden"
     end
 
     @tag authenticate: :student
     test "missing parameter", %{conn: conn} do
       conn = post(conn, build_url(1, 3), %{})
-      assert response(conn, 400) =~ "Missing parameter"
+      assert response(conn, 403) =~ "Forbidden"
     end
   end
 
@@ -87,7 +88,7 @@ defmodule CadetWeb.GradingControllerTest do
     @tag authenticate: :student
     test "unauthorized", %{conn: conn} do
       conn = post(conn, build_url_unsubmit(1))
-      assert response(conn, 403) =~ "User is not permitted to unsubmit questions"
+      assert response(conn, 403) =~ "Forbidden"
     end
   end
 
@@ -1174,9 +1175,8 @@ defmodule CadetWeb.GradingControllerTest do
 
     @tag authenticate: :student
     test "student cannot see summary", %{conn: conn} do
-      resp = conn |> get(build_url_summary()) |> text_response(401)
-
-      assert "User is not permitted to view the grading summary." == resp
+      conn = get(conn, build_url_summary())
+      assert response(conn, 403) =~ "Forbidden"
     end
   end
 
@@ -1256,8 +1256,8 @@ defmodule CadetWeb.GradingControllerTest do
     |> length()
   end
 
-  defp build_url, do: "/v1/grading/"
-  defp build_url_summary, do: "/v1/grading/summary"
+  defp build_url, do: "/v2/admin/grading/"
+  defp build_url_summary, do: "/v2/admin/grading/summary"
   defp build_url(submission_id), do: "#{build_url()}#{submission_id}"
   defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}/#{question_id}"
   defp build_url_unsubmit(submission_id), do: "#{build_url(submission_id)}/unsubmit"

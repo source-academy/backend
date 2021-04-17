@@ -1,6 +1,6 @@
-defmodule CadetWeb.NotificationController do
+defmodule CadetWeb.NotificationsController do
   @moduledoc """
-  Provides information about a Notifications.
+  Provides information about Notifications.
   """
 
   use CadetWeb, :controller
@@ -39,7 +39,7 @@ defmodule CadetWeb.NotificationController do
   end
 
   swagger_path :index do
-    get("/notification")
+    get("/notifications")
 
     summary("Get the unread notifications belonging to a user")
 
@@ -47,12 +47,12 @@ defmodule CadetWeb.NotificationController do
 
     produces("application/json")
 
-    response(200, "OK", Schema.ref(:Notification))
+    response(200, "OK", Schema.array(:Notification))
     response(401, "Unauthorised")
   end
 
   swagger_path :acknowledge do
-    post("/notification/acknowledge")
+    post("/notifications/acknowledge")
     summary("Acknowledge notification(s)")
     security([%{JWT: []}])
 
@@ -71,27 +71,24 @@ defmodule CadetWeb.NotificationController do
 
   def swagger_definitions do
     %{
-      NotificationList:
-        swagger_schema do
-          description("A list of all notifications")
-          type(:array)
-          items(Schema.ref(:Notification))
-        end,
       Notification:
         swagger_schema do
           title("Notification")
-          description("Information about the notification")
+          description("Information about a single notification")
 
           properties do
             id(:integer, "the notification id", required: true)
-            type(:string, "the type of the notification", required: true)
+            type(Schema.ref(:NotificationType), "the type of the notification", required: true)
             read(:boolean, "the read status of the notification", required: true)
 
-            assessmentId(:integer, "the submission id the notification references", required: true)
+            submission_id(:integer, "the submission id the notification references",
+              required: true
+            )
 
-            questionId(:integer, "the question id the notification references")
+            question_id(:integer, "the question id the notification references")
 
-            assessment(Schema.ref(:AssessmentInfo))
+            assessment_id(:integer, "the assessment id the notification references")
+            assessment(Schema.ref(:AssessmentInfo), "the assessment the notification references")
           end
         end,
       NotificationIds:
@@ -99,6 +96,11 @@ defmodule CadetWeb.NotificationController do
           properties do
             notificationIds(Schema.array(:integer), "the notification ids")
           end
+        end,
+      NotificationType:
+        swagger_schema do
+          type(:string)
+          enum([:new, :deadline, :autograded, :graded, :submitted, :unsubmitted, :new_message])
         end
     }
   end
