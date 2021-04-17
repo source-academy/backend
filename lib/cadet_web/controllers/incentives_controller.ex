@@ -15,14 +15,15 @@ defmodule CadetWeb.IncentivesController do
     )
   end
 
-  def update_progress(conn, %{"uuid" => uuid, "userid" => userid, "progress" => progress}) do
+  def update_progress(conn, %{"uuid" => uuid, "progress" => progress}) do
+    user_id = conn.assigns.current_user
     progress
-    |> json_to_progress(uuid, userid)
-    |> Goals.upsert_progress(uuid, userid)
+    |> json_to_progress(uuid, user_id)
+    |> Goals.upsert_progress(uuid, user_id)
     |> handle_standard_result(conn)
   end
 
-  defp json_to_progress(json, uuid, userid) do
+  defp json_to_progress(json, uuid, user_id) do
     json =
       json
       |> snake_casify_string_keys_recursive()
@@ -31,7 +32,7 @@ defmodule CadetWeb.IncentivesController do
       count: Map.get(json, "count"),
       completed: Map.get(json, "completed"),
       goal_uuid: uuid,
-      user_id: String.to_integer(userid)
+      user_id: user_id
     }
   end
 
@@ -55,6 +56,28 @@ defmodule CadetWeb.IncentivesController do
     response(401, "Unauthorised")
   end
 
+  swagger_path :update_progress do
+    post("/self/goals/{uuid}/progress")
+
+    summary("Inserts or updates own goal progress of specifed goal")
+    security([%{JWT: []}])
+
+    parameters do
+      uuid(:path, :string, "Goal UUID", required: true, format: :uuid)
+
+      progress(
+        :body,
+        Schema.ref(:GoalProgress),
+        "The goal progress to insert or update",
+        required: true
+      )
+    end
+
+    response(204, "Success")
+    response(401, "Unauthorised")
+    response(404, "Goal not found")
+  end
+
   def swagger_definitions do
     %{
       Achievement:
@@ -71,6 +94,16 @@ defmodule CadetWeb.IncentivesController do
             title(
               :string,
               "Achievement title"
+            )
+
+            xp(
+              :integer,
+              "XP earned when achievment is completed"
+            )
+
+            isVariableXp(
+              :boolean,
+              "If true, XP awarded will depend on the goal progress"
             )
 
             ability(
@@ -156,9 +189,9 @@ defmodule CadetWeb.IncentivesController do
               "Text to show when goal is completed"
             )
 
-            maxXp(
+            targetCount(
               :integer,
-              "Total EXP for this goal"
+              "When the count reaches this number, goal is completed"
             )
 
             type(
@@ -193,14 +226,14 @@ defmodule CadetWeb.IncentivesController do
               "Text to show when goal is completed"
             )
 
-            xp(
+            count(
               :integer,
-              "EXP currently attained by the user for this goal"
+              "Counter for the progress of the goal"
             )
 
-            maxXp(
+            targetCount(
               :integer,
-              "Total EXP for this goal"
+              "When the count reaches this number, goal is completed"
             )
 
             type(
@@ -211,6 +244,33 @@ defmodule CadetWeb.IncentivesController do
             meta(
               :object,
               "Goal satisfication information"
+            )
+          end
+        end,
+      GoalProgress:
+        swagger_schema do
+          description("User's goal progress")
+
+          properties do
+            uuid(
+              :string,
+              "Goal UUID",
+              format: :uuid
+            )
+
+            completed(
+              :boolean,
+              "Whether the goal has been completed by the user"
+            )
+
+            count(
+              :integer,
+              "Counter for the progress of the goal"
+            )
+
+            userId(
+              :integer,
+              "User the goal progress belongs to"
             )
           end
         end

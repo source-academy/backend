@@ -15,7 +15,7 @@ defmodule Cadet.Incentives.AchievementTest do
           is_task: false,
           position: 0,
           xp: 0,
-          variable_xp: false
+          is_variable_xp: false
         },
         :valid
       )

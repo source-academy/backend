@@ -12,7 +12,7 @@ defmodule CadetWeb.IncentivesView do
       title: :title,
       ability: :ability,
       xp: :xp,
-      variableXp: :variable_xp,
+      isVariableXp: :is_variable_xp,
       release: &format_datetime(&1.open_at),
       deadline: &format_datetime(&1.close_at),
       isTask: :is_task,

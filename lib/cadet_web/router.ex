@@ -99,12 +99,14 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth])
 
     get("/goals", IncentivesController, :index_goals)
+    post("/goals/:uuid/progress", IncentivesController, :update_progress)
   end
 
   scope "/v1/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
 
     get("/users", AdminUserController, :index)
+    post("/users/:userid/goals/:uuid/progress", AdminGoalsController, :update_progress)
 
     put("/achievements", AdminAchievementsController, :bulk_update)
     put("/achievements/:uuid", AdminAchievementsController, :update)

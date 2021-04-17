@@ -23,6 +23,14 @@ defmodule CadetWeb.AdminGoalsController do
     |> handle_standard_result(conn)
   end
 
+  def update_progress(conn, %{"uuid" => uuid, "userid" => user_id, "progress" => progress}) do
+    user_id = String.to_integer(user_id)
+    progress
+    |> json_to_progress(uuid, user_id)
+    |> Goals.upsert_progress(uuid, user_id)
+    |> handle_standard_result(conn)
+  end
+
   def delete(conn, %{"uuid" => uuid}) do
     uuid
     |> Goals.delete()
@@ -42,6 +50,19 @@ defmodule CadetWeb.AdminGoalsController do
     else
       Map.put(json, "uuid", uuid)
     end
+  end
+
+  defp json_to_progress(json, uuid, user_id) do
+    json =
+      json
+      |> snake_casify_string_keys_recursive()
+
+    %{
+      count: Map.get(json, "count"),
+      completed: Map.get(json, "completed"),
+      goal_uuid: uuid,
+      user_id: user_id
+    }
   end
 
   swagger_path :index do
@@ -99,8 +120,32 @@ defmodule CadetWeb.AdminGoalsController do
     response(403, "Forbidden")
   end
 
+  swagger_path :update_progress do
+    post("/admin/users/{userid}/goals/{uuid}/progress")
+
+    summary("Inserts or updates own goal progress of specifed goal")
+    security([%{JWT: []}])
+
+    parameters do
+      uuid(:path, :string, "Goal UUID", required: true, format: :uuid)
+      userid(:path, :integer, "User ID", required: true)
+
+      progress(
+        :body,
+        Schema.ref(:GoalProgress),
+        "The goal progress to insert or update",
+        required: true
+      )
+    end
+
+    response(204, "Success")
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
+    response(404, "Goal not found")
+  end
+
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/goals/{id}")
+    PhoenixSwagger.Path.delete("/admin/goals/{uuid}")
 
     summary("Deletes a goal")
     security([%{JWT: []}])

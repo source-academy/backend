@@ -14,7 +14,7 @@ defmodule Cadet.Incentives.Achievement do
     field(:ability, :string)
     field(:card_tile_url, :string)
     field(:xp, :integer)
-    field(:variable_xp, :boolean)
+    field(:is_variable_xp, :boolean)
 
     field(:open_at, :utc_datetime)
     field(:close_at, :utc_datetime)
@@ -32,7 +32,7 @@ defmodule Cadet.Incentives.Achievement do
     field(:goal_uuids, {:array, :binary_id}, virtual: true)
   end
 
-  @required_fields ~w(uuid title ability is_task position xp variable_xp)a
+  @required_fields ~w(uuid title ability is_task position xp is_variable_xp)a
   @optional_fields ~w(card_tile_url open_at close_at canvas_url description
     completion_text prerequisite_uuids goal_uuids)a
 

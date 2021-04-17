@@ -9,7 +9,7 @@ defmodule Cadet.TestEntityHelper do
       ability: "Core",
       is_task: false,
       xp: 0,
-      variable_xp: false,
+      is_variable_xp: false,
       position: id,
       card_tile_url: "http://hello#{id}",
       canvas_url: "http://bye#{id}",
