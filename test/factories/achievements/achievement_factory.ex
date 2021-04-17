@@ -16,6 +16,7 @@ defmodule Cadet.Incentives.AchievementFactory do
           is_task: false,
           position: 0,
           xp: 0,
+          is_variable_xp: false,
           description: Faker.Lorem.Shakespeare.En.king_richard_iii(),
           completion_text: Faker.Lorem.Shakespeare.En.romeo_and_juliet(),
           canvas_url:

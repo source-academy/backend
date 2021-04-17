@@ -24,7 +24,7 @@ defmodule Cadet.TestEntityHelper do
       "position" => id,
       "title" => "Achievement #{id}",
       "xp" => 0,
-      "variableXp" => false,
+      "isVariableXp" => false,
       "cardBackground" => "http://hello#{id}",
       "isTask" => false,
       "view" => %{
