@@ -93,7 +93,8 @@ defmodule CadetWeb.IncentivesController do
 
             title(
               :string,
-              "Achievement title"
+              "Achievement title",
+              required: true
             )
 
             xp(
@@ -108,7 +109,8 @@ defmodule CadetWeb.IncentivesController do
 
             ability(
               :string,
-              "Achievement ability i.e. category"
+              "Achievement ability i.e. category",
+              required: true
             )
 
             cardBackground(
@@ -128,17 +130,20 @@ defmodule CadetWeb.IncentivesController do
 
             isTask(
               :boolean,
-              "Whether the achievement is a task"
+              "Whether the achievement is a task",
+              required: true
             )
 
             position(
               :integer,
-              "Position of the achievement in the list"
+              "Position of the achievement in the list",
+              required: true
             )
 
             view(
               ref(:AchievementView),
-              "View properties"
+              "View properties",
+              required: true
             )
 
             goalUuids(
@@ -218,7 +223,8 @@ defmodule CadetWeb.IncentivesController do
 
             completed(
               :boolean,
-              "Whether the goal has been completed by the user"
+              "Whether the goal has been completed by the user",
+              required: true
             )
 
             text(
@@ -228,12 +234,14 @@ defmodule CadetWeb.IncentivesController do
 
             count(
               :integer,
-              "Counter for the progress of the goal"
+              "Counter for the progress of the goal",
+              required: true
             )
 
             targetCount(
               :integer,
-              "When the count reaches this number, goal is completed"
+              "When the count reaches this number, goal is completed",
+              required: true
             )
 
             type(

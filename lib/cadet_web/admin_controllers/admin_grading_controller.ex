@@ -1,4 +1,4 @@
-defmodule CadetWeb.GradingController do
+defmodule CadetWeb.AdminGradingController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
@@ -15,11 +15,6 @@ defmodule CadetWeb.GradingController do
         |> put_status(:ok)
         |> put_resp_content_type("application/json")
         |> text(submissions)
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 
@@ -28,9 +23,7 @@ defmodule CadetWeb.GradingController do
   end
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
-    user = conn.assigns[:current_user]
-
-    case Assessments.get_answers_in_submission(submission_id, user) do
+    case Assessments.get_answers_in_submission(submission_id) do
       {:ok, answers} ->
         render(conn, "show.json", answers: answers)
 
@@ -129,23 +122,16 @@ defmodule CadetWeb.GradingController do
   end
 
   def grading_summary(conn, _params) do
-    user = conn.assigns[:current_user]
-
-    case Assessments.get_group_grading_summary(user) do
+    case Assessments.get_group_grading_summary() do
       {:ok, summary} ->
         render(conn, "grading_summary.json", summary: summary)
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 
   swagger_path :index do
-    get("/grading")
+    get("/admin/grading")
 
-    summary("Get a list of all submissions with current user as the grader.")
+    summary("Get a list of all submissions with current user as the grader")
 
     security([%{JWT: []}])
 
@@ -162,11 +148,12 @@ defmodule CadetWeb.GradingController do
 
     response(200, "OK", Schema.ref(:Submissions))
     response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :unsubmit do
-    post("/grading/{submissionId}/unsubmit")
-    summary("Unsubmit submission. Can only be done by the Avenger of a student.")
+    post("/admin/grading/{submissionId}/unsubmit")
+    summary("Unsubmit submission. Can only be done by the Avenger of a student")
     security([%{JWT: []}])
 
     parameters do
@@ -175,12 +162,12 @@ defmodule CadetWeb.GradingController do
 
     response(200, "OK")
     response(400, "Invalid parameters")
-    response(403, "User not permitted to unsubmit assessment or assessment not open")
+    response(403, "Forbidden")
     response(404, "Submission not found")
   end
 
   swagger_path :autograde_submission do
-    post("/grading/{submissionId}/autograde")
+    post("/admin/grading/{submissionId}/autograde")
     summary("Force re-autograding of an entire submission")
     security([%{JWT: []}])
 
@@ -190,12 +177,12 @@ defmodule CadetWeb.GradingController do
 
     response(204, "Successful request")
     response(400, "Invalid parameters or submission not submitted")
-    response(403, "User not permitted to grade submissions")
+    response(403, "Forbidden")
     response(404, "Submission not found")
   end
 
   swagger_path :autograde_answer do
-    post("/grading/{submissionId}/{questionId}/autograde")
+    post("/admin/grading/{submissionId}/{questionId}/autograde")
     summary("Force re-autograding of a question in a submission")
     security([%{JWT: []}])
 
@@ -206,14 +193,14 @@ defmodule CadetWeb.GradingController do
 
     response(204, "Successful request")
     response(400, "Invalid parameters or submission not submitted")
-    response(403, "User not permitted to grade submissions")
+    response(403, "Forbidden")
     response(404, "Answer not found")
   end
 
   swagger_path :show do
-    get("/grading/{submissionId}")
+    get("/admin/grading/{submissionId}")
 
-    summary("Get information about a specific submission to be graded.")
+    summary("Get information about a specific submission to be graded")
 
     security([%{JWT: []}])
 
@@ -226,12 +213,13 @@ defmodule CadetWeb.GradingController do
     response(200, "OK", Schema.ref(:GradingInfo))
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
     response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :update do
-    post("/grading/{submissionId}/{questionId}")
+    post("/admin/grading/{submissionId}/{questionId}")
 
-    summary("Update marks given to the answer of a particular querstion in a submission")
+    summary("Update marks given to the answer of a particular question in a submission")
 
     security([%{JWT: []}])
 
@@ -247,6 +235,22 @@ defmodule CadetWeb.GradingController do
     response(200, "OK")
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
     response(401, "Unauthorised")
+    response(403, "Forbidden")
+  end
+
+  swagger_path :grading_summary do
+    get("/admin/grading/summary")
+
+    summary("Receives a summary of grading items done by this grader")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    response(200, "OK", Schema.array(:GradingSummary))
+    response(400, "Invalid or missing parameter(s) or submission and/or question not found")
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   def swagger_definitions do
@@ -259,24 +263,28 @@ defmodule CadetWeb.GradingController do
       Submission:
         swagger_schema do
           properties do
-            id(:integer, "submission id", required: true)
-            grade(:integer, "grade given")
-            xp(:integer, "xp earned")
-            xpBonus(:integer, "bonus xp for a given submission")
-            xpAdjustment(:integer, "xp adjustment given")
-            adjustment(:integer, "grade adjustment given")
+            id(:integer, "Submission id", required: true)
+            grade(:integer, "Grade given", required: true)
+            xp(:integer, "XP earned", required: true)
+            xpBonus(:integer, "Bonus XP for a given submission", required: true)
+            xpAdjustment(:integer, "XP adjustment given", required: true)
+            adjustment(:integer, "Grade adjustment given", required: true)
 
             status(
-              :string,
-              "one of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user"
-            )
-
-            gradedCount(:integer, "number of questions in this submission that have been graded",
+              Schema.ref(:AssessmentStatus),
+              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
               required: true
             )
 
-            assessment(Schema.ref(:AssessmentInfo))
-            student(Schema.ref(:StudentInfo))
+            gradedCount(:integer, "Number of questions in this submission that have been graded",
+              required: true
+            )
+
+            assessment(Schema.ref(:AssessmentInfo), "Assessment for which the submission is for",
+              required: true
+            )
+
+            student(Schema.ref(:StudentInfo), "Student who created the submission", required: true)
 
             unsubmittedBy(Schema.ref(:GraderInfo))
             unsubmittedAt(:string, "Last unsubmitted at", format: "date-time", required: false)
@@ -286,7 +294,11 @@ defmodule CadetWeb.GradingController do
         swagger_schema do
           properties do
             id(:integer, "assessment id", required: true)
-            type(:string, "Either mission/sidequest/path/contest", required: true)
+
+            type(Schema.ref(:AssessmentType), "Either mission/sidequest/path/contest",
+              required: true
+            )
+
             title(:string, "Mission title", required: true)
 
             maxGrade(
@@ -332,9 +344,9 @@ defmodule CadetWeb.GradingController do
           items(
             Schema.new do
               properties do
-                question(Schema.ref(:Question))
-                grade(Schema.ref(:Grade))
-                student(Schema.ref(:StudentInfo))
+                question(Schema.ref(:Question), "Question", required: true)
+                grade(Schema.ref(:Grade), "Grading information", required: true)
+                student(Schema.ref(:StudentInfo), "Student", required: true)
 
                 solution(
                   :string,
@@ -357,13 +369,26 @@ defmodule CadetWeb.GradingController do
             end
           )
         end,
+      GradingSummary:
+        swagger_schema do
+          description("Summary of grading items for current user as the grader")
+
+          properties do
+            groupName(:string, "Name of group this grader is in", required: true)
+            leaderName(:string, "Name of group leader", required: true)
+            submittedMissions(:integer, "Number of submitted missions", required: true)
+            submittedSidequests(:integer, "Number of submitted sidequests", required: true)
+            ungradedMissions(:integer, "Number of ungraded missions", required: true)
+            ungradedSidequests(:integer, "Number of ungraded sidequests", required: true)
+          end
+        end,
       Grade:
         swagger_schema do
           properties do
             grade(:integer, "Grade awarded by autograder")
             xp(:integer, "XP awarded by autograder")
-            adjustment(:integer, "grade adjustment given")
-            xpAdjustment(:integer, "xp adjustment given")
+            adjustment(:integer, "Grade adjustment given")
+            xpAdjustment(:integer, "XP adjustment given", required: true)
             grader(Schema.ref(:GraderInfo))
             gradedAt(:string, "Last graded at", format: "date-time", required: false)
             comments(:string, "Comments given by grader")
@@ -375,8 +400,9 @@ defmodule CadetWeb.GradingController do
             grading(
               Schema.new do
                 properties do
-                  adjustment(:integer, "grade adjustment given")
-                  xpAdjustment(:integer, "xp adjustment given")
+                  adjustment(:integer, "Grade adjustment given")
+                  xpAdjustment(:integer, "XP adjustment given")
+                  comments(:string, "Comments given by grader")
                 end
               end
             )

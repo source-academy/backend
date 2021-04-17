@@ -122,7 +122,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :index do
     get("/devices")
 
-    summary("Returns the devices registered by the user.")
+    summary("Returns the devices registered by the user")
 
     security([%{JWT: []}])
 
@@ -135,7 +135,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :register do
     post("/devices")
 
-    summary("Registers a new device.")
+    summary("Registers a new device")
 
     security([%{JWT: []}])
 
@@ -143,9 +143,12 @@ defmodule CadetWeb.DevicesController do
     produces("application/json")
 
     parameters do
-      type(:body, :string, "User type", required: true)
-      title(:body, :string, "User-given device title", required: true)
-      secret(:body, :string, "Device unique secret", required: true)
+      device(
+        :body,
+        Schema.ref(:RegisterDevicePayload),
+        "Device details",
+        required: true
+      )
     end
 
     response(200, "OK", Schema.ref(:Device))
@@ -156,7 +159,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :edit do
     post("/devices/{id}")
 
-    summary("Edits the given device.")
+    summary("Edits the given device")
 
     security([%{JWT: []}])
 
@@ -164,7 +167,7 @@ defmodule CadetWeb.DevicesController do
 
     parameters do
       id(:path, :integer, "Device ID", required: true)
-      title(:body, :string, "User-given device title", required: true)
+      device(:body, Schema.ref(:EditDevicePayload), "Device details", required: true)
     end
 
     response(204, "OK")
@@ -176,7 +179,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :deregister do
     PhoenixSwagger.Path.delete("/devices/{id}")
 
-    summary("Unregisters the given device.")
+    summary("Unregisters the given device")
 
     security([%{JWT: []}])
 
@@ -192,9 +195,9 @@ defmodule CadetWeb.DevicesController do
   end
 
   swagger_path :get_ws_endpoint do
-    PhoenixSwagger.Path.delete("/devices/{id}/ws_endpoint")
+    get("/devices/{id}/ws_endpoint")
 
-    summary("Generates a WebSocket endpoint URL for the given device.")
+    summary("Generates a WebSocket endpoint URL for the given device")
 
     security([%{JWT: []}])
 
@@ -212,7 +215,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_cert do
     get("/devices/{secret}/cert")
 
-    summary("Returns the device's PEM-encoded client certificate.")
+    summary("Returns the device's PEM-encoded client certificate")
 
     produces("text/plain")
 
@@ -227,7 +230,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_key do
     get("/devices/{secret}/key")
 
-    summary("Returns the device's PEM-encoded client key.")
+    summary("Returns the device's PEM-encoded client key")
 
     produces("text/plain")
 
@@ -242,7 +245,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_client_id do
     get("/devices/{secret}/client_id")
 
-    summary("Returns the device's MQTT client ID.")
+    summary("Returns the device's MQTT client ID")
 
     produces("text/plain")
 
@@ -257,7 +260,7 @@ defmodule CadetWeb.DevicesController do
   swagger_path :get_mqtt_endpoint do
     get("/devices/{secret}/mqtt_endpoint")
 
-    summary("Returns the MQTT endpoint the device should connect to.")
+    summary("Returns the MQTT endpoint the device should connect to")
 
     produces("text/plain")
 
@@ -274,18 +277,34 @@ defmodule CadetWeb.DevicesController do
       Device:
         swagger_schema do
           properties do
-            id(:integer, "Device ID (unique to user)")
-            type(:string, "User type")
-            title(:string, "User-given device title")
-            secret(:string, "Device unique secret")
+            id(:integer, "Device ID (unique to user)", required: true)
+            type(:string, "User type", required: true)
+            title(:string, "User-given device title", required: true)
+            secret(:string, "Device unique secret", required: true)
           end
         end,
       WebSocketEndpoint:
         swagger_schema do
           properties do
-            endpoint(:string, "Endpoint URL")
-            clientNamePrefix(:string, "Client name prefix to use")
-            thingName(:string, "Device name")
+            endpoint(:string, "Endpoint URL", required: true)
+            clientNamePrefix(:string, "Client name prefix to use", required: true)
+            thingName(:string, "Device name", required: true)
+          end
+        end,
+
+      # Schemas for payloads to modify data
+      RegisterDevicePayload:
+        swagger_schema do
+          properties do
+            type(:string, "User type", required: true)
+            title(:string, "User-given device title", required: true)
+            secret(:string, "Device unique secret", required: true)
+          end
+        end,
+      EditDevicePayload:
+        swagger_schema do
+          properties do
+            title(:string, "User-given device title", required: true)
           end
         end
     }

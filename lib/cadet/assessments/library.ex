@@ -1,6 +1,6 @@
 defmodule Cadet.Assessments.Library do
   @moduledoc """
-  The library entity represents a library to be used in a  question.
+  The library entity represents a library to be used in a question.
   """
   use Cadet, :model
 
