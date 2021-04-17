@@ -17,6 +17,7 @@ defmodule CadetWeb.IncentivesController do
 
   def update_progress(conn, %{"uuid" => uuid, "progress" => progress}) do
     user_id = conn.assigns.current_user
+
     progress
     |> json_to_progress(uuid, user_id)
     |> Goals.upsert_progress(uuid, user_id)

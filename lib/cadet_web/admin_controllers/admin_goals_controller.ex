@@ -25,6 +25,7 @@ defmodule CadetWeb.AdminGoalsController do
 
   def update_progress(conn, %{"uuid" => uuid, "userid" => user_id, "progress" => progress}) do
     user_id = String.to_integer(user_id)
+
     progress
     |> json_to_progress(uuid, user_id)
     |> Goals.upsert_progress(uuid, user_id)
