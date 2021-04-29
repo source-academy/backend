@@ -227,7 +227,9 @@ defmodule Cadet.Autograder.GradingJob do
          overwrite
        )
        when is_boolean(regrade) and is_boolean(overwrite) and is_ecto_id(submission_id) do
-    insert_empty_answer(submission_id, question)
+    if question.type != :voting do
+      insert_empty_answer(submission_id, question)
+    end
 
     grade_submission_question_answer_lists(
       submission_id,

@@ -120,4 +120,12 @@ defmodule Cadet.Assessments.Answer do
       programming: ProgrammingAnswer
     })
   end
+
+  @doc """
+  Used to update grade of answer to contest_score
+  """
+  def contest_score_update_changeset(answer, contest_score_param) do
+    answer
+    |> cast(contest_score_param, [:grade])
+  end 
 end
