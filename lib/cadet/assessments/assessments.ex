@@ -515,7 +515,7 @@ defmodule Cadet.Assessments do
     users = Enum.map(usernames, fn x -> Repo.get_by(User, username: x.username) end)
     invalid_usernames = Enum.any?(users, fn user -> user == nil end)
 
-    if is_nil(contest_assessment) and not invalid_usernames do
+    if not is_nil(contest_assessment) and not invalid_usernames do
       contest_submission_ids =
         Submission
         |> where(assessment_id: ^contest_assessment.id)
@@ -954,55 +954,62 @@ defmodule Cadet.Assessments do
     # store as grade -> 
     # query grade for contest question id. 
 
-    contest_votes_query = from(SubmissionVotes
-    |> join(:left, [v], s in assoc(v, :submission))
-    |> join(:left, [v, s, ans], ans in assoc(s, :answers))
-    |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
-    |> select([v, s, ans], 
-        %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]})) 
+    contest_votes_query =
+      from(
+        SubmissionVotes
+        |> join(:left, [v], s in assoc(v, :submission))
+        |> join(:left, [v, s, ans], ans in assoc(s, :answers))
+        |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
+        |> select(
+          [v, s, ans],
+          %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
+        )
+      )
 
-    eligible_votes = Repo.all(contest_votes_query) 
+    eligible_votes = Repo.all(contest_votes_query)
 
     # WARNING: possible bug with same answer being assigned to different users
     # should a user be assigned to the same submission ID  
     # # converts eligible votes to the {total cumulative score, number of votes, tokens}  
-    entry_raw_data = Enum.reduce(eligible_votes, %{}, 
-        fn(%{ans_id: ans_id, score: score, ans: ans}, tracker) -> 
-            {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0}) 
-        Map.put(tracker, ans_id, 
-            {prev_score + score, prev_count + 1, String.length(ans)})
-    end)
+    entry_raw_data =
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
+        {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
+        Map.put(tracker, ans_id, {prev_score + score, prev_count + 1, String.length(ans)})
+      end)
 
     # calculate the score based on formula {ans_id, score}
-    entry_scores = Enum.map(entry_raw_data, 
-        fn({ans_id, {sum_of_scores, number_of_voters, tokens}}) -> 
-        {ans_id, calculateFormulaScore(sum_of_scores, number_of_voters, tokens)}
+    entry_scores =
+      Enum.map(
+        entry_raw_data,
+        fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
+          {ans_id, calculateFormulaScore(sum_of_scores, number_of_voters, tokens)}
+        end
+      )
+
+    Enum.map(entry_scores, fn {ans_id, score} ->
+      %Answer{id: ans_id}
+      |> Answer.contest_score_update_changeset(%{
+        # TODO: neeed to fix this
+        # grade is an integer... might lead to unfairness
+        grade: round(score)
+      })
     end)
-    
-    Enum.map(entry_scores, fn({ans_id, score}) -> 
-        %Answer{id: ans_id}
-        |> Answer.contest_score_update_changeset(%{
-            # TODO: neeed to fix this
-            # grade is an integer... might lead to unfairness
-            grade: round(score)
-        })
+    |> Enum.map(fn changeset ->
+      op_key = "answer_#{changeset.data.id}"
+      Multi.update(Multi.new(), op_key, changeset)
     end)
-    |> Enum.map(fn(changeset) -> 
-        op_key = "answer_#{changeset.data.id}"
-        Multi.update(Multi.new(), op_key, changeset)
-    end) 
     |> Enum.reduce(Multi.new(), &Multi.append/2)
     |> Repo.transaction()
   end
-  
-  #TODO: set up a lexer
+
+  # TODO: set up a lexer
   # need to fix the token counter - with some lexical analysis. 
   # Calculate the score based on formula 
   # score(v,t) = v - 2^(t/50) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculateFormulaScore(sum_of_scores, number_of_voters, tokens) do
-      normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100 
-      normalized_voting_score - :math.pow(2, tokens / 50)
+    normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
+    normalized_voting_score - :math.pow(2, tokens / 50)
   end
 
   @doc """
@@ -1382,8 +1389,8 @@ defmodule Cadet.Assessments do
   def insert_or_update_voting_answer(user_id, question_id, answer_content) do
     set_score_to_nil =
       from(
-        SubmissionVotes 
-        |> where(user_id: ^user_id, question_id: ^question_id) 
+        SubmissionVotes
+        |> where(user_id: ^user_id, question_id: ^question_id)
       )
 
     voting_multi =
