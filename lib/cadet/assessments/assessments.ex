@@ -11,6 +11,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Course.Group
+  alias Cadet.Parser.Parser
   alias Ecto.Multi
 
   require Decimal
@@ -953,45 +954,24 @@ defmodule Cadet.Assessments do
     # map score to user id -> 
     # store as grade -> 
     # query grade for contest question id. 
-
-    contest_votes_query =
-      from(
-        SubmissionVotes
-        |> join(:left, [v], s in assoc(v, :submission))
-        |> join(:left, [v, s, ans], ans in assoc(s, :answers))
-        |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
-        |> select(
-          [v, s, ans],
-          %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
-        )
+    from(
+      SubmissionVotes
+      |> join(:left, [v], s in assoc(v, :submission))
+      |> join(:left, [v, s, ans], ans in assoc(s, :answers))
+      |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
+      |> select(
+        [v, s, ans],
+        %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
       )
-
-    eligible_votes = Repo.all(contest_votes_query)
-
-    # WARNING: possible bug with same answer being assigned to different users
-    # should a user be assigned to the same submission ID  
-    # # converts eligible votes to the {total cumulative score, number of votes, tokens}  
-    entry_raw_data =
-      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
-        {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
-        Map.put(tracker, ans_id, {prev_score + score, prev_count + 1, String.length(ans)})
-      end)
-
-    # calculate the score based on formula {ans_id, score}
-    entry_scores =
-      Enum.map(
-        entry_raw_data,
-        fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
-          {ans_id, calculateFormulaScore(sum_of_scores, number_of_voters, tokens)}
-        end
-      )
-
-    Enum.map(entry_scores, fn {ans_id, score} ->
+    )
+    |> Repo.all()
+    |> map_eligible_votes_to_entry_score
+    |> Enum.map(fn {ans_id, score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
         # TODO: neeed to fix this
         # grade is an integer... might lead to unfairness
-        grade: round(score)
+        grade: score
       })
     end)
     |> Enum.map(fn changeset ->
@@ -1002,6 +982,25 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
+  defp map_eligible_votes_to_entry_score(eligible_votes) do
+    # WARNING: possible bug with same answer being assigned to different users
+    # should a user be assigned to the same submission ID  
+    # # converts eligible votes to the {total cumulative score, number of votes, tokens}  
+    entry_vote_data =
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
+        {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
+        Map.put(tracker, ans_id, {prev_score + score, prev_count + 1, Parser.lex(ans)})
+      end)
+
+    # calculate the score based on formula {ans_id, score}
+    Enum.map(
+      entry_vote_data,
+      fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
+        {ans_id, calculateFormulaScore(sum_of_scores, number_of_voters, tokens)}
+      end
+    )
+  end
+
   # TODO: set up a lexer
   # need to fix the token counter - with some lexical analysis. 
   # Calculate the score based on formula 
@@ -1009,7 +1008,7 @@ defmodule Cadet.Assessments do
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculateFormulaScore(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    normalized_voting_score - :math.pow(2, tokens / 50)
+    round(normalized_voting_score - :math.pow(2, tokens / 50))
   end
 
   @doc """
