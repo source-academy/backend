@@ -7,6 +7,12 @@
 
 Cadet is the web application powering Source Academy.
 
+* `master` is the main development branch, and may be broken, buggy, unstable,
+  etc. It may not work with the frontend, if there are frontend changes that
+  have not yet been merged.
+* `stable` is the stable branch and should work with the stable branch of the
+  frontend.
+
 ## Developer setup
 
 ### System requirements
