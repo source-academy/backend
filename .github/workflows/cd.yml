@@ -1,0 +1,50 @@
+name: Build release
+on:
+  push:
+    branches:
+      - stable
+      - master
+
+jobs:
+  ci:
+    name: Build release
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: prod
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: rlespinasse/github-slug-action@v3.x
+      - uses: actions/checkout@v2
+      - name: Cache deps
+        uses: actions/cache@v1
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          restore-keys: |
+            ${{ runner.os }}-mix-
+      - name: Cache _build
+        uses: actions/cache@v1
+        with:
+          path: _build
+          key: cd-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-${{ github.sha }}
+          restore-keys: |
+            cd-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-
+      - name: Setup Elixir
+        uses: erlef/setup-elixir@v1
+        with:
+          elixir-version: 1.11.3
+          otp-version: 23.3.1
+      - name: Build release
+        run: |
+          set -eu
+          mix deps.get
+          mix release
+      - name: Create release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          automatic_release_tag: latest-${{ env.GITHUB_REF_SLUG }}
+          prerelease: ${{ env.GITHUB_REF_SLUG == 'master' }}
+          title: Latest commit on ${{ env.GITHUB_REF_SLUG }}
+          files: _build/prod/cadet-0.0.1.tar.gz
+
