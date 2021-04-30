@@ -955,17 +955,19 @@ defmodule Cadet.Assessments do
     # store as grade ->
     # query grade for contest question id.
     from(
-      SubmissionVotes
-      |> join(:left, [v], s in assoc(v, :submission))
-      |> join(:left, [v, s, ans], ans in assoc(s, :answers))
-      |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
-      |> select(
-        [v, s, ans],
-        %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
-      )
+      eligible_votes =
+        SubmissionVotes
+        |> join(:left, [v], s in assoc(v, :submission))
+        |> join(:left, [v, s, ans], ans in assoc(s, :answers))
+        |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
+        |> select(
+          [v, s, ans],
+          %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
+        )
     )
     |> Repo.all()
-    |> map_eligible_votes_to_entry_score
+
+    map_eligible_votes_to_entry_score(eligible_votes)
     |> Enum.map(fn {ans_id, score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
