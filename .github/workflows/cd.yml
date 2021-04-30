@@ -26,9 +26,9 @@ jobs:
         uses: actions/cache@v1
         with:
           path: _build
-          key: cd-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-${{ github.sha }}
+          key: cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-${{ github.sha }}
           restore-keys: |
-            cd-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-
+            cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-
       - name: Setup Elixir
         uses: erlef/setup-elixir@v1
         with:
