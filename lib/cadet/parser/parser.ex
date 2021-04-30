@@ -8,7 +8,7 @@ defmodule Cadet.Parser.Parser do
   def lex(program) do
     case parse(program) do
       {:ok, tokens} ->
-        countTokens(tokens)
+        count_tokens(tokens)
 
       {:error, reason} ->
         Logger.debug(inspect(reason))
@@ -16,7 +16,7 @@ defmodule Cadet.Parser.Parser do
     end
   end
 
-  defp countTokens(tokens) do
+  defp count_tokens(tokens) do
     Enum.reduce(tokens, 0, fn _curr, acc -> acc + 1 end)
   end
 

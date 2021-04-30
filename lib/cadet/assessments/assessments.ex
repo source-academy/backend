@@ -946,14 +946,14 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Computes the current score of each voting submission based on current 
-  submitted votes. 
+  Computes the current score of each voting submission based on current
+  submitted votes.
   """
   def compute_score(contest_question_id) do
-    # query all records from submission votes tied to the question id -> 
-    # map score to user id -> 
-    # store as grade -> 
-    # query grade for contest question id. 
+    # query all records from submission votes tied to the question id ->
+    # map score to user id ->
+    # store as grade ->
+    # query grade for contest question id.
     from(
       SubmissionVotes
       |> join(:left, [v], s in assoc(v, :submission))
@@ -969,7 +969,7 @@ defmodule Cadet.Assessments do
     |> Enum.map(fn {ans_id, score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
-        # TODO: neeed to fix this
+        # TODO: need to fix this
         # grade is an integer... might lead to unfairness
         grade: score
       })
@@ -984,8 +984,8 @@ defmodule Cadet.Assessments do
 
   defp map_eligible_votes_to_entry_score(eligible_votes) do
     # WARNING: possible bug with same answer being assigned to different users
-    # should a user be assigned to the same submission ID  
-    # # converts eligible votes to the {total cumulative score, number of votes, tokens}  
+    # should a user be assigned to the same submission ID
+    # # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
       Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
         {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
@@ -996,17 +996,15 @@ defmodule Cadet.Assessments do
     Enum.map(
       entry_vote_data,
       fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
-        {ans_id, calculateFormulaScore(sum_of_scores, number_of_voters, tokens)}
+        {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens)}
       end
     )
   end
 
-  # TODO: set up a lexer
-  # need to fix the token counter - with some lexical analysis. 
   # Calculate the score based on formula 
   # score(v,t) = v - 2^(t/50) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-  defp calculateFormulaScore(sum_of_scores, number_of_voters, tokens) do
+  defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
     round(normalized_voting_score - :math.pow(2, tokens / 50))
   end
