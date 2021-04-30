@@ -954,8 +954,8 @@ defmodule Cadet.Assessments do
     # map score to user id ->
     # store as grade ->
     # query grade for contest question id.
-    from(
-      eligible_votes =
+    eligible_votes_query =
+      from(
         SubmissionVotes
         |> join(:left, [v], s in assoc(v, :submission))
         |> join(:left, [v, s, ans], ans in assoc(s, :answers))
@@ -964,10 +964,13 @@ defmodule Cadet.Assessments do
           [v, s, ans],
           %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
         )
-    )
-    |> Repo.all()
+      )
 
-    map_eligible_votes_to_entry_score(eligible_votes)
+    eligible_votes = Repo.all(eligible_votes_query)
+
+    entry_scores = map_eligible_votes_to_entry_score(eligible_votes)
+
+    entry_scores
     |> Enum.map(fn {ans_id, score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
@@ -1003,7 +1006,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  # Calculate the score based on formula 
+  # Calculate the score based on formula
   # score(v,t) = v - 2^(t/50) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
