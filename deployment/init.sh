@@ -2,12 +2,13 @@
 
 # This script is intended to work with an EC2 Ubuntu instance, but will likely
 # work with any Linux server running systemd.
+# Note that some actions are done by cloud-init (see cloud-config)
 
 set -euxo pipefail
 
 BASEDIR=/opt/cadet
 PKGURL='https://github.com/source-academy/cadet/releases/download/latest-stable/cadet-0.0.1.tar.gz'
-PKGPATH='/tmp/cadet-0.0.1.tar.gz'
+PKGPATH='/run/cadet-init/cadet-0.0.1.tar.gz'
 SVCURL='https://raw.githubusercontent.com/source-academy/cadet/stable/deployment/cadet.service'
 SVCPATH='/etc/systemd/system/cadet.service'
 
@@ -16,21 +17,10 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-apt-get -y update
-apt-get -y full-upgrade
-apt-get -y install libncurses5
-
-if ! cat /proc/swaps | grep /swapfile; then
-  dd if=/dev/zero of=/swapfile bs=16M count=1G iflag=count_bytes status=progress
-  chmod 600 /swapfile
-  mkswap /swapfile
-  swapon /swapfile
-  echo '/swapfile none swap defaults 0 0' >> /etc/fstab
-fi
-
 curl -L "$SVCURL" > "$SVCPATH"
 systemctl daemon-reload
 
+mkdir -p "$(dirname "$PKGPATH")"
 rm -f "$PKGPATH"
 curl -L "$PKGURL" > "$PKGPATH"
 # FIXME add some checksumming
