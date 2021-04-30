@@ -4,6 +4,15 @@ on:
     branches:
       - stable
       - master
+    paths:
+      - 'config/**'
+      - 'lib/**'
+      - 'priv/**'
+      - 'rel/**'
+      - 'test/**'
+      - '**/*.ex'
+      - '**/*.exs'
+      - 'mix.lock'
 
 jobs:
   ci:
