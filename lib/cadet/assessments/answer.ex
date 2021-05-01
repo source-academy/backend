@@ -13,6 +13,8 @@ defmodule Cadet.Assessments.Answer do
 
   schema "answers" do
     field(:grade, :integer, default: 0)
+    # used to compare answers with others
+    field(:relative_score, :float, default: 0.0)
     field(:adjustment, :integer, default: 0)
     field(:xp, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
@@ -122,10 +124,10 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @doc """
-  Used to update grade of answer to contest_score
+  Used to update relative_score of answer to contest_score
   """
   def contest_score_update_changeset(answer, contest_score_param) do
     answer
-    |> cast(contest_score_param, [:grade])
+    |> cast(contest_score_param, [:relative_score])
   end
 end

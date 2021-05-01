@@ -9,7 +9,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   require Logger
 
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.Utilities
   alias Cadet.Env
 
@@ -129,8 +129,32 @@ defmodule Cadet.Autograder.GradingJob do
         grade_mcq_answer(answer, question)
 
       :voting ->
-        nil
+        grade_voting_answer(answer, question)
     end
+  end
+
+  defp grade_voting_answer(answer = %Answer{submission_id: submission_id}, question = %Question{}) do
+    is_nil_entries =
+      Submission
+      |> where(id: ^submission_id)
+      |> join(:inner, [s], sv in SubmissionVotes,
+        on: sv.user_id == s.student_id and sv.question_id == ^question.id
+      )
+      |> where([_, sv], is_nil(sv.score))
+      |> Repo.exists?()
+
+    grade = if is_nil_entries, do: 0, else: question.max_grade
+    xp = if is_nil_entries, do: 0, else: question.max_xp
+
+    answer
+    |> Answer.autograding_changeset(%{
+      adjustment: 0,
+      xp_adjustment: 0,
+      grade: grade,
+      xp: xp,
+      autograding_status: :success
+    })
+    |> Repo.update()
   end
 
   defp grade_mcq_answer(answer = %Answer{}, question = %Question{question: question_content}) do
@@ -163,6 +187,7 @@ defmodule Cadet.Autograder.GradingJob do
       case question_type do
         :programming -> %{code: "// Question was left blank by the student."}
         :mcq -> %{choice_id: 0}
+        :voting -> %{}
       end
 
     %Answer{}

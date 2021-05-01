@@ -4,7 +4,6 @@ defmodule Cadet.Assessments do
   missions, sidequests, paths, etc.
   """
   use Cadet, [:context, :display]
-
   import Ecto.Query
 
   alias Cadet.Accounts.{Notification, Notifications, User}
@@ -18,62 +17,30 @@ defmodule Cadet.Assessments do
 
   @xp_early_submission_max_bonus 100
   @xp_bonus_assessment_type ~w(mission sidequest)
-  # @submit_answer_roles ~w(student staff admin)a
-  @change_dates_assessment_role ~w(staff admin)a
-  @delete_assessment_role ~w(staff admin)a
-  @publish_assessment_role ~w(staff admin)a
-  @unsubmit_assessment_role ~w(staff admin)a
-  @see_all_submissions_roles ~w(staff admin)a
-  @group_grading_summary_roles @see_all_submissions_roles
   @open_all_assessment_roles ~w(staff admin)a
 
   # These roles can save and finalise answers for closed assessments and
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
 
-  def change_dates_assessment(_user = %User{role: role}, id, close_at, open_at) do
-    if role in @change_dates_assessment_role do
-      if Timex.before?(close_at, open_at) do
-        {:error, {:bad_request, "New end date should occur after new opening date"}}
-      else
-        update_assessment(id, %{close_at: close_at, open_at: open_at})
-      end
-    else
-      {:error, {:forbidden, "User is not permitted to edit"}}
-    end
+  def delete_assessment(id) do
+    assessment = Repo.get(Assessment, id)
+
+    Submission
+    |> where(assessment_id: ^id)
+    |> delete_submission_assocation(id)
+
+    Question
+    |> where(assessment_id: ^id)
+    |> Repo.all()
+    |> Enum.each(fn q ->
+      delete_submission_votes_association(q)
+    end)
+
+    Repo.delete(assessment)
   end
 
-  def toggle_publish_assessment(_publisher = %User{role: role}, id) do
-    if role in @publish_assessment_role do
-      assessment = Repo.get(Assessment, id)
-      update_assessment(id, %{is_published: !assessment.is_published})
-    else
-      {:error, {:forbidden, "User is not permitted to publish"}}
-    end
-  end
-
-  def delete_assessment(_deleter = %User{role: role}, id) do
-    if role in @delete_assessment_role do
-      assessment = Repo.get(Assessment, id)
-
-      Submission
-      |> where(assessment_id: ^id)
-      |> delete_submission_assocation(id)
-
-      Question
-      |> where(assessment_id: ^id)
-      |> Repo.all()
-      |> Enum.each(fn q ->
-        delete_submission_votes_association(q)
-      end)
-
-      Repo.delete(assessment)
-    else
-      {:error, {:forbidden, "User is not permitted to delete"}}
-    end
-  end
-
-  def delete_submission_votes_association(question) do
+  defp delete_submission_votes_association(question) do
     SubmissionVotes
     |> where(question_id: ^question.id)
     |> Repo.delete_all()
@@ -217,7 +184,7 @@ defmodule Cadet.Assessments do
         given_password
       ) do
     cond do
-      Timex.after?(Timex.now(), assessment.close_at) ->
+      Timex.compare(Timex.now(), assessment.close_at) >= 0 ->
         assessment_with_questions_and_answers(assessment, user)
 
       match?({:ok, _}, find_submission(user, assessment)) ->
@@ -262,7 +229,7 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         user = %User{role: role}
       ) do
-    if Timex.after?(Timex.now(), assessment.open_at) or role in @open_all_assessment_roles do
+    if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
@@ -438,7 +405,7 @@ defmodule Cadet.Assessments do
     if assessment_id do
       open_date = Repo.get(Assessment, assessment_id).open_at
       # check if assessment is already opened
-      if Timex.after?(open_date, Timex.now()) do
+      if Timex.compare(open_date, Timex.now()) >= 0 do
         false
       else
         existing_questions_count =
@@ -507,6 +474,9 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, params_with_assessment_id)
   end
 
+  @doc """
+  Generates and assigns contest entries for users with given usernames.
+  """
   def insert_voting(
         contest_number,
         usernames,
@@ -631,7 +601,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  def publish_assessment(id) do
+  def publish_assessment(id) when is_ecto_id(id) do
     update_assessment(id, %{is_published: true})
   end
 
@@ -655,6 +625,14 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def get_question(id) when is_ecto_id(id) do
+    Question
+    |> where(id: ^id)
+    |> join(:inner, [q], assessment in assoc(q, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
   def delete_question(id) when is_ecto_id(id) do
     question = Repo.get(Question, id)
     Repo.delete(question)
@@ -669,34 +647,14 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-
-  def answer_question(id, user = %User{id: user_id, role: role}, raw_answer)
-      when is_ecto_id(id) do
-    # if role in @submit_answer_roles do
-    question =
-      Question
-      |> where(id: ^id)
-      |> join(:inner, [q], assessment in assoc(q, :assessment))
-      |> preload([_, a], assessment: a)
-      |> Repo.one()
-
-    bypass = role in @bypass_closed_roles
-
-    with {:question_found?, true} <- {:question_found?, is_map(question)},
-         {:is_open?, true} <- {:is_open?, bypass or is_open?(question.assessment)},
-         {:ok, submission} <- find_or_create_submission(user, question.assessment),
-         {:status, true} <- {:status, bypass or submission.status != :submitted},
+  def answer_question(question = %Question{}, user = %User{id: user_id}, raw_answer, force_submit) do
+    with {:ok, submission} <- find_or_create_submission(user, question.assessment),
+         {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, user_id) do
       update_submission_status_router(submission, question)
 
       {:ok, nil}
     else
-      {:question_found?, false} ->
-        {:error, {:not_found, "Question not found"}}
-
-      {:is_open?, false} ->
-        {:error, {:forbidden, "Assessment not open"}}
-
       {:status, _} ->
         {:error, {:forbidden, "Assessment submission already finalised"}}
 
@@ -709,32 +667,144 @@ defmodule Cadet.Assessments do
       _ ->
         {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
-
-    # else
-    #  {:error, {:forbidden, "User is not permitted to answer questions"}}
-    # end
   end
 
-  def finalise_submission(assessment_id, %User{id: user_id, role: role})
-      when is_ecto_id(assessment_id) do
-    # if role in @submit_answer_roles do
-    submission =
-      Submission
-      |> where(assessment_id: ^assessment_id)
-      |> where(student_id: ^user_id)
-      |> join(:inner, [s], a in assoc(s, :assessment))
-      |> preload([_, a], assessment: a)
-      |> Repo.one()
+  # def answer_question(id, user = %User{id: user_id, role: role}, raw_answer)
+  #     when is_ecto_id(id) do
+  #   # if role in @submit_answer_roles do
+  #   question =
+  #     Question
+  #     |> where(id: ^id)
+  #     |> join(:inner, [q], assessment in assoc(q, :assessment))
+  #     |> preload([_, a], assessment: a)
+  #     |> Repo.one()
 
-    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-         {:is_open?, true} <-
-           {:is_open?, role in @bypass_closed_roles or is_open?(submission.assessment)},
-         {:status, :attempted} <- {:status, submission.status},
+  #   bypass = role in @bypass_closed_roles
+
+  #   with {:question_found?, true} <- {:question_found?, is_map(question)},
+  #        {:is_open?, true} <- {:is_open?, bypass or is_open?(question.assessment)},
+  #        {:ok, submission} <- find_or_create_submission(user, question.assessment),
+  #        {:status, true} <- {:status, bypass or submission.status != :submitted},
+  #        {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, user_id) do
+  #     update_submission_status_router(submission, question)
+
+  #     {:ok, nil}
+  #   else
+  #     {:question_found?, false} ->
+  #       {:error, {:not_found, "Question not found"}}
+
+  #     {:is_open?, false} ->
+  #       {:error, {:forbidden, "Assessment not open"}}
+
+  #     {:status, _} ->
+  #       {:error, {:forbidden, "Assessment submission already finalised"}}
+
+  #     {:error, :race_condition} ->
+  #       {:error, {:internal_server_error, "Please try again later."}}
+
+  #     {:error, :vote_not_unique} ->
+  #       {:error, {:bad_request, "Invalid vote or vote is not unique! Vote is not saved."}}
+
+  #     _ ->
+  #       {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+  #   end
+  # end
+
+  def get_submission(assessment_id, %User{id: user_id})
+      when is_ecto_id(assessment_id) do
+    Submission
+    |> where(assessment_id: ^assessment_id)
+    |> where(student_id: ^user_id)
+    |> join(:inner, [s], a in assoc(s, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
+  def finalise_submission(submission = %Submission{}) do
+    with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
       # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
       Notifications.write_notification_when_student_submits(submission)
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
+
+      {:ok, nil}
+    else
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :submitted} ->
+        {:error, {:forbidden, "Assessment has already been submitted"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
+      when is_ecto_id(submission_id) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.get(submission_id)
+
+    bypass = role in @bypass_closed_roles and submission.student_id == user_id
+
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
+         {:status, :submitted} <- {:status, submission.status},
+         {:allowed_to_unsubmit?, true} <-
+           {:allowed_to_unsubmit?,
+            role == :admin or bypass or
+              Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
+      Multi.new()
+      |> Multi.run(
+        :rollback_submission,
+        fn _repo, _ ->
+          submission
+          |> Submission.changeset(%{
+            status: :attempted,
+            xp_bonus: 0,
+            unsubmitted_by_id: user_id,
+            unsubmitted_at: Timex.now()
+          })
+          |> Repo.update()
+        end
+      )
+      |> Multi.run(:rollback_answers, fn _repo, _ ->
+        Answer
+        |> join(:inner, [a], q in assoc(a, :question))
+        |> join(:inner, [a, _], s in assoc(a, :submission))
+        |> preload([_, q, s], question: q, submission: s)
+        |> where(submission_id: ^submission.id)
+        |> Repo.all()
+        |> Enum.reduce_while({:ok, nil}, fn answer, acc ->
+          case acc do
+            {:error, _} ->
+              {:halt, acc}
+
+            {:ok, _} ->
+              {:cont,
+               answer
+               |> Answer.grading_changeset(%{
+                 grade: 0,
+                 adjustment: 0,
+                 xp: 0,
+                 xp_adjustment: 0,
+                 autograding_status: :none,
+                 autograding_results: []
+               })
+               |> Repo.update()}
+          end
+        end)
+      end)
+      |> Repo.transaction()
+
+      Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+        submission.assessment.id,
+        Cadet.Accounts.get_user(submission.student_id)
+      )
 
       {:ok, nil}
     else
@@ -747,106 +817,14 @@ defmodule Cadet.Assessments do
       {:status, :attempting} ->
         {:error, {:bad_request, "Some questions have not been attempted"}}
 
-      {:status, :submitted} ->
-        {:error, {:forbidden, "Assessment has already been submitted"}}
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      {:allowed_to_unsubmit?, false} ->
+        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
 
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
-    end
-
-    # else
-    #   {:error, {:forbidden, "User is not permitted to answer questions"}}
-    # end
-  end
-
-  def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
-      when is_ecto_id(submission_id) do
-    if role in @unsubmit_assessment_role do
-      submission =
-        Submission
-        |> join(:inner, [s], a in assoc(s, :assessment))
-        |> preload([_, a], assessment: a)
-        |> Repo.get(submission_id)
-
-      bypass = role in @bypass_closed_roles and submission.student_id == user_id
-
-      with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-           {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
-           {:status, :submitted} <- {:status, submission.status},
-           {:allowed_to_unsubmit?, true} <-
-             {:allowed_to_unsubmit?,
-              role == :admin or bypass or
-                Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
-        Multi.new()
-        |> Multi.run(
-          :rollback_submission,
-          fn _repo, _ ->
-            submission
-            |> Submission.changeset(%{
-              status: :attempted,
-              xp_bonus: 0,
-              unsubmitted_by_id: user_id,
-              unsubmitted_at: Timex.now()
-            })
-            |> Repo.update()
-          end
-        )
-        |> Multi.run(:rollback_answers, fn _repo, _ ->
-          Answer
-          |> join(:inner, [a], q in assoc(a, :question))
-          |> join(:inner, [a, _], s in assoc(a, :submission))
-          |> preload([_, q, s], question: q, submission: s)
-          |> where(submission_id: ^submission.id)
-          |> Repo.all()
-          |> Enum.reduce_while({:ok, nil}, fn answer, acc ->
-            case acc do
-              {:error, _} ->
-                {:halt, acc}
-
-              {:ok, _} ->
-                {:cont,
-                 answer
-                 |> Answer.grading_changeset(%{
-                   grade: 0,
-                   adjustment: 0,
-                   xp: 0,
-                   xp_adjustment: 0,
-                   autograding_status: :none,
-                   autograding_results: []
-                 })
-                 |> Repo.update()}
-            end
-          end)
-        end)
-        |> Repo.transaction()
-
-        Cadet.Accounts.Notifications.handle_unsubmit_notifications(
-          submission.assessment.id,
-          Cadet.Accounts.get_user(submission.student_id)
-        )
-
-        {:ok, nil}
-      else
-        {:submission_found?, false} ->
-          {:error, {:not_found, "Submission not found"}}
-
-        {:is_open?, false} ->
-          {:error, {:forbidden, "Assessment not open"}}
-
-        {:status, :attempting} ->
-          {:error, {:bad_request, "Some questions have not been attempted"}}
-
-        {:status, :attempted} ->
-          {:error, {:bad_request, "Assessment has not been submitted"}}
-
-        {:allowed_to_unsubmit?, false} ->
-          {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
-
-        _ ->
-          {:error, {:internal_server_error, "Please try again later."}}
-      end
-    else
-      {:error, {:forbidden, "User is not permitted to unsubmit questions"}}
     end
   end
 
@@ -912,7 +890,7 @@ defmodule Cadet.Assessments do
       SubmissionVotes
       |> where(question_id: ^question.id)
       |> where(user_id: ^submission.student_id)
-      |> where([c], is_nil(c.score))
+      |> where([sv], is_nil(sv.rank))
       |> Repo.exists?()
 
     unless not_nil_entries do
@@ -926,8 +904,23 @@ defmodule Cadet.Assessments do
       fn q ->
         if q.type == :voting do
           submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
+          # fetch top 10 contest voting entries with the contest question id
+          question_id = fetch_associated_contest_question_id(q.id)
 
-          voting_question = Map.put(q.question, :contest_entries, submission_votes)
+          leaderboard_results =
+            if(is_nil(question_id),
+              do: [],
+              else: fetch_top_relative_score_answers(question_id, 10)
+            )
+
+          # populate entries to vote for and leaderboard data into the question
+          voting_question =
+            Map.put(
+              Map.put(q.question, :contest_entries, submission_votes),
+              :contest_leaderboard,
+              leaderboard_results
+            )
+
           Map.put(q, :question, voting_question)
         else
           q
@@ -941,42 +934,132 @@ defmodule Cadet.Assessments do
     |> where([v], v.user_id == ^user_id and v.question_id == ^question_id)
     |> join(:inner, [v], s in assoc(v, :submission))
     |> join(:inner, [v, s], a in assoc(s, :answers))
-    |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, score: v.score})
+    |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, rank: v.rank})
     |> Repo.all()
   end
 
   @doc """
-  Computes the current score of each voting submission based on current
-  submitted votes.
+  Find the contest_question_id associated with the given voting_question id
   """
-  def compute_score(contest_question_id) do
-    # query all records from submission votes tied to the question id ->
-    # map score to user id ->
-    # store as grade ->
-    # query grade for contest question id.
-    eligible_votes_query =
+  def fetch_associated_contest_question_id(voting_question_id) do
+    # TODO: improve this function.
+    assessment_id_query =
       from(
         SubmissionVotes
-        |> join(:left, [v], s in assoc(v, :submission))
-        |> join(:left, [v, s, ans], ans in assoc(s, :answers))
-        |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
-        |> select(
-          [v, s, ans],
-          %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
-        )
+        |> where(question_id: ^voting_question_id)
+        |> join(:left, [sv], s in assoc(sv, :submission))
+        |> select([sv, s], %{assessment_id: s.assessment_id})
+        |> limit(1)
       )
 
-    eligible_votes = Repo.all(eligible_votes_query)
+    case Repo.all(assessment_id_query) do
+      [%{assessment_id: assessment_id}] ->
+        question_id_query =
+          from(
+            Question
+            |> where(assessment_id: ^assessment_id)
+            |> select([q], %{q_id: q.id})
+            |> limit(1)
+          )
+
+        case Repo.all(question_id_query) do
+          [%{q_id: q_id}] -> q_id
+          [] -> nil
+        end
+
+      [] ->
+        nil
+    end
+  end
+
+  @doc """
+  General method to fetch top relative_score entry answers for given question_id
+  Used for contest leaderboard fetching
+  """
+  def fetch_top_relative_score_answers(question_id, number_of_answers) do
+    Answer
+    |> where(question_id: ^question_id)
+    |> order_by(desc: :grade)
+    |> join(:left, [a], s in assoc(a, :submission))
+    |> join(:left, [a, s], student in assoc(s, :student))
+    |> select([a, s, student], %{
+      submission_id: a.submission_id,
+      answer: a.answer,
+      relative_score: a.relative_score,
+      student_name: student.name
+    })
+    |> limit(^number_of_answers)
+    |> Repo.all()
+  end
+
+  # TODO: implement rolling leaderboard
+  @doc """
+  Function called by scheduler to compute rolling leaderboard for
+  contests which voting has yet to close.
+  """
+
+  # def update_active_contest_leaderboard() do
+  #   active_voting_question_query =
+  #     from(
+  #       Question
+  #       |> where(type: "voting")
+  #     )
+  # end
+
+  def update_final_contest_leaderboards do
+    voting_questions_to_update = fetch_voting_questions_due_yesterday()
+
+    voting_questions_to_update
+    |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+  end
+
+  def fetch_voting_questions_due_yesterday do
+    Question
+    |> join(:left, [q], a in assoc(q, :assessment))
+    |> where([q], q.type == "voting")
+    |> where([q, a], a.is_published)
+    |> where(
+      [q, a],
+      a.close_at <= ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Computes the current relative_score of each voting submission answer
+  based on current submitted votes.
+  """
+
+  # def update_rolling_contest_leaderboards() do
+
+  # end
+
+  def compute_relative_score(contest_voting_question_id) do
+    # query all records from submission votes tied to the question id ->
+    # map rank to user id ->
+    # store as grade ->
+    # query grade for contest question id.
+    eligible_votes =
+      SubmissionVotes
+      |> join(:left, [v], s in assoc(v, :submission))
+      |> join(:left, [v, s, ans], ans in assoc(s, :answers))
+      |> where(
+        [v, s, ans],
+        v.question_id == ^contest_voting_question_id and s.status == "submitted"
+      )
+      |> select(
+        [v, s, ans],
+        %{ans_id: ans.id, rank: v.rank, ans: ans.answer["code"]}
+      )
+      |> Repo.all()
 
     entry_scores = map_eligible_votes_to_entry_score(eligible_votes)
 
     entry_scores
-    |> Enum.map(fn {ans_id, score} ->
+    |> Enum.map(fn {ans_id, relative_score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
-        # TODO: need to fix this
-        # grade is an integer... might lead to unfairness
-        grade: score
+        relative_score: relative_score
       })
     end)
     |> Enum.map(fn changeset ->
@@ -988,13 +1071,16 @@ defmodule Cadet.Assessments do
   end
 
   defp map_eligible_votes_to_entry_score(eligible_votes) do
-    # WARNING: possible bug with same answer being assigned to different users
-    # should a user be assigned to the same submission ID
     # # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
-      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, rank: rank, ans: ans}, tracker ->
         {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
-        Map.put(tracker, ans_id, {prev_score + score, prev_count + 1, Parser.lex(ans)})
+
+        Map.put(
+          tracker,
+          ans_id,
+          {prev_score + convert_vote_rank_to_score(rank), prev_count + 1, Parser.lex(ans)}
+        )
       end)
 
     # calculate the score based on formula {ans_id, score}
@@ -1006,12 +1092,18 @@ defmodule Cadet.Assessments do
     )
   end
 
+  # implementation detail assuming each user votes for
+  # 10 entries and rank range is [1, 10]
+  defp convert_vote_rank_to_score(rank) do
+    11 - rank
+  end
+
   # Calculate the score based on formula
   # score(v,t) = v - 2^(t/50) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    round(normalized_voting_score - :math.pow(2, tokens / 50))
+    normalized_voting_score - :math.pow(2, tokens / 50)
   end
 
   @doc """
@@ -1025,84 +1117,80 @@ defmodule Cadet.Assessments do
   a boolean which is false by default.
 
   The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:unauthorized, "User is not permitted to grade."}}
+  {:unauthorized, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(%User{}) ::
-          {:ok, String.t()} | {:error, {:unauthorized, String.t()}}
-  def all_submissions_by_grader_for_index(grader = %User{role: role}, group_only \\ false) do
-    if role in @see_all_submissions_roles do
-      show_all = role in @see_all_submissions_roles and not group_only
+          {:ok, String.t()}
+  def all_submissions_by_grader_for_index(grader = %User{}, group_only \\ false) do
+    show_all = not group_only
 
-      group_where =
-        if show_all,
-          do: "",
-          else:
-            "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
+    group_where =
+      if show_all,
+        do: "",
+        else:
+          "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
 
-      params = if show_all, do: [], else: [grader.id]
+    params = if show_all, do: [], else: [grader.id]
 
-      # We bypass Ecto here and use a raw query to generate JSON directly from
-      # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
+    # We bypass Ecto here and use a raw query to generate JSON directly from
+    # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
-      case Repo.query(
-             """
-             select json_agg(q)::TEXT from
-             (
-               select
+    case Repo.query(
+           """
+           select json_agg(q)::TEXT from
+           (
+             select
+               s.id,
+               s.status,
+               s."unsubmittedAt",
+               s.grade,
+               s.adjustment,
+               s.xp,
+               s."xpAdjustment",
+               s."xpBonus",
+               s."gradedCount",
+               assts.jsn AS assessment,
+               students.jsn as student,
+               unsubmitters.jsn as "unsubmittedBy"
+             from
+               (select
                  s.id,
+                 s.student_id,
+                 s.assessment_id,
                  s.status,
-                 s."unsubmittedAt",
-                 s.grade,
-                 s.adjustment,
-                 s.xp,
-                 s."xpAdjustment",
-                 s."xpBonus",
-                 s."gradedCount",
-                 assts.jsn AS assessment,
-                 students.jsn as student,
-                 unsubmitters.jsn as "unsubmittedBy"
-               from
-                 (select
-                   s.id,
-                   s.student_id,
-                   s.assessment_id,
-                   s.status,
-                   s.unsubmitted_at as "unsubmittedAt",
-                   s.unsubmitted_by_id,
-                   sum(ans.grade) as grade,
-                   sum(ans.adjustment) as adjustment,
-                   sum(ans.xp) as xp,
-                   sum(ans.xp_adjustment) as "xpAdjustment",
-                   s.xp_bonus as "xpBonus",
-                   count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
-                 from submissions s
-                   left join
-                   answers ans on s.id = ans.submission_id
-                 #{group_where}
-                 group by s.id) s
-               inner join
-                 (select
-                   a.id, to_json(a) as jsn
-                 from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
-               inner join
-                 (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
-               left join
-                 (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
-             ) q
-             """,
-             params
-           ) do
-        {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
-        {:ok, %{rows: [[json]]}} -> {:ok, json}
-      end
-    else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+                 s.unsubmitted_at as "unsubmittedAt",
+                 s.unsubmitted_by_id,
+                 sum(ans.grade) as grade,
+                 sum(ans.adjustment) as adjustment,
+                 sum(ans.xp) as xp,
+                 sum(ans.xp_adjustment) as "xpAdjustment",
+                 s.xp_bonus as "xpBonus",
+                 count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
+               from submissions s
+                 left join
+                 answers ans on s.id = ans.submission_id
+               #{group_where}
+               group by s.id) s
+             inner join
+               (select
+                 a.id, to_json(a) as jsn
+               from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
+             inner join
+               (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
+             left join
+               (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+           ) q
+           """,
+           params
+         ) do
+      {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
+      {:ok, %{rows: [[json]]}} -> {:ok, json}
     end
   end
 
-  @spec get_answers_in_submission(integer() | String.t(), %User{}) ::
-          {:ok, [%Answer{}]} | {:error, {:unauthorized, String.t()}}
-  def get_answers_in_submission(id, %User{role: role}) when is_ecto_id(id) do
+  @spec get_answers_in_submission(integer() | String.t()) ::
+          {:ok, [%Answer{}]} | {:error, {:bad_request | :unauthorized, String.t()}}
+  def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
       |> where(submission_id: ^id)
@@ -1117,15 +1205,25 @@ defmodule Cadet.Assessments do
         submission: {s, student: st}
       )
 
-    if role in @see_all_submissions_roles do
-      answers =
-        answer_query
-        |> Repo.all()
-        |> Enum.sort_by(& &1.question.display_order)
+    answers =
+      answer_query
+      |> Repo.all()
+      |> Enum.sort_by(& &1.question.display_order)
+      |> Enum.map(fn ans ->
+        if ans.question.type == :voting do
+          empty_contest_entries = Map.put(ans.question.question, :contest_entries, [])
+          empty_contest_leaderboard = Map.put(empty_contest_entries, :contest_leaderboard, [])
+          question = Map.put(ans.question, :question, empty_contest_leaderboard)
+          Map.put(ans, :question, question)
+        else
+          ans
+        end
+      end)
 
-      {:ok, answers}
+    if answers == [] do
+      {:error, {:bad_request, "Submission is not found."}}
     else
-      {:error, {:unauthorized, "User is not permitted to grade."}}
+      {:ok, answers}
     end
   end
 
@@ -1160,10 +1258,9 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %User{id: grader_id, role: role}
+        %User{id: grader_id}
       )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) and
-             role in @see_all_submissions_roles do
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)
 
     answer_query =
@@ -1217,8 +1314,8 @@ defmodule Cadet.Assessments do
 
   @spec force_regrade_submission(integer() | String.t(), %User{}) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
-  def force_regrade_submission(submission_id, _requesting_user = %User{id: grader_id, role: role})
-      when is_ecto_id(submission_id) and role in @see_all_submissions_roles do
+  def force_regrade_submission(submission_id, _requesting_user = %User{id: grader_id})
+      when is_ecto_id(submission_id) do
     with {:get, sub} when not is_nil(sub) <- {:get, Repo.get(Submission, submission_id)},
          {:status, true} <- {:status, sub.student_id == grader_id or sub.status == :submitted} do
       GradingJob.force_grade_individual_submission(sub, true)
@@ -1241,10 +1338,9 @@ defmodule Cadet.Assessments do
   def force_regrade_answer(
         submission_id,
         question_id,
-        _requesting_user = %User{id: grader_id, role: role}
+        _requesting_user = %User{id: grader_id}
       )
-      when is_ecto_id(submission_id) and is_ecto_id(question_id) and
-             role in @see_all_submissions_roles do
+      when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     answer =
       Answer
       |> where(submission_id: ^submission_id, question_id: ^question_id)
@@ -1286,8 +1382,8 @@ defmodule Cadet.Assessments do
 
   # Checks if an assessment is open and published.
   @spec is_open?(%Assessment{}) :: boolean()
-  defp is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
-    Timex.between?(Timex.now(), open_at, close_at) and is_published
+  def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+    Timex.between?(Timex.now(), open_at, close_at, inclusive: :start) and is_published
   end
 
   @type group_summary_entry :: %{
@@ -1299,48 +1395,44 @@ defmodule Cadet.Assessments do
           submitted_sidequests: number()
         }
 
-  @spec get_group_grading_summary(%User{}) ::
-          {:ok, [group_summary_entry()]} | {:error, {atom(), String.t()}}
-  def get_group_grading_summary(%User{role: role}) do
-    if role in @group_grading_summary_roles do
-      subs =
-        Answer
-        |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
-        |> join(:left, [ans, s], st in User, on: s.student_id == st.id)
-        |> join(:left, [ans, s, st], a in Assessment, on: a.id == s.assessment_id)
-        |> where(
-          [ans, s, st, a],
-          not is_nil(st.group_id) and s.status == ^:submitted and
-            a.type in ^["mission", "sidequest"]
-        )
-        |> group_by([ans, s, st, a], s.id)
-        |> select([ans, s, st, a], %{
-          group_id: max(st.group_id),
-          type: max(a.type),
-          num_submitted: count(),
-          num_ungraded: filter(count(), is_nil(ans.grader_id))
-        })
+  @spec get_group_grading_summary ::
+          {:ok, [group_summary_entry()]}
+  def get_group_grading_summary do
+    subs =
+      Answer
+      |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
+      |> join(:left, [ans, s], st in User, on: s.student_id == st.id)
+      |> join(:left, [ans, s, st], a in Assessment, on: a.id == s.assessment_id)
+      |> where(
+        [ans, s, st, a],
+        not is_nil(st.group_id) and s.status == ^:submitted and
+          a.type in ^["mission", "sidequest"]
+      )
+      |> group_by([ans, s, st, a], s.id)
+      |> select([ans, s, st, a], %{
+        group_id: max(st.group_id),
+        type: max(a.type),
+        num_submitted: count(),
+        num_ungraded: filter(count(), is_nil(ans.grader_id))
+      })
 
-      rows =
-        subs
-        |> subquery()
-        |> join(:left, [t], g in Group, on: t.group_id == g.id)
-        |> join(:left, [t, g], l in User, on: l.id == g.leader_id)
-        |> group_by([t, g, l], [t.group_id, g.name, l.name])
-        |> select([t, g, l], %{
-          group_name: g.name,
-          leader_name: l.name,
-          ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
-          submitted_missions: filter(count(), t.type == "mission"),
-          ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
-          submitted_sidequests: filter(count(), t.type == "sidequest")
-        })
-        |> Repo.all()
+    rows =
+      subs
+      |> subquery()
+      |> join(:left, [t], g in Group, on: t.group_id == g.id)
+      |> join(:left, [t, g], l in User, on: l.id == g.leader_id)
+      |> group_by([t, g, l], [t.group_id, g.name, l.name])
+      |> select([t, g, l], %{
+        group_name: g.name,
+        leader_name: l.name,
+        ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
+        submitted_missions: filter(count(), t.type == "mission"),
+        ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
+        submitted_sidequests: filter(count(), t.type == "sidequest")
+      })
+      |> Repo.all()
 
-      {:ok, rows}
-    else
-      {:error, {:unauthorized, "User is not permitted to view the grading summary."}}
-    end
+    {:ok, rows}
   end
 
   defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
@@ -1360,6 +1452,8 @@ defmodule Cadet.Assessments do
     end
   end
 
+  require Logger
+
   defp insert_or_update_answer(
          submission = %Submission{},
          question = %Question{},
@@ -1369,7 +1463,7 @@ defmodule Cadet.Assessments do
     answer_content = build_answer_content(raw_answer, question.type)
 
     if question.type == :voting do
-      insert_or_update_voting_answer(user_id, question.id, answer_content)
+      insert_or_update_voting_answer(submission.id, user_id, question.id, answer_content)
     else
       answer_changeset =
         %Answer{}
@@ -1388,16 +1482,14 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def insert_or_update_voting_answer(user_id, question_id, answer_content) do
-    set_score_to_nil =
-      from(
-        SubmissionVotes
-        |> where(user_id: ^user_id, question_id: ^question_id)
-      )
+  def insert_or_update_voting_answer(submission_id, user_id, question_id, answer_content) do
+    set_rank_to_nil =
+      SubmissionVotes
+      |> where(user_id: ^user_id, question_id: ^question_id)
 
     voting_multi =
       Multi.new()
-      |> Multi.update_all(:set_score_to_nil, set_score_to_nil, set: [score: nil])
+      |> Multi.update_all(:set_rank_to_nil, set_rank_to_nil, set: [rank: nil])
 
     answer_content
     |> Enum.with_index(1)
@@ -1409,9 +1501,25 @@ defmodule Cadet.Assessments do
           user_id: user_id,
           submission_id: entry.submission_id
         )
-        |> SubmissionVotes.changeset(%{score: entry.score})
+        |> SubmissionVotes.changeset(%{rank: entry.rank})
         |> Repo.insert_or_update()
       end)
+    end)
+    |> Multi.run("insert into answer table", fn _repo, _ ->
+      Answer
+      |> Repo.get_by(submission_id: submission_id, question_id: question_id)
+      |> case do
+        nil ->
+          Repo.insert(%Answer{
+            answer: %{},
+            submission_id: submission_id,
+            question_id: question_id,
+            type: :voting
+          })
+
+        _ ->
+          {:ok, nil}
+      end
     end)
     |> Repo.transaction()
     |> case do
@@ -1429,6 +1537,8 @@ defmodule Cadet.Assessments do
         %{code: raw_answer}
 
       :voting ->
+        Logger.info(inspect(raw_answer))
+
         raw_answer
         |> Enum.map(fn ans ->
           for {key, value} <- ans, into: %{}, do: {String.to_existing_atom(key), value}

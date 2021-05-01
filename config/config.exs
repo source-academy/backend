@@ -20,6 +20,8 @@ config :cadet, Cadet.Jobs.Scheduler,
   jobs: [
     # Grade assessments that close in the previous day at 00:01
     {"1 0 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}}
+    # Compute contest leaderboard ranks every 4 hours
+    # {"0 */4 * * *", {}}
   ]
 
 # Configures the endpoint

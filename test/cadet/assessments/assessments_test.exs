@@ -136,45 +136,190 @@ defmodule Cadet.AssessmentsTest do
     assert Repo.get(Question, question.id) == nil
   end
 
-  test "insert votes into submission_votes table" do
-    assessment = insert(:assessment, type: "contest")
-    question = insert(:voting_question)
-    users = Enum.map(0..5, fn _x -> insert(:user) end)
+  describe "contest voting" do
+    test "inserts votes into submission_votes table" do
+      assessment = insert(:assessment, type: "contest")
+      question = insert(:voting_question)
+      users = Enum.map(0..5, fn _x -> insert(:user) end)
 
-    Enum.map(users, fn user ->
-      insert(:submission, student: user, assessment: assessment, status: "submitted")
-    end)
+      Enum.map(users, fn user ->
+        insert(:submission, student: user, assessment: assessment, status: "submitted")
+      end)
 
-    usernames = Enum.map(users, fn user -> %{username: user.username} end)
+      usernames = Enum.map(users, fn user -> %{username: user.username} end)
 
-    Assessments.insert_voting(assessment.number, usernames, question.id)
-    assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 30
+      Assessments.insert_voting(assessment.number, usernames, question.id)
+      assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 30
+    end
+
+    test "create voting parameters with invalid contest number" do
+      question = insert(:voting_question)
+
+      {status, _} = Assessments.insert_voting("", [], question.id)
+
+      assert status == :error
+    end
+
+    test "deletes submission_votes when assessment is deleted" do
+      contest_assessment = insert(:assessment, type: "contest")
+      voting_assessment = insert(:assessment, type: "practical")
+      question = insert(:voting_question, assessment: voting_assessment)
+      users = Enum.map(0..5, fn _x -> insert(:user) end)
+
+      Enum.map(users, fn user ->
+        insert(:submission, student: user, assessment: contest_assessment, status: "submitted")
+      end)
+
+      usernames = Enum.map(users, fn user -> %{username: user.username} end)
+
+      Assessments.insert_voting(contest_assessment.number, usernames, question.id)
+      assert Repo.exists?(SubmissionVotes, question_id: question.id)
+
+      Assessments.delete_assessment(voting_assessment.id)
+      refute Repo.exists?(SubmissionVotes, question_id: question.id)
+    end
   end
 
-  test "create voting parameters with invalid contest number" do
-    question = insert(:voting_question)
+  require Logger
 
-    {status, _} = Assessments.insert_voting("", [], question.id)
+  describe "contest voting leaderboard" do
+    setup do
+      contest_assessment = insert(:assessment, type: "contest")
+      voting_assessment = insert(:assessment, type: "practical")
+      voting_question = insert(:voting_question, assessment: voting_assessment)
 
-    assert status == :error
-  end
+      # 5 students
+      student_list =
+        Enum.map(
+          1..5,
+          fn _index -> insert(:user) end
+        )
 
-  test "delete submission_votes when assessment is deleted" do
-    contest_assessment = insert(:assessment, type: "contest")
-    voting_assessment = insert(:assessment, type: "practical")
-    question = insert(:voting_question, assessment: voting_assessment)
-    users = Enum.map(0..5, fn _x -> insert(:user) end)
+      # each student has a contest submission
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: contest_assessment,
+              status: "submitted"
+            )
+          end
+        )
 
-    Enum.map(users, fn user ->
-      insert(:submission, student: user, assessment: contest_assessment, status: "submitted")
-    end)
+      # each student has an answer
+      ans_list =
+        Enum.map(
+          submission_list,
+          fn submission ->
+            insert(
+              :answer,
+              submission: submission,
+              question: voting_question
+            )
+          end
+        )
 
-    usernames = Enum.map(users, fn user -> %{username: user.username} end)
+      _submission_votes =
+        Enum.map(
+          student_list,
+          fn student ->
+            Enum.map(
+              Enum.with_index(submission_list),
+              fn {submission, index} ->
+                insert(
+                  :submission_vote,
+                  rank: index + 1,
+                  user: student,
+                  submission: submission,
+                  question: voting_question
+                )
+              end
+            )
+          end
+        )
 
-    Assessments.insert_voting(contest_assessment.number, usernames, question.id)
+      %{answers: ans_list, question_id: voting_question.id, student_list: student_list}
+    end
 
-    admin = insert(:user, role: "admin")
-    Assessments.delete_assessment(admin, voting_assessment.id)
-    assert Repo.exists?(SubmissionVotes, question_id: question.id) == false
+    test "computes correct relative_score with lexing/penalty and fetches highest x relative_score correctly",
+         %{answers: _answers, question_id: question_id, student_list: _student_list} do
+      Assessments.compute_relative_score(question_id)
+
+      top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, 5)
+
+      assert Enum.map(top_x_ans, fn ans -> ans.relative_score end) == [
+               99.0,
+               89.0,
+               79.0,
+               69.0,
+               59.0
+             ]
+
+      x = 3
+      top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, x)
+
+      # verify that top x ans are queried correctly
+      assert Enum.map(top_x_ans, fn ans -> ans.relative_score end) == [99.0, 89.0, 79.0]
+    end
+
+    # describe "fetch_contest_voting_questions_due_yesterday" do
+    #   test "it only returns yesterday's contest voting questions" do
+    #     yesterday =
+    #       insert_list(2, :assessment, %{
+    #         is_published: true,
+    #         open_at: Timex.shift(Timex.now(), days: -5),
+    #         close_at: Timex.shift(Timex.now(), hours: -4),
+    #         type: "mission"
+    #       })
+
+    #     past =
+    #       insert_list(2, :question, %{
+    #         is_published: true,
+    #         open_at: Timex.shift(Timex.now(), days: -5),
+    #         close_at: Timex.shift(Timex.now(), days: -4),
+    #         type: "mission"
+    #       })
+
+    #     future =
+    #       insert_list(2, :question, %{
+    #         is_published: true,
+    #         open_at: Timex.shift(Timex.now(), days: -3),
+    #         close_at: Timex.shift(Timex.now(), days: 4),
+    #         type: "mission"
+    #       })
+
+    #     for assessment <- yesterday ++ past ++ future do
+    #       insert_list(2, :programming_question, %{assessment: assessment})
+    #     end
+
+    #     assert get_assessments_ids(yesterday) ==
+    #              get_assessments_ids(Utilities.fetch_assessments_due_yesterday())
+    #   end
+
+    # test "updates rolling leaderboard entries for active voting assessments" do
+    #   now = Timex.now()
+
+    #   # already closed voting assessment
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   closed_voting_assessment = insert(:assessment, type: "practical",
+    #     start_at: Timex.subtract(now, hours: 12),
+    #     close_at: Timex.subtract(now, hours: 6))
+
+    #   # voting assessment not open
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   closed_voting_assessment = insert(:assessment, type: "practical",
+    #     start_at: Timex.shift(now, hours: 6),
+    #     close_at: Timex.shift(now, hours: 12))
+
+    #   # voting assessments ongoing
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   ongoing_voting_assessment = insert(:assessment, type: "practical")
+
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   ongoing_voting_assessment = insert(:assessment, type: "practical")
+    # end
   end
 end

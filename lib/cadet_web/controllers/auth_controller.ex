@@ -1,4 +1,7 @@
 defmodule CadetWeb.AuthController do
+  @moduledoc """
+  Handles user login and authentication.
+  """
   use CadetWeb, :controller
   use PhoenixSwagger
 
@@ -7,7 +10,7 @@ defmodule CadetWeb.AuthController do
   alias Cadet.Auth.{Guardian, Provider}
 
   @doc """
-  Receives a /login request with valid attributes (`Login form`).
+  Receives a /login request with valid attributes.
 
   If the user is already registered in our database, simply return `Tokens`. If
   the user has not been registered before, register the user, then return the
@@ -51,9 +54,6 @@ defmodule CadetWeb.AuthController do
     end
   end
 
-  @doc """
-  Receives a /login request with invalid attributes.
-  """
   def create(conn, _params) do
     send_resp(conn, :bad_request, "Missing parameter")
   end
@@ -70,13 +70,10 @@ defmodule CadetWeb.AuthController do
         render(conn, "token.json", generate_tokens(user))
 
       _ ->
-        send_resp(conn, :unauthorized, "Invalid Token")
+        send_resp(conn, :unauthorized, "Invalid refresh token")
     end
   end
 
-  @doc """
-  Receives a /refresh request with invalid attributes.
-  """
   def refresh(conn, _params) do
     send_resp(conn, :bad_request, "Missing parameter")
   end
@@ -91,13 +88,10 @@ defmodule CadetWeb.AuthController do
         text(conn, "OK")
 
       {:error, _} ->
-        send_resp(conn, :unauthorized, "Invalid Token")
+        send_resp(conn, :unauthorized, "Invalid token")
     end
   end
 
-  @doc """
-  Receives a /logout request with invalid attributes.
-  """
   def logout(conn, _params) do
     send_resp(conn, :bad_request, "Missing parameter")
   end
@@ -114,9 +108,9 @@ defmodule CadetWeb.AuthController do
   end
 
   swagger_path :create do
-    post("/auth")
+    post("/auth/login")
 
-    summary("Obtain access and refresh tokens to authenticate user.")
+    summary("Obtain access and refresh tokens to authenticate user")
 
     description(
       "Get a set of access and refresh tokens, using the authentication code " <>
@@ -129,10 +123,10 @@ defmodule CadetWeb.AuthController do
     produces("application/json")
 
     parameters do
-      code(:body, :string, "OAuth2 code", required: true)
-      provider(:body, :string, "OAuth2 provider ID", required: true)
-      client_id(:body, :string, "OAuth2 client ID", required: false)
-      redirect_uri(:body, :string, "OAuth2 redirect URI", required: false)
+      code(:query, :string, "OAuth2 code", required: true)
+      provider(:query, :string, "OAuth2 provider ID", required: true)
+      client_id(:query, :string, "OAuth2 client ID", required: false)
+      redirect_uri(:query, :string, "OAuth2 redirect URI", required: false)
     end
 
     response(200, "OK", Schema.ref(:Tokens))
@@ -150,7 +144,7 @@ defmodule CadetWeb.AuthController do
       refresh_token(
         :body,
         Schema.ref(:RefreshToken),
-        "refresh token obtained from /auth",
+        "Refresh token obtained from /auth/login",
         required: true
       )
     end
@@ -166,7 +160,7 @@ defmodule CadetWeb.AuthController do
     consumes("application/json")
 
     parameters do
-      tokens(:body, Schema.ref(:RefreshToken), "refresh token to be invalidated", required: true)
+      tokens(:body, Schema.ref(:RefreshToken), "Refresh token to be invalidated", required: true)
     end
 
     response(200, "OK")
@@ -181,8 +175,8 @@ defmodule CadetWeb.AuthController do
           title("Tokens")
 
           properties do
-            access_token(:string, "Access token with TTL of 1 hour")
-            refresh_token(:string, "Refresh token with TTL of 1 week")
+            access_token(:string, "Access token with TTL of 1 hour", required: true)
+            refresh_token(:string, "Refresh token with TTL of 1 week", required: true)
           end
         end,
       RefreshToken:

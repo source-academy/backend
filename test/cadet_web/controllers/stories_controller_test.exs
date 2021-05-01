@@ -186,7 +186,7 @@ defmodule CadetWeb.StoriesControllerTest do
     end
   end
 
-  defp build_url, do: "/v1/stories"
+  defp build_url, do: "/v2/stories"
   defp build_url(url), do: "#{build_url()}/#{url}"
 
   defp stringify_camelise_keys(map) do

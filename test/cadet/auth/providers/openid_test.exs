@@ -157,4 +157,15 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
     assert {:error, :invalid_credentials, "Failed to fetch token from OpenID provider"} ==
              OpenID.authorise(@config, "dummy_code", "", "")
   end
+
+  test "missing token", %{bypass: bypass} do
+    Bypass.stub(bypass, "POST", "/oauth2/token", fn conn ->
+      conn
+      |> PlugConn.put_resp_header("content-type", "application/json")
+      |> PlugConn.resp(200, ~s({}))
+    end)
+
+    assert {:error, :invalid_credentials, "Missing token in response from OpenID provider"} ==
+             OpenID.authorise(@config, "dummy_code", "", "")
+  end
 end

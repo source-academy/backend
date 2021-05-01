@@ -22,4 +22,6 @@ defmodule Cadet.Auth.Providers.CognitoClaimExtractor do
       _ -> :student
     end
   end
+
+  def get_token_type, do: "access_token"
 end

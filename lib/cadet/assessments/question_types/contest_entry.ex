@@ -8,16 +8,16 @@ defmodule Cadet.Assessments.QuestionTypes.ContestEntry do
   embedded_schema do
     field(:submission_id, :integer)
     field(:answer, :string)
-    field(:score, :integer)
+    field(:rank, :integer)
   end
 
   @required_fields ~w(submission_id answer)a
-  @optional_fields ~w(score)a
+  @optional_fields ~w(rank)a
 
   def changeset(question, params \\ %{}) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_number(:score, greater_than_or_equal_to: 0)
+    |> validate_number(:rank, greater_than_or_equal_to: 1)
   end
 end

@@ -48,6 +48,7 @@ jobs:
           otp-version: 23.1.4
       - name: Perform test
         run: |
+          set -eu
           mix deps.get
           mix ecto.setup
           mix format --check-formatted
