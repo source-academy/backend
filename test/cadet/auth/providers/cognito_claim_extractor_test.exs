@@ -12,5 +12,7 @@ defmodule Cadet.Auth.Providers.CognitoClaimExtractorTest do
     assert @username == Testee.get_name(@claims)
     assert @role == Testee.get_role(@claims)
     assert :admin == Testee.get_role(%{"cognito:groups" => [:admin]})
+
+    assert Testee.get_token_type() == "access_token"
   end
 end
