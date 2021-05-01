@@ -171,7 +171,7 @@ defmodule Cadet.Assessments do
         given_password
       ) do
     cond do
-      Timex.after?(Timex.now(), assessment.close_at) ->
+      Timex.compare(Timex.now(), assessment.close_at) >= 0 ->
         assessment_with_questions_and_answers(assessment, user)
 
       match?({:ok, _}, find_submission(user, assessment)) ->
@@ -216,7 +216,7 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         user = %User{role: role}
       ) do
-    if Timex.after?(Timex.now(), assessment.open_at) or role in @open_all_assessment_roles do
+    if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
@@ -380,7 +380,7 @@ defmodule Cadet.Assessments do
     if assessment_id do
       open_date = Repo.get(Assessment, assessment_id).open_at
       # check if assessment is already opened
-      if Timex.after?(open_date, Timex.now()) do
+      if Timex.compare(open_date, Timex.now()) >= 0 do
         false
       else
         existing_questions_count =
@@ -961,7 +961,7 @@ defmodule Cadet.Assessments do
   # Checks if an assessment is open and published.
   @spec is_open?(%Assessment{}) :: boolean()
   def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
-    Timex.between?(Timex.now(), open_at, close_at) and is_published
+    Timex.between?(Timex.now(), open_at, close_at, inclusive: :start) and is_published
   end
 
   @type group_summary_entry :: %{
