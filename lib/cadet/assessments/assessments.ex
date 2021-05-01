@@ -507,6 +507,9 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, params_with_assessment_id)
   end
 
+  @doc """
+  Generates and assigns contest entries for users with given usernames.
+  """
   def insert_voting(
         contest_number,
         usernames,
@@ -926,8 +929,20 @@ defmodule Cadet.Assessments do
       fn q ->
         if q.type == :voting do
           submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
+          # fetch top 10 contest voting entries with the contest question id
+          question_id = fetch_associated_contest_question_id(q.id)
 
-          voting_question = Map.put(q.question, :contest_entries, submission_votes)
+          leaderboard_results =
+            if(is_nil(question_id), do: [], else: fetch_top_grade_answers(question_id, 10))
+
+          # populate entries to vote for and leaderboard data into the question
+          voting_question =
+            Map.put(
+              Map.put(q.question, :contest_entries, submission_votes),
+              :contest_leaderboard,
+              leaderboard_results
+            )
+
           Map.put(q, :question, voting_question)
         else
           q
@@ -943,6 +958,64 @@ defmodule Cadet.Assessments do
     |> join(:inner, [v, s], a in assoc(s, :answers))
     |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, score: v.score})
     |> Repo.all()
+  end
+
+  @doc """
+  Find the contest_question_id associated with the given voting_question id
+  """
+  def fetch_associated_contest_question_id(voting_question_id) do
+    # TODO: improve this function.
+    assessment_id_query =
+      from(
+        SubmissionVotes
+        |> where(question_id: ^voting_question_id)
+        |> join(:left, [sv], s in assoc(sv, :submission))
+        |> select([sv, s], %{assessment_id: s.assessment_id})
+        |> limit(1)
+      )
+
+    case Repo.all(assessment_id_query) do
+      [%{assessment_id: assessment_id}] ->
+        question_id_query =
+          from(
+            Question
+            |> where(assessment_id: ^assessment_id)
+            |> select([q], %{q_id: q.id})
+            |> limit(1)
+          )
+
+        case Repo.all(question_id_query) do
+          [%{q_id: q_id}] -> q_id
+          [] -> nil
+        end
+
+      [] ->
+        nil
+    end
+  end
+
+  @doc """
+  General method to fetch top graded entry answers for given question_id
+  Used for contest leaderboard fetching
+  """
+  def fetch_top_grade_answers(question_id, number_of_answers) do
+    top_answers_query =
+      from(
+        Answer
+        |> where(question_id: ^question_id)
+        |> order_by(desc: :grade)
+        |> join(:left, [a], s in assoc(a, :submission))
+        |> join(:left, [a, s], student in assoc(s, :student))
+        |> select([a, s, student], %{
+          submission_id: a.submission_id,
+          answer: a.answer,
+          score: a.grade,
+          student_name: student.name
+        })
+        |> limit(^number_of_answers)
+      )
+
+    Repo.all(top_answers_query)
   end
 
   @doc """
@@ -974,8 +1047,6 @@ defmodule Cadet.Assessments do
     |> Enum.map(fn {ans_id, score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
-        # TODO: need to fix this
-        # grade is an integer... might lead to unfairness
         grade: score
       })
     end)
@@ -988,8 +1059,6 @@ defmodule Cadet.Assessments do
   end
 
   defp map_eligible_votes_to_entry_score(eligible_votes) do
-    # WARNING: possible bug with same answer being assigned to different users
-    # should a user be assigned to the same submission ID
     # # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
       Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
@@ -1011,7 +1080,8 @@ defmodule Cadet.Assessments do
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    round(normalized_voting_score - :math.pow(2, tokens / 50))
+    # *1,000,000 to maintain DP precision of 6dp.
+    round((normalized_voting_score - :math.pow(2, tokens / 50)) * 1_000_000)
   end
 
   @doc """

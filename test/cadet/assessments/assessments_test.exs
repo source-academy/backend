@@ -136,45 +136,89 @@ defmodule Cadet.AssessmentsTest do
     assert Repo.get(Question, question.id) == nil
   end
 
-  test "insert votes into submission_votes table" do
-    assessment = insert(:assessment, type: "contest")
-    question = insert(:voting_question)
-    users = Enum.map(0..5, fn _x -> insert(:user) end)
+  describe "contest voting" do
+    test "inserts votes into submission_votes table" do
+      assessment = insert(:assessment, type: "contest")
+      question = insert(:voting_question)
+      users = Enum.map(0..5, fn _x -> insert(:user) end)
 
-    Enum.map(users, fn user ->
-      insert(:submission, student: user, assessment: assessment, status: "submitted")
-    end)
+      Enum.map(users, fn user ->
+        insert(:submission, student: user, assessment: assessment, status: "submitted")
+      end)
 
-    usernames = Enum.map(users, fn user -> %{username: user.username} end)
+      usernames = Enum.map(users, fn user -> %{username: user.username} end)
 
-    Assessments.insert_voting(assessment.number, usernames, question.id)
-    assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 30
+      Assessments.insert_voting(assessment.number, usernames, question.id)
+      assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 30
+    end
+
+    test "create voting parameters with invalid contest number" do
+      question = insert(:voting_question)
+
+      {status, _} = Assessments.insert_voting("", [], question.id)
+
+      assert status == :error
+    end
+
+    test "deletes submission_votes when assessment is deleted" do
+      contest_assessment = insert(:assessment, type: "contest")
+      voting_assessment = insert(:assessment, type: "practical")
+      question = insert(:voting_question, assessment: voting_assessment)
+      users = Enum.map(0..5, fn _x -> insert(:user) end)
+
+      Enum.map(users, fn user ->
+        insert(:submission, student: user, assessment: contest_assessment, status: "submitted")
+      end)
+
+      usernames = Enum.map(users, fn user -> %{username: user.username} end)
+
+      Assessments.insert_voting(contest_assessment.number, usernames, question.id)
+
+      admin = insert(:user, role: "admin")
+      Assessments.delete_assessment(admin, voting_assessment.id)
+      refute Repo.exists?(SubmissionVotes, question_id: question.id)
+    end
   end
 
-  test "create voting parameters with invalid contest number" do
-    question = insert(:voting_question)
+  describe "contest voting leaderboard" do
+    setup do
+      contest_assessment = insert(:assessment, type: "contest")
+      voting_assessment = insert(:assessment, type: "practical")
+      voting_question = insert(:voting_question, assessment: voting_assessment)
 
-    {status, _} = Assessments.insert_voting("", [], question.id)
+      # mock vote score data
+      vote_scores = [25.00, 30.50, 40.50, 50.99, 51.00, 70.10, 70.20, 80.91, 80.99, 91.3, 99.99]
 
-    assert status == :error
-  end
+      ans_list =
+        Enum.map(
+          vote_scores,
+          fn vote_score ->
+            student = insert(:user)
 
-  test "delete submission_votes when assessment is deleted" do
-    contest_assessment = insert(:assessment, type: "contest")
-    voting_assessment = insert(:assessment, type: "practical")
-    question = insert(:voting_question, assessment: voting_assessment)
-    users = Enum.map(0..5, fn _x -> insert(:user) end)
+            submission =
+              insert(:submission,
+                student: student,
+                assessment: contest_assessment,
+                status: "submitted"
+              )
 
-    Enum.map(users, fn user ->
-      insert(:submission, student: user, assessment: contest_assessment, status: "submitted")
-    end)
+            insert(:answer,
+              submission: submission,
+              question: voting_question,
+              grade: round(vote_score * 1_000_000)
+            )
+          end
+        )
 
-    usernames = Enum.map(users, fn user -> %{username: user.username} end)
+      %{answers: ans_list, question_id: voting_question.id}
+    end
 
-    Assessments.insert_voting(contest_assessment.number, usernames, question.id)
+    test "fetches entries with highest grade", %{answers: _answers, question_id: question_id} do
+      x = 3
+      top_x_ans = Assessments.fetch_top_grade_answers(question_id, x)
 
-    admin = insert(:user, role: "admin")
-    Assessments.delete_assessment(admin, voting_assessment.id)
-    assert Repo.exists?(SubmissionVotes, question_id: question.id) == false
+      # verify that top x ans are queried correctly
+      assert Enum.map(top_x_ans, fn ans -> ans.score end) == [99_990_000, 91_300_000, 80_990_000]
+    end
   end
 end

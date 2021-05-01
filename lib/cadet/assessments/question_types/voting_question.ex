@@ -4,6 +4,7 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestion do
   """
   use Cadet, :model
   alias Cadet.Assessments.QuestionTypes.ContestEntry
+  alias Cadet.Assessments.Answer
 
   @primary_key false
   embedded_schema do

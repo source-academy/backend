@@ -153,6 +153,18 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
+  defp build_contest_leaderboard_entry(leaderboard_ans) do
+    Map.put(
+      transform_map_for_view(leaderboard_ans, %{
+        submission_id: :submission_id,
+        answer: :answer,
+        score: :score
+      }),
+      "student_name",
+      leaderboard_ans.student_name
+    )
+  end
+
   defp build_choice(choice) do
     transform_map_for_view(choice, %{
       id: "choice_id",
@@ -228,7 +240,11 @@ defmodule CadetWeb.AssessmentsHelpers do
           prepend: "prepend",
           solutionTemplate: "template",
           contestEntries:
-            &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end)
+            &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end),
+          contestLeaderboard:
+            &Enum.map(&1[:contest_leaderboard], fn entry ->
+              build_contest_leaderboard_entry(entry)
+            end)
         })
     end
   end

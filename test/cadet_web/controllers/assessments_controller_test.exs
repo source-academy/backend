@@ -450,7 +450,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             expected_voting_questions
             |> Enum.zip(contests_entries)
             |> Enum.map(fn {question, contest_entries} ->
-              Map.put(question, "contestEntries", contest_entries)
+              question = Map.put(question, "contestEntries", contest_entries)
+              Map.put(question, "contestLeaderboard", [])
             end)
 
           expected_questions =
