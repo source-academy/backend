@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# This script is intended to work with an EC2 Ubuntu instance, but will likely
-# work with any Linux server running systemd.
-# Note that some actions are done by cloud-init (see cloud-config)
+# This script is intended to work with an EC2 Ubuntu instance, but will likely work with any Linux server running
+# systemd. This is also used in the deployment guide.
+#
+# Note that, for the Terraform deployment, some actions are done by cloud-init (see cloud-config)
 
 set -euxo pipefail
 

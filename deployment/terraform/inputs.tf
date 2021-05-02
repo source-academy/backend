@@ -57,3 +57,11 @@ variable "bastion_ssh_key_name" {
 variable "assets_bucket" {
   description = "The S3 bucket containing the story assets."
 }
+
+variable "config_bucket" {
+  description = "The S3 bucket containing the backend configuration (cadet.exs)."
+}
+
+variable "config_object" {
+  description = "The key of (i.e. path to) the backend configuration in config_bucket, with no leading /."
+}

@@ -31,3 +31,11 @@ resource "aws_s3_bucket" "assets" {
     max_age_seconds = 3000
   }
 }
+
+resource "aws_s3_bucket" "config" {
+  bucket = var.config_bucket
+
+  tags = {
+    Name = "Source Academy Backend Configuration"
+  }
+}

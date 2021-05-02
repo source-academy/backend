@@ -32,6 +32,25 @@ resource "aws_launch_template" "api" {
     security_groups             = [aws_security_group.api.id]
   }
 
+  user_data = base64encode(<<EOT
+#cloud-config
+
+swap:
+  filename: /swapfile
+  size: 1073741824
+
+packages:
+  - libncurses5
+  - awscli
+
+runcmd:
+  - "mkdir -p /run/cadet-init"
+  - "aws s3 cp 's3://${var.config_bucket}/${var.config_object}' /etc/cadet.exs"
+  - "curl -L 'https://raw.githubusercontent.com/source-academy/cadet/stable/deployment/init.sh' > /run/cadet-init/init.sh"
+  - "exec bash /run/cadet-init/init.sh"
+EOT
+  )
+
   update_default_version = true
 }
 
