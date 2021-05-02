@@ -55,7 +55,7 @@ EOT
 }
 
 resource "aws_autoscaling_group" "api" {
-  depends_on = [aws_internet_gateway.cadet]
+  depends_on = [aws_internet_gateway.cadet, aws_secretsmanager_secret_version.db]
 
   name = aws_launch_template.api.name
   launch_template {
@@ -75,8 +75,8 @@ resource "aws_autoscaling_group" "api" {
   min_size = var.min_instance_count
   max_size = var.max_instance_count
 
-  health_check_type         = "EC2"
-  health_check_grace_period = 60
+  health_check_type         = "ELB"
+  health_check_grace_period = 180
 
   tag {
     key                 = "Name"
@@ -126,14 +126,21 @@ resource "aws_lb_listener" "api" {
 }
 
 resource "aws_lb_target_group" "api" {
-  name     = "${var.env}-cadet-api"
-  vpc_id   = aws_vpc.cadet.id
-  protocol = "HTTP"
-  port     = 4000
+  name                 = "${var.env}-cadet-api"
+  vpc_id               = aws_vpc.cadet.id
+  protocol             = "HTTP"
+  port                 = 4000
+  deregistration_delay = 15
 
   tags = {
     Name        = "${title(var.env)} Cadet API Target Group"
     Environment = var.env
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    path                = "/"
   }
 }
 
