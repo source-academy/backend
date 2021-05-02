@@ -29,7 +29,7 @@ variable "rds_allocated_storage" {
 
 variable "rds_password" {
   description = "RDS password"
-  default     = "postgres"
+  sensitive   = true
 }
 
 variable "lambda_filename" {
@@ -64,4 +64,9 @@ variable "config_bucket" {
 
 variable "config_object" {
   description = "The key of (i.e. path to) the backend configuration in config_bucket, with no leading /."
+}
+
+variable "aws_profile" {
+  description = "The name of the AWS credential profile to use."
+  default     = "default"
 }

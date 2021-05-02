@@ -16,8 +16,7 @@ terraform {
 }
 
 provider "aws" {
-  region  = "ap-southeast-1"
-  profile = "cadet"
+  region = "ap-southeast-1"
 }
 
 data "aws_region" "current" {}

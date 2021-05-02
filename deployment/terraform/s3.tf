@@ -8,34 +8,10 @@ resource "aws_s3_bucket" "sourcecasts" {
   }
 }
 
-resource "aws_s3_bucket" "assets" {
+data "aws_s3_bucket" "assets" {
   bucket = var.assets_bucket
-  acl    = "public-read"
-
-  tags = {
-    Name = "Source Academy Assets"
-  }
-
-  cors_rule {
-    allowed_headers = [
-      "*"
-    ]
-    allowed_methods = [
-      "GET",
-      "HEAD"
-    ]
-    allowed_origins = [
-      "*",
-    ]
-    expose_headers  = []
-    max_age_seconds = 3000
-  }
 }
 
-resource "aws_s3_bucket" "config" {
+data "aws_s3_bucket" "config" {
   bucket = var.config_bucket
-
-  tags = {
-    Name = "Source Academy Backend Configuration"
-  }
 }
