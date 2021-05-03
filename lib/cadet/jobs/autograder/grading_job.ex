@@ -11,7 +11,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
   alias Cadet.Autograder.Utilities
-  alias Cadet.Env
+  alias Cadet.Jobs.Log
 
   def close_and_make_empty_submission(assessment = %Assessment{id: id}) do
     id
@@ -26,7 +26,8 @@ defmodule Cadet.Autograder.GradingJob do
   end
 
   def grade_all_due_yesterday do
-    if Env.leader?() do
+    # 1435 = 1 day - 5 minutes
+    if Log.log_execution("grading_job", Timex.Duration.from_minutes(1435)) do
       Logger.info("Started autograding")
 
       for assessment <- Utilities.fetch_assessments_due_yesterday() do
@@ -35,7 +36,7 @@ defmodule Cadet.Autograder.GradingJob do
         |> Enum.each(&grade_individual_submission(&1, assessment))
       end
     else
-      Logger.info("Not grading - not leader")
+      Logger.info("Not grading - raced")
     end
   end
 
