@@ -35,7 +35,9 @@ jobs:
       - name: Cache _build
         uses: actions/cache@v1
         with:
-          path: _build
+          path: |
+            _build
+            !_build/prod/cadet-0.0.1.tar.gz
           key: cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-${{ github.sha }}
           restore-keys: |
             cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-23.3.1-elixir-1.11.3-
