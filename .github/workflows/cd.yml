@@ -13,6 +13,7 @@ on:
       - '**/*.ex'
       - '**/*.exs'
       - 'mix.lock'
+      - '.github/workflows/cd.yml'
 
 jobs:
   ci:
@@ -47,6 +48,7 @@ jobs:
         run: |
           set -eu
           mix deps.get
+          rm _build/prod/cadet-0.0.1.tar.gz
           mix release
       - name: Create release
         uses: marvinpinto/action-automatic-releases@latest
