@@ -50,7 +50,7 @@ jobs:
         run: |
           set -eu
           mix deps.get
-          rm _build/prod/cadet-0.0.1.tar.gz
+          rm -f _build/prod/cadet-0.0.1.tar.gz
           mix release
       - name: Create release
         uses: marvinpinto/action-automatic-releases@latest
