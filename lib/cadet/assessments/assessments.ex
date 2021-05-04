@@ -1027,28 +1027,39 @@ defmodule Cadet.Assessments do
   contests which voting has yet to close.
   """
 
-  # def update_active_contest_leaderboard() do
-  #   active_voting_question_query =
-  #     from(
-  #       Question
-  #       |> where(type: "voting")
-  #     )
+  # def update_rolling_contest_leaderboards do
+  # end
+
+  # def fetch_active_voting_questions do
   # end
 
   @doc """
   Function called by scheduler to computer final leaderboard for contests
   which voting has closed.
   """
+  def update_final_contest_leaderboards do
+    voting_questions_to_update = fetch_voting_questions_due_yesterday()
+
+    voting_questions_to_update
+    |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+  end
+
+  def fetch_voting_questions_due_yesterday do
+    Question
+    |> join(:left, [q], a in assoc(q, :assessment))
+    |> where([q], q.type == "voting")
+    |> where([q, a], a.is_published)
+    |> where(
+      [q, a],
+      a.close_at <= ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
+    )
+    |> Repo.all()
+  end
 
   @doc """
   Computes the current relative_score of each voting submission answer
   based on current submitted votes.
   """
-
-  # def update_rolling_contest_leaderboards() do
-
-  # end
-
   def compute_relative_score(contest_voting_question_id) do
     # query all records from submission votes tied to the question id ->
     # map rank to user id ->
