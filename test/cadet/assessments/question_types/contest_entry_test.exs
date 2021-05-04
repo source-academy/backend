@@ -7,7 +7,7 @@ defmodule Cadet.Assessments.QuestionTypes.ContestEntryTest do
     test "valid changeset" do
       assert_changeset(
         %{
-          score: 1,
+          rank: 1,
           answer: "asd",
           submission_id: 2
         },
@@ -26,7 +26,7 @@ defmodule Cadet.Assessments.QuestionTypes.ContestEntryTest do
     test "invalid changesets" do
       assert_changeset(
         %{
-          score: -1,
+          rank: -1,
           answer: "asd"
         },
         :invalid
@@ -34,7 +34,7 @@ defmodule Cadet.Assessments.QuestionTypes.ContestEntryTest do
 
       assert_changeset(
         %{
-          score: 1,
+          rank: 1,
           submission_id: 2
         },
         :invalid
@@ -42,7 +42,7 @@ defmodule Cadet.Assessments.QuestionTypes.ContestEntryTest do
 
       assert_changeset(
         %{
-          score: -1,
+          rank: -1,
           answer: "asd",
           submission_id: 2
         },

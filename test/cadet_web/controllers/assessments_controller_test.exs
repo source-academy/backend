@@ -431,7 +431,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Enum.zip(contests_submissions)
           |> Enum.map(fn {question, contest_submissions} ->
             Enum.map(contest_submissions, fn submission ->
-              insert(:submission_votes, %{user: user, submission: submission, question: question})
+              insert(:submission_vote, %{user: user, submission: submission, question: question})
             end)
           end)
 
@@ -441,7 +441,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 %{
                   "submission_id" => answer.submission.id,
                   "answer" => %{"code" => answer.answer.code},
-                  "score" => nil
+                  "rank" => nil
                 }
               end)
             end)

@@ -180,45 +180,146 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
+  require Logger
+
   describe "contest voting leaderboard" do
     setup do
       contest_assessment = insert(:assessment, type: "contest")
       voting_assessment = insert(:assessment, type: "practical")
       voting_question = insert(:voting_question, assessment: voting_assessment)
 
-      # mock vote score data
-      vote_scores = [25.00, 30.50, 40.50, 50.99, 51.00, 70.10, 70.20, 80.91, 80.99, 91.3, 99.99]
-
-      ans_list =
+      # 5 students
+      student_list =
         Enum.map(
-          vote_scores,
-          fn vote_score ->
-            student = insert(:user)
+          1..5,
+          fn _index -> insert(:user) end
+        )
 
-            submission =
-              insert(:submission,
-                student: student,
-                assessment: contest_assessment,
-                status: "submitted"
-              )
-
-            insert(:answer,
-              submission: submission,
-              question: voting_question,
-              grade: round(vote_score * 1_000_000)
+      # each student has a contest submission
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: contest_assessment,
+              status: "submitted"
             )
           end
         )
 
-      %{answers: ans_list, question_id: voting_question.id}
+      # each student has an answer
+      ans_list =
+        Enum.map(
+          submission_list,
+          fn submission ->
+            insert(
+              :answer,
+              submission: submission,
+              question: voting_question
+            )
+          end
+        )
+
+      _submission_votes =
+        Enum.map(
+          student_list,
+          fn student ->
+            Enum.map(
+              Enum.with_index(submission_list),
+              fn {submission, index} ->
+                insert(
+                  :submission_vote,
+                  rank: index + 1,
+                  user: student,
+                  submission: submission,
+                  question: voting_question
+                )
+              end
+            )
+          end
+        )
+
+      %{answers: ans_list, question_id: voting_question.id, student_list: student_list}
     end
 
-    test "fetches entries with highest grade", %{answers: _answers, question_id: question_id} do
+    test "computes correct relative_score with lexing/penalty and fetches highest x relative_score correctly",
+         %{answers: _answers, question_id: question_id, student_list: _student_list} do
+      Assessments.compute_relative_score(question_id)
+
+      top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, 5)
+
+      assert Enum.map(top_x_ans, fn ans -> ans.relative_score end) == [
+               99.0,
+               89.0,
+               79.0,
+               69.0,
+               59.0
+             ]
+
       x = 3
-      top_x_ans = Assessments.fetch_top_grade_answers(question_id, x)
+      top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, x)
 
       # verify that top x ans are queried correctly
-      assert Enum.map(top_x_ans, fn ans -> ans.score end) == [99_990_000, 91_300_000, 80_990_000]
+      assert Enum.map(top_x_ans, fn ans -> ans.relative_score end) == [99.0, 89.0, 79.0]
     end
+
+    # describe "fetch_contest_voting_questions_due_yesterday" do
+    #   test "it only returns yesterday's contest voting questions" do
+    #     yesterday =
+    #       insert_list(2, :assessment, %{
+    #         is_published: true,
+    #         open_at: Timex.shift(Timex.now(), days: -5),
+    #         close_at: Timex.shift(Timex.now(), hours: -4),
+    #         type: "mission"
+    #       })
+
+    #     past =
+    #       insert_list(2, :question, %{
+    #         is_published: true,
+    #         open_at: Timex.shift(Timex.now(), days: -5),
+    #         close_at: Timex.shift(Timex.now(), days: -4),
+    #         type: "mission"
+    #       })
+
+    #     future =
+    #       insert_list(2, :question, %{
+    #         is_published: true,
+    #         open_at: Timex.shift(Timex.now(), days: -3),
+    #         close_at: Timex.shift(Timex.now(), days: 4),
+    #         type: "mission"
+    #       })
+
+    #     for assessment <- yesterday ++ past ++ future do
+    #       insert_list(2, :programming_question, %{assessment: assessment})
+    #     end
+
+    #     assert get_assessments_ids(yesterday) ==
+    #              get_assessments_ids(Utilities.fetch_assessments_due_yesterday())
+    #   end
+
+    # test "updates rolling leaderboard entries for active voting assessments" do
+    #   now = Timex.now()
+
+    #   # already closed voting assessment
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   closed_voting_assessment = insert(:assessment, type: "practical",
+    #     start_at: Timex.subtract(now, hours: 12),
+    #     close_at: Timex.subtract(now, hours: 6))
+
+    #   # voting assessment not open
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   closed_voting_assessment = insert(:assessment, type: "practical",
+    #     start_at: Timex.shift(now, hours: 6),
+    #     close_at: Timex.shift(now, hours: 12))
+
+    #   # voting assessments ongoing
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   ongoing_voting_assessment = insert(:assessment, type: "practical")
+
+    #   contest_assessment = insert(:assessment, type: "contest")
+    #   ongoing_voting_assessment = insert(:assessment, type: "practical")
+    # end
   end
 end

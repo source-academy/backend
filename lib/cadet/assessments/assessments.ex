@@ -915,7 +915,7 @@ defmodule Cadet.Assessments do
       SubmissionVotes
       |> where(question_id: ^question.id)
       |> where(user_id: ^submission.student_id)
-      |> where([c], is_nil(c.score))
+      |> where([sv], is_nil(sv.rank))
       |> Repo.exists?()
 
     unless not_nil_entries do
@@ -933,7 +933,10 @@ defmodule Cadet.Assessments do
           question_id = fetch_associated_contest_question_id(q.id)
 
           leaderboard_results =
-            if(is_nil(question_id), do: [], else: fetch_top_grade_answers(question_id, 10))
+            if(is_nil(question_id),
+              do: [],
+              else: fetch_top_relative_score_answers(question_id, 10)
+            )
 
           # populate entries to vote for and leaderboard data into the question
           voting_question =
@@ -956,7 +959,7 @@ defmodule Cadet.Assessments do
     |> where([v], v.user_id == ^user_id and v.question_id == ^question_id)
     |> join(:inner, [v], s in assoc(v, :submission))
     |> join(:inner, [v, s], a in assoc(s, :answers))
-    |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, score: v.score})
+    |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, rank: v.rank})
     |> Repo.all()
   end
 
@@ -995,21 +998,21 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  General method to fetch top graded entry answers for given question_id
+  General method to fetch top relative_score entry answers for given question_id
   Used for contest leaderboard fetching
   """
-  def fetch_top_grade_answers(question_id, number_of_answers) do
+  def fetch_top_relative_score_answers(question_id, number_of_answers) do
     top_answers_query =
       from(
         Answer
         |> where(question_id: ^question_id)
-        |> order_by(desc: :grade)
+        |> order_by(desc: :relative_score)
         |> join(:left, [a], s in assoc(a, :submission))
         |> join(:left, [a, s], student in assoc(s, :student))
         |> select([a, s, student], %{
           submission_id: a.submission_id,
           answer: a.answer,
-          score: a.grade,
+          relative_score: a.relative_score,
           student_name: student.name
         })
         |> limit(^number_of_answers)
@@ -1018,13 +1021,37 @@ defmodule Cadet.Assessments do
     Repo.all(top_answers_query)
   end
 
+  # TODO: implement rolling leaderboard
   @doc """
-  Computes the current score of each voting submission based on current
-  submitted votes.
+  Function called by scheduler to compute rolling leaderboard for
+  contests which voting has yet to close.
   """
-  def compute_score(contest_question_id) do
+
+  # def update_active_contest_leaderboard() do
+  #   active_voting_question_query =
+  #     from(
+  #       Question
+  #       |> where(type: "voting")
+  #     )
+  # end
+
+  @doc """
+  Function called by scheduler to computer final leaderboard for contests
+  which voting has closed.
+  """
+
+  @doc """
+  Computes the current relative_score of each voting submission answer
+  based on current submitted votes.
+  """
+
+  # def update_rolling_contest_leaderboards() do
+
+  # end
+
+  def compute_relative_score(contest_voting_question_id) do
     # query all records from submission votes tied to the question id ->
-    # map score to user id ->
+    # map rank to user id ->
     # store as grade ->
     # query grade for contest question id.
     eligible_votes_query =
@@ -1032,10 +1059,13 @@ defmodule Cadet.Assessments do
         SubmissionVotes
         |> join(:left, [v], s in assoc(v, :submission))
         |> join(:left, [v, s, ans], ans in assoc(s, :answers))
-        |> where([v, s, ans], v.question_id == ^contest_question_id and s.status == "submitted")
+        |> where(
+          [v, s, ans],
+          v.question_id == ^contest_voting_question_id and s.status == "submitted"
+        )
         |> select(
           [v, s, ans],
-          %{ans_id: ans.id, score: v.score, ans: ans.answer["code"]}
+          %{ans_id: ans.id, rank: v.rank, ans: ans.answer["code"]}
         )
       )
 
@@ -1044,10 +1074,10 @@ defmodule Cadet.Assessments do
     entry_scores = map_eligible_votes_to_entry_score(eligible_votes)
 
     entry_scores
-    |> Enum.map(fn {ans_id, score} ->
+    |> Enum.map(fn {ans_id, relative_score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
-        grade: score
+        relative_score: relative_score
       })
     end)
     |> Enum.map(fn changeset ->
@@ -1061,9 +1091,14 @@ defmodule Cadet.Assessments do
   defp map_eligible_votes_to_entry_score(eligible_votes) do
     # # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
-      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, rank: rank, ans: ans}, tracker ->
         {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
-        Map.put(tracker, ans_id, {prev_score + score, prev_count + 1, Parser.lex(ans)})
+
+        Map.put(
+          tracker,
+          ans_id,
+          {prev_score + convert_vote_rank_to_score(rank), prev_count + 1, Parser.lex(ans)}
+        )
       end)
 
     # calculate the score based on formula {ans_id, score}
@@ -1075,13 +1110,18 @@ defmodule Cadet.Assessments do
     )
   end
 
+  # implementation detail assuming each user votes for
+  # 10 entries and rank range is [1, 10]
+  defp convert_vote_rank_to_score(rank) do
+    11 - rank
+  end
+
   # Calculate the score based on formula
   # score(v,t) = v - 2^(t/50) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    # *1,000,000 to maintain DP precision of 6dp.
-    round((normalized_voting_score - :math.pow(2, tokens / 50)) * 1_000_000)
+    normalized_voting_score - :math.pow(2, tokens / 50)
   end
 
   @doc """
@@ -1459,7 +1499,7 @@ defmodule Cadet.Assessments do
   end
 
   def insert_or_update_voting_answer(user_id, question_id, answer_content) do
-    set_score_to_nil =
+    set_rank_to_nil =
       from(
         SubmissionVotes
         |> where(user_id: ^user_id, question_id: ^question_id)
@@ -1467,7 +1507,7 @@ defmodule Cadet.Assessments do
 
     voting_multi =
       Multi.new()
-      |> Multi.update_all(:set_score_to_nil, set_score_to_nil, set: [score: nil])
+      |> Multi.update_all(:set_rank_to_nil, set_rank_to_nil, set: [rank: nil])
 
     answer_content
     |> Enum.with_index(1)
@@ -1479,7 +1519,7 @@ defmodule Cadet.Assessments do
           user_id: user_id,
           submission_id: entry.submission_id
         )
-        |> SubmissionVotes.changeset(%{score: entry.score})
+        |> SubmissionVotes.changeset(%{rank: entry.rank})
         |> Repo.insert_or_update()
       end)
     end)

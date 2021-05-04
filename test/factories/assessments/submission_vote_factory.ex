@@ -7,7 +7,7 @@ defmodule Cadet.Assessments.SubmissionVotesFactory do
     quote do
       alias Cadet.Assessments.SubmissionVotes
 
-      def submission_votes_factory do
+      def submission_vote_factory do
         %SubmissionVotes{
           user: build(:user, %{role: :student}),
           question: build(:voting_question),

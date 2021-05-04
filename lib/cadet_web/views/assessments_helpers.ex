@@ -149,7 +149,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     transform_map_for_view(entry, %{
       submission_id: :submission_id,
       answer: :answer,
-      score: :score
+      rank: :rank
     })
   end
 
