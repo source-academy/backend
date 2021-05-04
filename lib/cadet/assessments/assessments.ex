@@ -1021,17 +1021,25 @@ defmodule Cadet.Assessments do
     Repo.all(top_answers_query)
   end
 
-  # TODO: implement rolling leaderboard
   @doc """
   Function called by scheduler to compute rolling leaderboard for
   contests which voting has yet to close.
   """
+  def update_rolling_contest_leaderboards do
+    voting_questions_to_update = fetch_active_voting_questions()
 
-  # def update_rolling_contest_leaderboards do
-  # end
+    voting_questions_to_update
+    |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+  end
 
-  # def fetch_active_voting_questions do
-  # end
+  def fetch_active_voting_questions do
+    Question
+    |> join(:left, [q], a in assoc(q, :assessment))
+    |> where([q, a], q.type == "voting")
+    |> where([q, a], a.is_published)
+    |> where([q, a], a.open_at <= ^Timex.now() and a.close_at >= ^Timex.now())
+    |> Repo.all()
+  end
 
   @doc """
   Function called by scheduler to computer final leaderboard for contests
@@ -1047,11 +1055,12 @@ defmodule Cadet.Assessments do
   def fetch_voting_questions_due_yesterday do
     Question
     |> join(:left, [q], a in assoc(q, :assessment))
-    |> where([q], q.type == "voting")
+    |> where([q, a], q.type == "voting")
     |> where([q, a], a.is_published)
+    |> where([q, a], a.open_at <= ^Timex.now())
     |> where(
       [q, a],
-      a.close_at <= ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
+      a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
     )
     |> Repo.all()
   end

@@ -264,8 +264,18 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  describe "fetch_contest_voting_questions_due_yesterday" do
-    test "it only returns contest voting questions due yesterday" do
+  describe "tests leaderboard updating" do
+    setup do
+      current_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -1),
+          close_at: Timex.shift(Timex.now(), days: +1),
+          type: "practical"
+        )
+
+      current_question = insert_list(1, :voting_question, assessment: current_assessment)
+
       yesterday_assessment =
         insert(:assessment,
           is_published: true,
@@ -289,22 +299,29 @@ defmodule Cadet.AssessmentsTest do
           assessment: past_assessment
         )
 
-      future_assessment =
-        insert(:assessment,
-          is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -3),
-          close_at: Timex.shift(Timex.now(), days: 4),
-          type: "practical"
-        )
+      %{yesterday_question: yesterday_question, current_question: current_question}
+    end
 
-      _future_question =
-        insert(:voting_question,
-          assessment: future_assessment
-        )
-
+    test "fetch_voting_questions_due_yesterday only fetching voting questions closed yesterday",
+         %{yesterday_question: yesterday_question, current_question: _current_question} do
       assert get_question_ids(yesterday_question) ==
                get_question_ids(Assessments.fetch_voting_questions_due_yesterday())
     end
+
+    test "fetch_active_voting_questions only fetches active voting questions",
+         %{yesterday_question: _yesterday_question, current_question: current_question} do
+      assert get_question_ids(current_question) ==
+               get_question_ids(Assessments.fetch_active_voting_questions())
+    end
+
+    # TODO: finish writing up tests
+    # test "update_final_contest_leaderboards correctly updates leaderboards
+    # that voting closed yesterday"
+    # end
+
+    # test "update_rolling_contest_leaderboards correcly updates leaderboards
+    # which voting is active" do
+    # end
   end
 
   defp get_answer_relative_scores(answers) do
