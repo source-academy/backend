@@ -14,6 +14,7 @@ on:
       - '**/*.exs'
       - 'mix.lock'
       - '.github/workflows/cd.yml'
+      - '!config/*.example'
 
 jobs:
   ci:
