@@ -10,6 +10,6 @@ defmodule Cadet.Repo.Migrations.AddSubmissionVotesTable do
       timestamps()
     end
 
-    create(unique_index(:submission_votes, [:user_id, :question_id, :score], name: :unique_score))
+    create(unique_index(:submission_votes, [:user_id, :question_id, :rank], name: :unique_score))
   end
 end
