@@ -943,32 +943,17 @@ defmodule Cadet.Assessments do
   """
   def fetch_associated_contest_question_id(voting_question_id) do
     # TODO: improve this function.
-    assessment_id_query =
-      from(
-        SubmissionVotes
-        |> where(question_id: ^voting_question_id)
-        |> join(:left, [sv], s in assoc(sv, :submission))
-        |> select([sv, s], %{assessment_id: s.assessment_id})
-        |> limit(1)
-      )
-
-    case Repo.all(assessment_id_query) do
-      [%{assessment_id: assessment_id}] ->
-        question_id_query =
-          from(
-            Question
-            |> where(assessment_id: ^assessment_id)
-            |> select([q], %{q_id: q.id})
-            |> limit(1)
-          )
-
-        case Repo.all(question_id_query) do
-          [%{q_id: q_id}] -> q_id
-          [] -> nil
-        end
-
-      [] ->
-        nil
+    SubmissionVotes
+    |> where(question_id: ^voting_question_id)
+    |> join(:inner, [sv], s in assoc(sv, :submission))
+    |> join(:inner, [sv, s], ast in assoc(s, :assessment))
+    |> join(:inner, [sv, s, ast], q in Question, on: q.assessment_id == ast.id)
+    |> select([sv, s, ast, q], %{question_id: q.id})
+    |> limit(1)
+    |> Repo.one()
+    |> case do
+      nil -> nil
+      map -> Map.get(map, :question_id)
     end
   end
 
