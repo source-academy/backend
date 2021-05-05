@@ -936,7 +936,6 @@ defmodule Cadet.Assessments do
     |> Repo.all()
   end
 
-  # TODO: implement rolling leaderboard
   @doc """
   Function called by scheduler to compute rolling leaderboard for
   contests which voting has yet to close.
