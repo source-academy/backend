@@ -669,47 +669,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # def answer_question(id, user = %User{id: user_id, role: role}, raw_answer)
-  #     when is_ecto_id(id) do
-  #   # if role in @submit_answer_roles do
-  #   question =
-  #     Question
-  #     |> where(id: ^id)
-  #     |> join(:inner, [q], assessment in assoc(q, :assessment))
-  #     |> preload([_, a], assessment: a)
-  #     |> Repo.one()
-
-  #   bypass = role in @bypass_closed_roles
-
-  #   with {:question_found?, true} <- {:question_found?, is_map(question)},
-  #        {:is_open?, true} <- {:is_open?, bypass or is_open?(question.assessment)},
-  #        {:ok, submission} <- find_or_create_submission(user, question.assessment),
-  #        {:status, true} <- {:status, bypass or submission.status != :submitted},
-  #        {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, user_id) do
-  #     update_submission_status_router(submission, question)
-
-  #     {:ok, nil}
-  #   else
-  #     {:question_found?, false} ->
-  #       {:error, {:not_found, "Question not found"}}
-
-  #     {:is_open?, false} ->
-  #       {:error, {:forbidden, "Assessment not open"}}
-
-  #     {:status, _} ->
-  #       {:error, {:forbidden, "Assessment submission already finalised"}}
-
-  #     {:error, :race_condition} ->
-  #       {:error, {:internal_server_error, "Please try again later."}}
-
-  #     {:error, :vote_not_unique} ->
-  #       {:error, {:bad_request, "Invalid vote or vote is not unique! Vote is not saved."}}
-
-  #     _ ->
-  #       {:error, {:bad_request, "Missing or invalid parameter(s)"}}
-  #   end
-  # end
-
   def get_submission(assessment_id, %User{id: user_id})
       when is_ecto_id(assessment_id) do
     Submission
@@ -982,15 +941,26 @@ defmodule Cadet.Assessments do
   Function called by scheduler to compute rolling leaderboard for
   contests which voting has yet to close.
   """
+  def update_rolling_contest_leaderboards do
+    voting_questions_to_update = fetch_active_voting_questions()
 
-  # def update_active_contest_leaderboard() do
-  #   active_voting_question_query =
-  #     from(
-  #       Question
-  #       |> where(type: "voting")
-  #     )
-  # end
+    voting_questions_to_update
+    |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+  end
 
+  def fetch_active_voting_questions do
+    Question
+    |> join(:left, [q], a in assoc(q, :assessment))
+    |> where([q, a], q.type == "voting")
+    |> where([q, a], a.is_published)
+    |> where([q, a], a.open_at <= ^Timex.now() and a.close_at >= ^Timex.now())
+    |> Repo.all()
+  end
+
+  @doc """
+  Function called by scheduler to computer final leaderboard for contests
+  which voting has closed.
+  """
   def update_final_contest_leaderboards do
     voting_questions_to_update = fetch_voting_questions_due_yesterday()
 
@@ -1001,11 +971,12 @@ defmodule Cadet.Assessments do
   def fetch_voting_questions_due_yesterday do
     Question
     |> join(:left, [q], a in assoc(q, :assessment))
-    |> where([q], q.type == "voting")
+    |> where([q, a], q.type == "voting")
     |> where([q, a], a.is_published)
+    |> where([q, a], a.open_at <= ^Timex.now())
     |> where(
       [q, a],
-      a.close_at <= ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
+      a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
     )
     |> Repo.all()
   end
@@ -1014,11 +985,6 @@ defmodule Cadet.Assessments do
   Computes the current relative_score of each voting submission answer
   based on current submitted votes.
   """
-
-  # def update_rolling_contest_leaderboards() do
-
-  # end
-
   def compute_relative_score(contest_voting_question_id) do
     # query all records from submission votes tied to the question id ->
     # map rank to user id ->

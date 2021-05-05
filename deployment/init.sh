@@ -34,4 +34,5 @@ mkdir -p "$BASEDIR/tmp"
 chmod 1777 "$BASEDIR"/{tmp,lib/tzdata-*/priv/tmp_downloads}
 chmod a+x "$BASEDIR"/{bin/cadet,erts-*/bin/*,releases/*/{iex,elixir}}
 chown -R nobody:nogroup "$BASEDIR"/lib/tzdata-*/priv/{release_ets,latest_remote_poll.txt}
+"$BASEDIR/bin/cadet" eval Cadet.Release.migrate
 systemctl start cadet

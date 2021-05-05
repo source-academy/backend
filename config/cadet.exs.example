@@ -26,7 +26,7 @@ config :cadet, Cadet.Repo,
   # (This is here because of how configuration works in Elixir.)
   adapter: Ecto.Adapters.Postgres,
   # The AWS Secrets Manager secret name containing the database connection details
-  rds_secret_name: "prod-cadet-db",
+  rds_secret_name: "<unique-identifier>-cadet-db",
   # Alternatively, you can include the credentials here:
   # username: "postgres",
   # password: "postgres",
@@ -93,20 +93,21 @@ config :cadet,
   #   ]
   # ],
   autograder: [
-    lambda_name: "autograderLambdaName"
+    lambda_name: "<unique-identifier>-grader"
   ],
   uploader: [
-    assets_bucket: "source-academy-assets",
-    sourcecasts_bucket: "env-cadet-sourcecasts"
+    assets_bucket: "<unique-identifier>-assets",
+    sourcecasts_bucket: "<unique-identifier>-cadet-sourcecasts"
   ],
   # Configuration for Sling integration (executing on remote devices)
   remote_execution: [
     # Prefix for AWS IoT thing names
-    thing_prefix: "env-sling",
+    thing_prefix: "<unique-identifier>-sling",
     # AWS IoT thing group to put created things into (must be set-up beforehand)
-    thing_group: "env-sling",
+    thing_group: "<unique-identifier>-sling",
     # Role ARN to use when generating signed client MQTT-WS URLs (must be set-up beforehand)
-    client_role_arn: "arn:aws:iam::12345678:role/env-cadet-frontend"
+    # Note, you need to specify the correct account ID. Find it in AWS IAM at the bottom left.
+    client_role_arn: "arn:aws:iam::<account-id>:role/<unique-identifier>-cadet-frontend"
   ]
 
 # Sentry DSN. This is only really useful to the NUS SoC deployments, but you can
