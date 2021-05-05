@@ -34,5 +34,9 @@ mkdir -p "$BASEDIR/tmp"
 chmod 1777 "$BASEDIR"/{tmp,lib/tzdata-*/priv/tmp_downloads}
 chmod a+x "$BASEDIR"/{bin/cadet,erts-*/bin/*,releases/*/{iex,elixir}}
 chown -R nobody:nogroup "$BASEDIR"/lib/tzdata-*/priv/{release_ets,latest_remote_poll.txt}
-"$BASEDIR/bin/cadet" eval Cadet.Release.migrate
 systemctl start cadet
+# this just loops until we can reach the running application
+while ! "$BASEDIR/bin/cadet" rpc 1; do
+  sleep 0.5
+done
+"$BASEDIR/bin/cadet" eval Cadet.Release.migrate
