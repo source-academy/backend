@@ -934,6 +934,7 @@ defmodule Cadet.Assessments do
     })
     |> limit(^number_of_answers)
     |> Repo.all()
+    |> Enum.sort(&(&1.relative_score >= &2.relative_score))
   end
 
   @doc """
