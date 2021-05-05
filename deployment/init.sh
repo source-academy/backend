@@ -39,4 +39,4 @@ systemctl start cadet
 while ! "$BASEDIR/bin/cadet" rpc 1; do
   sleep 0.5
 done
-"$BASEDIR/bin/cadet" eval Cadet.Release.migrate
+"$BASEDIR/bin/cadet" rpc Cadet.Release.migrate
