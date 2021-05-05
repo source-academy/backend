@@ -351,11 +351,11 @@ defmodule Cadet.Autograder.GradingJobTest do
       end
     end
 
-    test "all assessments attempted, all questions answered, instance not leader, should not do anything",
+    test "all assessments attempted, all questions answered, instance raced, should not do anything",
          %{
            assessments: assessments
          } do
-      with_mock Cadet.Env, leader?: fn -> false end do
+      with_mock Cadet.Jobs.Log, log_execution: fn _name, _period -> false end do
         student = insert(:user, %{role: :student})
 
         submissions_answers =

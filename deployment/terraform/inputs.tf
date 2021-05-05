@@ -29,7 +29,7 @@ variable "rds_allocated_storage" {
 
 variable "rds_password" {
   description = "RDS password"
-  default     = "postgres"
+  sensitive   = true
 }
 
 variable "lambda_filename" {
@@ -56,4 +56,12 @@ variable "bastion_ssh_key_name" {
 
 variable "assets_bucket" {
   description = "The S3 bucket containing the story assets."
+}
+
+variable "config_bucket" {
+  description = "The S3 bucket containing the backend configuration (cadet.exs)."
+}
+
+variable "config_object" {
+  description = "The key of (i.e. path to) the backend configuration in config_bucket, with no leading /."
 }

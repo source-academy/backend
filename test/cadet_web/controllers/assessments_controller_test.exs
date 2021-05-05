@@ -3,14 +3,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
   use Timex
 
   import Ecto.Query
-  import ExUnit.CaptureLog
   import Mock
 
   alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus}
   alias Cadet.Autograder.GradingJob
-  alias Cadet.Test.XMLGenerator
   alias CadetWeb.AssessmentsController
 
   @local_name "test/fixtures/local_repo"
@@ -32,6 +30,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     AssessmentsController.swagger_definitions()
     AssessmentsController.swagger_path_index(nil)
     AssessmentsController.swagger_path_show(nil)
+    AssessmentsController.swagger_path_unlock(nil)
     AssessmentsController.swagger_path_submit(nil)
   end
 
@@ -42,9 +41,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "POST /:assessment_id, unauthenticated" do
+  describe "GET /:assessment_id, unauthenticated" do
     test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1))
+      conn = get(conn, build_url(1))
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
@@ -292,7 +291,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "POST /assessment_id, all roles" do
+  describe "GET /assessment_id, all roles" do
     test "it renders assessment details", %{
       conn: conn,
       users: users,
@@ -316,7 +315,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_assessments =
             conn
             |> sign_in(user)
-            |> post(build_url(assessment.id))
+            |> get(build_url(assessment.id))
             |> json_response(200)
             |> Map.delete("questions")
 
@@ -460,7 +459,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_questions =
             conn
             |> sign_in(user)
-            |> post(build_url(assessment.id))
+            |> get(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.delete(&1, "answer"))
@@ -515,7 +514,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_libraries =
             conn
             |> sign_in(user)
-            |> post(build_url(assessment.id))
+            |> get(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, "library"))
@@ -557,7 +556,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp_solutions =
           conn
           |> sign_in(user)
-          |> post(build_url(assessment.id))
+          |> get(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["solution"]))
@@ -605,7 +604,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp =
             conn
             |> sign_in(user)
-            |> post(build_url(assessment.id))
+            |> get(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.take(&1, ~w(xp grade)))
@@ -630,7 +629,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_solutions =
             conn
             |> sign_in(user)
-            |> post(build_url(assessment.id))
+            |> get(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["solution"]))
@@ -641,7 +640,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "POST /assessment_id, student" do
+  describe "GET /assessment_id, student" do
     test "it renders previously submitted answers", %{
       conn: conn,
       users: %{student: student},
@@ -668,7 +667,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp_answers =
           conn
           |> sign_in(student)
-          |> post(build_url(assessment.id))
+          |> get(build_url(assessment.id))
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["answer"]))
@@ -692,7 +691,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn =
         conn
         |> sign_in(student)
-        |> post(build_url(mission.assessment.id))
+        |> get(build_url(mission.assessment.id))
 
       assert response(conn, 401) == "Assessment not open"
     end
@@ -710,13 +709,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn =
         conn
         |> sign_in(student)
-        |> post(build_url(mission.assessment.id))
+        |> get(build_url(mission.assessment.id))
 
       assert response(conn, 400) == "Assessment not found"
     end
   end
 
-  describe "POST /assessment_id, non-students" do
+  describe "GET /assessment_id, non-students" do
     test "it renders empty answers", %{
       conn: conn,
       users: users,
@@ -729,7 +728,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           resp_answers =
             conn
             |> sign_in(user)
-            |> post(build_url(assessment.id))
+            |> get(build_url(assessment.id))
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["answer"]))
@@ -757,7 +756,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp =
           conn
           |> sign_in(user)
-          |> post(build_url(mission.assessment.id))
+          |> get(build_url(mission.assessment.id))
           |> json_response(200)
 
         assert resp["id"] == mission.assessment.id
@@ -780,7 +779,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         resp =
           conn
           |> sign_in(user)
-          |> post(build_url(mission.assessment.id))
+          |> get(build_url(mission.assessment.id))
           |> json_response(200)
 
         assert resp["id"] == mission.assessment.id
@@ -788,14 +787,14 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "POST /assessment_id/submit unauthenticated" do
+  describe "GET /assessment_id/submit unauthenticated" do
     test "is not permitted", %{conn: conn, assessments: %{"mission" => %{assessment: assessment}}} do
       conn = post(conn, build_url_submit(assessment.id))
       assert response(conn, 401) == "Unauthorised"
     end
   end
 
-  describe "POST /assessment_id/submit students" do
+  describe "GET /assessment_id/submit students" do
     for role <- ~w(student staff admin)a do
       @tag role: role
       test "is successful for attempted assessments for #{role}", %{
@@ -1137,7 +1136,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       |> Repo.update!()
 
       for {_role, user} <- users do
-        conn = conn |> sign_in(user) |> post(build_url(assessment.id))
+        conn = conn |> sign_in(user) |> get(build_url(assessment.id))
         assert response(conn, 403) == "Missing Password."
       end
     end
@@ -1160,7 +1159,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         conn =
           conn
           |> sign_in(user)
-          |> post(build_url(assessment.id), %{:password => "wrong"})
+          |> post(build_url_unlock(assessment.id), %{:password => "wrong"})
 
         assert response(conn, 403) == "Invalid Password."
       end
@@ -1182,7 +1181,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       |> Repo.update!()
 
       insert(:submission, %{assessment: assessment, student: student})
-      conn = conn |> sign_in(student) |> post(build_url(assessment.id))
+      conn = conn |> sign_in(student) |> get(build_url(assessment.id))
       assert response(conn, 200)
     end
 
@@ -1197,7 +1196,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         conn =
           conn
           |> sign_in(user)
-          |> post(build_url(assessment.id), %{:password => "wrong"})
+          |> post(build_url_unlock(assessment.id), %{:password => "wrong"})
           |> json_response(200)
 
         assert conn["id"] == assessment.id
@@ -1220,7 +1219,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         conn =
           conn
           |> sign_in(user)
-          |> post(build_url(assessment.id), %{:password => "mysupersecretpassword"})
+          |> post(build_url_unlock(assessment.id), %{:password => "mysupersecretpassword"})
           |> json_response(200)
 
         assert conn["id"] == assessment.id
@@ -1242,378 +1241,16 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn =
         conn
         |> sign_in(student)
-        |> post(build_url(mission.assessment.id))
+        |> get(build_url(mission.assessment.id))
 
       assert response(conn, 200)
     end
   end
 
-  describe "POST /, unauthenticated" do
-    test "unauthorized", %{conn: conn} do
-      assessment = build(:assessment, type: "mission", is_published: true)
-      questions = build_list(5, :question, assessment: nil)
-      xml = XMLGenerator.generate_xml_for(assessment, questions)
-      file = File.write("test/fixtures/local_repo/test.xml", xml)
-      force_update = "false"
-      body = %{assessment: file, forceUpdate: force_update}
-      conn = post(conn, build_url(), body)
-      assert response(conn, 401) =~ "Unauthorised"
-    end
-  end
-
-  describe "POST /, student only" do
-    @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      assessment = build(:assessment, type: "mission", is_published: true)
-      questions = build_list(5, :question, assessment: nil)
-      xml = XMLGenerator.generate_xml_for(assessment, questions)
-      force_update = "false"
-      body = %{assessment: xml, forceUpdate: force_update}
-      conn = post(conn, build_url(), body)
-      assert response(conn, 403) == "User not allowed to create assessment"
-    end
-  end
-
-  describe "POST /, staff only" do
-    @tag authenticate: :staff
-    test "successful", %{conn: conn} do
-      assessment = build(:assessment, type: "mission", is_published: true)
-      questions = build_list(5, :question, assessment: nil)
-
-      xml = XMLGenerator.generate_xml_for(assessment, questions)
-      force_update = "false"
-      path = Path.join(@local_name, "connTest")
-      file_name = "test.xml"
-      location = Path.join(path, file_name)
-      File.mkdir_p!(path)
-      File.write!(location, xml)
-
-      formdata = %Plug.Upload{
-        content_type: "text/xml",
-        filename: file_name,
-        path: location
-      }
-
-      body = %{assessment: %{file: formdata}, forceUpdate: force_update}
-      conn = post(conn, build_url(), body)
-      number = assessment.number
-
-      expected_assessment =
-        Assessment
-        |> where(number: ^number)
-        |> Repo.one()
-
-      assert response(conn, 200) == "OK"
-      assert expected_assessment != nil
-    end
-
-    @tag authenticate: :staff
-    test "upload empty xml", %{conn: conn} do
-      xml = ""
-      force_update = "true"
-      path = Path.join(@local_name, "connTest")
-      file_name = "test.xml"
-      location = Path.join(path, file_name)
-      File.mkdir_p!(path)
-      File.write!(location, xml)
-
-      formdata = %Plug.Upload{
-        content_type: "text/xml",
-        filename: file_name,
-        path: location
-      }
-
-      body = %{assessment: %{file: formdata}, forceUpdate: force_update}
-
-      err_msg =
-        "Invalid XML fatal expected_element_start_tag file file_name_unknown line 1 col 1 "
-
-      assert capture_log(fn ->
-               conn = post(conn, build_url(), body)
-               assert(response(conn, 400) == err_msg)
-             end) =~ ~r/.*fatal: :expected_element_start_tag.*/
-    end
-  end
-
-  describe "DELETE /:assessment_id, unauthenticated" do
-    test "unauthorized", %{conn: conn} do
-      assessment = insert(:assessment)
-      conn = delete(conn, build_url(assessment.id))
-      assert response(conn, 401) =~ "Unauthorised"
-    end
-  end
-
-  describe "DELETE /:assessment_id, student only" do
-    @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      assessment = insert(:assessment)
-      conn = delete(conn, build_url(assessment.id))
-      assert response(conn, 403) == "User is not permitted to delete"
-    end
-  end
-
-  describe "DELETE /:assessment_id, staff only" do
-    @tag authenticate: :staff
-    test "successful", %{conn: conn} do
-      assessment = insert(:assessment)
-      conn = delete(conn, build_url(assessment.id))
-      assert response(conn, 200) == "OK"
-      assert Repo.get(Assessment, assessment.id) == nil
-    end
-  end
-
-  describe "POST /publish/:assessment_id, unauthenticated" do
-    test "unauthorized", %{conn: conn} do
-      assessment = insert(:assessment)
-      conn = post(conn, build_url_publish(assessment.id))
-      assert response(conn, 401) =~ "Unauthorised"
-    end
-  end
-
-  describe "POST /publish/:assessment_id, student only" do
-    @tag authenticate: :student
-    test "forbidden", %{conn: conn} do
-      assessment = insert(:assessment)
-      conn = post(conn, build_url_publish(assessment.id))
-      assert response(conn, 403) == "User is not permitted to publish"
-    end
-  end
-
-  describe "POST /publish/:assessment_id, staff only" do
-    @tag authenticate: :staff
-    test "successful toggle from published to unpublished", %{conn: conn} do
-      assessment = insert(:assessment, is_published: true)
-      conn = post(conn, build_url_publish(assessment.id))
-      expected = Repo.get(Assessment, assessment.id).is_published
-      assert response(conn, 200) == "OK"
-      assert expected == false
-    end
-
-    @tag authenticate: :staff
-    test "successful toggle from unpublished to published", %{conn: conn} do
-      assessment = insert(:assessment, is_published: false)
-      conn = post(conn, build_url_publish(assessment.id))
-      expected = Repo.get(Assessment, assessment.id).is_published
-      assert response(conn, 200) == "OK"
-      assert expected == true
-    end
-  end
-
-  describe "POST /update/:assessment_id, unauthenticated" do
-    test "unauthorized", %{conn: conn} do
-      assessment = insert(:assessment)
-      conn = post(conn, build_url_update(assessment.id))
-      assert response(conn, 401) =~ "Unauthorised"
-    end
-  end
-
-  describe "POST /update/:assessment_id, student only" do
-    @tag authenticate: :student
-    test "forbidden", %{conn: conn} do
-      new_open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
-
-      new_open_at_string =
-        new_open_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_close_at = Timex.shift(new_open_at, days: 7)
-
-      new_close_at_string =
-        new_close_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_dates = %{openAt: new_open_at_string, closeAt: new_close_at_string}
-      assessment = insert(:assessment)
-      conn = post(conn, build_url_update(assessment.id), new_dates)
-      assert response(conn, 403) == "User is not permitted to edit"
-    end
-  end
-
-  describe "POST /update/:assessment_id, staff only" do
-    @tag authenticate: :staff
-    test "successful", %{conn: conn} do
-      open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
-
-      close_at = Timex.shift(open_at, days: 7)
-      assessment = insert(:assessment, %{open_at: open_at, close_at: close_at})
-
-      new_open_at =
-        open_at
-        |> Timex.shift(days: 3)
-
-      new_open_at_string =
-        new_open_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_close_at =
-        close_at
-        |> Timex.shift(days: 5)
-
-      new_close_at_string =
-        new_close_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_dates = %{openAt: new_open_at_string, closeAt: new_close_at_string}
-
-      conn =
-        conn
-        |> post(build_url_update(assessment.id), new_dates)
-
-      assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 200) == "OK"
-      assert [assessment.open_at, assessment.close_at] == [new_open_at, new_close_at]
-    end
-
-    @tag authenticate: :staff
-    test "allowed to change open time of opened assessments", %{conn: conn} do
-      open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: -3)
-        |> Timex.shift(hours: 4)
-
-      close_at = Timex.shift(open_at, days: 7)
-      assessment = insert(:assessment, %{open_at: open_at, close_at: close_at})
-
-      new_open_at =
-        open_at
-        |> Timex.shift(days: 6)
-
-      new_open_at_string =
-        new_open_at
-        |> Timex.format!("{ISO:Extended}")
-
-      close_at_string =
-        close_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_dates = %{openAt: new_open_at_string, closeAt: close_at_string}
-
-      conn =
-        conn
-        |> post(build_url_update(assessment.id), new_dates)
-
-      assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 200) == "OK"
-      assert [assessment.open_at, assessment.close_at] == [new_open_at, close_at]
-    end
-
-    @tag authenticate: :staff
-    test "not allowed to set close time to before open time", %{conn: conn} do
-      open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
-
-      close_at = Timex.shift(open_at, days: 7)
-      assessment = insert(:assessment, %{open_at: open_at, close_at: close_at})
-
-      new_close_at =
-        open_at
-        |> Timex.shift(days: -1)
-
-      new_close_at_string =
-        new_close_at
-        |> Timex.format!("{ISO:Extended}")
-
-      open_at_string =
-        open_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_dates = %{openAt: open_at_string, closeAt: new_close_at_string}
-
-      conn =
-        conn
-        |> post(build_url_update(assessment.id), new_dates)
-
-      assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 400) == "New end date should occur after new opening date"
-      assert [assessment.open_at, assessment.close_at] == [open_at, close_at]
-    end
-
-    @tag authenticate: :staff
-    test "successful, set close time to before current time", %{conn: conn} do
-      open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: -3)
-        |> Timex.shift(hours: 4)
-
-      close_at = Timex.shift(open_at, days: 7)
-      assessment = insert(:assessment, %{open_at: open_at, close_at: close_at})
-
-      new_close_at =
-        Timex.now()
-        |> Timex.shift(days: -1)
-
-      new_close_at_string =
-        new_close_at
-        |> Timex.format!("{ISO:Extended}")
-
-      open_at_string =
-        open_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_dates = %{openAt: open_at_string, closeAt: new_close_at_string}
-
-      conn =
-        conn
-        |> post(build_url_update(assessment.id), new_dates)
-
-      assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 200) == "OK"
-      assert [assessment.open_at, assessment.close_at] == [open_at, new_close_at]
-    end
-
-    @tag authenticate: :staff
-    test "successful, set open time to before current time", %{conn: conn} do
-      open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
-
-      close_at = Timex.shift(open_at, days: 7)
-      assessment = insert(:assessment, %{open_at: open_at, close_at: close_at})
-
-      new_open_at =
-        Timex.now()
-        |> Timex.shift(days: -1)
-
-      new_open_at_string =
-        new_open_at
-        |> Timex.format!("{ISO:Extended}")
-
-      close_at_string =
-        close_at
-        |> Timex.format!("{ISO:Extended}")
-
-      new_dates = %{openAt: new_open_at_string, closeAt: close_at_string}
-
-      conn =
-        conn
-        |> post(build_url_update(assessment.id), new_dates)
-
-      assessment = Repo.get(Assessment, assessment.id)
-      assert response(conn, 200) == "OK"
-      assert [assessment.open_at, assessment.close_at] == [new_open_at, close_at]
-    end
-  end
-
-  defp build_url, do: "/v1/assessments/"
-  defp build_url(assessment_id), do: "/v1/assessments/#{assessment_id}"
-  defp build_url_submit(assessment_id), do: "/v1/assessments/#{assessment_id}/submit"
-  defp build_url_publish(assessment_id), do: "/v1/assessments/publish/#{assessment_id}"
-  defp build_url_update(assessment_id), do: "/v1/assessments/update/#{assessment_id}"
+  defp build_url, do: "/v2/assessments/"
+  defp build_url(assessment_id), do: "/v2/assessments/#{assessment_id}"
+  defp build_url_submit(assessment_id), do: "/v2/assessments/#{assessment_id}/submit"
+  defp build_url_unlock(assessment_id), do: "/v2/assessments/#{assessment_id}/unlock"
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
 

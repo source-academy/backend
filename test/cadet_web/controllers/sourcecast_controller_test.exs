@@ -205,7 +205,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  defp build_url, do: "/v1/sourcecast/"
+  defp build_url, do: "v2/sourcecast/"
   defp build_url(sourcecast_id), do: "#{build_url()}#{sourcecast_id}/"
 
   defp seed_db do

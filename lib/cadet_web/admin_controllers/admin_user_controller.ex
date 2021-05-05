@@ -35,7 +35,7 @@ defmodule CadetWeb.AdminUserController do
 
             group(
               :string,
-              "Group the user belongs to. May be null if the user does not belong to any group."
+              "Group the user belongs to. May be null if the user does not belong to any group"
             )
           end
         end

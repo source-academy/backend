@@ -5,17 +5,14 @@ defmodule Cadet.Assets.Assets do
   Assessments context contains domain logic for assets management
   for Source academy's game component
   """
-  @manage_assets_role ~w(staff admin)a
-
   @accessible_folders ~w(images locations objects avatars ui stories sfx bgm) ++
                         if(Mix.env() == :test, do: ["testFolder"], else: [])
   @accepted_file_types ~w(.jpg .jpeg .gif .png .wav .mp3 .txt)
 
-  def upload_to_s3(upload_params, folder_name, file_name, user) do
+  def upload_to_s3(upload_params, folder_name, file_name) do
     file_type = Path.extname(file_name)
 
-    with :ok <- validate_role(user.role),
-         :ok <- validate_file_name(file_name),
+    with :ok <- validate_file_name(file_name),
          :ok <- validate_folder_name(folder_name),
          :ok <- validate_file_type(file_type) do
       if object_exists?(folder_name, file_name) do
@@ -35,19 +32,21 @@ defmodule Cadet.Assets.Assets do
     end
   end
 
-  def list_assets(folder_name, user) do
-    with :ok <- validate_role(user.role),
-         :ok <- validate_folder_name(folder_name) do
-      bucket()
-      |> S3.list_objects(prefix: folder_name <> "/")
-      |> ExAws.stream!()
-      |> Enum.map(fn file -> file.key end)
+  def list_assets(folder_name) do
+    case validate_folder_name(folder_name) do
+      :ok ->
+        bucket()
+        |> S3.list_objects(prefix: folder_name <> "/")
+        |> ExAws.stream!()
+        |> Enum.map(fn file -> file.key end)
+
+      {:error, _} = error ->
+        error
     end
   end
 
-  def delete_object(folder_name, file_name, user) do
-    with :ok <- validate_role(user.role),
-         :ok <- validate_file_name(file_name),
+  def delete_object(folder_name, file_name) do
+    with :ok <- validate_file_name(file_name),
          :ok <- validate_folder_name(folder_name) do
       if object_exists?(folder_name, file_name) do
         bucket()
@@ -68,14 +67,6 @@ defmodule Cadet.Assets.Assets do
     case response do
       {:error, _error} -> false
       _ -> true
-    end
-  end
-
-  defp validate_role(role) do
-    if role in @manage_assets_role do
-      :ok
-    else
-      {:error, {:forbidden, "User not allowed to manage assets"}}
     end
   end
 

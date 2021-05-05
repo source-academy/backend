@@ -104,8 +104,8 @@ erl_crash.dump
 .terraform
 *.tfstate
 *.backup
-terraform/terraform.tfvars
-terraform/*.plan
+/deployment/terraform/terraform.tfvars
+/deployment/terraform/*.plan
 
 # VSCode Elixir language support
 .elixir_ls/

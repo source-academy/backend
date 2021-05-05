@@ -1,12 +1,12 @@
-defmodule CadetWeb.NotificationControllerTest do
+defmodule CadetWeb.NotificationsControllerTest do
   use CadetWeb.ConnCase
 
-  alias CadetWeb.NotificationController
+  alias CadetWeb.NotificationsController
 
   test "swagger" do
-    NotificationController.swagger_definitions()
-    NotificationController.swagger_path_index(nil)
-    NotificationController.swagger_path_acknowledge(nil)
+    NotificationsController.swagger_definitions()
+    NotificationsController.swagger_path_index(nil)
+    NotificationsController.swagger_path_acknowledge(nil)
   end
 
   setup do
@@ -38,14 +38,14 @@ defmodule CadetWeb.NotificationControllerTest do
   end
 
   describe "GET /, unauthenticated" do
-    test "/notification", %{conn: conn} do
+    test "/notifications", %{conn: conn} do
       conn = get(conn, build_url())
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
   describe "POST /, unaunthenticated" do
-    test "/notification/acknowledge", %{conn: conn} do
+    test "/notifications/acknowledge", %{conn: conn} do
       conn =
         post(conn, build_acknowledge_url(), %{
           "notificationIds" => [1]
@@ -55,7 +55,7 @@ defmodule CadetWeb.NotificationControllerTest do
     end
   end
 
-  describe "GET /notification" do
+  describe "GET /notifications" do
     test "student fetches unread notifications", %{
       conn: conn,
       student: student,
@@ -132,7 +132,7 @@ defmodule CadetWeb.NotificationControllerTest do
     end
   end
 
-  describe "POST /notification/acknowledge" do
+  describe "POST /notifications/acknowledge" do
     test "student acknowledges own notification", %{
       conn: conn,
       student: student,
@@ -164,6 +164,6 @@ defmodule CadetWeb.NotificationControllerTest do
     end
   end
 
-  defp build_url, do: "/v1/notification"
-  defp build_acknowledge_url, do: "/v1/notification/acknowledge"
+  defp build_url, do: "/v2/notifications"
+  defp build_acknowledge_url, do: "/v2/notifications/acknowledge"
 end

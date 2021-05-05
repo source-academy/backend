@@ -167,10 +167,10 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   defp build_path(uuid \\ nil)
 
   defp build_path(nil) do
-    "/v1/admin/goals"
+    "/v2/admin/goals"
   end
 
   defp build_path(uuid) do
-    "/v1/admin/goals/#{uuid}"
+    "/v2/admin/goals/#{uuid}"
   end
 end

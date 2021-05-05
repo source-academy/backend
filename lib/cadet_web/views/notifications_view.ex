@@ -1,12 +1,12 @@
-defmodule CadetWeb.NotificationView do
+defmodule CadetWeb.NotificationsView do
   use CadetWeb, :view
 
   def render("index.json", %{notifications: notifications}) do
-    render_many(notifications, CadetWeb.NotificationView, "notification.json")
+    render_many(notifications, CadetWeb.NotificationsView, "notification.json")
   end
 
-  def render("notification.json", %{notification: notification}) do
-    transform_map_for_view(notification, %{
+  def render("notification.json", %{notifications: notifications}) do
+    transform_map_for_view(notifications, %{
       id: :id,
       type: :type,
       assessment_id: :assessment_id,

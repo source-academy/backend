@@ -53,7 +53,7 @@ defmodule CadetWeb.UserControllerTest do
 
       resp =
         conn
-        |> get("/v1/user")
+        |> get("/v2/user")
         |> json_response(200)
         |> Map.delete("story")
 
@@ -80,7 +80,7 @@ defmodule CadetWeb.UserControllerTest do
       for assessment <- early_assessments ++ late_assessments do
         resp_story =
           conn
-          |> get("/v1/user")
+          |> get("/v2/user")
           |> json_response(200)
           |> Map.get("story")
 
@@ -106,7 +106,7 @@ defmodule CadetWeb.UserControllerTest do
 
       resp_story =
         conn
-        |> get("/v1/user")
+        |> get("/v2/user")
         |> json_response(200)
         |> Map.get("story")
 
@@ -133,7 +133,7 @@ defmodule CadetWeb.UserControllerTest do
 
       resp_story =
         conn
-        |> get("/v1/user")
+        |> get("/v2/user")
         |> json_response(200)
         |> Map.get("story")
 
@@ -160,7 +160,7 @@ defmodule CadetWeb.UserControllerTest do
 
           resp_story =
             conn
-            |> get("/v1/user")
+            |> get("/v2/user")
             |> json_response(200)
             |> Map.get("story")
 
@@ -189,7 +189,7 @@ defmodule CadetWeb.UserControllerTest do
 
       resp_story =
         conn
-        |> get("/v1/user")
+        |> get("/v2/user")
         |> json_response(200)
         |> Map.get("story")
 
@@ -207,7 +207,7 @@ defmodule CadetWeb.UserControllerTest do
 
       resp =
         conn
-        |> get("/v1/user")
+        |> get("/v2/user")
         |> json_response(200)
         |> Map.delete("story")
 
@@ -226,7 +226,7 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     test "unauthorized", %{conn: conn} do
-      conn = get(conn, "/v1/user", nil)
+      conn = get(conn, "/v2/user", nil)
       assert response(conn, 401) =~ "Unauthorised"
     end
 
@@ -262,7 +262,7 @@ defmodule CadetWeb.UserControllerTest do
       }
 
       conn
-      |> put("/v1/user/game_states", %{"gameStates" => new_game_states})
+      |> put("/v2/user/game_states", %{"gameStates" => new_game_states})
       |> response(200)
 
       updated_user = Repo.get(User, user.id)
@@ -274,7 +274,7 @@ defmodule CadetWeb.UserControllerTest do
     test "success, retrieving student game state", %{conn: conn} do
       resp =
         conn
-        |> get("/v1/user")
+        |> get("/v2/user")
         |> json_response(200)
 
       assert %{} == resp["gameStates"]

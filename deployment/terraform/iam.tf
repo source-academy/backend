@@ -5,8 +5,19 @@ data "aws_iam_policy_document" "assets" {
     resources = [
       aws_s3_bucket.sourcecasts.arn,
       "${aws_s3_bucket.sourcecasts.arn}/*",
-      aws_s3_bucket.assets.arn,
-      "${aws_s3_bucket.assets.arn}/*",
+      data.aws_s3_bucket.assets.arn,
+      "${data.aws_s3_bucket.assets.arn}/*",
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "config" {
+  statement {
+    effect  = "Allow"
+    actions = ["s3:ListBucket", "s3:PutObject", "s3:GetObject", "s3:DeleteObject"]
+    resources = [
+      data.aws_s3_bucket.config.arn,
+      "${data.aws_s3_bucket.config.arn}/*"
     ]
   }
 }
@@ -105,8 +116,14 @@ resource "aws_iam_role" "frontend" {
 
 resource "aws_iam_policy" "assets" {
   name        = "${var.env}-cadet-assets"
-  description = "Allows R/W access to the ${aws_s3_bucket.sourcecasts.bucket} and ${aws_s3_bucket.assets.bucket} S3 buckets"
+  description = "Allows R/W access to the ${aws_s3_bucket.sourcecasts.bucket} and ${data.aws_s3_bucket.assets.bucket} S3 buckets"
   policy      = data.aws_iam_policy_document.assets.json
+}
+
+resource "aws_iam_policy" "config" {
+  name        = "${var.env}-cadet-config"
+  description = "Allows read access to the ${data.aws_s3_bucket.config.bucket} S3 bucket"
+  policy      = data.aws_iam_policy_document.config.json
 }
 
 resource "aws_iam_policy" "grader" {
@@ -142,6 +159,11 @@ resource "aws_iam_policy" "assume_frontend" {
 resource "aws_iam_role_policy_attachment" "api_assets" {
   role       = aws_iam_role.api.name
   policy_arn = aws_iam_policy.assets.arn
+}
+
+resource "aws_iam_role_policy_attachment" "api_config" {
+  role       = aws_iam_role.api.name
+  policy_arn = aws_iam_policy.config.arn
 }
 
 resource "aws_iam_role_policy_attachment" "api_grader" {

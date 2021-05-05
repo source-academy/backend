@@ -3,6 +3,17 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'config/**'
+      - 'lib/**'
+      - 'priv/**'
+      - 'rel/**'
+      - 'test/**'
+      - '**/*.ex'
+      - '**/*.exs'
+      - 'mix.lock'
+      - '.github/workflows/ci.yml'
+      - '!config/*.example'
   pull_request:
 
 jobs:
@@ -48,6 +59,7 @@ jobs:
           otp-version: 23.1.4
       - name: Perform test
         run: |
+          set -eu
           mix deps.get
           mix ecto.setup
           mix format --check-formatted
