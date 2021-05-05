@@ -1,3 +1,8 @@
+resource "random_password" "db_password" {
+  length           = 64
+  override_special = "~!#$%^&*()_+-=[]{}|;:,.<>?"
+}
+
 resource "aws_db_subnet_group" "db" {
   name       = "${var.env}-cadet-db"
   subnet_ids = [aws_subnet.private_a.id, aws_subnet.private_b.id]
@@ -19,7 +24,7 @@ resource "aws_db_instance" "db" {
   engine                    = "postgres"
   engine_version            = "13"
   username                  = "postgres"
-  password                  = var.rds_password
+  password                  = random_password.db_password.result
   port                      = 5432
   publicly_accessible       = false
   backup_retention_period   = 14
@@ -30,9 +35,5 @@ resource "aws_db_instance" "db" {
   tags = {
     Name        = "${title(var.env)} Cadet DB"
     Environment = var.env
-  }
-
-  lifecycle {
-    ignore_changes = [password]
   }
 }
