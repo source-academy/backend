@@ -157,10 +157,9 @@ defmodule CadetWeb.AssessmentsHelpers do
       transform_map_for_view(leaderboard_ans, %{
         submission_id: :submission_id,
         answer: :answer,
-        score: :relative_score
+        student_name: :student_name
       }),
-      "student_name",
-      leaderboard_ans.student_name
+      "score", Float.round(leaderboard_ans.relative_score, 2) 
     )
   end
 
