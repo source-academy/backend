@@ -27,11 +27,6 @@ variable "rds_allocated_storage" {
   default     = 10
 }
 
-variable "rds_password" {
-  description = "RDS password"
-  sensitive   = true
-}
-
 variable "lambda_filename" {
   description = "Location of the lambda deployment zip"
 }
