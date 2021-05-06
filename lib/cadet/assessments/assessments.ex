@@ -1030,7 +1030,8 @@ defmodule Cadet.Assessments do
         Map.put(
           tracker,
           ans_id,
-          {prev_score + convert_vote_rank_to_score(rank), prev_count + 1, Parser.lex(ans)}
+          # assume each voter is assigned 10 entries which will make it fair.
+          {prev_score + convert_vote_rank_to_score(rank, 10), prev_count + 1, Parser.lex(ans)}
         )
       end)
 
@@ -1043,10 +1044,9 @@ defmodule Cadet.Assessments do
     )
   end
 
-  # implementation detail assuming each user votes for
-  # 10 entries and rank range is [1, 10]
-  defp convert_vote_rank_to_score(rank) do
-    11 - rank
+  # implementation detail assuming to calculate scores out of 10 for rank [1, num_voted_entries]
+  defp convert_vote_rank_to_score(rank, num_voted_entries) do
+    11 - 10 * rank / num_voted_entries
   end
 
   # Calculate the score based on formula
