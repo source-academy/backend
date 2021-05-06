@@ -98,8 +98,8 @@ defmodule Cadet.Test.Seeds do
         insert(:voting_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 0,
-          max_xp: 0
+          max_grade: 10,
+          max_xp: 100
         })
       end)
 
@@ -135,14 +135,28 @@ defmodule Cadet.Test.Seeds do
         end)
       end)
 
+    voting_answers =
+      Enum.map(submissions, fn submission ->
+        Enum.map(voting_questions, fn question ->
+          insert(:answer, %{
+            grade: 10,
+            xp: 100,
+            question: question,
+            submission: submission,
+            answer: build(:voting_answer)
+          })
+        end)
+      end)
+
     %{
       assessment: assessment,
       programming_questions: programming_questions,
       mcq_questions: mcq_questions,
+      voting_questions: voting_questions,
       submissions: submissions,
       programming_answers: programming_answers,
       mcq_answers: mcq_answers,
-      voting_questions: voting_questions
+      voting_answers: voting_answers
     }
   end
 end

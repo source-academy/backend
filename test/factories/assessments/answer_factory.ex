@@ -26,6 +26,12 @@ defmodule Cadet.Assessments.AnswerFactory do
           choice_id: Enum.random(0..2)
         }
       end
+
+      def voting_answer_factory do
+        %{
+          completed: Enum.random(0..1) == 1
+        }
+      end
     end
   end
 end

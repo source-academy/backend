@@ -363,7 +363,6 @@ defmodule Cadet.Assessments do
             if status == :ok and new_question.type == :voting do
               insert_voting(
                 question_params.question.contest_number,
-                question_params.question.usernames,
                 new_question.id
               )
             else
@@ -479,88 +478,97 @@ defmodule Cadet.Assessments do
   """
   def insert_voting(
         contest_number,
-        usernames,
         question_id
       ) do
     contest_assessment = Repo.get_by(Assessment, number: contest_number)
-    users = Enum.map(usernames, fn x -> Repo.get_by(User, username: x.username) end)
-    invalid_usernames = Enum.any?(users, fn user -> user == nil end)
 
-    if not is_nil(contest_assessment) and not invalid_usernames do
+    if is_nil(contest_assessment) do
+      changeset = change(%Assessment{}, %{number: ""})
+
+      error_changeset =
+        Ecto.Changeset.add_error(
+          changeset,
+          :number,
+          "invalid contest number"
+        )
+
+      {:error, error_changeset}
+    else
       contest_submission_ids =
         Submission
         |> where(assessment_id: ^contest_assessment.id)
         |> where(status: "submitted")
+        |> select([s], {s.student_id, s.id})
         |> Repo.all()
-        |> Enum.map(fn x -> x.id end)
+        |> Enum.into(%{})
 
-      user_ids = Enum.map(usernames, fn x -> Repo.get_by(User, username: x.username).id end)
+      contest_submission_ids_length = Enum.count(contest_submission_ids)
 
-      votes_per_user = min(length(contest_submission_ids), 10)
+      user_ids =
+        User
+        |> where(role: "student")
+        |> select([u], u.id)
+        |> Repo.all()
+
+      votes_per_user = min(contest_submission_ids_length, 10)
 
       votes_per_submission =
         if Enum.empty?(contest_submission_ids) do
           0
         else
-          trunc(Float.ceil(votes_per_user * length(usernames) / length(contest_submission_ids)))
+          trunc(Float.ceil(votes_per_user * length(user_ids) / contest_submission_ids_length))
         end
 
-      submission_id_map =
+      submission_id_list =
         contest_submission_ids
-        |> Enum.into(%{}, fn id -> {id, votes_per_submission} end)
+        |> Enum.map(fn {_, s_id} -> s_id end)
+        |> Enum.shuffle()
+        |> List.duplicate(votes_per_submission)
+        |> List.flatten()
 
       {_submission_map, submission_votes_changesets} =
         user_ids
-        |> Enum.reduce({submission_id_map, []}, fn user_id, acc ->
-          {submission_map, submission_votes} = acc
+        |> Enum.reduce({submission_id_list, []}, fn user_id, acc ->
+          {submission_list, submission_votes} = acc
 
-          user_contest_submission =
-            Repo.get_by(Submission, student_id: user_id, assessment_id: contest_assessment.id)
+          user_contest_submission_id = Map.get(contest_submission_ids, user_id)
 
-          {user_submission_id_votes_left, submission_map} =
-            if is_nil(user_contest_submission) do
-              {nil, submission_map}
-            else
-              user_submission_id_votes_left = Map.get(submission_map, user_contest_submission.id)
-              submission_map = Map.delete(submission_map, user_contest_submission.id)
-              {user_submission_id_votes_left, submission_map}
-            end
+          {votes, rest} =
+            submission_list
+            |> Enum.reduce_while({MapSet.new(), submission_list}, fn s_id, acc ->
+              {user_votes, submissions} = acc
 
-          submission_ids = Enum.take_random(submission_map, votes_per_user)
+              max_votes =
+                if votes_per_user == contest_submission_ids_length and
+                     not is_nil(user_contest_submission_id) do
+                  votes_per_user - 1
+                else
+                  votes_per_user
+                end
 
-          new_submission_map =
-            submission_ids
-            |> Enum.reduce(submission_map, fn {s_id, votes_left}, acc ->
-              if votes_left - 1 == 0 do
-                Map.delete(acc, s_id)
+              if MapSet.size(user_votes) < max_votes do
+                if s_id != user_contest_submission_id and not MapSet.member?(user_votes, s_id) do
+                  new_user_votes = MapSet.put(user_votes, s_id)
+                  new_submissions = List.delete(submissions, s_id)
+                  {:cont, {new_user_votes, new_submissions}}
+                else
+                  {:cont, {user_votes, submissions}}
+                end
               else
-                Map.update(acc, s_id, 0, fn v -> v - 1 end)
+                {:halt, acc}
               end
             end)
 
+          votes = MapSet.to_list(votes)
+
           new_submission_votes =
-            submission_ids
-            |> Enum.reduce(submission_votes, fn {s_id, _votes_left}, acc ->
-              [
-                %SubmissionVotes{user_id: user_id, submission_id: s_id, question_id: question_id}
-                | acc
-              ]
+            votes
+            |> Enum.map(fn s_id ->
+              %SubmissionVotes{user_id: user_id, submission_id: s_id, question_id: question_id}
             end)
+            |> Enum.concat(submission_votes)
 
-          case user_submission_id_votes_left do
-            nil ->
-              {new_submission_map, new_submission_votes}
-
-            _ ->
-              new_submission_map =
-                Map.put(
-                  new_submission_map,
-                  user_contest_submission.id,
-                  user_submission_id_votes_left
-                )
-
-              {new_submission_map, new_submission_votes}
-          end
+          {rest, new_submission_votes}
         end)
 
       submission_votes_changesets
@@ -569,17 +577,6 @@ defmodule Cadet.Assessments do
         Multi.insert(multi, Integer.to_string(index), changeset)
       end)
       |> Repo.transaction()
-    else
-      changeset = change(%Assessment{}, %{number: ""})
-
-      error_changeset =
-        Ecto.Changeset.add_error(
-          changeset,
-          :number,
-          "invalid contest number or invalid usernames"
-        )
-
-      {:error, error_changeset}
     end
   end
 
@@ -901,7 +898,6 @@ defmodule Cadet.Assessments do
   Find the contest_question_id associated with the given voting_question id
   """
   def fetch_associated_contest_question_id(voting_question_id) do
-    # TODO: improve this function.
     SubmissionVotes
     |> where(question_id: ^voting_question_id)
     |> join(:inner, [sv], s in assoc(sv, :submission))
@@ -1462,7 +1458,7 @@ defmodule Cadet.Assessments do
       |> case do
         nil ->
           Repo.insert(%Answer{
-            answer: %{},
+            answer: %{completed: true},
             submission_id: submission_id,
             question_id: question_id,
             type: :voting

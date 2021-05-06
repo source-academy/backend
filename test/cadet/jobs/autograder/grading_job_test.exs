@@ -7,7 +7,7 @@ defmodule Cadet.Autograder.GradingJobTest do
   alias Que.Persistence, as: JobsQueue
 
   alias Cadet.Accounts.Notification
-  alias Cadet.Assessments.{Answer, Question, Submission}
+  alias Cadet.Assessments.{Answer, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.{GradingJob, LambdaWorker}
 
   defp assert_dispatched(answer_question_list) do
@@ -486,6 +486,119 @@ defmodule Cadet.Autograder.GradingJobTest do
         else
           assert answer_db.grade == 0
           assert answer_db.xp == 0
+        end
+
+        assert answer_db.autograding_status == :success
+      end
+
+      assert Enum.empty?(JobsQueue.all())
+    end
+  end
+
+  describe "#grade_all_due_yesterday, all voting questions" do
+    setup do
+      assessments =
+        insert_list(3, :assessment, %{
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -4),
+          type: "mission"
+        })
+
+      questions =
+        for assessment <- assessments do
+          insert_list(3, :voting_question, %{max_grade: 20, assessment: assessment})
+        end
+
+      %{assessments: Enum.zip(assessments, questions)}
+    end
+
+    test "all assessments attempted, all questions unanswered, " <>
+           "should insert empty answers, should not enqueue any",
+         %{
+           assessments: assessments
+         } do
+      student = insert(:user, %{role: :student})
+
+      for {assessment, _} <- assessments do
+        insert(:submission, %{student: student, assessment: assessment, status: :attempting})
+      end
+
+      GradingJob.grade_all_due_yesterday()
+
+      answers =
+        Submission
+        |> where(student_id: ^student.id)
+        |> join(:inner, [s], a in assoc(s, :answers))
+        |> select([_, a], a)
+        |> Repo.all()
+
+      assert Enum.count(answers) == 9
+
+      for answer <- answers do
+        assert answer.grade == 0
+        assert answer.xp == 0
+        assert answer.autograding_status == :success
+        assert answer.answer == %{"completed" => false}
+      end
+
+      assert Enum.empty?(JobsQueue.all())
+    end
+
+    test "all assessments attempted, all questions aswered, " <>
+           "should grade all questions, should not enqueue any",
+         %{
+           assessments: assessments
+         } do
+      student = insert(:user, %{role: :student})
+
+      submissions_answers =
+        for {assessment, questions} <- assessments do
+          submission =
+            insert(:submission, %{student: student, assessment: assessment, status: :attempted})
+
+          answers =
+            for question <- questions do
+              case Enum.random(0..1) do
+                0 -> insert(:submission_vote, %{user: student, question: question, rank: 1})
+                1 -> insert(:submission_vote, %{user: student, question: question})
+              end
+
+              insert(:answer, %{
+                question: question,
+                submission: submission,
+                answer: build(:voting_answer)
+              })
+            end
+
+          {submission, answers}
+        end
+
+      GradingJob.grade_all_due_yesterday()
+      questions = Enum.flat_map(assessments, fn {_, questions} -> questions end)
+      submissions = Enum.map(submissions_answers, fn {submission, _} -> submission end)
+      answers = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
+
+      for submission <- submissions do
+        assert Repo.get(Submission, submission.id).status == :submitted
+      end
+
+      for {question, answer} <- Enum.zip(questions, answers) do
+        is_nil_entries =
+          SubmissionVotes
+          |> where(user_id: ^student.id)
+          |> where(question_id: ^question.id)
+          |> where([sv], is_nil(sv.rank))
+          |> Repo.exists?()
+
+        answer_db = Repo.get(Answer, answer.id)
+
+        if is_nil_entries do
+          assert answer_db.grade == 0
+          assert answer_db.xp == 0
+        else
+          assert answer_db.grade == question.max_grade
+          assert answer_db.xp == question.max_xp
         end
 
         assert answer_db.autograding_status == :success

@@ -188,7 +188,7 @@ defmodule Cadet.Autograder.GradingJob do
       case question_type do
         :programming -> %{code: "// Question was left blank by the student."}
         :mcq -> %{choice_id: 0}
-        :voting -> %{}
+        :voting -> %{completed: false}
       end
 
     %Answer{}
@@ -253,9 +253,7 @@ defmodule Cadet.Autograder.GradingJob do
          overwrite
        )
        when is_boolean(regrade) and is_boolean(overwrite) and is_ecto_id(submission_id) do
-    if question.type != :voting do
-      insert_empty_answer(submission_id, question)
-    end
+    insert_empty_answer(submission_id, question)
 
     grade_submission_question_answer_lists(
       submission_id,

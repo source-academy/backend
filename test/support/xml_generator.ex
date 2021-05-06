@@ -150,15 +150,7 @@ defmodule Cadet.Test.XMLGenerator do
 
         template_field = [template(question.question.template)]
 
-        voting_field =
-          voting(
-            %{contest_number: question.question.contest_number},
-            [
-              for name <- question.question[:contest_entries] do
-                username(%{username: name.username})
-              end
-            ]
-          )
+        voting_field = voting(%{contest_number: question.question.contest_number})
 
         [
           snippet(prepend_field ++ template_field)
@@ -166,12 +158,8 @@ defmodule Cadet.Test.XMLGenerator do
     end
   end
 
-  defp voting(raw_attr, children) do
-    {"VOTING", map_permit_keys(raw_attr, ~w(contest_number)a), children}
-  end
-
-  defp username(raw_attr) do
-    {"USER", map_permit_keys(raw_attr, ~w(username)a)}
+  defp voting(raw_attr) do
+    {"VOTING", map_permit_keys(raw_attr, ~w(contest_number)a)}
   end
 
   defp deployment(raw_attrs, children) do

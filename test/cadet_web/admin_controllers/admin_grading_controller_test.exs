@@ -105,11 +105,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "xp" => 4000,
-            "xpAdjustment" => -2000,
+            "xp" => 5000,
+            "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 800,
-            "adjustment" => -400,
+            "grade" => 1000,
+            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -119,14 +119,14 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => "mission",
-              "maxGrade" => 800,
-              "maxXp" => 4000,
+              "maxGrade" => 1000,
+              "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 4
+              "questionCount" => 5
             },
             "status" => Atom.to_string(submission.status),
-            "gradedCount" => 4,
+            "gradedCount" => 5,
             "unsubmittedBy" => nil,
             "unsubmittedAt" => nil
           }
@@ -147,11 +147,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "xp" => 4000,
-            "xpAdjustment" => -2000,
+            "xp" => 5000,
+            "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 800,
-            "adjustment" => -400,
+            "grade" => 1000,
+            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -161,16 +161,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => "mission",
-              "maxGrade" => 800,
-              "maxXp" => 4000,
+              "maxGrade" => 1000,
+              "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 4
+              "questionCount" => 5
             },
             "status" => Atom.to_string(submission.status),
-            "gradedCount" => 4,
-            "unsubmittedAt" => nil,
-            "unsubmittedBy" => nil
+            "gradedCount" => 5,
+            "unsubmittedBy" => nil,
+            "unsubmittedAt" => nil
           }
         end)
 
@@ -207,11 +207,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "xp" => 4000,
-            "xpAdjustment" => -2000,
+            "xp" => 5000,
+            "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 800,
-            "adjustment" => -400,
+            "grade" => 1000,
+            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -221,16 +221,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => "mission",
-              "maxGrade" => 800,
-              "maxXp" => 4000,
+              "maxGrade" => 1000,
+              "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 4
+              "questionCount" => 5
             },
             "status" => Atom.to_string(submission.status),
-            "gradedCount" => 4,
-            "unsubmittedAt" => nil,
-            "unsubmittedBy" => nil
+            "gradedCount" => 5,
+            "unsubmittedBy" => nil,
+            "unsubmittedAt" => nil
           }
         end)
 
@@ -362,6 +362,49 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "id" => &1.submission.student.id
                 }
               }
+
+            :voting ->
+              %{
+                "question" => %{
+                  "prepend" => &1.question.question.prepend,
+                  "solutionTemplate" => &1.question.question.template,
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
+                  "content" => &1.question.question.content,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results,
+                  "answer" => nil,
+                  "contestEntries" => [],
+                  "contestLeaderboard" => []
+                },
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
+                },
+                "solution" => ""
+              }
           end
         )
 
@@ -491,6 +534,49 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "id" => &1.submission.student.id
                 }
               }
+
+            :voting ->
+              %{
+                "question" => %{
+                  "prepend" => &1.question.question.prepend,
+                  "solutionTemplate" => &1.question.question.template,
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
+                  "content" => &1.question.question.content,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results,
+                  "answer" => nil,
+                  "contestEntries" => [],
+                  "contestLeaderboard" => []
+                },
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
+                },
+                "solution" => ""
+              }
           end
         )
 
@@ -609,6 +695,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             case question.type do
               :programming -> build(:programming_answer)
               :mcq -> build(:mcq_answer)
+              :voting -> build(:voting_answer)
             end
         })
 
@@ -918,11 +1005,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "xp" => 4000,
-            "xpAdjustment" => -2000,
+            "xp" => 5000,
+            "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 800,
-            "adjustment" => -400,
+            "grade" => 1000,
+            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -932,16 +1019,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => "mission",
-              "maxGrade" => 800,
-              "maxXp" => 4000,
+              "maxGrade" => 1000,
+              "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 4
+              "questionCount" => 5
             },
             "status" => Atom.to_string(submission.status),
-            "gradedCount" => 4,
-            "unsubmittedAt" => nil,
-            "unsubmittedBy" => nil
+            "gradedCount" => 5,
+            "unsubmittedBy" => nil,
+            "unsubmittedAt" => nil
           }
         end)
 
@@ -962,11 +1049,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
       expected =
         Enum.map(submissions, fn submission ->
           %{
-            "xp" => 4000,
-            "xpAdjustment" => -2000,
+            "xp" => 5000,
+            "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 800,
-            "adjustment" => -400,
+            "grade" => 1000,
+            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.name,
@@ -976,16 +1063,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => "mission",
-              "maxGrade" => 800,
-              "maxXp" => 4000,
+              "maxGrade" => 1000,
+              "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 4
+              "questionCount" => 5
             },
             "status" => Atom.to_string(submission.status),
-            "gradedCount" => 4,
-            "unsubmittedAt" => nil,
-            "unsubmittedBy" => nil
+            "gradedCount" => 5,
+            "unsubmittedBy" => nil,
+            "unsubmittedAt" => nil
           }
         end)
 
@@ -1116,6 +1203,49 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "name" => &1.submission.student.name,
                   "id" => &1.submission.student.id
                 }
+              }
+
+            :voting ->
+              %{
+                "question" => %{
+                  "prepend" => &1.question.question.prepend,
+                  "solutionTemplate" => &1.question.question.template,
+                  "type" => "#{&1.question.type}",
+                  "id" => &1.question.id,
+                  "library" => %{
+                    "chapter" => &1.question.library.chapter,
+                    "globals" => &1.question.library.globals,
+                    "external" => %{
+                      "name" => "#{&1.question.library.external.name}",
+                      "symbols" => &1.question.library.external.symbols
+                    }
+                  },
+                  "maxGrade" => &1.question.max_grade,
+                  "maxXp" => &1.question.max_xp,
+                  "content" => &1.question.question.content,
+                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                  "autogradingResults" => &1.autograding_results,
+                  "answer" => nil,
+                  "contestEntries" => [],
+                  "contestLeaderboard" => []
+                },
+                "grade" => %{
+                  "grade" => &1.grade,
+                  "adjustment" => &1.adjustment,
+                  "xp" => &1.xp,
+                  "xpAdjustment" => &1.xp_adjustment,
+                  "grader" => %{
+                    "name" => grader.name,
+                    "id" => grader.id
+                  },
+                  "gradedAt" => format_datetime(&1.updated_at),
+                  "comments" => &1.comments
+                },
+                "student" => %{
+                  "name" => &1.submission.student.name,
+                  "id" => &1.submission.student.id
+                },
+                "solution" => ""
               }
           end
         )
@@ -1283,11 +1413,19 @@ defmodule CadetWeb.AdminGradingControllerTest do
           assessment: mission,
           max_grade: 200,
           max_xp: 1000,
-          display_order: 4 - index
+          display_order: 5 - index
         })
       end ++
         [
           insert(:mcq_question, %{
+            assessment: mission,
+            max_grade: 200,
+            max_xp: 1000,
+            display_order: 2
+          })
+        ] ++
+        [
+          insert(:voting_question, %{
             assessment: mission,
             max_grade: 200,
             max_xp: 1000,
@@ -1322,6 +1460,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             case question.type do
               :programming -> build(:programming_answer)
               :mcq -> build(:mcq_answer)
+              :voting -> build(:voting_answer)
             end
         })
       end

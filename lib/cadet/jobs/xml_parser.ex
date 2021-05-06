@@ -237,26 +237,17 @@ defmodule Cadet.Updater.XMLParser do
 
   defp process_question_entity_by_type(entity, "voting") do
     Map.merge(
-      Map.merge(
-        entity
-        |> xpath(
-          ~x"."e,
-          content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-          prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
-          template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1)
-        ),
-        entity
-        |> xpath(
-          ~x"./VOTING"e,
-          contest_number: ~x"./@contest_number"s
-        )
+      entity
+      |> xpath(
+        ~x"."e,
+        content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+        prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
+        template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1)
       ),
       entity
-      |> xmap(
-        usernames: [
-          ~x"./VOTING/USER"l,
-          username: ~x"./@username"s
-        ]
+      |> xpath(
+        ~x"./VOTING"e,
+        contest_number: ~x"./@contest_number"s
       )
     )
   end
