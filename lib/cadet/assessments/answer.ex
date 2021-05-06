@@ -8,7 +8,7 @@ defmodule Cadet.Assessments.Answer do
   alias Cadet.Repo
   alias Cadet.Accounts.User
   alias Cadet.Assessments.Answer.AutogradingStatus
-  alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer}
+  alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer, VotingAnswer}
   alias Cadet.Assessments.{Question, QuestionType, Submission}
 
   schema "answers" do
@@ -119,7 +119,8 @@ defmodule Cadet.Assessments.Answer do
   defp validate_answer_content(changeset) do
     validate_arbitrary_embedded_struct_by_type(changeset, :answer, %{
       mcq: MCQAnswer,
-      programming: ProgrammingAnswer
+      programming: ProgrammingAnswer,
+      voting: VotingAnswer
     })
   end
 

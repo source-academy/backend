@@ -140,22 +140,25 @@ defmodule Cadet.AssessmentsTest do
     test "inserts votes into submission_votes table" do
       assessment = insert(:assessment, type: "contest")
       question = insert(:voting_question)
-      users = Enum.map(0..5, fn _x -> insert(:user) end)
+      users = Enum.map(0..5, fn _x -> insert(:user, role: "student") end)
 
       Enum.map(users, fn user ->
         insert(:submission, student: user, assessment: assessment, status: "submitted")
       end)
 
-      usernames = Enum.map(users, fn user -> %{username: user.username} end)
+      insert(:user, role: "student")
 
-      Assessments.insert_voting(assessment.number, usernames, question.id)
-      assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 30
+      Assessments.insert_voting(assessment.number, question.id)
+
+      # students with own contest submissions will vote for 5 entries
+      # students without own contest submissin will vote for 6 entries
+      assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 6 * 5 + 6
     end
 
     test "create voting parameters with invalid contest number" do
       question = insert(:voting_question)
 
-      {status, _} = Assessments.insert_voting("", [], question.id)
+      {status, _} = Assessments.insert_voting("", question.id)
 
       assert status == :error
     end
@@ -164,15 +167,13 @@ defmodule Cadet.AssessmentsTest do
       contest_assessment = insert(:assessment, type: "contest")
       voting_assessment = insert(:assessment, type: "practical")
       question = insert(:voting_question, assessment: voting_assessment)
-      users = Enum.map(0..5, fn _x -> insert(:user) end)
+      users = Enum.map(0..5, fn _x -> insert(:user, role: "student") end)
 
       Enum.map(users, fn user ->
         insert(:submission, student: user, assessment: contest_assessment, status: "submitted")
       end)
 
-      usernames = Enum.map(users, fn user -> %{username: user.username} end)
-
-      Assessments.insert_voting(contest_assessment.number, usernames, question.id)
+      Assessments.insert_voting(contest_assessment.number, question.id)
       assert Repo.exists?(SubmissionVotes, question_id: question.id)
 
       Assessments.delete_assessment(voting_assessment.id)

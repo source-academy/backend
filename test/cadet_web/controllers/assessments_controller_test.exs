@@ -69,8 +69,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => &1.type,
               "coverImage" => &1.cover_picture,
-              "maxGrade" => 720,
-              "maxXp" => 4500,
+              "maxGrade" => 750,
+              "maxXp" => 4800,
               "status" => get_assessment_status(user, &1),
               "private" => false,
               "isPublished" => &1.is_published,
@@ -148,8 +148,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "closeAt" => format_datetime(&1.close_at),
             "type" => &1.type,
             "coverImage" => &1.cover_picture,
-            "maxGrade" => 720,
-            "maxXp" => 4500,
+            "maxGrade" => 750,
+            "maxXp" => 4800,
             "status" => get_assessment_status(student, &1),
             "private" => false,
             "isPublished" => &1.is_published,
@@ -209,7 +209,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> Enum.find(&(&1["id"] == assessment.id))
         |> Map.get("xp")
 
-      assert resp == 1000 * 3 + 500 * 3
+      assert resp == 1000 * 3 + 500 * 3 + 100 * 3
     end
 
     test "renders grade for students", %{
@@ -227,7 +227,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> Enum.find(&(&1["id"] == assessment.id))
         |> Map.get("grade")
 
-      assert resp == 200 * 3 + 40 * 3
+      assert resp == 200 * 3 + 40 * 3 + 10 * 3
     end
   end
 
@@ -271,8 +271,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => &1.type,
               "coverImage" => &1.cover_picture,
-              "maxGrade" => 720,
-              "maxXp" => 4500,
+              "maxGrade" => 750,
+              "maxXp" => 4800,
               "status" => get_assessment_status(user, &1),
               "private" => false,
               "gradedCount" => 0,
@@ -578,12 +578,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
              %{
                assessment: assessment,
                mcq_answers: [mcq_answers | _],
-               programming_answers: [programming_answers | _]
+               programming_answers: [programming_answers | _],
+               voting_answers: [voting_answers | _]
              }} <- assessments do
           expected =
             if role == :student do
               Enum.map(
-                programming_answers ++ mcq_answers,
+                programming_answers ++ mcq_answers ++ voting_answers,
                 &%{
                   "xp" => &1.xp + &1.xp_adjustment,
                   "grade" => &1.grade + &1.adjustment
@@ -592,14 +593,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
             else
               fn -> %{"xp" => 0, "grade" => 0} end
               |> Stream.repeatedly()
-              |> Enum.take(length(programming_answers) + length(mcq_answers))
+              |> Enum.take(
+                length(programming_answers) + length(mcq_answers) + length(voting_answers)
+              )
             end
-
-          # voting question has no answer, hence xp = 0, grade = 0.
-          # There are 3 seeded voting questions.
-          expected_voting_answer = Enum.map(0..2, fn _ -> %{"xp" => 0, "grade" => 0} end)
-
-          expected = expected ++ expected_voting_answer
 
           resp =
             conn
@@ -650,7 +647,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
            %{
              assessment: assessment,
              mcq_answers: [mcq_answers | _],
-             programming_answers: [programming_answers | _]
+             programming_answers: [programming_answers | _],
+             voting_answers: [voting_answers | _]
            }} <- assessments do
         # Programming questions should come first due to seeding order
         expected_programming_answers =
@@ -658,8 +656,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         expected_mcq_answers = Enum.map(mcq_answers, &%{"answer" => &1.answer.choice_id})
 
-        # Voting question has no answers. There are 3 seeded voting questions.
-        expected_voting_answers = Enum.map(0..2, fn _ -> %{"answer" => nil} end)
+        # Answers are not rendered for voting questions
+        expected_voting_answers = Enum.map(voting_answers, fn _ -> %{"answer" => nil} end)
 
         expected_answers =
           expected_programming_answers ++ expected_mcq_answers ++ expected_voting_answers
