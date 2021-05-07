@@ -22,8 +22,8 @@ config :cadet, Cadet.Jobs.Scheduler,
     {"1 0 * * *", {Cadet.Autograder.GradingJob, :grade_all_due_yesterday, []}},
     # Compute contest leaderboard that close in the previous day at 00:01
     {"1 0 * * *", {Cadet.Assessments, :update_final_contest_leaderboards, []}},
-    # Compute rolling leaderboard every 4 hours
-    {"0 */4 * * *", {Cadet.Assessments, :update_rolling_contest_leaderboards, []}}
+    # Compute rolling leaderboard every 2 hours
+    {"0 */2 * * *", {Cadet.Assessments, :update_rolling_contest_leaderboards, []}}
   ]
 
 # Configures the endpoint

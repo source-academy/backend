@@ -990,6 +990,7 @@ defmodule Cadet.Assessments do
       SubmissionVotes
       |> join(:left, [v], s in assoc(v, :submission))
       |> join(:left, [v, s, ans], ans in assoc(s, :answers))
+      |> where([v, s, ans], not is_nil(v.rank))
       |> where(
         [v, s, ans],
         v.question_id == ^contest_voting_question_id and s.status == "submitted"
@@ -1042,7 +1043,7 @@ defmodule Cadet.Assessments do
 
   # implementation detail assuming to calculate scores out of 10 for rank [1, num_voted_entries]
   defp convert_vote_rank_to_score(rank, num_voted_entries) do
-    11 - 10 * rank / num_voted_entries
+    11 - (10 * rank / num_voted_entries)
   end
 
   # Calculate the score based on formula
