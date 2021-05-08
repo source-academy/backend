@@ -157,7 +157,23 @@ defmodule Cadet.AssessmentsTest do
         )
       end)
 
-      insert(:user, role: "student")
+      unattempted_student = insert(:user, role: "student")
+
+      # unattempted submission will automatically be submitted after the assessment closes.
+      unattempted_submission =
+        insert(:submission,
+          student: unattempted_student,
+          assessment: contest_question.assessment,
+          status: "submitted"
+        )
+
+      insert(:answer,
+        answer: %{
+          code: "// question was left blank by student"
+        },
+        submission: unattempted_submission,
+        question: contest_question
+      )
 
       Assessments.insert_voting(contest_question.assessment.number, question.id)
 
