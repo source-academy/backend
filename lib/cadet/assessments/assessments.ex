@@ -494,11 +494,20 @@ defmodule Cadet.Assessments do
 
       {:error, error_changeset}
     else
+      # Returns contest submission ids with answers that contain "return"
       contest_submission_ids =
         Submission
-        |> where(assessment_id: ^contest_assessment.id)
-        |> where(status: "submitted")
-        |> select([s], {s.student_id, s.id})
+        |> join(:inner, [s], ans in assoc(s, :answers))
+        |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
+        |> where(
+          [_, ans],
+          fragment(
+            "?->>'code' like ?",
+            ans.answer,
+            "%return%"
+          )
+        )
+        |> select([s, _ans], {s.student_id, s.id})
         |> Repo.all()
         |> Enum.into(%{})
 
@@ -541,6 +550,7 @@ defmodule Cadet.Assessments do
               max_votes =
                 if votes_per_user == contest_submission_ids_length and
                      not is_nil(user_contest_submission_id) do
+                  # no. of submssions is less than 10. Unable to find
                   votes_per_user - 1
                 else
                   votes_per_user
@@ -903,13 +913,9 @@ defmodule Cadet.Assessments do
     |> join(:inner, [sv], s in assoc(sv, :submission))
     |> join(:inner, [sv, s], ast in assoc(s, :assessment))
     |> join(:inner, [sv, s, ast], q in Question, on: q.assessment_id == ast.id)
-    |> select([sv, s, ast, q], %{question_id: q.id})
+    |> select([sv, s, ast, q], q.id)
     |> limit(1)
     |> Repo.one()
-    |> case do
-      nil -> nil
-      map -> Map.get(map, :question_id)
-    end
   end
 
   @doc """
@@ -988,16 +994,12 @@ defmodule Cadet.Assessments do
     # query grade for contest question id.
     eligible_votes =
       SubmissionVotes
-      |> join(:left, [v], s in assoc(v, :submission))
-      |> join(:left, [v, s, ans], ans in assoc(s, :answers))
-      |> where([v, s, ans], not is_nil(v.rank))
-      |> where(
-        [v, s, ans],
-        v.question_id == ^contest_voting_question_id and s.status == "submitted"
-      )
+      |> where(question_id: ^contest_voting_question_id)
+      |> where([sv], not is_nil(sv.rank))
+      |> join(:inner, [sv], ans in Answer, on: sv.submission_id == ans.submission_id)
       |> select(
-        [v, s, ans],
-        %{ans_id: ans.id, rank: v.rank, ans: ans.answer["code"]}
+        [sv, ans],
+        %{ans_id: ans.id, rank: sv.rank, ans: ans.answer["code"]}
       )
       |> Repo.all()
 
@@ -1400,8 +1402,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  require Logger
-
   defp insert_or_update_answer(
          submission = %Submission{},
          question = %Question{},
@@ -1485,8 +1485,6 @@ defmodule Cadet.Assessments do
         %{code: raw_answer}
 
       :voting ->
-        Logger.info(inspect(raw_answer))
-
         raw_answer
         |> Enum.map(fn ans ->
           for {key, value} <- ans, into: %{}, do: {String.to_existing_atom(key), value}

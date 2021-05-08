@@ -420,7 +420,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               Enum.map(contest_submissions, fn submission ->
                 insert(:answer, %{
                   submission: submission,
-                  answer: build(:programming_answer),
+                  answer: %{code: "return 2;"},
                   question: build(:programming_question)
                 })
               end)
