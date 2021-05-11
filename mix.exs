@@ -75,7 +75,7 @@ defmodule Cadet.Mixfile do
       {:recase, "~> 0.7", override: true},
       {:sentry, "~> 8.0"},
       {:sweet_xml, "~> 0.6"},
-      {:timex, "3.6.4"},
+      {:timex, "~> 3.7"},
 
       # development dependencies
       {:configparser_ex, "~> 4.0", only: [:dev, :test]},
@@ -84,7 +84,9 @@ defmodule Cadet.Mixfile do
       {:distillery, "~> 2.1", runtime: false},
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.4", only: [:dev, :test]},
-      {:inch_ex, "~> 2.0", only: [:dev, :test]},
+
+      # RC to fix https://github.com/rrrene/inch_ex/pull/68
+      {:inch_ex, "~> 2.1-rc", only: [:dev, :test]},
 
       # unit testing dependencies
       {:bypass, "~> 2.1", only: :test},
@@ -94,7 +96,7 @@ defmodule Cadet.Mixfile do
 
       # The following are indirect dependencies, but we need to override the
       # versions due to conflicts
-      {:jsx, "~> 3.0", override: true},
+      {:jsx, "~> 3.1", override: true},
       {:xml_builder, "~> 2.1", override: true}
     ]
   end
