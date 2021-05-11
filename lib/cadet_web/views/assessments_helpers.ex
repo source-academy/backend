@@ -72,14 +72,9 @@ defmodule CadetWeb.AssessmentsHelpers do
     if assessment_type not in @graded_assessment_types do
       solution_getter =
         case question_type do
-          :programming ->
-            &Map.get(&1, "solution")
-
-          :mcq ->
-            &find_correct_choice(&1["choices"])
-
-          :voting ->
-            nil
+          :programming -> &Map.get(&1, "solution")
+          :mcq -> &find_correct_choice(&1["choices"])
+          :voting -> nil
         end
 
       transform_map_for_view(question, %{solution: solution_getter})

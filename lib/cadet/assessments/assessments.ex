@@ -905,7 +905,7 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Find the contest_question_id associated with the given voting_question id
+  Finds the contest_question_id associated with the given voting_question id
   """
   def fetch_associated_contest_question_id(voting_question_id) do
     SubmissionVotes
@@ -919,7 +919,8 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  General method to fetch top relative_score entry answers for given question_id
+  Fetches top answers for the given question, based on the contest relative_score
+
   Used for contest leaderboard fetching
   """
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
@@ -940,8 +941,7 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Function called by scheduler to compute rolling leaderboard for
-  contests which voting has yet to close.
+  Computes rolling leaderboard for contest votes that are still open.
   """
   def update_rolling_contest_leaderboards do
     voting_questions_to_update = fetch_active_voting_questions()
@@ -960,8 +960,7 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Function called by scheduler to computer final leaderboard for contests
-  which voting has closed.
+  Computes final leaderboard for contest votes that have closed.
   """
   def update_final_contest_leaderboards do
     voting_questions_to_update = fetch_voting_questions_due_yesterday()
@@ -1021,7 +1020,7 @@ defmodule Cadet.Assessments do
   end
 
   defp map_eligible_votes_to_entry_score(eligible_votes) do
-    # # converts eligible votes to the {total cumulative score, number of votes, tokens}
+    # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
       Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, rank: rank, ans: ans}, tracker ->
         {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
