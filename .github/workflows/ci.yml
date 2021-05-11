@@ -23,6 +23,8 @@ jobs:
     env:
       MIX_ENV: test
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ELIXIR_VERSION: 1.11.4
+      OTP_VERSION: 23.3.4
     services:
       postgres:
         image: postgres:13.1
@@ -49,21 +51,31 @@ jobs:
           path: |
             _build
             priv/plts
-          key: ${{ runner.os }}-erlang-23.1.4-elixir-1.11.0-${{ github.sha }}
+          key: ${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-erlang-23.1.4-elixir-1.11.0-
+            ${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-
       - name: Setup Elixir
         uses: erlef/setup-elixir@v1
         with:
-          elixir-version: 1.11.0
-          otp-version: 23.1.4
-      - name: Perform test
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+      - name: mix deps.get
         run: |
-          set -eu
           mix deps.get
-          mix ecto.setup
+      - name: mix format and mix credo
+        run: |
           mix format --check-formatted
           mix credo
+      - name: mix ecto.setup
+        run: |
+          mix ecto.setup
+      - name: mix coveralls.github (run tests)
+        run: |
           mix coveralls.github
+      - name: mix dialyzer (check typing)
+        run: |
+          mkdir -p priv/plts
           mix dialyzer
-          mix inch.report
+      - name: mix inch.report (check documentation coverage)
+        run: |
+          mix inch.report || :
