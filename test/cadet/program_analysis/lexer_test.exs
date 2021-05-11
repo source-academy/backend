@@ -315,8 +315,4 @@ defmodule Cadet.ProgramAnalysis.LexerTest do
     assert Lexer.count_tokens(sample_program_2) == 9
     assert Lexer.count_tokens(huge_program) == 1192
   end
-
-  test "count_tokens() returns 0 for invalid program" do
-    assert Lexer.count_tokens("\"hello world") == 0
-  end
 end
