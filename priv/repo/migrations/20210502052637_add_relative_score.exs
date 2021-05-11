@@ -1,4 +1,4 @@
-defmodule :"Elixir.Cadet.Repo.Migrations.Add relativeScore to answers table" do
+defmodule Elixir.Cadet.Repo.Migrations.AddRelativeScore do
   use Ecto.Migration
 
   def change do
