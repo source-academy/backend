@@ -882,8 +882,9 @@ defmodule Cadet.Assessments do
 
           # populate entries to vote for and leaderboard data into the question
           voting_question =
-            Map.put(
-              Map.put(q.question, :contest_entries, submission_votes),
+            q.question
+            |> Map.put(:contest_entries, submission_votes)
+            |> Map.put(
               :contest_leaderboard,
               leaderboard_results
             )
