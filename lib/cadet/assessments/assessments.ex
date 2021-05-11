@@ -873,7 +873,11 @@ defmodule Cadet.Assessments do
           submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(q.id)
-          leaderboard_results = fetch_top_relative_score_answers(question_id, 10)
+
+          leaderboard_results =
+            if is_nil(question_id),
+              do: nil,
+              else: fetch_top_relative_score_answers(question_id, 10)
 
           # populate entries to vote for and leaderboard data into the question
           voting_question =
