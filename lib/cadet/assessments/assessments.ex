@@ -818,7 +818,7 @@ defmodule Cadet.Assessments do
     |> Repo.update()
   end
 
-  def update_submission_status_router(submission = %Submission{}, question = %Question{}) do
+  defp update_submission_status_router(submission = %Submission{}, question = %Question{}) do
     case question.type do
       :voting -> update_contest_voting_submission_status(submission, question)
       :mcq -> update_submission_status(submission, question.assessment)
@@ -826,7 +826,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
+  defp update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
     model_assoc_count = fn model, assoc, id ->
       model
       |> where(id: ^id)
@@ -852,7 +852,7 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
-  def update_contest_voting_submission_status(submission = %Submission{}, question = %Question{}) do
+  defp update_contest_voting_submission_status(submission = %Submission{}, question = %Question{}) do
     not_nil_entries =
       SubmissionVotes
       |> where(question_id: ^question.id)
@@ -865,7 +865,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def load_contest_voting_entries(questions, user_id) do
+  defp load_contest_voting_entries(questions, user_id) do
     Enum.map(
       questions,
       fn q ->
@@ -873,12 +873,7 @@ defmodule Cadet.Assessments do
           submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(q.id)
-
-          leaderboard_results =
-            if(is_nil(question_id),
-              do: [],
-              else: fetch_top_relative_score_answers(question_id, 10)
-            )
+          leaderboard_results = fetch_top_relative_score_answers(question_id, 10)
 
           # populate entries to vote for and leaderboard data into the question
           voting_question =
@@ -906,10 +901,8 @@ defmodule Cadet.Assessments do
     |> Repo.all()
   end
 
-  @doc """
-  Finds the contest_question_id associated with the given voting_question id
-  """
-  def fetch_associated_contest_question_id(voting_question_id) do
+  # Finds the contest_question_id associated with the given voting_question id
+  defp fetch_associated_contest_question_id(voting_question_id) do
     SubmissionVotes
     |> where(question_id: ^voting_question_id)
     |> join(:inner, [sv], s in assoc(sv, :submission))
