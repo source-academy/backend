@@ -60,3 +60,8 @@ variable "config_bucket" {
 variable "config_object" {
   description = "The key of (i.e. path to) the backend configuration in config_bucket, with no leading /."
 }
+
+variable "cadet_release_url" {
+  description = "The URL to the Cadet release tarball"
+  default     = ""
+}
