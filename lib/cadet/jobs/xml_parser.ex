@@ -235,6 +235,23 @@ defmodule Cadet.Updater.XMLParser do
     |> Map.put(:choices, choices)
   end
 
+  defp process_question_entity_by_type(entity, "voting") do
+    Map.merge(
+      entity
+      |> xpath(
+        ~x"."e,
+        content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+        prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
+        template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1)
+      ),
+      entity
+      |> xpath(
+        ~x"./VOTING"e,
+        contest_number: ~x"./@contest_number"s
+      )
+    )
+  end
+
   defp process_question_entity_by_type(_, _) do
     {:error, "Invalid question type."}
   end

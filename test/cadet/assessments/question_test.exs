@@ -32,10 +32,20 @@ defmodule Cadet.Assessments.QuestionTest do
       }
     }
 
+    valid_voting_params = %{
+      type: :voting,
+      assessment_id: assessment.id,
+      library: build(:library),
+      question: %{
+        content: Faker.Pokemon.name()
+      }
+    }
+
     %{
       assessment: assessment,
       valid_mcq_params: valid_mcq_params,
-      valid_programming_params: valid_programming_params
+      valid_programming_params: valid_programming_params,
+      valid_voting_params: valid_voting_params
     }
   end
 
@@ -45,6 +55,10 @@ defmodule Cadet.Assessments.QuestionTest do
     end
 
     test "valid programming question", %{valid_programming_params: params} do
+      assert_changeset_db(params, :valid)
+    end
+
+    test "valid voting question", %{valid_voting_params: params} do
       assert_changeset_db(params, :valid)
     end
 
@@ -62,9 +76,10 @@ defmodule Cadet.Assessments.QuestionTest do
   describe "invalid changesets" do
     test "missing params", %{
       valid_mcq_params: mcq_params,
-      valid_programming_params: programming_params
+      valid_programming_params: programming_params,
+      valid_voting_params: voting_params
     } do
-      for params <- [mcq_params, programming_params],
+      for params <- [mcq_params, programming_params, voting_params],
           field <- @required_fields ++ @required_embeds do
         params
         |> Map.delete(field)
@@ -74,7 +89,8 @@ defmodule Cadet.Assessments.QuestionTest do
 
     test "invalid question content", %{
       valid_mcq_params: mcq_params,
-      valid_programming_params: programming_params
+      valid_programming_params: programming_params,
+      valid_voting_params: voting_params
     } do
       mcq_params
       |> Map.put(:type, :programming)
@@ -82,6 +98,10 @@ defmodule Cadet.Assessments.QuestionTest do
 
       programming_params
       |> Map.put(:type, :mcq)
+      |> assert_changeset(:invalid)
+
+      voting_params
+      |> Map.put(:type, :programming)
       |> assert_changeset(:invalid)
     end
 

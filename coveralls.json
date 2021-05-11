@@ -8,6 +8,7 @@
     "lib/cadet/repo.ex",
     "lib/mix/tasks",
     "test/support",
-    "test/factories"
+    "test/factories",
+    "src/source_lexer.erl"
   ]
 }

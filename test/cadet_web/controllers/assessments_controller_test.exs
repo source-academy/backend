@@ -69,13 +69,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => &1.type,
               "coverImage" => &1.cover_picture,
-              "maxGrade" => 720,
-              "maxXp" => 4500,
+              "maxGrade" => 750,
+              "maxXp" => 4800,
               "status" => get_assessment_status(user, &1),
               "private" => false,
               "isPublished" => &1.is_published,
               "gradedCount" => 0,
-              "questionCount" => 6
+              "questionCount" => 9
             }
           )
 
@@ -148,13 +148,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "closeAt" => format_datetime(&1.close_at),
             "type" => &1.type,
             "coverImage" => &1.cover_picture,
-            "maxGrade" => 720,
-            "maxXp" => 4500,
+            "maxGrade" => 750,
+            "maxXp" => 4800,
             "status" => get_assessment_status(student, &1),
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
-            "questionCount" => 6
+            "questionCount" => 9
           }
         )
 
@@ -209,7 +209,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> Enum.find(&(&1["id"] == assessment.id))
         |> Map.get("xp")
 
-      assert resp == 1000 * 3 + 500 * 3
+      assert resp == 1000 * 3 + 500 * 3 + 100 * 3
     end
 
     test "renders grade for students", %{
@@ -227,7 +227,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> Enum.find(&(&1["id"] == assessment.id))
         |> Map.get("grade")
 
-      assert resp == 200 * 3 + 40 * 3
+      assert resp == 200 * 3 + 40 * 3 + 10 * 3
     end
   end
 
@@ -271,12 +271,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "closeAt" => format_datetime(&1.close_at),
               "type" => &1.type,
               "coverImage" => &1.cover_picture,
-              "maxGrade" => 720,
-              "maxXp" => 4500,
+              "maxGrade" => 750,
+              "maxXp" => 4800,
               "status" => get_assessment_status(user, &1),
               "private" => false,
               "gradedCount" => 0,
-              "questionCount" => 6,
+              "questionCount" => 9,
               "isPublished" =>
                 if &1.type == "mission" do
                   false
@@ -336,7 +336,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
              %{
                assessment: assessment,
                mcq_questions: mcq_questions,
-               programming_questions: programming_questions
+               programming_questions: programming_questions,
+               voting_questions: voting_questions
              }} <- assessments do
           # Programming questions should come first due to seeding order
           expected_programming_questions =
@@ -399,7 +400,61 @@ defmodule CadetWeb.AssessmentsControllerTest do
               }
             )
 
-          expected_questions = expected_programming_questions ++ expected_mcq_questions
+          expected_voting_questions =
+            Enum.map(
+              voting_questions,
+              &%{
+                "id" => &1.id,
+                "type" => "#{&1.type}",
+                "content" => &1.question.content,
+                "solutionTemplate" => &1.question.template,
+                "prepend" => &1.question.prepend
+              }
+            )
+
+          contests_submissions =
+            Enum.map(0..2, fn _ -> Enum.map(0..2, fn _ -> insert(:submission) end) end)
+
+          contests_answers =
+            Enum.map(contests_submissions, fn contest_submissions ->
+              Enum.map(contest_submissions, fn submission ->
+                insert(:answer, %{
+                  submission: submission,
+                  answer: %{code: "return 2;"},
+                  question: build(:programming_question)
+                })
+              end)
+            end)
+
+          voting_questions
+          |> Enum.zip(contests_submissions)
+          |> Enum.map(fn {question, contest_submissions} ->
+            Enum.map(contest_submissions, fn submission ->
+              insert(:submission_vote, %{user: user, submission: submission, question: question})
+            end)
+          end)
+
+          contests_entries =
+            Enum.map(contests_answers, fn contest_answers ->
+              Enum.map(contest_answers, fn answer ->
+                %{
+                  "submission_id" => answer.submission.id,
+                  "answer" => %{"code" => answer.answer.code},
+                  "rank" => nil
+                }
+              end)
+            end)
+
+          expected_voting_questions =
+            expected_voting_questions
+            |> Enum.zip(contests_entries)
+            |> Enum.map(fn {question, contest_entries} ->
+              question = Map.put(question, "contestEntries", contest_entries)
+              Map.put(question, "contestLeaderboard", [])
+            end)
+
+          expected_questions =
+            expected_programming_questions ++ expected_mcq_questions ++ expected_voting_questions
 
           resp_questions =
             conn
@@ -425,6 +480,71 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
+    test "it renders contest leaderboards", %{
+      conn: conn,
+      accounts: accounts,
+      users: users,
+      assessments: assessments
+    } do
+      voting_question = assessments["contest"].voting_questions |> List.first()
+      contest_assessment_number = voting_question.question.contest_number
+
+      contest_assessment = Repo.get_by(Assessment, number: contest_assessment_number)
+
+      # insert contest question
+      contest_question =
+        insert(:programming_question, %{
+          display_order: 1,
+          assessment: contest_assessment,
+          max_grade: 0,
+          max_xp: 1000
+        })
+
+      # insert contest submissions and answers
+      contest_submissions =
+        for student <- Enum.take(accounts.students, 2) do
+          insert(:submission, %{assessment: contest_assessment, student: student})
+        end
+
+      contest_answers =
+        for {submission, score} <- Enum.with_index(contest_submissions, 1) do
+          insert(:answer, %{
+            grade: 0,
+            xp: 1000,
+            question: contest_question,
+            submission: submission,
+            answer: build(:programming_answer),
+            relative_score: score / 1
+          })
+        end
+
+      expected_leaderboard =
+        for answer <- contest_answers do
+          %{
+            "answer" => %{"code" => answer.answer.code},
+            "score" => answer.relative_score,
+            "student_name" => answer.submission.student.name,
+            "submission_id" => answer.submission.id
+          }
+        end
+        |> Enum.sort_by(& &1["score"], &>=/2)
+
+      for role <- Role.__enum_map__() do
+        user = Map.get(users, role)
+
+        resp_leaderboard =
+          conn
+          |> sign_in(user)
+          |> get(build_url(voting_question.assessment.id))
+          |> json_response(200)
+          |> Map.get("questions", [])
+          |> Enum.find(&(&1["id"] == voting_question.id))
+          |> Map.get("contestLeaderboard")
+
+        assert resp_leaderboard == expected_leaderboard
+      end
+    end
+
     test "it renders assessment question libraries", %{
       conn: conn,
       users: users,
@@ -437,12 +557,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
              %{
                assessment: assessment,
                mcq_questions: mcq_questions,
-               programming_questions: programming_questions
+               programming_questions: programming_questions,
+               voting_question: voting_questions
              }} <- assessments do
           # Programming questions should come first due to seeding order
 
           expected_libraries =
-            (programming_questions ++ mcq_questions)
+            (programming_questions ++ mcq_questions ++ voting_questions)
             |> Enum.map(&Map.get(&1, :library))
             |> Enum.map(
               &%{
@@ -479,7 +600,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         %{
           assessment: assessment,
           mcq_questions: mcq_questions,
-          programming_questions: programming_questions
+          programming_questions: programming_questions,
+          voting_questions: voting_questions
         } = assessments["path"]
 
         # Seeds set solution as 0
@@ -488,7 +610,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
         expected_programming_solutions =
           Enum.map(programming_questions, &%{"solution" => &1.question.solution})
 
-        expected_solutions = Enum.sort(expected_mcq_solutions ++ expected_programming_solutions)
+        # No solution in a voting question
+        expected_voting_solutions = Enum.map(voting_questions, fn _ -> %{"solution" => nil} end)
+
+        expected_solutions =
+          Enum.sort(
+            expected_mcq_solutions ++ expected_programming_solutions ++ expected_voting_solutions
+          )
 
         resp_solutions =
           conn
@@ -515,12 +643,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
              %{
                assessment: assessment,
                mcq_answers: [mcq_answers | _],
-               programming_answers: [programming_answers | _]
+               programming_answers: [programming_answers | _],
+               voting_answers: [voting_answers | _]
              }} <- assessments do
           expected =
             if role == :student do
               Enum.map(
-                programming_answers ++ mcq_answers,
+                programming_answers ++ mcq_answers ++ voting_answers,
                 &%{
                   "xp" => &1.xp + &1.xp_adjustment,
                   "grade" => &1.grade + &1.adjustment
@@ -529,7 +658,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
             else
               fn -> %{"xp" => 0, "grade" => 0} end
               |> Stream.repeatedly()
-              |> Enum.take(length(programming_answers) + length(mcq_answers))
+              |> Enum.take(
+                length(programming_answers) + length(mcq_answers) + length(voting_answers)
+              )
             end
 
           resp =
@@ -581,15 +712,20 @@ defmodule CadetWeb.AssessmentsControllerTest do
            %{
              assessment: assessment,
              mcq_answers: [mcq_answers | _],
-             programming_answers: [programming_answers | _]
+             programming_answers: [programming_answers | _],
+             voting_answers: [voting_answers | _]
            }} <- assessments do
         # Programming questions should come first due to seeding order
-
         expected_programming_answers =
           Enum.map(programming_answers, &%{"answer" => &1.answer.code})
 
         expected_mcq_answers = Enum.map(mcq_answers, &%{"answer" => &1.answer.choice_id})
-        expected_answers = expected_programming_answers ++ expected_mcq_answers
+
+        # Answers are not rendered for voting questions
+        expected_voting_answers = Enum.map(voting_answers, fn _ -> %{"answer" => nil} end)
+
+        expected_answers =
+          expected_programming_answers ++ expected_mcq_answers ++ expected_voting_answers
 
         resp_answers =
           conn
