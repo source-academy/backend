@@ -10,6 +10,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Course.Group
+  alias Cadet.Jobs.Log
   alias Cadet.Parser.Parser
   alias Ecto.Multi
 
@@ -944,10 +945,13 @@ defmodule Cadet.Assessments do
   Computes rolling leaderboard for contest votes that are still open.
   """
   def update_rolling_contest_leaderboards do
-    voting_questions_to_update = fetch_active_voting_questions()
+    # 115 = 2 hours - 5 minutes
+    if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(115)) do
+      voting_questions_to_update = fetch_active_voting_questions()
 
-    voting_questions_to_update
-    |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+      voting_questions_to_update
+      |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+    end
   end
 
   def fetch_active_voting_questions do
@@ -963,10 +967,13 @@ defmodule Cadet.Assessments do
   Computes final leaderboard for contest votes that have closed.
   """
   def update_final_contest_leaderboards do
-    voting_questions_to_update = fetch_voting_questions_due_yesterday()
+    # 1435 = 24 hours - 5 minutes
+    if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(1435)) do
+      voting_questions_to_update = fetch_voting_questions_due_yesterday()
 
-    voting_questions_to_update
-    |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+      voting_questions_to_update
+      |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+    end
   end
 
   def fetch_voting_questions_due_yesterday do
