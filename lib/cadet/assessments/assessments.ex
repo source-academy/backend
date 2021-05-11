@@ -876,7 +876,7 @@ defmodule Cadet.Assessments do
 
           leaderboard_results =
             if is_nil(question_id),
-              do: nil,
+              do: [],
               else: fetch_top_relative_score_answers(question_id, 10)
 
           # populate entries to vote for and leaderboard data into the question
