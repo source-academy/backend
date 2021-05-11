@@ -872,7 +872,7 @@ defmodule Cadet.Assessments do
         if q.type == :voting do
           submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
           # fetch top 10 contest voting entries with the contest question id
-          question_id = fetch_associated_contest_question_id(q.id)
+          question_id = fetch_associated_contest_question_id(q)
 
           leaderboard_results =
             if is_nil(question_id),
@@ -906,15 +906,19 @@ defmodule Cadet.Assessments do
   end
 
   # Finds the contest_question_id associated with the given voting_question id
-  defp fetch_associated_contest_question_id(voting_question_id) do
-    SubmissionVotes
-    |> where(question_id: ^voting_question_id)
-    |> join(:inner, [sv], s in assoc(sv, :submission))
-    |> join(:inner, [sv, s], ast in assoc(s, :assessment))
-    |> join(:inner, [sv, s, ast], q in Question, on: q.assessment_id == ast.id)
-    |> select([sv, s, ast, q], q.id)
-    |> limit(1)
-    |> Repo.one()
+  defp fetch_associated_contest_question_id(voting_question) do
+    number = voting_question.question["contest_number"]
+
+    if is_nil(number) do
+      nil
+    else
+      Assessment
+      |> where(number: ^number)
+      |> join(:inner, [a], q in assoc(a, :questions))
+      |> order_by([a, q], q.display_order)
+      |> select([a, q], q.id)
+      |> Repo.one()
+    end
   end
 
   @doc """
@@ -925,7 +929,7 @@ defmodule Cadet.Assessments do
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
     Answer
     |> where(question_id: ^question_id)
-    |> order_by(desc: :grade)
+    |> order_by(desc: :relative_score)
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
     |> select([a, s, student], %{
@@ -936,7 +940,6 @@ defmodule Cadet.Assessments do
     })
     |> limit(^number_of_answers)
     |> Repo.all()
-    |> Enum.sort(&(&1.relative_score >= &2.relative_score))
   end
 
   @doc """

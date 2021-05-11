@@ -480,6 +480,71 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
+    test "it renders contest leaderboards", %{
+      conn: conn,
+      accounts: accounts,
+      users: users,
+      assessments: assessments
+    } do
+      voting_question = assessments["contest"].voting_questions |> List.first()
+      contest_assessment_number = voting_question.question.contest_number
+
+      contest_assessment = Repo.get_by(Assessment, number: contest_assessment_number)
+
+      # insert contest question
+      contest_question =
+        insert(:programming_question, %{
+          display_order: 1,
+          assessment: contest_assessment,
+          max_grade: 0,
+          max_xp: 1000
+        })
+
+      # insert contest submissions and answers
+      contest_submissions =
+        for student <- Enum.take(accounts.students, 2) do
+          insert(:submission, %{assessment: contest_assessment, student: student})
+        end
+
+      contest_answers =
+        for {submission, score} <- Enum.with_index(contest_submissions, 1) do
+          insert(:answer, %{
+            grade: 0,
+            xp: 1000,
+            question: contest_question,
+            submission: submission,
+            answer: build(:programming_answer),
+            relative_score: score / 1
+          })
+        end
+
+      expected_leaderboard =
+        for answer <- contest_answers do
+          %{
+            "answer" => %{"code" => answer.answer.code},
+            "score" => answer.relative_score,
+            "student_name" => answer.submission.student.name,
+            "submission_id" => answer.submission.id
+          }
+        end
+        |> Enum.sort_by(& &1["score"], &>=/2)
+
+      for role <- Role.__enum_map__() do
+        user = Map.get(users, role)
+
+        resp_leaderboard =
+          conn
+          |> sign_in(user)
+          |> get(build_url(voting_question.assessment.id))
+          |> json_response(200)
+          |> Map.get("questions", [])
+          |> Enum.find(&(&1["id"] == voting_question.id))
+          |> Map.get("contestLeaderboard")
+
+        assert resp_leaderboard == expected_leaderboard
+      end
+    end
+
     test "it renders assessment question libraries", %{
       conn: conn,
       users: users,

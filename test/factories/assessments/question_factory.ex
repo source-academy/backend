@@ -75,7 +75,7 @@ defmodule Cadet.Assessments.QuestionFactory do
 
       def voting_question_factory do
         library = build(:library)
-        contest_assessment = insert(:assessment)
+        contest_assessment = insert(:assessment, %{is_published: true})
 
         %Question{
           type: :voting,
