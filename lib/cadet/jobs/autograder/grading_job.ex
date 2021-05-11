@@ -9,9 +9,9 @@ defmodule Cadet.Autograder.GradingJob do
 
   require Logger
 
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
+  alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.Utilities
-  alias Cadet.Env
+  alias Cadet.Jobs.Log
 
   def close_and_make_empty_submission(assessment = %Assessment{id: id}) do
     id
@@ -26,7 +26,8 @@ defmodule Cadet.Autograder.GradingJob do
   end
 
   def grade_all_due_yesterday do
-    if Env.leader?() do
+    # 1435 = 1 day - 5 minutes
+    if Log.log_execution("grading_job", Timex.Duration.from_minutes(1435)) do
       Logger.info("Started autograding")
 
       for assessment <- Utilities.fetch_assessments_due_yesterday() do
@@ -35,7 +36,7 @@ defmodule Cadet.Autograder.GradingJob do
         |> Enum.each(&grade_individual_submission(&1, assessment))
       end
     else
-      Logger.info("Not grading - not leader")
+      Logger.info("Not grading - raced")
     end
   end
 
@@ -122,9 +123,39 @@ defmodule Cadet.Autograder.GradingJob do
 
   def grade_answer(answer = %Answer{}, question = %Question{type: type}, overwrite \\ false) do
     case type do
-      :programming -> Utilities.dispatch_programming_answer(answer, question, overwrite)
-      :mcq -> grade_mcq_answer(answer, question)
+      :programming ->
+        Utilities.dispatch_programming_answer(answer, question, overwrite)
+
+      :mcq ->
+        grade_mcq_answer(answer, question)
+
+      :voting ->
+        grade_voting_answer(answer, question)
     end
+  end
+
+  defp grade_voting_answer(answer = %Answer{submission_id: submission_id}, question = %Question{}) do
+    is_nil_entries =
+      Submission
+      |> where(id: ^submission_id)
+      |> join(:inner, [s], sv in SubmissionVotes,
+        on: sv.user_id == s.student_id and sv.question_id == ^question.id
+      )
+      |> where([_, sv], is_nil(sv.rank))
+      |> Repo.exists?()
+
+    grade = if is_nil_entries, do: 0, else: question.max_grade
+    xp = if is_nil_entries, do: 0, else: question.max_xp
+
+    answer
+    |> Answer.autograding_changeset(%{
+      adjustment: 0,
+      xp_adjustment: 0,
+      grade: grade,
+      xp: xp,
+      autograding_status: :success
+    })
+    |> Repo.update()
   end
 
   defp grade_mcq_answer(answer = %Answer{}, question = %Question{question: question_content}) do
@@ -157,6 +188,7 @@ defmodule Cadet.Autograder.GradingJob do
       case question_type do
         :programming -> %{code: "// Question was left blank by the student."}
         :mcq -> %{choice_id: 0}
+        :voting -> %{completed: false}
       end
 
     %Answer{}

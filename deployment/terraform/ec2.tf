@@ -32,11 +32,30 @@ resource "aws_launch_template" "api" {
     security_groups             = [aws_security_group.api.id]
   }
 
+  user_data = base64encode(<<EOT
+#cloud-config
+
+swap:
+  filename: /swapfile
+  size: 1073741824
+
+packages:
+  - libncurses5
+  - awscli
+
+runcmd:
+  - "mkdir -p /run/cadet-init"
+  - "aws s3 cp 's3://${var.config_bucket}/${var.config_object}' /etc/cadet.exs"
+  - "curl -L 'https://raw.githubusercontent.com/source-academy/cadet/stable/deployment/init.sh' > /run/cadet-init/init.sh"
+  - "exec bash /run/cadet-init/init.sh"
+EOT
+  )
+
   update_default_version = true
 }
 
 resource "aws_autoscaling_group" "api" {
-  depends_on = [aws_internet_gateway.cadet]
+  depends_on = [aws_internet_gateway.cadet, aws_secretsmanager_secret_version.db]
 
   name = aws_launch_template.api.name
   launch_template {
@@ -56,8 +75,8 @@ resource "aws_autoscaling_group" "api" {
   min_size = var.min_instance_count
   max_size = var.max_instance_count
 
-  health_check_type         = "EC2"
-  health_check_grace_period = 60
+  health_check_type         = "ELB"
+  health_check_grace_period = 180
 
   tag {
     key                 = "Name"
@@ -107,14 +126,21 @@ resource "aws_lb_listener" "api" {
 }
 
 resource "aws_lb_target_group" "api" {
-  name     = "${var.env}-cadet-api"
-  vpc_id   = aws_vpc.cadet.id
-  protocol = "HTTP"
-  port     = 4000
+  name                 = "${var.env}-cadet-api"
+  vpc_id               = aws_vpc.cadet.id
+  protocol             = "HTTP"
+  port                 = 4000
+  deregistration_delay = 15
 
   tags = {
     Name        = "${title(var.env)} Cadet API Target Group"
     Environment = var.env
+  }
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    path                = "/"
   }
 }
 

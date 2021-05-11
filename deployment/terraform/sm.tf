@@ -18,8 +18,4 @@ resource "aws_secretsmanager_secret_version" "db" {
     dbname               = aws_db_instance.db.name,
     dbInstanceIdentifier = aws_db_instance.db.id
   })
-
-  lifecycle {
-    ignore_changes = [secret_string]
-  }
 }
