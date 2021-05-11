@@ -11,7 +11,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Autograder.GradingJob
   alias Cadet.Course.Group
   alias Cadet.Jobs.Log
-  alias Cadet.Parser.Parser
+  alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
 
   require Decimal
@@ -1037,7 +1037,8 @@ defmodule Cadet.Assessments do
           tracker,
           ans_id,
           # assume each voter is assigned 10 entries which will make it fair.
-          {prev_score + convert_vote_rank_to_score(rank, 10), prev_count + 1, Parser.lex(ans)}
+          {prev_score + convert_vote_rank_to_score(rank, 10), prev_count + 1,
+           Lexer.count_tokens(ans)}
         )
       end)
 
