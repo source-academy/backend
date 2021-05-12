@@ -20,6 +20,7 @@ defmodule Cadet.Incentives.GoalssTest do
   test "get goals with progress" do
     goal = insert(:goal, goal_literal(0))
     user = insert(:user)
+
     Repo.insert(%GoalProgress{
       count: 500,
       completed: false,
@@ -78,24 +79,31 @@ defmodule Cadet.Incentives.GoalssTest do
     user = insert(:user)
 
     assert {:ok, _} =
-      Goals.upsert_progress(%{
-        count: 100,
-        completed: false,
-        goal_uuid: goal.uuid,
-        user_id: user.id
-      }, goal.uuid, user.id)
+             Goals.upsert_progress(
+               %{
+                 count: 100,
+                 completed: false,
+                 goal_uuid: goal.uuid,
+                 user_id: user.id
+               },
+               goal.uuid,
+               user.id
+             )
 
     retrieved_goal = Goals.get_with_progress(user)
     assert [%{progress: [%{count: 100, completed: false}]}] = retrieved_goal
 
-
     assert {:ok, _} =
-      Goals.upsert_progress(%{
-        count: 200,
-        completed: true,
-        goal_uuid: goal.uuid,
-        user_id: user.id
-      }, goal.uuid, user.id)
+             Goals.upsert_progress(
+               %{
+                 count: 200,
+                 completed: true,
+                 goal_uuid: goal.uuid,
+                 user_id: user.id
+               },
+               goal.uuid,
+               user.id
+             )
 
     retrieved_goal = Goals.get_with_progress(user)
     assert [%{progress: [%{count: 200, completed: true}]}] = retrieved_goal

@@ -76,6 +76,7 @@ defmodule CadetWeb.IncentivesControllerTest do
     @tag authenticate: :student
     test "succeeds if authenticated", %{conn: conn, goal: g} do
       user = conn.assigns.current_user
+
       conn
       |> post("/v2/self/goals/#{g.uuid}/progress", %{
         "progress" => %{count: 100, completed: false, userid: user.id, uuid: g.uuid}
