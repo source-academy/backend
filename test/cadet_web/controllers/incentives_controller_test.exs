@@ -5,12 +5,14 @@ defmodule CadetWeb.IncentivesControllerTest do
 
   alias Cadet.Repo
   alias CadetWeb.IncentivesController
-  alias Cadet.Incentives.GoalProgress
+  alias Cadet.Incentives.{Goal, Goals, GoalProgress}
+  alias Ecto.UUID
 
   test "swagger" do
     assert is_map(IncentivesController.swagger_definitions())
     assert is_map(IncentivesController.swagger_path_index_achievements(nil))
     assert is_map(IncentivesController.swagger_path_index_goals(nil))
+    assert is_map(IncentivesController.swagger_path_update_progress(nil))
   end
 
   describe "GET /achievements" do
@@ -61,6 +63,35 @@ defmodule CadetWeb.IncentivesControllerTest do
 
     test "401 if unauthenticated", %{conn: conn} do
       conn |> get("/v2/self/goals") |> response(401)
+    end
+  end
+
+  describe "POST /self/goals/:uuid/progress" do
+    setup do
+      {:ok, g} = %Goal{uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      %{goal: g}
+    end
+
+    @tag authenticate: :student
+    test "succeeds if authenticated", %{conn: conn, goal: g} do
+      user = conn.assigns.current_user
+      conn
+      |> post("/v2/self/goals/#{g.uuid}/progress", %{
+        "progress" => %{count: 100, completed: false, userid: user.id, uuid: g.uuid}
+      })
+      |> response(204)
+
+      retrieved_goal = Goals.get_with_progress(user)
+      assert [%{progress: [%{count: 100, completed: false}]}] = retrieved_goal
+    end
+
+    test "401 if unauthenticated", %{conn: conn, goal: g} do
+      conn
+      |> post("/v2/self/goals/#{g.uuid}/progress", %{
+        "progress" => %{count: 100, completed: false, userid: 1, uuid: g.uuid}
+      })
+      |> response(401)
     end
   end
 end

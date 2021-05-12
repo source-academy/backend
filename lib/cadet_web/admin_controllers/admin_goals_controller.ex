@@ -142,7 +142,6 @@ defmodule CadetWeb.AdminGoalsController do
     response(204, "Success")
     response(401, "Unauthorised")
     response(403, "Forbidden")
-    response(404, "Goal not found")
   end
 
   swagger_path :delete do

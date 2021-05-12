@@ -4,7 +4,8 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   import Cadet.TestEntityHelper
 
   alias Cadet.Repo
-  alias Cadet.Incentives.Goal
+  alias Cadet.Accounts.User
+  alias Cadet.Incentives.{Goal, Goals}
   alias CadetWeb.AdminGoalsController
   alias Ecto.UUID
 
@@ -14,6 +15,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     assert is_map(AdminGoalsController.swagger_path_update(nil))
     assert is_map(AdminGoalsController.swagger_path_bulk_update(nil))
     assert is_map(AdminGoalsController.swagger_path_delete(nil))
+    assert is_map(AdminGoalsController.swagger_path_update_progress(nil))
   end
 
   describe "GET /admin/goals" do
@@ -161,6 +163,44 @@ defmodule CadetWeb.AdminGoalsControllerTest do
       |> response(401)
 
       assert goal_literal(5) = Repo.get(Goal, a.uuid)
+    end
+  end
+
+  describe "POST /admin/users/:userid/goals/:uuid/progress" do
+    setup do
+      {:ok, g} = %Goal{uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+      {:ok, u} = %User{name: "a", role: :student} |> Repo.insert()
+
+      %{goal: g, user: u}
+    end
+
+    @tag authenticate: :staff
+    test "succeeds for staff", %{conn: conn, goal: g, user: u} do
+      conn
+      |> post("/v2/admin/users/#{u.id}/goals/#{g.uuid}/progress", %{
+        "progress" => %{count: 100, completed: false, userid: u.id, uuid: g.uuid}
+      })
+      |> response(204)
+
+      retrieved_goal = Goals.get_with_progress(u)
+      assert [%{progress: [%{count: 100, completed: false}]}] = retrieved_goal
+    end
+
+    @tag authenticate: :student
+    test "403 for student", %{conn: conn, goal: g, user: u} do
+      conn
+      |> post("/v2/admin/users/#{u.id}/goals/#{g.uuid}/progress", %{
+        "progress" => %{count: 100, completed: false, userid: u.id, uuid: g.uuid}
+      })
+      |> response(403)
+    end
+
+    test "401 if unauthenticated", %{conn: conn, goal: g, user: u} do
+      conn
+      |> post("/v2/admin/users/#{u.id}/goals/#{g.uuid}/progress", %{
+        "progress" => %{count: 100, completed: false, userid: u.id, uuid: g.uuid}
+      })
+      |> response(401)
     end
   end
 

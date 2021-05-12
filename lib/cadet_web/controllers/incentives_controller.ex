@@ -76,7 +76,6 @@ defmodule CadetWeb.IncentivesController do
 
     response(204, "Success")
     response(401, "Unauthorised")
-    response(404, "Goal not found")
   end
 
   def swagger_definitions do
