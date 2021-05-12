@@ -2,7 +2,6 @@ defmodule CadetWeb.AssessmentsHelpers do
   @moduledoc """
   Helper functions for Assessments and Grading
   """
-
   import CadetWeb.ViewHelper
 
   @graded_assessment_types ~w(mission sidequest contest)
@@ -75,6 +74,7 @@ defmodule CadetWeb.AssessmentsHelpers do
         case question_type do
           :programming -> &Map.get(&1, "solution")
           :mcq -> &find_correct_choice(&1["choices"])
+          :voting -> nil
         end
 
       transform_map_for_view(question, %{solution: solution_getter})
@@ -83,6 +83,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
   defp answer_builder_for(:programming), do: & &1.answer["code"]
   defp answer_builder_for(:mcq), do: & &1.answer["choice_id"]
+  defp answer_builder_for(:voting), do: nil
 
   defp build_answer_fields_by_question_type(%{
          question: %{answer: answer, type: question_type}
@@ -136,6 +137,26 @@ defmodule CadetWeb.AssessmentsHelpers do
       errorLine: "errorLine",
       errorExplanation: "errorExplanation"
     })
+  end
+
+  defp build_contest_entry(entry) do
+    transform_map_for_view(entry, %{
+      submission_id: :submission_id,
+      answer: :answer,
+      rank: :rank
+    })
+  end
+
+  defp build_contest_leaderboard_entry(leaderboard_ans) do
+    Map.put(
+      transform_map_for_view(leaderboard_ans, %{
+        submission_id: :submission_id,
+        answer: :answer,
+        student_name: :student_name
+      }),
+      "score",
+      Float.round(leaderboard_ans.relative_score, 2)
+    )
   end
 
   defp build_choice(choice) do
@@ -205,6 +226,19 @@ defmodule CadetWeb.AssessmentsHelpers do
         transform_map_for_view(question, %{
           content: "content",
           choices: &Enum.map(&1["choices"], fn choice -> build_choice(choice) end)
+        })
+
+      :voting ->
+        transform_map_for_view(question, %{
+          content: "content",
+          prepend: "prepend",
+          solutionTemplate: "template",
+          contestEntries:
+            &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end),
+          contestLeaderboard:
+            &Enum.map(&1[:contest_leaderboard], fn entry ->
+              build_contest_leaderboard_entry(entry)
+            end)
         })
     end
   end

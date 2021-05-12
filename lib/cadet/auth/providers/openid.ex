@@ -15,9 +15,11 @@ defmodule Cadet.Auth.Providers.OpenID do
   def authorise(config, code, _client_id, redirect_uri) do
     %{openid_provider: openid_provider, claim_extractor: claim_extractor} = config
 
-    with {:token, {:ok, %{"access_token" => token}}} <-
+    with {:token, {:ok, token_map}} <-
            {:token,
             OpenIDConnect.fetch_tokens(openid_provider, %{code: code, redirect_uri: redirect_uri})},
+         {:get_token, token} when not is_nil(token) <-
+           {:get_token, token_map[claim_extractor.get_token_type()]},
          {:verify_sig, {:ok, claims}} <-
            {:verify_sig, OpenIDConnect.verify(openid_provider, token)},
          {:verify_claims, {:ok, _}} <-
@@ -34,6 +36,9 @@ defmodule Cadet.Auth.Providers.OpenID do
     else
       {:token, {:error, _, _}} ->
         {:error, :invalid_credentials, "Failed to fetch token from OpenID provider"}
+
+      {:get_token, nil} ->
+        {:error, :invalid_credentials, "Missing token in response from OpenID provider"}
 
       {:verify_sig, {:error, _, _}} ->
         {:error, :invalid_credentials, "Failed to verify token"}
@@ -73,4 +78,5 @@ defmodule Cadet.Auth.Providers.OpenID.ClaimExtractor do
   @callback get_username(%{}) :: String.t() | nil
   @callback get_name(%{}) :: String.t() | nil
   @callback get_role(%{}) :: String.t() | nil
+  @callback get_token_type() :: String.t() | nil
 end
