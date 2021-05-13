@@ -39,4 +39,5 @@ systemctl start cadet
 while ! "$BASEDIR/bin/cadet" rpc 1; do
   sleep 0.5
 done
+sleep 5 # Allow application to fully start up - avoid a race condition
 "$BASEDIR/bin/cadet" rpc Cadet.Release.migrate
