@@ -10,7 +10,7 @@ defmodule CadetWeb.AdminGoalsView do
     transform_map_for_view(goal, %{
       uuid: :uuid,
       text: :text,
-      maxXp: :max_xp,
+      targetCount: :target_count,
       type: :type,
       meta: :meta
     })

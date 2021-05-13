@@ -13,7 +13,9 @@ defmodule Cadet.Incentives.AchievementTest do
           open_at: DateTime.from_naive!(~N[2016-05-24 13:26:08.003], "Etc/UTC"),
           close_at: DateTime.from_naive!(~N[2016-05-27 13:26:08.003], "Etc/UTC"),
           is_task: false,
-          position: 0
+          position: 0,
+          xp: 0,
+          is_variable_xp: false
         },
         :valid
       )
