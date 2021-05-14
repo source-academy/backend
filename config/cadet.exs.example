@@ -15,10 +15,12 @@ config :cadet, CadetWeb.Endpoint,
   # You can specify the port here instead
   # e.g http: [compress: true, port: 4000]
   http: [compress: true],
+  # Generate using `mix phx.gen.secret`
   secret_key_base: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 config :cadet, Cadet.Auth.Guardian,
   issuer: "cadet",
+  # Generate using `mix phx.gen.secret`
   secret_key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 config :cadet, Cadet.Repo,
@@ -28,6 +30,7 @@ config :cadet, Cadet.Repo,
   # The AWS Secrets Manager secret name containing the database connection details
   rds_secret_name: "<unique-identifier>-cadet-db",
   # Alternatively, you can include the credentials here:
+  # (comment out or remove rds_secret_name)
   # username: "postgres",
   # password: "postgres",
   # database: "cadet_stg",
