@@ -99,11 +99,11 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:close_at, close_at)
 
     if assessment_params.access === "public" do
-      Map.put(assessment_params, :password, nil)
+      _ = Map.put(assessment_params, :password, nil)
     end
 
     if assessment_params.access === "private" and assessment_params.password === nil do
-      Map.put(assessment_params, :password, "")
+      _ = Map.put(assessment_params, :password, "")
     end
 
     {:ok, assessment_params}

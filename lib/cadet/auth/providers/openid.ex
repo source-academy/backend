@@ -48,6 +48,9 @@ defmodule Cadet.Auth.Providers.OpenID do
     end
   end
 
+  # issue with JOSE's type specifications
+  @dialyzer {:no_fail_call, [get_name: 2, get_role: 2]}
+
   @spec get_name(config, Provider.token()) ::
           {:ok, String.t()} | {:error, Provider.error(), String.t()}
   def get_name(config, token) do
