@@ -9,9 +9,10 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestion do
     field(:content, :string)
     field(:prepend, :string, default: "")
     field(:template, :string)
+    field(:contest_number, :string)
   end
 
-  @required_fields ~w(content)a
+  @required_fields ~w(content contest_number)a
   @optional_fields ~w(prepend template)a
 
   def changeset(question, params \\ %{}) do

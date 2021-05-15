@@ -71,7 +71,8 @@ defmodule Cadet.AssessmentsTest do
           type: :voting,
           library: build(:library),
           question: %{
-            content: Faker.Pokemon.name()
+            content: Faker.Pokemon.name(),
+            contest_number: assessment.number
           }
         },
         assessment.id

@@ -37,7 +37,8 @@ defmodule Cadet.Assessments.QuestionTest do
       assessment_id: assessment.id,
       library: build(:library),
       question: %{
-        content: Faker.Pokemon.name()
+        content: Faker.Pokemon.name(),
+        contest_number: assessment.number
       }
     }
 

@@ -907,13 +907,13 @@ defmodule Cadet.Assessments do
 
   # Finds the contest_question_id associated with the given voting_question id
   defp fetch_associated_contest_question_id(voting_question) do
-    number = voting_question.question["contest_number"]
+    contest_number = voting_question.question["contest_number"]
 
-    if is_nil(number) do
+    if is_nil(contest_number) do
       nil
     else
       Assessment
-      |> where(number: ^number)
+      |> where(number: ^contest_number)
       |> join(:inner, [a], q in assoc(a, :questions))
       |> order_by([a, q], q.display_order)
       |> select([a, q], q.id)
