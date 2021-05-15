@@ -7,7 +7,8 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestionTest do
     test "valid changeset" do
       assert_changeset(
         %{
-          content: "asd"
+          content: "content",
+          contest_number: "C4"
         },
         :valid
       )
