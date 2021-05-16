@@ -66,9 +66,9 @@ config :git_hooks,
     pre_push: [
       verbose: true,
       tasks: [
-        "mix format --check-formatted",
-        "mix test",
-        "mix credo"
+        {:mix_task, :format, ["--check-formatted"]},
+        {:mix_task, :credo},
+        {:mix_task, :test}
       ]
     ]
   ]
