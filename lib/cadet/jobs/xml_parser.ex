@@ -247,7 +247,7 @@ defmodule Cadet.Updater.XMLParser do
       entity
       |> xpath(
         ~x"./VOTING"e,
-        contest_number: ~x"./@contest_number"s
+        contest_number: ~x"./@assessment_number"s
       )
     )
   end
