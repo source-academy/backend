@@ -21,6 +21,7 @@ defmodule Cadet.Accounts.Query do
     |> of_username(username)
   end
 
+  # :TODO this one need to pipe through course info
   @spec students_of(%User{}) :: Ecto.Query.t()
   def students_of(%User{id: id, role: :staff}) do
     User
@@ -28,6 +29,7 @@ defmodule Cadet.Accounts.Query do
     |> where([_, g], g.leader_id == ^id)
   end
 
+  # :TODO this one need to pipe through course info
   def avenger_of?(avenger, student_id) do
     students = students_of(avenger)
 

@@ -14,13 +14,17 @@ defmodule Cadet.Accounts do
 
   Returns {:ok, user} on success, otherwise {:error, changeset}
   """
-  def register(attrs = %{username: username}, role) when is_binary(username) do
-    attrs |> Map.put(:role, role) |> insert_or_update_user()
+  # def register(attrs = %{username: username}, role) when is_binary(username) do
+  #   attrs |> Map.put(:role, role) |> insert_or_update_user()
+  # end
+  def register(attrs = %{username: username}) when is_binary(username) do
+    attrs |> insert_or_update_user()
   end
 
   @doc """
   Creates User entity with specified attributes.
   """
+  # :TODO recheck if deprecated
   def create_user(attrs \\ %{}) do
     %User{}
     |> User.changeset(attrs)
@@ -56,6 +60,7 @@ defmodule Cadet.Accounts do
   @doc """
   Returns users matching a given set of criteria.
   """
+  # :TODO to pipe thru some join functon with mapping table so van get group id in a course
   def get_users(filter \\ []) do
     User
     |> join(:left, [u], g in assoc(u, :group))
@@ -79,9 +84,14 @@ defmodule Cadet.Accounts do
     case Repo.one(Query.username(username)) do
       nil ->
         # user is not registered in our database
-        with {:ok, role} <- Provider.get_role(provider, token),
-             {:ok, name} <- Provider.get_name(provider, token),
-             {:ok, _} <- register(%{name: name, username: username}, role) do
+        # :TODO recheck when designing onboarding process (assign role to module)
+        # :TODO get_role process to be put in course creation?
+        # with {:ok, role} <- Provider.get_role(provider, token),
+        #      {:ok, name} <- Provider.get_name(provider, token),
+        #      {:ok, _} <- register(%{name: name, username: username}, role) do
+        #   sign_in(username, name, token)
+        with {:ok, name} <- Provider.get_name(provider, token),
+             {:ok, _} <- register(%{name: name, username: username}) do
           sign_in(username, name, token)
         else
           {:error, :invalid_credentials, err} ->
@@ -99,6 +109,7 @@ defmodule Cadet.Accounts do
     end
   end
 
+  # :TODO Pipe through module
   def update_game_states(user = %User{}, new_game_state = %{}) do
     case user
          |> User.changeset(%{game_states: new_game_state})
