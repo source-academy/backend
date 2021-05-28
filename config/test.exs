@@ -85,3 +85,6 @@ config :cadet,
   ]
 
 config :arc, storage: Arc.Storage.Local
+
+if "test.secrets.exs" |> Path.expand(__DIR__) |> File.exists?(),
+  do: import_config("test.secrets.exs")
