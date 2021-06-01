@@ -9,7 +9,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Accounts.{Notification, Notifications, User}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
-  alias Cadet.Course.Group
+  alias Cadet.Courses.Group
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
