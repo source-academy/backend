@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.User do
   use Cadet, :model
 
   alias Cadet.Accounts.Role
-  alias Cadet.Course.Group
+  alias Cadet.Courses.Group
 
   schema "users" do
     field(:name, :string)

@@ -1,11 +1,11 @@
-defmodule Cadet.Course.GroupFactory do
+defmodule Cadet.Courses.GroupFactory do
   @moduledoc """
   Factory for Group entity
   """
 
   defmacro __using__(_opts) do
     quote do
-      alias Cadet.Course.Group
+      alias Cadet.Courses.Group
 
       def group_factory do
         %Group{

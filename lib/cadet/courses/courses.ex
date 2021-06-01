@@ -1,16 +1,14 @@
-defmodule Cadet.Course do
+defmodule Cadet.Courses do
   @moduledoc """
-  Course context contains domain logic for Course administration
-  management such as discussion groups and materials
+  Courses context contains domain logic for Course administration
+  management such as course configuration, discussion groups and materials
   """
   use Cadet, [:context, :display]
 
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.{Group, Sourcecast, SourcecastUpload}
-
-  @upload_file_roles ~w(admin staff)a
+  alias Cadet.Courses.{Group, Sourcecast, SourcecastUpload}
 
   @doc """
   Get a group based on the group name or create one if it doesn't exist
@@ -99,6 +97,8 @@ defmodule Cadet.Course do
   #   |> Repo.all()
   #   |> Repo.preload([:student])
   # end
+
+  @upload_file_roles ~w(admin staff)a
 
   @doc """
   Upload a sourcecast file

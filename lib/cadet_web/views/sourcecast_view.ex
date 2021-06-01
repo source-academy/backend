@@ -16,7 +16,7 @@ defmodule CadetWeb.SourcecastView do
       audio: :audio,
       playbackData: :playbackData,
       uploader: &transform_map_for_view(&1.uploader, [:name, :id]),
-      url: &Cadet.Course.SourcecastUpload.url({&1.audio, &1})
+      url: &Cadet.Courses.SourcecastUpload.url({&1.audio, &1})
     })
   end
 end

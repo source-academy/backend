@@ -1,5 +1,5 @@
-defmodule Cadet.Course.SourcecastTest do
-  alias Cadet.Course.Sourcecast
+defmodule Cadet.Courses.SourcecastTest do
+  alias Cadet.Courses.Sourcecast
 
   use Cadet.ChangesetCase, entity: Sourcecast
 

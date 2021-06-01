@@ -25,7 +25,7 @@ defmodule Mix.Tasks.Cadet.Users.Import do
   require Logger
 
   alias Cadet.{Accounts, Course, Repo}
-  alias Cadet.Course.Group
+  alias Cadet.Courses.Group
   alias Cadet.Accounts.User
 
   def run(_args) do

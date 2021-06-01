@@ -1,11 +1,11 @@
-defmodule Cadet.Course.SourcecastFactory do
+defmodule Cadet.Courses.SourcecastFactory do
   @moduledoc """
   Factory for Sourcecast entity
   """
 
   defmacro __using__(_opts) do
     quote do
-      alias Cadet.Course.Sourcecast
+      alias Cadet.Courses.Sourcecast
 
       def sourcecast_factory do
         %Sourcecast{

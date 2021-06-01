@@ -24,7 +24,7 @@ defmodule Cadet.Factory do
 
   use Cadet.Settings.{SublanguageFactory}
 
-  use Cadet.Course.{GroupFactory, SourcecastFactory}
+  use Cadet.Courses.{GroupFactory, SourcecastFactory}
 
   use Cadet.Devices.DeviceFactory
 

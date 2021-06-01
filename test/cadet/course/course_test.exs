@@ -2,7 +2,7 @@ defmodule Cadet.CourseTest do
   use Cadet.DataCase
 
   alias Cadet.{Course, Repo}
-  alias Cadet.Course.{Group, Sourcecast, SourcecastUpload}
+  alias Cadet.Courses.{Group, Sourcecast, SourcecastUpload}
 
   describe "Sourcecast" do
     setup do
