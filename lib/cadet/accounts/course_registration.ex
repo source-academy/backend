@@ -4,15 +4,15 @@ defmodule Cadet.Accounts.CourseRegistration do
   """
   use Cadet, :model
 
-  alias Cadet.Course.{Courses, Group}
+  alias Cadet.Course.{Course, Group}
 
   schema "course_registrations" do
     field(:role, Role)
     field(:game_states, :map)
 
-    belongs_to(:group, Courses.Group)
+    belongs_to(:group, Group)
     belongs_to(:user, User)
-    belongs_to(:course, Courses)
+    belongs_to(:course, Course)
 
     timestamps()
   end
