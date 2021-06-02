@@ -1,4 +1,4 @@
-defmodule Cadet.Course.SourcecastUpload do
+defmodule Cadet.Courses.SourcecastUpload do
   @moduledoc """
   Represents an uploaded file for Sourcecast
   """

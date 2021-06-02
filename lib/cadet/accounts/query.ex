@@ -5,7 +5,7 @@ defmodule Cadet.Accounts.Query do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.Group
+  alias Cadet.Courses.Group
   alias Cadet.Repo
 
   # This gets all users where each and every user is a student.

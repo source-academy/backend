@@ -1,5 +1,5 @@
-defmodule Cadet.Course.GroupTest do
-  alias Cadet.Course.Group
+defmodule Cadet.Courses.GroupTest do
+  alias Cadet.Courses.Group
 
   use Cadet.ChangesetCase, entity: Group
 

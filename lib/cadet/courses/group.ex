@@ -1,4 +1,4 @@
-defmodule Cadet.Course.Group do
+defmodule Cadet.Courses.Group do
   @moduledoc """
   The Group entity represent relations between student
   and discussion group leader

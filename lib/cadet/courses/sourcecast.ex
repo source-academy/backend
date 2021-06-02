@@ -1,4 +1,4 @@
-defmodule Cadet.Course.Sourcecast do
+defmodule Cadet.Courses.Sourcecast do
   @moduledoc """
   Sourcecast stores audio files and deltas for playback
   """
@@ -6,7 +6,7 @@ defmodule Cadet.Course.Sourcecast do
   use Arc.Ecto.Schema
 
   alias Cadet.Accounts.User
-  alias Cadet.Course.SourcecastUpload
+  alias Cadet.Courses.SourcecastUpload
 
   schema "sourcecasts" do
     field(:title, :string)
