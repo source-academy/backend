@@ -29,5 +29,7 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       add(:course_id, references(:courses), null: false)
       timestamps()
     end
+
+    drop_if_exists(table(:sublanguages))
   end
 end
