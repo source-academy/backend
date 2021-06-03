@@ -29,7 +29,7 @@ defmodule CadetWeb.AdminCoursesController do
     send_resp(conn, :bad_request, "Missing parameter(s)")
   end
 
-  swagger_path :update do
+  swagger_path :update_sublanguage do
     put("/admin/courses/{courseId}/sublanguage")
 
     summary("Updates the default Source sublanguage of the Playground for the specified course")
