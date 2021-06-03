@@ -11,34 +11,33 @@ defmodule Cadet.Courses do
   alias Cadet.Courses.{Course, Group, Sourcecast, SourcecastUpload}
 
   @doc """
-  Returns the default Source sublanguage of the Playground for the specified course.
+  Returns the course configuration for the specified course.
   """
-  @spec get_sublanguage(integer) ::
-          {:ok, %{source_chapter: integer, source_variant: String.t()}}
-          | {:error, {:bad_request, String.t()}}
-  def get_sublanguage(course_id) when is_ecto_id(course_id) do
+  @spec get_course_config(integer) ::
+          {:ok, %Course{}} | {:error, {:bad_request, String.t()}}
+  def get_course_config(course_id) when is_ecto_id(course_id) do
     case retrieve_course(course_id) do
       nil ->
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
-        {:ok, %{source_chapter: course.source_chapter, source_variant: course.source_variant}}
+        {:ok, course}
     end
   end
 
   @doc """
-  Updates the default Source sublanguage of the Playground for the specified course.
+  Updates the general course configuration for the specified course
   """
-  @spec update_sublanguage(integer, integer, String.t()) ::
+  @spec update_course_config(integer, %{}) ::
           {:ok, %Course{}} | {:error, {:bad_request, String.t()} | {:error, Ecto.Changeset.t()}}
-  def update_sublanguage(course_id, chapter, variant) when is_ecto_id(course_id) do
+  def update_course_config(course_id, params) when is_ecto_id(course_id) do
     case retrieve_course(course_id) do
       nil ->
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
         course
-        |> Course.sublanguage_changeset(%{source_chapter: chapter, source_variant: variant})
+        |> Course.changeset(params)
         |> Repo.update()
     end
   end

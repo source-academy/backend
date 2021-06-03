@@ -5,34 +5,33 @@ defmodule CadetWeb.AdminCoursesController do
 
   alias Cadet.Courses
 
-  def update_sublanguage(conn, %{
-        "courseid" => course_id,
-        "chapter" => chapter,
-        "variant" => variant
-      })
-      when is_ecto_id(course_id) do
-    case Courses.update_sublanguage(course_id, chapter, variant) do
-      {:ok, _} ->
-        text(conn, "OK")
+  def update(conn, params = %{"courseid" => course_id}) when is_ecto_id(course_id) do
+    params = for {key, val} <- params, into: %{}, do: {String.to_atom(key), val}
 
-      {:error, {status, message}} ->
-        send_resp(conn, status, message)
+    if (Map.has_key?(params, :source_chapter) and Map.has_key?(params, :source_variant)) or
+         (not Map.has_key?(params, :source_chapter) and
+            not Map.has_key?(params, :source_variant)) do
+      case Courses.update_course_config(course_id, params) do
+        {:ok, _} ->
+          text(conn, "OK")
 
-      {:error, _} ->
-        conn
-        |> put_status(:bad_request)
-        |> text("Invalid parameter(s)")
+        {:error, {status, message}} ->
+          send_resp(conn, status, message)
+
+        {:error, _} ->
+          conn
+          |> put_status(:bad_request)
+          |> text("Invalid parameter(s)")
+      end
+    else
+      send_resp(conn, :bad_request, "Missing parameter(s)")
     end
   end
 
-  def update_sublanguage(conn, _) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
-  end
+  swagger_path :update do
+    put("/admin/courses/{courseId}/config")
 
-  swagger_path :update_sublanguage do
-    put("/admin/courses/{courseId}/sublanguage")
-
-    summary("Updates the default Source sublanguage of the Playground for the specified course")
+    summary("Updates the course configuration for the specified course")
 
     security([%{JWT: []}])
 
@@ -40,11 +39,20 @@ defmodule CadetWeb.AdminCoursesController do
 
     parameters do
       courseId(:path, :integer, "Course ID", required: true)
-      sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object", required: true)
+      name(:body, :string, "Course name")
+      module_code(:body, :string, "Course module code")
+      viewable(:body, :boolean, "Course viewability")
+      enable_game(:body, :boolean, "Enable game")
+      enable_achievements(:body, :boolean, "Enable achievements")
+      enable_sourcecast(:body, :boolean, "Enable sourcecast")
+      sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
+      module_help_text(:body, :string, "Module help text")
     end
 
     response(200, "OK")
     response(400, "Missing or invalid parameter(s)")
+
+    # :TODO Check if this Forbidden comes from ensure_role. How about EnsureAuthenticated?
     response(403, "Forbidden")
   end
 

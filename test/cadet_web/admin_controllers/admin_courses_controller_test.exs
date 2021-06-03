@@ -5,18 +5,54 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   test "swagger" do
     AdminCoursesController.swagger_definitions()
-    AdminCoursesController.swagger_path_update_sublanguage(nil)
+    AdminCoursesController.swagger_path_update(nil)
   end
 
-  describe "PUT /courses/{courseId}/sublanguage" do
+  describe "PUT /courses/{courseId}/config" do
     @tag authenticate: :admin
-    test "succeeds", %{conn: conn} do
-      course = insert(:course, %{source_chapter: 4, source_variant: "gpu"})
+    test "succeeds 1", %{conn: conn} do
+      course = insert(:course)
 
       conn =
         put(conn, build_url(course.id), %{
-          "chapter" => Enum.random(1..4),
-          "variant" => "default"
+          "source_chapter" => Enum.random(1..4),
+          "source_variant" => "default"
+        })
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :admin
+    test "succeeds 2", %{conn: conn} do
+      course = insert(:course)
+
+      conn =
+        put(conn, build_url(course.id), %{
+          "name" => "Data Structures and Algorithms",
+          "module_code" => "CS2040S",
+          "enable_game" => false,
+          "enable_achievements" => false,
+          "enable_sourcecast" => true,
+          "source_chapter" => Enum.random(1..4),
+          "source_variant" => "default",
+          "module_help_text" => "help"
+        })
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :admin
+    test "succeeds 3", %{conn: conn} do
+      course = insert(:course)
+
+      conn =
+        put(conn, build_url(course.id), %{
+          "name" => "Data Structures and Algorithms",
+          "module_code" => "CS2040S",
+          "enable_game" => false,
+          "enable_achievements" => false,
+          "enable_sourcecast" => true,
+          "module_help_text" => "help"
         })
 
       assert response(conn, 200) == "OK"
@@ -25,7 +61,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :student
     test "rejects forbidden request for non-staff users", %{conn: conn} do
       course = insert(:course)
-      conn = put(conn, build_url(course.id), %{"chapter" => 3, "variant" => "concurrent"})
+
+      conn =
+        put(conn, build_url(course.id), %{"source_chapter" => 3, "source_variant" => "concurrent"})
 
       assert response(conn, 403) == "Forbidden"
     end
@@ -33,13 +71,20 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :staff
     test "rejects requests with invalid course id", %{conn: conn} do
       course = insert(:course)
-      conn = put(conn, build_url(course.id + 1), %{"chapter" => 3, "variant" => "concurrent"})
+
+      conn =
+        put(conn, build_url(course.id + 1), %{
+          "source_chapter" => 3,
+          "source_variant" => "concurrent"
+        })
+
+      assert response(conn, 400) == "Invalid course id"
     end
 
     @tag authenticate: :staff
     test "rejects requests with invalid params", %{conn: conn} do
       course = insert(:course)
-      conn = put(conn, build_url(course.id), %{"chapter" => 4, "variant" => "wasm"})
+      conn = put(conn, build_url(course.id), %{"source_chapter" => 4, "source_variant" => "wasm"})
 
       assert response(conn, 400) == "Invalid parameter(s)"
     end
@@ -47,11 +92,19 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
       course = insert(:course)
-      conn = put(conn, build_url(course.id), %{"variant" => "default"})
+      conn = put(conn, build_url(course.id), %{
+        "name" => "Data Structures and Algorithms",
+        "module_code" => "CS2040S",
+        "enable_game" => false,
+        "enable_achievements" => false,
+        "enable_sourcecast" => true,
+        "module_help_text" => "help",
+        "source_variant" => "default"
+      })
 
       assert response(conn, 400) == "Missing parameter(s)"
     end
   end
 
-  defp build_url(course_id), do: "/v2/admin/courses/#{course_id}/sublanguage"
+  defp build_url(course_id), do: "/v2/admin/courses/#{course_id}/config"
 end
