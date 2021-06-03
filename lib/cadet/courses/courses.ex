@@ -38,7 +38,7 @@ defmodule Cadet.Courses do
 
       course ->
         course
-        |> Course.changeset(%{source_chapter: chapter, source_variant: variant})
+        |> Course.sublanguage_changeset(%{source_chapter: chapter, source_variant: variant})
         |> Repo.update()
     end
   end

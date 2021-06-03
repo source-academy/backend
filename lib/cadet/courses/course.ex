@@ -18,12 +18,12 @@ defmodule Cadet.Courses.Course do
     timestamps()
   end
 
-  @optional_fields ~w(name source_chapter source_variant module_code viewable enable_game
-    enable_achievements enable_sourcecast module_help_text)a
+  @required_fields_sublanguage ~w(source_chapter source_variant)a
 
-  def changeset(course, params) do
+  def sublanguage_changeset(course, params) do
     course
-    |> cast(params, @optional_fields)
+    |> cast(params, @required_fields_sublanguage)
+    |> validate_required(@required_fields_sublanguage)
     |> validate_allowed_combination()
   end
 
