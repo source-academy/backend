@@ -24,18 +24,17 @@ defmodule Cadet.Courses.Course do
   def changeset(course, params) do
     course
     |> cast(params, @optional_fields)
-    |> validate_required(@required_fields)
     |> validate_allowed_combination()
   end
 
   # Validates combination of Source chapter and variant
   defp validate_allowed_combination(changeset) do
     case get_field(changeset, :source_chapter) do
-      1 -> validate_inclusion(changeset, :variant, ["default", "lazy", "wasm"])
-      2 -> validate_inclusion(changeset, :variant, ["default", "lazy"])
-      3 -> validate_inclusion(changeset, :variant, ["default", "concurrent", "non-det"])
-      4 -> validate_inclusion(changeset, :variant, ["default", "gpu"])
-      _ -> add_error(changeset, :chapter, "is invalid")
+      1 -> validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm"])
+      2 -> validate_inclusion(changeset, :source_variant, ["default", "lazy"])
+      3 -> validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det"])
+      4 -> validate_inclusion(changeset, :source_variant, ["default", "gpu"])
+      _ -> add_error(changeset, :source_chapter, "is invalid")
     end
   end
 end
