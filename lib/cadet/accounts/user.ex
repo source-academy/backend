@@ -15,7 +15,10 @@ defmodule Cadet.Accounts.User do
     # field(:role, Role)
     field(:username, :string)
     # field(:game_states, :map)
+
     # belongs_to(:group, Group)
+    has_many(:course_registration, CourseRegistation)
+
     timestamps()
   end
 

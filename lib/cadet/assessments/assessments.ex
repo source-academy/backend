@@ -710,7 +710,10 @@ defmodule Cadet.Assessments do
 
   # :TODO update avenger_of? call
   # def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
-  def unsubmit_submission(submission_id, userCourse = %CourseRegistration{user_id: user_id, role: role, course_id: course_id})
+  def unsubmit_submission(
+        submission_id,
+        userCourse = %CourseRegistration{user_id: user_id, role: role, course_id: course_id}
+      )
       when is_ecto_id(submission_id) do
     submission =
       Submission

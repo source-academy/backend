@@ -17,11 +17,13 @@ defmodule Cadet.Accounts.CourseRegistration do
     timestamps()
   end
 
-  # @optional_fields ~w(name leader_id mentor_id)a
+  @required_fields ~w(user_id course_id)a
+  @optional_fields ~w(role game_states group_id)a
 
-  # def changeset(group, attrs \\ %{}) do
-  #   group
-  #   |> cast(attrs, @optional_fields)
-  #   |> add_belongs_to_id_from_model([:leader, :mentor], attrs)
-  # end
+  def changeset(course_registration, params \\ %{}) do
+    course_registration
+    |> cast(params, @optional_fields ++ @required_fields)
+    |> add_belongs_to_id_from_model([:user, :group, :course], params)
+    |> validate_required(@required_fields)
+  end
 end

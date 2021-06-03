@@ -25,15 +25,16 @@ defmodule Cadet.Accounts.Query do
   # :TODO test
   @spec students_of(%CourseRegistration{}) :: Ecto.Query.t()
   def students_of(%CourseRegistration{user_id: id, role: :staff, course_id: course_id}) do
-    User
-    |> in_course(course_id)
+    CourseRegistration
+    |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], g in Group, on: cr.group_id == g.id)
     |> where([cr, g], g.leader_id == ^id)
   end
 
   # :TODO test
   def avenger_of?(avenger_id, course_id, student_id) do
-    avengerInCourse = CourseRegistration
+    avengerInCourse =
+      CourseRegistration
       |> where([cr], cr.course_id = ^course_id)
       |> where([cr], cr.user_id = ^avenger_id)
 
@@ -42,7 +43,7 @@ defmodule Cadet.Accounts.Query do
     students
     |> Repo.get_by(user_id: ^student_id)
     |> case do
-        nil -> false
+      nil -> false
       _ -> true
     end
   end
