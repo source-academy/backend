@@ -1,8 +1,7 @@
-defmodule Cadet.CourseTest do
+defmodule Cadet.CoursesTest do
   use Cadet.DataCase
 
   alias Cadet.{Courses, Repo}
-  alias Cadet.Courses.{Group, Sourcecast, SourcecastUpload}
 
   describe "get course config" do
     test "succeeds" do
@@ -110,6 +109,46 @@ defmodule Cadet.CourseTest do
                Courses.update_course_config(course.id, %{source_chapter: 2, source_variant: "gpu"})
 
       assert %{source_variant: ["is invalid"]} = errors_on(changeset)
+    end
+  end
+
+  describe "update assessment config" do
+    test "succeeds" do
+      assessment_config = insert(:assessment_config)
+
+      {:ok, updated_config} =
+        Courses.update_assessment_config(assessment_config.course_id, 100, 24, 1)
+
+      assert updated_config.early_submission_xp == 100
+      assert updated_config.hours_before_early_xp_decay == 24
+      assert updated_config.decay_rate_points_per_hour == 1
+    end
+
+    test "returns with error for failed updates" do
+      assessment_config = insert(:assessment_config)
+
+      {:error, changeset} =
+        Courses.update_assessment_config(assessment_config.course_id, -1, 0, 0)
+
+      assert %{early_submission_xp: ["must be greater than or equal to 0"]} = errors_on(changeset)
+
+      {:error, changeset} =
+        Courses.update_assessment_config(assessment_config.course_id, 200, -1, 0)
+
+      assert %{hours_before_early_xp_decay: ["must be greater than or equal to 0"]} =
+               errors_on(changeset)
+
+      {:error, changeset} =
+        Courses.update_assessment_config(assessment_config.course_id, 200, 48, -1)
+
+      assert %{decay_rate_points_per_hour: ["must be greater than or equal to 0"]} =
+               errors_on(changeset)
+
+      {:error, changeset} =
+        Courses.update_assessment_config(assessment_config.course_id, 200, 48, 300)
+
+      assert %{decay_rate_points_per_hour: ["must be less than or equal to 200"]} =
+               errors_on(changeset)
     end
   end
 

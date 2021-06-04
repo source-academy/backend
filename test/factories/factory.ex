@@ -22,7 +22,7 @@ defmodule Cadet.Factory do
     GoalFactory
   }
 
-  use Cadet.Courses.{CourseFactory, GroupFactory, SourcecastFactory}
+  use Cadet.Courses.{AssessmentConfigFactory, CourseFactory, GroupFactory, SourcecastFactory}
 
   use Cadet.Devices.DeviceFactory
 

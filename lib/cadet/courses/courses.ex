@@ -8,7 +8,7 @@ defmodule Cadet.Courses do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Courses.{Course, Group, Sourcecast, SourcecastUpload}
+  alias Cadet.Courses.{AssessmentConfig, Course, Group, Sourcecast, SourcecastUpload}
 
   @doc """
   Returns the course configuration for the specified course.
@@ -46,6 +46,23 @@ defmodule Cadet.Courses do
     Course
     |> where(id: ^course_id)
     |> Repo.one()
+  end
+
+  @doc """
+  Updates the assessment configuration for the specified course
+  """
+  @spec update_assessment_config(integer, integer, integer, integer) ::
+          {:ok, %AssessmentConfig{}} | {:error, Ecto.Changeset.t()}
+  def update_assessment_config(course_id, early_xp, hours_before_decay, decay_rate) do
+    AssessmentConfig
+    |> where(course_id: ^course_id)
+    |> Repo.one()
+    |> AssessmentConfig.changeset(%{
+      early_submission_xp: early_xp,
+      hours_before_early_xp_decay: hours_before_decay,
+      decay_rate_points_per_hour: decay_rate
+    })
+    |> Repo.update()
   end
 
   @doc """

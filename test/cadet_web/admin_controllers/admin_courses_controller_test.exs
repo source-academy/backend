@@ -6,6 +6,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
   test "swagger" do
     AdminCoursesController.swagger_definitions()
     AdminCoursesController.swagger_path_update_course_config(nil)
+    AdminCoursesController.swagger_path_update_assessment_config(nil)
   end
 
   describe "PUT /courses/{courseId}/course_config" do
@@ -14,7 +15,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course = insert(:course)
 
       conn =
-        put(conn, build_url(course.id), %{
+        put(conn, build_url_course_config(course.id), %{
           "source_chapter" => Enum.random(1..4),
           "source_variant" => "default"
         })
@@ -27,7 +28,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course = insert(:course)
 
       conn =
-        put(conn, build_url(course.id), %{
+        put(conn, build_url_course_config(course.id), %{
           "name" => "Data Structures and Algorithms",
           "module_code" => "CS2040S",
           "enable_game" => false,
@@ -46,7 +47,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course = insert(:course)
 
       conn =
-        put(conn, build_url(course.id), %{
+        put(conn, build_url_course_config(course.id), %{
           "name" => "Data Structures and Algorithms",
           "module_code" => "CS2040S",
           "enable_game" => false,
@@ -63,7 +64,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course = insert(:course)
 
       conn =
-        put(conn, build_url(course.id), %{"source_chapter" => 3, "source_variant" => "concurrent"})
+        put(conn, build_url_course_config(course.id), %{
+          "source_chapter" => 3,
+          "source_variant" => "concurrent"
+        })
 
       assert response(conn, 403) == "Forbidden"
     end
@@ -73,7 +77,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course = insert(:course)
 
       conn =
-        put(conn, build_url(course.id + 1), %{
+        put(conn, build_url_course_config(course.id + 1), %{
           "source_chapter" => 3,
           "source_variant" => "concurrent"
         })
@@ -84,7 +88,12 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :staff
     test "rejects requests with invalid params", %{conn: conn} do
       course = insert(:course)
-      conn = put(conn, build_url(course.id), %{"source_chapter" => 4, "source_variant" => "wasm"})
+
+      conn =
+        put(conn, build_url_course_config(course.id), %{
+          "source_chapter" => 4,
+          "source_variant" => "wasm"
+        })
 
       assert response(conn, 400) == "Invalid parameter(s)"
     end
@@ -94,7 +103,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course = insert(:course)
 
       conn =
-        put(conn, build_url(course.id), %{
+        put(conn, build_url_course_config(course.id), %{
           "name" => "Data Structures and Algorithms",
           "module_code" => "CS2040S",
           "enable_game" => false,
@@ -108,5 +117,65 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
-  defp build_url(course_id), do: "/v2/admin/courses/#{course_id}/course_config"
+  describe "PUT /courses/{courseId}/assessment_config" do
+    @tag authenticate: :admin
+    test "succeeds", %{conn: conn} do
+      assessment_config = insert(:assessment_config)
+
+      conn =
+        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+          "early_submission_xp" => 100,
+          "hours_before_early_xp_decay" => 24,
+          "decay_rate_points_per_hour" => 2
+        })
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :student
+    test "rejects forbidden request for non-staff users", %{conn: conn} do
+      assessment_config = insert(:assessment_config)
+
+      conn =
+        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+          "early_submission_xp" => 100,
+          "hours_before_early_xp_decay" => 24,
+          "decay_rate_points_per_hour" => 2
+        })
+
+      assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with invalid params", %{conn: conn} do
+      assessment_config = insert(:assessment_config)
+
+      conn =
+        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+          "early_submission_xp" => 100,
+          "hours_before_early_xp_decay" => -1,
+          "decay_rate_points_per_hour" => 200
+        })
+
+      assert response(conn, 400) == "Invalid parameter(s)"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with missing params", %{conn: conn} do
+      assessment_config = insert(:assessment_config)
+
+      conn =
+        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+          "hours_before_early_xp_decay" => 24,
+          "decay_rate_points_per_hour" => 2
+        })
+
+      assert response(conn, 400) == "Missing parameter(s)"
+    end
+  end
+
+  defp build_url_course_config(course_id), do: "/v2/admin/courses/#{course_id}/course_config"
+
+  defp build_url_assessment_config(course_id),
+    do: "/v2/admin/courses/#{course_id}/assessment_config"
 end
