@@ -5,10 +5,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   test "swagger" do
     AdminCoursesController.swagger_definitions()
-    AdminCoursesController.swagger_path_update(nil)
+    AdminCoursesController.swagger_path_update_course_config(nil)
   end
 
-  describe "PUT /courses/{courseId}/config" do
+  describe "PUT /courses/{courseId}/course_config" do
     @tag authenticate: :admin
     test "succeeds 1", %{conn: conn} do
       course = insert(:course)
@@ -92,19 +92,21 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
       course = insert(:course)
-      conn = put(conn, build_url(course.id), %{
-        "name" => "Data Structures and Algorithms",
-        "module_code" => "CS2040S",
-        "enable_game" => false,
-        "enable_achievements" => false,
-        "enable_sourcecast" => true,
-        "module_help_text" => "help",
-        "source_variant" => "default"
-      })
+
+      conn =
+        put(conn, build_url(course.id), %{
+          "name" => "Data Structures and Algorithms",
+          "module_code" => "CS2040S",
+          "enable_game" => false,
+          "enable_achievements" => false,
+          "enable_sourcecast" => true,
+          "module_help_text" => "help",
+          "source_variant" => "default"
+        })
 
       assert response(conn, 400) == "Missing parameter(s)"
     end
   end
 
-  defp build_url(course_id), do: "/v2/admin/courses/#{course_id}/config"
+  defp build_url(course_id), do: "/v2/admin/courses/#{course_id}/course_config"
 end

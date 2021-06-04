@@ -5,7 +5,7 @@ defmodule CadetWeb.AdminCoursesController do
 
   alias Cadet.Courses
 
-  def update(conn, params = %{"courseid" => course_id}) when is_ecto_id(course_id) do
+  def update_course_config(conn, params = %{"courseid" => course_id}) when is_ecto_id(course_id) do
     params = for {key, val} <- params, into: %{}, do: {String.to_atom(key), val}
 
     if (Map.has_key?(params, :source_chapter) and Map.has_key?(params, :source_variant)) or
@@ -28,8 +28,8 @@ defmodule CadetWeb.AdminCoursesController do
     end
   end
 
-  swagger_path :update do
-    put("/admin/courses/{courseId}/config")
+  swagger_path :update_course_config do
+    put("/admin/courses/{courseId}/course_config")
 
     summary("Updates the course configuration for the specified course")
 
