@@ -30,6 +30,8 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       timestamps()
     end
 
+    create(unique_index(:assessment_types, [:course_id, :order]))
+
     drop_if_exists(table(:sublanguages))
   end
 end

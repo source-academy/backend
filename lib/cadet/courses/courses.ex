@@ -8,7 +8,15 @@ defmodule Cadet.Courses do
   import Ecto.Query
 
   alias Cadet.Accounts.User
-  alias Cadet.Courses.{AssessmentConfig, Course, Group, Sourcecast, SourcecastUpload}
+
+  alias Cadet.Courses.{
+    AssessmentConfig,
+    AssessmentTypes,
+    Course,
+    Group,
+    Sourcecast,
+    SourcecastUpload
+  }
 
   @doc """
   Returns the course configuration for the specified course.
@@ -21,7 +29,14 @@ defmodule Cadet.Courses do
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
-        {:ok, course}
+        assessment_types =
+          AssessmentTypes
+          |> where(course_id: ^course_id)
+          |> Repo.all()
+          |> Enum.sort(&(&1.order < &2.order))
+          |> Enum.map(& &1.type)
+
+        {:ok, Map.put_new(course, :assessment_types, assessment_types)}
     end
   end
 
@@ -63,6 +78,51 @@ defmodule Cadet.Courses do
       decay_rate_points_per_hour: decay_rate
     })
     |> Repo.update()
+  end
+
+  @doc """
+  Updates the Assessment Types for the specified course
+  """
+  @spec update_assessment_types(integer, list()) :: :ok | {:error, {:bad_request, String.t()}}
+  def update_assessment_types(course_id, params) do
+    if not is_list(params) do
+      {:error, {:bad_request, "Invalid parameter(s)"}}
+    else
+      params_length = params |> length()
+
+      with true <- params_length <= 5,
+           true <- params_length >= 1,
+           true <- params |> Enum.reduce(true, fn elem, acc -> acc and is_binary(elem) end),
+           true <-
+             params |> Enum.map(fn elem -> String.capitalize(elem) end) |> Enum.uniq() |> length() ===
+               params_length do
+        (params ++ List.duplicate(nil, 5 - params_length))
+        |> Enum.with_index(1)
+        |> Enum.each(fn {elem, idx} ->
+          case elem do
+            nil ->
+              AssessmentTypes
+              |> where(course_id: ^course_id)
+              |> where(order: ^idx)
+              |> Repo.delete_all()
+
+            _ ->
+              AssessmentTypes.changeset(%AssessmentTypes{}, %{
+                course_id: course_id,
+                order: idx,
+                type: elem
+              })
+              |> Repo.insert(
+                on_conflict: {:replace, [:type]},
+                conflict_target: [:course_id, :order]
+              )
+          end
+        end)
+      else
+        false ->
+          {:error, {:bad_request, "Invalid parameter(s)"}}
+      end
+    end
   end
 
   @doc """

@@ -23,7 +23,6 @@ defmodule Cadet.Courses.AssessmentConfig do
     assessment_config
     |> cast(params, @required_fields)
     |> validate_required(@required_fields)
-    |> foreign_key_constraint(:course_id)
     |> validate_number(:early_submission_xp, greater_than_or_equal_to: 0)
     |> validate_number(:hours_before_early_xp_decay, greater_than_or_equal_to: 0)
     |> validate_number(:decay_rate_points_per_hour, greater_than_or_equal_to: 0)
