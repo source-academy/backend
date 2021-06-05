@@ -12,7 +12,7 @@ defmodule CadetWeb.CoursesControllerTest do
     CoursesController.swagger_path_get_course_config(nil)
   end
 
-  describe "GET /courses/course_id/config, unauthenticated" do
+  describe "GET /v2/course/course_id/config, unauthenticated" do
     test "unathorized", %{conn: conn} do
       course = insert(:course)
       conn = get(conn, build_url_config(course.id))
@@ -20,7 +20,7 @@ defmodule CadetWeb.CoursesControllerTest do
     end
   end
 
-  describe "GET /courses/course_id/config" do
+  describe "GET /v2/course/course_id/config" do
     @tag authenticate: :student
     test "succeeds", %{conn: conn} do
       course = insert(:course)
@@ -58,5 +58,5 @@ defmodule CadetWeb.CoursesControllerTest do
     end
   end
 
-  defp build_url_config(course_id), do: "/v2/courses/#{course_id}/config"
+  defp build_url_config(course_id), do: "/v2/course/#{course_id}/config"
 end

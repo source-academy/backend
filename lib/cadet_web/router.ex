@@ -80,7 +80,7 @@ defmodule CadetWeb.Router do
     get("/user", UserController, :index)
     put("/user/game_states", UserController, :update_game_states)
 
-    get("/courses/:courseid/config", CoursesController, :index)
+    get("/config", CoursesController, :index)
 
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)
