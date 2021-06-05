@@ -181,10 +181,6 @@ defmodule CadetWeb.Router do
 
       {:error, :no_record} ->
         send_resp(conn, 403, "Forbidden") |> halt()
-
-      # :TODO not sure what to put yet
-      {:error, :backend_error} ->
-        send_resp(conn, 403, "Forbidden") |> halt()
     end
   end
 
