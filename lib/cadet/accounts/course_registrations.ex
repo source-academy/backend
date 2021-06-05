@@ -19,13 +19,13 @@ defmodule Cadet.Accounts.CourseRegistrations do
     CourseRegistration
     |> where([cr], cr.user_id == ^user_id)
     |> where([cr], cr.course_id == ^course_id)
-    |> Repo.all()
+    |> Repo.one()
     |> case do
-      [cr = %CourseRegistration{}] -> {:ok, cr}
-      # when the user is not in the course
-      [] -> {:error, :no_record}
-      # when a user was added to a course twice
-      _ -> {:error, :backend_error}
+      nil ->
+        {:error, :no_record}
+
+      cr ->
+        {:ok, cr}
     end
 
     # |> Repo.get_by(%{user_id: ^user_id, course_id: ^course_id})
