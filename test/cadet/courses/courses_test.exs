@@ -24,7 +24,9 @@ defmodule Cadet.CoursesTest do
 
     test "returns with error for invalid course id" do
       course = insert(:course)
-      assert {:error, {:bad_request, "Invalid course id"}} = Courses.get_course_config(course.id + 1)
+
+      assert {:error, {:bad_request, "Invalid course id"}} =
+               Courses.get_course_config(course.id + 1)
     end
   end
 
@@ -319,6 +321,25 @@ defmodule Cadet.CoursesTest do
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
                Courses.update_assessment_types(course_id, [])
+    end
+
+    test "returns with error for list parameter of greater than length 5" do
+      course = insert(:course)
+      course_id = course.id
+
+      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
+      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
+      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+
+      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
+               Courses.update_assessment_types(course_id, [
+                 "Missions",
+                 "Quests",
+                 "Paths",
+                 "Contests",
+                 "Others",
+                 "Assessments"
+               ])
     end
 
     test "returns with error for non-list parameter" do
