@@ -15,6 +15,22 @@ defmodule Cadet.Accounts.CourseRegistrations do
   # only join with Course if need course info/config
   # otherwise just use CourseRegistration
 
+  def get_user_record(user_id, course_id) when is_ecto_id(user_id) && is_ecto_id(course_id) do
+    CourseRegistration
+    |> where([cr], cr.user_id == ^user_id)
+    |> where([cr], cr.course_id == ^course_id)
+    |> Repo.all()
+    |> case do
+      [cr = %CourseRegistration{}] -> {:ok, cr}
+      # when the user is not in the course
+      [] -> {:error, :no_record}
+      # when a user was added to a course twice
+      _ -> {:error, :backend_error}
+    end
+
+    # |> Repo.get_by(%{user_id: ^user_id, course_id: ^course_id})
+  end
+
   def get_courses(%User{id: id}) do
     CourseRegistration
     |> where([cr], cr.user_id == ^id)
@@ -61,16 +77,15 @@ defmodule Cadet.Accounts.CourseRegistrations do
   # :TODO error handling
   def delete_record(params = %{user_id: user_id, course_id: course_id})
       when is_ecto_id(user_id) && is_ecto_id(course_id) do
-    record = CourseRegistration
-    |> where(user_id: ^user_id)
-    |> where(course_id: ^course_id)
-    |> Repo.one()
+    record =
+      CourseRegistration
+      |> where(user_id: ^user_id)
+      |> where(course_id: ^course_id)
+      |> Repo.one()
 
-    case Repo.delete(record) do
-      {:ok, struct}       -> # Deleted with success
-      {:error, changeset} -> # Something went wrong
-    end
+    # case Repo.delete(record) do
+    #   {:ok, struct}       -> # Deleted with success
+    #   {:error, changeset} -> # Something went wrong
+    # end
   end
-
-
 end

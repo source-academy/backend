@@ -24,7 +24,9 @@ defmodule Cadet.CoursesTest do
 
     test "returns with error for invalid course id" do
       course = insert(:course)
-      assert {:error, {:bad_request, "Invalid course id"}} = Courses.get_course_config(course.id + 1)
+
+      assert {:error, {:bad_request, "Invalid course id"}} =
+               Courses.get_course_config(course.id + 1)
     end
   end
 

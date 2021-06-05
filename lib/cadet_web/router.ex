@@ -16,9 +16,19 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
+  pipeline :course do
+    plug(:assign_course)
+  end
+
   pipeline :ensure_staff do
     plug(:ensure_role, [:staff, :admin])
   end
+
+  # scope "/v2/course/:courseid", CadetWeb do
+  #   pipe_through([:api, :auth, :ensure_auth, :course])
+
+  #   # routes, more scopes, etc
+  # end
 
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
@@ -46,8 +56,8 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v2", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth])
+  scope "/v2/course/:courseid", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course])
 
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
@@ -80,16 +90,16 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v2/self", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth])
+  scope "/v2/course/:courseid/self", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course])
 
     get("/goals", IncentivesController, :index_goals)
     post("/goals/:uuid/progress", IncentivesController, :update_progress)
   end
 
   # Admin pages
-  scope "/v2/admin", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
+  scope "/v2/course/:courseid/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
@@ -158,8 +168,25 @@ defmodule CadetWeb.Router do
     get("/", DefaultController, :index)
   end
 
+  defp assign_course(conn, opts) do
+    course_id = conn.path_params["courseid"]
+
+    course_reg =
+      Cadet.Accounts.CourseRegistration.get_user_record(conn.assigns.current_user.id, course_id)
+
+    case course_reg do
+      {:ok, cr} -> assign(conn, :course_reg, cr)
+      # user not in course
+      {:error, :no_record} -> send_resp(403, "Forbidden") |> halt()
+      # :TODO not sure what to put yet
+      {:error, :backend_error} -> send_resp(403, "Forbidden") |> halt()
+    end
+
+    conn
+  end
+
   defp ensure_role(conn, opts) do
-    if not is_nil(conn.assigns.current_user) and conn.assigns.current_user.role in opts do
+    if not is_nil(conn.assigns.current_user) and conn.assigns.course_reg.role in opts do
       conn
     else
       conn
