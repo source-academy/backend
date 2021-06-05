@@ -35,13 +35,13 @@ defmodule Cadet.Accounts.Query do
   def avenger_of?(avenger_id, course_id, student_id) do
     avengerInCourse =
       CourseRegistration
-      |> where([cr], cr.course_id = ^course_id)
-      |> where([cr], cr.user_id = ^avenger_id)
+      |> where([cr], cr.course_id == ^course_id)
+      |> where([cr], cr.user_id == ^avenger_id)
 
     students = students_of(avengerInCourse)
 
     students
-    |> Repo.get_by(user_id: ^student_id)
+    |> Repo.get_by(user_id: student_id)
     |> case do
       nil -> false
       _ -> true

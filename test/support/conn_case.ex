@@ -50,11 +50,12 @@ defmodule CadetWeb.ConnCase do
     conn = Phoenix.ConnTest.build_conn()
 
     if tags[:authenticate] do
-      user =
+      course_registration =
         cond do
           is_atom(tags[:authenticate]) ->
-            Cadet.Factory.insert(:user, %{role: tags[:authenticate]})
+            Cadet.Factory.insert(:course_registration, %{role: tags[:authenticate]})
 
+          # :TODO: This is_map case has not been handled. To recheck in the future.
           is_map(tags[:authenticate]) ->
             tags[:authenticate]
 
@@ -62,7 +63,13 @@ defmodule CadetWeb.ConnCase do
             nil
         end
 
-      conn = sign_in(conn, user)
+      # We assign course_id to the conn during testing, so that we can generate the correct
+      # course URL for the user created during the test. The course_id is assigned here instead
+      # of the course_registration since we want the router plug to assign the course_registration
+      # when actually accessing the endpoint during the test.
+      conn =
+        sign_in(conn, course_registration.user)
+        |> assign(:course_id, course_registration.course_id)
 
       {:ok, conn: conn}
     else

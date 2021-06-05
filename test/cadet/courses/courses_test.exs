@@ -115,7 +115,7 @@ defmodule Cadet.CoursesTest do
 
   describe "update assessment config" do
     test "succeeds" do
-      assessment_config = insert(:assessment_config)
+      assessment_config = insert(:assessment_config, %{course: insert(:course)})
 
       {:ok, updated_config} =
         Courses.update_assessment_config(assessment_config.course_id, 100, 24, 1)
@@ -126,7 +126,7 @@ defmodule Cadet.CoursesTest do
     end
 
     test "returns with error for failed updates" do
-      assessment_config = insert(:assessment_config)
+      assessment_config = insert(:assessment_config, %{course: insert(:course)})
 
       {:error, changeset} =
         Courses.update_assessment_config(assessment_config.course_id, -1, 0, 0)

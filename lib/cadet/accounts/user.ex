@@ -7,24 +7,18 @@ defmodule Cadet.Accounts.User do
   """
   use Cadet, :model
 
-  # alias Cadet.Accounts.Role
-  # alias Cadet.Course.Group
+  alias Cadet.Accounts.CourseRegistration
 
   schema "users" do
     field(:name, :string)
-    # field(:role, Role)
     field(:username, :string)
-    # field(:game_states, :map)
 
-    # belongs_to(:group, Group)
-    has_many(:course_registration, CourseRegistation)
+    has_many(:course_registration, CourseRegistration)
 
     timestamps()
   end
 
-  # @required_fields ~w(name role)a
   @required_fields ~w(name)a
-  # @optional_fields ~w(username group_id game_states)a
   @optional_fields ~w(username)a
 
   def changeset(user, params \\ %{}) do

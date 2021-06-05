@@ -1,4 +1,4 @@
-defmodule Cadet.Accounts.CouseRegistraionFactory do
+defmodule Cadet.Accounts.CourseRegistrationFactory do
   @moduledoc """
   Factory(ies) for Cadet.Accounts.CourseRegistration entity
   """
@@ -9,12 +9,13 @@ defmodule Cadet.Accounts.CouseRegistraionFactory do
       # alias Cadet.Courses.{Course, Group}
 
       def course_registration_factory do
-        %CourseRegstration{
+        %CourseRegistration{
           user: build(:user),
           course: build(:course),
-          group: build(:group),
+          # :TODO Group factory is currently wrongly configured
+          # group: build(:group),
           role: Enum.random(Role.__enum_map__()),
-          game_status: %{}
+          game_states: %{}
         }
       end
     end

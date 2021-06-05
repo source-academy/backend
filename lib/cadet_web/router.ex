@@ -80,7 +80,7 @@ defmodule CadetWeb.Router do
     get("/user", UserController, :index)
     put("/user/game_states", UserController, :update_game_states)
 
-    get("/courses/:courseid/config", CoursesController, :index)
+    get("/config", CoursesController, :index)
 
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)
@@ -134,9 +134,9 @@ defmodule CadetWeb.Router do
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
 
-    put("/courses/:courseid/course_config", AdminCoursesController, :update_course_config)
-    put("/courses/:courseid/assessment_config", AdminCoursesController, :update_assessment_config)
-    put("/courses/:courseid/assessment_types", AdminCoursesController, :update_assessment_types)
+    put("/course_config", AdminCoursesController, :update_course_config)
+    put("/assessment_config", AdminCoursesController, :update_assessment_config)
+    put("/assessment_types", AdminCoursesController, :update_assessment_types)
   end
 
   # Other scopes may use custom stacks.
@@ -169,21 +169,19 @@ defmodule CadetWeb.Router do
     get("/", DefaultController, :index)
   end
 
-  defp assign_course(conn, opts) do
+  defp assign_course(conn, _opts) do
     course_id = conn.path_params["courseid"]
 
     course_reg =
-      Cadet.Accounts.CourseRegistration.get_user_record(conn.assigns.current_user.id, course_id)
+      Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)
 
     case course_reg do
-      {:ok, cr} -> assign(conn, :course_reg, cr)
-      # user not in course
-      {:error, :no_record} -> send_resp(403, "Forbidden") |> halt()
-      # :TODO not sure what to put yet
-      {:error, :backend_error} -> send_resp(403, "Forbidden") |> halt()
-    end
+      {:ok, cr} ->
+        assign(conn, :course_reg, cr)
 
-    conn
+      {:error, :no_record} ->
+        send_resp(conn, 403, "Forbidden") |> halt()
+    end
   end
 
   defp ensure_role(conn, opts) do
