@@ -7,6 +7,7 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
   end
 
+  # :TODO add context function test
   describe "Changesets" do
     test "valid changeset" do
       assert_changeset(%{user_id: , course_id: , role: :admin}, :valid)

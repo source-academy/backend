@@ -17,19 +17,6 @@ defmodule Cadet.Accounts.CouseRegistraionFactory do
           game_status: %{}
         }
       end
-
-      # def student_factory do
-      #   %User{
-      #     name: Faker.Person.En.name(),
-      #     role: :student,
-      #     username:
-      #       sequence(
-      #         :nusnet_id,
-      #         &"E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
-      #       ),
-      #     game_states: %{}
-      #   }
-      # end
     end
   end
 end

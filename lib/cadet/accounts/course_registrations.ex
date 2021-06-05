@@ -58,5 +58,19 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.insert_or_update()
   end
 
+  # :TODO error handling
+  def delete_record(params = %{user_id: user_id, course_id: course_id})
+      when is_ecto_id(user_id) && is_ecto_id(course_id) do
+    record = CourseRegistration
+    |> where(user_id: ^user_id)
+    |> where(course_id: ^course_id)
+    |> Repo.one()
+
+    case Repo.delete(record) do
+      {:ok, struct}       -> # Deleted with success
+      {:error, changeset} -> # Something went wrong
+    end
+  end
+
 
 end
