@@ -16,9 +16,9 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
     end
 
     create table(:assessment_configs) do
-      add(:early_submission_xp, :integer, null: false, default: 200)
-      add(:days_before_early_xp_decay, :integer, null: false, default: 2)
-      add(:decay_rate_points_per_hour, :integer, null: false, default: 1)
+      add(:early_submission_xp, :integer, null: false)
+      add(:hours_before_early_xp_decay, :integer, null: false)
+      add(:decay_rate_points_per_hour, :integer, null: false)
       add(:course_id, references(:courses), null: false)
       timestamps()
     end
@@ -29,5 +29,9 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       add(:course_id, references(:courses), null: false)
       timestamps()
     end
+
+    create(unique_index(:assessment_types, [:course_id, :order]))
+
+    drop_if_exists(table(:sublanguages))
   end
 end

@@ -34,7 +34,6 @@ defmodule CadetWeb.Router do
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
-    get("/settings/sublanguage", SettingsController, :index)
   end
 
   scope "/v2", CadetWeb do
@@ -70,6 +69,8 @@ defmodule CadetWeb.Router do
 
     get("/user", UserController, :index)
     put("/user/game_states", UserController, :update_game_states)
+
+    get("/courses/:courseid/config", CoursesController, :index)
 
     get("/devices", DevicesController, :index)
     post("/devices", DevicesController, :register)
@@ -123,7 +124,8 @@ defmodule CadetWeb.Router do
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
 
-    put("/settings/sublanguage", AdminSettingsController, :update)
+    put("/courses/:courseid/course_config", AdminCoursesController, :update_course_config)
+    put("/courses/:courseid/assessment_config", AdminCoursesController, :update_assessment_config)
   end
 
   # Other scopes may use custom stacks.

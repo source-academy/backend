@@ -2,7 +2,7 @@ defmodule CadetWeb.SourcecastController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.{Repo, Course}
+  alias Cadet.{Repo, Courses}
   alias Cadet.Courses.Sourcecast
 
   def index(conn, _params) do
@@ -11,7 +11,7 @@ defmodule CadetWeb.SourcecastController do
   end
 
   def create(conn, %{"sourcecast" => sourcecast}) do
-    result = Course.upload_sourcecast_file(conn.assigns.current_user, sourcecast)
+    result = Courses.upload_sourcecast_file(conn.assigns.current_user, sourcecast)
 
     case result do
       {:ok, _nil} ->
@@ -29,7 +29,7 @@ defmodule CadetWeb.SourcecastController do
   end
 
   def delete(conn, %{"id" => id}) do
-    result = Course.delete_sourcecast_file(conn.assigns.current_user, id)
+    result = Courses.delete_sourcecast_file(conn.assigns.current_user, id)
 
     case result do
       {:ok, _nil} ->

@@ -18,24 +18,29 @@ defmodule Cadet.Courses.Course do
     timestamps()
   end
 
-  @optional_fields ~w(name source_chapter source_variant module_code viewable enable_game
-    enable_achievements enable_sourcecast module_help_text)a
+  @required_fields ~w(source_chapter source_variant)a
+  @optional_fields ~w(name module_code viewable enable_game enable_achievements enable_sourcecast module_help_text)a
 
   def changeset(course, params) do
-    course
-    |> cast(params, @optional_fields)
-    |> validate_required(@required_fields)
-    |> validate_allowed_combination()
+    if Map.has_key?(params, :source_chapter) or Map.has_key?(params, :source_variant) do
+      course
+      |> cast(params, @required_fields ++ @optional_fields)
+      |> validate_required(@required_fields)
+      |> validate_sublanguage_combination()
+    else
+      course
+      |> cast(params, @optional_fields)
+    end
   end
 
   # Validates combination of Source chapter and variant
-  defp validate_allowed_combination(changeset) do
+  defp validate_sublanguage_combination(changeset) do
     case get_field(changeset, :source_chapter) do
-      1 -> validate_inclusion(changeset, :variant, ["default", "lazy", "wasm"])
-      2 -> validate_inclusion(changeset, :variant, ["default", "lazy"])
-      3 -> validate_inclusion(changeset, :variant, ["default", "concurrent", "non-det"])
-      4 -> validate_inclusion(changeset, :variant, ["default", "gpu"])
-      _ -> add_error(changeset, :chapter, "is invalid")
+      1 -> validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm"])
+      2 -> validate_inclusion(changeset, :source_variant, ["default", "lazy"])
+      3 -> validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det"])
+      4 -> validate_inclusion(changeset, :source_variant, ["default", "gpu"])
+      _ -> add_error(changeset, :source_chapter, "is invalid")
     end
   end
 end

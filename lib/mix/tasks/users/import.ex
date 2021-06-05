@@ -24,7 +24,7 @@ defmodule Mix.Tasks.Cadet.Users.Import do
 
   require Logger
 
-  alias Cadet.{Accounts, Course, Repo}
+  alias Cadet.{Accounts, Courses, Repo}
   alias Cadet.Courses.Group
   alias Cadet.Accounts.User
 
@@ -48,7 +48,7 @@ defmodule Mix.Tasks.Cadet.Users.Import do
       csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
       for {:ok, [name, username, group_name]} <- csv_stream do
-        with {:ok, group = %Group{}} <- Course.get_or_create_group(group_name),
+        with {:ok, group = %Group{}} <- Courses.get_or_create_group(group_name),
              {:ok, %User{}} <-
                Accounts.insert_or_update_user(%{
                  username: username,
