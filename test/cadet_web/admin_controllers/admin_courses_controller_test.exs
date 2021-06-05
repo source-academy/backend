@@ -7,6 +7,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     AdminCoursesController.swagger_definitions()
     AdminCoursesController.swagger_path_update_course_config(nil)
     AdminCoursesController.swagger_path_update_assessment_config(nil)
+    AdminCoursesController.swagger_path_update_assessment_types(nil)
   end
 
   describe "PUT /courses/{courseId}/course_config" do
@@ -174,8 +175,70 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
+  describe "PUT /courses/{courseId}/assessment_types" do
+    @tag authenticate: :admin
+    test "succeeds", %{conn: conn} do
+      course = insert(:course)
+
+      conn =
+        put(conn, build_url_assessment_types(course.id), %{
+          "assessment_types" => ["Missions", "Quests", "Contests"]
+        })
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :student
+    test "rejects forbidden request for non-staff users", %{conn: conn} do
+      course = insert(:course)
+
+      conn =
+        put(conn, build_url_assessment_types(course.id), %{
+          "assessment_types" => ["Missions", "Quests", "Contests"]
+        })
+
+      assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with invalid params 1", %{conn: conn} do
+      course = insert(:course)
+
+      conn =
+        put(conn, build_url_assessment_types(course.id), %{
+          "assessment_types" => "Missions"
+        })
+
+      assert response(conn, 400) == "Invalid parameter(s)"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with invalid params 2", %{conn: conn} do
+      course = insert(:course)
+
+      conn =
+        put(conn, build_url_assessment_types(course.id), %{
+          "assessment_types" => [1, "Missions", "Quests"]
+        })
+
+      assert response(conn, 400) == "Invalid parameter(s)"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with missing params", %{conn: conn} do
+      course = insert(:course)
+
+      conn = put(conn, build_url_assessment_types(course.id), %{})
+
+      assert response(conn, 400) == "Missing parameter(s)"
+    end
+  end
+
   defp build_url_course_config(course_id), do: "/v2/admin/courses/#{course_id}/course_config"
 
   defp build_url_assessment_config(course_id),
     do: "/v2/admin/courses/#{course_id}/assessment_config"
+
+  defp build_url_assessment_types(course_id),
+    do: "/v2/admin/courses/#{course_id}/assessment_types"
 end
