@@ -13,10 +13,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
   describe "PUT /v2/course/{courseId}/admin/course_config" do
     @tag authenticate: :admin
     test "succeeds 1", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_course_config(course.id), %{
+        put(conn, build_url_course_config(course_id), %{
           "source_chapter" => Enum.random(1..4),
           "source_variant" => "default"
         })
@@ -26,10 +26,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :admin
     test "succeeds 2", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_course_config(course.id), %{
+        put(conn, build_url_course_config(course_id), %{
           "name" => "Data Structures and Algorithms",
           "module_code" => "CS2040S",
           "enable_game" => false,
@@ -45,10 +45,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :admin
     test "succeeds 3", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_course_config(course.id), %{
+        put(conn, build_url_course_config(course_id), %{
           "name" => "Data Structures and Algorithms",
           "module_code" => "CS2040S",
           "enable_game" => false,
@@ -62,10 +62,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :student
     test "rejects forbidden request for non-staff users", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_course_config(course.id), %{
+        put(conn, build_url_course_config(course_id), %{
           "source_chapter" => 3,
           "source_variant" => "concurrent"
         })
@@ -74,24 +74,24 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
 
     @tag authenticate: :staff
-    test "rejects requests with invalid course id", %{conn: conn} do
-      course = insert(:course)
+    test "rejects requests if user does not belong to the specified course", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_course_config(course.id + 1), %{
+        put(conn, build_url_course_config(course_id + 1), %{
           "source_chapter" => 3,
           "source_variant" => "concurrent"
         })
 
-      assert response(conn, 400) == "Invalid course id"
+      assert response(conn, 403) == "Forbidden"
     end
 
     @tag authenticate: :staff
     test "rejects requests with invalid params", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_course_config(course.id), %{
+        put(conn, build_url_course_config(course_id), %{
           "source_chapter" => 4,
           "source_variant" => "wasm"
         })
@@ -101,10 +101,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_course_config(course.id), %{
+        put(conn, build_url_course_config(course_id), %{
           "name" => "Data Structures and Algorithms",
           "module_code" => "CS2040S",
           "enable_game" => false,
@@ -121,10 +121,11 @@ defmodule CadetWeb.AdminCoursesControllerTest do
   describe "PUT /v2/course/{courseId}/admin/assessment_config" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
-      assessment_config = insert(:assessment_config)
+      course_id = conn.assigns[:course_id]
+      insert(:assessment_config, %{course_id: course_id})
 
       conn =
-        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+        put(conn, build_url_assessment_config(course_id), %{
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -135,10 +136,26 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :student
     test "rejects forbidden request for non-staff users", %{conn: conn} do
-      assessment_config = insert(:assessment_config)
+      course_id = conn.assigns[:course_id]
+      insert(:assessment_config, %{course_id: course_id})
 
       conn =
-        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+        put(conn, build_url_assessment_config(course_id), %{
+          "early_submission_xp" => 100,
+          "hours_before_early_xp_decay" => 24,
+          "decay_rate_points_per_hour" => 2
+        })
+
+      assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "rejects request if user does not belong to specified course", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      insert(:assessment_config, %{course_id: course_id})
+
+      conn =
+        put(conn, build_url_assessment_config(course_id + 1), %{
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -149,10 +166,11 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :staff
     test "rejects requests with invalid params", %{conn: conn} do
-      assessment_config = insert(:assessment_config)
+      course_id = conn.assigns[:course_id]
+      insert(:assessment_config, %{course_id: course_id})
 
       conn =
-        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+        put(conn, build_url_assessment_config(course_id), %{
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => -1,
           "decay_rate_points_per_hour" => 200
@@ -163,10 +181,11 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
-      assessment_config = insert(:assessment_config)
+      course_id = conn.assigns[:course_id]
+      insert(:assessment_config, %{course_id: course_id})
 
       conn =
-        put(conn, build_url_assessment_config(assessment_config.course_id), %{
+        put(conn, build_url_assessment_config(course_id), %{
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
         })
@@ -178,10 +197,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
   describe "PUT /v2/course/{courseId}/admin/assessment_types" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course.id), %{
+        put(conn, build_url_assessment_types(course_id), %{
           "assessment_types" => ["Missions", "Quests", "Contests"]
         })
 
@@ -190,10 +209,22 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :student
     test "rejects forbidden request for non-staff users", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course.id), %{
+        put(conn, build_url_assessment_types(course_id), %{
+          "assessment_types" => ["Missions", "Quests", "Contests"]
+        })
+
+      assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "rejects request if user is not in specified course", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn =
+        put(conn, build_url_assessment_types(course_id + 1), %{
           "assessment_types" => ["Missions", "Quests", "Contests"]
         })
 
@@ -202,10 +233,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :staff
     test "rejects requests with invalid params 1", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course.id), %{
+        put(conn, build_url_assessment_types(course_id), %{
           "assessment_types" => "Missions"
         })
 
@@ -214,10 +245,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :staff
     test "rejects requests with invalid params 2", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course.id), %{
+        put(conn, build_url_assessment_types(course_id), %{
           "assessment_types" => [1, "Missions", "Quests"]
         })
 
@@ -226,9 +257,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
     @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
-      course = insert(:course)
+      course_id = conn.assigns[:course_id]
 
-      conn = put(conn, build_url_assessment_types(course.id), %{})
+      conn = put(conn, build_url_assessment_types(course_id), %{})
 
       assert response(conn, 400) == "Missing parameter(s)"
     end
@@ -240,5 +271,5 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     do: "/v2/course/#{course_id}/admin/assessment_config"
 
   defp build_url_assessment_types(course_id),
-    do: "/v2/courses/#{course_id}/admin/assessment_types"
+    do: "/v2/course/#{course_id}/admin/assessment_types"
 end

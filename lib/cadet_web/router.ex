@@ -173,17 +173,19 @@ defmodule CadetWeb.Router do
     course_id = conn.path_params["courseid"]
 
     course_reg =
-      Cadet.Accounts.CourseRegistration.get_user_record(conn.assigns.current_user.id, course_id)
+      Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)
 
     case course_reg do
-      {:ok, cr} -> assign(conn, :course_reg, cr)
-      # user not in course
-      {:error, :no_record} -> send_resp(conn, 403, "Forbidden") |> halt()
-      # :TODO not sure what to put yet
-      {:error, :backend_error} -> send_resp(conn, 403, "Forbidden") |> halt()
-    end
+      {:ok, cr} ->
+        assign(conn, :course_reg, cr)
 
-    conn
+      {:error, :no_record} ->
+        send_resp(conn, 403, "Forbidden") |> halt()
+
+      # :TODO not sure what to put yet
+      {:error, :backend_error} ->
+        send_resp(conn, 403, "Forbidden") |> halt()
+    end
   end
 
   defp ensure_role(conn, opts) do

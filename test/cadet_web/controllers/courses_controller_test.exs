@@ -3,17 +3,13 @@ defmodule CadetWeb.CoursesControllerTest do
 
   alias CadetWeb.CoursesController
 
-  # setup do
-  #   Cadet.Test.Seeds.
-  # end
-
   test "swagger" do
     CoursesController.swagger_definitions()
     CoursesController.swagger_path_get_course_config(nil)
   end
 
   describe "GET /v2/course/course_id/config, unauthenticated" do
-    test "unathorized", %{conn: conn} do
+    test "unauthorized", %{conn: conn} do
       course = insert(:course)
       conn = get(conn, build_url_config(course.id))
       assert response(conn, 401) == "Unauthorised"
@@ -23,12 +19,13 @@ defmodule CadetWeb.CoursesControllerTest do
   describe "GET /v2/course/course_id/config" do
     @tag authenticate: :student
     test "succeeds", %{conn: conn} do
-      course = insert(:course)
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course.id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course.id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course.id})
+      course_id = conn.assigns[:course_id]
 
-      resp = conn |> get(build_url_config(course.id)) |> json_response(200)
+      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
+      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
+      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+
+      resp = conn |> get(build_url_config(course_id)) |> json_response(200)
 
       assert %{
                "config" => %{
@@ -47,14 +44,14 @@ defmodule CadetWeb.CoursesControllerTest do
     end
 
     @tag authenticate: :student
-    test "returns with error for invalid course id", %{conn: conn} do
-      course = insert(:course)
+    test "returns with error for user not belonging to the specified course", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
 
       conn =
         conn
-        |> get(build_url_config(course.id + 1))
+        |> get(build_url_config(course_id + 1))
 
-      assert response(conn, 400) == "Invalid course id"
+      assert response(conn, 403) == "Forbidden"
     end
   end
 

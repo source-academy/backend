@@ -1,7 +1,15 @@
 defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
   use Ecto.Migration
 
+  alias Cadet.Accounts.Role
+
   def change do
+    alter table(:users) do
+      remove(:role)
+      remove(:group_id)
+      remove(:game_states)
+    end
+
     create table(:courses) do
       add(:name, :string, null: false)
       add(:module_code, :string)
@@ -31,6 +39,16 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
     end
 
     create(unique_index(:assessment_types, [:course_id, :order]))
+
+    # :TODO Consider adding a unique constraint on user_id and course_id
+    create table(:course_registrations) do
+      add(:role, :role, null: false)
+      add(:game_states, :map, default: %{})
+      add(:group_id, references(:groups))
+      add(:user_id, references(:users), null: false)
+      add(:course_id, references(:courses), null: false)
+      timestamps()
+    end
 
     drop_if_exists(table(:sublanguages))
   end

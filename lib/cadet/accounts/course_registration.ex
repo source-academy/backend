@@ -4,8 +4,8 @@ defmodule Cadet.Accounts.CourseRegistration do
   """
   use Cadet, :model
 
-  alias Cadet.Accounts.Role
-  alias Cadet.Course.{Course, Group}
+  alias Cadet.Accounts.{Role, User}
+  alias Cadet.Courses.{Course, Group}
 
   schema "course_registrations" do
     field(:role, Role)
