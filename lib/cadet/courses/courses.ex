@@ -218,35 +218,35 @@ defmodule Cadet.Courses do
   @doc """
   Upload a sourcecast file
   """
-  def upload_sourcecast_file(uploader = %User{role: role}, attrs = %{}) do
-    if role in @upload_file_roles do
-      changeset =
-        %Sourcecast{}
-        |> Sourcecast.changeset(attrs)
-        |> put_assoc(:uploader, uploader)
+  # def upload_sourcecast_file(uploader = %User{role: role}, attrs = %{}) do
+  #   if role in @upload_file_roles do
+  #     changeset =
+  #       %Sourcecast{}
+  #       |> Sourcecast.changeset(attrs)
+  #       |> put_assoc(:uploader, uploader)
 
-      case Repo.insert(changeset) do
-        {:ok, sourcecast} ->
-          {:ok, sourcecast}
+  #     case Repo.insert(changeset) do
+  #       {:ok, sourcecast} ->
+  #         {:ok, sourcecast}
 
-        {:error, changeset} ->
-          {:error, {:bad_request, full_error_messages(changeset)}}
-      end
-    else
-      {:error, {:forbidden, "User is not permitted to upload"}}
-    end
-  end
+  #       {:error, changeset} ->
+  #         {:error, {:bad_request, full_error_messages(changeset)}}
+  #     end
+  #   else
+  #     {:error, {:forbidden, "User is not permitted to upload"}}
+  #   end
+  # end
 
   @doc """
   Delete a sourcecast file
   """
-  def delete_sourcecast_file(_deleter = %User{role: role}, id) do
-    if role in @upload_file_roles do
-      sourcecast = Repo.get(Sourcecast, id)
-      SourcecastUpload.delete({sourcecast.audio, sourcecast})
-      Repo.delete(sourcecast)
-    else
-      {:error, {:forbidden, "User is not permitted to delete"}}
-    end
-  end
+  # def delete_sourcecast_file(_deleter = %User{role: role}, id) do
+  #   if role in @upload_file_roles do
+  #     sourcecast = Repo.get(Sourcecast, id)
+  #     SourcecastUpload.delete({sourcecast.audio, sourcecast})
+  #     Repo.delete(sourcecast)
+  #   else
+  #     {:error, {:forbidden, "User is not permitted to delete"}}
+  #   end
+  # end
 end

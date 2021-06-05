@@ -226,36 +226,36 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def assessment_with_questions_and_answers(
-        assessment = %Assessment{id: id},
-        user = %User{role: role}
-      ) do
-    if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
-      answer_query =
-        Answer
-        |> join(:inner, [a], s in assoc(a, :submission))
-        |> where([_, s], s.student_id == ^user.id)
+  # def assessment_with_questions_and_answers(
+  #       assessment = %Assessment{id: id},
+  #       user = %User{role: role}
+  #     ) do
+  #   if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
+  #     answer_query =
+  #       Answer
+  #       |> join(:inner, [a], s in assoc(a, :submission))
+  #       |> where([_, s], s.student_id == ^user.id)
 
-      questions =
-        Question
-        |> where(assessment_id: ^id)
-        |> join(:left, [q], a in subquery(answer_query), on: q.id == a.question_id)
-        |> join(:left, [_, a], g in assoc(a, :grader))
-        |> select([q, a, g], {q, a, g})
-        |> order_by(:display_order)
-        |> Repo.all()
-        |> Enum.map(fn
-          {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
-          {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
-        end)
-        |> load_contest_voting_entries(user.id)
+  #     questions =
+  #       Question
+  #       |> where(assessment_id: ^id)
+  #       |> join(:left, [q], a in subquery(answer_query), on: q.id == a.question_id)
+  #       |> join(:left, [_, a], g in assoc(a, :grader))
+  #       |> select([q, a, g], {q, a, g})
+  #       |> order_by(:display_order)
+  #       |> Repo.all()
+  #       |> Enum.map(fn
+  #         {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
+  #         {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
+  #       end)
+  #       |> load_contest_voting_entries(user.id)
 
-      assessment = Map.put(assessment, :questions, questions)
-      {:ok, assessment}
-    else
-      {:error, {:unauthorized, "Assessment not open"}}
-    end
-  end
+  #     assessment = Map.put(assessment, :questions, questions)
+  #     {:ok, assessment}
+  #   else
+  #     {:error, {:unauthorized, "Assessment not open"}}
+  #   end
+  # end
 
   def assessment_with_questions_and_answers(id, user = %User{}) do
     assessment_with_questions_and_answers(id, user, nil)

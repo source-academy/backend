@@ -168,7 +168,7 @@ defmodule CadetWeb.Router do
     get("/", DefaultController, :index)
   end
 
-  defp assign_course(conn, opts) do
+  defp assign_course(conn, _opts) do
     course_id = conn.path_params["courseid"]
 
     course_reg =
@@ -177,9 +177,9 @@ defmodule CadetWeb.Router do
     case course_reg do
       {:ok, cr} -> assign(conn, :course_reg, cr)
       # user not in course
-      {:error, :no_record} -> send_resp(403, "Forbidden") |> halt()
+      {:error, :no_record} -> send_resp(conn, 403, "Forbidden") |> halt()
       # :TODO not sure what to put yet
-      {:error, :backend_error} -> send_resp(403, "Forbidden") |> halt()
+      {:error, :backend_error} -> send_resp(conn, 403, "Forbidden") |> halt()
     end
 
     conn
