@@ -17,8 +17,8 @@ defmodule Cadet.Accounts.CourseRegistration do
     timestamps()
   end
 
-  @required_fields ~w(user_id course_id)a
-  @optional_fields ~w(role game_states group_id)a
+  @required_fields ~w(user_id course_id role)a
+  @optional_fields ~w(game_states group_id)a
 
   def changeset(course_registration, params \\ %{}) do
     course_registration
