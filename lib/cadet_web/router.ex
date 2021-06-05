@@ -136,6 +136,7 @@ defmodule CadetWeb.Router do
 
     put("/courses/:courseid/course_config", AdminCoursesController, :update_course_config)
     put("/courses/:courseid/assessment_config", AdminCoursesController, :update_assessment_config)
+    put("/courses/:courseid/assessment_types", AdminCoursesController, :update_assessment_types)
   end
 
   # Other scopes may use custom stacks.

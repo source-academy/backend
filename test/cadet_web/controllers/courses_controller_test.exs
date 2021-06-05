@@ -3,6 +3,10 @@ defmodule CadetWeb.CoursesControllerTest do
 
   alias CadetWeb.CoursesController
 
+  # setup do
+  #   Cadet.Test.Seeds.
+  # end
+
   test "swagger" do
     CoursesController.swagger_definitions()
     CoursesController.swagger_path_get_course_config(nil)
@@ -20,6 +24,10 @@ defmodule CadetWeb.CoursesControllerTest do
     @tag authenticate: :student
     test "succeeds", %{conn: conn} do
       course = insert(:course)
+      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course.id})
+      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course.id})
+      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course.id})
+
       resp = conn |> get(build_url_config(course.id)) |> json_response(200)
 
       assert %{
@@ -32,7 +40,8 @@ defmodule CadetWeb.CoursesControllerTest do
                  "enable_sourcecast" => true,
                  "source_chapter" => 1,
                  "source_variant" => "default",
-                 "module_help_text" => "Help Text"
+                 "module_help_text" => "Help Text",
+                 "assessment_types" => ["Missions", "Quests", "Paths"]
                }
              } = resp
     end

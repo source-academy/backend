@@ -13,7 +13,8 @@ defmodule CadetWeb.CoursesView do
           :enable_sourcecast,
           :source_chapter,
           :source_variant,
-          :module_help_text
+          :module_help_text,
+          :assessment_types
         ])
     }
   end

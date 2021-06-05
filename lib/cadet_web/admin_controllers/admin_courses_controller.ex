@@ -51,6 +51,26 @@ defmodule CadetWeb.AdminCoursesController do
     send_resp(conn, :bad_request, "Missing parameter(s)")
   end
 
+  def update_assessment_types(conn, %{
+        "courseid" => course_id,
+        "assessment_types" => assessment_types
+      })
+      when is_ecto_id(course_id) do
+    case Courses.update_assessment_types(course_id, assessment_types) do
+      :ok ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def update_assessment_types(conn, _) do
+    send_resp(conn, :bad_request, "Missing parameter(s)")
+  end
+
   swagger_path :update_course_config do
     put("/admin/courses/{courseId}/course_config")
 
@@ -91,6 +111,25 @@ defmodule CadetWeb.AdminCoursesController do
       early_submission_xp(:body, :integer, "Early submission xp")
       hours_before_early_xp_decay(:body, :integer, "Hours before early submission xp decay")
       decay_rate_points_per_hour(:body, :integer, "Decay rate in points per hour")
+    end
+
+    response(200, "OK")
+    response(400, "Missing or invalid parameter(s)")
+    response(403, "Forbidden")
+  end
+
+  swagger_path :update_assessment_types do
+    put("/admin/courses/{courseId}/assessment_types")
+
+    summary("Updates the assessment types for the specified course")
+
+    security([%{JWT: []}])
+
+    consumes("application/json")
+
+    parameters do
+      courseId(:path, :integer, "Course ID", required: true)
+      assessment_types(:body, :list, "Assessment Types")
     end
 
     response(200, "OK")

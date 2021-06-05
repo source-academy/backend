@@ -45,6 +45,7 @@ defmodule CadetWeb.CoursesController do
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
+            assessment_types(:list, "Assessment Types", required: true)
           end
 
           example(%{
@@ -56,7 +57,8 @@ defmodule CadetWeb.CoursesController do
             enable_sourcecast: true,
             source_chapter: 1,
             source_variant: "default",
-            module_help_text: "Help text"
+            module_help_text: "Help text",
+            assessment_types: ["Missions", "Quests", "Paths", "Contests", "Others"]
           })
         end,
       SourceVariant:
