@@ -10,7 +10,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     AdminCoursesController.swagger_path_update_assessment_types(nil)
   end
 
-  describe "PUT /courses/{courseId}/course_config" do
+  describe "PUT /v2/course/{courseId}/admin/course_config" do
     @tag authenticate: :admin
     test "succeeds 1", %{conn: conn} do
       course = insert(:course)
@@ -118,7 +118,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
-  describe "PUT /courses/{courseId}/assessment_config" do
+  describe "PUT /v2/course/{courseId}/admin/assessment_config" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       assessment_config = insert(:assessment_config)
@@ -175,7 +175,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
-  describe "PUT /courses/{courseId}/assessment_types" do
+  describe "PUT /v2/course/{courseId}/admin/assessment_types" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course = insert(:course)
@@ -234,11 +234,11 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
-  defp build_url_course_config(course_id), do: "/v2/admin/courses/#{course_id}/course_config"
+  defp build_url_course_config(course_id), do: "/v2/course/#{course_id}/admin/course_config"
 
   defp build_url_assessment_config(course_id),
-    do: "/v2/admin/courses/#{course_id}/assessment_config"
+    do: "/v2/course/#{course_id}/admin/assessment_config"
 
   defp build_url_assessment_types(course_id),
-    do: "/v2/admin/courses/#{course_id}/assessment_types"
+    do: "/v2/courses/#{course_id}/admin/assessment_types"
 end

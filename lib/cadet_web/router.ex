@@ -134,9 +134,9 @@ defmodule CadetWeb.Router do
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
 
-    put("/courses/:courseid/course_config", AdminCoursesController, :update_course_config)
-    put("/courses/:courseid/assessment_config", AdminCoursesController, :update_assessment_config)
-    put("/courses/:courseid/assessment_types", AdminCoursesController, :update_assessment_types)
+    put("/course_config", AdminCoursesController, :update_course_config)
+    put("/assessment_config", AdminCoursesController, :update_assessment_config)
+    put("/assessment_types", AdminCoursesController, :update_assessment_types)
   end
 
   # Other scopes may use custom stacks.
