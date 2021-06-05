@@ -9,9 +9,10 @@ defmodule Cadet.Courses.Group do
 
   schema "groups" do
     field(:name, :string)
-    belongs_to(:leader, User)
-    belongs_to(:mentor, User)
-    has_many(:students, User)
+    belongs_to(:leader, CourseRegistration)
+    belongs_to(:mentor, CourseRegistration)
+
+    has_many(:students, CourseRegistration)
   end
 
   @optional_fields ~w(name leader_id mentor_id)a

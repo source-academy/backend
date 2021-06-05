@@ -6,7 +6,7 @@ defmodule Cadet.Assessments do
   use Cadet, [:context, :display]
   import Ecto.Query
 
-  alias Cadet.Accounts.{Notification, Notifications, User}
+  alias Cadet.Accounts.{Notification, Notifications, User, CourseRegistration}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Courses.Group
@@ -708,7 +708,12 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
+  # :TODO update avenger_of? call
+  # def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
+  def unsubmit_submission(
+        submission_id,
+        userCourse = %CourseRegistration{user_id: user_id, role: role, course_id: course_id}
+      )
       when is_ecto_id(submission_id) do
     submission =
       Submission
@@ -724,7 +729,7 @@ defmodule Cadet.Assessments do
          {:allowed_to_unsubmit?, true} <-
            {:allowed_to_unsubmit?,
             role == :admin or bypass or
-              Cadet.Accounts.Query.avenger_of?(user, submission.student_id)} do
+              Cadet.Accounts.Query.avenger_of?(userCourse, submission.student_id)} do
       Multi.new()
       |> Multi.run(
         :rollback_submission,
