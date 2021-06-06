@@ -13,7 +13,6 @@ defmodule Cadet.Accounts.Query do
     User
     |> in_course(course_id)
     |> where([u, cr], cr.role == "student")
-    |> preload(:group)
     |> Repo.all()
   end
 
@@ -37,6 +36,7 @@ defmodule Cadet.Accounts.Query do
       CourseRegistration
       |> where([cr], cr.course_id == ^course_id)
       |> where([cr], cr.user_id == ^avenger_id)
+      |> Repo.one()
 
     students = students_of(avengerInCourse)
 

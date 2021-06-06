@@ -35,17 +35,20 @@ defmodule Cadet.Accounts.CourseRegistrations do
     CourseRegistration
     |> where([cr], cr.user_id == ^id)
     |> join(:inner, [cr], c in assoc(cr, :course))
+    |> Repo.all()
   end
 
   def get_users(course_id) do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], u in assoc(cr, :user))
+    |> Repo.all()
   end
 
   def get_users(course_id, group_id) do
     get_users(course_id)
     |> where([cr, u], cr.group_id == ^group_id)
+    |> Repo.all()
 
     # |> join(:inner, [cr, u], g in assoc(cr, :group))
     # maybe not needed when we dont need group info
