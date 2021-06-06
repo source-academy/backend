@@ -68,29 +68,31 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   @spec insert_or_update_course_registration(map()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def insert_or_update_course_registration(params = %{user_id: user_id, course_id: course_id})
+  def insert_or_update_course_registration(params = %{user_id: user_id, course_id: course_id, role: _role})
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
     CourseRegistration
     |> where(user_id: ^user_id)
     |> where(course_id: ^course_id)
     |> Repo.one()
     |> case do
-      nil ->
-        CourseRegistration.changeset(%CourseRegistration{}, params)
+      nil ->CourseRegistration.changeset(%CourseRegistration{}, params)
 
-      cr ->
-        CourseRegistration.changeset(cr, params)
+      cr -> CourseRegistration.changeset(cr, params)
     end
     |> Repo.insert_or_update()
   end
 
   @spec delete_record(map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def delete_record(%{user_id: user_id, course_id: course_id})
+  def delete_record(params = %{user_id: user_id, course_id: course_id})
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
     CourseRegistration
     |> where(user_id: ^user_id)
     |> where(course_id: ^course_id)
     |> Repo.one()
+    |> case do
+      nil -> CourseRegistration.changeset(%CourseRegistration{}, params)
+      cr -> CourseRegistration.changeset(cr, params)
+    end
     |> Repo.delete()
   end
 end
