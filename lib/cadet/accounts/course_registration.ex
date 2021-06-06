@@ -26,5 +26,6 @@ defmodule Cadet.Accounts.CourseRegistration do
     |> cast(params, @optional_fields ++ @required_fields)
     |> add_belongs_to_id_from_model([:user, :group, :course], params)
     |> validate_required(@required_fields)
+    |> unique_constraint(:user_id, name: :course_registrations_user_id_course_id_index)
   end
 end

@@ -51,7 +51,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
     # maybe not needed when we dont need group info
   end
 
-  def enroll_course(params = %{user_id: user_id, course_id: course_id, role: role})
+  def enroll_course(params = %{user_id: user_id, course_id: course_id, role: _role})
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
     params |> insert_or_update_course_registration()
   end
@@ -74,18 +74,13 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.insert_or_update()
   end
 
-  # :TODO error handling
-  def delete_record(params = %{user_id: user_id, course_id: course_id})
+  @spec delete_record(map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def delete_record(%{user_id: user_id, course_id: course_id})
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
-    record =
-      CourseRegistration
-      |> where(user_id: ^user_id)
-      |> where(course_id: ^course_id)
-      |> Repo.one()
-
-    # case Repo.delete(record) do
-    #   {:ok, struct}       -> # Deleted with success
-    #   {:error, changeset} -> # Something went wrong
-    # end
+    CourseRegistration
+    |> where(user_id: ^user_id)
+    |> where(course_id: ^course_id)
+    |> Repo.one()
+    |> Repo.delete()
   end
 end

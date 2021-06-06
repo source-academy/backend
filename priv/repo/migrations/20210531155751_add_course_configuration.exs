@@ -40,7 +40,6 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
 
     create(unique_index(:assessment_types, [:course_id, :order]))
 
-    # :TODO Consider adding a unique constraint on user_id and course_id
     create table(:course_registrations) do
       add(:role, :role, null: false)
       add(:game_states, :map, default: %{})
@@ -49,6 +48,12 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       add(:course_id, references(:courses), null: false)
       timestamps()
     end
+
+    create(
+      unique_index(:course_registrations, [:user_id, :course_id],
+        name: :course_registrations_user_id_course_id_index
+      )
+    )
 
     drop_if_exists(table(:sublanguages))
   end
