@@ -7,7 +7,7 @@ defmodule Cadet.Courses do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.User
+  alias Cadet.Accounts.CourseRegistration
 
   alias Cadet.Courses.{
     AssessmentConfig,
@@ -216,38 +216,102 @@ defmodule Cadet.Courses do
   @upload_file_roles ~w(admin staff)a
 
   @doc """
-  Upload a sourcecast file
+  Upload a sourcecast file.
+
+  Note that there are no checks for whether the user belongs to the course, as this has been checked
+  inside a plug in the router.
   """
+  def upload_sourcecast_file(
+        _inserter = %CourseRegistration{user_id: user_id, course_id: course_id, role: role},
+        attrs = %{}
+      ) do
+    if role in @upload_file_roles do
+      course_reg =
+        CourseRegistration
+        |> where(user_id: ^user_id)
+        |> where(course_id: ^course_id)
+        |> preload(:course)
+        |> preload(:user)
+        |> Repo.one()
 
-  # def upload_sourcecast_file(uploader = %User{role: role}, attrs = %{}) do
-  #   if role in @upload_file_roles do
-  #     changeset =
-  #       %Sourcecast{}
-  #       |> Sourcecast.changeset(attrs)
-  #       |> put_assoc(:uploader, uploader)
+      changeset =
+        %Sourcecast{}
+        |> Sourcecast.changeset(attrs)
+        |> put_assoc(:uploader, course_reg.user)
+        |> put_assoc(:course, course_reg.course)
 
-  #     case Repo.insert(changeset) do
-  #       {:ok, sourcecast} ->
-  #         {:ok, sourcecast}
+      case Repo.insert(changeset) do
+        {:ok, sourcecast} ->
+          {:ok, sourcecast}
 
-  #       {:error, changeset} ->
-  #         {:error, {:bad_request, full_error_messages(changeset)}}
-  #     end
-  #   else
-  #     {:error, {:forbidden, "User is not permitted to upload"}}
-  #   end
-  # end
+        {:error, changeset} ->
+          {:error, {:bad_request, full_error_messages(changeset)}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to upload"}}
+    end
+  end
+
+  @doc """
+  Upload a public sourcecast file.
+
+  Note that there are no checks for whether the user belongs to the course, as this has been checked
+  inside a plug in the router.
+  """
+  def upload_sourcecast_file_public(
+        inserter,
+        _inserter_course_reg = %CourseRegistration{role: role},
+        attrs = %{}
+      ) do
+    if role in @upload_file_roles do
+      changeset =
+        %Sourcecast{}
+        |> Sourcecast.changeset(attrs)
+        |> put_assoc(:uploader, inserter)
+
+      case Repo.insert(changeset) do
+        {:ok, sourcecast} ->
+          {:ok, sourcecast}
+
+        {:error, changeset} ->
+          {:error, {:bad_request, full_error_messages(changeset)}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to upload"}}
+    end
+  end
 
   @doc """
   Delete a sourcecast file
+
+  Note that there are no checks for whether the user belongs to the course, as this has been checked
+  inside a plug in the router.
   """
-  # def delete_sourcecast_file(_deleter = %User{role: role}, id) do
-  #   if role in @upload_file_roles do
-  #     sourcecast = Repo.get(Sourcecast, id)
-  #     SourcecastUpload.delete({sourcecast.audio, sourcecast})
-  #     Repo.delete(sourcecast)
-  #   else
-  #     {:error, {:forbidden, "User is not permitted to delete"}}
-  #   end
-  # end
+  def delete_sourcecast_file(_deleter = %CourseRegistration{role: role}, sourcecast_id) do
+    if role in @upload_file_roles do
+      sourcecast = Repo.get(Sourcecast, sourcecast_id)
+      SourcecastUpload.delete({sourcecast.audio, sourcecast})
+      Repo.delete(sourcecast)
+    else
+      {:error, {:forbidden, "User is not permitted to delete"}}
+    end
+  end
+
+  @doc """
+  Get sourcecast files
+  """
+  def get_sourcecast_files(course_id) when is_ecto_id(course_id) do
+    Sourcecast
+    |> where(course_id: ^course_id)
+    |> Repo.all()
+    |> Repo.preload(:uploader)
+  end
+
+  def get_sourcecast_files do
+    Sourcecast
+    # Public sourcecasts are those without course_id
+    |> where([s], is_nil(s.course_id))
+    |> Repo.all()
+    |> Repo.preload(:uploader)
+  end
 end

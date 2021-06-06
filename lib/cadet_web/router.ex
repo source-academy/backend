@@ -59,6 +59,7 @@ defmodule CadetWeb.Router do
   scope "/v2/course/:courseid", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
+    get("/sourcecast", SourcecastController, :index)
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
     get("/assessments", AssessmentsController, :index)

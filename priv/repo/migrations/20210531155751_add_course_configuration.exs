@@ -51,5 +51,9 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
     end
 
     drop_if_exists(table(:sublanguages))
+
+    alter table(:sourcecasts) do
+      add(:course_id, references(:courses))
+    end
   end
 end
