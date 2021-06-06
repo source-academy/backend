@@ -35,6 +35,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
     CourseRegistration
     |> where([cr], cr.user_id == ^id)
     |> join(:inner, [cr], c in assoc(cr, :course))
+    |> preload(:course)
     |> Repo.all()
   end
 
@@ -42,12 +43,18 @@ defmodule Cadet.Accounts.CourseRegistrations do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], u in assoc(cr, :user))
+    |> preload(:user)
     |> Repo.all()
   end
 
   def get_users(course_id, group_id) do
-    get_users(course_id)
-    |> where([cr, u], cr.group_id == ^group_id)
+    CourseRegistration
+    |> where([cr], cr.course_id == ^course_id)
+    |> where([cr], cr.group_id == ^group_id)
+    |> join(:inner, [cr], u in assoc(cr, :user))
+    |> join(:inner, [cr, u], g in assoc(cr, :group))
+    |> preload(:user)
+    |> preload(:group)
     |> Repo.all()
 
     # |> join(:inner, [cr, u], g in assoc(cr, :group))
