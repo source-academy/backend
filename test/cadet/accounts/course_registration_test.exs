@@ -216,4 +216,37 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
 
   end
+
+  describe "delete course_registration" do
+    test "succeeds", %{course1: course1, user1: user1} do
+      assert length(CourseRegistrations.get_users(course1.id)) == 1
+      {:ok, _course_reg} = CourseRegistrations.delete_record(%{user_id: user1.id, course_id: course1.id, role: :student})
+      assert CourseRegistrations.get_users(course1.id) == []
+    end
+
+    test "failed due to repeated removal", %{course1: course1, user1: user1} do
+      assert length(CourseRegistrations.get_users(course1.id)) == 1
+      {:ok, _course_reg} = CourseRegistrations.delete_record(%{user_id: user1.id, course_id: course1.id, role: :student})
+      assert CourseRegistrations.get_users(course1.id) == []
+      assert_raise Ecto.NoPrimaryKeyValueError, fn ->
+        CourseRegistrations.delete_record(%{user_id: user1.id, course_id: course1.id, role: :student})
+      end
+    end
+
+    test "failed due to non existing entry", %{course1: course1, user2: user2} do
+      assert length(CourseRegistrations.get_users(course1.id)) == 1
+      assert_raise Ecto.NoPrimaryKeyValueError, fn ->
+        CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id, role: :student})
+      end
+    end
+
+    test "failed due to invalid changeset", %{course1: course1, user2: user2} do
+      assert length(CourseRegistrations.get_users(course1.id)) == 1
+      {:error, changeset} = CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id})
+      assert length(CourseRegistrations.get_users(course1.id)) == 1
+      refute changeset.valid?
+    end
+
+
+  end
 end
