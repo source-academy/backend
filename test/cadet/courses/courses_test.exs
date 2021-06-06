@@ -159,11 +159,11 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
-      insert(:assessment_types, %{order: 4, type: "Contests", course_id: course_id})
-      insert(:assessment_types, %{order: 5, type: "Others", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
+      insert(:assessment_types, %{order: 4, type: "Contests", course: course})
+      insert(:assessment_types, %{order: 5, type: "Others", course: course})
 
       :ok =
         Courses.update_assessment_types(course_id, [
@@ -189,11 +189,11 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 4, type: "Contests", course_id: course_id})
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
-      insert(:assessment_types, %{order: 5, type: "Others", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
+      insert(:assessment_types, %{order: 4, type: "Contests", course: course})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
+      insert(:assessment_types, %{order: 5, type: "Others", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
 
       :ok =
         Courses.update_assessment_types(course_id, [
@@ -219,11 +219,11 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
-      insert(:assessment_types, %{order: 4, type: "Contests", course_id: course_id})
-      insert(:assessment_types, %{order: 5, type: "Others", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
+      insert(:assessment_types, %{order: 4, type: "Contests", course: course})
+      insert(:assessment_types, %{order: 5, type: "Others", course: course})
 
       :ok =
         Courses.update_assessment_types(course_id, [
@@ -249,9 +249,9 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
 
       :ok =
         Courses.update_assessment_types(course_id, [
@@ -277,10 +277,10 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
-      insert(:assessment_types, %{order: 4, type: "Contests", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
+      insert(:assessment_types, %{order: 4, type: "Contests", course: course})
 
       :ok = Courses.update_assessment_types(course_id, ["Paths", "Quests", "Missions"])
       {:ok, updated_course_config} = Courses.get_course_config(course_id)
@@ -292,9 +292,9 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
                Courses.update_assessment_types(course_id, [1, "Quests", "Missions"])
@@ -304,9 +304,9 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
                Courses.update_assessment_types(course_id, ["Missions", "Quests", "Missions"])
@@ -316,9 +316,9 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
                Courses.update_assessment_types(course_id, [])
@@ -328,9 +328,9 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
                Courses.update_assessment_types(course_id, [
@@ -347,9 +347,9 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       course_id = course.id
 
-      insert(:assessment_types, %{order: 1, type: "Missions", course_id: course_id})
-      insert(:assessment_types, %{order: 2, type: "Quests", course_id: course_id})
-      insert(:assessment_types, %{order: 3, type: "Paths", course_id: course_id})
+      insert(:assessment_types, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_types, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_types, %{order: 3, type: "Paths", course: course})
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
                Courses.update_assessment_types(course_id, "Missions")

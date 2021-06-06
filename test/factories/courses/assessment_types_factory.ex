@@ -11,7 +11,6 @@ defmodule Cadet.Courses.AssessmentTypesFactory do
         %AssessmentTypes{
           order: 1,
           type: "Missions"
-          # course: build(:course)
         }
       end
     end
