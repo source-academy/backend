@@ -1,6 +1,10 @@
 defmodule CadetWeb.SourcecastControllerTest do
   use CadetWeb.ConnCase
 
+  import Ecto.Query
+
+  alias Cadet.Repo
+  alias Cadet.Courses.Course
   alias CadetWeb.SourcecastController
 
   test "swagger" do
@@ -11,7 +15,7 @@ defmodule CadetWeb.SourcecastControllerTest do
   end
 
   describe "GET /v2/sourcecast, unauthenticated" do
-    test "renders a list of all sourcecast entries for public", %{
+    test "renders a list of all sourcecast entries for public (those without course_id)", %{
       conn: conn
     } do
       %{sourcecasts: sourcecasts} = seed_db()
@@ -31,7 +35,8 @@ defmodule CadetWeb.SourcecastControllerTest do
               "name" => &1.uploader.name,
               "id" => &1.uploader.id
             },
-            "url" => Cadet.Courses.SourcecastUpload.url({&1.audio, &1})
+            "url" => Cadet.Courses.SourcecastUpload.url({&1.audio, &1}),
+            "course_id" => nil
           }
         )
 
@@ -47,7 +52,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /course/{courseId}/sourcecast, unauthenticated" do
+  describe "POST /v2/course/{courseId}/sourcecast, unauthenticated" do
     test "unauthorized", %{conn: conn} do
       course = insert(:course)
       conn = post(conn, build_url(course.id), %{})
@@ -55,7 +60,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /course/{courseId}/sourcecast, unauthenticated" do
+  describe "DELETE /v2/course/{courseId}/sourcecast, unauthenticated" do
     test "unauthorized", %{conn: conn} do
       course = insert(:course)
       seed_db(course.id)
@@ -64,13 +69,14 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "GET /sourcecast, returns public sourcecasts (those without course_id)" do
-    test "renders a list of all public sourcecast entries", %{
+  describe "GET /v2/course/{courseId}/sourcecast, returns course sourcecasts" do
+    @tag authenticate: :student
+    test "renders a list of all course sourcecast entries", %{
       conn: conn
     } do
-      course = insert(:course)
-      %{sourcecasts: sourcecasts} = seed_db()
-      seed_db(course.id)
+      course_id = conn.assigns[:course_id]
+      seed_db()
+      %{sourcecasts: sourcecasts} = seed_db(course_id)
 
       expected =
         sourcecasts
@@ -85,13 +91,14 @@ defmodule CadetWeb.SourcecastControllerTest do
               "name" => &1.uploader.name,
               "id" => &1.uploader.id
             },
-            "url" => Cadet.Courses.SourcecastUpload.url({&1.audio, &1})
+            "url" => Cadet.Courses.SourcecastUpload.url({&1.audio, &1}),
+            "course_id" => course_id
           }
         )
 
       res =
         conn
-        |> get(build_url())
+        |> get(build_url(course_id))
         |> json_response(200)
         |> Enum.map(&Map.delete(&1, "audio"))
         |> Enum.map(&Map.delete(&1, "inserted_at"))
@@ -101,7 +108,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /course/{courseId}/sourcecast, student" do
+  describe "POST /v2/course/{courseId}/sourcecast, student" do
     @tag authenticate: :student
     test "prohibited", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -125,7 +132,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /course/{courseId}/sourcecast, student" do
+  describe "DELETE /v2/course/{courseId}/sourcecast, student" do
     @tag authenticate: :student
     test "prohibited", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -136,12 +143,12 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /course/{courseId}/sourcecast, staff" do
+  describe "POST /v2/course/{courseId}/sourcecast, staff" do
     @tag authenticate: :staff
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
 
-      conn =
+      post_conn =
         post(conn, build_url(course_id), %{
           "sourcecast" => %{
             "title" => "Title",
@@ -157,14 +164,41 @@ defmodule CadetWeb.SourcecastControllerTest do
           "public" => true
         })
 
-      assert response(conn, 200) == "OK"
+      assert response(post_conn, 200) == "OK"
+
+      expected = [
+        %{
+          "title" => "Title",
+          "description" => "Description",
+          "playbackData" =>
+            "{\"init\":{\"editorValue\":\"// Type your program in here!\"},\"inputs\":[]}",
+          "uploader" => %{
+            "id" => conn.assigns[:current_user].id,
+            "name" => conn.assigns[:current_user].name
+          },
+          "course_id" => nil
+        }
+      ]
+
+      res =
+        conn
+        |> get(build_url())
+        |> json_response(200)
+        |> Enum.map(&Map.delete(&1, "audio"))
+        |> Enum.map(&Map.delete(&1, "inserted_at"))
+        |> Enum.map(&Map.delete(&1, "updated_at"))
+        |> Enum.map(&Map.delete(&1, "id"))
+        |> Enum.map(&Map.delete(&1, "uid"))
+        |> Enum.map(&Map.delete(&1, "url"))
+
+      assert expected == res
     end
 
     @tag authenticate: :staff
     test "successful for course sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
 
-      conn =
+      post_conn =
         post(conn, build_url(course_id), %{
           "sourcecast" => %{
             "title" => "Title",
@@ -179,7 +213,34 @@ defmodule CadetWeb.SourcecastControllerTest do
           }
         })
 
-      assert response(conn, 200) == "OK"
+      assert response(post_conn, 200) == "OK"
+
+      expected = [
+        %{
+          "title" => "Title",
+          "description" => "Description",
+          "playbackData" =>
+            "{\"init\":{\"editorValue\":\"// Type your program in here!\"},\"inputs\":[]}",
+          "uploader" => %{
+            "id" => conn.assigns[:current_user].id,
+            "name" => conn.assigns[:current_user].name
+          },
+          "course_id" => course_id
+        }
+      ]
+
+      res =
+        conn
+        |> get(build_url(course_id))
+        |> json_response(200)
+        |> Enum.map(&Map.delete(&1, "audio"))
+        |> Enum.map(&Map.delete(&1, "inserted_at"))
+        |> Enum.map(&Map.delete(&1, "updated_at"))
+        |> Enum.map(&Map.delete(&1, "id"))
+        |> Enum.map(&Map.delete(&1, "uid"))
+        |> Enum.map(&Map.delete(&1, "url"))
+
+      assert expected == res
     end
 
     @tag authenticate: :staff
@@ -191,7 +252,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /course/{courseId}/sourcecast, staff" do
+  describe "DELETE /v2/course/{courseId}/sourcecast, staff" do
     @tag authenticate: :staff
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -217,7 +278,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /course/{courseId}/sourcecast, admin" do
+  describe "POST /v2/course/{courseId}/sourcecast, admin" do
     @tag authenticate: :admin
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -272,7 +333,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /course/{courseId}/sourcecast, admin" do
+  describe "DELETE /v2/course/{courseId}/sourcecast, admin" do
     @tag authenticate: :admin
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -303,6 +364,8 @@ defmodule CadetWeb.SourcecastControllerTest do
   defp build_url(course_id, sourcecast_id), do: "#{build_url(course_id)}#{sourcecast_id}/"
 
   defp seed_db(course_id) do
+    course = Course |> where(id: ^course_id) |> Repo.one()
+
     sourcecasts =
       for i <- 0..4 do
         insert(:sourcecast, %{
@@ -316,7 +379,7 @@ defmodule CadetWeb.SourcecastControllerTest do
             filename: "upload#{i}.wav",
             path: "test/fixtures/upload.wav"
           },
-          course_id: course_id
+          course: course
         })
       end
 
