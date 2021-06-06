@@ -10,7 +10,8 @@ defmodule Cadet.Courses.GroupFactory do
       def group_factory do
         %Group{
           name: sequence("group"),
-          leader: build(:user, role: :staff)
+          # leader: build(:course_registration)
+          # leader: build(:user, role: :staff)
         }
       end
     end

@@ -17,12 +17,31 @@ alias Cadet.Assessments.SubmissionStatus
 # Cadet.Repo.insert!(%Cadet.Settings.Sublanguage{chapter: 1, variant: "default"})
 
 if Cadet.Env.env() == :dev do
-  # User and Group
-  avenger = insert(:user, %{name: "avenger", role: :staff})
-  mentor = insert(:user, %{name: "mentor", role: :staff})
-  group = insert(:group, %{leader: avenger, mentor: mentor})
-  students = insert_list(5, :student, %{group: group})
-  admin = insert(:user, %{name: "admin", role: :admin})
+  # Course
+  course1 = insert(:course)
+  # Users
+  avenger = insert(:user, %{name: "avenger", username: "E1234561"})
+  mentor = insert(:user, %{name: "mentor", username: "E1234562"})
+  admin = insert(:user, %{name: "admin", username: "E1234563"})
+  studenta = insert(:user, %{username: "E1234564"})
+  studentb = insert(:user, %{username: "E1234564"})
+  studentc = insert(:user, %{username: "E1234564"})
+  # CourseRegistration and Group
+  avenger1 = insert(:course_registration, %{user: avenger, course: course1, role: :staff})
+  mentor1 = insert(:course_registration, %{user: mentor, course: course1, role: :staff})
+  admin1 = insert(:course_registration, %{user: admin, course: course1, role: :admin})
+  group = insert(:group, %{leader: avenger1, mentor: mentor1})
+  studenta1 = insert(:course_registration, %{user: studenta, course: course1, role: :student, group: group})
+  studentb1 = insert(:course_registration, %{user: studentb, course: course1, role: :student, group: group})
+  studentc1 = insert(:course_registration, %{user: studentc, course: course1, role: :student, group: group})
+  students = [studenta1, studentb1, studentc1]
+  # :TODO fix assessment and notification then come back
+
+  # avenger = insert(:user, %{name: "avenger", role: :staff})
+  # mentor = insert(:user, %{name: "mentor", role: :staff})
+  # group = insert(:group, %{leader: avenger, mentor: mentor})
+  # students = insert_list(5, :student, %{group: group})
+  # admin = insert(:user, %{name: "admin", role: :admin})
 
   # Assessments
   for _ <- 1..5 do

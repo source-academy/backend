@@ -48,13 +48,13 @@ defmodule Mix.Tasks.Cadet.Users.Import do
       csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
       for {:ok, [name, username, group_name]} <- csv_stream do
-        with {:ok, group = %Group{}} <- Courses.get_or_create_group(group_name),
+        with {:ok, _group = %Group{}} <- Courses.get_or_create_group(group_name),
              {:ok, %User{}} <-
                Accounts.insert_or_update_user(%{
                  username: username,
                  name: name,
-                 role: :student,
-                 group: group
+                #  role: :student,
+                #  group: group
                }) do
           :ok
         else
@@ -82,9 +82,9 @@ defmodule Mix.Tasks.Cadet.Users.Import do
 
       for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, leader = %User{}} <-
-               Accounts.insert_or_update_user(%{username: username, name: name, role: :staff}),
+               Accounts.insert_or_update_user(%{username: username, name: name}),
              {:ok, %Group{}} <-
-               Course.insert_or_update_group(%{name: group_name, leader: leader}) do
+               Courses.insert_or_update_group(%{name: group_name, leader: leader}) do
           :ok
         else
           error ->
@@ -105,15 +105,16 @@ defmodule Mix.Tasks.Cadet.Users.Import do
     end
   end
 
+  # :TODO check mentor is staff before update group and add enroll course logit
   defp process_mentors_csv(path) when is_binary(path) do
     if File.exists?(path) do
       csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
       for {:ok, [name, username, group_name]} <- csv_stream do
         with {:ok, mentor = %User{}} <-
-               Accounts.insert_or_update_user(%{username: username, name: name, role: :staff}),
+               Accounts.insert_or_update_user(%{username: username, name: name}),
              {:ok, %Group{}} <-
-               Course.insert_or_update_group(%{name: group_name, mentor: mentor}) do
+               Courses.insert_or_update_group(%{name: group_name, mentor: mentor}) do
           :ok
         else
           error ->

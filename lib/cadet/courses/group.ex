@@ -5,7 +5,7 @@ defmodule Cadet.Courses.Group do
   """
   use Cadet, :model
 
-  alias Cadet.Accounts.User
+  alias Cadet.Accounts.CourseRegistration
 
   schema "groups" do
     field(:name, :string)
