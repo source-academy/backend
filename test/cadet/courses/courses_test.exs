@@ -2,6 +2,7 @@ defmodule Cadet.CoursesTest do
   use Cadet.DataCase
 
   alias Cadet.{Courses, Repo}
+  alias Cadet.Courses.{Sourcecast, SourcecastUpload}
 
   describe "get course config" do
     test "succeeds" do
@@ -355,38 +356,38 @@ defmodule Cadet.CoursesTest do
     end
   end
 
-  # describe "Sourcecast" do
-  #   setup do
-  #     on_exit(fn -> File.rm_rf!("uploads/test/sourcecasts") end)
-  #   end
+  describe "Sourcecast" do
+    setup do
+      on_exit(fn -> File.rm_rf!("uploads/test/sourcecasts") end)
+    end
 
-  #   test "upload file to folder then delete it" do
-  #     uploader = insert(:user, %{role: :staff})
+    test "upload file to folder then delete it" do
+      inserter_course_registration = insert(:course_registration, %{role: :staff})
 
-  #     upload = %Plug.Upload{
-  #       content_type: "audio/wav",
-  #       filename: "upload.wav",
-  #       path: "test/fixtures/upload.wav"
-  #     }
+      upload = %Plug.Upload{
+        content_type: "audio/wav",
+        filename: "upload.wav",
+        path: "test/fixtures/upload.wav"
+      }
 
-  #     result =
-  #       Courses.upload_sourcecast_file(uploader, %{
-  #         title: "Test Upload",
-  #         audio: upload,
-  #         playbackData:
-  #           "{\"init\":{\"editorValue\":\"// Type your program in here!\"},\"inputs\":[]}"
-  #       })
+      result =
+        Courses.upload_sourcecast_file(inserter_course_registration, %{
+          title: "Test Upload",
+          audio: upload,
+          playbackData:
+            "{\"init\":{\"editorValue\":\"// Type your program in here!\"},\"inputs\":[]}"
+        })
 
-  #     assert {:ok, sourcecast} = result
-  #     path = SourcecastUpload.url({sourcecast.audio, sourcecast})
-  #     assert path =~ "/uploads/test/sourcecasts/upload.wav"
+      assert {:ok, sourcecast} = result
+      path = SourcecastUpload.url({sourcecast.audio, sourcecast})
+      assert path =~ "/uploads/test/sourcecasts/upload.wav"
 
-  #     deleter = insert(:user, %{role: :staff})
-  #     assert {:ok, _} = Courses.delete_sourcecast_file(deleter, sourcecast.id)
-  #     assert Repo.get(Sourcecast, sourcecast.id) == nil
-  #     refute File.exists?("uploads/test/sourcecasts/upload.wav")
-  #   end
-  # end
+      deleter_course_registration = insert(:course_registration, %{role: :staff})
+      assert {:ok, _} = Courses.delete_sourcecast_file(deleter_course_registration, sourcecast.id)
+      assert Repo.get(Sourcecast, sourcecast.id) == nil
+      refute File.exists?("uploads/test/sourcecasts/upload.wav")
+    end
+  end
 
   # describe "get_or_create_group" do
   #   test "existing group" do
