@@ -6,10 +6,12 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
+  alias Cadet.Repo
   alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
+  alias Cadet.Courses.{Course, AssessmentTypes}
 
-  @assessment_types ~w(contest mission path practical sidequest)
-  def assessment_types, do: @assessment_types
+  # @assessment_types ~w(contest mission path practical sidequest)
+  # def assessment_types, do: @assessment_types
 
   schema "assessments" do
     field(:access, AssessmentAccess, virtual: true, default: :public)
@@ -23,7 +25,6 @@ defmodule Cadet.Assessments.Assessment do
     field(:graded_count, :integer, virtual: true)
     field(:title, :string)
     field(:is_published, :boolean, default: false)
-    field(:type, :string)
     field(:summary_short, :string)
     field(:summary_long, :string)
     field(:open_at, :utc_datetime_usec)
@@ -35,11 +36,15 @@ defmodule Cadet.Assessments.Assessment do
     field(:reading, :string)
     field(:password, :string, default: nil)
 
+    # field(:type, :string)
+    belongs_to(:type, AssessmentTypes)
+    belongs_to(:course, Course)
+
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
-  @required_fields ~w(type title open_at close_at number)a
+  @required_fields ~w(title open_at close_at number course_id type_id)a
   @optional_fields ~w(reading summary_short summary_long
     is_published story cover_picture access password)a
   @optional_file_fields ~w(mission_pdf)a
@@ -54,8 +59,24 @@ defmodule Cadet.Assessments.Assessment do
     |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:type, @assessment_types)
+    # |> validate_inclusion(:type, @assessment_types)
+    |> validate_type_course
     |> validate_open_close_date
+  end
+
+  defp validate_type_course(changeset) do
+    type_id = get_field(changeset, :type_id)
+    course_id = get_field(changeset, :course_id)
+
+    case Repo.get(AssessmentTypes, type_id) do
+      nil -> add_error(changeset, :type, "does not exist")
+
+      type -> if type.course_id == course_id do
+        changeset
+      else
+        add_error(changeset, :type, "does not belong to the same course as this assessment")
+      end
+    end
   end
 
   defp validate_open_close_date(changeset) do

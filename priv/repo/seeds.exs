@@ -24,8 +24,8 @@ if Cadet.Env.env() == :dev do
   mentor = insert(:user, %{name: "mentor", username: "E1234562"})
   admin = insert(:user, %{name: "admin", username: "E1234563"})
   studenta = insert(:user, %{username: "E1234564"})
-  studentb = insert(:user, %{username: "E1234564"})
-  studentc = insert(:user, %{username: "E1234564"})
+  studentb = insert(:user, %{username: "E1234565"})
+  studentc = insert(:user, %{username: "E1234566"})
   # CourseRegistration and Group
   avenger1 = insert(:course_registration, %{user: avenger, course: course1, role: :staff})
   mentor1 = insert(:course_registration, %{user: mentor, course: course1, role: :staff})

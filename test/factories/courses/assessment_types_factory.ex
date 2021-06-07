@@ -10,8 +10,8 @@ defmodule Cadet.Courses.AssessmentTypesFactory do
       def assessment_types_factory do
         %AssessmentTypes{
           order: 1,
-          type: "Missions"
-          # course: build(:course)
+          type: "Missions",
+          course: build(:course)
         }
       end
     end

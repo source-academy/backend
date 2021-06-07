@@ -12,7 +12,6 @@ defmodule Cadet.Accounts.CourseRegistrationFactory do
         %CourseRegistration{
           user: build(:user),
           course: build(:course),
-          # :TODO Group factory is currently wrongly configured
           group: build(:group),
           role: Enum.random(Role.__enum_map__()),
           game_states: %{}
