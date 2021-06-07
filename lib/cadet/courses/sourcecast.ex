@@ -22,7 +22,7 @@ defmodule Cadet.Courses.Sourcecast do
   end
 
   @required_fields ~w(title playbackData uid)a
-  @optional_fields ~w(description)a
+  @optional_fields ~w(description course_id)a
   @required_file_fields ~w(audio)a
   @regex Regex.compile!("^[a-zA-Z0-9_-]*$")
 
