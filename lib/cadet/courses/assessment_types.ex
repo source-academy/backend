@@ -26,6 +26,7 @@ defmodule Cadet.Courses.AssessmentTypes do
     |> validate_number(:order, greater_than: 0)
     |> validate_number(:order, less_than_or_equal_to: 5)
     |> unique_constraint([:type, :course_id])
+    |> unique_constraint([:order, :course_id])
   end
 
   defp capitalize(params, field) do

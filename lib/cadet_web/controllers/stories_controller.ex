@@ -5,7 +5,7 @@ defmodule CadetWeb.StoriesController do
   alias Cadet.Stories.Stories
 
   def index(conn, _) do
-    stories = Stories.list_stories(conn.assigns.current_user)
+    stories = Stories.list_stories(conn.assigns.course_reg)
     render(conn, "index.json", stories: stories)
   end
 
@@ -13,7 +13,8 @@ defmodule CadetWeb.StoriesController do
     result =
       story
       |> snake_casify_string_keys()
-      |> Stories.create_story(conn.assigns.current_user)
+      |> string_to_atom_map_keys()
+      |> Stories.create_story(conn.assigns.course_reg)
 
     case result do
       {:ok, _story} ->
@@ -30,7 +31,7 @@ defmodule CadetWeb.StoriesController do
     result =
       story
       |> snake_casify_string_keys()
-      |> Stories.update_story(id, conn.assigns.current_user)
+      |> Stories.update_story(id, conn.assigns.course_reg)
 
     case result do
       {:ok, _story} ->
@@ -44,7 +45,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   def delete(conn, _params = %{"storyid" => id}) do
-    result = Stories.delete_story(id, conn.assigns.current_user)
+    result = Stories.delete_story(id, conn.assigns.course_reg)
 
     case result do
       {:ok, _nil} ->
@@ -57,19 +58,22 @@ defmodule CadetWeb.StoriesController do
     end
   end
 
+  defp string_to_atom_map_keys(map) do
+    for {key, value} <- map, into: %{}, do: {key |> String.to_atom(), value}
+  end
+
   swagger_path :index do
-    get("/stories")
+    get("/v2/course/{courseId}/stories")
 
     summary("Get a list of all stories")
 
     security([%{JWT: []}])
 
     response(200, "OK", Schema.array(:Story))
-    response(403, "User not allowed to manage stories")
   end
 
   swagger_path :create do
-    post("/stories")
+    post("/v2/course/{courseId}/stories")
 
     summary("Creates a new story")
 
@@ -81,7 +85,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/stories/{storyId}")
+    PhoenixSwagger.Path.delete("/v2/course/{courseId}/stories/{storyId}")
 
     summary("Delete a story from database by id")
 
@@ -92,12 +96,12 @@ defmodule CadetWeb.StoriesController do
     security([%{JWT: []}])
 
     response(204, "OK")
-    response(403, "User not allowed to manage stories")
+    response(403, "User not allowed to manage stories or stories from another course")
     response(404, "Story not found")
   end
 
   swagger_path :update do
-    post("/stories/{storyId}")
+    post("/v2/course/{courseId}/stories/{storyId}")
 
     summary("Update details regarding a story")
 
@@ -110,7 +114,7 @@ defmodule CadetWeb.StoriesController do
     produces("application/json")
 
     response(200, "OK", :Story)
-    response(403, "User not allowed to manage stories")
+    response(403, "User not allowed to manage stories or stories from another course")
     response(404, "Story not found")
   end
 
@@ -126,6 +130,7 @@ defmodule CadetWeb.StoriesController do
             openAt(:string, "The opening date", format: "date-time", required: true)
             closeAt(:string, "The closing date", format: "date-time", required: true)
             isPublished(:boolean, "Whether or not is published", required: false)
+            courseId(:integer, "The id of the course that this story belongs to", required: true)
           end
         end
     }

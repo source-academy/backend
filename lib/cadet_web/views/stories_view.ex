@@ -13,7 +13,8 @@ defmodule CadetWeb.StoriesView do
       imageUrl: :image_url,
       isPublished: :is_published,
       openAt: &format_datetime(&1.open_at),
-      closeAt: &format_datetime(&1.close_at)
+      closeAt: &format_datetime(&1.close_at),
+      courseId: :course_id
     })
   end
 end

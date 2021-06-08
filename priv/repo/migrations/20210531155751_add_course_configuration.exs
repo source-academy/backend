@@ -60,5 +60,9 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
     alter table(:sourcecasts) do
       add(:course_id, references(:courses))
     end
+
+    alter table(:stories) do
+      add(:course_id, references(:courses), null: false)
+    end
   end
 end
