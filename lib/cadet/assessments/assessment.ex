@@ -36,7 +36,6 @@ defmodule Cadet.Assessments.Assessment do
     field(:reading, :string)
     field(:password, :string, default: nil)
 
-    # field(:type, :string)
     belongs_to(:type, AssessmentTypes)
     belongs_to(:course, Course)
 
@@ -59,7 +58,6 @@ defmodule Cadet.Assessments.Assessment do
     |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    # |> validate_inclusion(:type, @assessment_types)
     |> validate_type_course
     |> validate_open_close_date
   end
