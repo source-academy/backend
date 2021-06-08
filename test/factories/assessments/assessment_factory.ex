@@ -9,8 +9,9 @@ defmodule Cadet.Assessments.AssessmentFactory do
 
       def assessment_factory do
         # type = Enum.random(Assessment.assessment_types() -- ["practical"])
-        type = build(:assessment_types)
-        type_title = type.title
+        course = build(:course)
+        type = build(:assessment_types, %{course: course})
+        type_title = type.type
 
         # These are actual story identifiers so front-end can use seeds to test more effectively
         valid_stories = [
@@ -35,7 +36,7 @@ defmodule Cadet.Assessments.AssessmentFactory do
           story: Enum.random(valid_stories),
           reading: Faker.Lorem.sentence(),
           type: type,
-          course: build(:course),
+          course: course,
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
           is_published: false

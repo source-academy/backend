@@ -52,9 +52,9 @@ defmodule Mix.Tasks.Cadet.Users.Import do
              {:ok, %User{}} <-
                Accounts.insert_or_update_user(%{
                  username: username,
-                 name: name,
-                #  role: :student,
-                #  group: group
+                 name: name
+                 #  role: :student,
+                 #  group: group
                }) do
           :ok
         else

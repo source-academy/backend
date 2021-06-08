@@ -6,8 +6,10 @@ defmodule Cadet.Assessments.SubmissionTest do
   @required_fields ~w(student_id assessment_id)a
 
   setup do
-    assessment = insert(:assessment)
-    student = insert(:user, %{role: :student})
+    course = insert(:course)
+    type = insert(:assessment_types, %{course: course})
+    assessment = insert(:assessment, %{type: type, course: course})
+    student = insert(:course_registration, %{course: course, role: :student})
 
     valid_params = %{student_id: student.id, assessment_id: assessment.id}
 
@@ -40,7 +42,7 @@ defmodule Cadet.Assessments.SubmissionTest do
 
       assert_changeset_db(params, :invalid)
 
-      new_student = insert(:user, %{role: :student})
+      new_student = insert(:course_registration, %{role: :student})
       {:ok, _} = Repo.delete(assessment)
 
       params

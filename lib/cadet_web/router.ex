@@ -24,12 +24,6 @@ defmodule CadetWeb.Router do
     plug(:ensure_role, [:staff, :admin])
   end
 
-  # scope "/v2/course/:courseid", CadetWeb do
-  #   pipe_through([:api, :auth, :ensure_auth, :course])
-
-  #   # routes, more scopes, etc
-  # end
-
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
   end

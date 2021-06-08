@@ -12,17 +12,27 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     group2 = insert(:group, %{name: "group 2"})
     course1 = insert(:course, %{module_code: "course 1"})
     course2 = insert(:course, %{module_code: "course 2"})
+
     changeset =
-        CourseRegistration.changeset(%CourseRegistration{}, %{
-          course_id: course1.id,
-          user_id: user1.id,
-          group_id: group1.id,
-          role: :student
-        })
+      CourseRegistration.changeset(%CourseRegistration{}, %{
+        course_id: course1.id,
+        user_id: user1.id,
+        group_id: group1.id,
+        role: :student
+      })
 
     {:ok, _course_reg} = Repo.insert(changeset)
 
-    {:ok, %{user1: user1, user2: user2, group1: group1, group2: group2, course1: course1, course2: course2, changeset: changeset}}
+    {:ok,
+     %{
+       user1: user1,
+       user2: user2,
+       group1: group1,
+       group2: group2,
+       course1: course1,
+       course2: course2,
+       changeset: changeset
+     }}
   end
 
   describe "Changesets:" do
@@ -114,7 +124,13 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
       assert CourseRegistrations.get_users(course2.id) == []
     end
 
-    test "of a group in a course succeeds", %{user1: user1, user2: user2, group1: group1, group2: group2, course1: course1} do
+    test "of a group in a course succeeds", %{
+      user1: user1,
+      user2: user2,
+      group1: group1,
+      group2: group2,
+      course1: course1
+    } do
       changeset2 =
         CourseRegistration.changeset(%CourseRegistration{}, %{
           course_id: course1.id,
@@ -126,13 +142,13 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
       {:ok, _course_reg} = Repo.insert(changeset2)
       course_reg_course1_group1 = CourseRegistrations.get_users(course1.id, group1.id)
       assert length(course_reg_course1_group1) == 1
-      [hd|_] = course_reg_course1_group1
+      [hd | _] = course_reg_course1_group1
       assert user1.id == hd.user_id
       assert group1.id == hd.group_id
       assert course1.id == hd.course_id
     end
 
-    test "of a group in a course failed due to invalid id", %{course1: course1}do
+    test "of a group in a course failed due to invalid id", %{course1: course1} do
       group2 = insert(:group, %{name: "group2"})
       assert CourseRegistrations.get_users(course1.id, group2.id) == []
     end
@@ -141,7 +157,14 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
   describe "update course_registration" do
     test "successful insert", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      {:ok, course_reg} = CourseRegistrations.insert_or_update_course_registration(%{user_id: user2.id, course_id: course1.id, role: :student})
+
+      {:ok, course_reg} =
+        CourseRegistrations.insert_or_update_course_registration(%{
+          user_id: user2.id,
+          course_id: course1.id,
+          role: :student
+        })
+
       assert length(CourseRegistrations.get_users(course1.id)) == 2
       assert course_reg.user_id == user2.id
       assert course_reg.course_id == course1.id
@@ -149,7 +172,14 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
     test "successful insert through enroll_course", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      {:ok, course_reg} = CourseRegistrations.enroll_course(%{user_id: user2.id, course_id: course1.id, role: :student})
+
+      {:ok, course_reg} =
+        CourseRegistrations.enroll_course(%{
+          user_id: user2.id,
+          course_id: course1.id,
+          role: :student
+        })
+
       assert length(CourseRegistrations.get_users(course1.id)) == 2
       assert course_reg.user_id == user2.id
       assert course_reg.course_id == course1.id
@@ -157,7 +187,14 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
     test "successfully update role", %{course1: course1, user1: user1, group1: group1} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      {:ok, course_reg} = CourseRegistrations.insert_or_update_course_registration(%{user_id: user1.id, course_id: course1.id, role: :staff})
+
+      {:ok, course_reg} =
+        CourseRegistrations.insert_or_update_course_registration(%{
+          user_id: user1.id,
+          course_id: course1.id,
+          role: :staff
+        })
+
       assert length(CourseRegistrations.get_users(course1.id)) == 1
       assert course_reg.user_id == user1.id
       assert course_reg.course_id == course1.id
@@ -167,7 +204,15 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
     test "successfully update group", %{course1: course1, user1: user1, group2: group2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      {:ok, course_reg} = CourseRegistrations.insert_or_update_course_registration(%{user_id: user1.id, course_id: course1.id, role: :student, group_id: group2.id})
+
+      {:ok, course_reg} =
+        CourseRegistrations.insert_or_update_course_registration(%{
+          user_id: user1.id,
+          course_id: course1.id,
+          role: :student,
+          group_id: group2.id
+        })
+
       assert length(CourseRegistrations.get_users(course1.id)) == 1
       assert course_reg.user_id == user1.id
       assert course_reg.course_id == course1.id
@@ -177,9 +222,14 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
     test "failed due to incomplete changeset", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
+
       assert_raise FunctionClauseError, fn ->
-        CourseRegistrations.insert_or_update_course_registration(%{user_id: user2.id, course_id: course1.id})
+        CourseRegistrations.insert_or_update_course_registration(%{
+          user_id: user2.id,
+          course_id: course1.id
+        })
       end
+
       assert length(CourseRegistrations.get_users(course1.id)) == 1
     end
   end
@@ -187,29 +237,56 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
   describe "delete course_registration" do
     test "succeeds", %{course1: course1, user1: user1} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      {:ok, _course_reg} = CourseRegistrations.delete_record(%{user_id: user1.id, course_id: course1.id, role: :student})
+
+      {:ok, _course_reg} =
+        CourseRegistrations.delete_record(%{
+          user_id: user1.id,
+          course_id: course1.id,
+          role: :student
+        })
+
       assert CourseRegistrations.get_users(course1.id) == []
     end
 
     test "failed due to repeated removal", %{course1: course1, user1: user1} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      {:ok, _course_reg} = CourseRegistrations.delete_record(%{user_id: user1.id, course_id: course1.id, role: :student})
+
+      {:ok, _course_reg} =
+        CourseRegistrations.delete_record(%{
+          user_id: user1.id,
+          course_id: course1.id,
+          role: :student
+        })
+
       assert CourseRegistrations.get_users(course1.id) == []
+
       assert_raise Ecto.NoPrimaryKeyValueError, fn ->
-        CourseRegistrations.delete_record(%{user_id: user1.id, course_id: course1.id, role: :student})
+        CourseRegistrations.delete_record(%{
+          user_id: user1.id,
+          course_id: course1.id,
+          role: :student
+        })
       end
     end
 
     test "failed due to non existing entry", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
+
       assert_raise Ecto.NoPrimaryKeyValueError, fn ->
-        CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id, role: :student})
+        CourseRegistrations.delete_record(%{
+          user_id: user2.id,
+          course_id: course1.id,
+          role: :student
+        })
       end
     end
 
     test "failed due to invalid changeset", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      {:error, changeset} = CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id})
+
+      {:error, changeset} =
+        CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id})
+
       assert length(CourseRegistrations.get_users(course1.id)) == 1
       refute changeset.valid?
     end

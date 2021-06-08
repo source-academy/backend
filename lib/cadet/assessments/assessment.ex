@@ -58,6 +58,9 @@ defmodule Cadet.Assessments.Assessment do
     |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> add_belongs_to_id_from_model([:type, :course], params)
+    |> foreign_key_constraint(:type_id)
+    |> foreign_key_constraint(:course_id)
     |> validate_type_course
     |> validate_open_close_date
   end
@@ -67,13 +70,15 @@ defmodule Cadet.Assessments.Assessment do
     course_id = get_field(changeset, :course_id)
 
     case Repo.get(AssessmentTypes, type_id) do
-      nil -> add_error(changeset, :type, "does not exist")
+      nil ->
+        add_error(changeset, :type, "does not exist")
 
-      type -> if type.course_id == course_id do
-        changeset
-      else
-        add_error(changeset, :type, "does not belong to the same course as this assessment")
-      end
+      type ->
+        if type.course_id == course_id do
+          changeset
+        else
+          add_error(changeset, :type, "does not belong to the same course as this assessment")
+        end
     end
   end
 

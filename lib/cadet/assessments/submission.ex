@@ -2,7 +2,7 @@ defmodule Cadet.Assessments.Submission do
   @moduledoc false
   use Cadet, :model
 
-  alias Cadet.Accounts.User
+  alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Answer, Assessment, SubmissionStatus}
 
   schema "submissions" do
@@ -19,8 +19,8 @@ defmodule Cadet.Assessments.Submission do
     field(:unsubmitted_at, :utc_datetime_usec)
 
     belongs_to(:assessment, Assessment)
-    belongs_to(:student, User)
-    belongs_to(:unsubmitted_by, User)
+    belongs_to(:student, CourseRegistration)
+    belongs_to(:unsubmitted_by, CourseRegistration)
     has_many(:answers, Answer)
 
     timestamps()

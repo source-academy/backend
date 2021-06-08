@@ -31,9 +31,16 @@ if Cadet.Env.env() == :dev do
   mentor1 = insert(:course_registration, %{user: mentor, course: course1, role: :staff})
   admin1 = insert(:course_registration, %{user: admin, course: course1, role: :admin})
   group = insert(:group, %{leader: avenger1, mentor: mentor1})
-  studenta1 = insert(:course_registration, %{user: studenta, course: course1, role: :student, group: group})
-  studentb1 = insert(:course_registration, %{user: studentb, course: course1, role: :student, group: group})
-  studentc1 = insert(:course_registration, %{user: studentc, course: course1, role: :student, group: group})
+
+  studenta1 =
+    insert(:course_registration, %{user: studenta, course: course1, role: :student, group: group})
+
+  studentb1 =
+    insert(:course_registration, %{user: studentb, course: course1, role: :student, group: group})
+
+  studentc1 =
+    insert(:course_registration, %{user: studentc, course: course1, role: :student, group: group})
+
   students = [studenta1, studentb1, studentc1]
   # :TODO fix assessment and notification then come back
 

@@ -47,10 +47,11 @@ defmodule Cadet.Assessments.AssessmentTest do
           type_id: type1.id,
           course_id: course1.id,
           title: "mission",
-          number: "M#{Enum.random(0..10)}",
+          number: "M#{Enum.random(0..10)}"
         },
         :invalid
       )
+
       assert_changeset(
         %{
           type_id: type1.id,
@@ -64,45 +65,54 @@ defmodule Cadet.Assessments.AssessmentTest do
     end
 
     test "invalid changesets due to type_course", %{course1: course1, type1: type1, type2: type2} do
-      type_not_in_course = Assessment.changeset(%Assessment{}, %{
-        type_id: type2.id,
-        course_id: course1.id,
-        title: "mission",
-        number: "4",
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7),
-      })
+      type_not_in_course =
+        Assessment.changeset(%Assessment{}, %{
+          type_id: type2.id,
+          course_id: course1.id,
+          title: "mission",
+          number: "4",
+          open_at: Timex.now(),
+          close_at: Timex.shift(Timex.now(), days: 7)
+        })
+
       {:error, changeset} = Repo.insert(type_not_in_course)
-      assert changeset.errors == [{:type, {"does not belong to the same course as this assessment", []}}]
+
+      assert changeset.errors == [
+               {:type, {"does not belong to the same course as this assessment", []}}
+             ]
+
       refute changeset.valid?
 
+      type_not_exist =
+        Assessment.changeset(%Assessment{}, %{
+          type_id: type1.id + type2.id,
+          course_id: course1.id,
+          title: "invalid type",
+          number: "M#{Enum.random(1..10)}",
+          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
+          close_at:
+            Timex.now()
+            |> Timex.shift(days: Enum.random(1..7))
+            |> Timex.to_unix()
+            |> Integer.to_string()
+        })
 
-      type_not_exist = Assessment.changeset(%Assessment{}, %{
-        type_id: type1.id + type2.id,
-        course_id: course1.id,
-        title: "invalid type",
-        number: "M#{Enum.random(1..10)}",
-        open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-        close_at:
-          Timex.now()
-          |> Timex.shift(days: Enum.random(1..7))
-          |> Timex.to_unix()
-          |> Integer.to_string()
-      })
       {:error, changeset2} = Repo.insert(type_not_exist)
       assert changeset2.errors == [{:type, {"does not exist", []}}]
       refute changeset2.valid?
     end
 
     test "invalid changesets due to invalid dates", %{course1: course1, type1: type1} do
-      invalid_date = Assessment.changeset(%Assessment{}, %{
-        type_id: type1.id,
-        course_id: course1.id,
-        title: "mission",
-        number: "4",
-        open_at: Timex.shift(Timex.now(), days: 7),
-        close_at: Timex.now(),
-      })
+      invalid_date =
+        Assessment.changeset(%Assessment{}, %{
+          type_id: type1.id,
+          course_id: course1.id,
+          title: "mission",
+          number: "4",
+          open_at: Timex.shift(Timex.now(), days: 7),
+          close_at: Timex.now()
+        })
+
       {:error, changeset} = Repo.insert(invalid_date)
       assert changeset.errors == [{:open_at, {"Open date must be before close date", []}}]
       refute changeset.valid?

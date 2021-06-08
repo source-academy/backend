@@ -68,15 +68,16 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   @spec insert_or_update_course_registration(map()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def insert_or_update_course_registration(params = %{user_id: user_id, course_id: course_id, role: _role})
+  def insert_or_update_course_registration(
+        params = %{user_id: user_id, course_id: course_id, role: _role}
+      )
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
     CourseRegistration
     |> where(user_id: ^user_id)
     |> where(course_id: ^course_id)
     |> Repo.one()
     |> case do
-      nil ->CourseRegistration.changeset(%CourseRegistration{}, params)
-
+      nil -> CourseRegistration.changeset(%CourseRegistration{}, params)
       cr -> CourseRegistration.changeset(cr, params)
     end
     |> Repo.insert_or_update()
