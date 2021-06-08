@@ -2,7 +2,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
   @moduledoc """
   Provides functions fetch, add, update course_registration
   """
-  use Cadet, :context
+  use Cadet, [:context, :display]
 
   import Ecto.Query
 
@@ -95,5 +95,14 @@ defmodule Cadet.Accounts.CourseRegistrations do
       cr -> CourseRegistration.changeset(cr, params)
     end
     |> Repo.delete()
+  end
+
+  def update_game_states(cr = %CourseRegistration{}, new_game_state = %{}) do
+    case cr
+          |> CourseRegistration.changeset(%{game_states: new_game_state})
+          |> Repo.update() do
+      result = {:ok, _} -> result
+      {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
+    end
   end
 end

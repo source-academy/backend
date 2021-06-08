@@ -204,7 +204,7 @@ defmodule Cadet.Courses do
   # @doc """
   # Get list of students under staff discussion group
   # """
-  # def list_students_by_leader(staff = %User{}) do
+  # def list_students_by_leader(staff = %CourseRegistration{}) do
   #   import Cadet.Course.Query, only: [group_members: 1]
 
   #   staff

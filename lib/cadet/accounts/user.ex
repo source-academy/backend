@@ -8,23 +8,25 @@ defmodule Cadet.Accounts.User do
   use Cadet, :model
 
   alias Cadet.Accounts.CourseRegistration
+  alias Cadet.Courses.Course
 
   schema "users" do
     field(:name, :string)
     field(:username, :string)
 
+    belongs_to(:latest_viewed, Course)
     has_many(:course_registration, CourseRegistration)
 
     timestamps()
   end
 
   @required_fields ~w(name)a
-  @optional_fields ~w(username)a
+  @optional_fields ~w(username latest_viewed_id)a
 
   def changeset(user, params \\ %{}) do
     user
     |> cast(params, @required_fields ++ @optional_fields)
-    # |> add_belongs_to_id_from_model(:group, params)
     |> validate_required(@required_fields)
+    |> foreign_key_constraint(:latest_viewed_id)
   end
 end

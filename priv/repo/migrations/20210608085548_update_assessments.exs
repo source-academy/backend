@@ -17,5 +17,16 @@ defmodule Cadet.Repo.Migrations.UpdateAssessments do
 
     create(index(:submissions, :student_id))
     create(unique_index(:submissions, [:assessment_id, :student_id]))
+
+    alter table(:groups) do
+      remove(:leader_id)
+      add(:leader_id, references(:course_registrations), null: false)
+      remove(:mentor_id)
+      add(:mentor_id, references(:course_registrations), null: true)
+      add(:course_id, references(:courses), null: false)
+    end
+
+    create(unique_index(:groups, [:name, :course_id]))
+
   end
 end

@@ -109,11 +109,10 @@ defmodule Cadet.Accounts do
     end
   end
 
-  # :TODO Pipe through module
-  def update_game_states(user = %User{}, new_game_state = %{}) do
+  def update_latest_viewed(user = %User{}, latest_viewed_id) when is_ecto_id(latest_viewed_id) do
     case user
-         |> User.changeset(%{game_states: new_game_state})
-         |> Repo.update() do
+          |> User.changeset(%{latest_viewed_id: latest_viewed_id})
+          |> Repo.update() do
       result = {:ok, _} -> result
       {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
     end
