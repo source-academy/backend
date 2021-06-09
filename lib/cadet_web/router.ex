@@ -50,7 +50,7 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v2/course/:courseid", CadetWeb do
+  scope "/v2/course/:course_id", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
     get("/sourcecast", SourcecastController, :index)
@@ -85,7 +85,7 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v2/course/:courseid/self", CadetWeb do
+  scope "/v2/course/:course_id/self", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
     get("/goals", IncentivesController, :index_goals)
@@ -93,7 +93,7 @@ defmodule CadetWeb.Router do
   end
 
   # Admin pages
-  scope "/v2/course/:courseid/admin", CadetWeb do
+  scope "/v2/course/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     get("/assets/:foldername", AdminAssetsController, :index)
@@ -165,7 +165,7 @@ defmodule CadetWeb.Router do
   end
 
   defp assign_course(conn, _opts) do
-    course_id = conn.path_params["courseid"]
+    course_id = conn.path_params["course_id"]
 
     course_reg =
       Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)

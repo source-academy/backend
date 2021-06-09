@@ -2,18 +2,19 @@ defmodule CadetWeb.AdminUserView do
   use CadetWeb, :view
 
   def render("users.json", %{users: users}) do
-    render_many(users, CadetWeb.AdminUserView, "user.json", as: :user)
+    render_many(users, CadetWeb.AdminUserView, "cr.json", as: :cr)
   end
 
-  def render("user.json", %{user: user}) do
+  def render("cr.json", %{cr: cr}) do
     %{
-      userId: user.id,
-      name: user.name,
-      role: user.role,
+      crId: cr.id,
+      course_id: cr.course_id,
+      name: cr.user.name,
+      role: cr.role,
       group:
-        case user.group do
+        case cr.group do
           nil -> nil
-          _ -> user.group.name
+          _ -> cr.group.name
         end
     }
   end

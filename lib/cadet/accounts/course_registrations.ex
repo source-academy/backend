@@ -27,8 +27,6 @@ defmodule Cadet.Accounts.CourseRegistrations do
       cr ->
         {:ok, cr}
     end
-
-    # |> Repo.get_by(%{user_id: ^user_id, course_id: ^course_id})
   end
 
   def get_courses(%User{id: id}) do
@@ -39,7 +37,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
-  def get_users(course_id) do
+  def get_users(course_id) when is_ecto_id(course_id) do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], u in assoc(cr, :user))
@@ -47,7 +45,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
-  def get_users(course_id, group_id) do
+  def get_users(course_id, group_id) when is_ecto_id(group_id) and is_ecto_id(course_id) do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
     |> where([cr], cr.group_id == ^group_id)
@@ -56,9 +54,6 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> preload(:user)
     |> preload(:group)
     |> Repo.all()
-
-    # |> join(:inner, [cr, u], g in assoc(cr, :group))
-    # maybe not needed when we dont need group info
   end
 
   def enroll_course(params = %{user_id: user_id, course_id: course_id, role: _role})

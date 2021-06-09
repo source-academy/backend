@@ -5,7 +5,7 @@ defmodule CadetWeb.CoursesController do
 
   alias Cadet.Courses
 
-  def index(conn, %{"courseid" => course_id}) when is_ecto_id(course_id) do
+  def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     case Courses.get_course_config(course_id) do
       {:ok, config} -> render(conn, "config.json", config: config)
       {:error, {status, message}} -> send_resp(conn, status, message)
@@ -13,7 +13,7 @@ defmodule CadetWeb.CoursesController do
   end
 
   swagger_path :get_course_config do
-    get("/v2/course/{courseId}/config")
+    get("/v2/course/{course_id}/config")
 
     summary("Retrieves the course configuration of the specified course")
 
@@ -22,11 +22,11 @@ defmodule CadetWeb.CoursesController do
     produces("application/json")
 
     parameters do
-      courseId(:path, :integer, "Course ID", required: true)
+      course_id(:path, :integer, "Course ID", required: true)
     end
 
     response(200, "OK", Schema.ref(:Config))
-    response(400, "Invalid courseId")
+    response(400, "Invalid course_id")
   end
 
   def swagger_definitions do

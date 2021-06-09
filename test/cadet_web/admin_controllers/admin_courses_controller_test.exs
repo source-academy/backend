@@ -10,7 +10,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     AdminCoursesController.swagger_path_update_assessment_types(nil)
   end
 
-  describe "PUT /v2/course/{courseId}/admin/course_config" do
+  describe "PUT /v2/course/{course_id}/admin/course_config" do
     @tag authenticate: :admin
     test "succeeds 1", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -118,7 +118,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
-  describe "PUT /v2/course/{courseId}/admin/assessment_config" do
+  describe "PUT /v2/course/{course_id}/admin/assessment_config" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -194,7 +194,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
-  describe "PUT /v2/course/{courseId}/admin/assessment_types" do
+  describe "PUT /v2/course/{course_id}/admin/assessment_types" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]

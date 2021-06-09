@@ -20,13 +20,17 @@ defmodule Cadet.Repo.Migrations.UpdateAssessments do
 
     alter table(:groups) do
       remove(:leader_id)
-      add(:leader_id, references(:course_registrations), null: false)
+      add(:leader_id, references(:course_registrations), null: true)
       remove(:mentor_id)
       add(:mentor_id, references(:course_registrations), null: true)
-      add(:course_id, references(:courses), null: false)
+      add(:course_id, references(:courses), null: true)
     end
 
     create(unique_index(:groups, [:name, :course_id]))
+
+    alter table(:users) do
+      add(:latest_viewed_id, references(:courses), null: true)
+    end
 
   end
 end

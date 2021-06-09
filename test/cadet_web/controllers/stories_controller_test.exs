@@ -36,32 +36,32 @@ defmodule CadetWeb.StoriesControllerTest do
   end
 
   describe "unauthenticated" do
-    test "GET /v2/course/{courseId}/stories/", %{conn: conn} do
+    test "GET /v2/course/{course_id}/stories/", %{conn: conn} do
       course = insert(:course)
       conn = get(conn, build_url(course.id), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
 
-    test "POST /v2/course/{courseId}/stories/", %{conn: conn} do
+    test "POST /v2/course/{course_id}/stories/", %{conn: conn} do
       course = insert(:course)
       conn = post(conn, build_url(course.id), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
 
-    test "DELETE /v2/course/{courseId}/stories/:storyid", %{conn: conn} do
+    test "DELETE /v2/course/{course_id}/stories/:storyid", %{conn: conn} do
       course = insert(:course)
       conn = delete(conn, build_url(course.id, "storyid"), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
 
-    test "POST /v2/course/{courseId}/stories/:storyid", %{conn: conn} do
+    test "POST /v2/course/{course_id}/stories/:storyid", %{conn: conn} do
       course = insert(:course)
       conn = post(conn, build_url(course.id, "storyid"), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
-  describe "GET /v2/course/{courseId}/stories" do
+  describe "GET /v2/course/{course_id}/stories" do
     @tag authenticate: :student
     test "student permission, only obtain published open stories from own course", %{
       conn: conn,
@@ -136,7 +136,7 @@ defmodule CadetWeb.StoriesControllerTest do
         |> response(200)
         |> Jason.decode()
 
-      required_fields = ~w(openAt closeAt isPublished id title filenames imageUrl courseId)
+      required_fields = ~w(openAt closeAt isPublished id title filenames imageUrl course_id)
 
       Enum.each(required_fields, fn required_field ->
         value = resp[required_field]
@@ -146,14 +146,14 @@ defmodule CadetWeb.StoriesControllerTest do
           "id" -> assert is_integer(value)
           "filenames" -> assert is_list(value)
           "isPublished" -> assert is_boolean(value)
-          "courseId" -> assert is_integer(value)
+          "course_id" -> assert is_integer(value)
           _ -> assert is_binary(value)
         end
       end)
     end
   end
 
-  describe "DELETE /v2/course/{courseId}/stories/:storyid" do
+  describe "DELETE /v2/course/{course_id}/stories/:storyid" do
     @tag authenticate: :student
     test "student permission, forbidden", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -190,7 +190,7 @@ defmodule CadetWeb.StoriesControllerTest do
     end
   end
 
-  describe "POST /v2/course/{courseId}/stories/" do
+  describe "POST /v2/course/{course_id}/stories/" do
     @tag authenticate: :student
     test "student permission, forbidden", %{conn: conn, valid_params: params} do
       course_id = conn.assigns[:course_id]
@@ -216,7 +216,7 @@ defmodule CadetWeb.StoriesControllerTest do
     end
   end
 
-  describe "POST /v2/course/{courseId}/stories/:storyid" do
+  describe "POST /v2/course/{course_id}/stories/:storyid" do
     @tag authenticate: :student
     test "student permission, forbidden", %{conn: conn, valid_params: params} do
       course_id = conn.assigns[:course_id]

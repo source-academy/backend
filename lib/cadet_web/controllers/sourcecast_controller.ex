@@ -4,7 +4,7 @@ defmodule CadetWeb.SourcecastController do
 
   alias Cadet.Courses
 
-  def index(conn, %{"courseid" => course_id}) do
+  def index(conn, %{"course_id" => course_id}) do
     sourcecasts = Courses.get_sourcecast_files(course_id)
     render(conn, "index.json", sourcecasts: sourcecasts)
   end

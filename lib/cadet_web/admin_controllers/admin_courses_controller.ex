@@ -5,7 +5,7 @@ defmodule CadetWeb.AdminCoursesController do
 
   alias Cadet.Courses
 
-  def update_course_config(conn, params = %{"courseid" => course_id})
+  def update_course_config(conn, params = %{"course_id" => course_id})
       when is_ecto_id(course_id) do
     params = for {key, val} <- params, into: %{}, do: {String.to_atom(key), val}
 
@@ -30,7 +30,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   def update_assessment_config(conn, %{
-        "courseid" => course_id,
+        "course_id" => course_id,
         "early_submission_xp" => early_xp,
         "hours_before_early_xp_decay" => hours_before_decay,
         "decay_rate_points_per_hour" => decay_rate
@@ -52,7 +52,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   def update_assessment_types(conn, %{
-        "courseid" => course_id,
+        "course_id" => course_id,
         "assessment_types" => assessment_types
       })
       when is_ecto_id(course_id) do
@@ -72,7 +72,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   swagger_path :update_course_config do
-    put("/v2/course/{courseId}/admin/course_config")
+    put("/v2/course/{course_id}/admin/course_config")
 
     summary("Updates the course configuration for the specified course")
 
@@ -81,7 +81,7 @@ defmodule CadetWeb.AdminCoursesController do
     consumes("application/json")
 
     parameters do
-      courseId(:path, :integer, "Course ID", required: true)
+      course_id(:path, :integer, "Course ID", required: true)
       name(:body, :string, "Course name")
       module_code(:body, :string, "Course module code")
       viewable(:body, :boolean, "Course viewability")
@@ -98,7 +98,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   swagger_path :update_assessment_config do
-    put("/v2/course/{courseId}/admin/assessment_config")
+    put("/v2/course/{course_id}/admin/assessment_config")
 
     summary("Updates the assessment configuration for the specified course")
 
@@ -107,7 +107,7 @@ defmodule CadetWeb.AdminCoursesController do
     consumes("application/json")
 
     parameters do
-      courseId(:path, :integer, "Course ID", required: true)
+      course_id(:path, :integer, "Course ID", required: true)
       early_submission_xp(:body, :integer, "Early submission xp")
       hours_before_early_xp_decay(:body, :integer, "Hours before early submission xp decay")
       decay_rate_points_per_hour(:body, :integer, "Decay rate in points per hour")
@@ -119,7 +119,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   swagger_path :update_assessment_types do
-    put("/admin/courses/{courseId}/assessment_types")
+    put("/admin/courses/{course_id}/assessment_types")
 
     summary("Updates the assessment types for the specified course")
 
@@ -128,7 +128,7 @@ defmodule CadetWeb.AdminCoursesController do
     consumes("application/json")
 
     parameters do
-      courseId(:path, :integer, "Course ID", required: true)
+      course_id(:path, :integer, "Course ID", required: true)
       assessment_types(:body, :list, "Assessment Types")
     end
 

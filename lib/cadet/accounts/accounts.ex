@@ -6,7 +6,7 @@ defmodule Cadet.Accounts do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.{Query, User}
+  alias Cadet.Accounts.{Query, User, CourseRegistration}
   alias Cadet.Auth.Provider
 
   @doc """
@@ -14,21 +14,8 @@ defmodule Cadet.Accounts do
 
   Returns {:ok, user} on success, otherwise {:error, changeset}
   """
-  # def register(attrs = %{username: username}, role) when is_binary(username) do
-  #   attrs |> Map.put(:role, role) |> insert_or_update_user()
-  # end
   def register(attrs = %{username: username}) when is_binary(username) do
     attrs |> insert_or_update_user()
-  end
-
-  @doc """
-  Creates User entity with specified attributes.
-  """
-  # :TODO recheck if deprecated
-  def create_user(attrs \\ %{}) do
-    %User{}
-    |> User.changeset(attrs)
-    |> Repo.insert()
   end
 
   @doc """
@@ -60,20 +47,22 @@ defmodule Cadet.Accounts do
   @doc """
   Returns users matching a given set of criteria.
   """
-  # :TODO to pipe thru some join functon with mapping table so van get group id in a course
-  def get_users(filter \\ []) do
-    User
-    |> join(:left, [u], g in assoc(u, :group))
-    |> preload([u, g], group: g)
-    |> get_users(filter)
+  def get_users_by(filter \\ [], %CourseRegistration{course_id: course_id}) do
+    CourseRegistration
+    |> where([cr], cr.course_id == ^course_id)
+    |> join(:inner, [cr], u in assoc(cr, :user))
+    |> preload([cr, u], user: u)
+    |> join(:inner, [cr, u], g in assoc(cr, :group))
+    |> preload([cr, u, g], group: g)
+    |> get_users_helper(filter)
   end
 
-  defp get_users(query, []), do: Repo.all(query)
+  defp get_users_helper(query, []), do: Repo.all(query)
 
-  defp get_users(query, [{:group, group} | filters]),
-    do: query |> where([u, g], g.name == ^group) |> get_users(filters)
+  defp get_users_helper(query, [{:group, group} | filters]),
+    do: query |> where([cr, u, g], g.name == ^group) |> get_users_helper(filters)
 
-  defp get_users(query, [filter | filters]), do: query |> where(^[filter]) |> get_users(filters)
+  defp get_users_helper(query, [filter | filters]), do: query |> where(^[filter]) |> get_users_helper(filters)
 
   @spec sign_in(String.t(), Provider.token(), Provider.provider_instance()) ::
           {:error, :bad_request | :forbidden | :internal_server_error, String.t()} | {:ok, any}

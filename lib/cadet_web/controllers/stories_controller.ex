@@ -63,7 +63,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :index do
-    get("/v2/course/{courseId}/stories")
+    get("/v2/course/{course_id}/stories")
 
     summary("Get a list of all stories")
 
@@ -73,7 +73,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :create do
-    post("/v2/course/{courseId}/stories")
+    post("/v2/course/{course_id}/stories")
 
     summary("Creates a new story")
 
@@ -85,7 +85,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/v2/course/{courseId}/stories/{storyId}")
+    PhoenixSwagger.Path.delete("/v2/course/{course_id}/stories/{storyId}")
 
     summary("Delete a story from database by id")
 
@@ -101,7 +101,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :update do
-    post("/v2/course/{courseId}/stories/{storyId}")
+    post("/v2/course/{course_id}/stories/{storyId}")
 
     summary("Update details regarding a story")
 
@@ -130,7 +130,7 @@ defmodule CadetWeb.StoriesController do
             openAt(:string, "The opening date", format: "date-time", required: true)
             closeAt(:string, "The closing date", format: "date-time", required: true)
             isPublished(:boolean, "Whether or not is published", required: false)
-            courseId(:integer, "The id of the course that this story belongs to", required: true)
+            course_id(:integer, "The id of the course that this story belongs to", required: true)
           end
         end
     }
