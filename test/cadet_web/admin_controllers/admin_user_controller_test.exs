@@ -19,7 +19,9 @@ defmodule CadetWeb.AdminUserControllerTest do
     test "success, when staff retrieves users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-      stu = insert(:course_registration, %{role: :student, course: course})
+      group = insert(:group, %{course: course})
+      insert(:course_registration, %{role: :student, course: course, group: group})
+      insert(:course_registration, %{role: :staff, course: course, group: group})
 
       resp =
         conn
@@ -29,43 +31,52 @@ defmodule CadetWeb.AdminUserControllerTest do
       assert 2 == Enum.count(resp)
     end
 
-    # @tag authenticate: :staff
-    # test "can filter by role", %{conn: conn} do
-    #   insert(:student)
+    @tag authenticate: :staff
+    test "can filter by role", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+      group = insert(:group, %{course: course})
+      insert(:course_registration, %{role: :student, course: course, group: group})
+      insert(:course_registration, %{role: :staff, course: course, group: group})
 
-    #   resp =
-    #     conn
-    #     |> get("/v2/admin/users?role=student")
-    #     |> json_response(200)
+      resp =
+      conn
+      |> get(build_url(course_id) <> "?role=student")
+      |> json_response(200)
 
-    #   assert 1 == Enum.count(resp)
-    #   assert "student" == List.first(resp)["role"]
-    # end
+      assert 1 == Enum.count(resp)
+      assert "student" == List.first(resp)["role"]
+    end
 
-    # @tag authenticate: :staff
-    # test "can filter by group", %{conn: conn} do
-    #   group = insert(:group)
-    #   insert(:student, group: group)
+    @tag authenticate: :staff
+    test "can filter by group", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+      group = insert(:group, %{course: course})
+      insert(:course_registration, %{role: :student, course: course, group: group})
+      insert(:course_registration, %{role: :staff, course: course, group: group})
 
-    #   resp =
-    #     conn
-    #     |> get("/v2/admin/users?group=#{group.name}")
-    #     |> json_response(200)
+      resp =
+        conn
+        |> get(build_url(course_id) <> "?group=#{group.name}")
+        |> json_response(200)
 
-    #   assert 1 == Enum.count(resp)
-    #   assert group.name == List.first(resp)["group"]
-    # end
+      assert 2 == Enum.count(resp)
+      assert group.name == List.first(resp)["group"]
+    end
 
-    # @tag authenticate: :student
-    # test "forbidden, when student retrieves users", %{conn: conn} do
-    #   assert conn
-    #          |> get("/v2/admin/users")
-    #          |> response(403)
-    # end
+    @tag authenticate: :student
+    test "forbidden, when student retrieves users", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      assert conn
+             |> get(build_url(course_id))
+             |> response(403)
+    end
 
     # test "401 when not logged in", %{conn: conn} do
+    #   course_id = conn.assigns[:course_id]
     #   assert conn
-    #          |> get("/v2/admin/users")
+    #          |> get(build_url(course_id))
     #          |> response(401)
     # end
   end
