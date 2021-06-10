@@ -6,8 +6,6 @@ defmodule CadetWeb.AdminUserControllerTest do
   alias CadetWeb.AdminUserController
   alias Cadet.Repo
   alias Cadet.Courses.Course
-  alias Cadet.Accounts.CourseRegistrations
-  alias Cadet.Accounts
 
   test "swagger" do
     assert is_map(AdminUserController.swagger_definitions())
@@ -16,7 +14,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
   describe "GET /v2/course/{course_id}/admin/users" do
     @tag authenticate: :staff
-    test "success, when staff retrieves users", %{conn: conn} do
+    test "success, when staff retrieves all users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
       group = insert(:group, %{course: course})
@@ -28,7 +26,7 @@ defmodule CadetWeb.AdminUserControllerTest do
         |> get(build_url(course_id))
         |> json_response(200)
 
-      assert 2 == Enum.count(resp)
+      assert 3 == Enum.count(resp)
     end
 
     @tag authenticate: :staff

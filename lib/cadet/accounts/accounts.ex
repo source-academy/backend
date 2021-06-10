@@ -44,15 +44,16 @@ defmodule Cadet.Accounts do
     Repo.get(User, id)
   end
 
+  @get_all_role ~w(admin staff)a
   @doc """
   Returns users matching a given set of criteria.
   """
-  def get_users_by(filter \\ [], %CourseRegistration{course_id: course_id}) do
+  def get_users_by(filter \\ [], %CourseRegistration{course_id: course_id, role: role}) when role in @get_all_role do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], u in assoc(cr, :user))
     |> preload([cr, u], user: u)
-    |> join(:inner, [cr, u], g in assoc(cr, :group))
+    |> join(:left, [cr, u], g in assoc(cr, :group))
     |> preload([cr, u, g], group: g)
     |> get_users_helper(filter)
   end

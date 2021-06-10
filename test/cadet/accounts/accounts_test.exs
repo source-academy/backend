@@ -9,7 +9,7 @@ defmodule Cadet.AccountsTest do
   alias Cadet.{Accounts, Repo}
   alias Cadet.Accounts.{Query, User}
 
-  import Mock
+  # import Mock
 
   setup_all do
     HTTPoison.start()
@@ -107,21 +107,53 @@ defmodule Cadet.AccountsTest do
     end
   end
 
+
   describe "get_users_by" do
-    test "get all users in a course" do
+    setup do
+      c1 = insert(:course, %{name: "c1"})
+      c2 = insert(:course, %{name: "c2"})
+      admin1 = insert(:course_registration, %{course: c1, role: :admin})
+      admin2 = insert(:course_registration, %{course: c2, role: :admin})
+      g1 = insert(:group, %{course: c1})
+      g2 = insert(:group, %{course: c1})
+      insert(:course_registration, %{course: c1, group: g1, role: :student})
+      insert(:course_registration, %{course: c1, group: g1, role: :student})
 
+      {:ok, %{c1: c1, c2: c2, a1: admin1, a2: admin2, g1: g1, g2: g2}}
     end
 
-    test "get all students in a course" do
-
+    test "get all users in a course", %{a1: admin1, a2: admin2} do
+      all_in_c1 = Accounts.get_users_by([], admin1)
+      assert length(all_in_c1) == 3
+      all_in_c2 = Accounts.get_users_by([], admin2)
+      assert length(all_in_c2) == 1
     end
 
-    test "get all users in a group in a course" do
-
+    test "get all students in a course", %{a1: admin1, a2: admin2} do
+      all_stu_in_c1 = Accounts.get_users_by([role: :student], admin1)
+      assert length(all_stu_in_c1) == 2
+      all_stu_in_c2 = Accounts.get_users_by([role: :student], admin2)
+      assert length(all_stu_in_c2) == 0
     end
 
-    test "get all students in a group in a course" do
+    test "get all users in a group in a course", %{a1: admin1, g1: g1, g2: g2} do
+      all_in_c1g1 = Accounts.get_users_by([group: g1.name], admin1)
+      assert length(all_in_c1g1) == 2
+      all_in_c1g2 = Accounts.get_users_by([group: g2.name], admin1)
+      assert length(all_in_c1g2) == 0
+    end
 
+    test "get all students in a group in a course", %{c1: c1, a1: admin1, g1: g1, g2: g2} do
+      insert(:course_registration, %{course: c1, group: g1, role: :staff})
+      insert(:course_registration, %{course: c1, group: g2, role: :staff})
+      all_in_c1g1 = Accounts.get_users_by([group: g1.name], admin1)
+      assert length(all_in_c1g1) == 3
+      all_in_c1g2 = Accounts.get_users_by([group: g2.name], admin1)
+      assert length(all_in_c1g2) == 1
+      all_stu_in_c1g1 = Accounts.get_users_by([group: g1.name, role: :student], admin1)
+      assert length(all_stu_in_c1g1) == 2
+      all_stu_in_c1g2 = Accounts.get_users_by([group: g2.name, role: :student], admin1)
+      assert length(all_stu_in_c1g2) == 0
     end
   end
 end
