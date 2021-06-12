@@ -20,13 +20,15 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> where([cr], cr.user_id == ^user_id)
     |> where([cr], cr.course_id == ^course_id)
     |> Repo.one()
-    |> case do
-      nil ->
-        {:error, :no_record}
+  end
 
-      cr ->
-        {:ok, cr}
-    end
+  def get_user_course(user_id, course_id) when is_ecto_id(user_id) and is_ecto_id(course_id) do
+    CourseRegistration
+    |> where([cr], cr.user_id == ^user_id)
+    |> where([cr], cr.course_id == ^course_id)
+    |> preload(:course)
+    |> preload(:group)
+    |> Repo.one()
   end
 
   def get_courses(%User{id: id}) do

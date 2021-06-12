@@ -3,9 +3,8 @@ defmodule CadetWeb.AdminUserController do
   use PhoenixSwagger
 
   alias Cadet.Accounts
-  # alias Cadet.Accounts.CourseRegistrations
 
-  # :TODO this controller seems to be obsolte in the current version we will use the course_reg controller to find all users of a course
+  # This controller is used to find all users of a course
 
   def index(conn, filter) do
     users = filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
@@ -14,7 +13,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   swagger_path :index do
-    get("/admin/users")
+    get("/v2/course/{course_id}/admin/users")
 
     summary("Returns a list of users in the course owned by the admin")
 
@@ -29,7 +28,7 @@ defmodule CadetWeb.AdminUserController do
       AdminUserInfo:
         swagger_schema do
           title("User")
-          description("Basic information about the users in this course")
+          description("Basic information about the user in this course")
 
           properties do
             userId(:integer, "User's ID")

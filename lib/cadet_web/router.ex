@@ -49,7 +49,16 @@ defmodule CadetWeb.Router do
     get("/devices/:secret/mqtt_endpoint", DevicesController, :get_mqtt_endpoint)
   end
 
-  # Authenticated Pages
+  # Authenticated Pages without course
+  scope "/v2", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth])
+
+    get("/user", UserController, :index)
+    get("/user/latest_viewed", UserController, :get_latest_viewed)
+    post("/user/latest_viewed", UserController, :update_latest_viewed)
+  end
+
+  # Authenticated Pages with course
   scope "/v2/course/:course_id", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
@@ -72,7 +81,7 @@ defmodule CadetWeb.Router do
     get("/notifications", NotificationsController, :index)
     post("/notifications/acknowledge", NotificationsController, :acknowledge)
 
-    get("/user", UserController, :index)
+    get("/user", UserController, :get_course_reg)
     put("/user/game_states", UserController, :update_game_states)
 
     get("/config", CoursesController, :index)
@@ -171,11 +180,8 @@ defmodule CadetWeb.Router do
       Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)
 
     case course_reg do
-      {:ok, cr} ->
-        assign(conn, :course_reg, cr)
-
-      {:error, :no_record} ->
-        send_resp(conn, 403, "Forbidden") |> halt()
+      nil -> send_resp(conn, 403, "Forbidden") |> halt()
+      cr -> assign(conn, :course_reg, cr)
     end
   end
 

@@ -7,29 +7,50 @@ defmodule CadetWeb.UserController do
   use PhoenixSwagger
   import Cadet.Assessments
   alias Cadet.Accounts
+  alias Cadet.Accounts.CourseRegistrations
 
   def index(conn, _) do
-    user = user_with_group(conn.assigns.current_user)
-    %{total_grade: grade, total_xp: xp} = user_total_grade_xp(user)
-    max_grade = user_max_grade(user)
-    story = user_current_story(user)
+    user = Accounts.get_user(conn.assigns.current_user.id)
+    user_courses = CourseRegistrations.get_courses(conn.assigns.current_user)
+    latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_id)
+
+    %{total_grade: grade, total_xp: xp} = user_total_grade_xp(latest)
+    max_grade = user_max_grade(latest)
+    story = user_current_story(latest)
 
     render(
       conn,
       "index.json",
       user: user,
+      courses: user_courses,
+      latest: latest,
       grade: grade,
       max_grade: max_grade,
       story: story,
-      xp: xp,
-      game_states: user.game_states
+      xp: xp
     )
   end
+  # def index(conn, _) do
+  #   user = user_with_group(conn.assigns.current_user)
+  #   %{total_grade: grade, total_xp: xp} = user_total_grade_xp(user)
+  #   max_grade = user_max_grade(user)
+  #   story = user_current_story(user)
+
+  #   render(
+  #     conn,
+  #     "index.json",
+  #     user: user,
+  #     grade: grade,
+  #     max_grade: max_grade,
+  #     story: story,
+  #     xp: xp
+  #   )
+  # end
 
   def update_game_states(conn, %{"gameStates" => new_game_states}) do
     user = conn.assigns[:current_user]
 
-    case Accounts.update_game_states(user, new_game_states) do
+    case CourseRegistrations.update_game_states(user, new_game_states) do
       {:ok, %{}} ->
         text(conn, "OK")
 
@@ -41,9 +62,9 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :index do
-    get("/user")
+    get("/v2/user")
 
-    summary("Get the name, role and group of a user")
+    summary("Get the name, and latest_viewed_course of a user")
 
     security([%{JWT: []}])
     produces("application/json")

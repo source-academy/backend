@@ -50,10 +50,12 @@ defmodule CadetWeb.ConnCase do
     conn = Phoenix.ConnTest.build_conn()
 
     if tags[:authenticate] do
+      course = Cadet.Factory.insert(:course)
+      user = Cadet.Factory.insert(:user, %{latest_viewed: course})
       course_registration =
         cond do
           is_atom(tags[:authenticate]) ->
-            Cadet.Factory.insert(:course_registration, %{role: tags[:authenticate]})
+            Cadet.Factory.insert(:course_registration, %{user: user, course: course, role: tags[:authenticate]})
 
           # :TODO: This is_map case has not been handled. To recheck in the future.
           is_map(tags[:authenticate]) ->

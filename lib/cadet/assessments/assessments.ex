@@ -63,11 +63,11 @@ defmodule Cadet.Assessments do
     Repo.delete_all(submissions)
   end
 
-  @spec user_max_grade(%User{}) :: integer()
-  def user_max_grade(%User{id: user_id}) when is_ecto_id(user_id) do
+  @spec user_max_grade(%CourseRegistration{}) :: integer()
+  def user_max_grade(%CourseRegistration{id: cr_id}) do
     Submission
     |> where(status: ^:submitted)
-    |> where(student_id: ^user_id)
+    |> where(student_id: ^cr_id)
     |> join(
       :inner,
       [s],
@@ -79,10 +79,10 @@ defmodule Cadet.Assessments do
     |> decimal_to_integer()
   end
 
-  def user_total_grade_xp(%User{id: user_id}) do
+  def user_total_grade_xp(%CourseRegistration{id: cr_id}) do
     submission_grade_xp =
       Submission
-      |> where(student_id: ^user_id)
+      |> where(student_id: ^cr_id)
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
@@ -112,23 +112,18 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def user_with_group(%User{id: id}) do
-    User
-    |> preload(:group)
-    |> Repo.get(id)
-  end
-
-  def user_current_story(user = %User{}) do
+  # :TODO to check how this story works
+  def user_current_story(cr = %CourseRegistration{}) do
     {:ok, %{result: story}} =
       Multi.new()
       |> Multi.run(:unattempted, fn _repo, _ ->
-        {:ok, get_user_story_by_type(user, :unattempted)}
+        {:ok, get_user_story_by_type(cr, :unattempted)}
       end)
       |> Multi.run(:result, fn _repo, %{unattempted: unattempted_story} ->
         if unattempted_story do
           {:ok, %{play_story?: true, story: unattempted_story}}
         else
-          {:ok, %{play_story?: false, story: get_user_story_by_type(user, :attempted)}}
+          {:ok, %{play_story?: false, story: get_user_story_by_type(cr, :attempted)}}
         end
       end)
       |> Repo.transaction()
@@ -136,8 +131,8 @@ defmodule Cadet.Assessments do
     story
   end
 
-  @spec get_user_story_by_type(%User{}, :unattempted | :attempted) :: String.t() | nil
-  def get_user_story_by_type(%User{id: user_id}, type)
+  @spec get_user_story_by_type(%CourseRegistration{}, :unattempted | :attempted) :: String.t() | nil
+  def get_user_story_by_type(%CourseRegistration{id: cr_id}, type)
       when is_atom(type) do
     filter_and_sort = fn query ->
       case type do
@@ -155,9 +150,9 @@ defmodule Cadet.Assessments do
     |> where(is_published: true)
     |> where([a], not is_nil(a.story))
     |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
-    |> join(:left, [a], s in Submission, on: s.assessment_id == a.id and s.student_id == ^user_id)
+    |> join(:left, [a], s in Submission, on: s.assessment_id == a.id and s.student_id == ^cr_id)
     |> filter_and_sort.()
-    |> order_by([a], a.type)
+    |> order_by([a], a.type_id)
     |> select([a], a.story)
     |> first()
     |> Repo.one()
@@ -203,9 +198,10 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def assessment_with_questions_and_answers(id, user = %User{}, password)
+  # def assessment_with_questions_and_answers(id, user = %User{}, password)
+  def assessment_with_questions_and_answers(id, cr = %CourseRegistration{}, password)
       when is_ecto_id(id) do
-    role = user.role
+    role = cr.role
 
     assessment =
       if role in @open_all_assessment_roles do
@@ -220,7 +216,7 @@ defmodule Cadet.Assessments do
       end
 
     if assessment do
-      assessment_with_questions_and_answers(assessment, user, password)
+      assessment_with_questions_and_answers(assessment, cr, password)
     else
       {:error, {:bad_request, "Assessment not found"}}
     end
