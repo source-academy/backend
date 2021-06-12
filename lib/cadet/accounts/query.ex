@@ -19,6 +19,7 @@ defmodule Cadet.Accounts.Query do
   def username(username) do
     User
     |> of_username(username)
+    |> preload(:latest_viewed)
   end
 
   # :TODO test
