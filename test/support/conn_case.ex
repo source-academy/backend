@@ -52,14 +52,19 @@ defmodule CadetWeb.ConnCase do
     if tags[:authenticate] do
       course = Cadet.Factory.insert(:course)
       user = Cadet.Factory.insert(:user, %{latest_viewed: course})
+
       course_registration =
         cond do
           is_atom(tags[:authenticate]) ->
-            Cadet.Factory.insert(:course_registration, %{user: user, course: course, role: tags[:authenticate]})
+            Cadet.Factory.insert(:course_registration, %{
+              user: user,
+              course: course,
+              role: tags[:authenticate]
+            })
 
           # :TODO: This is_map case has not been handled. To recheck in the future.
           is_map(tags[:authenticate]) ->
-            tags[:authenticate]
+            Cadet.Factory.insert(:course_registration, tags[:authenticate])
 
           true ->
             nil
@@ -75,7 +80,13 @@ defmodule CadetWeb.ConnCase do
 
       {:ok, conn: conn}
     else
-      {:ok, conn: conn}
+      if tags[:sign_in] do
+        user = Cadet.Factory.insert(:user, tags[:sign_in])
+        conn = sign_in(conn, user)
+        {:ok, conn: conn}
+      else
+        {:ok, conn: conn}
+      end
     end
   end
 

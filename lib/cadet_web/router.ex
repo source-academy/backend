@@ -55,7 +55,7 @@ defmodule CadetWeb.Router do
 
     get("/user", UserController, :index)
     get("/user/latest_viewed", UserController, :get_latest_viewed)
-    post("/user/latest_viewed", UserController, :update_latest_viewed)
+    put("/user/latest_viewed/:course_id", UserController, :update_latest_viewed)
   end
 
   # Authenticated Pages with course
@@ -130,7 +130,7 @@ defmodule CadetWeb.Router do
     post("/users/:userid/goals/:uuid/progress", AdminGoalsController, :update_progress)
 
     put("/achievements", AdminAchievementsController, :bulk_update)
-    put("/achievements/:uuid", AdminAchievementsController, :update)
+    # put("/achievements/:uuid", AdminAchievementsController, :update)
     delete("/achievements/:uuid", AdminAchievementsController, :delete)
 
     get("/goals", AdminGoalsController, :index)

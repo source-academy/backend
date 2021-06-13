@@ -38,9 +38,9 @@ defmodule CadetWeb.AdminUserControllerTest do
       insert(:course_registration, %{role: :staff, course: course, group: group})
 
       resp =
-      conn
-      |> get(build_url(course_id) <> "?role=student")
-      |> json_response(200)
+        conn
+        |> get(build_url(course_id) <> "?role=student")
+        |> json_response(200)
 
       assert 1 == Enum.count(resp)
       assert "student" == List.first(resp)["role"]
@@ -66,6 +66,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     @tag authenticate: :student
     test "forbidden, when student retrieves users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
+
       assert conn
              |> get(build_url(course_id))
              |> response(403)

@@ -19,13 +19,6 @@ defmodule Cadet.Accounts.CourseRegistrations do
     CourseRegistration
     |> where([cr], cr.user_id == ^user_id)
     |> where([cr], cr.course_id == ^course_id)
-    |> Repo.one()
-  end
-
-  def get_user_course(user_id, course_id) when is_ecto_id(user_id) and is_ecto_id(course_id) do
-    CourseRegistration
-    |> where([cr], cr.user_id == ^user_id)
-    |> where([cr], cr.course_id == ^course_id)
     |> preload(:course)
     |> preload(:group)
     |> Repo.one()
@@ -96,8 +89,8 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   def update_game_states(cr = %CourseRegistration{}, new_game_state = %{}) do
     case cr
-          |> CourseRegistration.changeset(%{game_states: new_game_state})
-          |> Repo.update() do
+         |> CourseRegistration.changeset(%{game_states: new_game_state})
+         |> Repo.update() do
       result = {:ok, _} -> result
       {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
     end

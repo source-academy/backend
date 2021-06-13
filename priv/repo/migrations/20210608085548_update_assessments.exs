@@ -31,6 +31,5 @@ defmodule Cadet.Repo.Migrations.UpdateAssessments do
     alter table(:users) do
       add(:latest_viewed_id, references(:courses), null: true)
     end
-
   end
 end

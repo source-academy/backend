@@ -131,7 +131,8 @@ defmodule Cadet.Assessments do
     story
   end
 
-  @spec get_user_story_by_type(%CourseRegistration{}, :unattempted | :attempted) :: String.t() | nil
+  @spec get_user_story_by_type(%CourseRegistration{}, :unattempted | :attempted) ::
+          String.t() | nil
   def get_user_story_by_type(%CourseRegistration{id: cr_id}, type)
       when is_atom(type) do
     filter_and_sort = fn query ->

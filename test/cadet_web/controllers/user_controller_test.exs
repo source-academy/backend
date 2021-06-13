@@ -5,7 +5,7 @@ defmodule CadetWeb.UserControllerTest do
 
   alias Cadet.Repo
   alias CadetWeb.UserController
-  alias Cadet.Assessments.{Assessment, Submission}
+  # alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Accounts.{User, CourseRegistration}
 
   test "swagger" do
@@ -19,6 +19,7 @@ defmodule CadetWeb.UserControllerTest do
       user = conn.assigns.current_user
       course = user.latest_viewed
       cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
+      another_cr = insert(:course_registration, %{user: user})
       assessment = insert(:assessment, %{is_published: true, course: course})
       question = insert(:question, %{assessment: assessment})
 
@@ -57,7 +58,7 @@ defmodule CadetWeb.UserControllerTest do
         conn
         |> get("/v2/user")
         |> json_response(200)
-        |> put_in(["latestViewedCourse", "story"], nil)
+        |> put_in(["courseRegistration", "story"], nil)
         |> IO.inspect()
 
       expected = %{
@@ -65,22 +66,22 @@ defmodule CadetWeb.UserControllerTest do
           "userId" => user.id,
           "name" => user.name,
           "courses" => [
-            %{"course_id" => user.latest_viewed_id, "moduleCode" => "CS1101S", "name" => "Programming Methodology", "viewable" => true}
+            %{
+              "course_id" => user.latest_viewed_id,
+              "moduleCode" => "CS1101S",
+              "name" => "Programming Methodology",
+              "viewable" => true
+            },
+            %{
+              "course_id" => another_cr.course_id,
+              "moduleCode" => "CS1101S",
+              "name" => "Programming Methodology",
+              "viewable" => true
+            }
           ]
         },
-        "latestViewedCourse" => %{
-          "course" => %{
-            "assessment_types" => nil,
-            "enable_achievements" => true,
-            "enable_game" => true,
-            "enable_sourcecast" => true,
-            "module_code" => "CS1101S",
-            "module_help_text" => "Help Text",
-            "name" => "Programming Methodology",
-            "source_chapter" => 1,
-            "source_variant" => "default",
-            "viewable" => true
-          },
+        "courseRegistration" => %{
+          "courseId" => course.id,
           "role" => "#{cr.role}",
           "group" => nil,
           "xp" => 110,
@@ -88,7 +89,41 @@ defmodule CadetWeb.UserControllerTest do
           "maxGrade" => question.max_grade,
           "gameStates" => %{},
           "story" => nil
+        },
+        "courseConfiguration" => %{
+          "assessmentTypes" => nil,
+          "enableAchievements" => true,
+          "enableGame" => true,
+          "enableSourcecast" => true,
+          "moduleCode" => "CS1101S",
+          "moduleHelpText" => "Help Text",
+          "moduleName" => "Programming Methodology",
+          "sourceChapter" => 1,
+          "sourceVariant" => "default",
+          "viewable" => true
         }
+      }
+
+      assert expected == resp
+    end
+
+    @tag sign_in: %{latest_viewed: nil}
+    test "success, no latest_viewed course", %{conn: conn} do
+      user = conn.assigns.current_user
+
+      resp =
+        conn
+        |> get("/v2/user")
+        |> json_response(200)
+
+      expected = %{
+        "user" => %{
+          "userId" => user.id,
+          "name" => user.name,
+          "courses" => []
+        },
+        "courseRegistration" => nil,
+        "courseConfiguration" => nil
       }
 
       assert expected == resp
@@ -274,33 +309,151 @@ defmodule CadetWeb.UserControllerTest do
     # end
   end
 
-  # describe "PUT /user/game_states" do
-  #   @tag authenticate: :student
-  #   test "success, updating game state", %{conn: conn} do
-  #     user = conn.assigns.current_user
+  describe "GET /v2/user/latest_viewed" do
+    @tag authenticate: :student
+    test "success, student non-story fields", %{conn: conn} do
+      user = conn.assigns.current_user
+      course = user.latest_viewed
+      cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
+      _another_cr = insert(:course_registration, %{user: user})
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
 
-  #     new_game_states = %{
-  #       "gameSaveStates" => %{"1" => %{}, "2" => %{}},
-  #       "userSaveState" => %{}
-  #     }
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
 
-  #     conn
-  #     |> put("/v2/user/game_states", %{"gameStates" => new_game_states})
-  #     |> response(200)
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        grade: 50,
+        adjustment: -10,
+        xp: 20,
+        xp_adjustment: -10
+      })
 
-  #     updated_user = Repo.get(User, user.id)
+      not_submitted_assessment = insert(:assessment, %{is_published: true, course: course})
+      not_submitted_question = insert(:question, assessment: not_submitted_assessment)
 
-  #     assert new_game_states == updated_user.game_states
-  #   end
+      not_submitted_submission =
+        insert(:submission, %{assessment: not_submitted_assessment, student: cr})
 
-  #   @tag authenticate: :student
-  #   test "success, retrieving student game state", %{conn: conn} do
-  #     resp =
-  #       conn
-  #       |> get("/v2/user")
-  #       |> json_response(200)
+      insert(
+        :answer,
+        question: not_submitted_question,
+        submission: not_submitted_submission,
+        grade: 0,
+        adjustment: 0
+      )
 
-  #     assert %{} == resp["gameStates"]
-  #   end
-  # end
+      resp =
+        conn
+        |> get("/v2/user/latest_viewed")
+        |> json_response(200)
+        |> put_in(["courseRegistration", "story"], nil)
+        |> IO.inspect()
+
+      expected = %{
+        "courseRegistration" => %{
+          "courseId" => course.id,
+          "role" => "#{cr.role}",
+          "group" => nil,
+          "xp" => 110,
+          "grade" => 40,
+          "maxGrade" => question.max_grade,
+          "gameStates" => %{},
+          "story" => nil
+        },
+        "courseConfiguration" => %{
+          "assessmentTypes" => nil,
+          "enableAchievements" => true,
+          "enableGame" => true,
+          "enableSourcecast" => true,
+          "moduleCode" => "CS1101S",
+          "moduleHelpText" => "Help Text",
+          "moduleName" => "Programming Methodology",
+          "sourceChapter" => 1,
+          "sourceVariant" => "default",
+          "viewable" => true
+        }
+      }
+
+      assert expected == resp
+    end
+
+    @tag sign_in: %{latest_viewed: nil}
+    test "success, no latest_viewed course", %{conn: conn} do
+      resp =
+        conn
+        |> get("/v2/user/latest_viewed")
+        |> json_response(200)
+
+      expected = %{
+        "courseRegistration" => nil,
+        "courseConfiguration" => nil
+      }
+
+      assert expected == resp
+    end
+
+    test "unauthorized", %{conn: conn} do
+      conn = get(conn, "/v2/user/latest_viewed", nil)
+      assert response(conn, 401) =~ "Unauthorised"
+    end
+  end
+
+  describe "PUT /v2/user/latest_viewed/{course_id}" do
+    @tag authenticate: :student
+    test "success, updating game state", %{conn: conn} do
+      user = conn.assigns.current_user
+      new_course = insert(:course)
+      insert(:course_registration, %{user: user, course: new_course})
+
+      conn
+      |> put("/v2/user/latest_viewed/#{new_course.id}")
+      |> response(200)
+
+      updated_user = Repo.get(User, user.id)
+
+      assert new_course.id == updated_user.latest_viewed_id
+    end
+  end
+
+  describe "PUT /v2/course/{course_id}/user/game_states" do
+    @tag authenticate: :student
+    test "success, updating game state", %{conn: conn} do
+      user = conn.assigns.current_user
+      course_id = conn.assigns.course_id
+
+      new_game_states = %{
+        "gameSaveStates" => %{"1" => %{}, "2" => %{}},
+        "userSaveState" => %{}
+      }
+
+      conn
+      |> put(build_url(course_id) <> "/game_states", %{"gameStates" => new_game_states})
+      |> response(200)
+
+      updated_cr = Repo.get_by(CourseRegistration, course_id: course_id, user_id: user.id)
+
+      assert new_game_states == updated_cr.game_states
+    end
+
+    @tag authenticate: :student
+    test "success, retrieving student game state", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      resp =
+        conn
+        |> get(build_url(course_id))
+        |> json_response(200)
+
+      assert %{} == resp["courseRegistration"]["gameStates"]
+    end
+  end
+
+  defp build_url(course_id), do: "/v2/course/#{course_id}/user"
 end

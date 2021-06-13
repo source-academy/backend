@@ -48,7 +48,8 @@ defmodule Cadet.Accounts do
   @doc """
   Returns users matching a given set of criteria.
   """
-  def get_users_by(filter \\ [], %CourseRegistration{course_id: course_id, role: role}) when role in @get_all_role do
+  def get_users_by(filter \\ [], %CourseRegistration{course_id: course_id, role: role})
+      when role in @get_all_role do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], u in assoc(cr, :user))
@@ -63,7 +64,8 @@ defmodule Cadet.Accounts do
   defp get_users_helper(query, [{:group, group} | filters]),
     do: query |> where([cr, u, g], g.name == ^group) |> get_users_helper(filters)
 
-  defp get_users_helper(query, [filter | filters]), do: query |> where(^[filter]) |> get_users_helper(filters)
+  defp get_users_helper(query, [filter | filters]),
+    do: query |> where(^[filter]) |> get_users_helper(filters)
 
   @spec sign_in(String.t(), Provider.token(), Provider.provider_instance()) ::
           {:error, :bad_request | :forbidden | :internal_server_error, String.t()} | {:ok, any}
@@ -101,8 +103,8 @@ defmodule Cadet.Accounts do
 
   def update_latest_viewed(user = %User{}, latest_viewed_id) when is_ecto_id(latest_viewed_id) do
     case user
-          |> User.changeset(%{latest_viewed_id: latest_viewed_id})
-          |> Repo.update() do
+         |> User.changeset(%{latest_viewed_id: latest_viewed_id})
+         |> Repo.update() do
       result = {:ok, _} -> result
       {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
     end

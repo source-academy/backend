@@ -26,6 +26,7 @@ defmodule Cadet.Courses.Group do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> add_belongs_to_id_from_model([:leader, :mentor, :course], attrs)
+
     # |> validate_course
   end
 

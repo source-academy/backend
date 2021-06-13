@@ -7,7 +7,8 @@ defmodule CadetWeb.AdminUserController do
   # This controller is used to find all users of a course
 
   def index(conn, filter) do
-    users = filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
+    users =
+      filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
 
     render(conn, "users.json", users: users)
   end
@@ -33,7 +34,11 @@ defmodule CadetWeb.AdminUserController do
           properties do
             userId(:integer, "User's ID")
             name(:string, "Full name of the user")
-            role(:string, "Role of the user in this course. Can be 'student', 'staff', or 'admin'")
+
+            role(
+              :string,
+              "Role of the user in this course. Can be 'student', 'staff', or 'admin'"
+            )
 
             group(
               :string,

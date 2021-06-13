@@ -107,7 +107,6 @@ defmodule Cadet.AccountsTest do
     end
   end
 
-
   describe "get_users_by" do
     setup do
       c1 = insert(:course, %{name: "c1"})
