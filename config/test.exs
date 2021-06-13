@@ -52,22 +52,22 @@ config :cadet,
            token: "admin_token",
            code: "admin_code",
            name: "Test Admin",
-           username: "admin",
-           role: :admin
+           username: "admin"
+           #  role: :admin
          },
          %{
            token: "staff_token",
            code: "staff_code",
            name: "Test Staff",
-           username: "staff",
-           role: :staff
+           username: "staff"
+           #  role: :staff
          },
          %{
            token: "student_token",
            code: "student_code",
            name: "Test Student",
-           username: "student",
-           role: :student
+           username: "student"
+           #  role: :student
          }
        ]}
   },

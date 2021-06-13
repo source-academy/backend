@@ -1,9 +1,7 @@
 defmodule Cadet.Accounts.User do
   @moduledoc """
   The User entity represents a user.
-  It stores basic information such as name and role
-  Each user is associated to one `role` which determines the access level
-  of the user.
+  It stores basic information such as name
   """
   use Cadet, :model
 

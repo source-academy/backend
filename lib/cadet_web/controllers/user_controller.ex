@@ -12,6 +12,7 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
+
     if user.latest_viewed_id do
       latest = CourseRegistrations.get_user_record(user.id, user.latest_viewed_id)
       %{total_grade: grade, total_xp: xp} = user_total_grade_xp(latest)
@@ -30,10 +31,18 @@ defmodule CadetWeb.UserController do
         xp: xp
       )
     else
-      render(conn, "index.json", user: user, courses: courses, latest: nil, grade: nil, max_grade: nil, story: nil, xp: nil)
+      render(conn, "index.json",
+        user: user,
+        courses: courses,
+        latest: nil,
+        grade: nil,
+        max_grade: nil,
+        story: nil,
+        xp: nil
+      )
     end
-
   end
+
   # def index(conn, _) do
   #   user = user_with_group(conn.assigns.current_user)
   #   %{total_grade: grade, total_xp: xp} = user_total_grade_xp(user)
@@ -53,6 +62,7 @@ defmodule CadetWeb.UserController do
 
   def get_latest_viewed(conn, _) do
     user = conn.assigns.current_user
+
     latest =
       case user.latest_viewed_id do
         nil -> nil
@@ -170,8 +180,16 @@ defmodule CadetWeb.UserController do
 
           properties do
             user(Schema.ref(:UserInfo), "user info")
-            courseRegistration(Schema.ref(:CourseRegistration), "course registration of the latest viewed course")
-            courseConfiguration(Schema.ref(:CourseConfiguration), "course configuration of the latest viewed course")
+
+            courseRegistration(
+              Schema.ref(:CourseRegistration),
+              "course registration of the latest viewed course"
+            )
+
+            courseConfiguration(
+              Schema.ref(:CourseConfiguration),
+              "course configuration of the latest viewed course"
+            )
           end
         end,
       LatestViewedInfo:
@@ -180,8 +198,15 @@ defmodule CadetWeb.UserController do
           description("course_registration and course configuration of the latest course")
 
           properties do
-            courseRegistration(Schema.ref(:CourseRegistration), "course registration of the latest viewed course")
-            courseConfiguration(Schema.ref(:CourseConfiguration), "course configuration of the latest viewed course")
+            courseRegistration(
+              Schema.ref(:CourseRegistration),
+              "course registration of the latest viewed course"
+            )
+
+            courseConfiguration(
+              Schema.ref(:CourseConfiguration),
+              "course configuration of the latest viewed course"
+            )
           end
         end,
       UserInfo:
@@ -205,26 +230,32 @@ defmodule CadetWeb.UserController do
               "Role of the user. Can be 'Student', 'Staff', or 'Admin'",
               required: true
             )
+
             group(
               :string,
               "Group the user belongs to. May be null if the user does not belong to any group.",
               required: true
             )
+
             story(Schema.ref(:UserStory), "Story to displayed to current user. ")
+
             grade(
               :integer,
               "Amount of grade. Only provided for 'Student'. " <>
                 "Value will be 0 for non-students."
             )
+
             maxGrade(
               :integer,
               "Total maximum grade achievable based on submitted assessments. " <>
                 "Only provided for 'Student'"
             )
+
             xp(
               :integer,
               "Amount of xp. Only provided for 'Student'. " <> "Value will be 0 for non-students."
             )
+
             game_states(
               Schema.ref(:UserGameStates),
               "States for user's game, including users' game progress, settings and collectibles.\n"

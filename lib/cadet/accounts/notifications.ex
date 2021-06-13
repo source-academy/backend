@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.Notifications do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Notification, User}
+  alias Cadet.Accounts.{Notification, User, CourseRegistration}
   alias Cadet.Assessments.Submission
   alias Ecto.Multi
 
@@ -121,9 +121,9 @@ defmodule Cadet.Accounts.Notifications do
     |> Repo.transaction()
   end
 
-  @spec acknowledge(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, any()}
-  def acknowledge(notification_id, user = %User{}) do
-    notification = Repo.get_by(Notification, id: notification_id, user_id: user.id)
+  @spec acknowledge(:integer, %CourseRegistration{}) :: {:ok, Ecto.Schema.t()} | {:error, any()}
+  def acknowledge(notification_id, cr = %CourseRegistration{}) do
+    notification = Repo.get_by(Notification, id: notification_id, user_id: cr.user_id)
 
     case notification do
       nil ->
@@ -131,7 +131,7 @@ defmodule Cadet.Accounts.Notifications do
 
       notification ->
         notification
-        |> Notification.changeset(%{role: user.role, read: true})
+        |> Notification.changeset(%{role: cr.role, read: true})
         |> Repo.update()
     end
   end
@@ -139,15 +139,15 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Function that handles notifications when a submission is unsubmitted.
   """
-  @spec handle_unsubmit_notifications(integer(), %User{}) ::
+  @spec handle_unsubmit_notifications(integer(), %CourseRegistration{}) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def handle_unsubmit_notifications(assessment_id, student = %User{})
+  def handle_unsubmit_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
     # Fetch and delete all notifications of :autograded and :graded
     # Add new notification :unsubmitted
 
     Notification
-    |> where(user_id: ^student.id)
+    |> where(user_id: ^student.user_id)
     |> where(assessment_id: ^assessment_id)
     |> where([n], n.type in ^[:autograded, :graded])
     |> Repo.delete_all()
@@ -155,7 +155,7 @@ defmodule Cadet.Accounts.Notifications do
     write(%{
       type: :unsubmitted,
       role: student.role,
-      user_id: student.id,
+      user_id: student.user_id,
       assessment_id: assessment_id
     })
   end

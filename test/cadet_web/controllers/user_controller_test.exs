@@ -446,6 +446,7 @@ defmodule CadetWeb.UserControllerTest do
     @tag authenticate: :student
     test "success, retrieving student game state", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       resp =
         conn
         |> get(build_url(course_id))
