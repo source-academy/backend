@@ -136,7 +136,7 @@ defmodule CadetWeb.StoriesControllerTest do
         |> response(200)
         |> Jason.decode()
 
-      required_fields = ~w(openAt closeAt isPublished id title filenames imageUrl course_id)
+      required_fields = ~w(openAt closeAt isPublished id title filenames imageUrl courseId)
 
       Enum.each(required_fields, fn required_field ->
         value = resp[required_field]
@@ -146,7 +146,7 @@ defmodule CadetWeb.StoriesControllerTest do
           "id" -> assert is_integer(value)
           "filenames" -> assert is_list(value)
           "isPublished" -> assert is_boolean(value)
-          "course_id" -> assert is_integer(value)
+          "courseId" -> assert is_integer(value)
           _ -> assert is_binary(value)
         end
       end)

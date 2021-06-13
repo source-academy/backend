@@ -14,7 +14,7 @@ defmodule CadetWeb.StoriesView do
       isPublished: :is_published,
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
-      course_id: :course_id
+      courseId: :course_id
     })
   end
 end

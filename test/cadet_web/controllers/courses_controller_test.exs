@@ -29,16 +29,16 @@ defmodule CadetWeb.CoursesControllerTest do
 
       assert %{
                "config" => %{
-                 "name" => "Programming Methodology",
-                 "module_code" => "CS1101S",
+                 "moduleName" => "Programming Methodology",
+                 "moduleCode" => "CS1101S",
                  "viewable" => true,
-                 "enable_game" => true,
-                 "enable_achievements" => true,
-                 "enable_sourcecast" => true,
-                 "source_chapter" => 1,
-                 "source_variant" => "default",
-                 "module_help_text" => "Help Text",
-                 "assessment_types" => ["Missions", "Quests", "Paths"]
+                 "enableGame" => true,
+                 "enableAchievements" => true,
+                 "enableSourcecast" => true,
+                 "sourceChapter" => 1,
+                 "sourceVariant" => "default",
+                 "moduleHelpText" => "Help Text",
+                 "assessmentTypes" => ["Missions", "Quests", "Paths"]
                }
              } = resp
     end
