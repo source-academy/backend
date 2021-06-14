@@ -73,7 +73,7 @@ defmodule CadetWeb.UserControllerTest do
               "viewable" => true
             },
             %{
-              "course_id" => another_cr.course_id,
+              "courseId" => another_cr.course_id,
               "moduleCode" => "CS1101S",
               "name" => "Programming Methodology",
               "viewable" => true
