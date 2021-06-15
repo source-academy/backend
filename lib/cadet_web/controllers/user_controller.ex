@@ -14,7 +14,7 @@ defmodule CadetWeb.UserController do
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
 
     if user.latest_viewed_id do
-      latest = CourseRegistrations.get_user_record(user.id, user.latest_viewed_id)
+      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_id)
       %{total_grade: grade, total_xp: xp} = user_total_grade_xp(latest)
       max_grade = user_max_grade(latest)
       story = user_current_story(latest)
@@ -66,7 +66,7 @@ defmodule CadetWeb.UserController do
     latest =
       case user.latest_viewed_id do
         nil -> nil
-        _ -> CourseRegistrations.get_user_record(user.id, user.latest_viewed_id)
+        _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_id)
       end
 
     get_course_reg_config(conn, latest)

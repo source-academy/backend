@@ -2,6 +2,8 @@ defmodule Cadet.Assessments.Query do
   @moduledoc """
   Generate queries related to the Assessments context
   """
+  use Cadet, :context
+
   import Ecto.Query
 
   alias Cadet.Assessments.{Assessment, Question}
@@ -10,9 +12,10 @@ defmodule Cadet.Assessments.Query do
   Returns a query with the following bindings:
   [assessments_with_xp_and_grade, questions]
   """
-  @spec all_assessments_with_aggregates :: Ecto.Query.t()
-  def all_assessments_with_aggregates do
+  @spec all_assessments_with_aggregates(integer()) :: Ecto.Query.t()
+  def all_assessments_with_aggregates(course_id) when is_ecto_id(course_id) do
     Assessment
+    |> where(course_id: ^course_id)
     |> join(:inner, [a], q in subquery(assessments_aggregates()), on: a.id == q.assessment_id)
     |> select([a, q], %Assessment{
       a

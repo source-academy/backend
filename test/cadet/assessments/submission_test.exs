@@ -7,7 +7,7 @@ defmodule Cadet.Assessments.SubmissionTest do
 
   setup do
     course = insert(:course)
-    type = insert(:assessment_types, %{course: course})
+    type = insert(:assessment_type, %{course: course})
     assessment = insert(:assessment, %{type: type, course: course})
     student = insert(:course_registration, %{course: course, role: :student})
 

@@ -11,11 +11,12 @@ defmodule CadetWeb.AssessmentsView do
   def render("overview.json", %{assessment: assessment}) do
     transform_map_for_view(assessment, %{
       id: :id,
+      courseId: :course_id,
       title: :title,
       shortSummary: :summary_short,
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
-      type: :type,
+      type: &(&1.type.type),
       story: :story,
       number: :number,
       reading: :reading,

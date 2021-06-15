@@ -31,12 +31,13 @@ defmodule CadetWeb.AdminCoursesController do
 
   def update_assessment_config(conn, %{
         "course_id" => course_id,
+        "order" => order,
         "early_submission_xp" => early_xp,
         "hours_before_early_xp_decay" => hours_before_decay,
         "decay_rate_points_per_hour" => decay_rate
       })
       when is_ecto_id(course_id) do
-    case Courses.update_assessment_config(course_id, early_xp, hours_before_decay, decay_rate) do
+    case Courses.update_assessment_config(course_id, order, early_xp, hours_before_decay, decay_rate) do
       {:ok, _} ->
         text(conn, "OK")
 
@@ -98,7 +99,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   swagger_path :update_assessment_config do
-    put("/v2/course/{course_id}/admin/assessment_config")
+    put("/v2/course/{course_id}/admin/assessment_config/{order}")
 
     summary("Updates the assessment configuration for the specified course")
 
@@ -108,6 +109,7 @@ defmodule CadetWeb.AdminCoursesController do
 
     parameters do
       course_id(:path, :integer, "Course ID", required: true)
+      order(:path, :integer, "type order", required: true)
       early_submission_xp(:body, :integer, "Early submission xp")
       hours_before_early_xp_decay(:body, :integer, "Hours before early submission xp decay")
       decay_rate_points_per_hour(:body, :integer, "Decay rate in points per hour")

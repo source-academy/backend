@@ -59,7 +59,6 @@ defmodule CadetWeb.UserControllerTest do
         |> get("/v2/user")
         |> json_response(200)
         |> put_in(["courseRegistration", "story"], nil)
-        |> IO.inspect()
 
       expected = %{
         "user" => %{
@@ -67,7 +66,7 @@ defmodule CadetWeb.UserControllerTest do
           "name" => user.name,
           "courses" => [
             %{
-              "course_id" => user.latest_viewed_id,
+              "courseId" => user.latest_viewed_id,
               "moduleCode" => "CS1101S",
               "name" => "Programming Methodology",
               "viewable" => true
@@ -355,7 +354,6 @@ defmodule CadetWeb.UserControllerTest do
         |> get("/v2/user/latest_viewed")
         |> json_response(200)
         |> put_in(["courseRegistration", "story"], nil)
-        |> IO.inspect()
 
       expected = %{
         "courseRegistration" => %{

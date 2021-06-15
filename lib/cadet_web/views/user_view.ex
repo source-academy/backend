@@ -1,35 +1,6 @@
 defmodule CadetWeb.UserView do
   use CadetWeb, :view
 
-  # def render("index.json", %{
-  #       user: user,
-  #       cr: cr,
-  #       grade: grade,
-  #       max_grade: max_grade,
-  #       xp: xp,
-  #       story: story
-  #     }) do
-  #   %{
-  #     userId: user.id,
-  #     name: user.name,
-  #     role: cr.role,
-  #     group:
-  #       case cr.group do
-  #         nil -> nil
-  #         _ -> cr.group.name
-  #       end,
-  #     grade: grade,
-  #     xp: xp,
-  #     maxGrade: max_grade,
-  #     story:
-  #       transform_map_for_view(story, %{
-  #         story: :story,
-  #         playStory: :play_story?
-  #       }),
-  #     gameStates: cr.game_states
-  #   }
-  # end
-
   def render("index.json", %{
         user: user,
         courses: courses,
@@ -135,7 +106,7 @@ defmodule CadetWeb.UserView do
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,
-          assessmentTypes: :assessment_types
+          assessmentTypes: &(Enum.map(&1.assessment_type, fn x -> x.type end))
         })
     end
   end

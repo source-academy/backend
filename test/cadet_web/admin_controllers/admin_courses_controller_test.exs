@@ -1,6 +1,8 @@
 defmodule CadetWeb.AdminCoursesControllerTest do
   use CadetWeb.ConnCase
 
+  alias Cadet.Repo
+  alias Cadet.Courses.Course
   alias CadetWeb.AdminCoursesController
 
   test "swagger" do
@@ -122,10 +124,12 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      insert(:assessment_config, %{course_id: course_id})
+      course = Repo.get(Course, course_id)
+      type = insert(:assessment_type, %{course: course})
+      insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id), %{
+        put(conn, build_url_assessment_config(course_id, type.order), %{
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -137,10 +141,12 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :student
     test "rejects forbidden request for non-staff users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      insert(:assessment_config, %{course_id: course_id})
+      course = Repo.get(Course, course_id)
+      type = insert(:assessment_type, %{course: course})
+      insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id), %{
+        put(conn, build_url_assessment_config(course_id, type.order), %{
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -152,10 +158,12 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :staff
     test "rejects request if user does not belong to specified course", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      insert(:assessment_config, %{course_id: course_id})
+      course = Repo.get(Course, course_id)
+      type = insert(:assessment_type, %{course: course})
+      insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id + 1), %{
+        put(conn, build_url_assessment_config(course_id + 1, type.order), %{
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -167,10 +175,12 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :staff
     test "rejects requests with invalid params", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      insert(:assessment_config, %{course_id: course_id})
+      course = Repo.get(Course, course_id)
+      type = insert(:assessment_type, %{course: course})
+      insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id), %{
+        put(conn, build_url_assessment_config(course_id, type.order), %{
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => -1,
           "decay_rate_points_per_hour" => 200
@@ -182,10 +192,12 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      insert(:assessment_config, %{course_id: course_id})
+      course = Repo.get(Course, course_id)
+      type = insert(:assessment_type, %{course: course})
+      insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id), %{
+        put(conn, build_url_assessment_config(course_id, type.order), %{
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
         })
@@ -267,8 +279,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   defp build_url_course_config(course_id), do: "/v2/course/#{course_id}/admin/course_config"
 
-  defp build_url_assessment_config(course_id),
-    do: "/v2/course/#{course_id}/admin/assessment_config"
+  defp build_url_assessment_config(course_id, order),
+    do: "/v2/course/#{course_id}/admin/assessment_config/#{order}"
 
   defp build_url_assessment_types(course_id),
     do: "/v2/course/#{course_id}/admin/assessment_types"

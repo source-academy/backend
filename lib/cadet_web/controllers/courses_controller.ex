@@ -12,6 +12,10 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
+  # def create_course(conn, _) do
+
+  # end
+
   swagger_path :get_course_config do
     get("/v2/course/{course_id}/config")
 

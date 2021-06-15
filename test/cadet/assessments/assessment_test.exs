@@ -6,8 +6,8 @@ defmodule Cadet.Assessments.AssessmentTest do
   setup do
     course1 = insert(:course, %{module_code: "course 1"})
     course2 = insert(:course, %{module_code: "course 2"})
-    type1 = insert(:assessment_types, %{course: course1})
-    type2 = insert(:assessment_types, %{course: course2})
+    type1 = insert(:assessment_type, %{course: course1})
+    type2 = insert(:assessment_type, %{course: course2})
 
     {:ok, %{course1: course1, course2: course2, type1: type1, type2: type2}}
   end

@@ -5,27 +5,29 @@ defmodule Cadet.Courses.AssessmentConfig do
   """
   use Cadet, :model
 
-  alias Cadet.Courses.Course
+  alias Cadet.Courses.AssessmentType
 
   schema "assessment_configs" do
     field(:early_submission_xp, :integer)
     field(:hours_before_early_xp_decay, :integer)
     field(:decay_rate_points_per_hour, :integer)
-    belongs_to(:course, Course)
+    belongs_to(:assessment_type, AssessmentType)
 
     timestamps()
   end
 
   @required_fields ~w(early_submission_xp hours_before_early_xp_decay
     decay_rate_points_per_hour)a
+  @optional_fields ~w(assessment_type_id)a
 
   def changeset(assessment_config, params) do
     assessment_config
-    |> cast(params, @required_fields)
+    |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:early_submission_xp, greater_than_or_equal_to: 0)
     |> validate_number(:hours_before_early_xp_decay, greater_than_or_equal_to: 0)
     |> validate_number(:decay_rate_points_per_hour, greater_than_or_equal_to: 0)
+    |> foreign_key_constraint(:assessment_type_id)
     |> validate_decay_rate()
   end
 

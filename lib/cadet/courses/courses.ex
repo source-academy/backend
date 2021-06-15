@@ -11,7 +11,7 @@ defmodule Cadet.Courses do
 
   alias Cadet.Courses.{
     AssessmentConfig,
-    AssessmentTypes,
+    AssessmentType,
     Course,
     Group,
     Sourcecast,
@@ -30,7 +30,7 @@ defmodule Cadet.Courses do
 
       course ->
         assessment_types =
-          AssessmentTypes
+          AssessmentType
           |> where(course_id: ^course_id)
           |> Repo.all()
           |> Enum.sort(&(&1.order < &2.order))
@@ -66,11 +66,12 @@ defmodule Cadet.Courses do
   @doc """
   Updates the assessment configuration for the specified course
   """
-  @spec update_assessment_config(integer, integer, integer, integer) ::
+  @spec update_assessment_config(integer, integer, integer, integer, integer) ::
           {:ok, %AssessmentConfig{}} | {:error, Ecto.Changeset.t()}
-  def update_assessment_config(course_id, early_xp, hours_before_decay, decay_rate) do
+  def update_assessment_config(course_id, order, early_xp, hours_before_decay, decay_rate) do
     AssessmentConfig
-    |> where(course_id: ^course_id)
+    |> join(:inner, [ac], at in AssessmentType, on: at.order == ^order)
+    |> where([ac, at], at.course_id == ^ course_id)
     |> Repo.one()
     |> AssessmentConfig.changeset(%{
       early_submission_xp: early_xp,
@@ -101,13 +102,13 @@ defmodule Cadet.Courses do
         |> Enum.each(fn {elem, idx} ->
           case elem do
             nil ->
-              AssessmentTypes
+              AssessmentType
               |> where(course_id: ^course_id)
               |> where(order: ^idx)
               |> Repo.delete_all()
 
             _ ->
-              AssessmentTypes.changeset(%AssessmentTypes{}, %{
+              AssessmentType.changeset(%AssessmentType{}, %{
                 course_id: course_id,
                 order: idx,
                 type: elem

@@ -24,44 +24,44 @@ defmodule Cadet.Assessments do
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
 
-  def delete_assessment(id) do
-    assessment = Repo.get(Assessment, id)
+  # def delete_assessment(id) do
+  #   assessment = Repo.get(Assessment, id)
 
-    Submission
-    |> where(assessment_id: ^id)
-    |> delete_submission_assocation(id)
+  #   Submission
+  #   |> where(assessment_id: ^id)
+  #   |> delete_submission_assocation(id)
 
-    Question
-    |> where(assessment_id: ^id)
-    |> Repo.all()
-    |> Enum.each(fn q ->
-      delete_submission_votes_association(q)
-    end)
+  #   Question
+  #   |> where(assessment_id: ^id)
+  #   |> Repo.all()
+  #   |> Enum.each(fn q ->
+  #     delete_submission_votes_association(q)
+  #   end)
 
-    Repo.delete(assessment)
-  end
+  #   Repo.delete(assessment)
+  # end
 
-  defp delete_submission_votes_association(question) do
-    SubmissionVotes
-    |> where(question_id: ^question.id)
-    |> Repo.delete_all()
-  end
+  # defp delete_submission_votes_association(question) do
+  #   SubmissionVotes
+  #   |> where(question_id: ^question.id)
+  #   |> Repo.delete_all()
+  # end
 
-  defp delete_submission_assocation(submissions, assessment_id) do
-    submissions
-    |> Repo.all()
-    |> Enum.each(fn submission ->
-      Answer
-      |> where(submission_id: ^submission.id)
-      |> Repo.delete_all()
-    end)
+  # defp delete_submission_assocation(submissions, assessment_id) do
+  #   submissions
+  #   |> Repo.all()
+  #   |> Enum.each(fn submission ->
+  #     Answer
+  #     |> where(submission_id: ^submission.id)
+  #     |> Repo.delete_all()
+  #   end)
 
-    Notification
-    |> where(assessment_id: ^assessment_id)
-    |> Repo.delete_all()
+  #   Notification
+  #   |> where(assessment_id: ^assessment_id)
+  #   |> Repo.delete_all()
 
-    Repo.delete_all(submissions)
-  end
+  #   Repo.delete_all(submissions)
+  # end
 
   @spec user_max_grade(%CourseRegistration{}) :: integer()
   def user_max_grade(%CourseRegistration{id: cr_id}) do
@@ -262,11 +262,11 @@ defmodule Cadet.Assessments do
   Returns a list of assessments with all fields and an indicator showing whether it has been attempted
   by the supplied user
   """
-  def all_assessments(user = %User{}) do
+  def all_assessments(cr = %CourseRegistration{}) do
     submission_aggregates =
       Submission
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
-      |> where([s], s.student_id == ^user.id)
+      |> where([s], s.student_id == ^cr.id)
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
         assessment_id: s.assessment_id,
@@ -278,11 +278,11 @@ defmodule Cadet.Assessments do
 
     submission_status =
       Submission
-      |> where([s], s.student_id == ^user.id)
+      |> where([s], s.student_id == ^cr.id)
       |> select([s], [:assessment_id, :status])
 
     assessments =
-      Query.all_assessments_with_aggregates()
+      Query.all_assessments_with_aggregates(cr.course_id)
       |> subquery()
       |> join(
         :left,
@@ -298,15 +298,16 @@ defmodule Cadet.Assessments do
           graded_count: sa.graded_count,
           user_status: s.status
       })
-      |> filter_published_assessments(user)
+      |> filter_published_assessments(cr)
       |> order_by(:open_at)
+      |> preload(:type)
       |> Repo.all()
 
     {:ok, assessments}
   end
 
-  def filter_published_assessments(assessments, user) do
-    role = user.role
+  def filter_published_assessments(assessments, cr) do
+    role = cr.role
 
     case role do
       :student -> where(assessments, is_published: true)
@@ -674,11 +675,11 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def get_submission(assessment_id, %User{id: user_id})
+  def get_submission(assessment_id, %CourseRegistration{id: cr_id})
       when is_ecto_id(assessment_id) do
     Submission
     |> where(assessment_id: ^assessment_id)
-    |> where(student_id: ^user_id)
+    |> where(student_id: ^cr_id)
     |> join(:inner, [s], a in assoc(s, :assessment))
     |> preload([_, a], assessment: a)
     |> Repo.one()
@@ -797,6 +798,7 @@ defmodule Cadet.Assessments do
     end
   end
 
+  # :TODO bonus logic with assessment config
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do

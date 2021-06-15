@@ -1,7 +1,7 @@
-defmodule Cadet.Courses.AssessmentTypesTest do
-  alias Cadet.Courses.AssessmentTypes
+defmodule Cadet.Courses.AssessmentTypeTest do
+  alias Cadet.Courses.AssessmentType
 
-  use Cadet.ChangesetCase, entity: AssessmentTypes
+  use Cadet.ChangesetCase, entity: AssessmentType
 
   describe "Assessment Types Changesets" do
     test "valid changesets" do

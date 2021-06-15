@@ -24,7 +24,7 @@ defmodule Cadet.Factory do
 
   use Cadet.Courses.{
     AssessmentConfigFactory,
-    AssessmentTypesFactory,
+    AssessmentTypeFactory,
     CourseFactory,
     GroupFactory,
     SourcecastFactory

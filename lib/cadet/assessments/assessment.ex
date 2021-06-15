@@ -8,7 +8,7 @@ defmodule Cadet.Assessments.Assessment do
 
   alias Cadet.Repo
   alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
-  alias Cadet.Courses.{Course, AssessmentTypes}
+  alias Cadet.Courses.{Course, AssessmentType}
 
   # @assessment_types ~w(contest mission path practical sidequest)
   # def assessment_types, do: @assessment_types
@@ -36,7 +36,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:reading, :string)
     field(:password, :string, default: nil)
 
-    belongs_to(:type, AssessmentTypes)
+    belongs_to(:type, AssessmentType)
     belongs_to(:course, Course)
 
     has_many(:questions, Question, on_delete: :delete_all)
@@ -69,7 +69,7 @@ defmodule Cadet.Assessments.Assessment do
     type_id = get_field(changeset, :type_id)
     course_id = get_field(changeset, :course_id)
 
-    case Repo.get(AssessmentTypes, type_id) do
+    case Repo.get(AssessmentType, type_id) do
       nil ->
         add_error(changeset, :type, "does not exist")
 

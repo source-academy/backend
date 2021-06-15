@@ -10,13 +10,13 @@ defmodule CadetWeb.AssessmentsController do
   @bypass_closed_roles ~w(staff admin)a
 
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
-    user = conn.assigns[:current_user]
+    cr = conn.assigns.course_reg
 
     with {:submission, submission} when not is_nil(submission) <-
-           {:submission, Assessments.get_submission(assessment_id, user)},
+           {:submission, Assessments.get_submission(assessment_id, cr)},
          {:is_open?, true} <-
            {:is_open?,
-            user.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
+            cr.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
          {:ok, _nil} <- Assessments.finalise_submission(submission) do
       text(conn, "OK")
     else
@@ -38,8 +38,8 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def index(conn, _) do
-    user = conn.assigns[:current_user]
-    {:ok, assessments} = Assessments.all_assessments(user)
+    cr = conn.assigns.course_reg
+    {:ok, assessments} = Assessments.all_assessments(cr)
 
     render(conn, "index.json", assessments: assessments)
   end

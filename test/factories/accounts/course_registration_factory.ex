@@ -5,7 +5,7 @@ defmodule Cadet.Accounts.CourseRegistrationFactory do
 
   defmacro __using__(_opts) do
     quote do
-      alias Cadet.Accounts.{Role, User, CourseRegistration}
+      alias Cadet.Accounts.{Role, CourseRegistration}
       # alias Cadet.Courses.{Course, Group}
 
       def course_registration_factory do

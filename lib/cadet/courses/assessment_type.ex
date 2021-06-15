@@ -1,16 +1,17 @@
-defmodule Cadet.Courses.AssessmentTypes do
+defmodule Cadet.Courses.AssessmentType do
   @moduledoc """
   The AssessmentType entity stores the assessment tyoes in a
   particular course.
   """
   use Cadet, :model
 
-  alias Cadet.Courses.Course
+  alias Cadet.Courses.{Course, AssessmentConfig}
 
   schema "assessment_types" do
     field(:order, :integer)
     field(:type, :string)
     belongs_to(:course, Course)
+    has_one(:assessment_config, AssessmentConfig)
 
     timestamps()
   end

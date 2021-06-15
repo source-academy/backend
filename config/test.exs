@@ -65,8 +65,8 @@ config :cadet,
          %{
            token: "student_token",
            code: "student_code",
-           name: "Test Student",
-           username: "student"
+           name: "student 1",
+           username: "E1234564"
            #  role: :student
          }
        ]}

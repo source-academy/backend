@@ -24,7 +24,7 @@ if Cadet.Env.env() == :dev do
   avenger1 = insert(:user, %{name: "avenger", username: "E1234561", latest_viewed: course1})
   mentor1 = insert(:user, %{name: "mentor", username: "E1234562", latest_viewed: course1})
   admin1 = insert(:user, %{name: "admin", username: "E1234563", latest_viewed: course1})
-  studenta1admin2 = insert(:user, %{username: "E1234564", latest_viewed: course1})
+  studenta1admin2 = insert(:user, %{name: "student a", username: "E1234564", latest_viewed: course1})
   studentb1 = insert(:user, %{username: "E1234565", latest_viewed: course1})
   studentc1 = insert(:user, %{username: "E1234566", latest_viewed: course1})
   # CourseRegistration and Group
@@ -52,8 +52,9 @@ if Cadet.Env.env() == :dev do
   admin2cr = insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
 
   # Assessments
-  for _ <- 1..5 do
-    assessment = insert(:assessment, %{is_published: true})
+  for i <- 1..5 do
+    type = insert(:assessment_type, %{type: "mission#{i}", order: i, course: course1})
+    assessment = insert(:assessment, %{is_published: true, type: type})
 
     programming_questions =
       insert_list(3, :programming_question, %{

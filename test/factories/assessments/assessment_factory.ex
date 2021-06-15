@@ -10,7 +10,7 @@ defmodule Cadet.Assessments.AssessmentFactory do
       def assessment_factory do
         # type = Enum.random(Assessment.assessment_types() -- ["practical"])
         course = build(:course)
-        type = build(:assessment_types, %{course: course})
+        type = build(:assessment_type, %{course: course})
         type_title = type.type
 
         # These are actual story identifiers so front-end can use seeds to test more effectively
