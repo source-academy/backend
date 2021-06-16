@@ -97,8 +97,8 @@ defmodule CadetWeb.UserView do
 
       _ ->
         transform_map_for_view(latest.course, %{
-          moduleName: :name,
-          moduleCode: :module_code,
+          courseName: :name,
+          courseShortName: :module_code,
           viewable: :viewable,
           enableGame: :enable_game,
           enableAchievements: :enable_achievements,

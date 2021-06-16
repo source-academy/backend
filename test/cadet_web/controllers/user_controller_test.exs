@@ -18,6 +18,7 @@ defmodule CadetWeb.UserControllerTest do
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
       course = user.latest_viewed
+      insert(:assessment_type, %{type: "test type", course: course})
       cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
       another_cr = insert(:course_registration, %{user: user})
       assessment = insert(:assessment, %{is_published: true, course: course})
@@ -90,13 +91,13 @@ defmodule CadetWeb.UserControllerTest do
           "story" => nil
         },
         "courseConfiguration" => %{
-          "assessmentTypes" => nil,
+          "assessmentTypes" => ["test type"],
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
-          "moduleCode" => "CS1101S",
+          "courseShortName" => "CS1101S",
           "moduleHelpText" => "Help Text",
-          "moduleName" => "Programming Methodology",
+          "courseName" => "Programming Methodology",
           "sourceChapter" => 1,
           "sourceVariant" => "default",
           "viewable" => true
@@ -367,13 +368,13 @@ defmodule CadetWeb.UserControllerTest do
           "story" => nil
         },
         "courseConfiguration" => %{
-          "assessmentTypes" => nil,
+          "assessmentTypes" => [],
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
-          "moduleCode" => "CS1101S",
+          "courseShortName" => "CS1101S",
           "moduleHelpText" => "Help Text",
-          "moduleName" => "Programming Methodology",
+          "courseName" => "Programming Methodology",
           "sourceChapter" => 1,
           "sourceVariant" => "default",
           "viewable" => true
@@ -439,18 +440,6 @@ defmodule CadetWeb.UserControllerTest do
       updated_cr = Repo.get_by(CourseRegistration, course_id: course_id, user_id: user.id)
 
       assert new_game_states == updated_cr.game_states
-    end
-
-    @tag authenticate: :student
-    test "success, retrieving student game state", %{conn: conn} do
-      course_id = conn.assigns.course_id
-
-      resp =
-        conn
-        |> get(build_url(course_id))
-        |> json_response(200)
-
-      assert %{} == resp["courseRegistration"]["gameStates"]
     end
   end
 
