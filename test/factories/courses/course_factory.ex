@@ -9,8 +9,8 @@ defmodule Cadet.Courses.CourseFactory do
 
       def course_factory do
         %Course{
-          name: "Programming Methodology",
-          module_code: "CS1101S",
+          course_name: "Programming Methodology",
+          course_short_name: "CS1101S",
           viewable: true,
           enable_game: true,
           enable_achievements: true,

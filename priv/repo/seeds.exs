@@ -19,7 +19,7 @@ alias Cadet.Assessments.SubmissionStatus
 if Cadet.Env.env() == :dev do
   # Course
   course1 = insert(:course)
-  course2 = insert(:course, %{name: "Algorithm", module_code: "CS2040S"})
+  course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
   # Users
   avenger1 = insert(:user, %{name: "avenger", username: "E1234561", latest_viewed: course1})
   mentor1 = insert(:user, %{name: "mentor", username: "E1234562", latest_viewed: course1})

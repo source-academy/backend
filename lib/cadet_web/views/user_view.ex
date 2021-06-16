@@ -51,8 +51,8 @@ defmodule CadetWeb.UserView do
   def render("course.json", %{cr: cr}) do
     %{
       courseId: cr.course_id,
-      name: cr.course.name,
-      moduleCode: cr.course.module_code,
+      name: cr.course.course_name,
+      moduleCode: cr.course.course_short_name,
       viewable: cr.course.viewable
     }
   end
@@ -97,8 +97,8 @@ defmodule CadetWeb.UserView do
 
       _ ->
         transform_map_for_view(latest.course, %{
-          courseName: :name,
-          courseShortName: :module_code,
+          courseName: :course_name,
+          courseShortName: :course_short_name,
           viewable: :viewable,
           enableGame: :enable_game,
           enableAchievements: :enable_achievements,

@@ -5,8 +5,8 @@ defmodule Cadet.Courses.CourseTest do
 
   describe "Course Configuration Changesets" do
     test "valid changesets" do
-      assert_changeset(%{name: "Data Structures and Algorithms"}, :valid)
-      assert_changeset(%{module_code: "CS2040S"}, :valid)
+      assert_changeset(%{course_name: "Data Structures and Algorithms"}, :valid)
+      assert_changeset(%{course_short_name: "CS2040S"}, :valid)
       assert_changeset(%{viewable: false}, :valid)
       assert_changeset(%{enable_game: false}, :valid)
       assert_changeset(%{enable_achievements: false}, :valid)

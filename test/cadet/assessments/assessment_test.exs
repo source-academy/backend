@@ -4,8 +4,8 @@ defmodule Cadet.Assessments.AssessmentTest do
   use Cadet.ChangesetCase, entity: Assessment
 
   setup do
-    course1 = insert(:course, %{module_code: "course 1"})
-    course2 = insert(:course, %{module_code: "course 2"})
+    course1 = insert(:course, %{course_short_name: "course 1"})
+    course2 = insert(:course, %{course_short_name: "course 2"})
     type1 = insert(:assessment_type, %{course: course1})
     type2 = insert(:assessment_type, %{course: course2})
 

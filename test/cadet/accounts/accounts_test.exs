@@ -109,8 +109,8 @@ defmodule Cadet.AccountsTest do
 
   describe "get_users_by" do
     setup do
-      c1 = insert(:course, %{name: "c1"})
-      c2 = insert(:course, %{name: "c2"})
+      c1 = insert(:course, %{course_name: "c1"})
+      c2 = insert(:course, %{course_name: "c2"})
       admin1 = insert(:course_registration, %{course: c1, role: :admin})
       admin2 = insert(:course_registration, %{course: c2, role: :admin})
       g1 = insert(:group, %{course: c1})

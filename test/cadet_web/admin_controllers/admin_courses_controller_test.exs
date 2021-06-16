@@ -1,8 +1,10 @@
 defmodule CadetWeb.AdminCoursesControllerTest do
   use CadetWeb.ConnCase
 
+  import Cadet.SharedHelper
+  import Ecto.Query
   alias Cadet.Repo
-  alias Cadet.Courses.Course
+  alias Cadet.Courses.{Course, AssessmentConfig, AssessmentType}
   alias CadetWeb.AdminCoursesController
 
   test "swagger" do
@@ -16,63 +18,88 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :admin
     test "succeeds 1", %{conn: conn} do
       course_id = conn.assigns[:course_id]
+      old_course = Map.from_struct(Repo.get(Course, course_id))
 
-      conn =
-        put(conn, build_url_course_config(course_id), %{
-          "sourceChapter" => Enum.random(1..4),
-          "sourceVariant" => "default"
-        })
+      params = %{
+        "sourceChapter" => 2,
+        "sourceVariant" => "lazy"
+      }
 
-      assert response(conn, 200) == "OK"
+      resp = put(conn, build_url_course_config(course_id), params)
+
+      assert response(resp, 200) == "OK"
+      updated_course = Map.from_struct(Repo.get(Course, course_id))
+      refute old_course == updated_course
+
+      assert Map.merge(old_course, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end) ==
+               updated_course
     end
 
     @tag authenticate: :admin
     test "succeeds 2", %{conn: conn} do
       course_id = conn.assigns[:course_id]
+      old_course = Map.from_struct(Repo.get(Course, course_id))
 
-      conn =
-        put(conn, build_url_course_config(course_id), %{
-          "name" => "Data Structures and Algorithms",
-          "module_code" => "CS2040S",
-          "enable_game" => false,
-          "enable_achievements" => false,
-          "enable_sourcecast" => true,
-          "source_chapter" => Enum.random(1..4),
-          "source_variant" => "default",
-          "module_help_text" => "help"
-        })
+      params = %{
+        "courseName" => "Data Structures and Algorithms",
+        "courseShortName" => "CS2040S",
+        "enableGame" => false,
+        "enableAchievements" => false,
+        "enableSourcecast" => true,
+        "sourceChapter" => 1,
+        "sourceVariant" => "default",
+        "moduleHelpText" => "help"
+      }
 
-      assert response(conn, 200) == "OK"
+      resp = put(conn, build_url_course_config(course_id), params)
+
+      assert response(resp, 200) == "OK"
+      updated_course = Map.from_struct(Repo.get(Course, course_id))
+      refute old_course == updated_course
+
+      assert Map.merge(old_course, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end) ==
+               updated_course
     end
 
     @tag authenticate: :admin
     test "succeeds 3", %{conn: conn} do
       course_id = conn.assigns[:course_id]
+      old_course = Map.from_struct(Repo.get(Course, course_id))
 
-      conn =
-        put(conn, build_url_course_config(course_id), %{
-          "name" => "Data Structures and Algorithms",
-          "module_code" => "CS2040S",
-          "enable_game" => false,
-          "enable_achievements" => false,
-          "enable_sourcecast" => true,
-          "module_help_text" => "help"
-        })
+      params = %{
+        "courseName" => "Data Structures and Algorithms",
+        "courseShortName" => "CS2040S",
+        "enableGame" => false,
+        "enableAchievements" => false,
+        "enableSourcecast" => true,
+        "moduleHelpText" => "help"
+      }
 
-      assert response(conn, 200) == "OK"
+      resp = put(conn, build_url_course_config(course_id), params)
+
+      assert response(resp, 200) == "OK"
+      updated_course = Map.from_struct(Repo.get(Course, course_id))
+      refute old_course == updated_course
+
+      assert Map.merge(old_course, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end) ==
+               updated_course
     end
 
     @tag authenticate: :student
     test "rejects forbidden request for non-staff users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
+      old_course = Repo.get(Course, course_id)
 
       conn =
         put(conn, build_url_course_config(course_id), %{
-          "source_chapter" => 3,
-          "source_variant" => "concurrent"
+          "sourceChapter" => 3,
+          "sourceVariant" => "concurrent"
         })
 
+      same_course = Repo.get(Course, course_id)
+
       assert response(conn, 403) == "Forbidden"
+      assert old_course == same_course
     end
 
     @tag authenticate: :staff
@@ -81,8 +108,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_course_config(course_id + 1), %{
-          "source_chapter" => 3,
-          "source_variant" => "concurrent"
+          "sourceChapter" => 3,
+          "sourceVariant" => "concurrent"
         })
 
       assert response(conn, 403) == "Forbidden"
@@ -94,8 +121,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_course_config(course_id), %{
-          "source_chapter" => 4,
-          "source_variant" => "wasm"
+          "sourceChapter" => 4,
+          "sourceVariant" => "wasm"
         })
 
       assert response(conn, 400) == "Invalid parameter(s)"
@@ -107,13 +134,13 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_course_config(course_id), %{
-          "name" => "Data Structures and Algorithms",
-          "module_code" => "CS2040S",
-          "enable_game" => false,
-          "enable_achievements" => false,
-          "enable_sourcecast" => true,
-          "module_help_text" => "help",
-          "source_variant" => "default"
+          "courseName" => "Data Structures and Algorithms",
+          "courseShortName" => "CS2040S",
+          "enableGame" => false,
+          "enableAchievements" => false,
+          "enableSourcecast" => true,
+          "moduleHelpText" => "help",
+          "sourceVariant" => "default"
         })
 
       assert response(conn, 400) == "Missing parameter(s)"
@@ -125,18 +152,23 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-      type = insert(:assessment_type, %{course: course})
-      insert(:assessment_config, %{assessment_type: type})
+      type = insert(:assessment_type, %{course: course, order: 2})
+      old_config = insert(:assessment_config, %{assessment_type: type})
 
-      conn =
-        put(conn, build_url_assessment_config(course_id), %{
-          "order" => type.order,
-          "early_submission_xp" => 100,
-          "hours_before_early_xp_decay" => 24,
-          "decay_rate_points_per_hour" => 2
-        })
+      params = %{
+        "order" => type.order,
+        "earlySubmissionXp" => 100,
+        "hoursBeforeEarlyXpDecay" => 24,
+        "decayRatePointsPerHour" => 2
+      }
 
-      assert response(conn, 200) == "OK"
+      resp = put(conn, build_url_assessment_config(course_id), params)
+
+      assert response(resp, 200) == "OK"
+      updated_config = Repo.get(AssessmentConfig, old_config.id)
+      assert updated_config.decay_rate_points_per_hour == 2
+      assert updated_config.early_submission_xp == 100
+      assert updated_config.hours_before_early_xp_decay == 24
     end
 
     @tag authenticate: :student
@@ -149,9 +181,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       conn =
         put(conn, build_url_assessment_config(course_id), %{
           "order" => type.order,
-          "early_submission_xp" => 100,
-          "hours_before_early_xp_decay" => 24,
-          "decay_rate_points_per_hour" => 2
+          "earlySubmissionXp" => 100,
+          "hoursBeforeEarlyXpDecay" => 24,
+          "decayRatePointsPerHour" => 2
         })
 
       assert response(conn, 403) == "Forbidden"
@@ -167,9 +199,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       conn =
         put(conn, build_url_assessment_config(course_id + 1), %{
           "order" => type.order,
-          "early_submission_xp" => 100,
-          "hours_before_early_xp_decay" => 24,
-          "decay_rate_points_per_hour" => 2
+          "earlySubmissionXp" => 100,
+          "hoursBeforeEarlyXpDecay" => 24,
+          "decayRatePointsPerHour" => 2
         })
 
       assert response(conn, 403) == "Forbidden"
@@ -185,9 +217,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       conn =
         put(conn, build_url_assessment_config(course_id), %{
           "order" => type.order,
-          "early_submission_xp" => 100,
-          "hours_before_early_xp_decay" => -1,
-          "decay_rate_points_per_hour" => 200
+          "earlySubmissionXp" => 100,
+          "hoursBeforeEarlyXpDecay" => -1,
+          "decayRatePointsPerHour" => 200
         })
 
       assert response(conn, 400) == "Invalid parameter(s)"
@@ -203,8 +235,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       conn =
         put(conn, build_url_assessment_config(course_id), %{
           "order" => type.order,
-          "hours_before_early_xp_decay" => 24,
-          "decay_rate_points_per_hour" => 2
+          "hoursBeforeEarlyXpDecay" => 24,
+          "decayRatePointsPerHour" => 2
         })
 
       assert response(conn, 400) == "Missing parameter(s)"
@@ -215,13 +247,40 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
+      insert(:assessment_type, %{course: Repo.get(Course, course_id)})
+
+      old_course =
+        Course
+        |> where(id: ^course_id)
+        |> join(:left, [c], at in assoc(c, :assessment_type))
+        |> preload([c, at],
+          assessment_type: ^from(at in AssessmentType, order_by: [asc: at.order])
+        )
+        |> Repo.all()
+        |> hd()
+
+      old_types = Enum.map(old_course.assessment_type, fn x -> x.type end) |> IO.inspect()
 
       conn =
         put(conn, build_url_assessment_types(course_id), %{
           "assessment_types" => ["Missions", "Quests", "Contests"]
         })
 
+      new_course =
+        Course
+        |> where(id: ^course_id)
+        |> join(:left, [c], at in assoc(c, :assessment_type))
+        |> preload([c, at],
+          assessment_type: ^from(at in AssessmentType, order_by: [asc: at.order])
+        )
+        |> Repo.all()
+        |> hd()
+
+      new_types = Enum.map(new_course.assessment_type, fn x -> x.type end) |> IO.inspect()
+
       assert response(conn, 200) == "OK"
+      refute old_types == new_types
+      assert new_types == ["Missions", "Quests", "Contests"]
     end
 
     @tag authenticate: :student

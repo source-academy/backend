@@ -267,8 +267,8 @@ defmodule CadetWeb.UserController do
           title("Course Configuration")
 
           properties do
-            name(:string, "Course name", required: true)
-            module_code(:string, "Course module code", required: true)
+            course_name(:string, "Course name", required: true)
+            course_short_name(:string, "Course module code", required: true)
             viewable(:boolean, "Course viewability", required: true)
             enable_game(:boolean, "Enable game", required: true)
             enable_achievements(:boolean, "Enable achievements", required: true)
@@ -280,8 +280,8 @@ defmodule CadetWeb.UserController do
           end
 
           example(%{
-            name: "Programming Methodology",
-            module_code: "CS1101S",
+            course_name: "Programming Methodology",
+            course_short_name: "CS1101S",
             viewable: true,
             enable_game: true,
             enable_achievements: true,

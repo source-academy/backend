@@ -11,8 +11,8 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
     end
 
     create table(:courses) do
-      add(:name, :string, null: false)
-      add(:module_code, :string)
+      add(:course_name, :string, null: false)
+      add(:course_short_name, :string)
       add(:viewable, :boolean, null: false, default: true)
       add(:enable_game, :boolean, null: false, default: true)
       add(:enable_achievements, :boolean, null: false, default: true)

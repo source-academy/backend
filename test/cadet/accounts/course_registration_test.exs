@@ -10,8 +10,8 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     user2 = insert(:user, %{name: "user 2"})
     group1 = insert(:group, %{name: "group 1"})
     group2 = insert(:group, %{name: "group 2"})
-    course1 = insert(:course, %{module_code: "course 1"})
-    course2 = insert(:course, %{module_code: "course 2"})
+    course1 = insert(:course, %{course_short_name: "course 1"})
+    course2 = insert(:course, %{course_short_name: "course 2"})
 
     changeset =
       CourseRegistration.changeset(%CourseRegistration{}, %{

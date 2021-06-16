@@ -7,8 +7,8 @@ defmodule Cadet.Courses.Course do
   alias Cadet.Courses.AssessmentType
 
   schema "courses" do
-    field(:name, :string)
-    field(:module_code, :string)
+    field(:course_name, :string)
+    field(:course_short_name, :string)
     field(:viewable, :boolean, default: true)
     field(:enable_game, :boolean, default: true)
     field(:enable_achievements, :boolean, default: true)
@@ -23,7 +23,7 @@ defmodule Cadet.Courses.Course do
   end
 
   @required_fields ~w(source_chapter source_variant)a
-  @optional_fields ~w(name module_code viewable enable_game enable_achievements enable_sourcecast module_help_text)a
+  @optional_fields ~w(course_name course_short_name viewable enable_game enable_achievements enable_sourcecast module_help_text)a
 
   def changeset(course, params) do
     if Map.has_key?(params, :source_chapter) or Map.has_key?(params, :source_variant) do

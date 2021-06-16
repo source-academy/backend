@@ -11,8 +11,8 @@ defmodule Cadet.CoursesTest do
       insert(:assessment_type, %{order: 2, type: "Quests", course: course})
 
       {:ok, course} = Courses.get_course_config(course.id)
-      assert course.name == "Programming Methodology"
-      assert course.module_code == "CS1101S"
+      assert course.course_name == "Programming Methodology"
+      assert course.course_short_name == "CS1101S"
       assert course.viewable == true
       assert course.enable_game == true
       assert course.enable_achievements == true
@@ -37,8 +37,8 @@ defmodule Cadet.CoursesTest do
 
       {:ok, updated_course} =
         Courses.update_course_config(course.id, %{
-          name: "Data Structures and Algorithms",
-          module_code: "CS2040S",
+          course_name: "Data Structures and Algorithms",
+          course_short_name: "CS2040S",
           viewable: false,
           enable_game: false,
           enable_achievements: false,
@@ -46,8 +46,8 @@ defmodule Cadet.CoursesTest do
           module_help_text: ""
         })
 
-      assert updated_course.name == "Data Structures and Algorithms"
-      assert updated_course.module_code == "CS2040S"
+      assert updated_course.course_name == "Data Structures and Algorithms"
+      assert updated_course.course_short_name == "CS2040S"
       assert updated_course.viewable == false
       assert updated_course.enable_game == false
       assert updated_course.enable_achievements == false
@@ -63,8 +63,8 @@ defmodule Cadet.CoursesTest do
 
       {:ok, updated_course} =
         Courses.update_course_config(course.id, %{
-          name: "Data Structures and Algorithms",
-          module_code: "CS2040S",
+          course_name: "Data Structures and Algorithms",
+          course_short_name: "CS2040S",
           viewable: false,
           enable_game: false,
           enable_achievements: false,
@@ -74,8 +74,8 @@ defmodule Cadet.CoursesTest do
           module_help_text: "help"
         })
 
-      assert updated_course.name == "Data Structures and Algorithms"
-      assert updated_course.module_code == "CS2040S"
+      assert updated_course.course_name == "Data Structures and Algorithms"
+      assert updated_course.course_short_name == "CS2040S"
       assert updated_course.viewable == false
       assert updated_course.enable_game == false
       assert updated_course.enable_achievements == false

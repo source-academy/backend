@@ -5,8 +5,8 @@ defmodule CadetWeb.CoursesView do
     %{
       config:
         transform_map_for_view(config, %{
-          courseName: :name,
-          courseShortName: :module_code,
+          courseName: :course_name,
+          courseShortName: :course_short_name,
           viewable: :viewable,
           enableGame: :enable_game,
           enableAchievements: :enable_achievements,

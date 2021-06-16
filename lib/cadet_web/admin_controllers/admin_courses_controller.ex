@@ -7,10 +7,7 @@ defmodule CadetWeb.AdminCoursesController do
 
   def update_course_config(conn, params = %{"course_id" => course_id})
       when is_ecto_id(course_id) do
-    params =
-      params
-      |> snake_casify_string_keys()
-      |> (&for({key, val} <- &1, into: %{}, do: {String.to_atom(key), val})).()
+    params = params |> to_snake_case_atom_keys()
 
     if (Map.has_key?(params, :source_chapter) and Map.has_key?(params, :source_variant)) or
          (not Map.has_key?(params, :source_chapter) and
@@ -35,9 +32,9 @@ defmodule CadetWeb.AdminCoursesController do
   def update_assessment_config(conn, %{
         "course_id" => course_id,
         "order" => order,
-        "early_submission_xp" => early_xp,
-        "hours_before_early_xp_decay" => hours_before_decay,
-        "decay_rate_points_per_hour" => decay_rate
+        "earlySubmissionXp" => early_xp,
+        "hoursBeforeEarlyXpDecay" => hours_before_decay,
+        "decayRatePointsPerHour" => decay_rate
       })
       when is_ecto_id(course_id) do
     case Courses.update_assessment_config(
@@ -92,8 +89,8 @@ defmodule CadetWeb.AdminCoursesController do
 
     parameters do
       course_id(:path, :integer, "Course ID", required: true)
-      name(:body, :string, "Course name")
-      module_code(:body, :string, "Course module code")
+      course_name(:body, :string, "Course name")
+      course_short_name(:body, :string, "Course module code")
       viewable(:body, :boolean, "Course viewability")
       enable_game(:body, :boolean, "Enable game")
       enable_achievements(:body, :boolean, "Enable achievements")
