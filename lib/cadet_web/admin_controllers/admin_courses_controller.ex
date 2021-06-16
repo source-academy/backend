@@ -60,7 +60,7 @@ defmodule CadetWeb.AdminCoursesController do
 
   def update_assessment_types(conn, %{
         "course_id" => course_id,
-        "assessment_types" => assessment_types
+        "assessmentTypes" => assessment_types
       })
       when is_ecto_id(course_id) do
     case Courses.update_assessment_types(course_id, assessment_types) do

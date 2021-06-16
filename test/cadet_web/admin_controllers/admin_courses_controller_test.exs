@@ -18,7 +18,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :admin
     test "succeeds 1", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      old_course = Map.from_struct(Repo.get(Course, course_id))
+      old_course = to_map(Repo.get(Course, course_id))
 
       params = %{
         "sourceChapter" => 2,
@@ -28,17 +28,15 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       resp = put(conn, build_url_course_config(course_id), params)
 
       assert response(resp, 200) == "OK"
-      updated_course = Map.from_struct(Repo.get(Course, course_id))
+      updated_course = to_map(Repo.get(Course, course_id))
       refute old_course == updated_course
-
-      assert Map.merge(old_course, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end) ==
-               updated_course
+      assert update_map(old_course, params) == updated_course
     end
 
     @tag authenticate: :admin
     test "succeeds 2", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      old_course = Map.from_struct(Repo.get(Course, course_id))
+      old_course = to_map(Repo.get(Course, course_id))
 
       params = %{
         "courseName" => "Data Structures and Algorithms",
@@ -54,17 +52,15 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       resp = put(conn, build_url_course_config(course_id), params)
 
       assert response(resp, 200) == "OK"
-      updated_course = Map.from_struct(Repo.get(Course, course_id))
+      updated_course = to_map(Repo.get(Course, course_id))
       refute old_course == updated_course
-
-      assert Map.merge(old_course, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end) ==
-               updated_course
+      assert update_map(old_course, params) == updated_course
     end
 
     @tag authenticate: :admin
     test "succeeds 3", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      old_course = Map.from_struct(Repo.get(Course, course_id))
+      old_course = to_map(Repo.get(Course, course_id))
 
       params = %{
         "courseName" => "Data Structures and Algorithms",
@@ -78,11 +74,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       resp = put(conn, build_url_course_config(course_id), params)
 
       assert response(resp, 200) == "OK"
-      updated_course = Map.from_struct(Repo.get(Course, course_id))
+      updated_course = to_map(Repo.get(Course, course_id))
       refute old_course == updated_course
-
-      assert Map.merge(old_course, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end) ==
-               updated_course
+      assert update_map(old_course, params) == updated_course
     end
 
     @tag authenticate: :student
@@ -259,11 +253,11 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         |> Repo.all()
         |> hd()
 
-      old_types = Enum.map(old_course.assessment_type, fn x -> x.type end) |> IO.inspect()
+      old_types = Enum.map(old_course.assessment_type, fn x -> x.type end)
 
       conn =
         put(conn, build_url_assessment_types(course_id), %{
-          "assessment_types" => ["Missions", "Quests", "Contests"]
+          "assessmentTypes" => ["Missions", "Quests", "Contests"]
         })
 
       new_course =
@@ -276,7 +270,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         |> Repo.all()
         |> hd()
 
-      new_types = Enum.map(new_course.assessment_type, fn x -> x.type end) |> IO.inspect()
+      new_types = Enum.map(new_course.assessment_type, fn x -> x.type end)
 
       assert response(conn, 200) == "OK"
       refute old_types == new_types
@@ -289,7 +283,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_assessment_types(course_id), %{
-          "assessment_types" => ["Missions", "Quests", "Contests"]
+          "assessmentTypes" => ["Missions", "Quests", "Contests"]
         })
 
       assert response(conn, 403) == "Forbidden"
@@ -301,7 +295,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_assessment_types(course_id + 1), %{
-          "assessment_types" => ["Missions", "Quests", "Contests"]
+          "assessmentTypes" => ["Missions", "Quests", "Contests"]
         })
 
       assert response(conn, 403) == "Forbidden"
@@ -313,7 +307,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_assessment_types(course_id), %{
-          "assessment_types" => "Missions"
+          "assessmentTypes" => "Missions"
         })
 
       assert response(conn, 400) == "Invalid parameter(s)"
@@ -325,7 +319,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_assessment_types(course_id), %{
-          "assessment_types" => [1, "Missions", "Quests"]
+          "assessmentTypes" => [1, "Missions", "Quests"]
         })
 
       assert response(conn, 400) == "Invalid parameter(s)"
@@ -348,4 +342,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   defp build_url_assessment_types(course_id),
     do: "/v2/course/#{course_id}/admin/assessment_types"
+
+  defp to_map(schema), do: Map.from_struct(schema) |> Map.drop([:updated_at])
+
+  defp update_map(map1, params), do: Map.merge(map1, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end)
 end
