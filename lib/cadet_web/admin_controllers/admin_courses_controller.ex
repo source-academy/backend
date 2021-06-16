@@ -7,7 +7,7 @@ defmodule CadetWeb.AdminCoursesController do
 
   def update_course_config(conn, params = %{"course_id" => course_id})
       when is_ecto_id(course_id) do
-    params = for {key, val} <- params, into: %{}, do: {String.to_atom(key), val}
+    params = params |> snake_casify_string_keys() |> (&for {key, val} <- &1, into: %{}, do: {String.to_atom(key), val}).()
 
     if (Map.has_key?(params, :source_chapter) and Map.has_key?(params, :source_variant)) or
          (not Map.has_key?(params, :source_chapter) and
@@ -109,7 +109,7 @@ defmodule CadetWeb.AdminCoursesController do
 
     parameters do
       course_id(:path, :integer, "Course ID", required: true)
-      order(:path, :integer, "type order", required: true)
+      order(:body, :integer, "type order", required: true)
       early_submission_xp(:body, :integer, "Early submission xp")
       hours_before_early_xp_decay(:body, :integer, "Hours before early submission xp decay")
       decay_rate_points_per_hour(:body, :integer, "Decay rate in points per hour")

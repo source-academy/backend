@@ -19,8 +19,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn =
         put(conn, build_url_course_config(course_id), %{
-          "source_chapter" => Enum.random(1..4),
-          "source_variant" => "default"
+          "sourceChapter" => Enum.random(1..4),
+          "sourceVariant" => "default"
         })
 
       assert response(conn, 200) == "OK"
@@ -129,7 +129,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id, type.order), %{
+        put(conn, build_url_assessment_config(course_id), %{
+          "order" => type.order,
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -146,7 +147,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id, type.order), %{
+        put(conn, build_url_assessment_config(course_id), %{
+          "order" => type.order,
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -163,7 +165,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id + 1, type.order), %{
+        put(conn, build_url_assessment_config(course_id + 1), %{
+          "order" => type.order,
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
@@ -180,7 +183,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id, type.order), %{
+        put(conn, build_url_assessment_config(course_id), %{
+          "order" => type.order,
           "early_submission_xp" => 100,
           "hours_before_early_xp_decay" => -1,
           "decay_rate_points_per_hour" => 200
@@ -197,7 +201,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       insert(:assessment_config, %{assessment_type: type})
 
       conn =
-        put(conn, build_url_assessment_config(course_id, type.order), %{
+        put(conn, build_url_assessment_config(course_id), %{
+          "order" => type.order,
           "hours_before_early_xp_decay" => 24,
           "decay_rate_points_per_hour" => 2
         })
@@ -279,8 +284,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   defp build_url_course_config(course_id), do: "/v2/course/#{course_id}/admin/course_config"
 
-  defp build_url_assessment_config(course_id, order),
-    do: "/v2/course/#{course_id}/admin/assessment_config/#{order}"
+  defp build_url_assessment_config(course_id),
+    do: "/v2/course/#{course_id}/admin/assessment_config"
 
   defp build_url_assessment_types(course_id),
     do: "/v2/course/#{course_id}/admin/assessment_types"
