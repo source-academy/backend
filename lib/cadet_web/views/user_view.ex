@@ -51,8 +51,8 @@ defmodule CadetWeb.UserView do
   def render("course.json", %{cr: cr}) do
     %{
       courseId: cr.course_id,
-      name: cr.course.course_name,
-      moduleCode: cr.course.course_short_name,
+      courseName: cr.course.course_name,
+      courseShortName: cr.course.course_short_name,
       viewable: cr.course.viewable
     }
   end
