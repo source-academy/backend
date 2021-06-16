@@ -24,16 +24,16 @@ defmodule CadetWeb.CoursesControllerTest do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
 
+      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
       insert(:assessment_type, %{order: 1, type: "Missions", course: course})
       insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
 
       resp = conn |> get(build_url_config(course_id)) |> json_response(200)
 
       assert %{
                "config" => %{
-                 "moduleName" => "Programming Methodology",
-                 "moduleCode" => "CS1101S",
+                 "courseName" => "Programming Methodology",
+                 "courseShortName" => "CS1101S",
                  "viewable" => true,
                  "enableGame" => true,
                  "enableAchievements" => true,

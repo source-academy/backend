@@ -106,7 +106,7 @@ defmodule CadetWeb.UserView do
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,
-          assessmentTypes: &(Enum.map(&1.assessment_type, fn x -> x.type end))
+          assessmentTypes: &Enum.map(&1.assessment_type, fn x -> x.type end)
         })
     end
   end

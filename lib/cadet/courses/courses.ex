@@ -71,7 +71,7 @@ defmodule Cadet.Courses do
   def update_assessment_config(course_id, order, early_xp, hours_before_decay, decay_rate) do
     AssessmentConfig
     |> join(:inner, [ac], at in AssessmentType, on: at.order == ^order)
-    |> where([ac, at], at.course_id == ^ course_id)
+    |> where([ac, at], at.course_id == ^course_id)
     |> Repo.one()
     |> AssessmentConfig.changeset(%{
       early_submission_xp: early_xp,

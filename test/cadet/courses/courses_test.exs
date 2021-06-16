@@ -120,8 +120,7 @@ defmodule Cadet.CoursesTest do
       type = insert(:assessment_type, %{course: course})
       _assessment_config = insert(:assessment_config, %{assessment_type: type})
 
-      {:ok, updated_config} =
-        Courses.update_assessment_config(course.id, type.order, 100, 24, 1)
+      {:ok, updated_config} = Courses.update_assessment_config(course.id, type.order, 100, 24, 1)
 
       assert updated_config.early_submission_xp == 100
       assert updated_config.hours_before_early_xp_decay == 24
@@ -133,25 +132,21 @@ defmodule Cadet.CoursesTest do
       type = insert(:assessment_type, %{course: course})
       _assessment_config = insert(:assessment_config, %{assessment_type: type})
 
-      {:error, changeset} =
-        Courses.update_assessment_config(course.id, type.order, -1, 0, 0)
+      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, -1, 0, 0)
 
       assert %{early_submission_xp: ["must be greater than or equal to 0"]} = errors_on(changeset)
 
-      {:error, changeset} =
-        Courses.update_assessment_config(course.id, type.order, 200, -1, 0)
+      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, 200, -1, 0)
 
       assert %{hours_before_early_xp_decay: ["must be greater than or equal to 0"]} =
                errors_on(changeset)
 
-      {:error, changeset} =
-        Courses.update_assessment_config(course.id, type.order, 200, 48, -1)
+      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, 200, 48, -1)
 
       assert %{decay_rate_points_per_hour: ["must be greater than or equal to 0"]} =
                errors_on(changeset)
 
-      {:error, changeset} =
-        Courses.update_assessment_config(course.id, type.order, 200, 48, 300)
+      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, 200, 48, 300)
 
       assert %{decay_rate_points_per_hour: ["must be less than or equal to 200"]} =
                errors_on(changeset)

@@ -16,7 +16,7 @@ defmodule CadetWeb.AssessmentsView do
       shortSummary: :summary_short,
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
-      type: &(&1.type.type),
+      type: & &1.type.type,
       story: :story,
       number: :number,
       reading: :reading,

@@ -18,7 +18,9 @@ defmodule CadetWeb.UserControllerTest do
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
       course = user.latest_viewed
-      insert(:assessment_type, %{type: "test type", course: course})
+      insert(:assessment_type, %{order: 2, type: "test type 2", course: course})
+      insert(:assessment_type, %{order: 3, type: "test type 3", course: course})
+      insert(:assessment_type, %{order: 1, type: "test type 1", course: course})
       cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
       another_cr = insert(:course_registration, %{user: user})
       assessment = insert(:assessment, %{is_published: true, course: course})
@@ -91,7 +93,7 @@ defmodule CadetWeb.UserControllerTest do
           "story" => nil
         },
         "courseConfiguration" => %{
-          "assessmentTypes" => ["test type"],
+          "assessmentTypes" => ["test type 1", "test type 2", "test type 3"],
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,

@@ -8,6 +8,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   alias Cadet.Repo
   alias Cadet.Accounts.{User, CourseRegistration}
+  alias Cadet.Courses.AssessmentType
 
   # guide
   # only join with User if need name or user name
@@ -30,7 +31,9 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], c in assoc(cr, :course))
     |> join(:left, [cr, c], t in assoc(c, :assessment_type))
-    |> preload([cr, c, t],[course: {c, assessment_type: t}])
+    |> preload([cr, c, t],
+      course: {c, assessment_type: ^from(t in AssessmentType, order_by: [asc: t.order])}
+    )
     |> preload(:group)
     |> Repo.one()
   end
