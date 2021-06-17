@@ -15,8 +15,8 @@ defmodule CadetWeb.UserController do
 
     if user.latest_viewed_id do
       latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_id)
-      %{total_grade: grade, total_xp: xp} = user_total_grade_xp(latest)
-      max_grade = user_max_grade(latest)
+      xp = user_total_xp(latest)
+      max_xp = user_max_xp(latest)
       story = user_current_story(latest)
 
       render(
@@ -25,8 +25,7 @@ defmodule CadetWeb.UserController do
         user: user,
         courses: courses,
         latest: latest,
-        grade: grade,
-        max_grade: max_grade,
+        max_xp: max_xp,
         story: story,
         xp: xp
       )
@@ -35,30 +34,12 @@ defmodule CadetWeb.UserController do
         user: user,
         courses: courses,
         latest: nil,
-        grade: nil,
-        max_grade: nil,
+        max_xp: nil,
         story: nil,
         xp: nil
       )
     end
   end
-
-  # def index(conn, _) do
-  #   user = user_with_group(conn.assigns.current_user)
-  #   %{total_grade: grade, total_xp: xp} = user_total_grade_xp(user)
-  #   max_grade = user_max_grade(user)
-  #   story = user_current_story(user)
-
-  #   render(
-  #     conn,
-  #     "index.json",
-  #     user: user,
-  #     grade: grade,
-  #     max_grade: max_grade,
-  #     story: story,
-  #     xp: xp
-  #   )
-  # end
 
   def get_latest_viewed(conn, _) do
     user = conn.assigns.current_user
@@ -78,20 +59,19 @@ defmodule CadetWeb.UserController do
   end
 
   defp get_course_reg_config(conn, course_reg) when is_nil(course_reg) do
-    render(conn, "course.json", latest: nil, grade: nil, max_grade: nil, story: nil, xp: nil)
+    render(conn, "course.json", latest: nil, story: nil, xp: nil, max_xp: nil)
   end
 
   defp get_course_reg_config(conn, course_reg) do
-    %{total_grade: grade, total_xp: xp} = user_total_grade_xp(course_reg)
-    max_grade = user_max_grade(course_reg)
+    xp = user_total_xp(course_reg)
+    max_xp = user_max_xp(course_reg)
     story = user_current_story(course_reg)
 
     render(
       conn,
       "course.json",
       latest: course_reg,
-      grade: grade,
-      max_grade: max_grade,
+      max_xp: max_xp,
       story: story,
       xp: xp
     )
@@ -239,15 +219,9 @@ defmodule CadetWeb.UserController do
 
             story(Schema.ref(:UserStory), "Story to displayed to current user. ")
 
-            grade(
+            maxXp(
               :integer,
-              "Amount of grade. Only provided for 'Student'. " <>
-                "Value will be 0 for non-students."
-            )
-
-            maxGrade(
-              :integer,
-              "Total maximum grade achievable based on submitted assessments. " <>
+              "Total maximum xp achievable based on submitted assessments. " <>
                 "Only provided for 'Student'"
             )
 

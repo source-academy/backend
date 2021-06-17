@@ -15,8 +15,8 @@ defmodule Cadet.Assessments.Assessment do
 
   schema "assessments" do
     field(:access, AssessmentAccess, virtual: true, default: :public)
-    field(:max_grade, :integer, virtual: true)
-    field(:grade, :integer, virtual: true, default: 0)
+    # field(:max_grade, :integer, virtual: true)
+    # field(:grade, :integer, virtual: true, default: 0)
     field(:max_xp, :integer, virtual: true)
     field(:xp, :integer, virtual: true, default: 0)
     field(:user_status, SubmissionStatus, virtual: true)

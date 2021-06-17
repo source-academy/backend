@@ -5,8 +5,7 @@ defmodule CadetWeb.UserView do
         user: user,
         courses: courses,
         latest: latest,
-        grade: grade,
-        max_grade: max_grade,
+        max_xp: max_xp,
         xp: xp,
         story: story
       }) do
@@ -14,13 +13,12 @@ defmodule CadetWeb.UserView do
       user: %{
         userId: user.id,
         name: user.name,
-        courses: render_many(courses, CadetWeb.UserView, "course.json", as: :cr)
+        courses: render_many(courses, CadetWeb.UserView, "courses.json", as: :cr)
       },
       courseRegistration:
         render_latest(%{
           latest: latest,
-          grade: grade,
-          max_grade: max_grade,
+          max_xp: max_xp,
           xp: xp,
           story: story
         }),
@@ -30,8 +28,7 @@ defmodule CadetWeb.UserView do
 
   def render("course.json", %{
         latest: latest,
-        grade: grade,
-        max_grade: max_grade,
+        max_xp: max_xp,
         xp: xp,
         story: story
       }) do
@@ -39,8 +36,7 @@ defmodule CadetWeb.UserView do
       courseRegistration:
         render_latest(%{
           latest: latest,
-          grade: grade,
-          max_grade: max_grade,
+          max_xp: max_xp,
           xp: xp,
           story: story
         }),
@@ -48,7 +44,7 @@ defmodule CadetWeb.UserView do
     }
   end
 
-  def render("course.json", %{cr: cr}) do
+  def render("courses.json", %{cr: cr}) do
     %{
       courseId: cr.course_id,
       courseName: cr.course.course_name,
@@ -59,8 +55,7 @@ defmodule CadetWeb.UserView do
 
   defp render_latest(%{
          latest: latest,
-         grade: grade,
-         max_grade: max_grade,
+         max_xp: max_xp,
          xp: xp,
          story: story
        }) do
@@ -77,9 +72,8 @@ defmodule CadetWeb.UserView do
               nil -> nil
               _ -> latest.group.name
             end,
-          grade: grade,
           xp: xp,
-          maxGrade: max_grade,
+          maxXp: max_xp,
           story:
             transform_map_for_view(story, %{
               story: :story,

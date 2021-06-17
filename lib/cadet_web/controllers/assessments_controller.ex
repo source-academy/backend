@@ -174,12 +174,6 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
-            maxGrade(
-              :integer,
-              "The maximum grade for this assessment",
-              required: true
-            )
-
             maxXp(
               :integer,
               "The maximum XP for this assessment",
@@ -187,8 +181,6 @@ defmodule CadetWeb.AssessmentsController do
             )
 
             xp(:integer, "The XP earned for this assessment", required: true)
-
-            grade(:integer, "The grade earned for this assessment", required: true)
 
             coverImage(:string, "The URL to the cover picture", required: true)
 

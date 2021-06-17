@@ -24,7 +24,6 @@ defmodule CadetWeb.AssessmentsView do
       maxGrade: :max_grade,
       maxXp: :max_xp,
       xp: &(&1.xp || 0),
-      grade: &(&1.grade || 0),
       coverImage: :cover_picture,
       private: &password_protected?(&1.password),
       isPublished: :is_published,

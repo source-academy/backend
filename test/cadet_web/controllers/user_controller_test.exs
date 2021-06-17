@@ -37,8 +37,6 @@ defmodule CadetWeb.UserControllerTest do
       insert(:answer, %{
         question: question,
         submission: submission,
-        grade: 50,
-        adjustment: -10,
         xp: 20,
         xp_adjustment: -10
       })
@@ -53,8 +51,6 @@ defmodule CadetWeb.UserControllerTest do
         :answer,
         question: not_submitted_question,
         submission: not_submitted_submission,
-        grade: 0,
-        adjustment: 0
       )
 
       resp =
@@ -70,14 +66,14 @@ defmodule CadetWeb.UserControllerTest do
           "courses" => [
             %{
               "courseId" => user.latest_viewed_id,
-              "moduleCode" => "CS1101S",
-              "name" => "Programming Methodology",
+              "courseShortName" => "CS1101S",
+              "courseName" => "Programming Methodology",
               "viewable" => true
             },
             %{
               "courseId" => another_cr.course_id,
-              "moduleCode" => "CS1101S",
-              "name" => "Programming Methodology",
+              "courseShortName" => "CS1101S",
+              "courseName" => "Programming Methodology",
               "viewable" => true
             }
           ]
@@ -87,8 +83,7 @@ defmodule CadetWeb.UserControllerTest do
           "role" => "#{cr.role}",
           "group" => nil,
           "xp" => 110,
-          "grade" => 40,
-          "maxGrade" => question.max_grade,
+          "maxXp" => question.max_xp,
           "gameStates" => %{},
           "story" => nil
         },
@@ -332,8 +327,6 @@ defmodule CadetWeb.UserControllerTest do
       insert(:answer, %{
         question: question,
         submission: submission,
-        grade: 50,
-        adjustment: -10,
         xp: 20,
         xp_adjustment: -10
       })
@@ -348,8 +341,6 @@ defmodule CadetWeb.UserControllerTest do
         :answer,
         question: not_submitted_question,
         submission: not_submitted_submission,
-        grade: 0,
-        adjustment: 0
       )
 
       resp =
@@ -364,8 +355,7 @@ defmodule CadetWeb.UserControllerTest do
           "role" => "#{cr.role}",
           "group" => nil,
           "xp" => 110,
-          "grade" => 40,
-          "maxGrade" => question.max_grade,
+          "maxXp" => question.max_xp,
           "gameStates" => %{},
           "story" => nil
         },

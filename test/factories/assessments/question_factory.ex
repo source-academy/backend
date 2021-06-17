@@ -16,7 +16,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
         %Question{
           type: :programming,
-          max_grade: 10,
           max_xp: 100,
           assessment: build(:assessment, %{is_published: true}),
           library: library,
@@ -54,7 +53,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
         %Question{
           type: :mcq,
-          max_grade: 10,
           max_xp: 100,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
@@ -79,7 +77,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
         %Question{
           type: :voting,
-          max_grade: 10,
           max_xp: 100,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),

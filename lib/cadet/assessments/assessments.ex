@@ -63,45 +63,44 @@ defmodule Cadet.Assessments do
   #   Repo.delete_all(submissions)
   # end
 
-  @spec user_max_grade(%CourseRegistration{}) :: integer()
-  def user_max_grade(%CourseRegistration{id: cr_id}) do
+  @spec user_max_xp(%CourseRegistration{}) :: integer()
+  def user_max_xp(%CourseRegistration{id: cr_id}) do
     Submission
     |> where(status: ^:submitted)
     |> where(student_id: ^cr_id)
     |> join(
       :inner,
       [s],
-      a in subquery(Query.all_assessments_with_max_grade()),
+      a in subquery(Query.all_assessments_with_max_xp()),
       on: s.assessment_id == a.id
     )
-    |> select([_, a], sum(a.max_grade))
+    |> select([_, a], sum(a.max_xp))
     |> Repo.one()
     |> decimal_to_integer()
   end
 
-  def user_total_grade_xp(%CourseRegistration{id: cr_id}) do
-    submission_grade_xp =
+  def user_total_xp(%CourseRegistration{id: cr_id}) do
+    submission_xp =
       Submission
       |> where(student_id: ^cr_id)
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
-        total_grade: sum(a.grade) + sum(a.adjustment),
         # grouping by submission, so s.xp_bonus will be the same, but we need an
         # aggregate function
         total_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
       })
 
     total =
-      submission_grade_xp
+      submission_xp
       |> subquery
       |> select([s], %{
-        total_grade: sum(s.total_grade),
         total_xp: sum(s.total_xp)
       })
       |> Repo.one()
 
-    for {key, val} <- total, into: %{}, do: {key, decimal_to_integer(val)}
+    # for {key, val} <- total, into: %{}, do: {key, decimal_to_integer(val)}
+    decimal_to_integer(total.total_xp)
   end
 
   defp decimal_to_integer(decimal) do
@@ -270,7 +269,6 @@ defmodule Cadet.Assessments do
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
         assessment_id: s.assessment_id,
-        grade: fragment("? + ?", sum(ans.grade), sum(ans.adjustment)),
         # s.xp_bonus should be the same across the group, but we need an aggregate function here
         xp: fragment("? + ? + ?", sum(ans.xp), sum(ans.xp_adjustment), max(s.xp_bonus)),
         graded_count: ans.id |> count() |> filter(not is_nil(ans.grader_id))
@@ -294,7 +292,6 @@ defmodule Cadet.Assessments do
       |> select([a, sa, s], %{
         a
         | xp: sa.xp,
-          grade: sa.grade,
           graded_count: sa.graded_count,
           user_status: s.status
       })
@@ -758,8 +755,6 @@ defmodule Cadet.Assessments do
               {:cont,
                answer
                |> Answer.grading_changeset(%{
-                 grade: 0,
-                 adjustment: 0,
                  xp: 0,
                  xp_adjustment: 0,
                  autograding_status: :none,

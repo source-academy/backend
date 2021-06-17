@@ -6,8 +6,6 @@ defmodule Cadet.Assessments.Submission do
   alias Cadet.Assessments.{Answer, Assessment, SubmissionStatus}
 
   schema "submissions" do
-    field(:grade, :integer, virtual: true)
-    field(:adjustment, :integer, virtual: true)
     field(:xp, :integer, virtual: true)
     field(:xp_adjustment, :integer, virtual: true)
     field(:xp_bonus, :integer, default: 0)
