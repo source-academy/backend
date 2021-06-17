@@ -78,5 +78,5 @@
   "timex": {:hex, :timex, "3.7.5", "3eca56e23bfa4e0848f0b0a29a92fa20af251a975116c6d504966e8a90516dfd", [:mix], [{:combine, "~> 0.10", [hex: :combine, repo: "hexpm", optional: false]}, {:gettext, "~> 0.10", [hex: :gettext, repo: "hexpm", optional: false]}, {:tzdata, "~> 1.0", [hex: :tzdata, repo: "hexpm", optional: false]}], "hexpm", "a15608dca680f2ef663d71c95842c67f0af08a0f3b1d00e17bbd22872e2874e4"},
   "tzdata": {:hex, :tzdata, "1.1.0", "72f5babaa9390d0f131465c8702fa76da0919e37ba32baa90d93c583301a8359", [:mix], [{:hackney, "~> 1.17", [hex: :hackney, repo: "hexpm", optional: false]}], "hexpm", "18f453739b48d3dc5bcf0e8906d2dc112bb40baafe2c707596d89f3c8dd14034"},
   "unicode_util_compat": {:hex, :unicode_util_compat, "0.7.0", "bc84380c9ab48177092f43ac89e4dfa2c6d62b40b8bd132b1059ecc7232f9a78", [:rebar3], [], "hexpm", "25eee6d67df61960cf6a794239566599b09e17e668d3700247bc498638152521"},
-  "xml_builder": {:hex, :xml_builder, "2.1.4", "e60e21c0a39b9dd8dec1db5a2525c713f7fe4e85ed247caedf22a9bcdd2d5069", [:mix], [], "hexpm", "48188a4df8b9168ceb8318d128299bce064d272e18967349b2592347c434e677"},
+  "xml_builder": {:hex, :xml_builder, "2.2.0", "cc5f1eeefcfcde6e90a9b77fb6c490a20bc1b856a7010ce6396f6da9719cbbab", [:mix], [], "hexpm", "9d66d52fb917565d358166a4314078d39ef04d552904de96f8e73f68f64a62c9"},
 }
