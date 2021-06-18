@@ -4,8 +4,6 @@ defmodule CadetWeb.AssessmentsHelpers do
   """
   import CadetWeb.ViewHelper
 
-  @graded_assessment_types ~w(mission sidequest contest)
-
   defp build_library(%{library: library}) do
     transform_map_for_view(library, %{
       chapter: :chapter,
@@ -30,7 +28,7 @@ defmodule CadetWeb.AssessmentsHelpers do
       build_question_content_by_type(
         %{
           question: question,
-          assessment_type: assessment_type.type
+          assessment_type: assessment_type
         },
         all_testcases?
       )
@@ -44,7 +42,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     components = [
       build_question_by_assessment_type(%{
         question: question,
-        assessment_type: assessment.type
+        assessment_type: assessment.type.type
       }),
       build_answer_fields_by_question_type(%{question: question}),
       build_solution_if_ungraded_by_type(%{question: question, assessment: assessment})
@@ -60,8 +58,7 @@ defmodule CadetWeb.AssessmentsHelpers do
       id: :id,
       type: :type,
       library: &build_library(%{library: &1.library}),
-      maxXp: :max_xp,
-      maxGrade: :max_grade
+      maxXp: :max_xp
     })
   end
 
@@ -69,7 +66,7 @@ defmodule CadetWeb.AssessmentsHelpers do
          question: %{question: question, type: question_type},
          assessment: %{type: assessment_type}
        }) do
-    if assessment_type not in @graded_assessment_types do
+    if !assessment_type.is_graded do
       solution_getter =
         case question_type do
           :programming -> &Map.get(&1, "solution")

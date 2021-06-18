@@ -5,10 +5,8 @@ defmodule Cadet.Accounts.Query do
   import Ecto.Query
 
   alias Cadet.Accounts.{User, CourseRegistration}
-  alias Cadet.Course.Group
   alias Cadet.Repo
 
-  # :TODO test
   def all_students(course_id) do
     User
     |> in_course(course_id)
@@ -22,27 +20,21 @@ defmodule Cadet.Accounts.Query do
     |> preload(:latest_viewed)
   end
 
-  # :TODO test
   @spec students_of(%CourseRegistration{}) :: Ecto.Query.t()
-  def students_of(%CourseRegistration{user_id: id, role: :staff, course_id: course_id}) do
+  def students_of(course_reg = %CourseRegistration{course_id: course_id}) do
+    # Note that staff role is not check here as we assume that
+    # group leader is assign to a staff validated by group changeset
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
-    |> join(:inner, [cr], g in Group, on: cr.group_id == g.id)
-    |> where([cr, g], g.leader_id == ^id)
+    |> join(:inner, [cr], g in assoc(cr, :group))
+    |> where([cr, g], g.leader_id == ^course_reg.id)
   end
 
-  # :TODO test
-  def avenger_of?(avenger_id, course_id, student_id) do
-    avengerInCourse =
-      CourseRegistration
-      |> where([cr], cr.course_id == ^course_id)
-      |> where([cr], cr.user_id == ^avenger_id)
-      |> Repo.one()
-
-    students = students_of(avengerInCourse)
+  def avenger_of?(avenger, student_id) do
+    students = students_of(avenger)
 
     students
-    |> Repo.get_by(user_id: student_id)
+    |> Repo.get_by(id: student_id)
     |> case do
       nil -> false
       _ -> true
@@ -53,10 +45,9 @@ defmodule Cadet.Accounts.Query do
     query |> where([a], a.username == ^username)
   end
 
-  # :TODO test
   defp in_course(user, course_id) do
     user
     |> join(:inner, [u], cr in CourseRegistration, on: u.id == cr.user_id)
-    |> where([_, cr], cr.id == ^course_id)
+    |> where([_, cr], cr.course_id == ^course_id)
   end
 end

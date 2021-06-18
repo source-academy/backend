@@ -10,13 +10,15 @@ defmodule Cadet.Courses.AssessmentType do
   schema "assessment_types" do
     field(:order, :integer)
     field(:type, :string)
+    field(:is_graded, :boolean, default: true)
+
     belongs_to(:course, Course)
     has_one(:assessment_config, AssessmentConfig)
 
     timestamps()
   end
 
-  @required_fields ~w(order type course_id)a
+  @required_fields ~w(order type course_id is_graded)a
 
   def changeset(assessment_type, params) do
     params = capitalize(params, :type)

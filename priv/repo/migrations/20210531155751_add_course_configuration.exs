@@ -27,6 +27,7 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       add(:order, :integer, null: false)
       add(:type, :string, null: false)
       add(:course_id, references(:courses), null: false)
+      add(:is_graded, :boolean, null: false)
       timestamps()
     end
 

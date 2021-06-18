@@ -706,7 +706,7 @@ defmodule Cadet.Assessments do
   # def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
   def unsubmit_submission(
         submission_id,
-        userCourse = %CourseRegistration{user_id: user_id, role: role, course_id: course_id}
+        cr = %CourseRegistration{user_id: user_id, role: role, course_id: course_id}
       )
       when is_ecto_id(submission_id) do
     submission =
@@ -723,7 +723,7 @@ defmodule Cadet.Assessments do
          {:allowed_to_unsubmit?, true} <-
            {:allowed_to_unsubmit?,
             role == :admin or bypass or
-              Cadet.Accounts.Query.avenger_of?(userCourse, submission.student_id)} do
+              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
       Multi.new()
       |> Multi.run(
         :rollback_submission,
