@@ -9,15 +9,13 @@ defmodule Cadet.Assessments do
   alias Cadet.Accounts.{Notification, Notifications, User, CourseRegistration}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
-  alias Cadet.Courses.Group
+  alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
 
   require Decimal
 
-  @xp_early_submission_max_bonus 100
-  @xp_bonus_assessment_type ~w(mission sidequest)
   @open_all_assessment_roles ~w(staff admin)a
 
   # These roles can save and finalise answers for closed assessments and
@@ -706,7 +704,7 @@ defmodule Cadet.Assessments do
   # def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
   def unsubmit_submission(
         submission_id,
-        cr = %CourseRegistration{user_id: user_id, role: role, course_id: course_id}
+        cr = %CourseRegistration{user_id: user_id, role: role}
       )
       when is_ecto_id(submission_id) do
     submission =
@@ -792,23 +790,25 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # :TODO bonus logic with assessment config
+  # :TODO test bonus logic
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
     assessment = submission.assessment
+    assessment_conifg = Repo.get_by(AssessmentConfig, assessment_type_id: assessment.type_id)
+
+    max_bonus_xp = assessment_conifg.early_submission_xp
+    early_hours = assessment_conifg.hours_before_early_xp_decay
+    rate = assessment_conifg.decay_rate_points_per_hour
 
     xp_bonus =
       cond do
-        assessment.type not in @xp_bonus_assessment_type ->
-          0
-
-        Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: 48)) ->
-          @xp_early_submission_max_bonus
+        Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) ->
+          max_bonus_xp
 
         true ->
-          deduction = Timex.diff(Timex.now(), assessment.open_at, :hours) - 48
-          Enum.max([0, @xp_early_submission_max_bonus - deduction])
+          exceed_hours = Timex.diff(Timex.now(), assessment.open_at, :hours) - early_hours
+          Enum.max([0, max_bonus_xp - exceed_hours * rate])
       end
 
     submission
