@@ -30,7 +30,7 @@ defmodule CadetWeb.AssessmentsHelpers do
       build_question_content_by_type(
         %{
           question: question,
-          assessment_type: assessment_type
+          assessment_type: assessment_type.type
         },
         all_testcases?
       )

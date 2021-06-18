@@ -160,45 +160,44 @@ defmodule Cadet.Assessments do
 
   def assessment_with_questions_and_answers(
         assessment = %Assessment{password: nil},
-        user = %User{},
+        cr = %CourseRegistration{},
         nil
       ) do
-    assessment_with_questions_and_answers(assessment, user)
+    assessment_with_questions_and_answers(assessment, cr)
   end
 
   def assessment_with_questions_and_answers(
         assessment = %Assessment{password: nil},
-        user = %User{},
+        cr = %CourseRegistration{},
         _
       ) do
-    assessment_with_questions_and_answers(assessment, user)
+    assessment_with_questions_and_answers(assessment, cr)
   end
 
   def assessment_with_questions_and_answers(
         assessment = %Assessment{password: password},
-        user = %User{},
+        cr = %CourseRegistration{},
         given_password
       ) do
     cond do
       Timex.compare(Timex.now(), assessment.close_at) >= 0 ->
-        assessment_with_questions_and_answers(assessment, user)
+        assessment_with_questions_and_answers(assessment, cr)
 
-      match?({:ok, _}, find_submission(user, assessment)) ->
-        assessment_with_questions_and_answers(assessment, user)
+      match?({:ok, _}, find_submission(cr, assessment)) ->
+        assessment_with_questions_and_answers(assessment, cr)
 
       given_password == nil ->
         {:error, {:forbidden, "Missing Password."}}
 
       password == given_password ->
-        find_or_create_submission(user, assessment)
-        assessment_with_questions_and_answers(assessment, user)
+        find_or_create_submission(cr, assessment)
+        assessment_with_questions_and_answers(assessment, cr)
 
       true ->
         {:error, {:forbidden, "Invalid Password."}}
     end
   end
 
-  # def assessment_with_questions_and_answers(id, user = %User{}, password)
   def assessment_with_questions_and_answers(id, cr = %CourseRegistration{}, password)
       when is_ecto_id(id) do
     role = cr.role
@@ -222,39 +221,39 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # def assessment_with_questions_and_answers(
-  #       assessment = %Assessment{id: id},
-  #       user = %User{role: role}
-  #     ) do
-  #   if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
-  #     answer_query =
-  #       Answer
-  #       |> join(:inner, [a], s in assoc(a, :submission))
-  #       |> where([_, s], s.student_id == ^user.id)
+  def assessment_with_questions_and_answers(
+        assessment = %Assessment{id: id},
+        cr = %CourseRegistration{role: role}
+      ) do
+    if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
+      answer_query =
+        Answer
+        |> join(:inner, [a], s in assoc(a, :submission))
+        |> where([_, s], s.student_id == ^cr.id)
 
-  #     questions =
-  #       Question
-  #       |> where(assessment_id: ^id)
-  #       |> join(:left, [q], a in subquery(answer_query), on: q.id == a.question_id)
-  #       |> join(:left, [_, a], g in assoc(a, :grader))
-  #       |> select([q, a, g], {q, a, g})
-  #       |> order_by(:display_order)
-  #       |> Repo.all()
-  #       |> Enum.map(fn
-  #         {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
-  #         {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
-  #       end)
-  #       |> load_contest_voting_entries(user.id)
+      questions =
+        Question
+        |> where(assessment_id: ^id)
+        |> join(:left, [q], a in subquery(answer_query), on: q.id == a.question_id)
+        |> join(:left, [_, a], g in assoc(a, :grader))
+        |> select([q, a, g], {q, a, g})
+        |> order_by(:display_order)
+        |> Repo.all()
+        |> Enum.map(fn
+          {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
+          {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
+        end)
+        # |> load_contest_voting_entries(cr.id)
 
-  #     assessment = Map.put(assessment, :questions, questions)
-  #     {:ok, assessment}
-  #   else
-  #     {:error, {:unauthorized, "Assessment not open"}}
-  #   end
-  # end
+      assessment = Map.put(assessment, :questions, questions)
+      {:ok, assessment}
+    else
+      {:error, {:unauthorized, "Assessment not open"}}
+    end
+  end
 
-  def assessment_with_questions_and_answers(id, user = %User{}) do
-    assessment_with_questions_and_answers(id, user, nil)
+  def assessment_with_questions_and_answers(id, cr = %CourseRegistration{}) do
+    assessment_with_questions_and_answers(id, cr, nil)
   end
 
   @doc """
@@ -570,7 +569,7 @@ defmodule Cadet.Assessments do
           new_submission_votes =
             votes
             |> Enum.map(fn s_id ->
-              %SubmissionVotes{user_id: user_id, submission_id: s_id, question_id: question_id}
+              %SubmissionVotes{voter_id: user_id, submission_id: s_id, question_id: question_id}
             end)
             |> Enum.concat(submission_votes)
 
@@ -650,10 +649,10 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(question = %Question{}, user = %User{id: user_id}, raw_answer, force_submit) do
-    with {:ok, submission} <- find_or_create_submission(user, question.assessment),
+  def answer_question(question = %Question{}, cr = %CourseRegistration{id: cr_id}, raw_answer, force_submit) do
+    with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
-         {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, user_id) do
+         {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
       update_submission_status_router(submission, question)
 
       {:ok, nil}
@@ -1323,10 +1322,10 @@ defmodule Cadet.Assessments do
     {:error, {:forbidden, "User is not permitted to grade."}}
   end
 
-  defp find_submission(user = %User{}, assessment = %Assessment{}) do
+  defp find_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
     submission =
       Submission
-      |> where(student_id: ^user.id)
+      |> where(student_id: ^cr.id)
       |> where(assessment_id: ^assessment.id)
       |> Repo.one()
 
@@ -1392,9 +1391,9 @@ defmodule Cadet.Assessments do
     {:ok, rows}
   end
 
-  defp create_empty_submission(user = %User{}, assessment = %Assessment{}) do
+  defp create_empty_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
     %Submission{}
-    |> Submission.changeset(%{student: user, assessment: assessment})
+    |> Submission.changeset(%{student: cr, assessment: assessment})
     |> Repo.insert()
     |> case do
       {:ok, submission} -> {:ok, submission}
@@ -1402,10 +1401,10 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp find_or_create_submission(user = %User{}, assessment = %Assessment{}) do
-    case find_submission(user, assessment) do
+  defp find_or_create_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
+    case find_submission(cr, assessment) do
       {:ok, submission} -> {:ok, submission}
-      {:error, _} -> create_empty_submission(user, assessment)
+      {:error, _} -> create_empty_submission(cr, assessment)
     end
   end
 

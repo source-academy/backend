@@ -50,7 +50,7 @@ defmodule CadetWeb.UserControllerTest do
       insert(
         :answer,
         question: not_submitted_question,
-        submission: not_submitted_submission,
+        submission: not_submitted_submission
       )
 
       resp =
@@ -340,7 +340,7 @@ defmodule CadetWeb.UserControllerTest do
       insert(
         :answer,
         question: not_submitted_question,
-        submission: not_submitted_submission,
+        submission: not_submitted_submission
       )
 
       resp =

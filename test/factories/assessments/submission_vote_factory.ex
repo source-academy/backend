@@ -9,7 +9,7 @@ defmodule Cadet.Assessments.SubmissionVotesFactory do
 
       def submission_vote_factory do
         %SubmissionVotes{
-          user: build(:user, %{role: :student}),
+          voter: build(:course_registration, %{role: :student}),
           question: build(:voting_question),
           submission: build(:submission)
         }

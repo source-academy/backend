@@ -31,5 +31,10 @@ defmodule Cadet.Repo.Migrations.UpdateAssessments do
     alter table(:users) do
       add(:latest_viewed_id, references(:courses), null: true)
     end
+
+    alter table(:submission_votes) do
+      remove(:user_id)
+      add(:voter_id, references(:course_registrations), null: false)
+    end
   end
 end

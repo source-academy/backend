@@ -45,9 +45,9 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def show(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
-    user = conn.assigns[:current_user]
+    cr = conn.assigns.course_reg
 
-    case Assessments.assessment_with_questions_and_answers(assessment_id, user) do
+    case Assessments.assessment_with_questions_and_answers(assessment_id, cr) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
       {:error, {status, message}} -> send_resp(conn, status, message)
     end

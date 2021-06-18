@@ -38,7 +38,7 @@ defmodule CadetWeb.AssessmentsView do
       %{
         id: :id,
         title: :title,
-        type: :type,
+        type: & &1.type.type,
         story: :story,
         number: :number,
         reading: :reading,
