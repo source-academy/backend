@@ -345,5 +345,6 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   defp to_map(schema), do: Map.from_struct(schema) |> Map.drop([:updated_at])
 
-  defp update_map(map1, params), do: Map.merge(map1, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end)
+  defp update_map(map1, params),
+    do: Map.merge(map1, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end)
 end

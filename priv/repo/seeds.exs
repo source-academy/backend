@@ -56,8 +56,13 @@ if Cadet.Env.env() == :dev do
 
   # Assessments
   for i <- 1..5 do
-    type = insert(:assessment_type, %{type: "mission#{i}", order: i, course: course1})
+    type = insert(:assessment_type, %{type: "Mission#{i}", order: i, course: course1})
+    config = insert(:assessment_config, %{assessment_type: type})
     assessment = insert(:assessment, %{is_published: true, type: type, course: course1})
+
+    type2 = insert(:assessment_type, %{type: "Homework#{i}", order: i, course: course2})
+    config2 = insert(:assessment_config, %{assessment_type: type2})
+    assessment2 = insert(:assessment, %{is_published: true, type: type2, course: course2})
 
     programming_questions =
       insert_list(3, :programming_question, %{

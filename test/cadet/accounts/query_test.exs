@@ -21,11 +21,27 @@ defmodule Cadet.Accounts.QueryTest do
       course2 = insert(:course, course_name: "course 2")
       staff_a1 = insert(:course_registration, %{user: user_a, course: course1, role: :staff})
       group1 = insert(:group, %{leader: staff_a1, course: course1})
-      student_b1 = insert(:course_registration, %{user: user_b, course: course1, role: :student, group: group1})
+
+      student_b1 =
+        insert(:course_registration, %{
+          user: user_b,
+          course: course1,
+          role: :student,
+          group: group1
+        })
+
       student_c1 = insert(:course_registration, %{user: user_c, course: course1, role: :student})
       staff_a2 = insert(:course_registration, %{user: user_a, course: course2, role: :staff})
 
-      {:ok, %{c1: course1, c2: course2, sta_a1: staff_a1, stu_b1: student_b1, stu_c1: student_c1, sta_a2: staff_a2}}
+      {:ok,
+       %{
+         c1: course1,
+         c2: course2,
+         sta_a1: staff_a1,
+         stu_b1: student_b1,
+         stu_c1: student_c1,
+         sta_a2: staff_a2
+       }}
     end
 
     test "true, when in same course same group", %{sta_a1: sta_a1, stu_b1: stu_b1} do

@@ -241,7 +241,8 @@ defmodule Cadet.Assessments do
           {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
           {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
         end)
-        # |> load_contest_voting_entries(cr.id)
+
+      # |> load_contest_voting_entries(cr.id)
 
       assessment = Map.put(assessment, :questions, questions)
       {:ok, assessment}
@@ -647,7 +648,12 @@ defmodule Cadet.Assessments do
    `{:bad_request, "Missing or invalid parameter(s)"}`
 
   """
-  def answer_question(question = %Question{}, cr = %CourseRegistration{id: cr_id}, raw_answer, force_submit) do
+  def answer_question(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        raw_answer,
+        force_submit
+      ) do
     with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
