@@ -32,7 +32,7 @@ defmodule Cadet.Auth.Providers.GitHub do
            {:token, HTTPoison.post(@token_url, token_query, token_headers)},
          {:token_response, %{"access_token" => token}} <- {:token_response, Jason.decode!(body)},
          {:user, {:ok, %{"login" => username}}} <- {:user, api_call(@user_api, token)} do
-      {:ok, %{token: token, username: username}}
+      {:ok, %{token: token, username: Provider.namespace(username, "github")}}
     else
       {:token, {:ok, %{status_code: status}}} ->
         {:error, :upstream, "Status code #{status} from GitHub"}
