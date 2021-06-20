@@ -139,6 +139,7 @@ defmodule CadetWeb.Router do
     delete("/goals/:uuid", AdminGoalsController, :delete)
 
     put("/course_config", AdminCoursesController, :update_course_config)
+    get("/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/assessment_config", AdminCoursesController, :update_assessment_config)
     put("/assessment_types", AdminCoursesController, :update_assessment_types)
   end

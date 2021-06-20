@@ -141,6 +141,66 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
+  describe "GET /v2/course/{course_id}/admin/assessment_configs" do
+    @tag authenticate: :admin
+    test "succeeds", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+
+      type1 = insert(:assessment_type, %{order: 1, type: "Mission1", course: course})
+      insert(:assessment_config, %{assessment_type: type1})
+
+      type3 = insert(:assessment_type, %{order: 3, type: "Mission3", course: course})
+      insert(:assessment_config, %{assessment_type: type3})
+
+      type2 = insert(:assessment_type, %{is_graded: false, order: 2, type: "Mission2", course: course})
+      insert(:assessment_config, %{assessment_type: type2})
+
+      resp =
+        conn
+        |> get(build_url_assessment_config(course_id) <> "s")
+        |> json_response(200)
+
+      expected = [
+        %{
+          "decayRatePointsPerHour" => 1,
+          "earlySubmissionXp" => 200,
+          "hoursBeforeEarlyXpDecay" => 48,
+          "isGraded" => true,
+          "order" => 1,
+          "type" => "Mission1"
+        },
+        %{
+          "decayRatePointsPerHour" => 1,
+          "earlySubmissionXp" => 200,
+          "hoursBeforeEarlyXpDecay" => 48,
+          "isGraded" => false,
+          "order" => 2,
+          "type" => "Mission2"
+        },
+        %{
+          "decayRatePointsPerHour" => 1,
+          "earlySubmissionXp" => 200,
+          "hoursBeforeEarlyXpDecay" => 48,
+          "isGraded" => true,
+          "order" => 3,
+          "type" => "Mission3"
+        }
+      ]
+
+      assert expected == resp
+    end
+
+    @tag authenticate: :student
+    test "rejects forbidden request for non-staff users", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      resp = get(conn, build_url_assessment_config(course_id) <> "s")
+
+      assert response(resp, 403) == "Forbidden"
+    end
+  end
+
   describe "PUT /v2/course/{course_id}/admin/assessment_config" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do

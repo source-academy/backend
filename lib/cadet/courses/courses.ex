@@ -63,6 +63,15 @@ defmodule Cadet.Courses do
     |> Repo.one()
   end
 
+  def get_assessment_configs(course_id) when is_ecto_id(course_id) do
+    AssessmentConfig
+    |> join(:inner, [ac], at in assoc(ac, :assessment_type))
+    |> where([ac, at], at.course_id == ^course_id)
+    |> preload(:assessment_type)
+    |> order_by([ac, at], at.order)
+    |> Repo.all()
+  end
+
   @doc """
   Updates the assessment configuration for the specified course
   """

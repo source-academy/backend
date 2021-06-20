@@ -114,6 +114,23 @@ defmodule Cadet.CoursesTest do
     end
   end
 
+  describe "get assessment configs" do
+    test "succeeds" do
+      course = insert(:course)
+      for i <- 1..5 do
+        type = insert(:assessment_type, %{order: 6-i, type: "Mission#{i}", course: course})
+        insert(:assessment_config, %{decay_rate_points_per_hour: i , assessment_type: type})
+      end
+
+      assessment_configs = Courses.get_assessment_configs(course.id)
+
+      # This test that the assessment_type is preloaded and is ordered by order
+      for i <- 1..5 do
+        assert Enum.at(assessment_configs, i-1).assessment_type.order == i
+      end
+    end
+  end
+
   describe "update assessment config" do
     test "succeeds" do
       course = insert(:course)

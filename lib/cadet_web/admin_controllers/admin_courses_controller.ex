@@ -29,6 +29,11 @@ defmodule CadetWeb.AdminCoursesController do
     end
   end
 
+  def get_assessment_configs(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    assessment_configs = Courses.get_assessment_configs(course_id)
+    render(conn, "assessment_configs.json", %{configs: assessment_configs})
+  end
+
   def update_assessment_config(conn, %{
         "course_id" => course_id,
         "order" => order,
