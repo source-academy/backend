@@ -15,25 +15,30 @@ defmodule Cadet.Auth.Providers.GitHub do
           {:ok, %{token: Provider.token(), username: String.t()}}
           | {:error, Provider.error(), String.t()}
   def authorise(config, code, client_id, redirect_uri) do
-    token_query =
-      URI.encode_query(%{
-        client_id: client_id,
-        client_secret: config.client_secret,
-        code: code,
-        redirect_uri: redirect_uri
-      })
-
     token_headers = [
       {"Content-Type", "application/x-www-form-urlencoded"},
       {"Accept", "application/json"}
     ]
 
-    with {:token, {:ok, %{body: body, status_code: 200}}} <-
+    with {:validate_client, {:ok, client_secret}} <-
+           {:validate_client, Map.fetch(config, client_id)},
+         {:token_query, token_query} <-
+           {:token_query,
+            URI.encode_query(%{
+              client_id: client_id,
+              client_secret: client_secret,
+              code: code,
+              redirect_uri: redirect_uri
+            })},
+         {:token, {:ok, %{body: body, status_code: 200}}} <-
            {:token, HTTPoison.post(@token_url, token_query, token_headers)},
          {:token_response, %{"access_token" => token}} <- {:token_response, Jason.decode!(body)},
          {:user, {:ok, %{"login" => username}}} <- {:user, api_call(@user_api, token)} do
       {:ok, %{token: token, username: Provider.namespace(username, "github")}}
     else
+      {:validate_client, :error} ->
+        {:error, :invalid_credentials, "Invalid client id"}
+
       {:token, {:ok, %{status_code: status}}} ->
         {:error, :upstream, "Status code #{status} from GitHub"}
 
