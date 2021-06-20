@@ -13,6 +13,8 @@ defmodule Cadet.Auth.Provider do
   @type redirect_uri :: String.t()
   @type error :: :upstream | :invalid_credentials | :other
   @type provider_instance :: String.t()
+  @type username :: String.t()
+  @type prefix :: String.t()
 
   @doc "Exchanges the OAuth2 authorisation code for a token and the user ID."
   @callback authorise(any(), code, client_id, redirect_uri) ::
@@ -52,5 +54,10 @@ defmodule Cadet.Auth.Provider do
       {provider, config} -> provider.get_role(config, token)
       _ -> {:error, :other, "Invalid or nonexistent provider config"}
     end
+  end
+
+  @spec namespace(username, prefix) :: String.t()
+  def namespace(username, prefix) do
+    prefix <> "/" <> username
   end
 end

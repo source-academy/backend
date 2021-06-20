@@ -13,7 +13,9 @@ defmodule Cadet.Auth.Providers.GoogleClaimExtractor do
     end
   end
 
-  def get_name(_claims), do: nil
+  def get_name(claims) do
+    claims["name"]
+  end
 
   def get_role(_claims), do: nil
 
