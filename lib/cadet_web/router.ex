@@ -59,7 +59,7 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages with course
-  scope "/v2/course/:course_id", CadetWeb do
+  scope "/v2/courses/:course_id", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
     get("/sourcecast", SourcecastController, :index)
@@ -94,7 +94,7 @@ defmodule CadetWeb.Router do
   end
 
   # Authenticated Pages
-  scope "/v2/course/:course_id/self", CadetWeb do
+  scope "/v2/courses/:course_id/self", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
     get("/goals", IncentivesController, :index_goals)
@@ -102,7 +102,7 @@ defmodule CadetWeb.Router do
   end
 
   # Admin pages
-  scope "/v2/course/:course_id/admin", CadetWeb do
+  scope "/v2/courses/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     get("/assets/:foldername", AdminAssetsController, :index)
@@ -138,10 +138,9 @@ defmodule CadetWeb.Router do
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
 
-    put("/course_config", AdminCoursesController, :update_course_config)
-    get("/assessment_configs", AdminCoursesController, :get_assessment_configs)
-    put("/assessment_config", AdminCoursesController, :update_assessment_config)
-    put("/assessment_types", AdminCoursesController, :update_assessment_types)
+    put("/config", AdminCoursesController, :update_course_config)
+    get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
+    put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
   end
 
   # Other scopes may use custom stacks.

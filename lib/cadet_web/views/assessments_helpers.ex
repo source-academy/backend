@@ -16,19 +16,19 @@ defmodule CadetWeb.AssessmentsHelpers do
     transform_map_for_view(external_library, [:name, :symbols])
   end
 
-  def build_question_by_assessment_type(
+  def build_question_by_assessment_config(
         %{
           question: question,
-          assessment_type: assessment_type
+          assessment_config: assessment_config
         },
         all_testcases? \\ false
       ) do
     Map.merge(
       build_generic_question_fields(%{question: question}),
-      build_question_content_by_type(
+      build_question_content_by_config(
         %{
           question: question,
-          assessment_type: assessment_type
+          assessment_config: assessment_config
         },
         all_testcases?
       )
@@ -40,12 +40,12 @@ defmodule CadetWeb.AssessmentsHelpers do
         assessment: assessment
       }) do
     components = [
-      build_question_by_assessment_type(%{
+      build_question_by_assessment_config(%{
         question: question,
-        assessment_type: assessment.type.type
+        assessment_config: assessment.config.type
       }),
       build_answer_fields_by_question_type(%{question: question}),
-      build_solution_if_ungraded_by_type(%{question: question, assessment: assessment})
+      build_solution_if_ungraded_by_config(%{question: question, assessment: assessment})
     ]
 
     components
@@ -62,11 +62,11 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_solution_if_ungraded_by_type(%{
+  defp build_solution_if_ungraded_by_config(%{
          question: %{question: question, type: question_type},
-         assessment: %{type: assessment_type}
+         assessment: %{config: assessment_config}
        }) do
-    if !assessment_type.is_graded do
+    if !assessment_config.is_graded do
       solution_getter =
         case question_type do
           :programming -> &Map.get(&1, "solution")
@@ -201,10 +201,10 @@ defmodule CadetWeb.AssessmentsHelpers do
     end
   end
 
-  defp build_question_content_by_type(
+  defp build_question_content_by_config(
          %{
            question: %{question: question, type: question_type},
-           assessment_type: assessment_type
+           assessment_config: assessment_config
          },
          all_testcases?
        ) do
@@ -214,8 +214,8 @@ defmodule CadetWeb.AssessmentsHelpers do
           content: "content",
           prepend: "prepend",
           solutionTemplate: "template",
-          postpend: build_postpend(%{assessment_type: assessment_type}, all_testcases?),
-          testcases: build_testcases(%{assessment_type: assessment_type}, all_testcases?)
+          postpend: build_postpend(%{assessment_config: assessment_config}, all_testcases?),
+          testcases: build_testcases(%{assessment_config: assessment_config}, all_testcases?)
         })
 
       :mcq ->

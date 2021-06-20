@@ -4,7 +4,7 @@ defmodule Cadet.Courses.Course do
   """
   use Cadet, :model
 
-  alias Cadet.Courses.AssessmentType
+  alias Cadet.Courses.AssessmentConfig
 
   schema "courses" do
     field(:course_name, :string)
@@ -17,7 +17,7 @@ defmodule Cadet.Courses.Course do
     field(:source_variant, :string)
     field(:module_help_text, :string)
 
-    has_many(:assessment_type, AssessmentType)
+    has_many(:assessment_config, AssessmentConfig)
 
     timestamps()
   end

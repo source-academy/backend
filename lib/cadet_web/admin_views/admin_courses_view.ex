@@ -7,9 +7,9 @@ defmodule CadetWeb.AdminCoursesView do
 
   def render("config.json", %{config: config}) do
     transform_map_for_view(config, %{
-      order: &(&1.assessment_type.order),
-      type: &(&1.assessment_type.type),
-      isGraded: &(&1.assessment_type.is_graded),
+      order: :order,
+      type: :type,
+      isGraded: :is_graded,
       decayRatePointsPerHour: :decay_rate_points_per_hour,
       earlySubmissionXp: :early_submission_xp,
       hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay

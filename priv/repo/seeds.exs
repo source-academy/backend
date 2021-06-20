@@ -25,8 +25,7 @@ if Cadet.Env.env() == :dev do
   mentor1 = insert(:user, %{name: "mentor", latest_viewed: course1})
   admin1 = insert(:user, %{name: "admin", latest_viewed: course1})
 
-  studenta1admin2 =
-    insert(:user, %{name: "student a", latest_viewed: course1})
+  studenta1admin2 = insert(:user, %{name: "student a", latest_viewed: course1})
 
   studentb1 = insert(:user, %{latest_viewed: course1})
   studentc1 = insert(:user, %{latest_viewed: course1})
@@ -56,13 +55,11 @@ if Cadet.Env.env() == :dev do
 
   # Assessments
   for i <- 1..5 do
-    type = insert(:assessment_type, %{type: "Mission#{i}", order: i, course: course1})
-    config = insert(:assessment_config, %{assessment_type: type})
-    assessment = insert(:assessment, %{is_published: true, type: type, course: course1})
+    config = insert(:assessment_config, %{type: "Mission#{i}", order: i, course: course1})
+    assessment = insert(:assessment, %{is_published: true, config: config, course: course1})
 
-    type2 = insert(:assessment_type, %{type: "Homework#{i}", order: i, course: course2})
-    config2 = insert(:assessment_config, %{assessment_type: type2})
-    assessment2 = insert(:assessment, %{is_published: true, type: type2, course: course2})
+    config2 = insert(:assessment_config, %{type: "Homework#{i}", order: i, course: course2})
+    assessment2 = insert(:assessment, %{is_published: true, config: config2, course: course2})
 
     programming_questions =
       insert_list(3, :programming_question, %{

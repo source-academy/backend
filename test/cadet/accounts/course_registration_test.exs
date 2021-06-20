@@ -260,35 +260,32 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
       assert CourseRegistrations.get_users(course1.id) == []
 
-      assert_raise Ecto.NoPrimaryKeyValueError, fn ->
-        CourseRegistrations.delete_record(%{
-          user_id: user1.id,
-          course_id: course1.id,
-          role: :student
-        })
-      end
+      assert {:error, :no_such_enrty} ==
+               CourseRegistrations.delete_record(%{
+                 user_id: user1.id,
+                 course_id: course1.id,
+                 role: :student
+               })
     end
 
     test "failed due to non existing entry", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
 
-      assert_raise Ecto.NoPrimaryKeyValueError, fn ->
-        CourseRegistrations.delete_record(%{
-          user_id: user2.id,
-          course_id: course1.id,
-          role: :student
-        })
-      end
+      assert {:error, :no_such_enrty} ==
+               CourseRegistrations.delete_record(%{
+                 user_id: user2.id,
+                 course_id: course1.id,
+                 role: :student
+               })
     end
 
     test "failed due to invalid changeset", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
 
-      {:error, changeset} =
+      {:error, :no_such_enrty} =
         CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id})
 
       assert length(CourseRegistrations.get_users(course1.id)) == 1
-      refute changeset.valid?
     end
   end
 end

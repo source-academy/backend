@@ -7,8 +7,8 @@ defmodule Cadet.CoursesTest do
   describe "get course config" do
     test "succeeds" do
       course = insert(:course)
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_config, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_config, %{order: 2, type: "Quests", course: course})
 
       {:ok, course} = Courses.get_course_config(course.id)
       assert course.course_name == "Programming Methodology"
@@ -20,7 +20,7 @@ defmodule Cadet.CoursesTest do
       assert course.source_chapter == 1
       assert course.source_variant == "default"
       assert course.module_help_text == "Help Text"
-      assert course.assessment_types == ["Missions", "Quests"]
+      assert course.assessment_configs == ["Missions", "Quests"]
     end
 
     test "returns with error for invalid course id" do
@@ -117,258 +117,203 @@ defmodule Cadet.CoursesTest do
   describe "get assessment configs" do
     test "succeeds" do
       course = insert(:course)
+
       for i <- 1..5 do
-        type = insert(:assessment_type, %{order: 6-i, type: "Mission#{i}", course: course})
-        insert(:assessment_config, %{decay_rate_points_per_hour: i , assessment_type: type})
+        insert(:assessment_config, %{order: 6 - i, type: "Mission#{i}", course: course})
       end
 
       assessment_configs = Courses.get_assessment_configs(course.id)
 
-      # This test that the assessment_type is preloaded and is ordered by order
-      for i <- 1..5 do
-        assert Enum.at(assessment_configs, i-1).assessment_type.order == i
-      end
+      assert length(assessment_configs) <= 5
+
+      assessment_configs
+      |> Enum.with_index(1)
+      |> Enum.each(fn {at, idx} ->
+        assert at.order == idx
+        assert at.type == "Mission#{6 - idx}"
+      end)
     end
   end
 
-  describe "update assessment config" do
-    test "succeeds" do
+  describe "mass_upsert_or_delete_assessment_configs" do
+    setup do
       course = insert(:course)
-      type = insert(:assessment_type, %{course: course})
-      _assessment_config = insert(:assessment_config, %{assessment_type: type})
+      insert(:assessment_config, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_config, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_config, %{order: 3, type: "Paths", course: course})
+      insert(:assessment_config, %{order: 4, type: "Contests", course: course})
+      expected = ["Paths", "Quests", "Missions", "Others", "Contests"]
+      {:ok, %{course: course, expected: expected}}
+    end
 
-      {:ok, updated_config} = Courses.update_assessment_config(course.id, type.order, 100, 24, 1)
+    test "succeeds", %{course: course, expected: expected} do
+      :ok =
+        Courses.mass_upsert_or_delete_assessment_configs(course.id, [
+          %{course_id: course.id, order: 1, type: "Paths"},
+          %{course_id: course.id, order: 2, type: "Quests"},
+          %{course_id: course.id, order: 3, type: "Missions"},
+          %{course_id: course.id, order: 4, type: "Others"},
+          %{course_id: course.id, order: 5, type: "Contests"}
+        ])
 
+      assessment_configs = Courses.get_assessment_configs(course.id)
+
+      assert Enum.map(assessment_configs, & &1.type) == expected
+    end
+
+    test "succeeds to capitalise", %{course: course, expected: expected} do
+      :ok =
+        Courses.mass_upsert_or_delete_assessment_configs(course.id, [
+          %{course_id: course.id, order: 1, type: "Paths"},
+          %{course_id: course.id, order: 2, type: "quests"},
+          %{course_id: course.id, order: 3, type: "missions"},
+          %{course_id: course.id, order: 4, type: "Others"},
+          %{course_id: course.id, order: 5, type: "contests"}
+        ])
+
+      assessment_configs = Courses.get_assessment_configs(course.id)
+
+      assert Enum.map(assessment_configs, & &1.type) == expected
+    end
+
+    test "succeed to delete", %{course: course} do
+      :ok =
+        Courses.mass_upsert_or_delete_assessment_configs(course.id, [
+          %{course_id: course.id, order: 1, type: "Paths"},
+          %{course_id: course.id, order: 2, type: "quests"},
+          %{course_id: course.id, order: 3, type: "missions"}
+        ])
+
+      assessment_configs = Courses.get_assessment_configs(course.id)
+
+      assert Enum.map(assessment_configs, & &1.type) == ["Paths", "Quests", "Missions"]
+    end
+
+    test "returns with error for empty list parameter", %{course: course} do
+      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
+               Courses.mass_upsert_or_delete_assessment_configs(course.id, [])
+    end
+
+    test "returns with error for list parameter of greater than length 5", %{course: course} do
+      params = [
+        %{course_id: course.id, order: 1, type: "Paths"},
+        %{course_id: course.id, order: 2, type: "Quests"},
+        %{course_id: course.id, order: 3, type: "Missions"},
+        %{course_id: course.id, order: 4, type: "Others"},
+        %{course_id: course.id, order: 5, type: "Contests"},
+        %{course_id: course.id, order: 6, type: "Homework"}
+      ]
+
+      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
+               Courses.mass_upsert_or_delete_assessment_configs(course.id, params)
+    end
+
+    test "returns with error for non-list parameter", %{course: course} do
+      params = %{course_id: course.id, order: 1, type: "Paths"}
+
+      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
+               Courses.mass_upsert_or_delete_assessment_configs(course.id, params)
+    end
+  end
+
+  describe "insert_or_update_assessment_config" do
+    test "succeeds with insert to empty configs" do
+      course = insert(:course)
+      old_configs = Courses.get_assessment_configs(course.id)
+
+      params = %{
+        course_id: course.id,
+        order: 1,
+        type: "Mission",
+        early_submission_xp: 100,
+        hours_before_early_xp_decay: 24,
+        decay_rate_points_per_hour: 1
+      }
+
+      {:ok, updated_config} = Courses.insert_or_update_assessment_config(params)
+
+      new_configs = Courses.get_assessment_configs(course.id)
+      assert length(old_configs) == 0
+      assert length(new_configs) == 1
       assert updated_config.early_submission_xp == 100
       assert updated_config.hours_before_early_xp_decay == 24
       assert updated_config.decay_rate_points_per_hour == 1
     end
 
-    test "returns with error for failed updates" do
+    test "succeeds with insert to existing configs" do
       course = insert(:course)
-      type = insert(:assessment_type, %{course: course})
-      _assessment_config = insert(:assessment_config, %{assessment_type: type})
+      insert(:assessment_config, %{order: 1, course: course})
+      old_configs = Courses.get_assessment_configs(course.id)
 
-      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, -1, 0, 0)
+      params = %{
+        course_id: course.id,
+        order: 2,
+        type: "Mission",
+        early_submission_xp: 100,
+        hours_before_early_xp_decay: 24,
+        decay_rate_points_per_hour: 1
+      }
 
-      assert %{early_submission_xp: ["must be greater than or equal to 0"]} = errors_on(changeset)
+      {:ok, updated_config} = Courses.insert_or_update_assessment_config(params)
 
-      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, 200, -1, 0)
+      new_configs = Courses.get_assessment_configs(course.id)
+      assert length(old_configs) == 1
+      assert length(new_configs) == 2
+      assert updated_config.early_submission_xp == 100
+      assert updated_config.hours_before_early_xp_decay == 24
+      assert updated_config.decay_rate_points_per_hour == 1
+    end
 
-      assert %{hours_before_early_xp_decay: ["must be greater than or equal to 0"]} =
-               errors_on(changeset)
+    test "succeeds with update" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
 
-      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, 200, 48, -1)
+      params = %{
+        course_id: course.id,
+        order: config.order,
+        type: "Mission",
+        early_submission_xp: 100,
+        hours_before_early_xp_decay: 24,
+        decay_rate_points_per_hour: 1
+      }
 
-      assert %{decay_rate_points_per_hour: ["must be greater than or equal to 0"]} =
-               errors_on(changeset)
+      {:ok, updated_config} = Courses.insert_or_update_assessment_config(params)
 
-      {:error, changeset} = Courses.update_assessment_config(course.id, type.order, 200, 48, 300)
-
-      assert %{decay_rate_points_per_hour: ["must be less than or equal to 200"]} =
-               errors_on(changeset)
+      assert updated_config.type == "Mission"
+      assert updated_config.early_submission_xp == 100
+      assert updated_config.hours_before_early_xp_decay == 24
+      assert updated_config.decay_rate_points_per_hour == 1
     end
   end
 
-  describe "update assessment types" do
+  describe "delete_assessment_config" do
     test "succeeds" do
       course = insert(:course)
-      course_id = course.id
+      config = insert(:assessment_config, %{order: 1, course: course})
+      old_configs = Courses.get_assessment_configs(course.id)
 
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-      insert(:assessment_type, %{order: 4, type: "Contests", course: course})
-      insert(:assessment_type, %{order: 5, type: "Others", course: course})
+      params = %{
+        course_id: course.id,
+        order: config.order
+      }
 
-      :ok =
-        Courses.update_assessment_types(course_id, [
-          "Paths",
-          "Quests",
-          "Missions",
-          "Others",
-          "Contests"
-        ])
+      {:ok, _} = Courses.delete_assessment_config(params)
 
-      {:ok, updated_course_config} = Courses.get_course_config(course_id)
-
-      assert updated_course_config.assessment_types == [
-               "Paths",
-               "Quests",
-               "Missions",
-               "Others",
-               "Contests"
-             ]
+      new_configs = Courses.get_assessment_configs(course.id)
+      assert length(old_configs) == 1
+      assert length(new_configs) == 0
     end
 
-    test "succeeds when database entries are not in order" do
+    test "error" do
       course = insert(:course)
-      course_id = course.id
+      insert(:assessment_config, %{order: 1, course: course})
 
-      insert(:assessment_type, %{order: 4, type: "Contests", course: course})
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-      insert(:assessment_type, %{order: 5, type: "Others", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
+      params = %{
+        course_id: course.id,
+        order: 2
+      }
 
-      :ok =
-        Courses.update_assessment_types(course_id, [
-          "Paths",
-          "Quests",
-          "Missions",
-          "Others",
-          "Contests"
-        ])
-
-      {:ok, updated_course_config} = Courses.get_course_config(course_id)
-
-      assert updated_course_config.assessment_types == [
-               "Paths",
-               "Quests",
-               "Missions",
-               "Others",
-               "Contests"
-             ]
-    end
-
-    test "succeeds and capitalizes the types during database insertion" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-      insert(:assessment_type, %{order: 4, type: "Contests", course: course})
-      insert(:assessment_type, %{order: 5, type: "Others", course: course})
-
-      :ok =
-        Courses.update_assessment_types(course_id, [
-          "Paths",
-          "quests",
-          "Missions",
-          "Others",
-          "contests"
-        ])
-
-      {:ok, updated_course_config} = Courses.get_course_config(course_id)
-
-      assert updated_course_config.assessment_types == [
-               "Paths",
-               "Quests",
-               "Missions",
-               "Others",
-               "Contests"
-             ]
-    end
-
-    test "succeeds when inserting more types than existing database entries" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-
-      :ok =
-        Courses.update_assessment_types(course_id, [
-          "Paths",
-          "Quests",
-          "Missions",
-          "Others",
-          "Contests"
-        ])
-
-      {:ok, updated_course_config} = Courses.get_course_config(course_id)
-
-      assert updated_course_config.assessment_types == [
-               "Paths",
-               "Quests",
-               "Missions",
-               "Others",
-               "Contests"
-             ]
-    end
-
-    test "succeeds when inserting less types than existing database entries" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-      insert(:assessment_type, %{order: 4, type: "Contests", course: course})
-
-      :ok = Courses.update_assessment_types(course_id, ["Paths", "Quests", "Missions"])
-      {:ok, updated_course_config} = Courses.get_course_config(course_id)
-
-      assert updated_course_config.assessment_types == ["Paths", "Quests", "Missions"]
-    end
-
-    test "returns with error for invalid parameters" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-
-      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.update_assessment_types(course_id, [1, "Quests", "Missions"])
-    end
-
-    test "returns with error for duplicate parameters" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-
-      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.update_assessment_types(course_id, ["Missions", "Quests", "Missions"])
-    end
-
-    test "returns with error for empty list parameter" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-
-      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.update_assessment_types(course_id, [])
-    end
-
-    test "returns with error for list parameter of greater than length 5" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-
-      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.update_assessment_types(course_id, [
-                 "Missions",
-                 "Quests",
-                 "Paths",
-                 "Contests",
-                 "Others",
-                 "Assessments"
-               ])
-    end
-
-    test "returns with error for non-list parameter" do
-      course = insert(:course)
-      course_id = course.id
-
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-
-      assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.update_assessment_types(course_id, "Missions")
+      assert {:error, :no_such_enrty} == Courses.delete_assessment_config(params)
     end
   end
 

@@ -34,57 +34,34 @@ defmodule CadetWeb.AdminCoursesController do
     render(conn, "assessment_configs.json", %{configs: assessment_configs})
   end
 
-  def update_assessment_config(conn, %{
+  def update_assessment_configs(conn, %{
         "course_id" => course_id,
-        "order" => order,
-        "earlySubmissionXp" => early_xp,
-        "hoursBeforeEarlyXpDecay" => hours_before_decay,
-        "decayRatePointsPerHour" => decay_rate
+        "assessmentConfigs" => assessment_configs
       })
-      when is_ecto_id(course_id) do
-    case Courses.update_assessment_config(
-           course_id,
-           order,
-           early_xp,
-           hours_before_decay,
-           decay_rate
-         ) do
-      {:ok, _} ->
-        text(conn, "OK")
+      when is_ecto_id(course_id) and is_list(assessment_configs) do
+    if Enum.all?(assessment_configs, &is_map/1) do
+      configs = assessment_configs |> Enum.map(&to_snake_case_atom_keys/1)
 
-      {:error, _} ->
-        conn
-        |> put_status(:bad_request)
-        |> text("Invalid parameter(s)")
+      case Courses.mass_upsert_or_delete_assessment_configs(course_id, configs) do
+        :ok ->
+          text(conn, "OK")
+
+        {:error, {status, message}} ->
+          conn
+          |> put_status(status)
+          |> text(message)
+      end
+    else
+      send_resp(conn, :bad_request, "List parameter does not contain all maps")
     end
   end
 
-  def update_assessment_config(conn, _) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
-  end
-
-  def update_assessment_types(conn, %{
-        "course_id" => course_id,
-        "assessmentTypes" => assessment_types
-      })
-      when is_ecto_id(course_id) do
-    case Courses.update_assessment_types(course_id, assessment_types) do
-      :ok ->
-        text(conn, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def update_assessment_types(conn, _) do
-    send_resp(conn, :bad_request, "Missing parameter(s)")
+  def update_assessment_configs(conn, _) do
+    send_resp(conn, :bad_request, "Missing List parameter(s)")
   end
 
   swagger_path :update_course_config do
-    put("/v2/course/{course_id}/admin/course_config")
+    put("/v2/courses/{course_id}/admin/onfig")
 
     summary("Updates the course configuration for the specified course")
 
@@ -109,8 +86,8 @@ defmodule CadetWeb.AdminCoursesController do
     response(403, "Forbidden")
   end
 
-  swagger_path :update_assessment_config do
-    put("/v2/course/{course_id}/admin/assessment_config/{order}")
+  swagger_path :update_assessment_configs do
+    put("/v2/courses/{course_id}/admin/config/assessment_configs")
 
     summary("Updates the assessment configuration for the specified course")
 
@@ -120,29 +97,7 @@ defmodule CadetWeb.AdminCoursesController do
 
     parameters do
       course_id(:path, :integer, "Course ID", required: true)
-      order(:body, :integer, "type order", required: true)
-      early_submission_xp(:body, :integer, "Early submission xp")
-      hours_before_early_xp_decay(:body, :integer, "Hours before early submission xp decay")
-      decay_rate_points_per_hour(:body, :integer, "Decay rate in points per hour")
-    end
-
-    response(200, "OK")
-    response(400, "Missing or invalid parameter(s)")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :update_assessment_types do
-    put("/admin/courses/{course_id}/assessment_types")
-
-    summary("Updates the assessment types for the specified course")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      course_id(:path, :integer, "Course ID", required: true)
-      assessment_types(:body, :list, "Assessment Types")
+      assessment_configs(:body, :list, "Assessment Configs")
     end
 
     response(200, "OK")

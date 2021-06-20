@@ -2,19 +2,19 @@ defmodule CadetWeb.AdminCoursesControllerTest do
   use CadetWeb.ConnCase
 
   import Cadet.SharedHelper
-  import Ecto.Query
+
   alias Cadet.Repo
-  alias Cadet.Courses.{Course, AssessmentConfig, AssessmentType}
+  alias Cadet.Courses
+  alias Cadet.Courses.Course
   alias CadetWeb.AdminCoursesController
 
   test "swagger" do
     AdminCoursesController.swagger_definitions()
     AdminCoursesController.swagger_path_update_course_config(nil)
-    AdminCoursesController.swagger_path_update_assessment_config(nil)
-    AdminCoursesController.swagger_path_update_assessment_types(nil)
+    AdminCoursesController.swagger_path_update_assessment_configs(nil)
   end
 
-  describe "PUT /v2/course/{course_id}/admin/course_config" do
+  describe "PUT /v2/courses/{course_id}/admin/config" do
     @tag authenticate: :admin
     test "succeeds 1", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -141,24 +141,18 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
-  describe "GET /v2/course/{course_id}/admin/assessment_configs" do
+  describe "GET /v2/courses/{course_id}/admin/configs/assessment_configs" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-
-      type1 = insert(:assessment_type, %{order: 1, type: "Mission1", course: course})
-      insert(:assessment_config, %{assessment_type: type1})
-
-      type3 = insert(:assessment_type, %{order: 3, type: "Mission3", course: course})
-      insert(:assessment_config, %{assessment_type: type3})
-
-      type2 = insert(:assessment_type, %{is_graded: false, order: 2, type: "Mission2", course: course})
-      insert(:assessment_config, %{assessment_type: type2})
+      insert(:assessment_config, %{order: 1, type: "Mission1", course: course})
+      insert(:assessment_config, %{order: 3, type: "Mission3", course: course})
+      insert(:assessment_config, %{is_graded: false, order: 2, type: "Mission2", course: course})
 
       resp =
         conn
-        |> get(build_url_assessment_config(course_id) <> "s")
+        |> get(build_url_assessment_configs(course_id))
         |> json_response(200)
 
       expected = [
@@ -195,146 +189,51 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     test "rejects forbidden request for non-staff users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
 
-      resp = get(conn, build_url_assessment_config(course_id) <> "s")
+      resp = get(conn, build_url_assessment_configs(course_id))
 
       assert response(resp, 403) == "Forbidden"
     end
   end
 
-  describe "PUT /v2/course/{course_id}/admin/assessment_config" do
+  describe "PUT /v2/courses/{course_id}/admin/config/assessment_configs" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      course = Repo.get(Course, course_id)
-      type = insert(:assessment_type, %{course: course, order: 2})
-      old_config = insert(:assessment_config, %{assessment_type: type})
+      insert(:assessment_config, %{course: Repo.get(Course, course_id)})
+
+      old_configs = Courses.get_assessment_configs(course_id) |> Enum.map(& &1.type)
 
       params = %{
-        "order" => type.order,
-        "earlySubmissionXp" => 100,
-        "hoursBeforeEarlyXpDecay" => 24,
-        "decayRatePointsPerHour" => 2
+        "assessmentConfigs" => [
+          %{
+            "courseId" => course_id,
+            "order" => 1,
+            "type" => "Missions",
+            "earlySubmissionXp" => 100,
+            "hoursBeforeEarlyXpDecay" => 24,
+            "decayRatePointsPerHour" => 1
+          },
+          %{
+            "courseId" => course_id,
+            "order" => 2,
+            "type" => "Paths",
+            "earlySubmissionXp" => 100,
+            "hoursBeforeEarlyXpDecay" => 24,
+            "decayRatePointsPerHour" => 1
+          }
+        ]
       }
 
-      resp = put(conn, build_url_assessment_config(course_id), params)
+      resp =
+        conn
+        |> put(build_url_assessment_configs(course_id), params)
+        |> response(200)
 
-      assert response(resp, 200) == "OK"
-      updated_config = Repo.get(AssessmentConfig, old_config.id)
-      assert updated_config.decay_rate_points_per_hour == 2
-      assert updated_config.early_submission_xp == 100
-      assert updated_config.hours_before_early_xp_decay == 24
-    end
+      assert resp == "OK"
 
-    @tag authenticate: :student
-    test "rejects forbidden request for non-staff users", %{conn: conn} do
-      course_id = conn.assigns[:course_id]
-      course = Repo.get(Course, course_id)
-      type = insert(:assessment_type, %{course: course})
-      insert(:assessment_config, %{assessment_type: type})
-
-      conn =
-        put(conn, build_url_assessment_config(course_id), %{
-          "order" => type.order,
-          "earlySubmissionXp" => 100,
-          "hoursBeforeEarlyXpDecay" => 24,
-          "decayRatePointsPerHour" => 2
-        })
-
-      assert response(conn, 403) == "Forbidden"
-    end
-
-    @tag authenticate: :staff
-    test "rejects request if user does not belong to specified course", %{conn: conn} do
-      course_id = conn.assigns[:course_id]
-      course = Repo.get(Course, course_id)
-      type = insert(:assessment_type, %{course: course})
-      insert(:assessment_config, %{assessment_type: type})
-
-      conn =
-        put(conn, build_url_assessment_config(course_id + 1), %{
-          "order" => type.order,
-          "earlySubmissionXp" => 100,
-          "hoursBeforeEarlyXpDecay" => 24,
-          "decayRatePointsPerHour" => 2
-        })
-
-      assert response(conn, 403) == "Forbidden"
-    end
-
-    @tag authenticate: :staff
-    test "rejects requests with invalid params", %{conn: conn} do
-      course_id = conn.assigns[:course_id]
-      course = Repo.get(Course, course_id)
-      type = insert(:assessment_type, %{course: course})
-      insert(:assessment_config, %{assessment_type: type})
-
-      conn =
-        put(conn, build_url_assessment_config(course_id), %{
-          "order" => type.order,
-          "earlySubmissionXp" => 100,
-          "hoursBeforeEarlyXpDecay" => -1,
-          "decayRatePointsPerHour" => 200
-        })
-
-      assert response(conn, 400) == "Invalid parameter(s)"
-    end
-
-    @tag authenticate: :staff
-    test "rejects requests with missing params", %{conn: conn} do
-      course_id = conn.assigns[:course_id]
-      course = Repo.get(Course, course_id)
-      type = insert(:assessment_type, %{course: course})
-      insert(:assessment_config, %{assessment_type: type})
-
-      conn =
-        put(conn, build_url_assessment_config(course_id), %{
-          "order" => type.order,
-          "hoursBeforeEarlyXpDecay" => 24,
-          "decayRatePointsPerHour" => 2
-        })
-
-      assert response(conn, 400) == "Missing parameter(s)"
-    end
-  end
-
-  describe "PUT /v2/course/{course_id}/admin/assessment_types" do
-    @tag authenticate: :admin
-    test "succeeds", %{conn: conn} do
-      course_id = conn.assigns[:course_id]
-      insert(:assessment_type, %{course: Repo.get(Course, course_id)})
-
-      old_course =
-        Course
-        |> where(id: ^course_id)
-        |> join(:left, [c], at in assoc(c, :assessment_type))
-        |> preload([c, at],
-          assessment_type: ^from(at in AssessmentType, order_by: [asc: at.order])
-        )
-        |> Repo.all()
-        |> hd()
-
-      old_types = Enum.map(old_course.assessment_type, fn x -> x.type end)
-
-      conn =
-        put(conn, build_url_assessment_types(course_id), %{
-          "assessmentTypes" => ["Missions", "Quests", "Contests"]
-        })
-
-      new_course =
-        Course
-        |> where(id: ^course_id)
-        |> join(:left, [c], at in assoc(c, :assessment_type))
-        |> preload([c, at],
-          assessment_type: ^from(at in AssessmentType, order_by: [asc: at.order])
-        )
-        |> Repo.all()
-        |> hd()
-
-      new_types = Enum.map(new_course.assessment_type, fn x -> x.type end)
-
-      assert response(conn, 200) == "OK"
-      refute old_types == new_types
-      assert new_types == ["Missions", "Quests", "Contests"]
+      new_configs = Courses.get_assessment_configs(course_id) |> Enum.map(& &1.type)
+      refute old_configs == new_configs
+      assert new_configs == ["Missions", "Paths"]
     end
 
     @tag authenticate: :student
@@ -342,8 +241,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course_id), %{
-          "assessmentTypes" => ["Missions", "Quests", "Contests"]
+        put(conn, build_url_assessment_configs(course_id), %{
+          "assessmentConfigs" => []
         })
 
       assert response(conn, 403) == "Forbidden"
@@ -354,8 +253,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course_id + 1), %{
-          "assessmentTypes" => ["Missions", "Quests", "Contests"]
+        put(conn, build_url_assessment_configs(course_id + 1), %{
+          "assessmentConfigs" => []
         })
 
       assert response(conn, 403) == "Forbidden"
@@ -366,11 +265,11 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course_id), %{
-          "assessmentTypes" => "Missions"
+        put(conn, build_url_assessment_configs(course_id), %{
+          "assessmentConfigs" => "Missions"
         })
 
-      assert response(conn, 400) == "Invalid parameter(s)"
+      assert response(conn, 400) == "Missing List parameter(s)"
     end
 
     @tag authenticate: :staff
@@ -378,30 +277,27 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course_id = conn.assigns[:course_id]
 
       conn =
-        put(conn, build_url_assessment_types(course_id), %{
-          "assessmentTypes" => [1, "Missions", "Quests"]
+        put(conn, build_url_assessment_configs(course_id), %{
+          "assessmentConfigs" => [1, "Missions", "Quests"]
         })
 
-      assert response(conn, 400) == "Invalid parameter(s)"
+      assert response(conn, 400) == "List parameter does not contain all maps"
     end
 
     @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
       course_id = conn.assigns[:course_id]
 
-      conn = put(conn, build_url_assessment_types(course_id), %{})
+      conn = put(conn, build_url_assessment_configs(course_id), %{})
 
-      assert response(conn, 400) == "Missing parameter(s)"
+      assert response(conn, 400) == "Missing List parameter(s)"
     end
   end
 
-  defp build_url_course_config(course_id), do: "/v2/course/#{course_id}/admin/course_config"
+  defp build_url_course_config(course_id), do: "/v2/courses/#{course_id}/admin/config"
 
-  defp build_url_assessment_config(course_id),
-    do: "/v2/course/#{course_id}/admin/assessment_config"
-
-  defp build_url_assessment_types(course_id),
-    do: "/v2/course/#{course_id}/admin/assessment_types"
+  defp build_url_assessment_configs(course_id),
+    do: "/v2/courses/#{course_id}/admin/config/assessment_configs"
 
   defp to_map(schema), do: Map.from_struct(schema) |> Map.drop([:updated_at])
 

@@ -8,15 +8,10 @@ defmodule Cadet.Assessments.Assessment do
 
   alias Cadet.Repo
   alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
-  alias Cadet.Courses.{Course, AssessmentType}
-
-  # @assessment_types ~w(contest mission path practical sidequest)
-  # def assessment_types, do: @assessment_types
+  alias Cadet.Courses.{Course, AssessmentConfig}
 
   schema "assessments" do
     field(:access, AssessmentAccess, virtual: true, default: :public)
-    # field(:max_grade, :integer, virtual: true)
-    # field(:grade, :integer, virtual: true, default: 0)
     field(:max_xp, :integer, virtual: true)
     field(:xp, :integer, virtual: true, default: 0)
     field(:user_status, SubmissionStatus, virtual: true)
@@ -36,14 +31,14 @@ defmodule Cadet.Assessments.Assessment do
     field(:reading, :string)
     field(:password, :string, default: nil)
 
-    belongs_to(:type, AssessmentType)
+    belongs_to(:config, AssessmentConfig)
     belongs_to(:course, Course)
 
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
-  @required_fields ~w(title open_at close_at number course_id type_id)a
+  @required_fields ~w(title open_at close_at number course_id config_id)a
   @optional_fields ~w(reading summary_short summary_long
     is_published story cover_picture access password)a
   @optional_file_fields ~w(mission_pdf)a
@@ -58,26 +53,26 @@ defmodule Cadet.Assessments.Assessment do
     |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> add_belongs_to_id_from_model([:type, :course], params)
-    |> foreign_key_constraint(:type_id)
+    |> add_belongs_to_id_from_model([:config, :course], params)
+    |> foreign_key_constraint(:config_id)
     |> foreign_key_constraint(:course_id)
-    |> validate_type_course
+    |> validate_config_course
     |> validate_open_close_date
   end
 
-  defp validate_type_course(changeset) do
-    type_id = get_field(changeset, :type_id)
+  defp validate_config_course(changeset) do
+    config_id = get_field(changeset, :config_id)
     course_id = get_field(changeset, :course_id)
 
-    case Repo.get(AssessmentType, type_id) do
+    case Repo.get(AssessmentConfig, config_id) do
       nil ->
-        add_error(changeset, :type, "does not exist")
+        add_error(changeset, :config, "does not exist")
 
-      type ->
-        if type.course_id == course_id do
+      config ->
+        if config.course_id == course_id do
           changeset
         else
-          add_error(changeset, :type, "does not belong to the same course as this assessment")
+          add_error(changeset, :config, "does not belong to the same course as this assessment")
         end
     end
   end

@@ -12,7 +12,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     assert is_map(AdminUserController.swagger_path_index(nil))
   end
 
-  describe "GET /v2/course/{course_id}/admin/users" do
+  describe "GET /v2/courses/{course_id}/admin/users" do
     @tag authenticate: :staff
     test "success, when staff retrieves all users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -80,5 +80,5 @@ defmodule CadetWeb.AdminUserControllerTest do
     # end
   end
 
-  defp build_url(course_id), do: "/v2/course/#{course_id}/admin/users"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/users"
 end

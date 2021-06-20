@@ -17,7 +17,7 @@ defmodule CadetWeb.CoursesController do
   # end
 
   swagger_path :get_course_config do
-    get("/v2/course/{course_id}/config")
+    get("/v2/courses/{course_id}/config")
 
     summary("Retrieves the course configuration of the specified course")
 

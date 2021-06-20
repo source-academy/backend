@@ -4,7 +4,7 @@ defmodule Cadet.Repo.Migrations.UpdateAssessments do
   def change do
     alter table(:assessments) do
       remove(:type)
-      add(:type_id, references(:assessment_types), null: false)
+      add(:config_id, references(:assessment_configs), null: false)
       add(:course_id, references(:courses), null: false)
     end
 

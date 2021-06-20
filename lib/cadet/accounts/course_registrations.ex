@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   alias Cadet.Repo
   alias Cadet.Accounts.{User, CourseRegistration}
-  alias Cadet.Courses.AssessmentType
+  alias Cadet.Courses.AssessmentConfig
 
   # guide
   # only join with User if need name or user name
@@ -30,9 +30,9 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> where([cr], cr.user_id == ^user_id)
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], c in assoc(cr, :course))
-    |> join(:left, [cr, c], t in assoc(c, :assessment_type))
-    |> preload([cr, c, t],
-      course: {c, assessment_type: ^from(t in AssessmentType, order_by: [asc: t.order])}
+    |> join(:left, [cr, c], ac in assoc(c, :assessment_config))
+    |> preload([cr, c, ac],
+      course: {c, assessment_config: ^from(ac in AssessmentConfig, order_by: [asc: ac.order])}
     )
     |> preload(:group)
     |> Repo.one()
@@ -87,7 +87,8 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.insert_or_update()
   end
 
-  @spec delete_record(map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  @spec delete_record(map()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()} | {:error, :no_such_enrty}
   def delete_record(params = %{user_id: user_id, course_id: course_id})
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
     CourseRegistration
@@ -95,10 +96,9 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> where(course_id: ^course_id)
     |> Repo.one()
     |> case do
-      nil -> CourseRegistration.changeset(%CourseRegistration{}, params)
-      cr -> CourseRegistration.changeset(cr, params)
+      nil -> {:error, :no_such_enrty}
+      cr -> CourseRegistration.changeset(cr, params) |> Repo.delete()
     end
-    |> Repo.delete()
   end
 
   def update_game_states(cr = %CourseRegistration{}, new_game_state = %{}) do

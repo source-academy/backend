@@ -10,7 +10,7 @@ defmodule CadetWeb.CoursesControllerTest do
     CoursesController.swagger_path_get_course_config(nil)
   end
 
-  describe "GET /v2/course/course_id/config, unauthenticated" do
+  describe "GET /v2/courses/course_id/config, unauthenticated" do
     test "unauthorized", %{conn: conn} do
       course = insert(:course)
       conn = get(conn, build_url_config(course.id))
@@ -18,15 +18,15 @@ defmodule CadetWeb.CoursesControllerTest do
     end
   end
 
-  describe "GET /v2/course/course_id/config" do
+  describe "GET /v2/courses/course_id/config" do
     @tag authenticate: :student
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
 
-      insert(:assessment_type, %{order: 3, type: "Paths", course: course})
-      insert(:assessment_type, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_type, %{order: 2, type: "Quests", course: course})
+      insert(:assessment_config, %{order: 3, type: "Paths", course: course})
+      insert(:assessment_config, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_config, %{order: 2, type: "Quests", course: course})
 
       resp = conn |> get(build_url_config(course_id)) |> json_response(200)
 
@@ -41,7 +41,7 @@ defmodule CadetWeb.CoursesControllerTest do
                  "sourceChapter" => 1,
                  "sourceVariant" => "default",
                  "moduleHelpText" => "Help Text",
-                 "assessmentTypes" => ["Missions", "Quests", "Paths"]
+                 "assessmentTypeNames" => ["Missions", "Quests", "Paths"]
                }
              } = resp
     end
@@ -58,5 +58,5 @@ defmodule CadetWeb.CoursesControllerTest do
     end
   end
 
-  defp build_url_config(course_id), do: "/v2/course/#{course_id}/config"
+  defp build_url_config(course_id), do: "/v2/courses/#{course_id}/config"
 end

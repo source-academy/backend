@@ -7,8 +7,8 @@ defmodule Cadet.Assessments.SubmissionTest do
 
   setup do
     course = insert(:course)
-    type = insert(:assessment_type, %{course: course})
-    assessment = insert(:assessment, %{type: type, course: course})
+    config = insert(:assessment_config, %{course: course})
+    assessment = insert(:assessment, %{config: config, course: course})
     student = insert(:course_registration, %{course: course, role: :student})
 
     valid_params = %{student_id: student.id, assessment_id: assessment.id}

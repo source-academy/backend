@@ -52,7 +52,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /v2/course/{course_id}/sourcecast, unauthenticated" do
+  describe "POST /v2/courses/{course_id}/sourcecast, unauthenticated" do
     test "unauthorized", %{conn: conn} do
       course = insert(:course)
       conn = post(conn, build_url(course.id), %{})
@@ -60,7 +60,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /v2/course/{course_id}/sourcecast, unauthenticated" do
+  describe "DELETE /v2/courses/{course_id}/sourcecast, unauthenticated" do
     test "unauthorized", %{conn: conn} do
       course = insert(:course)
       seed_db(course.id)
@@ -69,7 +69,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "GET /v2/course/{course_id}/sourcecast, returns course sourcecasts" do
+  describe "GET /v2/courses/{course_id}/sourcecast, returns course sourcecasts" do
     @tag authenticate: :student
     test "renders a list of all course sourcecast entries", %{
       conn: conn
@@ -108,7 +108,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /v2/course/{course_id}/sourcecast, student" do
+  describe "POST /v2/courses/{course_id}/sourcecast, student" do
     @tag authenticate: :student
     test "prohibited", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -132,7 +132,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /v2/course/{course_id}/sourcecast, student" do
+  describe "DELETE /v2/courses/{course_id}/sourcecast, student" do
     @tag authenticate: :student
     test "prohibited", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -143,7 +143,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /v2/course/{course_id}/sourcecast, staff" do
+  describe "POST /v2/courses/{course_id}/sourcecast, staff" do
     @tag authenticate: :staff
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -252,7 +252,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /v2/course/{course_id}/sourcecast, staff" do
+  describe "DELETE /v2/courses/{course_id}/sourcecast, staff" do
     @tag authenticate: :staff
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -278,7 +278,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "POST /v2/course/{course_id}/sourcecast, admin" do
+  describe "POST /v2/courses/{course_id}/sourcecast, admin" do
     @tag authenticate: :admin
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -333,7 +333,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  describe "DELETE /v2/course/{course_id}/sourcecast, admin" do
+  describe "DELETE /v2/courses/{course_id}/sourcecast, admin" do
     @tag authenticate: :admin
     test "successful for public sourcecast", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -360,7 +360,7 @@ defmodule CadetWeb.SourcecastControllerTest do
   end
 
   defp build_url(), do: "/v2/sourcecast/"
-  defp build_url(course_id), do: "/v2/course/#{course_id}/sourcecast/"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/sourcecast/"
   defp build_url(course_id, sourcecast_id), do: "#{build_url(course_id)}#{sourcecast_id}/"
 
   defp seed_db(course_id) do

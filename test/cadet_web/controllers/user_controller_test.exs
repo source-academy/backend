@@ -18,9 +18,9 @@ defmodule CadetWeb.UserControllerTest do
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
       course = user.latest_viewed
-      insert(:assessment_type, %{order: 2, type: "test type 2", course: course})
-      insert(:assessment_type, %{order: 3, type: "test type 3", course: course})
-      insert(:assessment_type, %{order: 1, type: "test type 1", course: course})
+      insert(:assessment_config, %{order: 2, type: "test type 2", course: course})
+      insert(:assessment_config, %{order: 3, type: "test type 3", course: course})
+      insert(:assessment_config, %{order: 1, type: "test type 1", course: course})
       cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
       another_cr = insert(:course_registration, %{user: user})
       assessment = insert(:assessment, %{is_published: true, course: course})
@@ -88,7 +88,7 @@ defmodule CadetWeb.UserControllerTest do
           "story" => nil
         },
         "courseConfiguration" => %{
-          "assessmentTypes" => ["test type 1", "test type 2", "test type 3"],
+          "assessmentTypeNames" => ["test type 1", "test type 2", "test type 3"],
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
@@ -360,7 +360,7 @@ defmodule CadetWeb.UserControllerTest do
           "story" => nil
         },
         "courseConfiguration" => %{
-          "assessmentTypes" => [],
+          "assessmentTypeNames" => [],
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
@@ -414,7 +414,7 @@ defmodule CadetWeb.UserControllerTest do
     end
   end
 
-  describe "PUT /v2/course/{course_id}/user/game_states" do
+  describe "PUT /v2/courses/{course_id}/user/game_states" do
     @tag authenticate: :student
     test "success, updating game state", %{conn: conn} do
       user = conn.assigns.current_user
@@ -435,5 +435,5 @@ defmodule CadetWeb.UserControllerTest do
     end
   end
 
-  defp build_url(course_id), do: "/v2/course/#{course_id}/user"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/user"
 end

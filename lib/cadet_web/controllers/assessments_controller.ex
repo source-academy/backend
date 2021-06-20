@@ -153,7 +153,7 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
 
-            type(Schema.ref(:AssessmentType), "The assessment type", required: true)
+            config(Schema.ref(:AssessmentConfig), "The assessment config", required: true)
 
             shortSummary(:string, "Short summary", required: true)
 
@@ -203,7 +203,7 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
 
-            type(Schema.ref(:AssessmentType), "The assessment type", required: true)
+            config(Schema.ref(:AssessmentConfig), "The assessment config", required: true)
 
             number(
               :string,
@@ -219,9 +219,9 @@ defmodule CadetWeb.AssessmentsController do
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
           end
         end,
-      AssessmentType:
+      AssessmentConfig:
         swagger_schema do
-          description("Assessment type")
+          description("Assessment config")
           type(:string)
           enum([:mission, :sidequest, :path, :contest, :practical])
         end,

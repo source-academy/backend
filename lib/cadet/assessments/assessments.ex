@@ -150,7 +150,7 @@ defmodule Cadet.Assessments do
     |> where([a], a.open_at <= from_now(0, "second") and a.close_at >= from_now(0, "second"))
     |> join(:left, [a], s in Submission, on: s.assessment_id == a.id and s.student_id == ^cr_id)
     |> filter_and_sort.()
-    |> order_by([a], a.type_id)
+    |> order_by([a], a.config_id)
     |> select([a], a.story)
     |> first()
     |> Repo.one()
@@ -295,7 +295,7 @@ defmodule Cadet.Assessments do
       })
       |> filter_published_assessments(cr)
       |> order_by(:open_at)
-      |> preload(:type)
+      |> preload(:config)
       |> Repo.all()
 
     {:ok, assessments}

@@ -14,7 +14,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   swagger_path :index do
-    get("/v2/course/{course_id}/admin/users")
+    get("/v2/courses/{course_id}/admin/users")
 
     summary("Returns a list of users in the course owned by the admin")
 

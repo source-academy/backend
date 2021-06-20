@@ -11,7 +11,6 @@ defmodule Cadet.Courses do
 
   alias Cadet.Courses.{
     AssessmentConfig,
-    AssessmentType,
     Course,
     Group,
     Sourcecast,
@@ -29,14 +28,14 @@ defmodule Cadet.Courses do
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
-        assessment_types =
-          AssessmentType
+        assessment_configs =
+          AssessmentConfig
           |> where(course_id: ^course_id)
           |> Repo.all()
           |> Enum.sort(&(&1.order < &2.order))
           |> Enum.map(& &1.type)
 
-        {:ok, Map.put_new(course, :assessment_types, assessment_types)}
+        {:ok, Map.put_new(course, :assessment_configs, assessment_configs)}
     end
   end
 
@@ -65,73 +64,59 @@ defmodule Cadet.Courses do
 
   def get_assessment_configs(course_id) when is_ecto_id(course_id) do
     AssessmentConfig
-    |> join(:inner, [ac], at in assoc(ac, :assessment_type))
-    |> where([ac, at], at.course_id == ^course_id)
-    |> preload(:assessment_type)
-    |> order_by([ac, at], at.order)
+    |> where([at], at.course_id == ^course_id)
+    |> order_by(:order)
     |> Repo.all()
   end
 
-  @doc """
-  Updates the assessment configuration for the specified course
-  """
-  @spec update_assessment_config(integer, integer, integer, integer, integer) ::
-          {:ok, %AssessmentConfig{}} | {:error, Ecto.Changeset.t()}
-  def update_assessment_config(course_id, order, early_xp, hours_before_decay, decay_rate) do
-    AssessmentConfig
-    |> join(:inner, [ac], at in AssessmentType, on: at.order == ^order)
-    |> where([ac, at], at.course_id == ^course_id)
-    |> Repo.one()
-    |> AssessmentConfig.changeset(%{
-      early_submission_xp: early_xp,
-      hours_before_early_xp_decay: hours_before_decay,
-      decay_rate_points_per_hour: decay_rate
-    })
-    |> Repo.update()
-  end
-
-  @doc """
-  Updates the Assessment Types for the specified course
-  """
-  @spec update_assessment_types(integer, list()) :: :ok | {:error, {:bad_request, String.t()}}
-  def update_assessment_types(course_id, params) do
-    if not is_list(params) do
+  def mass_upsert_or_delete_assessment_configs(course_id, configs) do
+    if not is_list(configs) do
       {:error, {:bad_request, "Invalid parameter(s)"}}
     else
-      params_length = params |> length()
+      configs_length = configs |> length()
 
-      with true <- params_length <= 5,
-           true <- params_length >= 1,
-           true <- params |> Enum.reduce(true, fn elem, acc -> acc and is_binary(elem) end),
+      with true <- configs_length <= 5,
+           true <- configs_length >= 1,
            true <-
-             params |> Enum.map(fn elem -> String.capitalize(elem) end) |> Enum.uniq() |> length() ===
-               params_length do
-        (params ++ List.duplicate(nil, 5 - params_length))
+             configs
+             |> Enum.with_index(1)
+             |> Enum.all?(fn {elem, i} -> Map.has_key?(elem, :order) && elem.order == i end) do
+        (configs ++ List.duplicate(nil, 5 - configs_length))
         |> Enum.with_index(1)
         |> Enum.each(fn {elem, idx} ->
           case elem do
-            nil ->
-              AssessmentType
-              |> where(course_id: ^course_id)
-              |> where(order: ^idx)
-              |> Repo.delete_all()
-
-            _ ->
-              AssessmentType.changeset(%AssessmentType{}, %{
-                course_id: course_id,
-                order: idx,
-                type: elem
-              })
-              |> Repo.insert(
-                on_conflict: {:replace, [:type]},
-                conflict_target: [:course_id, :order]
-              )
+            nil -> delete_assessment_config(%{course_id: course_id, order: idx})
+            elem -> insert_or_update_assessment_config(elem)
           end
         end)
       else
-        false ->
-          {:error, {:bad_request, "Invalid parameter(s)"}}
+        false -> {:error, {:bad_request, "Invalid parameter(s)"}}
       end
+    end
+  end
+
+  def insert_or_update_assessment_config(params = %{course_id: course_id, order: order}) do
+    AssessmentConfig
+    |> where(course_id: ^course_id)
+    |> where(order: ^order)
+    |> Repo.one()
+    |> case do
+      nil -> AssessmentConfig.changeset(%AssessmentConfig{}, params)
+      at -> AssessmentConfig.changeset(at, params)
+    end
+    |> Repo.insert_or_update()
+  end
+
+  @spec delete_assessment_config(map()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()} | {:error, :no_such_enrty}
+  def delete_assessment_config(params = %{course_id: course_id, order: order}) do
+    AssessmentConfig
+    |> where(course_id: ^course_id)
+    |> where(order: ^order)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, :no_such_enrty}
+      at -> AssessmentConfig.changeset(at, params) |> Repo.delete()
     end
   end
 

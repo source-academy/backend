@@ -63,7 +63,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :index do
-    get("/v2/course/{course_id}/stories")
+    get("/v2/courses/{course_id}/stories")
 
     summary("Get a list of all stories")
 
@@ -73,7 +73,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :create do
-    post("/v2/course/{course_id}/stories")
+    post("/v2s{course_id}/stories")
 
     summary("Creates a new story")
 
@@ -85,7 +85,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/v2/course/{course_id}/stories/{storyId}")
+    PhoenixSwagger.Path.delete("/v2/courses/{course_id}/stories/{storyId}")
 
     summary("Delete a story from database by id")
 
@@ -101,7 +101,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :update do
-    post("/v2/course/{course_id}/stories/{storyId}")
+    post("/v2/courses/{course_id}/stories/{storyId}")
 
     summary("Update details regarding a story")
 

@@ -6,17 +6,22 @@ defmodule Cadet.Assessments.AssessmentTest do
   setup do
     course1 = insert(:course, %{course_short_name: "course 1"})
     course2 = insert(:course, %{course_short_name: "course 2"})
-    type1 = insert(:assessment_type, %{course: course1})
-    type2 = insert(:assessment_type, %{course: course2})
+    config1 = insert(:assessment_config, %{course: course1})
+    config2 = insert(:assessment_config, %{course: course2})
 
-    {:ok, %{course1: course1, course2: course2, type1: type1, type2: type2}}
+    {:ok, %{course1: course1, course2: course2, config1: config1, config2: config2}}
   end
 
   describe "Changesets" do
-    test "valid changesets", %{course1: course1, course2: course2, type1: type1, type2: type2} do
+    test "valid changesets", %{
+      course1: course1,
+      course2: course2,
+      config1: config1,
+      config2: config2
+    } do
       assert_changeset(
         %{
-          type_id: type1.id,
+          config_id: config1.id,
           course_id: course1.id,
           title: "mission",
           number: "M#{Enum.random(0..10)}",
@@ -28,7 +33,7 @@ defmodule Cadet.Assessments.AssessmentTest do
 
       assert_changeset(
         %{
-          type_id: type2.id,
+          config_id: config2.id,
           course_id: course2.id,
           title: "mission",
           number: "M#{Enum.random(0..10)}",
@@ -41,10 +46,10 @@ defmodule Cadet.Assessments.AssessmentTest do
       )
     end
 
-    test "invalid changesets missing required params", %{course1: course1, type1: type1} do
+    test "invalid changesets missing required params", %{course1: course1, config1: config1} do
       assert_changeset(
         %{
-          type_id: type1.id,
+          config_id: config1.id,
           course_id: course1.id,
           title: "mission",
           number: "M#{Enum.random(0..10)}"
@@ -54,7 +59,7 @@ defmodule Cadet.Assessments.AssessmentTest do
 
       assert_changeset(
         %{
-          type_id: type1.id,
+          config_id: config1.id,
           course_id: course1.id,
           title: "mission",
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
@@ -64,10 +69,14 @@ defmodule Cadet.Assessments.AssessmentTest do
       )
     end
 
-    test "invalid changesets due to type_course", %{course1: course1, type1: type1, type2: type2} do
-      type_not_in_course =
+    test "invalid changesets due to config_course", %{
+      course1: course1,
+      config1: config1,
+      config2: config2
+    } do
+      config_not_in_course =
         Assessment.changeset(%Assessment{}, %{
-          type_id: type2.id,
+          config_id: config2.id,
           course_id: course1.id,
           title: "mission",
           number: "4",
@@ -75,19 +84,19 @@ defmodule Cadet.Assessments.AssessmentTest do
           close_at: Timex.shift(Timex.now(), days: 7)
         })
 
-      {:error, changeset} = Repo.insert(type_not_in_course)
+      {:error, changeset} = Repo.insert(config_not_in_course)
 
       assert changeset.errors == [
-               {:type, {"does not belong to the same course as this assessment", []}}
+               {:config, {"does not belong to the same course as this assessment", []}}
              ]
 
       refute changeset.valid?
 
-      type_not_exist =
+      config_not_exist =
         Assessment.changeset(%Assessment{}, %{
-          type_id: type1.id + type2.id,
+          config_id: config1.id + config2.id,
           course_id: course1.id,
-          title: "invalid type",
+          title: "invalid config",
           number: "M#{Enum.random(1..10)}",
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
           close_at:
@@ -97,15 +106,15 @@ defmodule Cadet.Assessments.AssessmentTest do
             |> Integer.to_string()
         })
 
-      {:error, changeset2} = Repo.insert(type_not_exist)
-      assert changeset2.errors == [{:type, {"does not exist", []}}]
+      {:error, changeset2} = Repo.insert(config_not_exist)
+      assert changeset2.errors == [{:config, {"does not exist", []}}]
       refute changeset2.valid?
     end
 
-    test "invalid changesets due to invalid dates", %{course1: course1, type1: type1} do
+    test "invalid changesets due to invalid dates", %{course1: course1, config1: config1} do
       invalid_date =
         Assessment.changeset(%Assessment{}, %{
-          type_id: type1.id,
+          config_id: config1.id,
           course_id: course1.id,
           title: "mission",
           number: "4",

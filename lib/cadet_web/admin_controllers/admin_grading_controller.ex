@@ -295,7 +295,7 @@ defmodule CadetWeb.AdminGradingController do
           properties do
             id(:integer, "assessment id", required: true)
 
-            type(Schema.ref(:AssessmentType), "Either mission/sidequest/path/contest",
+            config(Schema.ref(:AssessmentConfig), "Either mission/sidequest/path/contest",
               required: true
             )
 
