@@ -149,11 +149,11 @@ defmodule Cadet.CoursesTest do
     test "succeeds", %{course: course, expected: expected} do
       :ok =
         Courses.mass_upsert_or_delete_assessment_configs(course.id, [
-          %{course_id: course.id, order: 1, type: "Paths"},
-          %{course_id: course.id, order: 2, type: "Quests"},
-          %{course_id: course.id, order: 3, type: "Missions"},
-          %{course_id: course.id, order: 4, type: "Others"},
-          %{course_id: course.id, order: 5, type: "Contests"}
+          %{order: 1, type: "Paths"},
+          %{order: 2, type: "Quests"},
+          %{order: 3, type: "Missions"},
+          %{order: 4, type: "Others"},
+          %{order: 5, type: "Contests"}
         ])
 
       assessment_configs = Courses.get_assessment_configs(course.id)
@@ -164,11 +164,11 @@ defmodule Cadet.CoursesTest do
     test "succeeds to capitalise", %{course: course, expected: expected} do
       :ok =
         Courses.mass_upsert_or_delete_assessment_configs(course.id, [
-          %{course_id: course.id, order: 1, type: "Paths"},
-          %{course_id: course.id, order: 2, type: "quests"},
-          %{course_id: course.id, order: 3, type: "missions"},
-          %{course_id: course.id, order: 4, type: "Others"},
-          %{course_id: course.id, order: 5, type: "contests"}
+          %{order: 1, type: "Paths"},
+          %{order: 2, type: "quests"},
+          %{order: 3, type: "missions"},
+          %{order: 4, type: "Others"},
+          %{order: 5, type: "contests"}
         ])
 
       assessment_configs = Courses.get_assessment_configs(course.id)
@@ -179,9 +179,9 @@ defmodule Cadet.CoursesTest do
     test "succeed to delete", %{course: course} do
       :ok =
         Courses.mass_upsert_or_delete_assessment_configs(course.id, [
-          %{course_id: course.id, order: 1, type: "Paths"},
-          %{course_id: course.id, order: 2, type: "quests"},
-          %{course_id: course.id, order: 3, type: "missions"}
+          %{order: 1, type: "Paths"},
+          %{order: 2, type: "quests"},
+          %{order: 3, type: "missions"}
         ])
 
       assessment_configs = Courses.get_assessment_configs(course.id)
@@ -196,12 +196,12 @@ defmodule Cadet.CoursesTest do
 
     test "returns with error for list parameter of greater than length 5", %{course: course} do
       params = [
-        %{course_id: course.id, order: 1, type: "Paths"},
-        %{course_id: course.id, order: 2, type: "Quests"},
-        %{course_id: course.id, order: 3, type: "Missions"},
-        %{course_id: course.id, order: 4, type: "Others"},
-        %{course_id: course.id, order: 5, type: "Contests"},
-        %{course_id: course.id, order: 6, type: "Homework"}
+        %{order: 1, type: "Paths"},
+        %{order: 2, type: "Quests"},
+        %{order: 3, type: "Missions"},
+        %{order: 4, type: "Others"},
+        %{order: 5, type: "Contests"},
+        %{order: 6, type: "Homework"}
       ]
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
@@ -222,7 +222,6 @@ defmodule Cadet.CoursesTest do
       old_configs = Courses.get_assessment_configs(course.id)
 
       params = %{
-        course_id: course.id,
         order: 1,
         type: "Mission",
         early_submission_xp: 100,
@@ -230,7 +229,7 @@ defmodule Cadet.CoursesTest do
         decay_rate_points_per_hour: 1
       }
 
-      {:ok, updated_config} = Courses.insert_or_update_assessment_config(params)
+      {:ok, updated_config} = Courses.insert_or_update_assessment_config(course.id, params)
 
       new_configs = Courses.get_assessment_configs(course.id)
       assert length(old_configs) == 0
@@ -246,7 +245,6 @@ defmodule Cadet.CoursesTest do
       old_configs = Courses.get_assessment_configs(course.id)
 
       params = %{
-        course_id: course.id,
         order: 2,
         type: "Mission",
         early_submission_xp: 100,
@@ -254,7 +252,7 @@ defmodule Cadet.CoursesTest do
         decay_rate_points_per_hour: 1
       }
 
-      {:ok, updated_config} = Courses.insert_or_update_assessment_config(params)
+      {:ok, updated_config} = Courses.insert_or_update_assessment_config(course.id, params)
 
       new_configs = Courses.get_assessment_configs(course.id)
       assert length(old_configs) == 1
@@ -269,7 +267,6 @@ defmodule Cadet.CoursesTest do
       config = insert(:assessment_config, %{course: course})
 
       params = %{
-        course_id: course.id,
         order: config.order,
         type: "Mission",
         early_submission_xp: 100,
@@ -277,7 +274,7 @@ defmodule Cadet.CoursesTest do
         decay_rate_points_per_hour: 1
       }
 
-      {:ok, updated_config} = Courses.insert_or_update_assessment_config(params)
+      {:ok, updated_config} = Courses.insert_or_update_assessment_config(course.id, params)
 
       assert updated_config.type == "Mission"
       assert updated_config.early_submission_xp == 100
@@ -293,11 +290,10 @@ defmodule Cadet.CoursesTest do
       old_configs = Courses.get_assessment_configs(course.id)
 
       params = %{
-        course_id: course.id,
         order: config.order
       }
 
-      {:ok, _} = Courses.delete_assessment_config(params)
+      {:ok, _} = Courses.delete_assessment_config(course.id, params)
 
       new_configs = Courses.get_assessment_configs(course.id)
       assert length(old_configs) == 1
@@ -309,11 +305,10 @@ defmodule Cadet.CoursesTest do
       insert(:assessment_config, %{order: 1, course: course})
 
       params = %{
-        course_id: course.id,
         order: 2
       }
 
-      assert {:error, :no_such_enrty} == Courses.delete_assessment_config(params)
+      assert {:error, :no_such_enrty} == Courses.delete_assessment_config(course.id, params)
     end
   end
 

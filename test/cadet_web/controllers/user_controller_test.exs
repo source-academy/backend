@@ -88,7 +88,7 @@ defmodule CadetWeb.UserControllerTest do
           "story" => nil
         },
         "courseConfiguration" => %{
-          "assessmentTypeNames" => ["test type 1", "test type 2", "test type 3"],
+          "assessmentTypes" => ["test type 1", "test type 2", "test type 3"],
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
@@ -360,7 +360,7 @@ defmodule CadetWeb.UserControllerTest do
           "story" => nil
         },
         "courseConfiguration" => %{
-          "assessmentTypeNames" => [],
+          "assessmentTypes" => [],
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
@@ -405,7 +405,7 @@ defmodule CadetWeb.UserControllerTest do
       insert(:course_registration, %{user: user, course: new_course})
 
       conn
-      |> put("/v2/user/latest_viewed/#{new_course.id}")
+      |> put("/v2/user/latest_viewed", %{"courseId" => new_course.id})
       |> response(200)
 
       updated_user = Repo.get(User, user.id)

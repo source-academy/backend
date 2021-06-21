@@ -41,7 +41,7 @@ defmodule CadetWeb.CoursesControllerTest do
                  "sourceChapter" => 1,
                  "sourceVariant" => "default",
                  "moduleHelpText" => "Help Text",
-                 "assessmentTypeNames" => ["Missions", "Quests", "Paths"]
+                 "assessmentTypes" => ["Missions", "Quests", "Paths"]
                }
              } = resp
     end

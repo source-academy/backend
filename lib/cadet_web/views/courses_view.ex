@@ -14,7 +14,7 @@ defmodule CadetWeb.CoursesView do
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,
-          assessmentTypeNames: :assessment_configs
+          assessmentTypes: :assessment_configs
         })
     }
   end

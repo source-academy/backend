@@ -85,8 +85,8 @@ defmodule Cadet.Courses do
         |> Enum.with_index(1)
         |> Enum.each(fn {elem, idx} ->
           case elem do
-            nil -> delete_assessment_config(%{course_id: course_id, order: idx})
-            elem -> insert_or_update_assessment_config(elem)
+            nil -> delete_assessment_config(course_id, %{order: idx})
+            elem -> insert_or_update_assessment_config(course_id, elem)
           end
         end)
       else
@@ -95,21 +95,21 @@ defmodule Cadet.Courses do
     end
   end
 
-  def insert_or_update_assessment_config(params = %{course_id: course_id, order: order}) do
+  def insert_or_update_assessment_config(course_id, params = %{order: order}) do
     AssessmentConfig
     |> where(course_id: ^course_id)
     |> where(order: ^order)
     |> Repo.one()
     |> case do
-      nil -> AssessmentConfig.changeset(%AssessmentConfig{}, params)
+      nil -> AssessmentConfig.changeset(%AssessmentConfig{course_id: course_id}, params)
       at -> AssessmentConfig.changeset(at, params)
     end
     |> Repo.insert_or_update()
   end
 
-  @spec delete_assessment_config(map()) ::
+  @spec delete_assessment_config(integer(), map()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()} | {:error, :no_such_enrty}
-  def delete_assessment_config(params = %{course_id: course_id, order: order}) do
+  def delete_assessment_config(course_id, params = %{order: order}) do
     AssessmentConfig
     |> where(course_id: ^course_id)
     |> where(order: ^order)

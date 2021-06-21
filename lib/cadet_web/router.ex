@@ -55,7 +55,7 @@ defmodule CadetWeb.Router do
 
     get("/user", UserController, :index)
     get("/user/latest_viewed", UserController, :get_latest_viewed)
-    put("/user/latest_viewed/:course_id", UserController, :update_latest_viewed)
+    put("/user/latest_viewed", UserController, :update_latest_viewed)
   end
 
   # Authenticated Pages with course

@@ -77,7 +77,7 @@ defmodule CadetWeb.UserController do
     )
   end
 
-  def update_latest_viewed(conn, %{"course_id" => course_id}) do
+  def update_latest_viewed(conn, %{"courseId" => course_id}) do
     case Accounts.update_latest_viewed(conn.assigns.current_user, course_id) do
       {:ok, %{}} ->
         text(conn, "OK")
@@ -126,13 +126,13 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_latest_viewed do
-    put("/v2/user/latest_viewed/{course_id}")
+    put("/v2/user/latest_viewed")
     summary("Update user's latest viewed course")
     security([%{JWT: []}])
     consumes("application/json")
 
     parameters do
-      course_id(:path, :integer, "new latest viewed course", required: true)
+      course_id(:body, :integer, "new latest viewed course", required: true)
     end
 
     response(200, "OK")
