@@ -109,4 +109,35 @@ defmodule Cadet.Accounts do
       {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
     end
   end
+
+  @update_role_roles ~w(admin)a
+  def update_role(
+        _admin_course_reg = %CourseRegistration{course_id: admin_course_id, role: admin_role},
+        role,
+        coursereg_id
+      ) do
+    if admin_role in @update_role_roles do
+      user_course_reg =
+        CourseRegistration
+        |> where(id: ^coursereg_id)
+        |> Repo.one()
+
+      # Check that the admin is indeed modifying a course registration in his own course
+      case user_course_reg.course_id == admin_course_id do
+        true ->
+          case user_course_reg |> CourseRegistration.changeset(%{role: role}) |> Repo.update() do
+            result = {:ok, _} ->
+              result
+
+            {:error, changeset} ->
+              {:error, {:bad_request, full_error_messages(changeset)}}
+          end
+
+        false ->
+          {:error, {:forbidden, "Wrong course"}}
+      end
+    else
+      {:error, {:forbidden, "User is not permitted to change others' roles"}}
+    end
+  end
 end

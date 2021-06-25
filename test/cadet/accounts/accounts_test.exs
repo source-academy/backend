@@ -155,4 +155,56 @@ defmodule Cadet.AccountsTest do
       assert length(all_stu_in_c1g2) == 0
     end
   end
+
+  describe "update_role" do
+    setup do
+      c1 = insert(:course, %{course_name: "c1"})
+      c2 = insert(:course, %{course_name: "c2"})
+      admin1 = insert(:course_registration, %{course: c1, role: :admin})
+      staff1 = insert(:course_registration, %{course: c1, role: :staff})
+      student1 = insert(:course_registration, %{course: c1, role: :student})
+      student2 = insert(:course_registration, %{course: c2, role: :student})
+
+      {:ok, %{a1: admin1, s1: student1, s2: student2, st1: staff1}}
+    end
+
+    test "successful when admin is admin of the course the user is in (student)", %{
+      a1: admin1,
+      s1: %{id: coursereg_id}
+    } do
+      {:ok, updated_coursereg} = Accounts.update_role(admin1, "student", coursereg_id)
+      assert updated_coursereg.role == :student
+    end
+
+    test "successful when admin is admin of the course the user is in (staff)", %{
+      a1: admin1,
+      s1: %{id: coursereg_id}
+    } do
+      {:ok, updated_coursereg} = Accounts.update_role(admin1, "staff", coursereg_id)
+      assert updated_coursereg.role == :staff
+    end
+
+    test "successful when admin is admin of the course the user is in (admin)", %{
+      a1: admin1,
+      s1: %{id: coursereg_id}
+    } do
+      {:ok, updated_coursereg} = Accounts.update_role(admin1, "admin", coursereg_id)
+      assert updated_coursereg.role == :admin
+    end
+
+    test "admin is not admin of the course the user is in", %{a1: admin1, s2: %{id: coursereg_id}} do
+      assert {:error, {:forbidden, "Wrong course"}} ==
+               Accounts.update_role(admin1, "staff", coursereg_id)
+    end
+
+    test "invalid role provided", %{a1: admin1, s1: %{id: coursereg_id}} do
+      assert {:error, {:bad_request, "role is invalid"}} =
+               Accounts.update_role(admin1, "invalidrole", coursereg_id)
+    end
+
+    test "fails when staff makes changes", %{st1: staff1, s1: %{id: coursereg_id}} do
+      assert {:error, {:forbidden, "User is not permitted to change others' roles"}} ==
+               Accounts.update_role(staff1, "staff", coursereg_id)
+    end
+  end
 end

@@ -13,6 +13,18 @@ defmodule CadetWeb.AdminUserController do
     render(conn, "users.json", users: users)
   end
 
+  def update_role(conn, %{"role" => role, "crId" => coursereg_id}) do
+    case Accounts.update_role(conn.assigns.course_reg, role, coursereg_id) do
+      {:ok, %{}} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   swagger_path :index do
     get("/v2/courses/{course_id}/admin/users")
 
@@ -22,6 +34,25 @@ defmodule CadetWeb.AdminUserController do
     produces("application/json")
     response(200, "OK", Schema.ref(:AdminUserInfo))
     response(401, "Unauthorised")
+  end
+
+  swagger_path :update_role do
+    put("/v2/courses/{course_id}/admin/users/role")
+
+    summary("Updates the role of the given user in the the course")
+    security([%{JWT: []}])
+    consumes("application/json")
+
+    parameters do
+      course_id(:path, :integer, "Course ID", required: true)
+      role(:body, :role, "The new role", required: true)
+
+      crId(:body, :integer, "The course registration of the user whose role is to be updated",
+        required: true
+      )
+    end
+
+    response(200, "OK")
   end
 
   def swagger_definitions do
