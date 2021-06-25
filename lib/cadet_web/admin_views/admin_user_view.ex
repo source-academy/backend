@@ -10,6 +10,7 @@ defmodule CadetWeb.AdminUserView do
       crId: cr.id,
       course_id: cr.course_id,
       name: cr.user.name,
+      username: cr.user.username,
       role: cr.role,
       group:
         case cr.group do
