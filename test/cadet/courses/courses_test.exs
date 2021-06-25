@@ -135,25 +135,41 @@ defmodule Cadet.CoursesTest do
     end
   end
 
-  describe "mass_upsert_or_delete_assessment_configs" do
+  describe "mass_upsert_assessment_configs" do
     setup do
       course = insert(:course)
-      insert(:assessment_config, %{order: 1, type: "Missions", course: course})
-      insert(:assessment_config, %{order: 2, type: "Quests", course: course})
-      insert(:assessment_config, %{order: 3, type: "Paths", course: course})
-      insert(:assessment_config, %{order: 4, type: "Contests", course: course})
+      config1 = insert(:assessment_config, %{order: 1, type: "Missions", course: course})
+      config2 = insert(:assessment_config, %{order: 2, type: "Quests", course: course})
+      config3 = insert(:assessment_config, %{order: 3, type: "Paths", course: course})
+      config4 = insert(:assessment_config, %{order: 4, type: "Contests", course: course})
       expected = ["Paths", "Quests", "Missions", "Others", "Contests"]
-      {:ok, %{course: course, expected: expected}}
+
+      {:ok,
+       %{
+         course: course,
+         expected: expected,
+         config1: config1,
+         config2: config2,
+         config3: config3,
+         config4: config4
+       }}
     end
 
-    test "succeeds", %{course: course, expected: expected} do
+    test "succeeds", %{
+      course: course,
+      expected: expected,
+      config1: config1,
+      config2: config2,
+      config3: config3,
+      config4: config4
+    } do
       :ok =
-        Courses.mass_upsert_or_delete_assessment_configs(course.id, [
-          %{order: 1, type: "Paths"},
-          %{order: 2, type: "Quests"},
-          %{order: 3, type: "Missions"},
-          %{order: 4, type: "Others"},
-          %{order: 5, type: "Contests"}
+        Courses.mass_upsert_assessment_configs(course.id, [
+          %{assessment_config_id: config1.id, type: "Paths"},
+          %{assessment_config_id: config2.id, type: "Quests"},
+          %{assessment_config_id: config3.id, type: "Missions"},
+          %{assessment_config_id: config4.id, type: "Others"},
+          %{assessment_config_id: -1, type: "Contests"}
         ])
 
       assessment_configs = Courses.get_assessment_configs(course.id)
@@ -161,14 +177,21 @@ defmodule Cadet.CoursesTest do
       assert Enum.map(assessment_configs, & &1.type) == expected
     end
 
-    test "succeeds to capitalise", %{course: course, expected: expected} do
+    test "succeeds to capitalise", %{
+      course: course,
+      expected: expected,
+      config1: config1,
+      config2: config2,
+      config3: config3,
+      config4: config4
+    } do
       :ok =
-        Courses.mass_upsert_or_delete_assessment_configs(course.id, [
-          %{order: 1, type: "Paths"},
-          %{order: 2, type: "quests"},
-          %{order: 3, type: "missions"},
-          %{order: 4, type: "Others"},
-          %{order: 5, type: "contests"}
+        Courses.mass_upsert_assessment_configs(course.id, [
+          %{assessment_config_id: config1.id, type: "Paths"},
+          %{assessment_config_id: config2.id, type: "Quests"},
+          %{assessment_config_id: config3.id, type: "Missions"},
+          %{assessment_config_id: config4.id, type: "Others"},
+          %{assessment_config_id: -1, type: "Contests"}
         ])
 
       assessment_configs = Courses.get_assessment_configs(course.id)
@@ -176,57 +199,66 @@ defmodule Cadet.CoursesTest do
       assert Enum.map(assessment_configs, & &1.type) == expected
     end
 
-    test "succeed to delete", %{course: course} do
-      :ok =
-        Courses.mass_upsert_or_delete_assessment_configs(course.id, [
-          %{order: 1, type: "Paths"},
-          %{order: 2, type: "quests"},
-          %{order: 3, type: "missions"}
-        ])
+    # test "succeed to delete", %{course: course} do
+    #   :ok =
+    #     Courses.mass_upsert_assessment_configs(course.id, [
+    #       %{order: 1, type: "Paths"},
+    #       %{order: 2, type: "quests"},
+    #       %{order: 3, type: "missions"}
+    #     ])
 
-      assessment_configs = Courses.get_assessment_configs(course.id)
+    #   assessment_configs = Courses.get_assessment_configs(course.id)
 
-      assert Enum.map(assessment_configs, & &1.type) == ["Paths", "Quests", "Missions"]
-    end
+    #   assert Enum.map(assessment_configs, & &1.type) == ["Paths", "Quests", "Missions"]
+    # end
 
     test "returns with error for empty list parameter", %{course: course} do
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.mass_upsert_or_delete_assessment_configs(course.id, [])
+               Courses.mass_upsert_assessment_configs(course.id, [])
     end
 
-    test "returns with error for list parameter of greater than length 5", %{course: course} do
+    test "returns with error for list parameter of greater than length 8", %{
+      course: course,
+      config1: config1,
+      config2: config2,
+      config3: config3,
+      config4: config4
+    } do
       params = [
-        %{order: 1, type: "Paths"},
-        %{order: 2, type: "Quests"},
-        %{order: 3, type: "Missions"},
-        %{order: 4, type: "Others"},
-        %{order: 5, type: "Contests"},
-        %{order: 6, type: "Homework"}
+        %{assessment_config_id: config1.id, type: "Paths"},
+        %{assessment_config_id: config2.id, type: "Quests"},
+        %{assessment_config_id: config3.id, type: "Missions"},
+        %{assessment_config_id: config4.id, type: "Others"},
+        %{assessment_config_id: -1, type: "Contests"},
+        %{assessment_config_id: -1, type: "Contests"},
+        %{assessment_config_id: -1, type: "Contests"},
+        %{assessment_config_id: -1, type: "Contests"},
+        %{assessment_config_id: -1, type: "Contests"}
       ]
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.mass_upsert_or_delete_assessment_configs(course.id, params)
+               Courses.mass_upsert_assessment_configs(course.id, params)
     end
 
     test "returns with error for non-list parameter", %{course: course} do
       params = %{course_id: course.id, order: 1, type: "Paths"}
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.mass_upsert_or_delete_assessment_configs(course.id, params)
+               Courses.mass_upsert_assessment_configs(course.id, params)
     end
   end
 
   describe "insert_or_update_assessment_config" do
-    test "succeeds with insert to empty configs" do
+    test "succeeds with insert configs" do
       course = insert(:course)
       old_configs = Courses.get_assessment_configs(course.id)
 
       params = %{
+        assessment_config_id: -1,
         order: 1,
         type: "Mission",
         early_submission_xp: 100,
-        hours_before_early_xp_decay: 24,
-        decay_rate_points_per_hour: 1
+        hours_before_early_xp_decay: 24
       }
 
       {:ok, updated_config} = Courses.insert_or_update_assessment_config(course.id, params)
@@ -236,30 +268,6 @@ defmodule Cadet.CoursesTest do
       assert length(new_configs) == 1
       assert updated_config.early_submission_xp == 100
       assert updated_config.hours_before_early_xp_decay == 24
-      assert updated_config.decay_rate_points_per_hour == 1
-    end
-
-    test "succeeds with insert to existing configs" do
-      course = insert(:course)
-      insert(:assessment_config, %{order: 1, course: course})
-      old_configs = Courses.get_assessment_configs(course.id)
-
-      params = %{
-        order: 2,
-        type: "Mission",
-        early_submission_xp: 100,
-        hours_before_early_xp_decay: 24,
-        decay_rate_points_per_hour: 1
-      }
-
-      {:ok, updated_config} = Courses.insert_or_update_assessment_config(course.id, params)
-
-      new_configs = Courses.get_assessment_configs(course.id)
-      assert length(old_configs) == 1
-      assert length(new_configs) == 2
-      assert updated_config.early_submission_xp == 100
-      assert updated_config.hours_before_early_xp_decay == 24
-      assert updated_config.decay_rate_points_per_hour == 1
     end
 
     test "succeeds with update" do
@@ -267,11 +275,10 @@ defmodule Cadet.CoursesTest do
       config = insert(:assessment_config, %{course: course})
 
       params = %{
-        order: config.order,
+        assessment_config_id: config.id,
         type: "Mission",
         early_submission_xp: 100,
-        hours_before_early_xp_decay: 24,
-        decay_rate_points_per_hour: 1
+        hours_before_early_xp_decay: 24
       }
 
       {:ok, updated_config} = Courses.insert_or_update_assessment_config(course.id, params)
@@ -279,7 +286,6 @@ defmodule Cadet.CoursesTest do
       assert updated_config.type == "Mission"
       assert updated_config.early_submission_xp == 100
       assert updated_config.hours_before_early_xp_decay == 24
-      assert updated_config.decay_rate_points_per_hour == 1
     end
   end
 
@@ -290,7 +296,7 @@ defmodule Cadet.CoursesTest do
       old_configs = Courses.get_assessment_configs(course.id)
 
       params = %{
-        order: config.order
+        assessment_config_id: config.id
       }
 
       {:ok, _} = Courses.delete_assessment_config(course.id, params)
@@ -305,7 +311,7 @@ defmodule Cadet.CoursesTest do
       insert(:assessment_config, %{order: 1, course: course})
 
       params = %{
-        order: 2
+        assessment_config_id: -1
       }
 
       assert {:error, :no_such_enrty} == Courses.delete_assessment_config(course.id, params)

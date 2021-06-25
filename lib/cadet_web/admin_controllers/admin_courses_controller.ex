@@ -42,7 +42,7 @@ defmodule CadetWeb.AdminCoursesController do
     if Enum.all?(assessment_configs, &is_map/1) do
       configs = assessment_configs |> Enum.map(&to_snake_case_atom_keys/1)
 
-      case Courses.mass_upsert_or_delete_assessment_configs(course_id, configs) do
+      case Courses.mass_upsert_assessment_configs(course_id, configs) do
         :ok ->
           text(conn, "OK")
 

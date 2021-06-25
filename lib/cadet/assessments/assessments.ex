@@ -796,7 +796,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # :TODO test bonus logic
+  # :TODO update bonus logic
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do

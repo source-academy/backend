@@ -146,9 +146,11 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-      insert(:assessment_config, %{order: 1, type: "Mission1", course: course})
-      insert(:assessment_config, %{order: 3, type: "Mission3", course: course})
-      insert(:assessment_config, %{is_graded: false, order: 2, type: "Mission2", course: course})
+      config1 = insert(:assessment_config, %{order: 1, type: "Mission1", course: course})
+      config3 = insert(:assessment_config, %{order: 3, type: "Mission3", course: course})
+
+      config2 =
+        insert(:assessment_config, %{is_graded: false, order: 2, type: "Mission2", course: course})
 
       resp =
         conn
@@ -157,28 +159,25 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       expected = [
         %{
-          "decayRatePointsPerHour" => 1,
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
           "isGraded" => true,
-          "order" => 1,
-          "type" => "Mission1"
+          "type" => "Mission1",
+          "AssessmentConfigId" => config1.id
         },
         %{
-          "decayRatePointsPerHour" => 1,
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
           "isGraded" => false,
-          "order" => 2,
-          "type" => "Mission2"
+          "type" => "Mission2",
+          "AssessmentConfigId" => config2.id
         },
         %{
-          "decayRatePointsPerHour" => 1,
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
           "isGraded" => true,
-          "order" => 3,
-          "type" => "Mission3"
+          "type" => "Mission3",
+          "AssessmentConfigId" => config3.id
         }
       ]
 
@@ -199,23 +198,23 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
       course_id = conn.assigns[:course_id]
-      insert(:assessment_config, %{course: Repo.get(Course, course_id)})
+      config = insert(:assessment_config, %{course: Repo.get(Course, course_id)})
 
       old_configs = Courses.get_assessment_configs(course_id) |> Enum.map(& &1.type)
 
       params = %{
         "assessmentConfigs" => [
           %{
+            "AssessmentConfigId" => config.id,
             "courseId" => course_id,
-            "order" => 1,
             "type" => "Missions",
             "earlySubmissionXp" => 100,
             "hoursBeforeEarlyXpDecay" => 24,
             "decayRatePointsPerHour" => 1
           },
           %{
+            "AssessmentConfigId" => -1,
             "courseId" => course_id,
-            "order" => 2,
             "type" => "Paths",
             "earlySubmissionXp" => 100,
             "hoursBeforeEarlyXpDecay" => 24,

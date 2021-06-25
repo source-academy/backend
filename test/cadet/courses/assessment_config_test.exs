@@ -20,7 +20,7 @@ defmodule Cadet.Courses.AssessmentConfigTest do
 
     test "invalid changeset with invalid order" do
       assert_changeset(%{order: 0, type: "Missions", course_id: 1}, :invalid)
-      assert_changeset(%{order: 6, type: "Missions", course_id: 1}, :invalid)
+      assert_changeset(%{order: 9, type: "Missions", course_id: 1}, :invalid)
     end
   end
 
@@ -32,8 +32,7 @@ defmodule Cadet.Courses.AssessmentConfigTest do
           type: "Missions",
           course_id: 1,
           early_submission_xp: 200,
-          hours_before_early_xp_decay: 48,
-          decay_rate_points_per_hour: 1
+          hours_before_early_xp_decay: 48
         },
         :valid
       )
@@ -44,8 +43,7 @@ defmodule Cadet.Courses.AssessmentConfigTest do
           type: "Missions",
           course_id: 1,
           early_submission_xp: 0,
-          hours_before_early_xp_decay: 0,
-          decay_rate_points_per_hour: 0
+          hours_before_early_xp_decay: 0
         },
         :valid
       )
@@ -56,8 +54,7 @@ defmodule Cadet.Courses.AssessmentConfigTest do
           type: "Missions",
           course_id: 1,
           early_submission_xp: 200,
-          hours_before_early_xp_decay: 0,
-          decay_rate_points_per_hour: 10
+          hours_before_early_xp_decay: 0
         },
         :valid
       )
@@ -70,8 +67,7 @@ defmodule Cadet.Courses.AssessmentConfigTest do
           type: "Missions",
           course_id: 1,
           early_submission_xp: -1,
-          hours_before_early_xp_decay: 0,
-          decay_rate_points_per_hour: 10
+          hours_before_early_xp_decay: 0
         },
         :invalid
       )
@@ -84,36 +80,7 @@ defmodule Cadet.Courses.AssessmentConfigTest do
           type: "Missions",
           course_id: 1,
           early_submission_xp: 200,
-          hours_before_early_xp_decay: -1,
-          decay_rate_points_per_hour: 10
-        },
-        :invalid
-      )
-    end
-
-    test "invalid changeset with invalid decay rate" do
-      assert_changeset(
-        %{
-          order: 1,
-          type: "Missions",
-          course_id: 1,
-          early_submission_xp: 200,
-          hours_before_early_xp_decay: 0,
-          decay_rate_points_per_hour: -1
-        },
-        :invalid
-      )
-    end
-
-    test "invalid changeset with decay rate greater than early submission xp" do
-      assert_changeset(
-        %{
-          order: 1,
-          type: "Missions",
-          course_id: 1,
-          early_submission_xp: 200,
-          hours_before_early_xp_decay: 48,
-          decay_rate_points_per_hour: 300
+          hours_before_early_xp_decay: -1
         },
         :invalid
       )

@@ -13,7 +13,6 @@ defmodule Cadet.Courses.AssessmentConfigFactory do
           type: "Missions",
           early_submission_xp: 200,
           hours_before_early_xp_decay: 48,
-          decay_rate_points_per_hour: 1,
           course: build(:course)
         }
       end

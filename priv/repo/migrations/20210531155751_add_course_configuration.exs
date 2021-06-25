@@ -30,11 +30,10 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       add(:is_graded, :boolean, null: false)
       add(:early_submission_xp, :integer, null: false)
       add(:hours_before_early_xp_decay, :integer, null: false)
-      add(:decay_rate_points_per_hour, :integer, null: false)
       timestamps()
     end
 
-    create(unique_index(:assessment_configs, [:course_id, :order]))
+    create(unique_index(:assessment_configs, [:course_id, :type]))
 
     create table(:course_registrations) do
       add(:role, :role, null: false)

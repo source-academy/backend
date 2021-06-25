@@ -69,25 +69,25 @@ defmodule Cadet.Courses do
     |> Repo.all()
   end
 
-  def mass_upsert_or_delete_assessment_configs(course_id, configs) do
+  def mass_upsert_assessment_configs(course_id, configs) do
     if not is_list(configs) do
       {:error, {:bad_request, "Invalid parameter(s)"}}
     else
       configs_length = configs |> length()
 
-      with true <- configs_length <= 5,
-           true <- configs_length >= 1,
-           true <-
-             configs
-             |> Enum.with_index(1)
-             |> Enum.all?(fn {elem, i} -> Map.has_key?(elem, :order) && elem.order == i end) do
-        (configs ++ List.duplicate(nil, 5 - configs_length))
+      with true <- configs_length <= 8,
+           true <- configs_length >= 1 do
+        configs
+        |> tl()
         |> Enum.with_index(1)
         |> Enum.each(fn {elem, idx} ->
-          case elem do
-            nil -> delete_assessment_config(course_id, %{order: idx})
-            elem -> insert_or_update_assessment_config(course_id, elem)
-          end
+          insert_or_update_assessment_config(course_id, Map.put(elem, :type, <<idx>>))
+        end)
+
+        configs
+        |> Enum.with_index(1)
+        |> Enum.each(fn {elem, idx} ->
+          insert_or_update_assessment_config(course_id, Map.put(elem, :order, idx))
         end)
       else
         false -> {:error, {:bad_request, "Invalid parameter(s)"}}
@@ -95,10 +95,13 @@ defmodule Cadet.Courses do
     end
   end
 
-  def insert_or_update_assessment_config(course_id, params = %{order: order}) do
+  def insert_or_update_assessment_config(
+        course_id,
+        params = %{assessment_config_id: assessment_config_id}
+      ) do
     AssessmentConfig
     |> where(course_id: ^course_id)
-    |> where(order: ^order)
+    |> where(id: ^assessment_config_id)
     |> Repo.one()
     |> case do
       nil -> AssessmentConfig.changeset(%AssessmentConfig{course_id: course_id}, params)
@@ -109,10 +112,10 @@ defmodule Cadet.Courses do
 
   @spec delete_assessment_config(integer(), map()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()} | {:error, :no_such_enrty}
-  def delete_assessment_config(course_id, params = %{order: order}) do
+  def delete_assessment_config(course_id, params = %{assessment_config_id: assessment_config_id}) do
     AssessmentConfig
     |> where(course_id: ^course_id)
-    |> where(order: ^order)
+    |> where(id: ^assessment_config_id)
     |> Repo.one()
     |> case do
       nil -> {:error, :no_such_enrty}
