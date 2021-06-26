@@ -14,7 +14,6 @@ defmodule Cadet.Courses.AssessmentConfigTest do
 
     test "invalid changeset missing required params" do
       assert_changeset(%{order: 1}, :invalid)
-      assert_changeset(%{course_id: 1}, :invalid)
       assert_changeset(%{order: 1, type: "Missions"}, :invalid)
     end
 

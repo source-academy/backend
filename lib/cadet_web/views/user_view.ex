@@ -65,6 +65,7 @@ defmodule CadetWeb.UserView do
 
       _ ->
         %{
+          crId: latest.id,
           courseId: latest.course_id,
           role: latest.role,
           group:

@@ -69,7 +69,7 @@ defmodule Cadet.Courses do
     |> Repo.all()
   end
 
-  def mass_upsert_assessment_configs(course_id, configs) do
+  def mass_upsert_and_reorder_assessment_configs(course_id, configs) do
     if not is_list(configs) do
       {:error, {:bad_request, "Invalid parameter(s)"}}
     else
@@ -78,17 +78,12 @@ defmodule Cadet.Courses do
       with true <- configs_length <= 8,
            true <- configs_length >= 1 do
         configs
-        |> tl()
-        |> Enum.with_index(1)
-        |> Enum.each(fn {elem, idx} ->
-          insert_or_update_assessment_config(course_id, Map.put(elem, :type, <<idx>>))
+        |> Enum.map(fn elem ->
+          {:ok, config} = insert_or_update_assessment_config(course_id, elem)
+          Map.put(elem, :assessment_config_id, config.id)
         end)
 
-        configs
-        |> Enum.with_index(1)
-        |> Enum.each(fn {elem, idx} ->
-          insert_or_update_assessment_config(course_id, Map.put(elem, :order, idx))
-        end)
+        reorder_assessment_configs(course_id, configs)
       else
         false -> {:error, {:bad_request, "Invalid parameter(s)"}}
       end
@@ -108,6 +103,35 @@ defmodule Cadet.Courses do
       at -> AssessmentConfig.changeset(at, params)
     end
     |> Repo.insert_or_update()
+  end
+
+  defp update_assessment_config(
+         course_id,
+         params = %{assessment_config_id: assessment_config_id}
+       ) do
+    AssessmentConfig
+    |> where(course_id: ^course_id)
+    |> where(id: ^assessment_config_id)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, :no_such_entry}
+      at -> AssessmentConfig.changeset(at, params) |> Repo.update()
+    end
+  end
+
+  def reorder_assessment_configs(course_id, configs) do
+    Repo.transaction(fn ->
+      configs
+      |> Enum.each(fn elem ->
+        update_assessment_config(course_id, Map.put(elem, :order, nil))
+      end)
+
+      configs
+      |> Enum.with_index(1)
+      |> Enum.each(fn {elem, idx} ->
+        update_assessment_config(course_id, Map.put(elem, :order, idx))
+      end)
+    end)
   end
 
   @spec delete_assessment_config(integer(), map()) ::
