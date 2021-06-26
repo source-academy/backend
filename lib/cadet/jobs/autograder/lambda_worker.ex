@@ -22,7 +22,7 @@ defmodule Cadet.Autograder.LambdaWorker do
 
     if Enum.empty?(lambda_params.testcases) do
       Logger.warn("No testcases found. Skipping autograding for answer_id: #{answer.id}")
-      # Fix for https://github.com/source-academy/cadet/issues/472
+      # Fix for https://github.com/source-academy/backend/issues/472
       Process.sleep(1000)
     else
       response =
