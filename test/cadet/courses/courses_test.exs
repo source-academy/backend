@@ -289,6 +289,32 @@ defmodule Cadet.CoursesTest do
     end
   end
 
+  describe "reorder_assessment_config" do
+    test "succeeds" do
+      course = insert(:course)
+      config1 = insert(:assessment_config, %{order: 1, type: "Missions", course: course})
+      config3 = insert(:assessment_config, %{order: 2, type: "Paths", course: course})
+      config2 = insert(:assessment_config, %{order: 3, type: "Quests", course: course})
+      config4 = insert(:assessment_config, %{order: 4, type: "Others", course: course})
+      old_configs = Courses.get_assessment_configs(course.id)
+
+      params = [
+        %{assessment_config_id: config1.id, type: "Paths"},
+        %{assessment_config_id: config2.id, type: "Quests"},
+        %{assessment_config_id: config3.id, type: "Missions"},
+        %{assessment_config_id: config4.id, type: "Others"}
+      ]
+
+      expected = ["Paths", "Quests", "Missions", "Others"]
+
+      {:ok, _} = Courses.reorder_assessment_configs(course.id, params)
+
+      new_configs = Courses.get_assessment_configs(course.id)
+      assert length(old_configs) == length(new_configs)
+      assert Enum.map(new_configs, & &1.type) == expected
+    end
+  end
+
   describe "delete_assessment_config" do
     test "succeeds" do
       course = insert(:course)

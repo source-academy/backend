@@ -19,8 +19,8 @@ defmodule Cadet.Courses.AssessmentConfig do
     timestamps()
   end
 
-  @required_fields ~w(order course_id)a
-  @optional_fields ~w(type early_submission_xp hours_before_early_xp_decay is_graded)a
+  @required_fields ~w(course_id)a
+  @optional_fields ~w(order type early_submission_xp hours_before_early_xp_decay is_graded)a
 
   def changeset(assessment_config, params) do
     params = capitalize(params, :type)

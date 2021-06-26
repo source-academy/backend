@@ -78,8 +78,9 @@ defmodule Cadet.Courses do
       with true <- configs_length <= 8,
            true <- configs_length >= 1 do
         configs
-        |> Enum.each(fn elem ->
-          insert_or_update_assessment_config(course_id, elem)
+        |> Enum.map(fn elem ->
+          {:ok, config} = insert_or_update_assessment_config(course_id, elem)
+          Map.put(elem, :assessment_config_id, config.id)
         end)
 
         reorder_assessment_configs(course_id, configs)
@@ -104,20 +105,33 @@ defmodule Cadet.Courses do
     |> Repo.insert_or_update()
   end
 
+  defp update_assessment_config(
+         course_id,
+         params = %{assessment_config_id: assessment_config_id}
+       ) do
+    AssessmentConfig
+    |> where(course_id: ^course_id)
+    |> where(id: ^assessment_config_id)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, :no_such_entry}
+      at -> AssessmentConfig.changeset(at, params) |> Repo.update()
+    end
+  end
+
   def reorder_assessment_configs(course_id, configs) do
     Repo.transaction(fn ->
       configs
       |> Enum.each(fn elem ->
-        insert_or_update_assessment_config(course_id, Map.put(elem, :order, nil))
+        update_assessment_config(course_id, Map.put(elem, :order, nil))
       end)
 
       configs
       |> Enum.with_index(1)
       |> Enum.each(fn {elem, idx} ->
-        insert_or_update_assessment_config(course_id, Map.put(elem, :order, idx))
+        update_assessment_config(course_id, Map.put(elem, :order, idx))
       end)
-    end
-    )
+    end)
   end
 
   @spec delete_assessment_config(integer(), map()) ::
