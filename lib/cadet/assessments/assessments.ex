@@ -870,12 +870,12 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp load_contest_voting_entries(questions, user_id) do
+  defp load_contest_voting_entries(questions, cr_id) do
     Enum.map(
       questions,
       fn q ->
         if q.type == :voting do
-          submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
+          submission_votes = all_submission_votes_by_question_id_and_cr_id(q.id, cr_id)
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(q)
 
@@ -901,9 +901,9 @@ defmodule Cadet.Assessments do
     )
   end
 
-  defp all_submission_votes_by_question_id_and_user_id(question_id, user_id) do
+  defp all_submission_votes_by_question_id_and_cr_id(question_id, cr_id) do
     SubmissionVotes
-    |> where([v], v.user_id == ^user_id and v.question_id == ^question_id)
+    |> where([v], v.cr_id == ^cr_id and v.question_id == ^question_id)
     |> join(:inner, [v], s in assoc(v, :submission))
     |> join(:inner, [v, s], a in assoc(s, :answers))
     |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, rank: v.rank})
