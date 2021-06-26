@@ -8,6 +8,7 @@ defmodule Cadet.Accounts do
 
   alias Cadet.Accounts.{Query, User, CourseRegistration}
   alias Cadet.Auth.Provider
+  alias Cadet.Assessments.{Answer, Submission}
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration
@@ -112,32 +113,88 @@ defmodule Cadet.Accounts do
 
   @update_role_roles ~w(admin)a
   def update_role(
-        _admin_course_reg = %CourseRegistration{course_id: admin_course_id, role: admin_role},
+        _admin_course_reg = %CourseRegistration{
+          id: admin_course_reg_id,
+          course_id: admin_course_id,
+          role: admin_role
+        },
         role,
         coursereg_id
       ) do
-    if admin_role in @update_role_roles do
-      user_course_reg =
-        CourseRegistration
-        |> where(id: ^coursereg_id)
-        |> Repo.one()
-
-      # Check that the admin is indeed modifying a course registration in his own course
-      case user_course_reg.course_id == admin_course_id do
-        true ->
-          case user_course_reg |> CourseRegistration.changeset(%{role: role}) |> Repo.update() do
-            result = {:ok, _} ->
-              result
-
-            {:error, changeset} ->
-              {:error, {:bad_request, full_error_messages(changeset)}}
-          end
-
-        false ->
-          {:error, {:forbidden, "Wrong course"}}
-      end
+    with {:validate_role, true} <- {:validate_role, admin_role in @update_role_roles},
+         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != coursereg_id},
+         {:get_cr, user_course_reg} when not is_nil(user_course_reg) <-
+           {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()},
+         {:validate_same_course, true} <-
+           {:validate_same_course, user_course_reg.course_id == admin_course_id},
+         {:update_db, {:ok, _} = result} <-
+           {:update_db,
+            user_course_reg |> CourseRegistration.changeset(%{role: role}) |> Repo.update()} do
+      result
     else
-      {:error, {:forbidden, "User is not permitted to change others' roles"}}
+      {:validate_role, false} ->
+        {:error, {:forbidden, "User is not permitted to change others' roles"}}
+
+      {:validate_not_self, false} ->
+        {:error, {:bad_request, "Admin not allowed to downgrade own role"}}
+
+      {:get_cr, _} ->
+        {:error, {:bad_request, "User course registration does not exist"}}
+
+      {:validate_same_course, false} ->
+        {:error, {:forbidden, "Wrong course"}}
+
+      {:update_db, {:error, changeset}} ->
+        {:error, {:bad_request, full_error_messages(changeset)}}
+    end
+  end
+
+  @delete_user_roles ~w(admin)a
+  def delete_user(
+        _admin_course_reg = %CourseRegistration{
+          id: admin_course_reg_id,
+          course_id: admin_course_id,
+          role: admin_role
+        },
+        coursereg_id
+      ) do
+    with {:validate_role, true} <- {:validate_role, admin_role in @delete_user_roles},
+         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != coursereg_id},
+         {:get_cr, user_course_reg} when not is_nil(user_course_reg) <-
+           {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()},
+         {:prevent_delete_admin, true} <- {:prevent_delete_admin, user_course_reg.role != :admin},
+         {:validate_same_course, true} <-
+           {:validate_same_course, user_course_reg.course_id == admin_course_id} do
+      # TODO: Handle deletions of achievement entries, etc. too
+
+      # Delete submissions and answers before deleting user
+      Submission
+      |> where(student_id: ^user_course_reg.id)
+      |> Repo.all()
+      |> Enum.each(fn x ->
+        Answer
+        |> where(submission_id: ^x.id)
+        |> Repo.delete_all()
+
+        Repo.delete(x)
+      end)
+
+      Repo.delete(user_course_reg)
+    else
+      {:validate_role, false} ->
+        {:error, {:forbidden, "User is not permitted to delete other users"}}
+
+      {:validate_not_self, false} ->
+        {:error, {:bad_request, "Admin not allowed to delete ownself from course"}}
+
+      {:get_cr, _} ->
+        {:error, {:bad_request, "User course registration does not exist"}}
+
+      {:prevent_delete_admin, false} ->
+        {:error, {:bad_request, "Admins cannot be deleted"}}
+
+      {:validate_same_course, false} ->
+        {:error, {:forbidden, "Wrong course"}}
     end
   end
 end
