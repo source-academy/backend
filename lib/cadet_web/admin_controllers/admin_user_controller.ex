@@ -7,6 +7,7 @@ defmodule CadetWeb.AdminUserController do
   alias Cadet.Repo
   alias Cadet.Accounts
   alias Cadet.Accounts.CourseRegistration
+  alias Cadet.Auth.Provider
 
   # This controller is used to find all users of a course
 
@@ -15,6 +16,64 @@ defmodule CadetWeb.AdminUserController do
       filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
 
     render(conn, "users.json", users: users)
+  end
+
+  @add_users_role ~w(admin)a
+  def add_users(conn, %{
+        "course_id" => course_id,
+        "users" => usernames_and_roles,
+        "provider" => provider
+      }) do
+    %{role: admin_role} = conn.assigns.course_reg
+
+    # Note: Usernames from frontend have not been namespaced yet
+    with {:validate_role, true} <- {:validate_role, admin_role in @add_users_role},
+         {:validate_provider, true} <-
+           {:validate_provider,
+            Map.has_key?(Application.get_env(:cadet, :identity_providers, %{}), provider)},
+         {:atomify_keys, usernames_and_roles} <-
+           {:atomify_keys,
+            Enum.map(usernames_and_roles, fn x ->
+              for({key, val} <- x, into: %{}, do: {String.to_atom(key), val})
+            end)},
+         {:validate_usernames, true} <-
+           {:validate_usernames,
+            Enum.reduce(usernames_and_roles, true, fn x, acc ->
+              acc and Map.has_key?(x, :username) and is_binary(x.username) and x.username != ""
+            end)},
+         {:validate_roles, true} <-
+           {:validate_roles,
+            Enum.reduce(usernames_and_roles, true, fn x, acc ->
+              acc and Map.has_key?(x, :role) and
+                String.to_atom(x.role) in Cadet.Accounts.Role.__enums__()
+            end)},
+         {:namespace, usernames_and_roles} <-
+           {:namespace,
+            Enum.map(usernames_and_roles, fn x ->
+              %{x | username: Provider.namespace(x.username, provider)}
+            end)} do
+      case Accounts.CourseRegistrations.add_users_to_course(usernames_and_roles, course_id) do
+        :ok ->
+          text(conn, "OK")
+
+        {:error, {status, message}} ->
+          conn
+          |> put_status(status)
+          |> text(message)
+      end
+    else
+      {:validate_role, false} ->
+        conn |> put_status(:forbidden) |> text("User is not permitted to add users")
+
+      {:validate_provider, false} ->
+        conn |> put_status(:bad_request) |> text("Invalid authentication provider")
+
+      {:validate_usernames, false} ->
+        conn |> put_status(:bad_request) |> text("Invalid username(s) provided")
+
+      {:validate_roles, false} ->
+        conn |> put_status(:bad_request) |> text("Invalid role(s) provided")
+    end
   end
 
   @update_role_roles ~w(admin)a
@@ -104,6 +163,27 @@ defmodule CadetWeb.AdminUserController do
     response(401, "Unauthorised")
   end
 
+  swagger_path :add_users do
+    put("/v2/courses/{course_id}/admin/users")
+
+    summary("Adds the list of usernames and roles to the course")
+    security([%{JWT: []}])
+    consumes("application/json")
+
+    parameters do
+      course_id(:path, :integer, "Course ID", required: true)
+      users(:body, Schema.array(:UsernameAndRole), "Array of usernames and roles", required: true)
+
+      provider(:body, :string, "The authentication provider linked to these usernames",
+        required: true
+      )
+    end
+
+    response(200, "OK")
+    response(400, "Bad Request. Invalid provider, username or role")
+    response(403, "Forbidden. You are not an admin")
+  end
+
   swagger_path :update_role do
     put("/v2/courses/{course_id}/admin/users/role")
 
@@ -174,6 +254,16 @@ defmodule CadetWeb.AdminUserController do
               :string,
               "Group the user belongs to in this course. May be null if the user does not belong to any group"
             )
+          end
+        end,
+      UsernameAndRole:
+        swagger_schema do
+          title("Username and role")
+          description("Username and role of the user to add to this course")
+
+          properties do
+            username(:string, "The user's username")
+            role(:role, "The user's role. Can be 'student', 'staff', or 'admin'")
           end
         end
     }

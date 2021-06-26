@@ -127,6 +127,7 @@ defmodule CadetWeb.Router do
     )
 
     get("/users", AdminUserController, :index)
+    put("/users", AdminUserController, :add_users)
     put("/users/role", AdminUserController, :update_role)
     delete("/users", AdminUserController, :delete_user)
     post("/users/:userid/goals/:uuid/progress", AdminGoalsController, :update_progress)

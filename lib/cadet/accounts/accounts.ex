@@ -8,7 +8,6 @@ defmodule Cadet.Accounts do
 
   alias Cadet.Accounts.{Query, User, CourseRegistration}
   alias Cadet.Auth.Provider
-  alias Cadet.Assessments.{Answer, Submission}
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration

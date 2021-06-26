@@ -1,5 +1,5 @@
 defmodule Cadet.Accounts.CourseRegistrationTest do
-  alias Cadet.Accounts.{CourseRegistration, CourseRegistrations}
+  alias Cadet.Accounts.{CourseRegistration, CourseRegistrations, User}
 
   use Cadet.ChangesetCase, entity: CourseRegistration
 
@@ -154,12 +154,49 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     end
   end
 
-  describe "update course_registration" do
-    test "successful insert", %{course1: course1, user2: user2} do
+  describe "add_users_to_course" do
+    # Note: roles are already validated in the controller
+    test "successful", %{course2: course2} do
+      user = insert(:user, %{username: "existing-user"})
+      insert(:course_registration, %{course: course2, user: user})
+      assert length(CourseRegistrations.get_users(course2.id)) == 1
+
+      usernames_and_roles = [
+        %{username: "existing-user", role: "admin"},
+        %{username: "student1", role: "student"},
+        %{username: "student2", role: "student"},
+        %{username: "staff1", role: "staff"},
+        %{username: "admin1", role: "admin"}
+      ]
+
+      assert :ok == CourseRegistrations.add_users_to_course(usernames_and_roles, course2.id)
+      assert length(CourseRegistrations.get_users(course2.id)) == 5
+    end
+
+    test "successful when there are duplicate inputs in list", %{course2: course2} do
+      user = insert(:user, %{username: "existing-user"})
+      insert(:course_registration, %{course: course2, user: user})
+      assert length(CourseRegistrations.get_users(course2.id)) == 1
+
+      usernames_and_roles = [
+        %{username: "existing-user", role: "admin"},
+        %{username: "student1", role: "student"},
+        %{username: "student1", role: "student"},
+        %{username: "staff1", role: "staff"},
+        %{username: "admin1", role: "admin"}
+      ]
+
+      assert :ok == CourseRegistrations.add_users_to_course(usernames_and_roles, course2.id)
+      assert length(CourseRegistrations.get_users(course2.id)) == 4
+    end
+  end
+
+  describe "enroll course" do
+    test "successful enrollment", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
 
       {:ok, course_reg} =
-        CourseRegistrations.insert_or_update_course_registration(%{
+        CourseRegistrations.enroll_course(%{
           user_id: user2.id,
           course_id: course1.id,
           role: :student
@@ -168,13 +205,18 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
       assert length(CourseRegistrations.get_users(course1.id)) == 2
       assert course_reg.user_id == user2.id
       assert course_reg.course_id == course1.id
-    end
 
-    test "successful insert through enroll_course", %{course1: course1, user2: user2} do
+      assert User |> where(id: ^user2.id) |> Repo.one() |> Map.fetch!(:latest_viewed_id) ==
+               course1.id
+    end
+  end
+
+  describe "update course_registration" do
+    test "successful insert", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
 
       {:ok, course_reg} =
-        CourseRegistrations.enroll_course(%{
+        CourseRegistrations.insert_or_update_course_registration(%{
           user_id: user2.id,
           course_id: course1.id,
           role: :student
@@ -333,13 +375,13 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     end
 
     test "succeeds", %{student: %{id: coursereg_id}} do
-      {:ok, deleted_coursereg} = CourseRegistrations.delete_course_registration(coursereg_id)
+      {:ok, _deleted_coursereg} = CourseRegistrations.delete_course_registration(coursereg_id)
       assert is_nil(CourseRegistration |> where(id: ^coursereg_id) |> Repo.one())
     end
 
     test "fails when course registration does not exist", %{} do
       assert {:error, {:bad_request, "User course registration does not exist"}} ==
-        CourseRegistrations.delete_course_registration(10_000)
+               CourseRegistrations.delete_course_registration(10_000)
     end
   end
 end

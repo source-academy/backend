@@ -7,6 +7,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
   import Ecto.Query
 
   alias Cadet.Repo
+  alias Cadet.Accounts
   alias Cadet.Accounts.{User, CourseRegistration}
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Courses.AssessmentConfig
@@ -66,9 +67,56 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
+  def add_users_to_course(usernames_and_roles, course_id) do
+    # Note: Usernames have already been namespaced in the controller
+    usernames_and_roles
+    |> Enum.reduce_while(nil, fn %{username: username, role: role}, _acc ->
+      add_users_to_course_helper(username, course_id, role)
+    end)
+  end
+
+  defp add_users_to_course_helper(username, course_id, role) do
+    case User
+         |> where(username: ^username)
+         |> Repo.one() do
+      nil ->
+        with {:ok, _} <- Accounts.register(%{username: username}) do
+          add_users_to_course_helper(username, course_id, role)
+        else
+          {:error, changeset} ->
+            {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
+        end
+
+      user ->
+        with {:ok, _} <- enroll_course(%{user_id: user.id, course_id: course_id, role: role}) do
+          {:cont, :ok}
+        else
+          {:error, changeset} ->
+            {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
+        end
+    end
+  end
+
+  @doc """
+  Enrolls the user into the specified course with the specified role, and updates the user's
+  latest viewed course id to this enrolled course.
+  """
   def enroll_course(params = %{user_id: user_id, course_id: course_id, role: _role})
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
-    params |> insert_or_update_course_registration()
+    case params |> insert_or_update_course_registration() do
+      {:ok, _course_reg} = ok ->
+        # Ensures that the user has a latest_viewed_course
+        User
+        |> where(id: ^user_id)
+        |> Repo.one()
+        |> User.changeset(%{latest_viewed_id: course_id})
+        |> Repo.update()
+
+        ok
+
+      {:error, _} = error ->
+        error
+    end
   end
 
   @spec insert_or_update_course_registration(map()) ::

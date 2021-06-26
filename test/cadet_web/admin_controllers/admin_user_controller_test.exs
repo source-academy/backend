@@ -82,6 +82,204 @@ defmodule CadetWeb.AdminUserControllerTest do
     # end
   end
 
+  describe "PUT /v2/courses/{course_id}/admin/users" do
+    @tag authenticate: :admin
+    test "successfully namespaces and inserts users", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+      user = insert(:user, %{username: "test/existing-user"})
+      insert(:course_registration, %{course: course, user: user})
+
+      assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
+
+      params = %{
+        users: [
+          %{"username" => "existing-user", "role" => "student"},
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => "admin", "role" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      resp = put(conn, build_url_users(course_id), params)
+
+      assert response(resp, 200) == "OK"
+
+      assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 7
+    end
+
+    @tag authenticate: :admin
+    test "successful with duplicate inputs", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+      user = insert(:user, %{username: "test/existing-user"})
+      insert(:course_registration, %{course: course, user: user})
+
+      assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
+
+      params = %{
+        users: [
+          %{"username" => "existing-user", "role" => "student"},
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => "admin", "role" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      resp = put(conn, build_url_users(course_id), params)
+
+      assert response(resp, 200) == "OK"
+
+      assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 6
+    end
+
+    @tag authenticate: :staff
+    test "fails when not admin", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      params = %{
+        users: [
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => "admin", "role" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      conn = put(conn, build_url_users(course_id), params)
+
+      assert response(conn, 403) == "User is not permitted to add users"
+    end
+
+    @tag authenticate: :admin
+    test "fails when invalid provider is specified", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      params = %{
+        users: [
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => "admin", "role" => "admin"}
+        ],
+        provider: "invalid-provider"
+      }
+
+      conn = put(conn, build_url_users(course_id), params)
+
+      assert response(conn, 400) == "Invalid authentication provider"
+    end
+
+    @tag authenticate: :admin
+    test "fails when no username is specified for at least one input", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      params = %{
+        users: [
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"role" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      conn = put(conn, build_url_users(course_id), params)
+
+      assert response(conn, 400) == "Invalid username(s) provided"
+    end
+
+    @tag authenticate: :admin
+    test "fails when invalid username is specified (not string)", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      params = %{
+        users: [
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => nil, "role" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      conn = put(conn, build_url_users(course_id), params)
+
+      assert response(conn, 400) == "Invalid username(s) provided"
+    end
+
+    @tag authenticate: :admin
+    test "fails when invalid username is specified (empty string)", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      params = %{
+        users: [
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => "", "role" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      conn = put(conn, build_url_users(course_id), params)
+
+      assert response(conn, 400) == "Invalid username(s) provided"
+    end
+
+    @tag authenticate: :admin
+    test "fails when no role is specified for at least one input", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      params = %{
+        users: [
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "student"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      conn = put(conn, build_url_users(course_id), params)
+
+      assert response(conn, 400) == "Invalid role(s) provided"
+    end
+
+    @tag authenticate: :admin
+    test "fails when invalid role is specified for at least one input", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      params = %{
+        users: [
+          %{"username" => "student1", "role" => "student"},
+          %{"username" => "student2", "role" => "student"},
+          %{"username" => "student3", "role" => "invalid-role"},
+          %{"username" => "staff", "role" => "staff"},
+          %{"username" => "admin", "role" => "admin"}
+        ],
+        provider: "test"
+      }
+
+      conn = put(conn, build_url_users(course_id), params)
+
+      assert response(conn, 400) == "Invalid role(s) provided"
+    end
+  end
+
   describe "PUT /v2/courses/{course_id}/admin/users/role" do
     @tag authenticate: :admin
     test "success (student to staff), when admin is admin of the course the user is in", %{
