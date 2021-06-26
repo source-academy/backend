@@ -79,6 +79,7 @@ defmodule CadetWeb.UserControllerTest do
           ]
         },
         "courseRegistration" => %{
+          "crId" => cr.id,
           "courseId" => course.id,
           "role" => "#{cr.role}",
           "group" => nil,
@@ -351,6 +352,7 @@ defmodule CadetWeb.UserControllerTest do
 
       expected = %{
         "courseRegistration" => %{
+          "crId" => cr.id,
           "courseId" => course.id,
           "role" => "#{cr.role}",
           "group" => nil,

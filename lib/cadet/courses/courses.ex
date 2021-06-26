@@ -70,23 +70,24 @@ defmodule Cadet.Courses do
   end
 
   def mass_upsert_and_reorder_assessment_configs(course_id, configs) do
-    if not is_list(configs) do
-      {:error, {:bad_request, "Invalid parameter(s)"}}
-    else
+    if is_list(configs) do
       configs_length = configs |> length()
 
       with true <- configs_length <= 8,
            true <- configs_length >= 1 do
-        configs
-        |> Enum.map(fn elem ->
-          {:ok, config} = insert_or_update_assessment_config(course_id, elem)
-          Map.put(elem, :assessment_config_id, config.id)
-        end)
+        new_configs =
+          configs
+          |> Enum.map(fn elem ->
+            {:ok, config} = insert_or_update_assessment_config(course_id, elem)
+            Map.put(elem, :assessment_config_id, config.id)
+          end)
 
-        reorder_assessment_configs(course_id, configs)
+        reorder_assessment_configs(course_id, new_configs)
       else
         false -> {:error, {:bad_request, "Invalid parameter(s)"}}
       end
+    else
+      {:error, {:bad_request, "Invalid parameter(s)"}}
     end
   end
 
@@ -115,7 +116,7 @@ defmodule Cadet.Courses do
     |> Repo.one()
     |> case do
       nil -> {:error, :no_such_entry}
-      at -> AssessmentConfig.changeset(at, params) |> Repo.update()
+      at -> at |> AssessmentConfig.changeset(params) |> Repo.update()
     end
   end
 
@@ -143,7 +144,7 @@ defmodule Cadet.Courses do
     |> Repo.one()
     |> case do
       nil -> {:error, :no_such_enrty}
-      at -> AssessmentConfig.changeset(at, params) |> Repo.delete()
+      at -> at |> AssessmentConfig.changeset(params) |> Repo.delete()
     end
   end
 

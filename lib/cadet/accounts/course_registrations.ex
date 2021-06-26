@@ -113,39 +113,72 @@ defmodule Cadet.Accounts.CourseRegistrations do
   end
 
   def update_role(role, coursereg_id) do
-    with {:get_cr, course_reg} when not is_nil(course_reg) <-
-           {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()} do
-      case course_reg
-           |> CourseRegistration.changeset(%{role: role})
-           |> Repo.update() do
-        {:ok, _} = result -> result
-        {:error, changeset} -> {:error, {:bad_request, full_error_messages(changeset)}}
-      end
-    else
-      {:get_cr, nil} -> {:error, {:bad_request, "User course registration does not exist"}}
+    # with {:get_cr, course_reg} when not is_nil(course_reg) <-
+    #        {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()} do
+    #   case course_reg
+    #        |> CourseRegistration.changeset(%{role: role})
+    #        |> Repo.update() do
+    #     {:ok, _} = result -> result
+    #     {:error, changeset} -> {:error, {:bad_request, full_error_messages(changeset)}}
+    #   end
+    # else
+    #   {:get_cr, nil} -> {:error, {:bad_request, "User course registration does not exist"}}
+    # end
+
+    case CourseRegistration |> where(id: ^coursereg_id) |> Repo.one() do
+      nil ->
+        {:error, {:bad_request, "User course registration does not exist"}}
+
+      course_reg ->
+        case course_reg
+             |> CourseRegistration.changeset(%{role: role})
+             |> Repo.update() do
+          {:ok, _} = result -> result
+          {:error, changeset} -> {:error, {:bad_request, full_error_messages(changeset)}}
+        end
     end
   end
 
   def delete_course_registration(coursereg_id) do
     # TODO: Handle deletions of achievement entries, etc. too
 
-    with {:get_cr, course_reg} when not is_nil(course_reg) <-
-           {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()} do
-      # Delete submissions and answers before deleting user
-      Submission
-      |> where(student_id: ^course_reg.id)
-      |> Repo.all()
-      |> Enum.each(fn x ->
-        Answer
-        |> where(submission_id: ^x.id)
-        |> Repo.delete_all()
+    # with {:get_cr, course_reg} when not is_nil(course_reg) <-
+    #        {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()} do
+    #   # Delete submissions and answers before deleting user
+    #   Submission
+    #   |> where(student_id: ^course_reg.id)
+    #   |> Repo.all()
+    #   |> Enum.each(fn x ->
+    #     Answer
+    #     |> where(submission_id: ^x.id)
+    #     |> Repo.delete_all()
 
-        Repo.delete(x)
-      end)
+    #     Repo.delete(x)
+    #   end)
 
-      Repo.delete(course_reg)
-    else
-      {:get_cr, nil} -> {:error, {:bad_request, "User course registration does not exist"}}
+    #   Repo.delete(course_reg)
+    # else
+    #   {:get_cr, nil} -> {:error, {:bad_request, "User course registration does not exist"}}
+    # end
+
+    case CourseRegistration |> where(id: ^coursereg_id) |> Repo.one() do
+      nil ->
+        {:error, {:bad_request, "User course registration does not exist"}}
+
+      course_reg ->
+        # Delete submissions and answers before deleting user
+        Submission
+        |> where(student_id: ^course_reg.id)
+        |> Repo.all()
+        |> Enum.each(fn x ->
+          Answer
+          |> where(submission_id: ^x.id)
+          |> Repo.delete_all()
+
+          Repo.delete(x)
+        end)
+
+        Repo.delete(course_reg)
     end
   end
 end

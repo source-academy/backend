@@ -132,14 +132,14 @@ defmodule Cadet.AccountsTest do
       all_stu_in_c1 = Accounts.get_users_by([role: :student], admin1)
       assert length(all_stu_in_c1) == 2
       all_stu_in_c2 = Accounts.get_users_by([role: :student], admin2)
-      assert length(all_stu_in_c2) == 0
+      assert all_stu_in_c2 == []
     end
 
     test "get all users in a group in a course", %{a1: admin1, g1: g1, g2: g2} do
       all_in_c1g1 = Accounts.get_users_by([group: g1.name], admin1)
       assert length(all_in_c1g1) == 2
       all_in_c1g2 = Accounts.get_users_by([group: g2.name], admin1)
-      assert length(all_in_c1g2) == 0
+      assert all_in_c1g2 == []
     end
 
     test "get all students in a group in a course", %{c1: c1, a1: admin1, g1: g1, g2: g2} do
@@ -152,7 +152,7 @@ defmodule Cadet.AccountsTest do
       all_stu_in_c1g1 = Accounts.get_users_by([group: g1.name, role: :student], admin1)
       assert length(all_stu_in_c1g1) == 2
       all_stu_in_c1g2 = Accounts.get_users_by([group: g2.name, role: :student], admin1)
-      assert length(all_stu_in_c1g2) == 0
+      assert all_stu_in_c1g2 == []
     end
   end
 end

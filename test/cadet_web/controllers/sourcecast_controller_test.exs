@@ -359,7 +359,7 @@ defmodule CadetWeb.SourcecastControllerTest do
     end
   end
 
-  defp build_url(), do: "/v2/sourcecast/"
+  defp build_url, do: "/v2/sourcecast/"
   defp build_url(course_id), do: "/v2/courses/#{course_id}/sourcecast/"
   defp build_url(course_id, sourcecast_id), do: "#{build_url(course_id)}#{sourcecast_id}/"
 

@@ -6,7 +6,7 @@ defmodule CadetWeb.AdminUserController do
 
   alias Cadet.Repo
   alias Cadet.Accounts
-  alias Cadet.Accounts.CourseRegistration
+  alias Cadet.Accounts.{CourseRegistrations, CourseRegistration}
 
   # This controller is used to find all users of a course
 
@@ -28,7 +28,7 @@ defmodule CadetWeb.AdminUserController do
            {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()},
          {:validate_same_course, true} <-
            {:validate_same_course, user_course_reg.course_id == admin_course_id} do
-      case Accounts.CourseRegistrations.update_role(role, coursereg_id) do
+      case CourseRegistrations.update_role(role, coursereg_id) do
         {:ok, %{}} ->
           text(conn, "OK")
 
@@ -64,7 +64,7 @@ defmodule CadetWeb.AdminUserController do
          {:prevent_delete_admin, true} <- {:prevent_delete_admin, user_course_reg.role != :admin},
          {:validate_same_course, true} <-
            {:validate_same_course, user_course_reg.course_id == admin_course_id} do
-      case Accounts.CourseRegistrations.delete_course_registration(coursereg_id) do
+      case CourseRegistrations.delete_course_registration(coursereg_id) do
         {:ok, %{}} ->
           text(conn, "OK")
 

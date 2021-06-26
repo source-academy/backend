@@ -339,7 +339,7 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
 
     test "fails when course registration does not exist", %{} do
       assert {:error, {:bad_request, "User course registration does not exist"}} ==
-        CourseRegistrations.delete_course_registration(10_000)
+               CourseRegistrations.delete_course_registration(10_000)
     end
   end
 end

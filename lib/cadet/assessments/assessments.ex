@@ -278,7 +278,8 @@ defmodule Cadet.Assessments do
       |> select([s], [:assessment_id, :status])
 
     assessments =
-      Query.all_assessments_with_aggregates(cr.course_id)
+      cr.course_id
+      |> Query.all_assessments_with_aggregates()
       |> subquery()
       |> join(
         :left,

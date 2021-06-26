@@ -264,7 +264,7 @@ defmodule Cadet.CoursesTest do
       {:ok, updated_config} = Courses.insert_or_update_assessment_config(course.id, params)
 
       new_configs = Courses.get_assessment_configs(course.id)
-      assert length(old_configs) == 0
+      assert old_configs == []
       assert length(new_configs) == 1
       assert updated_config.early_submission_xp == 100
       assert updated_config.hours_before_early_xp_decay == 24
@@ -329,7 +329,7 @@ defmodule Cadet.CoursesTest do
 
       new_configs = Courses.get_assessment_configs(course.id)
       assert length(old_configs) == 1
-      assert length(new_configs) == 0
+      assert new_configs == []
     end
 
     test "error" do

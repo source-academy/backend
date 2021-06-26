@@ -200,7 +200,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course_id = conn.assigns[:course_id]
       config = insert(:assessment_config, %{course: Repo.get(Course, course_id)})
 
-      old_configs = Courses.get_assessment_configs(course_id) |> Enum.map(& &1.type)
+      old_configs = course_id |> Courses.get_assessment_configs() |> Enum.map(& &1.type)
 
       params = %{
         "assessmentConfigs" => [
@@ -230,7 +230,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       assert resp == "OK"
 
-      new_configs = Courses.get_assessment_configs(course_id) |> Enum.map(& &1.type)
+      new_configs = course_id |> Courses.get_assessment_configs() |> Enum.map(& &1.type)
       refute old_configs == new_configs
       assert new_configs == ["Missions", "Paths"]
     end
@@ -298,7 +298,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
   defp build_url_assessment_configs(course_id),
     do: "/v2/courses/#{course_id}/admin/config/assessment_configs"
 
-  defp to_map(schema), do: Map.from_struct(schema) |> Map.drop([:updated_at])
+  defp to_map(schema), do: schema |> Map.from_struct() |> Map.drop([:updated_at])
 
   defp update_map(map1, params),
     do: Map.merge(map1, to_snake_case_atom_keys(params), fn _k, _v1, v2 -> v2 end)

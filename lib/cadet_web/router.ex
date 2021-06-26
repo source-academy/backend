@@ -182,7 +182,7 @@ defmodule CadetWeb.Router do
       Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)
 
     case course_reg do
-      nil -> send_resp(conn, 403, "Forbidden") |> halt()
+      nil -> conn |> send_resp(403, "Forbidden") |> halt()
       cr -> assign(conn, :course_reg, cr)
     end
   end
