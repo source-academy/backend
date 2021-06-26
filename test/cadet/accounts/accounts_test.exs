@@ -38,7 +38,21 @@ defmodule Cadet.AccountsTest do
   describe "sign in using auth provider" do
     test "unregistered user" do
       {:ok, _user} = Accounts.sign_in("student", "student_token", "test")
-      assert Repo.one(Query.username("student")).username == "student"
+      user = Repo.one(Query.username("student"))
+      assert user.username == "student"
+
+      # as set in config/test.exs
+      assert user.name == "student 1"
+    end
+
+    test "pre-created user during first login" do
+      user = insert(:user, %{username: "student", name: nil})
+      {:ok, _user} = Accounts.sign_in("student", "student_token", "test")
+      user = Repo.one(Query.username("student"))
+      assert user.username == "student"
+
+      # as set in config/test.exs
+      assert user.name == "student 1"
     end
 
     test "registered user" do

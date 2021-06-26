@@ -73,31 +73,27 @@ defmodule Cadet.Accounts do
   Sign in using given user ID
   """
   def sign_in(username, token, provider) do
-    case Repo.one(Query.username(username)) do
-      nil ->
-        # user is not registered in our database
-        # :TODO recheck when designing onboarding process (assign role to module)
-        # :TODO get_role process to be put in course creation?
-        # with {:ok, role} <- Provider.get_role(provider, token),
-        #      {:ok, name} <- Provider.get_name(provider, token),
-        #      {:ok, _} <- register(%{name: name, username: username}, role) do
-        #   sign_in(username, name, token)
-        with {:ok, name} <- Provider.get_name(provider, token),
-             {:ok, _} <- register(%{name: name, username: username}) do
-          sign_in(username, name, token)
-        else
-          {:error, :invalid_credentials, err} ->
-            {:error, :forbidden, err}
+    user = Repo.one(Query.username(username))
 
-          {:error, :upstream, err} ->
-            {:error, :bad_request, err}
+    if is_nil(user) or is_nil(user.name) do
+      # user is not registered in our database or does not have a name
+      # (accounts pre-created by instructors do not have a name, and has to be fetched
+      #  from the auth provider during sign_in)
+      with {:ok, name} <- Provider.get_name(provider, token),
+           {:ok, _} <- register(%{name: name, username: username}) do
+        sign_in(username, name, token)
+      else
+        {:error, :invalid_credentials, err} ->
+          {:error, :forbidden, err}
 
-          {:error, _err} ->
-            {:error, :internal_server_error}
-        end
+        {:error, :upstream, err} ->
+          {:error, :bad_request, err}
 
-      user ->
-        {:ok, user}
+        {:error, _err} ->
+          {:error, :internal_server_error}
+      end
+    else
+      {:ok, user}
     end
   end
 

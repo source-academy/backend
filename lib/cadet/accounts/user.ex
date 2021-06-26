@@ -18,8 +18,8 @@ defmodule Cadet.Accounts.User do
     timestamps()
   end
 
-  @required_fields ~w(name)a
-  @optional_fields ~w(username latest_viewed_id)a
+  @required_fields ~w(username)a
+  @optional_fields ~w(name latest_viewed_id)a
 
   def changeset(user, params \\ %{}) do
     user
