@@ -116,8 +116,7 @@ defmodule Cadet.Courses do
       |> Enum.each(fn {elem, idx} ->
         insert_or_update_assessment_config(course_id, Map.put(elem, :order, idx))
       end)
-    end
-    )
+    end)
   end
 
   @spec delete_assessment_config(integer(), map()) ::

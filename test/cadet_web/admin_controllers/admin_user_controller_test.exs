@@ -149,7 +149,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "staff",
-        "crId" => 1
+        "crId" => 10_000
       }
 
       conn = put(conn, build_url_users_role(course_id), params)
@@ -169,7 +169,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       conn = put(conn, build_url_users_role(course_id), params)
 
-      assert response(conn, 403) == "Wrong course"
+      assert response(conn, 403) == "User is in a different course"
       unchanged_course_reg = Repo.get(CourseRegistration, user_course_reg.id)
       assert unchanged_course_reg.role == :student
     end
@@ -334,7 +334,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       conn = delete(conn, build_url_users(course_id), params)
 
-      assert response(conn, 403) == "Wrong course"
+      assert response(conn, 403) == "User is in a different course"
     end
   end
 

@@ -234,58 +234,112 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     end
   end
 
-  describe "delete course_registration" do
-    test "succeeds", %{course1: course1, user1: user1} do
-      assert length(CourseRegistrations.get_users(course1.id)) == 1
+  # TODO: Remove eventually (duplicate of delete_course_registration)
+  # describe "delete record" do
+  #   test "succeeds", %{course1: course1, user1: user1} do
+  #     assert length(CourseRegistrations.get_users(course1.id)) == 1
 
-      {:ok, _course_reg} =
-        CourseRegistrations.delete_record(%{
-          user_id: user1.id,
-          course_id: course1.id,
-          role: :student
-        })
+  #     {:ok, _course_reg} =
+  #       CourseRegistrations.delete_record(%{
+  #         user_id: user1.id,
+  #         course_id: course1.id,
+  #         role: :student
+  #       })
 
-      assert CourseRegistrations.get_users(course1.id) == []
+  #     assert CourseRegistrations.get_users(course1.id) == []
+  #   end
+
+  #   test "failed due to repeated removal", %{course1: course1, user1: user1} do
+  #     assert length(CourseRegistrations.get_users(course1.id)) == 1
+
+  #     {:ok, _course_reg} =
+  #       CourseRegistrations.delete_record(%{
+  #         user_id: user1.id,
+  #         course_id: course1.id,
+  #         role: :student
+  #       })
+
+  #     assert CourseRegistrations.get_users(course1.id) == []
+
+  #     assert {:error, :no_such_enrty} ==
+  #              CourseRegistrations.delete_record(%{
+  #                user_id: user1.id,
+  #                course_id: course1.id,
+  #                role: :student
+  #              })
+  #   end
+
+  #   test "failed due to non existing entry", %{course1: course1, user2: user2} do
+  #     assert length(CourseRegistrations.get_users(course1.id)) == 1
+
+  #     assert {:error, :no_such_enrty} ==
+  #              CourseRegistrations.delete_record(%{
+  #                user_id: user2.id,
+  #                course_id: course1.id,
+  #                role: :student
+  #              })
+  #   end
+
+  #   test "failed due to invalid changeset", %{course1: course1, user2: user2} do
+  #     assert length(CourseRegistrations.get_users(course1.id)) == 1
+
+  #     {:error, :no_such_enrty} =
+  #       CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id})
+
+  #     assert length(CourseRegistrations.get_users(course1.id)) == 1
+  #   end
+  # end
+
+  describe "update_role" do
+    setup do
+      student = insert(:course_registration, %{role: :student})
+      staff = insert(:course_registration, %{role: :staff})
+      admin = insert(:course_registration, %{role: :admin})
+
+      {:ok, %{student: student, staff: staff, admin: admin}}
     end
 
-    test "failed due to repeated removal", %{course1: course1, user1: user1} do
-      assert length(CourseRegistrations.get_users(course1.id)) == 1
-
-      {:ok, _course_reg} =
-        CourseRegistrations.delete_record(%{
-          user_id: user1.id,
-          course_id: course1.id,
-          role: :student
-        })
-
-      assert CourseRegistrations.get_users(course1.id) == []
-
-      assert {:error, :no_such_enrty} ==
-               CourseRegistrations.delete_record(%{
-                 user_id: user1.id,
-                 course_id: course1.id,
-                 role: :student
-               })
+    test "succeeds for student to staff", %{student: %{id: coursereg_id}} do
+      {:ok, updated_coursereg} = CourseRegistrations.update_role("staff", coursereg_id)
+      assert updated_coursereg.role == :staff
     end
 
-    test "failed due to non existing entry", %{course1: course1, user2: user2} do
-      assert length(CourseRegistrations.get_users(course1.id)) == 1
-
-      assert {:error, :no_such_enrty} ==
-               CourseRegistrations.delete_record(%{
-                 user_id: user2.id,
-                 course_id: course1.id,
-                 role: :student
-               })
+    test "succeeds for student to admin", %{student: %{id: coursereg_id}} do
+      {:ok, updated_coursereg} = CourseRegistrations.update_role("admin", coursereg_id)
+      assert updated_coursereg.role == :admin
     end
 
-    test "failed due to invalid changeset", %{course1: course1, user2: user2} do
-      assert length(CourseRegistrations.get_users(course1.id)) == 1
+    test "succeeds for admin to staff", %{admin: %{id: coursereg_id}} do
+      {:ok, updated_coursereg} = CourseRegistrations.update_role("staff", coursereg_id)
+      assert updated_coursereg.role == :staff
+    end
 
-      {:error, :no_such_enrty} =
-        CourseRegistrations.delete_record(%{user_id: user2.id, course_id: course1.id})
+    test "fails when invalid role is provided", %{student: %{id: coursereg_id}} do
+      assert {:error, {:bad_request, "role is invalid"}} ==
+               CourseRegistrations.update_role("invalidrole", coursereg_id)
+    end
 
-      assert length(CourseRegistrations.get_users(course1.id)) == 1
+    test "fails when course registration does not exist", %{} do
+      assert {:error, {:bad_request, "User course registration does not exist"}} ==
+               CourseRegistrations.update_role("staff", 10_000)
+    end
+  end
+
+  describe "delete_course_registration" do
+    setup do
+      student = insert(:course_registration, %{role: :student})
+
+      {:ok, %{student: student}}
+    end
+
+    test "succeeds", %{student: %{id: coursereg_id}} do
+      {:ok, deleted_coursereg} = CourseRegistrations.delete_course_registration(coursereg_id)
+      assert is_nil(CourseRegistration |> where(id: ^coursereg_id) |> Repo.one())
+    end
+
+    test "fails when course registration does not exist", %{} do
+      assert {:error, {:bad_request, "User course registration does not exist"}} ==
+        CourseRegistrations.delete_course_registration(10_000)
     end
   end
 end
