@@ -797,7 +797,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # :TODO update bonus logic
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
@@ -806,16 +805,17 @@ defmodule Cadet.Assessments do
 
     max_bonus_xp = assessment_conifg.early_submission_xp
     early_hours = assessment_conifg.hours_before_early_xp_decay
-    rate = assessment_conifg.decay_rate_points_per_hour
 
     xp_bonus =
-      cond do
-        Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) ->
-          max_bonus_xp
-
-        true ->
-          exceed_hours = Timex.diff(Timex.now(), assessment.open_at, :hours) - early_hours
-          Enum.max([0, max_bonus_xp - exceed_hours * rate])
+      if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) do
+        max_bonus_xp
+      else
+        # This logic interpolates from max bonus at early hour to 0 bonus at close time
+        decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+        remaining_hours = Timex.diff(assessment.close_at, Timex.now(), :hours)
+        proportion = remaining_hours / decaying_hours
+        bonus_xp = (max_bonus_xp * proportion) |> round()
+        Enum.max([0, bonus_xp])
       end
 
     submission
