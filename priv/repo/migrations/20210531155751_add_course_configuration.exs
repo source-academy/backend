@@ -24,7 +24,7 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
     end
 
     create table(:assessment_configs) do
-      add(:order, :integer, null: false)
+      add(:order, :integer, null: true)
       add(:type, :string, null: false)
       add(:course_id, references(:courses), null: false)
       add(:is_graded, :boolean, null: false)
@@ -33,7 +33,7 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       timestamps()
     end
 
-    create(unique_index(:assessment_configs, [:course_id, :type]))
+    create(unique_index(:assessment_configs, [:course_id, :order]))
 
     create table(:course_registrations) do
       add(:role, :role, null: false)

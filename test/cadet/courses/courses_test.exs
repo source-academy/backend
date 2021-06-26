@@ -135,7 +135,7 @@ defmodule Cadet.CoursesTest do
     end
   end
 
-  describe "mass_upsert_assessment_configs" do
+  describe "mass_upsert_and_reorder_assessment_configs" do
     setup do
       course = insert(:course)
       config1 = insert(:assessment_config, %{order: 1, type: "Missions", course: course})
@@ -163,8 +163,8 @@ defmodule Cadet.CoursesTest do
       config3: config3,
       config4: config4
     } do
-      :ok =
-        Courses.mass_upsert_assessment_configs(course.id, [
+      {:ok, _} =
+        Courses.mass_upsert_and_reorder_assessment_configs(course.id, [
           %{assessment_config_id: config1.id, type: "Paths"},
           %{assessment_config_id: config2.id, type: "Quests"},
           %{assessment_config_id: config3.id, type: "Missions"},
@@ -185,8 +185,8 @@ defmodule Cadet.CoursesTest do
       config3: config3,
       config4: config4
     } do
-      :ok =
-        Courses.mass_upsert_assessment_configs(course.id, [
+      {:ok, _} =
+        Courses.mass_upsert_and_reorder_assessment_configs(course.id, [
           %{assessment_config_id: config1.id, type: "Paths"},
           %{assessment_config_id: config2.id, type: "Quests"},
           %{assessment_config_id: config3.id, type: "Missions"},
@@ -201,7 +201,7 @@ defmodule Cadet.CoursesTest do
 
     # test "succeed to delete", %{course: course} do
     #   :ok =
-    #     Courses.mass_upsert_assessment_configs(course.id, [
+    #     Courses.mass_upsert_and_reorder_assessment_configs(course.id, [
     #       %{order: 1, type: "Paths"},
     #       %{order: 2, type: "quests"},
     #       %{order: 3, type: "missions"}
@@ -214,7 +214,7 @@ defmodule Cadet.CoursesTest do
 
     test "returns with error for empty list parameter", %{course: course} do
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.mass_upsert_assessment_configs(course.id, [])
+               Courses.mass_upsert_and_reorder_assessment_configs(course.id, [])
     end
 
     test "returns with error for list parameter of greater than length 8", %{
@@ -237,14 +237,14 @@ defmodule Cadet.CoursesTest do
       ]
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.mass_upsert_assessment_configs(course.id, params)
+               Courses.mass_upsert_and_reorder_assessment_configs(course.id, params)
     end
 
     test "returns with error for non-list parameter", %{course: course} do
       params = %{course_id: course.id, order: 1, type: "Paths"}
 
       assert {:error, {:bad_request, "Invalid parameter(s)"}} =
-               Courses.mass_upsert_assessment_configs(course.id, params)
+               Courses.mass_upsert_and_reorder_assessment_configs(course.id, params)
     end
   end
 

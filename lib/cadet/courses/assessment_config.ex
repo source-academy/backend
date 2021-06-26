@@ -32,7 +32,7 @@ defmodule Cadet.Courses.AssessmentConfig do
     |> validate_number(:order, less_than_or_equal_to: 8)
     |> validate_number(:early_submission_xp, greater_than_or_equal_to: 0)
     |> validate_number(:hours_before_early_xp_decay, greater_than_or_equal_to: 0)
-    |> unique_constraint([:type, :course_id])
+    |> unique_constraint([:order, :course_id])
   end
 
   defp capitalize(params, field) do
