@@ -36,8 +36,8 @@ defmodule Cadet.StoriesTest do
   describe "List stories" do
     test "All stories from own course" do
       course = insert(:course)
-      story1 = insert(:story, %{course: course}) |> remove_course_assoc()
-      story2 = insert(:story, %{course: course}) |> remove_course_assoc()
+      story1 = :story |> insert(%{course: course}) |> remove_course_assoc()
+      story2 = :story |> insert(%{course: course}) |> remove_course_assoc()
 
       assert Stories.list_stories(insert(:course_registration, %{course: course, role: :staff})) ==
                [story1, story2]
@@ -46,7 +46,7 @@ defmodule Cadet.StoriesTest do
     test "Does not list stories from other courses" do
       course = insert(:course)
       insert(:story)
-      story2 = insert(:story, %{course: course}) |> remove_course_assoc()
+      story2 = :story |> insert(%{course: course}) |> remove_course_assoc()
 
       assert Stories.list_stories(insert(:course_registration, %{course: course, role: :staff})) ==
                [story2]
@@ -61,10 +61,12 @@ defmodule Cadet.StoriesTest do
       insert(:story, %{Map.put(params, :course, course) | :open_at => one_week_ago})
 
       published_open_story =
-        insert(
-          :story,
-          %{Map.put(params, :course, course) | :is_published => true, :open_at => one_week_ago}
-        )
+        :story
+        |> insert(%{
+          Map.put(params, :course, course)
+          | :is_published => true,
+            :open_at => one_week_ago
+        })
         |> remove_course_assoc()
 
       assert Stories.list_stories(insert(:course_registration, %{course: course, role: :student})) ==

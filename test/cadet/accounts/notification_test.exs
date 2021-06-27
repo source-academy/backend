@@ -3,19 +3,21 @@ defmodule Cadet.Accounts.NotificationTest do
 
   use Cadet.ChangesetCase, entity: Notification
 
-  @required_fields ~w(type role user_id)a
+  @required_fields ~w(type role course_reg_id)a
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
-    avenger = insert(:user, %{role: :staff})
-    student = insert(:user, %{role: :student})
+    avenger_user = insert(:user)
+    student_user = insert(:user)
+    avenger = insert(:course_registration, %{user: avenger_user, role: :staff})
+    student = insert(:course_registration, %{user: student_user, role: :student})
     submission = insert(:submission, %{student: student, assessment: assessment})
 
     valid_params_for_student = %{
       type: :new,
       read: false,
       role: student.role,
-      user_id: student.id,
+      course_reg_id: student.id,
       assessment_id: assessment.id
     }
 
@@ -23,7 +25,7 @@ defmodule Cadet.Accounts.NotificationTest do
       type: :submitted,
       read: false,
       role: avenger.role,
-      user_id: avenger.id,
+      course_reg_id: avenger.id,
       assessment_id: assessment.id,
       submission_id: submission.id
     }
@@ -74,14 +76,14 @@ defmodule Cadet.Accounts.NotificationTest do
           read: false,
           assessment_id: assessment.id,
           assessment: assessment,
-          user_id: student.id
+          course_reg_id: student.id
         })
 
-      expected = Enum.sort(notifications, &(&1.id < &2.id))
+      expected = notifications |> Enum.sort(&(&1.id < &2.id)) |> Enum.map(& Map.delete(&1, :assessment))
 
       {:ok, notifications_db} = Notifications.fetch(student)
 
-      results = Enum.sort(notifications_db, &(&1.id < &2.id))
+      results = notifications_db |> Enum.sort(&(&1.id < &2.id)) |> Enum.map(& Map.delete(&1, :assessment))
 
       assert results == expected
     end
@@ -90,7 +92,7 @@ defmodule Cadet.Accounts.NotificationTest do
       insert_list(3, :notification, %{
         read: true,
         assessment_id: assessment.id,
-        user_id: student.id
+        course_reg_id: student.id
       })
 
       {:ok, notifications_db} = Notifications.fetch(student)
@@ -108,7 +110,7 @@ defmodule Cadet.Accounts.NotificationTest do
         type: :new,
         read: false,
         role: student.role,
-        user_id: student.id,
+        course_reg_id: student.id,
         assessment_id: assessment.id
       }
 
@@ -116,7 +118,7 @@ defmodule Cadet.Accounts.NotificationTest do
         type: :submitted,
         read: false,
         role: avenger.role,
-        user_id: avenger.id,
+        course_reg_id: avenger.id,
         assessment_id: assessment.id,
         submission_id: submission.id
       }
@@ -135,7 +137,7 @@ defmodule Cadet.Accounts.NotificationTest do
         type: :new,
         read: false,
         role: student.role,
-        user_id: student.id,
+        course_reg_id: student.id,
         assessment_id: assessment.id
       }
 
@@ -143,7 +145,7 @@ defmodule Cadet.Accounts.NotificationTest do
         type: :submitted,
         read: false,
         role: avenger.role,
-        user_id: avenger.id,
+        course_reg_id: avenger.id,
         assessment_id: assessment.id,
         submission_id: submission.id
       }
@@ -154,7 +156,7 @@ defmodule Cadet.Accounts.NotificationTest do
       assert Repo.one(
                from(n in Notification,
                  where:
-                   n.type == ^:new and n.user_id == ^student.id and
+                   n.type == ^:new and n.course_reg_id == ^student.id and
                      n.assessment_id == ^assessment.id
                )
              )
@@ -165,7 +167,7 @@ defmodule Cadet.Accounts.NotificationTest do
       assert Repo.one(
                from(n in Notification,
                  where:
-                   n.type == ^:submitted and n.user_id == ^avenger.id and
+                   n.type == ^:submitted and n.course_reg_id == ^avenger.id and
                      n.submission_id == ^submission.id
                )
              )
@@ -179,7 +181,7 @@ defmodule Cadet.Accounts.NotificationTest do
         type: :new,
         read: false,
         role: student.role,
-        user_id: student.id,
+        course_reg_id: student.id,
         assessment_id: assessment.id
       }
 
@@ -200,7 +202,7 @@ defmodule Cadet.Accounts.NotificationTest do
         insert(:notification, %{
           read: false,
           assessment_id: assessment.id,
-          user_id: student.id
+          course_reg_id: student.id
         })
 
       Notifications.acknowledge([notification.id], student)
@@ -218,7 +220,7 @@ defmodule Cadet.Accounts.NotificationTest do
         insert_list(3, :notification, %{
           read: false,
           assessment_id: assessment.id,
-          user_id: student.id
+          course_reg_id: student.id
         })
 
       notifications
@@ -239,7 +241,7 @@ defmodule Cadet.Accounts.NotificationTest do
         insert(:notification, %{
           read: false,
           assessment_id: assessment.id,
-          user_id: student.id
+          course_reg_id: student.id
         })
 
       assert {:error, _} = Notifications.acknowledge(notification.id, avenger)
@@ -256,16 +258,16 @@ defmodule Cadet.Accounts.NotificationTest do
 
     test "receives notification when submitted" do
       assessment = insert(:assessment, %{is_published: true})
-      avenger = insert(:user, %{role: :staff})
+      avenger = insert(:course_registration, %{role: :staff})
       group = insert(:group, %{leader: avenger})
-      student = insert(:user, %{role: :student, group: group})
+      student = insert(:course_registration, %{role: :student, group: group})
       submission = insert(:submission, %{student: student, assessment: assessment})
 
       Notifications.write_notification_when_student_submits(submission)
 
       notification =
         Repo.get_by(Notification,
-          user_id: avenger.id,
+          course_reg_id: avenger.id,
           type: :submitted,
           submission_id: submission.id
         )
@@ -282,7 +284,7 @@ defmodule Cadet.Accounts.NotificationTest do
 
       notification =
         Repo.get_by(Notification,
-          user_id: student.id,
+          course_reg_id: student.id,
           type: :autograded,
           assessment_id: assessment.id
         )
@@ -298,7 +300,7 @@ defmodule Cadet.Accounts.NotificationTest do
       Notifications.write_notification_when_graded(submission.id, :graded)
 
       notification =
-        Repo.get_by(Notification, user_id: student.id, type: :graded, assessment_id: assessment.id)
+        Repo.get_by(Notification, course_reg_id: student.id, type: :graded, assessment_id: assessment.id)
 
       assert %{type: :graded} = notification
     end
@@ -307,13 +309,13 @@ defmodule Cadet.Accounts.NotificationTest do
       assessment: assessment,
       student: student
     } do
-      students = [student | insert_list(3, :user, %{role: :student})]
+      students = [student | insert_list(3, :course_registration, %{course: student.course, role: :student})]
 
-      Notifications.write_notification_for_new_assessment(assessment.id)
+      Notifications.write_notification_for_new_assessment(student.course_id, assessment.id)
 
       for student <- students do
         notification =
-          Repo.get_by(Notification, user_id: student.id, type: :new, assessment_id: assessment.id)
+          Repo.get_by(Notification, course_reg_id: student.id, type: :new, assessment_id: assessment.id)
 
         assert %{type: :new} = notification
       end

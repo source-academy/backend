@@ -75,7 +75,8 @@ defmodule CadetWeb.ConnCase do
       # of the course_registration since we want the router plug to assign the course_registration
       # when actually accessing the endpoint during the test.
       conn =
-        sign_in(conn, course_registration.user)
+        conn
+        |> sign_in(course_registration.user)
         |> assign(:course_id, course_registration.course_id)
 
       {:ok, conn: conn}

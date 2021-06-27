@@ -278,7 +278,8 @@ defmodule Cadet.Assessments do
       |> select([s], [:assessment_id, :status])
 
     assessments =
-      Query.all_assessments_with_aggregates(cr.course_id)
+      cr.course_id
+      |> Query.all_assessments_with_aggregates()
       |> subquery()
       |> join(
         :left,
@@ -796,7 +797,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # :TODO update bonus logic
   @spec update_submission_status_and_xp_bonus(%Submission{}) ::
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
@@ -805,16 +805,17 @@ defmodule Cadet.Assessments do
 
     max_bonus_xp = assessment_conifg.early_submission_xp
     early_hours = assessment_conifg.hours_before_early_xp_decay
-    rate = assessment_conifg.decay_rate_points_per_hour
 
     xp_bonus =
-      cond do
-        Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) ->
-          max_bonus_xp
-
-        true ->
-          exceed_hours = Timex.diff(Timex.now(), assessment.open_at, :hours) - early_hours
-          Enum.max([0, max_bonus_xp - exceed_hours * rate])
+      if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) do
+        max_bonus_xp
+      else
+        # This logic interpolates from max bonus at early hour to 0 bonus at close time
+        decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+        remaining_hours = Timex.diff(assessment.close_at, Timex.now(), :hours)
+        proportion = remaining_hours / decaying_hours
+        bonus_xp = (max_bonus_xp * proportion) |> round()
+        Enum.max([0, bonus_xp])
       end
 
     submission
@@ -869,12 +870,12 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp load_contest_voting_entries(questions, user_id) do
+  defp load_contest_voting_entries(questions, cr_id) do
     Enum.map(
       questions,
       fn q ->
         if q.type == :voting do
-          submission_votes = all_submission_votes_by_question_id_and_user_id(q.id, user_id)
+          submission_votes = all_submission_votes_by_question_id_and_cr_id(q.id, cr_id)
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(q)
 
@@ -900,9 +901,9 @@ defmodule Cadet.Assessments do
     )
   end
 
-  defp all_submission_votes_by_question_id_and_user_id(question_id, user_id) do
+  defp all_submission_votes_by_question_id_and_cr_id(question_id, cr_id) do
     SubmissionVotes
-    |> where([v], v.user_id == ^user_id and v.question_id == ^question_id)
+    |> where([v], v.cr_id == ^cr_id and v.question_id == ^question_id)
     |> join(:inner, [v], s in assoc(v, :submission))
     |> join(:inner, [v, s], a in assoc(s, :answers))
     |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, rank: v.rank})
