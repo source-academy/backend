@@ -2,7 +2,43 @@ defmodule Cadet.CoursesTest do
   use Cadet.DataCase
 
   alias Cadet.{Courses, Repo}
-  alias Cadet.Courses.{Sourcecast, SourcecastUpload}
+  alias Cadet.Accounts.{CourseRegistration, User}
+  alias Cadet.Courses.{Course, Sourcecast, SourcecastUpload}
+
+  describe "create course config" do
+    test "succeeds" do
+      user = insert(:user)
+
+      # Course precreated in User factory
+      assert Course |> Repo.all() |> length() == 1
+
+      params = %{
+        course_name: "CS1101S Programming Methodology (AY20/21 Sem 1)",
+        course_short_name: "CS1101S",
+        viewable: true,
+        enable_game: true,
+        enable_achievements: true,
+        enable_sourcecast: true,
+        source_chapter: 1,
+        source_variant: "default",
+        module_help_text: "Help Text"
+      }
+
+      Courses.create_course_config(params, user)
+
+      # New course created
+      assert Course |> Repo.all() |> length() == 2
+
+      # New admin course registration for user
+      course_regs = CourseRegistration |> where(user_id: ^user.id) |> Repo.all()
+      assert length(course_regs) == 1
+      assert Enum.at(course_regs, 0).role == :admin
+
+      # User's latest_viewed course is updated
+      assert User |> where(id: ^user.id) |> Repo.one() |> Map.fetch!(:latest_viewed_id) ==
+               Enum.at(course_regs, 0).course_id
+    end
+  end
 
   describe "get course config" do
     test "succeeds" do

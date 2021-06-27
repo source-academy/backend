@@ -12,9 +12,61 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
-  # def create_course(conn, _) do
+  def create(conn, params) do
+    user = conn.assigns.current_user
+    params = params |> to_snake_case_atom_keys()
 
-  # end
+    required_keys = [
+      :course_name,
+      :course_short_name,
+      :viewable,
+      :enable_game,
+      :enable_achievements,
+      :enable_sourcecast,
+      :source_chapter,
+      :source_variant,
+      :module_help_text
+    ]
+
+    if Enum.reduce(required_keys, true, fn x, acc -> acc and Map.has_key?(params, x) end) do
+      case Courses.create_course_config(params, user) do
+        {:ok, _} ->
+          text(conn, "OK")
+
+        {:error, _, _, _} ->
+          conn
+          |> put_status(:bad_request)
+          |> text("Invalid parameter(s)")
+      end
+    else
+      send_resp(conn, :bad_request, "Missing parameter(s)")
+    end
+  end
+
+  swagger_path :create do
+    post("/v2/config/create")
+
+    summary("Creates a new course")
+
+    security([%{JWT: []}])
+    consumes("application/json")
+
+    parameters do
+      course_name(:body, :string, "Course name", required: true)
+      course_short_name(:body, :string, "Course module code", required: true)
+      viewable(:body, :boolean, "Course viewability", required: true)
+      enable_game(:body, :boolean, "Enable game", required: true)
+      enable_achievements(:body, :boolean, "Enable achievements", required: true)
+      enable_sourcecast(:body, :boolean, "Enable sourcecast", required: true)
+      source_chapter(:body, :number, "Default source chapter", required: true)
+
+      source_variant(:body, Schema.ref(:SourceVariant), "Default source variant name",
+        required: true
+      )
+
+      module_help_text(:body, :string, "Module help text", required: true)
+    end
+  end
 
   swagger_path :get_course_config do
     get("/v2/courses/{course_id}/config")
