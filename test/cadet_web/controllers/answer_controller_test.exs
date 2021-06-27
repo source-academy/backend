@@ -13,7 +13,9 @@ defmodule CadetWeb.AnswerControllerTest do
   end
 
   setup do
-    assessment = insert(:assessment, %{is_published: true})
+    course = insert(:course)
+    config = insert(:assessment_config, %{course: course})
+    assessment = insert(:assessment, %{is_published: true, course: course, config: config})
     mcq_question = insert(:mcq_question, %{assessment: assessment})
     programming_question = insert(:programming_question, %{assessment: assessment})
     voting_question = insert(:voting_question, %{assessment: assessment})
@@ -28,7 +30,8 @@ defmodule CadetWeb.AnswerControllerTest do
 
   describe "POST /assessments/question/{questionId}/answer/, Unauthenticated" do
     test "is disallowed", %{conn: conn, mcq_question: question} do
-      conn = post(conn, build_url(question.id), %{answer: 5})
+      course = insert(:course)
+      conn = post(conn, build_url(course.id, question.id), %{answer: 5})
 
       assert response(conn, 401) =~ "Unauthorised"
     end
@@ -44,34 +47,35 @@ defmodule CadetWeb.AnswerControllerTest do
         programming_question: programming_question,
         voting_question: voting_question
       } do
-        user = conn.assigns.current_user
-        mcq_conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+        course_reg = conn.assigns.test_cr
+        course_id = conn.assigns.course_id
+        mcq_conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
         assert response(mcq_conn, 200) =~ "OK"
-        assert get_answer_value(mcq_question, assessment, user) == 5
+        assert get_answer_value(mcq_question, assessment, course_reg) == 5
 
         programming_conn =
-          post(conn, build_url(programming_question.id), %{answer: "hello world"})
+          post(conn, build_url(course_id, programming_question.id), %{answer: "hello world"})
 
         assert response(programming_conn, 200) =~ "OK"
-        assert get_answer_value(programming_question, assessment, user) == "hello world"
+        assert get_answer_value(programming_question, assessment, course_reg) == "hello world"
 
         contest_submission = insert(:submission)
 
         Repo.insert(%SubmissionVotes{
-          user_id: user.id,
+          voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: contest_submission.id
         })
 
         voting_conn =
-          post(conn, build_url(voting_question.id), %{
+          post(conn, build_url(course_id, voting_question.id), %{
             answer: [
               %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 3}
             ]
           })
 
         assert response(voting_conn, 200) =~ "OK"
-        rank = get_rank_for_submission_vote(voting_question, user, contest_submission)
+        rank = get_rank_for_submission_vote(voting_question, course_reg, contest_submission)
         assert rank == 3
       end
 
@@ -83,37 +87,38 @@ defmodule CadetWeb.AnswerControllerTest do
         programming_question: programming_question,
         voting_question: voting_question
       } do
-        user = conn.assigns.current_user
-        mcq_conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+        course_reg = conn.assigns.test_cr
+        course_id = conn.assigns.course_id
+        mcq_conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
         assert response(mcq_conn, 200) =~ "OK"
-        assert get_answer_value(mcq_question, assessment, user) == 5
+        assert get_answer_value(mcq_question, assessment, course_reg) == 5
 
-        updated_mcq_conn = post(conn, build_url(mcq_question.id), %{answer: 6})
+        updated_mcq_conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 6})
         assert response(updated_mcq_conn, 200) =~ "OK"
-        assert get_answer_value(mcq_question, assessment, user) == 6
+        assert get_answer_value(mcq_question, assessment, course_reg) == 6
 
         programming_conn =
-          post(conn, build_url(programming_question.id), %{answer: "hello world"})
+          post(conn, build_url(course_id, programming_question.id), %{answer: "hello world"})
 
         assert response(programming_conn, 200) =~ "OK"
-        assert get_answer_value(programming_question, assessment, user) == "hello world"
+        assert get_answer_value(programming_question, assessment, course_reg) == "hello world"
 
         updated_programming_conn =
-          post(conn, build_url(programming_question.id), %{answer: "hello_world"})
+          post(conn, build_url(course_id, programming_question.id), %{answer: "hello_world"})
 
         assert response(updated_programming_conn, 200) =~ "OK"
-        assert get_answer_value(programming_question, assessment, user) == "hello_world"
+        assert get_answer_value(programming_question, assessment, course_reg) == "hello_world"
 
         contest_submission = insert(:submission)
 
         Repo.insert(%SubmissionVotes{
-          user_id: user.id,
+          voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: contest_submission.id
         })
 
         voting_conn =
-          post(conn, build_url(voting_question.id), %{
+          post(conn, build_url(course_id, voting_question.id), %{
             answer: [
               %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 3}
             ]
@@ -122,7 +127,7 @@ defmodule CadetWeb.AnswerControllerTest do
         assert response(voting_conn, 200) =~ "OK"
 
         updated_voting_conn =
-          post(conn, build_url(voting_question.id), %{
+          post(conn, build_url(course_id, voting_question.id), %{
             answer: [
               %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 5}
             ]
@@ -130,7 +135,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
         assert response(updated_voting_conn, 200) =~ "OK"
 
-        rank = get_rank_for_submission_vote(voting_question, user, contest_submission)
+        rank = get_rank_for_submission_vote(voting_question, course_reg, contest_submission)
         assert rank == 5
       end
 
@@ -142,18 +147,19 @@ defmodule CadetWeb.AnswerControllerTest do
         programming_question: programming_question,
         voting_question: voting_question
       } do
-        user = conn.assigns.current_user
-        post(conn, build_url(mcq_question.id), %{answer: 5})
-        post(conn, build_url(programming_question.id), %{answer: "hello world"})
+        course_reg = conn.assigns.test_cr
+        course_id = conn.assigns.course_id
+        post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
+        post(conn, build_url(course_id, programming_question.id), %{answer: "hello world"})
         contest_submission = insert(:submission)
 
         Repo.insert(%SubmissionVotes{
-          user_id: user.id,
+          voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: contest_submission.id
         })
 
-        post(conn, build_url(voting_question.id), %{
+        post(conn, build_url(course_id, voting_question.id), %{
           answer: [
             %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 3}
           ]
@@ -163,14 +169,14 @@ defmodule CadetWeb.AnswerControllerTest do
 
         submission =
           Submission
-          |> where(student_id: ^user.id)
+          |> where(student_id: ^course_reg.id)
           |> where(assessment_id: ^assessment.id)
           |> Repo.one!()
 
         assert submission.status == :attempted
 
         # should not affect submission changes
-        conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+        conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
         assert response(conn, 200) =~ "OK"
       end
 
@@ -181,10 +187,11 @@ defmodule CadetWeb.AnswerControllerTest do
           assessment: assessment,
           mcq_question: mcq_question
         } do
-          user = conn.assigns.current_user
+          course_reg = conn.assigns.test_cr
+          course_id = conn.assigns.course_id
 
-          insert(:submission, %{assessment: assessment, student: user, status: :submitted})
-          conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+          insert(:submission, %{assessment: assessment, student: course_reg, status: :submitted})
+          conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
 
           assert response(conn, 403) == "Assessment submission already finalised"
         end
@@ -195,10 +202,11 @@ defmodule CadetWeb.AnswerControllerTest do
           assessment: assessment,
           mcq_question: mcq_question
         } do
-          user = conn.assigns.current_user
+          course_reg = conn.assigns.test_cr
+          course_id = conn.assigns.course_id
 
-          insert(:submission, %{assessment: assessment, student: user, status: :submitted})
-          conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+          insert(:submission, %{assessment: assessment, student: course_reg, status: :submitted})
+          conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
 
           assert response(conn, 200) == "OK"
         end
@@ -212,29 +220,35 @@ defmodule CadetWeb.AnswerControllerTest do
         programming_question: programming_question,
         voting_question: voting_question
       } do
-        user = conn.assigns.current_user
-        missing_answer_conn = post(conn, build_url(programming_question.id), %{answ: 5})
+        course_reg = conn.assigns.test_cr
+        course_id = conn.assigns.course_id
+
+        missing_answer_conn =
+          post(conn, build_url(course_id, programming_question.id), %{answ: 5})
+
         assert response(missing_answer_conn, 400) == "Missing or invalid parameter(s)"
-        assert is_nil(get_answer_value(mcq_question, assessment, user))
+        assert is_nil(get_answer_value(mcq_question, assessment, course_reg))
 
-        mcq_conn = post(conn, build_url(programming_question.id), %{answer: 5})
+        mcq_conn = post(conn, build_url(course_id, programming_question.id), %{answer: 5})
         assert response(mcq_conn, 400) == "Missing or invalid parameter(s)"
-        assert is_nil(get_answer_value(mcq_question, assessment, user))
+        assert is_nil(get_answer_value(mcq_question, assessment, course_reg))
 
-        programming_conn = post(conn, build_url(mcq_question.id), %{answer: "hello world"})
+        programming_conn =
+          post(conn, build_url(course_id, mcq_question.id), %{answer: "hello world"})
+
         assert response(programming_conn, 400) == "Missing or invalid parameter(s)"
-        assert is_nil(get_answer_value(programming_question, assessment, user))
+        assert is_nil(get_answer_value(programming_question, assessment, course_reg))
 
         contest_submission = insert(:submission)
 
         Repo.insert(%SubmissionVotes{
-          user_id: user.id,
+          voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: contest_submission.id
         })
 
         voting_conn =
-          post(conn, build_url(voting_question.id), %{
+          post(conn, build_url(course_id, voting_question.id), %{
             answer: [
               %{
                 "answer" => "hello world",
@@ -253,27 +267,28 @@ defmodule CadetWeb.AnswerControllerTest do
         conn: conn,
         voting_question: voting_question
       } do
-        user = conn.assigns.current_user
+        course_reg = conn.assigns.test_cr
+        course_id = conn.assigns.course_id
 
         first_contest_submission = insert(:submission)
         second_contest_submission = insert(:submission)
 
         Repo.insert(%SubmissionVotes{
-          user_id: user.id,
+          voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: first_contest_submission.id,
           rank: 1
         })
 
         Repo.insert(%SubmissionVotes{
-          user_id: user.id,
+          voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: second_contest_submission.id,
           rank: 2
         })
 
         voting_conn =
-          post(conn, build_url(voting_question.id), %{
+          post(conn, build_url(course_id, voting_question.id), %{
             answer: [
               %{
                 "answer" => "hello world",
@@ -300,17 +315,19 @@ defmodule CadetWeb.AnswerControllerTest do
     assessment: assessment,
     mcq_question: mcq_question
   } do
-    user = conn.assigns.current_user
+    course_reg = conn.assigns.test_cr
+    course_id = conn.assigns.course_id
     {:ok, _} = Repo.delete(mcq_question)
 
-    conn = post(conn, build_url(mcq_question.id), %{answer: 5})
+    conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
     assert response(conn, 404) == "Question not found"
-    assert is_nil(get_answer_value(mcq_question, assessment, user))
+    assert is_nil(get_answer_value(mcq_question, assessment, course_reg))
   end
 
   @tag authenticate: :student
   test "invalid params not open submission is unsuccessful", %{conn: conn} do
-    user = conn.assigns.current_user
+    course_reg = conn.assigns.test_cr
+    course_id = conn.assigns.course_id
 
     before_open_at_assessment =
       insert(:assessment, %{
@@ -320,9 +337,14 @@ defmodule CadetWeb.AnswerControllerTest do
 
     before_open_at_question = insert(:mcq_question, %{assessment: before_open_at_assessment})
 
-    before_open_at_conn = post(conn, build_url(before_open_at_question.id), %{answer: 5})
+    before_open_at_conn =
+      post(conn, build_url(course_id, before_open_at_question.id), %{answer: 5})
+
     assert response(before_open_at_conn, 403) == "Assessment not open"
-    assert is_nil(get_answer_value(before_open_at_question, before_open_at_assessment, user))
+
+    assert is_nil(
+             get_answer_value(before_open_at_question, before_open_at_assessment, course_reg)
+           )
 
     after_close_at_assessment =
       insert(:assessment, %{
@@ -332,29 +354,34 @@ defmodule CadetWeb.AnswerControllerTest do
 
     after_close_at_question = insert(:mcq_question, %{assessment: after_close_at_assessment})
 
-    after_close_at_conn = post(conn, build_url(after_close_at_question.id), %{answer: 5})
+    after_close_at_conn =
+      post(conn, build_url(course_id, after_close_at_question.id), %{answer: 5})
+
     assert response(after_close_at_conn, 403) == "Assessment not open"
-    assert is_nil(get_answer_value(after_close_at_question, after_close_at_assessment, user))
+
+    assert is_nil(
+             get_answer_value(after_close_at_question, after_close_at_assessment, course_reg)
+           )
 
     unpublished_assessment = insert(:assessment, %{is_published: false})
 
     unpublished_question = insert(:mcq_question, %{assessment: unpublished_assessment})
 
-    unpublished_conn = post(conn, build_url(unpublished_question.id), %{answer: 5})
+    unpublished_conn = post(conn, build_url(course_id, unpublished_question.id), %{answer: 5})
     assert response(unpublished_conn, 403) == "Assessment not open"
-    assert is_nil(get_answer_value(unpublished_question, unpublished_assessment, user))
+    assert is_nil(get_answer_value(unpublished_question, unpublished_assessment, course_reg))
   end
 
-  defp build_url(question_id) do
-    "/v2/assessments/question/#{question_id}/answer/"
+  defp build_url(course_id, question_id) do
+    "/v2/courses/#{course_id}/assessments/question/#{question_id}/answer/"
   end
 
-  defp get_answer_value(question, assessment, user) do
+  defp get_answer_value(question, assessment, course_reg) do
     answer =
       Answer
       |> where(question_id: ^question.id)
       |> join(:inner, [a], s in assoc(a, :submission))
-      |> where([a, s], s.student_id == ^user.id)
+      |> where([a, s], s.student_id == ^course_reg.id)
       |> where([a, s], s.assessment_id == ^assessment.id)
       |> Repo.one()
 
@@ -366,10 +393,10 @@ defmodule CadetWeb.AnswerControllerTest do
     end
   end
 
-  defp get_rank_for_submission_vote(question, user, submission) do
+  defp get_rank_for_submission_vote(question, course_reg, submission) do
     SubmissionVotes
     |> where(question_id: ^question.id)
-    |> where(user_id: ^user.id)
+    |> where(voter_id: ^course_reg.id)
     |> where(submission_id: ^submission.id)
     |> select([sv], sv.rank)
     |> Repo.one()

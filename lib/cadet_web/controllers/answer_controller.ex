@@ -5,20 +5,20 @@ defmodule CadetWeb.AnswerController do
 
   alias Cadet.Assessments
 
-  # These roles can save and finalise answers for closed assessments and
-  # submitted answers
+  # These roles can save and finalise answers for
+  # closed assessments and submitted answers
   @bypass_closed_roles ~w(staff admin)a
 
   def submit(conn, %{"questionid" => question_id, "answer" => answer})
       when is_ecto_id(question_id) do
-    user = conn.assigns[:current_user]
-    can_bypass? = user.role in @bypass_closed_roles
+    course_reg = conn.assigns[:course_reg]
+    can_bypass? = course_reg.role in @bypass_closed_roles
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
          {:is_open?, true} <-
            {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
-         {:ok, _nil} <- Assessments.answer_question(question, user, answer, can_bypass?) do
+         {:ok, _nil} <- Assessments.answer_question(question, course_reg, answer, can_bypass?) do
       text(conn, "OK")
     else
       {:question, nil} ->

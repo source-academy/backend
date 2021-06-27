@@ -105,7 +105,8 @@ defmodule Cadet.Accounts.Notifications do
           {:ok, Ecto.Schema.t()}
           | {:error, any}
           | {:error, Ecto.Multi.name(), any, %{Ecto.Multi.name() => any}}
-  def acknowledge(notification_ids, course_reg = %CourseRegistration{}) when is_list(notification_ids) do
+  def acknowledge(notification_ids, course_reg = %CourseRegistration{})
+      when is_list(notification_ids) do
     Multi.new()
     |> Multi.run(:update_all, fn _repo, _ ->
       Enum.reduce_while(notification_ids, {:ok, nil}, fn n_id, acc ->
@@ -186,7 +187,8 @@ defmodule Cadet.Accounts.Notifications do
   """
   @spec write_notification_for_new_assessment(integer(), integer()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def write_notification_for_new_assessment(course_id, assessment_id) when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
+  def write_notification_for_new_assessment(course_id, assessment_id)
+      when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
     Multi.new()
     |> Multi.run(:insert_all, fn _repo, _ ->
       CourseRegistration

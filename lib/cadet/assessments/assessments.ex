@@ -22,44 +22,44 @@ defmodule Cadet.Assessments do
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
 
-  # def delete_assessment(id) do
-  #   assessment = Repo.get(Assessment, id)
+  def delete_assessment(id) do
+    assessment = Repo.get(Assessment, id)
 
-  #   Submission
-  #   |> where(assessment_id: ^id)
-  #   |> delete_submission_assocation(id)
+    Submission
+    |> where(assessment_id: ^id)
+    |> delete_submission_assocation(id)
 
-  #   Question
-  #   |> where(assessment_id: ^id)
-  #   |> Repo.all()
-  #   |> Enum.each(fn q ->
-  #     delete_submission_votes_association(q)
-  #   end)
+    Question
+    |> where(assessment_id: ^id)
+    |> Repo.all()
+    |> Enum.each(fn q ->
+      delete_submission_votes_association(q)
+    end)
 
-  #   Repo.delete(assessment)
-  # end
+    Repo.delete(assessment)
+  end
 
-  # defp delete_submission_votes_association(question) do
-  #   SubmissionVotes
-  #   |> where(question_id: ^question.id)
-  #   |> Repo.delete_all()
-  # end
+  defp delete_submission_votes_association(question) do
+    SubmissionVotes
+    |> where(question_id: ^question.id)
+    |> Repo.delete_all()
+  end
 
-  # defp delete_submission_assocation(submissions, assessment_id) do
-  #   submissions
-  #   |> Repo.all()
-  #   |> Enum.each(fn submission ->
-  #     Answer
-  #     |> where(submission_id: ^submission.id)
-  #     |> Repo.delete_all()
-  #   end)
+  defp delete_submission_assocation(submissions, assessment_id) do
+    submissions
+    |> Repo.all()
+    |> Enum.each(fn submission ->
+      Answer
+      |> where(submission_id: ^submission.id)
+      |> Repo.delete_all()
+    end)
 
-  #   Notification
-  #   |> where(assessment_id: ^assessment_id)
-  #   |> Repo.delete_all()
+    Notification
+    |> where(assessment_id: ^assessment_id)
+    |> Repo.delete_all()
 
-  #   Repo.delete_all(submissions)
-  # end
+    Repo.delete_all(submissions)
+  end
 
   @spec user_max_xp(%CourseRegistration{}) :: integer()
   def user_max_xp(%CourseRegistration{id: cr_id}) do
@@ -109,7 +109,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # :TODO to check how this story works
   def user_current_story(cr = %CourseRegistration{}) do
     {:ok, %{result: story}} =
       Multi.new()
@@ -861,7 +860,7 @@ defmodule Cadet.Assessments do
     not_nil_entries =
       SubmissionVotes
       |> where(question_id: ^question.id)
-      |> where(user_id: ^submission.student_id)
+      |> where(voter_id: ^submission.student_id)
       |> where([sv], is_nil(sv.rank))
       |> Repo.exists?()
 
@@ -1419,12 +1418,12 @@ defmodule Cadet.Assessments do
          submission = %Submission{},
          question = %Question{},
          raw_answer,
-         user_id
+         course_reg_id
        ) do
     answer_content = build_answer_content(raw_answer, question.type)
 
     if question.type == :voting do
-      insert_or_update_voting_answer(submission.id, user_id, question.id, answer_content)
+      insert_or_update_voting_answer(submission.id, course_reg_id, question.id, answer_content)
     else
       answer_changeset =
         %Answer{}
@@ -1443,10 +1442,11 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def insert_or_update_voting_answer(submission_id, user_id, question_id, answer_content) do
+  # :TODO contest + check voting answer content
+  def insert_or_update_voting_answer(submission_id, course_reg_id, question_id, answer_content) do
     set_rank_to_nil =
       SubmissionVotes
-      |> where(user_id: ^user_id, question_id: ^question_id)
+      |> where(voter_id: ^course_reg_id, question_id: ^question_id)
 
     voting_multi =
       Multi.new()
@@ -1459,7 +1459,7 @@ defmodule Cadet.Assessments do
       |> Multi.run("update#{index}", fn _repo, _ ->
         SubmissionVotes
         |> Repo.get_by(
-          user_id: user_id,
+          voter_id: course_reg_id,
           submission_id: entry.submission_id
         )
         |> SubmissionVotes.changeset(%{rank: entry.rank})

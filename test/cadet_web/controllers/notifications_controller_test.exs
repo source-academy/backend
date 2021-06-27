@@ -47,7 +47,7 @@ defmodule CadetWeb.NotificationsControllerTest do
   end
 
   describe "POST /, unaunthenticated" do
-    test "/notifications/acknowledge", %{course: course,conn: conn} do
+    test "/notifications/acknowledge", %{course: course, conn: conn} do
       conn =
         post(conn, build_acknowledge_url(course.id), %{
           "notificationIds" => [1]

@@ -79,11 +79,13 @@ defmodule Cadet.Accounts.NotificationTest do
           course_reg_id: student.id
         })
 
-      expected = notifications |> Enum.sort(&(&1.id < &2.id)) |> Enum.map(& Map.delete(&1, :assessment))
+      expected =
+        notifications |> Enum.sort(&(&1.id < &2.id)) |> Enum.map(&Map.delete(&1, :assessment))
 
       {:ok, notifications_db} = Notifications.fetch(student)
 
-      results = notifications_db |> Enum.sort(&(&1.id < &2.id)) |> Enum.map(& Map.delete(&1, :assessment))
+      results =
+        notifications_db |> Enum.sort(&(&1.id < &2.id)) |> Enum.map(&Map.delete(&1, :assessment))
 
       assert results == expected
     end
@@ -300,7 +302,11 @@ defmodule Cadet.Accounts.NotificationTest do
       Notifications.write_notification_when_graded(submission.id, :graded)
 
       notification =
-        Repo.get_by(Notification, course_reg_id: student.id, type: :graded, assessment_id: assessment.id)
+        Repo.get_by(Notification,
+          course_reg_id: student.id,
+          type: :graded,
+          assessment_id: assessment.id
+        )
 
       assert %{type: :graded} = notification
     end
@@ -309,13 +315,19 @@ defmodule Cadet.Accounts.NotificationTest do
       assessment: assessment,
       student: student
     } do
-      students = [student | insert_list(3, :course_registration, %{course: student.course, role: :student})]
+      students = [
+        student | insert_list(3, :course_registration, %{course: student.course, role: :student})
+      ]
 
       Notifications.write_notification_for_new_assessment(student.course_id, assessment.id)
 
       for student <- students do
         notification =
-          Repo.get_by(Notification, course_reg_id: student.id, type: :new, assessment_id: assessment.id)
+          Repo.get_by(Notification,
+            course_reg_id: student.id,
+            type: :new,
+            assessment_id: assessment.id
+          )
 
         assert %{type: :new} = notification
       end

@@ -78,6 +78,7 @@ defmodule CadetWeb.ConnCase do
         conn
         |> sign_in(course_registration.user)
         |> assign(:course_id, course_registration.course_id)
+        |> assign(:test_cr, course_registration)
 
       {:ok, conn: conn}
     else

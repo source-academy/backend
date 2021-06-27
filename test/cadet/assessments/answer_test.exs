@@ -126,6 +126,4 @@ defmodule Cadet.Assessments.AnswerTest do
       assert_changeset(%{}, :invalid, :grading_changeset)
     end
   end
-
-
 end
