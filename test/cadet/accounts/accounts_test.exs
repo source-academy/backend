@@ -46,7 +46,7 @@ defmodule Cadet.AccountsTest do
     end
 
     test "pre-created user during first login" do
-      user = insert(:user, %{username: "student", name: nil})
+      insert(:user, %{username: "student", name: nil})
       {:ok, _user} = Accounts.sign_in("student", "student_token", "test")
       user = Repo.one(Query.username("student"))
       assert user.username == "student"

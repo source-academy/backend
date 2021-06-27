@@ -21,7 +21,8 @@ defmodule Cadet.Accounts.Notifications do
       Notification
       |> where(course_reg_id: ^course_reg.id)
       |> where(read: false)
-      |> preload(:assessment)
+      |> join(:inner, [n], a in assoc(n, :assessment))
+      |> preload([n, a], assessment: {a, :config})
       |> Repo.all()
 
     {:ok, notifications}

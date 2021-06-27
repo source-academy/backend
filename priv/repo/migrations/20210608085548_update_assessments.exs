@@ -36,5 +36,7 @@ defmodule Cadet.Repo.Migrations.UpdateAssessments do
       remove(:user_id)
       add(:voter_id, references(:course_registrations), null: false)
     end
+
+    create(unique_index(:submission_votes, [:voter_id, :question_id, :rank], name: :unique_score))
   end
 end
