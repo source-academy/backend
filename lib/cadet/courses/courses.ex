@@ -6,8 +6,9 @@ defmodule Cadet.Courses do
   use Cadet, [:context, :display]
 
   import Ecto.Query
+  alias Ecto.Multi
 
-  alias Cadet.Accounts.CourseRegistration
+  alias Cadet.Accounts.{CourseRegistration, User}
 
   alias Cadet.Courses.{
     AssessmentConfig,
@@ -16,6 +17,29 @@ defmodule Cadet.Courses do
     Sourcecast,
     SourcecastUpload
   }
+
+  @doc """
+  Creates a new course configuration, course registration, and sets
+  the user's latest course id to the newly created course.
+  """
+  def create_course_config(params, user) do
+    Multi.new()
+    |> Multi.insert(:course, Course.changeset(%Course{}, params))
+    |> Multi.insert(:course_reg, fn %{course: course} ->
+      CourseRegistration.changeset(%CourseRegistration{}, %{
+        course_id: course.id,
+        user_id: user.id,
+        role: :admin
+      })
+    end)
+    |> Multi.update(:latest_viewed_id, fn %{course: course} ->
+      User
+      |> where(id: ^user.id)
+      |> Repo.one()
+      |> User.changeset(%{latest_viewed_id: course.id})
+    end)
+    |> Repo.transaction()
+  end
 
   @doc """
   Returns the course configuration for the specified course.
