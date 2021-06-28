@@ -293,10 +293,92 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
   end
 
+  describe "DELETE /v2/courses/{course_id}/admin/config/assessment_config" do
+    @tag authenticate: :admin
+    test "succeeds", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+      config1 = insert(:assessment_config, %{order: 1, course: course, type: "Missions"})
+      config2 = insert(:assessment_config, %{order: 2, course: course, type: "Paths"})
+
+      old_configs = course_id |> Courses.get_assessment_configs() |> Enum.map(& &1.type)
+
+      params = %{
+        "assessmentConfig" => %{
+            "AssessmentConfigId" => config1.id,
+            "courseId" => course_id,
+            "type" => "Missions",
+            "earlySubmissionXp" => 100,
+            "hoursBeforeEarlyXpDecay" => 24,
+            "decayRatePointsPerHour" => 1
+          }
+      }
+
+      resp =
+        conn
+        |> delete(build_url_assessment_config(course_id), params)
+        |> response(200)
+
+      assert resp == "OK"
+
+      new_configs = course_id |> Courses.get_assessment_configs() |> Enum.map(& &1.type)
+      refute old_configs == new_configs
+      assert new_configs == ["Paths"]
+    end
+
+    @tag authenticate: :student
+    test "rejects forbidden request for non-staff users", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn =
+        delete(conn, build_url_assessment_config(course_id), %{
+          "assessmentConfig" => %{}
+        })
+
+      assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "rejects request if user is not in specified course", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn =
+        delete(conn, build_url_assessment_config(course_id + 1), %{
+          "assessmentConfig" => %{}
+        })
+
+      assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with invalid params 1", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn =
+        delete(conn, build_url_assessment_config(course_id), %{
+          "assessmentConfigs" => "Missions"
+        })
+
+      assert response(conn, 400) == "Missing Map parameter(s)"
+    end
+
+    @tag authenticate: :staff
+    test "rejects requests with missing params", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn = delete(conn, build_url_assessment_config(course_id), %{})
+
+      assert response(conn, 400) == "Missing Map parameter(s)"
+    end
+  end
+
   defp build_url_course_config(course_id), do: "/v2/courses/#{course_id}/admin/config"
 
   defp build_url_assessment_configs(course_id),
     do: "/v2/courses/#{course_id}/admin/config/assessment_configs"
+
+  defp build_url_assessment_config(course_id),
+    do: "/v2/courses/#{course_id}/admin/config/assessment_config"
 
   defp to_map(schema), do: schema |> Map.from_struct() |> Map.drop([:updated_at])
 
