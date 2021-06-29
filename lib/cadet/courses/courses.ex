@@ -124,8 +124,11 @@ defmodule Cadet.Courses do
     |> where(id: ^assessment_config_id)
     |> Repo.one()
     |> case do
-      nil -> AssessmentConfig.changeset(%AssessmentConfig{course_id: course_id}, params)
-      at -> AssessmentConfig.changeset(at, params)
+      nil ->
+        AssessmentConfig.changeset(%AssessmentConfig{}, Map.put(params, :course_id, course_id))
+
+      at ->
+        AssessmentConfig.changeset(at, params)
     end
     |> Repo.insert_or_update()
   end

@@ -65,18 +65,17 @@ defmodule CadetWeb.AdminCoursesController do
         "assessmentConfig" => assessment_config
       })
       when is_ecto_id(course_id) and is_map(assessment_config) do
-      config = assessment_config |> to_snake_case_atom_keys()
+    config = assessment_config |> to_snake_case_atom_keys()
 
-      case Courses.delete_assessment_config(course_id, config) do
-        {:ok, _} ->
-          text(conn, "OK")
+    case Courses.delete_assessment_config(course_id, config) do
+      {:ok, _} ->
+        text(conn, "OK")
 
-        {:error, message} ->
-          conn
-          |> put_status(:bad_request)
-          |> text(message)
-      end
-
+      {:error, message} ->
+        conn
+        |> put_status(:bad_request)
+        |> text(message)
+    end
   end
 
   def delete_assessment_config(conn, _) do

@@ -305,13 +305,13 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       params = %{
         "assessmentConfig" => %{
-            "AssessmentConfigId" => config1.id,
-            "courseId" => course_id,
-            "type" => "Missions",
-            "earlySubmissionXp" => 100,
-            "hoursBeforeEarlyXpDecay" => 24,
-            "decayRatePointsPerHour" => 1
-          }
+          "AssessmentConfigId" => config1.id,
+          "courseId" => course_id,
+          "type" => "Missions",
+          "earlySubmissionXp" => 100,
+          "hoursBeforeEarlyXpDecay" => 24,
+          "decayRatePointsPerHour" => 1
+        }
       }
 
       resp =
