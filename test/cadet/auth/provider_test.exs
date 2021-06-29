@@ -10,7 +10,6 @@ defmodule Cadet.Auth.ProviderTest do
   test "with valid provider" do
     assert {:ok, _} = Provider.authorise("test", "student_code", nil, nil)
     assert {:ok, _} = Provider.get_name("test", "student_token")
-    assert {:ok, _} = Provider.get_role("test", "student_token")
   end
 
   test "with invalid provider" do

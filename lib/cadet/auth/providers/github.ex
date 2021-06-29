@@ -6,10 +6,11 @@ defmodule Cadet.Auth.Providers.GitHub do
 
   @behaviour Provider
 
-  @type config :: %{client_secret: String.t()}
-
-  @token_url "https://github.com/login/oauth/access_token"
-  @user_api "https://api.github.com/user"
+  @type config :: %{
+          clients: %{},
+          token_url: String.t(),
+          user_api: String.t()
+        }
 
   @spec authorise(config(), Provider.code(), Provider.client_id(), Provider.redirect_uri()) ::
           {:ok, %{token: Provider.token(), username: String.t()}}
@@ -20,8 +21,11 @@ defmodule Cadet.Auth.Providers.GitHub do
       {"Accept", "application/json"}
     ]
 
+    token_url = config.token_url
+    user_api = config.user_api
+
     with {:validate_client, {:ok, client_secret}} <-
-           {:validate_client, Map.fetch(config, client_id)},
+           {:validate_client, Map.fetch(config.clients, client_id)},
          {:token_query, token_query} <-
            {:token_query,
             URI.encode_query(%{
@@ -31,9 +35,9 @@ defmodule Cadet.Auth.Providers.GitHub do
               redirect_uri: redirect_uri
             })},
          {:token, {:ok, %{body: body, status_code: 200}}} <-
-           {:token, HTTPoison.post(@token_url, token_query, token_headers)},
+           {:token, HTTPoison.post(token_url, token_query, token_headers)},
          {:token_response, %{"access_token" => token}} <- {:token_response, Jason.decode!(body)},
-         {:user, {:ok, %{"login" => username}}} <- {:user, api_call(@user_api, token)} do
+         {:user, {:ok, %{"login" => username}}} <- {:user, api_call(user_api, token)} do
       {:ok, %{token: token, username: Provider.namespace(username, "github")}}
     else
       {:validate_client, :error} ->
@@ -52,8 +56,10 @@ defmodule Cadet.Auth.Providers.GitHub do
 
   @spec get_name(config(), Provider.token()) ::
           {:ok, String.t()} | {:error, Provider.error(), String.t()}
-  def get_name(_, token) do
-    case api_call(@user_api, token) do
+  def get_name(config, token) do
+    user_api = config.user_api
+
+    case api_call(user_api, token) do
       {:ok, %{"name" => name}} ->
         {:ok, name}
 
