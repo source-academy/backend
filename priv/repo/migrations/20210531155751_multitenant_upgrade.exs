@@ -1,8 +1,9 @@
-defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
+defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
   use Ecto.Migration
   import Ecto.Query, only: [from: 2, where: 2]
 
-  alias Cadet.Accounts.{CourseRegistration, Role, User}
+  alias Cadet.Accounts.{CourseRegistration, Notification, Role, User}
+  alias Cadet.Assessments.{Assessment, Submission, SubmissionVotes}
   alias Cadet.Courses.{AssessmentConfig, Course, Group, Sourcecast}
   alias Cadet.Repo
   alias Cadet.Stories.Story
@@ -73,6 +74,42 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       add(:course_id, references(:courses))
     end
 
+    # Make assessments related to an assessment config and a course
+    alter table(:assessments) do
+      add(:config_id, references(:assessment_configs))
+      add(:course_id, references(:courses))
+    end
+
+    # Prep for migration of student_id and unsubmitted_by_id from User entity to CourseRegistration entity.
+    rename(table(:submissions), :student_id, to: :temp_student_id)
+    rename(table(:submissions), :unsubmitted_by_id, to: :temp_unsubmitted_by_id)
+    drop(constraint(:submissions, "submissions_student_id_fkey"))
+    drop(constraint(:submissions, "submissions_unsubmitted_by_id_fkey"))
+
+    alter table(:submissions) do
+      add(:student_id, references(:course_registrations))
+      add(:unsubmitted_by_id, references(:course_registrations))
+    end
+
+    alter table(:submission_votes) do
+      add(:voter_id, references(:course_registrations))
+    end
+
+    # Remove grade metric from backend
+    alter table(:answers) do
+      remove(:grade)
+      remove(:adjustment)
+    end
+
+    alter table(:questions) do
+      remove(:max_grade)
+    end
+
+    # Update notifications
+    alter table(:notifications) do
+      add(:course_reg_id, references(:course_registrations))
+    end
+
     # Sourcecasts to be associated with a course
     alter table(:sourcecasts) do
       add(:course_id, references(:courses))
@@ -130,22 +167,6 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
           |> Repo.update()
         end)
 
-        # Create Assessment Configurations based on Source Academy Knight
-        ["Missions", "Quests", "Paths", "Contests", "Others"]
-        |> Enum.each(fn assessment_type ->
-          %AssessmentConfig{}
-          |> AssessmentConfig.changeset(%{
-            type: assessment_type,
-            course_id: course.id,
-            is_graded: true,
-            early_submission_xp: 200,
-            hours_before_early_xp_decay: 48
-          })
-          |> Repo.insert()
-
-          # TODO: Link these to the new assessments/ submissions/ answers when they are done
-        end)
-
         # Handle groups (adding course_id, and updating leader_id and mentor_id to course registrations)
         from(g in "groups", select: {g.id, g.temp_leader_id, g.temp_mentor_id})
         |> Repo.all()
@@ -184,6 +205,106 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
           |> where(id: ^elem(group, 0))
           |> Repo.one()
           |> Group.changeset(%{leader_id: leader_id, mentor_id: mentor_id, course_id: course.id})
+          |> Repo.update()
+        end)
+
+        # Create Assessment Configurations based on Source Academy Knight
+        ["Missions", "Quests", "Paths", "Contests", "Others"]
+        |> Enum.each(fn assessment_type ->
+          %AssessmentConfig{}
+          |> AssessmentConfig.changeset(%{
+            type: assessment_type,
+            course_id: course.id,
+            is_graded: true,
+            early_submission_xp: 200,
+            hours_before_early_xp_decay: 48
+          })
+          |> Repo.insert()
+        end)
+
+        # Link existing assessments to an assessment config and course
+        from(a in "assessments", select: {a.id, a.type})
+        |> Repo.all()
+        |> Enum.each(fn assessment ->
+          assessment_type =
+            case elem(assessment, 1) do
+              "mission" -> "Missions"
+              "sidequest" -> "Quests"
+              "path" -> "Paths"
+              "contest" -> "Contests"
+              "practical" -> "Others"
+            end
+
+          assessment_config =
+            AssessmentConfig
+            |> where(type: ^assessment_type)
+            |> Repo.one()
+
+          Assessment
+          |> where(id: ^elem(assessment, 0))
+          |> Repo.one()
+          |> Assessment.changeset(%{config_id: assessment_config.id, course_id: course.id})
+          |> Repo.update()
+        end)
+
+        # Updating student_id and unsubmitted_by_id from User to CourseRegistration
+        from(s in "submissions", select: {s.id, s.temp_student_id, s.temp_unsubmitted_by_id})
+        |> Repo.all()
+        |> Enum.each(fn submission ->
+          student_id =
+            CourseRegistration
+            |> where(user_id: ^elem(submission, 1))
+            |> Repo.one()
+            |> Map.fetch!(:id)
+
+          unsubmitted_by_id =
+            case elem(submission, 2) do
+              nil ->
+                nil
+
+              id ->
+                CourseRegistration
+                |> where(user_id: ^id)
+                |> Repo.one()
+                |> Map.fetch!(:id)
+            end
+
+          Submission
+          |> where(id: ^elem(submission, 0))
+          |> Repo.one()
+          |> Submission.changeset(%{student_id: student_id, unsubmitted_by_id: unsubmitted_by_id})
+          |> Repo.update()
+        end)
+
+        from(s in "submission_votes", select: {s.id, s.user_id})
+        |> Repo.all()
+        |> Enum.each(fn vote ->
+          voter_id =
+            CourseRegistration
+            |> where(user_id: ^elem(vote, 1))
+            |> Repo.one()
+            |> Map.fetch!(:id)
+
+          SubmissionVotes
+          |> where(id: ^elem(vote, 0))
+          |> Repo.one()
+          |> SubmissionVotes.changeset(%{voter_id: voter_id})
+          |> Repo.update()
+        end)
+
+        from(n in "notifications", select: {n.id, n.user_id})
+        |> Repo.all()
+        |> Enum.each(fn notification ->
+          course_reg_id =
+            CourseRegistration
+            |> where(user_id: ^elem(notification, 1))
+            |> Repo.one()
+            |> Map.fetch!(:id)
+
+          Notification
+          |> where(id: ^elem(notification, 0))
+          |> Repo.one()
+          |> Notification.changeset(%{course_reg_id: course_reg_id})
           |> Repo.update()
         end)
 
@@ -226,6 +347,48 @@ defmodule Cadet.Repo.Migrations.AddCourseConfiguration do
       )
 
       modify(:course_id, references(:courses), null: false, from: references(:courses))
+    end
+
+    create(unique_index(:groups, [:name, :course_id]))
+
+    # Cleanup assessments table, and make config_id and course_id non-nullable
+    alter table(:assessments) do
+      remove(:type)
+      modify(:config_id, references(:assessment_configs), null: false, from: references(:courses))
+      modify(:course_id, references(:courses), null: false, from: references(:courses))
+    end
+
+    alter table(:submissions) do
+      remove(:temp_student_id)
+      remove(:temp_unsubmitted_by_id)
+
+      modify(:student_id, references(:course_registrations),
+        null: false,
+        from: references(:course_registrations)
+      )
+    end
+
+    create(index(:submissions, :student_id))
+    create(unique_index(:submissions, [:assessment_id, :student_id]))
+
+    alter table(:submission_votes) do
+      remove(:user_id)
+
+      modify(:voter_id, references(:course_registrations),
+        null: false,
+        from: references(:course_registrations)
+      )
+    end
+
+    create(unique_index(:submission_votes, [:voter_id, :question_id, :rank], name: :unique_score))
+
+    alter table(:notifications) do
+      remove(:user_id)
+
+      modify(:course_reg_id, references(:course_registrations),
+        null: false,
+        from: references(:course_registrations)
+      )
     end
 
     # Set course_id to be non-nullable
