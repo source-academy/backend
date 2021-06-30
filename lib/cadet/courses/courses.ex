@@ -67,7 +67,7 @@ defmodule Cadet.Courses do
   Updates the general course configuration for the specified course
   """
   @spec update_course_config(integer, %{}) ::
-          {:ok, %Course{}} | {:error, {:bad_request, String.t()} | {:error, Ecto.Changeset.t()}}
+          {:ok, %Course{}} | {:error, {:bad_request, String.t()}} | {:error, Ecto.Changeset.t()}
   def update_course_config(course_id, params) when is_ecto_id(course_id) do
     case retrieve_course(course_id) do
       nil ->

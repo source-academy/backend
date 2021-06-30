@@ -3,7 +3,7 @@ defmodule Cadet.Accounts.NotificationTest do
 
   use Cadet.ChangesetCase, entity: Notification
 
-  @required_fields ~w(type role course_reg_id)a
+  @required_fields ~w(type course_reg_id)a
 
   setup do
     assessment = insert(:assessment, %{is_published: true})

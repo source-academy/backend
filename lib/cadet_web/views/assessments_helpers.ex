@@ -173,7 +173,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_testcases(%{assessment_type: assessment_type}, all_testcases?) do
+  defp build_testcases(%{assessment_config: assessment_config}, all_testcases?) do
     cond do
       all_testcases? ->
         &Enum.concat(
@@ -181,7 +181,8 @@ defmodule CadetWeb.AssessmentsHelpers do
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "private") end)
         )
 
-      assessment_type == "path" ->
+      # :TODO another indicator for whether to build all testcases
+      assessment_config == "path" ->
         &Enum.concat(
           Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
@@ -192,8 +193,8 @@ defmodule CadetWeb.AssessmentsHelpers do
     end
   end
 
-  defp build_postpend(%{assessment_type: assessment_type}, all_testcases?) do
-    case {all_testcases?, assessment_type} do
+  defp build_postpend(%{assessment_config: assessment_config}, all_testcases?) do
+    case {all_testcases?, assessment_config} do
       {true, _} -> & &1["postpend"]
       {_, "path"} -> & &1["postpend"]
       # Create a 1-arity function to return an empty postpend for non-paths

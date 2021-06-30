@@ -800,7 +800,7 @@ defmodule Cadet.Assessments do
           {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
     assessment = submission.assessment
-    assessment_conifg = Repo.get_by(AssessmentConfig, assessment_type_id: assessment.type_id)
+    assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
 
     max_bonus_xp = assessment_conifg.early_submission_xp
     early_hours = assessment_conifg.hours_before_early_xp_decay

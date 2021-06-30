@@ -38,40 +38,80 @@ defmodule Cadet.Test.Seeds do
 
   def assessments do
     if Cadet.Env.env() == :test do
-      # User and Group
-      avenger = insert(:user, %{name: "avenger", role: :staff})
-      mentor = insert(:user, %{name: "mentor", role: :staff})
-      group = insert(:group, %{leader: avenger, mentor: mentor})
-      students = insert_list(5, :student, %{group: group})
-      admin = insert(:user, %{name: "admin", role: :admin})
+      # # User and Group
+      # avenger = insert(:user, %{name: "avenger", role: :staff})
+      # mentor = insert(:user, %{name: "mentor", role: :staff})
+      # group = insert(:group, %{leader: avenger, mentor: mentor})
+      # students = insert_list(5, :student, %{group: group})
+      # admin = insert(:user, %{name: "admin", role: :admin})
+      # Course
+      course1 = insert(:course)
+      course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
+      # Users
+      avenger1 = insert(:user, %{name: "avenger", latest_viewed: course1})
+      mentor1 = insert(:user, %{name: "mentor", latest_viewed: course1})
+      admin1 = insert(:user, %{name: "admin", latest_viewed: course1})
+
+      studenta1admin2 = insert(:user, %{name: "student a", latest_viewed: course1})
+
+      studentb1 = insert(:user, %{latest_viewed: course1})
+      studentc1 = insert(:user, %{latest_viewed: course1})
+      # CourseRegistration and Group
+      avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
+      mentor1_cr = insert(:course_registration, %{user: mentor1, course: course1, role: :staff})
+      admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
+      group = insert(:group, %{leader: avenger1_cr, mentor: mentor1_cr})
+
+      student1a_cr =
+        insert(:course_registration, %{
+          user: studenta1admin2,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
+      student1b_cr =
+        insert(:course_registration, %{user: studentb1, course: course1, role: :student, group: group})
+
+      student1c_cr =
+        insert(:course_registration, %{user: studentc1, course: course1, role: :student, group: group})
+
+      students = [student1a_cr, student1b_cr, student1c_cr]
+
+      _admin2cr = insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
 
       assessments =
-        Enum.reduce(
-          Cadet.Assessments.Assessment.assessment_types(),
-          %{},
-          fn type, acc -> Map.put(acc, type, insert_assessments(type, students)) end
-        )
+        1..5
+        |> Enum.map(&insert(:assessment_config, %{course: course1, order: &1}))
+        |> Enum.reduce(
+            %{},
+            fn config, acc -> Map.put(acc, config.type, insert_assessments(config, students, course1)) end
+          )
 
       %{
+        courses: %{
+          course1: course1,
+          course2: course2
+        },
         accounts: %{
-          avenger: avenger,
-          mentor: mentor,
+          avenger1_cr: avenger1_cr,
+          mentor1_cr: mentor1_cr,
           group: group,
           students: students,
-          admin: admin
+          admin1_cr: admin1_cr
         },
         users: %{
-          staff: avenger,
-          student: List.first(students),
-          admin: admin
+          staff: avenger1,
+          student: studenta1admin2,
+          admin: admin1
         },
         assessments: assessments
       }
     end
   end
 
-  defp insert_assessments(assessment_type, students) do
-    assessment = insert(:assessment, %{type: assessment_type, is_published: true})
+  defp insert_assessments(assessment_config, students, course) do
+    assessment = insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
     programming_questions =
       Enum.map(1..3, fn id ->

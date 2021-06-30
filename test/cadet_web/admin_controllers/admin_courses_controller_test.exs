@@ -299,7 +299,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
       config1 = insert(:assessment_config, %{order: 1, course: course, type: "Missions"})
-      config2 = insert(:assessment_config, %{order: 2, course: course, type: "Paths"})
+      _config2 = insert(:assessment_config, %{order: 2, course: course, type: "Paths"})
 
       old_configs = course_id |> Courses.get_assessment_configs() |> Enum.map(& &1.type)
 
