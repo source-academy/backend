@@ -22,7 +22,7 @@ defmodule Cadet.Accounts.Notification do
     timestamps()
   end
 
-  @required_fields ~w(type read role course_reg_id assessment_id)a
+  @required_fields ~w(type read course_reg_id assessment_id)a
   @optional_fields ~w(submission_id)a
 
   def changeset(answer, params) do
