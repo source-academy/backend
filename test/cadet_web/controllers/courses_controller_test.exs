@@ -129,6 +129,6 @@ defmodule CadetWeb.CoursesControllerTest do
     end
   end
 
-  defp build_url_create(), do: "/v2/config/create"
+  defp build_url_create, do: "/v2/config/create"
   defp build_url_config(course_id), do: "/v2/courses/#{course_id}/config"
 end

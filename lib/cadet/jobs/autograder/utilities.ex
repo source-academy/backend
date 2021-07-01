@@ -42,9 +42,10 @@ defmodule Cadet.Autograder.Utilities do
     Assessment
     |> where(is_published: true)
     |> where([a], a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1))
-    |> where([a], a.type != "contest")
-    |> join(:inner, [a], q in assoc(a, :questions))
-    |> preload([_, q], questions: q)
+    |> join(:inner, [a], c in assoc(a, :config))
+    |> where([a, c], not c.is_contest)
+    |> join(:inner, [a, c], q in assoc(a, :questions))
+    |> preload([_, _, q], questions: q)
     |> Repo.all()
     |> Enum.map(&sort_assessment_questions(&1))
   end

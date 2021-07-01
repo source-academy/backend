@@ -203,11 +203,13 @@ defmodule Cadet.Assessments do
       if role in @open_all_assessment_roles do
         Assessment
         |> where(id: ^id)
+        |> preload(:config)
         |> Repo.one()
       else
         Assessment
         |> where(id: ^id)
         |> where(is_published: true)
+        |> preload(:config)
         |> Repo.one()
       end
 
@@ -220,13 +222,13 @@ defmodule Cadet.Assessments do
 
   def assessment_with_questions_and_answers(
         assessment = %Assessment{id: id},
-        cr = %CourseRegistration{role: role}
+        course_reg = %CourseRegistration{role: role}
       ) do
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
-        |> where([_, s], s.student_id == ^cr.id)
+        |> where([_, s], s.student_id == ^course_reg.id)
 
       questions =
         Question
@@ -240,10 +242,9 @@ defmodule Cadet.Assessments do
           {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
           {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
         end)
+        |> load_contest_voting_entries(course_reg.id)
 
-      # |> load_contest_voting_entries(cr.id)
-
-      assessment = Map.put(assessment, :questions, questions)
+      assessment = assessment |> Map.put(:questions, questions)
       {:ok, assessment}
     else
       {:error, {:unauthorized, "Assessment not open"}}
@@ -811,9 +812,9 @@ defmodule Cadet.Assessments do
       else
         # This logic interpolates from max bonus at early hour to 0 bonus at close time
         decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
-        remaining_hours = Timex.diff(assessment.close_at, Timex.now(), :hours)
-        proportion = remaining_hours / decaying_hours
-        bonus_xp = (max_bonus_xp * proportion) |> round()
+        remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, Timex.now(), :hours)])
+        proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
+        bonus_xp = round(max_bonus_xp * proportion)
         Enum.max([0, bonus_xp])
       end
 
@@ -857,24 +858,24 @@ defmodule Cadet.Assessments do
   end
 
   defp update_contest_voting_submission_status(submission = %Submission{}, question = %Question{}) do
-    not_nil_entries =
+    has_nil_entries =
       SubmissionVotes
       |> where(question_id: ^question.id)
       |> where(voter_id: ^submission.student_id)
       |> where([sv], is_nil(sv.rank))
       |> Repo.exists?()
 
-    unless not_nil_entries do
+    unless has_nil_entries do
       submission |> Submission.changeset(%{status: :attempted}) |> Repo.update()
     end
   end
 
-  defp load_contest_voting_entries(questions, cr_id) do
+  defp load_contest_voting_entries(questions, voter_id) do
     Enum.map(
       questions,
       fn q ->
         if q.type == :voting do
-          submission_votes = all_submission_votes_by_question_id_and_cr_id(q.id, cr_id)
+          submission_votes = all_submission_votes_by_question_id_and_voter_id(q.id, voter_id)
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(q)
 
@@ -900,9 +901,9 @@ defmodule Cadet.Assessments do
     )
   end
 
-  defp all_submission_votes_by_question_id_and_cr_id(question_id, cr_id) do
+  defp all_submission_votes_by_question_id_and_voter_id(question_id, voter_id) do
     SubmissionVotes
-    |> where([v], v.cr_id == ^cr_id and v.question_id == ^question_id)
+    |> where([v], v.voter_id == ^voter_id and v.question_id == ^question_id)
     |> join(:inner, [v], s in assoc(v, :submission))
     |> join(:inner, [v, s], a in assoc(s, :answers))
     |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, rank: v.rank})
@@ -936,11 +937,12 @@ defmodule Cadet.Assessments do
     |> order_by(desc: :relative_score)
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
-    |> select([a, s, student], %{
+    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+    |> select([a, s, student, student_user], %{
       submission_id: a.submission_id,
       answer: a.answer,
       relative_score: a.relative_score,
-      student_name: student.name
+      student_name: student_user.name
     })
     |> limit(^number_of_answers)
     |> Repo.all()

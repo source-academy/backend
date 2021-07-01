@@ -10,7 +10,7 @@ defmodule Cadet.CoursesTest do
       user = insert(:user)
 
       # Course precreated in User factory
-      assert Course |> Repo.all() |> length() == 1
+      old_courses = Course |> Repo.all() |> length()
 
       params = %{
         course_name: "CS1101S Programming Methodology (AY20/21 Sem 1)",
@@ -27,7 +27,8 @@ defmodule Cadet.CoursesTest do
       Courses.create_course_config(params, user)
 
       # New course created
-      assert Course |> Repo.all() |> length() == 2
+      new_courses = Course |> Repo.all() |> length()
+      assert new_courses - old_courses == 1
 
       # New admin course registration for user
       course_regs = CourseRegistration |> where(user_id: ^user.id) |> Repo.all()

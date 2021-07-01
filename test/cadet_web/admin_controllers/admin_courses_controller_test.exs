@@ -150,7 +150,12 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       config3 = insert(:assessment_config, %{order: 3, type: "Mission3", course: course})
 
       config2 =
-        insert(:assessment_config, %{is_graded: false, order: 2, type: "Mission2", course: course})
+        insert(:assessment_config, %{
+          build_solution: true,
+          order: 2,
+          type: "Mission2",
+          course: course
+        })
 
       resp =
         conn
@@ -161,21 +166,27 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         %{
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
-          "isGraded" => true,
+          "buildSolution" => false,
+          "buildHidden" => false,
+          "isContest" => false,
           "type" => "Mission1",
           "AssessmentConfigId" => config1.id
         },
         %{
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
-          "isGraded" => false,
+          "buildSolution" => true,
+          "buildHidden" => false,
+          "isContest" => false,
           "type" => "Mission2",
           "AssessmentConfigId" => config2.id
         },
         %{
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
-          "isGraded" => true,
+          "buildSolution" => false,
+          "buildHidden" => false,
+          "isContest" => false,
           "type" => "Mission3",
           "AssessmentConfigId" => config3.id
         }

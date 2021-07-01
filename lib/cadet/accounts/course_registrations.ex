@@ -80,17 +80,19 @@ defmodule Cadet.Accounts.CourseRegistrations do
          |> where(username: ^username)
          |> Repo.one() do
       nil ->
-        with {:ok, _} <- Accounts.register(%{username: username}) do
-          add_users_to_course_helper(username, course_id, role)
-        else
+        case Accounts.register(%{username: username}) do
+          {:ok, _} ->
+            add_users_to_course_helper(username, course_id, role)
+
           {:error, changeset} ->
             {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
         end
 
       user ->
-        with {:ok, _} <- enroll_course(%{user_id: user.id, course_id: course_id, role: role}) do
-          {:cont, :ok}
-        else
+        case enroll_course(%{user_id: user.id, course_id: course_id, role: role}) do
+          {:ok, _} ->
+            {:cont, :ok}
+
           {:error, changeset} ->
             {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
         end

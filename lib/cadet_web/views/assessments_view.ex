@@ -36,8 +36,9 @@ defmodule CadetWeb.AssessmentsView do
       assessment,
       %{
         id: :id,
+        courseId: :course_id,
         title: :title,
-        config: & &1.config.type,
+        type: & &1.config.type,
         story: :story,
         number: :number,
         reading: :reading,

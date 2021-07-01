@@ -28,7 +28,9 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
       add(:order, :integer, null: true)
       add(:type, :string, null: false)
       add(:course_id, references(:courses), null: false)
-      add(:is_graded, :boolean, null: false)
+      add(:build_solution, :boolean, null: false, default: false)
+      add(:is_contest, :boolean, null: false, default: false)
+      add(:build_hidden, :boolean, null: false, default: false)
       add(:early_submission_xp, :integer, null: false)
       add(:hours_before_early_xp_decay, :integer, null: false)
       timestamps()
@@ -215,7 +217,9 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> AssessmentConfig.changeset(%{
             type: assessment_type,
             course_id: course.id,
-            is_graded: true,
+            build_solution: assessment_type in ["Paths", "Others"],
+            build_hidden: assessment_type == "Paths",
+            is_contest: assessment_type == "Contests",
             early_submission_xp: 200,
             hours_before_early_xp_decay: 48
           })

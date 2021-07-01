@@ -71,54 +71,88 @@ defmodule Cadet.Test.Seeds do
         })
 
       student1b_cr =
-        insert(:course_registration, %{user: studentb1, course: course1, role: :student, group: group})
+        insert(:course_registration, %{
+          user: studentb1,
+          course: course1,
+          role: :student,
+          group: group
+        })
 
       student1c_cr =
-        insert(:course_registration, %{user: studentc1, course: course1, role: :student, group: group})
+        insert(:course_registration, %{
+          user: studentc1,
+          course: course1,
+          role: :student,
+          group: group
+        })
 
       students = [student1a_cr, student1b_cr, student1c_cr]
 
-      _admin2cr = insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
+      _admin2cr =
+        insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
+
+      assessment_configs = [
+        insert(:assessment_config, %{course: course1, order: 1, type: "mission"}),
+        insert(:assessment_config, %{course: course1, order: 2}),
+        insert(:assessment_config, %{
+          course: course1,
+          order: 3,
+          build_hidden: true,
+          build_solution: true,
+          type: "path"
+        }),
+        insert(:assessment_config, %{course: course1, order: 4, is_contest: true}),
+        insert(:assessment_config, %{
+          course: course1,
+          order: 5,
+          build_solution: true,
+          type: "practical"
+        })
+      ]
+
+      # 1..5 |> Enum.map(&insert(:assessment_config, %{course: course1, order: &1}))
 
       assessments =
-        1..5
-        |> Enum.map(&insert(:assessment_config, %{course: course1, order: &1}))
+        assessment_configs
         |> Enum.reduce(
-            %{},
-            fn config, acc -> Map.put(acc, config.type, insert_assessments(config, students, course1)) end
-          )
+          %{},
+          fn config, acc ->
+            Map.put(acc, config.type, insert_assessments(config, students, course1))
+          end
+        )
 
       %{
         courses: %{
           course1: course1,
           course2: course2
         },
-        accounts: %{
+        course_regs: %{
           avenger1_cr: avenger1_cr,
           mentor1_cr: mentor1_cr,
           group: group,
           students: students,
           admin1_cr: admin1_cr
         },
-        users: %{
-          staff: avenger1,
-          student: studenta1admin2,
-          admin: admin1
+        role_crs: %{
+          staff: avenger1_cr,
+          student: student1a_cr,
+          admin: admin1_cr
         },
+        assessment_configs: assessment_configs,
         assessments: assessments
       }
     end
   end
 
   defp insert_assessments(assessment_config, students, course) do
-    assessment = insert(:assessment, %{course: course, config: assessment_config, is_published: true})
+    assessment =
+      insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
     programming_questions =
       Enum.map(1..3, fn id ->
         insert(:programming_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 200,
           max_xp: 1000
         })
       end)
@@ -128,7 +162,6 @@ defmodule Cadet.Test.Seeds do
         insert(:mcq_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 40,
           max_xp: 500
         })
       end)
@@ -138,7 +171,6 @@ defmodule Cadet.Test.Seeds do
         insert(:voting_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 10,
           max_xp: 100
         })
       end)
@@ -153,7 +185,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(submissions, fn submission ->
         Enum.map(programming_questions, fn question ->
           insert(:answer, %{
-            grade: 200,
             xp: 1000,
             question: question,
             submission: submission,
@@ -166,7 +197,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(submissions, fn submission ->
         Enum.map(mcq_questions, fn question ->
           insert(:answer, %{
-            grade: 40,
             xp: 500,
             question: question,
             submission: submission,
@@ -179,7 +209,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(submissions, fn submission ->
         Enum.map(voting_questions, fn question ->
           insert(:answer, %{
-            grade: 10,
             xp: 100,
             question: question,
             submission: submission,
