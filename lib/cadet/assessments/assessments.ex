@@ -1215,14 +1215,14 @@ defmodule Cadet.Assessments do
   @spec update_grading_info(
           %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
           %{},
-          %User{}
+          %CourseRegistration{}
         ) ::
           {:ok, nil}
           | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %User{id: grader_id}
+        %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)

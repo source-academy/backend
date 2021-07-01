@@ -101,6 +101,8 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
     alter table(:answers) do
       remove(:grade)
       remove(:adjustment)
+      remove(:grader_id)
+      add(:grader_id, references(:course_registrations), null: true)
     end
 
     alter table(:questions) do

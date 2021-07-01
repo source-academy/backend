@@ -1197,9 +1197,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  @tag :skip
   test "graded count is updated when assessment is graded", %{
     conn: conn,
+    courses: %{course1: course1},
+    assessment_configs: [config| _],
     role_crs: %{staff: avenger}
   } do
     assessment =
@@ -1208,14 +1209,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
         open_at: Timex.shift(Timex.now(), hours: -2),
         close_at: Timex.shift(Timex.now(), days: 7),
         is_published: true,
-        type: "mission"
+        config: config,
+        course: course1
       )
 
     [question_one, question_two] = insert_list(2, :programming_question, assessment: assessment)
 
-    user = insert(:user, role: :student)
+    course_reg = insert(:course_registration, role: :student, course: course1)
 
-    submission = insert(:submission, assessment: assessment, student: user, status: :submitted)
+    submission = insert(:submission, assessment: assessment, student: course_reg, status: :submitted)
 
     Enum.each(
       [question_one, question_two],
@@ -1224,8 +1226,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
     get_graded_count = fn ->
       conn
-      |> sign_in(user)
-      |> get(build_url())
+      |> sign_in(course_reg.user)
+      |> get(build_url(course1.id))
       |> json_response(200)
       |> Enum.find(&(&1["id"] == assessment.id))
       |> Map.get("gradedCount")
@@ -1234,7 +1236,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     grade_question = fn question ->
       Assessments.update_grading_info(
         %{submission_id: submission.id, question_id: question.id},
-        %{"adjustment" => 0},
+        %{"xp_adjustment" => 0},
         avenger
       )
     end
@@ -1251,13 +1253,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "Password protected assessments render properly" do
-    @tag :skip
-    test "returns 403 when trying to access a password protected assessment without a password",
-         %{
-           conn: conn,
-           role_crs: role_crs
-         } do
-      assessment = insert(:assessment, %{type: "practical", is_published: true})
+    setup %{courses: %{course1: course1}, assessment_configs: configs,} do
+      assessment = insert(:assessment, %{config: Enum.at(configs, 4), course: course1, is_published: true})
 
       assessment
       |> Assessment.changeset(%{
@@ -1267,104 +1264,87 @@ defmodule CadetWeb.AssessmentsControllerTest do
       })
       |> Repo.update!()
 
-      for {_role, user} <- role_crs do
-        conn = conn |> sign_in(user) |> get(build_url(assessment.id))
+      {:ok, protected_assessment: assessment}
+    end
+
+    test "returns 403 when trying to access a password protected assessment without a password", %{
+      conn: conn,
+      courses: %{course1: course1},
+      protected_assessment: protected_assessment,
+      role_crs: role_crs
+    } do
+      for {_role, course_reg} <- role_crs do
+        conn = conn |> sign_in(course_reg.user) |> get(build_url(course1.id, protected_assessment.id))
         assert response(conn, 403) == "Missing Password."
       end
     end
 
-    @tag :skip
     test "returns 403 when password is wrong/invalid", %{
       conn: conn,
+      courses: %{course1: course1},
+      protected_assessment: protected_assessment,
       role_crs: role_crs
     } do
-      assessment = insert(:assessment, %{type: "practical", is_published: true})
-
-      assessment
-      |> Assessment.changeset(%{
-        password: "mysupersecretpassword",
-        open_at: Timex.shift(Timex.now(), days: -2),
-        close_at: Timex.shift(Timex.now(), days: +1)
-      })
-      |> Repo.update!()
-
-      for {_role, user} <- role_crs do
+      for {_role, course_reg} <- role_crs do
         conn =
           conn
-          |> sign_in(user)
-          |> post(build_url_unlock(assessment.id), %{:password => "wrong"})
+          |> sign_in(course_reg.user)
+          |> post(build_url_unlock(course1.id, protected_assessment.id), %{:password => "wrong"})
 
         assert response(conn, 403) == "Invalid Password."
       end
     end
 
-    @tag :skip
-    test "allow role_crs with preexisting submission to access private assessment without a password",
-         %{
-           conn: conn,
-           role_crs: %{student: student}
-         } do
-      assessment = insert(:assessment, %{type: "practical", is_published: true})
-
-      assessment
-      |> Assessment.changeset(%{
-        password: "mysupersecretpassword",
-        open_at: Timex.shift(Timex.now(), days: -2),
-        close_at: Timex.shift(Timex.now(), days: +1)
-      })
-      |> Repo.update!()
-
-      insert(:submission, %{assessment: assessment, student: student})
-      conn = conn |> sign_in(student) |> get(build_url(assessment.id))
+    test "allow role_crs with preexisting submission to access private assessment without a password", %{
+      conn: conn,
+      courses: %{course1: course1},
+      protected_assessment: protected_assessment,
+      role_crs: %{student: student}
+    } do
+      insert(:submission, %{assessment: protected_assessment, student: student})
+      conn = conn |> sign_in(student.user) |> get(build_url(course1.id, protected_assessment.id))
       assert response(conn, 200)
     end
 
-    @tag :skip
     test "ignore password when assessment is not password protected", %{
       conn: conn,
+      courses: %{course1: course1},
       role_crs: role_crs,
       assessments: assessments
     } do
       assessment = assessments["mission"].assessment
 
-      for {_role, user} <- role_crs do
+      for {_role, course_reg} <- role_crs do
         conn =
           conn
-          |> sign_in(user)
-          |> post(build_url_unlock(assessment.id), %{:password => "wrong"})
+          |> sign_in(course_reg.user)
+          |> post(build_url_unlock(course1.id, assessment.id), %{:password => "wrong"})
           |> json_response(200)
 
         assert conn["id"] == assessment.id
       end
     end
 
-    @tag :skip
     test "render assessment when password is correct", %{
       conn: conn,
+      courses: %{course1: course1},
+      protected_assessment: protected_assessment,
       role_crs: role_crs,
-      assessments: assessments
     } do
-      assessment = assessments["mission"].assessment
-
-      {:ok, _} =
-        assessment
-        |> Assessment.changeset(%{password: "mysupersecretpassword"})
-        |> Repo.update()
-
-      for {_role, user} <- role_crs do
+      for {_role, course_reg} <- role_crs do
         conn =
           conn
-          |> sign_in(user)
-          |> post(build_url_unlock(assessment.id), %{:password => "mysupersecretpassword"})
+          |> sign_in(course_reg.user)
+          |> post(build_url_unlock(course1.id, protected_assessment.id), %{:password => "mysupersecretpassword"})
           |> json_response(200)
 
-        assert conn["id"] == assessment.id
+        assert conn["id"] == protected_assessment.id
       end
     end
 
-    @tag :skip
     test "permit global access to private assessment after closed", %{
       conn: conn,
+      courses: %{course1: course1},
       role_crs: %{student: student},
       assessments: %{"mission" => mission}
     } do
@@ -1377,16 +1357,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       conn =
         conn
-        |> sign_in(student)
-        |> get(build_url(mission.assessment.id))
+        |> sign_in(student.user)
+        |> get(build_url(course1.id, mission.assessment.id))
 
       assert response(conn, 200)
     end
   end
 
-  defp build_url, do: "/v2/assessments/"
-  defp build_url_submit(assessment_id), do: "/v2/assessments/#{assessment_id}/submit"
-  defp build_url_unlock(assessment_id), do: "/v2/assessments/#{assessment_id}/unlock"
   defp build_url(course_id), do: "/v2/courses/#{course_id}/assessments/"
 
   defp build_url(course_id, assessment_id),
