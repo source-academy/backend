@@ -28,8 +28,6 @@ defmodule Cadet.Courses.AssessmentConfig do
     hours_before_early_xp_decay build_solution build_hidden is_contest)a
 
   def changeset(assessment_config, params) do
-    params = capitalize(params, :type)
-
     assessment_config
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
@@ -38,9 +36,5 @@ defmodule Cadet.Courses.AssessmentConfig do
     |> validate_number(:early_submission_xp, greater_than_or_equal_to: 0)
     |> validate_number(:hours_before_early_xp_decay, greater_than_or_equal_to: 0)
     |> unique_constraint([:order, :course_id])
-  end
-
-  defp capitalize(params, field) do
-    Map.update(params, field, nil, &String.capitalize/1)
   end
 end
