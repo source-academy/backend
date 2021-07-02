@@ -22,7 +22,12 @@ defmodule CadetWeb.UserView do
           xp: xp,
           story: story
         }),
-      courseConfiguration: render_config(latest)
+      courseConfiguration: render_config(latest),
+      assessmentConfigs:
+        case latest do
+          nil -> nil
+          latest -> Enum.map(latest.course.assessment_config, fn x -> x.type end)
+        end
     }
   end
 
@@ -40,7 +45,12 @@ defmodule CadetWeb.UserView do
           xp: xp,
           story: story
         }),
-      courseConfiguration: render_config(latest)
+      courseConfiguration: render_config(latest),
+      assessmentConfigs:
+        case latest do
+          nil -> nil
+          latest -> Enum.map(latest.course.assessment_config, fn x -> x.type end)
+        end
     }
   end
 
@@ -100,8 +110,7 @@ defmodule CadetWeb.UserView do
           enableSourcecast: :enable_sourcecast,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
-          moduleHelpText: :module_help_text,
-          assessmentTypes: &Enum.map(&1.assessment_config, fn x -> x.type end)
+          moduleHelpText: :module_help_text
         })
     end
   end
