@@ -7,7 +7,7 @@ defmodule CadetWeb.AdminCoursesView do
 
   def render("config.json", %{config: config}) do
     transform_map_for_view(config, %{
-      AssessmentConfigId: :id,
+      assessmentConfigId: :id,
       type: :type,
       buildHidden: :build_hidden,
       buildSolution: :build_solution,

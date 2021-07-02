@@ -170,7 +170,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "buildHidden" => false,
           "isContest" => false,
           "type" => "Mission1",
-          "AssessmentConfigId" => config1.id
+          "assessmentConfigId" => config1.id
         },
         %{
           "earlySubmissionXp" => 200,
@@ -179,7 +179,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "buildHidden" => false,
           "isContest" => false,
           "type" => "Mission2",
-          "AssessmentConfigId" => config2.id
+          "assessmentConfigId" => config2.id
         },
         %{
           "earlySubmissionXp" => 200,
@@ -188,7 +188,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "buildHidden" => false,
           "isContest" => false,
           "type" => "Mission3",
-          "AssessmentConfigId" => config3.id
+          "assessmentConfigId" => config3.id
         }
       ]
 
@@ -216,7 +216,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       params = %{
         "assessmentConfigs" => [
           %{
-            "AssessmentConfigId" => config.id,
+            "assessmentConfigId" => config.id,
             "courseId" => course_id,
             "type" => "Missions",
             "earlySubmissionXp" => 100,
@@ -224,7 +224,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
             "decayRatePointsPerHour" => 1
           },
           %{
-            "AssessmentConfigId" => -1,
+            "assessmentConfigId" => -1,
             "courseId" => course_id,
             "type" => "Paths",
             "earlySubmissionXp" => 100,
@@ -316,7 +316,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       params = %{
         "assessmentConfig" => %{
-          "AssessmentConfigId" => config1.id,
+          "assessmentConfigId" => config1.id,
           "courseId" => course_id,
           "type" => "Missions",
           "earlySubmissionXp" => 100,
