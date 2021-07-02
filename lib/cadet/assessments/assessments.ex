@@ -509,9 +509,9 @@ defmodule Cadet.Assessments do
       contest_submission_ids_length = Enum.count(contest_submission_ids)
 
       user_ids =
-        User
+        CourseRegistration
         |> where(role: "student")
-        |> select([u], u.id)
+        |> select([cr], cr.id)
         |> Repo.all()
 
       votes_per_user = min(contest_submission_ids_length, 10)

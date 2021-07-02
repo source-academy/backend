@@ -857,7 +857,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "GET /assessment_id/submit unauthenticated" do
-    test "is not permitted", %{conn: conn,  courses: %{course1: course1}, assessments: %{"mission" => %{assessment: assessment}}} do
+    test "is not permitted", %{
+      conn: conn,
+      courses: %{course1: course1},
+      assessments: %{"mission" => %{assessment: assessment}}
+    } do
       conn = post(conn, build_url_submit(course1.id, assessment.id))
       assert response(conn, 401) == "Unauthorised"
     end
@@ -875,7 +879,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
       } do
         with_mock GradingJob,
           force_grade_individual_submission: fn _ -> nil end do
-          group = if(role == :student, do: insert(:group, %{course: course1, leader: role_crs.staff}), else: nil)
+          group =
+            if(role == :student,
+              do: insert(:group, %{course: course1, leader: role_crs.staff}),
+              else: nil
+            )
+
           course_reg = insert(:course_registration, %{role: role, group: group, course: course1})
 
           submission =
@@ -901,15 +910,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "submission of answer within early hours(seeded 48) of opening grants full XP bonus", %{
       conn: conn,
       courses: %{course1: course1},
-      role_crs: role_crs,
+      role_crs: role_crs
     } do
       with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
-        assessment_config = insert(
-          :assessment_config,
-          early_submission_xp: 100,
-          hours_before_early_xp_decay: 48,
-          course: course1
-        )
+        assessment_config =
+          insert(
+            :assessment_config,
+            early_submission_xp: 100,
+            hours_before_early_xp_decay: 48,
+            course: course1
+          )
+
         assessment =
           insert(
             :assessment,
@@ -923,7 +934,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
         question = insert(:programming_question, assessment: assessment)
 
         group = insert(:group, leader: role_crs.staff)
-        course_reg = insert(:course_registration, %{role: :student, group: group, course: course1})
+
+        course_reg =
+          insert(:course_registration, %{role: :student, group: group, course: course1})
 
         submission =
           insert(:submission, assessment: assessment, student: course_reg, status: :attempted)
@@ -950,16 +963,18 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "submission of answer after early hours before deadline get decaying XP bonus", %{
       conn: conn,
       courses: %{course1: course1},
-      role_crs: role_crs,
+      role_crs: role_crs
     } do
       with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
         for hours_after <- 48..148 do
-          assessment_config = insert(
-            :assessment_config,
-            early_submission_xp: 100,
-            hours_before_early_xp_decay: 48,
-            course: course1
-          )
+          assessment_config =
+            insert(
+              :assessment_config,
+              early_submission_xp: 100,
+              hours_before_early_xp_decay: 48,
+              course: course1
+            )
+
           assessment =
             insert(
               :assessment,
@@ -973,7 +988,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
           question = insert(:programming_question, assessment: assessment)
 
           group = insert(:group, leader: role_crs.staff)
-          course_reg = insert(:course_registration, %{role: :student, group: group, course: course1})
+
+          course_reg =
+            insert(:course_registration, %{role: :student, group: group, course: course1})
 
           submission =
             insert(:submission, assessment: assessment, student: course_reg, status: :attempted)
@@ -991,7 +1008,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> response(200)
 
           submission_db = Repo.get(Submission, submission.id)
-          proportion = Timex.diff(assessment.close_at, Timex.now(), :hours) / (100 + hours_after - 48)
+
+          proportion =
+            Timex.diff(assessment.close_at, Timex.now(), :hours) / (100 + hours_after - 48)
+
           assert submission_db.status == :submitted
           assert submission_db.xp_bonus == round(proportion * 100)
         end
@@ -1001,16 +1021,18 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "submission of answer at the last hour yield 0 XP bonus", %{
       conn: conn,
       courses: %{course1: course1},
-      role_crs: role_crs,
+      role_crs: role_crs
     } do
       with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
         for hours_after <- 48..148 do
-          assessment_config = insert(
-            :assessment_config,
-            early_submission_xp: 100,
-            hours_before_early_xp_decay: 48,
-            course: course1
-          )
+          assessment_config =
+            insert(
+              :assessment_config,
+              early_submission_xp: 100,
+              hours_before_early_xp_decay: 48,
+              course: course1
+            )
+
           assessment =
             insert(
               :assessment,
@@ -1024,7 +1046,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
           question = insert(:programming_question, assessment: assessment)
 
           group = insert(:group, leader: role_crs.staff)
-          course_reg = insert(:course_registration, %{role: :student, group: group, course: course1})
+
+          course_reg =
+            insert(:course_registration, %{role: :student, group: group, course: course1})
 
           submission =
             insert(:submission, assessment: assessment, student: course_reg, status: :attempted)
@@ -1050,17 +1074,19 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
 
     test "give 0 bonus for configs with 0 max", %{
-      conn: conn, courses: %{course1: course1}, role_crs: role_crs,} do
+      conn: conn,
+      courses: %{course1: course1},
+      role_crs: role_crs
+    } do
       with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
-
-
         for hours_after <- 0..148 do
-          assessment_config = insert(
-            :assessment_config,
-            early_submission_xp: 0,
-            hours_before_early_xp_decay: 48,
-            course: course1
-          )
+          assessment_config =
+            insert(
+              :assessment_config,
+              early_submission_xp: 0,
+              hours_before_early_xp_decay: 48,
+              course: course1
+            )
 
           assessment =
             insert(
@@ -1075,7 +1101,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
           question = insert(:programming_question, assessment: assessment)
 
           group = insert(:group, leader: role_crs.staff)
-          course_reg = insert(:course_registration, %{role: :student, group: group, course: course1})
+
+          course_reg =
+            insert(:course_registration, %{role: :student, group: group, course: course1})
 
           submission =
             insert(:submission, assessment: assessment, student: course_reg, status: :attempted)
@@ -1105,7 +1133,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "is not permitted for unattempted assessments", %{
       conn: conn,
       courses: %{course1: course1},
-      assessments: %{"mission" => %{assessment: assessment}},
+      assessments: %{"mission" => %{assessment: assessment}}
     } do
       course_reg = insert(:course_registration, %{role: :student, course: course1})
 
@@ -1149,7 +1177,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assert response(conn, 403) == "Assessment has already been submitted"
     end
 
-    test "is not permitted for closed assessments", %{conn: conn, courses: %{course1: course1},} do
+    test "is not permitted for closed assessments", %{conn: conn, courses: %{course1: course1}} do
       course_reg = insert(:course_registration, %{role: :student, course: course1})
 
       # Only check for after-closing because submission shouldn't exist if unpublished or
@@ -1175,7 +1203,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assert response(conn, 403) == "Assessment not open"
     end
 
-    test "not found if not in same course", %{conn: conn, courses: %{course2: course2}, role_crs: %{student: student}, assessments: %{"mission" => %{assessment: assessment}}} do
+    test "not found if not in same course", %{
+      conn: conn,
+      courses: %{course2: course2},
+      role_crs: %{student: student},
+      assessments: %{"mission" => %{assessment: assessment}}
+    } do
       # user is in both course, but assessment belongs to a course and no submission will be found
       conn =
         conn
@@ -1185,9 +1218,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assert response(conn, 404) == "Submission not found"
     end
 
-    test "forbidden if not in course", %{conn: conn, courses: %{course2: course2}, course_regs: %{students: students}, assessments: %{"mission" => %{assessment: assessment}}} do
+    test "forbidden if not in course", %{
+      conn: conn,
+      courses: %{course2: course2},
+      course_regs: %{students: students},
+      assessments: %{"mission" => %{assessment: assessment}}
+    } do
       # user is not in the course
       student2 = hd(tl(students))
+
       conn =
         conn
         |> sign_in(student2.user)
@@ -1200,7 +1239,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   test "graded count is updated when assessment is graded", %{
     conn: conn,
     courses: %{course1: course1},
-    assessment_configs: [config| _],
+    assessment_configs: [config | _],
     role_crs: %{staff: avenger}
   } do
     assessment =
@@ -1217,7 +1256,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
     course_reg = insert(:course_registration, role: :student, course: course1)
 
-    submission = insert(:submission, assessment: assessment, student: course_reg, status: :submitted)
+    submission =
+      insert(:submission, assessment: assessment, student: course_reg, status: :submitted)
 
     Enum.each(
       [question_one, question_two],
@@ -1253,8 +1293,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "Password protected assessments render properly" do
-    setup %{courses: %{course1: course1}, assessment_configs: configs,} do
-      assessment = insert(:assessment, %{config: Enum.at(configs, 4), course: course1, is_published: true})
+    setup %{courses: %{course1: course1}, assessment_configs: configs} do
+      assessment =
+        insert(:assessment, %{config: Enum.at(configs, 4), course: course1, is_published: true})
 
       assessment
       |> Assessment.changeset(%{
@@ -1267,14 +1308,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
       {:ok, protected_assessment: assessment}
     end
 
-    test "returns 403 when trying to access a password protected assessment without a password", %{
-      conn: conn,
-      courses: %{course1: course1},
-      protected_assessment: protected_assessment,
-      role_crs: role_crs
-    } do
+    test "returns 403 when trying to access a password protected assessment without a password",
+         %{
+           conn: conn,
+           courses: %{course1: course1},
+           protected_assessment: protected_assessment,
+           role_crs: role_crs
+         } do
       for {_role, course_reg} <- role_crs do
-        conn = conn |> sign_in(course_reg.user) |> get(build_url(course1.id, protected_assessment.id))
+        conn =
+          conn |> sign_in(course_reg.user) |> get(build_url(course1.id, protected_assessment.id))
+
         assert response(conn, 403) == "Missing Password."
       end
     end
@@ -1295,12 +1339,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "allow role_crs with preexisting submission to access private assessment without a password", %{
-      conn: conn,
-      courses: %{course1: course1},
-      protected_assessment: protected_assessment,
-      role_crs: %{student: student}
-    } do
+    test "allow role_crs with preexisting submission to access private assessment without a password",
+         %{
+           conn: conn,
+           courses: %{course1: course1},
+           protected_assessment: protected_assessment,
+           role_crs: %{student: student}
+         } do
       insert(:submission, %{assessment: protected_assessment, student: student})
       conn = conn |> sign_in(student.user) |> get(build_url(course1.id, protected_assessment.id))
       assert response(conn, 200)
@@ -1329,13 +1374,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn: conn,
       courses: %{course1: course1},
       protected_assessment: protected_assessment,
-      role_crs: role_crs,
+      role_crs: role_crs
     } do
       for {_role, course_reg} <- role_crs do
         conn =
           conn
           |> sign_in(course_reg.user)
-          |> post(build_url_unlock(course1.id, protected_assessment.id), %{:password => "mysupersecretpassword"})
+          |> post(build_url_unlock(course1.id, protected_assessment.id), %{
+            :password => "mysupersecretpassword"
+          })
           |> json_response(200)
 
         assert conn["id"] == protected_assessment.id

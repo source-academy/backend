@@ -9,29 +9,51 @@ defmodule Cadet.Updater.XMLParserTest do
   import ExUnit.CaptureLog
 
   setup do
+    course = insert(:course)
+    assessment_configs = [
+      insert(:assessment_config, %{course: course, order: 1, type: "mission"}),
+      insert(:assessment_config, %{course: course, order: 2}),
+      insert(:assessment_config, %{
+        course: course,
+        order: 3,
+        build_hidden: true,
+        build_solution: true,
+        type: "path"
+      }),
+      insert(:assessment_config, %{course: course, order: 4, is_contest: true}),
+      insert(:assessment_config, %{
+        course: course,
+        order: 5,
+        build_solution: true,
+        type: "practical"
+      })
+    ]
+
     assessments =
       Enum.map(
-        Assessment.assessment_types(),
-        &build(:assessment, type: &1, is_published: true)
+        assessment_configs,
+        &build(:assessment, course_id: course.id, course: course, config: &1, config_id: &1.id, is_published: true)
       )
 
-    assessments_with_type = Enum.into(assessments, %{}, &{&1.type, &1})
+    assessments_with_config = Enum.into(assessments, %{}, &{&1, &1.config})
 
     questions = build_list(5, :question, assessment: nil)
 
     %{
       assessments: assessments,
       questions: questions,
-      assessments_with_type: assessments_with_type
+      course: course,
+      assessment_configs: assessment_configs,
+      assessments_with_config: assessments_with_config
     }
   end
 
   describe "Pure XML Parser" do
-    test "XML Parser happy path", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
+    test "XML Parser happy path", %{questions: questions, course: course, assessments_with_config: assessments_with_config} do
+      for {assessment, assessment_config} <- assessments_with_config do
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-        assert XMLParser.parse_xml(xml) == :ok
+        assert XMLParser.parse_xml(xml, course.id, assessment_config.id) == :ok
 
         number = assessment.number
 
@@ -53,11 +75,13 @@ defmodule Cadet.Updater.XMLParserTest do
           |> Map.put(:open_at, open_at)
           |> Map.put(:close_at, close_at)
           |> Map.put(:is_published, false)
+          |> Map.put(:course_id, course.id)
+          |> Map.put(:config_id, assessment_config.id)
 
         assert_map_keys(
           Map.from_struct(expected_assesment),
           Map.from_struct(assessment_db),
-          ~w(title is_published type summary_short summary_long open_at close_at)a ++
+          ~w(title is_published config_id course_id summary_short summary_long open_at close_at)a ++
             ~w(number story reading password)a
         )
 
@@ -80,10 +104,9 @@ defmodule Cadet.Updater.XMLParserTest do
     end
 
     test "happy path existing still closed assessment", %{
-      assessments: assessments,
-      questions: questions
+      questions: questions, course: course, assessments_with_config: assessments_with_config
     } do
-      for assessment <- assessments do
+      for {assessment, assessment_config} <- assessments_with_config do
         still_closed_assessment =
           Map.from_struct(%{
             assessment
@@ -97,18 +120,18 @@ defmodule Cadet.Updater.XMLParserTest do
 
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
-        assert XMLParser.parse_xml(xml) == :ok
+        assert XMLParser.parse_xml(xml, course.id, assessment_config.id) == :ok
       end
     end
 
-    test "PROBLEM with missing type", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
+    test "PROBLEM with missing type", %{questions: questions, course: course, assessments_with_config: assessments_with_config} do
+      for {assessment, assessment_config} <- assessments_with_config do
         xml =
-          XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(maxgrade)a)
+          XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(maxxp)a)
 
         assert capture_log(fn ->
                  assert(
-                   XMLParser.parse_xml(xml) ==
+                   XMLParser.parse_xml(xml, course.id, assessment_config.id) ==
                      {:error, {:bad_request, "Missing attribute(s) on PROBLEM"}}
                  )
                end) =~
@@ -116,13 +139,13 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
-    test "PROBLEM with missing maxgrade", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
+    test "PROBLEM with missing maxxp", %{questions: questions, course: course, assessments_with_config: assessments_with_config} do
+      for {assessment, assessment_config} <- assessments_with_config do
         xml = XMLGenerator.generate_xml_for(assessment, questions, problem_permit_keys: ~w(type)a)
 
         assert capture_log(fn ->
                  assert(
-                   XMLParser.parse_xml(xml) ==
+                   XMLParser.parse_xml(xml, course.id, assessment_config.id) ==
                      {:error, {:bad_request, "Missing attribute(s) on PROBLEM"}}
                  )
                end) =~
@@ -130,21 +153,21 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
-    test "Invalid question type", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
+    test "Invalid question type", %{questions: questions, course: course, assessments_with_config: assessments_with_config} do
+      for {assessment, assessment_config} <- assessments_with_config do
         xml = XMLGenerator.generate_xml_for(assessment, questions, override_type: "anu")
 
         assert capture_log(fn ->
                  assert(
-                   XMLParser.parse_xml(xml) == {:error, {:bad_request, "Invalid question type."}}
+                   XMLParser.parse_xml(xml, course.id, assessment_config.id) == {:error, {:bad_request, "Invalid question type."}}
                  )
                end) =~
                  "Invalid question type."
       end
     end
 
-    test "Invalid question changeset", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
+    test "Invalid question changeset", %{questions: questions, course: course, assessments_with_config: assessments_with_config} do
+      for {assessment, assessment_config} <- assessments_with_config do
         questions_without_content =
           Enum.map(questions, &%{&1 | question: %{&1.question | content: ""}})
 
@@ -152,27 +175,27 @@ defmodule Cadet.Updater.XMLParserTest do
 
         # the error message can be quite convoluted
         assert capture_log(fn ->
-                 assert({:error, {:bad_request, _error_message}} = XMLParser.parse_xml(xml))
+                 assert({:error, {:bad_request, _error_message}} = XMLParser.parse_xml(xml, course.id, assessment_config.id))
                end) =~
                  ~r/Invalid \b.*\b changeset\./
       end
     end
 
-    test "missing DEPLOYMENT", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
+    test "missing DEPLOYMENT", %{questions: questions, course: course, assessments_with_config: assessments_with_config} do
+      for {assessment, assessment_config} <- assessments_with_config do
         xml = XMLGenerator.generate_xml_for(assessment, questions, no_deployment: true)
 
         assert capture_log(fn ->
                  assert(
-                   XMLParser.parse_xml(xml) == {:error, {:bad_request, "Missing DEPLOYMENT"}}
+                   XMLParser.parse_xml(xml, course.id, assessment_config.id) == {:error, {:bad_request, "Missing DEPLOYMENT"}}
                  )
                end) =~
                  "Missing DEPLOYMENT"
       end
     end
 
-    test "existing assessment with submissions", %{assessments: assessments, questions: questions} do
-      for assessment <- assessments do
+    test "existing assessment with submissions", %{questions: questions, course: course, assessments_with_config: assessments_with_config} do
+      for {assessment, assessment_config} <- assessments_with_config do
         already_open_assessment =
           Map.from_struct(%{
             assessment
@@ -197,7 +220,7 @@ defmodule Cadet.Updater.XMLParserTest do
         xml = XMLGenerator.generate_xml_for(assessment, questions)
 
         assert capture_log(fn ->
-                 assert XMLParser.parse_xml(xml) ==
+                 assert XMLParser.parse_xml(xml, course.id, assessment_config.id) ==
                           {:ok, "Assessment has submissions, ignoring..."}
                end) =~
                  "Assessment has submissions, ignoring..."
@@ -207,22 +230,21 @@ defmodule Cadet.Updater.XMLParserTest do
 
   describe "XML file processing" do
     test "happy path", %{
-      assessments_with_type: assessments_with_type,
-      questions: questions
+      questions: questions, course: course, assessments_with_config: assessments_with_config
     } do
-      for {_, assessment} <- assessments_with_type do
+      for {assessment, assessment_config} <- assessments_with_config do
         xml = XMLGenerator.generate_xml_for(assessment, questions)
-        assert :ok == XMLParser.parse_xml(xml)
+        assert :ok == XMLParser.parse_xml(xml, course.id, assessment_config.id)
       end
     end
 
-    test "empty xml file" do
+    test "empty xml file", %{assessment_configs: [config| _], course: course} do
       assert capture_log(fn ->
-               assert {:error, {:bad_request, _}} = XMLParser.parse_xml("")
+               assert {:error, {:bad_request, _}} = XMLParser.parse_xml("", course.id, config.id)
              end) =~ ":expected_element_start_tag"
     end
 
-    test "valid xml file but invalid assessment xml" do
+    test "valid xml file but invalid assessment xml", %{assessment_configs: [config| _], course: course} do
       xml = """
       <html>
       <head><title>Best markup language!</title></head>
@@ -233,7 +255,7 @@ defmodule Cadet.Updater.XMLParserTest do
       """
 
       assert capture_log(fn ->
-               {:error, {:bad_request, "Missing TASK"}} == XMLParser.parse_xml(xml)
+               {:error, {:bad_request, "Missing TASK"}} == XMLParser.parse_xml(xml, course.id, config.id)
              end) =~ "Missing TASK"
     end
   end

@@ -15,10 +15,10 @@ defmodule Cadet.Updater.XMLParser do
     quote do: is_list(unquote(term)) and unquote(term) != []
   end
 
-  @spec parse_xml(String.t(), boolean()) ::
+  @spec parse_xml(String.t(), integer(), integer(), boolean()) ::
           :ok | {:ok, String.t()} | {:error, {atom(), String.t()}}
-  def parse_xml(xml, force_update \\ false) do
-    with {:ok, assessment_params} <- process_assessment(xml),
+  def parse_xml(xml, course_id, assessment_config_id, force_update \\ false) do
+    with {:ok, assessment_params} <- process_assessment(xml, course_id, assessment_config_id),
          {:ok, questions_params} <- process_questions(xml),
          {:ok, %{assessment: assessment}} <-
            Assessments.insert_or_update_assessments_and_questions(
@@ -69,8 +69,8 @@ defmodule Cadet.Updater.XMLParser do
     |> List.foldr("", fn x, acc -> "#{acc <> x} " end)
   end
 
-  @spec process_assessment(String.t()) :: {:ok, map()} | {:error, String.t()}
-  defp process_assessment(xml) do
+  @spec process_assessment(String.t(), integer(), integer()) :: {:ok, map()} | {:error, String.t()}
+  defp process_assessment(xml, course_id, assessment_config_id) do
     open_at =
       Timex.now()
       |> Timex.beginning_of_day()
@@ -84,7 +84,7 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(
         ~x"//TASK"e,
         access: ~x"./@access"s |> transform_by(&process_access/1),
-        type: ~x"./@kind"s |> transform_by(&change_quest_to_sidequest/1),
+        # type: ~x"./@kind"s |> transform_by(&change_quest_to_sidequest/1),
         title: ~x"./@title"s,
         number: ~x"./@number"s,
         story: ~x"./@story"s,
@@ -97,6 +97,8 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:is_published, false)
       |> Map.put(:open_at, open_at)
       |> Map.put(:close_at, close_at)
+      |> Map.put(:course_id, course_id)
+      |> Map.put(:config_id, assessment_config_id)
 
     if assessment_params.access === "public" do
       _ = Map.put(assessment_params, :password, nil)
@@ -121,14 +123,14 @@ defmodule Cadet.Updater.XMLParser do
     "public"
   end
 
-  @spec change_quest_to_sidequest(String.t()) :: String.t()
-  defp change_quest_to_sidequest("quest") do
-    "sidequest"
-  end
+  # @spec change_quest_to_sidequest(String.t()) :: String.t()
+  # defp change_quest_to_sidequest("quest") do
+  #   "sidequest"
+  # end
 
-  defp change_quest_to_sidequest(type) when is_binary(type) do
-    type
-  end
+  # defp change_quest_to_sidequest(type) when is_binary(type) do
+  #   type
+  # end
 
   @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   defp process_questions(xml) do
@@ -140,13 +142,13 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(
         ~x"//PROBLEMS/PROBLEM"el,
         type: ~x"./@type"o |> transform_by(&process_charlist/1),
-        max_grade: ~x"./@maxgrade"oi,
+        # max_grade: ~x"./@maxgrade"oi,
         max_xp: ~x"./@maxxp"oi,
         entity: ~x"."
       )
       |> Enum.map(fn param ->
         with {:no_missing_attr?, true} <-
-               {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_grade])},
+               {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_xp])},
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
                process_question_library(question, default_library, default_grading_library),

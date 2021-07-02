@@ -4,17 +4,17 @@ defmodule CadetWeb.AdminAssessmentsController do
   use PhoenixSwagger
 
   alias Cadet.Assessments
-  import Cadet.Updater.XMLParser, only: [parse_xml: 2]
+  import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
-  def create(conn, %{"assessment" => assessment, "forceUpdate" => force_update}) do
+  def create(conn, %{"course_id" => course_id, "assessment" => assessment, "forceUpdate" => force_update, "assessmentConfigId" => assessment_config_id}) do
     file =
       assessment["file"].path
       |> File.read!()
 
     result =
       case force_update do
-        "true" -> parse_xml(file, true)
-        "false" -> parse_xml(file, false)
+        "true" -> parse_xml(file, course_id, assessment_config_id, true)
+        "false" -> parse_xml(file, course_id, assessment_config_id, false)
       end
 
     case result do
