@@ -389,6 +389,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  defp build_url, do: "/v2/admin/assessments/"
-  defp build_url(assessment_id), do: "/v2/admin/assessments/#{assessment_id}"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/assessments/"
+
+  defp build_url(course_id, assessment_id),
+    do: "/v2/courses/#{course_id}/admin/assessments/#{assessment_id}"
 end

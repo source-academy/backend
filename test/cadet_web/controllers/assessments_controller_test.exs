@@ -344,7 +344,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
                 "postpend" =>
-                  if assessment.config.build_hidden do
+                  if not assessment.config.is_graded do
                     &1.question.postpend
                   else
                     ""
@@ -358,7 +358,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                           do: {Atom.to_string(k), v}
                     end
                   ) ++
-                    if assessment.config.build_hidden do
+                    if not assessment.config.is_graded do
                       Enum.map(
                         &1.question.private,
                         fn testcase ->

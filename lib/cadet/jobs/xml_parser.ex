@@ -69,7 +69,8 @@ defmodule Cadet.Updater.XMLParser do
     |> List.foldr("", fn x, acc -> "#{acc <> x} " end)
   end
 
-  @spec process_assessment(String.t(), integer(), integer()) :: {:ok, map()} | {:error, String.t()}
+  @spec process_assessment(String.t(), integer(), integer()) ::
+          {:ok, map()} | {:error, String.t()}
   defp process_assessment(xml, course_id, assessment_config_id) do
     open_at =
       Timex.now()

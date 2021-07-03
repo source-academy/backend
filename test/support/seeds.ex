@@ -97,15 +97,15 @@ defmodule Cadet.Test.Seeds do
         insert(:assessment_config, %{
           course: course1,
           order: 3,
-          build_hidden: true,
-          build_solution: true,
+          skippable: false,
+          is_graded: false,
           type: "path"
         }),
-        insert(:assessment_config, %{course: course1, order: 4, is_contest: true}),
+        insert(:assessment_config, %{course: course1, order: 4, is_autograded: false}),
         insert(:assessment_config, %{
           course: course1,
           order: 5,
-          build_solution: true,
+          is_graded: false,
           type: "practical"
         })
       ]

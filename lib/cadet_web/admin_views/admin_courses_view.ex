@@ -9,9 +9,9 @@ defmodule CadetWeb.AdminCoursesView do
     transform_map_for_view(config, %{
       assessmentConfigId: :id,
       type: :type,
-      buildHidden: :build_hidden,
-      buildSolution: :build_solution,
-      isContest: :is_contest,
+      skippable: :skippable,
+      isGraded: :is_graded,
+      isAutograded: :is_autograded,
       earlySubmissionXp: :early_submission_xp,
       hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay
     })

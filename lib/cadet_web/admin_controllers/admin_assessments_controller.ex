@@ -6,7 +6,12 @@ defmodule CadetWeb.AdminAssessmentsController do
   alias Cadet.Assessments
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
-  def create(conn, %{"course_id" => course_id, "assessment" => assessment, "forceUpdate" => force_update, "assessmentConfigId" => assessment_config_id}) do
+  def create(conn, %{
+        "course_id" => course_id,
+        "assessment" => assessment,
+        "forceUpdate" => force_update,
+        "assessmentConfigId" => assessment_config_id
+      }) do
     file =
       assessment["file"].path
       |> File.read!()

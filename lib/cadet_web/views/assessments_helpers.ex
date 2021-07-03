@@ -66,7 +66,7 @@ defmodule CadetWeb.AssessmentsHelpers do
          question: %{question: question, type: question_type},
          assessment: %{config: assessment_config}
        }) do
-    if assessment_config.build_solution do
+    if !assessment_config.is_graded do
       solution_getter =
         case question_type do
           :programming -> &Map.get(&1, "solution")
@@ -181,9 +181,8 @@ defmodule CadetWeb.AssessmentsHelpers do
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "private") end)
         )
 
-      # :TODO another indicator for whether to build all testcases
-      # assessment_config == "path" ->
-      assessment_config.build_hidden ->
+      # build hidden testcases if ungraded
+      !assessment_config.is_graded ->
         &Enum.concat(
           Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
@@ -195,9 +194,9 @@ defmodule CadetWeb.AssessmentsHelpers do
   end
 
   defp build_postpend(%{assessment_config: assessment_config}, all_testcases?) do
-    case {all_testcases?, assessment_config.build_hidden} do
+    case {all_testcases?, assessment_config.is_graded} do
       {true, _} -> & &1["postpend"]
-      {_, true} -> & &1["postpend"]
+      {_, false} -> & &1["postpend"]
       # Create a 1-arity function to return an empty postpend for non-paths
       _ -> fn _question -> "" end
     end

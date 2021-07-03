@@ -10,11 +10,13 @@ defmodule Cadet.Courses.AssessmentConfig do
   schema "assessment_configs" do
     field(:order, :integer)
     field(:type, :string)
-    field(:build_solution, :boolean, default: false)
-    # a graded assessment type will not build solutions to the frontend
-    field(:build_hidden, :boolean, default: false)
-    # backend will build public testcases with hidden private testcases and will build postpend.
-    field(:is_contest, :boolean, default: false)
+    field(:is_graded, :boolean, default: true)
+
+    # a graded assessment type will not build solutions and private testcases as hidden to the frontend
+    field(:skippable, :boolean, default: true)
+    # only for frontend to determine if a student can go to next question without attempting
+    field(:is_autograded, :boolean, default: true)
+    # assessment will be autograded a day after due day
     field(:early_submission_xp, :integer, default: 0)
     field(:hours_before_early_xp_decay, :integer, default: 0)
 
@@ -25,7 +27,7 @@ defmodule Cadet.Courses.AssessmentConfig do
 
   @required_fields ~w(course_id)a
   @optional_fields ~w(order type early_submission_xp
-    hours_before_early_xp_decay build_solution build_hidden is_contest)a
+    hours_before_early_xp_decay is_graded skippable is_autograded)a
 
   def changeset(assessment_config, params) do
     assessment_config
