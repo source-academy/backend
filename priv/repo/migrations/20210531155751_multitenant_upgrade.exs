@@ -63,16 +63,15 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
       modify(:username, :string, null: false)
     end
 
-    # Prep for migration of leader_id and mentor_id from User entity to CourseRegistration entity.
+    # Prep for migration of leader_id from User entity to CourseRegistration entity.
     # Also make groups associated with a course.
     rename(table(:groups), :leader_id, to: :temp_leader_id)
-    rename(table(:groups), :mentor_id, to: :temp_mentor_id)
     drop(constraint(:groups, "groups_leader_id_fkey"))
     drop(constraint(:groups, "groups_mentor_id_fkey"))
 
     alter table(:groups) do
+      remove(:mentor_id)
       add(:leader_id, references(:course_registrations))
-      add(:mentor_id, references(:course_registrations))
       add(:course_id, references(:courses))
     end
 
@@ -171,8 +170,8 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> Repo.update()
         end)
 
-        # Handle groups (adding course_id, and updating leader_id and mentor_id to course registrations)
-        from(g in "groups", select: {g.id, g.temp_leader_id, g.temp_mentor_id})
+        # Handle groups (adding course_id, and updating leader_id to course registrations)
+        from(g in "groups", select: {g.id, g.temp_leader_id})
         |> Repo.all()
         |> Enum.each(fn group ->
           leader_id =
@@ -193,22 +192,10 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
                 |> Map.fetch!(:id)
             end
 
-          mentor_id =
-            case elem(group, 2) do
-              nil ->
-                nil
-
-              id ->
-                CourseRegistration
-                |> where(user_id: ^id)
-                |> Repo.one()
-                |> Map.fetch!(:id)
-            end
-
           Group
           |> where(id: ^elem(group, 0))
           |> Repo.one()
-          |> Group.changeset(%{leader_id: leader_id, mentor_id: mentor_id, course_id: course.id})
+          |> Group.changeset(%{leader_id: leader_id, course_id: course.id})
           |> Repo.update()
         end)
 
@@ -345,7 +332,6 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
     # Cleanup groups table, and make course_id and leader_id non-nullable
     alter table(:groups) do
       remove(:temp_leader_id)
-      remove(:temp_mentor_id)
 
       modify(:leader_id, references(:course_registrations),
         null: false,

@@ -14,7 +14,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   # guide
   # only join with User if need name or user name
-  # only join with Group if need leader/mentor/students in group
+  # only join with Group if need leader/students in group
   # only join with Course if need course info/config
   # otherwise just use CourseRegistration
 

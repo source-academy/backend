@@ -22,7 +22,6 @@ if Cadet.Env.env() == :dev do
   course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
   # Users
   avenger1 = insert(:user, %{name: "avenger", latest_viewed: course1})
-  mentor1 = insert(:user, %{name: "mentor", latest_viewed: course1})
   admin1 = insert(:user, %{name: "admin", latest_viewed: course1})
 
   studenta1admin2 = insert(:user, %{name: "student a", latest_viewed: course1})
@@ -31,9 +30,8 @@ if Cadet.Env.env() == :dev do
   studentc1 = insert(:user, %{latest_viewed: course1})
   # CourseRegistration and Group
   avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
-  mentor1_cr = insert(:course_registration, %{user: mentor1, course: course1, role: :staff})
   admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
-  group = insert(:group, %{leader: avenger1_cr, mentor: mentor1_cr})
+  group = insert(:group, %{leader: avenger1_cr})
 
   student1a_cr =
     insert(:course_registration, %{

@@ -10,7 +10,6 @@ defmodule Cadet.Test.Seeds do
   %{
     accounts: %{
       avenger: avenger,
-      mentor: mentor,
       group: group,
       students: students,
       admin: admin
@@ -38,18 +37,11 @@ defmodule Cadet.Test.Seeds do
 
   def assessments do
     if Cadet.Env.env() == :test do
-      # # User and Group
-      # avenger = insert(:user, %{name: "avenger", role: :staff})
-      # mentor = insert(:user, %{name: "mentor", role: :staff})
-      # group = insert(:group, %{leader: avenger, mentor: mentor})
-      # students = insert_list(5, :student, %{group: group})
-      # admin = insert(:user, %{name: "admin", role: :admin})
       # Course
       course1 = insert(:course)
       course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
       # Users
       avenger1 = insert(:user, %{name: "avenger", latest_viewed: course1})
-      mentor1 = insert(:user, %{name: "mentor", latest_viewed: course1})
       admin1 = insert(:user, %{name: "admin", latest_viewed: course1})
 
       studenta1admin2 = insert(:user, %{name: "student a", latest_viewed: course1})
@@ -58,9 +50,8 @@ defmodule Cadet.Test.Seeds do
       studentc1 = insert(:user, %{latest_viewed: course1})
       # CourseRegistration and Group
       avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
-      mentor1_cr = insert(:course_registration, %{user: mentor1, course: course1, role: :staff})
       admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
-      group = insert(:group, %{leader: avenger1_cr, mentor: mentor1_cr})
+      group = insert(:group, %{leader: avenger1_cr})
 
       student1a_cr =
         insert(:course_registration, %{
@@ -128,7 +119,6 @@ defmodule Cadet.Test.Seeds do
         },
         course_regs: %{
           avenger1_cr: avenger1_cr,
-          mentor1_cr: mentor1_cr,
           group: group,
           students: students,
           admin1_cr: admin1_cr

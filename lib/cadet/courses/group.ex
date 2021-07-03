@@ -12,20 +12,19 @@ defmodule Cadet.Courses.Group do
   schema "groups" do
     field(:name, :string)
     belongs_to(:leader, CourseRegistration)
-    belongs_to(:mentor, CourseRegistration)
     belongs_to(:course, Course)
 
     has_many(:students, CourseRegistration)
   end
 
   @required_fields ~w(name course_id)a
-  @optional_fields ~w(leader_id mentor_id)a
+  @optional_fields ~w(leader_id)a
 
   def changeset(group, attrs \\ %{}) do
     group
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> add_belongs_to_id_from_model([:leader, :mentor, :course], attrs)
+    |> add_belongs_to_id_from_model([:leader, :course], attrs)
     |> validate_role
 
     # |> validate_course
@@ -44,7 +43,6 @@ defmodule Cadet.Courses.Group do
   # defp validate_course(changeset) do
   #   course_id = get_field(changeset, :course_id)
   #   leader_id = get_field(changeset, :leader_id)
-  #   mentor_id = get_field(changeset, :mentor_id)
 
   #   if leader_id != nil && Repo.get(CourseRegistration, leader_id).course_id != course_id do
   #     add_error(changeset, :leader, "does not belong to the same course ")
