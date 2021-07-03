@@ -115,12 +115,13 @@ defmodule CadetWeb.UserView do
       latest ->
         Enum.map(latest.course.assessment_config, fn config ->
           transform_map_for_view(config, %{
+            assessmentConfigId: :id,
             type: :type,
             skippable: :skippable,
             isGraded: :is_graded,
             isAutograded: :is_autograded,
-            EarlySubmissionXp: :early_submission_xp,
-            HoursBeforeEarlyXpDecay: :hours_before_early_xp_decay
+            earlySubmissionXp: :early_submission_xp,
+            hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay
           })
         end)
     end

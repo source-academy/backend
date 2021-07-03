@@ -18,9 +18,9 @@ defmodule CadetWeb.UserControllerTest do
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
       course = user.latest_viewed
-      insert(:assessment_config, %{order: 2, type: "test type 2", course: course})
-      insert(:assessment_config, %{order: 3, type: "test type 3", course: course})
-      insert(:assessment_config, %{order: 1, type: "test type 1", course: course})
+      config2 = insert(:assessment_config, %{order: 2, type: "test type 2", course: course})
+      config3 = insert(:assessment_config, %{order: 3, type: "test type 3", course: course})
+      config1 = insert(:assessment_config, %{order: 1, type: "test type 1", course: course})
       cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
       another_cr = insert(:course_registration, %{user: user})
       assessment = insert(:assessment, %{is_published: true, course: course})
@@ -103,26 +103,29 @@ defmodule CadetWeb.UserControllerTest do
           %{
             "skippable" => true,
             "type" => "test type 1",
-            "EarlySubmissionXp" => 200,
-            "HoursBeforeEarlyXpDecay" => 48,
             "isAutograded" => true,
-            "isGraded" => true
+            "isGraded" => true,
+            "assessmentConfigId" => config1.id,
+            "earlySubmissionXp" => 200,
+            "hoursBeforeEarlyXpDecay" => 48
           },
           %{
             "skippable" => true,
             "type" => "test type 2",
-            "EarlySubmissionXp" => 200,
-            "HoursBeforeEarlyXpDecay" => 48,
             "isAutograded" => true,
-            "isGraded" => true
+            "isGraded" => true,
+            "assessmentConfigId" => config2.id,
+            "earlySubmissionXp" => 200,
+            "hoursBeforeEarlyXpDecay" => 48
           },
           %{
             "skippable" => true,
             "type" => "test type 3",
-            "EarlySubmissionXp" => 200,
-            "HoursBeforeEarlyXpDecay" => 48,
             "isAutograded" => true,
-            "isGraded" => true
+            "isGraded" => true,
+            "assessmentConfigId" => config3.id,
+            "earlySubmissionXp" => 200,
+            "hoursBeforeEarlyXpDecay" => 48
           }
         ]
       }
