@@ -99,7 +99,7 @@ defmodule CadetWeb.UserControllerTest do
           "sourceVariant" => "default",
           "viewable" => true
         },
-        "assessmentConfigs" => ["test type 1", "test type 2", "test type 3"]
+        "assessmentConfigurations" => ["test type 1", "test type 2", "test type 3"]
       }
 
       assert expected == resp
@@ -122,7 +122,7 @@ defmodule CadetWeb.UserControllerTest do
         },
         "courseRegistration" => nil,
         "courseConfiguration" => nil,
-        "assessmentConfigs" => nil
+        "assessmentConfigurations" => nil
       }
 
       assert expected == resp
@@ -373,7 +373,7 @@ defmodule CadetWeb.UserControllerTest do
           "sourceVariant" => "default",
           "viewable" => true
         },
-        "assessmentConfigs" => []
+        "assessmentConfigurations" => []
       }
 
       assert expected == resp
@@ -389,7 +389,7 @@ defmodule CadetWeb.UserControllerTest do
       expected = %{
         "courseRegistration" => nil,
         "courseConfiguration" => nil,
-        "assessmentConfigs" => nil
+        "assessmentConfigurations" => nil
       }
 
       assert expected == resp
