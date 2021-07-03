@@ -99,7 +99,11 @@ defmodule CadetWeb.UserControllerTest do
           "sourceVariant" => "default",
           "viewable" => true
         },
-        "assessmentConfigurations" => ["test type 1", "test type 2", "test type 3"]
+        "assessmentConfigurations" => [
+          %{"skippable" => true, "type" => "test type 1"},
+          %{"skippable" => true, "type" => "test type 2"},
+          %{"skippable" => true, "type" => "test type 3"}
+        ]
       }
 
       assert expected == resp

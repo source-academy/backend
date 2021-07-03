@@ -11,8 +11,7 @@ defmodule Cadet.Courses.AssessmentConfig do
     field(:order, :integer)
     field(:type, :string)
     field(:is_graded, :boolean, default: true)
-
-    # a graded assessment type will not build solutions and private testcases as hidden to the frontend
+    # a graded type will not build solutions and will build private testcases as hidden
     field(:skippable, :boolean, default: true)
     # only for frontend to determine if a student can go to next question without attempting
     field(:is_autograded, :boolean, default: true)
