@@ -100,9 +100,30 @@ defmodule CadetWeb.UserControllerTest do
           "viewable" => true
         },
         "assessmentConfigurations" => [
-          %{"skippable" => true, "type" => "test type 1"},
-          %{"skippable" => true, "type" => "test type 2"},
-          %{"skippable" => true, "type" => "test type 3"}
+          %{
+            "skippable" => true,
+            "type" => "test type 1",
+            "EarlySubmissionXp" => 200,
+            "HoursBeforeEarlyXpDecay" => 48,
+            "isAutograded" => true,
+            "isGraded" => true
+          },
+          %{
+            "skippable" => true,
+            "type" => "test type 2",
+            "EarlySubmissionXp" => 200,
+            "HoursBeforeEarlyXpDecay" => 48,
+            "isAutograded" => true,
+            "isGraded" => true
+          },
+          %{
+            "skippable" => true,
+            "type" => "test type 3",
+            "EarlySubmissionXp" => 200,
+            "HoursBeforeEarlyXpDecay" => 48,
+            "isAutograded" => true,
+            "isGraded" => true
+          }
         ]
       }
 
