@@ -154,7 +154,7 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     end
   end
 
-  describe "add_users_to_course" do
+  describe "upsert_users_in_course" do
     # Note: roles are already validated in the controller
     test "successful", %{course2: course2} do
       user = insert(:user, %{username: "existing-user"})
@@ -169,7 +169,7 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
         %{username: "admin1", role: "admin"}
       ]
 
-      assert :ok == CourseRegistrations.add_users_to_course(usernames_and_roles, course2.id)
+      assert :ok == CourseRegistrations.upsert_users_in_course(usernames_and_roles, course2.id)
       assert length(CourseRegistrations.get_users(course2.id)) == 5
     end
 
@@ -186,7 +186,7 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
         %{username: "admin1", role: "admin"}
       ]
 
-      assert :ok == CourseRegistrations.add_users_to_course(usernames_and_roles, course2.id)
+      assert :ok == CourseRegistrations.upsert_users_in_course(usernames_and_roles, course2.id)
       assert length(CourseRegistrations.get_users(course2.id)) == 4
     end
   end

@@ -33,7 +33,8 @@ defmodule Cadet.Courses.Group do
   defp validate_role(changeset) do
     leader_id = get_field(changeset, :leader_id)
 
-    if leader_id != nil && Repo.get(CourseRegistration, leader_id).role != :staff do
+    if leader_id != nil &&
+         !Enum.member?([:staff, :admin], Repo.get(CourseRegistration, leader_id).role) do
       add_error(changeset, :leader, "is not a staff")
     else
       changeset

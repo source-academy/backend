@@ -333,11 +333,6 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
     alter table(:groups) do
       remove(:temp_leader_id)
 
-      modify(:leader_id, references(:course_registrations),
-        null: false,
-        from: references(:course_registrations)
-      )
-
       modify(:course_id, references(:courses), null: false, from: references(:courses))
     end
 

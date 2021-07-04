@@ -5,7 +5,7 @@ defmodule CadetWeb.AdminUserController do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts
+  alias Cadet.{Accounts, Courses}
   alias Cadet.Accounts.{CourseRegistrations, CourseRegistration}
   alias Cadet.Auth.Provider
 
@@ -19,61 +19,74 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @add_users_role ~w(admin)a
-  def add_users(conn, %{
+  def upsert_users_and_groups(conn, %{
         "course_id" => course_id,
-        "users" => usernames_and_roles,
+        "users" => usernames_roles_groups,
         "provider" => provider
       }) do
     %{role: admin_role} = conn.assigns.course_reg
 
-    # Note: Usernames from frontend have not been namespaced yet
-    with {:validate_role, true} <- {:validate_role, admin_role in @add_users_role},
-         {:validate_provider, true} <-
-           {:validate_provider,
-            Map.has_key?(Application.get_env(:cadet, :identity_providers, %{}), provider)},
-         {:atomify_keys, usernames_and_roles} <-
-           {:atomify_keys,
-            Enum.map(usernames_and_roles, fn x ->
-              for({key, val} <- x, into: %{}, do: {String.to_atom(key), val})
-            end)},
-         {:validate_usernames, true} <-
-           {:validate_usernames,
-            Enum.reduce(usernames_and_roles, true, fn x, acc ->
-              acc and Map.has_key?(x, :username) and is_binary(x.username) and x.username != ""
-            end)},
-         {:validate_roles, true} <-
-           {:validate_roles,
-            Enum.reduce(usernames_and_roles, true, fn x, acc ->
-              acc and Map.has_key?(x, :role) and
-                String.to_atom(x.role) in Cadet.Accounts.Role.__enums__()
-            end)},
-         {:namespace, usernames_and_roles} <-
-           {:namespace,
-            Enum.map(usernames_and_roles, fn x ->
-              %{x | username: Provider.namespace(x.username, provider)}
-            end)} do
-      case Accounts.CourseRegistrations.add_users_to_course(usernames_and_roles, course_id) do
-        :ok ->
+    {:ok, conn} =
+      Repo.transaction(fn ->
+        # Note: Usernames from frontend have not been namespaced yet
+        with {:validate_role, true} <- {:validate_role, admin_role in @add_users_role},
+             {:validate_provider, true} <-
+               {:validate_provider,
+                Map.has_key?(Application.get_env(:cadet, :identity_providers, %{}), provider)},
+             {:atomify_keys, usernames_roles_groups} <-
+               {:atomify_keys,
+                Enum.map(usernames_roles_groups, fn x ->
+                  for({key, val} <- x, into: %{}, do: {String.to_atom(key), val})
+                end)},
+             {:validate_usernames, true} <-
+               {:validate_usernames,
+                Enum.reduce(usernames_roles_groups, true, fn x, acc ->
+                  acc and Map.has_key?(x, :username) and is_binary(x.username) and
+                    x.username != ""
+                end)},
+             {:validate_roles, true} <-
+               {:validate_roles,
+                Enum.reduce(usernames_roles_groups, true, fn x, acc ->
+                  acc and Map.has_key?(x, :role) and
+                    String.to_atom(x.role) in Cadet.Accounts.Role.__enums__()
+                end)},
+             {:namespace, usernames_roles_groups} <-
+               {:namespace,
+                Enum.map(usernames_roles_groups, fn x ->
+                  %{x | username: Provider.namespace(x.username, provider)}
+                end)},
+             {:upsert_users, :ok} <-
+               {:upsert_users,
+                Accounts.CourseRegistrations.upsert_users_in_course(
+                  usernames_roles_groups,
+                  course_id
+                )},
+             {:upsert_groups, :ok} <-
+               {:upsert_groups,
+                Courses.upsert_groups_in_course(usernames_roles_groups, course_id)} do
           text(conn, "OK")
+        else
+          {:validate_role, false} ->
+            conn |> put_status(:forbidden) |> text("User is not permitted to add users")
 
-        {:error, {status, message}} ->
-          conn
-          |> put_status(status)
-          |> text(message)
-      end
-    else
-      {:validate_role, false} ->
-        conn |> put_status(:forbidden) |> text("User is not permitted to add users")
+          {:validate_provider, false} ->
+            conn |> put_status(:bad_request) |> text("Invalid authentication provider")
 
-      {:validate_provider, false} ->
-        conn |> put_status(:bad_request) |> text("Invalid authentication provider")
+          {:validate_usernames, false} ->
+            conn |> put_status(:bad_request) |> text("Invalid username(s) provided")
 
-      {:validate_usernames, false} ->
-        conn |> put_status(:bad_request) |> text("Invalid username(s) provided")
+          {:validate_roles, false} ->
+            conn |> put_status(:bad_request) |> text("Invalid role(s) provided")
 
-      {:validate_roles, false} ->
-        conn |> put_status(:bad_request) |> text("Invalid role(s) provided")
-    end
+          {:upsert_users, {:error, {status, message}}} ->
+            conn |> put_status(status) |> text(message)
+
+          {:upsert_groups, {:error, {status, message}}} ->
+            conn |> put_status(status) |> text(message)
+        end
+      end)
+
+    conn
   end
 
   @update_role_roles ~w(admin)a

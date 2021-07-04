@@ -3,7 +3,7 @@ defmodule Cadet.CoursesTest do
 
   alias Cadet.{Courses, Repo}
   alias Cadet.Accounts.{CourseRegistration, User}
-  alias Cadet.Courses.{Course, Sourcecast, SourcecastUpload}
+  alias Cadet.Courses.{Course, Group, Sourcecast, SourcecastUpload}
 
   describe "create course config" do
     test "succeeds" do
@@ -381,6 +381,64 @@ defmodule Cadet.CoursesTest do
     end
   end
 
+  describe "upsert_groups_in_course" do
+    setup do
+      course = insert(:course)
+      existing_group_leader = insert(:course_registration, %{course: course, role: :staff})
+
+      _existing_group =
+        insert(:group, %{name: "Group1", course: course, leader: existing_group_leader})
+
+      {:ok, course: course}
+    end
+
+    test "succeeds", %{course: course} do
+      student1 = insert(:course_registration, %{course: course, group: nil, role: :student})
+      student2 = insert(:course_registration, %{course: course, group: nil, role: :student})
+      student3 = insert(:course_registration, %{course: course, group: nil, role: :student})
+      staff1 = insert(:course_registration, %{course: course, group: nil, role: :staff})
+      staff2 = insert(:course_registration, %{course: course, group: nil, role: :staff})
+      admin1 = insert(:course_registration, %{course: course, group: nil, role: :admin})
+      admin2 = insert(:course_registration, %{course: course, group: nil, role: :admin})
+
+      # Some entries do not have group specified
+      usernames_and_groups = [
+        %{username: student1.user.username, group: "Group1"},
+        %{username: student2.user.username, group: "Group2"},
+        %{username: student3.user.username},
+        %{username: staff1.user.username, group: "Group1"},
+        %{username: staff2.user.username},
+        %{username: admin1.user.username, group: "Group2"},
+        %{username: admin2.user.username}
+      ]
+
+      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course.id)
+
+      # Check that Group2 was created
+      assert length(Group |> where(course_id: ^course.id) |> Repo.all()) == 2
+
+      # Check that leaders were assigned/ updated correctly
+      group1 = Group |> where(course_id: ^course.id) |> where(name: "Group1") |> Repo.one()
+      group2 = Group |> where(course_id: ^course.id) |> where(name: "Group2") |> Repo.one()
+      assert group1 |> Map.fetch!(:leader_id) == staff1.id
+      assert group2 |> Map.fetch!(:leader_id) == admin1.id
+
+      # Check that students were assigned to the correct groups
+      assert CourseRegistration |> where(id: ^student1.id) |> Repo.one() |> Map.fetch!(:group_id) ==
+               group1.id
+
+      assert CourseRegistration |> where(id: ^student2.id) |> Repo.one() |> Map.fetch!(:group_id) ==
+               group2.id
+
+      # Check that entries without group are 'ignored'
+      assert CourseRegistration |> where(id: ^student3.id) |> Repo.one() |> Map.fetch!(:group_id) ==
+               nil
+
+      assert length(Group |> where(leader_id: ^staff2.id) |> Repo.all()) == 0
+      assert length(Group |> where(leader_id: ^admin2.id) |> Repo.all()) == 0
+    end
+  end
+
   describe "Sourcecast" do
     setup do
       on_exit(fn -> File.rm_rf!("uploads/test/sourcecasts") end)
@@ -414,29 +472,31 @@ defmodule Cadet.CoursesTest do
     end
   end
 
-  # describe "get_or_create_group" do
-  #   test "existing group" do
-  #     group = insert(:group)
+  describe "get_or_create_group" do
+    test "existing group" do
+      course = insert(:course)
+      group = insert(:group, %{course: course})
 
-  #     {:ok, group_db} = Courses.get_or_create_group(group.name)
+      {:ok, group_db} = Courses.get_or_create_group(group.name, course.id)
 
-  #     assert group_db.id == group.id
-  #     assert group_db.leader_id == group.leader_id
-  #   end
+      assert group_db.id == group.id
+      assert group_db.leader_id == group.leader_id
+    end
 
-  #   test "non-existent group" do
-  #     group_name = params_for(:group).name
+    test "non-existent group" do
+      course = insert(:course)
+      group_name = params_for(:group).name
 
-  #     {:ok, _} = Courses.get_or_create_group(group_name)
+      {:ok, _} = Courses.get_or_create_group(group_name, course.id)
 
-  #     group_db =
-  #       Group
-  #       |> where(name: ^group_name)
-  #       |> Repo.one()
+      group_db =
+        Group
+        |> where(name: ^group_name)
+        |> Repo.one()
 
-  #     refute is_nil(group_db)
-  #   end
-  # end
+      refute is_nil(group_db)
+    end
+  end
 
   # describe "insert_or_update_group" do
   #   test "existing group" do

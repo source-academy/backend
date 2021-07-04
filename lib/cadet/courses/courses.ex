@@ -175,18 +175,63 @@ defmodule Cadet.Courses do
     end
   end
 
+  def upsert_groups_in_course(usernames_and_groups, course_id) do
+    usernames_and_groups
+    |> Enum.reduce_while(nil, fn %{username: username} = entry, _acc ->
+      with {:ok, groupname} <- Map.fetch(entry, :group) do
+        case upsert_groups_in_course_helper(username, course_id, groupname) do
+          {:ok, _} -> {:cont, :ok}
+          {:error, changeset} -> {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
+        end
+      else
+        # If no group is specified, continue reduction
+        :error -> {:cont, :ok}
+      end
+    end)
+  end
+
+  defp upsert_groups_in_course_helper(username, course_id, groupname) do
+    with {:get_group, {:ok, group}} <- {:get_group, get_or_create_group(groupname, course_id)},
+         {:get_course_reg, %{role: role} = course_reg} <-
+           {:get_course_reg,
+            CourseRegistration
+            |> where(
+              user_id: ^(User |> where(username: ^username) |> Repo.one() |> Map.fetch!(:id))
+            )
+            |> where(course_id: ^course_id)
+            |> Repo.one()} do
+      # It is ok to assume that user course registions already exist, as they would have been created
+      # in the admin_user_controller before calling this function
+      case role do
+        # If student, update his course registration
+        :student ->
+          course_reg
+          |> CourseRegistration.changeset(%{group_id: group.id})
+          |> Repo.update()
+
+        # If admin or staff, set them as group leader
+        _ ->
+          group
+          |> Group.changeset(%{leader_id: course_reg.id})
+          |> Repo.update()
+      end
+    end
+  end
+
   @doc """
-  Get a group based on the group name or create one if it doesn't exist
+  Get a group based on the group name and course id or create one if it doesn't exist
   """
-  @spec get_or_create_group(String.t()) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
-  def get_or_create_group(name) when is_binary(name) do
+  @spec get_or_create_group(String.t(), integer()) ::
+          {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
+  def get_or_create_group(name, course_id) when is_binary(name) and is_ecto_id(course_id) do
     Group
     |> where(name: ^name)
+    |> where(course_id: ^course_id)
     |> Repo.one()
     |> case do
       nil ->
         %Group{}
-        |> Group.changeset(%{name: name})
+        |> Group.changeset(%{name: name, course_id: course_id})
         |> Repo.insert()
 
       group ->
@@ -194,23 +239,23 @@ defmodule Cadet.Courses do
     end
   end
 
-  @doc """
-  Updates a group based on the group name or create one if it doesn't exist
-  """
-  @spec insert_or_update_group(map()) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
-  def insert_or_update_group(params = %{name: name}) when is_binary(name) do
-    Group
-    |> where(name: ^name)
-    |> Repo.one()
-    |> case do
-      nil ->
-        Group.changeset(%Group{}, params)
+  # @doc """
+  # Updates a group based on the group name or create one if it doesn't exist
+  # """
+  # @spec insert_or_update_group(map()) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
+  # def insert_or_update_group(params = %{name: name}) when is_binary(name) do
+  #   Group
+  #   |> where(name: ^name)
+  #   |> Repo.one()
+  #   |> case do
+  #     nil ->
+  #       Group.changeset(%Group{}, params)
 
-      group ->
-        Group.changeset(group, params)
-    end
-    |> Repo.insert_or_update()
-  end
+  #     group ->
+  #       Group.changeset(group, params)
+  #   end
+  #   |> Repo.insert_or_update()
+  # end
 
   # @doc """
   # Reassign a student to a discussion group

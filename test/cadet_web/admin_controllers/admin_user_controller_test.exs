@@ -6,7 +6,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
   alias CadetWeb.AdminUserController
   alias Cadet.Repo
-  alias Cadet.Courses.Course
+  alias Cadet.Courses.{Course, Group}
   alias Cadet.Accounts.CourseRegistration
 
   test "swagger" do
@@ -84,22 +84,23 @@ defmodule CadetWeb.AdminUserControllerTest do
 
   describe "PUT /v2/courses/{course_id}/admin/users" do
     @tag authenticate: :admin
-    test "successfully namespaces and inserts users", %{conn: conn} do
+    test "successfully namespaces and inserts users, and assign groups", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
       user = insert(:user, %{username: "test/existing-user"})
       insert(:course_registration, %{course: course, user: user})
 
       assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
+      assert Group |> Repo.all() |> Enum.count() == 0
 
       params = %{
         users: [
-          %{"username" => "existing-user", "role" => "student"},
+          %{"username" => "existing-user", "role" => "student", "group" => "group1"},
           %{"username" => "student1", "role" => "student"},
-          %{"username" => "student2", "role" => "student"},
-          %{"username" => "student3", "role" => "student"},
-          %{"username" => "staff", "role" => "staff"},
-          %{"username" => "admin", "role" => "admin"}
+          %{"username" => "student2", "role" => "student", "group" => "group2"},
+          %{"username" => "student3", "role" => "student", "group" => "group2"},
+          %{"username" => "staff", "role" => "staff", "group" => "group1"},
+          %{"username" => "admin", "role" => "admin", "group" => "group2"}
         ],
         provider: "test"
       }
@@ -108,7 +109,11 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       assert response(resp, 200) == "OK"
 
+      # Users inserted
       assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 7
+
+      # Groups created
+      assert Group |> Repo.all() |> Enum.count() == 2
     end
 
     @tag authenticate: :admin
@@ -122,12 +127,12 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         users: [
-          %{"username" => "existing-user", "role" => "student"},
+          %{"username" => "existing-user", "role" => "student", "group" => "group1"},
           %{"username" => "student1", "role" => "student"},
-          %{"username" => "student2", "role" => "student"},
-          %{"username" => "student2", "role" => "student"},
-          %{"username" => "staff", "role" => "staff"},
-          %{"username" => "admin", "role" => "admin"}
+          %{"username" => "student2", "role" => "student", "group" => "group2"},
+          %{"username" => "student2", "role" => "student", "group" => "group2"},
+          %{"username" => "staff", "role" => "staff", "group" => "group1"},
+          %{"username" => "admin", "role" => "admin", "group" => "group2"}
         ],
         provider: "test"
       }
