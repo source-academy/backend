@@ -146,6 +146,10 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           })
           |> Repo.insert()
 
+        # Namespace existing usernames
+        from(u in "users", update: [set: [username: fragment("? || ? ", "luminus/", u.username)]])
+        |> Repo.update_all([])
+
         # Create course registrations for existing users
         from(u in "users", select: {u.id, u.role, u.group_id, u.game_states})
         |> Repo.all()
