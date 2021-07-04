@@ -210,8 +210,8 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> AssessmentConfig.changeset(%{
             type: assessment_type,
             course_id: course.id,
-            is_graded: assessment_type in ["Missions", "Quests", "Contests"],
-            skippable: assessment_type == "Paths",
+            is_graded: assessment_type in ["Missions", "Quests", "Contests", "Others"],
+            skippable: assessment_type != "Paths",
             is_autograded: assessment_type != "Contests",
             early_submission_xp: 200,
             hours_before_early_xp_decay: 48
