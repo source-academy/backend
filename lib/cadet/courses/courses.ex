@@ -18,6 +18,9 @@ defmodule Cadet.Courses do
     SourcecastUpload
   }
 
+  alias Cadet.Assessments
+  alias Cadet.Assessments.Assessment
+
   @doc """
   Creates a new course configuration, course registration, and sets
   the user's latest course id to the newly created course.
@@ -164,14 +167,24 @@ defmodule Cadet.Courses do
 
   @spec delete_assessment_config(integer(), map()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()} | {:error, :no_such_enrty}
-  def delete_assessment_config(course_id, params = %{assessment_config_id: assessment_config_id}) do
-    AssessmentConfig
-    |> where(course_id: ^course_id)
-    |> where(id: ^assessment_config_id)
-    |> Repo.one()
-    |> case do
-      nil -> {:error, :no_such_enrty}
-      at -> at |> AssessmentConfig.changeset(params) |> Repo.delete()
+  def delete_assessment_config(course_id, %{assessment_config_id: assessment_config_id}) do
+    config =
+      AssessmentConfig
+      |> where(course_id: ^course_id)
+      |> where(id: ^assessment_config_id)
+      |> Repo.one()
+
+    case config do
+      nil ->
+        {:error, :no_such_enrty}
+
+      config ->
+        Assessment
+        |> where(config_id: ^config.id)
+        |> Repo.all()
+        |> Enum.each(fn assessment -> Assessments.delete_assessment(assessment.id) end)
+
+        Repo.delete(config)
     end
   end
 

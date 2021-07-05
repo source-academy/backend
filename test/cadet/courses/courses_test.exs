@@ -4,6 +4,7 @@ defmodule Cadet.CoursesTest do
   alias Cadet.{Courses, Repo}
   alias Cadet.Accounts.{CourseRegistration, User}
   alias Cadet.Courses.{Course, Group, Sourcecast, SourcecastUpload}
+  alias Cadet.Assessments.Assessment
 
   describe "create course config" do
     test "succeeds" do
@@ -356,7 +357,9 @@ defmodule Cadet.CoursesTest do
     test "succeeds" do
       course = insert(:course)
       config = insert(:assessment_config, %{order: 1, course: course})
+      assessment = insert(:assessment, %{course: course, config: config})
       old_configs = Courses.get_assessment_configs(course.id)
+      refute Assessment |> Repo.get(assessment.id) |> is_nil()
 
       params = %{
         assessment_config_id: config.id
@@ -367,6 +370,7 @@ defmodule Cadet.CoursesTest do
       new_configs = Courses.get_assessment_configs(course.id)
       assert length(old_configs) == 1
       assert new_configs == []
+      assert Assessment |> Repo.get(assessment.id) |> is_nil()
     end
 
     test "error" do
