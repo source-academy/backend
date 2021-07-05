@@ -386,56 +386,90 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       existing_group_leader = insert(:course_registration, %{course: course, role: :staff})
 
-      _existing_group =
-        insert(:group, %{name: "Group1", course: course, leader: existing_group_leader})
+      existing_group =
+        insert(:group, %{name: "Existing Group", course: course, leader: existing_group_leader})
 
-      {:ok, course: course}
+      existing_student =
+        insert(:course_registration, %{course: course, group: existing_group, role: :student})
+
+      {:ok,
+       course: course,
+       existing_group: existing_group,
+       existing_group_leader: existing_group_leader,
+       existing_student: existing_student}
     end
 
-    test "succeeds", %{course: course} do
-      student1 = insert(:course_registration, %{course: course, group: nil, role: :student})
-      student2 = insert(:course_registration, %{course: course, group: nil, role: :student})
-      student3 = insert(:course_registration, %{course: course, group: nil, role: :student})
-      staff1 = insert(:course_registration, %{course: course, group: nil, role: :staff})
-      staff2 = insert(:course_registration, %{course: course, group: nil, role: :staff})
-      admin1 = insert(:course_registration, %{course: course, group: nil, role: :admin})
-      admin2 = insert(:course_registration, %{course: course, group: nil, role: :admin})
+    test "succeeds in upserting existing groups", %{
+      course: course,
+      existing_group: existing_group,
+      existing_group_leader: existing_group_leader,
+      existing_student: existing_student
+    } do
+      student = insert(:course_registration, %{course: course, group: nil, role: :student})
+      admin = insert(:course_registration, %{course: course, group: nil, role: :admin})
 
-      # Some entries do not have group specified
       usernames_and_groups = [
-        %{username: student1.user.username, group: "Group1"},
-        %{username: student2.user.username, group: "Group2"},
-        %{username: student3.user.username},
-        %{username: staff1.user.username, group: "Group1"},
-        %{username: staff2.user.username},
-        %{username: admin1.user.username, group: "Group2"},
-        %{username: admin2.user.username}
+        %{username: existing_student.user.username, group: "Group1"},
+        %{username: admin.user.username, group: "Group2"},
+        %{username: student.user.username, group: "Group2"},
+        %{username: existing_group_leader.user.username, group: "Group1"}
       ]
 
       assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course.id)
 
-      # Check that Group2 was created
-      assert length(Group |> where(course_id: ^course.id) |> Repo.all()) == 2
+      # Check that Group1 and Group2 were created
+      assert length(Group |> where(course_id: ^course.id) |> Repo.all()) == 3
 
       # Check that leaders were assigned/ updated correctly
+      assert is_nil(
+               Group
+               |> where(id: ^existing_group.id)
+               |> Repo.one()
+               |> Map.fetch!(:leader_id)
+             )
+
       group1 = Group |> where(course_id: ^course.id) |> where(name: "Group1") |> Repo.one()
       group2 = Group |> where(course_id: ^course.id) |> where(name: "Group2") |> Repo.one()
-      assert group1 |> Map.fetch!(:leader_id) == staff1.id
-      assert group2 |> Map.fetch!(:leader_id) == admin1.id
+      assert group1 |> Map.fetch!(:leader_id) == existing_group_leader.id
+      assert group2 |> Map.fetch!(:leader_id) == admin.id
 
       # Check that students were assigned to the correct groups
-      assert CourseRegistration |> where(id: ^student1.id) |> Repo.one() |> Map.fetch!(:group_id) ==
+      assert CourseRegistration
+             |> where(id: ^existing_student.id)
+             |> Repo.one()
+             |> Map.fetch!(:group_id) ==
                group1.id
 
-      assert CourseRegistration |> where(id: ^student2.id) |> Repo.one() |> Map.fetch!(:group_id) ==
+      assert CourseRegistration |> where(id: ^student.id) |> Repo.one() |> Map.fetch!(:group_id) ==
                group2.id
+    end
 
-      # Check that entries without group are 'ignored'
-      assert CourseRegistration |> where(id: ^student3.id) |> Repo.one() |> Map.fetch!(:group_id) ==
-               nil
+    test "succeeds (removes user from existing groups when group is not specified)", %{
+      course: course,
+      existing_group: existing_group,
+      existing_group_leader: existing_group_leader,
+      existing_student: existing_student
+    } do
+      usernames_and_groups = [
+        %{username: existing_student.user.username},
+        %{username: existing_group_leader.user.username}
+      ]
 
-      assert length(Group |> where(leader_id: ^staff2.id) |> Repo.all()) == 0
-      assert length(Group |> where(leader_id: ^admin2.id) |> Repo.all()) == 0
+      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course.id)
+
+      assert is_nil(
+               Group
+               |> where(id: ^existing_group.id)
+               |> Repo.one()
+               |> Map.fetch!(:leader_id)
+             )
+
+      assert is_nil(
+               CourseRegistration
+               |> where(id: ^existing_student.id)
+               |> Repo.one()
+               |> Map.fetch!(:group_id)
+             )
     end
   end
 

@@ -178,14 +178,18 @@ defmodule Cadet.Courses do
   def upsert_groups_in_course(usernames_and_groups, course_id) do
     usernames_and_groups
     |> Enum.reduce_while(nil, fn %{username: username} = entry, _acc ->
-      with {:ok, groupname} <- Map.fetch(entry, :group) do
-        case upsert_groups_in_course_helper(username, course_id, groupname) do
-          {:ok, _} -> {:cont, :ok}
-          {:error, changeset} -> {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
-        end
-      else
-        # If no group is specified, continue reduction
-        :error -> {:cont, :ok}
+      case Map.fetch(entry, :group) do
+        {:ok, groupname} ->
+          # Add users to group
+          upsert_groups_in_course_helper(username, course_id, groupname)
+
+        :error ->
+          # Delete users from group
+          upsert_groups_in_course_helper(username, course_id)
+      end
+      |> case do
+        {:ok, _} -> {:cont, :ok}
+        {:error, changeset} -> {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
       end
     end)
   end
@@ -209,12 +213,52 @@ defmodule Cadet.Courses do
           |> CourseRegistration.changeset(%{group_id: group.id})
           |> Repo.update()
 
-        # If admin or staff, set them as group leader
+        # If admin or staff, remove their previous group assignment and set them as group leader
         _ ->
+          remove_staff_from_group(course_id, course_reg.id)
+
           group
           |> Group.changeset(%{leader_id: course_reg.id})
           |> Repo.update()
       end
+    end
+  end
+
+  defp upsert_groups_in_course_helper(username, course_id) do
+    with {:get_course_reg, %{role: role} = course_reg} <-
+           {:get_course_reg,
+            CourseRegistration
+            |> where(
+              user_id: ^(User |> where(username: ^username) |> Repo.one() |> Map.fetch!(:id))
+            )
+            |> where(course_id: ^course_id)
+            |> Repo.one()} do
+      case role do
+        :student ->
+          course_reg
+          |> CourseRegistration.changeset(%{group_id: nil})
+          |> Repo.update()
+
+        _ ->
+          remove_staff_from_group(course_id, course_reg.id)
+          {:ok, nil}
+      end
+    end
+  end
+
+  defp remove_staff_from_group(course_id, leader_id) do
+    Group
+    |> where(course_id: ^course_id)
+    |> where(leader_id: ^leader_id)
+    |> Repo.one()
+    |> case do
+      nil ->
+        nil
+
+      group ->
+        group
+        |> Group.changeset(%{leader_id: nil})
+        |> Repo.update()
     end
   end
 

@@ -146,6 +146,10 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           })
           |> Repo.insert()
 
+        # Namespace existing usernames
+        from(u in "users", update: [set: [username: fragment("? || ? ", "luminus/", u.username)]])
+        |> Repo.update_all([])
+
         # Create course registrations for existing users
         from(u in "users", select: {u.id, u.role, u.group_id, u.game_states})
         |> Repo.all()
@@ -206,8 +210,8 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> AssessmentConfig.changeset(%{
             type: assessment_type,
             course_id: course.id,
-            is_graded: assessment_type in ["Missions", "Quests", "Contests"],
-            skippable: assessment_type == "Paths",
+            is_graded: assessment_type in ["Missions", "Quests", "Contests", "Others"],
+            skippable: assessment_type != "Paths",
             is_autograded: assessment_type != "Contests",
             early_submission_xp: 200,
             hours_before_early_xp_decay: 48
