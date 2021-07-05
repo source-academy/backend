@@ -9,7 +9,8 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
-      student: &transform_map_for_view(&1.submission.student, [:name, :id]),
+      student:
+        &transform_map_for_view(&1.submission.student, %{name: fn st -> st.user.name end, id: :id}),
       question: &build_grading_question/1,
       solution: &(&1.question.question["solution"] || ""),
       grade: &build_grade/1
@@ -51,8 +52,6 @@ defmodule CadetWeb.AdminGradingView do
     transform_map_for_view(answer, %{
       grader: grader_builder(grader),
       gradedAt: graded_at_builder(grader),
-      grade: :grade,
-      adjustment: :adjustment,
       xp: :xp,
       xpAdjustment: :xp_adjustment,
       comments: :comments

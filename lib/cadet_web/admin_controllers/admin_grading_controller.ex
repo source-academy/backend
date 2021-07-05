@@ -5,11 +5,11 @@ defmodule CadetWeb.AdminGradingController do
   alias Cadet.Assessments
 
   def index(conn, %{"group" => group}) when group in ["true", "false"] do
-    user = conn.assigns[:current_user]
+    course_reg = conn.assigns[:course_reg]
 
     group = String.to_atom(group)
 
-    case Assessments.all_submissions_by_grader_for_index(user, group) do
+    case Assessments.all_submissions_by_grader_for_index(course_reg, group) do
       {:ok, submissions} ->
         conn
         |> put_status(:ok)
@@ -43,19 +43,14 @@ defmodule CadetWeb.AdminGradingController do
         }
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
-    user = conn.assigns[:current_user]
+    course_reg = conn.assigns[:course_reg]
 
-    grading =
-      if raw_grading["xpAdjustment"] do
-        Map.put(raw_grading, "xp_adjustment", raw_grading["xpAdjustment"])
-      else
-        raw_grading
-      end
+    grading = raw_grading |> snake_casify_string_keys()
 
     case Assessments.update_grading_info(
            %{submission_id: submission_id, question_id: question_id},
            grading,
-           user
+           course_reg
          ) do
       {:ok, _} ->
         text(conn, "OK")
@@ -74,9 +69,9 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   def unsubmit(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
-    user = conn.assigns[:current_user]
+    course_reg = conn.assigns[:course_reg]
 
-    case Assessments.unsubmit_submission(submission_id, user) do
+    case Assessments.unsubmit_submission(submission_id, course_reg) do
       {:ok, nil} ->
         text(conn, "OK")
 
@@ -94,9 +89,9 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   def autograde_submission(conn, %{"submissionid" => submission_id}) do
-    user = conn.assigns[:current_user]
+    course_reg = conn.assigns[:course_reg]
 
-    case Assessments.force_regrade_submission(submission_id, user) do
+    case Assessments.force_regrade_submission(submission_id, course_reg) do
       {:ok, nil} ->
         send_resp(conn, :no_content, "")
 
@@ -108,9 +103,9 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   def autograde_answer(conn, %{"submissionid" => submission_id, "questionid" => question_id}) do
-    user = conn.assigns[:current_user]
+    course_reg = conn.assigns[:course_reg]
 
-    case Assessments.force_regrade_answer(submission_id, question_id, user) do
+    case Assessments.force_regrade_answer(submission_id, question_id, course_reg) do
       {:ok, nil} ->
         send_resp(conn, :no_content, "")
 
@@ -121,8 +116,8 @@ defmodule CadetWeb.AdminGradingController do
     end
   end
 
-  def grading_summary(conn, _params) do
-    case Assessments.get_group_grading_summary() do
+  def grading_summary(conn, %{"course_id" => course_id}) do
+    case Assessments.get_group_grading_summary(course_id) do
       {:ok, summary} ->
         render(conn, "grading_summary.json", summary: summary)
     end

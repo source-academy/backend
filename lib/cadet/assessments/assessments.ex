@@ -707,11 +707,9 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # :TODO update avenger_of? call
-  # def unsubmit_submission(submission_id, user = %User{id: user_id, role: role})
   def unsubmit_submission(
         submission_id,
-        cr = %CourseRegistration{user_id: user_id, role: role}
+        cr = %CourseRegistration{id: course_reg_id, role: role}
       )
       when is_ecto_id(submission_id) do
     submission =
@@ -720,7 +718,7 @@ defmodule Cadet.Assessments do
       |> preload([_, a], assessment: a)
       |> Repo.get(submission_id)
 
-    bypass = role in @bypass_closed_roles and submission.student_id == user_id
+    bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
          {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
@@ -737,7 +735,7 @@ defmodule Cadet.Assessments do
           |> Submission.changeset(%{
             status: :attempted,
             xp_bonus: 0,
-            unsubmitted_by_id: user_id,
+            unsubmitted_by_id: course_reg_id,
             unsubmitted_at: Timex.now()
           })
           |> Repo.update()
@@ -772,7 +770,7 @@ defmodule Cadet.Assessments do
 
       Cadet.Accounts.Notifications.handle_unsubmit_notifications(
         submission.assessment.id,
-        Cadet.Accounts.get_user(submission.student_id)
+        Repo.get(CourseRegistration, submission.student_id)
       )
 
       {:ok, nil}
@@ -1083,16 +1081,16 @@ defmodule Cadet.Assessments do
   The return value is {:ok, submissions} if no errors, else it is {:error,
   {:unauthorized, "Forbidden."}}
   """
-  @spec all_submissions_by_grader_for_index(%User{}) ::
+  @spec all_submissions_by_grader_for_index(%CourseRegistration{}) ::
           {:ok, String.t()}
-  def all_submissions_by_grader_for_index(grader = %User{}, group_only \\ false) do
+  def all_submissions_by_grader_for_index(grader = %CourseRegistration{}, group_only \\ false) do
     show_all = not group_only
 
     group_where =
       if show_all,
         do: "",
         else:
-          "where s.student_id in (select u.id from users u inner join groups g on u.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
+          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
 
     params = if show_all, do: [], else: [grader.id]
 
@@ -1107,13 +1105,11 @@ defmodule Cadet.Assessments do
                s.id,
                s.status,
                s."unsubmittedAt",
-               s.grade,
-               s.adjustment,
                s.xp,
                s."xpAdjustment",
                s."xpBonus",
                s."gradedCount",
-               assts.jsn AS assessment,
+               assts.jsn as assessment,
                students.jsn as student,
                unsubmitters.jsn as "unsubmittedBy"
              from
@@ -1124,8 +1120,6 @@ defmodule Cadet.Assessments do
                  s.status,
                  s.unsubmitted_at as "unsubmittedAt",
                  s.unsubmitted_by_id,
-                 sum(ans.grade) as grade,
-                 sum(ans.adjustment) as adjustment,
                  sum(ans.xp) as xp,
                  sum(ans.xp_adjustment) as "xpAdjustment",
                  s.xp_bonus as "xpBonus",
@@ -1138,11 +1132,43 @@ defmodule Cadet.Assessments do
              inner join
                (select
                  a.id, to_json(a) as jsn
-               from (select a.id, a.title, a.type, sum(q.max_grade) as "maxGrade", sum(q.max_xp) as "maxXp", count(q.id) as "questionCount" from assessments a left join questions q on a.id = q.assessment_id group by a.id) a) assts on assts.id = s.assessment_id
+               from
+                 (select
+                   a.id,
+                   a.title,
+                   max(ac.type) as "type",
+                   sum(q.max_xp) as "maxXp",
+                   count(q.id) as "questionCount"
+                 from assessments a
+                   left join
+                   questions q on a.id = q.assessment_id
+                   inner join
+                   assessment_configs ac on ac.id = a.config_id
+                 group by a.id) a) assts on assts.id = s.assessment_id
              inner join
-               (select u.id, to_json(u) as jsn from (select u.id, u.name, g.name as "groupName", g.leader_id as "groupLeaderId" from users u left join groups g on g.id = u.group_id) u) students on students.id = s.student_id
+               (select
+                 cr.id, to_json(cr) as jsn
+               from
+                 (select
+                   cr.id,
+                   u.name as "name",
+                   g.name as "groupName",
+                   g.leader_id as "groupLeaderId"
+                 from course_registrations cr
+                   left join
+                   groups g on g.id = cr.group_id
+                   inner join
+                   users u on u.id = cr.user_id) cr) students on students.id = s.student_id
              left join
-               (select u.id, to_json(u) as jsn from (select u.id, u.name from users u) u) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+               (select
+                 cr.id, to_json(cr) as jsn
+               from
+                 (select
+                   cr.id,
+                   u.name
+                 from course_registrations cr
+                   inner join
+                   users u on u.id = cr.user_id) cr) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
            ) q
            """,
            params
@@ -1160,13 +1186,16 @@ defmodule Cadet.Assessments do
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
+      |> join(:inner, [a, ..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
+      |> join(:inner, [a, ..., g], gu in assoc(g, :user))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
       |> join(:inner, [a, ..., s], st in assoc(s, :student))
-      |> preload([_, q, ast, g, s, st],
-        question: {q, assessment: ast},
-        grader: g,
-        submission: {s, student: st}
+      |> join(:inner, [a, ..., st], u in assoc(st, :user))
+      |> preload([_, q, ast, ac, g, gu, s, st, u],
+        question: {q, assessment: {ast, config: ac}},
+        grader: {g, user: gu},
+        submission: {s, student: {st, user: u}}
       )
 
     answers =
@@ -1276,9 +1305,12 @@ defmodule Cadet.Assessments do
     {:error, {:unauthorized, "User is not permitted to grade."}}
   end
 
-  @spec force_regrade_submission(integer() | String.t(), %User{}) ::
+  @spec force_regrade_submission(integer() | String.t(), %CourseRegistration{}) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
-  def force_regrade_submission(submission_id, _requesting_user = %User{id: grader_id})
+  def force_regrade_submission(
+        submission_id,
+        _requesting_user = %CourseRegistration{id: grader_id}
+      )
       when is_ecto_id(submission_id) do
     with {:get, sub} when not is_nil(sub) <- {:get, Repo.get(Submission, submission_id)},
          {:status, true} <- {:status, sub.student_id == grader_id or sub.status == :submitted} do
@@ -1297,12 +1329,16 @@ defmodule Cadet.Assessments do
     {:error, {:forbidden, "User is not permitted to grade."}}
   end
 
-  @spec force_regrade_answer(integer() | String.t(), integer() | String.t(), %User{}) ::
+  @spec force_regrade_answer(
+          integer() | String.t(),
+          integer() | String.t(),
+          %CourseRegistration{}
+        ) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
   def force_regrade_answer(
         submission_id,
         question_id,
-        _requesting_user = %User{id: grader_id}
+        _requesting_user = %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     answer =
@@ -1353,50 +1389,92 @@ defmodule Cadet.Assessments do
   @type group_summary_entry :: %{
           group_name: String.t(),
           leader_name: String.t(),
-          ungraded_missions: integer(),
-          submitted_missions: integer(),
-          ungraded_sidequests: number(),
-          submitted_sidequests: number()
+          ungraded: [map()],
+          submitted: [map()]
+          # ungraded_missions: integer(),
+          # submitted_missions: integer(),
+          # ungraded_sidequests: number(),
+          # submitted_sidequests: number()
         }
 
-  @spec get_group_grading_summary ::
-          {:ok, [group_summary_entry()]}
-  def get_group_grading_summary do
+  @spec get_group_grading_summary(integer()) ::
+          {:ok, [], [group_summary_entry()]}
+  def get_group_grading_summary(course_id) do
     subs =
       Answer
       |> join(:left, [ans], s in Submission, on: s.id == ans.submission_id)
-      |> join(:left, [ans, s], st in User, on: s.student_id == st.id)
+      |> join(:left, [ans, s], st in CourseRegistration, on: s.student_id == st.id)
       |> join(:left, [ans, s, st], a in Assessment, on: a.id == s.assessment_id)
+      |> join(:inner, [ans, s, st, a], ac in AssessmentConfig, on: ac.id == a.config_id)
       |> where(
-        [ans, s, st, a],
+        [ans, s, st, a, ac],
         not is_nil(st.group_id) and s.status == ^:submitted and
-          a.type in ^["mission", "sidequest"]
+          ac.is_graded and a.course_id == ^course_id
       )
-      |> group_by([ans, s, st, a], s.id)
-      |> select([ans, s, st, a], %{
+      |> group_by([ans, s, st, a, ac], s.id)
+      |> select([ans, s, st, a, ac], %{
         group_id: max(st.group_id),
-        type: max(a.type),
+        config_id: max(ac.id),
+        config_type: max(ac.type),
         num_submitted: count(),
         num_ungraded: filter(count(), is_nil(ans.grader_id))
       })
 
-    rows =
+    raw_data =
       subs
       |> subquery()
       |> join(:left, [t], g in Group, on: t.group_id == g.id)
-      |> join(:left, [t, g], l in User, on: l.id == g.leader_id)
-      |> group_by([t, g, l], [t.group_id, g.name, l.name])
-      |> select([t, g, l], %{
+      |> join(:left, [t, g], l in CourseRegistration, on: l.id == g.leader_id)
+      |> join(:left, [t, g, l], lu in User, on: lu.id == l.user_id)
+      |> group_by([t, g, l, lu], [t.group_id, t.config_id, t.config_type, g.name, lu.name])
+      |> select([t, g, l, lu], %{
         group_name: g.name,
-        leader_name: l.name,
-        ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
-        submitted_missions: filter(count(), t.type == "mission"),
-        ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
-        submitted_sidequests: filter(count(), t.type == "sidequest")
+        leader_name: lu.name,
+        config_id: t.config_id,
+        config_type: t.config_type,
+        ungraded: filter(count(), t.num_ungraded > 0),
+        submitted: count()
+        # ungraded: cols |> Enum.map(fn graded_config -> Map.put(graded_config, :ungraded_count, filter(count(), t.config_id == graded_config.id and t.num_ungraded > 0))end),
+        # submitted: cols |> Enum.map(fn graded_config -> Map.put(graded_config, :submitted_count, filter(count(), t.config_id == graded_config.id))end)
+        # ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
+        # submitted_missions: filter(count(), t.type == "mission"),
+        # ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
+        # submitted_sidequests: filter(count(), t.type == "sidequest")
       })
       |> Repo.all()
 
-    {:ok, rows}
+    graded_configs =
+      AssessmentConfig
+      |> where([ac], ac.course_id == ^course_id and ac.is_graded)
+      |> order_by(:order)
+      |> select([ac], %{
+        id: :id,
+        type: :type
+      })
+      |> Repo.all()
+
+    data_by_groups =
+      raw_data
+      |> Enum.reduce(%{}, fn raw, acc ->
+        if Map.has_key?(acc, raw.group_name) do
+          acc
+          |> put_in([raw.group_name, "ungraded_" <> raw.config_type], raw.ungraded)
+          |> put_in([raw.group_name, "submitted_" <> raw.config_type], raw.submitted)
+        else
+          acc
+          |> put_in([raw.group_name], %{})
+          |> put_in([raw.group_name, "group_name"], raw.group_name)
+          |> put_in([raw.group_name, "leader_name"], raw.leader_name)
+          |> put_in([raw.group_name, "ungraded_" <> raw.config_type], raw.ungraded)
+          |> put_in([raw.group_name, "submitted_" <> raw.config_type], raw.submitted)
+        end
+      end)
+
+    # |>
+
+    cols = graded_configs
+    rows = data_by_groups
+    {:ok, cols, rows}
   end
 
   defp create_empty_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
@@ -1444,7 +1522,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # :TODO contest + check voting answer content
   def insert_or_update_voting_answer(submission_id, course_reg_id, question_id, answer_content) do
     set_rank_to_nil =
       SubmissionVotes

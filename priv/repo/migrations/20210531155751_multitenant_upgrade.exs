@@ -71,7 +71,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
 
     alter table(:groups) do
       remove(:mentor_id)
-      add(:leader_id, references(:course_registrations))
+      add(:leader_id, references(:course_registrations), null: true)
       add(:course_id, references(:courses))
     end
 
