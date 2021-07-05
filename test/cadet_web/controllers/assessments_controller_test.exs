@@ -71,6 +71,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "openAt" => format_datetime(&1.open_at),
               "closeAt" => format_datetime(&1.close_at),
               "type" => &1.config.type,
+              "isManuallyGraded" => &1.config.is_manually_graded,
               "coverImage" => &1.cover_picture,
               "maxXp" => 4800,
               "status" => get_assessment_status(course_reg, &1),
@@ -153,6 +154,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "openAt" => format_datetime(&1.open_at),
             "closeAt" => format_datetime(&1.close_at),
             "type" => &1.config.type,
+            "isManuallyGraded" => &1.config.is_manually_graded,
             "coverImage" => &1.cover_picture,
             "maxXp" => 4800,
             "status" => get_assessment_status(student, &1),
@@ -262,6 +264,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "openAt" => format_datetime(&1.open_at),
               "closeAt" => format_datetime(&1.close_at),
               "type" => &1.config.type,
+              "isManuallyGraded" => &1.config.is_manually_graded,
               "coverImage" => &1.cover_picture,
               "maxXp" => 4800,
               "status" => get_assessment_status(course_reg, &1),
@@ -344,7 +347,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
                 "postpend" =>
-                  if not assessment.config.is_graded do
+                  if &1.build_hidden_testcases do
                     &1.question.postpend
                   else
                     ""
@@ -358,7 +361,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                           do: {Atom.to_string(k), v}
                     end
                   ) ++
-                    if not assessment.config.is_graded do
+                    if &1.build_hidden_testcases do
                       Enum.map(
                         &1.question.private,
                         fn testcase ->

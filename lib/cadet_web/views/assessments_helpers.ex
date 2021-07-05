@@ -16,36 +16,26 @@ defmodule CadetWeb.AssessmentsHelpers do
     transform_map_for_view(external_library, [:name, :symbols])
   end
 
-  def build_question_by_assessment_config(
-        %{
-          question: question,
-          assessment_config: assessment_config
-        },
+  def build_question_by_question_config(
+        %{question: question},
         all_testcases? \\ false
       ) do
     Map.merge(
       build_generic_question_fields(%{question: question}),
       build_question_content_by_config(
-        %{
-          question: question,
-          assessment_config: assessment_config
-        },
+        %{question: question},
         all_testcases?
       )
     )
   end
 
-  def build_question_with_answer_and_solution_if_ungraded(%{
-        question: question,
-        assessment: assessment
-      }) do
+  def build_question_with_answer_and_solution_if_ungraded(%{question: question}) do
     components = [
-      build_question_by_assessment_config(%{
-        question: question,
-        assessment_config: assessment.config
+      build_question_by_question_config(%{
+        question: question
       }),
       build_answer_fields_by_question_type(%{question: question}),
-      build_solution_if_ungraded_by_config(%{question: question, assessment: assessment})
+      build_solution_if_ungraded_by_config(%{question: question})
     ]
 
     components
@@ -63,10 +53,9 @@ defmodule CadetWeb.AssessmentsHelpers do
   end
 
   defp build_solution_if_ungraded_by_config(%{
-         question: %{question: question, type: question_type},
-         assessment: %{config: assessment_config}
+         question: %{question: question, type: question_type, show_solution: show_solution}
        }) do
-    if !assessment_config.is_graded do
+    if show_solution do
       solution_getter =
         case question_type do
           :programming -> &Map.get(&1, "solution")
@@ -173,7 +162,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_testcases(%{assessment_config: assessment_config}, all_testcases?) do
+  defp build_testcases(%{build_hidden: build_hidden}, all_testcases?) do
     cond do
       all_testcases? ->
         &Enum.concat(
@@ -182,7 +171,7 @@ defmodule CadetWeb.AssessmentsHelpers do
         )
 
       # build hidden testcases if ungraded
-      !assessment_config.is_graded ->
+      build_hidden ->
         &Enum.concat(
           Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
           Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
@@ -193,10 +182,10 @@ defmodule CadetWeb.AssessmentsHelpers do
     end
   end
 
-  defp build_postpend(%{assessment_config: assessment_config}, all_testcases?) do
-    case {all_testcases?, assessment_config.is_graded} do
+  defp build_postpend(%{build_hidden: build_hidden}, all_testcases?) do
+    case {all_testcases?, build_hidden} do
       {true, _} -> & &1["postpend"]
-      {_, false} -> & &1["postpend"]
+      {_, true} -> & &1["postpend"]
       # Create a 1-arity function to return an empty postpend for non-paths
       _ -> fn _question -> "" end
     end
@@ -204,8 +193,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
   defp build_question_content_by_config(
          %{
-           question: %{question: question, type: question_type},
-           assessment_config: assessment_config
+           question: %{question: question, type: question_type, build_hidden_testcases: build_hidden_testcases}
          },
          all_testcases?
        ) do
@@ -215,8 +203,8 @@ defmodule CadetWeb.AssessmentsHelpers do
           content: "content",
           prepend: "prepend",
           solutionTemplate: "template",
-          postpend: build_postpend(%{assessment_config: assessment_config}, all_testcases?),
-          testcases: build_testcases(%{assessment_config: assessment_config}, all_testcases?)
+          postpend: build_postpend(%{build_hidden: build_hidden_testcases}, all_testcases?),
+          testcases: build_testcases(%{build_hidden: build_hidden_testcases}, all_testcases?)
         })
 
       :mcq ->

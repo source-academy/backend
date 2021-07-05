@@ -1409,7 +1409,7 @@ defmodule Cadet.Assessments do
       |> where(
         [ans, s, st, a, ac],
         not is_nil(st.group_id) and s.status == ^:submitted and
-          ac.is_graded and a.course_id == ^course_id
+          ac.show_grading_summary and a.course_id == ^course_id
       )
       |> group_by([ans, s, st, a, ac], s.id)
       |> select([ans, s, st, a, ac], %{
@@ -1445,7 +1445,7 @@ defmodule Cadet.Assessments do
 
     graded_configs =
       AssessmentConfig
-      |> where([ac], ac.course_id == ^course_id and ac.is_graded)
+      |> where([ac], ac.course_id == ^course_id and ac.show_grading_summary)
       |> order_by(:order)
       |> select([ac], %{
         id: :id,

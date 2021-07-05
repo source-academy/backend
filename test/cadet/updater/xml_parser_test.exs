@@ -17,15 +17,12 @@ defmodule Cadet.Updater.XMLParserTest do
       insert(:assessment_config, %{
         course: course,
         order: 3,
-        skippable: false,
-        is_graded: false,
         type: "path"
       }),
-      insert(:assessment_config, %{course: course, order: 4, is_autograded: false}),
+      insert(:assessment_config, %{course: course, order: 4}),
       insert(:assessment_config, %{
         course: course,
         order: 5,
-        is_graded: false,
         type: "practical"
       })
     ]

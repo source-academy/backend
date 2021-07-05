@@ -117,9 +117,8 @@ defmodule CadetWeb.UserView do
           transform_map_for_view(config, %{
             assessmentConfigId: :id,
             type: :type,
-            skippable: :skippable,
-            isGraded: :is_graded,
-            isAutograded: :is_autograded,
+            displayInDashboard: :show_grading_summary,
+            isManuallyGraded: :is_manually_graded,
             earlySubmissionXp: :early_submission_xp,
             hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay
           })

@@ -88,15 +88,14 @@ defmodule Cadet.Test.Seeds do
         insert(:assessment_config, %{
           course: course1,
           order: 3,
-          skippable: false,
-          is_graded: false,
+          show_grading_summary: false,
+          is_manually_graded: false,
           type: "path"
         }),
-        insert(:assessment_config, %{course: course1, order: 4, is_autograded: false}),
+        insert(:assessment_config, %{course: course1, order: 4}),
         insert(:assessment_config, %{
           course: course1,
           order: 5,
-          is_graded: false,
           type: "practical"
         })
       ]
@@ -143,7 +142,9 @@ defmodule Cadet.Test.Seeds do
         insert(:programming_question, %{
           display_order: id,
           assessment: assessment,
-          max_xp: 1000
+          max_xp: 1000,
+          build_hidden_testcases: assessment.config.type == "path",
+          show_solution: assessment.config.type == "path"
         })
       end)
 
@@ -152,7 +153,9 @@ defmodule Cadet.Test.Seeds do
         insert(:mcq_question, %{
           display_order: id,
           assessment: assessment,
-          max_xp: 500
+          max_xp: 500,
+          build_hidden_testcases: assessment.config.type == "path",
+          show_solution: assessment.config.type == "path"
         })
       end)
 
@@ -161,7 +164,9 @@ defmodule Cadet.Test.Seeds do
         insert(:voting_question, %{
           display_order: id,
           assessment: assessment,
-          max_xp: 100
+          max_xp: 100,
+          build_hidden_testcases: assessment.config.type == "path",
+          show_solution: assessment.config.type == "path"
         })
       end)
 

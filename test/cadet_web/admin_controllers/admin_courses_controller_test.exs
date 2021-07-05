@@ -151,7 +151,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       config2 =
         insert(:assessment_config, %{
-          is_graded: false,
+          show_grading_summary: false,
+          is_manually_graded: false,
           order: 2,
           type: "Mission2",
           course: course
@@ -166,27 +167,24 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         %{
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
-          "isAutograded" => true,
-          "isGraded" => true,
-          "skippable" => true,
+          "displayInDashboard" => true,
+          "isManuallyGraded" => true,
           "type" => "Mission1",
           "assessmentConfigId" => config1.id
         },
         %{
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
-          "isAutograded" => true,
-          "isGraded" => false,
-          "skippable" => true,
+          "displayInDashboard" => false,
+          "isManuallyGraded" => false,
           "type" => "Mission2",
           "assessmentConfigId" => config2.id
         },
         %{
           "earlySubmissionXp" => 200,
           "hoursBeforeEarlyXpDecay" => 48,
-          "isAutograded" => true,
-          "isGraded" => true,
-          "skippable" => true,
+          "displayInDashboard" => true,
+          "isManuallyGraded" => true,
           "type" => "Mission3",
           "assessmentConfigId" => config3.id
         }

@@ -28,9 +28,8 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
       add(:order, :integer, null: true)
       add(:type, :string, null: false)
       add(:course_id, references(:courses), null: false)
-      add(:is_graded, :boolean, null: false, default: true)
-      add(:is_autograded, :boolean, null: false, default: true)
-      add(:skippable, :boolean, null: false, default: true)
+      add(:show_grading_summary, :boolean, null: false, default: true)
+      add(:is_manually_graded, :boolean, null: false, default: true)
       add(:early_submission_xp, :integer, null: false)
       add(:hours_before_early_xp_decay, :integer, null: false)
       timestamps()
@@ -106,6 +105,9 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
 
     alter table(:questions) do
       remove(:max_grade)
+      add(:show_solution, :boolean, null: false, default: false)
+      add(:build_hidden_testcases, :boolean, null: false, default: false)
+      add(:blocking, :boolean, null: false, default: false)
     end
 
     # Update notifications
@@ -203,6 +205,19 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> Repo.update()
         end)
 
+        # update existing questions with new question config
+        from(q in "questions", join: a in "assessments", on: a.id == q.assessment_id, where: a.type == "path", select: {q.id})
+        |> Repo.all()
+        |> Enum.each(fn question ->
+          Question
+          |> Repo.get(question.id)
+          |> Question.changeset(%{
+            show_solution: false,
+            build_hidden_testcases: false,
+            blocking: false})
+          |> Repo.update()
+        end)
+
         # Create Assessment Configurations based on Source Academy Knight
         ["Missions", "Quests", "Paths", "Contests", "Others"]
         |> Enum.each(fn assessment_type ->
@@ -210,9 +225,8 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> AssessmentConfig.changeset(%{
             type: assessment_type,
             course_id: course.id,
-            is_graded: assessment_type in ["Missions", "Quests", "Contests", "Others"],
-            skippable: assessment_type != "Paths",
-            is_autograded: assessment_type != "Contests",
+            show_grading_summary: assessment_type in ["Missions", "Quests"],
+            is_manually_graded: assessment_type != "Paths",
             early_submission_xp: 200,
             hours_before_early_xp_decay: 48
           })

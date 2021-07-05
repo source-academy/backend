@@ -17,6 +17,7 @@ defmodule CadetWeb.AssessmentsView do
       openAt: &format_datetime(&1.open_at),
       closeAt: &format_datetime(&1.close_at),
       type: & &1.config.type,
+      isManuallyGraded: & &1.config.is_manually_graded,
       story: :story,
       number: :number,
       reading: :reading,
@@ -47,8 +48,7 @@ defmodule CadetWeb.AssessmentsView do
         questions:
           &Enum.map(&1.questions, fn question ->
             build_question_with_answer_and_solution_if_ungraded(%{
-              question: question,
-              assessment: assessment
+              question: question
             })
           end)
       }

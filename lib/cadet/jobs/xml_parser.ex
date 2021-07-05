@@ -145,11 +145,15 @@ defmodule Cadet.Updater.XMLParser do
         type: ~x"./@type"o |> transform_by(&process_charlist/1),
         # max_grade: ~x"./@maxgrade"oi,
         max_xp: ~x"./@maxxp"oi,
+        show_solution: ~x"./@showsolution"os,
+        build_hidden_testcases: ~x"./@buildhiddentestcases"os,
+        blocking: ~x"./@blocking"os,
         entity: ~x"."
       )
       |> Enum.map(fn param ->
         with {:no_missing_attr?, true} <-
                {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_xp])},
+             question when is_map(question) <- process_question_booleans(param),
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
                process_question_library(question, default_library, default_grading_library),
@@ -177,6 +181,15 @@ defmodule Cadet.Updater.XMLParser do
     Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset)}")
 
     Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
+  end
+
+  @spec process_question_booleans(map()) :: map()
+  defp process_question_booleans(question) do
+    flags = [:show_solution, :build_hidden_testcases, :blocking]
+    flags
+    |> Enum.reduce(question, fn flag, acc ->
+      put_in(acc[flag], acc[flag] == "true")
+    end)
   end
 
   @spec process_question_by_question_type(map()) :: map() | {:error, String.t()}
