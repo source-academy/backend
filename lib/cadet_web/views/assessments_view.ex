@@ -47,9 +47,12 @@ defmodule CadetWeb.AssessmentsView do
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         questions:
           &Enum.map(&1.questions, fn question ->
-            build_question_with_answer_and_solution_if_ungraded(%{
-              question: question
-            })
+            map =
+              build_question_with_answer_and_solution_if_ungraded(%{
+                question: question
+              })
+
+            map
           end)
       }
     )

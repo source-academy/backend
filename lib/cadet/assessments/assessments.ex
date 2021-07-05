@@ -691,7 +691,7 @@ defmodule Cadet.Assessments do
   def finalise_submission(submission = %Submission{}) do
     with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
-      # TODO: Couple with update_submission_status_and_xp_bonus to ensure notification is sent
+      # Couple with update_submission_status_and_xp_bonus to ensure notification is sent
       Notifications.write_notification_when_student_submits(submission)
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)

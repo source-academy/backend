@@ -6,8 +6,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   import Ecto.Query
 
-  alias Cadet.Repo
-  alias Cadet.Accounts
+  alias Cadet.{Repo, Accounts}
   alias Cadet.Accounts.{User, CourseRegistration}
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Courses.AssessmentConfig

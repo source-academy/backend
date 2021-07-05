@@ -191,7 +191,9 @@ defmodule Cadet.Courses do
   def upsert_groups_in_course(usernames_and_groups, course_id) do
     usernames_and_groups
     |> Enum.reduce_while(nil, fn %{username: username} = entry, _acc ->
-      case Map.fetch(entry, :group) do
+      entry
+      |> Map.fetch(:group)
+      |> case do
         {:ok, groupname} ->
           # Add users to group
           upsert_groups_in_course_helper(username, course_id, groupname)

@@ -17,6 +17,8 @@ defmodule CadetWeb.ConnCase do
 
   import Plug.Conn
 
+  alias Cadet.Factory
+
   using do
     quote do
       # Import conveniences for testing with connections
@@ -50,13 +52,13 @@ defmodule CadetWeb.ConnCase do
     conn = Phoenix.ConnTest.build_conn()
 
     if tags[:authenticate] do
-      course = Cadet.Factory.insert(:course)
-      user = Cadet.Factory.insert(:user, %{latest_viewed: course})
+      course = Factory.insert(:course)
+      user = Factory.insert(:user, %{latest_viewed: course})
 
       course_registration =
         cond do
           is_atom(tags[:authenticate]) ->
-            Cadet.Factory.insert(:course_registration, %{
+            Factory.insert(:course_registration, %{
               user: user,
               course: course,
               role: tags[:authenticate]
@@ -64,7 +66,7 @@ defmodule CadetWeb.ConnCase do
 
           # :TODO: This is_map case has not been handled. To recheck in the future.
           is_map(tags[:authenticate]) ->
-            Cadet.Factory.insert(:course_registration, tags[:authenticate])
+            Factory.insert(:course_registration, tags[:authenticate])
 
           true ->
             nil
@@ -83,7 +85,7 @@ defmodule CadetWeb.ConnCase do
       {:ok, conn: conn}
     else
       if tags[:sign_in] do
-        user = Cadet.Factory.insert(:user, tags[:sign_in])
+        user = Factory.insert(:user, tags[:sign_in])
         conn = sign_in(conn, user)
         {:ok, conn: conn}
       else

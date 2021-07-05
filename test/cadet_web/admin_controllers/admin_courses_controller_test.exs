@@ -3,8 +3,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   import Cadet.SharedHelper
 
-  alias Cadet.Repo
-  alias Cadet.Courses
+  alias Cadet.{Repo, Courses}
   alias Cadet.Courses.Course
   alias CadetWeb.AdminCoursesController
 
