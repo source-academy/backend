@@ -252,6 +252,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       ),
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -288,6 +289,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               %{
                 "question" => %{
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -334,6 +336,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "prepend" => &1.question.question.prepend,
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -867,6 +870,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       ),
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -903,6 +907,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               %{
                 "question" => %{
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -949,6 +954,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "prepend" => &1.question.question.prepend,
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
