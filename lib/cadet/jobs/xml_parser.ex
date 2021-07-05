@@ -186,6 +186,7 @@ defmodule Cadet.Updater.XMLParser do
   @spec process_question_booleans(map()) :: map()
   defp process_question_booleans(question) do
     flags = [:show_solution, :build_hidden_testcases, :blocking]
+
     flags
     |> Enum.reduce(question, fn flag, acc ->
       put_in(acc[flag], acc[flag] == "true")

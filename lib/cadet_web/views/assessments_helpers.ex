@@ -193,7 +193,11 @@ defmodule CadetWeb.AssessmentsHelpers do
 
   defp build_question_content_by_config(
          %{
-           question: %{question: question, type: question_type, build_hidden_testcases: build_hidden_testcases}
+           question: %{
+             question: question,
+             type: question_type,
+             build_hidden_testcases: build_hidden_testcases
+           }
          },
          all_testcases?
        ) do

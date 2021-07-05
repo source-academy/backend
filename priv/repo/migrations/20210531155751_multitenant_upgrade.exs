@@ -206,7 +206,12 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
         end)
 
         # update existing questions with new question config
-        from(q in "questions", join: a in "assessments", on: a.id == q.assessment_id, where: a.type == "path", select: {q.id})
+        from(q in "questions",
+          join: a in "assessments",
+          on: a.id == q.assessment_id,
+          where: a.type == "path",
+          select: {q.id}
+        )
         |> Repo.all()
         |> Enum.each(fn question ->
           Question
@@ -214,7 +219,8 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> Question.changeset(%{
             show_solution: false,
             build_hidden_testcases: false,
-            blocking: false})
+            blocking: false
+          })
           |> Repo.update()
         end)
 
