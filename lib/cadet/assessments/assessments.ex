@@ -235,12 +235,14 @@ defmodule Cadet.Assessments do
         |> where(assessment_id: ^id)
         |> join(:left, [q], a in subquery(answer_query), on: q.id == a.question_id)
         |> join(:left, [_, a], g in assoc(a, :grader))
-        |> select([q, a, g], {q, a, g})
+        |> join(:left, [_, _, g], u in assoc(g, :user))
+        |> select([q, a, g, u], {q, a, g, u})
         |> order_by(:display_order)
         |> Repo.all()
         |> Enum.map(fn
-          {q, nil, _} -> %{q | answer: %Answer{grader: nil}}
-          {q, a, g} -> %{q | answer: %Answer{a | grader: g}}
+          {q, nil, _, _} -> %{q | answer: %Answer{grader: nil}}
+          {q, a, nil, _} -> %{q | answer: %Answer{a | grader: nil}}
+          {q, a, g, u} -> %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
         end)
         |> load_contest_voting_entries(course_reg.id)
 
@@ -1189,7 +1191,7 @@ defmodule Cadet.Assessments do
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
       |> join(:inner, [a, ..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
-      |> join(:inner, [a, ..., g], gu in assoc(g, :user))
+      |> join(:left, [a, ..., g], gu in assoc(g, :user))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
       |> join(:inner, [a, ..., s], st in assoc(s, :student))
       |> join(:inner, [a, ..., st], u in assoc(st, :user))
