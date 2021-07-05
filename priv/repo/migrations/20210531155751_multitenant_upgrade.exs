@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
   import Ecto.Query, only: [from: 2, where: 2]
 
   alias Cadet.Accounts.{CourseRegistration, Notification, Role, User}
-  alias Cadet.Assessments.{Assessment, Submission, SubmissionVotes}
+  alias Cadet.Assessments.{Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Courses.{AssessmentConfig, Course, Group, Sourcecast}
   alias Cadet.Repo
   alias Cadet.Stories.Story
@@ -205,21 +205,22 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> Repo.update()
         end)
 
-        # update existing questions with new question config
+        # Update existing Path questions with new question config
+        # The questions from other assessment types are not updated as these fields default to false
         from(q in "questions",
           join: a in "assessments",
           on: a.id == q.assessment_id,
           where: a.type == "path",
-          select: {q.id}
+          select: q.id
         )
         |> Repo.all()
-        |> Enum.each(fn question ->
+        |> Enum.each(fn question_id ->
           Question
-          |> Repo.get(question.id)
+          |> Repo.get(question_id)
           |> Question.changeset(%{
-            show_solution: false,
-            build_hidden_testcases: false,
-            blocking: false
+            show_solution: true,
+            build_hidden_testcases: true,
+            blocking: true
           })
           |> Repo.update()
         end)
