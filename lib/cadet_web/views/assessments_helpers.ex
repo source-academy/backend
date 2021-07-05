@@ -48,7 +48,8 @@ defmodule CadetWeb.AssessmentsHelpers do
       id: :id,
       type: :type,
       library: &build_library(%{library: &1.library}),
-      maxXp: :max_xp
+      maxXp: :max_xp,
+      blocking: :blocking
     })
   end
 
