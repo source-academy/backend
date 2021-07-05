@@ -58,6 +58,12 @@ defmodule CadetWeb.Router do
     put("/user/latest_viewed", UserController, :update_latest_viewed)
 
     post("/config/create", CoursesController, :create)
+
+    get("/devices", DevicesController, :index)
+    post("/devices", DevicesController, :register)
+    post("/devices/:id", DevicesController, :edit)
+    delete("/devices/:id", DevicesController, :deregister)
+    get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
   end
 
   # Authenticated Pages with course
@@ -87,12 +93,6 @@ defmodule CadetWeb.Router do
     put("/user/game_states", UserController, :update_game_states)
 
     get("/config", CoursesController, :index)
-
-    get("/devices", DevicesController, :index)
-    post("/devices", DevicesController, :register)
-    post("/devices/:id", DevicesController, :edit)
-    delete("/devices/:id", DevicesController, :deregister)
-    get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
   end
 
   # Authenticated Pages
