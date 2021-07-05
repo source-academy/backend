@@ -128,6 +128,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
@@ -190,6 +191,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
@@ -761,6 +763,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
@@ -803,6 +806,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             },
             "assessment" => %{
               "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
