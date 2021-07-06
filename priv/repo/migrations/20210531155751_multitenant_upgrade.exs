@@ -230,9 +230,11 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
 
         # Create Assessment Configurations based on Source Academy Knight
         ["Missions", "Quests", "Paths", "Contests", "Others"]
-        |> Enum.each(fn assessment_type ->
+        |> Enum.with_index(1)
+        |> Enum.each(fn {assessment_type, idx} ->
           %AssessmentConfig{}
           |> AssessmentConfig.changeset(%{
+            order: idx,
             type: assessment_type,
             course_id: course.id,
             show_grading_summary: assessment_type in ["Missions", "Quests"],
