@@ -419,9 +419,13 @@ defmodule Cadet.Assessments do
   end
 
   @spec insert_or_update_assessment_changeset(map(), boolean()) :: Ecto.Changeset.t()
-  defp insert_or_update_assessment_changeset(params = %{number: number}, force_update) do
+  defp insert_or_update_assessment_changeset(
+         params = %{number: number, course_id: course_id},
+         force_update
+       ) do
     Assessment
     |> where(number: ^number)
+    |> where(course_id: ^course_id)
     |> Repo.one()
     |> case do
       nil ->

@@ -56,6 +56,7 @@ defmodule Cadet.Assessments.Assessment do
     |> add_belongs_to_id_from_model([:config, :course], params)
     |> foreign_key_constraint(:config_id)
     |> foreign_key_constraint(:course_id)
+    |> unique_constraint([:number, :course_id])
     |> validate_config_course
     |> validate_open_close_date
   end

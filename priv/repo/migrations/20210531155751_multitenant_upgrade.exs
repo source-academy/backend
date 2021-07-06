@@ -80,6 +80,9 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
       add(:course_id, references(:courses))
     end
 
+    drop(unique_index(:assessments, [:number]))
+    create(unique_index(:assessments, [:number, :course_id]))
+
     # Prep for migration of student_id and unsubmitted_by_id from User entity to CourseRegistration entity.
     rename(table(:submissions), :student_id, to: :temp_student_id)
     rename(table(:submissions), :unsubmitted_by_id, to: :temp_unsubmitted_by_id)
