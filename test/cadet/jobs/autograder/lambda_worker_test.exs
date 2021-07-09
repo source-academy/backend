@@ -32,7 +32,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
 
     submission =
       insert(:submission, %{
-        student: insert(:user, %{role: :student}),
+        student: insert(:course_registration, %{role: :student}),
         assessment: question.assessment
       })
 
@@ -63,7 +63,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                   %{"resultType" => "pass", "score" => 1},
                   %{"resultType" => "pass", "score" => 1}
                 ],
-                grade: 2,
+                score: 2,
+                max_score: 2,
                 status: :success
               }
             })
@@ -112,7 +113,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                     ]
                   }
                 ],
-                grade: 0,
+                score: 0,
+                max_score: 2,
                 status: :success
               }
             })
@@ -133,7 +135,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
             Que.add(ResultStoreWorker, %{
               answer_id: answer.id,
               result: %{
-                grade: 0,
+                score: 0,
+                max_score: 1,
                 status: :failed,
                 result: [
                   %{
@@ -202,7 +205,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
             %{
               answer_id: answer.id,
               result: %{
-                grade: 0,
+                score: 0,
+                max_score: 1,
                 status: :failed,
                 result: [
                   %{

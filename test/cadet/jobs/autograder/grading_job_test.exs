@@ -23,12 +23,16 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   describe "#force_grade_individual_submission, all programming questions" do
     setup do
+      course = insert(:course)
+      assessment_config = insert(:assessment_config, %{course: course})
+
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: "mission"
+          config: assessment_config,
+          course: course
         })
 
       questions =
@@ -36,13 +40,13 @@ defmodule Cadet.Autograder.GradingJobTest do
           insert_list(3, :programming_question, %{assessment: assessment})
         end
 
-      %{assessments: Enum.zip(assessments, questions)}
+      %{course: course, assessments: Enum.zip(assessments, questions)}
     end
 
     test "all assessments attempted, all questions graded, assocs preloaded, should enqueue all jobs",
-         %{assessments: assessments} do
+         %{course: course, assessments: assessments} do
       with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
+        student = insert(:course_registration, %{course: course, role: :student})
 
         [{assessment, questions} | _] = assessments
 
@@ -73,9 +77,9 @@ defmodule Cadet.Autograder.GradingJobTest do
 
     test "all assessments attempted, all questions graded, no assocs preloaded, " <>
            "should enqueue all jobs",
-         %{assessments: assessments} do
+         %{course: course, assessments: assessments} do
       with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
+        student = insert(:course_registration, %{course: course, role: :student})
 
         [{assessment, questions} | _] = assessments
 
@@ -107,12 +111,16 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   describe "#grade_all_due_yesterday, all programming questions" do
     setup do
+      course = insert(:course)
+      assessment_config = insert(:assessment_config, %{course: course})
+
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: "mission"
+          config: assessment_config,
+          course: course
         })
 
       questions =
@@ -120,14 +128,15 @@ defmodule Cadet.Autograder.GradingJobTest do
           insert_list(3, :programming_question, %{assessment: assessment})
         end
 
-      %{assessments: Enum.zip(assessments, questions)}
+      %{course: course, assessments: Enum.zip(assessments, questions)}
     end
 
     test "all assessments attempted, all questions answered, should enqueue all jobs", %{
+      course: course,
       assessments: assessments
     } do
       with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
+        student = insert(:course_registration, %{course: course, role: :student})
 
         submissions_answers =
           Enum.map(assessments, fn {assessment, questions} ->
@@ -165,9 +174,10 @@ defmodule Cadet.Autograder.GradingJobTest do
     end
 
     test "all assessments attempted, all questions graded, should not do anything", %{
+      course: course,
       assessments: assessments
     } do
-      student = insert(:user, %{role: :student})
+      student = insert(:course_registration, %{course: course, role: :student})
 
       Enum.map(assessments, fn {assessment, questions} ->
         submission =
@@ -190,11 +200,14 @@ defmodule Cadet.Autograder.GradingJobTest do
 
     test "all assessments attempted, should update all submission statuses and create notifications",
          %{
+           course: course,
            assessments: assessments
          } do
       with_mock Que, add: fn _, _ -> nil end do
-        group = insert(:group)
-        student = insert(:student, %{group_id: group.id})
+        group = insert(:group, %{course: course})
+
+        student =
+          insert(:course_registration, %{course: course, role: :student, group_id: group.id})
 
         submissions =
           Enum.map(assessments, fn {assessment, _} ->
@@ -216,11 +229,14 @@ defmodule Cadet.Autograder.GradingJobTest do
 
     test "all assessments submitted, should not create notifications",
          %{
+           course: course,
            assessments: assessments
          } do
       with_mock Que, add: fn _, _ -> nil end do
-        group = insert(:group)
-        student = insert(:student, %{group_id: group.id})
+        group = insert(:group, %{course: course})
+
+        student =
+          insert(:course_registration, %{course: course, role: :student, group_id: group.id})
 
         submissions =
           Enum.map(assessments, fn {assessment, _} ->
@@ -239,10 +255,11 @@ defmodule Cadet.Autograder.GradingJobTest do
     end
 
     test "all assessments unattempted, should create submissions", %{
+      course: course,
       assessments: assessments
     } do
       with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
+        student = insert(:course_registration, %{course: course, role: :student})
 
         GradingJob.grade_all_due_yesterday()
 
@@ -261,9 +278,10 @@ defmodule Cadet.Autograder.GradingJobTest do
     test "all assessments attempting, no questions answered, " <>
            "should insert empty answers, should not enqueue any",
          %{
+           course: course,
            assessments: assessments
          } do
-      student = insert(:user, %{role: :student})
+      student = insert(:course_registration, %{course: course, role: :student})
 
       for {assessment, _} <- assessments do
         insert(:submission, %{student: student, assessment: assessment, status: :attempting})
@@ -281,7 +299,6 @@ defmodule Cadet.Autograder.GradingJobTest do
       assert Enum.count(answers) == 9
 
       for answer <- answers do
-        assert answer.grade == 0
         assert answer.autograding_status == :success
         assert answer.answer == %{"code" => "// Question was left blank by the student."}
       end
@@ -293,10 +310,11 @@ defmodule Cadet.Autograder.GradingJobTest do
     test "all assessments attempting, first question unanswered, " <>
            "should insert empty answer, should dispatch submitted answers",
          %{
+           course: course,
            assessments: assessments
          } do
       with_mock Que, add: fn _, _ -> nil end do
-        student = insert(:user, %{role: :student})
+        student = insert(:course_registration, %{course: course, role: :student})
 
         # Do not answer first question in each assessment
         submissions_answers =
@@ -343,7 +361,6 @@ defmodule Cadet.Autograder.GradingJobTest do
           |> Enum.filter(&(&1.question_id in unanswered_question_ids))
 
         for answer <- inserted_empty_answers do
-          assert answer.grade == 0
           assert answer.xp == 0
           assert answer.autograding_status == :success
           assert answer.answer == %{"code" => "// Question was left blank by the student."}
@@ -353,10 +370,11 @@ defmodule Cadet.Autograder.GradingJobTest do
 
     test "all assessments attempted, all questions answered, instance raced, should not do anything",
          %{
+           course: course,
            assessments: assessments
          } do
       with_mock Cadet.Jobs.Log, log_execution: fn _name, _period -> false end do
-        student = insert(:user, %{role: :student})
+        student = insert(:course_registration, %{course: course, role: :student})
 
         submissions_answers =
           Enum.map(assessments, fn {assessment, questions} ->
@@ -395,28 +413,33 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   describe "#grade_all_due_yesterday, all mcq questions" do
     setup do
+      course = insert(:course)
+      assessment_config = insert(:assessment_config, %{course: course})
+
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: "mission"
+          config: assessment_config,
+          course: course
         })
 
       questions =
         for assessment <- assessments do
-          insert_list(3, :mcq_question, %{max_grade: 20, assessment: assessment})
+          insert_list(3, :mcq_question, %{max_xp: 200, assessment: assessment})
         end
 
-      %{assessments: Enum.zip(assessments, questions)}
+      %{course: course, assessments: Enum.zip(assessments, questions)}
     end
 
     test "all assessments attempted, all questions unanswered, " <>
            "should insert empty answers, should not enqueue any",
          %{
+           course: course,
            assessments: assessments
          } do
-      student = insert(:user, %{role: :student})
+      student = insert(:course_registration, %{course: course, role: :student})
 
       for {assessment, _} <- assessments do
         insert(:submission, %{student: student, assessment: assessment, status: :attempting})
@@ -434,7 +457,6 @@ defmodule Cadet.Autograder.GradingJobTest do
       assert Enum.count(answers) == 9
 
       for answer <- answers do
-        assert answer.grade == 0
         assert answer.xp == 0
         assert answer.autograding_status == :success
         assert answer.answer == %{"choice_id" => 0}
@@ -446,9 +468,10 @@ defmodule Cadet.Autograder.GradingJobTest do
     test "all assessments attempted, all questions answered, " <>
            "should grade all questions, should not enqueue any",
          %{
+           course: course,
            assessments: assessments
          } do
-      student = insert(:user, %{role: :student})
+      student = insert(:course_registration, %{course: course, role: :student})
 
       submissions_answers =
         Enum.map(assessments, fn {assessment, questions} ->
@@ -481,10 +504,8 @@ defmodule Cadet.Autograder.GradingJobTest do
 
         # seeded questions have correct choice as 0
         if answer_db.answer["choice_id"] == 0 do
-          assert answer_db.grade == question.max_grade
           assert answer_db.xp == question.max_xp
         else
-          assert answer_db.grade == 0
           assert answer_db.xp == 0
         end
 
@@ -497,28 +518,33 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   describe "#grade_all_due_yesterday, all voting questions" do
     setup do
+      course = insert(:course)
+      assessment_config = insert(:assessment_config, %{course: course})
+
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: "mission"
+          config: assessment_config,
+          course: course
         })
 
       questions =
         for assessment <- assessments do
-          insert_list(3, :voting_question, %{max_grade: 20, assessment: assessment})
+          insert_list(3, :voting_question, %{max_xp: 20, assessment: assessment})
         end
 
-      %{assessments: Enum.zip(assessments, questions)}
+      %{course: course, assessments: Enum.zip(assessments, questions)}
     end
 
     test "all assessments attempted, all questions unanswered, " <>
            "should insert empty answers, should not enqueue any",
          %{
+           course: course,
            assessments: assessments
          } do
-      student = insert(:user, %{role: :student})
+      student = insert(:course_registration, %{course: course, role: :student})
 
       for {assessment, _} <- assessments do
         insert(:submission, %{student: student, assessment: assessment, status: :attempting})
@@ -536,7 +562,6 @@ defmodule Cadet.Autograder.GradingJobTest do
       assert Enum.count(answers) == 9
 
       for answer <- answers do
-        assert answer.grade == 0
         assert answer.xp == 0
         assert answer.autograding_status == :success
         assert answer.answer == %{"completed" => false}
@@ -548,9 +573,10 @@ defmodule Cadet.Autograder.GradingJobTest do
     test "all assessments attempted, all questions aswered, " <>
            "should grade all questions, should not enqueue any",
          %{
+           course: course,
            assessments: assessments
          } do
-      student = insert(:user, %{role: :student})
+      student = insert(:course_registration, %{course: course, role: :student})
 
       submissions_answers =
         for {assessment, questions} <- assessments do
@@ -560,8 +586,8 @@ defmodule Cadet.Autograder.GradingJobTest do
           answers =
             for question <- questions do
               case Enum.random(0..1) do
-                0 -> insert(:submission_vote, %{user: student, question: question, rank: 1})
-                1 -> insert(:submission_vote, %{user: student, question: question})
+                0 -> insert(:submission_vote, %{voter: student, question: question, rank: 1})
+                1 -> insert(:submission_vote, %{voter: student, question: question})
               end
 
               insert(:answer, %{
@@ -586,7 +612,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       for {question, answer} <- Enum.zip(questions, answers) do
         is_nil_entries =
           SubmissionVotes
-          |> where(user_id: ^student.id)
+          |> where(voter_id: ^student.id)
           |> where(question_id: ^question.id)
           |> where([sv], is_nil(sv.rank))
           |> Repo.exists?()
@@ -594,10 +620,8 @@ defmodule Cadet.Autograder.GradingJobTest do
         answer_db = Repo.get(Answer, answer.id)
 
         if is_nil_entries do
-          assert answer_db.grade == 0
           assert answer_db.xp == 0
         else
-          assert answer_db.grade == question.max_grade
           assert answer_db.xp == question.max_xp
         end
 

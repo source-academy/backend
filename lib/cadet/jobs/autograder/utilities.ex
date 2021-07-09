@@ -8,7 +8,7 @@ defmodule Cadet.Autograder.Utilities do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.User
+  alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
   def dispatch_programming_answer(answer = %Answer{}, question = %Question{}, overwrite \\ false) do
@@ -26,15 +26,15 @@ defmodule Cadet.Autograder.Utilities do
   end
 
   def fetch_submissions(assessment_id) when is_ecto_id(assessment_id) do
-    User
+    CourseRegistration
     |> where(role: "student")
     |> join(
       :left,
-      [u],
+      [cr],
       s in Submission,
-      on: u.id == s.student_id and s.assessment_id == ^assessment_id
+      on: cr.id == s.student_id and s.assessment_id == ^assessment_id
     )
-    |> select([u, s], %{student_id: u.id, submission: s})
+    |> select([cr, s], %{student_id: cr.id, submission: s})
     |> Repo.all()
   end
 
@@ -42,10 +42,8 @@ defmodule Cadet.Autograder.Utilities do
     Assessment
     |> where(is_published: true)
     |> where([a], a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1))
-    |> join(:inner, [a], c in assoc(a, :config))
-    |> where([a, c], not c.is_contest)
     |> join(:inner, [a, c], q in assoc(a, :questions))
-    |> preload([_, _, q], questions: q)
+    |> preload([_, q], questions: q)
     |> Repo.all()
     |> Enum.map(&sort_assessment_questions(&1))
   end

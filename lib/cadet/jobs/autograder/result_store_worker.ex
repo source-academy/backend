@@ -56,7 +56,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   defp update_answer(answer = %Answer{}, result = %{status: status}, overwrite) do
     xp =
       cond do
-        answer.question.max_grade == 0 and length(result.result) > 0 ->
+        result.max_score == 0 and length(result.result) > 0 ->
           testcase_results = result.result
 
           num_passed =
@@ -64,23 +64,14 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
           Integer.floor_div(answer.question.max_xp * num_passed, length(testcase_results))
 
-        answer.question.max_grade == 0 ->
+        result.max_score == 0 ->
           0
 
         true ->
-          Integer.floor_div(answer.question.max_xp * result.grade, answer.question.max_grade)
-      end
-
-    new_adjustment =
-      if not overwrite and answer.grader_id do
-        answer.adjustment - result.grade
-      else
-        0
+          Integer.floor_div(answer.question.max_xp * result.score, result.max_score)
       end
 
     changes = %{
-      adjustment: new_adjustment,
-      grade: result.grade,
       xp: xp,
       autograding_status: status,
       autograding_results: result.result

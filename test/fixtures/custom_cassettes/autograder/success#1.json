@@ -22,7 +22,7 @@
     "response": {
       "binary": false,
       "body":
-        "{\r\n  \"totalScore\": 2,\r\n  \"results\": [\r\n    {\r\n      \"resultType\": \"pass\",\r\n      \"score\": 1\r\n    },\r\n    {\r\n      \"resultType\": \"pass\",\r\n      \"score\": 1\r\n    }\r\n  ]\r\n}",
+        "{\r\n  \"totalScore\": 2,\r\n \"maxScore\": 2,\r\n \"results\": [\r\n    {\r\n      \"resultType\": \"pass\",\r\n      \"score\": 1\r\n    },\r\n    {\r\n      \"resultType\": \"pass\",\r\n      \"score\": 1\r\n    }\r\n  ]\r\n}",
       "headers": {
         "Date": "Thu, 09 Aug 2018 09:50:53 GMT",
         "Content-Type": "application/json",

@@ -208,7 +208,10 @@ defmodule CadetWeb.AdminUserController do
       course_id(:path, :integer, "Course ID", required: true)
       role(:body, :role, "The new role", required: true)
 
-      courseRegId(:body, :integer, "The course registration of the user whose role is to be updated",
+      courseRegId(
+        :body,
+        :integer,
+        "The course registration of the user whose role is to be updated",
         required: true
       )
     end
@@ -232,7 +235,10 @@ defmodule CadetWeb.AdminUserController do
     parameters do
       course_id(:path, :integer, "Course ID", required: true)
 
-      courseRegId(:body, :integer, "The course registration of the user whose role is to be updated",
+      courseRegId(
+        :body,
+        :integer,
+        "The course registration of the user whose role is to be updated",
         required: true
       )
     end
