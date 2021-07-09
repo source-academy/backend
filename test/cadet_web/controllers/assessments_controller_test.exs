@@ -343,6 +343,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               &%{
                 "id" => &1.id,
                 "type" => "#{&1.type}",
+                "blocking" => &1.blocking,
                 "content" => &1.question.content,
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
@@ -382,6 +383,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               &%{
                 "id" => &1.id,
                 "type" => "#{&1.type}",
+                "blocking" => &1.blocking,
                 "content" => &1.question.content,
                 "choices" =>
                   Enum.map(
@@ -403,6 +405,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               &%{
                 "id" => &1.id,
                 "type" => "#{&1.type}",
+                "blocking" => &1.blocking,
                 "content" => &1.question.content,
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend

@@ -169,7 +169,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   describe "POST /admin/users/:userid/goals/:uuid/progress" do
     setup do
       {:ok, g} = %Goal{uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
-      {:ok, u} = %User{name: "a", role: :student} |> Repo.insert()
+      u = insert(:course_registration, %{role: :student})
 
       %{goal: g, user: u}
     end
