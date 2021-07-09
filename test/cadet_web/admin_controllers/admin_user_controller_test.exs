@@ -296,7 +296,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "staff",
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       resp = put(conn, build_url_users_role(course_id), params)
@@ -316,7 +316,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "student",
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       resp = put(conn, build_url_users_role(course_id), params)
@@ -336,7 +336,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "staff",
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       resp = put(conn, build_url_users_role(course_id), params)
@@ -352,7 +352,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "staff",
-        "crId" => 10_000
+        "courseRegId" => 10_000
       }
 
       conn = put(conn, build_url_users_role(course_id), params)
@@ -367,7 +367,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "staff",
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       conn = put(conn, build_url_users_role(course_id), params)
@@ -385,7 +385,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "staff",
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       conn = put(conn, build_url_users_role(course_id), params)
@@ -403,7 +403,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       params = %{
         "role" => "avenger",
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       conn = put(conn, build_url_users_role(course_id), params)
@@ -424,7 +424,7 @@ defmodule CadetWeb.AdminUserControllerTest do
       user_course_reg = insert(:course_registration, %{role: :student, course: course})
 
       params = %{
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       resp = delete(conn, build_url_users(course_id), params)
@@ -442,7 +442,7 @@ defmodule CadetWeb.AdminUserControllerTest do
       user_course_reg = insert(:course_registration, %{role: :staff, course: course})
 
       params = %{
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       resp = delete(conn, build_url_users(course_id), params)
@@ -460,7 +460,7 @@ defmodule CadetWeb.AdminUserControllerTest do
       user_course_reg = insert(:course_registration, %{role: :student, course: course})
 
       params = %{
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       conn = delete(conn, build_url_users(course_id), params)
@@ -483,7 +483,7 @@ defmodule CadetWeb.AdminUserControllerTest do
         |> Repo.one()
 
       params = %{
-        "crId" => own_course_reg.id
+        "courseRegId" => own_course_reg.id
       }
 
       conn = delete(conn, build_url_users(course_id), params)
@@ -499,7 +499,7 @@ defmodule CadetWeb.AdminUserControllerTest do
       course_id = conn.assigns[:course_id]
 
       params = %{
-        "crId" => 1
+        "courseRegId" => 1
       }
 
       conn = delete(conn, build_url_users(course_id), params)
@@ -516,7 +516,7 @@ defmodule CadetWeb.AdminUserControllerTest do
       user_course_reg = insert(:course_registration, %{role: :admin, course: course})
 
       params = %{
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       conn = delete(conn, build_url_users(course_id), params)
@@ -532,7 +532,7 @@ defmodule CadetWeb.AdminUserControllerTest do
       user_course_reg = insert(:course_registration, %{role: :student})
 
       params = %{
-        "crId" => user_course_reg.id
+        "courseRegId" => user_course_reg.id
       }
 
       conn = delete(conn, build_url_users(course_id), params)

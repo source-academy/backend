@@ -7,7 +7,7 @@ defmodule CadetWeb.AdminUserView do
 
   def render("cr.json", %{cr: cr}) do
     %{
-      crId: cr.id,
+      courseRegId: cr.id,
       course_id: cr.course_id,
       name: cr.user.name,
       username: cr.user.username,

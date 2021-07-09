@@ -90,7 +90,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @update_role_roles ~w(admin)a
-  def update_role(conn, %{"role" => role, "crId" => coursereg_id}) do
+  def update_role(conn, %{"role" => role, "courseRegId" => coursereg_id}) do
     %{id: admin_course_reg_id, role: admin_role, course_id: admin_course_id} =
       conn.assigns.course_reg
 
@@ -125,7 +125,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @delete_user_roles ~w(admin)a
-  def delete_user(conn, %{"crId" => coursereg_id}) do
+  def delete_user(conn, %{"courseRegId" => coursereg_id}) do
     %{id: admin_course_reg_id, role: admin_role, course_id: admin_course_id} =
       conn.assigns.course_reg
 
@@ -208,7 +208,7 @@ defmodule CadetWeb.AdminUserController do
       course_id(:path, :integer, "Course ID", required: true)
       role(:body, :role, "The new role", required: true)
 
-      crId(:body, :integer, "The course registration of the user whose role is to be updated",
+      courseRegId(:body, :integer, "The course registration of the user whose role is to be updated",
         required: true
       )
     end
@@ -232,7 +232,7 @@ defmodule CadetWeb.AdminUserController do
     parameters do
       course_id(:path, :integer, "Course ID", required: true)
 
-      crId(:body, :integer, "The course registration of the user whose role is to be updated",
+      courseRegId(:body, :integer, "The course registration of the user whose role is to be updated",
         required: true
       )
     end
