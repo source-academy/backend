@@ -1089,16 +1089,16 @@ defmodule Cadet.Assessments do
   """
   @spec all_submissions_by_grader_for_index(%CourseRegistration{}) ::
           {:ok, String.t()}
-  def all_submissions_by_grader_for_index(grader = %CourseRegistration{}, group_only \\ false) do
+  def all_submissions_by_grader_for_index(grader = %CourseRegistration{course_id: course_id}, group_only \\ false) do
     show_all = not group_only
 
     group_where =
       if show_all,
         do: "",
         else:
-          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
+          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
 
-    params = if show_all, do: [], else: [grader.id]
+    params = if show_all, do: [course_id], else: [course_id, grader.id]
 
     # We bypass Ecto here and use a raw query to generate JSON directly from
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
@@ -1151,6 +1151,7 @@ defmodule Cadet.Assessments do
                    questions q on a.id = q.assessment_id
                    inner join
                    assessment_configs ac on ac.id = a.config_id
+                  where a.course_id = $1
                  group by a.id) a) assts on assts.id = s.assessment_id
              inner join
                (select
