@@ -55,6 +55,7 @@ jobs:
           mix deps.get
       - name: mix release
         run: |
+          ls -la _build/prod
           rm -f _build/prod/cadet-0.0.1.tar.gz
           mix release
       - name: Create release
