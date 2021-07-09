@@ -1089,7 +1089,10 @@ defmodule Cadet.Assessments do
   """
   @spec all_submissions_by_grader_for_index(%CourseRegistration{}) ::
           {:ok, String.t()}
-  def all_submissions_by_grader_for_index(grader = %CourseRegistration{course_id: course_id}, group_only \\ false) do
+  def all_submissions_by_grader_for_index(
+        grader = %CourseRegistration{course_id: course_id},
+        group_only \\ false
+      ) do
     show_all = not group_only
 
     group_where =

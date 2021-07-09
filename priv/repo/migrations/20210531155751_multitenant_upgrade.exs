@@ -351,7 +351,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           Notification
           |> where(id: ^elem(notification, 0))
           |> Repo.one()
-          |> Notification.changeset(%{course_reg_id: course_reg_id})
+          |> Notification.changeset(%{read: true, course_reg_id: course_reg_id})
           |> Repo.update()
         end)
 
