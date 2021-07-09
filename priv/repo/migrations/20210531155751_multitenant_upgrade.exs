@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
   import Ecto.Query, only: [from: 2, where: 2]
 
   alias Cadet.Accounts.{CourseRegistration, Notification, Role, User}
-  alias Cadet.Assessments.{Assessment, Question, Submission, SubmissionVotes}
+  alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Courses.{AssessmentConfig, Course, Group, Sourcecast}
   alias Cadet.Repo
   alias Cadet.Stories.Story
@@ -98,11 +98,13 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
       add(:voter_id, references(:course_registrations))
     end
 
+    rename(table(:answers), :grader_id, to: :temp_grader_id)
+    drop(constraint(:answers, "answers_grader_id_fkey"))
+
     # Remove grade metric from backend
     alter table(:answers) do
       remove(:grade)
       remove(:adjustment)
-      remove(:grader_id)
       add(:grader_id, references(:course_registrations), null: true)
     end
 
@@ -299,6 +301,28 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
           |> Repo.update()
         end)
 
+        from(a in "answers", select: {a.id, a.temp_grader_id})
+        |> Repo.all()
+        |> Enum.each(fn answer ->
+          case elem(answer, 1) do
+            nil ->
+              nil
+
+            user_id ->
+              grader_id =
+                CourseRegistration
+                |> where(user_id: ^user_id)
+                |> Repo.one()
+                |> Map.fetch!(:id)
+
+              Answer
+              |> where(id: ^elem(answer, 0))
+              |> Repo.one()
+              |> Answer.grading_changeset(%{grader_id: grader_id})
+              |> Repo.update()
+          end
+        end)
+
         from(s in "submission_votes", select: {s.id, s.user_id})
         |> Repo.all()
         |> Enum.each(fn vote ->
@@ -383,6 +407,10 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
         null: false,
         from: references(:course_registrations)
       )
+    end
+
+    alter table(:answers) do
+      remove(:temp_grader_id)
     end
 
     create(index(:submissions, :student_id))
