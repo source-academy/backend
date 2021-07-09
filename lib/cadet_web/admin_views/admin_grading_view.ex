@@ -18,7 +18,7 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   def render("grading_summary.json", %{cols: cols, summary: summary}) do
-    %{columns: cols, rows: summary}
+    %{cols: cols, rows: summary}
   end
 
   defp build_grading_question(answer) do

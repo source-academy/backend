@@ -1042,7 +1042,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       resp = conn |> get(build_url_summary(course.id)) |> json_response(200)
 
       expected = %{
-        "columns" => [
+        "cols" => [
           "submitted" <> config1.type,
           "ungraded" <> config1.type,
           "submitted" <> config2.type,

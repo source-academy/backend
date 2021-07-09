@@ -1393,19 +1393,8 @@ defmodule Cadet.Assessments do
     Timex.between?(Timex.now(), open_at, close_at, inclusive: :start) and is_published
   end
 
-  @type group_summary_entry :: %{
-          group_name: String.t(),
-          leader_name: String.t(),
-          ungraded: [map()],
-          submitted: [map()]
-          # ungraded_missions: integer(),
-          # submitted_missions: integer(),
-          # ungraded_sidequests: number(),
-          # submitted_sidequests: number()
-        }
-
   @spec get_group_grading_summary(integer()) ::
-          {:ok, [], [group_summary_entry()]}
+          {:ok, [String.t(), ...], []}
   def get_group_grading_summary(course_id) do
     subs =
       Answer
