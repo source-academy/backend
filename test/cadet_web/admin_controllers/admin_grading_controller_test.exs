@@ -1043,12 +1043,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       expected = %{
         "cols" => [
+          "groupName",
+          "leaderName",
           "submitted" <> config1.type,
           "ungraded" <> config1.type,
           "submitted" <> config2.type,
-          "ungraded" <> config2.type,
-          "groupName",
-          "leaderName"
+          "ungraded" <> config2.type
         ],
         "rows" => [
           %{

@@ -1474,7 +1474,7 @@ defmodule Cadet.Assessments do
       end)
 
     rows = data_by_groups |> Enum.map(fn {_k, row} -> Map.merge(default_row_data, row) end)
-    cols = headings ++ ["groupName", "leaderName"]
+    cols = ["groupName", "leaderName"] ++ headings
 
     {:ok, cols, rows}
   end
