@@ -118,8 +118,8 @@ defmodule CadetWeb.AdminGradingController do
 
   def grading_summary(conn, %{"course_id" => course_id}) do
     case Assessments.get_group_grading_summary(course_id) do
-      {:ok, summary} ->
-        render(conn, "grading_summary.json", summary: summary)
+      {:ok, cols, summary} ->
+        render(conn, "grading_summary.json", cols: cols, summary: summary)
     end
   end
 

@@ -1021,36 +1021,67 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
   describe "GET /summary" do
     @tag authenticate: :admin
-    @tag :skip
     test "admin can see summary", %{conn: conn} do
       %{
         course: course,
+        config: config1,
         submissions: submissions,
         group: group,
         grader: grader,
         answers: answers
       } = seed_db(conn)
 
-      conn = get(conn, build_url_summary(course.id))
+      %{
+        submissions: submissions2,
+        config: config2,
+        group: group2,
+        grader: grader2,
+        answers: answers2
+      } = seed_db(conn, insert(:course_registration, %{course: course, role: :staff}))
 
-      expected = [
-        %{
-          "groupName" => group.name,
-          "leaderName" => grader.user.name,
-          "submittedMissions" => count_submissions(submissions, answers, "mission"),
-          "submittedSidequests" => count_submissions(submissions, answers, "sidequest"),
-          "ungradedMissions" => count_submissions(submissions, answers, "mission", true),
-          "ungradedSidequests" => count_submissions(submissions, answers, "sidequest", true)
-        }
-      ]
+      resp = conn |> get(build_url_summary(course.id)) |> json_response(200)
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["groupName"])
+      expected = %{
+        "columns" => [
+          "submitted" <> config1.type,
+          "ungraded" <> config1.type,
+          "submitted" <> config2.type,
+          "ungraded" <> config2.type,
+          "groupName",
+          "leaderName"
+        ],
+        "rows" => [
+          %{
+            "groupName" => group.name,
+            "leaderName" => grader.user.name,
+            ("submitted" <> config1.type) => count_submissions(submissions, answers, config1.id),
+            ("submitted" <> config2.type) => count_submissions(submissions, answers, config2.id),
+            ("ungraded" <> config1.type) =>
+              count_submissions(submissions, answers, config1.id, true),
+            ("ungraded" <> config2.type) =>
+              count_submissions(submissions, answers, config2.id, true)
+          },
+          %{
+            "groupName" => group2.name,
+            "leaderName" => grader2.user.name,
+            ("submitted" <> config1.type) =>
+              count_submissions(submissions2, answers2, config1.id),
+            ("submitted" <> config2.type) =>
+              count_submissions(submissions2, answers2, config2.id),
+            ("ungraded" <> config1.type) =>
+              count_submissions(submissions2, answers2, config1.id, true),
+            ("ungraded" <> config2.type) =>
+              count_submissions(submissions2, answers2, config2.id, true)
+          }
+        ]
+      }
+
+      assert expected == resp
     end
 
     @tag authenticate: :student
-    @tag :skip
     test "student cannot see summary", %{conn: conn} do
-      conn = get(conn, build_url_summary())
+      conn = get(conn, build_url_summary(conn.assigns.course_id))
       assert response(conn, 403) =~ "Forbidden"
     end
   end
@@ -1135,10 +1166,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
   end
 
-  defp count_submissions(submissions, answers, type, only_ungraded \\ false) do
+  defp count_submissions(submissions, answers, config_id, only_ungraded \\ false) do
     submissions
     |> Enum.filter(fn s ->
-      s.status == :submitted and s.assessment.type == type and
+      s.status == :submitted and s.assessment.config_id == config_id and
         (not only_ungraded or
            answers
            |> Enum.filter(fn a -> a.submission == s and is_nil(a.grader_id) end)
@@ -1147,8 +1178,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
     |> length()
   end
 
-  defp build_url_summary, do: "/v2/admin/grading/summary"
-  # old
   defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/grading/"
   defp build_url_summary(course_id), do: "/v2/courses/#{course_id}/admin/grading/summary"
   defp build_url(course_id, submission_id), do: "#{build_url(course_id)}#{submission_id}"

@@ -17,19 +17,8 @@ defmodule CadetWeb.AdminGradingView do
     })
   end
 
-  def render("grading_summary.json", %{summary: summary}) do
-    render_many(summary, CadetWeb.AdminGradingView, "grading_summary_entry.json", as: :entry)
-  end
-
-  def render("grading_summary_entry.json", %{entry: entry}) do
-    transform_map_for_view(entry, %{
-      groupName: :group_name,
-      leaderName: :leader_name,
-      ungradedMissions: :ungraded_missions,
-      submittedMissions: :submitted_missions,
-      ungradedSidequests: :ungraded_sidequests,
-      submittedSidequests: :submitted_sidequests
-    })
+  def render("grading_summary.json", %{cols: cols, summary: summary}) do
+    %{columns: cols, rows: summary}
   end
 
   defp build_grading_question(answer) do

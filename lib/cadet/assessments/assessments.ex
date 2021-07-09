@@ -1441,22 +1441,17 @@ defmodule Cadet.Assessments do
         config_type: t.config_type,
         ungraded: filter(count(), t.num_ungraded > 0),
         submitted: count()
-        # ungraded: cols |> Enum.map(fn graded_config -> Map.put(graded_config, :ungraded_count, filter(count(), t.config_id == graded_config.id and t.num_ungraded > 0))end),
-        # submitted: cols |> Enum.map(fn graded_config -> Map.put(graded_config, :submitted_count, filter(count(), t.config_id == graded_config.id))end)
-        # ungraded_missions: filter(count(), t.type == "mission" and t.num_ungraded > 0),
-        # submitted_missions: filter(count(), t.type == "mission"),
-        # ungraded_sidequests: filter(count(), t.type == "sidequest" and t.num_ungraded > 0),
-        # submitted_sidequests: filter(count(), t.type == "sidequest")
       })
       |> Repo.all()
 
-    graded_configs =
+    showing_configs =
       AssessmentConfig
       |> where([ac], ac.course_id == ^course_id and ac.show_grading_summary)
       |> order_by(:order)
+      |> group_by([ac], ac.id)
       |> select([ac], %{
-        id: :id,
-        type: :type
+        id: ac.id,
+        type: ac.type
       })
       |> Repo.all()
 
@@ -1465,22 +1460,33 @@ defmodule Cadet.Assessments do
       |> Enum.reduce(%{}, fn raw, acc ->
         if Map.has_key?(acc, raw.group_name) do
           acc
-          |> put_in([raw.group_name, "ungraded_" <> raw.config_type], raw.ungraded)
-          |> put_in([raw.group_name, "submitted_" <> raw.config_type], raw.submitted)
+          |> put_in([raw.group_name, "ungraded" <> raw.config_type], raw.ungraded)
+          |> put_in([raw.group_name, "submitted" <> raw.config_type], raw.submitted)
         else
           acc
           |> put_in([raw.group_name], %{})
-          |> put_in([raw.group_name, "group_name"], raw.group_name)
-          |> put_in([raw.group_name, "leader_name"], raw.leader_name)
-          |> put_in([raw.group_name, "ungraded_" <> raw.config_type], raw.ungraded)
-          |> put_in([raw.group_name, "submitted_" <> raw.config_type], raw.submitted)
+          |> put_in([raw.group_name, "groupName"], raw.group_name)
+          |> put_in([raw.group_name, "leaderName"], raw.leader_name)
+          |> put_in([raw.group_name, "ungraded" <> raw.config_type], raw.ungraded)
+          |> put_in([raw.group_name, "submitted" <> raw.config_type], raw.submitted)
         end
       end)
 
-    # |>
+    headings =
+      showing_configs
+      |> Enum.reduce([], fn config, acc ->
+        acc ++ ["submitted" <> config.type, "ungraded" <> config.type]
+      end)
 
-    cols = graded_configs
-    rows = data_by_groups
+    default_row_data =
+      headings
+      |> Enum.reduce(%{}, fn heading, acc ->
+        put_in(acc, [heading], 0)
+      end)
+
+    rows = data_by_groups |> Enum.map(fn {_k, row} -> Map.merge(default_row_data, row) end)
+    cols = headings ++ ["groupName", "leaderName"]
+
     {:ok, cols, rows}
   end
 
