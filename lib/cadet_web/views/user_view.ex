@@ -51,6 +51,7 @@ defmodule CadetWeb.UserView do
       courseId: cr.course_id,
       courseName: cr.course.course_name,
       courseShortName: cr.course.course_short_name,
+      role: cr.role,
       viewable: cr.course.viewable
     }
   end

@@ -22,7 +22,7 @@ defmodule CadetWeb.UserControllerTest do
       config3 = insert(:assessment_config, %{order: 3, type: "test type 3", course: course})
       config1 = insert(:assessment_config, %{order: 1, type: "test type 1", course: course})
       cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
-      another_cr = insert(:course_registration, %{user: user})
+      another_cr = insert(:course_registration, %{user: user, role: :admin})
       assessment = insert(:assessment, %{is_published: true, course: course})
       question = insert(:question, %{assessment: assessment})
 
@@ -68,13 +68,15 @@ defmodule CadetWeb.UserControllerTest do
               "courseId" => user.latest_viewed_id,
               "courseShortName" => "CS1101S",
               "courseName" => "Programming Methodology",
-              "viewable" => true
+              "viewable" => true,
+              "role" => "#{cr.role}"
             },
             %{
               "courseId" => another_cr.course_id,
               "courseShortName" => "CS1101S",
               "courseName" => "Programming Methodology",
-              "viewable" => true
+              "viewable" => true,
+              "role" => "#{another_cr.role}"
             }
           ]
         },

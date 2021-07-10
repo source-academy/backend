@@ -1076,7 +1076,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
         ]
       }
 
-      assert expected == resp
+      assert expected["cols"] == resp["cols"]
+      assert expected["rows"] == Enum.sort_by(resp["rows"], & &1["groupName"])
     end
 
     @tag authenticate: :student
