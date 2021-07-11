@@ -18,127 +18,127 @@ defmodule Mix.Tasks.Cadet.Users.Import do
   Note that group names must be unique.
   """
 
-  @shortdoc "Import user and grouping information from csv files."
+  # @shortdoc "Import user and grouping information from csv files."
 
-  use Mix.Task
+  # use Mix.Task
 
-  require Logger
+  # require Logger
 
-  alias Cadet.{Accounts, Courses, Repo}
-  alias Cadet.Courses.Group
-  alias Cadet.Accounts.User
+  # alias Cadet.{Accounts, Courses, Repo}
+  # alias Cadet.Courses.Group
+  # alias Cadet.Accounts.User
 
-  def run(_args) do
-    # Required for Ecto to work properly, from Mix.Ecto
-    if function_exported?(Mix.Task, :run, 2), do: Mix.Task.run("app.start")
+  # def run(_args) do
+  #   # Required for Ecto to work properly, from Mix.Ecto
+  #   if function_exported?(Mix.Task, :run, 2), do: Mix.Task.run("app.start")
 
-    students_csv_path = trimmed_gets("Path to students csv (leave blank to skip): ")
-    leaders_csv_path = trimmed_gets("Path to leaders csv (leave blank to skip): ")
-    mentors_csv_path = trimmed_gets("Path to mentors csv (leave blank to skip): ")
+  #   students_csv_path = trimmed_gets("Path to students csv (leave blank to skip): ")
+  #   leaders_csv_path = trimmed_gets("Path to leaders csv (leave blank to skip): ")
+  #   mentors_csv_path = trimmed_gets("Path to mentors csv (leave blank to skip): ")
 
-    Repo.transaction(fn ->
-      students_csv_path != "" && process_students_csv(students_csv_path)
-      leaders_csv_path != "" && process_leaders_csv(leaders_csv_path)
-      mentors_csv_path != "" && process_mentors_csv(mentors_csv_path)
-    end)
-  end
+  #   Repo.transaction(fn ->
+  #     students_csv_path != "" && process_students_csv(students_csv_path)
+  #     leaders_csv_path != "" && process_leaders_csv(leaders_csv_path)
+  #     mentors_csv_path != "" && process_mentors_csv(mentors_csv_path)
+  #   end)
+  # end
 
-  defp process_students_csv(path) when is_binary(path) do
-    if File.exists?(path) do
-      csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
+  # defp process_students_csv(path) when is_binary(path) do
+  #   if File.exists?(path) do
+  #     csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
-      for {:ok, [name, username, group_name]} <- csv_stream do
-        with {:ok, _group = %Group{}} <- Courses.get_or_create_group(group_name),
-             {:ok, %User{}} <-
-               Accounts.insert_or_update_user(%{
-                 username: username,
-                 name: name
-                 #  role: :student,
-                 #  group: group
-               }) do
-          :ok
-        else
-          error ->
-            Logger.error(
-              "Unable to insert student (name: #{name}, username: #{username}, " <>
-                "group_name: #{group_name})"
-            )
+  #     for {:ok, [name, username, group_name]} <- csv_stream do
+  #       with {:ok, _group = %Group{}} <- Courses.get_or_create_group(group_name),
+  #            {:ok, %User{}} <-
+  #              Accounts.insert_or_update_user(%{
+  #                username: username,
+  #                name: name
+  #                #  role: :student,
+  #                #  group: group
+  #              }) do
+  #         :ok
+  #       else
+  #         error ->
+  #           Logger.error(
+  #             "Unable to insert student (name: #{name}, username: #{username}, " <>
+  #               "group_name: #{group_name})"
+  #           )
 
-            Logger.error("error: #{inspect(error, pretty: true)}")
+  #           Logger.error("error: #{inspect(error, pretty: true)}")
 
-            Repo.rollback(error)
-        end
-      end
+  #           Repo.rollback(error)
+  #       end
+  #     end
 
-      Logger.info("Imported students csv at #{path}")
-    else
-      Logger.error("Cannot find students csv at #{path}")
-    end
-  end
+  #     Logger.info("Imported students csv at #{path}")
+  #   else
+  #     Logger.error("Cannot find students csv at #{path}")
+  #   end
+  # end
 
-  defp process_leaders_csv(path) when is_binary(path) do
-    if File.exists?(path) do
-      csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
+  # defp process_leaders_csv(path) when is_binary(path) do
+  #   if File.exists?(path) do
+  #     csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
-      for {:ok, [name, username, group_name]} <- csv_stream do
-        with {:ok, leader = %User{}} <-
-               Accounts.insert_or_update_user(%{username: username, name: name}),
-             {:ok, %Group{}} <-
-               Courses.insert_or_update_group(%{name: group_name, leader: leader}) do
-          :ok
-        else
-          error ->
-            Logger.error(
-              "Unable to insert leader (name: #{name}, username: #{username}, " <>
-                "group_name: #{group_name})"
-            )
+  #     for {:ok, [name, username, group_name]} <- csv_stream do
+  #       with {:ok, leader = %User{}} <-
+  #              Accounts.insert_or_update_user(%{username: username, name: name}),
+  #            {:ok, %Group{}} <-
+  #              Courses.insert_or_update_group(%{name: group_name, leader: leader}) do
+  #         :ok
+  #       else
+  #         error ->
+  #           Logger.error(
+  #             "Unable to insert leader (name: #{name}, username: #{username}, " <>
+  #               "group_name: #{group_name})"
+  #           )
 
-            Logger.error("error: #{inspect(error, pretty: true)}")
+  #           Logger.error("error: #{inspect(error, pretty: true)}")
 
-            Repo.rollback(error)
-        end
-      end
+  #           Repo.rollback(error)
+  #       end
+  #     end
 
-      Logger.info("Imported leaders csv at #{path}")
-    else
-      Logger.error("Cannot find leaders csv at #{path}")
-    end
-  end
+  #     Logger.info("Imported leaders csv at #{path}")
+  #   else
+  #     Logger.error("Cannot find leaders csv at #{path}")
+  #   end
+  # end
 
-  # :TODO check mentor is staff before update group and add enroll course logit
-  defp process_mentors_csv(path) when is_binary(path) do
-    if File.exists?(path) do
-      csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
+  # # :TODO check mentor is staff before update group and add enroll course logit
+  # defp process_mentors_csv(path) when is_binary(path) do
+  #   if File.exists?(path) do
+  #     csv_stream = path |> File.stream!() |> CSV.decode(strip_fields: true)
 
-      for {:ok, [name, username, group_name]} <- csv_stream do
-        with {:ok, mentor = %User{}} <-
-               Accounts.insert_or_update_user(%{username: username, name: name}),
-             {:ok, %Group{}} <-
-               Courses.insert_or_update_group(%{name: group_name, mentor: mentor}) do
-          :ok
-        else
-          error ->
-            Logger.error(
-              "Unable to insert mentor (name: #{name}, username: #{username}, " <>
-                "group_name: #{group_name})"
-            )
+  #     for {:ok, [name, username, group_name]} <- csv_stream do
+  #       with {:ok, mentor = %User{}} <-
+  #              Accounts.insert_or_update_user(%{username: username, name: name}),
+  #            {:ok, %Group{}} <-
+  #              Courses.insert_or_update_group(%{name: group_name, mentor: mentor}) do
+  #         :ok
+  #       else
+  #         error ->
+  #           Logger.error(
+  #             "Unable to insert mentor (name: #{name}, username: #{username}, " <>
+  #               "group_name: #{group_name})"
+  #           )
 
-            Logger.error("error: #{inspect(error, pretty: true)}")
+  #           Logger.error("error: #{inspect(error, pretty: true)}")
 
-            Repo.rollback(error)
-        end
-      end
+  #           Repo.rollback(error)
+  #       end
+  #     end
 
-      Logger.info("Imported mentors csv at #{path}")
-    else
-      Logger.error("Cannot find mentors csv at #{path}")
-    end
-  end
+  #     Logger.info("Imported mentors csv at #{path}")
+  #   else
+  #     Logger.error("Cannot find mentors csv at #{path}")
+  #   end
+  # end
 
-  @spec trimmed_gets(String.t()) :: String.t()
-  defp trimmed_gets(prompt) when is_binary(prompt) do
-    prompt
-    |> IO.gets()
-    |> String.trim()
-  end
+  # @spec trimmed_gets(String.t()) :: String.t()
+  # defp trimmed_gets(prompt) when is_binary(prompt) do
+  #   prompt
+  #   |> IO.gets()
+  #   |> String.trim()
+  # end
 end

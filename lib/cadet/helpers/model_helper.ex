@@ -54,26 +54,6 @@ defmodule Cadet.ModelHelper do
     end)
   end
 
-  @doc """
-  Given a changeset for a model that has some `belongs_to` associations, this function will attach only one id to the changeset if the models are provided in the parameters.
-
-  example:
-  ```
-  defmodule MyTest do
-    schema "my_test" do
-      belongs_to(:bossman, User)
-    end
-
-    def changeset(my_test, params) do
-      # params = %{bossman: %User{}}
-
-      my_test
-      |> cast(params, [])
-      |> add_belongs_to_id_from_model(:bossman, params)
-    end
-  end
-  ```
-  """
   def add_belongs_to_id_from_model(changeset, assoc, params) when is_atom(assoc) do
     assoc_id_field = String.to_atom("#{assoc}_id")
 

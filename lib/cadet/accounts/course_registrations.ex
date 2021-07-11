@@ -137,21 +137,6 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.insert_or_update()
   end
 
-  # TODO: Remove eventually (duplicate of delete_course_registration)
-  # @spec delete_record(map()) ::
-  #         {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()} | {:error, :no_such_enrty}
-  # def delete_record(params = %{user_id: user_id, course_id: course_id})
-  #     when is_ecto_id(user_id) and is_ecto_id(course_id) do
-  #   CourseRegistration
-  #   |> where(user_id: ^user_id)
-  #   |> where(course_id: ^course_id)
-  #   |> Repo.one()
-  #   |> case do
-  #     nil -> {:error, :no_such_enrty}
-  #     cr -> CourseRegistration.changeset(cr, params) |> Repo.delete()
-  #   end
-  # end
-
   def update_game_states(cr = %CourseRegistration{}, new_game_state = %{}) do
     case cr
          |> CourseRegistration.changeset(%{game_states: new_game_state})
