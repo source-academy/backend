@@ -77,6 +77,10 @@ defmodule Cadet.Courses do
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
+        if Map.has_key?(params, :viewable) and not params.viewable do
+          remove_latest_viewed_id(course_id)
+        end
+
         course
         |> Course.changeset(params)
         |> Repo.update()
@@ -87,6 +91,17 @@ defmodule Cadet.Courses do
     Course
     |> where(id: ^course_id)
     |> Repo.one()
+  end
+
+  defp remove_latest_viewed_id(course_id) do
+    User
+    |> where(latest_viewed_id: ^course_id)
+    |> Repo.all()
+    |> Enum.each(fn user ->
+      user
+      |> User.changeset(%{latest_viewed_id: nil})
+      |> Repo.update()
+    end)
   end
 
   def get_assessment_configs(course_id) when is_ecto_id(course_id) do

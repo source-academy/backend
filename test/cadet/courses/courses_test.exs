@@ -123,6 +123,25 @@ defmodule Cadet.CoursesTest do
       assert updated_course.module_help_text == "help"
     end
 
+    test "succeeds (removes latest_viewed_id)" do
+      course = insert(:course)
+      user = insert(:user, %{latest_viewed: course})
+
+      {:ok, updated_course} =
+        Courses.update_course_config(course.id, %{
+          course_name: "Data Structures and Algorithms",
+          course_short_name: "CS2040S",
+          viewable: false,
+          enable_game: false,
+          enable_achievements: false,
+          enable_sourcecast: false,
+          module_help_text: "help"
+        })
+
+      assert updated_course.viewable == false
+      assert is_nil(Repo.get(User, user.id).latest_viewed_id)
+    end
+
     test "returns with error for invalid course id" do
       course = insert(:course)
       new_chapter = Enum.random(1..4)
