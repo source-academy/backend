@@ -84,7 +84,7 @@ defmodule CadetWeb.AdminUserController do
           {:upsert_groups, {:error, {status, message}}} ->
             conn |> put_status(status) |> text(message)
         end
-      end)
+      end, timeout: 20_000)
 
     conn
   end
