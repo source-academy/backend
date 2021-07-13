@@ -163,32 +163,22 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_testcases(%{build_hidden: build_hidden}, all_testcases?) do
+  defp build_testcases(all_testcases?) do
     cond do
       all_testcases? ->
         &Enum.concat(
-          Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
-          Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "private") end)
-        )
-
-      # build hidden testcases if ungraded
-      build_hidden ->
-        &Enum.concat(
-          Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
-          Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
+          Enum.concat(
+            Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
+            Enum.map(&1["opaque"], fn testcase -> build_testcase(testcase, "opaque") end)
+          ),
+          Enum.map(&1["secret"], fn testcase -> build_testcase(testcase, "secret") end)
         )
 
       true ->
-        &Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end)
-    end
-  end
-
-  defp build_postpend(%{build_hidden: build_hidden}, all_testcases?) do
-    case {all_testcases?, build_hidden} do
-      {true, _} -> & &1["postpend"]
-      {_, true} -> & &1["postpend"]
-      # Create a 1-arity function to return an empty postpend for non-paths
-      _ -> fn _question -> "" end
+        &Enum.concat(
+          Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
+          Enum.map(&1["opaque"], fn testcase -> build_testcase(testcase, "opaque") end)
+        )
     end
   end
 
@@ -196,8 +186,7 @@ defmodule CadetWeb.AssessmentsHelpers do
          %{
            question: %{
              question: question,
-             type: question_type,
-             build_hidden_testcases: build_hidden_testcases
+             type: question_type
            }
          },
          all_testcases?
@@ -208,8 +197,8 @@ defmodule CadetWeb.AssessmentsHelpers do
           content: "content",
           prepend: "prepend",
           solutionTemplate: "template",
-          postpend: build_postpend(%{build_hidden: build_hidden_testcases}, all_testcases?),
-          testcases: build_testcases(%{build_hidden: build_hidden_testcases}, all_testcases?)
+          postpend: "postpend",
+          testcases: build_testcases(all_testcases?)
         })
 
       :mcq ->

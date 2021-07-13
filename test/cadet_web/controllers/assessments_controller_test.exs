@@ -347,12 +347,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "content" => &1.question.content,
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
-                "postpend" =>
-                  if &1.build_hidden_testcases do
-                    &1.question.postpend
-                  else
-                    ""
-                  end,
+                "postpend" => &1.question.postpend,
                 "testcases" =>
                   Enum.map(
                     &1.question.public,
@@ -362,18 +357,14 @@ defmodule CadetWeb.AssessmentsControllerTest do
                           do: {Atom.to_string(k), v}
                     end
                   ) ++
-                    if &1.build_hidden_testcases do
-                      Enum.map(
-                        &1.question.private,
-                        fn testcase ->
-                          for {k, v} <- testcase,
-                              into: %{"type" => "hidden"},
-                              do: {Atom.to_string(k), v}
-                        end
-                      )
-                    else
-                      []
-                    end
+                    Enum.map(
+                      &1.question.opaque,
+                      fn testcase ->
+                        for {k, v} <- testcase,
+                            into: %{"type" => "opaque"},
+                            do: {Atom.to_string(k), v}
+                      end
+                    )
               }
             )
 

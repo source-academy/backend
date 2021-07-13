@@ -143,7 +143,6 @@ defmodule Cadet.Test.Seeds do
           display_order: id,
           assessment: assessment,
           max_xp: 1000,
-          build_hidden_testcases: assessment.config.type == "path",
           show_solution: assessment.config.type == "path"
         })
       end)
@@ -154,7 +153,6 @@ defmodule Cadet.Test.Seeds do
           display_order: id,
           assessment: assessment,
           max_xp: 500,
-          build_hidden_testcases: assessment.config.type == "path",
           show_solution: assessment.config.type == "path"
         })
       end)
@@ -165,7 +163,6 @@ defmodule Cadet.Test.Seeds do
           display_order: id,
           assessment: assessment,
           max_xp: 100,
-          build_hidden_testcases: assessment.config.type == "path",
           show_solution: assessment.config.type == "path"
         })
       end)

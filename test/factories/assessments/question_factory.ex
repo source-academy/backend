@@ -38,7 +38,14 @@ defmodule Cadet.Assessments.QuestionFactory do
               program: Faker.Lorem.Shakespeare.king_richard_iii()
             }
           ],
-          private: [
+          opaque: [
+            %{
+              score: :rand.uniform(5),
+              answer: Faker.StarWars.character(),
+              program: Faker.Lorem.Shakespeare.king_richard_iii()
+            }
+          ],
+          secret: [
             %{
               score: :rand.uniform(5),
               answer: Faker.StarWars.character(),

@@ -243,10 +243,18 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       end
                     ) ++
                       Enum.map(
-                        &1.question.question.private,
+                        &1.question.question.opaque,
                         fn testcase ->
                           for {k, v} <- testcase,
-                              into: %{"type" => "private"},
+                              into: %{"type" => "opaque"},
+                              do: {Atom.to_string(k), v}
+                        end
+                      ) ++
+                      Enum.map(
+                        &1.question.question.secret,
+                        fn testcase ->
+                          for {k, v} <- testcase,
+                              into: %{"type" => "secret"},
                               do: {Atom.to_string(k), v}
                         end
                       ),
@@ -861,10 +869,18 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       end
                     ) ++
                       Enum.map(
-                        &1.question.question.private,
+                        &1.question.question.opaque,
                         fn testcase ->
                           for {k, v} <- testcase,
-                              into: %{"type" => "private"},
+                              into: %{"type" => "opaque"},
+                              do: {Atom.to_string(k), v}
+                        end
+                      ) ++
+                      Enum.map(
+                        &1.question.question.secret,
+                        fn testcase ->
+                          for {k, v} <- testcase,
+                              into: %{"type" => "secret"},
                               do: {Atom.to_string(k), v}
                         end
                       ),

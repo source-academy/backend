@@ -23,7 +23,10 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
               public: [
                 %{"score" => 1, "answer" => "1", "program" => "f(1);"}
               ],
-              private: [
+              opaque: [
+                %{"score" => 1, "answer" => "45", "program" => "f(10);"}
+              ],
+              secret: [
                 %{"score" => 1, "answer" => "45", "program" => "f(10);"}
               ]
             })
@@ -165,7 +168,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
             question:
               build(:programming_question_content, %{
                 public: [],
-                private: []
+                opaque: [],
+                secret: []
               })
           }
         )
@@ -233,7 +237,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
       expected = %{
         prependProgram: question.question.prepend,
         postpendProgram: question.question.postpend,
-        testcases: question.question.public ++ question.question.private,
+        testcases:
+          question.question.public ++ question.question.opaque ++ question.question.secret,
         studentProgram: answer.answer.code,
         library: %{
           chapter: question.grading_library.chapter,

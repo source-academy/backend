@@ -146,7 +146,6 @@ defmodule Cadet.Updater.XMLParser do
         # max_grade: ~x"./@maxgrade"oi,
         max_xp: ~x"./@maxxp"oi,
         show_solution: ~x"./@showsolution"os,
-        build_hidden_testcases: ~x"./@buildhiddentestcases"os,
         blocking: ~x"./@blocking"os,
         entity: ~x"."
       )
@@ -185,7 +184,7 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec process_question_booleans(map()) :: map()
   defp process_question_booleans(question) do
-    flags = [:show_solution, :build_hidden_testcases, :blocking]
+    flags = [:show_solution, :blocking]
 
     flags
     |> Enum.reduce(question, fn flag, acc ->
@@ -225,8 +224,14 @@ defmodule Cadet.Updater.XMLParser do
           answer: ~x"./@answer" |> transform_by(&process_charlist/1),
           program: ~x"./text()" |> transform_by(&process_charlist/1)
         ],
-        private: [
-          ~x"./SNIPPET/TESTCASES/PRIVATE"l,
+        opaque: [
+          ~x"./SNIPPET/TESTCASES/OPAQUE"l,
+          score: ~x"./@score"oi,
+          answer: ~x"./@answer" |> transform_by(&process_charlist/1),
+          program: ~x"./text()" |> transform_by(&process_charlist/1)
+        ],
+        secret: [
+          ~x"./SNIPPET/TESTCASES/SECRET"l,
           score: ~x"./@score"oi,
           answer: ~x"./@answer" |> transform_by(&process_charlist/1),
           program: ~x"./text()" |> transform_by(&process_charlist/1)

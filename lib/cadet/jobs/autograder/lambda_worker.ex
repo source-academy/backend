@@ -92,7 +92,8 @@ defmodule Cadet.Autograder.LambdaWorker do
       studentProgram: Map.get(answer.answer, "code"),
       postpendProgram: Map.get(question_content, "postpend", ""),
       testcases:
-        Map.get(question_content, "public", []) ++ Map.get(question_content, "private", []),
+        Map.get(question_content, "public", []) ++
+          Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", []),
       library: %{
         chapter: question.grading_library.chapter,
         external: upcased_name_external,

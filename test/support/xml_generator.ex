@@ -130,8 +130,13 @@ defmodule Cadet.Test.XMLGenerator do
               end
             ] ++
               [
-                for testcase <- question.question[:private] do
-                  private(%{score: testcase.score, answer: testcase.answer}, testcase.program)
+                for testcase <- question.question[:opaque] do
+                  opaque(%{score: testcase.score, answer: testcase.answer}, testcase.program)
+                end
+              ] ++
+              [
+                for testcase <- question.question[:secret] do
+                  secret(%{score: testcase.score, answer: testcase.answer}, testcase.program)
                 end
               ]
           )
@@ -283,8 +288,12 @@ defmodule Cadet.Test.XMLGenerator do
     {"PUBLIC", map_permit_keys(raw_attrs, ~w(score answer)a), content}
   end
 
-  defp private(raw_attrs, content) do
-    {"PRIVATE", map_permit_keys(raw_attrs, ~w(score answer)a), content}
+  defp opaque(raw_attrs, content) do
+    {"OPAQUE", map_permit_keys(raw_attrs, ~w(score answer)a), content}
+  end
+
+  defp secret(raw_attrs, content) do
+    {"SECRET", map_permit_keys(raw_attrs, ~w(score answer)a), content}
   end
 
   defp map_permit_keys(map, keys) when is_map(map) and is_list(keys) do

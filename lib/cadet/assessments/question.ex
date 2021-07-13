@@ -14,7 +14,6 @@ defmodule Cadet.Assessments.Question do
     field(:type, QuestionType)
     field(:max_xp, :integer)
     field(:show_solution, :boolean, default: false)
-    field(:build_hidden_testcases, :boolean, default: false)
     field(:blocking, :boolean, default: false)
     field(:answer, :map, virtual: true)
     embeds_one(:library, Library, on_replace: :update)
@@ -24,8 +23,7 @@ defmodule Cadet.Assessments.Question do
   end
 
   @required_fields ~w(question type assessment_id)a
-  @optional_fields ~w(display_order max_xp show_solution
-    build_hidden_testcases blocking)a
+  @optional_fields ~w(display_order max_xp show_solution blocking)a
   @required_embeds ~w(library)a
 
   def changeset(question, params) do

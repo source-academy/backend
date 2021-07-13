@@ -41,7 +41,7 @@ defmodule Cadet.Updater.XMLParserTest do
 
     assessments_with_config = Enum.into(assessments, %{}, &{&1, &1.config})
 
-    questions = build_list(5, :question, assessment: nil)
+    questions = [build(:programming_question), build(:mcq_question), build(:voting_question)]
 
     %{
       assessments: assessments,

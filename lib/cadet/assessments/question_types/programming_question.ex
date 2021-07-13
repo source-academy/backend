@@ -14,7 +14,8 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
     field(:postpend, :string, default: "")
     field(:solution, :string)
     embeds_many(:public, Testcase)
-    embeds_many(:private, Testcase)
+    embeds_many(:opaque, Testcase)
+    embeds_many(:secret, Testcase)
   end
 
   @required_fields ~w(content template)a
@@ -24,7 +25,8 @@ defmodule Cadet.Assessments.QuestionTypes.ProgrammingQuestion do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> cast_embed(:public, with: &Testcase.changeset/2)
-    |> cast_embed(:private, with: &Testcase.changeset/2)
+    |> cast_embed(:opaque, with: &Testcase.changeset/2)
+    |> cast_embed(:secret, with: &Testcase.changeset/2)
     |> validate_required(@required_fields)
   end
 end

@@ -362,13 +362,13 @@ defmodule CadetWeb.AssessmentsController do
             answer(:string)
             score(:integer)
             program(:string)
-            type(Schema.ref(:TestcaseType), "One of public/hidden/private")
+            type(Schema.ref(:TestcaseType), "One of public/opaque/secret")
           end
         end,
       TestcaseType:
         swagger_schema do
           type(:string)
-          enum([:public, :hidden, :private])
+          enum([:public, :opaque, :secret])
         end,
       AutogradingResult:
         swagger_schema do
