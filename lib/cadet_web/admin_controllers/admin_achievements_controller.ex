@@ -7,6 +7,7 @@ defmodule CadetWeb.AdminAchievementsController do
 
   def bulk_update(conn, %{"achievements" => achievements}) do
     course_reg = conn.assigns.course_reg
+
     achievements
     |> Enum.map(&json_to_achievement(&1, course_reg.course_id))
     |> Achievements.upsert_many()
@@ -15,6 +16,7 @@ defmodule CadetWeb.AdminAchievementsController do
 
   def update(conn, %{"uuid" => uuid, "achievement" => achievement}) do
     course_reg = conn.assigns.course_reg
+
     achievement
     |> json_to_achievement(course_reg.course_id, uuid)
     |> Achievements.upsert()

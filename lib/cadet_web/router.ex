@@ -134,7 +134,8 @@ defmodule CadetWeb.Router do
     delete("/users", AdminUserController, :delete_user)
 
     put("/achievements", AdminAchievementsController, :bulk_update)
-    put("/achievements/:uuid", AdminAchievementsController, :update) # may be unused
+    # update may be unused
+    put("/achievements/:uuid", AdminAchievementsController, :update)
     delete("/achievements/:uuid", AdminAchievementsController, :delete)
 
     post("goals/:uuid/progress/:course_reg_id", AdminGoalsController, :update_progress)

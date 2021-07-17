@@ -164,21 +164,19 @@ defmodule CadetWeb.AssessmentsHelpers do
   end
 
   defp build_testcases(all_testcases?) do
-    cond do
-      all_testcases? ->
-        &Enum.concat(
-          Enum.concat(
-            Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
-            Enum.map(&1["opaque"], fn testcase -> build_testcase(testcase, "opaque") end)
-          ),
-          Enum.map(&1["secret"], fn testcase -> build_testcase(testcase, "secret") end)
-        )
-
-      true ->
-        &Enum.concat(
+    if all_testcases? do
+      &Enum.concat(
+        Enum.concat(
           Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
           Enum.map(&1["opaque"], fn testcase -> build_testcase(testcase, "opaque") end)
-        )
+        ),
+        Enum.map(&1["secret"], fn testcase -> build_testcase(testcase, "secret") end)
+      )
+    else
+      &Enum.concat(
+        Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
+        Enum.map(&1["opaque"], fn testcase -> build_testcase(testcase, "opaque") end)
+      )
     end
   end
 

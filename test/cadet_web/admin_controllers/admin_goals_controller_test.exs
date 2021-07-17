@@ -21,7 +21,12 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course_id = conn.assigns.course_id
-      {:ok, goal} = %Goal{course_id: course_id, uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      {:ok, goal} =
+        %Goal{course_id: course_id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
       [resp_goal] =
         conn
         |> get(build_path(course_id))
@@ -34,6 +39,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :student
     test "403 for student", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       conn
       |> get(build_path(course_id))
       |> response(403)
@@ -41,6 +47,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
     test "401 if unauthenticated", %{conn: conn} do
       course = insert(:course)
+
       conn
       |> get(build_path(course.id))
       |> response(401)
@@ -99,6 +106,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn, goals: goals = [a1, a2]} do
       course_id = conn.assigns.course_id
+
       conn
       |> put(build_path(course_id), %{
         "goals" => goals
@@ -112,6 +120,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :student
     test "403 for student", %{conn: conn, goals: goals = [a1, a2]} do
       course_id = conn.assigns.course_id
+
       conn
       |> put(build_path(course_id), %{
         "goals" => goals
@@ -124,6 +133,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
     test "401 if unauthenticated", %{conn: conn, goals: goals = [a1, a2]} do
       course = insert(:course)
+
       conn
       |> put(build_path(course.id), %{
         "goals" => goals
@@ -139,7 +149,12 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course_id = conn.assigns.course_id
-       {:ok, a} = %Goal{course_id: course_id, uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      {:ok, a} =
+        %Goal{course_id: course_id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
       conn
       |> delete(build_path(course_id, a.uuid))
       |> response(204)
@@ -150,7 +165,12 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :student
     test "403 for student", %{conn: conn} do
       course_id = conn.assigns.course_id
-       {:ok, a} = %Goal{course_id: course_id, uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      {:ok, a} =
+        %Goal{course_id: course_id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
       conn
       |> delete(build_path(course_id, a.uuid))
       |> response(403)
@@ -160,7 +180,12 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
     test "401 if unauthenticated", %{conn: conn} do
       course = insert(:course)
-      {:ok, a} = %Goal{course_id: course.id, uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      {:ok, a} =
+        %Goal{course_id: course.id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
       conn
       |> delete(build_path(course.id, a.uuid))
       |> response(401)
@@ -173,7 +198,12 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course = conn.assigns.test_cr.course
-      {:ok, g} = %Goal{course_id: course.id, uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      {:ok, g} =
+        %Goal{course_id: course.id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
       course_reg = insert(:course_registration, %{course: course, role: :student})
 
       conn
@@ -189,7 +219,12 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     @tag authenticate: :student
     test "403 for student", %{conn: conn} do
       course = conn.assigns.test_cr.course
-      {:ok, g} = %Goal{course_id: course.id, uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      {:ok, g} =
+        %Goal{course_id: course.id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
       course_reg = insert(:course_registration, %{course: course, role: :student})
 
       conn
@@ -201,7 +236,12 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
     test "401 if unauthenticated", %{conn: conn} do
       course = insert(:course)
-      {:ok, g} = %Goal{course_id: course.id, uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
+
+      {:ok, g} =
+        %Goal{course_id: course.id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
       course_reg = insert(:course_registration, %{course: course, role: :student})
 
       conn
