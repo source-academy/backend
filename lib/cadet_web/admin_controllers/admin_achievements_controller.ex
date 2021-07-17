@@ -6,15 +6,17 @@ defmodule CadetWeb.AdminAchievementsController do
   alias Cadet.Incentives.Achievements
 
   def bulk_update(conn, %{"achievements" => achievements}) do
+    course_reg = conn.assigns.course_reg
     achievements
-    |> Enum.map(&json_to_achievement(&1))
+    |> Enum.map(&json_to_achievement(&1, course_reg.course_id))
     |> Achievements.upsert_many()
     |> handle_standard_result(conn)
   end
 
   def update(conn, %{"uuid" => uuid, "achievement" => achievement}) do
+    course_reg = conn.assigns.course_reg
     achievement
-    |> json_to_achievement(uuid)
+    |> json_to_achievement(course_reg.course_id, uuid)
     |> Achievements.upsert()
     |> handle_standard_result(conn)
   end
@@ -25,7 +27,7 @@ defmodule CadetWeb.AdminAchievementsController do
     |> handle_standard_result(conn)
   end
 
-  defp json_to_achievement(json, uuid \\ nil) do
+  defp json_to_achievement(json, course_id, uuid \\ nil) do
     json =
       json
       |> snake_casify_string_keys_recursive()
@@ -34,6 +36,7 @@ defmodule CadetWeb.AdminAchievementsController do
         {"release", "open_at"},
         {"card_background", "card_tile_url"}
       ])
+      |> Map.put("course_id", course_id)
       |> case do
         map = %{"view" => view} ->
           map

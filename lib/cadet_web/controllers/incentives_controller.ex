@@ -6,25 +6,26 @@ defmodule CadetWeb.IncentivesController do
   alias Cadet.Incentives.{Achievements, Goals}
 
   def index_achievements(conn, _) do
-    render(conn, "index_achievements.json", achievements: Achievements.get())
+    course_id = conn.assigns.course_reg.course_id
+    render(conn, "index_achievements.json", achievements: Achievements.get(course_id))
   end
 
   def index_goals(conn, _) do
     render(conn, "index_goals_with_progress.json",
-      goals: Goals.get_with_progress(conn.assigns.current_user)
+      goals: Goals.get_with_progress(conn.assigns.course_reg)
     )
   end
 
   def update_progress(conn, %{"uuid" => uuid, "progress" => progress}) do
-    user_id = conn.assigns.current_user.id
+    course_reg_id = conn.assigns.course_reg.id
 
     progress
-    |> json_to_progress(uuid, user_id)
-    |> Goals.upsert_progress(uuid, user_id)
+    |> json_to_progress(uuid, course_reg_id)
+    |> Goals.upsert_progress(uuid, course_reg_id)
     |> handle_standard_result(conn)
   end
 
-  defp json_to_progress(json, uuid, user_id) do
+  defp json_to_progress(json, uuid, course_reg_id) do
     json =
       json
       |> snake_casify_string_keys_recursive()
@@ -33,7 +34,7 @@ defmodule CadetWeb.IncentivesController do
       count: Map.get(json, "count"),
       completed: Map.get(json, "completed"),
       goal_uuid: uuid,
-      user_id: user_id
+      course_reg_id: course_reg_id
     }
   end
 

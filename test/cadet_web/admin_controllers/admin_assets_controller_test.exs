@@ -54,6 +54,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :student
     test "POST /assets/:foldername/*filename", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       conn =
         post(conn, build_url(course_id, "testFolder/testFile.png"), %{
           :upload => build_upload("test/fixtures/upload.png")
@@ -82,6 +83,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       conn =
         post(conn, build_url(course_id, "wrongFolder/wrongUpload.png"), %{
           "upload" => build_upload("test/fixtures/upload.png")
@@ -95,6 +97,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "index file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       use_cassette "aws/controller_list_assets#1" do
         conn = get(conn, build_url(course_id, "testFolder"), %{})
 
@@ -106,6 +109,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       use_cassette "aws/controller_delete_asset#1" do
         conn = delete(conn, build_url(course_id, "testFolder/test2.png"))
 
@@ -116,6 +120,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       use_cassette "aws/controller_upload_asset#1" do
         conn =
           post(conn, build_url(course_id, "testFolder/test.png"), %{
@@ -132,6 +137,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       conn =
         post(conn, build_url(course_id, "testFolder/test.pdf"), %{
           "upload" => build_upload("test/fixtures/upload.pdf")
@@ -145,6 +151,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       conn =
         post(conn, build_url(course_id, "testFolder"), %{
           "upload" => build_upload("test/fixtures/upload.png")
@@ -165,6 +172,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       use_cassette "aws/controller_delete_asset#2" do
         conn = delete(conn, build_url(course_id, "testFolder/nestedFolder/test2.png"))
 
@@ -175,6 +183,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     @tag authenticate: :staff
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
+
       use_cassette "aws/controller_upload_asset#2" do
         conn =
           post(conn, build_url(course_id, "testFolder/nestedFolder/test.png"), %{

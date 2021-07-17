@@ -5,7 +5,7 @@ defmodule CadetWeb.IncentivesControllerTest do
 
   alias Cadet.Repo
   alias CadetWeb.IncentivesController
-  alias Cadet.Incentives.{Goal, Goals, GoalProgress}
+  alias Cadet.Incentives.{Goals, GoalProgress}
   alias Ecto.UUID
 
   test "swagger" do
@@ -15,46 +15,49 @@ defmodule CadetWeb.IncentivesControllerTest do
     assert is_map(IncentivesController.swagger_path_update_progress(nil))
   end
 
-  describe "GET /achievements" do
+  describe "GET v2/coures/:course_id/achievements" do
     @tag authenticate: :student
     test "succeeds if authenticated", %{conn: conn} do
-      insert(:achievement, achievement_literal(0))
+      course = conn.assigns.test_cr.course
+      insert(:achievement, Map.merge(achievement_literal(0), %{course: course}))
 
-      resp = conn |> get("/v2/achievements") |> json_response(200)
+      resp = conn |> get(build_url_achievements(course.id)) |> json_response(200)
 
       assert [achievement_json_literal(0)] = resp
     end
 
     test "401 if unauthenticated", %{conn: conn} do
-      conn |> get("/v2/achievements") |> response(401)
+      course = insert(:course)
+      conn |> get(build_url_achievements(course.id)) |> response(401)
     end
   end
 
-  describe "GET /self/goals" do
+  describe "GET v2/coures/:course_id/self/goals" do
     @tag authenticate: :student
     test "succeeds if authenticated", %{conn: conn} do
-      insert(:goal, goal_literal(0))
+      course = conn.assigns.test_cr.course
+      insert(:goal, Map.merge(goal_literal(0), %{course: course}))
 
-      resp = conn |> get("/v2/self/goals") |> json_response(200)
+      resp = conn |> get(build_url_goals(course.id)) |> json_response(200)
 
       assert [goal_json_literal(0)] = resp
     end
 
     @tag authenticate: :student
     test "includes user's progress", %{conn: conn} do
-      user = conn.assigns.current_user
-      goal = insert(:goal, goal_literal(0))
+      course_reg = conn.assigns.test_cr
+      goal = insert(:goal, Map.merge(goal_literal(0), %{course: course_reg.course}))
 
       {:ok, progress} =
         %GoalProgress{
           goal_uuid: goal.uuid,
-          user_id: user.id,
+          course_reg_id: course_reg.id,
           count: 123,
           completed: true
         }
         |> Repo.insert()
 
-      [resp_goal] = conn |> get("/v2/self/goals") |> json_response(200)
+      [resp_goal] = conn |> get(build_url_goals(course_reg.course_id)) |> json_response(200)
 
       assert goal_json_literal(0) = resp_goal
       assert resp_goal["count"] == progress.count
@@ -62,37 +65,66 @@ defmodule CadetWeb.IncentivesControllerTest do
     end
 
     test "401 if unauthenticated", %{conn: conn} do
-      conn |> get("/v2/self/goals") |> response(401)
+      course = insert(:course)
+      conn |> get(build_url_goals(course.id)) |> response(401)
     end
   end
 
-  describe "POST /self/goals/:uuid/progress" do
-    setup do
-      {:ok, g} = %Goal{uuid: UUID.generate()} |> Map.merge(goal_literal(5)) |> Repo.insert()
-
-      %{goal: g}
-    end
-
+  describe "POST v2/coures/:course_id/self/goals/:uuid/progress" do
     @tag authenticate: :student
-    test "succeeds if authenticated", %{conn: conn, goal: g} do
-      user = conn.assigns.current_user
+    test "succeeds if authenticated", %{conn: conn} do
+      course_reg = conn.assigns.test_cr
+      uuid = UUID.generate()
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(goal_literal(5), %{
+            course: course_reg.course,
+            course_id: course_reg.course_id,
+            uuid: uuid
+          })
+        )
 
       conn
-      |> post("/v2/self/goals/#{g.uuid}/progress", %{
-        "progress" => %{count: 100, completed: false, userid: user.id, uuid: g.uuid}
+      |> post(build_url_goals(course_reg.course_id, goal.uuid), %{
+        "progress" => %{
+          count: 100,
+          completed: false,
+          course_reg_id: course_reg.id,
+          uuid: goal.uuid
+        }
       })
       |> response(204)
 
-      retrieved_goal = Goals.get_with_progress(user)
+      retrieved_goal = Goals.get_with_progress(course_reg)
       assert [%{progress: [%{count: 100, completed: false}]}] = retrieved_goal
     end
 
-    test "401 if unauthenticated", %{conn: conn, goal: g} do
+    test "401 if unauthenticated", %{conn: conn} do
+      course = insert(:course)
+      uuid = UUID.generate()
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(goal_literal(5), %{course: course, course_id: course.id, uuid: uuid})
+        )
+
       conn
-      |> post("/v2/self/goals/#{g.uuid}/progress", %{
-        "progress" => %{count: 100, completed: false, userid: 1, uuid: g.uuid}
+      |> post(build_url_goals(course.id, goal.uuid), %{
+        "progress" => %{count: 100, completed: false, course_reg_id: 1, uuid: goal.uuid}
       })
       |> response(401)
     end
   end
+
+  defp build_url_achievements(course_id),
+    do: "/v2/courses/#{course_id}/achievements"
+
+  defp build_url_goals(course_id),
+    do: "/v2/courses/#{course_id}/self/goals"
+
+  defp build_url_goals(course_id, uuid),
+    do: "/v2/courses/#{course_id}/self/goals/#{uuid}/progress"
 end
