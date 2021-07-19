@@ -36,8 +36,8 @@ defmodule Cadet.CoursesTest do
       assert length(course_regs) == 1
       assert Enum.at(course_regs, 0).role == :admin
 
-      # User's latest_viewed course is updated
-      assert User |> where(id: ^user.id) |> Repo.one() |> Map.fetch!(:latest_viewed_id) ==
+      # User's latest_viewed_course is updated
+      assert User |> where(id: ^user.id) |> Repo.one() |> Map.fetch!(:latest_viewed_course_id) ==
                Enum.at(course_regs, 0).course_id
     end
   end
@@ -123,9 +123,9 @@ defmodule Cadet.CoursesTest do
       assert updated_course.module_help_text == "help"
     end
 
-    test "succeeds (removes latest_viewed_id)" do
+    test "succeeds (removes latest_viewed_course_id)" do
       course = insert(:course)
-      user = insert(:user, %{latest_viewed: course})
+      user = insert(:user, %{latest_viewed_course: course})
 
       {:ok, updated_course} =
         Courses.update_course_config(course.id, %{
@@ -139,7 +139,7 @@ defmodule Cadet.CoursesTest do
         })
 
       assert updated_course.viewable == false
-      assert is_nil(Repo.get(User, user.id).latest_viewed_id)
+      assert is_nil(Repo.get(User, user.id).latest_viewed_course_id)
     end
 
     test "returns with error for invalid course id" do

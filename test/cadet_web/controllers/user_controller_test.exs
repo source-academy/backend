@@ -17,7 +17,7 @@ defmodule CadetWeb.UserControllerTest do
     @tag authenticate: :student
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
-      course = user.latest_viewed
+      course = user.latest_viewed_course
       config2 = insert(:assessment_config, %{order: 2, type: "test type 2", course: course})
       config3 = insert(:assessment_config, %{order: 3, type: "test type 3", course: course})
       config1 = insert(:assessment_config, %{order: 1, type: "test type 1", course: course})
@@ -65,7 +65,7 @@ defmodule CadetWeb.UserControllerTest do
           "name" => user.name,
           "courses" => [
             %{
-              "courseId" => user.latest_viewed_id,
+              "courseId" => user.latest_viewed_course_id,
               "courseShortName" => "CS1101S",
               "courseName" => "Programming Methodology",
               "viewable" => true,
@@ -132,8 +132,8 @@ defmodule CadetWeb.UserControllerTest do
       assert expected == resp
     end
 
-    @tag sign_in: %{latest_viewed: nil}
-    test "success, no latest_viewed course", %{conn: conn} do
+    @tag sign_in: %{latest_viewed_course: nil}
+    test "success, no latest_viewed_course", %{conn: conn} do
       user = conn.assigns.current_user
 
       resp =
@@ -335,11 +335,11 @@ defmodule CadetWeb.UserControllerTest do
     # end
   end
 
-  describe "GET /v2/user/latest_viewed" do
+  describe "GET /v2/user/latest_viewed_course" do
     @tag authenticate: :student
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
-      course = user.latest_viewed
+      course = user.latest_viewed_course
       cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
       _another_cr = insert(:course_registration, %{user: user})
       assessment = insert(:assessment, %{is_published: true, course: course})
@@ -374,7 +374,7 @@ defmodule CadetWeb.UserControllerTest do
 
       resp =
         conn
-        |> get("/v2/user/latest_viewed")
+        |> get("/v2/user/latest_viewed_course")
         |> json_response(200)
         |> put_in(["courseRegistration", "story"], nil)
 
@@ -406,11 +406,11 @@ defmodule CadetWeb.UserControllerTest do
       assert expected == resp
     end
 
-    @tag sign_in: %{latest_viewed: nil}
-    test "success, no latest_viewed course", %{conn: conn} do
+    @tag sign_in: %{latest_viewed_course: nil}
+    test "success, no latest_viewed_course", %{conn: conn} do
       resp =
         conn
-        |> get("/v2/user/latest_viewed")
+        |> get("/v2/user/latest_viewed_course")
         |> json_response(200)
 
       expected = %{
@@ -423,12 +423,12 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     test "unauthorized", %{conn: conn} do
-      conn = get(conn, "/v2/user/latest_viewed", nil)
+      conn = get(conn, "/v2/user/latest_viewed_course", nil)
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
-  describe "PUT /v2/user/latest_viewed/{course_id}" do
+  describe "PUT /v2/user/latest_viewed_course/{course_id}" do
     @tag authenticate: :student
     test "success, updating game state", %{conn: conn} do
       user = conn.assigns.current_user
@@ -436,12 +436,12 @@ defmodule CadetWeb.UserControllerTest do
       insert(:course_registration, %{user: user, course: new_course})
 
       conn
-      |> put("/v2/user/latest_viewed", %{"courseId" => new_course.id})
+      |> put("/v2/user/latest_viewed_course", %{"courseId" => new_course.id})
       |> response(200)
 
       updated_user = Repo.get(User, user.id)
 
-      assert new_course.id == updated_user.latest_viewed_id
+      assert new_course.id == updated_user.latest_viewed_course_id
     end
   end
 

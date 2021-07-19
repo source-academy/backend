@@ -16,7 +16,7 @@ defmodule Cadet.Accounts.UserFactory do
               :nusnet_id,
               &"test/E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
             ),
-          latest_viewed: build(:course)
+          latest_viewed_course: build(:course)
         }
       end
 
@@ -28,7 +28,7 @@ defmodule Cadet.Accounts.UserFactory do
               :nusnet_id,
               &"test/E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
             ),
-          latest_viewed: build(:course)
+          latest_viewed_course: build(:course)
         }
       end
     end

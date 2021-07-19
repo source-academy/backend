@@ -97,12 +97,26 @@ defmodule Cadet.Accounts do
     end
   end
 
-  def update_latest_viewed(user = %User{}, latest_viewed_id) when is_ecto_id(latest_viewed_id) do
-    case user
-         |> User.changeset(%{latest_viewed_id: latest_viewed_id})
-         |> Repo.update() do
-      result = {:ok, _} -> result
-      {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
+  def update_latest_viewed(user = %User{id: user_id}, latest_viewed_course_id)
+      when is_ecto_id(latest_viewed_course_id) do
+    CourseRegistration
+    |> where(user_id: ^user_id)
+    |> where(course_id: ^latest_viewed_course_id)
+    |> Repo.one()
+    |> case do
+      nil ->
+        {:error, {:bad_request, "user is not in the course"}}
+
+      _ ->
+        case user
+             |> User.changeset(%{latest_viewed_course_id: latest_viewed_course_id})
+             |> Repo.update() do
+          result = {:ok, _} ->
+            result
+
+          {:error, changeset} ->
+            {:error, {:internal_server_error, full_error_messages(changeset)}}
+        end
     end
   end
 end

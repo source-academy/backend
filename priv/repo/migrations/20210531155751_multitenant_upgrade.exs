@@ -173,13 +173,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
         end)
 
         # Add latest_viewed_id to existing users
-        User
-        |> Repo.all()
-        |> Enum.each(fn user ->
-          user
-          |> User.changeset(%{latest_viewed_id: course.id})
-          |> Repo.update()
-        end)
+        repo().update_all("users", set: [latest_viewed_id: course.id])
 
         # Handle groups (adding course_id, and updating leader_id to course registrations)
         from(g in "groups", select: {g.id, g.temp_leader_id})

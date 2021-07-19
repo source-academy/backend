@@ -17,7 +17,7 @@ defmodule Cadet.Accounts.Query do
   def username(username) do
     User
     |> of_username(username)
-    |> preload(:latest_viewed)
+    |> preload(:latest_viewed_course)
   end
 
   @spec students_of(%CourseRegistration{}) :: Ecto.Query.t()

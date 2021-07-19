@@ -41,13 +41,13 @@ defmodule Cadet.Test.Seeds do
       course1 = insert(:course)
       course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
       # Users
-      avenger1 = insert(:user, %{name: "avenger", latest_viewed: course1})
-      admin1 = insert(:user, %{name: "admin", latest_viewed: course1})
+      avenger1 = insert(:user, %{name: "avenger", latest_viewed_course: course1})
+      admin1 = insert(:user, %{name: "admin", latest_viewed_course: course1})
 
-      studenta1admin2 = insert(:user, %{name: "student a", latest_viewed: course1})
+      studenta1admin2 = insert(:user, %{name: "student a", latest_viewed_course: course1})
 
-      studentb1 = insert(:user, %{latest_viewed: course1})
-      studentc1 = insert(:user, %{latest_viewed: course1})
+      studentb1 = insert(:user, %{latest_viewed_course: course1})
+      studentc1 = insert(:user, %{latest_viewed_course: course1})
       # CourseRegistration and Group
       avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
       admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})

@@ -206,7 +206,7 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
       assert course_reg.user_id == user2.id
       assert course_reg.course_id == course1.id
 
-      assert User |> where(id: ^user2.id) |> Repo.one() |> Map.fetch!(:latest_viewed_id) ==
+      assert User |> where(id: ^user2.id) |> Repo.one() |> Map.fetch!(:latest_viewed_course_id) ==
                course1.id
     end
   end

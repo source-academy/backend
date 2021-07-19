@@ -36,7 +36,7 @@ defmodule CadetWeb.SourcecastControllerTest do
               "id" => &1.uploader.id
             },
             "url" => Cadet.Courses.SourcecastUpload.url({&1.audio, &1}),
-            "course_id" => nil
+            "courseId" => nil
           }
         )
 
@@ -92,7 +92,7 @@ defmodule CadetWeb.SourcecastControllerTest do
               "id" => &1.uploader.id
             },
             "url" => Cadet.Courses.SourcecastUpload.url({&1.audio, &1}),
-            "course_id" => course_id
+            "courseId" => course_id
           }
         )
 
@@ -176,7 +176,7 @@ defmodule CadetWeb.SourcecastControllerTest do
             "id" => conn.assigns[:current_user].id,
             "name" => conn.assigns[:current_user].name
           },
-          "course_id" => nil
+          "courseId" => nil
         }
       ]
 
@@ -225,7 +225,7 @@ defmodule CadetWeb.SourcecastControllerTest do
             "id" => conn.assigns[:current_user].id,
             "name" => conn.assigns[:current_user].name
           },
-          "course_id" => course_id
+          "courseId" => course_id
         }
       ]
 

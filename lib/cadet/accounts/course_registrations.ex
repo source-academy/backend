@@ -110,7 +110,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
         User
         |> where(id: ^user_id)
         |> Repo.one()
-        |> User.changeset(%{latest_viewed_id: course_id})
+        |> User.changeset(%{latest_viewed_course_id: course_id})
         |> Repo.update()
 
         ok

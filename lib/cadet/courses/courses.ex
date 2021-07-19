@@ -35,11 +35,11 @@ defmodule Cadet.Courses do
         role: :admin
       })
     end)
-    |> Multi.update(:latest_viewed_id, fn %{course: course} ->
+    |> Multi.update(:latest_viewed_course_id, fn %{course: course} ->
       User
       |> where(id: ^user.id)
       |> Repo.one()
-      |> User.changeset(%{latest_viewed_id: course.id})
+      |> User.changeset(%{latest_viewed_course_id: course.id})
     end)
     |> Repo.transaction()
   end
@@ -78,7 +78,7 @@ defmodule Cadet.Courses do
 
       course ->
         if Map.has_key?(params, :viewable) and not params.viewable do
-          remove_latest_viewed_id(course_id)
+          remove_latest_viewed_course_id(course_id)
         end
 
         course
@@ -93,13 +93,13 @@ defmodule Cadet.Courses do
     |> Repo.one()
   end
 
-  defp remove_latest_viewed_id(course_id) do
+  defp remove_latest_viewed_course_id(course_id) do
     User
-    |> where(latest_viewed_id: ^course_id)
+    |> where(latest_viewed_course_id: ^course_id)
     |> Repo.all()
     |> Enum.each(fn user ->
       user
-      |> User.changeset(%{latest_viewed_id: nil})
+      |> User.changeset(%{latest_viewed_course_id: nil})
       |> Repo.update()
     end)
   end

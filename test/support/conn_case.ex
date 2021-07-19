@@ -53,7 +53,7 @@ defmodule CadetWeb.ConnCase do
 
     if tags[:authenticate] do
       course = Factory.insert(:course)
-      user = Factory.insert(:user, %{latest_viewed: course})
+      user = Factory.insert(:user, %{latest_viewed_course: course})
 
       course_registration =
         cond do

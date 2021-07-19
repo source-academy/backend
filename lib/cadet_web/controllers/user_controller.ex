@@ -13,8 +13,8 @@ defmodule CadetWeb.UserController do
     user = conn.assigns.current_user
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
 
-    if user.latest_viewed_id do
-      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_id)
+    if user.latest_viewed_course_id do
+      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
       xp = user_total_xp(latest)
       max_xp = user_max_xp(latest)
       story = user_current_story(latest)
@@ -45,9 +45,9 @@ defmodule CadetWeb.UserController do
     user = conn.assigns.current_user
 
     latest =
-      case user.latest_viewed_id do
+      case user.latest_viewed_course_id do
         nil -> nil
-        _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_id)
+        _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
       end
 
     get_course_reg_config(conn, latest)
@@ -115,7 +115,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :get_latest_viewed do
-    get("/v2/user/latest_viewed")
+    get("/v2/user/latest_viewed_course")
 
     summary("Get the latest_viewed_course of a user")
 
@@ -126,7 +126,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_latest_viewed do
-    put("/v2/user/latest_viewed")
+    put("/v2/user/latest_viewed_course")
     summary("Update user's latest viewed course")
     security([%{JWT: []}])
     consumes("application/json")

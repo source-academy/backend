@@ -21,7 +21,7 @@ defmodule Cadet.Auth.GuardianTest do
     }
 
     assert Guardian.resource_from_claims(good_claims) ==
-             {:ok, remove_preload(user, :latest_viewed)}
+             {:ok, remove_preload(user, :latest_viewed_course)}
 
     assert Guardian.resource_from_claims(bad_claims) == {:error, :not_found}
   end

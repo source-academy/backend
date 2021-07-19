@@ -54,8 +54,8 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth])
 
     get("/user", UserController, :index)
-    get("/user/latest_viewed", UserController, :get_latest_viewed)
-    put("/user/latest_viewed", UserController, :update_latest_viewed)
+    get("/user/latest_viewed_course", UserController, :get_latest_viewed)
+    put("/user/latest_viewed_course", UserController, :update_latest_viewed)
 
     post("/config/create", CoursesController, :create)
 
@@ -134,7 +134,6 @@ defmodule CadetWeb.Router do
     delete("/users", AdminUserController, :delete_user)
 
     put("/achievements", AdminAchievementsController, :bulk_update)
-    # update may be unused
     put("/achievements/:uuid", AdminAchievementsController, :update)
     delete("/achievements/:uuid", AdminAchievementsController, :delete)
 
