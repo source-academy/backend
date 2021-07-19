@@ -276,7 +276,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "assessmentConfigs" => "Missions"
         })
 
-      assert response(conn, 400) == "Missing List parameter(s)"
+      assert response(conn, 400) == "missing assessmentConfig"
     end
 
     @tag authenticate: :staff
@@ -288,7 +288,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "assessmentConfigs" => [1, "Missions", "Quests"]
         })
 
-      assert response(conn, 400) == "List parameter does not contain all maps"
+      assert response(conn, 400) ==
+               "assessmentConfigs should be a list of assessment configuration objects"
     end
 
     @tag authenticate: :staff
@@ -297,7 +298,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       conn = put(conn, build_url_assessment_configs(course_id), %{})
 
-      assert response(conn, 400) == "Missing List parameter(s)"
+      assert response(conn, 400) == "missing assessmentConfig"
     end
   end
 

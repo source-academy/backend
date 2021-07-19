@@ -10,13 +10,25 @@ defmodule Cadet.Courses.GroupTest do
     end
 
     test "validate role" do
-      student = insert(:course_registration, %{role: :student})
-      staff = insert(:course_registration, %{role: :staff})
-      admin = insert(:course_registration, %{role: :admin})
+      course = insert(:course)
+      student = insert(:course_registration, %{course: course, role: :student})
+      staff = insert(:course_registration, %{course: course, role: :staff})
+      admin = insert(:course_registration, %{course: course, role: :admin})
 
-      assert_changeset(%{name: "test", course_id: 1, leader_id: staff.id}, :valid)
-      assert_changeset(%{name: "test", course_id: 1, leader_id: admin.id}, :valid)
-      assert_changeset(%{name: "test", course_id: 1, leader_id: student.id}, :invalid)
+      assert_changeset(%{name: "test", course_id: course.id, leader_id: staff.id}, :valid)
+      assert_changeset(%{name: "test", course_id: course.id, leader_id: admin.id}, :valid)
+      assert_changeset(%{name: "test", course_id: course.id, leader_id: student.id}, :invalid)
+    end
+
+    test "validate course" do
+      course = insert(:course)
+      student = insert(:course_registration, %{course: course, role: :student})
+      staff = insert(:course_registration, %{course: course, role: :staff})
+      admin = insert(:course_registration, %{course: course, role: :admin})
+
+      assert_changeset(%{name: "test", course_id: course.id + 1, leader_id: staff.id}, :invalid)
+      assert_changeset(%{name: "test", course_id: course.id + 1, leader_id: admin.id}, :invalid)
+      assert_changeset(%{name: "test", course_id: course.id + 1, leader_id: student.id}, :invalid)
     end
   end
 end

@@ -73,7 +73,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :create do
-    post("/v2s{course_id}/stories")
+    post("/v2{course_id}/stories")
 
     summary("Creates a new story")
 

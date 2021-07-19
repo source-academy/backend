@@ -73,7 +73,7 @@ defmodule Cadet.Accounts do
   Sign in using given user ID
   """
   def sign_in(username, token, provider) do
-    user = Repo.one(Query.username(username))
+    user = username |> Query.username() |> Repo.one()
 
     if is_nil(user) or is_nil(user.name) do
       # user is not registered in our database or does not have a name

@@ -124,15 +124,6 @@ defmodule Cadet.Updater.XMLParser do
     "public"
   end
 
-  # @spec change_quest_to_sidequest(String.t()) :: String.t()
-  # defp change_quest_to_sidequest("quest") do
-  #   "sidequest"
-  # end
-
-  # defp change_quest_to_sidequest(type) when is_binary(type) do
-  #   type
-  # end
-
   @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   defp process_questions(xml) do
     default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
@@ -143,7 +134,6 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(
         ~x"//PROBLEMS/PROBLEM"el,
         type: ~x"./@type"o |> transform_by(&process_charlist/1),
-        # max_grade: ~x"./@maxgrade"oi,
         max_xp: ~x"./@maxxp"oi,
         show_solution: ~x"./@showsolution"os,
         blocking: ~x"./@blocking"os,

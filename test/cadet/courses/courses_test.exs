@@ -554,32 +554,4 @@ defmodule Cadet.CoursesTest do
       refute is_nil(group_db)
     end
   end
-
-  # describe "insert_or_update_group" do
-  #   test "existing group" do
-  #     group = insert(:group)
-  #     group_params = params_with_assocs(:group, name: group.name)
-  #     Courses.insert_or_update_group(group_params)
-
-  #     updated_group =
-  #       Group
-  #       |> where(name: ^group.name)
-  #       |> Repo.one()
-
-  #     assert updated_group.id == group.id
-  #     assert updated_group.leader_id == group_params.leader_id
-  #   end
-
-  #   test "non-existent group" do
-  #     group_params = params_with_assocs(:group)
-  #     Courses.insert_or_update_group(group_params)
-
-  #     updated_group =
-  #       Group
-  #       |> where(name: ^group_params.name)
-  #       |> Repo.one()
-
-  #     assert updated_group.leader_id == group_params.leader_id
-  #   end
-  # end
 end

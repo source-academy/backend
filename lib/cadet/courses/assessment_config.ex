@@ -1,6 +1,6 @@
 defmodule Cadet.Courses.AssessmentConfig do
   @moduledoc """
-  The AssessmentConfig entity stores the assessment tyoes in a
+  The AssessmentConfig entity stores the assessment types in a
   particular course.
   """
   use Cadet, :model

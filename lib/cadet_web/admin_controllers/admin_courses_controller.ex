@@ -52,12 +52,16 @@ defmodule CadetWeb.AdminCoursesController do
           |> text(message)
       end
     else
-      send_resp(conn, :bad_request, "List parameter does not contain all maps")
+      send_resp(
+        conn,
+        :bad_request,
+        "assessmentConfigs should be a list of assessment configuration objects"
+      )
     end
   end
 
   def update_assessment_configs(conn, _) do
-    send_resp(conn, :bad_request, "Missing List parameter(s)")
+    send_resp(conn, :bad_request, "missing assessmentConfig")
   end
 
   def delete_assessment_config(conn, %{
