@@ -19,8 +19,8 @@ defmodule Cadet.Repo.Migrations.UpdateAchievement do
       fn ->
         courses = "courses" |> repo().all()
         course_id = courses |> Enum.at(0) |> elem(0)
-        repo().delete_all("achievements")
-        repo().delete_all("goals")
+        repo().update_all("achievements", set: [course_id: course_id])
+        repo().update_all("goals", set: [course_id: course_id])
         repo().delete_all("goal_progress")
       end
     )
