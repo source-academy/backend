@@ -938,6 +938,14 @@ defmodule Cadet.Assessments do
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
     Answer
     |> where(question_id: ^question_id)
+    |> where(
+      [a],
+      fragment(
+        "?->>'code' like ?",
+        a.answer,
+        "%return%"
+      )
+    )
     |> order_by(desc: :relative_score)
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
