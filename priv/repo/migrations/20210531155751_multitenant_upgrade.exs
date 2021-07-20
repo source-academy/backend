@@ -155,7 +155,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
 
         # Namespace existing usernames
         from(u in "users", update: [set: [username: fragment("? || ? ", "luminus/", u.username)]])
-        |> Repo.update_all([])
+        |> repo().update_all([])
 
         # Create course registrations for existing users
         from(u in "users", select: {u.id, u.role, u.group_id, u.game_states})
@@ -187,8 +187,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
                 CourseRegistration
                 |> where(role: :staff)
                 |> Repo.one()
-
-                Map.fetch!(:id)
+                |> Map.fetch!(:id)
 
               id ->
                 CourseRegistration
