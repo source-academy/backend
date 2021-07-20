@@ -263,6 +263,6 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   end
 
   defp build_path(course_id, uuid, course_reg_id) do
-    "v2/courses/#{course_id}/admin/goals/#{uuid}/progress/#{course_reg_id}"
+    "v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals/#{uuid}/progress/"
   end
 end

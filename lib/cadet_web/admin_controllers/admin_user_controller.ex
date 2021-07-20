@@ -93,17 +93,19 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @update_role_roles ~w(admin)a
-  def update_role(conn, %{"role" => role, "courseRegId" => coursereg_id}) do
+  def update_role(conn, %{"role" => role, "course_reg_id" => course_reg_id}) do
+    course_reg_id = course_reg_id |> String.to_integer()
+
     %{id: admin_course_reg_id, role: admin_role, course_id: admin_course_id} =
       conn.assigns.course_reg
 
     with {:validate_role, true} <- {:validate_role, admin_role in @update_role_roles},
-         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != coursereg_id},
+         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != course_reg_id},
          {:get_cr, user_course_reg} when not is_nil(user_course_reg) <-
-           {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()},
+           {:get_cr, CourseRegistration |> where(id: ^course_reg_id) |> Repo.one()},
          {:validate_same_course, true} <-
            {:validate_same_course, user_course_reg.course_id == admin_course_id} do
-      case CourseRegistrations.update_role(role, coursereg_id) do
+      case CourseRegistrations.update_role(role, course_reg_id) do
         {:ok, %{}} ->
           text(conn, "OK")
 
@@ -128,18 +130,20 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @delete_user_roles ~w(admin)a
-  def delete_user(conn, %{"courseRegId" => coursereg_id}) do
+  def delete_user(conn, %{"course_reg_id" => course_reg_id}) do
+    course_reg_id = course_reg_id |> String.to_integer()
+
     %{id: admin_course_reg_id, role: admin_role, course_id: admin_course_id} =
       conn.assigns.course_reg
 
     with {:validate_role, true} <- {:validate_role, admin_role in @delete_user_roles},
-         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != coursereg_id},
+         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != course_reg_id},
          {:get_cr, user_course_reg} when not is_nil(user_course_reg) <-
-           {:get_cr, CourseRegistration |> where(id: ^coursereg_id) |> Repo.one()},
+           {:get_cr, CourseRegistration |> where(id: ^course_reg_id) |> Repo.one()},
          {:prevent_delete_admin, true} <- {:prevent_delete_admin, user_course_reg.role != :admin},
          {:validate_same_course, true} <-
            {:validate_same_course, user_course_reg.course_id == admin_course_id} do
-      case CourseRegistrations.delete_course_registration(coursereg_id) do
+      case CourseRegistrations.delete_course_registration(course_reg_id) do
         {:ok, %{}} ->
           text(conn, "OK")
 
