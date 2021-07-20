@@ -14,5 +14,15 @@ defmodule Cadet.Repo.Migrations.UpdateAchievement do
       remove(:user_id)
       add(:course_reg_id, references(:course_registrations))
     end
+
+    execute(
+      fn ->
+        courses = from(c in "courses", select: {c.id}) |> repo().all()
+        course_id = courses |> Enum.at(0) |> elem(0)
+        repo().update_all("achievements", set: [course_id: course_id])
+        repo().update_all("goals", set: [course_id: course_id])
+        repo().delete_all("goal_progress")
+      end
+    )
   end
 end
