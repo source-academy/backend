@@ -266,6 +266,7 @@ defmodule Cadet.AssessmentsTest do
           fn submission ->
             insert(
               :answer,
+              answer: build(:programming_answer),
               submission: submission,
               question: voting_question
             )
@@ -301,19 +302,13 @@ defmodule Cadet.AssessmentsTest do
 
       top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, 5)
 
-      assert get_answer_relative_scores(top_x_ans) == [
-               99.0,
-               89.0,
-               79.0,
-               69.0,
-               59.0
-             ]
+      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(5)
 
       x = 3
       top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, x)
 
       # verify that top x ans are queried correctly
-      assert get_answer_relative_scores(top_x_ans) == [99.0, 89.0, 79.0]
+      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(3)
     end
   end
 
@@ -412,6 +407,7 @@ defmodule Cadet.AssessmentsTest do
         fn submission ->
           insert(
             :answer,
+            answer: build(:programming_answer),
             submission: submission,
             question: current_question
           )
@@ -423,6 +419,7 @@ defmodule Cadet.AssessmentsTest do
         fn submission ->
           insert(
             :answer,
+            answer: build(:programming_answer),
             submission: submission,
             question: yesterday_question
           )
@@ -434,6 +431,7 @@ defmodule Cadet.AssessmentsTest do
         fn submission ->
           insert(
             :answer,
+            answer: build(:programming_answer),
             submission: submission,
             question: past_question
           )
@@ -544,7 +542,7 @@ defmodule Cadet.AssessmentsTest do
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(yesterday_question.id, 5)
-             ) == [99.0, 89.0, 79.0, 69.0, 59.0]
+             ) == expected_top_relative_scores(5)
     end
 
     test "update_rolling_contest_leaderboards correcly updates leaderboards which voting is active",
@@ -566,7 +564,7 @@ defmodule Cadet.AssessmentsTest do
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 5)
-             ) == [99.0, 89.0, 79.0, 69.0, 59.0]
+             ) == expected_top_relative_scores(5)
     end
   end
 
@@ -576,5 +574,13 @@ defmodule Cadet.AssessmentsTest do
 
   defp get_question_ids(questions) do
     questions |> Enum.map(fn q -> q.id end) |> Enum.sort()
+  end
+
+  defp expected_top_relative_scores(top_x) do
+    # "return 0;" in the factory has 3 token
+    10..0
+    |> Enum.to_list()
+    |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / 50) end)
+    |> Enum.take(top_x)
   end
 end
