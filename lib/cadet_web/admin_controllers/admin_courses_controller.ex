@@ -40,7 +40,16 @@ defmodule CadetWeb.AdminCoursesController do
       })
       when is_ecto_id(course_id) and is_list(assessment_configs) do
     if Enum.all?(assessment_configs, &is_map/1) do
-      configs = assessment_configs |> Enum.map(&to_snake_case_atom_keys/1)
+      configs =
+        assessment_configs
+        |> Enum.map(&to_snake_case_atom_keys/1)
+        |> update_in(
+          [Access.all()],
+          &with(
+            {v, m} <- Map.pop(&1, :display_in_dashboard),
+            do: Map.put(m, :show_grading_summary, v)
+          )
+        )
 
       case Courses.mass_upsert_and_reorder_assessment_configs(course_id, configs) do
         {:ok, _} ->

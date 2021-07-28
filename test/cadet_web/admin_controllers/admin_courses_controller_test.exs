@@ -216,17 +216,17 @@ defmodule CadetWeb.AdminCoursesControllerTest do
             "assessmentConfigId" => config.id,
             "courseId" => course_id,
             "type" => "Missions",
+            "displayInDashboard" => true,
             "earlySubmissionXp" => 100,
-            "hoursBeforeEarlyXpDecay" => 24,
-            "decayRatePointsPerHour" => 1
+            "hoursBeforeEarlyXpDecay" => 24
           },
           %{
             "assessmentConfigId" => -1,
             "courseId" => course_id,
             "type" => "Paths",
+            "displayInDashboard" => true,
             "earlySubmissionXp" => 100,
-            "hoursBeforeEarlyXpDecay" => 24,
-            "decayRatePointsPerHour" => 1
+            "hoursBeforeEarlyXpDecay" => 24
           }
         ]
       }
