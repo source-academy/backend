@@ -43,7 +43,11 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
       course2: course2
     } do
       assert_changeset(%{user_id: user1.id, course_id: course2.id, role: :admin}, :valid)
-      assert_changeset(%{user_id: user2.id, course_id: course1.id, role: :student}, :valid)
+
+      assert_changeset(
+        %{user_id: user2.id, course_id: course1.id, role: :student, agreed_to_research: true},
+        :valid
+      )
 
       # assert_changeset(%{user_id: user2.id, course_id: course2.id, role: :staff, group_id: group.id}, :valid)
     end
@@ -326,6 +330,45 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     test "fails when course registration does not exist", %{} do
       assert {:error, {:bad_request, "User course registration does not exist"}} ==
                CourseRegistrations.delete_course_registration(10_000)
+    end
+  end
+
+  describe "update_research_agreement" do
+    setup do
+      student1 = insert(:course_registration, %{role: :student})
+      student2 = insert(:course_registration, %{role: :student, agreed_to_research: false})
+
+      {:ok, %{student1: student1, student2: student2}}
+    end
+
+    test "succeeds when field is initially nil", %{student1: student1} do
+      assert is_nil(
+               CourseRegistration
+               |> where(id: ^student1.id)
+               |> Repo.one()
+               |> Map.fetch!(:agreed_to_research)
+             )
+
+      CourseRegistrations.update_research_agreement(student1, true)
+
+      assert CourseRegistration
+             |> where(id: ^student1.id)
+             |> Repo.one()
+             |> Map.fetch!(:agreed_to_research) == true
+    end
+
+    test "succeeds when field is initially not nil", %{student2: student2} do
+      assert CourseRegistration
+             |> where(id: ^student2.id)
+             |> Repo.one()
+             |> Map.fetch!(:agreed_to_research) == false
+
+      CourseRegistrations.update_research_agreement(student2, true)
+
+      assert CourseRegistration
+             |> where(id: ^student2.id)
+             |> Repo.one()
+             |> Map.fetch!(:agreed_to_research) == true
     end
   end
 end

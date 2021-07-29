@@ -83,7 +83,8 @@ defmodule CadetWeb.UserView do
               story: :story,
               playStory: :play_story?
             }),
-          gameStates: latest.game_states
+          gameStates: latest.game_states,
+          agreedToResearch: latest.agreed_to_research
         }
     end
   end
