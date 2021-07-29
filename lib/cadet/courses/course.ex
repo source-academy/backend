@@ -39,21 +39,34 @@ defmodule Cadet.Courses.Course do
     var = Map.has_key?(params, :source_variant)
 
     # not (chap xor var)
-    if (chap and var) or (not chap and not var) do
-      case get_field(changeset, :source_chapter, nil) do
-        nil -> changeset
-        1 -> validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm"])
-        2 -> validate_inclusion(changeset, :source_variant, ["default", "lazy"])
-        3 -> validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det"])
-        4 -> validate_inclusion(changeset, :source_variant, ["default", "gpu"])
-        _ -> add_error(changeset, :source_chapter, "is invalid")
-      end
-    else
-      add_error(
-        changeset,
-        :source_chapter,
-        "source chapter and source variant must be present together"
-      )
+    case {chap, var} do
+      {true, true} ->
+        case get_field(changeset, :source_chapter) do
+          1 ->
+            validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm"])
+
+          2 ->
+            validate_inclusion(changeset, :source_variant, ["default", "lazy"])
+
+          3 ->
+            validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det"])
+
+          4 ->
+            validate_inclusion(changeset, :source_variant, ["default", "gpu"])
+
+          _ ->
+            add_error(changeset, :source_chapter, "is invalid")
+        end
+
+      {false, false} ->
+        changeset
+
+      {_, _} ->
+        add_error(
+          changeset,
+          :source_chapter,
+          "source chapter and source variant must be present together"
+        )
     end
   end
 end
