@@ -8,7 +8,7 @@ defmodule Cadet.Courses do
   import Ecto.Query
   alias Ecto.Multi
 
-  alias Cadet.Accounts.{CourseRegistration, User}
+  alias Cadet.Accounts.{CourseRegistration, User, CourseRegistrations}
 
   alias Cadet.Courses.{
     AssessmentConfig,
@@ -28,18 +28,12 @@ defmodule Cadet.Courses do
   def create_course_config(params, user) do
     Multi.new()
     |> Multi.insert(:course, Course.changeset(%Course{}, params))
-    |> Multi.insert(:course_reg, fn %{course: course} ->
-      CourseRegistration.changeset(%CourseRegistration{}, %{
+    |> Multi.run(:course_reg, fn _repo, %{course: course} ->
+      CourseRegistrations.enroll_course(%{
         course_id: course.id,
         user_id: user.id,
         role: :admin
       })
-    end)
-    |> Multi.update(:latest_viewed_course_id, fn %{course: course} ->
-      User
-      |> where(id: ^user.id)
-      |> Repo.one()
-      |> User.changeset(%{latest_viewed_course_id: course.id})
     end)
     |> Repo.transaction()
   end
@@ -312,75 +306,6 @@ defmodule Cadet.Courses do
         {:ok, group}
     end
   end
-
-  # @doc """
-  # Updates a group based on the group name or create one if it doesn't exist
-  # """
-  # @spec insert_or_update_group(map()) :: {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
-  # def insert_or_update_group(params = %{name: name}) when is_binary(name) do
-  #   Group
-  #   |> where(name: ^name)
-  #   |> Repo.one()
-  #   |> case do
-  #     nil ->
-  #       Group.changeset(%Group{}, params)
-
-  #     group ->
-  #       Group.changeset(group, params)
-  #   end
-  #   |> Repo.insert_or_update()
-  # end
-
-  # @doc """
-  # Reassign a student to a discussion group
-  # This will un-assign student from the current discussion group
-  # """
-  # def assign_group(leader = %User{}, student = %User{}) do
-  #   cond do
-  #     leader.role == :student ->
-  #       {:error, :invalid}
-
-  #     student.role != :student ->
-  #       {:error, :invalid}
-
-  #     true ->
-  #       Repo.transaction(fn ->
-  #         {:ok, _} = unassign_group(student)
-
-  #         %Group{}
-  #         |> Group.changeset(%{})
-  #         |> put_assoc(:leader, leader)
-  #         |> put_assoc(:student, student)
-  #         |> Repo.insert!()
-  #       end)
-  #   end
-  # end
-
-  # @doc """
-  # Remove existing student from discussion group, no-op if a student
-  # is unassigned
-  # """
-  # def unassign_group(student = %User{}) do
-  #   existing_group = Repo.get_by(Group, student_id: student.id)
-
-  #   if existing_group == nil do
-  #     {:ok, nil}
-  #   else
-  #     Repo.delete(existing_group)
-  #   end
-  # end
-
-  # @doc """
-  # Get list of students under staff discussion group
-  # """
-  # def list_students_by_leader(staff = %CourseRegistration{}) do
-  #   import Cadet.Course.Query, only: [group_members: 1]
-
-  #   staff
-  #   |> group_members()
-  #   |> Repo.all()
-  #   |> Repo.preload([:student])
-  # end
 
   @upload_file_roles ~w(admin staff)a
 

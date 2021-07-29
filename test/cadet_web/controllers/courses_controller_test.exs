@@ -48,14 +48,13 @@ defmodule CadetWeb.CoursesControllerTest do
         "viewable" => "true",
         "enable_achievements" => "true",
         "enable_sourcecast" => "true",
-        "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
       }
 
       conn = post(conn, build_url_create(), params)
 
-      assert response(conn, 400) == "Missing parameter(s)"
+      assert response(conn, 400) == "Invalid parameter(s)"
     end
 
     @tag authenticate: :student

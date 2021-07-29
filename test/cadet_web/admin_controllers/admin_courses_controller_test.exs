@@ -136,7 +136,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "sourceVariant" => "default"
         })
 
-      assert response(conn, 400) == "Missing parameter(s)"
+      assert response(conn, 400) == "Invalid parameter(s)"
     end
   end
 

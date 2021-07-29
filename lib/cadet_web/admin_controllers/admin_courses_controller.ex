@@ -9,23 +9,17 @@ defmodule CadetWeb.AdminCoursesController do
       when is_ecto_id(course_id) do
     params = params |> to_snake_case_atom_keys()
 
-    if (Map.has_key?(params, :source_chapter) and Map.has_key?(params, :source_variant)) or
-         (not Map.has_key?(params, :source_chapter) and
-            not Map.has_key?(params, :source_variant)) do
-      case Courses.update_course_config(course_id, params) do
-        {:ok, _} ->
-          text(conn, "OK")
+    case Courses.update_course_config(course_id, params) do
+      {:ok, _} ->
+        text(conn, "OK")
 
-        {:error, {status, message}} ->
-          send_resp(conn, status, message)
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
 
-        {:error, _} ->
-          conn
-          |> put_status(:bad_request)
-          |> text("Invalid parameter(s)")
-      end
-    else
-      send_resp(conn, :bad_request, "Missing parameter(s)")
+      {:error, _} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid parameter(s)")
     end
   end
 

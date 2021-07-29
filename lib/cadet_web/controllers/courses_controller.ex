@@ -16,30 +16,14 @@ defmodule CadetWeb.CoursesController do
     user = conn.assigns.current_user
     params = params |> to_snake_case_atom_keys()
 
-    required_keys = [
-      :course_name,
-      :course_short_name,
-      :viewable,
-      :enable_game,
-      :enable_achievements,
-      :enable_sourcecast,
-      :source_chapter,
-      :source_variant,
-      :module_help_text
-    ]
+    case Courses.create_course_config(params, user) do
+      {:ok, _} ->
+        text(conn, "OK")
 
-    if Enum.reduce(required_keys, true, fn x, acc -> acc and Map.has_key?(params, x) end) do
-      case Courses.create_course_config(params, user) do
-        {:ok, _} ->
-          text(conn, "OK")
-
-        {:error, _, _, _} ->
-          conn
-          |> put_status(:bad_request)
-          |> text("Invalid parameter(s)")
-      end
-    else
-      send_resp(conn, :bad_request, "Missing parameter(s)")
+      {:error, _, _, _} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid parameter(s)")
     end
   end
 

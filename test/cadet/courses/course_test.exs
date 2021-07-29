@@ -5,30 +5,131 @@ defmodule Cadet.Courses.CourseTest do
 
   describe "Course Configuration Changesets" do
     test "valid changesets" do
-      assert_changeset(%{course_name: "Data Structures and Algorithms"}, :valid)
-      assert_changeset(%{course_short_name: "CS2040S"}, :valid)
-      assert_changeset(%{viewable: false}, :valid)
-      assert_changeset(%{enable_game: false}, :valid)
-      assert_changeset(%{enable_achievements: false}, :valid)
-      assert_changeset(%{enable_sourcecast: false}, :valid)
-      assert_changeset(%{module_help_text: ""}, :valid)
-      assert_changeset(%{module_help_text: "Module help text"}, :valid)
+      assert_changeset(
+        %{
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          course_short_name: "CS2040S",
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          viewable: false,
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          enable_game: false,
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          enable_achievements: false,
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          enable_sourcecast: false,
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          module_help_text: "",
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          module_help_text: "Module help text",
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
 
       assert_changeset(
         %{
           enable_game: true,
           enable_achievements: true,
-          enable_sourcecast: true
+          enable_sourcecast: true,
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
         },
         :valid
       )
 
-      assert_changeset(%{source_chapter: 1, source_variant: "wasm"}, :valid)
-      assert_changeset(%{source_chapter: 2, source_variant: "lazy"}, :valid)
-      assert_changeset(%{source_chapter: 3, source_variant: "non-det"}, :valid)
+      assert_changeset(
+        %{
+          source_chapter: 1,
+          source_variant: "wasm",
+          course_name: "Data Structures and Algorithms"
+        },
+        :valid
+      )
 
       assert_changeset(
-        %{source_chapter: 4, source_variant: "default", enable_achievements: true},
+        %{
+          source_chapter: 2,
+          source_variant: "lazy",
+          course_name: "Data Structures and Algorithms"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          source_chapter: 3,
+          source_variant: "non-det",
+          course_name: "Data Structures and Algorithms"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          source_chapter: 4,
+          source_variant: "default",
+          enable_achievements: true,
+          course_name: "Data Structures and Algorithms"
+        },
         :valid
       )
     end

@@ -22,12 +22,14 @@ defmodule Cadet.Courses.Course do
     timestamps()
   end
 
-  @optional_fields ~w(course_name course_short_name viewable enable_game
-    enable_achievements enable_sourcecast module_help_text source_chapter source_variant)a
+  @required_fields ~w(course_name viewable enable_game
+    enable_achievements enable_sourcecast source_chapter source_variant)a
+  @optional_fields ~w(course_short_name module_help_text)a
 
   def changeset(course, params) do
     course
-    |> cast(params, @optional_fields)
+    |> cast(params, @required_fields ++ @optional_fields)
+    |> validate_required(@required_fields)
     |> validate_sublanguage_combination(params)
   end
 
@@ -41,7 +43,7 @@ defmodule Cadet.Courses.Course do
       case get_field(changeset, :source_chapter, nil) do
         nil -> changeset
         1 -> validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm"])
-        2 -> validate_inclusion(changeset, :source_variant, ["default", "lazy"]) |> IO.inspect()
+        2 -> validate_inclusion(changeset, :source_variant, ["default", "lazy"])
         3 -> validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det"])
         4 -> validate_inclusion(changeset, :source_variant, ["default", "gpu"])
         _ -> add_error(changeset, :source_chapter, "is invalid")
