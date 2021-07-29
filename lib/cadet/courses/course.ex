@@ -22,30 +22,36 @@ defmodule Cadet.Courses.Course do
     timestamps()
   end
 
-  @required_fields ~w(source_chapter source_variant)a
-  @optional_fields ~w(course_name course_short_name viewable
-    enable_game enable_achievements enable_sourcecast module_help_text)a
+  @optional_fields ~w(course_name course_short_name viewable enable_game
+    enable_achievements enable_sourcecast module_help_text source_chapter source_variant)a
 
   def changeset(course, params) do
-    if Map.has_key?(params, :source_chapter) or Map.has_key?(params, :source_variant) do
-      course
-      |> cast(params, @required_fields ++ @optional_fields)
-      |> validate_required(@required_fields)
-      |> validate_sublanguage_combination()
-    else
-      course
-      |> cast(params, @optional_fields)
-    end
+    course
+    |> cast(params, @optional_fields)
+    |> validate_sublanguage_combination(params)
   end
 
   # Validates combination of Source chapter and variant
-  defp validate_sublanguage_combination(changeset) do
-    case get_field(changeset, :source_chapter) do
-      1 -> validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm"])
-      2 -> validate_inclusion(changeset, :source_variant, ["default", "lazy"])
-      3 -> validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det"])
-      4 -> validate_inclusion(changeset, :source_variant, ["default", "gpu"])
-      _ -> add_error(changeset, :source_chapter, "is invalid")
+  defp validate_sublanguage_combination(changeset, params) do
+    chap = Map.has_key?(params, :source_chapter)
+    var = Map.has_key?(params, :source_variant)
+
+    # not (chap xor var)
+    if (chap and var) or (not chap and not var) do
+      case get_field(changeset, :source_chapter, nil) do
+        nil -> changeset
+        1 -> validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm"])
+        2 -> validate_inclusion(changeset, :source_variant, ["default", "lazy"]) |> IO.inspect()
+        3 -> validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det"])
+        4 -> validate_inclusion(changeset, :source_variant, ["default", "gpu"])
+        _ -> add_error(changeset, :source_chapter, "is invalid")
+      end
+    else
+      add_error(
+        changeset,
+        :source_chapter,
+        "source chapter and source variant must be present together"
+      )
     end
   end
 end
