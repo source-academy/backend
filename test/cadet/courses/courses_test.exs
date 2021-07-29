@@ -380,11 +380,7 @@ defmodule Cadet.CoursesTest do
       old_configs = Courses.get_assessment_configs(course.id)
       refute Assessment |> Repo.get(assessment.id) |> is_nil()
 
-      params = %{
-        assessment_config_id: config.id
-      }
-
-      {:ok, _} = Courses.delete_assessment_config(course.id, params)
+      {:ok, _} = Courses.delete_assessment_config(course.id, config.id)
 
       new_configs = Courses.get_assessment_configs(course.id)
       assert length(old_configs) == 1
@@ -396,11 +392,7 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       insert(:assessment_config, %{order: 1, course: course})
 
-      params = %{
-        assessment_config_id: -1
-      }
-
-      assert {:error, :no_such_enrty} == Courses.delete_assessment_config(course.id, params)
+      assert {:error, :no_such_enrty} == Courses.delete_assessment_config(course.id, -1)
     end
   end
 

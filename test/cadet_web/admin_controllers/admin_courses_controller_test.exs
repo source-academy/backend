@@ -312,20 +312,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
       old_configs = course_id |> Courses.get_assessment_configs() |> Enum.map(& &1.type)
 
-      params = %{
-        "assessmentConfig" => %{
-          "assessmentConfigId" => config1.id,
-          "courseId" => course_id,
-          "type" => "Missions",
-          "earlySubmissionXp" => 100,
-          "hoursBeforeEarlyXpDecay" => 24,
-          "decayRatePointsPerHour" => 1
-        }
-      }
-
       resp =
         conn
-        |> delete(build_url_assessment_config(course_id), params)
+        |> delete(build_url_assessment_config(course_id, config1.id))
         |> response(200)
 
       assert resp == "OK"
@@ -339,10 +328,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     test "rejects forbidden request for non-staff users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
 
-      conn =
-        delete(conn, build_url_assessment_config(course_id), %{
-          "assessmentConfig" => %{}
-        })
+      conn = delete(conn, build_url_assessment_config(course_id, 1))
 
       assert response(conn, 403) == "Forbidden"
     end
@@ -351,33 +337,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     test "rejects request if user is not in specified course", %{conn: conn} do
       course_id = conn.assigns[:course_id]
 
-      conn =
-        delete(conn, build_url_assessment_config(course_id + 1), %{
-          "assessmentConfig" => %{}
-        })
+      conn = delete(conn, build_url_assessment_config(course_id + 1, 1))
 
       assert response(conn, 403) == "Forbidden"
-    end
-
-    @tag authenticate: :staff
-    test "rejects requests with invalid params 1", %{conn: conn} do
-      course_id = conn.assigns[:course_id]
-
-      conn =
-        delete(conn, build_url_assessment_config(course_id), %{
-          "assessmentConfigs" => "Missions"
-        })
-
-      assert response(conn, 400) == "Missing Map parameter(s)"
-    end
-
-    @tag authenticate: :staff
-    test "rejects requests with missing params", %{conn: conn} do
-      course_id = conn.assigns[:course_id]
-
-      conn = delete(conn, build_url_assessment_config(course_id), %{})
-
-      assert response(conn, 400) == "Missing Map parameter(s)"
     end
   end
 
@@ -386,8 +348,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
   defp build_url_assessment_configs(course_id),
     do: "/v2/courses/#{course_id}/admin/config/assessment_configs"
 
-  defp build_url_assessment_config(course_id),
-    do: "/v2/courses/#{course_id}/admin/config/assessment_config"
+  defp build_url_assessment_config(course_id, config_id),
+    do: "/v2/courses/#{course_id}/admin/config/assessment_config/#{config_id}"
 
   defp to_map(schema), do: schema |> Map.from_struct() |> Map.drop([:updated_at])
 

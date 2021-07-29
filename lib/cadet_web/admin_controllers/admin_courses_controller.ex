@@ -69,12 +69,10 @@ defmodule CadetWeb.AdminCoursesController do
 
   def delete_assessment_config(conn, %{
         "course_id" => course_id,
-        "assessmentConfig" => assessment_config
+        "assessment_config_id" => assessment_config_id
       })
-      when is_ecto_id(course_id) and is_map(assessment_config) do
-    config = assessment_config |> to_snake_case_atom_keys()
-
-    case Courses.delete_assessment_config(course_id, config) do
+      when is_ecto_id(course_id) and is_ecto_id(assessment_config_id) do
+    case Courses.delete_assessment_config(course_id, assessment_config_id) do
       {:ok, _} ->
         text(conn, "OK")
 
@@ -83,10 +81,6 @@ defmodule CadetWeb.AdminCoursesController do
         |> put_status(:bad_request)
         |> text(message)
     end
-  end
-
-  def delete_assessment_config(conn, _) do
-    send_resp(conn, :bad_request, "Missing Map parameter(s)")
   end
 
   swagger_path :update_course_config do

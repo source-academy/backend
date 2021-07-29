@@ -146,7 +146,12 @@ defmodule CadetWeb.Router do
     put("/config", AdminCoursesController, :update_course_config)
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
-    delete("/config/assessment_config", AdminCoursesController, :delete_assessment_config)
+
+    delete(
+      "/config/assessment_config/:assessment_config_id",
+      AdminCoursesController,
+      :delete_assessment_config
+    )
   end
 
   # Other scopes may use custom stacks.

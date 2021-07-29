@@ -174,9 +174,9 @@ defmodule Cadet.Courses do
     end)
   end
 
-  @spec delete_assessment_config(integer(), map()) ::
+  @spec delete_assessment_config(integer(), integer()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()} | {:error, :no_such_enrty}
-  def delete_assessment_config(course_id, %{assessment_config_id: assessment_config_id}) do
+  def delete_assessment_config(course_id, assessment_config_id) do
     config =
       AssessmentConfig
       |> where(course_id: ^course_id)
