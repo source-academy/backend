@@ -55,45 +55,53 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   end
 
   describe "GET v2/courses/:course_id/admin/goals/:userid" do
-    setup do
-      {:ok, g} = %Goal{uuid: UUID.generate()} |> Map.merge(goal_literal(0)) |> Repo.insert()
-      {:ok, u} = %User{name: "a", role: :student} |> Repo.insert()
+    @tag authenticate: :staff
+    test "succeeds for staff", %{conn: conn} do
+      course = conn.assigns.test_cr.course
+
+      {:ok, g} =
+        %Goal{course_id: course.id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
+      course_reg = insert(:course_registration, %{course: course, role: :student})
 
       {:ok, p} =
         %GoalProgress{
           goal_uuid: g.uuid,
-          user_id: u.id,
+          course_reg_id: course_reg.id,
           count: 123,
           completed: true
         }
         |> Repo.insert()
 
-      %{goal: g, user: u, progress: p}
-    end
-
-    @tag authenticate: :staff
-    test "succeeds for staff", %{conn: conn, goal: goal, user: user, progress: progress} do
       [resp_goal] =
         conn
-        |> get(build_path(user.id))
+        |> get(build_path(course.id, course_reg.id))
         |> json_response(200)
 
-      assert goal_json_literal(0) = resp_goal
-      assert resp_goal["uuid"] == goal.uuid
-      assert resp_goal["count"] == progress.count
-      assert resp_goal["completed"] == progress.completed
+      assert goal_json_literal(5) = resp_goal
+      assert resp_goal["uuid"] == g.uuid
+      assert resp_goal["count"] == p.count
+      assert resp_goal["completed"] == p.completed
     end
 
     @tag authenticate: :student
-    test "403 for student", %{conn: conn, user: user} do
+    test "403 for student", %{conn: conn} do
+      course = conn.assigns.test_cr.course
+      course_reg = insert(:course_registration, %{course: course, role: :student})
+
       conn
-      |> get(build_path(user.id))
+      |> get(build_path(course.id, course_reg.id))
       |> response(403)
     end
 
-    test "401 if unauthenticated", %{conn: conn, user: user} do
+    test "401 if unauthenticated", %{conn: conn} do
+      course = insert(:course)
+      course_reg = insert(:course_registration, %{course: course, role: :student})
+
       conn
-      |> get(build_path(user.id))
+      |> get(build_path(course.id, course_reg.id))
       |> response(401)
     end
   end
