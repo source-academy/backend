@@ -46,7 +46,7 @@ packages:
 runcmd:
   - "mkdir -p /run/cadet-init"
   - "aws s3 cp 's3://${var.config_bucket}/${var.config_object}' /etc/cadet.exs"
-  - "curl -L 'https://raw.githubusercontent.com/source-academy/cadet/stable/deployment/init.sh' > /run/cadet-init/init.sh"
+  - "curl -L 'https://raw.githubusercontent.com/source-academy/backend/stable/deployment/init.sh' > /run/cadet-init/init.sh"
   - "SVCURL='${var.cadet_release_url}' exec bash /run/cadet-init/init.sh"
 EOT
   )
