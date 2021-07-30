@@ -120,6 +120,7 @@ defmodule CadetWeb.Router do
 
     get("/goals", AdminGoalsController, :index)
     put("/goals", AdminGoalsController, :bulk_update)
+    get("/goals/:userid", AdminGoalsController, :index_goals_with_progress)
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
 
