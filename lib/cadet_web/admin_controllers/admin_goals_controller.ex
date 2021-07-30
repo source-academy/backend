@@ -13,12 +13,13 @@ defmodule CadetWeb.AdminGoalsController do
     render(conn, "index.json", goals: Goals.get(course_id))
   end
 
-  def index_goals_with_progress(conn, %{"course_id" => course_id, "course_reg_id" => course_reg_id}) do
+  def index_goals_with_progress(conn, %{
+        "course_id" => course_id,
+        "course_reg_id" => course_reg_id
+      }) do
     course_reg = %CourseRegistration{id: String.to_integer(course_reg_id)}
 
-    render(conn, "index_goals_with_progress.json",
-      goals: Goals.get_with_progress(course_reg)
-    )
+    render(conn, "index_goals_with_progress.json", goals: Goals.get_with_progress(course_reg))
   end
 
   def bulk_update(conn, %{"goals" => goals}) do
