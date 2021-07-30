@@ -5,7 +5,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
   alias Cadet.Repo
   alias Cadet.Accounts.User
-  alias Cadet.Incentives.{Goal, Goals}
+  alias Cadet.Incentives.{Goal, Goals, GoalProgress}
   alias CadetWeb.AdminGoalsController
   alias Ecto.UUID
 
