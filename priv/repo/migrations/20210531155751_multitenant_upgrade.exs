@@ -185,7 +185,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
               # assign a staff to be the leader_id during migration
               nil ->
                 CourseRegistration
-                |> where(role: :staff)
+                |> where([cr], cr.role in [:admin, :staff])
                 |> Repo.one()
                 |> Map.fetch!(:id)
 
