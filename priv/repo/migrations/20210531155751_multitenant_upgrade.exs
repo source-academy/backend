@@ -1,6 +1,6 @@
 defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
   use Ecto.Migration
-  import Ecto.Query, only: [from: 2, where: 2]
+  import Ecto.Query
 
   alias Cadet.Accounts.{CourseRegistration, Notification, Role, User}
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
