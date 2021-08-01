@@ -11,6 +11,7 @@ defmodule Cadet.Incentives.AchievementFactory do
       def achievement_factory do
         %Achievement{
           uuid: UUID.generate(),
+          course: insert(:course),
           title: Faker.Food.dish(),
           ability: Enum.random(Achievement.valid_abilities()),
           is_task: false,

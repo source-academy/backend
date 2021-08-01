@@ -4,6 +4,8 @@ defmodule Cadet.Stories.Story do
   """
   use Cadet, :model
 
+  alias Cadet.Courses.Course
+
   schema "stories" do
     field(:open_at, :utc_datetime_usec)
     field(:close_at, :utc_datetime_usec)
@@ -12,10 +14,12 @@ defmodule Cadet.Stories.Story do
     field(:image_url, :string)
     field(:filenames, {:array, :string})
 
+    belongs_to(:course, Course)
+
     timestamps()
   end
 
-  @required_fields ~w(open_at close_at title filenames)a
+  @required_fields ~w(open_at close_at title filenames course_id)a
   @optional_fields ~w(is_published image_url)a
 
   def changeset(story, attrs \\ %{}) do

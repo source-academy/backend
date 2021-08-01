@@ -6,7 +6,7 @@ defmodule Cadet.Accounts do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.{Query, User}
+  alias Cadet.Accounts.{Query, User, CourseRegistration}
   alias Cadet.Auth.Provider
 
   @doc """
@@ -14,17 +14,8 @@ defmodule Cadet.Accounts do
 
   Returns {:ok, user} on success, otherwise {:error, changeset}
   """
-  def register(attrs = %{username: username}, role) when is_binary(username) do
-    attrs |> Map.put(:role, role) |> insert_or_update_user()
-  end
-
-  @doc """
-  Creates User entity with specified attributes.
-  """
-  def create_user(attrs \\ %{}) do
-    %User{}
-    |> User.changeset(attrs)
-    |> Repo.insert()
+  def register(attrs = %{username: username}) when is_binary(username) do
+    attrs |> insert_or_update_user()
   end
 
   @doc """
@@ -53,22 +44,28 @@ defmodule Cadet.Accounts do
     Repo.get(User, id)
   end
 
+  @get_all_role ~w(admin staff)a
   @doc """
   Returns users matching a given set of criteria.
   """
-  def get_users(filter \\ []) do
-    User
-    |> join(:left, [u], g in assoc(u, :group))
-    |> preload([u, g], group: g)
-    |> get_users(filter)
+  def get_users_by(filter \\ [], %CourseRegistration{course_id: course_id, role: role})
+      when role in @get_all_role do
+    CourseRegistration
+    |> where([cr], cr.course_id == ^course_id)
+    |> join(:inner, [cr], u in assoc(cr, :user))
+    |> preload([cr, u], user: u)
+    |> join(:left, [cr, u], g in assoc(cr, :group))
+    |> preload([cr, u, g], group: g)
+    |> get_users_helper(filter)
   end
 
-  defp get_users(query, []), do: Repo.all(query)
+  defp get_users_helper(query, []), do: Repo.all(query)
 
-  defp get_users(query, [{:group, group} | filters]),
-    do: query |> where([u, g], g.name == ^group) |> get_users(filters)
+  defp get_users_helper(query, [{:group, group} | filters]),
+    do: query |> where([cr, u, g], g.name == ^group) |> get_users_helper(filters)
 
-  defp get_users(query, [filter | filters]), do: query |> where(^[filter]) |> get_users(filters)
+  defp get_users_helper(query, [filter | filters]),
+    do: query |> where(^[filter]) |> get_users_helper(filters)
 
   @spec sign_in(String.t(), Provider.token(), Provider.provider_instance()) ::
           {:error, :bad_request | :forbidden | :internal_server_error, String.t()} | {:ok, any}
@@ -76,35 +73,50 @@ defmodule Cadet.Accounts do
   Sign in using given user ID
   """
   def sign_in(username, token, provider) do
-    case Repo.one(Query.username(username)) do
-      nil ->
-        # user is not registered in our database
-        with {:ok, role} <- Provider.get_role(provider, token),
-             {:ok, name} <- Provider.get_name(provider, token),
-             {:ok, _} <- register(%{name: name, username: username}, role) do
-          sign_in(username, name, token)
-        else
-          {:error, :invalid_credentials, err} ->
-            {:error, :forbidden, err}
+    user = username |> Query.username() |> Repo.one()
 
-          {:error, :upstream, err} ->
-            {:error, :bad_request, err}
+    if is_nil(user) or is_nil(user.name) do
+      # user is not registered in our database or does not have a name
+      # (accounts pre-created by instructors do not have a name, and has to be fetched
+      #  from the auth provider during sign_in)
+      with {:ok, name} <- Provider.get_name(provider, token),
+           {:ok, _} <- register(%{name: name, username: username}) do
+        sign_in(username, name, token)
+      else
+        {:error, :invalid_credentials, err} ->
+          {:error, :forbidden, err}
 
-          {:error, _err} ->
-            {:error, :internal_server_error}
-        end
+        {:error, :upstream, err} ->
+          {:error, :bad_request, err}
 
-      user ->
-        {:ok, user}
+        {:error, _err} ->
+          {:error, :internal_server_error}
+      end
+    else
+      {:ok, user}
     end
   end
 
-  def update_game_states(user = %User{}, new_game_state = %{}) do
-    case user
-         |> User.changeset(%{game_states: new_game_state})
-         |> Repo.update() do
-      result = {:ok, _} -> result
-      {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
+  def update_latest_viewed(user = %User{id: user_id}, latest_viewed_course_id)
+      when is_ecto_id(latest_viewed_course_id) do
+    CourseRegistration
+    |> where(user_id: ^user_id)
+    |> where(course_id: ^latest_viewed_course_id)
+    |> Repo.one()
+    |> case do
+      nil ->
+        {:error, {:bad_request, "user is not in the course"}}
+
+      _ ->
+        case user
+             |> User.changeset(%{latest_viewed_course_id: latest_viewed_course_id})
+             |> Repo.update() do
+          result = {:ok, _} ->
+            result
+
+          {:error, changeset} ->
+            {:error, {:internal_server_error, full_error_messages(changeset)}}
+        end
     end
   end
 end

@@ -3,8 +3,8 @@ defmodule CadetWeb.ViewHelper do
   Helper functions shared throughout views
   """
 
-  defp build_staff(user) do
-    transform_map_for_view(user, [:name, :id])
+  defp build_staff(course_reg) do
+    transform_map_for_view(course_reg, %{name: fn st -> st.user.name end, id: :id})
   end
 
   def unsubmitted_by_builder(nil), do: nil

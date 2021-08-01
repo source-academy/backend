@@ -7,29 +7,92 @@ defmodule CadetWeb.UserController do
   use PhoenixSwagger
   import Cadet.Assessments
   alias Cadet.Accounts
+  alias Cadet.Accounts.CourseRegistrations
 
   def index(conn, _) do
-    user = user_with_group(conn.assigns.current_user)
-    %{total_grade: grade, total_xp: xp} = user_total_grade_xp(user)
-    max_grade = user_max_grade(user)
-    story = user_current_story(user)
+    user = conn.assigns.current_user
+    courses = CourseRegistrations.get_courses(conn.assigns.current_user)
+
+    if user.latest_viewed_course_id do
+      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+      xp = user_total_xp(latest)
+      max_xp = user_max_xp(latest)
+      story = user_current_story(latest)
+
+      render(
+        conn,
+        "index.json",
+        user: user,
+        courses: courses,
+        latest: latest,
+        max_xp: max_xp,
+        story: story,
+        xp: xp
+      )
+    else
+      render(conn, "index.json",
+        user: user,
+        courses: courses,
+        latest: nil,
+        max_xp: nil,
+        story: nil,
+        xp: nil
+      )
+    end
+  end
+
+  def get_latest_viewed(conn, _) do
+    user = conn.assigns.current_user
+
+    latest =
+      case user.latest_viewed_course_id do
+        nil -> nil
+        _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+      end
+
+    get_course_reg_config(conn, latest)
+  end
+
+  def get_course_reg(conn, _) do
+    course_reg = conn.assigns.course_reg
+    get_course_reg_config(conn, course_reg)
+  end
+
+  defp get_course_reg_config(conn, course_reg) when is_nil(course_reg) do
+    render(conn, "course.json", latest: nil, story: nil, xp: nil, max_xp: nil)
+  end
+
+  defp get_course_reg_config(conn, course_reg) do
+    xp = user_total_xp(course_reg)
+    max_xp = user_max_xp(course_reg)
+    story = user_current_story(course_reg)
 
     render(
       conn,
-      "index.json",
-      user: user,
-      grade: grade,
-      max_grade: max_grade,
+      "course.json",
+      latest: course_reg,
+      max_xp: max_xp,
       story: story,
-      xp: xp,
-      game_states: user.game_states
+      xp: xp
     )
   end
 
-  def update_game_states(conn, %{"gameStates" => new_game_states}) do
-    user = conn.assigns[:current_user]
+  def update_latest_viewed(conn, %{"courseId" => course_id}) do
+    case Accounts.update_latest_viewed(conn.assigns.current_user, course_id) do
+      {:ok, %{}} ->
+        text(conn, "OK")
 
-    case Accounts.update_game_states(user, new_game_states) do
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def update_game_states(conn, %{"gameStates" => new_game_states}) do
+    cr = conn.assigns[:course_reg]
+
+    case CourseRegistrations.update_game_states(cr, new_game_states) do
       {:ok, %{}} ->
         text(conn, "OK")
 
@@ -41,18 +104,42 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :index do
-    get("/user")
+    get("/v2/user")
 
-    summary("Get the name, role and group of a user")
+    summary("Get the name, and latest_viewed_course of a user")
 
     security([%{JWT: []}])
     produces("application/json")
-    response(200, "OK", Schema.ref(:UserInfo))
+    response(200, "OK", Schema.ref(:IndexInfo))
     response(401, "Unauthorised")
   end
 
+  swagger_path :get_latest_viewed do
+    get("/v2/user/latest_viewed_course")
+
+    summary("Get the latest_viewed_course of a user")
+
+    security([%{JWT: []}])
+    produces("application/json")
+    response(200, "OK", Schema.ref(:LatestViewedInfo))
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :update_latest_viewed do
+    put("/v2/user/latest_viewed_course")
+    summary("Update user's latest viewed course")
+    security([%{JWT: []}])
+    consumes("application/json")
+
+    parameters do
+      course_id(:body, :integer, "new latest viewed course", required: true)
+    end
+
+    response(200, "OK")
+  end
+
   swagger_path :update_game_states do
-    put("/user/game_states")
+    put("/v2/courses/:course_id/user/game_states")
     summary("Update user's game states")
     security([%{JWT: []}])
     consumes("application/json")
@@ -66,6 +153,42 @@ defmodule CadetWeb.UserController do
 
   def swagger_definitions do
     %{
+      IndexInfo:
+        swagger_schema do
+          title("User Index")
+          description("user, course_registration and course configuration of the latest course")
+
+          properties do
+            user(Schema.ref(:UserInfo), "user info")
+
+            courseRegistration(
+              Schema.ref(:CourseRegistration),
+              "course registration of the latest viewed course"
+            )
+
+            courseConfiguration(
+              Schema.ref(:CourseConfiguration),
+              "course configuration of the latest viewed course"
+            )
+          end
+        end,
+      LatestViewedInfo:
+        swagger_schema do
+          title("Latest viewed course")
+          description("course_registration and course configuration of the latest course")
+
+          properties do
+            courseRegistration(
+              Schema.ref(:CourseRegistration),
+              "course registration of the latest viewed course"
+            )
+
+            courseConfiguration(
+              Schema.ref(:CourseConfiguration),
+              "course configuration of the latest viewed course"
+            )
+          end
+        end,
       UserInfo:
         swagger_schema do
           title("User")
@@ -73,9 +196,15 @@ defmodule CadetWeb.UserController do
 
           properties do
             userId(:integer, "User's ID", required: true)
-
             name(:string, "Full name of the user", required: true)
+          end
+        end,
+      CourseRegistration:
+        swagger_schema do
+          title("CourseRegistration")
+          description("information about the CourseRegistration")
 
+          properties do
             role(
               :string,
               "Role of the user. Can be 'Student', 'Staff', or 'Admin'",
@@ -90,15 +219,9 @@ defmodule CadetWeb.UserController do
 
             story(Schema.ref(:UserStory), "Story to displayed to current user. ")
 
-            grade(
+            maxXp(
               :integer,
-              "Amount of grade. Only provided for 'Student'. " <>
-                "Value will be 0 for non-students."
-            )
-
-            maxGrade(
-              :integer,
-              "Total maximum grade achievable based on submitted assessments. " <>
+              "Total maximum xp achievable based on submitted assessments. " <>
                 "Only provided for 'Student'"
             )
 
@@ -112,6 +235,41 @@ defmodule CadetWeb.UserController do
               "States for user's game, including users' game progress, settings and collectibles.\n"
             )
           end
+        end,
+      CourseConfiguration:
+        swagger_schema do
+          title("Course Configuration")
+
+          properties do
+            course_name(:string, "Course name", required: true)
+            course_short_name(:string, "Course module code", required: true)
+            viewable(:boolean, "Course viewability", required: true)
+            enable_game(:boolean, "Enable game", required: true)
+            enable_achievements(:boolean, "Enable achievements", required: true)
+            enable_sourcecast(:boolean, "Enable sourcecast", required: true)
+            source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
+            source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
+            module_help_text(:string, "Module help text", required: true)
+            assessment_types(:list, "Assessment Types", required: true)
+          end
+
+          example(%{
+            course_name: "Programming Methodology",
+            course_short_name: "CS1101S",
+            viewable: true,
+            enable_game: true,
+            enable_achievements: true,
+            enable_sourcecast: true,
+            source_chapter: 1,
+            source_variant: "default",
+            module_help_text: "Help text",
+            assessment_types: ["Missions", "Quests", "Paths", "Contests", "Others"]
+          })
+        end,
+      SourceVariant:
+        swagger_schema do
+          type(:string)
+          enum([:default, :concurrent, :gpu, :lazy, "non-det", :wasm])
         end,
       UserStory:
         swagger_schema do

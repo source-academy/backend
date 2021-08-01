@@ -139,19 +139,16 @@ defmodule Cadet.Autograder.GradingJob do
       Submission
       |> where(id: ^submission_id)
       |> join(:inner, [s], sv in SubmissionVotes,
-        on: sv.user_id == s.student_id and sv.question_id == ^question.id
+        on: sv.voter_id == s.student_id and sv.question_id == ^question.id
       )
       |> where([_, sv], is_nil(sv.rank))
       |> Repo.exists?()
 
-    grade = if is_nil_entries, do: 0, else: question.max_grade
     xp = if is_nil_entries, do: 0, else: question.max_xp
 
     answer
     |> Answer.autograding_changeset(%{
-      adjustment: 0,
       xp_adjustment: 0,
-      grade: grade,
       xp: xp,
       autograding_status: :success
     })
@@ -165,14 +162,11 @@ defmodule Cadet.Autograder.GradingJob do
       |> Map.get("choice_id")
 
     correct? = answer.answer["choice_id"] == correct_choice
-    grade = if correct?, do: question.max_grade, else: 0
     xp = if correct?, do: question.max_xp, else: 0
 
     answer
     |> Answer.autograding_changeset(%{
-      adjustment: 0,
       xp_adjustment: 0,
-      grade: grade,
       xp: xp,
       autograding_status: :success
     })

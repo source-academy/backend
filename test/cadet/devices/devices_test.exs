@@ -9,7 +9,7 @@ defmodule Cadet.DevicesTest do
   @registration_compare_fields ~w(id title device_id user_id)a
 
   setup do
-    user = insert(:user, %{role: :student})
+    user = insert(:user)
     device = insert(:device, client_key: nil, client_cert: nil)
 
     {:ok, registration} =
@@ -65,7 +65,7 @@ defmodule Cadet.DevicesTest do
   end
 
   test "add existing device to new user", %{device: device} do
-    user = insert(:user, %{role: :student})
+    user = insert(:user)
     title = Faker.Person.En.first_name()
 
     assert {:ok, %DeviceRegistration{} = registration} =

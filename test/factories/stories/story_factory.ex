@@ -14,7 +14,8 @@ defmodule Cadet.Stories.StoryFactory do
           is_published: false,
           filenames: ["mission-1.txt"],
           title: "Mission1",
-          image_url: "http://example.com"
+          image_url: "http://example.com",
+          course: build(:course)
         }
       end
     end

@@ -6,16 +6,14 @@ defmodule Cadet.Assessments.Answer do
   use Cadet, :model
 
   alias Cadet.Repo
-  alias Cadet.Accounts.User
+  alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.Answer.AutogradingStatus
   alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer, VotingAnswer}
   alias Cadet.Assessments.{Question, QuestionType, Submission}
 
   schema "answers" do
-    field(:grade, :integer, default: 0)
     # used to compare answers with others
     field(:relative_score, :float, default: 0.0)
-    field(:adjustment, :integer, default: 0)
     field(:xp, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
     field(:comments, :string)
@@ -24,7 +22,7 @@ defmodule Cadet.Assessments.Answer do
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
 
-    belongs_to(:grader, User)
+    belongs_to(:grader, CourseRegistration)
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
 
@@ -32,7 +30,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment grade adjustment grader_id comments)a
+  @optional_fields ~w(xp xp_adjustment grader_id comments)a
 
   def changeset(answer, params) do
     answer
@@ -43,7 +41,7 @@ defmodule Cadet.Assessments.Answer do
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
     |> validate_answer_content()
-    |> validate_xp_grade_adjustment_total()
+    |> validate_xp_adjustment_total()
   end
 
   @spec grading_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
@@ -55,8 +53,6 @@ defmodule Cadet.Assessments.Answer do
         grader_id
         xp
         xp_adjustment
-        grade
-        adjustment
         autograding_results
         autograding_status
         comments
@@ -64,29 +60,26 @@ defmodule Cadet.Assessments.Answer do
     )
     |> add_belongs_to_id_from_model(:grader, params)
     |> foreign_key_constraint(:grader_id)
-    |> validate_xp_grade_adjustment_total()
+    |> validate_xp_adjustment_total()
   end
 
   @spec autograding_changeset(%__MODULE__{} | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def autograding_changeset(answer, params) do
     answer
-    |> cast(params, ~w(grade adjustment xp xp_adjustment autograding_status autograding_results)a)
-    |> validate_xp_grade_adjustment_total()
+    |> cast(params, ~w(xp xp_adjustment autograding_status autograding_results)a)
+    |> validate_xp_adjustment_total()
   end
 
-  @spec validate_xp_grade_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
-  defp validate_xp_grade_adjustment_total(changeset) do
+  @spec validate_xp_adjustment_total(Ecto.Changeset.t()) :: Ecto.Changeset.t()
+  defp validate_xp_adjustment_total(changeset) do
     answer = apply_changes(changeset)
-
-    total_grade = answer.grade + answer.adjustment
 
     total_xp = answer.xp + answer.xp_adjustment
 
     with {:question_id, question_id} when is_ecto_id(question_id) <-
            {:question_id, answer.question_id},
-         {:question, %{max_grade: max_grade, max_xp: max_xp}} <-
+         {:question, %{max_xp: max_xp}} <-
            {:question, Repo.get(Question, question_id)},
-         {:total_grade, true} <- {:total_grade, total_grade >= 0 and total_grade <= max_grade},
          {:total_xp, true} <- {:total_xp, total_xp >= 0 and total_xp <= max_xp} do
       changeset
     else
@@ -96,13 +89,9 @@ defmodule Cadet.Assessments.Answer do
       {:question, _} ->
         add_error(changeset, :question_id, "refers to non-existent question")
 
-      {:total_grade, false} ->
-        add_error(changeset, :adjustment, "must make total be between 0 and question.max_grade")
-
       {:total_xp, false} ->
         add_error(changeset, :xp_adjustment, "must make total be between 0 and question.max_xp")
     end
-    |> validate_number(:grade, greater_than_or_equal_to: 0)
     |> validate_number(:xp, greater_than_or_equal_to: 0)
   end
 

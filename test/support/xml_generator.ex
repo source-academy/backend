@@ -40,7 +40,6 @@ defmodule Cadet.Test.XMLGenerator do
         task(
           map_convert_keys(assessment, %{
             access: :access,
-            type: :kind,
             number: :number,
             open_at: :startdate,
             close_at: :duedate,
@@ -85,8 +84,8 @@ defmodule Cadet.Test.XMLGenerator do
     type = override_type || question.type
 
     map_permit_keys(
-      %{type: type, maxgrade: question.max_grade},
-      permit_keys || ~w(type maxgrade)a
+      %{type: type, maxxp: question.max_xp},
+      permit_keys || ~w(type maxxp)a
     )
   end
 
@@ -131,8 +130,13 @@ defmodule Cadet.Test.XMLGenerator do
               end
             ] ++
               [
-                for testcase <- question.question[:private] do
-                  private(%{score: testcase.score, answer: testcase.answer}, testcase.program)
+                for testcase <- question.question[:opaque] do
+                  opaque(%{score: testcase.score, answer: testcase.answer}, testcase.program)
+                end
+              ] ++
+              [
+                for testcase <- question.question[:secret] do
+                  secret(%{score: testcase.score, answer: testcase.answer}, testcase.program)
                 end
               ]
           )
@@ -224,13 +228,7 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp task(raw_attrs, children) do
-    attrs =
-      Map.update!(raw_attrs, :kind, fn
-        "sidequest" -> "quest"
-        type -> type
-      end)
-
-    {"TASK", map_permit_keys(attrs, ~w(kind number startdate duedate title story access)a),
+    {"TASK", map_permit_keys(raw_attrs, ~w(number startdate duedate title story access)a),
      children}
   end
 
@@ -251,7 +249,7 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp problem(raw_attrs, children) do
-    {"PROBLEM", map_permit_keys(raw_attrs, ~w(maxgrade type)a), children}
+    {"PROBLEM", map_permit_keys(raw_attrs, ~w(maxxp type)a), children}
   end
 
   defp text(content) do
@@ -290,8 +288,12 @@ defmodule Cadet.Test.XMLGenerator do
     {"PUBLIC", map_permit_keys(raw_attrs, ~w(score answer)a), content}
   end
 
-  defp private(raw_attrs, content) do
-    {"PRIVATE", map_permit_keys(raw_attrs, ~w(score answer)a), content}
+  defp opaque(raw_attrs, content) do
+    {"OPAQUE", map_permit_keys(raw_attrs, ~w(score answer)a), content}
+  end
+
+  defp secret(raw_attrs, content) do
+    {"SECRET", map_permit_keys(raw_attrs, ~w(score answer)a), content}
   end
 
   defp map_permit_keys(map, keys) when is_map(map) and is_list(keys) do

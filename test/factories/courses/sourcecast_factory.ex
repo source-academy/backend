@@ -13,7 +13,7 @@ defmodule Cadet.Courses.SourcecastFactory do
           description: Faker.StarWars.planet(),
           audio: build(:upload),
           playbackData: Faker.StarWars.planet(),
-          uploader: build(:user, %{role: :staff})
+          uploader: build(:user)
         }
       end
     end

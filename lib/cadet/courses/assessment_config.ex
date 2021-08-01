@@ -1,28 +1,38 @@
 defmodule Cadet.Courses.AssessmentConfig do
   @moduledoc """
-  The AssessmentConfig entity stores the assessment configuration
-  of a particular course.
+  The AssessmentConfig entity stores the assessment types in a
+  particular course.
   """
   use Cadet, :model
 
   alias Cadet.Courses.Course
 
   schema "assessment_configs" do
-    field(:early_submission_xp, :integer, default: 200)
-    field(:days_before_early_xp_decay, :integer, default: 2)
-    field(:decay_rate_points_per_hour, :integer, default: 1)
+    field(:order, :integer)
+    field(:type, :string)
+    field(:show_grading_summary, :boolean, default: true)
+    field(:is_manually_graded, :boolean, default: true)
+    # used by fronend to determine display styles
+    field(:early_submission_xp, :integer, default: 0)
+    field(:hours_before_early_xp_decay, :integer, default: 0)
+
     belongs_to(:course, Course)
 
     timestamps()
   end
 
-  @required_fields ~w(course)a
-  @optional_fields ~w(early_submission_xp days_before_early_xp_decay
-    decay_rate_points_per_hour)a
+  @required_fields ~w(course_id)a
+  @optional_fields ~w(order type early_submission_xp
+    hours_before_early_xp_decay show_grading_summary is_manually_graded)a
 
   def changeset(assessment_config, params) do
     assessment_config
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> validate_number(:order, greater_than: 0)
+    |> validate_number(:order, less_than_or_equal_to: 8)
+    |> validate_number(:early_submission_xp, greater_than_or_equal_to: 0)
+    |> validate_number(:hours_before_early_xp_decay, greater_than_or_equal_to: 0)
+    |> unique_constraint([:order, :course_id])
   end
 end

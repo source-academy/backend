@@ -4,6 +4,7 @@ on:
     branches:
       - stable
       - master
+      - multitenant-deploy
     paths:
       - 'config/**'
       - 'lib/**'
@@ -53,9 +54,7 @@ jobs:
         run: |
           mix deps.get
       - name: mix release
-        run: |
-          rm -f _build/prod/cadet-0.0.1.tar.gz
-          mix release
+        run: mix release --overwrite
       - name: Create release
         uses: marvinpinto/action-automatic-releases@latest
         with:

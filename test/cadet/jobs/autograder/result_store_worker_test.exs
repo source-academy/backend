@@ -8,7 +8,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
 
   setup do
     answer = insert(:answer, %{question: insert(:question), submission: insert(:submission)})
-    success_no_errors = %{status: :success, grade: 10, result: []}
+    success_no_errors = %{status: :success, score: 10, max_score: 10, result: []}
 
     success_with_errors = %{
       result: [
@@ -37,7 +37,8 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
           ]
         }
       ],
-      grade: 0,
+      score: 0,
+      max_score: 10,
       status: :success
     }
 
@@ -47,7 +48,8 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
           "systemError" => "Autograder runtime error. Please contact a system administrator"
         }
       ],
-      grade: 0,
+      score: 0,
+      max_score: 10,
       status: :failed
     }
 
@@ -83,16 +85,13 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
             end)
           end)
 
-        assert answer.grade == result.grade
-        assert answer.adjustment == 0
-
-        if answer.question.max_grade == 0 do
+        if result.max_score == 0 do
           assert answer.xp == 0
         else
           assert answer.xp ==
                    Integer.floor_div(
-                     answer.question.max_xp * answer.grade,
-                     answer.question.max_grade
+                     answer.question.max_xp * result.score,
+                     result.max_score
                    )
         end
 
@@ -102,13 +101,12 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
     end
 
     test "after manual grading", %{results: results} do
-      grader = insert(:user, %{role: :staff})
+      grader = insert(:course_registration, %{role: :staff})
 
       answer =
         insert(:answer, %{
           question: insert(:question),
           submission: insert(:submission),
-          adjustment: 5,
           grader_id: grader.id
         })
 
@@ -128,16 +126,13 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
             end)
           end)
 
-        assert answer.grade == result.grade
-        assert answer.adjustment == 5 - result.grade
-
-        if answer.question.max_grade == 0 do
+        if result.max_score == 0 do
           assert answer.xp == 0
         else
           assert answer.xp ==
                    Integer.floor_div(
-                     answer.question.max_xp * answer.grade,
-                     answer.question.max_grade
+                     answer.question.max_xp * result.score,
+                     result.max_score
                    )
         end
 

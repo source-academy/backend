@@ -3,16 +3,16 @@ defmodule Cadet.Assessments.SubmissionVotesTest do
 
   use Cadet.ChangesetCase, entity: SubmissionVotes
 
-  @required_fields ~w(user_id submission_id question_id)a
+  @required_fields ~w(voter_id submission_id question_id)a
 
   setup do
     question = insert(:question)
-    user = insert(:user)
+    voter = insert(:course_registration)
     submission = insert(:submission)
 
-    valid_params = %{user_id: user.id, submission_id: submission.id, question_id: question.id}
+    valid_params = %{voter_id: voter.id, submission_id: submission.id, question_id: question.id}
 
-    {:ok, %{question: question, user: user, submission: submission, valid_params: valid_params}}
+    {:ok, %{question: question, voter: voter, submission: submission, valid_params: valid_params}}
   end
 
   describe "Changesets" do
@@ -22,10 +22,10 @@ defmodule Cadet.Assessments.SubmissionVotesTest do
 
     test "converts valid params with models into ids", %{
       question: question,
-      user: user,
+      voter: voter,
       submission: submission
     } do
-      assert_changeset_db(%{question: question, user: user, submission: submission}, :valid)
+      assert_changeset_db(%{question: question, voter: voter, submission: submission}, :valid)
     end
 
     test "invalid changeset missing params", %{valid_params: params} do
@@ -38,15 +38,15 @@ defmodule Cadet.Assessments.SubmissionVotesTest do
 
     test "invalid changeset foreign key constraint", %{
       question: question,
-      user: user,
+      voter: voter,
       submission: submission,
       valid_params: params
     } do
-      {:ok, _} = Repo.delete(user)
+      {:ok, _} = Repo.delete(voter)
 
       assert_changeset_db(params, :invalid)
 
-      new_user = insert(:user)
+      new_user = insert(:course_registration)
       {:ok, _} = Repo.delete(question)
 
       params

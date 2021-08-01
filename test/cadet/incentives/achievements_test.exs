@@ -13,10 +13,13 @@ defmodule Cadet.Incentives.AchievementsTest do
   import Cadet.TestEntityHelper
 
   test "create achievements" do
+    course = insert(:course)
+
     for ability <- Achievement.valid_abilities() do
       {:ok, %{uuid: uuid}} =
         Achievements.upsert(%{
           uuid: Ecto.UUID.generate(),
+          course_id: course.id,
           title: ability,
           ability: ability,
           is_task: false,
@@ -30,8 +33,9 @@ defmodule Cadet.Incentives.AchievementsTest do
   end
 
   test "create achievement with prerequisites as id" do
-    a1 = insert(:achievement)
-    a2 = insert(:achievement)
+    course = insert(:course)
+    a1 = insert(:achievement, %{course: course})
+    a2 = insert(:achievement, %{course: course})
     prerequisite_uuids = [a1.uuid, a2.uuid]
     a_uuid = UUID.generate()
     attrs = achievement_literal(0)
@@ -39,6 +43,7 @@ defmodule Cadet.Incentives.AchievementsTest do
     {:ok, _} =
       attrs
       |> Map.merge(%{
+        course_id: course.id,
         uuid: a_uuid,
         prerequisite_uuids: prerequisite_uuids
       })
@@ -55,6 +60,7 @@ defmodule Cadet.Incentives.AchievementsTest do
     {:ok, _} =
       attrs
       |> Map.merge(%{
+        course_id: g.course_id,
         uuid: a_uuid,
         goal_uuids: [g.uuid]
       })
@@ -64,9 +70,10 @@ defmodule Cadet.Incentives.AchievementsTest do
   end
 
   test "get achievements" do
-    goal = insert(:goal)
-    prereq = insert(:achievement)
-    achievement = insert(:achievement, achievement_literal(0))
+    course = insert(:course)
+    goal = insert(:goal, %{course: course})
+    prereq = insert(:achievement, %{course: course})
+    achievement = insert(:achievement, Map.merge(achievement_literal(0), %{course: course}))
 
     Repo.insert(%AchievementPrerequisite{
       prerequisite_uuid: prereq.uuid,
@@ -80,7 +87,7 @@ defmodule Cadet.Incentives.AchievementsTest do
 
     goal_uuid = goal.uuid
     prereq_uuid = prereq.uuid
-    achievement = Enum.find(Achievements.get(), &(&1.uuid == achievement.uuid))
+    achievement = Enum.find(Achievements.get(course.id), &(&1.uuid == achievement.uuid))
 
     assert achievement_literal(0) = achievement
     assert [%{goal_uuid: ^goal_uuid}] = achievement.goals
@@ -125,9 +132,11 @@ defmodule Cadet.Incentives.AchievementsTest do
   end
 
   test "bulk insert succeeds" do
+    course = insert(:course)
+
     attrs =
       [achievement_literal(0), achievement_literal(1)]
-      |> Enum.map(&Map.merge(&1, %{uuid: UUID.generate()}))
+      |> Enum.map(&Map.merge(&1, %{course_id: course.id, uuid: UUID.generate()}))
 
     assert {:ok, result} = Achievements.upsert_many(attrs)
     assert [achievement_literal(0), achievement_literal(1)] = result

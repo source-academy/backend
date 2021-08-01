@@ -1,31 +1,30 @@
 defmodule Cadet.Accounts.User do
   @moduledoc """
   The User entity represents a user.
-  It stores basic information such as name and role
-  Each user is associated to one `role` which determines the access level
-  of the user.
+  It stores basic information such as name
   """
   use Cadet, :model
 
-  alias Cadet.Accounts.Role
-  alias Cadet.Courses.Group
+  alias Cadet.Accounts.CourseRegistration
+  alias Cadet.Courses.Course
 
   schema "users" do
     field(:name, :string)
-    field(:role, Role)
     field(:username, :string)
-    field(:game_states, :map)
-    belongs_to(:group, Group)
+
+    belongs_to(:latest_viewed_course, Course)
+    has_many(:courses, CourseRegistration)
+
     timestamps()
   end
 
-  @required_fields ~w(name role)a
-  @optional_fields ~w(username group_id game_states)a
+  @required_fields ~w(username)a
+  @optional_fields ~w(name latest_viewed_course_id)a
 
   def changeset(user, params \\ %{}) do
     user
     |> cast(params, @required_fields ++ @optional_fields)
-    |> add_belongs_to_id_from_model(:group, params)
     |> validate_required(@required_fields)
+    |> foreign_key_constraint(:latest_viewed_course_id)
   end
 end
