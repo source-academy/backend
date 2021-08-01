@@ -16,6 +16,10 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
+  pipeline :course do
+    plug(:assign_course)
+  end
+
   pipeline :ensure_staff do
     plug(:ensure_role, [:staff, :admin])
   end
@@ -34,7 +38,6 @@ defmodule CadetWeb.Router do
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
-    get("/settings/sublanguage", SettingsController, :index)
   end
 
   scope "/v2", CadetWeb do
@@ -46,10 +49,28 @@ defmodule CadetWeb.Router do
     get("/devices/:secret/mqtt_endpoint", DevicesController, :get_mqtt_endpoint)
   end
 
-  # Authenticated Pages
+  # Authenticated Pages without course
   scope "/v2", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth])
 
+    get("/user", UserController, :index)
+    get("/user/latest_viewed_course", UserController, :get_latest_viewed)
+    put("/user/latest_viewed_course", UserController, :update_latest_viewed)
+
+    post("/config/create", CoursesController, :create)
+
+    get("/devices", DevicesController, :index)
+    post("/devices", DevicesController, :register)
+    post("/devices/:id", DevicesController, :edit)
+    delete("/devices/:id", DevicesController, :deregister)
+    get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
+  end
+
+  # Authenticated Pages with course
+  scope "/v2/courses/:course_id", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course])
+
+    get("/sourcecast", SourcecastController, :index)
     resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
     get("/assessments", AssessmentsController, :index)
@@ -68,27 +89,23 @@ defmodule CadetWeb.Router do
     get("/notifications", NotificationsController, :index)
     post("/notifications/acknowledge", NotificationsController, :acknowledge)
 
-    get("/user", UserController, :index)
+    get("/user", UserController, :get_course_reg)
     put("/user/game_states", UserController, :update_game_states)
 
-    get("/devices", DevicesController, :index)
-    post("/devices", DevicesController, :register)
-    post("/devices/:id", DevicesController, :edit)
-    delete("/devices/:id", DevicesController, :deregister)
-    get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
+    get("/config", CoursesController, :index)
   end
 
   # Authenticated Pages
-  scope "/v2/self", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth])
+  scope "/v2/courses/:course_id/self", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course])
 
     get("/goals", IncentivesController, :index_goals)
     post("/goals/:uuid/progress", IncentivesController, :update_progress)
   end
 
   # Admin pages
-  scope "/v2/admin", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :ensure_staff])
+  scope "/v2/courses/:course_id/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
@@ -112,7 +129,10 @@ defmodule CadetWeb.Router do
     )
 
     get("/users", AdminUserController, :index)
-    post("/users/:userid/goals/:uuid/progress", AdminGoalsController, :update_progress)
+    put("/users", AdminUserController, :upsert_users_and_groups)
+    put("/users/:course_reg_id/role", AdminUserController, :update_role)
+    delete("/users/:course_reg_id", AdminUserController, :delete_user)
+    post("/users/:course_reg_id/goals/:uuid/progress", AdminGoalsController, :update_progress)
 
     put("/achievements", AdminAchievementsController, :bulk_update)
     put("/achievements/:uuid", AdminAchievementsController, :update)
@@ -123,7 +143,15 @@ defmodule CadetWeb.Router do
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
 
-    put("/settings/sublanguage", AdminSettingsController, :update)
+    put("/config", AdminCoursesController, :update_course_config)
+    get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
+    put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
+
+    delete(
+      "/config/assessment_config/:assessment_config_id",
+      AdminCoursesController,
+      :delete_assessment_config
+    )
   end
 
   # Other scopes may use custom stacks.
@@ -156,8 +184,20 @@ defmodule CadetWeb.Router do
     get("/", DefaultController, :index)
   end
 
+  defp assign_course(conn, _opts) do
+    course_id = conn.path_params["course_id"]
+
+    course_reg =
+      Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)
+
+    case course_reg do
+      nil -> conn |> send_resp(403, "Forbidden") |> halt()
+      cr -> assign(conn, :course_reg, cr)
+    end
+  end
+
   defp ensure_role(conn, opts) do
-    if not is_nil(conn.assigns.current_user) and conn.assigns.current_user.role in opts do
+    if not is_nil(conn.assigns.current_user) and conn.assigns.course_reg.role in opts do
       conn
     else
       conn

@@ -17,7 +17,7 @@ defmodule Cadet.Assessments.AnswerFactory do
 
       def programming_answer_factory do
         %{
-          code: sequence(:code, &"alert(#{&1})")
+          code: sequence(:code, &"return #{&1};")
         }
       end
 

@@ -16,7 +16,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
         %Question{
           type: :programming,
-          max_grade: 10,
           max_xp: 100,
           assessment: build(:assessment, %{is_published: true}),
           library: library,
@@ -39,7 +38,14 @@ defmodule Cadet.Assessments.QuestionFactory do
               program: Faker.Lorem.Shakespeare.king_richard_iii()
             }
           ],
-          private: [
+          opaque: [
+            %{
+              score: :rand.uniform(5),
+              answer: Faker.StarWars.character(),
+              program: Faker.Lorem.Shakespeare.king_richard_iii()
+            }
+          ],
+          secret: [
             %{
               score: :rand.uniform(5),
               answer: Faker.StarWars.character(),
@@ -54,7 +60,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
         %Question{
           type: :mcq,
-          max_grade: 10,
           max_xp: 100,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),
@@ -79,7 +84,6 @@ defmodule Cadet.Assessments.QuestionFactory do
 
         %Question{
           type: :voting,
-          max_grade: 10,
           max_xp: 100,
           assessment: build(:assessment, %{is_published: true}),
           library: build(:library),

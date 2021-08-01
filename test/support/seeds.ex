@@ -10,7 +10,6 @@ defmodule Cadet.Test.Seeds do
   %{
     accounts: %{
       avenger: avenger,
-      mentor: mentor,
       group: group,
       students: students,
       admin: admin
@@ -38,48 +37,113 @@ defmodule Cadet.Test.Seeds do
 
   def assessments do
     if Cadet.Env.env() == :test do
-      # User and Group
-      avenger = insert(:user, %{name: "avenger", role: :staff})
-      mentor = insert(:user, %{name: "mentor", role: :staff})
-      group = insert(:group, %{leader: avenger, mentor: mentor})
-      students = insert_list(5, :student, %{group: group})
-      admin = insert(:user, %{name: "admin", role: :admin})
+      # Course
+      course1 = insert(:course)
+      course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
+      # Users
+      avenger1 = insert(:user, %{name: "avenger", latest_viewed_course: course1})
+      admin1 = insert(:user, %{name: "admin", latest_viewed_course: course1})
+
+      studenta1admin2 = insert(:user, %{name: "student a", latest_viewed_course: course1})
+
+      studentb1 = insert(:user, %{latest_viewed_course: course1})
+      studentc1 = insert(:user, %{latest_viewed_course: course1})
+      # CourseRegistration and Group
+      avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
+      admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
+      group = insert(:group, %{leader: avenger1_cr})
+
+      student1a_cr =
+        insert(:course_registration, %{
+          user: studenta1admin2,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
+      student1b_cr =
+        insert(:course_registration, %{
+          user: studentb1,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
+      student1c_cr =
+        insert(:course_registration, %{
+          user: studentc1,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
+      students = [student1a_cr, student1b_cr, student1c_cr]
+
+      _admin2cr =
+        insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
+
+      assessment_configs = [
+        insert(:assessment_config, %{course: course1, order: 1, type: "mission"}),
+        insert(:assessment_config, %{course: course1, order: 2}),
+        insert(:assessment_config, %{
+          course: course1,
+          order: 3,
+          show_grading_summary: false,
+          is_manually_graded: false,
+          type: "path"
+        }),
+        insert(:assessment_config, %{course: course1, order: 4}),
+        insert(:assessment_config, %{
+          course: course1,
+          order: 5,
+          type: "practical"
+        })
+      ]
+
+      # 1..5 |> Enum.map(&insert(:assessment_config, %{course: course1, order: &1}))
 
       assessments =
-        Enum.reduce(
-          Cadet.Assessments.Assessment.assessment_types(),
+        assessment_configs
+        |> Enum.reduce(
           %{},
-          fn type, acc -> Map.put(acc, type, insert_assessments(type, students)) end
+          fn config, acc ->
+            Map.put(acc, config.type, insert_assessments(config, students, course1))
+          end
         )
 
       %{
-        accounts: %{
-          avenger: avenger,
-          mentor: mentor,
+        courses: %{
+          course1: course1,
+          course2: course2
+        },
+        course_regs: %{
+          avenger1_cr: avenger1_cr,
           group: group,
           students: students,
-          admin: admin
+          admin1_cr: admin1_cr
         },
-        users: %{
-          staff: avenger,
-          student: List.first(students),
-          admin: admin
+        role_crs: %{
+          staff: avenger1_cr,
+          student: student1a_cr,
+          admin: admin1_cr
         },
+        assessment_configs: assessment_configs,
         assessments: assessments
       }
     end
   end
 
-  defp insert_assessments(assessment_type, students) do
-    assessment = insert(:assessment, %{type: assessment_type, is_published: true})
+  defp insert_assessments(assessment_config, students, course) do
+    assessment =
+      insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
     programming_questions =
       Enum.map(1..3, fn id ->
         insert(:programming_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 200,
-          max_xp: 1000
+          max_xp: 1000,
+          show_solution: assessment.config.type == "path"
         })
       end)
 
@@ -88,8 +152,8 @@ defmodule Cadet.Test.Seeds do
         insert(:mcq_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 40,
-          max_xp: 500
+          max_xp: 500,
+          show_solution: assessment.config.type == "path"
         })
       end)
 
@@ -98,8 +162,8 @@ defmodule Cadet.Test.Seeds do
         insert(:voting_question, %{
           display_order: id,
           assessment: assessment,
-          max_grade: 10,
-          max_xp: 100
+          max_xp: 100,
+          show_solution: assessment.config.type == "path"
         })
       end)
 
@@ -113,7 +177,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(submissions, fn submission ->
         Enum.map(programming_questions, fn question ->
           insert(:answer, %{
-            grade: 200,
             xp: 1000,
             question: question,
             submission: submission,
@@ -126,7 +189,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(submissions, fn submission ->
         Enum.map(mcq_questions, fn question ->
           insert(:answer, %{
-            grade: 40,
             xp: 500,
             question: question,
             submission: submission,
@@ -139,7 +201,6 @@ defmodule Cadet.Test.Seeds do
       Enum.map(submissions, fn submission ->
         Enum.map(voting_questions, fn question ->
           insert(:answer, %{
-            grade: 10,
             xp: 100,
             question: question,
             submission: submission,

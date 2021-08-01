@@ -7,7 +7,7 @@ defmodule Cadet.Assessments.AnswerTest do
 
   setup do
     assessment = insert(:assessment, %{is_published: true})
-    student = insert(:user, %{role: :student})
+    student = insert(:course_registration, %{role: :student})
     submission = insert(:submission, %{student: student, assessment: assessment})
     mcq_question = insert(:mcq_question, %{assessment: assessment})
     programming_question = insert(:programming_question, %{assessment: assessment})
@@ -120,40 +120,6 @@ defmodule Cadet.Assessments.AnswerTest do
       params
       |> Map.put(:question_id, new_mcq_question.id)
       |> assert_changeset_db(:invalid)
-    end
-  end
-
-  describe "grading_changeset" do
-    test "invalid changeset total grade < 0", %{
-      valid_mcq_params: valid_mcq_params,
-      mcq_question: mcq_question,
-      valid_programming_params: valid_programming_params,
-      programming_question: programming_question
-    } do
-      for {question, params} <- [
-            {mcq_question, valid_mcq_params},
-            {programming_question, valid_programming_params}
-          ] do
-        answer = insert(:answer, %{params | question_id: question.id, grade: 1})
-
-        refute Answer.grading_changeset(answer, %{adjustment: -2}).valid?
-      end
-    end
-
-    test "invalid changeset total grade > max_grade", %{
-      valid_mcq_params: valid_mcq_params,
-      mcq_question: mcq_question,
-      valid_programming_params: valid_programming_params,
-      programming_question: programming_question
-    } do
-      for {question, params} <- [
-            {mcq_question, valid_mcq_params},
-            {programming_question, valid_programming_params}
-          ] do
-        answer = insert(:answer, %{params | question_id: question.id, grade: question.max_grade})
-
-        refute Answer.grading_changeset(answer, %{adjustment: 1}).valid?
-      end
     end
 
     test "invalid changeset without question_id" do

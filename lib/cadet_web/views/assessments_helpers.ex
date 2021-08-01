@@ -4,8 +4,6 @@ defmodule CadetWeb.AssessmentsHelpers do
   """
   import CadetWeb.ViewHelper
 
-  @graded_assessment_types ~w(mission sidequest contest)
-
   defp build_library(%{library: library}) do
     transform_map_for_view(library, %{
       chapter: :chapter,
@@ -18,36 +16,26 @@ defmodule CadetWeb.AssessmentsHelpers do
     transform_map_for_view(external_library, [:name, :symbols])
   end
 
-  def build_question_by_assessment_type(
-        %{
-          question: question,
-          assessment_type: assessment_type
-        },
+  def build_question_by_question_config(
+        %{question: question},
         all_testcases? \\ false
       ) do
     Map.merge(
       build_generic_question_fields(%{question: question}),
-      build_question_content_by_type(
-        %{
-          question: question,
-          assessment_type: assessment_type
-        },
+      build_question_content_by_config(
+        %{question: question},
         all_testcases?
       )
     )
   end
 
-  def build_question_with_answer_and_solution_if_ungraded(%{
-        question: question,
-        assessment: assessment
-      }) do
+  def build_question_with_answer_and_solution_if_ungraded(%{question: question}) do
     components = [
-      build_question_by_assessment_type(%{
-        question: question,
-        assessment_type: assessment.type
+      build_question_by_question_config(%{
+        question: question
       }),
       build_answer_fields_by_question_type(%{question: question}),
-      build_solution_if_ungraded_by_type(%{question: question, assessment: assessment})
+      build_solution_if_ungraded_by_config(%{question: question})
     ]
 
     components
@@ -61,15 +49,14 @@ defmodule CadetWeb.AssessmentsHelpers do
       type: :type,
       library: &build_library(%{library: &1.library}),
       maxXp: :max_xp,
-      maxGrade: :max_grade
+      blocking: :blocking
     })
   end
 
-  defp build_solution_if_ungraded_by_type(%{
-         question: %{question: question, type: question_type},
-         assessment: %{type: assessment_type}
+  defp build_solution_if_ungraded_by_config(%{
+         question: %{question: question, type: question_type, show_solution: show_solution}
        }) do
-    if assessment_type not in @graded_assessment_types do
+    if show_solution do
       solution_getter =
         case question_type do
           :programming -> &Map.get(&1, "solution")
@@ -98,7 +85,6 @@ defmodule CadetWeb.AssessmentsHelpers do
       grader: grader_builder(grader),
       gradedAt: graded_at_builder(grader),
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
-      grade: &((&1.grade || 0) + (&1.adjustment || 0)),
       autogradingStatus: :autograding_status,
       autogradingResults: build_results(%{results: answer.autograding_results}),
       comments: :comments
@@ -177,38 +163,29 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_testcases(%{assessment_type: assessment_type}, all_testcases?) do
-    cond do
-      all_testcases? ->
-        &Enum.concat(
+  defp build_testcases(all_testcases?) do
+    if all_testcases? do
+      &Enum.concat(
+        Enum.concat(
           Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
-          Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "private") end)
-        )
-
-      assessment_type == "path" ->
-        &Enum.concat(
-          Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
-          Enum.map(&1["private"], fn testcase -> build_testcase(testcase, "hidden") end)
-        )
-
-      true ->
-        &Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end)
+          Enum.map(&1["opaque"], fn testcase -> build_testcase(testcase, "opaque") end)
+        ),
+        Enum.map(&1["secret"], fn testcase -> build_testcase(testcase, "secret") end)
+      )
+    else
+      &Enum.concat(
+        Enum.map(&1["public"], fn testcase -> build_testcase(testcase, "public") end),
+        Enum.map(&1["opaque"], fn testcase -> build_testcase(testcase, "opaque") end)
+      )
     end
   end
 
-  defp build_postpend(%{assessment_type: assessment_type}, all_testcases?) do
-    case {all_testcases?, assessment_type} do
-      {true, _} -> & &1["postpend"]
-      {_, "path"} -> & &1["postpend"]
-      # Create a 1-arity function to return an empty postpend for non-paths
-      _ -> fn _question -> "" end
-    end
-  end
-
-  defp build_question_content_by_type(
+  defp build_question_content_by_config(
          %{
-           question: %{question: question, type: question_type},
-           assessment_type: assessment_type
+           question: %{
+             question: question,
+             type: question_type
+           }
          },
          all_testcases?
        ) do
@@ -218,8 +195,8 @@ defmodule CadetWeb.AssessmentsHelpers do
           content: "content",
           prepend: "prepend",
           solutionTemplate: "template",
-          postpend: build_postpend(%{assessment_type: assessment_type}, all_testcases?),
-          testcases: build_testcases(%{assessment_type: assessment_type}, all_testcases?)
+          postpend: "postpend",
+          testcases: build_testcases(all_testcases?)
         })
 
       :mcq ->

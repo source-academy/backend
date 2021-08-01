@@ -56,7 +56,8 @@ defmodule Cadet.Autograder.LambdaWorker do
       %{
         answer_id: answer.id,
         result: %{
-          grade: 0,
+          score: 0,
+          max_score: 1,
           status: :failed,
           result: [
             %{
@@ -91,7 +92,8 @@ defmodule Cadet.Autograder.LambdaWorker do
       studentProgram: Map.get(answer.answer, "code"),
       postpendProgram: Map.get(question_content, "postpend", ""),
       testcases:
-        Map.get(question_content, "public", []) ++ Map.get(question_content, "private", []),
+        Map.get(question_content, "public", []) ++
+          Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", []),
       library: %{
         chapter: question.grading_library.chapter,
         external: upcased_name_external,
@@ -105,7 +107,8 @@ defmodule Cadet.Autograder.LambdaWorker do
     # %{"errorMessage" => "${message}"}
     if Map.has_key?(response, "errorMessage") do
       %{
-        grade: 0,
+        score: 0,
+        max_score: 1,
         status: :failed,
         result: [
           %{
@@ -117,7 +120,12 @@ defmodule Cadet.Autograder.LambdaWorker do
         ]
       }
     else
-      %{grade: response["totalScore"], result: response["results"], status: :success}
+      %{
+        score: response["totalScore"],
+        max_score: response["maxScore"],
+        result: response["results"],
+        status: :success
+      }
     end
   end
 end

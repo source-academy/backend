@@ -1,6 +1,6 @@
 defmodule Cadet.Assessments.QuestionTypes.Testcase do
   @moduledoc """
-  The Assessments.QuestionTypes.Testcase entity represents a public/private testcase.
+  The Assessments.QuestionTypes.Testcase entity represents a public/opaque/secret testcase.
   """
   use Cadet, :model
 

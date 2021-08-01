@@ -32,6 +32,12 @@ defmodule Cadet.SharedHelper do
         do: {if(is_binary(key), do: Recase.to_snake(key), else: key), val}
   end
 
+  def to_snake_case_atom_keys(map = %{}) do
+    map
+    |> snake_casify_string_keys()
+    |> (&for({key, val} <- &1, into: %{}, do: {String.to_atom(key), val})).()
+  end
+
   @doc """
   Snake-casifies string keys, recursively.
 

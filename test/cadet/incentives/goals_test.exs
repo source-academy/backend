@@ -7,28 +7,29 @@ defmodule Cadet.Incentives.GoalssTest do
   import Cadet.TestEntityHelper
 
   test "create goal" do
+    course = insert(:course)
     uuid = UUID.generate()
-    Goals.upsert(Map.merge(goal_literal(0), %{uuid: uuid}))
+    Goals.upsert(Map.merge(goal_literal(0), %{course_id: course.id, uuid: uuid}))
     assert goal_literal(0) = Repo.get(Goal, uuid)
   end
 
   test "get goals" do
-    insert(:goal, goal_literal(0))
-    assert [goal_literal(0)] = Goals.get()
+    goal = insert(:goal, goal_literal(0))
+    assert [goal_literal(0)] = Goals.get(goal.course_id)
   end
 
   test "get goals with progress" do
     goal = insert(:goal, goal_literal(0))
-    user = insert(:user)
+    course_reg = insert(:course_registration)
 
     Repo.insert(%GoalProgress{
       count: 500,
       completed: false,
-      user_id: user.id,
+      course_reg_id: course_reg.id,
       goal_uuid: goal.uuid
     })
 
-    retrieved_goal = Goals.get_with_progress(user)
+    retrieved_goal = Goals.get_with_progress(course_reg)
 
     assert [goal_literal(0)] = retrieved_goal
     assert [%{progress: [%{count: 500, completed: false}]}] = retrieved_goal
@@ -48,8 +49,11 @@ defmodule Cadet.Incentives.GoalssTest do
   end
 
   test "bulk insert succeeds" do
+    course = insert(:course)
+
     attrs =
-      [goal_literal(0), goal_literal(1)] |> Enum.map(&Map.merge(&1, %{uuid: UUID.generate()}))
+      [goal_literal(0), goal_literal(1)]
+      |> Enum.map(&Map.merge(&1, %{course_id: course.id, uuid: UUID.generate()}))
 
     assert {:ok, result} = Goals.upsert_many(attrs)
     assert [goal_literal(0), goal_literal(1)] = result
@@ -76,7 +80,7 @@ defmodule Cadet.Incentives.GoalssTest do
 
   test "upsert progress" do
     goal = insert(:goal, goal_literal(0))
-    user = insert(:user)
+    course_reg = insert(:course_registration, %{course: goal.course})
 
     assert {:ok, _} =
              Goals.upsert_progress(
@@ -84,13 +88,13 @@ defmodule Cadet.Incentives.GoalssTest do
                  count: 100,
                  completed: false,
                  goal_uuid: goal.uuid,
-                 user_id: user.id
+                 course_reg_id: course_reg.id
                },
                goal.uuid,
-               user.id
+               course_reg.id
              )
 
-    retrieved_goal = Goals.get_with_progress(user)
+    retrieved_goal = Goals.get_with_progress(course_reg)
     assert [%{progress: [%{count: 100, completed: false}]}] = retrieved_goal
 
     assert {:ok, _} =
@@ -99,13 +103,13 @@ defmodule Cadet.Incentives.GoalssTest do
                  count: 200,
                  completed: true,
                  goal_uuid: goal.uuid,
-                 user_id: user.id
+                 course_reg_id: course_reg.id
                },
                goal.uuid,
-               user.id
+               course_reg.id
              )
 
-    retrieved_goal = Goals.get_with_progress(user)
+    retrieved_goal = Goals.get_with_progress(course_reg)
     assert [%{progress: [%{count: 200, completed: true}]}] = retrieved_goal
   end
 end

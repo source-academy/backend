@@ -1,6 +1,7 @@
 defmodule Cadet.Auth.GuardianTest do
   use Cadet.DataCase
 
+  import Cadet.ModelHelper
   alias Cadet.Auth.Guardian
 
   test "token subject is user id" do
@@ -19,7 +20,9 @@ defmodule Cadet.Auth.GuardianTest do
       "sub" => "2000"
     }
 
-    assert Guardian.resource_from_claims(good_claims) == {:ok, user}
+    assert Guardian.resource_from_claims(good_claims) ==
+             {:ok, remove_preload(user, :latest_viewed_course)}
+
     assert Guardian.resource_from_claims(bad_claims) == {:error, :not_found}
   end
 end

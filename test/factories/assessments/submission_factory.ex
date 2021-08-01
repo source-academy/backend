@@ -9,7 +9,7 @@ defmodule Cadet.Assessments.SubmissionFactory do
 
       def submission_factory do
         %Submission{
-          student: build(:user, %{role: :student}),
+          student: build(:course_registration, %{role: :student}),
           assessment: build(:assessment)
         }
       end

@@ -9,33 +9,23 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
-      student: &transform_map_for_view(&1.submission.student, [:name, :id]),
+      student:
+        &transform_map_for_view(&1.submission.student, %{name: fn st -> st.user.name end, id: :id}),
       question: &build_grading_question/1,
       solution: &(&1.question.question["solution"] || ""),
       grade: &build_grade/1
     })
   end
 
-  def render("grading_summary.json", %{summary: summary}) do
-    render_many(summary, CadetWeb.AdminGradingView, "grading_summary_entry.json", as: :entry)
-  end
-
-  def render("grading_summary_entry.json", %{entry: entry}) do
-    transform_map_for_view(entry, %{
-      groupName: :group_name,
-      leaderName: :leader_name,
-      ungradedMissions: :ungraded_missions,
-      submittedMissions: :submitted_missions,
-      ungradedSidequests: :ungraded_sidequests,
-      submittedSidequests: :submitted_sidequests
-    })
+  def render("grading_summary.json", %{cols: cols, summary: summary}) do
+    %{cols: cols, rows: summary}
   end
 
   defp build_grading_question(answer) do
     results = build_autograding_results(answer.autograding_results)
 
-    %{question: answer.question, assessment_type: answer.question.assessment.type}
-    |> build_question_by_assessment_type(true)
+    %{question: answer.question}
+    |> build_question_by_question_config(true)
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
     |> Map.put(:autogradingStatus, answer.autograding_status)
     |> Map.put(:autogradingResults, results)
@@ -51,8 +41,6 @@ defmodule CadetWeb.AdminGradingView do
     transform_map_for_view(answer, %{
       grader: grader_builder(grader),
       gradedAt: graded_at_builder(grader),
-      grade: :grade,
-      adjustment: :adjustment,
       xp: :xp,
       xpAdjustment: :xp_adjustment,
       comments: :comments

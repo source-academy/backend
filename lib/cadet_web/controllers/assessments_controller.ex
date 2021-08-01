@@ -10,13 +10,13 @@ defmodule CadetWeb.AssessmentsController do
   @bypass_closed_roles ~w(staff admin)a
 
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
-    user = conn.assigns[:current_user]
+    cr = conn.assigns.course_reg
 
     with {:submission, submission} when not is_nil(submission) <-
-           {:submission, Assessments.get_submission(assessment_id, user)},
+           {:submission, Assessments.get_submission(assessment_id, cr)},
          {:is_open?, true} <-
            {:is_open?,
-            user.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
+            cr.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
          {:ok, _nil} <- Assessments.finalise_submission(submission) do
       text(conn, "OK")
     else
@@ -38,16 +38,16 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def index(conn, _) do
-    user = conn.assigns[:current_user]
-    {:ok, assessments} = Assessments.all_assessments(user)
+    cr = conn.assigns.course_reg
+    {:ok, assessments} = Assessments.all_assessments(cr)
 
     render(conn, "index.json", assessments: assessments)
   end
 
   def show(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
-    user = conn.assigns[:current_user]
+    cr = conn.assigns.course_reg
 
-    case Assessments.assessment_with_questions_and_answers(assessment_id, user) do
+    case Assessments.assessment_with_questions_and_answers(assessment_id, cr) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
@@ -55,9 +55,9 @@ defmodule CadetWeb.AssessmentsController do
 
   def unlock(conn, %{"assessmentid" => assessment_id, "password" => password})
       when is_ecto_id(assessment_id) do
-    user = conn.assigns[:current_user]
+    cr = conn.assigns.course_reg
 
-    case Assessments.assessment_with_questions_and_answers(assessment_id, user, password) do
+    case Assessments.assessment_with_questions_and_answers(assessment_id, cr, password) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
@@ -153,7 +153,7 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
 
-            type(Schema.ref(:AssessmentType), "The assessment type", required: true)
+            config(Schema.ref(:AssessmentConfig), "The assessment config", required: true)
 
             shortSummary(:string, "Short summary", required: true)
 
@@ -174,12 +174,6 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
-            maxGrade(
-              :integer,
-              "The maximum grade for this assessment",
-              required: true
-            )
-
             maxXp(
               :integer,
               "The maximum XP for this assessment",
@@ -187,8 +181,6 @@ defmodule CadetWeb.AssessmentsController do
             )
 
             xp(:integer, "The XP earned for this assessment", required: true)
-
-            grade(:integer, "The grade earned for this assessment", required: true)
 
             coverImage(:string, "The URL to the cover picture", required: true)
 
@@ -211,7 +203,7 @@ defmodule CadetWeb.AssessmentsController do
             id(:integer, "The assessment ID", required: true)
             title(:string, "The title of the assessment", required: true)
 
-            type(Schema.ref(:AssessmentType), "The assessment type", required: true)
+            config(Schema.ref(:AssessmentConfig), "The assessment config", required: true)
 
             number(
               :string,
@@ -227,9 +219,9 @@ defmodule CadetWeb.AssessmentsController do
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
           end
         end,
-      AssessmentType:
+      AssessmentConfig:
         swagger_schema do
-          description("Assessment type")
+          description("Assessment config")
           type(:string)
           enum([:mission, :sidequest, :path, :contest, :practical])
         end,
@@ -370,13 +362,13 @@ defmodule CadetWeb.AssessmentsController do
             answer(:string)
             score(:integer)
             program(:string)
-            type(Schema.ref(:TestcaseType), "One of public/hidden/private")
+            type(Schema.ref(:TestcaseType), "One of public/opaque/secret")
           end
         end,
       TestcaseType:
         swagger_schema do
           type(:string)
-          enum([:public, :hidden, :private])
+          enum([:public, :opaque, :secret])
         end,
       AutogradingResult:
         swagger_schema do
