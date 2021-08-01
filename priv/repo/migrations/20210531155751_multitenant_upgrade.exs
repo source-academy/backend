@@ -1,6 +1,6 @@
 defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
   use Ecto.Migration
-  import Ecto.Query, only: [from: 2, where: 2]
+  import Ecto.Query
 
   alias Cadet.Accounts.{CourseRegistration, Notification, Role, User}
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
@@ -185,7 +185,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
               # assign a staff to be the leader_id during migration
               nil ->
                 CourseRegistration
-                |> where(role: :staff)
+                |> where([cr], cr.role in [:admin, :staff])
                 |> Repo.one()
                 |> Map.fetch!(:id)
 

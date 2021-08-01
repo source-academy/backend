@@ -1,7 +1,7 @@
 defmodule Cadet.Auth.GuardianTest do
   use Cadet.DataCase
 
-  import Cadet.TestHelper
+  import Cadet.ModelHelper
   alias Cadet.Auth.Guardian
 
   test "token subject is user id" do

@@ -88,20 +88,18 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
     @tag authenticate: :student
     test "403 for student", %{conn: conn} do
-      course = conn.assigns.test_cr.course
-      course_reg = insert(:course_registration, %{course: course, role: :student})
+      course_id = conn.assigns.course_id
 
       conn
-      |> get(build_path(course.id, course_reg.id))
+      |> get(build_path(course_id))
       |> response(403)
     end
 
     test "401 if unauthenticated", %{conn: conn} do
       course = insert(:course)
-      course_reg = insert(:course_registration, %{course: course, role: :student})
 
       conn
-      |> get(build_path(course.id, course_reg.id))
+      |> get(build_path(course.id))
       |> response(401)
     end
   end
@@ -315,6 +313,6 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   end
 
   defp build_path(course_id, uuid, course_reg_id) do
-    "v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals/#{uuid}/progress/"
+    "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals/#{uuid}/progress/"
   end
 end

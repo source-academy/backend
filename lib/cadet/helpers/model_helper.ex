@@ -132,4 +132,15 @@ defmodule Cadet.ModelHelper do
         |> cast_assoc(assoc_field)
     end
   end
+
+  def remove_preload(struct, field, cardinality \\ :one) do
+    %{
+      struct
+      | field => %Ecto.Association.NotLoaded{
+          __field__: field,
+          __owner__: struct.__struct__,
+          __cardinality__: cardinality
+        }
+    }
+  end
 end
