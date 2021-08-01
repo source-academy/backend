@@ -9,7 +9,7 @@ defmodule CadetWeb.NotificationsController do
   alias Cadet.Accounts.Notifications
 
   def index(conn, _) do
-    {:ok, notifications} = Notifications.fetch(conn.assigns.current_user)
+    {:ok, notifications} = Notifications.fetch(conn.assigns.course_reg)
 
     render(
       conn,
@@ -21,7 +21,7 @@ defmodule CadetWeb.NotificationsController do
   def acknowledge(conn, %{"notificationIds" => notification_ids}) do
     case Notifications.acknowledge(
            notification_ids,
-           conn.assigns.current_user
+           conn.assigns.course_reg
          ) do
       {:ok, _nil} ->
         text(conn, "OK")
@@ -39,7 +39,7 @@ defmodule CadetWeb.NotificationsController do
   end
 
   swagger_path :index do
-    get("/notifications")
+    get("/v2/courses/{course_id}/notifications")
 
     summary("Get the unread notifications belonging to a user")
 
@@ -52,7 +52,7 @@ defmodule CadetWeb.NotificationsController do
   end
 
   swagger_path :acknowledge do
-    post("/notifications/acknowledge")
+    post("/v2/courses/{course_id}/notifications/acknowledge")
     summary("Acknowledge notification(s)")
     security([%{JWT: []}])
 

@@ -6,24 +6,26 @@ defmodule Cadet.Incentives.Goals do
 
   alias Cadet.Incentives.{Goal, GoalProgress}
 
-  alias Cadet.Accounts.User
+  alias Cadet.Accounts.CourseRegistration
 
   import Ecto.Query
 
   @doc """
   Returns all goals.
   """
-  @spec get() :: [%Goal{}]
-  def get do
-    Repo.all(Goal)
+  @spec get(integer()) :: [%Goal{}]
+  def get(course_id) when is_ecto_id(course_id) do
+    Goal
+    |> where(course_id: ^course_id)
+    |> Repo.all()
   end
 
   @doc """
-  Returns goals with user progress.
+  Returns goals with progress for each course_registration.
   """
-  def get_with_progress(%User{id: user_id}) do
+  def get_with_progress(%CourseRegistration{id: course_reg_id}) do
     Goal
-    |> join(:left, [g], p in assoc(g, :progress), on: p.user_id == ^user_id)
+    |> join(:left, [g], p in assoc(g, :progress), on: p.course_reg_id == ^course_reg_id)
     |> preload([g, p], [:achievements, progress: p])
     |> Repo.all()
   end
@@ -79,21 +81,30 @@ defmodule Cadet.Incentives.Goals do
     end
   end
 
-  def upsert_progress(attrs, goal_uuid, user_id) do
-    if goal_uuid == nil or user_id == nil do
+  def upsert_progress(attrs, goal_uuid, course_reg_id) do
+    if goal_uuid == nil or course_reg_id == nil do
       {:error, {:bad_request, "No UUID specified in Goal"}}
     else
-      GoalProgress
-      |> Repo.get_by(goal_uuid: goal_uuid, user_id: user_id)
-      |> (&(&1 || %GoalProgress{})).()
-      |> GoalProgress.changeset(attrs)
-      |> Repo.insert_or_update()
-      |> case do
-        result = {:ok, _} ->
-          result
+      course_reg = Repo.get(CourseRegistration, course_reg_id)
+      goal = Repo.get_by(Goal, uuid: goal_uuid, course_id: course_reg.course_id)
 
-        {:error, changeset} ->
-          {:error, {:bad_request, full_error_messages(changeset)}}
+      case goal do
+        nil ->
+          {:error, {:bad_request, "User and goal are not in the same course"}}
+
+        _ ->
+          GoalProgress
+          |> Repo.get_by(goal_uuid: goal_uuid, course_reg_id: course_reg_id)
+          |> (&(&1 || %GoalProgress{})).()
+          |> GoalProgress.changeset(attrs)
+          |> Repo.insert_or_update()
+          |> case do
+            result = {:ok, _} ->
+              result
+
+            {:error, changeset} ->
+              {:error, {:bad_request, full_error_messages(changeset)}}
+          end
       end
     end
   end

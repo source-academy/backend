@@ -30,8 +30,15 @@ defmodule Cadet.Auth.Providers.OpenID do
               nil
             )} do
       case claim_extractor.get_username(claims) do
-        nil -> {:error, :invalid_credentials, "No username specified in token"}
-        username -> {:ok, %{token: token, username: username}}
+        nil ->
+          {:error, :invalid_credentials, "No username specified in token"}
+
+        username ->
+          {:ok,
+           %{
+             token: token,
+             username: Provider.namespace(username, Atom.to_string(openid_provider))
+           }}
       end
     else
       {:token, {:error, _, _}} ->

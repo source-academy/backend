@@ -6,7 +6,7 @@ defmodule Cadet.Courses.Sourcecast do
   use Arc.Ecto.Schema
 
   alias Cadet.Accounts.User
-  alias Cadet.Courses.SourcecastUpload
+  alias Cadet.Courses.{Course, SourcecastUpload}
 
   schema "sourcecasts" do
     field(:title, :string)
@@ -16,12 +16,13 @@ defmodule Cadet.Courses.Sourcecast do
     field(:audio, SourcecastUpload.Type)
 
     belongs_to(:uploader, User)
+    belongs_to(:course, Course)
 
     timestamps()
   end
 
   @required_fields ~w(title playbackData uid)a
-  @optional_fields ~w(description)a
+  @optional_fields ~w(description course_id)a
   @required_file_fields ~w(audio)a
   @regex Regex.compile!("^[a-zA-Z0-9_-]*$")
 
@@ -46,5 +47,6 @@ defmodule Cadet.Courses.Sourcecast do
     |> validate_required(@required_fields ++ @required_file_fields)
     |> validate_format(:uid, @regex)
     |> foreign_key_constraint(:uploader_id)
+    |> foreign_key_constraint(:course_id)
   end
 end

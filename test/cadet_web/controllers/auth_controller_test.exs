@@ -63,7 +63,8 @@ defmodule CadetWeb.AuthControllerTest do
           "client_id" => ""
         })
 
-      assert response(conn, 400) == "Unable to retrieve token from ADFS: Upstream error"
+      assert response(conn, 400) ==
+               "Unable to retrieve token from authentication provider: Upstream error"
     end
 
     test_with_mock "unknown error from Provider.authorise",

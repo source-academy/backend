@@ -11,11 +11,14 @@ defmodule CadetWeb.NotificationsView do
       type: :type,
       assessment_id: :assessment_id,
       submission_id: :submission_id,
-      assessment:
-        &transform_map_for_view(&1.assessment, %{
-          type: :type,
-          title: :title
-        })
+      assessment: &render_notification_assessment/1
+    })
+  end
+
+  defp render_notification_assessment(notification) do
+    transform_map_for_view(notification.assessment, %{
+      type: & &1.config.type,
+      title: :title
     })
   end
 end

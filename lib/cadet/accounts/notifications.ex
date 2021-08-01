@@ -8,20 +8,21 @@ defmodule Cadet.Accounts.Notifications do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Notification, User}
+  alias Cadet.Accounts.{Notification, CourseRegistration, CourseRegistration}
   alias Cadet.Assessments.Submission
   alias Ecto.Multi
 
   @doc """
-  Fetches all unread notifications belonging to a user as an array
+  Fetches all unread notifications belonging to a course_reg as an array
   """
-  @spec fetch(%User{}) :: {:ok, {:array, Notification}}
-  def fetch(user = %User{}) do
+  @spec fetch(%CourseRegistration{}) :: {:ok, {:array, Notification}}
+  def fetch(course_reg = %CourseRegistration{}) do
     notifications =
       Notification
-      |> where(user_id: ^user.id)
+      |> where(course_reg_id: ^course_reg.id)
       |> where(read: false)
-      |> preload(:assessment)
+      |> join(:inner, [n], a in assoc(n, :assessment))
+      |> preload([n, a], assessment: {a, :config})
       |> Repo.all()
 
     {:ok, notifications}
@@ -43,13 +44,13 @@ defmodule Cadet.Accounts.Notifications do
 
   defp write_student(
          params = %{
-           user_id: user_id,
+           course_reg_id: course_reg_id,
            assessment_id: assessment_id,
            type: type
          }
        ) do
     Notification
-    |> where(user_id: ^user_id)
+    |> where(course_reg_id: ^course_reg_id)
     |> where(assessment_id: ^assessment_id)
     |> where(type: ^type)
     |> Repo.one()
@@ -71,13 +72,13 @@ defmodule Cadet.Accounts.Notifications do
 
   defp write_staff(
          params = %{
-           user_id: user_id,
+           course_reg_id: course_reg_id,
            submission_id: submission_id,
            type: type
          }
        ) do
     Notification
-    |> where(user_id: ^user_id)
+    |> where(course_reg_id: ^course_reg_id)
     |> where(submission_id: ^submission_id)
     |> where(type: ^type)
     |> Repo.one()
@@ -100,18 +101,19 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Changes read status of notification(s) from false to true.
   """
-  @spec acknowledge({:array, :integer}, %User{}) ::
+  @spec acknowledge({:array, :integer}, %CourseRegistration{}) ::
           {:ok, Ecto.Schema.t()}
           | {:error, any}
           | {:error, Ecto.Multi.name(), any, %{Ecto.Multi.name() => any}}
-  def acknowledge(notification_ids, user = %User{}) when is_list(notification_ids) do
+  def acknowledge(notification_ids, course_reg = %CourseRegistration{})
+      when is_list(notification_ids) do
     Multi.new()
     |> Multi.run(:update_all, fn _repo, _ ->
       Enum.reduce_while(notification_ids, {:ok, nil}, fn n_id, acc ->
         # credo:disable-for-next-line
         case acc do
           {:ok, _} ->
-            {:cont, acknowledge(n_id, user)}
+            {:cont, acknowledge(n_id, course_reg)}
 
           _ ->
             {:halt, acc}
@@ -121,9 +123,9 @@ defmodule Cadet.Accounts.Notifications do
     |> Repo.transaction()
   end
 
-  @spec acknowledge(:integer, %User{}) :: {:ok, Ecto.Schema.t()} | {:error, any()}
-  def acknowledge(notification_id, user = %User{}) do
-    notification = Repo.get_by(Notification, id: notification_id, user_id: user.id)
+  @spec acknowledge(:integer, %CourseRegistration{}) :: {:ok, Ecto.Schema.t()} | {:error, any()}
+  def acknowledge(notification_id, course_reg = %CourseRegistration{}) do
+    notification = Repo.get_by(Notification, id: notification_id, course_reg_id: course_reg.id)
 
     case notification do
       nil ->
@@ -131,7 +133,7 @@ defmodule Cadet.Accounts.Notifications do
 
       notification ->
         notification
-        |> Notification.changeset(%{role: user.role, read: true})
+        |> Notification.changeset(%{role: course_reg.role, read: true})
         |> Repo.update()
     end
   end
@@ -139,15 +141,15 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Function that handles notifications when a submission is unsubmitted.
   """
-  @spec handle_unsubmit_notifications(integer(), %User{}) ::
+  @spec handle_unsubmit_notifications(integer(), %CourseRegistration{}) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def handle_unsubmit_notifications(assessment_id, student = %User{})
+  def handle_unsubmit_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
     # Fetch and delete all notifications of :autograded and :graded
     # Add new notification :unsubmitted
 
     Notification
-    |> where(user_id: ^student.id)
+    |> where(course_reg_id: ^student.id)
     |> where(assessment_id: ^assessment_id)
     |> where([n], n.type in ^[:autograded, :graded])
     |> Repo.delete_all()
@@ -155,7 +157,7 @@ defmodule Cadet.Accounts.Notifications do
     write(%{
       type: :unsubmitted,
       role: student.role,
-      user_id: student.id,
+      course_reg_id: student.id,
       assessment_id: assessment_id
     })
   end
@@ -175,7 +177,7 @@ defmodule Cadet.Accounts.Notifications do
       type: type,
       read: false,
       role: :student,
-      user_id: submission.student_id,
+      course_reg_id: submission.student_id,
       assessment_id: submission.assessment_id
     })
   end
@@ -183,12 +185,14 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Writes a notification to all students that a new assessment is available.
   """
-  @spec write_notification_for_new_assessment(integer()) ::
+  @spec write_notification_for_new_assessment(integer(), integer()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def write_notification_for_new_assessment(assessment_id) when is_ecto_id(assessment_id) do
+  def write_notification_for_new_assessment(course_id, assessment_id)
+      when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
     Multi.new()
     |> Multi.run(:insert_all, fn _repo, _ ->
-      User
+      CourseRegistration
+      |> where(course_id: ^course_id)
       |> where(role: ^:student)
       |> Repo.all()
       |> Enum.reduce_while({:ok, nil}, fn student, acc ->
@@ -200,7 +204,7 @@ defmodule Cadet.Accounts.Notifications do
                type: :new,
                read: false,
                role: :student,
-               user_id: student.id,
+               course_reg_id: student.id,
                assessment_id: assessment_id
              })}
 
@@ -228,7 +232,7 @@ defmodule Cadet.Accounts.Notifications do
         type: :submitted,
         read: false,
         role: :staff,
-        user_id: avenger_id,
+        course_reg_id: avenger_id,
         assessment_id: submission.assessment_id,
         submission_id: submission.id
       })
@@ -236,7 +240,7 @@ defmodule Cadet.Accounts.Notifications do
   end
 
   defp get_avenger_id_of(student_id) when is_ecto_id(student_id) do
-    User
+    CourseRegistration
     |> Repo.get_by(id: student_id)
     |> Repo.preload(:group)
     |> Map.get(:group)

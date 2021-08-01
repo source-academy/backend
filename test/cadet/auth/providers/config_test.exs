@@ -7,6 +7,7 @@ defmodule Cadet.Auth.Providers.ConfigTest do
   @token "token"
   @name "Test Name"
   @username "testusername"
+  @namespaced_username "test/testusername"
   @role :student
 
   @config [
@@ -21,7 +22,7 @@ defmodule Cadet.Auth.Providers.ConfigTest do
 
   describe "authorise" do
     test "successfully" do
-      assert {:ok, %{token: @token, username: @username}} =
+      assert {:ok, %{token: @token, username: @namespaced_username}} =
                Config.authorise(@config, @code, nil, nil)
     end
 

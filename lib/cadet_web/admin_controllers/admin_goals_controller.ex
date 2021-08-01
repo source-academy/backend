@@ -6,29 +6,38 @@ defmodule CadetWeb.AdminGoalsController do
   alias Cadet.Incentives.Goals
 
   def index(conn, _) do
-    render(conn, "index.json", goals: Goals.get())
+    course_id = conn.assigns.course_reg.course_id
+    render(conn, "index.json", goals: Goals.get(course_id))
   end
 
   def bulk_update(conn, %{"goals" => goals}) do
+    course_reg = conn.assigns.course_reg
+
     goals
-    |> Enum.map(&json_to_goal(&1))
+    |> Enum.map(&json_to_goal(&1, course_reg.course_id))
     |> Goals.upsert_many()
     |> handle_standard_result(conn)
   end
 
   def update(conn, %{"uuid" => uuid, "goal" => goal}) do
+    course_reg = conn.assigns.course_reg
+
     goal
-    |> json_to_goal(uuid)
+    |> json_to_goal(course_reg.course_id, uuid)
     |> Goals.upsert()
     |> handle_standard_result(conn)
   end
 
-  def update_progress(conn, %{"uuid" => uuid, "userid" => user_id, "progress" => progress}) do
-    user_id = String.to_integer(user_id)
+  def update_progress(conn, %{
+        "uuid" => uuid,
+        "course_reg_id" => course_reg_id,
+        "progress" => progress
+      }) do
+    course_reg_id = String.to_integer(course_reg_id)
 
     progress
-    |> json_to_progress(uuid, user_id)
-    |> Goals.upsert_progress(uuid, user_id)
+    |> json_to_progress(uuid, course_reg_id)
+    |> Goals.upsert_progress(uuid, course_reg_id)
     |> handle_standard_result(conn)
   end
 
@@ -38,13 +47,14 @@ defmodule CadetWeb.AdminGoalsController do
     |> handle_standard_result(conn)
   end
 
-  defp json_to_goal(json, uuid \\ nil) do
+  defp json_to_goal(json, course_id, uuid \\ nil) do
     original_meta = json["meta"]
 
     json =
       json
       |> snake_casify_string_keys_recursive()
       |> Map.put("meta", original_meta)
+      |> Map.put("course_id", course_id)
 
     if is_nil(uuid) do
       json
@@ -53,7 +63,7 @@ defmodule CadetWeb.AdminGoalsController do
     end
   end
 
-  defp json_to_progress(json, uuid, user_id) do
+  defp json_to_progress(json, uuid, course_reg_id) do
     json =
       json
       |> snake_casify_string_keys_recursive()
@@ -62,7 +72,7 @@ defmodule CadetWeb.AdminGoalsController do
       count: Map.get(json, "count"),
       completed: Map.get(json, "completed"),
       goal_uuid: uuid,
-      user_id: user_id
+      course_reg_id: course_reg_id
     }
   end
 

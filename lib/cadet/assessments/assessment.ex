@@ -6,15 +6,12 @@ defmodule Cadet.Assessments.Assessment do
   use Cadet, :model
   use Arc.Ecto.Schema
 
+  alias Cadet.Repo
   alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
-
-  @assessment_types ~w(contest mission path practical sidequest)
-  def assessment_types, do: @assessment_types
+  alias Cadet.Courses.{Course, AssessmentConfig}
 
   schema "assessments" do
     field(:access, AssessmentAccess, virtual: true, default: :public)
-    field(:max_grade, :integer, virtual: true)
-    field(:grade, :integer, virtual: true, default: 0)
     field(:max_xp, :integer, virtual: true)
     field(:xp, :integer, virtual: true, default: 0)
     field(:user_status, SubmissionStatus, virtual: true)
@@ -23,7 +20,6 @@ defmodule Cadet.Assessments.Assessment do
     field(:graded_count, :integer, virtual: true)
     field(:title, :string)
     field(:is_published, :boolean, default: false)
-    field(:type, :string)
     field(:summary_short, :string)
     field(:summary_long, :string)
     field(:open_at, :utc_datetime_usec)
@@ -35,11 +31,14 @@ defmodule Cadet.Assessments.Assessment do
     field(:reading, :string)
     field(:password, :string, default: nil)
 
+    belongs_to(:config, AssessmentConfig)
+    belongs_to(:course, Course)
+
     has_many(:questions, Question, on_delete: :delete_all)
     timestamps()
   end
 
-  @required_fields ~w(type title open_at close_at number)a
+  @required_fields ~w(title open_at close_at number course_id config_id)a
   @optional_fields ~w(reading summary_short summary_long
     is_published story cover_picture access password)a
   @optional_file_fields ~w(mission_pdf)a
@@ -54,8 +53,29 @@ defmodule Cadet.Assessments.Assessment do
     |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:type, @assessment_types)
+    |> add_belongs_to_id_from_model([:config, :course], params)
+    |> foreign_key_constraint(:config_id)
+    |> foreign_key_constraint(:course_id)
+    |> unique_constraint([:number, :course_id])
+    |> validate_config_course
     |> validate_open_close_date
+  end
+
+  defp validate_config_course(changeset) do
+    config_id = get_field(changeset, :config_id)
+    course_id = get_field(changeset, :course_id)
+
+    case Repo.get(AssessmentConfig, config_id) do
+      nil ->
+        add_error(changeset, :config, "does not exist")
+
+      config ->
+        if config.course_id == course_id do
+          changeset
+        else
+          add_error(changeset, :config, "does not belong to the same course as this assessment")
+        end
+    end
   end
 
   defp validate_open_close_date(changeset) do

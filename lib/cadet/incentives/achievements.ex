@@ -13,9 +13,10 @@ defmodule Cadet.Incentives.Achievements do
 
   This returns Achievement structs with prerequisites and goal association maps pre-loaded.
   """
-  @spec get() :: [%Achievement{}]
-  def get do
+  @spec get(integer()) :: [%Achievement{}]
+  def get(course_id) when is_ecto_id(course_id) do
     Achievement
+    |> where(course_id: ^course_id)
     |> preload([:prerequisites, :goals])
     |> Repo.all()
   end
@@ -25,6 +26,7 @@ defmodule Cadet.Incentives.Achievements do
   Inserts a new achievement, or updates it if it already exists.
   """
   def upsert(attrs) when is_map(attrs) do
+    # course_id not nil check is left to the changeset
     case attrs[:uuid] || attrs["uuid"] do
       nil ->
         {:error, {:bad_request, "No UUID specified in Achievement"}}

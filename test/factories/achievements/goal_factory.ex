@@ -14,6 +14,7 @@ defmodule Cadet.Incentives.GoalFactory do
           text: "Score earned from Curve Introduction mission",
           target_count: Faker.random_between(1, 1000),
           type: "test_type",
+          course: insert(:course),
           meta: %{}
         }
       end

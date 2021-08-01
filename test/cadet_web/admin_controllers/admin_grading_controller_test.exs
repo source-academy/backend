@@ -20,74 +20,84 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
   describe "GET /, unauthenticated" do
     test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url())
+      course = insert(:course)
+      conn = get(conn, build_url(course.id))
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
   describe "GET /:submissionid, unauthenticated" do
     test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url(1))
+      course = insert(:course)
+      conn = get(conn, build_url(course.id, 1))
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
   describe "POST /:submissionid/:questionid, unauthenticated" do
     test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      course = insert(:course)
+      conn = post(conn, build_url(course.id, 1, 3), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
   describe "GET /:submissionid/unsubmit, unauthenticated" do
     test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url_unsubmit(1))
+      course = insert(:course)
+      conn = post(conn, build_url_unsubmit(course.id, 1))
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
   describe "GET /, student" do
     @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url())
+    test "Forbidden", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = get(conn, build_url(course_id))
       assert response(conn, 403) =~ "Forbidden"
     end
   end
 
   describe "GET /?group=true, student" do
     @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url(), %{"group" => "true"})
+    test "Forbidden", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = get(conn, build_url(course_id), %{"group" => "true"})
       assert response(conn, 403) =~ "Forbidden"
     end
   end
 
   describe "GET /:submissionid, student" do
     @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      conn = get(conn, build_url(1))
+    test "Forbidden", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = get(conn, build_url(course_id, 1))
       assert response(conn, 403) =~ "Forbidden"
     end
   end
 
   describe "POST /:submissionid/:questionid, student" do
     @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{"grading" => %{}})
+    test "Forbidden", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = post(conn, build_url(course_id, 1, 3), %{"grading" => %{}})
       assert response(conn, 403) =~ "Forbidden"
     end
 
     @tag authenticate: :student
     test "missing parameter", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      course_id = conn.assigns.course_id
+      conn = post(conn, build_url(course_id, 1, 3), %{})
       assert response(conn, 403) =~ "Forbidden"
     end
   end
 
   describe "GET /:submissionid/unsubmit, student" do
     @tag authenticate: :student
-    test "unauthorized", %{conn: conn} do
-      conn = post(conn, build_url_unsubmit(1))
+    test "Forbidden", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = post(conn, build_url_unsubmit(course_id, 1))
       assert response(conn, 403) =~ "Forbidden"
     end
   end
@@ -96,11 +106,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
     @tag authenticate: :staff
     test "avenger gets to see all students submissions", %{conn: conn} do
       %{
+        course: course,
         mission: mission,
         submissions: submissions
       } = seed_db(conn)
 
-      conn = get(conn, build_url())
+      conn = get(conn, build_url(course.id))
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -108,60 +119,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xp" => 5000,
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 1000,
-            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
-              "name" => submission.student.name,
+              "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
-              "type" => "mission",
-              "maxGrade" => 1000,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
-          }
-        end)
-
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
-    end
-
-    @tag authenticate: :staff
-    test "pure mentor gets to see all students submissions", %{conn: conn} do
-      %{mentor: mentor, submissions: submissions, mission: mission} = seed_db(conn)
-
-      conn =
-        conn
-        |> sign_in(mentor)
-        |> get(build_url())
-
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "grade" => 1000,
-            "adjustment" => -500,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.name,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => "mission",
-              "maxGrade" => 1000,
+              "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
@@ -183,10 +150,13 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "staff not leading a group to get empty", %{conn: conn} do
       seed_db(conn)
 
+      test_cr = conn.assigns.test_cr
+      new_staff = insert(:course_registration, %{course: test_cr.course, role: :staff})
+
       resp =
         conn
-        |> sign_in(insert(:user, role: :staff))
-        |> get(build_url(), %{"group" => "true"})
+        |> sign_in(new_staff.user)
+        |> get(build_url(test_cr.course_id), %{"group" => "true"})
         |> json_response(200)
 
       assert resp == []
@@ -195,14 +165,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
     @tag authenticate: :staff
     test "filtered by its own group", %{conn: conn} do
       %{
+        course: course,
         mission: mission,
         submissions: submissions
       } = seed_db(conn)
 
       # just to insert more submissions
-      seed_db(conn, insert(:user, role: :staff))
+      new_staff = insert(:course_registration, %{course: course, role: :staff})
+      seed_db(conn, new_staff)
 
-      conn = get(conn, build_url(), %{"group" => "true"})
+      conn = get(conn, build_url(course.id), %{"group" => "true"})
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -210,18 +182,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xp" => 5000,
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 1000,
-            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
-              "name" => submission.student.name,
+              "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
-              "type" => "mission",
-              "maxGrade" => 1000,
+              "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
@@ -242,6 +212,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
       %{
+        course: course,
         grader: grader,
         submissions: submissions,
         answers: answers
@@ -249,7 +220,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       submission = List.first(submissions)
 
-      conn = get(conn, build_url(submission.id))
+      conn = get(conn, build_url(course.id, submission.id))
 
       expected =
         answers
@@ -272,187 +243,24 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       end
                     ) ++
                       Enum.map(
-                        &1.question.question.private,
+                        &1.question.question.opaque,
                         fn testcase ->
                           for {k, v} <- testcase,
-                              into: %{"type" => "private"},
+                              into: %{"type" => "opaque"},
                               do: {Atom.to_string(k), v}
                         end
-                      ),
-                  "solutionTemplate" => &1.question.question.template,
-                  "type" => "#{&1.question.type}",
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
-                    }
-                  },
-                  "maxGrade" => &1.question.max_grade,
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "answer" => &1.answer.code,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results
-                },
-                "solution" => &1.question.question.solution,
-                "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.name,
-                    "id" => grader.id
-                  },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.name,
-                  "id" => &1.submission.student.id
-                }
-              }
-
-            :mcq ->
-              %{
-                "question" => %{
-                  "type" => "#{&1.question.type}",
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
-                    }
-                  },
-                  "maxGrade" => &1.question.max_grade,
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "answer" => &1.answer.choice_id,
-                  "choices" =>
-                    for choice <- &1.question.question.choices do
-                      %{
-                        "content" => choice.content,
-                        "hint" => choice.hint,
-                        "id" => choice.choice_id
-                      }
-                    end,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results
-                },
-                "solution" => "",
-                "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.name,
-                    "id" => grader.id
-                  },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.name,
-                  "id" => &1.submission.student.id
-                }
-              }
-
-            :voting ->
-              %{
-                "question" => %{
-                  "prepend" => &1.question.question.prepend,
-                  "solutionTemplate" => &1.question.question.template,
-                  "type" => "#{&1.question.type}",
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
-                    }
-                  },
-                  "maxGrade" => &1.question.max_grade,
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results,
-                  "answer" => nil,
-                  "contestEntries" => [],
-                  "contestLeaderboard" => []
-                },
-                "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.name,
-                    "id" => grader.id
-                  },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.name,
-                  "id" => &1.submission.student.id
-                },
-                "solution" => ""
-              }
-          end
-        )
-
-      assert expected == json_response(conn, 200)
-    end
-
-    @tag authenticate: :staff
-    test "pure mentor gets to view all submissions", %{conn: conn} do
-      %{mentor: mentor, grader: grader, submissions: submissions, answers: answers} =
-        seed_db(conn)
-
-      submission = List.first(submissions)
-
-      conn =
-        conn
-        |> sign_in(mentor)
-        |> get(build_url(submission.id))
-
-      expected =
-        answers
-        |> Enum.filter(&(&1.submission.id == submission.id))
-        |> Enum.sort_by(& &1.question.display_order)
-        |> Enum.map(
-          &case &1.question.type do
-            :programming ->
-              %{
-                "question" => %{
-                  "prepend" => &1.question.question.prepend,
-                  "postpend" => &1.question.question.postpend,
-                  "testcases" =>
-                    Enum.map(
-                      &1.question.question.public,
-                      fn testcase ->
-                        for {k, v} <- testcase,
-                            into: %{"type" => "public"},
-                            do: {Atom.to_string(k), v}
-                      end
-                    ) ++
+                      ) ++
                       Enum.map(
-                        &1.question.question.private,
+                        &1.question.question.secret,
                         fn testcase ->
                           for {k, v} <- testcase,
-                              into: %{"type" => "private"},
+                              into: %{"type" => "secret"},
                               do: {Atom.to_string(k), v}
                         end
                       ),
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -462,7 +270,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
-                  "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code,
@@ -471,19 +278,17 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "solution" => &1.question.question.solution,
                 "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
-                    "name" => grader.name,
+                    "name" => grader.user.name,
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at),
                   "comments" => &1.comments
                 },
                 "student" => %{
-                  "name" => &1.submission.student.name,
+                  "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 }
               }
@@ -492,6 +297,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               %{
                 "question" => %{
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -501,7 +307,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
-                  "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
@@ -518,19 +323,17 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "solution" => "",
                 "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
-                    "name" => grader.name,
+                    "name" => grader.user.name,
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at),
                   "comments" => &1.comments
                 },
                 "student" => %{
-                  "name" => &1.submission.student.name,
+                  "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 }
               }
@@ -541,6 +344,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "prepend" => &1.question.question.prepend,
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -550,7 +354,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
-                  "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "autogradingStatus" => Atom.to_string(&1.autograding_status),
@@ -560,19 +363,17 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "contestLeaderboard" => []
                 },
                 "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
-                    "name" => grader.name,
+                    "name" => grader.user.name,
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at),
                   "comments" => &1.comments
                 },
                 "student" => %{
-                  "name" => &1.submission.student.name,
+                  "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 },
                 "solution" => ""
@@ -587,16 +388,15 @@ defmodule CadetWeb.AdminGradingControllerTest do
   describe "POST /:submissionid/:questionid, staff" do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
-      %{grader: grader, answers: answers} = seed_db(conn)
+      %{course: course, grader: grader, answers: answers} = seed_db(conn)
 
       grader_id = grader.id
 
       answer = List.first(answers)
 
       conn =
-        post(conn, build_url(answer.submission.id, answer.question.id), %{
+        post(conn, build_url(course.id, answer.submission.id, answer.question.id), %{
           "grading" => %{
-            "adjustment" => -10,
             "xpAdjustment" => -10
           }
         })
@@ -604,35 +404,19 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assert response(conn, 200) == "OK"
 
       assert %{
-               adjustment: -10,
                xp_adjustment: -10,
                grader_id: ^grader_id
              } = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :staff
-    test "invalid adjustment fails", %{conn: conn} do
-      %{answers: answers} = seed_db(conn)
-
-      answer = List.first(answers)
-
-      conn =
-        post(conn, build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"adjustment" => -9_999_999_999}
-        })
-
-      assert response(conn, 400) ==
-               "adjustment must make total be between 0 and question.max_grade"
-    end
-
-    @tag authenticate: :staff
     test "invalid xp_adjustment fails", %{conn: conn} do
-      %{answers: answers} = seed_db(conn)
+      %{course: course, answers: answers} = seed_db(conn)
 
       answer = List.first(answers)
 
       conn =
-        post(conn, build_url(answer.submission.id, answer.question.id), %{
+        post(conn, build_url(course.id, answer.submission.id, answer.question.id), %{
           "grading" => %{"xpAdjustment" => -9_999_999_999}
         })
 
@@ -641,42 +425,15 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "staff who isn't the grader of said answer can still grade submission and grader field is updated correctly",
-         %{conn: conn} do
-      %{mentor: mentor, answers: answers} = seed_db(conn)
-
-      mentor_id = mentor.id
-
-      answer = List.first(answers)
-
-      conn =
-        conn
-        |> sign_in(mentor)
-        |> post(build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{
-            "adjustment" => -100,
-            "xpAdjustment" => -100
-          }
-        })
-
-      assert response(conn, 200) == "OK"
-
-      assert %{
-               adjustment: -100,
-               xp_adjustment: -100,
-               grader_id: ^mentor_id
-             } = Repo.get(Answer, answer.id)
-    end
-
-    @tag authenticate: :staff
     test "missing parameter", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      course_id = conn.assigns.course_id
+      conn = post(conn, build_url(course_id, 1, 3), %{})
       assert response(conn, 400) =~ "Missing parameter"
     end
 
     @tag authenticate: :staff
     test "submission is not :submitted", %{conn: conn} do
-      %{grader: grader, mission: mission, questions: questions} = seed_db(conn)
+      %{course: course, grader: grader, mission: mission, questions: questions} = seed_db(conn)
 
       submission = insert(:submission, %{assessment: mission, status: :attempting})
 
@@ -685,8 +442,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
       answer =
         insert(:answer, %{
           grader_id: grader.id,
-          grade: 200,
-          adjustment: -100,
           xp: 1000,
           xp_adjustment: -500,
           question: question,
@@ -700,9 +455,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
         })
 
       conn =
-        post(conn, build_url(answer.submission_id, answer.question_id), %{
+        post(conn, build_url(course.id, answer.submission_id, answer.question_id), %{
           "grading" => %{
-            "adjustment" => -100,
             "xpAdjustment" => -100
           }
         })
@@ -714,7 +468,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
   describe "POST /:submissionid/unsubmit, staff" do
     @tag authenticate: :staff
     test "succeeds", %{conn: conn} do
-      %{grader: grader, students: students} = seed_db(conn)
+      %{course: course, config: config, grader: grader, students: students} = seed_db(conn)
 
       assessment =
         insert(
@@ -722,7 +476,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: "mission"
+          config: config,
+          course: course
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -741,8 +496,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         )
 
       conn
-      |> sign_in(grader)
-      |> post(build_url_unsubmit(submission.id))
+      |> post(build_url_unsubmit(course.id, submission.id))
       |> response(200)
 
       submission_db = Repo.get(Submission, submission.id)
@@ -757,8 +511,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assert answer_db.grader_id == grader.id
       assert answer_db.xp == 0
       assert answer_db.xp_adjustment == 0
-      assert answer_db.grade == 0
-      assert answer_db.adjustment == 0
       assert answer_db.comments == answer.comments
     end
 
@@ -766,7 +518,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "assessments which have not been submitted should not be allowed to unsubmit", %{
       conn: conn
     } do
-      %{grader: grader, students: students} = seed_db(conn)
+      %{course: course, config: config, students: students} = seed_db(conn)
 
       assessment =
         insert(
@@ -774,7 +526,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: "mission"
+          config: config,
+          course: course
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -792,15 +545,14 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn =
         conn
-        |> sign_in(grader)
-        |> post(build_url_unsubmit(submission.id))
+        |> post(build_url_unsubmit(course.id, submission.id))
 
       assert response(conn, 400) =~ "Assessment has not been submitted"
     end
 
     @tag authenticate: :staff
     test "assessment that is not open anymore cannot be unsubmitted", %{conn: conn} do
-      %{grader: grader, students: students} = seed_db(conn)
+      %{course: course, config: config, students: students} = seed_db(conn)
 
       assessment =
         insert(
@@ -808,7 +560,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: 1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: "mission"
+          course: course,
+          config: config
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -826,8 +579,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn =
         conn
-        |> sign_in(grader)
-        |> post(build_url_unsubmit(submission.id))
+        |> post(build_url_unsubmit(course.id, submission.id))
 
       assert response(conn, 403) =~ "Assessment not open"
     end
@@ -836,7 +588,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "avenger should not be allowed to unsubmit for students outside of their group", %{
       conn: conn
     } do
-      %{students: students} = seed_db(conn)
+      %{course: course, config: config, students: students} = seed_db(conn)
 
       assessment =
         insert(
@@ -844,10 +596,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: "mission"
+          course: course,
+          config: config
         )
 
-      other_grader = insert(:user, role: :staff)
+      other_grader = insert(:course_registration, %{role: :staff, course: course})
       question = insert(:programming_question, assessment: assessment)
       student = List.first(students)
 
@@ -863,8 +616,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn =
         conn
-        |> sign_in(other_grader)
-        |> post(build_url_unsubmit(submission.id))
+        |> sign_in(other_grader.user)
+        |> post(build_url_unsubmit(course.id, submission.id))
 
       assert response(conn, 403) =~ "Only Avenger of student or Admin is permitted to unsubmit"
     end
@@ -873,16 +626,18 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "avenger should be allowed to unsubmit own submissions", %{
       conn: conn
     } do
+      %{course: course, config: config, grader: grader} = seed_db(conn)
+
       assessment =
         insert(
           :assessment,
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: "mission"
+          course: course,
+          config: config
         )
 
-      grader = conn.assigns.current_user
       question = insert(:programming_question, assessment: assessment)
 
       submission =
@@ -897,7 +652,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn =
         conn
-        |> post(build_url_unsubmit(submission.id))
+        |> post(build_url_unsubmit(course.id, submission.id))
 
       assert response(conn, 200) =~ "OK"
     end
@@ -906,16 +661,18 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "avenger should be allowed to unsubmit own closed submissions", %{
       conn: conn
     } do
+      %{course: course, config: config, grader: grader} = seed_db(conn)
+
       assessment =
         insert(
           :assessment,
           open_at: Timex.shift(Timex.now(), hours: 1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: "mission"
+          course: course,
+          config: config
         )
 
-      grader = conn.assigns.current_user
       question = insert(:programming_question, assessment: assessment)
 
       submission =
@@ -930,7 +687,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn =
         conn
-        |> post(build_url_unsubmit(submission.id))
+        |> post(build_url_unsubmit(course.id, submission.id))
 
       assert response(conn, 200) =~ "OK"
     end
@@ -939,9 +696,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "admin should be allowed to unsubmit", %{
       conn: conn
     } do
-      %{students: students} = seed_db(conn)
+      %{course: course, config: config, students: students} = seed_db(conn)
 
-      admin = insert(:user, %{role: :admin})
+      admin = insert(:course_registration, %{role: :admin, course: course})
 
       assessment =
         insert(
@@ -949,7 +706,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
           open_at: Timex.shift(Timex.now(), hours: -1),
           close_at: Timex.shift(Timex.now(), hours: 500),
           is_published: true,
-          type: "mission"
+          course: course,
+          config: config
         )
 
       question = insert(:programming_question, assessment: assessment)
@@ -967,8 +725,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
         )
 
       conn
-      |> sign_in(admin)
-      |> post(build_url_unsubmit(submission.id))
+      |> sign_in(admin.user)
+      |> post(build_url_unsubmit(course.id, submission.id))
 
       submission_db = Repo.get(Submission, submission.id)
       answer_db = Repo.get(Answer, answer.id)
@@ -982,8 +740,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assert answer_db.grader_id == nil
       assert answer_db.xp == 0
       assert answer_db.xp_adjustment == 0
-      assert answer_db.grade == 0
-      assert answer_db.adjustment == 0
     end
   end
 
@@ -991,16 +747,17 @@ defmodule CadetWeb.AdminGradingControllerTest do
     @tag authenticate: :staff
     test "can see all submissions", %{conn: conn} do
       %{
+        course: course,
         mission: mission,
         submissions: submissions
       } = seed_db(conn)
 
-      admin = insert(:user, role: :admin)
+      admin = insert(:course_registration, course: course, role: :admin)
 
       conn =
         conn
-        |> sign_in(admin)
-        |> get(build_url())
+        |> sign_in(admin.user)
+        |> get(build_url(course.id))
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -1008,18 +765,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xp" => 5000,
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 1000,
-            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
-              "name" => submission.student.name,
+              "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
-              "type" => "mission",
-              "maxGrade" => 1000,
+              "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
@@ -1040,11 +795,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
     @tag authenticate: :admin
     test "successful", %{conn: conn} do
       %{
+        course: course,
         mission: mission,
         submissions: submissions
       } = seed_db(conn)
 
-      conn = get(conn, build_url(), %{"group" => "true"})
+      conn = get(conn, build_url(course.id), %{"group" => "true"})
 
       expected =
         Enum.map(submissions, fn submission ->
@@ -1052,18 +808,16 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xp" => 5000,
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
-            "grade" => 1000,
-            "adjustment" => -500,
             "id" => submission.id,
             "student" => %{
-              "name" => submission.student.name,
+              "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
             },
             "assessment" => %{
-              "type" => "mission",
-              "maxGrade" => 1000,
+              "type" => mission.config.type,
+              "isManuallyGraded" => mission.config.is_manually_graded,
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
@@ -1084,6 +838,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
     @tag authenticate: :admin
     test "successful", %{conn: conn} do
       %{
+        course: course,
         grader: grader,
         submissions: submissions,
         answers: answers
@@ -1091,7 +846,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       submission = List.first(submissions)
 
-      conn = get(conn, build_url(submission.id))
+      conn = get(conn, build_url(course.id, submission.id))
 
       expected =
         answers
@@ -1114,15 +869,24 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       end
                     ) ++
                       Enum.map(
-                        &1.question.question.private,
+                        &1.question.question.opaque,
                         fn testcase ->
                           for {k, v} <- testcase,
-                              into: %{"type" => "private"},
+                              into: %{"type" => "opaque"},
+                              do: {Atom.to_string(k), v}
+                        end
+                      ) ++
+                      Enum.map(
+                        &1.question.question.secret,
+                        fn testcase ->
+                          for {k, v} <- testcase,
+                              into: %{"type" => "secret"},
                               do: {Atom.to_string(k), v}
                         end
                       ),
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -1132,7 +896,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
-                  "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.code,
@@ -1141,19 +904,17 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "solution" => &1.question.question.solution,
                 "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
-                    "name" => grader.name,
+                    "name" => grader.user.name,
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at),
                   "comments" => &1.comments
                 },
                 "student" => %{
-                  "name" => &1.submission.student.name,
+                  "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 }
               }
@@ -1162,6 +923,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               %{
                 "question" => %{
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -1173,7 +935,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   },
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
-                  "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "choices" =>
                     for choice <- &1.question.question.choices do
@@ -1188,19 +949,17 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "solution" => "",
                 "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
-                    "name" => grader.name,
+                    "name" => grader.user.name,
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at),
                   "comments" => &1.comments
                 },
                 "student" => %{
-                  "name" => &1.submission.student.name,
+                  "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 }
               }
@@ -1211,6 +970,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "prepend" => &1.question.question.prepend,
                   "solutionTemplate" => &1.question.question.template,
                   "type" => "#{&1.question.type}",
+                  "blocking" => &1.question.blocking,
                   "id" => &1.question.id,
                   "library" => %{
                     "chapter" => &1.question.library.chapter,
@@ -1220,7 +980,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "symbols" => &1.question.library.external.symbols
                     }
                   },
-                  "maxGrade" => &1.question.max_grade,
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
                   "autogradingStatus" => Atom.to_string(&1.autograding_status),
@@ -1230,19 +989,17 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "contestLeaderboard" => []
                 },
                 "grade" => %{
-                  "grade" => &1.grade,
-                  "adjustment" => &1.adjustment,
                   "xp" => &1.xp,
                   "xpAdjustment" => &1.xp_adjustment,
                   "grader" => %{
-                    "name" => grader.name,
+                    "name" => grader.user.name,
                     "id" => grader.id
                   },
                   "gradedAt" => format_datetime(&1.updated_at),
                   "comments" => &1.comments
                 },
                 "student" => %{
-                  "name" => &1.submission.student.name,
+                  "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 },
                 "solution" => ""
@@ -1257,22 +1014,23 @@ defmodule CadetWeb.AdminGradingControllerTest do
   describe "POST /:submissionid/:questionid, admin" do
     @tag authenticate: :admin
     test "succeeds", %{conn: conn} do
-      %{answers: answers} = seed_db(conn)
+      %{course: course, answers: answers} = seed_db(conn)
 
       answer = List.first(answers)
 
       conn =
-        post(conn, build_url(answer.submission.id, answer.question.id), %{
-          "grading" => %{"adjustment" => -10}
+        post(conn, build_url(course.id, answer.submission.id, answer.question.id), %{
+          "grading" => %{"xpAdjustment" => -10}
         })
 
       assert response(conn, 200) == "OK"
-      assert %{adjustment: -10} = Repo.get(Answer, answer.id)
+      assert %{xp_adjustment: -10} = Repo.get(Answer, answer.id)
     end
 
     @tag authenticate: :admin
     test "missing parameter", %{conn: conn} do
-      conn = post(conn, build_url(1, 3), %{})
+      course_id = conn.assigns.course_id
+      conn = post(conn, build_url(course_id, 1, 3), %{})
       assert response(conn, 400) =~ "Missing parameter"
     end
   end
@@ -1281,31 +1039,66 @@ defmodule CadetWeb.AdminGradingControllerTest do
     @tag authenticate: :admin
     test "admin can see summary", %{conn: conn} do
       %{
+        course: course,
+        config: config1,
         submissions: submissions,
         group: group,
         grader: grader,
         answers: answers
       } = seed_db(conn)
 
-      conn = get(conn, build_url_summary())
+      %{
+        submissions: submissions2,
+        config: config2,
+        group: group2,
+        grader: grader2,
+        answers: answers2
+      } = seed_db(conn, insert(:course_registration, %{course: course, role: :staff}))
 
-      expected = [
-        %{
-          "groupName" => group.name,
-          "leaderName" => grader.name,
-          "submittedMissions" => count_submissions(submissions, answers, "mission"),
-          "submittedSidequests" => count_submissions(submissions, answers, "sidequest"),
-          "ungradedMissions" => count_submissions(submissions, answers, "mission", true),
-          "ungradedSidequests" => count_submissions(submissions, answers, "sidequest", true)
-        }
-      ]
+      resp = conn |> get(build_url_summary(course.id)) |> json_response(200)
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["groupName"])
+      expected = %{
+        "cols" => [
+          "groupName",
+          "leaderName",
+          "submitted" <> config1.type,
+          "ungraded" <> config1.type,
+          "submitted" <> config2.type,
+          "ungraded" <> config2.type
+        ],
+        "rows" => [
+          %{
+            "groupName" => group.name,
+            "leaderName" => grader.user.name,
+            ("submitted" <> config1.type) => count_submissions(submissions, answers, config1.id),
+            ("submitted" <> config2.type) => count_submissions(submissions, answers, config2.id),
+            ("ungraded" <> config1.type) =>
+              count_submissions(submissions, answers, config1.id, true),
+            ("ungraded" <> config2.type) =>
+              count_submissions(submissions, answers, config2.id, true)
+          },
+          %{
+            "groupName" => group2.name,
+            "leaderName" => grader2.user.name,
+            ("submitted" <> config1.type) =>
+              count_submissions(submissions2, answers2, config1.id),
+            ("submitted" <> config2.type) =>
+              count_submissions(submissions2, answers2, config2.id),
+            ("ungraded" <> config1.type) =>
+              count_submissions(submissions2, answers2, config1.id, true),
+            ("ungraded" <> config2.type) =>
+              count_submissions(submissions2, answers2, config2.id, true)
+          }
+        ]
+      }
+
+      assert expected["cols"] == resp["cols"]
+      assert expected["rows"] == Enum.sort_by(resp["rows"], & &1["groupName"])
     end
 
     @tag authenticate: :student
     test "student cannot see summary", %{conn: conn} do
-      conn = get(conn, build_url_summary())
+      conn = get(conn, build_url_summary(conn.assigns.course_id))
       assert response(conn, 403) =~ "Forbidden"
     end
   end
@@ -1313,44 +1106,51 @@ defmodule CadetWeb.AdminGradingControllerTest do
   describe "POST /grading/:submissionid/autograde" do
     setup %{conn: conn} do
       %{
+        course: course,
         submissions: [submission, _]
       } = seed_db(conn)
 
-      %{submission: submission}
+      %{course: course, submission: submission}
     end
 
     @tag authenticate: :staff
-    test "staff can re-autograde submissions", %{conn: conn, submission: submission} do
+    test "staff can re-autograde submissions", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
       with_mock Cadet.Autograder.GradingJob,
         force_grade_individual_submission: fn in_sub, _ -> assert submission.id == in_sub.id end do
-        assert conn |> post(build_url_autograde(submission.id)) |> response(204)
+        assert conn |> post(build_url_autograde(course.id, submission.id)) |> response(204)
       end
     end
 
     @tag authenticate: :student
-    test "student cannot re-autograde", %{conn: conn, submission: submission} do
-      assert conn |> post(build_url_autograde(submission.id)) |> response(403)
+    test "student cannot re-autograde", %{conn: conn, course: course, submission: submission} do
+      assert conn |> post(build_url_autograde(course.id, submission.id)) |> response(403)
     end
 
     @tag authenticate: :student
-    test "fails if not found", %{conn: conn} do
-      assert conn |> post(build_url_autograde(2_147_483_647)) |> response(403)
+    test "fails if not found", %{conn: conn, course: course} do
+      assert conn |> post(build_url_autograde(course.id, 2_147_483_647)) |> response(403)
     end
   end
 
   describe "POST /grading/:submissionid/:questionid/autograde" do
     setup %{conn: conn} do
       %{
+        course: course,
         submissions: [submission | _],
         questions: [question | _]
       } = seed_db(conn)
 
-      %{submission: submission, question: question}
+      %{course: course, submission: submission, question: question}
     end
 
     @tag authenticate: :staff
     test "staff can re-autograde questions", %{
       conn: conn,
+      course: course,
       submission: submission,
       question: question
     } do
@@ -1359,25 +1159,34 @@ defmodule CadetWeb.AdminGradingControllerTest do
           assert question.id == in_q.id
           assert question.id == in_a.question_id
         end do
-        assert conn |> post(build_url_autograde(submission.id, question.id)) |> response(204)
+        assert conn
+               |> post(build_url_autograde(course.id, submission.id, question.id))
+               |> response(204)
       end
     end
 
     @tag authenticate: :student
-    test "student cannot re-autograde", %{conn: conn, submission: submission, question: question} do
-      assert conn |> post(build_url_autograde(submission.id, question.id)) |> response(403)
+    test "student cannot re-autograde", %{
+      conn: conn,
+      course: course,
+      submission: submission,
+      question: question
+    } do
+      assert conn
+             |> post(build_url_autograde(course.id, submission.id, question.id))
+             |> response(403)
     end
 
     @tag authenticate: :student
-    test "fails if not found", %{conn: conn} do
-      assert conn |> post(build_url_autograde(2_147_483_647, 123_456)) |> response(403)
+    test "fails if not found", %{conn: conn, course: course} do
+      assert conn |> post(build_url_autograde(course.id, 2_147_483_647, 123_456)) |> response(403)
     end
   end
 
-  defp count_submissions(submissions, answers, type, only_ungraded \\ false) do
+  defp count_submissions(submissions, answers, config_id, only_ungraded \\ false) do
     submissions
     |> Enum.filter(fn s ->
-      s.status == :submitted and s.assessment.type == type and
+      s.status == :submitted and s.assessment.config_id == config_id and
         (not only_ungraded or
            answers
            |> Enum.filter(fn a -> a.submission == s and is_nil(a.grader_id) end)
@@ -1386,32 +1195,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
     |> length()
   end
 
-  defp build_url, do: "/v2/admin/grading/"
-  defp build_url_summary, do: "/v2/admin/grading/summary"
-  defp build_url(submission_id), do: "#{build_url()}#{submission_id}"
-  defp build_url(submission_id, question_id), do: "#{build_url(submission_id)}/#{question_id}"
-  defp build_url_unsubmit(submission_id), do: "#{build_url(submission_id)}/unsubmit"
-  defp build_url_autograde(submission_id), do: "#{build_url(submission_id)}/autograde"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/grading/"
+  defp build_url_summary(course_id), do: "/v2/courses/#{course_id}/admin/grading/summary"
+  defp build_url(course_id, submission_id), do: "#{build_url(course_id)}#{submission_id}"
 
-  defp build_url_autograde(submission_id, question_id),
-    do: "#{build_url(submission_id, question_id)}/autograde"
+  defp build_url(course_id, submission_id, question_id),
+    do: "#{build_url(course_id, submission_id)}/#{question_id}"
+
+  defp build_url_unsubmit(course_id, submission_id),
+    do: "#{build_url(course_id, submission_id)}/unsubmit"
+
+  defp build_url_autograde(course_id, submission_id),
+    do: "#{build_url(course_id, submission_id)}/autograde"
+
+  defp build_url_autograde(course_id, submission_id, question_id),
+    do: "#{build_url(course_id, submission_id, question_id)}/autograde"
 
   defp seed_db(conn, override_grader \\ nil) do
-    grader = override_grader || conn.assigns[:current_user]
-    mentor = insert(:user, role: :staff)
+    grader = override_grader || conn.assigns[:test_cr]
 
-    group =
-      insert(:group, %{leader_id: grader.id, leader: grader, mentor_id: mentor.id, mentor: mentor})
+    course = grader.course
+    assessment_config = insert(:assessment_config, %{course: course})
 
-    students = insert_list(5, :student, %{group: group})
-    mission = insert(:assessment, %{title: "mission", type: "mission", is_published: true})
+    group = insert(:group, %{course: course, leader_id: grader.id, leader: grader})
+
+    students = insert_list(5, :course_registration, %{course: course, group: group})
+
+    mission =
+      insert(:assessment, %{
+        title: "mission",
+        course: course,
+        config: assessment_config,
+        is_published: true
+      })
 
     questions =
       for index <- 0..2 do
         # insert with display order in reverse
         insert(:programming_question, %{
           assessment: mission,
-          max_grade: 200,
           max_xp: 1000,
           display_order: 5 - index
         })
@@ -1419,7 +1241,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
         [
           insert(:mcq_question, %{
             assessment: mission,
-            max_grade: 200,
             max_xp: 1000,
             display_order: 2
           })
@@ -1427,7 +1248,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
         [
           insert(:voting_question, %{
             assessment: mission,
-            max_grade: 200,
             max_xp: 1000,
             display_order: 1
           })
@@ -1450,8 +1270,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
           question <- questions do
         insert(:answer, %{
           grader_id: grader.id,
-          grade: 200,
-          adjustment: -100,
           xp: 1000,
           xp_adjustment: -500,
           question: question,
@@ -1466,8 +1284,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
       end
 
     %{
+      course: course,
+      config: assessment_config,
       grader: grader,
-      mentor: mentor,
       group: group,
       students: students,
       mission: mission,

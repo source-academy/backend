@@ -4,7 +4,7 @@ defmodule Cadet.Factory do
   """
   use ExMachina.Ecto, repo: Cadet.Repo
 
-  use Cadet.Accounts.{NotificationFactory, UserFactory}
+  use Cadet.Accounts.{NotificationFactory, UserFactory, CourseRegistrationFactory}
 
   use Cadet.Assessments.{
     AnswerFactory,
@@ -22,9 +22,12 @@ defmodule Cadet.Factory do
     GoalFactory
   }
 
-  use Cadet.Settings.{SublanguageFactory}
-
-  use Cadet.Courses.{GroupFactory, SourcecastFactory}
+  use Cadet.Courses.{
+    AssessmentConfigFactory,
+    CourseFactory,
+    GroupFactory,
+    SourcecastFactory
+  }
 
   use Cadet.Devices.DeviceFactory
 

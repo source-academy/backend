@@ -5,13 +5,13 @@ defmodule Cadet.Incentives.GoalProgressTest do
 
   describe "Changesets" do
     test "valid params" do
-      user = insert(:user)
+      course_reg = insert(:course_registration)
       goal = insert(:goal)
 
       assert_changeset_db(
         %{
           goal_uuid: goal.uuid,
-          user_id: user.id,
+          course_reg_id: course_reg.id,
           count: 500,
           completed: false
         },

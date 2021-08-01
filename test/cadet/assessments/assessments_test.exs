@@ -5,20 +5,22 @@ defmodule Cadet.AssessmentsTest do
   alias Cadet.Assessments.{Assessment, Question, SubmissionVotes}
 
   test "create assessments of all types" do
-    for type <- Assessment.assessment_types() do
-      title_string = type
+    course = insert(:course)
+    config = insert(:assessment_config, %{type: "Test", course: course})
+    course_id = course.id
+    config_id = config.id
 
-      {_res, assessment} =
-        Assessments.create_assessment(%{
-          title: title_string,
-          type: type,
-          number: "#{type |> String.upcase()}#{Enum.random(0..10)}",
-          open_at: Timex.now(),
-          close_at: Timex.shift(Timex.now(), days: 7)
-        })
+    {_res, assessment} =
+      Assessments.create_assessment(%{
+        course_id: course_id,
+        title: "test",
+        config_id: config_id,
+        number: "#{config.type |> String.upcase()}#{Enum.random(0..10)}",
+        open_at: Timex.now(),
+        close_at: Timex.shift(Timex.now(), days: 7)
+      })
 
-      assert %{title: ^title_string, type: ^type} = assessment
-    end
+    assert %{title: "test", config_id: ^config_id, course_id: ^course_id} = assessment
   end
 
   test "create programming question" do
@@ -108,14 +110,18 @@ defmodule Cadet.AssessmentsTest do
   end
 
   test "publish assessment" do
-    assessment = insert(:assessment, is_published: false)
+    course = insert(:course)
+    config = insert(:assessment_config, %{course: course})
+    assessment = insert(:assessment, %{is_published: false, course: course, config: config})
 
     {:ok, assessment} = Assessments.publish_assessment(assessment.id)
     assert assessment.is_published == true
   end
 
   test "update assessment" do
-    assessment = insert(:assessment, title: "assessment")
+    course = insert(:course)
+    config = insert(:assessment_config, %{course: course})
+    assessment = insert(:assessment, %{title: "assessment", course: course, config: config})
 
     Assessments.update_assessment(assessment.id, %{title: "changed_assessment"})
 
@@ -141,12 +147,17 @@ defmodule Cadet.AssessmentsTest do
     test "inserts votes into submission_votes table" do
       contest_question = insert(:programming_question)
       question = insert(:voting_question)
-      users = Enum.map(0..5, fn _x -> insert(:user, role: "student") end)
+      # users = Enum.map(0..5, fn _x -> insert(:user, role: "student") end)
+      students =
+        insert_list(6, :course_registration, %{
+          role: :student,
+          course: contest_question.assessment.course
+        })
 
-      Enum.map(users, fn user ->
+      Enum.map(students, fn student ->
         submission =
           insert(:submission,
-            student: user,
+            student: student,
             assessment: contest_question.assessment,
             status: "submitted"
           )
@@ -158,7 +169,8 @@ defmodule Cadet.AssessmentsTest do
         )
       end)
 
-      unattempted_student = insert(:user, role: "student")
+      unattempted_student =
+        insert(:course_registration, %{role: :student, course: contest_question.assessment.course})
 
       # unattempted submission will automatically be submitted after the assessment closes.
       unattempted_submission =
@@ -193,14 +205,16 @@ defmodule Cadet.AssessmentsTest do
 
     test "deletes submission_votes when assessment is deleted" do
       contest_question = insert(:programming_question)
-      voting_assessment = insert(:assessment, type: "practical")
+      course = contest_question.assessment.course
+      config = contest_question.assessment.config
+      voting_assessment = insert(:assessment, %{course: course, config: config})
       question = insert(:voting_question, assessment: voting_assessment)
-      users = Enum.map(0..5, fn _x -> insert(:user, role: "student") end)
+      students = insert_list(5, :course_registration, %{role: :student, course: course})
 
-      Enum.map(users, fn user ->
+      Enum.map(students, fn student ->
         submission =
           insert(:submission,
-            student: user,
+            student: student,
             assessment: contest_question.assessment,
             status: "submitted"
           )
@@ -222,16 +236,14 @@ defmodule Cadet.AssessmentsTest do
 
   describe "contest voting leaderboard utility functions" do
     setup do
-      contest_assessment = insert(:assessment, type: "contest")
-      voting_assessment = insert(:assessment, type: "practical")
+      course = insert(:course)
+      config = insert(:assessment_config)
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      voting_assessment = insert(:assessment, %{course: course, config: config})
       voting_question = insert(:voting_question, assessment: voting_assessment)
 
       # generate 5 students
-      student_list =
-        Enum.map(
-          1..5,
-          fn _index -> insert(:user) end
-        )
+      student_list = insert_list(5, :course_registration, %{course: course, role: :student})
 
       # generate contest submission for each student
       submission_list =
@@ -254,6 +266,7 @@ defmodule Cadet.AssessmentsTest do
           fn submission ->
             insert(
               :answer,
+              answer: build(:programming_answer),
               submission: submission,
               question: voting_question
             )
@@ -271,7 +284,7 @@ defmodule Cadet.AssessmentsTest do
                 insert(
                   :submission_vote,
                   rank: index + 1,
-                  user: student,
+                  voter: student,
                   submission: submission,
                   question: voting_question
                 )
@@ -289,56 +302,55 @@ defmodule Cadet.AssessmentsTest do
 
       top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, 5)
 
-      assert get_answer_relative_scores(top_x_ans) == [
-               99.0,
-               89.0,
-               79.0,
-               69.0,
-               59.0
-             ]
+      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(5)
 
       x = 3
       top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, x)
 
       # verify that top x ans are queried correctly
-      assert get_answer_relative_scores(top_x_ans) == [99.0, 89.0, 79.0]
+      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(3)
     end
   end
 
   describe "contest leaderboard updating functions" do
     setup do
-      current_contest_assessment = insert(:assessment, type: "contest")
+      course = insert(:course)
+      config = insert(:assessment_config)
+      current_contest_assessment = insert(:assessment, %{course: course, config: config})
       # contest_voting assessment that is still ongoing
       current_assessment =
         insert(:assessment,
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -1),
           close_at: Timex.shift(Timex.now(), days: +1),
-          type: "practical"
+          course: course,
+          config: config
         )
 
       current_question = insert(:voting_question, assessment: current_assessment)
 
-      yesterday_contest_assessment = insert(:assessment, type: "contest")
+      yesterday_contest_assessment = insert(:assessment, %{course: course, config: config})
       # contest_voting assessment closed yesterday
       yesterday_assessment =
         insert(:assessment,
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: -4),
-          type: "practical"
+          course: course,
+          config: config
         )
 
       yesterday_question = insert(:voting_question, assessment: yesterday_assessment)
 
-      past_contest_assessment = insert(:assessment, type: "contest")
+      past_contest_assessment = insert(:assessment, %{course: course, config: config})
       # contest voting assessment closed >1 day ago
       past_assessment =
         insert(:assessment,
           is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), days: -4),
-          type: "practical"
+          course: course,
+          config: config
         )
 
       past_question =
@@ -347,11 +359,7 @@ defmodule Cadet.AssessmentsTest do
         )
 
       # generate 5 students
-      student_list =
-        Enum.map(
-          1..5,
-          fn _index -> insert(:user) end
-        )
+      student_list = insert_list(5, :course_registration, %{course: course, role: :student})
 
       # generate contest submission for each user
       current_submission_list =
@@ -399,6 +407,7 @@ defmodule Cadet.AssessmentsTest do
         fn submission ->
           insert(
             :answer,
+            answer: build(:programming_answer),
             submission: submission,
             question: current_question
           )
@@ -410,6 +419,7 @@ defmodule Cadet.AssessmentsTest do
         fn submission ->
           insert(
             :answer,
+            answer: build(:programming_answer),
             submission: submission,
             question: yesterday_question
           )
@@ -421,6 +431,7 @@ defmodule Cadet.AssessmentsTest do
         fn submission ->
           insert(
             :answer,
+            answer: build(:programming_answer),
             submission: submission,
             question: past_question
           )
@@ -438,7 +449,7 @@ defmodule Cadet.AssessmentsTest do
                 insert(
                   :submission_vote,
                   rank: index + 1,
-                  user: student,
+                  voter: student,
                   submission: submission,
                   question: current_question
                 )
@@ -457,7 +468,7 @@ defmodule Cadet.AssessmentsTest do
                 insert(
                   :submission_vote,
                   rank: index + 1,
-                  user: student,
+                  voter: student,
                   submission: submission,
                   question: yesterday_question
                 )
@@ -476,7 +487,7 @@ defmodule Cadet.AssessmentsTest do
                 insert(
                   :submission_vote,
                   rank: index + 1,
-                  user: student,
+                  voter: student,
                   submission: submission,
                   question: past_question
                 )
@@ -512,8 +523,7 @@ defmodule Cadet.AssessmentsTest do
                get_question_ids(Assessments.fetch_active_voting_questions())
     end
 
-    test "update_final_contest_leaderboards correctly updates leaderboards
-    that voting closed yesterday",
+    test "update_final_contest_leaderboards correctly updates leaderboards that voting closed yesterday",
          %{
            yesterday_question: yesterday_question,
            current_question: current_question,
@@ -532,11 +542,10 @@ defmodule Cadet.AssessmentsTest do
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(yesterday_question.id, 5)
-             ) == [99.0, 89.0, 79.0, 69.0, 59.0]
+             ) == expected_top_relative_scores(5)
     end
 
-    test "update_rolling_contest_leaderboards correcly updates leaderboards
-      which voting is active",
+    test "update_rolling_contest_leaderboards correcly updates leaderboards which voting is active",
          %{
            yesterday_question: yesterday_question,
            current_question: current_question,
@@ -555,7 +564,7 @@ defmodule Cadet.AssessmentsTest do
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 5)
-             ) == [99.0, 89.0, 79.0, 69.0, 59.0]
+             ) == expected_top_relative_scores(5)
     end
   end
 
@@ -565,5 +574,13 @@ defmodule Cadet.AssessmentsTest do
 
   defp get_question_ids(questions) do
     questions |> Enum.map(fn q -> q.id end) |> Enum.sort()
+  end
+
+  defp expected_top_relative_scores(top_x) do
+    # "return 0;" in the factory has 3 token
+    10..0
+    |> Enum.to_list()
+    |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / 50) end)
+    |> Enum.take(top_x)
   end
 end

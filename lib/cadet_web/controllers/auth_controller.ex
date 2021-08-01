@@ -34,7 +34,7 @@ defmodule CadetWeb.AuthController do
       {:authorise, {:error, :upstream, reason}} ->
         conn
         |> put_status(:bad_request)
-        |> text("Unable to retrieve token from ADFS: #{reason}")
+        |> text("Unable to retrieve token from authentication provider: #{reason}")
 
       {:authorise, {:error, :invalid_credentials, reason}} ->
         conn

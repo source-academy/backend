@@ -14,13 +14,14 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
     assert is_map(AdminAchievementsController.swagger_path_delete(nil))
   end
 
-  describe "PUT /admin/achievements/:uuid" do
+  describe "PUT v2/courses/:course_id/admin/achievements/:uuid" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
+      course_id = conn.assigns.course_id
       uuid = UUID.generate()
 
       conn
-      |> put(build_path(uuid), %{"achievement" => achievement_json_literal(0)})
+      |> put(build_path(course_id, uuid), %{"achievement" => achievement_json_literal(0)})
       |> response(204)
 
       ach = Repo.get(Achievement, uuid)
@@ -30,10 +31,13 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
 
     @tag authenticate: :staff
     test "succeeds without view", %{conn: conn} do
+      course_id = conn.assigns.course_id
       uuid = UUID.generate()
 
       conn
-      |> put(build_path(uuid), %{"achievement" => Map.drop(achievement_json_literal(0), ["view"])})
+      |> put(build_path(course_id, uuid), %{
+        "achievement" => Map.drop(achievement_json_literal(0), ["view"])
+      })
       |> response(204)
 
       ach = Repo.get(Achievement, uuid)
@@ -47,10 +51,11 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
 
     @tag authenticate: :student
     test "403 for student", %{conn: conn} do
+      course = insert(:course)
       uuid = UUID.generate()
 
       conn
-      |> put(build_path(uuid), %{"achievement" => achievement_json_literal(0)})
+      |> put(build_path(course.id, uuid), %{"achievement" => achievement_json_literal(0)})
       |> response(403)
 
       assert Achievement |> Repo.get(uuid) |> is_nil()
@@ -67,7 +72,7 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
     end
   end
 
-  describe "PUT /admin/achievements" do
+  describe "PUT v2/courses/:course_id/admin/achievements" do
     setup do
       %{
         achievements: [
@@ -79,8 +84,10 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
 
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn, achievements: achs = [a1, a2]} do
+      course_id = conn.assigns.course_id
+
       conn
-      |> put(build_path(), %{
+      |> put(build_path(course_id), %{
         "achievements" => achs
       })
       |> response(204)
@@ -91,8 +98,10 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
 
     @tag authenticate: :student
     test "403 for student", %{conn: conn, achievements: achs = [a1, a2]} do
+      course_id = conn.assigns.course_id
+
       conn
-      |> put(build_path(), %{
+      |> put(build_path(course_id), %{
         "achievements" => achs
       })
       |> response(403)
@@ -102,8 +111,10 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
     end
 
     test "401 if unauthenticated", %{conn: conn, achievements: achs = [a1, a2]} do
+      course = insert(:course)
+
       conn
-      |> put(build_path(), %{
+      |> put(build_path(course.id), %{
         "achievements" => achs
       })
       |> response(401)
@@ -113,48 +124,62 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
     end
   end
 
-  describe "DELETE /admin/achievements/:uuid" do
-    setup do
-      {:ok, a} =
-        %Achievement{uuid: UUID.generate()} |> Map.merge(achievement_literal(5)) |> Repo.insert()
-
-      %{achievement: a}
-    end
-
+  describe "DELETE v2/courses/:course_id/admin/achievements/:uuid" do
     @tag authenticate: :staff
-    test "succeeds for staff", %{conn: conn, achievement: a} do
+    test "succeeds for staff", %{conn: conn} do
+      course_id = conn.assigns.course_id
+
+      {:ok, a} =
+        %Achievement{course_id: course_id, uuid: UUID.generate()}
+        |> Map.merge(achievement_literal(5))
+        |> Repo.insert()
+
       conn
-      |> delete(build_path(a.uuid))
+      |> delete(build_path(course_id, a.uuid))
       |> response(204)
 
       assert Achievement |> Repo.get(a.uuid) |> is_nil()
     end
 
     @tag authenticate: :student
-    test "403 for student", %{conn: conn, achievement: a} do
+    test "403 for student", %{conn: conn} do
+      course_id = conn.assigns.course_id
+
+      {:ok, a} =
+        %Achievement{course_id: course_id, uuid: UUID.generate()}
+        |> Map.merge(achievement_literal(5))
+        |> Repo.insert()
+
       conn
-      |> delete(build_path(a.uuid))
+      |> delete(build_path(course_id, a.uuid))
       |> response(403)
 
       assert achievement_literal(5) = Repo.get(Achievement, a.uuid)
     end
 
-    test "401 if unauthenticated", %{conn: conn, achievement: a} do
+    test "401 if unauthenticated", %{conn: conn} do
+      course = insert(:course)
+
+      {:ok, a} =
+        %Achievement{course_id: course.id, uuid: UUID.generate()}
+        |> Map.merge(achievement_literal(5))
+        |> Repo.insert()
+
       conn
-      |> delete(build_path(a.uuid))
+      |> delete(build_path(course.id, a.uuid))
       |> response(401)
 
       assert achievement_literal(5) = Repo.get(Achievement, a.uuid)
     end
   end
 
-  defp build_path(uuid \\ nil)
+  defp build_path(course_id, uuid \\ nil)
 
-  defp build_path(nil) do
-    "/v2/admin/achievements"
+  defp build_path(course_id, nil) do
+    "/v2/courses/#{course_id}/admin/achievements"
   end
 
-  defp build_path(uuid) do
-    "/v2/admin/achievements/#{uuid}"
+  defp build_path(course_id, uuid) do
+    "/v2/courses/#{course_id}/admin/achievements/#{uuid}"
   end
 end
