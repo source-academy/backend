@@ -6,6 +6,7 @@ defmodule CadetWeb.AdminAssetsController do
 
   def index(conn, _params = %{"foldername" => foldername}) do
     course_reg = conn.assigns.course_reg
+
     case Assets.list_assets(course_reg.course_id, foldername) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       assets -> render(conn, "index.json", assets: assets)

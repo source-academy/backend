@@ -62,7 +62,8 @@ defmodule Cadet.Assets.Assets do
 
   @spec object_exists?(integer(), binary, binary) :: boolean()
   def object_exists?(course_id, folder_name, file_name) do
-    response = bucket() |> S3.head_object("#{course_id}/#{folder_name}/#{file_name}") |> ExAws.request()
+    response =
+      bucket() |> S3.head_object("#{course_id}/#{folder_name}/#{file_name}") |> ExAws.request()
 
     case response do
       {:error, _error} -> false
