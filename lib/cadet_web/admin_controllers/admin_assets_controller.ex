@@ -5,7 +5,8 @@ defmodule CadetWeb.AdminAssetsController do
   alias Cadet.Assets.Assets
 
   def index(conn, _params = %{"foldername" => foldername}) do
-    case Assets.list_assets(foldername) do
+    course_reg = conn.assigns.course_reg
+    case Assets.list_assets(course_reg.course_id, foldername) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       assets -> render(conn, "index.json", assets: assets)
     end
@@ -13,9 +14,10 @@ defmodule CadetWeb.AdminAssetsController do
 
   @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
   def delete(conn, _params = %{"foldername" => foldername, "filename" => filename}) do
+    course_reg = conn.assigns.course_reg
     filename = Enum.join(filename, "/")
 
-    case Assets.delete_object(foldername, filename) do
+    case Assets.delete_object(course_reg.course_id, foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       _ -> conn |> put_status(204) |> text('')
     end
@@ -26,9 +28,10 @@ defmodule CadetWeb.AdminAssetsController do
         "filename" => filename,
         "foldername" => foldername
       }) do
+    course_reg = conn.assigns.course_reg
     filename = Enum.join(filename, "/")
 
-    case Assets.upload_to_s3(upload_params, foldername, filename) do
+    case Assets.upload_to_s3(upload_params, course_reg.course_id, foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       resp -> render(conn, "show.json", resp: resp)
     end
