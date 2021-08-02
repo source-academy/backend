@@ -139,234 +139,170 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
     execute(
       fn ->
         # Create the new course for migration
-        {:ok, course} =
-          %Course{}
-          |> Course.changeset(%{
-            course_name: "CS1101S Programming Methodology (AY21/22 Sem 1)",
-            course_short_name: "CS1101S",
-            viewable: true,
-            enable_game: true,
-            enable_achievments: true,
-            enable_sourcecast: true,
-            source_chapter: 1,
-            source_variant: "default"
-          })
-          |> Repo.insert()
+        {1, [course | _]} =
+          repo().insert_all(
+            "courses",
+            [
+              %{
+                course_name: "CS1101S Programming Methodology (AY21/22 Sem 1)",
+                course_short_name: "CS1101S",
+                viewable: true,
+                enable_game: true,
+                enable_achievements: true,
+                enable_sourcecast: true,
+                source_chapter: 1,
+                source_variant: "default",
+                inserted_at: Timex.now(),
+                updated_at: Timex.now()
+              }
+            ],
+            returning: [:id]
+          )
 
         # Namespace existing usernames
         from(u in "users", update: [set: [username: fragment("? || ? ", "luminus/", u.username)]])
         |> repo().update_all([])
 
         # Create course registrations for existing users
-        from(u in "users", select: {u.id, u.role, u.group_id, u.game_states})
-        |> Repo.all()
-        |> Enum.each(fn user ->
-          %CourseRegistration{}
-          |> CourseRegistration.changeset(%{
-            user_id: elem(user, 0),
-            role: elem(user, 1),
-            group_id: elem(user, 2),
-            game_states: elem(user, 3),
-            course_id: course.id
+        from(u in "users",
+          select: %{
+            user_id: u.id,
+            role: u.role,
+            group_id: u.group_id,
+            game_states: u.game_states
+          }
+        )
+        |> repo().all()
+        |> Enum.map(fn user ->
+          Map.merge(user, %{
+            course_id: course.id,
+            inserted_at: Timex.now(),
+            updated_at: Timex.now()
           })
-          |> Repo.insert()
         end)
+        |> (&repo().insert_all("course_registrations", &1)).()
 
         # Add latest_viewed_id to existing users
         repo().update_all("users", set: [latest_viewed_id: course.id])
 
-        # Handle groups (adding course_id, and updating leader_id to course registrations)
-        from(g in "groups", select: {g.id, g.temp_leader_id})
-        |> Repo.all()
-        |> Enum.each(fn group ->
-          leader_id =
-            case elem(group, 1) do
-              # leader_id is now going to be non-nullable. if it was previously nil, we will just
-              # assign a staff to be the leader_id during migration
-              nil ->
-                CourseRegistration
-                |> where([cr], cr.role in [:admin, :staff])
-                |> Repo.one()
-                |> Map.fetch!(:id)
-
-              id ->
-                CourseRegistration
-                |> where(user_id: ^id)
-                |> Repo.one()
-                |> Map.fetch!(:id)
-            end
-
-          Group
-          |> where(id: ^elem(group, 0))
-          |> Repo.one()
-          |> Group.changeset(%{leader_id: leader_id, course_id: course.id})
-          |> Repo.update()
-        end)
+        # Handle groups, adding course_id
+        repo().update_all("groups", set: [course_id: course.id])
 
         # Update existing Path questions with new question config
         # The questions from other assessment types are not updated as these fields default to false
         from(q in "questions",
           join: a in "assessments",
           on: a.id == q.assessment_id,
-          where: a.type == "path",
-          select: q.id
+          where: a.type == "path"
         )
-        |> Repo.all()
-        |> Enum.each(fn question_id ->
-          Question
-          |> Repo.get(question_id)
-          |> Question.changeset(%{
+        |> repo().update_all(
+          set: [
             show_solution: true,
             build_hidden_testcases: true,
             blocking: true
-          })
-          |> Repo.update()
-        end)
+          ]
+        )
 
         # Create Assessment Configurations based on Source Academy Knight
-        ["Missions", "Quests", "Paths", "Contests", "Others"]
-        |> Enum.with_index(1)
-        |> Enum.each(fn {assessment_type, idx} ->
-          %AssessmentConfig{}
-          |> AssessmentConfig.changeset(%{
-            order: idx,
-            type: assessment_type,
-            course_id: course.id,
-            show_grading_summary: assessment_type in ["Missions", "Quests"],
-            is_manually_graded: assessment_type != "Paths",
-            early_submission_xp: 200,
-            hours_before_early_xp_decay: 48
-          })
-          |> Repo.insert()
-        end)
+        {5, configs} =
+          ["Missions", "Quests", "Paths", "Contests", "Others"]
+          |> Enum.with_index(1)
+          |> Enum.map(fn {assessment_type, idx} ->
+            %{
+              order: idx,
+              type: assessment_type,
+              course_id: course.id,
+              show_grading_summary: assessment_type in ["Missions", "Quests"],
+              is_manually_graded: assessment_type != "Paths",
+              early_submission_xp: 100,
+              hours_before_early_xp_decay: 24,
+              inserted_at: Timex.now(),
+              updated_at: Timex.now()
+            }
+          end)
+          |> (&repo().insert_all("assessment_configs", &1, returning: [:id])).()
+
+        # assessment_configs = repo().insert_all("assessment_configs", configs, returning: [:id])
 
         # Link existing assessments to an assessment config and course
-        from(a in "assessments", select: {a.id, a.type})
-        |> Repo.all()
-        |> Enum.each(fn assessment ->
-          assessment_type =
-            case elem(assessment, 1) do
-              "mission" -> "Missions"
-              "sidequest" -> "Quests"
-              "path" -> "Paths"
-              "contest" -> "Contests"
-              "practical" -> "Others"
-            end
+        [
+          {"mission", "Missions"},
+          {"sidequest", "Quests"},
+          {"path", "Paths"},
+          {"contest", "Contests"},
+          {"practical", "Others"}
+        ]
+        |> Enum.each(fn {old_type, new_type} ->
+          config_id =
+            from(ac in "assessment_configs", where: ac.type == ^new_type, select: ac.id)
+            |> repo().all()
+            |> Enum.at(0)
 
-          assessment_config =
-            AssessmentConfig
-            |> where(type: ^assessment_type)
-            |> Repo.one()
-
-          Assessment
-          |> where(id: ^elem(assessment, 0))
-          |> Repo.one()
-          |> Assessment.changeset(%{config_id: assessment_config.id, course_id: course.id})
-          |> Repo.update()
+          from(a in "assessments", where: a.type == ^old_type)
+          |> repo().update_all(
+            set: [
+              config_id: config_id,
+              course_id: course.id
+            ]
+          )
         end)
 
         # Updating student_id and unsubmitted_by_id from User to CourseRegistration
-        from(s in "submissions", select: {s.id, s.temp_student_id, s.temp_unsubmitted_by_id})
-        |> Repo.all()
-        |> Enum.each(fn submission ->
-          student_id =
-            CourseRegistration
-            |> where(user_id: ^elem(submission, 1))
-            |> Repo.one()
-            |> Map.fetch!(:id)
+        from(
+          s in "submissions",
+          join: st in "course_registrations",
+          on: st.user_id == s.temp_student_id,
+          update: [set: [student_id: st.id]]
+        )
+        |> repo().update_all([])
 
-          unsubmitted_by_id =
-            case elem(submission, 2) do
-              nil ->
-                nil
+        from(
+          s in "submissions",
+          join: cr in "course_registrations",
+          on: cr.user_id == s.temp_unsubmitted_by_id,
+          update: [set: [unsubmitted_by_id: cr.id]]
+        )
+        |> repo().update_all([])
 
-              id ->
-                CourseRegistration
-                |> where(user_id: ^id)
-                |> Repo.one()
-                |> Map.fetch!(:id)
-            end
+        # Updating grader_id in answer from User to CourseRegistration
+        from(
+          a in "answers",
+          join: cr in "course_registrations",
+          on: cr.user_id == a.temp_grader_id,
+          update: [set: [grader_id: cr.id]]
+        )
+        |> repo().update_all([])
 
-          Submission
-          |> where(id: ^elem(submission, 0))
-          |> Repo.one()
-          |> Submission.changeset(%{student_id: student_id, unsubmitted_by_id: unsubmitted_by_id})
-          |> Repo.update()
-        end)
+        # Updating user_id to voter_id of CourseRegistration
+        from(
+          s in "submission_votes",
+          join: cr in "course_registrations",
+          on: cr.user_id == s.user_id,
+          update: [set: [voter_id: cr.id]]
+        )
+        |> repo().update_all([])
 
-        from(a in "answers", select: {a.id, a.temp_grader_id})
-        |> Repo.all()
-        |> Enum.each(fn answer ->
-          case elem(answer, 1) do
-            nil ->
-              nil
-
-            user_id ->
-              grader_id =
-                CourseRegistration
-                |> where(user_id: ^user_id)
-                |> Repo.one()
-                |> Map.fetch!(:id)
-
-              Answer
-              |> where(id: ^elem(answer, 0))
-              |> Repo.one()
-              |> Answer.grading_changeset(%{grader_id: grader_id})
-              |> Repo.update()
-          end
-        end)
-
-        from(s in "submission_votes", select: {s.id, s.user_id})
-        |> Repo.all()
-        |> Enum.each(fn vote ->
-          voter_id =
-            CourseRegistration
-            |> where(user_id: ^elem(vote, 1))
-            |> Repo.one()
-            |> Map.fetch!(:id)
-
-          SubmissionVotes
-          |> where(id: ^elem(vote, 0))
-          |> Repo.one()
-          |> SubmissionVotes.changeset(%{voter_id: voter_id})
-          |> Repo.update()
-        end)
-
-        from(n in "notifications", select: {n.id, n.user_id})
-        |> Repo.all()
-        |> Enum.each(fn notification ->
-          course_reg_id =
-            CourseRegistration
-            |> where(user_id: ^elem(notification, 1))
-            |> Repo.one()
-            |> Map.fetch!(:id)
-
-          Notification
-          |> where(id: ^elem(notification, 0))
-          |> Repo.one()
-          |> Notification.changeset(%{read: true, course_reg_id: course_reg_id})
-          |> Repo.update()
-        end)
+        # Updating user_id to course_reg_id in Notification
+        from(
+          n in "notifications",
+          join: cr in "course_registrations",
+          on: cr.user_id == n.user_id,
+          update: [set: [course_reg_id: cr.id]]
+        )
+        |> repo().update_all([])
 
         # Add course id to all Sourcecasts
-        Sourcecast
-        |> Repo.all()
-        |> Enum.each(fn x ->
-          x
-          |> Sourcecast.changeset(%{course_id: course.id})
-          |> Repo.update()
-        end)
+        repo().update_all("sourcecasts", set: [course_id: course.id])
 
         # Add course id to all Stories
-        Story
-        |> Repo.all()
-        |> Enum.each(fn x ->
-          x
-          |> Story.changeset(%{course_id: course.id})
-          |> Repo.update()
-        end)
+        repo().update_all("stories", set: [course_id: course.id])
       end,
       fn -> nil end
+    )
+
+    # Update leader_id to course registrations)
+    execute(
+      "update groups g set leader_id = coalesce((select cr.id from course_registrations cr where cr.user_id = g.temp_leader_id), (select cr.id from course_registrations cr where cr.role = 'staff' or cr.role = 'admin'))"
     )
 
     # Cleanup users table after data migration
