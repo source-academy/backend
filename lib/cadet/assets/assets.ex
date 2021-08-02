@@ -36,7 +36,7 @@ defmodule Cadet.Assets.Assets do
     case validate_folder_name(folder_name) do
       :ok ->
         bucket()
-        |> S3.list_objects(prefix: course_id <> folder_name <> "/")
+        |> S3.list_objects(prefix: "#{course_id}/" <> folder_name <> "/")
         |> ExAws.stream!()
         |> Enum.map(fn file -> file.key end)
 

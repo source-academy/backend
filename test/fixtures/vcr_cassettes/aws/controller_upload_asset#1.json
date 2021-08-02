@@ -5,7 +5,7 @@
       "headers": {
         "Authorization": "***",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20200704T190421Z",
+        "x-amz-date": "20210802T110002Z",
         "content-length": "0",
         "x-amz-content-sha256": "***"
       },
@@ -15,13 +15,13 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/148689/testFolder/test.png"
     },
     "response": {
       "binary": false,
-      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>source-academy-assets</Bucket><Key>testFolder/test.png</Key><UploadId>.2EnEkVehEMM61hmagbmwhodenj6TCiSgnwzQfDVir9Bj4f9TsuVvQ1aXGwqBypLXqrWKtw7MjM8Q6klQ94F4utNPNKnEG7RV06bD1Uws343jIRCvomw6tFXcPSjqedREjKn2C.KxYF2BtIT1fpBNw--</UploadId></InitiateMultipartUploadResult>",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>test-sa-assets</Bucket><Key>148689/testFolder/test.png</Key><UploadId>4Yy8HgHzbtzXH3XoEvCgp2v2CBA6yiQ_97OiOuOM2UtcZBOfS9WJreKi3F9yVipygVd4LtNaHLXT2ZMJZsQaU1pWmrVqP8xQuK1VN2TaZdXKs8yiR7KUM8RqBsJ3QdWvnJJ8gQjTbBYdjqiFi2NcNA--</UploadId></InitiateMultipartUploadResult>",
       "headers": {
-        "Date": "Sat, 04 Jul 2020 19:04:22 GMT",
+        "Date": "Mon, 02 Aug 2021 11:00:01 GMT",
         "Transfer-Encoding": "chunked",
         "Server": "AmazonS3"
       },
@@ -35,7 +35,7 @@
       "headers": {
         "Authorization": "***",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20200704T190421Z",
+        "x-amz-date": "20210802T110002Z",
         "content-length": "0",
         "x-amz-content-sha256": "***"
       },
@@ -45,15 +45,14 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/148689/testFolder/test.png"
     },
     "response": {
       "binary": false,
       "body": null,
       "headers": {
         "Content-Type": "application/xml",
-        "Transfer-Encoding": "chunked",
-        "Date": "Sat, 04 Jul 2020 19:04:21 GMT",
+        "Date": "Mon, 02 Aug 2021 11:00:00 GMT",
         "Server": "AmazonS3"
       },
       "status_code": 404,
@@ -66,7 +65,7 @@
       "headers": {
         "Authorization": "***",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20200704T190421Z",
+        "x-amz-date": "20210802T110002Z",
         "content-length": "95",
         "x-amz-content-sha256": "***"
       },
@@ -76,16 +75,16 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/testFolder/test.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/148689/testFolder/test.png"
     },
     "response": {
       "binary": false,
       "body": "",
       "headers": {
-        "Date": "Sat, 04 Jul 2020 19:04:22 GMT",
+        "Date": "Mon, 02 Aug 2021 11:00:01 GMT",
         "ETag": "\"60cf42b4d05caf10cf8bb15c0817a7b4\"",
-        "Content-Length": "0",
-        "Server": "AmazonS3"
+        "Server": "AmazonS3",
+        "Content-Length": "0"
       },
       "status_code": 200,
       "type": "ok"

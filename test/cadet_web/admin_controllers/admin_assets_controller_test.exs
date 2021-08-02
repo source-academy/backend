@@ -128,7 +128,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
           })
 
         assert json_response(conn, 200) ===
-                 "https://source-academy-assets.s3.amazonaws.com/testFolder/test.png"
+                 "https://#{bucket()}.s3.amazonaws.com/#{course_id}/testFolder/test.png"
       end
     end
   end
@@ -191,7 +191,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
           })
 
         assert json_response(conn, 200) ===
-                 "https://source-academy-assets.s3.amazonaws.com/testFolder/nestedFolder/test.png"
+                 "https://#{bucket()}.s3.amazonaws.com/#{course_id}/testFolder/nestedFolder/test.png"
       end
     end
   end
@@ -202,4 +202,6 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   defp build_upload(path, content_type \\ "image/png") do
     %Plug.Upload{path: path, filename: Path.basename(path), content_type: content_type}
   end
+
+  defp bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_bucket)
 end

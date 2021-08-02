@@ -75,7 +75,7 @@ config :cadet,
     lambda_name: "dummy"
   ],
   uploader: [
-    assets_bucket: "source-academy-assets",
+    assets_bucket: "test-sa-assets",
     sourcecasts_bucket: "test-cadet-sourcecasts"
   ],
   remote_execution: [
