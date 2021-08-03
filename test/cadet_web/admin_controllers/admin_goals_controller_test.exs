@@ -4,7 +4,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   import Cadet.TestEntityHelper
 
   alias Cadet.Repo
-  alias Cadet.Incentives.{Goal, Goals}
+  alias Cadet.Incentives.{Goal, Goals, GoalProgress}
   alias CadetWeb.AdminGoalsController
   alias Ecto.UUID
 
@@ -34,6 +34,56 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
       assert goal_json_literal(5) = resp_goal
       assert resp_goal["uuid"] == goal.uuid
+    end
+
+    @tag authenticate: :student
+    test "403 for student", %{conn: conn} do
+      course_id = conn.assigns.course_id
+
+      conn
+      |> get(build_path(course_id))
+      |> response(403)
+    end
+
+    test "401 if unauthenticated", %{conn: conn} do
+      course = insert(:course)
+
+      conn
+      |> get(build_path(course.id))
+      |> response(401)
+    end
+  end
+
+  describe "GET v2/courses/:course_id/admin/users/:course_reg_id/goals" do
+    @tag authenticate: :staff
+    test "succeeds for staff", %{conn: conn} do
+      course = conn.assigns.test_cr.course
+
+      {:ok, g} =
+        %Goal{course_id: course.id, uuid: UUID.generate()}
+        |> Map.merge(goal_literal(5))
+        |> Repo.insert()
+
+      course_reg = insert(:course_registration, %{course: course, role: :student})
+
+      {:ok, p} =
+        %GoalProgress{
+          goal_uuid: g.uuid,
+          course_reg_id: course_reg.id,
+          count: 123,
+          completed: true
+        }
+        |> Repo.insert()
+
+      [resp_goal] =
+        conn
+        |> get(build_user_goals_path(course.id, course_reg.id))
+        |> json_response(200)
+
+      assert goal_json_literal(5) = resp_goal
+      assert resp_goal["uuid"] == g.uuid
+      assert resp_goal["count"] == p.count
+      assert resp_goal["completed"] == p.completed
     end
 
     @tag authenticate: :student
@@ -264,5 +314,9 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
   defp build_path(course_id, uuid, course_reg_id) do
     "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals/#{uuid}/progress/"
+  end
+
+  defp build_user_goals_path(course_id, course_reg_id) do
+    "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals"
   end
 end
