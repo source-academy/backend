@@ -1,0 +1,33 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20210802T105950Z",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "get",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/"
+    },
+    "response": {
+      "binary": false,
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Name>test-sa-assets</Name><Prefix>2/testFolder/</Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated></ListBucketResult>",
+      "headers": {
+        "Date": "Mon, 02 Aug 2021 10:59:49 GMT",
+        "x-amz-bucket-region": "ap-southeast-1",
+        "Content-Type": "application/xml",
+        "Transfer-Encoding": "chunked",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

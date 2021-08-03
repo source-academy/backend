@@ -5,7 +5,7 @@
       "headers": {
         "Authorization": "***",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20200704T190051Z",
+        "x-amz-date": "20210802T105951Z",
         "x-amz-content-sha256": "***"
       },
       "method": "get",
@@ -14,13 +14,13 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/source-academy-assets/"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/"
     },
     "response": {
       "binary": false,
-      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Name>source-academy-assets</Name><Prefix>testFolder/</Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>testFolder/</Key><LastModified>2020-07-04T18:53:11.000Z</LastModified><ETag>&quot;d41d8cd98f00b204e9800998ecf8427e&quot;</ETag><Size>0</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>xxx</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>testFolder/test.png</Key><LastModified>2020-07-04T19:00:44.000Z</LastModified><ETag>&quot;3104001edec38fadeb925b9dbddab198&quot;</ETag><Size>8035</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>xxx</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>testFolder/test2.png</Key><LastModified>2020-07-04T18:58:52.000Z</LastModified><ETag>&quot;3104001edec38fadeb925b9dbddab198&quot;</ETag><Size>8035</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>xxx</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Name>test-sa-assets</Name><Prefix>1/testFolder/</Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>1/testFolder/</Key><LastModified>2021-08-02T10:23:39.000Z</LastModified><ETag>&quot;d41d8cd98f00b204e9800998ecf8427e&quot;</ETag><Size>0</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>1/testFolder/test.png</Key><LastModified>2021-08-02T10:56:36.000Z</LastModified><ETag>&quot;33c5d4f094a7727780a3c63babae1083&quot;</ETag><Size>2568</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>1/testFolder/test2.png</Key><LastModified>2021-08-02T10:25:15.000Z</LastModified><ETag>&quot;af2ab457d8b118efa176bc12cff4895f&quot;</ETag><Size>2996</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>",
       "headers": {
-        "Date": "Sat, 04 Jul 2020 19:00:52 GMT",
+        "Date": "Mon, 02 Aug 2021 10:59:51 GMT",
         "x-amz-bucket-region": "ap-southeast-1",
         "Content-Type": "application/xml",
         "Transfer-Encoding": "chunked",
