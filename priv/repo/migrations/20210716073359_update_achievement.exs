@@ -1,6 +1,6 @@
 defmodule Cadet.Repo.Migrations.UpdateAchievement do
   use Ecto.Migration
-  import Ecto.Query, only: [from: 2, where: 2]
+  import Ecto.Query, only: [from: 2]
 
   def change do
     alter table(:achievements) do
