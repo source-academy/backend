@@ -54,7 +54,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     end
   end
 
-  describe "GET v2/courses/:course_id/admin/goals/:userid" do
+  describe "GET v2/courses/:course_id/admin/users/:course_reg_id/goals" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course = conn.assigns.test_cr.course
@@ -77,7 +77,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
       [resp_goal] =
         conn
-        |> get(build_path(course.id, course_reg.id))
+        |> get(build_user_goals_path(course.id, course_reg.id))
         |> json_response(200)
 
       assert goal_json_literal(5) = resp_goal
@@ -314,5 +314,9 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
   defp build_path(course_id, uuid, course_reg_id) do
     "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals/#{uuid}/progress/"
+  end
+
+  defp build_user_goals_path(course_id, course_reg_id) do
+    "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals"
   end
 end
