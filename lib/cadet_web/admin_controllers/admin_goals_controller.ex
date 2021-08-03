@@ -4,10 +4,17 @@ defmodule CadetWeb.AdminGoalsController do
   use PhoenixSwagger
 
   alias Cadet.Incentives.Goals
+  alias Cadet.Accounts.CourseRegistration
 
   def index(conn, _) do
     course_id = conn.assigns.course_reg.course_id
     render(conn, "index.json", goals: Goals.get(course_id))
+  end
+
+  def index_goals_with_progress(conn, %{"course_reg_id" => course_reg_id}) do
+    course_reg = %CourseRegistration{id: String.to_integer(course_reg_id)}
+
+    render(conn, "index_goals_with_progress.json", goals: Goals.get_with_progress(course_reg))
   end
 
   def bulk_update(conn, %{"goals" => goals}) do
@@ -83,6 +90,17 @@ defmodule CadetWeb.AdminGoalsController do
     security([%{JWT: []}])
 
     response(200, "OK", Schema.array(:Goal))
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
+  end
+
+  swagger_path :index_goals_with_progress do
+    get("/admin/goals/:userid")
+
+    summary("Gets goals and goal progress of a user")
+    security([%{JWT: []}])
+
+    response(200, "OK", Schema.array(:GoalWithProgress))
     response(401, "Unauthorised")
     response(403, "Forbidden")
   end
