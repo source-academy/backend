@@ -2,7 +2,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
   use Ecto.Migration
   import Ecto.Query
 
-  alias Cadet.Accounts.{CourseRegistration, Notification, Role, User}
+  alias Cadet.Accounts.{CourseRegistration, Notification}
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Courses.{AssessmentConfig, Course, Group, Sourcecast}
   alias Cadet.Repo
