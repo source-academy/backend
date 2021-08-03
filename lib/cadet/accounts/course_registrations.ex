@@ -183,4 +183,14 @@ defmodule Cadet.Accounts.CourseRegistrations do
         Repo.delete(course_reg)
     end
   end
+
+  def update_research_agreement(course_reg, agreed_to_research) do
+    course_reg
+    |> CourseRegistration.changeset(%{agreed_to_research: agreed_to_research})
+    |> Repo.update()
+    |> case do
+      result = {:ok, _} -> result
+      {:error, changeset} -> {:error, {:bad_request, full_error_messages(changeset)}}
+    end
+  end
 end

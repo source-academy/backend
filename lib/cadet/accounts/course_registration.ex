@@ -10,6 +10,7 @@ defmodule Cadet.Accounts.CourseRegistration do
   schema "course_registrations" do
     field(:role, Role)
     field(:game_states, :map)
+    field(:agreed_to_research, :boolean)
 
     belongs_to(:group, Group)
     belongs_to(:user, User)
@@ -19,7 +20,7 @@ defmodule Cadet.Accounts.CourseRegistration do
   end
 
   @required_fields ~w(user_id course_id role)a
-  @optional_fields ~w(game_states group_id)a
+  @optional_fields ~w(game_states group_id agreed_to_research)a
 
   def changeset(course_registration, params \\ %{}) do
     course_registration
