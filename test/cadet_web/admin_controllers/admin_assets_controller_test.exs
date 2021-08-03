@@ -94,7 +94,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "ok request" do
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "index file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -106,7 +106,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -117,7 +117,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -169,7 +169,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "nested filename request" do
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -180,7 +180,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
