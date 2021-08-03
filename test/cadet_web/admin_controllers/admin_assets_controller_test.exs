@@ -94,7 +94,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "ok request" do
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "index file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -106,7 +106,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -117,7 +117,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -128,7 +128,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
           })
 
         assert json_response(conn, 200) ===
-                 "https://source-academy-assets.s3.amazonaws.com/testFolder/test.png"
+                 "https://#{bucket()}.s3.amazonaws.com/#{course_id}/testFolder/test.png"
       end
     end
   end
@@ -169,7 +169,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "nested filename request" do
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -180,7 +180,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :staff, course_id: 117
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -191,7 +191,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
           })
 
         assert json_response(conn, 200) ===
-                 "https://source-academy-assets.s3.amazonaws.com/testFolder/nestedFolder/test.png"
+                 "https://#{bucket()}.s3.amazonaws.com/#{course_id}/testFolder/nestedFolder/test.png"
       end
     end
   end
@@ -202,4 +202,6 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   defp build_upload(path, content_type \\ "image/png") do
     %Plug.Upload{path: path, filename: Path.basename(path), content_type: content_type}
   end
+
+  defp bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_bucket)
 end

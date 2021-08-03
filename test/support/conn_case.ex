@@ -52,7 +52,7 @@ defmodule CadetWeb.ConnCase do
     conn = Phoenix.ConnTest.build_conn()
 
     if tags[:authenticate] do
-      course = Factory.insert(:course)
+      course = Factory.insert(:course, id: tags[:course_id])
       user = Factory.insert(:user, %{latest_viewed_course: course})
 
       course_registration =
