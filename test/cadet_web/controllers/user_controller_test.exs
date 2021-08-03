@@ -88,7 +88,8 @@ defmodule CadetWeb.UserControllerTest do
           "xp" => 110,
           "maxXp" => question.max_xp,
           "gameStates" => %{},
-          "story" => nil
+          "story" => nil,
+          "agreedToResearch" => nil
         },
         "courseConfiguration" => %{
           "enableAchievements" => true,
@@ -213,7 +214,8 @@ defmodule CadetWeb.UserControllerTest do
           "xp" => 110,
           "maxXp" => question.max_xp,
           "gameStates" => %{},
-          "story" => nil
+          "story" => nil,
+          "agreedToResearch" => nil
         },
         "courseConfiguration" => %{
           "enableAchievements" => true,
@@ -289,6 +291,31 @@ defmodule CadetWeb.UserControllerTest do
       updated_cr = Repo.get_by(CourseRegistration, course_id: course_id, user_id: user.id)
 
       assert new_game_states == updated_cr.game_states
+    end
+  end
+
+  describe "PUT /v2/courses/{course_id}/user/research_agreement" do
+    @tag authenticate: :student
+    test "success, updating research agreement", %{conn: conn} do
+      user = conn.assigns.current_user
+      course_id = conn.assigns.course_id
+
+      params = %{
+        "agreedToResearch" => true
+      }
+
+      assert is_nil(
+               CourseRegistration
+               |> Repo.get_by(course_id: course_id, user_id: user.id)
+               |> Map.fetch!(:agreed_to_research)
+             )
+
+      conn
+      |> put(build_url(course_id) <> "/research_agreement", params)
+      |> response(200)
+
+      updated_cr = Repo.get_by(CourseRegistration, course_id: course_id, user_id: user.id)
+      assert updated_cr.agreed_to_research == true
     end
   end
 

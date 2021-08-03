@@ -103,6 +103,20 @@ defmodule CadetWeb.UserController do
     end
   end
 
+  def update_research_agreement(conn, %{"agreedToResearch" => agreed_to_research}) do
+    course_reg = conn.assigns[:course_reg]
+
+    case CourseRegistrations.update_research_agreement(course_reg, agreed_to_research) do
+      {:ok, %{}} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   swagger_path :index do
     get("/v2/user")
 
@@ -149,6 +163,27 @@ defmodule CadetWeb.UserController do
     end
 
     response(200, "OK")
+  end
+
+  swagger_path :update_research_agreement do
+    put("/v2/courses/:course_id/user/research_agreement")
+    summary("Update the user's agreement to the anonymized collection of programs for research")
+    security([%{JWT: []}])
+    consumes("application/json")
+
+    parameters do
+      course_id(:path, :integer, "the user's course id", required: true)
+
+      agreedToResearch(
+        :body,
+        :boolean,
+        "whether the user has agreed to participate in the research",
+        required: true
+      )
+    end
+
+    response(200, "OK")
+    response(400, "Bad Request")
   end
 
   def swagger_definitions do
@@ -233,6 +268,11 @@ defmodule CadetWeb.UserController do
             game_states(
               Schema.ref(:UserGameStates),
               "States for user's game, including users' game progress, settings and collectibles.\n"
+            )
+
+            agreed_to_research(
+              :boolean,
+              "Whether the user as agreed to participate in the collection of anonymized data for research purposes."
             )
           end
         end,
