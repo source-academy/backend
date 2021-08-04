@@ -7,7 +7,6 @@ defmodule Cadet.Incentives.Achievement do
   alias Cadet.Courses.Course
   alias Cadet.Incentives.{AchievementPrerequisite, AchievementToGoal}
 
-
   @primary_key {:uuid, :binary_id, autogenerate: false}
   schema "achievements" do
     field(:title, :string)
