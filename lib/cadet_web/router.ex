@@ -82,9 +82,6 @@ defmodule CadetWeb.Router do
     get("/achievements", IncentivesController, :index_achievements)
 
     get("/stories", StoriesController, :index)
-    post("/stories", StoriesController, :create)
-    delete("/stories/:storyid", StoriesController, :delete)
-    post("/stories/:storyid", StoriesController, :update)
 
     get("/notifications", NotificationsController, :index)
     post("/notifications/acknowledge", NotificationsController, :acknowledge)
@@ -144,6 +141,10 @@ defmodule CadetWeb.Router do
     put("/goals", AdminGoalsController, :bulk_update)
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
+
+    post("/stories", AdminStoriesController, :create)
+    delete("/stories/:storyid", AdminStoriesController, :delete)
+    post("/stories/:storyid", AdminStoriesController, :update)
 
     put("/config", AdminCoursesController, :update_course_config)
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)

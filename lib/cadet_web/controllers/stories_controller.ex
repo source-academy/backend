@@ -4,62 +4,10 @@ defmodule CadetWeb.StoriesController do
 
   alias Cadet.Stories.Stories
 
-  def index(conn, _) do
-    stories = Stories.list_stories(conn.assigns.course_reg)
+  def index(conn, %{"course_id" => course_id}) do
+    list_all = conn.assigns.course_reg.role in [:admin, :staff]
+    stories = Stories.list_stories(course_id, list_all)
     render(conn, "index.json", stories: stories)
-  end
-
-  def create(conn, story) do
-    result =
-      story
-      |> snake_casify_string_keys()
-      |> string_to_atom_map_keys()
-      |> Stories.create_story(conn.assigns.course_reg)
-
-    case result do
-      {:ok, _story} ->
-        conn |> put_status(200) |> text('')
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def update(conn, _params = %{"storyid" => id, "story" => story}) do
-    result =
-      story
-      |> snake_casify_string_keys()
-      |> Stories.update_story(id, conn.assigns.course_reg)
-
-    case result do
-      {:ok, _story} ->
-        conn |> put_status(200) |> text('')
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def delete(conn, _params = %{"storyid" => id}) do
-    result = Stories.delete_story(id, conn.assigns.course_reg)
-
-    case result do
-      {:ok, _nil} ->
-        conn |> put_status(204) |> text('')
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  defp string_to_atom_map_keys(map) do
-    for {key, value} <- map, into: %{}, do: {key |> String.to_atom(), value}
   end
 
   swagger_path :index do
@@ -70,52 +18,6 @@ defmodule CadetWeb.StoriesController do
     security([%{JWT: []}])
 
     response(200, "OK", Schema.array(:Story))
-  end
-
-  swagger_path :create do
-    post("/v2{course_id}/stories")
-
-    summary("Creates a new story")
-
-    security([%{JWT: []}])
-
-    response(200, "OK", :Story)
-    response(400, "Bad request")
-    response(403, "User not allowed to manage stories")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/v2/courses/{course_id}/stories/{storyId}")
-
-    summary("Delete a story from database by id")
-
-    parameters do
-      storyId(:path, :integer, "Story Id", required: true)
-    end
-
-    security([%{JWT: []}])
-
-    response(204, "OK")
-    response(403, "User not allowed to manage stories or stories from another course")
-    response(404, "Story not found")
-  end
-
-  swagger_path :update do
-    post("/v2/courses/{course_id}/stories/{storyId}")
-
-    summary("Update details regarding a story")
-
-    parameters do
-      storyId(:path, :integer, "Story Id", required: true)
-    end
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    response(200, "OK", :Story)
-    response(403, "User not allowed to manage stories or stories from another course")
-    response(404, "Story not found")
   end
 
   @spec swagger_definitions :: %{Story: any}
