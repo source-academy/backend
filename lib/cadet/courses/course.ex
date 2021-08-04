@@ -17,6 +17,9 @@ defmodule Cadet.Courses.Course do
     field(:source_variant, :string)
     field(:module_help_text, :string)
 
+    # for now, only settable from database
+    field(:assets_prefix, :string, default: nil)
+
     has_many(:assessment_config, AssessmentConfig)
 
     timestamps()

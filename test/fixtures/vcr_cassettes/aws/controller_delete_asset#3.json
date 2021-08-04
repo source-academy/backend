@@ -1,0 +1,65 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T190423Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "head",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test2.png"
+    },
+    "response": {
+      "binary": false,
+      "body": null,
+      "headers": {
+        "Date": "Sat, 04 Jul 2020 19:04:24 GMT",
+        "Last-Modified": "Sat, 04 Jul 2020 18:58:52 GMT",
+        "ETag": "\"3104001edec38fadeb925b9dbddab198\"",
+        "Accept-Ranges": "bytes",
+        "Content-Type": "image/png",
+        "Content-Length": "8035",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T190423Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "delete",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test2.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Date": "Sat, 04 Jul 2020 19:04:24 GMT",
+        "Server": "AmazonS3"
+      },
+      "status_code": 204,
+      "type": "ok"
+    }
+  }
+]

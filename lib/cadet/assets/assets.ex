@@ -9,18 +9,18 @@ defmodule Cadet.Assets.Assets do
                         if(Mix.env() == :test, do: ["testFolder"], else: [])
   @accepted_file_types ~w(.jpg .jpeg .gif .png .wav .mp3 .txt)
 
-  def upload_to_s3(upload_params, course_id, folder_name, file_name) do
+  def upload_to_s3(upload_params, prefix, folder_name, file_name) do
     file_type = Path.extname(file_name)
 
     with :ok <- validate_file_name(file_name),
          :ok <- validate_folder_name(folder_name),
          :ok <- validate_file_type(file_type) do
-      if object_exists?(course_id, folder_name, file_name) do
+      if object_exists?(prefix, folder_name, file_name) do
         {:error, {:bad_request, "File already exists"}}
       else
         file = upload_params.path
 
-        s3_path = "#{prefix()}#{course_id}/#{folder_name}/#{file_name}"
+        s3_path = "#{prefix}#{folder_name}/#{file_name}"
 
         file
         |> Upload.stream_file()
@@ -32,25 +32,29 @@ defmodule Cadet.Assets.Assets do
     end
   end
 
-  def list_assets(course_id, folder_name) do
+  def list_assets(prefix, folder_name) do
+    prefix_len = byte_size(prefix)
+
     case validate_folder_name(folder_name) do
       :ok ->
         bucket()
-        |> S3.list_objects(prefix: "#{prefix()}#{course_id}/" <> folder_name <> "/")
+        |> S3.list_objects(prefix: prefix <> folder_name <> "/")
         |> ExAws.stream!()
-        |> Enum.map(fn file -> file.key end)
+        |> Enum.map(fn file ->
+          binary_part(file.key, prefix_len, byte_size(file.key) - prefix_len)
+        end)
 
       {:error, _} = error ->
         error
     end
   end
 
-  def delete_object(course_id, folder_name, file_name) do
+  def delete_object(prefix, folder_name, file_name) do
     with :ok <- validate_file_name(file_name),
          :ok <- validate_folder_name(folder_name) do
-      if object_exists?(course_id, folder_name, file_name) do
+      if object_exists?(prefix, folder_name, file_name) do
         bucket()
-        |> S3.delete_object("#{prefix()}#{course_id}/#{folder_name}/#{file_name}")
+        |> S3.delete_object("#{prefix}#{folder_name}/#{file_name}")
         |> ExAws.request!()
 
         :ok
@@ -60,11 +64,11 @@ defmodule Cadet.Assets.Assets do
     end
   end
 
-  @spec object_exists?(integer(), binary, binary) :: boolean()
-  def object_exists?(course_id, folder_name, file_name) do
+  @spec object_exists?(integer() | binary(), binary, binary) :: boolean()
+  def object_exists?(prefix, folder_name, file_name) do
     response =
       bucket()
-      |> S3.head_object("#{prefix()}#{course_id}/#{folder_name}/#{file_name}")
+      |> S3.head_object("#{prefix}#{folder_name}/#{file_name}")
       |> ExAws.request()
 
     case response do
@@ -99,5 +103,6 @@ defmodule Cadet.Assets.Assets do
 
   defp bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_bucket)
 
-  defp prefix, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_prefix, "")
+  def assets_prefix,
+    do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_prefix, "")
 end
