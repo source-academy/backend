@@ -15,21 +15,18 @@ defmodule Cadet.Incentives.AchievementsTest do
   test "create achievements" do
     course = insert(:course)
 
-    for ability <- Achievement.valid_abilities() do
-      {:ok, %{uuid: uuid}} =
-        Achievements.upsert(%{
-          uuid: Ecto.UUID.generate(),
-          course_id: course.id,
-          title: ability,
-          ability: ability,
-          is_task: false,
-          position: 0,
-          xp: 0,
-          is_variable_xp: false
-        })
+    {:ok, %{uuid: uuid}} =
+      Achievements.upsert(%{
+        uuid: Ecto.UUID.generate(),
+        course_id: course.id,
+        title: "test achievement",
+        is_task: false,
+        position: 0,
+        xp: 0,
+        is_variable_xp: false
+      })
 
-      assert %{title: ^ability, ability: ^ability} = Repo.get(Achievement, uuid)
-    end
+    assert %{title: "test achievement"} = Repo.get(Achievement, uuid)
   end
 
   test "create achievement with prerequisites as id" do

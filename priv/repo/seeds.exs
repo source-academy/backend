@@ -249,7 +249,6 @@ if Cadet.Env.env() == :dev do
   # achievement_0 =
   #   insert(:achievement, %{
   #     title: "Rune Master",
-  #     ability: "Core",
   #     is_task: true,
   #     position: 1,
   #     card_tile_url:
@@ -264,7 +263,6 @@ if Cadet.Env.env() == :dev do
   # achievement_1 =
   #   insert(:achievement, %{
   #     title: "Beyond the Second Dimension",
-  #     ability: "Core",
   #     is_task: false,
   #     position: 0,
   #     card_tile_url:
@@ -280,7 +278,6 @@ if Cadet.Env.env() == :dev do
   # achievement_2 =
   #   insert(:achievement, %{
   #     title: "Colorful Carpet",
-  #     ability: "Core",
   #     is_task: false,
   #     position: 0,
   #     card_tile_url:
@@ -296,7 +293,6 @@ if Cadet.Env.env() == :dev do
   # achievement_3 =
   #   insert(:achievement, %{
   #     title: "Unpublished",
-  #     ability: "Core",
   #     is_task: false,
   #     position: 0,
   #     card_tile_url:
@@ -306,7 +302,6 @@ if Cadet.Env.env() == :dev do
   # achievement_4 =
   #   insert(:achievement, %{
   #     title: "Curve Wizard",
-  #     ability: "Core",
   #     is_task: true,
   #     position: 4,
   #     card_tile_url:
@@ -323,7 +318,6 @@ if Cadet.Env.env() == :dev do
   # achievement_5 =
   #   insert(:achievement, %{
   #     title: "Curve Introduction",
-  #     ability: "Core",
   #     is_task: false,
   #     position: 0,
   #     card_tile_url:
@@ -339,7 +333,6 @@ if Cadet.Env.env() == :dev do
   # achievement_6 =
   #   insert(:achievement, %{
   #     title: "Curve Manipulation",
-  #     ability: "Core",
   #     is_task: false,
   #     position: 0,
   #     card_tile_url:
@@ -355,7 +348,6 @@ if Cadet.Env.env() == :dev do
   # achievement_7 =
   #   insert(:achievement, %{
   #     title: "The Source-rer",
-  #     ability: "Effort",
   #     is_task: true,
   #     position: 3,
   #     card_tile_url:
@@ -371,7 +363,6 @@ if Cadet.Env.env() == :dev do
   # achievement_8 =
   #   insert(:achievement, %{
   #     title: "Power of Friendship",
-  #     ability: "Community",
   #     is_task: true,
   #     position: 2,
   #     card_tile_url:
@@ -386,7 +377,6 @@ if Cadet.Env.env() == :dev do
   # achievement_9 =
   #   insert(:achievement, %{
   #     title: "Piazza Guru",
-  #     ability: "Community",
   #     is_task: false,
   #     position: 0,
   #     card_tile_url:
@@ -399,7 +389,6 @@ if Cadet.Env.env() == :dev do
   # achievement_10 =
   #   insert(:achievement, %{
   #     title: "Thats the Spirit",
-  #     ability: "Exploration",
   #     is_task: true,
   #     position: 5,
   #     card_tile_url:
