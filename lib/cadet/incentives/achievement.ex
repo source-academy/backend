@@ -7,12 +7,9 @@ defmodule Cadet.Incentives.Achievement do
   alias Cadet.Courses.Course
   alias Cadet.Incentives.{AchievementPrerequisite, AchievementToGoal}
 
-  @valid_abilities ~w(Core Community Effort Exploration Flex)
-
   @primary_key {:uuid, :binary_id, autogenerate: false}
   schema "achievements" do
     field(:title, :string)
-    field(:ability, :string)
     field(:card_tile_url, :string)
     field(:xp, :integer)
     field(:is_variable_xp, :boolean)
@@ -34,7 +31,7 @@ defmodule Cadet.Incentives.Achievement do
     field(:goal_uuids, {:array, :binary_id}, virtual: true)
   end
 
-  @required_fields ~w(uuid title ability is_task position xp is_variable_xp course_id)a
+  @required_fields ~w(uuid title is_task position xp is_variable_xp course_id)a
   @optional_fields ~w(card_tile_url open_at close_at canvas_url description
     completion_text prerequisite_uuids goal_uuids)a
 
@@ -47,7 +44,6 @@ defmodule Cadet.Incentives.Achievement do
     achievement
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:ability, @valid_abilities)
     |> foreign_key_constraint(:course_id)
     |> cast_join_ids(
       :prerequisite_uuids,
@@ -62,6 +58,4 @@ defmodule Cadet.Incentives.Achievement do
       :uuid
     )
   end
-
-  def valid_abilities, do: @valid_abilities
 end

@@ -13,7 +13,6 @@ defmodule Cadet.Incentives.AchievementFactory do
           uuid: UUID.generate(),
           course: insert(:course),
           title: Faker.Food.dish(),
-          ability: Enum.random(Achievement.valid_abilities()),
           is_task: false,
           position: 0,
           xp: 0,
