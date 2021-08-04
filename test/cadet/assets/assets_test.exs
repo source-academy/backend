@@ -8,9 +8,9 @@ defmodule Cadet.Assets.AssetsTest do
     test "accessible folder" do
       use_cassette "aws/model_list_assets#1" do
         assert Assets.list_assets(prefix(1), "testFolder") === [
-                 "1/testFolder/",
-                 "1/testFolder/test.png",
-                 "1/testFolder/test2.png"
+                 "testFolder/",
+                 "testFolder/test.png",
+                 "testFolder/test2.png"
                ]
       end
     end
