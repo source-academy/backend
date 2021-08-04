@@ -54,7 +54,7 @@ defmodule Cadet.Assets.AssetsTest do
                  "testFolder",
                  "test1.png"
                ) ===
-                 "https://#{bucket()}.s3.amazonaws.com/1/testFolder/test1.png"
+                 "https://#{bucket()}.s3.amazonaws.com/courses-test/1/testFolder/test1.png"
       end
     end
   end
