@@ -2,12 +2,6 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
   use Ecto.Migration
   import Ecto.Query
 
-  alias Cadet.Accounts.{CourseRegistration, Notification}
-  alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
-  alias Cadet.Courses.{AssessmentConfig, Course, Group, Sourcecast}
-  alias Cadet.Repo
-  alias Cadet.Stories.Story
-
   def change do
     # Tracks course configurations
     create table(:courses) do
