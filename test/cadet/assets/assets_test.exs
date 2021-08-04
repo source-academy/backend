@@ -7,7 +7,7 @@ defmodule Cadet.Assets.AssetsTest do
   describe "Manage assets" do
     test "accessible folder" do
       use_cassette "aws/model_list_assets#1" do
-        assert Assets.list_assets(1, "testFolder") === [
+        assert Assets.list_assets(prefix(1), "testFolder") === [
                  "1/testFolder/",
                  "1/testFolder/test.png",
                  "1/testFolder/test2.png"
@@ -17,20 +17,20 @@ defmodule Cadet.Assets.AssetsTest do
 
     test "access another course with 0 folder" do
       use_cassette "aws/model_list_assets#2" do
-        assert Assets.list_assets(2, "testFolder") === []
+        assert Assets.list_assets(prefix(2), "testFolder") === []
       end
     end
 
     test "delete nonexistent file" do
       use_cassette "aws/model_delete_asset#1" do
-        assert Assets.delete_object(1, "testFolder", "test4.png") ===
+        assert Assets.delete_object(prefix(1), "testFolder", "test4.png") ===
                  {:error, {:not_found, "File not found"}}
       end
     end
 
     test "delete ok file" do
       use_cassette "aws/model_delete_asset#2" do
-        assert Assets.delete_object(1, "testFolder", "test.png") === :ok
+        assert Assets.delete_object(prefix(1), "testFolder", "test.png") === :ok
       end
     end
 
@@ -38,7 +38,7 @@ defmodule Cadet.Assets.AssetsTest do
       use_cassette "aws/model_upload_asset#1" do
         assert Assets.upload_to_s3(
                  build_upload("test/fixtures/upload.png"),
-                 1,
+                 prefix(1),
                  "testFolder",
                  "test2.png"
                ) ===
@@ -50,7 +50,7 @@ defmodule Cadet.Assets.AssetsTest do
       use_cassette "aws/model_upload_asset#2" do
         assert Assets.upload_to_s3(
                  build_upload("test/fixtures/upload.png"),
-                 1,
+                 prefix(1),
                  "testFolder",
                  "test1.png"
                ) ===
@@ -64,4 +64,6 @@ defmodule Cadet.Assets.AssetsTest do
   end
 
   defp bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_bucket)
+
+  defp prefix(course_id), do: "#{Assets.assets_prefix()}#{course_id}/"
 end

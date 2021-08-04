@@ -20,6 +20,7 @@ defmodule Cadet.Courses do
 
   alias Cadet.Assessments
   alias Cadet.Assessments.Assessment
+  alias Cadet.Assets.Assets
 
   @doc """
   Creates a new course configuration, course registration, and sets
@@ -407,5 +408,10 @@ defmodule Cadet.Courses do
     |> where([s], is_nil(s.course_id))
     |> Repo.all()
     |> Repo.preload(:uploader)
+  end
+
+  @spec assets_prefix(%Course{}) :: binary()
+  def assets_prefix(course) do
+    course.assets_prefix || "#{Assets.assets_prefix()}#{course.id}/"
   end
 end

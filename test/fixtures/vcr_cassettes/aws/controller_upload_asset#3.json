@@ -1,0 +1,93 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20210802T110004Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "post",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>test-sa-assets</Bucket><Key>this-is-a-prefix/testFolder/nestedFolder/test.png</Key><UploadId>jQOloaBCXjlYK5iRAQKuUVpX4bDPKZ0RSW8T3ndp4N.ZnW_e3eoE.AermyCbfytWRJ.i.tQ4lKSvruRteBTviJ5.492AlTIm6D08VEaszDayFRN_gGrdPclOZgxcT1b.UZ9V.Nku10KjcT7fc3BWbQ--</UploadId></InitiateMultipartUploadResult>",
+      "headers": {
+        "Date": "Mon, 02 Aug 2021 11:00:04 GMT",
+        "Transfer-Encoding": "chunked",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20210802T110004Z",
+        "content-length": "0",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "head",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test.png"
+    },
+    "response": {
+      "binary": false,
+      "body": null,
+      "headers": {
+        "Content-Type": "application/xml",
+        "Date": "Mon, 02 Aug 2021 11:00:02 GMT",
+        "Server": "AmazonS3"
+      },
+      "status_code": 404,
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "body": "�PNG\r\n\u001a\n\u0000\u0000\u0000\rIHDR\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0001\u0001\u0003\u0000\u0000\u0000%�V�\u0000\u0000\u0000\u0003PLTE�M\u0000\\58\u0000\u0000\u0000\u0001tRNS��4V�\u0000\u0000\u0000\nIDATx�cb\u0000\u0000\u0000\u0006\u0000\u000367|�\u0000\u0000\u0000\u0000IEND�B`�",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20210802T110004Z",
+        "content-length": "95",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "put",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test.png"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Date": "Mon, 02 Aug 2021 11:00:04 GMT",
+        "ETag": "\"60cf42b4d05caf10cf8bb15c0817a7b4\"",
+        "Server": "AmazonS3",
+        "Content-Length": "0"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]
