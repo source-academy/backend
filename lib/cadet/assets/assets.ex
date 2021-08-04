@@ -20,7 +20,7 @@ defmodule Cadet.Assets.Assets do
       else
         file = upload_params.path
 
-        s3_path = "#{course_id}/#{folder_name}/#{file_name}"
+        s3_path = "#{prefix()}#{course_id}/#{folder_name}/#{file_name}"
 
         file
         |> Upload.stream_file()
@@ -36,7 +36,7 @@ defmodule Cadet.Assets.Assets do
     case validate_folder_name(folder_name) do
       :ok ->
         bucket()
-        |> S3.list_objects(prefix: "#{course_id}/" <> folder_name <> "/")
+        |> S3.list_objects(prefix: "#{prefix()}#{course_id}/" <> folder_name <> "/")
         |> ExAws.stream!()
         |> Enum.map(fn file -> file.key end)
 
@@ -50,7 +50,7 @@ defmodule Cadet.Assets.Assets do
          :ok <- validate_folder_name(folder_name) do
       if object_exists?(course_id, folder_name, file_name) do
         bucket()
-        |> S3.delete_object("#{course_id}/#{folder_name}/#{file_name}")
+        |> S3.delete_object("#{prefix()}#{course_id}/#{folder_name}/#{file_name}")
         |> ExAws.request!()
 
         :ok
@@ -63,7 +63,9 @@ defmodule Cadet.Assets.Assets do
   @spec object_exists?(integer(), binary, binary) :: boolean()
   def object_exists?(course_id, folder_name, file_name) do
     response =
-      bucket() |> S3.head_object("#{course_id}/#{folder_name}/#{file_name}") |> ExAws.request()
+      bucket()
+      |> S3.head_object("#{prefix()}#{course_id}/#{folder_name}/#{file_name}")
+      |> ExAws.request()
 
     case response do
       {:error, _error} -> false
@@ -96,4 +98,6 @@ defmodule Cadet.Assets.Assets do
   end
 
   defp bucket, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_bucket)
+
+  defp prefix, do: :cadet |> Application.fetch_env!(:uploader) |> Keyword.get(:assets_prefix, "")
 end

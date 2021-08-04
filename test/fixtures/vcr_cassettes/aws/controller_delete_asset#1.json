@@ -15,7 +15,7 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/117/testFolder/test2.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/117/testFolder/test2.png"
     },
     "response": {
       "binary": false,
@@ -49,7 +49,7 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/117/testFolder/test2.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/117/testFolder/test2.png"
     },
     "response": {
       "binary": false,

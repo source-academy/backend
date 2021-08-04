@@ -76,6 +76,7 @@ config :cadet,
   ],
   uploader: [
     assets_bucket: "test-sa-assets",
+    assets_prefix: "courses-test/",
     sourcecasts_bucket: "test-cadet-sourcecasts"
   ],
   remote_execution: [

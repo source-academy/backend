@@ -128,7 +128,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
           })
 
         assert json_response(conn, 200) ===
-                 "https://#{bucket()}.s3.amazonaws.com/#{course_id}/testFolder/test.png"
+                 "https://#{bucket()}.s3.amazonaws.com/courses-test/#{course_id}/testFolder/test.png"
       end
     end
   end
@@ -191,7 +191,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
           })
 
         assert json_response(conn, 200) ===
-                 "https://#{bucket()}.s3.amazonaws.com/#{course_id}/testFolder/nestedFolder/test.png"
+                 "https://#{bucket()}.s3.amazonaws.com/courses-test/#{course_id}/testFolder/nestedFolder/test.png"
       end
     end
   end

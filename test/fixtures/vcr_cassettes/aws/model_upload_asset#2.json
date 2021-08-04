@@ -15,11 +15,11 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/1/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/1/testFolder/test1.png"
     },
     "response": {
       "binary": false,
-      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>test-sa-assets</Bucket><Key>1/testFolder/test1.png</Key><UploadId>Jk9B8v0z6kdQbTsuU9S4Wu0r5oCPGDwid8meJ4h6sdUGwNyMKSetyBSCooSrl6zormlRXJDxmzcZMQJp9ylbq.aNQql.Vf048gE28hUz5_.bSzARS8fxYzPQFjgvxgkVLK4sCM.QSI3KtEc6JpYJHg--</UploadId></InitiateMultipartUploadResult>",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>test-sa-assets</Bucket><Key>courses-test/1/testFolder/test1.png</Key><UploadId>Jk9B8v0z6kdQbTsuU9S4Wu0r5oCPGDwid8meJ4h6sdUGwNyMKSetyBSCooSrl6zormlRXJDxmzcZMQJp9ylbq.aNQql.Vf048gE28hUz5_.bSzARS8fxYzPQFjgvxgkVLK4sCM.QSI3KtEc6JpYJHg--</UploadId></InitiateMultipartUploadResult>",
       "headers": {
         "Date": "Mon, 02 Aug 2021 10:59:53 GMT",
         "Transfer-Encoding": "chunked",
@@ -45,7 +45,7 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/1/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/1/testFolder/test1.png"
     },
     "response": {
       "binary": false,
@@ -75,7 +75,7 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/1/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/1/testFolder/test1.png"
     },
     "response": {
       "binary": false,
