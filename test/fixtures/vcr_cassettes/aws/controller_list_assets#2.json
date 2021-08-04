@@ -1,0 +1,33 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Authorization": "***",
+        "host": "s3.ap-southeast-1.amazonaws.com",
+        "x-amz-date": "20200704T190455Z",
+        "x-amz-content-sha256": "***"
+      },
+      "method": "get",
+      "options": {
+        "with_body": "true",
+        "recv_timeout": 660000
+      },
+      "request_body": "",
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/"
+    },
+    "response": {
+      "binary": false,
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Name>test-sa-assets</Name><Prefix>this-is-a-prefix/testFolder/</Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><IsTruncated>false</IsTruncated><Contents><Key>this-is-a-prefix/testFolder/</Key><LastModified>2020-07-04T18:53:11.000Z</LastModified><ETag>&quot;d41d8cd98f00b204e9800998ecf8427e&quot;</ETag><Size>0</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>this-is-a-prefix/testFolder/test.png</Key><LastModified>2020-07-04T19:04:50.000Z</LastModified><ETag>&quot;3104001edec38fadeb925b9dbddab198&quot;</ETag><Size>8035</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents><Contents><Key>this-is-a-prefix/testFolder/test2.png</Key><LastModified>2020-07-04T19:04:50.000Z</LastModified><ETag>&quot;3104001edec38fadeb925b9dbddab198&quot;</ETag><Size>8035</Size><Owner><ID>98bd2bd2de0c976fb511f741fea454cb1026b9e1f9ac9160fd9f51d07e765f19</ID><DisplayName>unixsp+cs1101s</DisplayName></Owner><StorageClass>STANDARD</StorageClass></Contents></ListBucketResult>",
+      "headers": {
+        "Date": "Sat, 04 Jul 2020 19:04:57 GMT",
+        "x-amz-bucket-region": "ap-southeast-1",
+        "Content-Type": "application/xml",
+        "Transfer-Encoding": "chunked",
+        "Server": "AmazonS3"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]

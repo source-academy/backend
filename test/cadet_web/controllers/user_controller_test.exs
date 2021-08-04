@@ -3,10 +3,10 @@ defmodule CadetWeb.UserControllerTest do
 
   import Cadet.Factory
 
-  alias Cadet.Repo
   alias CadetWeb.UserController
   # alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Accounts.{User, CourseRegistration}
+  alias Cadet.{Repo, Courses}
 
   test "swagger" do
     assert is_map(UserController.swagger_definitions())
@@ -100,7 +100,8 @@ defmodule CadetWeb.UserControllerTest do
           "courseName" => "Programming Methodology",
           "sourceChapter" => 1,
           "sourceVariant" => "default",
-          "viewable" => true
+          "viewable" => true,
+          "assetsPrefix" => Courses.assets_prefix(course)
         },
         "assessmentConfigurations" => [
           %{
@@ -226,7 +227,8 @@ defmodule CadetWeb.UserControllerTest do
           "courseName" => "Programming Methodology",
           "sourceChapter" => 1,
           "sourceVariant" => "default",
-          "viewable" => true
+          "viewable" => true,
+          "assetsPrefix" => Courses.assets_prefix(course)
         },
         "assessmentConfigurations" => []
       }
