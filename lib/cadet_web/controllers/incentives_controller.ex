@@ -108,12 +108,6 @@ defmodule CadetWeb.IncentivesController do
               "If true, XP awarded will depend on the goal progress"
             )
 
-            ability(
-              :string,
-              "Achievement ability i.e. category",
-              required: true
-            )
-
             cardBackground(
               :string,
               "URL of the achievement's background image"

@@ -6,7 +6,6 @@ defmodule Cadet.TestEntityHelper do
   defmacro achievement_literal(id) do
     Macro.escape(%{
       title: "Achievement #{id}",
-      ability: "Core",
       is_task: false,
       xp: 0,
       is_variable_xp: false,
@@ -20,7 +19,6 @@ defmodule Cadet.TestEntityHelper do
 
   defmacro achievement_json_literal(id) do
     Macro.escape(%{
-      "ability" => "Core",
       "position" => id,
       "title" => "Achievement #{id}",
       "xp" => 0,
