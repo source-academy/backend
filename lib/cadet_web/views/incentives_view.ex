@@ -10,7 +10,6 @@ defmodule CadetWeb.IncentivesView do
     transform_map_for_view(achievement, %{
       uuid: :uuid,
       title: :title,
-      ability: :ability,
       xp: :xp,
       isVariableXp: :is_variable_xp,
       release: &format_datetime(&1.open_at),
