@@ -91,7 +91,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     test "successfully namespaces and inserts users, and assign groups", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-      user = insert(:user, %{username: "test/existing-user"})
+      user = insert(:user, %{provider: "test", username: "existing-user"})
       insert(:course_registration, %{course: course, user: user})
 
       assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
@@ -124,7 +124,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     test "successful with duplicate inputs", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-      user = insert(:user, %{username: "test/existing-user"})
+      user = insert(:user, %{provider: "test", username: "existing-user"})
       insert(:course_registration, %{course: course, user: user})
 
       assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2

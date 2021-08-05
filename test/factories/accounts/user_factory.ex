@@ -10,6 +10,7 @@ defmodule Cadet.Accounts.UserFactory do
 
       def user_factory do
         %User{
+          provider: "test",
           name: Faker.Person.En.name(),
           username:
             sequence(
@@ -22,6 +23,7 @@ defmodule Cadet.Accounts.UserFactory do
 
       def student_factory do
         %User{
+          provider: "test",
           name: Faker.Person.En.name(),
           username:
             sequence(
