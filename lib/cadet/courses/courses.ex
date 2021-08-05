@@ -311,8 +311,8 @@ defmodule Cadet.Courses do
   @doc """
   Upload a sourcecast file.
 
-  Note that there are no checks for whether the user belongs to the course, as this has been checked
-  inside a plug in the router.
+  Note that there are no checks for whether the user belongs to the course,
+  as this has been checked inside a plug in the router.
   """
   def upload_sourcecast_file(
         _inserter = %CourseRegistration{user: user, course: course},
@@ -336,8 +336,8 @@ defmodule Cadet.Courses do
   # @doc """
   # Upload a public sourcecast file.
 
-  # Note that there are no checks for whether the user belongs to the course, as this has been checked
-  # inside a plug in the router.
+  # Note that there are no checks for whether the user belongs to the course,
+  # as this has been checked inside a plug in the router.
   # unused in the current version
   # """
   # def upload_sourcecast_file_public(
