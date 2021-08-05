@@ -514,8 +514,7 @@ defmodule Cadet.CoursesTest do
       path = SourcecastUpload.url({sourcecast.audio, sourcecast})
       assert path =~ "/uploads/test/sourcecasts/upload.wav"
 
-      deleter_course_registration = insert(:course_registration, %{role: :staff})
-      assert {:ok, _} = Courses.delete_sourcecast_file(deleter_course_registration, sourcecast.id)
+      assert {:ok, _} = Courses.delete_sourcecast_file(sourcecast.id)
       assert Repo.get(Sourcecast, sourcecast.id) == nil
       refute File.exists?("uploads/test/sourcecasts/upload.wav")
     end
