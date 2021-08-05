@@ -2,12 +2,14 @@ defmodule CadetWeb.AdminAssetsController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
+
   alias Cadet.Assets.Assets
+  alias Cadet.Courses
 
   def index(conn, _params = %{"foldername" => foldername}) do
     course_reg = conn.assigns.course_reg
 
-    case Assets.list_assets(course_reg.course_id, foldername) do
+    case Assets.list_assets(Courses.assets_prefix(course_reg.course), foldername) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       assets -> render(conn, "index.json", assets: assets)
     end
@@ -18,7 +20,7 @@ defmodule CadetWeb.AdminAssetsController do
     course_reg = conn.assigns.course_reg
     filename = Enum.join(filename, "/")
 
-    case Assets.delete_object(course_reg.course_id, foldername, filename) do
+    case Assets.delete_object(Courses.assets_prefix(course_reg.course), foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       _ -> conn |> put_status(204) |> text('')
     end
@@ -32,7 +34,12 @@ defmodule CadetWeb.AdminAssetsController do
     course_reg = conn.assigns.course_reg
     filename = Enum.join(filename, "/")
 
-    case Assets.upload_to_s3(upload_params, course_reg.course_id, foldername, filename) do
+    case Assets.upload_to_s3(
+           upload_params,
+           Courses.assets_prefix(course_reg.course),
+           foldername,
+           filename
+         ) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       resp -> render(conn, "show.json", resp: resp)
     end

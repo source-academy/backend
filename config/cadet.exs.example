@@ -100,6 +100,7 @@ config :cadet,
   ],
   uploader: [
     assets_bucket: "<unique-identifier>-assets",
+    assets_prefix: "courses/",
     sourcecasts_bucket: "<unique-identifier>-cadet-sourcecasts"
   ],
   # Configuration for Sling integration (executing on remote devices)

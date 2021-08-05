@@ -5,7 +5,7 @@
       "headers": {
         "Authorization": "***",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20210802T105953Z",
+        "x-amz-date": "20210802T110004Z",
         "content-length": "0",
         "x-amz-content-sha256": "***"
       },
@@ -15,13 +15,13 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/1/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test.png"
     },
     "response": {
       "binary": false,
-      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>test-sa-assets</Bucket><Key>courses-test/1/testFolder/test1.png</Key><UploadId>Jk9B8v0z6kdQbTsuU9S4Wu0r5oCPGDwid8meJ4h6sdUGwNyMKSetyBSCooSrl6zormlRXJDxmzcZMQJp9ylbq.aNQql.Vf048gE28hUz5_.bSzARS8fxYzPQFjgvxgkVLK4sCM.QSI3KtEc6JpYJHg--</UploadId></InitiateMultipartUploadResult>",
+      "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Bucket>test-sa-assets</Bucket><Key>this-is-a-prefix/testFolder/nestedFolder/test.png</Key><UploadId>jQOloaBCXjlYK5iRAQKuUVpX4bDPKZ0RSW8T3ndp4N.ZnW_e3eoE.AermyCbfytWRJ.i.tQ4lKSvruRteBTviJ5.492AlTIm6D08VEaszDayFRN_gGrdPclOZgxcT1b.UZ9V.Nku10KjcT7fc3BWbQ--</UploadId></InitiateMultipartUploadResult>",
       "headers": {
-        "Date": "Mon, 02 Aug 2021 10:59:53 GMT",
+        "Date": "Mon, 02 Aug 2021 11:00:04 GMT",
         "Transfer-Encoding": "chunked",
         "Server": "AmazonS3"
       },
@@ -35,7 +35,7 @@
       "headers": {
         "Authorization": "***",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20210802T105953Z",
+        "x-amz-date": "20210802T110004Z",
         "content-length": "0",
         "x-amz-content-sha256": "***"
       },
@@ -45,14 +45,14 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/1/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test.png"
     },
     "response": {
       "binary": false,
       "body": null,
       "headers": {
         "Content-Type": "application/xml",
-        "Date": "Mon, 02 Aug 2021 10:59:52 GMT",
+        "Date": "Mon, 02 Aug 2021 11:00:02 GMT",
         "Server": "AmazonS3"
       },
       "status_code": 404,
@@ -65,7 +65,7 @@
       "headers": {
         "Authorization": "***",
         "host": "s3.ap-southeast-1.amazonaws.com",
-        "x-amz-date": "20210802T105953Z",
+        "x-amz-date": "20210802T110004Z",
         "content-length": "95",
         "x-amz-content-sha256": "***"
       },
@@ -75,13 +75,13 @@
         "recv_timeout": 660000
       },
       "request_body": "",
-      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/courses-test/1/testFolder/test1.png"
+      "url": "https://s3.ap-southeast-1.amazonaws.com/test-sa-assets/this-is-a-prefix/testFolder/nestedFolder/test.png"
     },
     "response": {
       "binary": false,
       "body": "",
       "headers": {
-        "Date": "Mon, 02 Aug 2021 10:59:53 GMT",
+        "Date": "Mon, 02 Aug 2021 11:00:04 GMT",
         "ETag": "\"60cf42b4d05caf10cf8bb15c0817a7b4\"",
         "Server": "AmazonS3",
         "Content-Length": "0"

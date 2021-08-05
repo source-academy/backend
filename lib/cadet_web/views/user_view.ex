@@ -1,6 +1,8 @@
 defmodule CadetWeb.UserView do
   use CadetWeb, :view
 
+  alias Cadet.Courses
+
   def render("index.json", %{
         user: user,
         courses: courses,
@@ -104,7 +106,8 @@ defmodule CadetWeb.UserView do
           enableSourcecast: :enable_sourcecast,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
-          moduleHelpText: :module_help_text
+          moduleHelpText: :module_help_text,
+          assetsPrefix: &Courses.assets_prefix/1
         })
     end
   end

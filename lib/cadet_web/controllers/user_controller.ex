@@ -291,6 +291,7 @@ defmodule CadetWeb.UserController do
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
             assessment_types(:list, "Assessment Types", required: true)
+            assets_prefix(:string, "Assets prefix, used by the game")
           end
 
           example(%{
@@ -303,7 +304,8 @@ defmodule CadetWeb.UserController do
             source_chapter: 1,
             source_variant: "default",
             module_help_text: "Help text",
-            assessment_types: ["Missions", "Quests", "Paths", "Contests", "Others"]
+            assessment_types: ["Missions", "Quests", "Paths", "Contests", "Others"],
+            assets_prefix: "courses-prod/1/"
           })
         end,
       SourceVariant:
