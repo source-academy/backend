@@ -100,14 +100,14 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:close_at, close_at)
       |> Map.put(:course_id, course_id)
       |> Map.put(:config_id, assessment_config_id)
-
-    if assessment_params.access === "public" do
-      _ = Map.put(assessment_params, :password, nil)
-    end
-
-    if assessment_params.access === "private" and assessment_params.password === nil do
-      _ = Map.put(assessment_params, :password, "")
-    end
+      |> (&if(&1.access === "public",
+            do: Map.put(&1, :password, nil),
+            else: &1
+          )).()
+      |> (&if(&1.access === "private" and &1.password === nil,
+            do: Map.put(&1, :password, ""),
+            else: &1
+          )).()
 
     {:ok, assessment_params}
   rescue
