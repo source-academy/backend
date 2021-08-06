@@ -22,7 +22,6 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> where([cr], cr.user_id == ^user_id)
     |> where([cr], cr.course_id == ^course_id)
     |> preload(:course)
-    |> preload(:user)
     |> preload(:group)
     |> Repo.one()
   end

@@ -315,14 +315,11 @@ defmodule Cadet.Courses do
   as this has been checked inside a plug in the router.
   """
   def upload_sourcecast_file(
-        _inserter = %CourseRegistration{user: user, course: course},
+        _inserter = %CourseRegistration{user_id: user_id, course_id: course_id},
         attrs = %{}
       ) do
     changeset =
-      %Sourcecast{}
-      |> Sourcecast.changeset(attrs)
-      |> put_assoc(:uploader, user)
-      |> put_assoc(:course, course)
+      Sourcecast.changeset(%Sourcecast{uploader_id: user_id, course_id: course_id}, attrs)
 
     case Repo.insert(changeset) do
       {:ok, sourcecast} ->
