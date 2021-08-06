@@ -53,11 +53,6 @@ defmodule CadetWeb.UserController do
     get_course_reg_config(conn, latest)
   end
 
-  def get_course_reg(conn, _) do
-    course_reg = conn.assigns.course_reg
-    get_course_reg_config(conn, course_reg)
-  end
-
   defp get_course_reg_config(conn, course_reg) when is_nil(course_reg) do
     render(conn, "course.json", latest: nil, story: nil, xp: nil, max_xp: nil)
   end

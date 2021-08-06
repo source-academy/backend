@@ -52,16 +52,6 @@ defmodule CadetWeb.AdminStoriesController do
     end
   end
 
-  swagger_path :index do
-    get("/v2/courses/{course_id}/stories")
-
-    summary("Get a list of all stories")
-
-    security([%{JWT: []}])
-
-    response(200, "OK", Schema.array(:Story))
-  end
-
   swagger_path :create do
     post("/v2{course_id}/stories")
 
