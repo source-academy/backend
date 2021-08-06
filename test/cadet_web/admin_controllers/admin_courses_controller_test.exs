@@ -293,6 +293,18 @@ defmodule CadetWeb.AdminCoursesControllerTest do
     end
 
     @tag authenticate: :staff
+    test "rejects requests with invalid params: more than 8", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn =
+        put(conn, build_url_assessment_configs(course_id), %{
+          "assessmentConfigs" => [%{}, %{}, %{}, %{}, %{}, %{}, %{}, %{}, %{}]
+        })
+
+      assert response(conn, 400) == "Invalid parameter(s)"
+    end
+
+    @tag authenticate: :staff
     test "rejects requests with missing params", %{conn: conn} do
       course_id = conn.assigns[:course_id]
 
@@ -340,6 +352,15 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       conn = delete(conn, build_url_assessment_config(course_id + 1, 1))
 
       assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "fails if config does not exist", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn = delete(conn, build_url_assessment_config(course_id, 1))
+
+      assert response(conn, 400) == "The given assessment configuration does not exist"
     end
   end
 

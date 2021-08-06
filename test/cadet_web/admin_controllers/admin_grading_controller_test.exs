@@ -383,6 +383,14 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       assert expected == json_response(conn, 200)
     end
+
+    @tag authenticate: :staff
+    test "fail due to non existing submission", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn = get(conn, build_url(course_id, 1))
+      assert response(conn, 400) == "Submission is not found."
+    end
   end
 
   describe "POST /:submissionid/:questionid, staff" do
@@ -1009,6 +1017,14 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       assert expected == json_response(conn, 200)
     end
+
+    @tag authenticate: :admin
+    test "fail due to non existing submission", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn = get(conn, build_url(course_id, 1))
+      assert response(conn, 400) == "Submission is not found."
+    end
   end
 
   describe "POST /:submissionid/:questionid, admin" do
@@ -1093,7 +1109,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
       }
 
       assert expected["cols"] == resp["cols"]
-      assert expected["rows"] == Enum.sort_by(resp["rows"], & &1["groupName"])
+
+      assert Enum.sort_by(expected["rows"], & &1["groupName"]) ==
+               Enum.sort_by(resp["rows"], & &1["groupName"])
     end
 
     @tag authenticate: :student
@@ -1130,9 +1148,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assert conn |> post(build_url_autograde(course.id, submission.id)) |> response(403)
     end
 
-    @tag authenticate: :student
+    @tag authenticate: :staff
     test "fails if not found", %{conn: conn, course: course} do
-      assert conn |> post(build_url_autograde(course.id, 2_147_483_647)) |> response(403)
+      assert conn |> post(build_url_autograde(course.id, 2_147_483_647)) |> response(404) ==
+               "Submission not found"
     end
   end
 
@@ -1177,9 +1196,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
              |> response(403)
     end
 
-    @tag authenticate: :student
+    @tag authenticate: :staff
     test "fails if not found", %{conn: conn, course: course} do
-      assert conn |> post(build_url_autograde(course.id, 2_147_483_647, 123_456)) |> response(403)
+      assert conn |> post(build_url_autograde(course.id, 2_147_483_647, 123_456)) |> response(404) ==
+               "Answer not found"
     end
   end
 

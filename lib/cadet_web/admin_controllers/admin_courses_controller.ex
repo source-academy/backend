@@ -13,8 +13,12 @@ defmodule CadetWeb.AdminCoursesController do
       {:ok, _} ->
         text(conn, "OK")
 
+      # coveralls-ignore-start
+      # case of invalid course_id will not happen here
       {:error, {status, message}} ->
         send_resp(conn, status, message)
+
+      # coveralls-ignore-stop
 
       {:error, _} ->
         conn
@@ -34,6 +38,7 @@ defmodule CadetWeb.AdminCoursesController do
       })
       when is_ecto_id(course_id) and is_list(assessment_configs) do
     if Enum.all?(assessment_configs, &is_map/1) do
+      # coveralls-ignore-start
       configs =
         assessment_configs
         |> Enum.map(&to_snake_case_atom_keys/1)
@@ -44,6 +49,8 @@ defmodule CadetWeb.AdminCoursesController do
             do: Map.put(m, :show_grading_summary, v)
           )
         )
+
+      # coveralls-ignore-stop
 
       case Courses.mass_upsert_and_reorder_assessment_configs(course_id, configs) do
         {:ok, _} ->

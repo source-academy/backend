@@ -7,8 +7,14 @@ defmodule CadetWeb.CoursesController do
 
   def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     case Courses.get_course_config(course_id) do
-      {:ok, config} -> render(conn, "config.json", config: config)
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, config} ->
+        render(conn, "config.json", config: config)
+
+      # coveralls-ignore-start
+      # no course error will not happen here
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
+        # coveralls-ignore-stop
     end
   end
 

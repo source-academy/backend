@@ -275,7 +275,7 @@ defmodule CadetWeb.UserControllerTest do
 
   describe "PUT /v2/user/latest_viewed_course/{course_id}" do
     @tag authenticate: :student
-    test "success, updating game state", %{conn: conn} do
+    test "success, updating latest course", %{conn: conn} do
       user = conn.assigns.current_user
       new_course = insert(:course)
       insert(:course_registration, %{user: user, course: new_course})
@@ -287,6 +287,15 @@ defmodule CadetWeb.UserControllerTest do
       updated_user = Repo.get(User, user.id)
 
       assert new_course.id == updated_user.latest_viewed_course_id
+    end
+
+    @tag authenticate: :student
+    test "fail, user not in course", %{conn: conn} do
+      new_course = insert(:course)
+
+      assert conn
+             |> put("/v2/user/latest_viewed_course", %{"courseId" => new_course.id})
+             |> response(400) == "user is not in the course"
     end
   end
 
@@ -308,6 +317,17 @@ defmodule CadetWeb.UserControllerTest do
       updated_cr = Repo.get_by(CourseRegistration, course_id: course_id, user_id: user.id)
 
       assert new_game_states == updated_cr.game_states
+    end
+
+    @tag authenticate: :student
+    test "fail due to invalid changeset", %{conn: conn} do
+      course_id = conn.assigns.course_id
+
+      new_game_states = 1
+
+      assert conn
+             |> put(build_url(course_id) <> "/game_states", %{"gameStates" => new_game_states})
+             |> response(400) == "game_states is invalid"
     end
   end
 
@@ -333,6 +353,19 @@ defmodule CadetWeb.UserControllerTest do
 
       updated_cr = Repo.get_by(CourseRegistration, course_id: course_id, user_id: user.id)
       assert updated_cr.agreed_to_research == true
+    end
+
+    @tag authenticate: :student
+    test "fail, due to invalid changeset", %{conn: conn} do
+      course_id = conn.assigns.course_id
+
+      params = %{
+        "agreedToResearch" => 1
+      }
+
+      assert conn
+             |> put(build_url(course_id) <> "/research_agreement", params)
+             |> response(400) == "agreed_to_research is invalid"
     end
   end
 

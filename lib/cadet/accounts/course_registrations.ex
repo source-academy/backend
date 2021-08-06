@@ -137,12 +137,12 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.insert_or_update()
   end
 
-  def update_game_states(cr = %CourseRegistration{}, new_game_state = %{}) do
+  def update_game_states(cr = %CourseRegistration{}, new_game_state) do
     case cr
          |> CourseRegistration.changeset(%{game_states: new_game_state})
          |> Repo.update() do
       result = {:ok, _} -> result
-      {:error, changeset} -> {:error, {:internal_server_error, full_error_messages(changeset)}}
+      {:error, changeset} -> {:error, {:bad_request, full_error_messages(changeset)}}
     end
   end
 

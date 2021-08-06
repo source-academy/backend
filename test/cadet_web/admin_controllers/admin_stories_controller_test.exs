@@ -114,6 +114,16 @@ defmodule CadetWeb.AdminStoriesControllerTest do
       assert inserted_story |> Map.take(Map.keys(params)) == params
       assert response(conn, 200) == ""
     end
+
+    @tag authenticate: :staff
+    test "fail due to invalid changeset", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn = post(conn, build_url(course_id), %{"story" => %{}})
+
+      assert response(conn, 400) ==
+               "close_at can't be blank\nfilenames can't be blank\nopen_at can't be blank\ntitle can't be blank"
+    end
   end
 
   describe "POST /v2/courses/{course_id}/admin/stories/:storyid" do

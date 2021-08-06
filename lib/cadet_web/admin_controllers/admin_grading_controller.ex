@@ -82,12 +82,6 @@ defmodule CadetWeb.AdminGradingController do
     end
   end
 
-  def unsubmit(conn, _params) do
-    conn
-    |> put_status(:bad_request)
-    |> text("Missing parameter")
-  end
-
   def autograde_submission(conn, %{"submissionid" => submission_id}) do
     course_reg = conn.assigns[:course_reg]
 

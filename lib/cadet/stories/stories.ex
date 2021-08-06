@@ -2,7 +2,7 @@ defmodule Cadet.Stories.Stories do
   @moduledoc """
   Manages stories for the Source Academy game
   """
-  use Cadet, [:context]
+  use Cadet, [:context, :display]
 
   import Ecto.Query
 
@@ -24,9 +24,15 @@ defmodule Cadet.Stories.Stories do
   end
 
   def create_story(attrs = %{}, course_id) do
-    %Story{}
-    |> Story.changeset(Map.put(attrs, :course_id, course_id))
-    |> Repo.insert()
+    case %Story{}
+         |> Story.changeset(Map.put(attrs, :course_id, course_id))
+         |> Repo.insert() do
+      {:ok, _} = result ->
+        result
+
+      {:error, changeset} ->
+        {:error, {:bad_request, full_error_messages(changeset)}}
+    end
   end
 
   def update_story(attrs = %{}, id, course_id) do

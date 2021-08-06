@@ -172,6 +172,16 @@ defmodule CadetWeb.AdminSourcecastControllerTest do
       conn = post(conn, build_url(course_id), %{})
       assert response(conn, 400) =~ "Missing or invalid parameter(s)"
     end
+
+    @tag authenticate: :staff
+    test "invalid changeset", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn = post(conn, build_url(course_id), %{"sourcecast" => %{}})
+
+      assert response(conn, 400) =~
+               "audio can't be blank\nplaybackData can't be blank\ntitle can't be blank"
+    end
   end
 
   describe "DELETE /v2/courses/{course_id}/sourcecast, staff" do
@@ -194,9 +204,18 @@ defmodule CadetWeb.AdminSourcecastControllerTest do
       %{sourcecasts: sourcecasts} = seed_db(course_id)
       sourcecast = List.first(sourcecasts)
 
-      conn = delete(conn, build_url(course_id, sourcecast.id), %{})
+      conn = delete(conn, build_url(course_id, sourcecast.id))
 
       assert response(conn, 200) =~ "OK"
+    end
+
+    @tag authenticate: :staff
+    test "fail due to not found", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn = delete(conn, build_url(course_id, 1))
+
+      assert response(conn, 404) =~ "Sourcecast not found"
     end
   end
 

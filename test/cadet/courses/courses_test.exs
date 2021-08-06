@@ -392,7 +392,8 @@ defmodule Cadet.CoursesTest do
       course = insert(:course)
       insert(:assessment_config, %{order: 1, course: course})
 
-      assert {:error, :no_such_enrty} == Courses.delete_assessment_config(course.id, -1)
+      assert {:error, "The given assessment configuration does not exist"} ==
+               Courses.delete_assessment_config(course.id, -1)
     end
   end
 

@@ -186,7 +186,7 @@ defmodule Cadet.Courses do
 
     case config do
       nil ->
-        {:error, :no_such_enrty}
+        {:error, "The given assessment configuration does not exist"}
 
       config ->
         Assessment
@@ -368,8 +368,15 @@ defmodule Cadet.Courses do
   """
   def delete_sourcecast_file(sourcecast_id) do
     sourcecast = Repo.get(Sourcecast, sourcecast_id)
-    SourcecastUpload.delete({sourcecast.audio, sourcecast})
-    Repo.delete(sourcecast)
+
+    case sourcecast do
+      nil ->
+        {:error, {:not_found, "Sourcecast not found!"}}
+
+      sourcecast ->
+        SourcecastUpload.delete({sourcecast.audio, sourcecast})
+        Repo.delete(sourcecast)
+    end
   end
 
   @doc """
