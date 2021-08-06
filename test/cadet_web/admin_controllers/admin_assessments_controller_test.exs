@@ -197,6 +197,32 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert response(conn, 200) == "OK"
       assert is_nil(Repo.get(Assessment, assessment.id))
     end
+
+    @tag authenticate: :staff
+    test "error due to different course", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      another_course = insert(:course)
+      config = insert(:assessment_config, %{course: another_course})
+      assessment = insert(:assessment, %{course: another_course, config: config})
+
+      conn = delete(conn, build_url(course.id, assessment.id))
+      assert response(conn, 403) == "User not allow to delete assessments from another course"
+      refute is_nil(Repo.get(Assessment, assessment.id))
+    end
+
+    # @tag authenticate: :staff
+    # test "error due to different course", %{conn: conn} do
+    #   test_cr = conn.assigns.test_cr
+    #   course = test_cr.course
+    #   another_course = insert(:course)
+    #   config = insert(:assessment_config, %{course: another_course})
+    #   assessment = insert(:assessment, %{course: another_course, config: config})
+
+    #   conn = delete(conn, build_url(course.id, assessment.id))
+    #   assert response(conn, 403) == "User not allow to delete assessments from another course"
+    #   refute is_nil(Repo.get(Assessment, assessment.id))
+    # end
   end
 
   describe "POST /:assessment_id, unauthenticated, publish" do

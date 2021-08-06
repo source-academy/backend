@@ -3,7 +3,10 @@ defmodule CadetWeb.AdminAssessmentsController do
 
   use PhoenixSwagger
 
+  import Ecto.Query, only: [where: 2]
   alias Cadet.Assessments
+  alias Cadet.Assessments.Assessment
+  alias Cadet.Repo
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
   def create(conn, %{
@@ -40,12 +43,15 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def delete(conn, %{"assessmentid" => assessment_id}) do
-    result = Assessments.delete_assessment(assessment_id)
-
-    case result do
-      {:ok, _nil} ->
-        text(conn, "OK")
+  def delete(conn, %{"course_id" => course_id, "assessmentid" => assessment_id}) do
+    with {:same_course, true} <- {:same_course, is_same_course(course_id, assessment_id)},
+         {:ok, _} <- Assessments.delete_assessment(assessment_id) do
+      text(conn, "OK")
+    else
+      {:same_course, false} ->
+        conn
+        |> put_status(403)
+        |> text("User not allow to delete assessments from another course")
 
       {:error, {status, message}} ->
         conn
@@ -93,6 +99,13 @@ defmodule CadetWeb.AdminAssessmentsController do
         {:ok, assessment}
       end
     end
+  end
+
+  defp is_same_course(course_id, assessment_id) do
+    Assessment
+    |> where(id: ^assessment_id)
+    |> where(course_id: ^course_id)
+    |> Repo.exists?()
   end
 
   swagger_path :create do
