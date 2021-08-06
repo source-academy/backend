@@ -4,6 +4,7 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
   use Cadet.ChangesetCase, entity: CourseRegistration
 
   alias Cadet.Repo
+  alias Cadet.Assessments.{Submission, Answer}
 
   setup do
     user1 = insert(:user, %{name: "user 1"})
@@ -213,6 +214,17 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
       assert User |> where(id: ^user2.id) |> Repo.one() |> Map.fetch!(:latest_viewed_course_id) ==
                course1.id
     end
+
+    test "fail due to invalid changeset", %{course1: course1, user2: user2} do
+      {:error, changeset} =
+        CourseRegistrations.enroll_course(%{
+          user_id: user2.id,
+          course_id: course1.id,
+          role: :avenger
+        })
+
+      refute changeset.valid?
+    end
   end
 
   describe "update course_registration" do
@@ -318,13 +330,21 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
   describe "delete_course_registration" do
     setup do
       student = insert(:course_registration, %{role: :student})
+      assessment = insert(:assessment)
+      submission = insert(:submission, %{assessment: assessment, student: student})
+      question = insert(:question, %{assessment: assessment})
+      insert(:answer, %{submission: submission, question: question})
 
-      {:ok, %{student: student}}
+      {:ok, %{student: student, submission: submission}}
     end
 
-    test "succeeds", %{student: %{id: coursereg_id}} do
+    test "succeeds", %{student: %{id: coursereg_id}, submission: %{id: submission_id}} do
+      refute is_nil(Submission |> where(student_id: ^coursereg_id) |> Repo.one())
+      refute is_nil(Answer |> where(submission_id: ^submission_id) |> Repo.one())
       {:ok, _deleted_coursereg} = CourseRegistrations.delete_course_registration(coursereg_id)
       assert is_nil(CourseRegistration |> where(id: ^coursereg_id) |> Repo.one())
+      assert is_nil(Submission |> where(student_id: ^coursereg_id) |> Repo.one())
+      assert is_nil(Answer |> where(submission_id: ^submission_id) |> Repo.one())
     end
 
     test "fails when course registration does not exist", %{} do

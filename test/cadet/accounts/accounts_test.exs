@@ -9,7 +9,7 @@ defmodule Cadet.AccountsTest do
   alias Cadet.{Accounts, Repo}
   alias Cadet.Accounts.{Query, User}
 
-  # import Mock
+  import Mock
 
   setup_all do
     HTTPoison.start()
@@ -69,11 +69,12 @@ defmodule Cadet.AccountsTest do
                Accounts.sign_in("student", "invalid_token", "test")
     end
 
-    # test_with_mock "upstream error", Cadet.Auth.Provider,
-    #   get_role: fn _, _ -> {:error, :upstream, "Upstream error"} end do
-    #   assert {:error, :bad_request, "Upstream error"} ==
-    #            Accounts.sign_in("student", "student_token", "test")
-    # end
+    test_with_mock "upstream error", Cadet.Auth.Provider,
+      get_role: fn _, _ -> {:error, :upstream, "Upstream error"} end,
+      get_name: fn _, _ -> {:error, :upstream, "Upstream error"} end do
+      assert {:error, :bad_request, "Upstream error"} ==
+               Accounts.sign_in("student", "student_token", "test")
+    end
   end
 
   # describe "sign in with unregistered user gets the right roles" do

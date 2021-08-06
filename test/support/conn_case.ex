@@ -54,6 +54,7 @@ defmodule CadetWeb.ConnCase do
     if tags[:authenticate] do
       course = Factory.insert(:course, id: tags[:course_id])
       user = Factory.insert(:user, %{latest_viewed_course: course})
+      group = if tags[:group], do: Factory.insert(:group, course: course), else: nil
 
       course_registration =
         cond do
@@ -61,7 +62,8 @@ defmodule CadetWeb.ConnCase do
             Factory.insert(:course_registration, %{
               user: user,
               course: course,
-              role: tags[:authenticate]
+              role: tags[:authenticate],
+              group: group
             })
 
           # :TODO: This is_map case has not been handled. To recheck in the future.

@@ -1,6 +1,7 @@
 defmodule CadetWeb.UserControllerTest do
   use CadetWeb.ConnCase
 
+  import Ecto.Query
   import Cadet.Factory
 
   alias CadetWeb.UserController
@@ -18,14 +19,19 @@ defmodule CadetWeb.UserControllerTest do
   end
 
   describe "GET v2/user" do
-    @tag authenticate: :student
+    @tag authenticate: :student, group: true
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
       course = user.latest_viewed_course
       config2 = insert(:assessment_config, %{order: 2, type: "test type 2", course: course})
       config3 = insert(:assessment_config, %{order: 3, type: "test type 3", course: course})
       config1 = insert(:assessment_config, %{order: 1, type: "test type 1", course: course})
-      cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
+
+      cr =
+        CourseRegistration
+        |> preload(:group)
+        |> Repo.get_by(course_id: course.id, user_id: user.id)
+
       another_cr = insert(:course_registration, %{user: user, role: :admin})
       assessment = insert(:assessment, %{is_published: true, course: course})
       question = insert(:question, %{assessment: assessment})
@@ -88,7 +94,7 @@ defmodule CadetWeb.UserControllerTest do
           "courseRegId" => cr.id,
           "courseId" => course.id,
           "role" => "#{cr.role}",
-          "group" => nil,
+          "group" => cr.group.name,
           "xp" => 110,
           "maxXp" => question.max_xp,
           "gameStates" => %{},
@@ -168,11 +174,16 @@ defmodule CadetWeb.UserControllerTest do
   end
 
   describe "GET /v2/user/latest_viewed_course" do
-    @tag authenticate: :student
+    @tag authenticate: :student, group: true
     test "success, student non-story fields", %{conn: conn} do
       user = conn.assigns.current_user
       course = user.latest_viewed_course
-      cr = Repo.get_by(CourseRegistration, course_id: course.id, user_id: user.id)
+
+      cr =
+        CourseRegistration
+        |> preload(:group)
+        |> Repo.get_by(course_id: course.id, user_id: user.id)
+
       _another_cr = insert(:course_registration, %{user: user})
       assessment = insert(:assessment, %{is_published: true, course: course})
       question = insert(:question, %{assessment: assessment})
@@ -215,7 +226,7 @@ defmodule CadetWeb.UserControllerTest do
           "courseRegId" => cr.id,
           "courseId" => course.id,
           "role" => "#{cr.role}",
-          "group" => nil,
+          "group" => cr.group.name,
           "xp" => 110,
           "maxXp" => question.max_xp,
           "gameStates" => %{},

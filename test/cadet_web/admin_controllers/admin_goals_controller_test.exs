@@ -10,7 +10,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
   test "swagger" do
     assert is_map(AdminGoalsController.swagger_path_index(nil))
-    assert is_map(AdminGoalsController.swagger_path_index(nil))
+    assert is_map(AdminGoalsController.swagger_path_index_goals_with_progress(nil))
     assert is_map(AdminGoalsController.swagger_path_update(nil))
     assert is_map(AdminGoalsController.swagger_path_bulk_update(nil))
     assert is_map(AdminGoalsController.swagger_path_delete(nil))
