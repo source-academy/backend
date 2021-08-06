@@ -9,61 +9,29 @@ defmodule CadetWeb.SourcecastController do
     render(conn, "index.json", sourcecasts: sourcecasts)
   end
 
-  def index(conn, _params) do
-    sourcecasts = Courses.get_sourcecast_files()
-    render(conn, "index.json", sourcecasts: sourcecasts)
-  end
+  # def index(conn, _params) do
+  #   sourcecasts = Courses.get_sourcecast_files()
+  #   render(conn, "index.json", sourcecasts: sourcecasts)
+  # end
 
-  def create(conn, %{"sourcecast" => sourcecast, "public" => _public}) do
-    result =
-      Courses.upload_sourcecast_file_public(
-        conn.assigns.current_user,
-        conn.assigns.course_reg,
-        sourcecast
-      )
+  # def create(conn, %{"sourcecast" => sourcecast, "public" => _public}) do
+  #   result =
+  #     Courses.upload_sourcecast_file_public(
+  #       conn.assigns.current_user,
+  #       conn.assigns.course_reg,
+  #       sourcecast
+  #     )
 
-    case result do
-      {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
+  #   case result do
+  #     {:ok, _nil} ->
+  #       send_resp(conn, 200, "OK")
 
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def create(conn, %{"sourcecast" => sourcecast}) do
-    result = Courses.upload_sourcecast_file(conn.assigns.course_reg, sourcecast)
-
-    case result do
-      {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
-
-  def create(conn, _params) do
-    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
-  end
-
-  def delete(conn, %{"id" => id}) do
-    result = Courses.delete_sourcecast_file(conn.assigns.course_reg, id)
-
-    case result do
-      {:ok, _nil} ->
-        send_resp(conn, 200, "OK")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
-  end
+  #     {:error, {status, message}} ->
+  #       conn
+  #       |> put_status(status)
+  #       |> text(message)
+  #   end
+  # end
 
   swagger_path :index do
     get("/sourcecast")
@@ -71,43 +39,6 @@ defmodule CadetWeb.SourcecastController do
     summary("Show all sourcecasts")
     produces("application/json")
     security([%{JWT: []}])
-
-    response(200, "Success")
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :create do
-    post("/sourcecast")
-    description("Uploads sourcecast")
-    summary("Upload sourcecast")
-    consumes("multipart/form-data")
-    security([%{JWT: []}])
-
-    parameters do
-      public(
-        :body,
-        :boolean,
-        "Uploads as public sourcecast when 'public' is specified regardless of truthy or falsy"
-      )
-
-      sourcecast(:body, Schema.ref(:Sourcecast), "sourcecast object", required: true)
-    end
-
-    response(200, "Success")
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/sourcecast/{id}")
-    description("Deletes sourcecast by id")
-    summary("Delete sourcecast")
-    security([%{JWT: []}])
-
-    parameters do
-      id(:path, :integer, "sourcecast id", required: true)
-    end
 
     response(200, "Success")
     response(400, "Invalid or missing parameter(s)")

@@ -39,7 +39,7 @@ defmodule Cadet.StoriesTest do
       story1 = :story |> insert(%{course: course}) |> remove_course_assoc()
       story2 = :story |> insert(%{course: course}) |> remove_course_assoc()
 
-      assert Stories.list_stories(insert(:course_registration, %{course: course, role: :staff})) ==
+      assert Stories.list_stories(course.id, true) ==
                [story1, story2]
     end
 
@@ -48,7 +48,7 @@ defmodule Cadet.StoriesTest do
       insert(:story)
       story2 = :story |> insert(%{course: course}) |> remove_course_assoc()
 
-      assert Stories.list_stories(insert(:course_registration, %{course: course, role: :staff})) ==
+      assert Stories.list_stories(course.id, true) ==
                [story2]
     end
 
@@ -69,94 +69,71 @@ defmodule Cadet.StoriesTest do
         })
         |> remove_course_assoc()
 
-      assert Stories.list_stories(insert(:course_registration, %{course: course, role: :student})) ==
+      assert Stories.list_stories(course.id, false) ==
                [published_open_story]
     end
   end
 
   describe "Create story" do
-    test "create course story as staff", %{valid_params: params} do
-      course_registration = insert(:course_registration, %{role: :staff})
-      {:ok, story} = Stories.create_story(params, course_registration)
-      params = Map.put(params, :course_id, course_registration.course_id)
+    test "create course story", %{valid_params: params} do
+      course = insert(:course)
+      {:ok, story} = Stories.create_story(params, course.id)
+      params = Map.put(params, :course_id, course.id)
 
       assert story |> Map.take(params |> Map.keys()) == params
-    end
-
-    test "students not allowed to create story", %{valid_params: params} do
-      course_registration = insert(:course_registration, %{role: :student})
-
-      assert {:error, {:forbidden, "User not allowed to manage stories"}} =
-               Stories.create_story(params, course_registration)
     end
   end
 
   describe "Update story" do
     test "updating story as staff in own course", %{updated_params: updated_params} do
-      course_registration = insert(:course_registration, %{role: :staff})
-      story = insert(:story, %{course: course_registration.course})
-      {:ok, updated_story} = Stories.update_story(updated_params, story.id, course_registration)
-      updated_params = Map.put(updated_params, :course_id, course_registration.course_id)
+      course = insert(:course)
+      story = insert(:story, %{course: course})
+      {:ok, updated_story} = Stories.update_story(updated_params, story.id, course.id)
+      updated_params = Map.put(updated_params, :course_id, course.id)
 
       assert updated_story |> Map.take(updated_params |> Map.keys()) == updated_params
     end
 
     test "updating story that does not exist as staff", %{updated_params: updated_params} do
-      course_registration = insert(:course_registration, %{role: :staff})
-      story = insert(:story, %{course: course_registration.course})
+      course = insert(:course)
+      story = insert(:story, %{course: course})
 
       {:error, {:not_found, "Story not found"}} =
-        Stories.update_story(updated_params, story.id + 1, course_registration)
+        Stories.update_story(updated_params, story.id + 1, course.id)
     end
 
     test "staff fails to update story of another course", %{updated_params: updated_params} do
-      course_registration = insert(:course_registration, %{role: :staff})
+      course = insert(:course)
       story = insert(:story, %{course: build(:course)})
 
       assert {:error, {:forbidden, "User not allowed to manage stories from another course"}} =
-               Stories.update_story(updated_params, story.id, course_registration)
-    end
-
-    test "student fails to update story of own course", %{updated_params: updated_params} do
-      course_registration = insert(:course_registration, %{role: :student})
-      story = insert(:story, %{course: course_registration.course})
-
-      assert {:error, {:forbidden, "User not allowed to manage stories"}} =
-               Stories.update_story(updated_params, story.id, course_registration)
+               Stories.update_story(updated_params, story.id, course.id)
     end
   end
 
   describe "Delete story" do
     test "staff deleting course story from own course" do
-      course_registration = insert(:course_registration, %{role: :staff})
-      story = insert(:story, %{course: course_registration.course})
-      {:ok, story} = Stories.delete_story(story.id, course_registration)
+      course = insert(:course)
+      story = insert(:story, %{course: course})
+      {:ok, story} = Stories.delete_story(story.id, course.id)
 
       assert Repo.get(Story, story.id) == nil
     end
 
     test "staff deleting course story that does not exist" do
-      course_registration = insert(:course_registration, %{role: :staff})
-      story = insert(:story, %{course: course_registration.course})
+      course = insert(:course)
+      story = insert(:story, %{course: course})
 
       assert {:error, {:not_found, "Story not found"}} =
-               Stories.delete_story(story.id + 1, course_registration)
+               Stories.delete_story(story.id + 1, course.id)
     end
 
     test "staff fails to delete story from another course" do
-      course_registration = insert(:course_registration, %{role: :staff})
+      course = insert(:course)
       story = insert(:story, %{course: build(:course)})
 
       assert {:error, {:forbidden, "User not allowed to manage stories from another course"}} =
-               Stories.delete_story(story.id, course_registration)
-    end
-
-    test "student fails to delete story from own course" do
-      course_registration = insert(:course_registration, %{role: :student})
-      story = insert(:story, %{course: course_registration.course})
-
-      assert {:error, {:forbidden, "User not allowed to manage stories"}} =
-               Stories.delete_story(story.id, course_registration)
+               Stories.delete_story(story.id, course.id)
     end
   end
 

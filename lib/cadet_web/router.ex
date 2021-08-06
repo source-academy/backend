@@ -34,7 +34,7 @@ defmodule CadetWeb.Router do
   scope "/v2", CadetWeb do
     pipe_through([:api, :auth])
 
-    get("/sourcecast", SourcecastController, :index)
+    # get("/sourcecast", SourcecastController, :index)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
@@ -71,7 +71,6 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
     get("/sourcecast", SourcecastController, :index)
-    resources("/sourcecast", SourcecastController, only: [:create, :delete])
 
     get("/assessments", AssessmentsController, :index)
     get("/assessments/:assessmentid", AssessmentsController, :show)
@@ -82,9 +81,6 @@ defmodule CadetWeb.Router do
     get("/achievements", IncentivesController, :index_achievements)
 
     get("/stories", StoriesController, :index)
-    post("/stories", StoriesController, :create)
-    delete("/stories/:storyid", StoriesController, :delete)
-    post("/stories/:storyid", StoriesController, :update)
 
     get("/notifications", NotificationsController, :index)
     post("/notifications/acknowledge", NotificationsController, :acknowledge)
@@ -107,6 +103,8 @@ defmodule CadetWeb.Router do
   # Admin pages
   scope "/v2/courses/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
+
+    resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
@@ -144,6 +142,10 @@ defmodule CadetWeb.Router do
     put("/goals", AdminGoalsController, :bulk_update)
     put("/goals/:uuid", AdminGoalsController, :update)
     delete("/goals/:uuid", AdminGoalsController, :delete)
+
+    post("/stories", AdminStoriesController, :create)
+    delete("/stories/:storyid", AdminStoriesController, :delete)
+    post("/stories/:storyid", AdminStoriesController, :update)
 
     put("/config", AdminCoursesController, :update_course_config)
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)

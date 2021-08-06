@@ -7,16 +7,10 @@ defmodule Cadet.Stories.Stories do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.CourseRegistration
   alias Cadet.Stories.Story
-  alias Cadet.Courses.Course
 
-  @manage_stories_role ~w(staff admin)a
-
-  def list_stories(
-        _user_course_registration = %CourseRegistration{course_id: course_id, role: role}
-      ) do
-    if role in @manage_stories_role do
+  def list_stories(course_id, list_all) do
+    if list_all do
       Story
       |> where(course_id: ^course_id)
       |> Repo.all()
@@ -29,66 +23,39 @@ defmodule Cadet.Stories.Stories do
     end
   end
 
-  def create_story(
-        attrs = %{},
-        _user_course_registration = %CourseRegistration{course_id: course_id, role: role}
-      ) do
-    if role in @manage_stories_role do
-      course =
-        Course
-        |> where(id: ^course_id)
-        |> Repo.one()
+  def create_story(attrs = %{}, course_id) do
+    %Story{}
+    |> Story.changeset(Map.put(attrs, :course_id, course_id))
+    |> Repo.insert()
+  end
 
-      %Story{}
-      |> Story.changeset(Map.put(attrs, :course_id, course.id))
-      |> Repo.insert()
-    else
-      {:error, {:forbidden, "User not allowed to manage stories"}}
+  def update_story(attrs = %{}, id, course_id) do
+    case Repo.get(Story, id) do
+      nil ->
+        {:error, {:not_found, "Story not found"}}
+
+      story ->
+        if story.course_id == course_id do
+          story
+          |> Story.changeset(attrs)
+          |> Repo.update()
+        else
+          {:error, {:forbidden, "User not allowed to manage stories from another course"}}
+        end
     end
   end
 
-  def update_story(
-        attrs = %{},
-        id,
-        _user_course_registration = %CourseRegistration{course_id: course_id, role: role}
-      ) do
-    if role in @manage_stories_role do
-      case Repo.get(Story, id) do
-        nil ->
-          {:error, {:not_found, "Story not found"}}
+  def delete_story(id, course_id) do
+    case Repo.get(Story, id) do
+      nil ->
+        {:error, {:not_found, "Story not found"}}
 
-        story ->
-          if story.course_id == course_id do
-            story
-            |> Story.changeset(attrs)
-            |> Repo.update()
-          else
-            {:error, {:forbidden, "User not allowed to manage stories from another course"}}
-          end
-      end
-    else
-      {:error, {:forbidden, "User not allowed to manage stories"}}
-    end
-  end
-
-  def delete_story(
-        id,
-        _user_course_registration = %CourseRegistration{course_id: course_id, role: role}
-      ) do
-    if role in @manage_stories_role do
-      case Repo.get(Story, id) do
-        nil ->
-          {:error, {:not_found, "Story not found"}}
-
-        story ->
-          if story.course_id == course_id do
-            Repo.delete(story)
-          else
-            {:error, {:forbidden, "User not allowed to manage stories from another course"}}
-          end
-      end
-    else
-      {:error, {:forbidden, "User not allowed to manage stories"}}
+      story ->
+        if story.course_id == course_id do
+          Repo.delete(story)
+        else
+          {:error, {:forbidden, "User not allowed to manage stories from another course"}}
+        end
     end
   end
 end
