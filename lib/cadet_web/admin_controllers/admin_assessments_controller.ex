@@ -4,10 +4,10 @@ defmodule CadetWeb.AdminAssessmentsController do
   use PhoenixSwagger
 
   import Ecto.Query, only: [where: 2]
-  alias Cadet.Assessments
-  alias Cadet.Assessments.Assessment
-  alias Cadet.Repo
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
+
+  alias Cadet.{Assessments, Repo}
+  alias Cadet.Assessments.Assessment
 
   def create(conn, %{
         "course_id" => course_id,
