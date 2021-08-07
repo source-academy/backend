@@ -48,6 +48,9 @@ defmodule Cadet.Auth.Provider do
     end
   end
 
+  # no longer used anymore currently
+
+  # coveralls-ignore-start
   @spec get_role(provider_instance, token) :: {:ok, String.t()} | {:error, error(), String.t()}
   def get_role(instance, token) do
     case get_instance_config(instance) do
@@ -55,4 +58,6 @@ defmodule Cadet.Auth.Provider do
       _ -> {:error, :other, "Invalid or nonexistent provider config"}
     end
   end
+
+  # coveralls-ignore-stop
 end
