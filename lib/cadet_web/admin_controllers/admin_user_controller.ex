@@ -26,7 +26,10 @@ defmodule CadetWeb.AdminUserController do
     %{role: admin_role} = conn.assigns.course_reg
     usernames_roles_groups = usernames_roles_groups |> Enum.map(&to_snake_case_atom_keys/1)
 
-    with {:validate_role, true} <- {:validate_role, admin_role in @add_users_role},
+    with {:validate_cap, true} <-
+           {:validate_cap,
+            Enum.count(CourseRegistrations.get_users(course_id) ++ usernames_roles_groups) <= 1500},
+         {:validate_role, true} <- {:validate_role, admin_role in @add_users_role},
          {:validate_provider, true} <-
            {:validate_provider,
             Map.has_key?(Application.get_env(:cadet, :identity_providers, %{}), provider)},
@@ -67,6 +70,9 @@ defmodule CadetWeb.AdminUserController do
 
       conn
     else
+      {:validate_cap, false} ->
+        conn |> put_status(:bad_request) |> text("A course can have maximum of 1500 users")
+
       {:validate_role, false} ->
         conn |> put_status(:forbidden) |> text("User is not permitted to add users")
 
