@@ -5,6 +5,7 @@ on:
       - stable
       - master
       - multitenant-deploy
+      - multitenant-stg-deploy
     paths:
       - 'config/**'
       - 'lib/**'
