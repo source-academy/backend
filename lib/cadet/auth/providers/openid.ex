@@ -37,7 +37,7 @@ defmodule Cadet.Auth.Providers.OpenID do
           {:ok,
            %{
              token: token,
-             username: Provider.namespace(username, Atom.to_string(openid_provider))
+             username: username
            }}
       end
     else
