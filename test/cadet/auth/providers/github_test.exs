@@ -5,7 +5,6 @@ defmodule Cadet.Auth.Providers.GitHubTest do
   alias Plug.Conn, as: PlugConn
 
   @username "username"
-  @namespaced_username "github/username"
   @name "name"
 
   @dummy_access_token "dummy_access_token"
@@ -45,7 +44,7 @@ defmodule Cadet.Auth.Providers.GitHubTest do
     bypass_return_token(bypass)
     bypass_api_call(bypass)
 
-    assert {:ok, %{token: @dummy_access_token, username: @namespaced_username}} ==
+    assert {:ok, %{token: @dummy_access_token, username: @username}} ==
              GitHub.authorise(config(bypass), "", "dummy_client_id", "")
   end
 
