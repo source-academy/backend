@@ -11,6 +11,7 @@ defmodule Cadet.Accounts.User do
   schema "users" do
     field(:name, :string)
     field(:username, :string)
+    field(:provider, :string)
 
     belongs_to(:latest_viewed_course, Course)
     has_many(:courses, CourseRegistration)
@@ -18,7 +19,7 @@ defmodule Cadet.Accounts.User do
     timestamps()
   end
 
-  @required_fields ~w(username)a
+  @required_fields ~w(username provider)a
   @optional_fields ~w(name latest_viewed_course_id)a
 
   def changeset(user, params \\ %{}) do

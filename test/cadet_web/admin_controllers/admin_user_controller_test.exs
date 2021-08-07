@@ -91,7 +91,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     test "successfully namespaces and inserts users, and assign groups", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-      user = insert(:user, %{username: "test/existing-user"})
+      user = insert(:user, %{provider: "test", username: "existing-user"})
       insert(:course_registration, %{course: course, user: user})
 
       assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
@@ -124,7 +124,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     test "successful with duplicate inputs", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
-      user = insert(:user, %{username: "test/existing-user"})
+      user = insert(:user, %{provider: "test", username: "existing-user"})
       insert(:course_registration, %{course: course, user: user})
 
       assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
@@ -286,6 +286,36 @@ defmodule CadetWeb.AdminUserControllerTest do
       conn = put(conn, build_url_users(course_id), params)
 
       assert response(conn, 400) == "Invalid role(s) provided"
+    end
+
+    @tag authenticate: :admin
+    test "fails when more than 1500", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+      user = insert(:user, %{provider: "test", username: "existing-user"})
+      insert(:course_registration, %{course: course, user: user})
+
+      assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
+
+      params = %{
+        users:
+          1..1499
+          |> Enum.to_list()
+          |> Enum.map(fn x ->
+            %{
+              "username" => "user" <> Integer.to_string(x),
+              "role" => "student",
+              "group" => "group1"
+            }
+          end),
+        provider: "test"
+      }
+
+      resp = put(conn, build_url_users(course_id), params)
+
+      assert response(resp, 400) == "A course can have maximum of 1500 users"
+
+      assert CourseRegistration |> where(course_id: ^course_id) |> Repo.all() |> Enum.count() == 2
     end
   end
 

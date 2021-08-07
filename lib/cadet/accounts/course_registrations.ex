@@ -47,6 +47,14 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
+  def get_admin_courses_count(%User{id: id}) do
+    CourseRegistration
+    |> where(user_id: ^id)
+    |> where(role: :admin)
+    |> Repo.all()
+    |> Enum.count()
+  end
+
   def get_users(course_id) when is_ecto_id(course_id) do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
@@ -66,22 +74,22 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
-  def upsert_users_in_course(usernames_and_roles, course_id) do
+  def upsert_users_in_course(provider, usernames_and_roles, course_id) do
     # Note: Usernames have already been namespaced in the controller
     usernames_and_roles
     |> Enum.reduce_while(nil, fn %{username: username, role: role}, _acc ->
-      upsert_users_in_course_helper(username, course_id, role)
+      upsert_users_in_course_helper(provider, username, course_id, role)
     end)
   end
 
-  defp upsert_users_in_course_helper(username, course_id, role) do
+  defp upsert_users_in_course_helper(provider, username, course_id, role) do
     case User
          |> where(username: ^username)
          |> Repo.one() do
       nil ->
-        case Accounts.register(%{username: username}) do
+        case Accounts.register(%{username: username, provider: provider}) do
           {:ok, _} ->
-            upsert_users_in_course_helper(username, course_id, role)
+            upsert_users_in_course_helper(provider, username, course_id, role)
 
           {:error, changeset} ->
             {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}

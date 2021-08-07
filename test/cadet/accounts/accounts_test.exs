@@ -27,6 +27,7 @@ defmodule Cadet.AccountsTest do
 
   test "valid registration" do
     attrs = %{
+      provider: "test",
       name: "Test Name",
       username: "e0123456"
     }

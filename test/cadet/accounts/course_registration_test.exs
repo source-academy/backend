@@ -174,7 +174,9 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
         %{username: "admin1", role: "admin"}
       ]
 
-      assert :ok == CourseRegistrations.upsert_users_in_course(usernames_and_roles, course2.id)
+      assert :ok ==
+               CourseRegistrations.upsert_users_in_course("test", usernames_and_roles, course2.id)
+
       assert length(CourseRegistrations.get_users(course2.id)) == 5
     end
 
@@ -191,7 +193,9 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
         %{username: "admin1", role: "admin"}
       ]
 
-      assert :ok == CourseRegistrations.upsert_users_in_course(usernames_and_roles, course2.id)
+      assert :ok ==
+               CourseRegistrations.upsert_users_in_course("test", usernames_and_roles, course2.id)
+
       assert length(CourseRegistrations.get_users(course2.id)) == 4
     end
   end

@@ -14,7 +14,7 @@ defmodule Cadet.Accounts do
 
   Returns {:ok, user} on success, otherwise {:error, changeset}
   """
-  def register(attrs = %{username: username}) when is_binary(username) do
+  def register(attrs = %{username: username, provider: _provider}) when is_binary(username) do
     attrs |> insert_or_update_user()
   end
 
@@ -23,9 +23,11 @@ defmodule Cadet.Accounts do
   create one.
   """
   @spec insert_or_update_user(map()) :: {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def insert_or_update_user(attrs = %{username: username}) when is_binary(username) do
+  def insert_or_update_user(attrs = %{username: username, provider: provider})
+      when is_binary(username) do
     User
     |> where(username: ^username)
+    |> where(provider: ^provider)
     |> Repo.one()
     |> case do
       nil ->
@@ -80,7 +82,7 @@ defmodule Cadet.Accounts do
       # (accounts pre-created by instructors do not have a name, and has to be fetched
       #  from the auth provider during sign_in)
       with {:ok, name} <- Provider.get_name(provider, token),
-           {:ok, _} <- register(%{name: name, username: username}) do
+           {:ok, _} <- register(%{provider: provider, name: name, username: username}) do
         sign_in(username, name, token)
       else
         {:error, :invalid_credentials, err} ->
