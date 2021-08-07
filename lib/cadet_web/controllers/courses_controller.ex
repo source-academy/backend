@@ -4,6 +4,7 @@ defmodule CadetWeb.CoursesController do
   use PhoenixSwagger
 
   alias Cadet.Courses
+  alias Cadet.Accounts.CourseRegistrations
 
   def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     case Courses.get_course_config(course_id) do
@@ -22,14 +23,20 @@ defmodule CadetWeb.CoursesController do
     user = conn.assigns.current_user
     params = params |> to_snake_case_atom_keys()
 
-    case Courses.create_course_config(params, user) do
-      {:ok, _} ->
-        text(conn, "OK")
+    if CourseRegistrations.get_admin_courses_count(user) < 5 do
+      case Courses.create_course_config(params, user) do
+        {:ok, _} ->
+          text(conn, "OK")
 
-      {:error, _, _, _} ->
-        conn
-        |> put_status(:bad_request)
-        |> text("Invalid parameter(s)")
+        {:error, _, _, _} ->
+          conn
+          |> put_status(:bad_request)
+          |> text("Invalid parameter(s)")
+      end
+    else
+      conn
+      |> put_status(:forbidden)
+      |> text("User not allowed to be admin of more than 5 courses.")
     end
   end
 

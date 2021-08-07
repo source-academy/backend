@@ -79,6 +79,28 @@ defmodule CadetWeb.CoursesControllerTest do
 
       assert response(conn, 400) == "Invalid parameter(s)"
     end
+
+    @tag authenticate: :student
+    test "fails when more than 5 course admin", %{conn: conn} do
+      user = conn.assigns.current_user
+      insert_list(5, :course_registration, %{user: user, role: :admin})
+
+      params = %{
+        "course_name" => "CS1101S Programming Methodology (AY20/21 Sem 1)",
+        "course_short_name" => "CS1101S",
+        "viewable" => "true",
+        "enable_game" => "true",
+        "enable_achievements" => "true",
+        "enable_sourcecast" => "true",
+        "source_chapter" => "1",
+        "source_variant" => "default",
+        "module_help_text" => "Help Text"
+      }
+
+      conn = post(conn, build_url_create(), params)
+
+      assert response(conn, 403) == "User not allowed to be admin of more than 5 courses."
+    end
   end
 
   describe "GET /v2/courses/course_id/config, unauthenticated" do

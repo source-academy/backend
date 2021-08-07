@@ -47,6 +47,14 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
+  def get_admin_courses_count(%User{id: id}) do
+    CourseRegistration
+    |> where(user_id: ^id)
+    |> where(role: :admin)
+    |> Repo.all()
+    |> Enum.count()
+  end
+
   def get_users(course_id) when is_ecto_id(course_id) do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
