@@ -55,9 +55,4 @@ defmodule Cadet.Auth.Provider do
       _ -> {:error, :other, "Invalid or nonexistent provider config"}
     end
   end
-
-  @spec namespace(username, prefix) :: String.t()
-  def namespace(username, prefix) do
-    prefix <> "/" <> username
-  end
 end

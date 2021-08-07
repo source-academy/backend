@@ -21,7 +21,7 @@ defmodule Cadet.Auth.Providers.Config do
   def authorise(config, code, _client_id, _redirect_uri) do
     case Enum.find(config, nil, fn %{code: this_code} -> code == this_code end) do
       %{token: token, username: username} ->
-        {:ok, %{token: token, username: Provider.namespace(username, "test")}}
+        {:ok, %{token: token, username: username}}
 
       _ ->
         {:error, :invalid_credentials, "Invalid code"}
