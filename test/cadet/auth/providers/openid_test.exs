@@ -33,7 +33,6 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
   """
 
   @username "username"
-  @namespaced_username "test/username"
   @role :admin
 
   @openid_provider_name :test
@@ -104,7 +103,7 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
 
     bypass_return_token(bypass, @okay_token)
 
-    assert {:ok, %{token: @okay_token, username: @namespaced_username}} =
+    assert {:ok, %{token: @okay_token, username: @username}} =
              OpenID.authorise(@config, "dummy_code", "", "")
 
     assert {:ok, @username} == OpenID.get_name(@config, @okay_token)

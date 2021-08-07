@@ -198,7 +198,7 @@ defmodule Cadet.Courses do
     end
   end
 
-  def upsert_groups_in_course(usernames_and_groups, course_id) do
+  def upsert_groups_in_course(usernames_and_groups, course_id, provider) do
     usernames_and_groups
     |> Enum.reduce_while(nil, fn %{username: username} = entry, _acc ->
       entry
@@ -206,11 +206,11 @@ defmodule Cadet.Courses do
       |> case do
         {:ok, groupname} ->
           # Add users to group
-          upsert_groups_in_course_helper(username, course_id, groupname)
+          upsert_groups_in_course_helper(username, course_id, groupname, provider)
 
         :error ->
           # Delete users from group
-          upsert_groups_in_course_helper(username, course_id)
+          upsert_groups_in_course_helper(username, course_id, provider)
       end
       |> case do
         {:ok, _} -> {:cont, :ok}
@@ -219,13 +219,17 @@ defmodule Cadet.Courses do
     end)
   end
 
-  defp upsert_groups_in_course_helper(username, course_id, groupname) do
+  defp upsert_groups_in_course_helper(username, course_id, groupname, provider) do
     with {:get_group, {:ok, group}} <- {:get_group, get_or_create_group(groupname, course_id)},
          {:get_course_reg, %{role: role} = course_reg} <-
            {:get_course_reg,
             CourseRegistration
             |> where(
-              user_id: ^(User |> where(username: ^username) |> Repo.one() |> Map.fetch!(:id))
+              user_id:
+                ^(User
+                  |> where(username: ^username, provider: ^provider)
+                  |> Repo.one()
+                  |> Map.fetch!(:id))
             )
             |> where(course_id: ^course_id)
             |> Repo.one()} do
@@ -249,12 +253,16 @@ defmodule Cadet.Courses do
     end
   end
 
-  defp upsert_groups_in_course_helper(username, course_id) do
+  defp upsert_groups_in_course_helper(username, course_id, provider) do
     with {:get_course_reg, %{role: role} = course_reg} <-
            {:get_course_reg,
             CourseRegistration
             |> where(
-              user_id: ^(User |> where(username: ^username) |> Repo.one() |> Map.fetch!(:id))
+              user_id:
+                ^(User
+                  |> where(username: ^username, provider: ^provider)
+                  |> Repo.one()
+                  |> Map.fetch!(:id))
             )
             |> where(course_id: ^course_id)
             |> Repo.one()} do

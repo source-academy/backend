@@ -38,7 +38,7 @@ defmodule Cadet.Auth.Providers.GitHub do
            {:token, HTTPoison.post(token_url, token_query, token_headers)},
          {:token_response, %{"access_token" => token}} <- {:token_response, Jason.decode!(body)},
          {:user, {:ok, %{"login" => username}}} <- {:user, api_call(user_api, token)} do
-      {:ok, %{token: token, username: Provider.namespace(username, "github")}}
+      {:ok, %{token: token, username: username}}
     else
       {:validate_client, :error} ->
         {:error, :invalid_credentials, "Invalid client id"}

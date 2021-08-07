@@ -55,7 +55,7 @@ defmodule CadetWeb.AdminUserController do
                     )},
                  {:upsert_groups, :ok} <-
                    {:upsert_groups,
-                    Courses.upsert_groups_in_course(usernames_roles_groups, course_id)} do
+                    Courses.upsert_groups_in_course(usernames_roles_groups, course_id, provider)} do
               text(conn, "OK")
             else
               {:upsert_users, {:error, {status, message}}} ->

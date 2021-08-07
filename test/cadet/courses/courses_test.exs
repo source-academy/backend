@@ -431,7 +431,7 @@ defmodule Cadet.CoursesTest do
         %{username: existing_group_leader.user.username, group: "Group1"}
       ]
 
-      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course.id)
+      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course.id, "test")
 
       # Check that Group1 and Group2 were created
       assert length(Group |> where(course_id: ^course.id) |> Repo.all()) == 3
@@ -471,7 +471,7 @@ defmodule Cadet.CoursesTest do
         %{username: existing_group_leader.user.username}
       ]
 
-      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course.id)
+      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course.id, "test")
 
       assert is_nil(
                Group

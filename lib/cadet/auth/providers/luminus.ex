@@ -36,7 +36,7 @@ defmodule Cadet.Auth.Providers.LumiNUS do
          {:verify_jwt, {:ok, _}} <-
            {:verify_jwt,
             Guardian.Token.Jwt.Verify.verify_claims(Cadet.Auth.EmptyGuardian, claims, nil)} do
-      {:ok, %{token: token, username: Provider.namespace(username, "luminus")}}
+      {:ok, %{token: token, username: username}}
     else
       {:token, {:ok, %{body: body, status_code: status}}} ->
         {:error, :upstream, "Status code #{status} from LumiNUS: #{body}"}

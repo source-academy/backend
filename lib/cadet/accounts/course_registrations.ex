@@ -75,7 +75,6 @@ defmodule Cadet.Accounts.CourseRegistrations do
   end
 
   def upsert_users_in_course(provider, usernames_and_roles, course_id) do
-    # Note: Usernames have already been namespaced in the controller
     usernames_and_roles
     |> Enum.reduce_while(nil, fn %{username: username, role: role}, _acc ->
       upsert_users_in_course_helper(provider, username, course_id, role)
@@ -84,7 +83,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   defp upsert_users_in_course_helper(provider, username, course_id, role) do
     case User
-         |> where(username: ^username)
+         |> where(username: ^username, provider: ^provider)
          |> Repo.one() do
       nil ->
         case Accounts.register(%{username: username, provider: provider}) do
