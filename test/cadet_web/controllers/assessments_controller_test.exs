@@ -219,7 +219,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> Enum.find(&(&1["id"] == assessment.id))
         |> Map.get("xp")
 
-      assert resp == 1000 * 3 + 500 * 3 + 100 * 3
+      assert resp == 800 * 3 + 500 * 3 + 100 * 3
     end
   end
 

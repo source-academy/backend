@@ -95,10 +95,14 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :index_goals_with_progress do
-    get("/admin/goals/:userid")
+    get("/admin/goals/{courseRegId}")
 
     summary("Gets goals and goal progress of a user")
     security([%{JWT: []}])
+
+    parameters do
+      courseRegId(:path, :integer, "Course Reg ID", required: true)
+    end
 
     response(200, "OK", Schema.array(:GoalWithProgress))
     response(401, "Unauthorised")
@@ -150,14 +154,14 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :update_progress do
-    post("/admin/users/{userid}/goals/{uuid}/progress")
+    post("/admin/users/{courseRegId}/goals/{uuid}/progress")
 
     summary("Inserts or updates own goal progress of specifed goal")
     security([%{JWT: []}])
 
     parameters do
       uuid(:path, :string, "Goal UUID", required: true, format: :uuid)
-      userid(:path, :integer, "User ID", required: true)
+      courseRegId(:path, :integer, "Course Reg ID", required: true)
 
       progress(
         :body,
