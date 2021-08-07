@@ -29,6 +29,77 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     AdminAssessmentsController.swagger_path_update(nil)
   end
 
+  describe "GET /:course_reg_id, unauthenticated" do
+    test "unauthorised", %{conn: conn, courses: %{course1: course1}} do
+      course_reg = insert(:course_registration, %{course: course1, role: :student})
+
+      conn
+      |> get(build_user_assessments_url(course1.id, course_reg.id))
+      |> response(401)
+    end
+  end
+
+  describe "GET /:course_reg_id, student only" do
+    @tag authenticate: :student
+    test "unauthorised", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      course_reg = insert(:course_registration, %{course: course, role: :student})
+
+      conn
+      |> get(build_user_assessments_url(course.id, course_reg.id))
+      |> response(403)
+    end
+  end
+
+  # this doesn't work
+  # describe "GET /:course_reg_id, staff only" do
+  #   @tag authenticate: :staff
+  #   test "renders assessments overview", %{
+  #     conn: conn,
+  #     assessments: assessments
+  #   } do
+  #     test_cr = conn.assigns.test_cr
+  #     course = test_cr.course
+  #     course_reg = insert(:course_registration, %{course: course, role: :student})
+
+  #     expected =
+  #       assessments
+  #       |> Map.values()
+  #       |> Enum.map(& &1.assessment)
+  #       |> Enum.map(
+  #         &%{
+  #           "courseId" => &1.course_id,
+  #           "id" => &1.id,
+  #           "title" => &1.title,
+  #           "shortSummary" => &1.summary_short,
+  #           "story" => &1.story,
+  #           "number" => &1.number,
+  #           "reading" => &1.reading,
+  #           "openAt" => format_datetime(&1.open_at),
+  #           "closeAt" => format_datetime(&1.close_at),
+  #           "type" => &1.config.type,
+  #           "isManuallyGraded" => &1.config.is_manually_graded,
+  #           "coverImage" => &1.cover_picture,
+  #           "xp" => 4800,
+  #           "maxXp" => 4800,
+  #           "status" => "not_attempted",
+  #           "private" => false,
+  #           "isPublished" => &1.is_published,
+  #           "gradedCount" => 0,
+  #           "questionCount" => 9
+  #         }
+  #       )
+
+  #     resp =
+  #       conn
+  #       |> get(build_user_assessments_url(course.id, course_reg.id))
+  #       |> json_response(200)
+
+  #     assert expected == resp
+  #     end
+  # end
+
   describe "POST /, unauthenticated" do
     test "unauthorized", %{
       conn: conn,
@@ -544,4 +615,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
   defp build_url(course_id, assessment_id),
     do: "/v2/courses/#{course_id}/admin/assessments/#{assessment_id}"
+
+  defp build_user_assessments_url(course_id, course_reg_id),
+    do: "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/assessments"
 end

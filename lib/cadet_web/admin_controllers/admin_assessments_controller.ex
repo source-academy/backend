@@ -8,6 +8,14 @@ defmodule CadetWeb.AdminAssessmentsController do
 
   alias Cadet.{Assessments, Repo}
   alias Cadet.Assessments.Assessment
+  alias Cadet.Accounts.CourseRegistration
+
+  def index(conn, %{"course_reg_id" => course_reg_id}) do
+    course_reg = Repo.get(CourseRegistration, course_reg_id)
+    {:ok, assessments} = Assessments.all_assessments(course_reg)
+
+    render(conn, "index.json", assessments: assessments)
+  end
 
   def create(conn, %{
         "course_id" => course_id,
@@ -106,6 +114,22 @@ defmodule CadetWeb.AdminAssessmentsController do
     |> where(id: ^assessment_id)
     |> where(course_id: ^course_id)
     |> Repo.exists?()
+  end
+
+  swagger_path :index do
+    get("/admin/users/{courseRegId}/assessments")
+
+    summary("Fetches assessment overviews of a user")
+
+    security([%{JWT: []}])
+
+    parameters do
+      courseRegId(:path, :integer, "Course Reg ID", required: true)
+    end
+
+    response(200, "OK", Schema.array(:AssessmentsList))
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
   end
 
   swagger_path :create do
