@@ -6,7 +6,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   import ExUnit.CaptureLog
 
   alias Cadet.Repo
-  alias Cadet.Assessments.Assessment
+  alias Cadet.Accounts.CourseRegistration
+  alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Test.XMLGenerator
   alias CadetWeb.AdminAssessmentsController
 
@@ -53,52 +54,99 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   end
 
   # this doesn't work
-  # describe "GET /:course_reg_id, staff only" do
-  #   @tag authenticate: :staff
-  #   test "renders assessments overview", %{
-  #     conn: conn,
-  #     assessments: assessments
-  #   } do
-  #     test_cr = conn.assigns.test_cr
-  #     course = test_cr.course
-  #     course_reg = insert(:course_registration, %{course: course, role: :student})
+  describe "GET /:course_reg_id, staff only" do
+    test "renders assessments overview of student by staff", %{
+      conn: conn,
+      courses: %{course1: course1},
+      role_crs: %{staff: staff, student: student},
+      assessments: assessments
+    } do
+      view_as = student
 
-  #     expected =
-  #       assessments
-  #       |> Map.values()
-  #       |> Enum.map(& &1.assessment)
-  #       |> Enum.map(
-  #         &%{
-  #           "courseId" => &1.course_id,
-  #           "id" => &1.id,
-  #           "title" => &1.title,
-  #           "shortSummary" => &1.summary_short,
-  #           "story" => &1.story,
-  #           "number" => &1.number,
-  #           "reading" => &1.reading,
-  #           "openAt" => format_datetime(&1.open_at),
-  #           "closeAt" => format_datetime(&1.close_at),
-  #           "type" => &1.config.type,
-  #           "isManuallyGraded" => &1.config.is_manually_graded,
-  #           "coverImage" => &1.cover_picture,
-  #           "xp" => 4800,
-  #           "maxXp" => 4800,
-  #           "status" => "not_attempted",
-  #           "private" => false,
-  #           "isPublished" => &1.is_published,
-  #           "gradedCount" => 0,
-  #           "questionCount" => 9
-  #         }
-  #       )
+      expected =
+        assessments
+        |> Map.values()
+        |> Enum.map(& &1.assessment)
+        |> Enum.sort(&open_at_asc_comparator/2)
+        |> Enum.map(
+          &%{
+            "courseId" => &1.course_id,
+            "id" => &1.id,
+            "title" => &1.title,
+            "shortSummary" => &1.summary_short,
+            "story" => &1.story,
+            "number" => &1.number,
+            "reading" => &1.reading,
+            "openAt" => format_datetime(&1.open_at),
+            "closeAt" => format_datetime(&1.close_at),
+            "type" => &1.config.type,
+            "isManuallyGraded" => &1.config.is_manually_graded,
+            "coverImage" => &1.cover_picture,
+            "maxXp" => 4800,
+            "status" => get_assessment_status(view_as, &1),
+            "private" => false,
+            "isPublished" => &1.is_published,
+            "gradedCount" => 0,
+            "questionCount" => 9,
+            "xp" => (800 + 500 + 100) * 3
+          }
+        )
 
-  #     resp =
-  #       conn
-  #       |> get(build_user_assessments_url(course.id, course_reg.id))
-  #       |> json_response(200)
+      resp =
+        conn
+        |> sign_in(staff.user)
+        |> get(build_user_assessments_url(course1.id, view_as.id))
+        |> json_response(200)
 
-  #     assert expected == resp
-  #     end
-  # end
+      assert expected == resp
+    end
+
+    test "renders assessments overview of admin by staff", %{
+      conn: conn,
+      courses: %{course1: course1},
+      role_crs: %{staff: staff, admin: admin},
+      assessments: assessments
+    } do
+      view_as = admin
+
+      expected =
+        assessments
+        |> Map.values()
+        |> Enum.map(& &1.assessment)
+        |> Enum.sort(&open_at_asc_comparator/2)
+        |> Enum.map(
+          &%{
+            "courseId" => &1.course_id,
+            "id" => &1.id,
+            "title" => &1.title,
+            "shortSummary" => &1.summary_short,
+            "story" => &1.story,
+            "number" => &1.number,
+            "reading" => &1.reading,
+            "openAt" => format_datetime(&1.open_at),
+            "closeAt" => format_datetime(&1.close_at),
+            "type" => &1.config.type,
+            "isManuallyGraded" => &1.config.is_manually_graded,
+            "coverImage" => &1.cover_picture,
+            "maxXp" => 4800,
+            "status" => get_assessment_status(view_as, &1),
+            "private" => false,
+            "isPublished" => &1.is_published,
+            "gradedCount" => 0,
+            "questionCount" => 9,
+            "xp" => 0
+          }
+        )
+
+      resp =
+        conn
+        |> sign_in(staff.user)
+        |> get(build_user_assessments_url(course1.id, view_as.id))
+        |> json_response(200)
+
+      assert expected == resp
+    end
+  end
 
   describe "POST /, unauthenticated" do
     test "unauthorized", %{
@@ -618,4 +666,16 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
   defp build_user_assessments_url(course_id, course_reg_id),
     do: "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/assessments"
+
+  defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
+
+  defp get_assessment_status(course_reg = %CourseRegistration{}, assessment = %Assessment{}) do
+    submission =
+      Submission
+      |> where(student_id: ^course_reg.id)
+      |> where(assessment_id: ^assessment.id)
+      |> Repo.one()
+
+    (submission && submission.status |> Atom.to_string()) || "not_attempted"
+  end
 end

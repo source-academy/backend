@@ -177,7 +177,7 @@ defmodule Cadet.Test.Seeds do
       Enum.map(submissions, fn submission ->
         Enum.map(programming_questions, fn question ->
           insert(:answer, %{
-            xp: 1000,
+            xp: 800,
             question: question,
             submission: submission,
             answer: build(:programming_answer)
