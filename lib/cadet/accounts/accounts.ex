@@ -75,7 +75,7 @@ defmodule Cadet.Accounts do
   Sign in using given user ID
   """
   def sign_in(username, token, provider) do
-    user = username |> Query.username() |> Repo.one()
+    user = username |> Query.username() |> where(provider: ^provider) |> Repo.one()
 
     if is_nil(user) or is_nil(user.name) do
       # user is not registered in our database or does not have a name
@@ -83,7 +83,7 @@ defmodule Cadet.Accounts do
       #  from the auth provider during sign_in)
       with {:ok, name} <- Provider.get_name(provider, token),
            {:ok, _} <- register(%{provider: provider, name: name, username: username}) do
-        sign_in(username, name, token)
+        sign_in(username, token, provider)
       else
         {:error, :invalid_credentials, err} ->
           {:error, :forbidden, err}
