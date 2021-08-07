@@ -6,17 +6,8 @@ defmodule Cadet.Repo.Migrations.AddProviderToUser do
       add(:provider, :string, null: true)
     end
 
-    execute("update users set provider = 'luminus' where username like 'luminus/%'")
-
-    execute(
-      "update users set username = replace(username, 'luminus/', '') where username like 'luminus/%'"
-    )
-
-    execute("update users set provider = 'test' where username like 'test/%'")
-
-    execute(
-      "update users set username = replace(username, 'test/', '') where username like 'test/%'"
-    )
+    execute("update users set provider = split_part(username, '/', 1)")
+    execute("update users set username = substring(username from char_length(provider) + 2)")
 
     alter table(:users) do
       modify(:provider, :string, null: false)
