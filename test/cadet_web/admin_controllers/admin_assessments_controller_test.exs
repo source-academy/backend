@@ -25,6 +25,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
   test "swagger" do
     AdminAssessmentsController.swagger_definitions()
+    AdminAssessmentsController.swagger_path_index(nil)
     AdminAssessmentsController.swagger_path_create(nil)
     AdminAssessmentsController.swagger_path_delete(nil)
     AdminAssessmentsController.swagger_path_update(nil)
