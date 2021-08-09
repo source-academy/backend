@@ -23,8 +23,9 @@ defmodule Cadet.Incentives.Goals do
   @doc """
   Returns goals with progress for each course_registration.
   """
-  def get_with_progress(%CourseRegistration{id: course_reg_id}) do
+  def get_with_progress(%CourseRegistration{id: course_reg_id, course_id: course_id}) do
     Goal
+    |> where(course_id: ^course_id)
     |> join(:left, [g], p in assoc(g, :progress), on: p.course_reg_id == ^course_reg_id)
     |> preload([g, p], [:achievements, progress: p])
     |> Repo.all()
@@ -35,23 +36,37 @@ defmodule Cadet.Incentives.Goals do
   Inserts a new goal, or updates it if it already exists.
   """
   def upsert(attrs) do
-    case attrs[:uuid] || attrs["uuid"] do
-      nil ->
+    case {attrs[:uuid] || attrs["uuid"], attrs[:course_id] || attrs["course_id"]} do
+      {nil, nil} ->
+        {:error, {:bad_request, "No course ID or UUID specified in Goal"}}
+
+      {nil, _} ->
         {:error, {:bad_request, "No UUID specified in Goal"}}
 
-      uuid ->
-        Goal
-        |> Repo.get(uuid)
-        |> (&(&1 || %Goal{})).()
-        |> Goal.changeset(attrs)
-        |> Repo.insert_or_update()
-        |> case do
-          result = {:ok, _} ->
-            result
+      {_, nil} ->
+        {:error, {:bad_request, "No course ID specified in Goal"}}
 
-          {:error, changeset} ->
-            {:error, {:bad_request, full_error_messages(changeset)}}
+      {uuid, course_id} ->
+        goal = Repo.get(Goal, uuid) || %Goal{course_id: course_id}
+
+        if goal.course_id == course_id do
+          upsert_checked(goal, attrs)
+        else
+          {:error, {:bad_request, "Goal already exists in different course"}}
         end
+    end
+  end
+
+  defp upsert_checked(goal, attrs) do
+    goal
+    |> Goal.changeset(attrs)
+    |> Repo.insert_or_update()
+    |> case do
+      result = {:ok, _} ->
+        result
+
+      {:error, changeset} ->
+        {:error, {:bad_request, full_error_messages(changeset)}}
     end
   end
 
@@ -70,11 +85,11 @@ defmodule Cadet.Incentives.Goals do
   @doc """
   Deletes a goal.
   """
-  @spec delete(Ecto.UUID.t()) ::
+  @spec delete(Ecto.UUID.t(), integer()) ::
           :ok | {:error, {:not_found, String.t()}}
-  def delete(uuid) when is_binary(uuid) do
+  def delete(uuid, course_id) when is_binary(uuid) do
     case Goal
-         |> where(uuid: ^uuid)
+         |> where(uuid: ^uuid, course_id: ^course_id)
          |> Repo.delete_all() do
       {0, _} -> {:error, {:not_found, "Goal not found"}}
       {_, _} -> :ok
