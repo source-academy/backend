@@ -12,7 +12,8 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   def index_goals_with_progress(conn, %{"course_reg_id" => course_reg_id}) do
-    course_reg = %CourseRegistration{id: String.to_integer(course_reg_id)}
+    course_id = conn.assigns.course_reg.course_id
+    course_reg = %CourseRegistration{id: String.to_integer(course_reg_id), course_id: course_id}
 
     render(conn, "index_goals_with_progress.json", goals: Goals.get_with_progress(course_reg))
   end
@@ -49,8 +50,10 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   def delete(conn, %{"uuid" => uuid}) do
+    course_reg = conn.assigns.course_reg
+
     uuid
-    |> Goals.delete()
+    |> Goals.delete(course_reg.course_id)
     |> handle_standard_result(conn)
   end
 

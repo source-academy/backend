@@ -19,8 +19,10 @@ defmodule Cadet.Incentives.GoalssTest do
   end
 
   test "get goals with progress" do
-    goal = insert(:goal, goal_literal(0))
     course_reg = insert(:course_registration)
+
+    goal =
+      insert(:goal, Map.merge(goal_literal(0), %{course: nil, course_id: course_reg.course_id}))
 
     Repo.insert(%GoalProgress{
       count: 500,
@@ -42,7 +44,8 @@ defmodule Cadet.Incentives.GoalssTest do
     assert {:ok, _} =
              Goals.upsert(%{
                uuid: goal.uuid,
-               text: new_text
+               text: new_text,
+               course_id: goal.course_id
              })
 
     assert %{text: ^new_text} = Repo.get(Goal, goal.uuid)
@@ -74,7 +77,7 @@ defmodule Cadet.Incentives.GoalssTest do
 
   test "delete goal" do
     g = insert(:goal)
-    assert :ok = Goals.delete(g.uuid)
+    assert :ok = Goals.delete(g.uuid, g.course_id)
     assert Goal |> Repo.get(g.uuid) |> is_nil()
   end
 
