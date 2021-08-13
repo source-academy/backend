@@ -74,6 +74,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
       config = insert(:assessment_config, %{course: course})
       assessment = insert(:assessment, %{is_published: true, course: course, config: config})
       students = insert_list(5, :course_registration, %{role: :student, course: course})
+      insert(:course_registration, %{course: build(:course), role: :student})
       %{students: students, assessment: assessment}
     end
 
@@ -88,7 +89,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
 
       results =
         assessment.id
-        |> Utilities.fetch_submissions()
+        |> Utilities.fetch_submissions(assessment.course_id)
         |> Enum.map(&%{student_id: &1.student_id, submission_id: &1.submission.id})
 
       assert results == expected
@@ -100,7 +101,7 @@ defmodule Cadet.Autograder.UtilitiesTest do
     } do
       expected_student_ids = Enum.map(students, & &1.id)
 
-      results = Utilities.fetch_submissions(assessment.id)
+      results = Utilities.fetch_submissions(assessment.id, assessment.course_id)
 
       assert results |> Enum.map(& &1.student_id) |> Enum.sort() ==
                Enum.sort(expected_student_ids)

@@ -15,7 +15,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   def close_and_make_empty_submission(assessment = %Assessment{id: id}) do
     id
-    |> Utilities.fetch_submissions()
+    |> Utilities.fetch_submissions(assessment.course_id)
     |> Enum.map(fn %{student_id: student_id, submission: submission} ->
       if submission do
         update_submission_status_to_submitted(submission)
