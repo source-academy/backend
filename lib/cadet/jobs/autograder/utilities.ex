@@ -27,8 +27,7 @@ defmodule Cadet.Autograder.Utilities do
 
   def fetch_submissions(assessment_id, course_id) when is_ecto_id(assessment_id) do
     CourseRegistration
-    |> where(role: "student")
-    |> where(course_id: ^course_id)
+    |> where(role: "student", course_id: ^course_id)
     |> join(
       :left,
       [cr],
