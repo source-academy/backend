@@ -23,15 +23,46 @@ defmodule CadetWeb.AdminUserControllerTest do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
       group = insert(:group, %{course: course})
-      insert(:course_registration, %{role: :student, course: course, group: group})
-      insert(:course_registration, %{role: :staff, course: course, group: group})
+      cr1 = conn.assigns[:test_cr]
+      cr2 = insert(:course_registration, %{role: :student, course: course, group: group})
+      cr3 = insert(:course_registration, %{role: :staff, course: course, group: group})
+
+      expected = [
+        %{
+          "courseRegId" => cr1.id,
+          "course_id" => course_id,
+          "group" => nil,
+          "name" => cr1.user.name,
+          "provider" => "test",
+          "role" => "staff",
+          "username" => cr1.user.username
+        },
+        %{
+          "courseRegId" => cr2.id,
+          "course_id" => course_id,
+          "group" => group.name,
+          "name" => cr2.user.name,
+          "provider" => "test",
+          "role" => "student",
+          "username" => cr2.user.username
+        },
+        %{
+          "courseRegId" => cr3.id,
+          "course_id" => course_id,
+          "group" => group.name,
+          "name" => cr3.user.name,
+          "provider" => "test",
+          "role" => "staff",
+          "username" => cr3.user.username
+        }
+      ]
 
       resp =
         conn
         |> get(build_url_users(course_id))
         |> json_response(200)
 
-      assert 3 == Enum.count(resp)
+      assert expected == Enum.sort(resp, &(&1["courseRegId"] < &2["courseRegId"]))
     end
 
     @tag authenticate: :staff

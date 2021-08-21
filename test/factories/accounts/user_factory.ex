@@ -15,7 +15,7 @@ defmodule Cadet.Accounts.UserFactory do
           username:
             sequence(
               :nusnet_id,
-              &"test/E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
+              &"E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
             ),
           latest_viewed_course: build(:course)
         }
@@ -28,7 +28,7 @@ defmodule Cadet.Accounts.UserFactory do
           username:
             sequence(
               :nusnet_id,
-              &"test/E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
+              &"E#{&1 |> Integer.to_string() |> String.pad_leading(7, "0")}"
             ),
           latest_viewed_course: build(:course)
         }
