@@ -495,7 +495,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       # insert contest submissions and answers
       contest_submissions =
-        for student <- Enum.take(course_regs.students, 2) do
+        for student <- Enum.take(course_regs.students, 5) do
           insert(:submission, %{assessment: contest_assessment, student: student})
         end
 

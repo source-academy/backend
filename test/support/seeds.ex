@@ -137,6 +137,8 @@ defmodule Cadet.Test.Seeds do
     assessment =
       insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
+    contest_assessment = insert(:assessment, %{course: course, config: assessment_config, is_published: true})
+
     programming_questions =
       Enum.map(1..3, fn id ->
         insert(:programming_question, %{
@@ -163,7 +165,8 @@ defmodule Cadet.Test.Seeds do
           display_order: id,
           assessment: assessment,
           max_xp: 100,
-          show_solution: assessment.config.type == "path"
+          show_solution: assessment.config.type == "path",
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
         })
       end)
 
