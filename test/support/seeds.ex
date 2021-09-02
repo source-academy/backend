@@ -137,7 +137,8 @@ defmodule Cadet.Test.Seeds do
     assessment =
       insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
-    contest_assessment = insert(:assessment, %{course: course, config: assessment_config, is_published: true})
+    contest_assessment =
+      insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
     programming_questions =
       Enum.map(1..3, fn id ->
