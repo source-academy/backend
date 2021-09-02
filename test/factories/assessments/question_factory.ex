@@ -96,6 +96,17 @@ defmodule Cadet.Assessments.QuestionFactory do
           }
         }
       end
+
+      def voting_question_content_factory do
+        contest_assessment = insert(:assessment, %{is_published: true})
+
+        %{
+          content: Faker.Pokemon.name(),
+          prepend: Faker.Pokemon.location(),
+          template: Faker.Lorem.Shakespeare.as_you_like_it(),
+          contest_number: contest_assessment.number
+        }
+      end
     end
   end
 end

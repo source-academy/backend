@@ -13,13 +13,13 @@ defmodule Cadet.Updater.XMLParserTest do
 
     assessment_configs = [
       insert(:assessment_config, %{course: course, order: 1, type: "mission"}),
-      insert(:assessment_config, %{course: course, order: 2}),
+      insert(:assessment_config, %{course: course, order: 2, type: "quest"}),
       insert(:assessment_config, %{
         course: course,
         order: 3,
         type: "path"
       }),
-      insert(:assessment_config, %{course: course, order: 4}),
+      insert(:assessment_config, %{course: course, order: 4, type: "contest"}),
       insert(:assessment_config, %{
         course: course,
         order: 5,
@@ -39,9 +39,18 @@ defmodule Cadet.Updater.XMLParserTest do
         )
       )
 
+    # contest assessment need to be added before assessment containing voting questions can be added.
+    contest_assessment = insert(:assessment, course: course, config: hd(assessment_configs))
+
     assessments_with_config = Enum.into(assessments, %{}, &{&1, &1.config})
 
-    questions = [build(:programming_question), build(:mcq_question), build(:voting_question)]
+    questions = [
+      build(:programming_question),
+      build(:mcq_question),
+      build(:voting_question,
+        question: build(:voting_question_content, contest_number: contest_assessment.number)
+      )
+    ]
 
     %{
       assessments: assessments,
