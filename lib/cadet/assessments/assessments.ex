@@ -244,7 +244,7 @@ defmodule Cadet.Assessments do
           {q, a, nil, _} -> %{q | answer: %Answer{a | grader: nil}}
           {q, a, g, u} -> %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
         end)
-        |> load_contest_voting_entries(course_reg.id)
+        |> load_contest_voting_entries(course_reg.course_id, course_reg.id)
 
       assessment = assessment |> Map.put(:questions, questions)
       {:ok, assessment}
@@ -449,6 +449,12 @@ defmodule Cadet.Assessments do
 
         cond do
           not answers_exist ->
+            # Delete all realted submission_votes
+            SubmissionVotes
+            |> join(:inner, [sv, q], q in assoc(sv, :question))
+            |> where([sv, q], q.assessment_id == ^assessment_id)
+            |> Repo.delete_all()
+
             # Delete all existing questions
             Question
             |> where(assessment_id: ^assessment_id)
@@ -876,14 +882,14 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp load_contest_voting_entries(questions, voter_id) do
+  defp load_contest_voting_entries(questions, course_id, voter_id) do
     Enum.map(
       questions,
       fn q ->
         if q.type == :voting do
           submission_votes = all_submission_votes_by_question_id_and_voter_id(q.id, voter_id)
           # fetch top 10 contest voting entries with the contest question id
-          question_id = fetch_associated_contest_question_id(q)
+          question_id = fetch_associated_contest_question_id(course_id, q)
 
           leaderboard_results =
             if is_nil(question_id),
@@ -917,14 +923,14 @@ defmodule Cadet.Assessments do
   end
 
   # Finds the contest_question_id associated with the given voting_question id
-  defp fetch_associated_contest_question_id(voting_question) do
+  defp fetch_associated_contest_question_id(course_id, voting_question) do
     contest_number = voting_question.question["contest_number"]
 
     if is_nil(contest_number) do
       nil
     else
       Assessment
-      |> where(number: ^contest_number)
+      |> where(number: ^contest_number, course_id: ^course_id)
       |> join(:inner, [a], q in assoc(a, :questions))
       |> order_by([a, q], q.display_order)
       |> select([a, q], q.id)
