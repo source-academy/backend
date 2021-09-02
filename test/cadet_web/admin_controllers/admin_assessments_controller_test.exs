@@ -216,7 +216,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
           is_published: true
         )
 
-      # contest assessment need to be added before assessment containing voting questions can be added.
+      # contest assessment need to be added before assessment with voting questions can be added.
       contest_assessment = insert(:assessment, course: course, config: config)
 
       questions = [
