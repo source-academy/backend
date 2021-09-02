@@ -216,7 +216,16 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
           is_published: true
         )
 
-      questions = build_list(5, :question, assessment: nil)
+      # contest assessment need to be added before assessment with voting questions can be added.
+      contest_assessment = insert(:assessment, course: course, config: config)
+
+      questions = [
+        build(:programming_question),
+        build(:mcq_question),
+        build(:voting_question,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        )
+      ]
 
       xml = XMLGenerator.generate_xml_for(assessment, questions)
       force_update = "false"

@@ -146,12 +146,20 @@ defmodule Cadet.AssessmentsTest do
   describe "contest voting" do
     test "inserts votes into submission_votes table" do
       contest_question = insert(:programming_question)
-      question = insert(:voting_question)
-      # users = Enum.map(0..5, fn _x -> insert(:user, role: "student") end)
+      contest_assessment = contest_question.assessment
+      course = contest_question.assessment.course
+      voting_assessment = insert(:assessment, %{course: course})
+
+      question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+
       students =
         insert_list(6, :course_registration, %{
           role: :student,
-          course: contest_question.assessment.course
+          course: course
         })
 
       Enum.map(students, fn student ->
@@ -169,8 +177,7 @@ defmodule Cadet.AssessmentsTest do
         )
       end)
 
-      unattempted_student =
-        insert(:course_registration, %{role: :student, course: contest_question.assessment.course})
+      unattempted_student = insert(:course_registration, %{role: :student, course: course})
 
       # unattempted submission will automatically be submitted after the assessment closes.
       unattempted_submission =
@@ -188,7 +195,7 @@ defmodule Cadet.AssessmentsTest do
         question: contest_question
       )
 
-      Assessments.insert_voting(contest_question.assessment.number, question.id)
+      Assessments.insert_voting(course.id, contest_question.assessment.number, question.id)
 
       # students with own contest submissions will vote for 5 entries
       # students without own contest submissin will vote for 6 entries
@@ -196,9 +203,20 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "create voting parameters with invalid contest number" do
+      contest_question = insert(:programming_question)
       question = insert(:voting_question)
 
-      {status, _} = Assessments.insert_voting("", question.id)
+      {status, _} =
+        Assessments.insert_voting(
+          insert(:course).id,
+          contest_question.assessment.number,
+          question.id
+        )
+
+      assert status == :error
+
+      {status, _} =
+        Assessments.insert_voting(contest_question.assessment.course_id, "", question.id)
 
       assert status == :error
     end
@@ -226,7 +244,7 @@ defmodule Cadet.AssessmentsTest do
         )
       end)
 
-      Assessments.insert_voting(contest_question.assessment.number, question.id)
+      Assessments.insert_voting(course.id, contest_question.assessment.number, question.id)
       assert Repo.exists?(SubmissionVotes, question_id: question.id)
 
       Assessments.delete_assessment(voting_assessment.id)

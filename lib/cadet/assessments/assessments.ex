@@ -359,6 +359,7 @@ defmodule Cadet.Assessments do
 
             if status == :ok and new_question.type == :voting do
               insert_voting(
+                assessment_params.course_id,
                 question_params.question.contest_number,
                 new_question.id
               )
@@ -478,10 +479,11 @@ defmodule Cadet.Assessments do
   Generates and assigns contest entries for users with given usernames.
   """
   def insert_voting(
+        course_id,
         contest_number,
         question_id
       ) do
-    contest_assessment = Repo.get_by(Assessment, number: contest_number)
+    contest_assessment = Repo.get_by(Assessment, number: contest_number, course_id: course_id)
 
     if is_nil(contest_assessment) do
       changeset = change(%Assessment{}, %{number: ""})
