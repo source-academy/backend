@@ -524,7 +524,7 @@ defmodule Cadet.Assessments do
 
       user_ids =
         CourseRegistration
-        |> where(role: "student")
+        |> where(role: "student", course_id: ^course_id)
         |> select([cr], cr.id)
         |> Repo.all()
 
