@@ -507,9 +507,11 @@ defmodule Cadet.Assessments do
       contest_submission_ids =
         Submission
         |> join(:inner, [s], ans in assoc(s, :answers))
+        |> join(:inner, [s, ans], cr in assoc(s, :student))
+        |> where([s, ans, cr], cr.role == "student")
         |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
         |> where(
-          [_, ans],
+          [_, ans, cr],
           fragment(
             "?->>'code' like ?",
             ans.answer,
@@ -522,7 +524,7 @@ defmodule Cadet.Assessments do
 
       contest_submission_ids_length = Enum.count(contest_submission_ids)
 
-      user_ids =
+      voter_ids =
         CourseRegistration
         |> where(role: "student", course_id: ^course_id)
         |> select([cr], cr.id)
@@ -534,7 +536,7 @@ defmodule Cadet.Assessments do
         if Enum.empty?(contest_submission_ids) do
           0
         else
-          trunc(Float.ceil(votes_per_user * length(user_ids) / contest_submission_ids_length))
+          trunc(Float.ceil(votes_per_user * length(voter_ids) / contest_submission_ids_length))
         end
 
       submission_id_list =
@@ -545,11 +547,11 @@ defmodule Cadet.Assessments do
         |> List.flatten()
 
       {_submission_map, submission_votes_changesets} =
-        user_ids
-        |> Enum.reduce({submission_id_list, []}, fn user_id, acc ->
+        voter_ids
+        |> Enum.reduce({submission_id_list, []}, fn voter_id, acc ->
           {submission_list, submission_votes} = acc
 
-          user_contest_submission_id = Map.get(contest_submission_ids, user_id)
+          user_contest_submission_id = Map.get(contest_submission_ids, voter_id)
 
           {votes, rest} =
             submission_list
@@ -583,7 +585,7 @@ defmodule Cadet.Assessments do
           new_submission_votes =
             votes
             |> Enum.map(fn s_id ->
-              %SubmissionVotes{voter_id: user_id, submission_id: s_id, question_id: question_id}
+              %SubmissionVotes{voter_id: voter_id, submission_id: s_id, question_id: question_id}
             end)
             |> Enum.concat(submission_votes)
 
