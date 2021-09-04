@@ -510,16 +510,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
           })
         end
 
-      expected_leaderboard =
-        for answer <- contest_answers do
-          %{
-            "answer" => %{"code" => answer.answer.code},
-            "score" => answer.relative_score,
-            "student_name" => answer.submission.student.user.name,
-            "submission_id" => answer.submission.id
-          }
-        end
-        |> Enum.sort_by(& &1["score"], &>=/2)
+      expected_leaderboard = []
+      # temporary fix to hide the leaderboard
+      # for answer <- contest_answers do
+      #   %{
+      #     "answer" => %{"code" => answer.answer.code},
+      #     "score" => answer.relative_score,
+      #     "student_name" => answer.submission.student.user.name,
+      #     "submission_id" => answer.submission.id
+      #   }
+      # end
+      # |> Enum.sort_by(& &1["score"], &>=/2)
 
       for role <- Role.__enum_map__() do
         course_reg = Map.get(role_crs, role)

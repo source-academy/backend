@@ -507,9 +507,11 @@ defmodule Cadet.Assessments do
       contest_submission_ids =
         Submission
         |> join(:inner, [s], ans in assoc(s, :answers))
+        |> join(:inner, [s, ans], cr in assoc(s, :student))
+        |> where([s, ans, cr], cr.role == "student")
         |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
         |> where(
-          [_, ans],
+          [_, ans, cr],
           fragment(
             "?->>'code' like ?",
             ans.answer,
@@ -522,9 +524,9 @@ defmodule Cadet.Assessments do
 
       contest_submission_ids_length = Enum.count(contest_submission_ids)
 
-      user_ids =
+      voter_ids =
         CourseRegistration
-        |> where(role: "student")
+        |> where(role: "student", course_id: ^course_id)
         |> select([cr], cr.id)
         |> Repo.all()
 
@@ -534,7 +536,7 @@ defmodule Cadet.Assessments do
         if Enum.empty?(contest_submission_ids) do
           0
         else
-          trunc(Float.ceil(votes_per_user * length(user_ids) / contest_submission_ids_length))
+          trunc(Float.ceil(votes_per_user * length(voter_ids) / contest_submission_ids_length))
         end
 
       submission_id_list =
@@ -545,11 +547,11 @@ defmodule Cadet.Assessments do
         |> List.flatten()
 
       {_submission_map, submission_votes_changesets} =
-        user_ids
-        |> Enum.reduce({submission_id_list, []}, fn user_id, acc ->
+        voter_ids
+        |> Enum.reduce({submission_id_list, []}, fn voter_id, acc ->
           {submission_list, submission_votes} = acc
 
-          user_contest_submission_id = Map.get(contest_submission_ids, user_id)
+          user_contest_submission_id = Map.get(contest_submission_ids, voter_id)
 
           {votes, rest} =
             submission_list
@@ -583,7 +585,7 @@ defmodule Cadet.Assessments do
           new_submission_votes =
             votes
             |> Enum.map(fn s_id ->
-              %SubmissionVotes{voter_id: user_id, submission_id: s_id, question_id: question_id}
+              %SubmissionVotes{voter_id: voter_id, submission_id: s_id, question_id: question_id}
             end)
             |> Enum.concat(submission_votes)
 
@@ -891,10 +893,11 @@ defmodule Cadet.Assessments do
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(course_id, q)
 
-          leaderboard_results =
-            if is_nil(question_id),
-              do: [],
-              else: fetch_top_relative_score_answers(question_id, 10)
+          leaderboard_results = []
+          # temporary fix to hide the leaderboard
+          # if is_nil(question_id),
+          #   do: [],
+          #   else: fetch_top_relative_score_answers(question_id, 10)
 
           # populate entries to vote for and leaderboard data into the question
           voting_question =
@@ -958,6 +961,7 @@ defmodule Cadet.Assessments do
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
     |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+    |> where([a, s, student], student.role == "student")
     |> select([a, s, student, student_user], %{
       submission_id: a.submission_id,
       answer: a.answer,
