@@ -894,10 +894,10 @@ defmodule Cadet.Assessments do
           question_id = fetch_associated_contest_question_id(course_id, q)
 
           leaderboard_results = []
-            # temporary fix to hide the leaderboard
-            # if is_nil(question_id),
-            #   do: [],
-            #   else: fetch_top_relative_score_answers(question_id, 10)
+          # temporary fix to hide the leaderboard
+          # if is_nil(question_id),
+          #   do: [],
+          #   else: fetch_top_relative_score_answers(question_id, 10)
 
           # populate entries to vote for and leaderboard data into the question
           voting_question =
