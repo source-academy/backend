@@ -141,7 +141,7 @@ defmodule Cadet.Autograder.GradingJob do
       |> join(:inner, [s], sv in SubmissionVotes,
         on: sv.voter_id == s.student_id and sv.question_id == ^question.id
       )
-      |> where([_, sv], is_nil(sv.rank))
+      |> where([_, sv], is_nil(sv.score))
       |> Repo.exists?()
 
     xp = if is_nil_entries, do: 0, else: question.max_xp

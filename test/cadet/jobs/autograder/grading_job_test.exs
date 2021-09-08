@@ -586,7 +586,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           answers =
             for question <- questions do
               case Enum.random(0..1) do
-                0 -> insert(:submission_vote, %{voter: student, question: question, rank: 1})
+                0 -> insert(:submission_vote, %{voter: student, question: question, score: 1})
                 1 -> insert(:submission_vote, %{voter: student, question: question})
               end
 
@@ -614,7 +614,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           SubmissionVotes
           |> where(voter_id: ^student.id)
           |> where(question_id: ^question.id)
-          |> where([sv], is_nil(sv.rank))
+          |> where([sv], is_nil(sv.score))
           |> Repo.exists?()
 
         answer_db = Repo.get(Answer, answer.id)

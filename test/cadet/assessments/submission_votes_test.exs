@@ -64,7 +64,7 @@ defmodule Cadet.Assessments.SubmissionVotesTest do
     test "invalid changeset unique constraint", %{
       valid_params: params
     } do
-      params = Map.put(params, :rank, 2)
+      params = Map.put(params, :score, 2)
       first_entry = SubmissionVotes.changeset(%SubmissionVotes{}, params)
       {:ok, _} = Repo.insert(first_entry)
       new_submission = insert(:submission)

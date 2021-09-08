@@ -876,7 +876,7 @@ defmodule Cadet.Assessments do
       SubmissionVotes
       |> where(question_id: ^question.id)
       |> where(voter_id: ^submission.student_id)
-      |> where([sv], is_nil(sv.rank))
+      |> where([sv], is_nil(sv.score))
       |> Repo.exists?()
 
     unless has_nil_entries do
@@ -921,7 +921,7 @@ defmodule Cadet.Assessments do
     |> where([v], v.voter_id == ^voter_id and v.question_id == ^question_id)
     |> join(:inner, [v], s in assoc(v, :submission))
     |> join(:inner, [v, s], a in assoc(s, :answers))
-    |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, rank: v.rank})
+    |> select([v, s, a], %{submission_id: v.submission_id, answer: a.answer, score: v.score})
     |> Repo.all()
   end
 
@@ -1026,17 +1026,17 @@ defmodule Cadet.Assessments do
   """
   def compute_relative_score(contest_voting_question_id) do
     # query all records from submission votes tied to the question id ->
-    # map rank to user id ->
+    # map score to user id ->
     # store as grade ->
     # query grade for contest question id.
     eligible_votes =
       SubmissionVotes
       |> where(question_id: ^contest_voting_question_id)
-      |> where([sv], not is_nil(sv.rank))
+      |> where([sv], not is_nil(sv.score))
       |> join(:inner, [sv], ans in Answer, on: sv.submission_id == ans.submission_id)
       |> select(
         [sv, ans],
-        %{ans_id: ans.id, rank: sv.rank, ans: ans.answer["code"]}
+        %{ans_id: ans.id, score: sv.score, ans: ans.answer["code"]}
       )
       |> Repo.all()
 
@@ -1060,15 +1060,14 @@ defmodule Cadet.Assessments do
   defp map_eligible_votes_to_entry_score(eligible_votes) do
     # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
-      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, rank: rank, ans: ans}, tracker ->
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
         {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
 
         Map.put(
           tracker,
           ans_id,
           # assume each voter is assigned 10 entries which will make it fair.
-          {prev_score + convert_vote_rank_to_score(rank, 10), prev_count + 1,
-           Lexer.count_tokens(ans)}
+          {prev_score + score, prev_count + 1, Lexer.count_tokens(ans)}
         )
       end)
 
@@ -1079,11 +1078,6 @@ defmodule Cadet.Assessments do
         {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens)}
       end
     )
-  end
-
-  # implementation detail assuming to calculate scores out of 10 for rank [1, num_voted_entries]
-  defp convert_vote_rank_to_score(rank, num_voted_entries) do
-    11 - 10 * rank / num_voted_entries
   end
 
   # Calculate the score based on formula
@@ -1549,13 +1543,13 @@ defmodule Cadet.Assessments do
   end
 
   def insert_or_update_voting_answer(submission_id, course_reg_id, question_id, answer_content) do
-    set_rank_to_nil =
+    set_score_to_nil =
       SubmissionVotes
       |> where(voter_id: ^course_reg_id, question_id: ^question_id)
 
     voting_multi =
       Multi.new()
-      |> Multi.update_all(:set_rank_to_nil, set_rank_to_nil, set: [rank: nil])
+      |> Multi.update_all(:set_score_to_nil, set_score_to_nil, set: [score: nil])
 
     answer_content
     |> Enum.with_index(1)
@@ -1567,7 +1561,7 @@ defmodule Cadet.Assessments do
           voter_id: course_reg_id,
           submission_id: entry.submission_id
         )
-        |> SubmissionVotes.changeset(%{rank: entry.rank})
+        |> SubmissionVotes.changeset(%{score: entry.score})
         |> Repo.insert_or_update()
       end)
     end)

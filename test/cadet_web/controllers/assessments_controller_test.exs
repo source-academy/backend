@@ -435,7 +435,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 %{
                   "submission_id" => answer.submission.id,
                   "answer" => %{"code" => answer.answer.code},
-                  "rank" => nil
+                  "score" => nil
                 }
               end)
             end)
