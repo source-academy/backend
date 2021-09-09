@@ -140,7 +140,7 @@ defmodule CadetWeb.AssessmentsHelpers do
         answer: :answer,
         student_name: :student_name
       }),
-      "relative_score",
+      "final_score",
       Float.round(leaderboard_ans.relative_score, 2)
     )
   end
