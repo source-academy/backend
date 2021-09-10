@@ -301,7 +301,7 @@ defmodule Cadet.AssessmentsTest do
               fn {submission, index} ->
                 insert(
                   :submission_vote,
-                  rank: index + 1,
+                  score: 10 - index,
                   voter: student,
                   submission: submission,
                   question: voting_question
@@ -466,7 +466,7 @@ defmodule Cadet.AssessmentsTest do
               fn {submission, index} ->
                 insert(
                   :submission_vote,
-                  rank: index + 1,
+                  score: 10 - index,
                   voter: student,
                   submission: submission,
                   question: current_question
@@ -485,7 +485,7 @@ defmodule Cadet.AssessmentsTest do
               fn {submission, index} ->
                 insert(
                   :submission_vote,
-                  rank: index + 1,
+                  score: 10 - index,
                   voter: student,
                   submission: submission,
                   question: yesterday_question
@@ -504,7 +504,7 @@ defmodule Cadet.AssessmentsTest do
               fn {submission, index} ->
                 insert(
                   :submission_vote,
-                  rank: index + 1,
+                  score: 10 - index,
                   voter: student,
                   submission: submission,
                   question: past_question

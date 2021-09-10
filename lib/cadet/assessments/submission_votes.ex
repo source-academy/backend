@@ -6,7 +6,7 @@ defmodule Cadet.Assessments.SubmissionVotes do
   alias Cadet.Assessments.{Question, Submission}
 
   schema "submission_votes" do
-    field(:rank, :integer)
+    field(:score, :integer)
 
     belongs_to(:voter, CourseRegistration)
     belongs_to(:submission, Submission)
@@ -15,7 +15,7 @@ defmodule Cadet.Assessments.SubmissionVotes do
   end
 
   @required_fields ~w(voter_id submission_id question_id)a
-  @optional_fields ~w(rank)a
+  @optional_fields ~w(score)a
 
   def changeset(submission_vote, params) do
     submission_vote

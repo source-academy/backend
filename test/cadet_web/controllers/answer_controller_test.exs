@@ -70,13 +70,13 @@ defmodule CadetWeb.AnswerControllerTest do
         voting_conn =
           post(conn, build_url(course_id, voting_question.id), %{
             answer: [
-              %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 3}
+              %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 3}
             ]
           })
 
         assert response(voting_conn, 200) =~ "OK"
-        rank = get_rank_for_submission_vote(voting_question, course_reg, contest_submission)
-        assert rank == 3
+        score = get_score_for_submission_vote(voting_question, course_reg, contest_submission)
+        assert score == 3
       end
 
       @tag authenticate: role
@@ -120,7 +120,7 @@ defmodule CadetWeb.AnswerControllerTest do
         voting_conn =
           post(conn, build_url(course_id, voting_question.id), %{
             answer: [
-              %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 3}
+              %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 3}
             ]
           })
 
@@ -129,14 +129,14 @@ defmodule CadetWeb.AnswerControllerTest do
         updated_voting_conn =
           post(conn, build_url(course_id, voting_question.id), %{
             answer: [
-              %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 5}
+              %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 5}
             ]
           })
 
         assert response(updated_voting_conn, 200) =~ "OK"
 
-        rank = get_rank_for_submission_vote(voting_question, course_reg, contest_submission)
-        assert rank == 5
+        score = get_score_for_submission_vote(voting_question, course_reg, contest_submission)
+        assert score == 5
       end
 
       @tag authenticate: role
@@ -161,7 +161,7 @@ defmodule CadetWeb.AnswerControllerTest do
 
         post(conn, build_url(course_id, voting_question.id), %{
           answer: [
-            %{"answer" => "hello world", "submission_id" => contest_submission.id, "rank" => 3}
+            %{"answer" => "hello world", "submission_id" => contest_submission.id, "score" => 3}
           ]
         })
 
@@ -253,7 +253,7 @@ defmodule CadetWeb.AnswerControllerTest do
               %{
                 "answer" => "hello world",
                 "submission_id" => contest_submission.id,
-                "rank" => "a"
+                "score" => "a"
               }
             ]
           })
@@ -263,7 +263,7 @@ defmodule CadetWeb.AnswerControllerTest do
       end
 
       @tag authenticate: role
-      test "update duplicate rank in submission_votes is unsuccessful", %{
+      test "update duplicate score in submission_votes is unsuccessful", %{
         conn: conn,
         voting_question: voting_question
       } do
@@ -277,14 +277,14 @@ defmodule CadetWeb.AnswerControllerTest do
           voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: first_contest_submission.id,
-          rank: 1
+          score: 1
         })
 
         Repo.insert(%SubmissionVotes{
           voter_id: course_reg.id,
           question_id: voting_question.id,
           submission_id: second_contest_submission.id,
-          rank: 2
+          score: 2
         })
 
         voting_conn =
@@ -293,12 +293,12 @@ defmodule CadetWeb.AnswerControllerTest do
               %{
                 "answer" => "hello world",
                 "submission_id" => first_contest_submission.id,
-                "rank" => 3
+                "score" => 3
               },
               %{
                 "answer" => "hello world",
                 "submission_id" => second_contest_submission.id,
-                "rank" => 3
+                "score" => 3
               }
             ]
           })
@@ -393,12 +393,12 @@ defmodule CadetWeb.AnswerControllerTest do
     end
   end
 
-  defp get_rank_for_submission_vote(question, course_reg, submission) do
+  defp get_score_for_submission_vote(question, course_reg, submission) do
     SubmissionVotes
     |> where(question_id: ^question.id)
     |> where(voter_id: ^course_reg.id)
     |> where(submission_id: ^submission.id)
-    |> select([sv], sv.rank)
+    |> select([sv], sv.score)
     |> Repo.one()
   end
 end
