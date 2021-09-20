@@ -244,7 +244,7 @@ defmodule Cadet.Assessments do
           {q, a, nil, _} -> %{q | answer: %Answer{a | grader: nil}}
           {q, a, g, u} -> %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
         end)
-        |> load_contest_voting_entries(course_reg.course_id, course_reg.id)
+        |> load_contest_voting_entries(course_reg, assessment)
 
       assessment = assessment |> Map.put(:questions, questions)
       {:ok, assessment}
@@ -734,6 +734,7 @@ defmodule Cadet.Assessments do
       |> preload([_, a], assessment: a)
       |> Repo.get(submission_id)
 
+    # allows staff to unsubmit own assessment
     bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
@@ -884,7 +885,11 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp load_contest_voting_entries(questions, course_id, voter_id) do
+  defp load_contest_voting_entries(
+         questions,
+         %CourseRegistration{role: role, course_id: course_id, id: voter_id},
+         assessment
+       ) do
     Enum.map(
       questions,
       fn q ->
@@ -893,11 +898,16 @@ defmodule Cadet.Assessments do
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(course_id, q)
 
-          leaderboard_results = []
-          # temporary fix to hide the leaderboard
-          # if is_nil(question_id),
-          #   do: [],
-          #   else: fetch_top_relative_score_answers(question_id, 10)
+          leaderboard_results =
+            if is_nil(question_id) do
+              []
+            else
+              if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
+                fetch_top_relative_score_answers(question_id, 10)
+              else
+                []
+              end
+            end
 
           # populate entries to vote for and leaderboard data into the question
           voting_question =
@@ -939,6 +949,13 @@ defmodule Cadet.Assessments do
       |> select([a, q], q.id)
       |> Repo.one()
     end
+  end
+
+  defp leaderboard_open?(assessment, voting_question) do
+    Timex.before?(
+      Timex.now(),
+      Timex.shift(assessment.close_at, hours: voting_question.question["reveal_hours"])
+    )
   end
 
   @doc """

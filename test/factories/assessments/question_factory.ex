@@ -92,7 +92,8 @@ defmodule Cadet.Assessments.QuestionFactory do
             content: Faker.Pokemon.name(),
             prepend: Faker.Pokemon.location(),
             template: Faker.Lorem.Shakespeare.as_you_like_it(),
-            contest_number: contest_assessment.number
+            contest_number: contest_assessment.number,
+            reveal_hours: 48
           }
         }
       end
@@ -104,7 +105,8 @@ defmodule Cadet.Assessments.QuestionFactory do
           content: Faker.Pokemon.name(),
           prepend: Faker.Pokemon.location(),
           template: Faker.Lorem.Shakespeare.as_you_like_it(),
-          contest_number: contest_assessment.number
+          contest_number: contest_assessment.number,
+          reveal_hours: 48
         }
       end
     end
