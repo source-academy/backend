@@ -85,7 +85,6 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(
         ~x"//TASK"e,
         access: ~x"./@access"s |> transform_by(&process_access/1),
-        # type: ~x"./@kind"s |> transform_by(&change_quest_to_sidequest/1),
         title: ~x"./@title"s,
         number: ~x"./@number"s,
         story: ~x"./@story"s,
@@ -259,7 +258,8 @@ defmodule Cadet.Updater.XMLParser do
       entity
       |> xpath(
         ~x"./VOTING"e,
-        contest_number: ~x"./@assessment_number"s
+        contest_number: ~x"./@assessment_number"s,
+        reveal_hours: ~x"./@reveal_hours"i
       )
     )
   end

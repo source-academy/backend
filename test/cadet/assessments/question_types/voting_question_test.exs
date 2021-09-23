@@ -8,7 +8,8 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestionTest do
       assert_changeset(
         %{
           content: "content",
-          contest_number: "C4"
+          contest_number: "C4",
+          reveal_hours: 48
         },
         :valid
       )

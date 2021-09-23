@@ -473,7 +473,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "it renders contest leaderboards", %{
+    test "renders open leaderboard for all roles", %{
       conn: conn,
       course_regs: course_regs,
       courses: %{course1: course1},
@@ -510,17 +510,16 @@ defmodule CadetWeb.AssessmentsControllerTest do
           })
         end
 
-      expected_leaderboard = []
-      # temporary fix to hide the leaderboard
-      # for answer <- contest_answers do
-      #   %{
-      #     "answer" => %{"code" => answer.answer.code},
-      #     "score" => answer.relative_score,
-      #     "student_name" => answer.submission.student.user.name,
-      #     "submission_id" => answer.submission.id
-      #   }
-      # end
-      # |> Enum.sort_by(& &1["score"], &>=/2)
+      expected_leaderboard =
+        for answer <- contest_answers do
+          %{
+            "answer" => %{"code" => answer.answer.code},
+            "final_score" => answer.relative_score,
+            "student_name" => answer.submission.student.user.name,
+            "submission_id" => answer.submission.id
+          }
+        end
+        |> Enum.sort_by(& &1["final_score"], &>=/2)
 
       for role <- Role.__enum_map__() do
         course_reg = Map.get(role_crs, role)
@@ -536,6 +535,139 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         assert resp_leaderboard == expected_leaderboard
       end
+    end
+
+    test "renders close leaderboard for staff and admin", %{
+      conn: conn,
+      course_regs: course_regs,
+      courses: %{course1: course1},
+      role_crs: role_crs,
+      assessments: assessments
+    } do
+      voting_assessment = assessments["practical"].assessment
+
+      voting_assessment
+      |> Assessment.changeset(%{
+        open_at: Timex.shift(Timex.now(), days: -30),
+        close_at: Timex.shift(Timex.now(), days: -20)
+      })
+      |> Repo.update()
+
+      voting_question = assessments["practical"].voting_questions |> List.first()
+      contest_assessment_number = voting_question.question.contest_number
+
+      contest_assessment = Repo.get_by(Assessment, number: contest_assessment_number)
+
+      # insert contest question
+      contest_question =
+        insert(:programming_question, %{
+          display_order: 1,
+          assessment: contest_assessment,
+          max_xp: 1000
+        })
+
+      # insert contest submissions and answers
+      contest_submissions =
+        for student <- Enum.take(course_regs.students, 5) do
+          insert(:submission, %{assessment: contest_assessment, student: student})
+        end
+
+      contest_answers =
+        for {submission, score} <- Enum.with_index(contest_submissions, 1) do
+          insert(:answer, %{
+            xp: 1000,
+            question: contest_question,
+            submission: submission,
+            answer: build(:programming_answer),
+            relative_score: score / 1
+          })
+        end
+
+      expected_leaderboard =
+        for answer <- contest_answers do
+          %{
+            "answer" => %{"code" => answer.answer.code},
+            "final_score" => answer.relative_score,
+            "student_name" => answer.submission.student.user.name,
+            "submission_id" => answer.submission.id
+          }
+        end
+        |> Enum.sort_by(& &1["final_score"], &>=/2)
+
+      for role <- [:admin, :staff] do
+        course_reg = Map.get(role_crs, role)
+
+        resp_leaderboard =
+          conn
+          |> sign_in(course_reg.user)
+          |> get(build_url(course1.id, voting_question.assessment.id))
+          |> json_response(200)
+          |> Map.get("questions", [])
+          |> Enum.find(&(&1["id"] == voting_question.id))
+          |> Map.get("contestLeaderboard")
+
+        assert resp_leaderboard == expected_leaderboard
+      end
+    end
+
+    test "does not render close leaderboard for students", %{
+      conn: conn,
+      course_regs: course_regs,
+      courses: %{course1: course1},
+      role_crs: %{student: course_reg},
+      assessments: assessments
+    } do
+      voting_assessment = assessments["practical"].assessment
+
+      voting_assessment
+      |> Assessment.changeset(%{
+        open_at: Timex.shift(Timex.now(), days: -30),
+        close_at: Timex.shift(Timex.now(), days: -20)
+      })
+      |> Repo.update()
+
+      voting_question = assessments["practical"].voting_questions |> List.first()
+      contest_assessment_number = voting_question.question.contest_number
+
+      contest_assessment = Repo.get_by(Assessment, number: contest_assessment_number)
+
+      # insert contest question
+      contest_question =
+        insert(:programming_question, %{
+          display_order: 1,
+          assessment: contest_assessment,
+          max_xp: 1000
+        })
+
+      # insert contest submissions and answers
+      contest_submissions =
+        for student <- Enum.take(course_regs.students, 5) do
+          insert(:submission, %{assessment: contest_assessment, student: student})
+        end
+
+      _contest_answers =
+        for {submission, score} <- Enum.with_index(contest_submissions, 1) do
+          insert(:answer, %{
+            xp: 1000,
+            question: contest_question,
+            submission: submission,
+            answer: build(:programming_answer),
+            relative_score: score / 1
+          })
+        end
+
+      expected_leaderboard = []
+
+      resp_leaderboard =
+        conn
+        |> sign_in(course_reg.user)
+        |> get(build_url(course1.id, voting_question.assessment.id))
+        |> json_response(200)
+        |> Map.get("questions", [])
+        |> Enum.find(&(&1["id"] == voting_question.id))
+        |> Map.get("contestLeaderboard")
+
+      assert resp_leaderboard == expected_leaderboard
     end
 
     test "it renders assessment question libraries", %{

@@ -74,7 +74,8 @@ defmodule Cadet.AssessmentsTest do
           library: build(:library),
           question: %{
             content: Faker.Pokemon.name(),
-            contest_number: assessment.number
+            contest_number: assessment.number,
+            reveal_hours: 48
           }
         },
         assessment.id
