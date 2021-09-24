@@ -480,6 +480,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
       role_crs: role_crs,
       assessments: assessments
     } do
+      voting_assessment = assessments["practical"].assessment
+
+      voting_assessment
+      |> Assessment.changeset(%{
+        open_at: Timex.shift(Timex.now(), days: -30),
+        close_at: Timex.shift(Timex.now(), days: -20)
+      })
+      |> Repo.update()
+
       voting_question = assessments["practical"].voting_questions |> List.first()
       contest_assessment_number = voting_question.question.contest_number
 
@@ -548,8 +557,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        open_at: Timex.shift(Timex.now(), days: -30),
-        close_at: Timex.shift(Timex.now(), days: -20)
+        close_at: Timex.shift(Timex.now(), days: 20)
       })
       |> Repo.update()
 
@@ -621,8 +629,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        open_at: Timex.shift(Timex.now(), days: -30),
-        close_at: Timex.shift(Timex.now(), days: -20)
+        close_at: Timex.shift(Timex.now(), days: 20)
       })
       |> Repo.update()
 

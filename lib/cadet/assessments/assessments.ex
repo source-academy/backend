@@ -953,8 +953,8 @@ defmodule Cadet.Assessments do
 
   defp leaderboard_open?(assessment, voting_question) do
     Timex.before?(
-      Timex.now(),
-      Timex.shift(assessment.close_at, hours: voting_question.question["reveal_hours"])
+      Timex.shift(assessment.close_at, hours: voting_question.question["reveal_hours"]),
+      Timex.now()
     )
   end
 
