@@ -9,7 +9,7 @@ defmodule Cadet.Assessments.LibraryFactory do
 
       def library_factory do
         %{
-          chapter: Enum.random(1..20),
+          chapter: Enum.random(1..4),
           globals:
             Enum.reduce(
               0..5,

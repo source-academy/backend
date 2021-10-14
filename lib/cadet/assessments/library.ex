@@ -9,12 +9,14 @@ defmodule Cadet.Assessments.Library do
   @primary_key false
   embedded_schema do
     field(:chapter, :integer, default: 1)
+    field(:variant, :string, default: nil)
+    field(:exec_time_ms, :integer, default: 1000)
     field(:globals, :map, default: %{})
     embeds_one(:external, ExternalLibrary, on_replace: :update)
   end
 
   @required_fields ~w(chapter)a
-  @optional_fields ~w(globals)a
+  @optional_fields ~w(globals variant exec_time_ms)a
   @required_embeds ~w(external)a
 
   def changeset(library, params \\ %{}) do
@@ -24,6 +26,8 @@ defmodule Cadet.Assessments.Library do
     |> put_default_external()
     |> validate_required(@required_fields ++ @required_embeds)
     |> validate_globals()
+    |> validate_chapter()
+    |> validate_chapter_variant()
   end
 
   defp validate_globals(changeset) do
@@ -37,6 +41,45 @@ defmodule Cadet.Assessments.Library do
     else
       {:nil?, true} -> changeset
       _ -> add_error(changeset, :globals, "invalid format")
+    end
+  end
+
+  defp validate_chapter(changeset) do
+    case changeset |> fetch_change(:chapter) do
+      {:ok, c} when c in 1..4 -> changeset
+      :error -> changeset
+      _ -> add_error(changeset, :chapter, "invalid chapter")
+    end
+  end
+
+  @valid_chapter_variants [
+    {1, "wasm"},
+    {1, "lazy"},
+    {2, "lazy"},
+    {3, "concurrent"},
+    {3, "non-det"},
+    {4, "gpu"}
+  ]
+
+  defp validate_chapter_variant(changeset) do
+    chapter = changeset |> fetch_field(:chapter)
+    variant = changeset |> fetch_field(:variant)
+
+    case {chapter, variant} do
+      # no changes
+      {{:data, _}, {:data, _}} ->
+        changeset
+
+      # default variant
+      {{_, _c}, {_, v}} when is_nil(v) or v == "default" ->
+        changeset
+
+      {{_, chapter}, {_, variant}} ->
+        if {chapter, variant} in @valid_chapter_variants do
+          changeset
+        else
+          add_error(changeset, :variant, "invalid variant for given chapter")
+        end
     end
   end
 

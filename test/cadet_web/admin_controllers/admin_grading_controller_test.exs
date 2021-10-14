@@ -268,7 +268,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "external" => %{
                       "name" => "#{&1.question.library.external.name}",
                       "symbols" => &1.question.library.external.symbols
-                    }
+                    },
+                    "execTimeMs" => &1.question.library.exec_time_ms,
+                    "variant" => &1.question.library.variant
                   },
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
@@ -305,7 +307,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "external" => %{
                       "name" => "#{&1.question.library.external.name}",
                       "symbols" => &1.question.library.external.symbols
-                    }
+                    },
+                    "execTimeMs" => &1.question.library.exec_time_ms,
+                    "variant" => &1.question.library.variant
                   },
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
@@ -352,7 +356,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "external" => %{
                       "name" => "#{&1.question.library.external.name}",
                       "symbols" => &1.question.library.external.symbols
-                    }
+                    },
+                    "execTimeMs" => &1.question.library.exec_time_ms,
+                    "variant" => &1.question.library.variant
                   },
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
@@ -902,7 +908,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "external" => %{
                       "name" => "#{&1.question.library.external.name}",
                       "symbols" => &1.question.library.external.symbols
-                    }
+                    },
+                    "execTimeMs" => &1.question.library.exec_time_ms,
+                    "variant" => &1.question.library.variant
                   },
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,
@@ -939,7 +947,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "external" => %{
                       "name" => "#{&1.question.library.external.name}",
                       "symbols" => &1.question.library.external.symbols
-                    }
+                    },
+                    "execTimeMs" => &1.question.library.exec_time_ms,
+                    "variant" => &1.question.library.variant
                   },
                   "content" => &1.question.question.content,
                   "answer" => &1.answer.choice_id,
@@ -986,7 +996,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "external" => %{
                       "name" => "#{&1.question.library.external.name}",
                       "symbols" => &1.question.library.external.symbols
-                    }
+                    },
+                    "execTimeMs" => &1.question.library.exec_time_ms,
+                    "variant" => &1.question.library.variant
                   },
                   "maxXp" => &1.question.max_xp,
                   "content" => &1.question.question.content,

@@ -308,7 +308,9 @@ defmodule Cadet.Updater.XMLParser do
     library_entity
     |> xpath(
       ~x"."e,
-      chapter: ~x"./@interpreter"i
+      chapter: ~x"./@interpreter"i,
+      exec_time_ms: ~x"./@exectime"oi,
+      variant: ~x"./@variant"os
     )
     |> Map.put(:globals, globals)
     |> Map.put(:external, external)

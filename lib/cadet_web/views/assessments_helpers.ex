@@ -7,6 +7,8 @@ defmodule CadetWeb.AssessmentsHelpers do
   defp build_library(%{library: library}) do
     transform_map_for_view(library, %{
       chapter: :chapter,
+      variant: :variant,
+      execTimeMs: :exec_time_ms,
       globals: :globals,
       external: &build_external_library(%{external_library: &1.external})
     })
