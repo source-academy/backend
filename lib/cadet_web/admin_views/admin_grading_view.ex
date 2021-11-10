@@ -22,19 +22,11 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   defp build_grading_question(answer) do
-    results = build_autograding_results(answer.autograding_results)
-
     %{question: answer.question}
     |> build_question_by_question_config(true)
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
     |> Map.put(:autogradingStatus, answer.autograding_status)
-    |> Map.put(:autogradingResults, results)
-  end
-
-  defp build_autograding_results(nil), do: nil
-
-  defp build_autograding_results(results) do
-    Enum.map(results, &build_result/1)
+    |> Map.put(:autogradingResults, answer.autograding_results)
   end
 
   defp build_grade(answer = %{grader: grader}) do

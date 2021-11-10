@@ -88,42 +88,8 @@ defmodule CadetWeb.AssessmentsHelpers do
       gradedAt: graded_at_builder(grader),
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
       autogradingStatus: :autograding_status,
-      autogradingResults: build_results(%{results: answer.autograding_results}),
+      autogradingResults: :autograding_results,
       comments: :comments
-    })
-  end
-
-  defp build_results(%{results: results}) do
-    case results do
-      nil -> nil
-      _ -> &Enum.map(&1.autograding_results, fn result -> build_result(result) end)
-    end
-  end
-
-  def build_result(result) do
-    transform_map_for_view(result, %{
-      resultType: "resultType",
-      expected: "expected",
-      actual: "actual",
-      errorType: "errorType",
-      errors: build_errors(result["errors"])
-    })
-  end
-
-  defp build_errors(errors) do
-    case errors do
-      nil -> nil
-      _ -> &Enum.map(&1["errors"], fn error -> build_error(error) end)
-    end
-  end
-
-  defp build_error(error) do
-    transform_map_for_view(error, %{
-      errorType: "errorType",
-      line: "line",
-      location: "location",
-      errorLine: "errorLine",
-      errorExplanation: "errorExplanation"
     })
   end
 
