@@ -68,11 +68,6 @@ defmodule Cadet.Auth.Providers.GitHub do
     end
   end
 
-  def get_role(_config, _claims) do
-    # There is no role specified for the GitHub provider
-    {:error, :invalid_credentials, "No role specified in token"}
-  end
-
   defp api_call(url, token) do
     headers = [{"Authorization", "token " <> token}]
 

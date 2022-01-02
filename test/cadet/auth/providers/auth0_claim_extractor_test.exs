@@ -13,9 +13,8 @@ defmodule Cadet.Auth.Providers.Auth0ClaimExtractorTest do
       "https://source-academy.github.io/role" => "admin"
     }
 
-    assert Testee.get_username(claims) == @username
-    assert Testee.get_name(claims) == "name name"
-    assert Testee.get_role(claims) == "admin"
+    assert Testee.get_username(claims, "") == @username
+    assert Testee.get_name(claims, "") == "name name"
 
     assert Testee.get_token_type() == "id_token"
   end
@@ -23,6 +22,6 @@ defmodule Cadet.Auth.Providers.Auth0ClaimExtractorTest do
   test "test non-verified email" do
     claims = %{"email" => @username, "email_verified" => false}
 
-    assert is_nil(Testee.get_username(claims))
+    assert is_nil(Testee.get_username(claims, ""))
   end
 end

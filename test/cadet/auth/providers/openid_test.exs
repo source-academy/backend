@@ -33,7 +33,6 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
   """
 
   @username "username"
-  @role :admin
 
   @openid_provider_name :test
 
@@ -107,7 +106,6 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
              OpenID.authorise(@config, "dummy_code", "", "")
 
     assert {:ok, @username} == OpenID.get_name(@config, @okay_token)
-    assert {:ok, @role} == OpenID.get_role(@config, @okay_token)
   end
 
   @no_username_token "eyJraWQiOiIxIiwiYWxnIjoiUlMyNTYifQ.eyJjb2duaXRvOmdyb3VwcyI6WyJhZG1pbiJdfQ.oAcQXHRZjm9lje8SoIkLBan4ucZDorWuqVU4dtFySh0br48f722VOZ4Ejwm23ha8TMYSmHpOnyS0WKOrBN1tYtmTvaApLT1Q7zphtGLoGVhrQRx-cM23vCswLQWesbmhgD-QzFkTXCnAXy8N2EjaBehWJbBuslZZpqH1R9LIZiqzTEtoY1wIK_ndClZZ2qswVuNdoWBWJShJDvmJAgphb7roKEG5KEc70jb8cOE79CKXpj_uKJwLYrcLpzVyZwLNJevi6FiT2wLIBr2HCL8_Vrv6SmVtLlvRU23-IIyXxdAce4KIyMTC2BovvTgGZtiXPjMOlcklyZMDeIyaWBosMA"
@@ -140,13 +138,6 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
 
     assert {:error, :invalid_credentials, "Failed to verify token"} ==
              OpenID.authorise(@config, "dummy_code", "", "")
-  end
-
-  @empty_token "eyJraWQiOiIxIiwiYWxnIjoiUlMyNTYifQ.e30.Fi_39PCZ0w5FbyE2xtvnBfVKmGitgH0BdRgmKa70WJBemiZsa1g5tifFRo0Ns74LTXhtK2xHk2jeLuZ3GU4ReYPmMXnnuCDU-6gw-Aavz9Iqj7MxM78v-Sn7icJey-6U4PPVUk-6BPEw2VaXb4FWk2zK6UzGxlFst0_jUJCpoClIhyvTRC8_JgLbDGfwbEYv3VNYwg5XB3NGlBsPZdBFEvcWNgJzfFl5V362H3b2R3u0KC5nBDnICAkghy_HON68ZdTmnhojCxfdYGilmDmzDUqRbqUWAfRDGFqwEhw4OOjRadMwxdC_ks7Z5tSFcVoY7US7XYW_XbK6TsD3qLU-iQ"
-
-  test "get_role with no role in token" do
-    assert {:error, :invalid_credentials, "No role specified in token"} ==
-             OpenID.get_role(@config, @empty_token)
   end
 
   test "non-successful HTTP status", %{bypass: bypass} do

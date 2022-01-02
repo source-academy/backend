@@ -8,9 +8,8 @@ defmodule Cadet.Auth.Providers.GoogleClaimExtractorTest do
   test "test verified email" do
     claims = %{"email" => @username, "email_verified" => true}
 
-    assert Testee.get_username(claims) == @username
-    assert is_nil(Testee.get_name(claims))
-    assert is_nil(Testee.get_role(claims))
+    assert Testee.get_username(claims, "") == @username
+    assert is_nil(Testee.get_name(claims, ""))
 
     assert Testee.get_token_type() == "id_token"
   end
@@ -18,8 +17,7 @@ defmodule Cadet.Auth.Providers.GoogleClaimExtractorTest do
   test "test non-verified email" do
     claims = %{"email" => @username, "email_verified" => false}
 
-    assert is_nil(Testee.get_username(claims))
-    assert is_nil(Testee.get_name(claims))
-    assert is_nil(Testee.get_role(claims))
+    assert is_nil(Testee.get_username(claims, ""))
+    assert is_nil(Testee.get_name(claims, ""))
   end
 end

@@ -1,11 +1,8 @@
 defmodule Cadet.Auth.Provider do
   @moduledoc """
   An identity provider, which takes the OAuth2 authentication code and exchanges
-  it for a token with the OAuth2 provider, and then retrieves the user ID, name,
-  and user role.
+  it for a token with the OAuth2 provider, and then retrieves the user ID and name.
   """
-
-  alias Cadet.Accounts.Role
 
   @type code :: String.t()
   @type token :: String.t()
@@ -22,9 +19,6 @@ defmodule Cadet.Auth.Provider do
 
   @doc "Retrieves the name of the user with the associated token."
   @callback get_name(any(), token) :: {:ok, String.t()} | {:error, error(), String.t()}
-
-  @doc "Retrieves the role of the user with the associated token."
-  @callback get_role(any(), token) :: {:ok, Role.t()} | {:error, error(), String.t()}
 
   @spec get_instance_config(provider_instance) :: {module(), any()} | nil
   def get_instance_config(instance) do
@@ -47,17 +41,4 @@ defmodule Cadet.Auth.Provider do
       _ -> {:error, :other, "Invalid or nonexistent provider config"}
     end
   end
-
-  # no longer used anymore currently
-
-  # coveralls-ignore-start
-  @spec get_role(provider_instance, token) :: {:ok, String.t()} | {:error, error(), String.t()}
-  def get_role(instance, token) do
-    case get_instance_config(instance) do
-      {provider, config} -> provider.get_role(config, token)
-      _ -> {:error, :other, "Invalid or nonexistent provider config"}
-    end
-  end
-
-  # coveralls-ignore-stop
 end

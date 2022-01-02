@@ -8,10 +8,8 @@ defmodule Cadet.Auth.Providers.CognitoClaimExtractorTest do
   @claims %{"username" => @username, "cognito:groups" => [Atom.to_string(@role)]}
 
   test "test" do
-    assert @username == Testee.get_username(@claims)
-    assert @username == Testee.get_name(@claims)
-    assert @role == Testee.get_role(@claims)
-    assert :admin == Testee.get_role(%{"cognito:groups" => [:admin]})
+    assert @username == Testee.get_username(@claims, "")
+    assert @username == Testee.get_name(@claims, "")
 
     assert Testee.get_token_type() == "access_token"
   end

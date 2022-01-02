@@ -29,7 +29,7 @@ defmodule Cadet.Auth.Providers.OpenID do
               claims,
               nil
             )} do
-      case claim_extractor.get_username(claims) do
+      case claim_extractor.get_username(claims, token) do
         nil ->
           {:error, :invalid_credentials, "No username specified in token"}
 
@@ -56,27 +56,16 @@ defmodule Cadet.Auth.Providers.OpenID do
   end
 
   # issue with JOSE's type specifications
-  @dialyzer {:no_fail_call, [get_name: 2, get_role: 2]}
+  @dialyzer {:no_fail_call, [get_name: 2]}
 
   @spec get_name(config, Provider.token()) ::
           {:ok, String.t()} | {:error, Provider.error(), String.t()}
   def get_name(config, token) do
     %{claim_extractor: claim_extractor} = config
     # Assume the token has already been verified by authorise
-    case claim_extractor.get_name(JOSE.JWT.peek(token).fields) do
+    case claim_extractor.get_name(JOSE.JWT.peek(token).fields, token) do
       nil -> {:error, :invalid_credentials, "No name specified in token"}
       name -> {:ok, name}
-    end
-  end
-
-  @spec get_role(config, Provider.token()) ::
-          {:ok, Cadet.Accounts.Role.t()} | {:error, Provider.error(), String.t()}
-  def get_role(config, token) do
-    %{claim_extractor: claim_extractor} = config
-    # Assume the token has already been verified by authorise
-    case claim_extractor.get_role(JOSE.JWT.peek(token).fields) do
-      nil -> {:error, :invalid_credentials, "No role specified in token"}
-      role -> {:ok, role}
     end
   end
 end
@@ -85,8 +74,7 @@ defmodule Cadet.Auth.Providers.OpenID.ClaimExtractor do
   @moduledoc """
   A behaviour for modules that extract fields from JWT token claims.
   """
-  @callback get_username(%{}) :: String.t() | nil
-  @callback get_name(%{}) :: String.t() | nil
-  @callback get_role(%{}) :: String.t() | nil
+  @callback get_username(%{}, String.t()) :: String.t() | nil
+  @callback get_name(%{}, String.t()) :: String.t() | nil
   @callback get_token_type() :: String.t() | nil
 end

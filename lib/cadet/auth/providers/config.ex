@@ -36,13 +36,4 @@ defmodule Cadet.Auth.Providers.Config do
       _ -> {:error, :invalid_credentials, "Invalid token"}
     end
   end
-
-  @spec get_role(any(), Provider.token()) ::
-          {:ok, Cadet.Accounts.Role.t()} | {:error, Provider.error(), String.t()}
-  def get_role(config, token) do
-    case Enum.find(config, nil, fn %{token: this_token} -> token == this_token end) do
-      %{role: role} -> {:ok, role}
-      _ -> {:error, :invalid_credentials, "Invalid token"}
-    end
-  end
 end

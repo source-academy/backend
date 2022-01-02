@@ -18,8 +18,5 @@ defmodule Cadet.Auth.ProviderTest do
 
     assert {:error, :other, "Invalid or nonexistent provider config"} =
              Provider.get_name("32523453", "student_token")
-
-    assert {:error, :other, "Invalid or nonexistent provider config"} =
-             Provider.get_role("tes0938456720t", "student_token")
   end
 end

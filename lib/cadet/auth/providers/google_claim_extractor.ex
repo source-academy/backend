@@ -5,7 +5,7 @@ defmodule Cadet.Auth.Providers.GoogleClaimExtractor do
 
   @behaviour Cadet.Auth.Providers.OpenID.ClaimExtractor
 
-  def get_username(claims) do
+  def get_username(claims, _id_token) do
     if claims["email_verified"] do
       claims["email"]
     else
@@ -13,11 +13,9 @@ defmodule Cadet.Auth.Providers.GoogleClaimExtractor do
     end
   end
 
-  def get_name(claims) do
+  def get_name(claims, _id_token) do
     claims["name"]
   end
-
-  def get_role(_claims), do: nil
 
   def get_token_type, do: "id_token"
 end

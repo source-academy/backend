@@ -71,29 +71,11 @@ defmodule Cadet.AccountsTest do
     end
 
     test_with_mock "upstream error", Cadet.Auth.Provider,
-      get_role: fn _, _ -> {:error, :upstream, "Upstream error"} end,
       get_name: fn _, _ -> {:error, :upstream, "Upstream error"} end do
       assert {:error, :bad_request, "Upstream error"} ==
                Accounts.sign_in("student", "student_token", "test")
     end
   end
-
-  # describe "sign in with unregistered user gets the right roles" do
-  #   test ~s(user has admin access) do
-  #     assert {:ok, user} = Accounts.sign_in("admin", "admin_token", "test")
-  #     assert %{role: :admin} = user
-  #   end
-
-  #   test ~s(user has staff access) do
-  #     assert {:ok, user} = Accounts.sign_in("staff", "staff_token", "test")
-  #     assert %{role: :staff} = user
-  #   end
-
-  #   test ~s(user has student access) do
-  #     assert {:ok, user} = Accounts.sign_in("student", "student_token", "test")
-  #     assert %{role: :student} = user
-  #   end
-  # end
 
   describe "insert_or_update_user" do
     test "existing user" do

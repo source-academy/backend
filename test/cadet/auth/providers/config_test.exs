@@ -39,14 +39,4 @@ defmodule Cadet.Auth.Providers.ConfigTest do
       assert {:error, _, _} = Config.get_name(@config, @token <> "dflajhdfs")
     end
   end
-
-  describe "get role" do
-    test "successfully" do
-      assert {:ok, @role} = Config.get_role(@config, @token)
-    end
-
-    test "with wrong token" do
-      assert {:error, _, _} = Config.get_role(@config, @token <> "dflajhdfs")
-    end
-  end
 end
