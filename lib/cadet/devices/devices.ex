@@ -11,7 +11,7 @@ defmodule Cadet.Devices do
   alias Cadet.Devices.{Device, DeviceRegistration}
   alias ExAws.STS
 
-  @spec get_user_registrations(integer | String.t() | %User{}) :: [%DeviceRegistration{}]
+  @spec get_user_registrations(integer | String.t() | User.t()) :: [DeviceRegistration.t()]
   def get_user_registrations(%User{id: user_id}) do
     get_user_registrations(user_id)
   end
@@ -23,8 +23,8 @@ defmodule Cadet.Devices do
     |> Repo.all()
   end
 
-  @spec get_user_registration(integer | String.t() | %User{}, integer | String.t()) ::
-          %DeviceRegistration{} | nil
+  @spec get_user_registration(integer | String.t() | User.t(), integer | String.t()) ::
+          DeviceRegistration.t() | nil
   def get_user_registration(%User{id: user_id}, id) do
     get_user_registration(user_id, id)
   end
@@ -37,20 +37,20 @@ defmodule Cadet.Devices do
     |> Repo.get(id)
   end
 
-  @spec delete_registration(%DeviceRegistration{}) :: {:ok, %DeviceRegistration{}}
+  @spec delete_registration(DeviceRegistration.t()) :: {:ok, DeviceRegistration.t()}
   def delete_registration(registration = %DeviceRegistration{}) do
     Repo.delete(registration)
   end
 
-  @spec rename_registration(%DeviceRegistration{}, String.t()) ::
-          {:ok, %DeviceRegistration{}} | {:error, Ecto.Changeset.t()}
+  @spec rename_registration(DeviceRegistration.t(), String.t()) ::
+          {:ok, DeviceRegistration.t()} | {:error, Ecto.Changeset.t()}
   def rename_registration(registration = %DeviceRegistration{}, title) do
     registration
     |> DeviceRegistration.changeset(%{title: title})
     |> Repo.update()
   end
 
-  @spec get_device(binary | integer) :: %Device{} | nil
+  @spec get_device(binary | integer) :: Device.t() | nil
   def get_device(device_id) when is_integer(device_id) do
     Repo.get(Device, device_id)
   end
@@ -61,8 +61,8 @@ defmodule Cadet.Devices do
     |> Repo.one()
   end
 
-  @spec register(binary, binary, binary, integer | %User{}) ::
-          {:ok, %DeviceRegistration{}} | {:error, Ecto.Changeset.t() | :conflicting_device}
+  @spec register(binary, binary, binary, integer | User.t()) ::
+          {:ok, DeviceRegistration.t()} | {:error, Ecto.Changeset.t() | :conflicting_device}
   def register(title, type, secret, %User{id: user_id}) do
     register(title, type, secret, user_id)
   end
@@ -78,7 +78,7 @@ defmodule Cadet.Devices do
     end
   end
 
-  @spec get_device_key_cert(binary | integer | %Device{}) ::
+  @spec get_device_key_cert(binary | integer | Device.t()) ::
           {:ok, {String.t(), String.t()}}
           | {:error,
              :no_such_device
@@ -108,7 +108,7 @@ defmodule Cadet.Devices do
   end
 
   @spec maybe_insert_device(binary, binary) ::
-          {:ok, %Device{}} | {:error, Ecto.Changeset.t() | :conflicting_device}
+          {:ok, Device.t()} | {:error, Ecto.Changeset.t() | :conflicting_device}
   defp maybe_insert_device(type, secret) do
     case get_device(secret) do
       device = %Device{} ->
@@ -167,8 +167,8 @@ defmodule Cadet.Devices do
   end
 
   @spec get_device_ws_endpoint(
-          binary | integer | %Device{},
-          %User{},
+          binary | integer | Device.t(),
+          User.t(),
           [{:datetime, :calendar.datetime()}]
         ) ::
           {:ok, %{}}

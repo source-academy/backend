@@ -8,6 +8,8 @@ defmodule Cadet.Devices.DeviceRegistration do
   alias Cadet.Accounts.User
   alias Cadet.Devices.Device
 
+  @type t :: %__MODULE__{}
+
   schema "device_registrations" do
     field(:title, :string)
 

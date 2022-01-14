@@ -13,7 +13,7 @@ defmodule Cadet.Incentives.Goals do
   @doc """
   Returns all goals.
   """
-  @spec get(integer()) :: [%Goal{}]
+  @spec get(integer()) :: [Goal.t()]
   def get(course_id) when is_ecto_id(course_id) do
     Goal
     |> where(course_id: ^course_id)
@@ -31,7 +31,7 @@ defmodule Cadet.Incentives.Goals do
     |> Repo.all()
   end
 
-  @spec upsert(map()) :: {:ok, %Goal{}} | {:error, {:bad_request, String.t()}}
+  @spec upsert(map()) :: {:ok, Goal.t()} | {:error, {:bad_request, String.t()}}
   @doc """
   Inserts a new goal, or updates it if it already exists.
   """
@@ -70,7 +70,7 @@ defmodule Cadet.Incentives.Goals do
     end
   end
 
-  @spec upsert_many([map()]) :: {:ok, [%Goal{}]} | {:error, {:bad_request, String.t()}}
+  @spec upsert_many([map()]) :: {:ok, [Goal.t()]} | {:error, {:bad_request, String.t()}}
   def upsert_many(many_attrs) do
     Repo.transaction(fn ->
       for attrs <- many_attrs do

@@ -8,6 +8,13 @@ defmodule Cadet.Accounts.User do
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Courses.Course
 
+  @type t :: %__MODULE__{
+          name: String.t(),
+          username: String.t(),
+          provider: String.t(),
+          latest_viewed_course: Course.t()
+        }
+
   schema "users" do
     field(:name, :string)
     field(:username, :string)

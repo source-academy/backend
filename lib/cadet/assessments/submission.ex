@@ -5,6 +5,8 @@ defmodule Cadet.Assessments.Submission do
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Answer, Assessment, SubmissionStatus}
 
+  @type t :: %__MODULE__{}
+
   schema "submissions" do
     field(:xp, :integer, virtual: true)
     field(:xp_adjustment, :integer, virtual: true)

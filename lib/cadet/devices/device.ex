@@ -5,6 +5,8 @@ defmodule Cadet.Devices.Device do
 
   use Cadet, :model
 
+  @type t :: %__MODULE__{}
+
   schema "devices" do
     field(:secret, :string)
     field(:type, :string)

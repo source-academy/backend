@@ -8,6 +8,8 @@ defmodule Cadet.Assessments.Question do
   alias Cadet.Assessments.{Assessment, Library, QuestionType}
   alias Cadet.Assessments.QuestionTypes.{MCQQuestion, ProgrammingQuestion, VotingQuestion}
 
+  @type t :: %__MODULE__{}
+
   schema "questions" do
     field(:display_order, :integer)
     field(:question, :map)

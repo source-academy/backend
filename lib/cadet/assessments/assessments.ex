@@ -61,7 +61,7 @@ defmodule Cadet.Assessments do
     Repo.delete_all(submissions)
   end
 
-  @spec user_max_xp(%CourseRegistration{}) :: integer()
+  @spec user_max_xp(CourseRegistration.t()) :: integer()
   def user_max_xp(%CourseRegistration{id: cr_id}) do
     Submission
     |> where(status: ^:submitted)
@@ -127,7 +127,7 @@ defmodule Cadet.Assessments do
     story
   end
 
-  @spec get_user_story_by_type(%CourseRegistration{}, :unattempted | :attempted) ::
+  @spec get_user_story_by_type(CourseRegistration.t(), :unattempted | :attempted) ::
           String.t() | nil
   def get_user_story_by_type(%CourseRegistration{id: cr_id}, type)
       when is_atom(type) do
@@ -812,8 +812,8 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec update_submission_status_and_xp_bonus(%Submission{}) ::
-          {:ok, %Submission{}} | {:error, Ecto.Changeset.t()}
+  @spec update_submission_status_and_xp_bonus(Submission.t()) ::
+          {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
     assessment = submission.assessment
     assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
@@ -1118,7 +1118,7 @@ defmodule Cadet.Assessments do
   The return value is {:ok, submissions} if no errors, else it is {:error,
   {:unauthorized, "Forbidden."}}
   """
-  @spec all_submissions_by_grader_for_index(%CourseRegistration{}) ::
+  @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok, String.t()}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
@@ -1221,7 +1221,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, [%Answer{}]} | {:error, {:bad_request | :unauthorized, String.t()}}
+          {:ok, [Answer.t()]} | {:error, {:bad_request | :unauthorized, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -1286,7 +1286,7 @@ defmodule Cadet.Assessments do
   @spec update_grading_info(
           %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
           %{},
-          %CourseRegistration{}
+          CourseRegistration.t()
         ) ::
           {:ok, nil}
           | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
@@ -1347,7 +1347,7 @@ defmodule Cadet.Assessments do
     {:error, {:unauthorized, "User is not permitted to grade."}}
   end
 
-  @spec force_regrade_submission(integer() | String.t(), %CourseRegistration{}) ::
+  @spec force_regrade_submission(integer() | String.t(), CourseRegistration.t()) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
   def force_regrade_submission(
         submission_id,
@@ -1374,7 +1374,7 @@ defmodule Cadet.Assessments do
   @spec force_regrade_answer(
           integer() | String.t(),
           integer() | String.t(),
-          %CourseRegistration{}
+          CourseRegistration.t()
         ) ::
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
   def force_regrade_answer(
@@ -1423,7 +1423,7 @@ defmodule Cadet.Assessments do
   end
 
   # Checks if an assessment is open and published.
-  @spec is_open?(%Assessment{}) :: boolean()
+  @spec is_open?(Assessment.t()) :: boolean()
   def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
     Timex.between?(Timex.now(), open_at, close_at, inclusive: :start) and is_published
   end

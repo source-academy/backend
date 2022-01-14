@@ -13,7 +13,7 @@ defmodule Cadet.Incentives.Achievements do
 
   This returns Achievement structs with prerequisites and goal association maps pre-loaded.
   """
-  @spec get(integer()) :: [%Achievement{}]
+  @spec get(integer()) :: [Achievement.t()]
   def get(course_id) when is_ecto_id(course_id) do
     Achievement
     |> where(course_id: ^course_id)
@@ -21,7 +21,7 @@ defmodule Cadet.Incentives.Achievements do
     |> Repo.all()
   end
 
-  @spec upsert(map()) :: {:ok, %Achievement{}} | {:error, {:bad_request, String.t()}}
+  @spec upsert(map()) :: {:ok, Achievement.t()} | {:error, {:bad_request, String.t()}}
   @doc """
   Inserts a new achievement, or updates it if it already exists.
   """
@@ -48,7 +48,7 @@ defmodule Cadet.Incentives.Achievements do
     end
   end
 
-  @spec upsert_many([map()]) :: {:ok, [%Achievement{}]} | {:error, {:bad_request, String.t()}}
+  @spec upsert_many([map()]) :: {:ok, [Achievement.t()]} | {:error, {:bad_request, String.t()}}
   def upsert_many(many_attrs) when is_list(many_attrs) do
     Repo.transaction(fn ->
       for attrs <- many_attrs do

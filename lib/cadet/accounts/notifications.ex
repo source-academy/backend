@@ -15,7 +15,7 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Fetches all unread notifications belonging to a course_reg as an array
   """
-  @spec fetch(%CourseRegistration{}) :: {:ok, {:array, Notification}}
+  @spec fetch(CourseRegistration.t()) :: {:ok, {:array, Notification}}
   def fetch(course_reg = %CourseRegistration{}) do
     notifications =
       Notification
@@ -101,7 +101,7 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Changes read status of notification(s) from false to true.
   """
-  @spec acknowledge({:array, :integer}, %CourseRegistration{}) ::
+  @spec acknowledge({:array, :integer}, CourseRegistration.t()) ::
           {:ok, Ecto.Schema.t()}
           | {:error, any}
           | {:error, Ecto.Multi.name(), any, %{Ecto.Multi.name() => any}}
@@ -123,7 +123,7 @@ defmodule Cadet.Accounts.Notifications do
     |> Repo.transaction()
   end
 
-  @spec acknowledge(:integer, %CourseRegistration{}) :: {:ok, Ecto.Schema.t()} | {:error, any()}
+  @spec acknowledge(:integer, CourseRegistration.t()) :: {:ok, Ecto.Schema.t()} | {:error, any()}
   def acknowledge(notification_id, course_reg = %CourseRegistration{}) do
     notification = Repo.get_by(Notification, id: notification_id, course_reg_id: course_reg.id)
 
@@ -141,7 +141,7 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Function that handles notifications when a submission is unsubmitted.
   """
-  @spec handle_unsubmit_notifications(integer(), %CourseRegistration{}) ::
+  @spec handle_unsubmit_notifications(integer(), CourseRegistration.t()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unsubmit_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
@@ -220,7 +220,7 @@ defmodule Cadet.Accounts.Notifications do
   When a student has finalized a submission, writes a notification to the corresponding
   grader (Avenger) in charge of the student.
   """
-  @spec write_notification_when_student_submits(%Submission{}) ::
+  @spec write_notification_when_student_submits(Submission.t()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_when_student_submits(submission = %Submission{}) do
     avenger_id = get_avenger_id_of(submission.student_id)

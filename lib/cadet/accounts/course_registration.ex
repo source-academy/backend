@@ -7,6 +7,15 @@ defmodule Cadet.Accounts.CourseRegistration do
   alias Cadet.Accounts.{Role, User}
   alias Cadet.Courses.{Course, Group}
 
+  @type t :: %__MODULE__{
+          role: Role.t(),
+          game_states: %{},
+          agreed_to_research: boolean(),
+          group: Group.t() | nil,
+          user: User.t() | nil,
+          course: Course.t() | nil
+        }
+
   schema "course_registrations" do
     field(:role, Role)
     field(:game_states, :map)

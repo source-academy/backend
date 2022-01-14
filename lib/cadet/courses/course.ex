@@ -6,6 +6,19 @@ defmodule Cadet.Courses.Course do
 
   alias Cadet.Courses.AssessmentConfig
 
+  @type t :: %__MODULE__{
+          course_name: String.t(),
+          course_short_name: String.t(),
+          viewable: boolean(),
+          enable_game: boolean(),
+          enable_achievements: boolean(),
+          enable_sourcecast: boolean(),
+          source_chapter: integer(),
+          source_variant: String.t(),
+          module_help_text: String.t(),
+          assets_prefix: String.t() | nil
+        }
+
   schema "courses" do
     field(:course_name, :string)
     field(:course_short_name, :string)

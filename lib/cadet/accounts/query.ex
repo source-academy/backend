@@ -20,7 +20,7 @@ defmodule Cadet.Accounts.Query do
     |> preload(:latest_viewed_course)
   end
 
-  @spec students_of(%CourseRegistration{}) :: Ecto.Query.t()
+  @spec students_of(CourseRegistration.t()) :: Ecto.Query.t()
   def students_of(course_reg = %CourseRegistration{course_id: course_id}) do
     # Note that staff role is not check here as we assume that
     # group leader is assign to a staff validated by group changeset
