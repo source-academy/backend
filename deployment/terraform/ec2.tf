@@ -143,20 +143,3 @@ resource "aws_lb_target_group" "api" {
     path                = "/"
   }
 }
-
-resource "aws_instance" "bastion" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3a.nano"
-
-  tags = {
-    Name        = "${title(var.env)} Cadet Bastion"
-    Environment = var.env
-  }
-
-  vpc_security_group_ids      = [aws_security_group.bastion.id]
-  subnet_id                   = aws_subnet.public_a.id
-  associate_public_ip_address = true
-  ipv6_address_count          = 1
-  ebs_optimized               = true
-  key_name                    = var.bastion_ssh_key_name
-}

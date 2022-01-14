@@ -33,20 +33,16 @@ variable "lambda_filename" {
 
 variable "lambda_timeout" {
   description = "Timeout duration of the lambda service (seconds)"
-  default     = 30
+  default     = 240
 }
 
 variable "grader_timeout" {
   description = "Timeout duration of the grader (milliseconds)"
-  default     = 30000
+  default     = 15000
 }
 
 variable "api_ssh_key_name" {
   description = "SSH key that the API instances should authorise (must already exist in AWS)"
-}
-
-variable "bastion_ssh_key_name" {
-  description = "SSH key that the bastion should authorise (must already exist in AWS)"
 }
 
 variable "assets_bucket" {
