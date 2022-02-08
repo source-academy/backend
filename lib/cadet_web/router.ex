@@ -79,6 +79,7 @@ defmodule CadetWeb.Router do
     post("/assessments/question/:questionid/answer", AnswerController, :submit)
 
     get("/achievements", IncentivesController, :index_achievements)
+    get("/achievements/totalxp", IncentivesController, :calculate_totalxp)
 
     get("/stories", StoriesController, :index)
 

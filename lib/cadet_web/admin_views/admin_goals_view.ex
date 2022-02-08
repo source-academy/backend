@@ -10,6 +10,10 @@ defmodule CadetWeb.AdminGoalsView do
     render_many(goals, CadetWeb.AdminGoalsView, "goal_with_progress.json", as: :goal)
   end
 
+  def render("totalxp.json", %{data: data}) do
+    %{data: data}
+  end
+
   def render("goal.json", %{goal: goal}) do
     transform_map_for_view(goal, %{
       uuid: :uuid,

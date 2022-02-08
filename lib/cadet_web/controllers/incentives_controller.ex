@@ -16,6 +16,11 @@ defmodule CadetWeb.IncentivesController do
     )
   end
 
+  def calculate_totalxp(conn, _) do
+    # query database
+    render(conn, "item.json", item: "hello")
+  end
+
   def update_progress(conn, %{"uuid" => uuid, "progress" => progress}) do
     course_reg_id = conn.assigns.course_reg.id
 
@@ -24,6 +29,8 @@ defmodule CadetWeb.IncentivesController do
     |> Goals.upsert_progress(uuid, course_reg_id)
     |> handle_standard_result(conn)
   end
+
+
 
   defp json_to_progress(json, uuid, course_reg_id) do
     json =
