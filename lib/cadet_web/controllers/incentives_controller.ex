@@ -17,10 +17,10 @@ defmodule CadetWeb.IncentivesController do
   end
 
   def calculate_totalxp(conn, _) do
-    # query database
-    render(conn, "item.json", item: "hello")
+    json(conn, %{data: "message"})
   end
 
+  @spec update_progress(Plug.Conn.t(), map) :: Plug.Conn.t()
   def update_progress(conn, %{"uuid" => uuid, "progress" => progress}) do
     course_reg_id = conn.assigns.course_reg.id
 
