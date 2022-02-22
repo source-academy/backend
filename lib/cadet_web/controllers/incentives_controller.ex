@@ -10,6 +10,7 @@ defmodule CadetWeb.IncentivesController do
     render(conn, "index_achievements.json", achievements: Achievements.get(course_id))
   end
 
+  @spec index_goals(Plug.Conn.t(), any) :: Plug.Conn.t()
   def index_goals(conn, _) do
     render(conn, "index_goals_with_progress.json",
       goals: Goals.get_with_progress(conn.assigns.course_reg)
@@ -17,7 +18,24 @@ defmodule CadetWeb.IncentivesController do
   end
 
   def calculate_totalxp(conn, _) do
-    json(conn, %{data: "message"})
+    course_id = conn.assigns.course_reg.course_id
+    achievements = Achievements.get_goals_with_progress(course_id)
+
+    #IO.inspect Enum.at(goals, 0)
+    #IO.inspect Enum.at(achievements, 0)
+    total_xp = 0
+    Enum.each(achievements, fn achivement_item ->
+      xp = achivement_item.xp
+      Enum.each(achivement_item.goals, fn goal_item ->
+        progress = Enum.at(goal_item.goal.progress, 0)
+        if (!progress.completed) do
+          IO.inspect "uncompleted"
+          xp = 0
+        end
+      end)
+      total_xp = total_xp + xp
+    end)
+    json(conn, %{totalXp: total_xp})
   end
 
   @spec update_progress(Plug.Conn.t(), map) :: Plug.Conn.t()

@@ -21,6 +21,18 @@ defmodule Cadet.Incentives.Achievements do
     |> Repo.all()
   end
 
+  @doc """
+  Returns all achievements with goals and progress.
+
+  This returns Achievement structs with prerequisites, goal association and progress maps pre-loaded.
+  """
+  def get_goals_with_progress(course_id) when is_ecto_id(course_id) do
+    Achievement
+    |> where(course_id: ^course_id)
+    |> preload([:prerequisites, goals: [goal: :progress]])
+    |> Repo.all()
+  end
+
   @spec upsert(map()) :: {:ok, %Achievement{}} | {:error, {:bad_request, String.t()}}
   @doc """
   Inserts a new achievement, or updates it if it already exists.
