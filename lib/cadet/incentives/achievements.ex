@@ -40,6 +40,7 @@ defmodule Cadet.Incentives.Achievements do
         goal <- achievement.goals,
         Enum.at(goal.goal.progress, 0).completed,
         reduce: 0 do
+      # contains bug that will add the same achievement xp for each of the goals it has
       total ->
         total + achievement.xp
     end
