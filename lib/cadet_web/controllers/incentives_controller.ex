@@ -19,22 +19,22 @@ defmodule CadetWeb.IncentivesController do
 
   def calculate_totalxp(conn, _) do
     course_id = conn.assigns.course_reg.course_id
-    achievements = Achievements.get_goals_with_progress(course_id)
-
-    #IO.inspect Enum.at(goals, 0)
-    #IO.inspect Enum.at(achievements, 0)
-    total_xp = 0
-    Enum.each(achievements, fn achivement_item ->
-      xp = achivement_item.xp
-      Enum.each(achivement_item.goals, fn goal_item ->
-        progress = Enum.at(goal_item.goal.progress, 0)
-        if (!progress.completed) do
-          IO.inspect "uncompleted"
-          xp = 0
-        end
-      end)
-      total_xp = total_xp + xp
-    end)
+    total_xp = Achievements.get_goals_with_progress(course_id)
+    IO.puts(total_xp)
+    # IO.inspect Enum.at(goals, 0)
+    # IO.inspect Enum.at(achievements, 0)
+    # total_xp = 0
+    # Enum.each(achievements, fn achivement_item ->
+    #   xp = achivement_item.xp
+    #   Enum.each(achivement_item.goals, fn goal_item ->
+    #     progress = Enum.at(goal_item.goal.progress, 0)
+    #     if (!progress.completed) do
+    #       IO.inspect "uncompleted"
+    #       xp = 0
+    #     end
+    #   end)
+    #   total_xp = total_xp + xp
+    # end)
     json(conn, %{totalXp: total_xp})
   end
 
@@ -47,8 +47,6 @@ defmodule CadetWeb.IncentivesController do
     |> Goals.upsert_progress(uuid, course_reg_id)
     |> handle_standard_result(conn)
   end
-
-
 
   defp json_to_progress(json, uuid, course_reg_id) do
     json =

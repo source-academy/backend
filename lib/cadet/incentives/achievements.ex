@@ -27,10 +27,22 @@ defmodule Cadet.Incentives.Achievements do
   This returns Achievement structs with prerequisites, goal association and progress maps pre-loaded.
   """
   def get_goals_with_progress(course_id) when is_ecto_id(course_id) do
-    Achievement
-    |> where(course_id: ^course_id)
-    |> preload([:prerequisites, goals: [goal: :progress]])
-    |> Repo.all()
+    achievements =
+      Achievement
+      |> where(course_id: ^course_id)
+      |> preload([:prerequisites, goals: [goal: :progress]])
+      |> Repo.all()
+
+    # IO.puts("---------------------------------------")
+    # IO.inspect(achievements)
+
+    for achievement <- achievements,
+        goal <- achievement.goals,
+        Enum.at(goal.goal.progress, 0).completed,
+        reduce: 0 do
+      total ->
+        total + achievement.xp
+    end
   end
 
   @spec upsert(map()) :: {:ok, %Achievement{}} | {:error, {:bad_request, String.t()}}
