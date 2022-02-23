@@ -19,7 +19,7 @@ defmodule CadetWeb.IncentivesController do
 
   def calculate_totalxp(conn, _) do
     course_id = conn.assigns.course_reg.course_id
-    total_xp = Achievements.get_goals_with_progress(course_id)
+    total_xp = Achievements.get_total_xp(course_id)
     IO.puts(total_xp)
     # IO.inspect Enum.at(goals, 0)
     # IO.inspect Enum.at(achievements, 0)

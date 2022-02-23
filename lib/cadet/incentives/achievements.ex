@@ -26,7 +26,7 @@ defmodule Cadet.Incentives.Achievements do
 
   This returns Achievement structs with prerequisites, goal association and progress maps pre-loaded.
   """
-  def get_goals_with_progress(course_id) when is_ecto_id(course_id) do
+  def get_total_xp(course_id) when is_ecto_id(course_id) do
     achievements =
       Achievement
       |> where(course_id: ^course_id)
