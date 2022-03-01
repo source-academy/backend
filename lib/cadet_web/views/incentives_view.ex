@@ -33,12 +33,6 @@ defmodule CadetWeb.IncentivesView do
     render_many(goals, CadetWeb.IncentivesView, "goal_with_progress.json", as: :goal)
   end
 
-  def render("item.json", %{message: message}) do
-    %{
-      message: message,
-    }
-  end
-
   def render("goal_with_progress.json", %{goal: goal}) do
     transform_map_for_view(goal, %{
       uuid: :uuid,
