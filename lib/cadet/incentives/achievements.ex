@@ -23,6 +23,8 @@ defmodule Cadet.Incentives.Achievements do
 
   @doc """
   Returns all achievements with goals and progress.
+  # To Do
+  Run elixir tests for edge cases etc.
 
   This returns Achievement structs with prerequisites, goal association and progress maps pre-loaded.
   """
@@ -33,17 +35,26 @@ defmodule Cadet.Incentives.Achievements do
       |> preload([:prerequisites, goals: [goal: :progress]])
       |> Repo.all()
 
-    # IO.puts("---------------------------------------")
-    # IO.inspect(achievements)
 
-    for achievement <- achievements,
-        goal <- achievement.goals,
-        Enum.at(goal.goal.progress, 0).completed,
-        reduce: 0 do
-      # contains bug that will add the same achievement xp for each of the goals it has
-      total ->
-        total + achievement.xp
+    is_goal_completed = fn (goal_item) ->
+      if (Enum.count(goal_item.goal.progress) != 0),
+        do: Enum.at(goal_item.goal.progress, 0).completed,
+        else: false
     end
+
+    is_all_goal_completed = fn (goal_item, acc) ->
+      if is_goal_completed.(goal_item), do: {:cont, acc}, else: {:halt, 0}
+    end
+
+    acc_goals = fn (all_goals) ->
+      Enum.reduce_while(all_goals, 1, is_all_goal_completed)
+    end
+
+    acc_achievements = fn (achievement_item, acc) ->
+      acc + acc_goals.(achievement_item.goals) * achievement_item.xp
+    end
+
+    Enum.reduce(achievements, 0, acc_achievements)
   end
 
   @spec upsert(map()) :: {:ok, %Achievement{}} | {:error, {:bad_request, String.t()}}

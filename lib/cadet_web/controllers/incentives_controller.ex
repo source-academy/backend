@@ -2,7 +2,9 @@ defmodule CadetWeb.IncentivesController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
+  import Cadet.Assessments
 
+  alias Cadet.Accounts.CourseRegistrations
   alias Cadet.Incentives.{Achievements, Goals}
 
   def index_achievements(conn, _) do
@@ -19,23 +21,18 @@ defmodule CadetWeb.IncentivesController do
 
   def calculate_totalxp(conn, _) do
     course_id = conn.assigns.course_reg.course_id
-    total_xp = Achievements.get_total_xp(course_id)
-    IO.puts(total_xp)
-    # IO.inspect Enum.at(goals, 0)
-    # IO.inspect Enum.at(achievements, 0)
-    # total_xp = 0
-    # Enum.each(achievements, fn achivement_item ->
-    #   xp = achivement_item.xp
-    #   Enum.each(achivement_item.goals, fn goal_item ->
-    #     progress = Enum.at(goal_item.goal.progress, 0)
-    #     if (!progress.completed) do
-    #       IO.inspect "uncompleted"
-    #       xp = 0
-    #     end
-    #   end)
-    #   total_xp = total_xp + xp
-    # end)
-    json(conn, %{totalXp: total_xp})
+    total_achievement_xp = Achievements.get_total_xp(course_id)
+    user = conn.assigns.current_user
+
+    if user.latest_viewed_course_id do
+      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+      total_assessment_xp = user_total_xp(latest)
+      total_xp = total_assessment_xp + total_achievement_xp
+      json(conn, %{totalXp: total_xp})
+    else
+      json(conn, %{totalXp: total_achievement_xp})
+    end
+
   end
 
   @spec update_progress(Plug.Conn.t(), map) :: Plug.Conn.t()
