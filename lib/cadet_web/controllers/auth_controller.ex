@@ -96,7 +96,7 @@ defmodule CadetWeb.AuthController do
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
-  @spec generate_tokens(%User{}) :: %{access_token: String.t(), refresh_token: String.t()}
+  @spec generate_tokens(User.t()) :: %{access_token: String.t(), refresh_token: String.t()}
   defp generate_tokens(user) do
     {:ok, access_token, _} =
       Guardian.encode_and_sign(user, %{}, token_type: "access", ttl: {1, :hour})

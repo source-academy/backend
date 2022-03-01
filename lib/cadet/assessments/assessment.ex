@@ -10,6 +10,8 @@ defmodule Cadet.Assessments.Assessment do
   alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
   alias Cadet.Courses.{Course, AssessmentConfig}
 
+  @type t :: %__MODULE__{}
+
   schema "assessments" do
     field(:access, AssessmentAccess, virtual: true, default: :public)
     field(:max_xp, :integer, virtual: true)

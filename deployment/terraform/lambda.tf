@@ -27,7 +27,7 @@ resource "aws_lambda_function" "grader" {
   runtime          = "nodejs12.x"
   timeout          = var.lambda_timeout
   source_code_hash = filebase64sha256(var.lambda_filename)
-  memory_size      = 256
+  memory_size      = 512
 
   environment {
     variables = {

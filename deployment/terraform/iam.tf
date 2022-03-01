@@ -171,6 +171,11 @@ resource "aws_iam_role_policy_attachment" "api_grader" {
   policy_arn = aws_iam_policy.grader.arn
 }
 
+resource "aws_iam_role_policy_attachment" "api_ssm" {
+  role       = aws_iam_role.api.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 resource "aws_iam_role_policy_attachment" "api_db_secret" {
   role       = aws_iam_role.api.name
   policy_arn = aws_iam_policy.db_secret.arn

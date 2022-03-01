@@ -11,6 +11,8 @@ defmodule Cadet.Assessments.Answer do
   alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer, VotingAnswer}
   alias Cadet.Assessments.{Question, QuestionType, Submission}
 
+  @type t :: %__MODULE__{}
+
   schema "answers" do
     # used to compare answers with others
     field(:relative_score, :float, default: 0.0)

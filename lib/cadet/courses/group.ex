@@ -9,6 +9,12 @@ defmodule Cadet.Courses.Group do
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Courses.Course
 
+  @type t :: %__MODULE__{
+          name: String.t(),
+          leader: CourseRegistration.t() | nil,
+          course: Course.t() | nil
+        }
+
   schema "groups" do
     field(:name, :string)
     belongs_to(:leader, CourseRegistration)

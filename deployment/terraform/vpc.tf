@@ -99,47 +99,11 @@ resource "aws_security_group" "api" {
   }
 
   ingress {
-    description     = "HTTP from API Load Balancer and Bastion"
+    description     = "HTTP from API Load Balancer"
     protocol        = "tcp"
     from_port       = 4000
     to_port         = 4000
-    security_groups = [aws_security_group.lb.id, aws_security_group.bastion.id]
-  }
-
-  ingress {
-    description     = "SSH from Bastion"
-    protocol        = "tcp"
-    from_port       = 22
-    to_port         = 22
-    security_groups = [aws_security_group.bastion.id]
-  }
-}
-
-resource "aws_security_group" "bastion" {
-  name_prefix = "${var.env}-cadet-bastion-"
-  vpc_id      = aws_vpc.cadet.id
-
-  tags = {
-    Name        = "${title(var.env)} Cadet Bastion Security Group"
-    Environment = var.env
-  }
-
-  egress {
-    description      = "Any to internet"
-    protocol         = "-1"
-    from_port        = 0
-    to_port          = 0
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-
-  ingress {
-    description      = "SSH from internet"
-    protocol         = "tcp"
-    from_port        = 22
-    to_port          = 22
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
+    security_groups = [aws_security_group.lb.id]
   }
 }
 

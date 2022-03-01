@@ -24,8 +24,8 @@ jobs:
     env:
       MIX_ENV: prod
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ELIXIR_VERSION: '1.12.3'
-      OTP_VERSION: '24.0.6'
+      ELIXIR_VERSION: '1.13.3'
+      OTP_VERSION: '24.2.1'
     steps:
       - uses: rlespinasse/github-slug-action@v3.x
       - uses: actions/checkout@v2

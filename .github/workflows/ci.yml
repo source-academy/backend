@@ -23,11 +23,11 @@ jobs:
     env:
       MIX_ENV: test
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ELIXIR_VERSION: '1.12.3'
-      OTP_VERSION: '24.0.6'
+      ELIXIR_VERSION: '1.13.3'
+      OTP_VERSION: '24.2.1'
     services:
       postgres:
-        image: postgres:13.1
+        image: postgres:14.2
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

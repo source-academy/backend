@@ -76,7 +76,7 @@ defmodule Cadet.ModelHelper do
       when is_atom(field) and is_map(type_to_model_map) do
     build_changeset = fn params, type ->
       model = Map.get(type_to_model_map, type)
-      apply(model, :changeset, [struct(model), params])
+      model.changeset(struct(model), params)
     end
 
     with true <- changeset.valid?,

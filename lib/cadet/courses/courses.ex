@@ -43,7 +43,7 @@ defmodule Cadet.Courses do
   Returns the course configuration for the specified course.
   """
   @spec get_course_config(integer) ::
-          {:ok, %Course{}} | {:error, {:bad_request, String.t()}}
+          {:ok, Course.t()} | {:error, {:bad_request, String.t()}}
   def get_course_config(course_id) when is_ecto_id(course_id) do
     case retrieve_course(course_id) do
       nil ->
@@ -65,7 +65,7 @@ defmodule Cadet.Courses do
   Updates the general course configuration for the specified course
   """
   @spec update_course_config(integer, %{}) ::
-          {:ok, %Course{}} | {:error, Ecto.Changeset.t()} | {:error, {:bad_request, String.t()}}
+          {:ok, Course.t()} | {:error, Ecto.Changeset.t()} | {:error, {:bad_request, String.t()}}
   def update_course_config(course_id, params) when is_ecto_id(course_id) do
     case retrieve_course(course_id) do
       nil ->
@@ -299,7 +299,7 @@ defmodule Cadet.Courses do
   Get a group based on the group name and course id or create one if it doesn't exist
   """
   @spec get_or_create_group(String.t(), integer()) ::
-          {:ok, %Group{}} | {:error, Ecto.Changeset.t()}
+          {:ok, Group.t()} | {:error, Ecto.Changeset.t()}
   def get_or_create_group(name, course_id) when is_binary(name) and is_ecto_id(course_id) do
     Group
     |> where(name: ^name)
@@ -406,7 +406,7 @@ defmodule Cadet.Courses do
   #   |> Repo.preload(:uploader)
   # end
 
-  @spec assets_prefix(%Course{}) :: binary()
+  @spec assets_prefix(Course.t()) :: binary()
   def assets_prefix(course) do
     course.assets_prefix || "#{Assets.assets_prefix()}#{course.id}/"
   end
