@@ -33,28 +33,28 @@ defmodule Cadet.Incentives.Achievements do
       |> preload([:prerequisites, goals: [goal: [progress: :course_reg]]])
       |> Repo.all()
 
+    IO.inspect(Enum.at(Enum.at(achievements, 2).goals, 0).goal.meta["targetCount"])
 
-    IO.inspect Enum.at(Enum.at(achievements, 2).goals, 0).goal.meta["targetCount"]
-
-    is_goal_completed = fn (goal_item) ->
-      if (Enum.count(goal_item.goal.progress) != 0),
-        do: Enum.at(goal_item.goal.progress, 0).completed
-          and user_id == Enum.at(goal_item.goal.progress, 0).course_reg.user_id
-          and Enum.at(goal_item.goal.progress, 0).count == goal_item.goal.meta["targetCount"],
+    is_goal_completed = fn goal_item ->
+      if Enum.count(goal_item.goal.progress) != 0,
+        do:
+          Enum.at(goal_item.goal.progress, 0).completed and
+            user_id == Enum.at(goal_item.goal.progress, 0).course_reg.user_id and
+            Enum.at(goal_item.goal.progress, 0).count == goal_item.goal.meta["targetCount"],
         else: false
     end
 
-    is_all_goal_completed = fn (goal_item, acc) ->
+    is_all_goal_completed = fn goal_item, acc ->
       if is_goal_completed.(goal_item), do: {:cont, acc}, else: {:halt, 0}
     end
 
-    acc_goals = fn (all_goals) ->
-      if (Enum.count(all_goals) != 0),
+    acc_goals = fn all_goals ->
+      if Enum.count(all_goals) != 0,
         do: Enum.reduce_while(all_goals, 1, is_all_goal_completed),
         else: 0
     end
 
-    acc_achievements = fn (achievement_item, acc) ->
+    acc_achievements = fn achievement_item, acc ->
       acc + acc_goals.(achievement_item.goals) * achievement_item.xp
     end
 

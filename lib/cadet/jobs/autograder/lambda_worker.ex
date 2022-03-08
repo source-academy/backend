@@ -44,7 +44,9 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do
     error_message =
-      "Failed to get autograder result. answer_id: #{answer.id}, error: #{inspect(error, pretty: true)}"
+      "Failed to get autograder result. answer_id: #{answer.id}, error: #{
+        inspect(error, pretty: true)
+      }"
 
     Logger.error(error_message)
     Sentry.capture_message(error_message)

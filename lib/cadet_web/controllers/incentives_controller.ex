@@ -33,7 +33,6 @@ defmodule CadetWeb.IncentivesController do
     else
       json(conn, %{totalXp: "an error has occured"})
     end
-
   end
 
   @spec update_progress(Plug.Conn.t(), map) :: Plug.Conn.t()
