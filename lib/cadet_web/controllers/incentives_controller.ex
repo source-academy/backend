@@ -21,16 +21,17 @@ defmodule CadetWeb.IncentivesController do
 
   def calculate_totalxp(conn, _) do
     course_id = conn.assigns.course_reg.course_id
-    total_achievement_xp = Achievements.get_total_xp(course_id)
     user = conn.assigns.current_user
 
     if user.latest_viewed_course_id do
       latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+      total_achievement_xp = Achievements.get_total_xp(course_id, user.id)
       total_assessment_xp = user_total_xp(latest)
+
       total_xp = total_assessment_xp + total_achievement_xp
       json(conn, %{totalXp: total_xp})
     else
-      json(conn, %{totalXp: total_achievement_xp})
+      json(conn, %{totalXp: "an error has occured"})
     end
 
   end

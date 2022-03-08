@@ -23,22 +23,24 @@ defmodule Cadet.Incentives.Achievements do
 
   @doc """
   Returns all achievements with goals and progress.
-  # To Do
-  Run elixir tests for edge cases etc.
 
   This returns Achievement structs with prerequisites, goal association and progress maps pre-loaded.
   """
-  def get_total_xp(course_id) when is_ecto_id(course_id) do
+  def get_total_xp(course_id, user_id) when is_ecto_id(course_id) do
     achievements =
       Achievement
       |> where(course_id: ^course_id)
-      |> preload([:prerequisites, goals: [goal: :progress]])
+      |> preload([:prerequisites, goals: [goal: [progress: :course_reg]]])
       |> Repo.all()
 
 
+    IO.inspect Enum.at(Enum.at(achievements, 2).goals, 0).goal.meta["targetCount"]
+
     is_goal_completed = fn (goal_item) ->
       if (Enum.count(goal_item.goal.progress) != 0),
-        do: Enum.at(goal_item.goal.progress, 0).completed,
+        do: Enum.at(goal_item.goal.progress, 0).completed
+          and user_id == Enum.at(goal_item.goal.progress, 0).course_reg.user_id
+          and Enum.at(goal_item.goal.progress, 0).count == goal_item.goal.meta["targetCount"],
         else: false
     end
 
@@ -47,7 +49,9 @@ defmodule Cadet.Incentives.Achievements do
     end
 
     acc_goals = fn (all_goals) ->
-      Enum.reduce_while(all_goals, 1, is_all_goal_completed)
+      if (Enum.count(all_goals) != 0),
+        do: Enum.reduce_while(all_goals, 1, is_all_goal_completed),
+        else: 0
     end
 
     acc_achievements = fn (achievement_item, acc) ->
