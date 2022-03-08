@@ -5,7 +5,8 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
-  import Cadet.Assessments
+  alias Cadet.Assessments
+  alias Cadet.Incentives.Achievements
   alias Cadet.Accounts
   alias Cadet.Accounts.CourseRegistrations
 
@@ -15,9 +16,9 @@ defmodule CadetWeb.UserController do
 
     if user.latest_viewed_course_id do
       latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-      xp = user_total_xp(latest)
-      max_xp = user_max_xp(latest)
-      story = user_current_story(latest)
+      xp = Assessments.user_total_xp(latest)
+      max_xp = Assessments.user_max_xp(latest)
+      story = Assessments.user_current_story(latest)
 
       render(
         conn,
@@ -58,9 +59,9 @@ defmodule CadetWeb.UserController do
   end
 
   defp get_course_reg_config(conn, course_reg) do
-    xp = user_total_xp(course_reg)
-    max_xp = user_max_xp(course_reg)
-    story = user_current_story(course_reg)
+    xp = Assessments.user_total_xp(course_reg)
+    max_xp = Assessments.user_max_xp(course_reg)
+    story = Assessments.user_current_story(course_reg)
 
     render(
       conn,
@@ -109,6 +110,22 @@ defmodule CadetWeb.UserController do
         conn
         |> put_status(status)
         |> text(message)
+    end
+  end
+
+  def combined_total_xp(conn, _) do
+    course_id = conn.assigns.course_reg.course_id
+    user = conn.assigns.current_user
+
+    if user.latest_viewed_course_id do
+      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+      total_achievement_xp = Achievements.achievements_total_xp(course_id, user.id)
+      total_assessment_xp = Assessments.user_total_xp(latest)
+
+      total_xp = total_assessment_xp + total_achievement_xp
+      json(conn, %{totalXp: total_xp})
+    else
+      json(conn, %{totalXp: "an error has occured"})
     end
   end
 

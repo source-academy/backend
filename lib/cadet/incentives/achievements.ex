@@ -22,18 +22,16 @@ defmodule Cadet.Incentives.Achievements do
   end
 
   @doc """
-  Returns all achievements with goals and progress.
+  Returns a user's total xp from their completed achievements.
 
   This returns Achievement structs with prerequisites, goal association and progress maps pre-loaded.
   """
-  def get_total_xp(course_id, user_id) when is_ecto_id(course_id) do
+  def achievements_total_xp(course_id, user_id) when is_ecto_id(course_id) do
     achievements =
       Achievement
       |> where(course_id: ^course_id)
       |> preload([:prerequisites, goals: [goal: [progress: :course_reg]]])
       |> Repo.all()
-
-    IO.inspect(Enum.at(Enum.at(achievements, 2).goals, 0).goal.meta["targetCount"])
 
     is_goal_completed = fn goal_item ->
       if Enum.count(goal_item.goal.progress) != 0,
@@ -44,24 +42,22 @@ defmodule Cadet.Incentives.Achievements do
         else: false
     end
 
-    is_all_goal_completed = fn goal_item, acc ->
-      if is_goal_completed.(goal_item), do: {:cont, acc}, else: {:halt, 0}
-    end
+    Enum.reduce(achievements, 0, fn achievement_item, acc ->
+      completed_goals =
+        if Enum.count(achievement_item.goals) != 0,
+          do:
+            Enum.reduce_while(achievement_item.goals, 1, fn goal_item, acc ->
+              if is_goal_completed.(goal_item),
+                do: {:cont, acc},
+                else: {:halt, 0}
+            end),
+          else: 0
 
-    acc_goals = fn all_goals ->
-      if Enum.count(all_goals) != 0,
-        do: Enum.reduce_while(all_goals, 1, is_all_goal_completed),
-        else: 0
-    end
-
-    acc_achievements = fn achievement_item, acc ->
-      acc + acc_goals.(achievement_item.goals) * achievement_item.xp
-    end
-
-    Enum.reduce(achievements, 0, acc_achievements)
+      acc + completed_goals * achievement_item.xp
+    end)
   end
 
-  @spec upsert(map()) :: {:ok, %Achievement{}} | {:error, {:bad_request, String.t()}}
+  @spec upsert(map()) :: {:ok, Achievement.t()} | {:error, {:bad_request, String.t()}}
   @doc """
   Inserts a new achievement, or updates it if it already exists.
   """
