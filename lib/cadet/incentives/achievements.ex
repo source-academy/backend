@@ -5,8 +5,11 @@ defmodule Cadet.Incentives.Achievements do
   use Cadet, [:context, :display]
 
   alias Cadet.Incentives.Achievement
+  alias Cadet.Incentives.GoalProgress
 
   import Ecto.Query
+
+  require Decimal
 
   @doc """
   Returns all achievements.
@@ -23,38 +26,42 @@ defmodule Cadet.Incentives.Achievements do
 
   @doc """
   Returns a user's total xp from their completed achievements.
-
-  This returns Achievement structs with prerequisites, goal association and progress maps pre-loaded.
   """
-  def achievements_total_xp(course_id, user_id) when is_ecto_id(course_id) do
-    achievements =
+  def achievements_total_xp(course_id, course_reg_id) when is_ecto_id(course_id) do
+    xp =
       Achievement
-      |> where(course_id: ^course_id)
-      |> preload([:prerequisites, goals: [goal: [progress: :course_reg]]])
-      |> Repo.all()
+      |> join(:inner, [a], j in assoc(a, :goals))
+      |> join(:inner, [_, j], g in assoc(j, :goal))
+      |> join(:left, [_, _, g], p in GoalProgress,
+        on: p.goal_uuid == g.uuid and p.course_reg_id == ^course_reg_id
+      )
+      |> where([a, j, g, p], a.course_id == ^course_id)
+      |> group_by([a, j, g, p], a.uuid)
+      |> having(
+        [a, j, g, p],
+        fragment(
+          "bool_and(?)",
+          p.completed and p.count == g.target_count and not is_nil(p.course_reg_id)
+        )
+      )
+      # this max is a dummy - simply because a.xp is not under the GROUP BY
+      |> select([a, j, g, p], %{
+        xp: fragment("CASE WHEN bool_and(is_variable_xp) THEN SUM(count) ELSE MAX(xp) END")
+      })
+      |> subquery()
+      |> select([s], sum(s.xp))
+      |> Repo.one()
+      |> decimal_to_integer()
 
-    is_goal_completed = fn goal_item ->
-      if Enum.count(goal_item.goal.progress) != 0,
-        do:
-          Enum.at(goal_item.goal.progress, 0).completed and
-            user_id == Enum.at(goal_item.goal.progress, 0).course_reg.user_id and
-            Enum.at(goal_item.goal.progress, 0).count == goal_item.goal.meta["targetCount"],
-        else: false
+    xp
+  end
+
+  defp decimal_to_integer(decimal) do
+    if Decimal.is_decimal(decimal) do
+      Decimal.to_integer(decimal)
+    else
+      0
     end
-
-    Enum.reduce(achievements, 0, fn achievement_item, acc ->
-      completed_goals =
-        if Enum.count(achievement_item.goals) != 0,
-          do:
-            Enum.reduce_while(achievement_item.goals, 1, fn goal_item, acc ->
-              if is_goal_completed.(goal_item),
-                do: {:cont, acc},
-                else: {:halt, 0}
-            end),
-          else: 0
-
-      acc + completed_goals * achievement_item.xp
-    end)
   end
 
   @spec upsert(map()) :: {:ok, Achievement.t()} | {:error, {:bad_request, String.t()}}

@@ -115,18 +115,14 @@ defmodule CadetWeb.UserController do
 
   def combined_total_xp(conn, _) do
     course_id = conn.assigns.course_reg.course_id
-    user = conn.assigns.current_user
+    user_id = conn.assigns.course_reg.user_id
+    course_reg_id = conn.assigns.course_reg.id
+    user_course = CourseRegistrations.get_user_course(user_id, course_id)
 
-    if user.latest_viewed_course_id do
-      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-      total_achievement_xp = Achievements.achievements_total_xp(course_id, user.id)
-      total_assessment_xp = Assessments.user_total_xp(latest)
-
-      total_xp = total_assessment_xp + total_achievement_xp
-      json(conn, %{totalXp: total_xp})
-    else
-      json(conn, %{totalXp: "an error has occured"})
-    end
+    total_achievement_xp = Achievements.achievements_total_xp(course_id, course_reg_id)
+    total_assessment_xp = Assessments.user_total_xp(user_course)
+    total_xp = total_achievement_xp + total_assessment_xp
+    json(conn, %{totalXp: total_xp})
   end
 
   swagger_path :index do
