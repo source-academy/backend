@@ -5,10 +5,10 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
-  alias Cadet.Assessments
   alias Cadet.Incentives.Achievements
-  alias Cadet.Accounts
   alias Cadet.Accounts.CourseRegistrations
+
+  alias Cadet.{Accounts, Assessments}
 
   def index(conn, _) do
     user = conn.assigns.current_user

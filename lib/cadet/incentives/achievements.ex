@@ -4,8 +4,7 @@ defmodule Cadet.Incentives.Achievements do
   """
   use Cadet, [:context, :display]
 
-  alias Cadet.Incentives.Achievement
-  alias Cadet.Incentives.GoalProgress
+  alias Cadet.Incentives.{Achievement, GoalProgress}
 
   import Ecto.Query
 
