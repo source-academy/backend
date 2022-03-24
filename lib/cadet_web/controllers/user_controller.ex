@@ -126,7 +126,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :index do
-    get("/v2/user")
+    get("/user")
 
     summary("Get the name, and latest_viewed_course of a user")
 
@@ -137,7 +137,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :get_latest_viewed do
-    get("/v2/user/latest_viewed_course")
+    get("/user/latest_viewed_course")
 
     summary("Get the latest_viewed_course of a user")
 
@@ -148,7 +148,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_latest_viewed do
-    put("/v2/user/latest_viewed_course")
+    put("/user/latest_viewed_course")
     summary("Update user's latest viewed course")
     security([%{JWT: []}])
     consumes("application/json")
@@ -161,7 +161,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_game_states do
-    put("/v2/courses/:course_id/user/game_states")
+    put("/courses/:course_id/user/game_states")
     summary("Update user's game states")
     security([%{JWT: []}])
     consumes("application/json")
@@ -174,7 +174,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_research_agreement do
-    put("/v2/courses/:course_id/user/research_agreement")
+    put("/courses/:course_id/user/research_agreement")
     summary("Update the user's agreement to the anonymized collection of programs for research")
     security([%{JWT: []}])
     consumes("application/json")
@@ -192,6 +192,22 @@ defmodule CadetWeb.UserController do
 
     response(200, "OK")
     response(400, "Bad Request")
+  end
+
+  swagger_path :combined_total_xp do
+    get("/courses/{courseId}/user/total_xp")
+
+    summary("Get the total xp from achievements and assessments of a user in a specific course")
+
+    security([%{JWT: []}])
+    produces("application/json")
+
+    parameters do
+      courseId(:path, :integer, "Course Id", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:TotalXPInfo))
+    response(401, "Unauthorised")
   end
 
   def swagger_definitions do
@@ -213,6 +229,15 @@ defmodule CadetWeb.UserController do
               Schema.ref(:CourseConfiguration),
               "course configuration of the latest viewed course"
             )
+          end
+        end,
+      TotalXPInfo:
+        swagger_schema do
+          title("User Total XP")
+          description("total xp of the user")
+
+          properties do
+            totalXp(:integer, "total xp")
           end
         end,
       LatestViewedInfo:
