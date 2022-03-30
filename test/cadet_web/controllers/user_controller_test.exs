@@ -5,8 +5,8 @@ defmodule CadetWeb.UserControllerTest do
   import Cadet.Factory
 
   import Cadet.TestEntityHelper
+
   alias CadetWeb.UserController
-  # alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Accounts.{User, CourseRegistration}
   alias Cadet.{Repo, Courses}
 
