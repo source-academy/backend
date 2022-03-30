@@ -2,9 +2,8 @@ defmodule CadetWeb.UserControllerTest do
   use CadetWeb.ConnCase
 
   import Ecto.Query
-  import Cadet.Factory
 
-  import Cadet.TestEntityHelper
+  import Cadet.{Factory, TestEntityHelper}
 
   alias CadetWeb.UserController
   alias Cadet.Accounts.{User, CourseRegistration}
