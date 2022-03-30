@@ -4,6 +4,7 @@ defmodule CadetWeb.UserControllerTest do
   import Ecto.Query
   import Cadet.Factory
 
+  import Cadet.TestEntityHelper
   alias CadetWeb.UserController
   # alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Accounts.{User, CourseRegistration}
@@ -173,6 +174,130 @@ defmodule CadetWeb.UserControllerTest do
     end
   end
 
+  describe "GET /v2/courses/{course_id}/user/total_xp" do
+    @tag authenticate: :student, group: true
+    test "normal addition of completed assessment and achievement with completed goal", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/user/total_xp")
+        |> json_response(200)
+
+      assert resp["totalXp"] == 210
+    end
+
+    # test "success", %{conn: conn} do
+    #   user = conn.assigns.current_user
+    #   course = user.latest_viewed_course
+
+    #   cr =
+    #     CourseRegistration
+    #     |> preload(:group)
+    #     |> Repo.get_by(course_id: course.id, user_id: user.id)
+
+    #   another_cr = insert(:course_registration, %{user: user, role: :admin})
+    #   assessment = insert(:assessment, %{is_published: true, course: course})
+    #   question = insert(:question, %{assessment: assessment})
+
+    #   submission =
+    #     insert(:submission, %{
+    #       assessment: assessment,
+    #       student: cr,
+    #       status: :submitted,
+    #       xp_bonus: 100
+    #     })
+
+    #   insert(:answer, %{
+    #     question: question,
+    #     submission: submission,
+    #     xp: 20,
+    #     xp_adjustment: -10
+    #   })
+
+    #   not_submitted_assessment = insert(:assessment, %{is_published: true, course: course})
+    #   not_submitted_question = insert(:question, assessment: not_submitted_assessment)
+
+    #   not_submitted_submission =
+    #     insert(:submission, %{assessment: not_submitted_assessment, student: cr})
+
+    #   insert(
+    #     :answer,
+    #     question: not_submitted_question,
+    #     submission: not_submitted_submission
+    #   )
+
+    #   resp =
+    #     conn
+    #     |> get("/v2/courses/#{course.id}/user/total_xp")
+    #     |> json_response(200)
+
+    #   expected = %{
+    #     "totalXp" => 110
+    #   }
+
+    #   assert expected == resp
+    # end
+
+    # test "unauthorized", %{conn: conn} do
+    #   conn = get(conn, "/v2/courses/1/user/total_xp", nil)
+    #   assert response(conn, 401) =~ "Unauthorised"
+    # end
+  end
+
+  # REFERENCE THIS
   describe "GET /v2/user/latest_viewed_course" do
     @tag authenticate: :student, group: true
     test "success, student non-story fields", %{conn: conn} do
