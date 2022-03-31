@@ -175,7 +175,7 @@ defmodule CadetWeb.UserControllerTest do
 
   describe "GET /v2/courses/{course_id}/user/total_xp" do
     @tag authenticate: :student, group: true
-    test "addition of assessment and achievement with completed goal", %{
+    test "achievement, one completed goal", %{
       conn: conn
     } do
       test_cr = conn.assigns.test_cr
@@ -240,7 +240,7 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     @tag authenticate: :student, group: true
-    test "addition of assessment and achievement with incomplete goal", %{
+    test "achievement, one incomplete goal", %{
       conn: conn
     } do
       test_cr = conn.assigns.test_cr
@@ -305,7 +305,7 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     @tag authenticate: :student, group: true
-    test "addition of assessment and achievement with one completed, one incomplete goal",
+    test "achievement, one completed and one incomplete goal",
          %{
            conn: conn
          } do
@@ -390,7 +390,7 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     @tag authenticate: :student, group: true
-    test "addition of assessment and achievement with goal w/o progress entry", %{
+    test "achievement, goal (no progress entry)", %{
       conn: conn
     } do
       test_cr = conn.assigns.test_cr
@@ -448,7 +448,7 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     @tag authenticate: :student, group: true
-    test "addition of no assessments and achievement with completed goal", %{
+    test "no assessments", %{
       conn: conn
     } do
       test_cr = conn.assigns.test_cr
@@ -495,7 +495,7 @@ defmodule CadetWeb.UserControllerTest do
     end
 
     @tag authenticate: :student, group: true
-    test "addition of assessment and no achievements", %{
+    test "no achievements", %{
       conn: conn
     } do
       test_cr = conn.assigns.test_cr
