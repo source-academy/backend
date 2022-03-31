@@ -175,7 +175,7 @@ defmodule CadetWeb.UserControllerTest do
 
   describe "GET /v2/courses/{course_id}/user/total_xp" do
     @tag authenticate: :student, group: true
-    test "normal addition of completed assessment and achievement with completed goal", %{
+    test "addition of assessment and achievement with completed goal", %{
       conn: conn
     } do
       test_cr = conn.assigns.test_cr
@@ -221,6 +221,7 @@ defmodule CadetWeb.UserControllerTest do
         course: course,
         title: "Rune Master",
         is_task: true,
+        is_variable_xp: false,
         position: 1,
         xp: 100,
         card_tile_url:
@@ -238,62 +239,293 @@ defmodule CadetWeb.UserControllerTest do
       assert resp["totalXp"] == 210
     end
 
-    # test "success", %{conn: conn} do
-    #   user = conn.assigns.current_user
-    #   course = user.latest_viewed_course
+    @tag authenticate: :student, group: true
+    test "addition of assessment and achievement with incomplete goal", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
 
-    #   cr =
-    #     CourseRegistration
-    #     |> preload(:group)
-    #     |> Repo.get_by(course_id: course.id, user_id: user.id)
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
 
-    #   another_cr = insert(:course_registration, %{user: user, role: :admin})
-    #   assessment = insert(:assessment, %{is_published: true, course: course})
-    #   question = insert(:question, %{assessment: assessment})
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
 
-    #   submission =
-    #     insert(:submission, %{
-    #       assessment: assessment,
-    #       student: cr,
-    #       status: :submitted,
-    #       xp_bonus: 100
-    #     })
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
 
-    #   insert(:answer, %{
-    #     question: question,
-    #     submission: submission,
-    #     xp: 20,
-    #     xp_adjustment: -10
-    #   })
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
 
-    #   not_submitted_assessment = insert(:assessment, %{is_published: true, course: course})
-    #   not_submitted_question = insert(:question, assessment: not_submitted_assessment)
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
 
-    #   not_submitted_submission =
-    #     insert(:submission, %{assessment: not_submitted_assessment, student: cr})
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/user/total_xp")
+        |> json_response(200)
 
-    #   insert(
-    #     :answer,
-    #     question: not_submitted_question,
-    #     submission: not_submitted_submission
-    #   )
+      assert resp["totalXp"] == 110
+    end
 
-    #   resp =
-    #     conn
-    #     |> get("/v2/courses/#{course.id}/user/total_xp")
-    #     |> json_response(200)
+    @tag authenticate: :student, group: true
+    test "addition of assessment and achievement with one completed, one incomplete goal",
+         %{
+           conn: conn
+         } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
 
-    #   expected = %{
-    #     "totalXp" => 110
-    #   }
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
 
-    #   assert expected == resp
-    # end
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
 
-    # test "unauthorized", %{conn: conn} do
-    #   conn = get(conn, "/v2/courses/1/user/total_xp", nil)
-    #   assert response(conn, 401) =~ "Unauthorised"
-    # end
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal_complete =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      goal_incomplete =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal_complete.uuid},
+          %{goal_uuid: goal_incomplete.uuid}
+        ]
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/user/total_xp")
+        |> json_response(200)
+
+      assert resp["totalXp"] == 110
+    end
+
+    @tag authenticate: :student, group: true
+    test "addition of assessment and achievement with goal w/o progress entry", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/user/total_xp")
+        |> json_response(200)
+
+      assert resp["totalXp"] == 110
+    end
+
+    @tag authenticate: :student, group: true
+    test "addition of no assessments and achievement with completed goal", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/user/total_xp")
+        |> json_response(200)
+
+      assert resp["totalXp"] == 100
+    end
+
+    @tag authenticate: :student, group: true
+    test "addition of assessment and no achievements", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/user/total_xp")
+        |> json_response(200)
+
+      assert resp["totalXp"] == 110
+    end
   end
 
   # REFERENCE THIS
