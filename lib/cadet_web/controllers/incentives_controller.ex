@@ -10,14 +10,12 @@ defmodule CadetWeb.IncentivesController do
     render(conn, "index_achievements.json", achievements: Achievements.get(course_id))
   end
 
-  @spec index_goals(Plug.Conn.t(), any) :: Plug.Conn.t()
   def index_goals(conn, _) do
     render(conn, "index_goals_with_progress.json",
       goals: Goals.get_with_progress(conn.assigns.course_reg)
     )
   end
 
-  @spec update_progress(Plug.Conn.t(), map) :: Plug.Conn.t()
   def update_progress(conn, %{"uuid" => uuid, "progress" => progress}) do
     course_reg_id = conn.assigns.course_reg.id
 
