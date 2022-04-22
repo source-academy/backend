@@ -16,6 +16,7 @@ defmodule CadetWeb.UserControllerTest do
     assert is_map(UserController.swagger_path_update_latest_viewed(nil))
     assert is_map(UserController.swagger_path_update_game_states(nil))
     assert is_map(UserController.swagger_path_update_research_agreement(nil))
+    assert is_map(UserController.swagger_path_combined_total_xp(nil))
   end
 
   describe "GET v2/user" do
