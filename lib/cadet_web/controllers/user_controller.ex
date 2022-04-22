@@ -180,7 +180,7 @@ defmodule CadetWeb.UserController do
     consumes("application/json")
 
     parameters do
-      course_id(:path, :integer, "the user's course id", required: true)
+      course_id(:path, :integer, "course ID", required: true)
 
       agreedToResearch(
         :body,
@@ -195,15 +195,15 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :combined_total_xp do
-    get("/courses/{courseId}/user/total_xp")
+    get("/courses/:course_id/user/total_xp")
 
-    summary("Get the total xp from achievements and assessments of a user in a specific course")
+    summary("Get the user's total XP from achievements and assessments")
 
     security([%{JWT: []}])
     produces("application/json")
 
     parameters do
-      courseId(:path, :integer, "Course Id", required: true)
+      course_id(:path, :integer, "course ID", required: true)
     end
 
     response(200, "OK", Schema.ref(:TotalXPInfo))
@@ -234,10 +234,10 @@ defmodule CadetWeb.UserController do
       TotalXPInfo:
         swagger_schema do
           title("User Total XP")
-          description("total xp of the user")
+          description("the user's total achievement and assessment XP")
 
           properties do
-            totalXp(:integer, "total xp")
+            totalXp(:integer, "total XP")
           end
         end,
       LatestViewedInfo:
