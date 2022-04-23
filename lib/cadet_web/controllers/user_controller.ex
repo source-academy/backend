@@ -5,9 +5,10 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
-  import Cadet.Assessments
-  alias Cadet.Accounts
+  alias Cadet.Incentives.Achievements
   alias Cadet.Accounts.CourseRegistrations
+
+  alias Cadet.{Accounts, Assessments}
 
   def index(conn, _) do
     user = conn.assigns.current_user
@@ -15,9 +16,9 @@ defmodule CadetWeb.UserController do
 
     if user.latest_viewed_course_id do
       latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-      xp = user_total_xp(latest)
-      max_xp = user_max_xp(latest)
-      story = user_current_story(latest)
+      xp = Assessments.user_total_xp(latest)
+      max_xp = Assessments.user_max_xp(latest)
+      story = Assessments.user_current_story(latest)
 
       render(
         conn,
@@ -58,9 +59,9 @@ defmodule CadetWeb.UserController do
   end
 
   defp get_course_reg_config(conn, course_reg) do
-    xp = user_total_xp(course_reg)
-    max_xp = user_max_xp(course_reg)
-    story = user_current_story(course_reg)
+    xp = Assessments.user_total_xp(course_reg)
+    max_xp = Assessments.user_max_xp(course_reg)
+    story = Assessments.user_current_story(course_reg)
 
     render(
       conn,
@@ -112,8 +113,20 @@ defmodule CadetWeb.UserController do
     end
   end
 
+  def combined_total_xp(conn, _) do
+    course_id = conn.assigns.course_reg.course_id
+    user_id = conn.assigns.course_reg.user_id
+    course_reg_id = conn.assigns.course_reg.id
+    user_course = CourseRegistrations.get_user_course(user_id, course_id)
+
+    total_achievement_xp = Achievements.achievements_total_xp(course_id, course_reg_id)
+    total_assessment_xp = Assessments.user_total_xp(user_course)
+    total_xp = total_achievement_xp + total_assessment_xp
+    json(conn, %{totalXp: total_xp})
+  end
+
   swagger_path :index do
-    get("/v2/user")
+    get("/user")
 
     summary("Get the name, and latest_viewed_course of a user")
 
@@ -124,7 +137,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :get_latest_viewed do
-    get("/v2/user/latest_viewed_course")
+    get("/user/latest_viewed_course")
 
     summary("Get the latest_viewed_course of a user")
 
@@ -135,7 +148,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_latest_viewed do
-    put("/v2/user/latest_viewed_course")
+    put("/user/latest_viewed_course")
     summary("Update user's latest viewed course")
     security([%{JWT: []}])
     consumes("application/json")
@@ -148,7 +161,7 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_game_states do
-    put("/v2/courses/:course_id/user/game_states")
+    put("/courses/:course_id/user/game_states")
     summary("Update user's game states")
     security([%{JWT: []}])
     consumes("application/json")
@@ -161,13 +174,13 @@ defmodule CadetWeb.UserController do
   end
 
   swagger_path :update_research_agreement do
-    put("/v2/courses/:course_id/user/research_agreement")
+    put("/courses/:course_id/user/research_agreement")
     summary("Update the user's agreement to the anonymized collection of programs for research")
     security([%{JWT: []}])
     consumes("application/json")
 
     parameters do
-      course_id(:path, :integer, "the user's course id", required: true)
+      course_id(:path, :integer, "course ID", required: true)
 
       agreedToResearch(
         :body,
@@ -179,6 +192,22 @@ defmodule CadetWeb.UserController do
 
     response(200, "OK")
     response(400, "Bad Request")
+  end
+
+  swagger_path :combined_total_xp do
+    get("/courses/:course_id/user/total_xp")
+
+    summary("Get the user's total XP from achievements and assessments")
+
+    security([%{JWT: []}])
+    produces("application/json")
+
+    parameters do
+      course_id(:path, :integer, "course ID", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:TotalXPInfo))
+    response(401, "Unauthorised")
   end
 
   def swagger_definitions do
@@ -200,6 +229,15 @@ defmodule CadetWeb.UserController do
               Schema.ref(:CourseConfiguration),
               "course configuration of the latest viewed course"
             )
+          end
+        end,
+      TotalXPInfo:
+        swagger_schema do
+          title("User Total XP")
+          description("the user's total achievement and assessment XP")
+
+          properties do
+            totalXp(:integer, "total XP")
           end
         end,
       LatestViewedInfo:

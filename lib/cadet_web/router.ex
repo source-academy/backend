@@ -85,6 +85,7 @@ defmodule CadetWeb.Router do
     get("/notifications", NotificationsController, :index)
     post("/notifications/acknowledge", NotificationsController, :acknowledge)
 
+    get("/user/total_xp", UserController, :combined_total_xp)
     put("/user/game_states", UserController, :update_game_states)
     put("/user/research_agreement", UserController, :update_research_agreement)
 
