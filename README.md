@@ -85,7 +85,7 @@ one followed.
 
 ## Entity-Relationship Diagram
 
-Generated with [DBeaver](https://dbeaver.io/) on 17 October 2020
+Generated with [DBeaver](https://dbeaver.io/) on 03 June 2022
 
 ![Entity-Relationship Diagram for cadet](schema.png)
 
