@@ -19,6 +19,7 @@ defmodule Cadet.Accounts.User do
     field(:name, :string)
     field(:username, :string)
     field(:provider, :string)
+    field(:super_admin, :boolean)
 
     belongs_to(:latest_viewed_course, Course)
     has_many(:courses, CourseRegistration)
@@ -27,7 +28,7 @@ defmodule Cadet.Accounts.User do
   end
 
   @required_fields ~w(username provider)a
-  @optional_fields ~w(name latest_viewed_course_id)a
+  @optional_fields ~w(name latest_viewed_course_id super_admin)a
 
   def changeset(user, params \\ %{}) do
     user
