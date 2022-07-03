@@ -1,0 +1,28 @@
+[
+  {
+    "request": {
+      "body": "blah",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://my-adfs/adfs/oauth2/token"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"error\":\"invalid_request\",\"error_description\":\"MSIS9609: The \\u0027redirect_uri\\u0027 parameter is invalid. No redirect uri with the specified value is registered for the received \\u0027client_id\\u0027. \"}",
+      "headers": {
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache",
+        "Content-Length": "206",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Server": "Microsoft-HTTPAPI/2.0 Microsoft-HTTPAPI/2.0",
+        "Date": "Sun, 03 Jul 2022 07:16:40 GMT"
+      },
+      "status_code": 400,
+      "type": "ok"
+    }
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "request": {
+      "body": "client_id=CLIENT_ID&code=CODE_invalid&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Flogin",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://my-adfs/adfs/oauth2/token"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"error\":\"invalid_grant\",\"error_description\":\"MSIS9612: The authorization code received in \\u0027code\\u0027 parameter is invalid. \"}",
+      "headers": {
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache",
+        "Content-Length": "132",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Server": "Microsoft-HTTPAPI/2.0 Microsoft-HTTPAPI/2.0",
+        "Date": "Sun, 03 Jul 2022 07:14:54 GMT"
+      },
+      "status_code": 400,
+      "type": "ok"
+    }
+  }
+]

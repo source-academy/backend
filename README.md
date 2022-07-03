@@ -34,9 +34,9 @@ format`.
    $ vim config/dev.secrets.exs
    ```
 
-  - To use LumiNUS authentication, specify a valid LumiNUS `api_key`. Note that
-    the frontend will supply the ADFS client ID and redirect URL (so you will
-    need that too, but not here).
+  - To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.)
+    Note that the frontend will supply the ADFS client ID and redirect URL (so
+    you will need that too, but not here).
 
 2. Install Elixir dependencies
 

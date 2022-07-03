@@ -39,15 +39,12 @@ config :cadet, Cadet.Repo,
 
 config :cadet,
   identity_providers: %{
-    # # To use authentication with LumiNUS.
-    # "nusnet_id" =>
-    #   {Cadet.Auth.Providers.LumiNUS,
+    # # To use authentication with ADFS.
+    # "nusnet" =>
+    #   {Cadet.Auth.Providers.ADFS,
     #    %{
-    #      # The LumiNUS API key
-    #      api_key: "",
-    #      # The modules to check for enrolment. Multiple modules can be specified,
-    #      # in which case the highest role from any of the modules will be used.
-    #      modules: %{"CS1101S" => "2010"}
+    #      # The OAuth2 token endpoint.
+    #      token_endpoint: "https://my-adfs/adfs/oauth2/token"
     #    }},
     # # An example of OpenID authentication with Cognito. Any OpenID-compliant
     # # provider should work.

@@ -40,10 +40,9 @@ config :cadet, Cadet.Auth.Guardian,
 config :cadet,
   identity_providers: %{
     "nusnet_id" =>
-      {Cadet.Auth.Providers.LumiNUS,
+      {Cadet.Auth.Providers.ADFS,
        %{
-         api_key: "API_KEY",
-         modules: %{"CS1101S" => "2010"}
+         token_endpoint: "https://my-adfs/adfs/oauth2/token"
        }},
     "test" =>
       {Cadet.Auth.Providers.Config,

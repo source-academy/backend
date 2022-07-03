@@ -1,0 +1,28 @@
+[
+  {
+    "request": {
+      "body": "client_id=CLIENT_ID&code=CODE&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Flogin",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "method": "post",
+      "options": [],
+      "request_body": "",
+      "url": "https://my-adfs/adfs/oauth2/token"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"access_token\":\"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJfU2FtQWNjb3VudE5hbWUiOiJlMDEyMzQ1NiIsImRpc3BsYXlOYW1lIjoiWW91ciBOYW1lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjIwMDAwMDAwMDB9.IUOntnGSFJEvojMynmuRrz-uK3J0s1OOwMlNBHMfd_X3mwhQZ8Mg2SxSd2m2CpwSWGwCxvjHLjH7152CZ0KoZnh9glXdoh80QBVVoeeu6HY62bk3LLT4FnocRVzxrFG4TscX3HzyIjEKag82OWnjQe7V0cjWKNgm4l_RxhmaNUZ6m3aAx9kxqyT1bfmgyPdC0rSYbTiSx0-E6RKJ_ynmM8fF2WUPiMecjFbuRHD2UWt7nzqpPMnJKFtUs_21wuiz51TfcUMpI1ewr9EJapgiKbsRACwFtXzNGgGZmJg7dcwwo73Mc_hLnK2SXyxeSsPSz6GXzu4ZxQMVdesB1C10Ig\",\"token_type\":\"bearer\",\"expires_in\":3600}",
+      "headers": {
+        "Cache-Control": "no-store",
+        "Pragma": "no-cache",
+        "Content-Length": "559",
+        "Content-Type": "application/json;charset=UTF-8",
+        "Server": "Microsoft-HTTPAPI/2.0 Microsoft-HTTPAPI/2.0",
+        "Date": "Sun, 03 Jul 2022 07:13:56 GMT"
+      },
+      "status_code": 200,
+      "type": "ok"
+    }
+  }
+]
