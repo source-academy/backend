@@ -238,13 +238,12 @@ defmodule Cadet.Courses do
       case role do
         # If student, update his course registration
         :student ->
-          course_reg
-          |> CourseRegistration.changeset(%{group_id: group.id})
-          |> Repo.update()
+          update_course_reg_group(course_reg, group.id)
 
         # If admin or staff, remove their previous group assignment and set them as group leader
         _ ->
           remove_staff_from_group(course_id, course_reg.id)
+          update_course_reg_group(course_reg, group.id)
 
           group
           |> Group.changeset(%{leader_id: course_reg.id})
@@ -268,12 +267,11 @@ defmodule Cadet.Courses do
             |> Repo.one()} do
       case role do
         :student ->
-          course_reg
-          |> CourseRegistration.changeset(%{group_id: nil})
-          |> Repo.update()
+          update_course_reg_group(course_reg, nil)
 
         _ ->
           remove_staff_from_group(course_id, course_reg.id)
+          update_course_reg_group(course_reg, nil)
           {:ok, nil}
       end
     end
@@ -293,6 +291,12 @@ defmodule Cadet.Courses do
         |> Group.changeset(%{leader_id: nil})
         |> Repo.update()
     end
+  end
+
+  defp update_course_reg_group(course_reg, group_id) do
+    course_reg
+    |> CourseRegistration.changeset(%{group_id: group_id})
+    |> Repo.update()
   end
 
   @doc """
