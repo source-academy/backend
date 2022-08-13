@@ -488,11 +488,21 @@ defmodule Cadet.CoursesTest do
              )
     end
 
-    test "succeeds when upsert same group name to another course" do
+    test "succeeds when upsert same group name to another course", %{
+      course: course,
+      existing_group_leader: existing_group_leader
+    } do
       course2 = insert(:course)
 
       new_group_leader = insert(:course_registration, %{course: course2, role: :staff})
       new_group_student = insert(:course_registration, %{course: course2, role: :student})
+
+      assert is_nil(
+               Group
+               |> where(course_id: ^course2.id)
+               |> where(name: "Existing Group")
+               |> Repo.one()
+             )
 
       usernames_and_groups = [
         %{username: new_group_student.user.username, group: "Existing Group"},
@@ -500,6 +510,20 @@ defmodule Cadet.CoursesTest do
       ]
 
       assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course2.id, "test")
+
+      group = Group |> where(course_id: ^course.id) |> where(name: "Existing Group") |> Repo.one()
+      assert group |> Map.fetch!(:leader_id) == existing_group_leader.id
+
+      group2 =
+        Group |> where(course_id: ^course2.id) |> where(name: "Existing Group") |> Repo.one()
+
+      assert group2 |> Map.fetch!(:leader_id) == new_group_leader.id
+
+      student = CourseRegistration |> Repo.get(new_group_student.id)
+      assert student |> Map.fetch!(:group_id) == group2.id
+
+      leader = CourseRegistration |> Repo.get(new_group_leader.id)
+      assert leader |> Map.fetch!(:group_id) == group2.id
     end
   end
 
