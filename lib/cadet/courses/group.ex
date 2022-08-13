@@ -30,6 +30,7 @@ defmodule Cadet.Courses.Group do
     group
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> unique_constraint(:per_course_unique_name, name: :unique_name_per_course)
     |> add_belongs_to_id_from_model([:leader, :course], attrs)
     |> validate_role
     |> validate_course
