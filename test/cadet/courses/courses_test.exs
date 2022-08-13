@@ -487,6 +487,20 @@ defmodule Cadet.CoursesTest do
                |> Map.fetch!(:group_id)
              )
     end
+
+    test "succeeds when upsert same group name to another course" do
+      course2 = insert(:course)
+
+      new_group_leader = insert(:course_registration, %{course: course2, role: :staff})
+      new_group_student = insert(:course_registration, %{course: course2, role: :student})
+
+      usernames_and_groups = [
+        %{username: new_group_student.user.username, group: "Existing Group"},
+        %{username: new_group_leader.user.username, group: "Existing Group"}
+      ]
+
+      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups, course2.id, "test")
+    end
   end
 
   describe "Sourcecast" do
