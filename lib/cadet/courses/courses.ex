@@ -242,12 +242,16 @@ defmodule Cadet.Courses do
 
         # If admin or staff, remove their previous group assignment and set them as group leader
         _ ->
-          remove_staff_from_group(course_id, course_reg.id)
-          update_course_reg_group(course_reg, group.id)
+          if group.leader_id != course_reg.id do
+            update_course_reg_group(course_reg, group.id)
+            remove_staff_from_group(course_id, course_reg.id)
 
-          group
-          |> Group.changeset(%{leader_id: course_reg.id})
-          |> Repo.update()
+            group
+            |> Group.changeset(%{leader_id: course_reg.id})
+            |> Repo.update()
+          else
+            {:ok, nil}
+          end
       end
     end
   end
