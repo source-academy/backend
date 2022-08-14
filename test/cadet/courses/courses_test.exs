@@ -524,6 +524,18 @@ defmodule Cadet.CoursesTest do
 
       leader = CourseRegistration |> Repo.get(new_group_leader.id)
       assert leader |> Map.fetch!(:group_id) == group2.id
+
+      # test on update idempotence
+      usernames_and_groups2 = [
+        %{username: new_group_leader.user.username, group: "Existing Group"}
+      ]
+
+      assert :ok == Courses.upsert_groups_in_course(usernames_and_groups2, course2.id, "test")
+
+      group2 =
+        Group |> where(course_id: ^course2.id) |> where(name: "Existing Group") |> Repo.one()
+
+      assert group2 |> Map.fetch!(:leader_id) == new_group_leader.id
     end
   end
 
