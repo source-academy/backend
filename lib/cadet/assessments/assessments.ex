@@ -1114,7 +1114,7 @@ defmodule Cadet.Assessments do
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    normalized_voting_score - :math.pow(2, tokens / 50)
+    normalized_voting_score - :math.pow(2, min(1023.5, tokens / 50))
   end
 
   @doc """
