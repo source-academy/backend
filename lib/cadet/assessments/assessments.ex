@@ -1001,8 +1001,9 @@ defmodule Cadet.Assessments do
 
       voting_questions_to_update = fetch_active_voting_questions()
 
-      voting_questions_to_update
-      |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+      _ =
+        voting_questions_to_update
+        |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
 
       Logger.info("Successfully update_rolling_contest_leaderboards")
     end
@@ -1027,8 +1028,9 @@ defmodule Cadet.Assessments do
 
       voting_questions_to_update = fetch_voting_questions_due_yesterday()
 
-      voting_questions_to_update
-      |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+      _ =
+        voting_questions_to_update
+        |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
 
       Logger.info("Successfully update_final_contest_leaderboards")
     end
