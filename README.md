@@ -51,6 +51,64 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
 
 5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can also be accessed at http://localhost:4000/swagger.
 
+If you don't need to test MQTT connections for remote execution using [Sling](source-academy/sling), you can stop here. Otherwise, continue to [set up the local development environment with MQTT](#setting-up-a-local-development-environment-with-mqtt-support).
+
+### Setting up a local development environment with MQTT support
+
+In addition to performing the steps [above](#setting-up-your-local-development-environment), you will need to do the following:
+
+1. Set up a local MQTT server.
+   One cross-platform solution is Mosquitto. Follow their [instructions](https://mosquitto.org/download/) on how to install it for your system.
+
+2. Update Mosquitto configurations
+   We will require two listeners on two different ports: one for listening to the WebSockets connection from Source Academy Frontend, and one to listen for the regular MQTT connection from the EV3. Locate your `mosquitto.conf` file, and add the following lines:
+
+   ```conf
+   # Default listener
+   listener 1883
+   protocol mqtt
+   allow_anonymous true
+
+   # MQTT over WebSockets
+   listener 9001
+   protocol websockets
+   allow_anonymous true
+   ```
+
+   If necessary, you can change the default port numbers, but it is generally best to stick to the default MQQT/WS ports.
+
+3. Restart the Mosquitto service to apply configuration changes
+
+4. Manually update `lib/cadet/devices/devices.ex` to use our local MQTT server
+   The MQTT endpoints are hardcoded to use AWS. For local development, change (but **do not commit**) the following functions:
+
+   - `get_device_ws_endpoint` returns the address the frontend should connect to. Take not that the port number should match what you have defined earlier in `mosquitto.conf`. Assuming your backend, frontend and MQTT server are hosted on the same computer, edit the function body as follows:
+
+     ```elixir
+     def get_device_ws_endpoint(%Device{id: device_id}, %User{id: user_id}, opts) do
+      {:ok,
+       %{
+         endpoint: "ws://localhost:9001/",
+         thing_name: get_thing_name(device_id),
+         client_name_prefix: get_ws_client_prefix(user_id)
+       }}
+     end
+     ```
+
+   - `get_endpoint_address` gives the address the EV3 should connect to (under normal operations). The address should be the local IP address of the computer hosting the MQTT server. Again, take note of the port number.
+      <details><summary>Sidenote on connecting from the EV3</summary>
+      
+      We will not actually use this return value for anything, so the actual value. We just need to hardcode something to return (and stop the backend from trying to connect to AWS). Also, it is good practice to assume that the value is going to be used anyway:
+      </details>
+
+     ```elixir
+     def get_endpoint_address do
+      {:ok, "192.168.139.10:1883"} # This won't actually be used (for now -- see sidenote)
+     end
+     ```
+
+Your backend is now all set up for remote execution using a local MQTT server. To see how to configure the EV3 to use a local MQTT server, check out the [EV3-Source](https://github.com/source-academy/ev3-source) repository.
+
 ### Obtaining `access_token` in dev environment
 
 You can obtain an `access_token` JWT for a user with a given role by simply running:
