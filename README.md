@@ -7,11 +7,8 @@
 
 Cadet is the web application powering Source Academy.
 
-* `master` is the main development branch, and may be broken, buggy, unstable,
-  etc. It may not work with the frontend, if there are frontend changes that
-  have not yet been merged.
-* `stable` is the stable branch and should work with the stable branch of the
-  frontend. Note that `stable` may not have stable history!
+- `master` is the main development branch, and may be broken, buggy, unstable, etc. It may not work with the frontend, if there are frontend changes that have not yet been merged.
+- `stable` is the stable branch and should work with the stable branch of the frontend. Note that `stable` may not have stable history!
 
 ## Developer setup
 
@@ -21,9 +18,7 @@ Cadet is the web application powering Source Academy.
 2. Erlang/OTP 23.2.1
 3. PostgreSQL 13 or 14
 
-It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but
-using a different version of Elixir may result in differences in e.g. `mix
-format`.
+It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but using a different version of Elixir may result in differences in e.g. `mix format`.
 
 ### Setting up your local development environment
 
@@ -34,9 +29,7 @@ format`.
    $ vim config/dev.secrets.exs
    ```
 
-  - To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.)
-    Note that the frontend will supply the ADFS client ID and redirect URL (so
-    you will need that too, but not here).
+- To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.) Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
 
 2. Install Elixir dependencies
 
@@ -56,14 +49,11 @@ format`.
    $ mix phx.server
    ```
 
-5. You may now make API calls to the server locally via `localhost:4000`. The
-   API documentation can also be accessed at http://localhost:4000/swagger.
-
+5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can also be accessed at http://localhost:4000/swagger.
 
 ### Obtaining `access_token` in dev environment
 
-You can obtain an `access_token` JWT for a user with a given role by simply
-running:
+You can obtain an `access_token` JWT for a user with a given role by simply running:
 
 ```bash
 $ mix cadet.token <role>
@@ -77,11 +67,9 @@ $ mix help cadet.token
 
 ### Style Guide
 
-We follow this style guide: https://github.com/lexmag/elixir-style-guide and
-https://github.com/christopheradams/elixir_style_guide
+We follow this style guide: https://github.com/lexmag/elixir-style-guide and https://github.com/christopheradams/elixir_style_guide
 
-Where there is a conflict between the two, the first one (lexmag) shall be the
-one followed.
+Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
 
 ## Entity-Relationship Diagram
 
@@ -92,6 +80,7 @@ Generated with [DBeaver](https://dbeaver.io/) on 03 June 2022
 ## License
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 All sources in this repository are licensed under the [Apache License Version 2][apache2].
 
 [apache2]: https://www.apache.org/licenses/LICENSE-2.0.txt
