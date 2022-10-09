@@ -40,13 +40,17 @@ defmodule Cadet.Assessments.LibraryTest do
         {1, "default"},
         {1, "wasm"},
         {1, "lazy"},
+        {1, "native"},
         {2, "default"},
         {2, "lazy"},
+        {2, "native"},
         {3, "default"},
         {3, "concurrent"},
         {3, "non-det"},
+        {3, "native"},
         {4, "default"},
-        {4, "gpu"}
+        {4, "gpu"},
+        {4, "native"}
       ]
 
       for {c, v} <- variants do

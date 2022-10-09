@@ -55,10 +55,14 @@ defmodule Cadet.Assessments.Library do
   @valid_chapter_variants [
     {1, "wasm"},
     {1, "lazy"},
+    {1, "native"},
     {2, "lazy"},
+    {2, "native"},
     {3, "concurrent"},
     {3, "non-det"},
-    {4, "gpu"}
+    {3, "native"},
+    {4, "gpu"},
+    {4, "native"}
   ]
 
   defp validate_chapter_variant(changeset) do
