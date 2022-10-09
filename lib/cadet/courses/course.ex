@@ -65,7 +65,12 @@ defmodule Cadet.Courses.Course do
             validate_inclusion(changeset, :source_variant, ["default", "lazy", "native"])
 
           3 ->
-            validate_inclusion(changeset, :source_variant, ["default", "concurrent", "non-det", "native"])
+            validate_inclusion(changeset, :source_variant, [
+              "default",
+              "concurrent",
+              "non-det",
+              "native"
+            ])
 
           4 ->
             validate_inclusion(changeset, :source_variant, ["default", "gpu", "native"])

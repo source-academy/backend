@@ -62,7 +62,7 @@ defmodule Cadet.Assessments.Library do
     {3, "non-det"},
     {3, "native"},
     {4, "gpu"},
-    {4, "native"},
+    {4, "native"}
   ]
 
   defp validate_chapter_variant(changeset) do
