@@ -129,6 +129,7 @@ defmodule CadetWeb.Router do
 
     get("/users", AdminUserController, :index)
     put("/users", AdminUserController, :upsert_users_and_groups)
+    get("/users/total_xp", AdminUserController, :combined_user_total_xp)
     get("/users/:course_reg_id/assessments", AdminAssessmentsController, :index)
 
     # The admin route for getting assessment information for a specifc user

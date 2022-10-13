@@ -317,4 +317,94 @@ defmodule CadetWeb.AdminUserController do
         end
     }
   end
+
+  def combined_user_total_xp(conn, _) do
+    combined_user_xp_total_query =
+    """
+    SELECT
+      name,
+      username,
+      assessment_xp,
+      achievement_xp
+    FROM
+      (SELECT
+        sum(total_xp) as assessment_xp,
+        users.name,
+        users.username,
+        total_xps.cr_id
+      FROM
+        (
+          SELECT
+            sum(sa1."xp") + sum(sa1."xp_adjustment") + max(ss0."xp_bonus") AS "total_xp",
+            ss0."student_id" as cr_id,
+            ss0.user_id
+          FROM
+            (
+              SELECT
+                submissions.xp_bonus,
+                submissions.student_id,
+                submissions.id,
+                cr_ids.user_id
+              FROM
+                submissions
+                INNER JOIN (
+                  SELECT
+                    cr.id as id,
+                    cr.user_id
+                  FROM
+                    course_registrations cr
+                  WHERE
+                    cr.course_id = 41
+                ) cr_ids on cr_ids.id = submissions.student_id
+            ) as ss0
+            INNER JOIN "answers" sa1 ON ss0."id" = sa1."submission_id"
+          GROUP BY
+            ss0."id",
+            ss0."student_id",
+            ss0."user_id"
+        ) total_xps
+        inner join users on users.id = total_xps.user_id
+      GROUP BY
+        username,
+        cr_id,
+        name) as total_assessments
+    LEFT JOIN
+      (SELECT
+        sum(s0."xp") as achievement_xp,
+        s0."course_reg_id" as cr_id
+      FROM
+        (
+          SELECT
+            CASE WHEN bool_and(is_variable_xp) THEN SUM(count) ELSE MAX(xp) END AS "xp",
+            sg3."course_reg_id" AS "course_reg_id"
+          FROM
+            "achievements" AS sa0
+            INNER JOIN "achievement_to_goal" AS sa1 ON sa1."achievement_uuid" = sa0."uuid"
+            INNER JOIN "goals" AS sg2 ON sg2."uuid" = sa1."goal_uuid"
+            RIGHT OUTER JOIN "goal_progress" AS sg3 ON (sg3."goal_uuid" = sg2."uuid")
+          WHERE
+            (sa0."course_id" = 41)
+          GROUP BY
+            sa0."uuid",
+            sg3."course_reg_id"
+          HAVING
+            (
+              bool_and(
+                (
+                  sg3."completed"
+                  AND (sg3."count" = sg2."target_count")
+                )
+                AND NOT (sg3."course_reg_id" IS NULL)
+              )
+            )
+        ) AS s0
+      GROUP BY s0."course_reg_id") as total_achievement
+    ON total_assessments."cr_id" = total_achievement."cr_id"
+    """
+
+    all_users_total_xp = Ecto.Adapters.SQL.query!(Repo, combined_user_xp_total_query)
+    IO.inspect all_users_total_xp.rows
+
+    json(conn, %{all_users_xp: all_users_total_xp.rows})
+  end
 end
