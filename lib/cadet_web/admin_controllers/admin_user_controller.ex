@@ -319,8 +319,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   def combined_user_total_xp(conn, _) do
-    combined_user_xp_total_query =
-    """
+    combined_user_xp_total_query = """
     SELECT
       name,
       username,
@@ -403,8 +402,6 @@ defmodule CadetWeb.AdminUserController do
     """
 
     all_users_total_xp = Ecto.Adapters.SQL.query!(Repo, combined_user_xp_total_query)
-    IO.inspect all_users_total_xp.rows
-
     json(conn, %{all_users_xp: all_users_total_xp.rows})
   end
 end
