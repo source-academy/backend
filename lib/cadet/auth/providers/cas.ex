@@ -20,11 +20,11 @@ defmodule Cadet.Auth.Providers.CAS do
     }
 
     with {:validate, {:ok, %{body: body, status_code: 200}}} <-
-           {:validate, HTTPoison.get(config.service_validate_endpoint, [], params: params)},
-         {:validation_response, data} <- {:validation_response, Jason.decode!(body)},
-         {:extract_username, %{"name" => username}} <- {:extract_username, data} do
-          IO.inspect(data)
-      {:ok, %{token: data, username: username}}
+           {:validate, HTTPoison.get(config.service_validate_endpoint, [], params: params)} do
+        #  {:validation_response, data} <- {:validation_response, Jason.decode!(body)},
+        #  {:extract_username, %{"name" => username}} <- {:extract_username, data} do
+          IO.inspect(body)
+      {:ok, %{token: body, username: "placeholder"}}
     else
       {:validate, {:ok, %{body: body, status_code: status}}} ->
         {:error, :upstream, "Status code #{status} from CAS: #{body}"}
