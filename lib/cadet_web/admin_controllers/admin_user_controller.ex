@@ -20,27 +20,35 @@ defmodule CadetWeb.AdminUserController do
   @add_users_role ~w(admin)a
   def upsert_users_and_groups(conn, %{
         "course_id" => course_id,
-        "users" => usernames_roles_groups,
+        "users" => usernames_names_roles_groups,
         "provider" => provider
       }) do
     %{role: admin_role} = conn.assigns.course_reg
-    usernames_roles_groups = usernames_roles_groups |> Enum.map(&to_snake_case_atom_keys/1)
+
+    usernames_names_roles_groups =
+      usernames_names_roles_groups |> Enum.map(&to_snake_case_atom_keys/1)
 
     with {:validate_cap, true} <-
            {:validate_cap,
-            Enum.count(CourseRegistrations.get_users(course_id) ++ usernames_roles_groups) <= 1500},
+            Enum.count(CourseRegistrations.get_users(course_id) ++ usernames_names_roles_groups) <=
+              1500},
          {:validate_role, true} <- {:validate_role, admin_role in @add_users_role},
          {:validate_provider, true} <-
            {:validate_provider,
             Map.has_key?(Application.get_env(:cadet, :identity_providers, %{}), provider)},
          {:validate_usernames, true} <-
            {:validate_usernames,
-            Enum.all?(usernames_roles_groups, fn x ->
+            Enum.all?(usernames_names_roles_groups, fn x ->
               Map.has_key?(x, :username) and is_binary(x.username) and x.username != ""
+            end)},
+         {:validate_names, true} <-
+           {:validate_names,
+            Enum.all?(usernames_names_roles_groups, fn x ->
+              Map.has_key?(x, :name) and is_binary(x.name) and x.name != ""
             end)},
          {:validate_roles, true} <-
            {:validate_roles,
-            Enum.all?(usernames_roles_groups, fn x ->
+            Enum.all?(usernames_names_roles_groups, fn x ->
               Map.has_key?(x, :role) and String.to_atom(x.role) in Role.__enums__()
             end)} do
       {:ok, conn} =
@@ -50,12 +58,16 @@ defmodule CadetWeb.AdminUserController do
                    {:upsert_users,
                     CourseRegistrations.upsert_users_in_course(
                       provider,
-                      usernames_roles_groups,
+                      usernames_names_roles_groups,
                       course_id
                     )},
                  {:upsert_groups, :ok} <-
                    {:upsert_groups,
-                    Courses.upsert_groups_in_course(usernames_roles_groups, course_id, provider)} do
+                    Courses.upsert_groups_in_course(
+                      usernames_names_roles_groups,
+                      course_id,
+                      provider
+                    )} do
               text(conn, "OK")
             else
               {:upsert_users, {:error, {status, message}}} ->

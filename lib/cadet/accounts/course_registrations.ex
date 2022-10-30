@@ -76,19 +76,19 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   def upsert_users_in_course(provider, usernames_and_roles, course_id) do
     usernames_and_roles
-    |> Enum.reduce_while(nil, fn %{username: username, role: role}, _acc ->
-      upsert_users_in_course_helper(provider, username, course_id, role)
+    |> Enum.reduce_while(nil, fn %{username: username, name: name, role: role}, _acc ->
+      upsert_users_in_course_helper(provider, username, name, course_id, role)
     end)
   end
 
-  defp upsert_users_in_course_helper(provider, username, course_id, role) do
+  defp upsert_users_in_course_helper(provider, username, name, course_id, role) do
     case User
          |> where(username: ^username, provider: ^provider)
          |> Repo.one() do
       nil ->
-        case Accounts.register(%{username: username, provider: provider}) do
+        case Accounts.register(%{username: username, name: name, provider: provider}) do
           {:ok, _} ->
-            upsert_users_in_course_helper(provider, username, course_id, role)
+            upsert_users_in_course_helper(provider, username, name, course_id, role)
 
           {:error, changeset} ->
             {:halt, {:error, {:bad_request, full_error_messages(changeset)}}}
