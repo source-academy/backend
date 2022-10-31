@@ -404,4 +404,20 @@ defmodule CadetWeb.AdminUserController do
     all_users_total_xp = Ecto.Adapters.SQL.query!(Repo, combined_user_xp_total_query)
     json(conn, %{all_users_xp: all_users_total_xp.rows})
   end
+
+  swagger_path :all_users_combined_total_xp do
+    get("/courses/{courseId}/admin/users/total_xp")
+
+    summary("Get the total xp from achievements and assessments of all users in a specific course")
+
+    security([%{JWT: []}])
+    produces("application/json")
+
+    parameters do
+      courseId(:path, :integer, "Course Id", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:TotalXPInfo))
+    response(401, "Unauthorised")
+  end
 end
