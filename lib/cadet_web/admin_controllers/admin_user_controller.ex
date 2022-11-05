@@ -5,8 +5,9 @@ defmodule CadetWeb.AdminUserController do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.{Accounts, Courses}
+  alias Cadet.{Accounts, Assessments, Courses}
   alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
+  alias Cadet.Incentives.Achievements
 
   # This controller is used to find all users of a course
 
@@ -15,6 +16,19 @@ defmodule CadetWeb.AdminUserController do
       filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
 
     render(conn, "users.json", users: users)
+  end
+
+  def combined_total_xp(conn, %{"course_reg_id" => course_reg_id}) do
+    course_reg = Repo.get(CourseRegistration, course_reg_id)
+    course_id = course_reg.course_id
+    user_id = course_reg.user_id
+    course_reg_id = course_reg.id
+    user_course = CourseRegistrations.get_user_course(user_id, course_id)
+
+    total_achievement_xp = Achievements.achievements_total_xp(course_id, course_reg_id)
+    total_assessment_xp = Assessments.user_total_xp(user_course)
+    total_xp = total_achievement_xp + total_assessment_xp
+    json(conn, %{totalXp: total_xp})
   end
 
   @add_users_role ~w(admin)a
