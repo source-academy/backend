@@ -391,7 +391,7 @@ defmodule CadetWeb.AdminUserController do
               bool_and(
                 (
                   sg3."completed"
-                  AND (sg3."count" = sg2."target_count")
+                  AND (sg3."count" >= sg2."target_count")
                 )
                 AND NOT (sg3."course_reg_id" IS NULL)
               )
