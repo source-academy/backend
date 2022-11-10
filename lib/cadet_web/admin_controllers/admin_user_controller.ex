@@ -319,6 +319,8 @@ defmodule CadetWeb.AdminUserController do
   end
 
   def combined_user_total_xp(conn, _) do
+    course_id = conn.assigns.course_reg.course_id
+
     combined_user_xp_total_query = """
     SELECT
       name,
@@ -353,7 +355,7 @@ defmodule CadetWeb.AdminUserController do
                   FROM
                     course_registrations cr
                   WHERE
-                    cr.course_id = 41
+                    cr.course_id = #{course_id}
                 ) cr_ids on cr_ids.id = submissions.student_id
             ) as ss0
             INNER JOIN "answers" sa1 ON ss0."id" = sa1."submission_id"
@@ -382,7 +384,7 @@ defmodule CadetWeb.AdminUserController do
             INNER JOIN "goals" AS sg2 ON sg2."uuid" = sa1."goal_uuid"
             RIGHT OUTER JOIN "goal_progress" AS sg3 ON (sg3."goal_uuid" = sg2."uuid")
           WHERE
-            (sa0."course_id" = 41)
+            (sa0."course_id" = #{course_id})
           GROUP BY
             sa0."uuid",
             sg3."course_reg_id"
