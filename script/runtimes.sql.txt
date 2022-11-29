@@ -1,0 +1,9 @@
+create table "public"."runtimes"(
+	"id" serial,
+	"assessment_id" int8, 
+	"question_id" int8,
+	"user_id" int8, 
+	"counter" int8
+);
+
+ alter table "public"."runtimes" add constraint "runtimes_pkey" primary key ("id");
