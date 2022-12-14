@@ -7,7 +7,6 @@ defmodule CadetWeb.AdminUserController do
   alias Cadet.Repo
   alias Cadet.{Accounts, Assessments, Courses}
   alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
-  alias Cadet.Incentives.Achievements
 
   # This controller is used to find all users of a course
 
@@ -20,14 +19,12 @@ defmodule CadetWeb.AdminUserController do
 
   def combined_total_xp(conn, %{"course_reg_id" => course_reg_id}) do
     course_reg = Repo.get(CourseRegistration, course_reg_id)
+
     course_id = course_reg.course_id
     user_id = course_reg.user_id
     course_reg_id = course_reg.id
-    user_course = CourseRegistrations.get_user_course(user_id, course_id)
 
-    total_achievement_xp = Achievements.achievements_total_xp(course_id, course_reg_id)
-    total_assessment_xp = Assessments.user_total_xp(user_course)
-    total_xp = total_achievement_xp + total_assessment_xp
+    total_xp = Assessments.user_total_xp(course_id, user_id, course_reg_id)
     json(conn, %{totalXp: total_xp})
   end
 
@@ -189,6 +186,23 @@ defmodule CadetWeb.AdminUserController do
     security([%{JWT: []}])
     produces("application/json")
     response(200, "OK", Schema.ref(:AdminUserInfo))
+    response(401, "Unauthorised")
+  end
+
+  swagger_path :combined_total_xp do
+    get("/v2/courses/{course_id}/admin/users/{course_reg_id}/total_xp")
+
+    summary("Get the specified user's total XP from achievements and assessments")
+
+    security([%{JWT: []}])
+    produces("application/json")
+
+    parameters do
+      course_id(:path, :integer, "Course ID", required: true)
+      course_reg_id(:path, :integer, "Course registration ID", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:TotalXPInfo))
     response(401, "Unauthorised")
   end
 
