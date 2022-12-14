@@ -36,11 +36,24 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    ```bash
    $ mix deps.get
    ```
+   If you encounter error message `Fail to fetch record for 'hexpm/mime' from registry(using cache insted)`The following instruction may be useful for you.
+   ```bash
+   $ mix local.hex --force
+   ```
 
 3. Initialise development database
 
    ```bash
    $ mix ecto.setup
+   ```
+   If you encounter error message about invalid password for the user "postgres".
+   You should reset the "postgres" password:
+   ```bash
+   $ sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
+   ```
+   and restart postgres service:
+   ```bash
+   $ sudo service postgresql restart
    ```
 
 4. Run the server on your local machine
