@@ -6,6 +6,8 @@ defmodule Cadet.Assessments do
   use Cadet, [:context, :display]
   import Ecto.Query
 
+  require Logger
+
   alias Cadet.Accounts.{Notification, Notifications, User, CourseRegistration}
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
@@ -995,10 +997,15 @@ defmodule Cadet.Assessments do
   def update_rolling_contest_leaderboards do
     # 115 = 2 hours - 5 minutes
     if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(115)) do
+      Logger.info("Started update_rolling_contest_leaderboards")
+
       voting_questions_to_update = fetch_active_voting_questions()
 
-      voting_questions_to_update
-      |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+      _ =
+        voting_questions_to_update
+        |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+
+      Logger.info("Successfully update_rolling_contest_leaderboards")
     end
   end
 
@@ -1016,11 +1023,16 @@ defmodule Cadet.Assessments do
   """
   def update_final_contest_leaderboards do
     # 1435 = 24 hours - 5 minutes
-    if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_leaderboards", Timex.Duration.from_minutes(1435)) do
+      Logger.info("Started update_final_contest_leaderboards")
+
       voting_questions_to_update = fetch_voting_questions_due_yesterday()
 
-      voting_questions_to_update
-      |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+      _ =
+        voting_questions_to_update
+        |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+
+      Logger.info("Successfully update_final_contest_leaderboards")
     end
   end
 
@@ -1102,7 +1114,7 @@ defmodule Cadet.Assessments do
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    normalized_voting_score - :math.pow(2, tokens / 50)
+    normalized_voting_score - :math.pow(2, min(1023.5, tokens / 50))
   end
 
   @doc """

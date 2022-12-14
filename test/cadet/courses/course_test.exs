@@ -125,6 +125,15 @@ defmodule Cadet.Courses.CourseTest do
 
       assert_changeset(
         %{
+          source_chapter: 3,
+          source_variant: "native",
+          course_name: "Data Structures and Algorithms"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
           source_chapter: 4,
           source_variant: "default",
           enable_achievements: true,

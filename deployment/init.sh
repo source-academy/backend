@@ -8,9 +8,9 @@
 set -euxo pipefail
 
 BASEDIR=/opt/cadet
-PKGURL='https://github.com/source-academy/backend/releases/download/latest-stable/cadet-0.0.1.tar.gz'
+PKGURL='https://github.com/source-academy/backend/releases/download/latest-deploy/cadet-0.0.1.tar.gz'
 PKGPATH='/run/cadet-init/cadet-0.0.1.tar.gz'
-SVCURL=${SVCURL:-'https://raw.githubusercontent.com/source-academy/backend/stable/deployment/cadet.service'}
+SVCURL=${SVCURL:-'https://raw.githubusercontent.com/source-academy/backend/deploy/deployment/cadet.service'}
 SVCPATH='/etc/systemd/system/cadet.service'
 
 if [ "$EUID" -ne 0 ]; then

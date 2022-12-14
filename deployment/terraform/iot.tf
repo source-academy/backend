@@ -19,7 +19,8 @@ data "aws_iam_policy_document" "iot_sling" {
       "arn:aws:iot:${local.region}:${local.account_id}:topicfilter/$${iot:ClientId}/run",
       "arn:aws:iot:${local.region}:${local.account_id}:topicfilter/$${iot:ClientId}/stop",
       "arn:aws:iot:${local.region}:${local.account_id}:topicfilter/$${iot:ClientId}/ping",
-      "arn:aws:iot:${local.region}:${local.account_id}:topicfilter/$${iot:ClientId}/input"
+      "arn:aws:iot:${local.region}:${local.account_id}:topicfilter/$${iot:ClientId}/input",
+      "arn:aws:iot:${local.region}:${local.account_id}:topicfilter/$${iot:ClientId}/monitor"
     ]
   }
 
@@ -32,7 +33,8 @@ data "aws_iam_policy_document" "iot_sling" {
       "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/run",
       "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/stop",
       "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/ping",
-      "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/input"
+      "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/input",
+      "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/monitor"
     ]
   }
 
@@ -42,7 +44,8 @@ data "aws_iam_policy_document" "iot_sling" {
     resources = [
       "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/status",
       "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/display",
-      "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/hello"
+      "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/hello",
+      "arn:aws:iot:${local.region}:${local.account_id}:topic/$${iot:ClientId}/monitor"
     ]
   }
 }

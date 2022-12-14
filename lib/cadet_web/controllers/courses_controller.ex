@@ -23,7 +23,7 @@ defmodule CadetWeb.CoursesController do
     user = conn.assigns.current_user
     params = params |> to_snake_case_atom_keys()
 
-    if CourseRegistrations.get_admin_courses_count(user) < 5 do
+    if user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 do
       case Courses.create_course_config(params, user) do
         {:ok, _} ->
           text(conn, "OK")
