@@ -1,6 +1,7 @@
 defmodule CadetWeb.AdminAssessmentsView do
   use CadetWeb, :view
   use Timex
+  import CadetWeb.AssessmentsHelpers
 
   def render("index.json", %{assessments: assessments}) do
     render_many(assessments, CadetWeb.AdminAssessmentsView, "overview.json", as: :assessment)
@@ -28,6 +29,32 @@ defmodule CadetWeb.AdminAssessmentsView do
       questionCount: :question_count,
       gradedCount: &(&1.graded_count || 0)
     })
+  end
+
+  def render("show.json", %{assessment: assessment}) do
+    transform_map_for_view(
+      assessment,
+      %{
+        id: :id,
+        courseId: :course_id,
+        title: :title,
+        type: & &1.config.type,
+        story: :story,
+        number: :number,
+        reading: :reading,
+        longSummary: :summary_long,
+        missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
+        questions:
+          &Enum.map(&1.questions, fn question ->
+            map =
+              build_question_with_answer_and_solution_if_ungraded(%{
+                question: question
+              })
+
+            map
+          end)
+      }
+    )
   end
 
   defp password_protected?(nil), do: false

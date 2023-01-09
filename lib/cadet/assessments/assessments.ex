@@ -8,13 +8,21 @@ defmodule Cadet.Assessments do
 
   require Logger
 
-  alias Cadet.Accounts.{Notification, Notifications, User, CourseRegistration}
+  alias Cadet.Accounts.{
+    Notification,
+    Notifications,
+    User,
+    CourseRegistration,
+    CourseRegistrations
+  }
+
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
+  alias Cadet.Incentives.Achievements
 
   require Decimal
 
@@ -79,7 +87,7 @@ defmodule Cadet.Assessments do
     |> decimal_to_integer()
   end
 
-  def user_total_xp(%CourseRegistration{id: cr_id}) do
+  def assessments_total_xp(%CourseRegistration{id: cr_id}) do
     submission_xp =
       Submission
       |> where(student_id: ^cr_id)
@@ -101,6 +109,15 @@ defmodule Cadet.Assessments do
 
     # for {key, val} <- total, into: %{}, do: {key, decimal_to_integer(val)}
     decimal_to_integer(total.total_xp)
+  end
+
+  def user_total_xp(course_id, user_id, course_reg_id) do
+    user_course = CourseRegistrations.get_user_course(user_id, course_id)
+
+    total_achievement_xp = Achievements.achievements_total_xp(course_id, course_reg_id)
+    total_assessment_xp = assessments_total_xp(user_course)
+
+    total_achievement_xp + total_assessment_xp
   end
 
   defp decimal_to_integer(decimal) do

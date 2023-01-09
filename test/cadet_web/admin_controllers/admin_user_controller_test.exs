@@ -1,8 +1,8 @@
 defmodule CadetWeb.AdminUserControllerTest do
   use CadetWeb.ConnCase
 
-  import Cadet.Factory
   import Ecto.Query
+  import Cadet.{Factory, TestEntityHelper}
 
   alias CadetWeb.AdminUserController
   alias Cadet.Repo
@@ -15,6 +15,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     assert is_map(AdminUserController.swagger_path_add_users(nil))
     assert is_map(AdminUserController.swagger_path_update_role(nil))
     assert is_map(AdminUserController.swagger_path_delete_user(nil))
+    assert is_map(AdminUserController.swagger_path_combined_total_xp(nil))
   end
 
   describe "GET /v2/courses/{course_id}/admin/users" do
@@ -562,6 +563,73 @@ defmodule CadetWeb.AdminUserControllerTest do
       conn = delete(conn, build_url_users(course_id, user_course_reg.id))
 
       assert response(conn, 403) == "User is in a different course"
+    end
+  end
+
+  describe "GET /v2/courses/{course_id}/admin/users/{course_reg_id}/total_xp" do
+    @tag authenticate: :admin
+    test "achievement, one completed goal", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/admin/users/#{test_cr.id}/total_xp")
+        |> json_response(200)
+
+      assert resp["totalXp"] == 210
     end
   end
 
