@@ -59,17 +59,24 @@ defmodule Cadet.Courses.Course do
       {true, true} ->
         case get_field(changeset, :source_chapter) do
           1 ->
-            validate_inclusion(changeset, :source_variant, ["default", "lazy", "wasm", "native"])
+            validate_inclusion(changeset, :source_variant, [
+              "default",
+              "lazy",
+              "wasm",
+              "native",
+              "typed"
+            ])
 
           2 ->
-            validate_inclusion(changeset, :source_variant, ["default", "lazy", "native"])
+            validate_inclusion(changeset, :source_variant, ["default", "lazy", "native", "typed"])
 
           3 ->
             validate_inclusion(changeset, :source_variant, [
               "default",
               "concurrent",
               "non-det",
-              "native"
+              "native",
+              "typed"
             ])
 
           4 ->
