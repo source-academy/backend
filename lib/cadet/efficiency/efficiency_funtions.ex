@@ -17,17 +17,17 @@ defmodule Cadet.Efficiency do
     Runtimes
   }
 
-  def update_runtimes(assessmentId, questionId, userId)
-      when is_ecto_id(assessmentId) and is_ecto_id(questionId) and is_ecto_id(userId) do
+  def update_runtimes(assessment_id, question_id, user_id)
+      when is_ecto_id(assessment_id) and is_ecto_id(question_id) and is_ecto_id(user_id) do
     # Repo.insert!(
-    #    %Runtimes{assessment_id: assessmentId, user_id: userId, counter: 0}, 
+    #    %Runtimes{assessment_id: assessment_id, user_id: user_id, counter: 0},
     #    on_conflict: [inc: [counter: 1]],
     #    conflict_target: [:assessment_id, :user_id]
     #    )
 
-    {assessment_id, ""} = Integer.parse(assessmentId)
-    {question_id, ""} = Integer.parse(questionId)
-    {user_id, ""} = Integer.parse(userId)
+    {assessment_id, ""} = Integer.parse(assessment_id)
+    {question_id, ""} = Integer.parse(question_id)
+    {user_id, ""} = Integer.parse(user_id)
 
     schema =
       Repo.get_by(Runtimes,
@@ -51,7 +51,7 @@ defmodule Cadet.Efficiency do
     end
   end
 
-  def getEfficiencyRealData(id, question_id) when is_ecto_id(id) and is_ecto_id(question_id) do
+  def get_efficiency_real_data(id, question_id) when is_ecto_id(id) and is_ecto_id(question_id) do
     {id, ""} = Integer.parse(id)
     {question_id, ""} = Integer.parse(question_id)
     efficiency = efficiency_real_data(id, question_id)
