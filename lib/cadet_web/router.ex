@@ -66,17 +66,15 @@ defmodule CadetWeb.Router do
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
   end
 
+  scope "/v2/efficiency/:id/:question_id", CadetWeb do
+    pipe_through([:api])
+    get("/efficiency_real_data", EfficiencyController, :real_data)
+  end
 
-   scope "/v2/efficiency/:id/:question_id", CadetWeb do
-     pipe_through [:api]
-     get("/efficiency_real_data", EfficiencyController, :real_data)
-   end
-   
-   scope "/v2/runtimes/:assessmentId/:questionId/:userId", CadetWeb do
-     pipe_through [:api]
-     get("/runtimes", RuntimesController, :index)
-   end
-
+  scope "/v2/runtimes/:assessmentId/:questionId/:userId", CadetWeb do
+    pipe_through([:api])
+    get("/runtimes", RuntimesController, :index)
+  end
 
   # Authenticated Pages with course
   scope "/v2/courses/:course_id", CadetWeb do

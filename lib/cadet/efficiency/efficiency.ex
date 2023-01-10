@@ -9,26 +9,15 @@ defmodule Cadet.Efficiency.Efficiency do
     field(:sid, :string)
     field(:sname, :string)
     field(:time, :string)
-    field(:runtimes, :integer)	
-    field(:score, :integer)		
-	
-	
-	
-
-   
-
-     
+    field(:runtimes, :integer)
+    field(:score, :integer)
   end
 
- 
   @required_fields ~w(cid sid sname avgtime runtimes )a
-  
-  
+
   def changeset(efficiency, params) do
     efficiency
     |> cast(params, @required_fields)
     |> validate_required(@required_fields)
   end
-
-   
 end

@@ -6,5 +6,4 @@ defmodule CadetWeb.EfficiencyController do
     efficiency = Efficiency.getEfficiencyRealData(id, question_id)
     json(conn, efficiency.efficiency)
   end
-
 end
