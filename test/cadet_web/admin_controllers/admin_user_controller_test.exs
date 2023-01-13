@@ -699,7 +699,8 @@ defmodule CadetWeb.AdminUserControllerTest do
       # Getting the first entry of the list
       [total_xp_list | _tail] = resp["all_users_xp"]
 
-      # We are checking for correct username, total assessment xp, total achievement xp of the first entry
+      # We are checking for correct username, total assessment xp, and
+      # total achievement xp of the first entry
       assert Enum.at(total_xp_list, 1) == test_cr.user.username
       assert String.to_integer(Enum.at(total_xp_list, 2)) == 110
       assert String.to_integer(Enum.at(total_xp_list, 3)) == 100
