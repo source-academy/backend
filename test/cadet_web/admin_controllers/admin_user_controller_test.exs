@@ -633,6 +633,148 @@ defmodule CadetWeb.AdminUserControllerTest do
     end
   end
 
+  describe "GET /v2/courses/{course_id}/admin/users/total_xp" do
+    @tag authenticate: :admin
+    test "achievement, one completed goal", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/admin/users/total_xp")
+        |> json_response(200)
+
+      # Getting the first entry of the list
+      [total_xp_list | _tail] = resp["all_users_xp"]
+
+      # We are checking for correct username, total assessment xp, total achievement xp of the first entry
+      assert Enum.at(total_xp_list, 1) == test_cr.user.username
+      assert String.to_integer(Enum.at(total_xp_list, 2)) == 110
+      assert String.to_integer(Enum.at(total_xp_list, 3)) == 100
+    end
+
+    @tag authenticate: :admin
+    test "one incomplete acheivement", %{
+      conn: conn
+    } do
+      test_cr = conn.assigns.test_cr
+      course = conn.assigns.test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: false,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/admin/users/total_xp")
+        |> json_response(200)
+
+      [total_xp_list | _tail] = resp["all_users_xp"]
+
+      assert Enum.at(total_xp_list, 1) == test_cr.user.username
+      assert String.to_integer(Enum.at(total_xp_list, 2)) == 110
+      assert Enum.at(total_xp_list, 3) == nil
+    end
+  end
+
   defp build_url_users(course_id), do: "/v2/courses/#{course_id}/admin/users"
 
   defp build_url_users(course_id, course_reg_id),
