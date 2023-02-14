@@ -292,4 +292,100 @@ defmodule Cadet.Notifications do
   def change_time_option(%TimeOption{} = time_option, attrs \\ %{}) do
     TimeOption.changeset(time_option, attrs)
   end
+
+  alias Cadet.Notifications.NotificationPreference
+
+  @doc """
+  Returns the list of notification_preferences.
+
+  ## Examples
+
+      iex> list_notification_preferences()
+      [%NotificationPreference{}, ...]
+
+  """
+  def list_notification_preferences do
+    Repo.all(NotificationPreference)
+  end
+
+  @doc """
+  Gets a single notification_preference.
+
+  Raises `Ecto.NoResultsError` if the Notification preference does not exist.
+
+  ## Examples
+
+      iex> get_notification_preference!(123)
+      %NotificationPreference{}
+
+      iex> get_notification_preference!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_notification_preference!(id), do: Repo.get!(NotificationPreference, id)
+
+  @doc """
+  Creates a notification_preference.
+
+  ## Examples
+
+      iex> create_notification_preference(%{field: value})
+      {:ok, %NotificationPreference{}}
+
+      iex> create_notification_preference(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_notification_preference(attrs \\ %{}) do
+    %NotificationPreference{}
+    |> NotificationPreference.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a notification_preference.
+
+  ## Examples
+
+      iex> update_notification_preference(notification_preference, %{field: new_value})
+      {:ok, %NotificationPreference{}}
+
+      iex> update_notification_preference(notification_preference, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_notification_preference(%NotificationPreference{} = notification_preference, attrs) do
+    notification_preference
+    |> NotificationPreference.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a notification_preference.
+
+  ## Examples
+
+      iex> delete_notification_preference(notification_preference)
+      {:ok, %NotificationPreference{}}
+
+      iex> delete_notification_preference(notification_preference)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_notification_preference(%NotificationPreference{} = notification_preference) do
+    Repo.delete(notification_preference)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking notification_preference changes.
+
+  ## Examples
+
+      iex> change_notification_preference(notification_preference)
+      %Ecto.Changeset{data: %NotificationPreference{}}
+
+  """
+  def change_notification_preference(%NotificationPreference{} = notification_preference, attrs \\ %{}) do
+    NotificationPreference.changeset(notification_preference, attrs)
+  end
 end
