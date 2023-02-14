@@ -196,4 +196,100 @@ defmodule Cadet.Notifications do
   def change_notification_config(%NotificationConfig{} = notification_config, attrs \\ %{}) do
     NotificationConfig.changeset(notification_config, attrs)
   end
+
+  alias Cadet.Notifications.TimeOption
+
+  @doc """
+  Returns the list of time_options.
+
+  ## Examples
+
+      iex> list_time_options()
+      [%TimeOption{}, ...]
+
+  """
+  def list_time_options do
+    Repo.all(TimeOption)
+  end
+
+  @doc """
+  Gets a single time_option.
+
+  Raises `Ecto.NoResultsError` if the Time option does not exist.
+
+  ## Examples
+
+      iex> get_time_option!(123)
+      %TimeOption{}
+
+      iex> get_time_option!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_time_option!(id), do: Repo.get!(TimeOption, id)
+
+  @doc """
+  Creates a time_option.
+
+  ## Examples
+
+      iex> create_time_option(%{field: value})
+      {:ok, %TimeOption{}}
+
+      iex> create_time_option(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_time_option(attrs \\ %{}) do
+    %TimeOption{}
+    |> TimeOption.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a time_option.
+
+  ## Examples
+
+      iex> update_time_option(time_option, %{field: new_value})
+      {:ok, %TimeOption{}}
+
+      iex> update_time_option(time_option, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_time_option(%TimeOption{} = time_option, attrs) do
+    time_option
+    |> TimeOption.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a time_option.
+
+  ## Examples
+
+      iex> delete_time_option(time_option)
+      {:ok, %TimeOption{}}
+
+      iex> delete_time_option(time_option)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_time_option(%TimeOption{} = time_option) do
+    Repo.delete(time_option)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking time_option changes.
+
+  ## Examples
+
+      iex> change_time_option(time_option)
+      %Ecto.Changeset{data: %TimeOption{}}
+
+  """
+  def change_time_option(%TimeOption{} = time_option, attrs \\ %{}) do
+    TimeOption.changeset(time_option, attrs)
+  end
 end

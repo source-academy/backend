@@ -4,7 +4,7 @@ defmodule Cadet.NotificationsTest do
   alias Cadet.Notifications
 
   describe "notification_types" do
-    alias Cadet.Notifications.NotificationType
+    # alias Cadet.Notifications.NotificationType
 
     # import Cadet.NotificationsFixtures
 
@@ -115,5 +115,61 @@ defmodule Cadet.NotificationsTest do
     #   notification_config = notification_config_fixture()
     #   assert %Ecto.Changeset{} = Notifications.change_notification_config(notification_config)
     # end
+  end
+
+  describe "time_options" do
+    #   alias Cadet.Notifications.TimeOption
+
+    #   import Cadet.NotificationsFixtures
+
+    #   @invalid_attrs %{is_default: nil, minutes: nil}
+
+    #   test "list_time_options/0 returns all time_options" do
+    #     time_option = time_option_fixture()
+    #     assert Notifications.list_time_options() == [time_option]
+    #   end
+
+    #   test "get_time_option!/1 returns the time_option with given id" do
+    #     time_option = time_option_fixture()
+    #     assert Notifications.get_time_option!(time_option.id) == time_option
+    #   end
+
+    #   test "create_time_option/1 with valid data creates a time_option" do
+    #     valid_attrs = %{is_default: true, minutes: 42}
+
+    #     assert {:ok, %TimeOption{} = time_option} = Notifications.create_time_option(valid_attrs)
+    #     assert time_option.is_default == true
+    #     assert time_option.minutes == 42
+    #   end
+
+    #   test "create_time_option/1 with invalid data returns error changeset" do
+    #     assert {:error, %Ecto.Changeset{}} = Notifications.create_time_option(@invalid_attrs)
+    #   end
+
+    #   test "update_time_option/2 with valid data updates the time_option" do
+    #     time_option = time_option_fixture()
+    #     update_attrs = %{is_default: false, minutes: 43}
+
+    #     assert {:ok, %TimeOption{} = time_option} = Notifications.update_time_option(time_option, update_attrs)
+    #     assert time_option.is_default == false
+    #     assert time_option.minutes == 43
+    #   end
+
+    #   test "update_time_option/2 with invalid data returns error changeset" do
+    #     time_option = time_option_fixture()
+    #     assert {:error, %Ecto.Changeset{}} = Notifications.update_time_option(time_option, @invalid_attrs)
+    #     assert time_option == Notifications.get_time_option!(time_option.id)
+    #   end
+
+    #   test "delete_time_option/1 deletes the time_option" do
+    #     time_option = time_option_fixture()
+    #     assert {:ok, %TimeOption{}} = Notifications.delete_time_option(time_option)
+    #     assert_raise Ecto.NoResultsError, fn -> Notifications.get_time_option!(time_option.id) end
+    #   end
+
+    #   test "change_time_option/1 returns a time_option changeset" do
+    #     time_option = time_option_fixture()
+    #     assert %Ecto.Changeset{} = Notifications.change_time_option(time_option)
+    #   end
   end
 end
