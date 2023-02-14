@@ -388,4 +388,100 @@ defmodule Cadet.Notifications do
   def change_notification_preference(%NotificationPreference{} = notification_preference, attrs \\ %{}) do
     NotificationPreference.changeset(notification_preference, attrs)
   end
+
+  alias Cadet.Notifications.SentNotification
+
+  @doc """
+  Returns the list of sent_notifications.
+
+  ## Examples
+
+      iex> list_sent_notifications()
+      [%SentNotification{}, ...]
+
+  """
+  def list_sent_notifications do
+    Repo.all(SentNotification)
+  end
+
+  @doc """
+  Gets a single sent_notification.
+
+  Raises `Ecto.NoResultsError` if the Sent notification does not exist.
+
+  ## Examples
+
+      iex> get_sent_notification!(123)
+      %SentNotification{}
+
+      iex> get_sent_notification!(456)
+      ** (Ecto.NoResultsError)
+
+  """
+  def get_sent_notification!(id), do: Repo.get!(SentNotification, id)
+
+  @doc """
+  Creates a sent_notification.
+
+  ## Examples
+
+      iex> create_sent_notification(%{field: value})
+      {:ok, %SentNotification{}}
+
+      iex> create_sent_notification(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_sent_notification(attrs \\ %{}) do
+    %SentNotification{}
+    |> SentNotification.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a sent_notification.
+
+  ## Examples
+
+      iex> update_sent_notification(sent_notification, %{field: new_value})
+      {:ok, %SentNotification{}}
+
+      iex> update_sent_notification(sent_notification, %{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_sent_notification(%SentNotification{} = sent_notification, attrs) do
+    sent_notification
+    |> SentNotification.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a sent_notification.
+
+  ## Examples
+
+      iex> delete_sent_notification(sent_notification)
+      {:ok, %SentNotification{}}
+
+      iex> delete_sent_notification(sent_notification)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def delete_sent_notification(%SentNotification{} = sent_notification) do
+    Repo.delete(sent_notification)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking sent_notification changes.
+
+  ## Examples
+
+      iex> change_sent_notification(sent_notification)
+      %Ecto.Changeset{data: %SentNotification{}}
+
+  """
+  def change_sent_notification(%SentNotification{} = sent_notification, attrs \\ %{}) do
+    SentNotification.changeset(sent_notification, attrs)
+  end
 end

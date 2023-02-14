@@ -226,4 +226,58 @@ defmodule Cadet.NotificationsTest do
     #   assert %Ecto.Changeset{} = Notifications.change_notification_preference(notification_preference)
     # end
   end
+
+  describe "sent_notifications" do
+    # alias Cadet.Notifications.SentNotification
+
+    # import Cadet.NotificationsFixtures
+
+    # @invalid_attrs %{content: nil}
+
+    # test "list_sent_notifications/0 returns all sent_notifications" do
+    #   sent_notification = sent_notification_fixture()
+    #   assert Notifications.list_sent_notifications() == [sent_notification]
+    # end
+
+    # test "get_sent_notification!/1 returns the sent_notification with given id" do
+    #   sent_notification = sent_notification_fixture()
+    #   assert Notifications.get_sent_notification!(sent_notification.id) == sent_notification
+    # end
+
+    # test "create_sent_notification/1 with valid data creates a sent_notification" do
+    #   valid_attrs = %{content: "some content"}
+
+    #   assert {:ok, %SentNotification{} = sent_notification} = Notifications.create_sent_notification(valid_attrs)
+    #   assert sent_notification.content == "some content"
+    # end
+
+    # test "create_sent_notification/1 with invalid data returns error changeset" do
+    #   assert {:error, %Ecto.Changeset{}} = Notifications.create_sent_notification(@invalid_attrs)
+    # end
+
+    # test "update_sent_notification/2 with valid data updates the sent_notification" do
+    #   sent_notification = sent_notification_fixture()
+    #   update_attrs = %{content: "some updated content"}
+
+    #   assert {:ok, %SentNotification{} = sent_notification} = Notifications.update_sent_notification(sent_notification, update_attrs)
+    #   assert sent_notification.content == "some updated content"
+    # end
+
+    # test "update_sent_notification/2 with invalid data returns error changeset" do
+    #   sent_notification = sent_notification_fixture()
+    #   assert {:error, %Ecto.Changeset{}} = Notifications.update_sent_notification(sent_notification, @invalid_attrs)
+    #   assert sent_notification == Notifications.get_sent_notification!(sent_notification.id)
+    # end
+
+    # test "delete_sent_notification/1 deletes the sent_notification" do
+    #   sent_notification = sent_notification_fixture()
+    #   assert {:ok, %SentNotification{}} = Notifications.delete_sent_notification(sent_notification)
+    #   assert_raise Ecto.NoResultsError, fn -> Notifications.get_sent_notification!(sent_notification.id) end
+    # end
+
+    # test "change_sent_notification/1 returns a sent_notification changeset" do
+    #   sent_notification = sent_notification_fixture()
+    #   assert %Ecto.Changeset{} = Notifications.change_sent_notification(sent_notification)
+    # end
+  end
 end
