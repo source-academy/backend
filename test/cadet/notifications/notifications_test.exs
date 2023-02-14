@@ -62,4 +62,58 @@ defmodule Cadet.NotificationsTest do
     #   assert %Ecto.Changeset{} = Notifications.change_notification_type(notification_type)
     # end
   end
+
+  describe "notification_configs" do
+    # alias Cadet.Notifications.NotificationConfig
+
+    # import Cadet.NotificationsFixtures
+
+    # @invalid_attrs %{is_enabled: nil}
+
+    # test "list_notification_configs/0 returns all notification_configs" do
+    #   notification_config = notification_config_fixture()
+    #   assert Notifications.list_notification_configs() == [notification_config]
+    # end
+
+    # test "get_notification_config!/1 returns the notification_config with given id" do
+    #   notification_config = notification_config_fixture()
+    #   assert Notifications.get_notification_config!(notification_config.id) == notification_config
+    # end
+
+    # test "create_notification_config/1 with valid data creates a notification_config" do
+    #   valid_attrs = %{is_enabled: true}
+
+    #   assert {:ok, %NotificationConfig{} = notification_config} = Notifications.create_notification_config(valid_attrs)
+    #   assert notification_config.is_enabled == true
+    # end
+
+    # test "create_notification_config/1 with invalid data returns error changeset" do
+    #   assert {:error, %Ecto.Changeset{}} = Notifications.create_notification_config(@invalid_attrs)
+    # end
+
+    # test "update_notification_config/2 with valid data updates the notification_config" do
+    #   notification_config = notification_config_fixture()
+    #   update_attrs = %{is_enabled: false}
+
+    #   assert {:ok, %NotificationConfig{} = notification_config} = Notifications.update_notification_config(notification_config, update_attrs)
+    #   assert notification_config.is_enabled == false
+    # end
+
+    # test "update_notification_config/2 with invalid data returns error changeset" do
+    #   notification_config = notification_config_fixture()
+    #   assert {:error, %Ecto.Changeset{}} = Notifications.update_notification_config(notification_config, @invalid_attrs)
+    #   assert notification_config == Notifications.get_notification_config!(notification_config.id)
+    # end
+
+    # test "delete_notification_config/1 deletes the notification_config" do
+    #   notification_config = notification_config_fixture()
+    #   assert {:ok, %NotificationConfig{}} = Notifications.delete_notification_config(notification_config)
+    #   assert_raise Ecto.NoResultsError, fn -> Notifications.get_notification_config!(notification_config.id) end
+    # end
+
+    # test "change_notification_config/1 returns a notification_config changeset" do
+    #   notification_config = notification_config_fixture()
+    #   assert %Ecto.Changeset{} = Notifications.change_notification_config(notification_config)
+    # end
+  end
 end

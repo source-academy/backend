@@ -3,25 +3,25 @@ defmodule CadetWeb.NotificationTypeControllerTest do
 
   # import Cadet.NotificationsFixtures
 
-  alias Cadet.Notifications.NotificationType
+  # alias Cadet.Notifications.NotificationType
 
-  @create_attrs %{
-    is_autopopulated: true,
-    is_enabled: true,
-    name: "some name",
-    template_file_name: "some template_file_name"
-  }
-  @update_attrs %{
-    is_autopopulated: false,
-    is_enabled: false,
-    name: "some updated name",
-    template_file_name: "some updated template_file_name"
-  }
-  @invalid_attrs %{is_autopopulated: nil, is_enabled: nil, name: nil, template_file_name: nil}
+  # @create_attrs %{
+  #   is_autopopulated: true,
+  #   is_enabled: true,
+  #   name: "some name",
+  #   template_file_name: "some template_file_name"
+  # }
+  # @update_attrs %{
+  #   is_autopopulated: false,
+  #   is_enabled: false,
+  #   name: "some updated name",
+  #   template_file_name: "some updated template_file_name"
+  # }
+  # @invalid_attrs %{is_autopopulated: nil, is_enabled: nil, name: nil, template_file_name: nil}
 
-  setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
-  end
+  # setup %{conn: conn} do
+  #   {:ok, conn: put_req_header(conn, "accept", "application/json")}
+  # end
 
   # describe "index" do
   #   test "lists all notification_types", %{conn: conn} do
