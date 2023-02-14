@@ -81,6 +81,12 @@ defmodule Cadet.Mixfile do
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.7"},
 
+      # notifiations system dependencies
+      {:bamboo, "~> 2.3.0"},
+      {:bamboo_ses, "~> 0.3.0"},
+      {:bamboo_phoenix, "~> 1.0.0"},
+      {:oban, "~> 2.13"},
+
       # development dependencies
       {:configparser_ex, "~> 4.0", only: [:dev, :test]},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},

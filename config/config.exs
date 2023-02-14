@@ -93,3 +93,16 @@ config :guardian, Guardian.DB,
   token_types: ["refresh"],
   # default: 60 minute
   sweep_interval: 180
+
+config :cadet, Oban,
+  repo: Cadet.Repo,
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     crontab: []
+    }
+  ],
+  queues: [default: 10, mail: 50]
+
+config :cadet, Cadet.Mailer,
+  adapter: Bamboo.LocalAdapter
