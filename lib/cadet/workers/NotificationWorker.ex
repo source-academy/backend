@@ -37,8 +37,10 @@ defmodule Cadet.Workers.NotificationWorker do
         args: %{"notification_type" => notification_type} = _args
       })
       when notification_type == "avenger_backlog" do
-    notification_type_id = 1
+    notification_type_id = 2
     ungraded_threshold = 5
+
+    ntype = Cadet.Notifications.get_notification_type!(notification_type_id)
 
     for course_id <- Cadet.Courses.get_all_course_ids() do
       avengers_crs = Cadet.Accounts.CourseRegistrations.get_staffs(course_id)
@@ -49,11 +51,11 @@ defmodule Cadet.Workers.NotificationWorker do
 
         cond do
           length(ungraded_submissions) < ungraded_threshold -> IO.puts("[AVENGER_BACKLOG] below threshold!")
-          # !is_system_enabled(notification_type_id) -> IO.puts("[AVENGER_BACKLOG] system-level disabled!")
-          # !is_course_enabled(notification_type_id, course_id, nil) -> IO.puts("[AVENGER_BACKLOG] course-level disabled")
+          !is_system_enabled(notification_type_id) -> IO.puts("[AVENGER_BACKLOG] system-level disabled!")
+          !is_course_enabled(notification_type_id, course_id, nil) -> IO.puts("[AVENGER_BACKLOG] course-level disabled")
           true ->
             IO.puts("[AVENGER_BACKLOG] SENDING_OUT")
-            Email.avenger_backlog_email(avenger, ungraded_submissions)
+            Email.avenger_backlog_email(ntype.template_file_name, avenger, ungraded_submissions)
         end
       end
     end

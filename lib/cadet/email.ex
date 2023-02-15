@@ -3,7 +3,7 @@ defmodule Cadet.Email do
   import Bamboo.Email
   alias Cadet.Mailer
 
-  def avenger_backlog_email(avenger, ungraded_submissions) do
+  def avenger_backlog_email(template_file_name, avenger, ungraded_submissions) do
     cond do
       is_nil(avenger.email) -> nil
       true ->
@@ -12,7 +12,7 @@ defmodule Cadet.Email do
           |> assign(:avenger_name, avenger.name)
           |> assign(:submissions, ungraded_submissions)
           |> subject("Backlog for #{avenger.name}")
-          |> render("backlog.html")
+          |> render("#{template_file_name}.html")
           |> Mailer.deliver_now()
     end
   end

@@ -100,7 +100,7 @@ config :cadet, Oban,
     {Oban.Plugins.Pruner, max_age: 60}, # keep
     {Oban.Plugins.Cron,
       crontab: [
-        {"* * * * *", Cadet.Workers.NotificationWorker, args: %{"notification_type" => "avenger_backlog"}},
+        {"@daily", Cadet.Workers.NotificationWorker, args: %{"notification_type" => "avenger_backlog"}},
       ]
     }
   ],
