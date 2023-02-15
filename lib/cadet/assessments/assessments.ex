@@ -1151,7 +1151,8 @@ defmodule Cadet.Assessments do
           {:ok, String.t()}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        group_only \\ false
+        group_only \\ false,
+        ungraded_only \\ false
       ) do
     show_all = not group_only
 
@@ -1160,6 +1161,11 @@ defmodule Cadet.Assessments do
         do: "",
         else:
           "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
+
+    ungraded_where =
+      if not ungraded_only,
+        do: "",
+        else: "where s.\"gradedCount\" < assts.\"questionCount\""
 
     params = if show_all, do: [course_id], else: [course_id, grader.id]
 
@@ -1200,7 +1206,7 @@ defmodule Cadet.Assessments do
                group by s.id) s
              inner join
                (select
-                 a.id, to_json(a) as jsn
+                 a.id, a."questionCount", to_json(a) as jsn
                from
                  (select
                    a.id,
@@ -1240,6 +1246,7 @@ defmodule Cadet.Assessments do
                  from course_registrations cr
                    inner join
                    users u on u.id = cr.user_id) cr) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+             #{ungraded_where}
            ) q
            """,
            params

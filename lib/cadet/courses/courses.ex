@@ -82,6 +82,12 @@ defmodule Cadet.Courses do
     end
   end
 
+  def get_all_course_ids() do
+    Course
+    |> select([c], c.id)
+    |> Repo.all()
+  end
+
   defp retrieve_course(course_id) when is_ecto_id(course_id) do
     Course
     |> where(id: ^course_id)

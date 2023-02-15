@@ -97,12 +97,15 @@ config :guardian, Guardian.DB,
 config :cadet, Oban,
   repo: Cadet.Repo,
   plugins: [
-    Oban.Plugins.Pruner,
+    {Oban.Plugins.Pruner, max_age: 60}, # keep
     {Oban.Plugins.Cron,
-     crontab: []
+      crontab: [
+        {"* * * * *", Cadet.Workers.NotificationWorker, args: %{"notification_type" => "avenger_backlog"}},
+      ]
     }
   ],
-  queues: [default: 10, mail: 50]
+  queues: [default: 10, notifications: 1]
 
 config :cadet, Cadet.Mailer,
-  adapter: Bamboo.LocalAdapter
+  adapter: Bamboo.LocalAdapter,
+  open_email_in_browser_url: "http://localhost:4000/sent_emails"

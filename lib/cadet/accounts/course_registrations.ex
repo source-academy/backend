@@ -63,6 +63,13 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
+  def get_staffs(course_id) do
+    CourseRegistration
+    |> where(course_id: ^course_id)
+    |> where(role: :staff)
+    |> Repo.all()
+  end
+
   def get_users(course_id, group_id) when is_ecto_id(group_id) and is_ecto_id(course_id) do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
