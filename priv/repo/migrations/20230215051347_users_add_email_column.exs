@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.UsersAddEmailColumn do
 
   def change do
     alter table(:users) do
-      add :email, :string
+      add(:email, :string)
     end
   end
 end

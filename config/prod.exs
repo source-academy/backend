@@ -45,5 +45,4 @@ config :ex_aws,
   access_key_id: [:instance_role],
   secret_access_key: [:instance_role]
 
-config :cadet, Cadet.Mailer,
-  adapter: Bamboo.SesAdapter
+config :cadet, Cadet.Mailer, adapter: Bamboo.SesAdapter

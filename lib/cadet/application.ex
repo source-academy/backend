@@ -22,7 +22,7 @@ defmodule Cadet.Application do
       # Start the Quantum scheduler
       worker(Cadet.Jobs.Scheduler, []),
       # Start the Oban instance
-      {Oban, Application.fetch_env!(:cadet, Oban)},
+      {Oban, Application.fetch_env!(:cadet, Oban)}
     ]
 
     children =

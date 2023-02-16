@@ -5,15 +5,17 @@ defmodule Cadet.Email do
 
   def avenger_backlog_email(template_file_name, avenger, ungraded_submissions) do
     cond do
-      is_nil(avenger.email) -> nil
+      is_nil(avenger.email) ->
+        nil
+
       true ->
         base_email()
-          |> to(avenger.email)
-          |> assign(:avenger_name, avenger.name)
-          |> assign(:submissions, ungraded_submissions)
-          |> subject("Backlog for #{avenger.name}")
-          |> render("#{template_file_name}.html")
-          |> Mailer.deliver_now()
+        |> to(avenger.email)
+        |> assign(:avenger_name, avenger.name)
+        |> assign(:submissions, ungraded_submissions)
+        |> subject("Backlog for #{avenger.name}")
+        |> render("#{template_file_name}.html")
+        |> Mailer.deliver_now()
     end
   end
 

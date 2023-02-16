@@ -2,7 +2,7 @@ defmodule Cadet.Repo.Migrations.AddNotificationConfigsAssessmentsTrigger do
   use Ecto.Migration
 
   def up do
-    execute """
+    execute("""
       CREATE OR REPLACE FUNCTION populate_noti_configs_from_notification_types_for_assconf() RETURNS trigger AS $$
       DECLARE
         ntype Record;
@@ -14,22 +14,22 @@ defmodule Cadet.Repo.Migrations.AddNotificationConfigsAssessmentsTrigger do
         RETURN NEW;
       END;
       $$ LANGUAGE plpgsql;
-    """
+    """)
 
-    execute """
+    execute("""
       CREATE TRIGGER populate_notification_configs_on_new_assessment_config
       AFTER INSERT ON assessment_configs
       FOR EACH ROW EXECUTE PROCEDURE populate_noti_configs_from_notification_types_for_assconf();
-    """
+    """)
   end
 
   def down do
-    execute """
+    execute("""
       DROP TRIGGER IF EXISTS populate_notification_configs_on_new_assessment_config ON assessment_configs;
-    """
+    """)
 
-    execute """
+    execute("""
       DROP FUNCTION IF EXISTS populate_noti_configs_from_notification_types_for_assconf;
-    """
+    """)
   end
 end

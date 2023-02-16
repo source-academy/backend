@@ -97,14 +97,14 @@ config :guardian, Guardian.DB,
 config :cadet, Oban,
   repo: Cadet.Repo,
   plugins: [
-    {Oban.Plugins.Pruner, max_age: 60}, # keep
+    # keep
+    {Oban.Plugins.Pruner, max_age: 60},
     {Oban.Plugins.Cron,
-      crontab: [
-        {"@daily", Cadet.Workers.NotificationWorker, args: %{"notification_type" => "avenger_backlog"}},
-      ]
-    }
+     crontab: [
+       {"@daily", Cadet.Workers.NotificationWorker,
+        args: %{"notification_type" => "avenger_backlog"}}
+     ]}
   ],
   queues: [default: 10, notifications: 1]
 
-config :cadet, Cadet.Mailer,
-  adapter: Bamboo.LocalAdapter
+config :cadet, Cadet.Mailer, adapter: Bamboo.LocalAdapter

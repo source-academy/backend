@@ -133,15 +133,19 @@ defmodule Cadet.Notifications do
   def get_notification_config!(id), do: Repo.get!(NotificationConfig, id)
 
   def get_notification_config!(notification_type_id, course_id, assconfig_id) do
-    query = from n in Cadet.Notifications.NotificationConfig,
-      join: ntype in Cadet.Notifications.NotificationType, on: n.notification_type_id == ntype.id,
-      where: n.notification_type_id == ^notification_type_id and n.course_id == ^course_id
+    query =
+      from(n in Cadet.Notifications.NotificationConfig,
+        join: ntype in Cadet.Notifications.NotificationType,
+        on: n.notification_type_id == ntype.id,
+        where: n.notification_type_id == ^notification_type_id and n.course_id == ^course_id
+      )
 
-    query = if is_nil(assconfig_id) do
-      where(query, [c], is_nil(c.assessment_config_id))
-    else
-      where(query, [c], c.assessment_config_id == ^assconfig_id)
-    end
+    query =
+      if is_nil(assconfig_id) do
+        where(query, [c], is_nil(c.assessment_config_id))
+      else
+        where(query, [c], c.assessment_config_id == ^assconfig_id)
+      end
 
     Repo.one!(query)
   end
@@ -243,21 +247,31 @@ defmodule Cadet.Notifications do
   def get_time_option!(id), do: Repo.get!(TimeOption, id)
 
   def get_time_options_for_assessment(assessment_config_id, notification_type_id) do
-    query = from ac in Cadet.Courses.AssessmentConfig,
-      join: n in Cadet.Notifications.NotificationConfig, on: n.assessment_config_id == ac.id,
-      join: to in Cadet.Notifications.TimeOption, on: to.notification_config_id == n.id,
-      where: ac.id == ^assessment_config_id and n.notification_type_id == ^notification_type_id,
-      select: to
+    query =
+      from(ac in Cadet.Courses.AssessmentConfig,
+        join: n in Cadet.Notifications.NotificationConfig,
+        on: n.assessment_config_id == ac.id,
+        join: to in Cadet.Notifications.TimeOption,
+        on: to.notification_config_id == n.id,
+        where: ac.id == ^assessment_config_id and n.notification_type_id == ^notification_type_id,
+        select: to
+      )
 
     Repo.all(query)
   end
 
   def get_default_time_option_for_assessment!(assessment_config_id, notification_type_id) do
-    query = from ac in Cadet.Courses.AssessmentConfig,
-      join: n in Cadet.Notifications.NotificationConfig, on: n.assessment_config_id == ac.id,
-      join: to in Cadet.Notifications.TimeOption, on: to.notification_config_id == n.id,
-      where: ac.id == ^assessment_config_id and n.notification_type_id == ^notification_type_id and to.is_default == true,
-      select: to
+    query =
+      from(ac in Cadet.Courses.AssessmentConfig,
+        join: n in Cadet.Notifications.NotificationConfig,
+        on: n.assessment_config_id == ac.id,
+        join: to in Cadet.Notifications.TimeOption,
+        on: to.notification_config_id == n.id,
+        where:
+          ac.id == ^assessment_config_id and n.notification_type_id == ^notification_type_id and
+            to.is_default == true,
+        select: to
+      )
 
     Repo.one!(query)
   end
@@ -359,11 +373,15 @@ defmodule Cadet.Notifications do
   def get_notification_preference!(id), do: Repo.get!(NotificationPreference, id)
 
   def get_notification_preference(notification_type_id, course_reg_id) do
-    query = from np in NotificationPreference,
-      join: noti in Cadet.Notifications.NotificationConfig, on: np.notification_config_id == noti.id,
-      join: ntype in NotificationType, on: noti.notification_type_id == ntype.id,
-      where: ntype.id == ^notification_type_id and np.course_reg_id == ^course_reg_id,
-      preload: :time_option
+    query =
+      from(np in NotificationPreference,
+        join: noti in Cadet.Notifications.NotificationConfig,
+        on: np.notification_config_id == noti.id,
+        join: ntype in NotificationType,
+        on: noti.notification_type_id == ntype.id,
+        where: ntype.id == ^notification_type_id and np.course_reg_id == ^course_reg_id,
+        preload: :time_option
+      )
 
     Repo.one(query)
   end
@@ -429,7 +447,10 @@ defmodule Cadet.Notifications do
       %Ecto.Changeset{data: %NotificationPreference{}}
 
   """
-  def change_notification_preference(%NotificationPreference{} = notification_preference, attrs \\ %{}) do
+  def change_notification_preference(
+        %NotificationPreference{} = notification_preference,
+        attrs \\ %{}
+      ) do
     NotificationPreference.changeset(notification_preference, attrs)
   end
 

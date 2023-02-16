@@ -199,8 +199,8 @@ defmodule CadetWeb.Router do
     get("/", DefaultController, :index)
   end
 
-  if Mix.env == :dev do
-    forward "/sent_emails", Bamboo.SentEmailViewerPlug
+  if Mix.env() == :dev do
+    forward("/sent_emails", Bamboo.SentEmailViewerPlug)
   end
 
   defp assign_course(conn, _opts) do
