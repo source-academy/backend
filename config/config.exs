@@ -72,10 +72,6 @@ config :sentry,
   root_source_code_path: File.cwd!(),
   context_lines: 5
 
-# Import environment specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
-import_config "#{Mix.env()}.exs"
-
 # Configure Phoenix Swagger
 config :cadet, :phoenix_swagger,
   swagger_files: %{
@@ -108,3 +104,7 @@ config :cadet, Oban,
   queues: [default: 10, notifications: 1]
 
 config :cadet, Cadet.Mailer, adapter: Bamboo.LocalAdapter
+
+# Import environment specific config. This must remain at the bottom
+# of this file so it overrides the configuration defined above.
+import_config "#{Mix.env()}.exs"
