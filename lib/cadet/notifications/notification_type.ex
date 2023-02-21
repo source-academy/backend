@@ -4,7 +4,7 @@ defmodule Cadet.Notifications.NotificationType do
 
   schema "notification_types" do
     field(:is_autopopulated, :boolean, default: false)
-    field(:is_enabled, :boolean, default: true)
+    field(:is_enabled, :boolean, default: false)
     field(:name, :string)
     field(:template_file_name, :string)
 

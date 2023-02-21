@@ -27,7 +27,7 @@ defmodule CadetWeb.NotificationPreferenceView do
   def render("notification_preference.json", %{notification_preference: notification_preference}) do
     %{
       id: notification_preference.id,
-      is_enable: notification_preference.is_enable
+      is_enabled: notification_preference.is_enabled
     }
   end
 end

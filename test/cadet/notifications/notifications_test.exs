@@ -191,10 +191,10 @@ defmodule Cadet.NotificationsTest do
     # end
 
     # test "create_notification_preference/1 with valid data creates a notification_preference" do
-    #   valid_attrs = %{is_enable: true}
+    #   valid_attrs = %{is_enabled: true}
 
     #   assert {:ok, %NotificationPreference{} = notification_preference} = Notifications.create_notification_preference(valid_attrs)
-    #   assert notification_preference.is_enable == true
+    #   assert notification_preference.is_enabled == true
     # end
 
     # test "create_notification_preference/1 with invalid data returns error changeset" do
@@ -203,10 +203,10 @@ defmodule Cadet.NotificationsTest do
 
     # test "update_notification_preference/2 with valid data updates the notification_preference" do
     #   notification_preference = notification_preference_fixture()
-    #   update_attrs = %{is_enable: false}
+    #   update_attrs = %{is_enabled: false}
 
     #   assert {:ok, %NotificationPreference{} = notification_preference} = Notifications.update_notification_preference(notification_preference, update_attrs)
-    #   assert notification_preference.is_enable == false
+    #   assert notification_preference.is_enabled == false
     # end
 
     # test "update_notification_preference/2 with invalid data returns error changeset" do

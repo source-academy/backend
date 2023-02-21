@@ -6,12 +6,12 @@ defmodule CadetWeb.NotificationPreferenceControllerTest do
   # alias Cadet.Notifications.NotificationPreference
 
   # @create_attrs %{
-  #   is_enable: true
+  #   is_enabled: true
   # }
   # @update_attrs %{
-  #   is_enable: false
+  #   is_enabled: false
   # }
-  # @invalid_attrs %{is_enable: nil}
+  # @invalid_attrs %{is_enabled: nil}
 
   # setup %{conn: conn} do
   #   {:ok, conn: put_req_header(conn, "accept", "application/json")}
@@ -33,7 +33,7 @@ defmodule CadetWeb.NotificationPreferenceControllerTest do
 
   #     assert %{
   #              "id" => ^id,
-  #              "is_enable" => true
+  #              "is_enabled" => true
   #            } = json_response(conn, 200)["data"]
   #   end
 
@@ -54,7 +54,7 @@ defmodule CadetWeb.NotificationPreferenceControllerTest do
 
   #     assert %{
   #              "id" => ^id,
-  #              "is_enable" => false
+  #              "is_enabled" => false
   #            } = json_response(conn, 200)["data"]
   #   end
 

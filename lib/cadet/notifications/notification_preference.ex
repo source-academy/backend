@@ -6,7 +6,7 @@ defmodule Cadet.Notifications.NotificationPreference do
   alias Cadet.Accounts.CourseRegistration
 
   schema "notification_preferences" do
-    field(:is_enable, :boolean, default: false)
+    field(:is_enabled, :boolean, default: false)
 
     belongs_to(:notification_config, NotificationConfig)
     belongs_to(:time_option, TimeOption)
@@ -18,7 +18,7 @@ defmodule Cadet.Notifications.NotificationPreference do
   @doc false
   def changeset(notification_preference, attrs) do
     notification_preference
-    |> cast(attrs, [:is_enable])
-    |> validate_required([:is_enable])
+    |> cast(attrs, [:is_enabled])
+    |> validate_required([:is_enabled])
   end
 end
