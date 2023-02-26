@@ -90,4 +90,42 @@ defmodule Cadet.Workers.NotificationWorker do
 
     :ok
   end
+
+  @impl Oban.Worker
+  def perform(%Oban.Job{
+        args:
+          %{"notification_type" => notification_type, "submission_id" => submission_id} = _args
+      })
+      when notification_type == "assessment_submission" do
+    notification_type =
+      Cadet.Notifications.get_notification_type_by_name!("ASSESSMENT SUBMISSION")
+
+    submission = Cadet.Assessments.get_submission_by_id(submission_id)
+    course_id = submission.assessment.course_id
+    student_id = submission.student_id
+    assement_config_id = submission.assessment.config_id
+    student = Cadet.Accounts.get_user(student_id)
+    avenger = Cadet.Accounts.CourseRegistrations.get_avenger_of(student_id).user
+
+    cond do
+      !is_system_enabled(notification_type.id) ->
+        IO.puts("[ASSESSMENT_SUBMISSION] system-level disabled!")
+
+      !is_course_enabled(notification_type.id, course_id, assement_config_id) ->
+        IO.puts("[ASSESSMENT_SUBMISSION] course-level disabled")
+
+      !is_user_enabled(notification_type.id, submission.student_id) ->
+        IO.puts("[ASSESSMENT_SUBMISSION] user-level disabled")
+
+      true ->
+        IO.puts("[ASSESSMENT_SUBMISSION] SENDING_OUT")
+
+        Email.assessment_submission_email(
+          notification_type.template_file_name,
+          avenger,
+          student,
+          submission
+        )
+    end
+  end
 end

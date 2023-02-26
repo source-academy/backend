@@ -207,4 +207,21 @@ defmodule Cadet.Accounts.CourseRegistrations do
       {:error, changeset} -> {:error, {:bad_request, full_error_messages(changeset)}}
     end
   end
+
+  def get_avenger_of(student_id) when is_ecto_id(student_id) do
+    CourseRegistration
+    |> Repo.get_by(id: student_id)
+    |> Repo.preload(:group)
+    |> Map.get(:group)
+    |> case do
+      nil -> nil
+      group ->
+        avenger_id = Map.get(group, :leader_id)
+
+        CourseRegistration
+        |> where([cr], cr.id == ^avenger_id)
+        |> preload(:user)
+        |> Repo.one()
+    end
+  end
 end

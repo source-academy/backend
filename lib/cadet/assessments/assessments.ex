@@ -721,11 +721,23 @@ defmodule Cadet.Assessments do
     |> Repo.one()
   end
 
+  def get_submission_by_id(submission_id) when is_ecto_id(submission_id) do
+    Submission
+    |> where(id: ^submission_id)
+    |> join(:inner, [s], a in assoc(s, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
   def finalise_submission(submission = %Submission{}) do
     with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
       # Couple with update_submission_status_and_xp_bonus to ensure notification is sent
       Notifications.write_notification_when_student_submits(submission)
+      # Send email notification to avenger
+      %{notification_type: "assessment_submission", submission_id: updated_submission.id}
+        |> Cadet.Workers.NotificationWorker.new()
+        |> Oban.insert()
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
 
