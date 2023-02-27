@@ -1,4 +1,7 @@
 defmodule Cadet.Notifications.SentNotification do
+  @moduledoc """
+  SentNotification entity to store all sent notifications for logging (and future purposes etc. mailbox)
+  """
   use Ecto.Schema
   import Ecto.Changeset
   alias Cadet.Accounts.CourseRegistration

@@ -1,25 +1,30 @@
 defmodule Cadet.Workers.NotificationWorker do
+  @moduledoc """
+  Contain oban workers for sending notifications
+  """
   use Oban.Worker, queue: :notifications, max_attempts: 1
   alias Cadet.Email
+  alias Cadet.Notifications
 
   defp is_system_enabled(notification_type_id) do
-    Cadet.Notifications.get_notification_type!(notification_type_id).is_enabled
+    Notifications.get_notification_type!(notification_type_id).is_enabled
   end
 
   defp is_course_enabled(notification_type_id, course_id, assessment_config_id) do
-    Cadet.Notifications.get_notification_config!(
+    Notifications.get_notification_config!(
       notification_type_id,
       course_id,
       assessment_config_id
     ).is_enabled
   end
 
-  def is_user_enabled(notification_type_id, course_reg_id) do
-    pref = Cadet.Notifications.get_notification_preference(notification_type_id, course_reg_id)
+  defp is_user_enabled(notification_type_id, course_reg_id) do
+    pref = Notifications.get_notification_preference(notification_type_id, course_reg_id)
 
-    cond do
-      is_nil(pref) -> true
-      true -> pref.is_enabled
+    if is_nil(pref) do
+      true
+    else
+      pref.is_enabled
     end
   end
 
@@ -31,17 +36,15 @@ defmodule Cadet.Workers.NotificationWorker do
         course_reg_id,
         time_option_minutes
       ) do
-    pref = Cadet.Notifications.get_notification_preference(notification_type_id, course_reg_id)
+    pref = Notifications.get_notification_preference(notification_type_id, course_reg_id)
 
-    cond do
-      is_nil(pref) ->
-        Cadet.Notifications.get_default_time_option_for_assessment!(
-          assessment_config_id,
-          notification_type_id
-        ).minutes == time_option_minutes
-
-      true ->
-        pref.time_option.minutes == time_option_minutes
+    if is_nil(pref) do
+      Notifications.get_default_time_option_for_assessment!(
+        assessment_config_id,
+        notification_type_id
+      ).minutes == time_option_minutes
+    else
+      pref.time_option.minutes == time_option_minutes
     end
   end
 

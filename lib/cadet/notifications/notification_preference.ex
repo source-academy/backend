@@ -1,4 +1,7 @@
 defmodule Cadet.Notifications.NotificationPreference do
+  @moduledoc """
+  NotificationPreference entity that stores user preferences for a specific notification for a specific course/assessment.
+  """
   use Ecto.Schema
   import Ecto.Changeset
   alias Cadet.Notifications.NotificationConfig

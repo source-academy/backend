@@ -1163,9 +1163,9 @@ defmodule Cadet.Assessments do
           "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
 
     ungraded_where =
-      if not ungraded_only,
-        do: "",
-        else: "where s.\"gradedCount\" < assts.\"questionCount\""
+      if ungraded_only,
+        do: "where s.\"gradedCount\" < assts.\"questionCount\"",
+        else: ""
 
     params = if show_all, do: [course_id], else: [course_id, grader.id]
 

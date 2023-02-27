@@ -1,4 +1,7 @@
 defmodule Cadet.Notifications.TimeOption do
+  @moduledoc """
+  TimeOption entity for options course admins have created for notifications
+  """
   use Ecto.Schema
   import Ecto.Changeset
   alias Cadet.Notifications.NotificationConfig

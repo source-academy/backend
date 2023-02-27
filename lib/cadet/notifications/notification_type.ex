@@ -1,4 +1,9 @@
 defmodule Cadet.Notifications.NotificationType do
+  @moduledoc """
+  NotificationType entity that represents a unique type of notification that the system supports.
+  There should only be a single entry of this notification regardless of number of courses/assessments using sending this notification.
+  Course/assessment specific configuration should exist as NotificationConfig instead.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 

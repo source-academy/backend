@@ -89,7 +89,10 @@ defmodule CadetWeb.SentNotificationControllerTest do
   # describe "delete sent_notification" do
   #   setup [:create_sent_notification]
 
-  #   test "deletes chosen sent_notification", %{conn: conn, sent_notification: sent_notification} do
+  #   test "deletes chosen sent_notification", %{
+  #     conn: conn,
+  #     sent_notification: sent_notification
+  #   } do
   #     conn = delete(conn, Routes.sent_notification_path(conn, :delete, sent_notification))
   #     assert response(conn, 204)
 
