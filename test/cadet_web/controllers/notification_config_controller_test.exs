@@ -26,7 +26,11 @@ defmodule CadetWeb.NotificationConfigControllerTest do
 
   # describe "create notification_config" do
   #   test "renders notification_config when data is valid", %{conn: conn} do
-  #     conn = post(conn, Routes.notification_config_path(conn, :create), notification_config: @create_attrs)
+  #     conn = post(
+  #       conn,
+  #       Routes.notification_config_path(conn, :create),
+  #       notification_config: @create_attrs
+  #     )
   #     assert %{"id" => id} = json_response(conn, 201)["data"]
 
   #     conn = get(conn, Routes.notification_config_path(conn, :show, id))
@@ -38,7 +42,11 @@ defmodule CadetWeb.NotificationConfigControllerTest do
   #   end
 
   #   test "renders errors when data is invalid", %{conn: conn} do
-  #     conn = post(conn, Routes.notification_config_path(conn, :create), notification_config: @invalid_attrs)
+  #     conn = post(
+  #       conn,
+  #       Routes.notification_config_path(conn, :create),
+  #       notification_config: @invalid_attrs
+  #     )
   #     assert json_response(conn, 422)["errors"] != %{}
   #   end
   # end
@@ -46,8 +54,15 @@ defmodule CadetWeb.NotificationConfigControllerTest do
   # describe "update notification_config" do
   #   setup [:create_notification_config]
 
-  #   test "renders notification_config when data is valid", %{conn: conn, notification_config: %NotificationConfig{id: id} = notification_config} do
-  #     conn = put(conn, Routes.notification_config_path(conn, :update, notification_config), notification_config: @update_attrs)
+  #   test "renders notification_config when data is valid", %{
+  #     conn: conn,
+  #     notification_config: %NotificationConfig{id: id} = notification_config
+  #   } do
+  #     conn = put(
+  #       conn,
+  #       Routes.notification_config_path(conn, :update, notification_config),
+  #       notification_config: @update_attrs
+  #     )
   #     assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
   #     conn = get(conn, Routes.notification_config_path(conn, :show, id))
@@ -59,7 +74,11 @@ defmodule CadetWeb.NotificationConfigControllerTest do
   #   end
 
   #   test "renders errors when data is invalid", %{conn: conn, notification_config: notification_config} do
-  #     conn = put(conn, Routes.notification_config_path(conn, :update, notification_config), notification_config: @invalid_attrs)
+  #     conn = put(
+  #       conn,
+  #       Routes.notification_config_path(conn, :update, notification_config),
+  #       notification_config: @invalid_attrs
+  #     )
   #     assert json_response(conn, 422)["errors"] != %{}
   #   end
   # end

@@ -49,8 +49,15 @@ defmodule CadetWeb.TimeOptionControllerTest do
   # describe "update time_option" do
   #   setup [:create_time_option]
 
-  #   test "renders time_option when data is valid", %{conn: conn, time_option: %TimeOption{id: id} = time_option} do
-  #     conn = put(conn, Routes.time_option_path(conn, :update, time_option), time_option: @update_attrs)
+  #   test "renders time_option when data is valid", %{
+  #     conn: conn,
+  #     time_option: %TimeOption{id: id} = time_option
+  #   } do
+  #     conn = put(
+  #       conn,
+  #       Routes.time_option_path(conn, :update, time_option),
+  #       time_option: @update_attrs
+  #     )
   #     assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
   #     conn = get(conn, Routes.time_option_path(conn, :show, id))
@@ -63,7 +70,11 @@ defmodule CadetWeb.TimeOptionControllerTest do
   #   end
 
   #   test "renders errors when data is invalid", %{conn: conn, time_option: time_option} do
-  #     conn = put(conn, Routes.time_option_path(conn, :update, time_option), time_option: @invalid_attrs)
+  #     conn = put(
+  #       conn,
+  #       Routes.time_option_path(conn, :update, time_option),
+  #       time_option: @invalid_attrs
+  #     )
   #     assert json_response(conn, 422)["errors"] != %{}
   #   end
   # end

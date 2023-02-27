@@ -26,7 +26,11 @@ defmodule CadetWeb.SentNotificationControllerTest do
 
   # describe "create sent_notification" do
   #   test "renders sent_notification when data is valid", %{conn: conn} do
-  #     conn = post(conn, Routes.sent_notification_path(conn, :create), sent_notification: @create_attrs)
+  #     conn = post(
+  #       conn,
+  #       Routes.sent_notification_path(conn, :create),
+  #       sent_notification: @create_attrs
+  #     )
   #     assert %{"id" => id} = json_response(conn, 201)["data"]
 
   #     conn = get(conn, Routes.sent_notification_path(conn, :show, id))
@@ -38,7 +42,11 @@ defmodule CadetWeb.SentNotificationControllerTest do
   #   end
 
   #   test "renders errors when data is invalid", %{conn: conn} do
-  #     conn = post(conn, Routes.sent_notification_path(conn, :create), sent_notification: @invalid_attrs)
+  #     conn = post(
+  #       conn,
+  #       Routes.sent_notification_path(conn, :create),
+  #       sent_notification: @invalid_attrs
+  #     )
   #     assert json_response(conn, 422)["errors"] != %{}
   #   end
   # end
@@ -46,20 +54,34 @@ defmodule CadetWeb.SentNotificationControllerTest do
   # describe "update sent_notification" do
   #   setup [:create_sent_notification]
 
-  #   test "renders sent_notification when data is valid", %{conn: conn, sent_notification: %SentNotification{id: id} = sent_notification} do
-  #     conn = put(conn, Routes.sent_notification_path(conn, :update, sent_notification), sent_notification: @update_attrs)
-  #     assert %{"id" => ^id} = json_response(conn, 200)["data"]
+    # test "renders sent_notification when data is valid", %{
+    #   conn: conn,
+    #   sent_notification: %SentNotification{id: id} = sent_notification
+    # } do
+    #   conn = put(
+    #     conn,
+    #     Routes.sent_notification_path(conn, :update, sent_notification),
+    #     sent_notification: @update_attrs
+    #   )
+    #   assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
-  #     conn = get(conn, Routes.sent_notification_path(conn, :show, id))
+    #   conn = get(conn, Routes.sent_notification_path(conn, :show, id))
 
-  #     assert %{
-  #              "id" => ^id,
-  #              "content" => "some updated content"
-  #            } = json_response(conn, 200)["data"]
-  #   end
+    #   assert %{
+    #            "id" => ^id,
+    #            "content" => "some updated content"
+    #          } = json_response(conn, 200)["data"]
+    # end
 
-  #   test "renders errors when data is invalid", %{conn: conn, sent_notification: sent_notification} do
-  #     conn = put(conn, Routes.sent_notification_path(conn, :update, sent_notification), sent_notification: @invalid_attrs)
+  #   test "renders errors when data is invalid", %{
+  #     conn: conn,
+  #     sent_notification: sent_notification
+  #   } do
+  #     conn = put(
+  #       conn,
+  #       Routes.sent_notification_path(conn, :update, sent_notification),
+  #       sent_notification: @invalid_attrs
+  #     )
   #     assert json_response(conn, 422)["errors"] != %{}
   #   end
   # end

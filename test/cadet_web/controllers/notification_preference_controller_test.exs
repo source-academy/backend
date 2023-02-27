@@ -26,7 +26,8 @@ defmodule CadetWeb.NotificationPreferenceControllerTest do
 
   # describe "create notification_preference" do
   #   test "renders notification_preference when data is valid", %{conn: conn} do
-  #     conn = post(conn, Routes.notification_preference_path(conn, :create), notification_preference: @create_attrs)
+  #     conn = post(conn, Routes.notification_preference_path(conn, :create),
+  #       notification_preference: @create_attrs)
   #     assert %{"id" => id} = json_response(conn, 201)["data"]
 
   #     conn = get(conn, Routes.notification_preference_path(conn, :show, id))
@@ -38,7 +39,11 @@ defmodule CadetWeb.NotificationPreferenceControllerTest do
   #   end
 
   #   test "renders errors when data is invalid", %{conn: conn} do
-  #     conn = post(conn, Routes.notification_preference_path(conn, :create), notification_preference: @invalid_attrs)
+  #     conn = post(
+  #       conn,
+  #       Routes.notification_preference_path(conn, :create),
+  #       notification_preference: @invalid_attrs
+  #     )
   #     assert json_response(conn, 422)["errors"] != %{}
   #   end
   # end
@@ -46,20 +51,34 @@ defmodule CadetWeb.NotificationPreferenceControllerTest do
   # describe "update notification_preference" do
   #   setup [:create_notification_preference]
 
-  #   test "renders notification_preference when data is valid", %{conn: conn, notification_preference: %NotificationPreference{id: id} = notification_preference} do
-  #     conn = put(conn, Routes.notification_preference_path(conn, :update, notification_preference), notification_preference: @update_attrs)
+  #   test "renders notification_preference when data is valid", %{
+  #     conn: conn,
+  #     notification_preference: %NotificationPreference{id: id} = notification_preference
+  #   } do
+  #     conn = put(
+  #       conn,
+  #       Routes.notification_preference_path(conn, :update, notification_preference),
+  #       notification_preference: @update_attrs
+  #     )
   #     assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
   #     conn = get(conn, Routes.notification_preference_path(conn, :show, id))
 
   #     assert %{
-  #              "id" => ^id,
-  #              "is_enabled" => false
-  #            } = json_response(conn, 200)["data"]
-  #   end
+  #             "id" => ^id,
+  #             "is_enabled" => false
+  #           } = json_response(conn, 200)["data"]
+  # end
 
-  #   test "renders errors when data is invalid", %{conn: conn, notification_preference: notification_preference} do
-  #     conn = put(conn, Routes.notification_preference_path(conn, :update, notification_preference), notification_preference: @invalid_attrs)
+  #   test "renders errors when data is invalid", %{
+  #     conn: conn,
+  #     notification_preference: notification_preference
+  #   } do
+  #     conn = put(
+  #       conn,
+  #       Routes.notification_preference_path(conn, :update, notification_preference),
+  #       notification_preference: @invalid_attrs
+  #     )
   #     assert json_response(conn, 422)["errors"] != %{}
   #   end
   # end
@@ -67,8 +86,14 @@ defmodule CadetWeb.NotificationPreferenceControllerTest do
   # describe "delete notification_preference" do
   #   setup [:create_notification_preference]
 
-  #   test "deletes chosen notification_preference", %{conn: conn, notification_preference: notification_preference} do
-  #     conn = delete(conn, Routes.notification_preference_path(conn, :delete, notification_preference))
+  #   test "deletes chosen notification_preference", %{
+  #     conn: conn,
+  #     notification_preference: notification_preference
+  #   } do
+  #     conn = delete(
+  #       conn,
+  #       Routes.notification_preference_path(conn, :delete, notification_preference)
+  #     )
   #     assert response(conn, 204)
 
   #     assert_error_sent 404, fn ->
