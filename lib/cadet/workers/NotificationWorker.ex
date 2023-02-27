@@ -3,8 +3,7 @@ defmodule Cadet.Workers.NotificationWorker do
   Contain oban workers for sending notifications
   """
   use Oban.Worker, queue: :notifications, max_attempts: 1
-  alias Cadet.Email
-  alias Cadet.Notifications
+  alias Cadet.{Email, Notifications}
 
   defp is_system_enabled(notification_type_id) do
     Notifications.get_notification_type!(notification_type_id).is_enabled

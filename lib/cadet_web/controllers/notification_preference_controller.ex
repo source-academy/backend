@@ -16,7 +16,10 @@ defmodule CadetWeb.NotificationPreferenceController do
            Notifications.create_notification_preference(notification_preference_params) do
       conn
       |> put_status(:created)
-      # |> put_resp_header("location", Routes.notification_preference_path(conn, :show, notification_preference))
+      # |> put_resp_header(
+      #   "location",
+      #   Routes.notification_preference_path(conn, :show, notification_preference
+      # ))
       |> render("show.json", notification_preference: notification_preference)
     end
   end

@@ -16,7 +16,10 @@ defmodule CadetWeb.SentNotificationController do
            Notifications.create_sent_notification(sent_notification_params) do
       conn
       |> put_status(:created)
-      # |> put_resp_header("location", Routes.sent_notification_path(conn, :show, sent_notification))
+      # |> put_resp_header(
+      #   "location",
+      #   Routes.sent_notification_path(conn, :show, sent_notification)
+      # )
       |> render("show.json", sent_notification: sent_notification)
     end
   end

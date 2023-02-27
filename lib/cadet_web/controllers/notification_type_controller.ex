@@ -16,7 +16,10 @@ defmodule CadetWeb.NotificationTypeController do
            Notifications.create_notification_type(notification_type_params) do
       conn
       |> put_status(:created)
-      # |> put_resp_header("location", Routes.notification_type_path(conn, :show, notification_type))
+      # |> put_resp_header(
+      #   "location",
+      #   Routes.notification_type_path(conn, :show, notification_type)
+      # )
       |> render("show.json", notification_type: notification_type)
     end
   end

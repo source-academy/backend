@@ -4,8 +4,7 @@ defmodule Cadet.Notifications.NotificationPreference do
   """
   use Ecto.Schema
   import Ecto.Changeset
-  alias Cadet.Notifications.NotificationConfig
-  alias Cadet.Notifications.TimeOption
+  alias Cadet.Notifications.{NotificationConfig, TimeOption}
   alias Cadet.Accounts.CourseRegistration
 
   schema "notification_preferences" do

@@ -6,8 +6,13 @@ defmodule Cadet.Notifications do
   import Ecto.Query, warn: false
   alias Cadet.Repo
 
-  alias Cadet.Notifications.NotificationType
-  alias Cadet.Notifications.NotificationConfig
+  alias Cadet.Notifications.{
+    NotificationType,
+    NotificationConfig,
+    SentNotification,
+    TimeOption,
+    NotificationPreference
+  }
 
   @doc """
   Returns the list of notification_types.
@@ -215,8 +220,6 @@ defmodule Cadet.Notifications do
     NotificationConfig.changeset(notification_config, attrs)
   end
 
-  alias Cadet.Notifications.TimeOption
-
   @doc """
   Returns the list of time_options.
   
@@ -306,7 +309,7 @@ defmodule Cadet.Notifications do
       {:error, %Ecto.Changeset{}}
   
   """
-  def update_time_option(%TimeOption{} = time_option, attrs) do
+  def update_time_option(time_option = %TimeOption{}, attrs) do
     time_option
     |> TimeOption.changeset(attrs)
     |> Repo.update()
@@ -324,7 +327,7 @@ defmodule Cadet.Notifications do
       {:error, %Ecto.Changeset{}}
   
   """
-  def delete_time_option(%TimeOption{} = time_option) do
+  def delete_time_option(time_option = %TimeOption{}) do
     Repo.delete(time_option)
   end
 
@@ -337,11 +340,9 @@ defmodule Cadet.Notifications do
       %Ecto.Changeset{data: %TimeOption{}}
   
   """
-  def change_time_option(%TimeOption{} = time_option, attrs \\ %{}) do
+  def change_time_option(time_option = %TimeOption{}, attrs \\ %{}) do
     TimeOption.changeset(time_option, attrs)
   end
-
-  alias Cadet.Notifications.NotificationPreference
 
   @doc """
   Returns the list of notification_preferences.
@@ -448,13 +449,11 @@ defmodule Cadet.Notifications do
   
   """
   def change_notification_preference(
-        %NotificationPreference{} = notification_preference,
+        notification_preference = %NotificationPreference{},
         attrs \\ %{}
       ) do
     NotificationPreference.changeset(notification_preference, attrs)
   end
-
-  alias Cadet.Notifications.SentNotification
 
   @doc """
   Returns the list of sent_notifications.

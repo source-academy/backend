@@ -101,7 +101,10 @@ defmodule CadetWeb.NotificationTypeControllerTest do
   # describe "delete notification_type" do
   #   setup [:create_notification_type]
 
-  #   test "deletes chosen notification_type", %{conn: conn, notification_type: notification_type} do
+  #   test "deletes chosen notification_type", %{
+  #     conn: conn,
+  #     notification_type: notification_type
+  #   } do
   #     conn = delete(conn, Routes.notification_type_path(conn, :delete, notification_type))
   #     assert response(conn, 204)
 

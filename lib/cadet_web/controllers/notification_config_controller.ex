@@ -16,7 +16,10 @@ defmodule CadetWeb.NotificationConfigController do
            Notifications.create_notification_config(notification_config_params) do
       conn
       |> put_status(:created)
-      # |> put_resp_header("location", Routes.notification_config_path(conn, :show, notification_config))
+      # |> put_resp_header(
+      #   "location",
+      #   Routes.notification_config_path(conn, :show, notification_config)
+      # )
       |> render("show.json", notification_config: notification_config)
     end
   end

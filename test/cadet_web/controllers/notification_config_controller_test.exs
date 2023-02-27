@@ -73,7 +73,10 @@ defmodule CadetWeb.NotificationConfigControllerTest do
   #            } = json_response(conn, 200)["data"]
   #   end
 
-  #   test "renders errors when data is invalid", %{conn: conn, notification_config: notification_config} do
+  #   test "renders errors when data is invalid", %{
+  #     conn: conn,
+  #     notification_config: notification_config
+  #   } do
   #     conn = put(
   #       conn,
   #       Routes.notification_config_path(conn, :update, notification_config),
@@ -86,7 +89,10 @@ defmodule CadetWeb.NotificationConfigControllerTest do
   # describe "delete notification_config" do
   #   setup [:create_notification_config]
 
-  #   test "deletes chosen notification_config", %{conn: conn, notification_config: notification_config} do
+  #   test "deletes chosen notification_config", %{
+  #     conn: conn,
+  #     notification_config: notification_config
+  #   } do
   #     conn = delete(conn, Routes.notification_config_path(conn, :delete, notification_config))
   #     assert response(conn, 204)
 

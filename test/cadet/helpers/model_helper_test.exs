@@ -1,10 +1,10 @@
+alias Ecto.Changeset
+use Ecto.Schema
+
 defmodule Cadet.ModelHelperTest.TestObject do
   @moduledoc """
   Test object.
   """
-  use Ecto.Schema
-
-  alias Ecto.Changeset
 
   schema "objects" do
     has_many(:prerequisites, __MODULE__, on_replace: :delete)
@@ -25,9 +25,6 @@ defmodule Cadet.ModelHelperTest.TestObjectSpecialKey do
   """
   # Credo false positive due to multiple modules in the file
   # credo:disable-for-next-line Credo.Check.Consistency.MultiAliasImportRequireUse
-  use Ecto.Schema
-
-  alias Ecto.Changeset
 
   @primary_key {:uuid, :binary_id, autogenerate: false}
   schema "special_objects" do
@@ -48,7 +45,6 @@ defmodule Cadet.ModelHelperTest do
 
   # Credo false positive due to multiple modules in the file
   # credo:disable-for-next-line Credo.Check.Consistency.MultiAliasImportRequireUse
-  alias Ecto.Changeset
   alias Cadet.ModelHelperTest.{TestObject, TestObjectSpecialKey}
 
   import Cadet.ModelHelper

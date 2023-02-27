@@ -66,7 +66,8 @@ defmodule Cadet.NotificationsTest do
 
     # test "delete_notification_type/1 deletes the notification_type" do
     #   notification_type = notification_type_fixture()
-    #   assert {:ok, %NotificationType{}} = Notifications.delete_notification_type(notification_type)
+    #   assert {:ok, %NotificationType{}} =
+    #     Notifications.delete_notification_type(notification_type)
     #   assert_raise Ecto.NoResultsError, fn -> Notifications.get_notification_type!(notification_type.id) end
     # end
 
@@ -102,7 +103,8 @@ defmodule Cadet.NotificationsTest do
     # end
 
     # test "create_notification_config/1 with invalid data returns error changeset" do
-    #   assert {:error, %Ecto.Changeset{}} = Notifications.create_notification_config(@invalid_attrs)
+    #   assert {:error, %Ecto.Changeset{}} =
+    #     Notifications.create_notification_config(@invalid_attrs)
     # end
 
     # test "update_notification_config/2 with valid data updates the notification_config" do
@@ -299,13 +301,15 @@ defmodule Cadet.NotificationsTest do
 
     # test "delete_sent_notification/1 deletes the sent_notification" do
     #   sent_notification = sent_notification_fixture()
-    #   assert {:ok, %SentNotification{}} = Notifications.delete_sent_notification(sent_notification)
+    #   assert {:ok, %SentNotification{}} =
+    #     Notifications.delete_sent_notification(sent_notification)
     #   assert_raise Ecto.NoResultsError, fn -> Notifications.get_sent_notification!(sent_notification.id) end
     # end
 
     # test "change_sent_notification/1 returns a sent_notification changeset" do
     #   sent_notification = sent_notification_fixture()
-    #   assert %Ecto.Changeset{} = Notifications.change_sent_notification(sent_notification)
+    #   assert %Ecto.Changeset{} =
+    #     Notifications.change_sent_notification(sent_notification)
     # end
   end
 end

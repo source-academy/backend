@@ -82,7 +82,7 @@ defmodule Cadet.Courses do
     end
   end
 
-  def get_all_course_ids() do
+  def get_all_course_ids do
     Course
     |> select([c], c.id)
     |> Repo.all()
@@ -239,8 +239,8 @@ defmodule Cadet.Courses do
             )
             |> where(course_id: ^course_id)
             |> Repo.one()} do
-      # It is ok to assume that user course registions already exist, as they would have been created
-      # in the admin_user_controller before calling this function
+      # It is ok to assume that user course registions already exist, as they would
+      # have been created in the admin_user_controller before calling this function
       case role do
         # If student, update his course registration
         :student ->
