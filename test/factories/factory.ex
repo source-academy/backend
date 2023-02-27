@@ -29,6 +29,12 @@ defmodule Cadet.Factory do
     SourcecastFactory
   }
 
+  use Cadet.Notifications.{
+    NotificationTypeFactory,
+    NotificationConfigFactory,
+    TimeOptionFactory
+  }
+
   use Cadet.Devices.DeviceFactory
 
   def upload_factory do
