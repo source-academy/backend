@@ -12,7 +12,7 @@ defmodule Cadet.Notifications.NotificationConfigFactory do
           is_enabled: false,
           notification_type: build(:notification_type),
           course: build(:course),
-          assessment_config: build(:assessment_config),
+          assessment_config: build(:assessment_config)
         }
       end
     end

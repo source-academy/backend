@@ -11,7 +11,7 @@ defmodule Cadet.Notifications.TimeOptionFactory do
         %TimeOption{
           is_default: false,
           minutes: 0,
-          notification_config: build(:notification_config),
+          notification_config: build(:notification_config)
         }
       end
     end

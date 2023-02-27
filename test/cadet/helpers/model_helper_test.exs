@@ -23,6 +23,7 @@ defmodule Cadet.ModelHelperTest.TestObjectSpecialKey do
   @moduledoc """
   Test object.
   """
+
   # Credo false positive due to multiple modules in the file
   # credo:disable-for-next-line Credo.Check.Consistency.MultiAliasImportRequireUse
 
