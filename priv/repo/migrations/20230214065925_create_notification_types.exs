@@ -11,6 +11,6 @@ defmodule Cadet.Repo.Migrations.CreateNotificationTypes do
       timestamps()
     end
 
-    create unique_index(:notification_types, [:name])
+    create(unique_index(:notification_types, [:name]))
   end
 end

@@ -5,7 +5,9 @@ defmodule Cadet.Repo.Migrations.CreateNotificationPreferences do
     create table(:notification_preferences) do
       add(:is_enabled, :boolean, default: false, null: false)
 
-      add(:notification_config_id, references(:notification_configs, on_delete: :delete_all, null: false),
+      add(
+        :notification_config_id,
+        references(:notification_configs, on_delete: :delete_all, null: false),
         null: false
       )
 
