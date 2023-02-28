@@ -37,7 +37,7 @@ defmodule Cadet.Workers.NotificationWorker do
       ) do
     pref = Notifications.get_notification_preference(notification_type_id, course_reg_id)
 
-    if is_nil(pref) do
+    if is_nil(pref) or is_nil(pref.time_option) do
       Notifications.get_default_time_option_for_assessment!(
         assessment_config_id,
         notification_type_id
