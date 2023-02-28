@@ -20,7 +20,7 @@ defmodule Cadet.Notifications.NotificationType do
   def changeset(notification_type, attrs) do
     notification_type
     |> cast(attrs, [:name, :template_file_name, :is_enabled, :is_autopopulated])
-    |> validate_required([:name, :template_file_name, :is_enabled, :is_autopopulated])
+    |> validate_required([:name, :template_file_name, :is_autopopulated])
     |> unique_constraint(:name)
   end
 end
