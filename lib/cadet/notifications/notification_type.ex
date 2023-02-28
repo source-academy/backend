@@ -21,5 +21,6 @@ defmodule Cadet.Notifications.NotificationType do
     notification_type
     |> cast(attrs, [:name, :template_file_name, :is_enabled, :is_autopopulated])
     |> validate_required([:name, :template_file_name, :is_enabled, :is_autopopulated])
+    |> unique_constraint(:name)
   end
 end

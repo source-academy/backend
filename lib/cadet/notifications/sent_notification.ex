@@ -17,7 +17,7 @@ defmodule Cadet.Notifications.SentNotification do
   @doc false
   def changeset(sent_notification, attrs) do
     sent_notification
-    |> cast(attrs, [:content])
-    |> validate_required([:content])
+    |> cast(attrs, [:content, :course_reg_id])
+    |> validate_required([:content, :course_reg_id])
   end
 end

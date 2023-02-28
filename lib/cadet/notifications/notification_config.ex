@@ -21,6 +21,6 @@ defmodule Cadet.Notifications.NotificationConfig do
   def changeset(notification_config, attrs) do
     notification_config
     |> cast(attrs, [:is_enabled, :notification_type_id, :course_id])
-    |> validate_required([:is_enabled, :notification_type_id, :course_id])
+    |> validate_required([:notification_type_id, :course_id])
   end
 end
