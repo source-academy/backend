@@ -22,5 +22,12 @@ defmodule Cadet.Notifications.NotificationConfig do
     notification_config
     |> cast(attrs, [:is_enabled, :notification_type_id, :course_id])
     |> validate_required([:notification_type_id, :course_id])
+    |> prevent_nil_is_enabled()
   end
+
+  defp prevent_nil_is_enabled(changeset = %{changes: %{is_enabled: is_enabled}}) when is_nil(is_enabled),
+    do: add_error(changeset, :full_name, "empty")
+
+  defp prevent_nil_is_enabled(changeset),
+    do: changeset
 end

@@ -9,23 +9,10 @@ defmodule Cadet.Notifications do
   alias Cadet.Notifications.{
     NotificationType,
     NotificationConfig,
-    SentNotification,
+    # SentNotification,
     TimeOption,
     NotificationPreference
   }
-
-  @doc """
-  Returns the list of notification_types.
-
-  ## Examples
-
-      iex> list_notification_types()
-      [%NotificationType{}, ...]
-
-  """
-  def list_notification_types do
-    Repo.all(NotificationType)
-  end
 
   @doc """
   Gets a single notification_type.
@@ -43,100 +30,6 @@ defmodule Cadet.Notifications do
   """
   def get_notification_type!(id), do: Repo.get!(NotificationType, id)
 
-  @doc """
-  Creates a notification_type.
-
-  ## Examples
-
-      iex> create_notification_type(%{field: value})
-      {:ok, %NotificationType{}}
-
-      iex> create_notification_type(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_notification_type(attrs \\ %{}) do
-    %NotificationType{}
-    |> NotificationType.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
-  Updates a notification_type.
-
-  ## Examples
-
-      iex> update_notification_type(notification_type, %{field: new_value})
-      {:ok, %NotificationType{}}
-
-      iex> update_notification_type(notification_type, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_notification_type(notification_type = %NotificationType{}, attrs) do
-    notification_type
-    |> NotificationType.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a notification_type.
-
-  ## Examples
-
-      iex> delete_notification_type(notification_type)
-      {:ok, %NotificationType{}}
-
-      iex> delete_notification_type(notification_type)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_notification_type(notification_type = %NotificationType{}) do
-    Repo.delete(notification_type)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking notification_type changes.
-
-  ## Examples
-
-      iex> change_notification_type(notification_type)
-      %Ecto.Changeset{data: %NotificationType{}}
-
-  """
-  def change_notification_type(notification_type = %NotificationType{}, attrs \\ %{}) do
-    NotificationType.changeset(notification_type, attrs)
-  end
-
-  @doc """
-  Returns the list of notification_configs.
-
-  ## Examples
-
-      iex> list_notification_configs()
-      [%NotificationConfig{}, ...]
-
-  """
-  def list_notification_configs do
-    Repo.all(NotificationConfig)
-  end
-
-  @doc """
-  Gets a single notification_config.
-
-  Raises `Ecto.NoResultsError` if the Notification config does not exist.
-
-  ## Examples
-
-      iex> get_notification_config!(123)
-      %NotificationConfig{}
-
-      iex> get_notification_config!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_notification_config!(id), do: Repo.get!(NotificationConfig, id)
-
   def get_notification_config!(notification_type_id, course_id, assconfig_id) do
     query =
       from(n in Cadet.Notifications.NotificationConfig,
@@ -153,24 +46,6 @@ defmodule Cadet.Notifications do
       end
 
     Repo.one!(query)
-  end
-
-  @doc """
-  Creates a notification_config.
-
-  ## Examples
-
-      iex> create_notification_config(%{field: value})
-      {:ok, %NotificationConfig{}}
-
-      iex> create_notification_config(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_notification_config(attrs \\ %{}) do
-    %NotificationConfig{}
-    |> NotificationConfig.changeset(attrs)
-    |> Repo.insert()
   end
 
   @doc """
@@ -192,22 +67,6 @@ defmodule Cadet.Notifications do
   end
 
   @doc """
-  Deletes a notification_config.
-
-  ## Examples
-
-      iex> delete_notification_config(notification_config)
-      {:ok, %NotificationConfig{}}
-
-      iex> delete_notification_config(notification_config)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_notification_config(notification_config = %NotificationConfig{}) do
-    Repo.delete(notification_config)
-  end
-
-  @doc """
   Returns an `%Ecto.Changeset{}` for tracking notification_config changes.
 
   ## Examples
@@ -218,19 +77,6 @@ defmodule Cadet.Notifications do
   """
   def change_notification_config(notification_config = %NotificationConfig{}, attrs \\ %{}) do
     NotificationConfig.changeset(notification_config, attrs)
-  end
-
-  @doc """
-  Returns the list of time_options.
-
-  ## Examples
-
-      iex> list_time_options()
-      [%TimeOption{}, ...]
-
-  """
-  def list_time_options do
-    Repo.all(TimeOption)
   end
 
   @doc """
@@ -298,24 +144,6 @@ defmodule Cadet.Notifications do
   end
 
   @doc """
-  Updates a time_option.
-
-  ## Examples
-
-      iex> update_time_option(time_option, %{field: new_value})
-      {:ok, %TimeOption{}}
-
-      iex> update_time_option(time_option, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_time_option(time_option = %TimeOption{}, attrs) do
-    time_option
-    |> TimeOption.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
   Deletes a time_option.
 
   ## Examples
@@ -330,48 +158,6 @@ defmodule Cadet.Notifications do
   def delete_time_option(time_option = %TimeOption{}) do
     Repo.delete(time_option)
   end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking time_option changes.
-
-  ## Examples
-
-      iex> change_time_option(time_option)
-      %Ecto.Changeset{data: %TimeOption{}}
-
-  """
-  def change_time_option(time_option = %TimeOption{}, attrs \\ %{}) do
-    TimeOption.changeset(time_option, attrs)
-  end
-
-  @doc """
-  Returns the list of notification_preferences.
-
-  ## Examples
-
-      iex> list_notification_preferences()
-      [%NotificationPreference{}, ...]
-
-  """
-  def list_notification_preferences do
-    Repo.all(NotificationPreference)
-  end
-
-  @doc """
-  Gets a single notification_preference.
-
-  Raises `Ecto.NoResultsError` if the Notification preference does not exist.
-
-  ## Examples
-
-      iex> get_notification_preference!(123)
-      %NotificationPreference{}
-
-      iex> get_notification_preference!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_notification_preference!(id), do: Repo.get!(NotificationPreference, id)
 
   def get_notification_preference(notification_type_id, course_reg_id) do
     query =
@@ -464,9 +250,9 @@ defmodule Cadet.Notifications do
       [%SentNotification{}, ...]
 
   """
-  def list_sent_notifications do
-    Repo.all(SentNotification)
-  end
+  # def list_sent_notifications do
+  #   Repo.all(SentNotification)
+  # end
 
   @doc """
   Gets a single sent_notification.
@@ -482,70 +268,6 @@ defmodule Cadet.Notifications do
       ** (Ecto.NoResultsError)
 
   """
-  def get_sent_notification!(id), do: Repo.get!(SentNotification, id)
+  # def get_sent_notification!(id), do: Repo.get!(SentNotification, id)
 
-  @doc """
-  Creates a sent_notification.
-
-  ## Examples
-
-      iex> create_sent_notification(%{field: value})
-      {:ok, %SentNotification{}}
-
-      iex> create_sent_notification(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_sent_notification(attrs \\ %{}) do
-    %SentNotification{}
-    |> SentNotification.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
-  Updates a sent_notification.
-
-  ## Examples
-
-      iex> update_sent_notification(sent_notification, %{field: new_value})
-      {:ok, %SentNotification{}}
-
-      iex> update_sent_notification(sent_notification, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def update_sent_notification(sent_notification = %SentNotification{}, attrs) do
-    sent_notification
-    |> SentNotification.changeset(attrs)
-    |> Repo.update()
-  end
-
-  @doc """
-  Deletes a sent_notification.
-
-  ## Examples
-
-      iex> delete_sent_notification(sent_notification)
-      {:ok, %SentNotification{}}
-
-      iex> delete_sent_notification(sent_notification)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_sent_notification(sent_notification = %SentNotification{}) do
-    Repo.delete(sent_notification)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking sent_notification changes.
-
-  ## Examples
-
-      iex> change_sent_notification(sent_notification)
-      %Ecto.Changeset{data: %SentNotification{}}
-
-  """
-  def change_sent_notification(sent_notification = %SentNotification{}, attrs \\ %{}) do
-    SentNotification.changeset(sent_notification, attrs)
-  end
 end

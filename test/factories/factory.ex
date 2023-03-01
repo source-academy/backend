@@ -32,6 +32,7 @@ defmodule Cadet.Factory do
   use Cadet.Notifications.{
     NotificationTypeFactory,
     NotificationConfigFactory,
+    NotificationPreferenceFactory,
     TimeOptionFactory
   }
 
