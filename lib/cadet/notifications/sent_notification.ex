@@ -19,5 +19,6 @@ defmodule Cadet.Notifications.SentNotification do
     sent_notification
     |> cast(attrs, [:content, :course_reg_id])
     |> validate_required([:content, :course_reg_id])
+    |> foreign_key_constraint(:course_reg_id)
   end
 end

@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.CreateSentNotifications do
 
   def change do
     create table(:sent_notifications) do
-      add(:content, :text)
+      add(:content, :text, null: false)
       add(:course_reg_id, references(:course_registrations, on_delete: :nothing), null: false)
 
       timestamps()
