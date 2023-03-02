@@ -91,7 +91,6 @@ if "test.secrets.exs" |> Path.expand(__DIR__) |> File.exists?(),
 
 config :cadet, Oban,
   repo: Cadet.Repo,
-  plugins: false,
-  queues: false
+  testing: :manual
 
 config :cadet, Cadet.Mailer, adapter: Bamboo.TestAdapter
