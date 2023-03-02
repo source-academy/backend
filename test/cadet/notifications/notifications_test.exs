@@ -26,6 +26,16 @@ defmodule Cadet.NotificationsTest do
              ).id == notification_config.id
     end
 
+    test "get_notification_config!/3 with no assessment config returns the notification_config with given id" do
+      notification_config = insert(:notification_config, assessment_config: nil)
+
+      assert Notifications.get_notification_config!(
+               notification_config.notification_type.id,
+               notification_config.course.id,
+               nil
+             ).id == notification_config.id
+    end
+
     test "update_notification_config/2 with valid data updates the notification_config" do
       notification_config = insert(:notification_config)
       update_attrs = %{is_enabled: true}
