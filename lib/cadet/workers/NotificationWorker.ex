@@ -52,10 +52,10 @@ defmodule Cadet.Workers.NotificationWorker do
         args: %{"notification_type" => notification_type} = _args
       })
       when notification_type == "avenger_backlog" do
-    notification_type_id = 2
     ungraded_threshold = 5
 
-    ntype = Cadet.Notifications.get_notification_type!(notification_type_id)
+    ntype = Cadet.Notifications.get_notification_type_by_name!("AVENGER BACKLOG")
+    notification_type_id = ntype.id
 
     for course_id <- Cadet.Courses.get_all_course_ids() do
       avengers_crs = Cadet.Accounts.CourseRegistrations.get_staffs(course_id)
@@ -65,7 +65,10 @@ defmodule Cadet.Workers.NotificationWorker do
 
         ungraded_submissions =
           Jason.decode!(
-            elem(Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true), 1)
+            elem(
+              Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true),
+              1
+            )
           )
 
         cond do

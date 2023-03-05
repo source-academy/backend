@@ -30,6 +30,23 @@ defmodule Cadet.Notifications do
   """
   def get_notification_type!(id), do: Repo.get!(NotificationType, id)
 
+  @doc """
+  Gets a single notification_type by name.any()
+
+  Raises `Ecto.NoResultsError` if the Notification type does not exist.
+
+  ## Examples
+
+      iex> get_notification_type_by_name!("AVENGER BACKLOG")
+      %NotificationType{}
+
+      iex> get_notification_type_by_name!("AVENGER BACKLOG")
+      ** (Ecto.NoResultsError)
+  """
+  def get_notification_type_by_name!(name) do
+    Repo.one!(from(nt in NotificationType, where: nt.name == ^name))
+  end
+
   def get_notification_config!(notification_type_id, course_id, assconfig_id) do
     query =
       from(n in Cadet.Notifications.NotificationConfig,
@@ -250,6 +267,7 @@ defmodule Cadet.Notifications do
       [%SentNotification{}, ...]
 
   """
+
   # def list_sent_notifications do
   #   Repo.all(SentNotification)
   # end
@@ -269,5 +287,4 @@ defmodule Cadet.Notifications do
 
   """
   # def get_sent_notification!(id), do: Repo.get!(SentNotification, id)
-
 end
