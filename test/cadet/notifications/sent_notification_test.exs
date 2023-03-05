@@ -26,7 +26,6 @@ defmodule Cadet.Notifications.SentNotificationTest do
 
   describe "Changesets" do
     test "valid changesets", %{
-      course: course,
       student: student
     } do
       assert_changeset(
@@ -39,7 +38,6 @@ defmodule Cadet.Notifications.SentNotificationTest do
     end
 
     test "invalid changesets missing content", %{
-      course: course,
       student: student
     } do
       assert_changeset(
@@ -50,10 +48,7 @@ defmodule Cadet.Notifications.SentNotificationTest do
       )
     end
 
-    test "invalid changesets missing course_reg_id", %{
-      course: course,
-      student: student
-    } do
+    test "invalid changesets missing course_reg_id" do
       assert_changeset(
         %{
           content: "Test Content 2"
@@ -63,9 +58,7 @@ defmodule Cadet.Notifications.SentNotificationTest do
     end
 
     test "invalid changeset foreign key constraint", %{
-      course: course,
-      student: student,
-      changeset: changeset
+      student: student
     } do
       changeset =
         SentNotification.changeset(%SentNotification{}, %{
