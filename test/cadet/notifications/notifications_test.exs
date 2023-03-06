@@ -113,7 +113,11 @@ defmodule Cadet.NotificationsTest do
     @invalid_attrs %{is_enabled: nil}
 
     test "get_notification_preference!/1 returns the notification_preference with given id" do
-      notification_preference = insert(:notification_preference)
+      notification_type = insert(:notification_type, name: "get_notification_preference!/1")
+      notification_config = insert(:notification_config, notification_type: notification_type)
+
+      notification_preference =
+        insert(:notification_preference, notification_config: notification_config)
 
       assert Notifications.get_notification_preference(
                notification_preference.notification_config.notification_type.id,
@@ -127,7 +131,14 @@ defmodule Cadet.NotificationsTest do
     end
 
     test "update_notification_preference/2 with valid data updates the notification_preference" do
-      notification_preference = insert(:notification_preference)
+      notification_type =
+        insert(:notification_type, name: "update_notification_preference/2 valid")
+
+      notification_config = insert(:notification_config, notification_type: notification_type)
+
+      notification_preference =
+        insert(:notification_preference, notification_config: notification_config)
+
       update_attrs = %{is_enabled: true}
 
       assert {:ok, %NotificationPreference{} = notification_preference} =
@@ -137,7 +148,13 @@ defmodule Cadet.NotificationsTest do
     end
 
     test "update_notification_preference/2 with invalid data returns error changeset" do
-      notification_preference = insert(:notification_preference)
+      notification_type =
+        insert(:notification_type, name: "update_notification_preference/2 invalid")
+
+      notification_config = insert(:notification_config, notification_type: notification_type)
+
+      notification_preference =
+        insert(:notification_preference, notification_config: notification_config)
 
       assert {:error, %Ecto.Changeset{}} =
                Notifications.update_notification_preference(
@@ -153,7 +170,11 @@ defmodule Cadet.NotificationsTest do
     end
 
     test "delete_notification_preference/1 deletes the notification_preference" do
-      notification_preference = insert(:notification_preference)
+      notification_type = insert(:notification_type, name: "delete_notification_preference/1")
+      notification_config = insert(:notification_config, notification_type: notification_type)
+
+      notification_preference =
+        insert(:notification_preference, notification_config: notification_config)
 
       assert {:ok, %NotificationPreference{}} =
                Notifications.delete_notification_preference(notification_preference)
@@ -165,7 +186,11 @@ defmodule Cadet.NotificationsTest do
     end
 
     test "change_notification_preference/1 returns a notification_preference changeset" do
-      notification_preference = insert(:notification_preference)
+      notification_type = insert(:notification_type, name: "change_notification_preference/1")
+      notification_config = insert(:notification_config, notification_type: notification_type)
+
+      notification_preference =
+        insert(:notification_preference, notification_config: notification_config)
 
       assert %Ecto.Changeset{} =
                Notifications.change_notification_preference(notification_preference)
