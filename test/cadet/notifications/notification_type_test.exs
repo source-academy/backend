@@ -65,7 +65,7 @@ defmodule Cadet.Notifications.NotificationTypeTest do
       refute changeset.valid?
     end
 
-    test "invalid changeset nil is_enabled", %{changeset: changeset} do
+    test "invalid changeset nil is_enabled" do
       assert_changeset(
         %{
           name: "Notification Type 0",

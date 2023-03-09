@@ -2,6 +2,7 @@ defmodule Cadet.NotificationsTest do
   use Cadet.DataCase
 
   alias Cadet.Notifications
+  alias Cadet.Notifications.{NotificationConfig, NotificationPreference, TimeOption}
 
   describe "notification_types" do
     test "get_notification_type!/1 returns the notification_type with given id" do
@@ -12,8 +13,6 @@ defmodule Cadet.NotificationsTest do
   end
 
   describe "notification_configs" do
-    alias Cadet.Notifications.NotificationConfig
-
     @invalid_attrs %{is_enabled: nil}
 
     test "get_notification_config!/3 returns the notification_config with given id" do
@@ -67,8 +66,6 @@ defmodule Cadet.NotificationsTest do
   end
 
   describe "time_options" do
-    alias Cadet.Notifications.TimeOption
-
     @invalid_attrs %{is_default: nil, minutes: nil}
 
     test "get_time_option!/1 returns the time_option with given id" do
@@ -108,8 +105,6 @@ defmodule Cadet.NotificationsTest do
   end
 
   describe "notification_preferences" do
-    alias Cadet.Notifications.NotificationPreference
-
     @invalid_attrs %{is_enabled: nil}
 
     test "get_notification_preference!/1 returns the notification_preference with given id" do
