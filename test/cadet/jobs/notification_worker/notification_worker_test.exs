@@ -12,6 +12,21 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
     assessments = Cadet.Test.Seeds.assessments()
     avenger_cr = assessments.course_regs.avenger1_cr
 
+    # setup for assessment submission
+    asssub_ntype = Cadet.Notifications.get_notification_type_by_name!("ASSESSMENT SUBMISSION")
+    {name, data} = Enum.at(assessments.assessments, 0)
+    submission = List.first(List.first(data.mcq_answers)).submission
+
+    assessment_config = submission.assessment.config
+    course = assessment_config.course
+    insert(:notification_config,
+      notification_type: asssub_ntype,
+      course: course,
+      assessment_config: assessment_config,
+      is_enabled: true
+    )
+
+    # setup for avenger backlog
     ungraded_submissions =
       Jason.decode!(
         elem(Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true), 1)
@@ -20,25 +35,33 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
     Repo.update_all(NotificationType, set: [is_enabled: true])
     Repo.update_all(NotificationConfig, set: [is_enabled: true])
 
-    {:ok, %{avenger_user: avenger_cr.user, ungraded_submissions: ungraded_submissions}}
+    {:ok,
+     %{
+       avenger_user: avenger_cr.user,
+       ungraded_submissions: ungraded_submissions,
+       submission_id: submission.id
+     }}
   end
 
   test "avenger backlog test", %{
     avenger_user: avenger_user
   } do
     perform_job(NotificationWorker, %{"notification_type" => "avenger_backlog"})
-    # ntype = Cadet.Notifications.get_notification_type!(1)
 
-    # email =
-    #   Cadet.Email.avenger_backlog_email(
-    #     ntype.template_file_name,
-    #     avenger_user,
-    #     ungraded_submissions
-    #   )
-
-    # assert_delivered_email(email)
     avenger_email = avenger_user.email
+    assert_delivered_email_matches(%{to: [{_, ^avenger_email}]})
+  end
 
+  test "assessment submission test", %{
+    avenger_user: avenger_user,
+    submission_id: submission_id
+  } do
+    perform_job(NotificationWorker, %{
+      "notification_type" => "assessment_submission",
+      submission_id: submission_id
+    })
+
+    avenger_email = avenger_user.email
     assert_delivered_email_matches(%{to: [{_, ^avenger_email}]})
   end
 end
