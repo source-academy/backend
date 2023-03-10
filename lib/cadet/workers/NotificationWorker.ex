@@ -4,6 +4,7 @@ defmodule Cadet.Workers.NotificationWorker do
   """
   use Oban.Worker, queue: :notifications, max_attempts: 1
   alias Cadet.{Email, Notifications}
+  alias Cadet.Repo
 
   defp is_system_enabled(notification_type_id) do
     Notifications.get_notification_type!(notification_type_id).is_enabled
@@ -104,7 +105,8 @@ defmodule Cadet.Workers.NotificationWorker do
     course_id = submission.assessment.course_id
     student_id = submission.student_id
     assement_config_id = submission.assessment.config_id
-    student = Cadet.Accounts.get_user(student_id)
+    course_reg = Repo.get(Cadet.Accounts.CourseRegistration, submission.student_id)
+    student = Cadet.Accounts.get_user(course_reg.user_id)
     avenger = Cadet.Accounts.CourseRegistrations.get_avenger_of(student_id).user
 
     cond do
