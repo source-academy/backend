@@ -736,8 +736,9 @@ defmodule Cadet.Assessments do
       Notifications.write_notification_when_student_submits(submission)
       # Send email notification to avenger
       %{notification_type: "assessment_submission", submission_id: updated_submission.id}
-        |> Cadet.Workers.NotificationWorker.new()
-        |> Oban.insert()
+      |> Cadet.Workers.NotificationWorker.new()
+      |> Oban.insert()
+
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
 

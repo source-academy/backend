@@ -214,7 +214,9 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.preload(:group)
     |> Map.get(:group)
     |> case do
-      nil -> nil
+      nil ->
+        nil
+
       group ->
         avenger_id = Map.get(group, :leader_id)
 
