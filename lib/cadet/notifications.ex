@@ -9,7 +9,7 @@ defmodule Cadet.Notifications do
   alias Cadet.Notifications.{
     NotificationType,
     NotificationConfig,
-    # SentNotification,
+    SentNotification,
     TimeOption,
     NotificationPreference
   }
@@ -30,10 +30,6 @@ defmodule Cadet.Notifications do
   """
   def get_notification_type!(id), do: Repo.get!(NotificationType, id)
 
-  def get_notification_type_by_name!(name) do
-    Repo.one!(from(nt in NotificationType, where: nt.name == ^name))
-  end
-
   @doc """
   Gets a single notification_type by name.any()
 
@@ -51,7 +47,7 @@ defmodule Cadet.Notifications do
     Repo.one!(from(nt in NotificationType, where: nt.name == ^name))
   end
 
-  def get_notification_config!(notification_type_id, course_id, assconfig_id) do
+  def get_notification_config(notification_type_id, course_id, assconfig_id) do
     query =
       from(n in Cadet.Notifications.NotificationConfig,
         join: ntype in Cadet.Notifications.NotificationType,
@@ -66,7 +62,7 @@ defmodule Cadet.Notifications do
         where(query, [c], c.assessment_config_id == ^assconfig_id)
       end
 
-    Repo.one!(query)
+    Repo.one(query)
   end
 
   @doc """
@@ -263,6 +259,24 @@ defmodule Cadet.Notifications do
   end
 
   @doc """
+  Creates a sent_notification.
+
+  ## Examples
+
+      iex> create_sent_notification(%{field: value})
+      {:ok, %SentNotification{}}
+
+      iex> create_sent_notification(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_sent_notification(course_reg_id, content) do
+    %SentNotification{}
+    |> SentNotification.changeset(%{course_reg_id: course_reg_id, content: content})
+    |> Repo.insert()
+  end
+
+  @doc """
   Returns the list of sent_notifications.
 
   ## Examples
@@ -276,19 +290,19 @@ defmodule Cadet.Notifications do
   #   Repo.all(SentNotification)
   # end
 
-  @doc """
-  Gets a single sent_notification.
+  # @doc """
+  # Gets a single sent_notification.
 
-  Raises `Ecto.NoResultsError` if the Sent notification does not exist.
+  # Raises `Ecto.NoResultsError` if the Sent notification does not exist.
 
-  ## Examples
+  # ## Examples
 
-      iex> get_sent_notification!(123)
-      %SentNotification{}
+  #     iex> get_sent_notification!(123)
+  #     %SentNotification{}
 
-      iex> get_sent_notification!(456)
-      ** (Ecto.NoResultsError)
+  #     iex> get_sent_notification!(456)
+  #     ** (Ecto.NoResultsError)
 
-  """
-  # def get_sent_notification!(id), do: Repo.get!(SentNotification, id)
+  # """
+  # # def get_sent_notification!(id), do: Repo.get!(SentNotification, id)
 end

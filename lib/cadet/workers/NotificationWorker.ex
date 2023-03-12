@@ -3,7 +3,7 @@ defmodule Cadet.Workers.NotificationWorker do
   Contain oban workers for sending notifications
   """
   use Oban.Worker, queue: :notifications, max_attempts: 1
-  alias Cadet.{Email, Notifications}
+  alias Cadet.{Email, Notifications, Mailer}
   alias Cadet.Repo
 
   defp is_system_enabled(notification_type_id) do
@@ -11,11 +11,18 @@ defmodule Cadet.Workers.NotificationWorker do
   end
 
   defp is_course_enabled(notification_type_id, course_id, assessment_config_id) do
-    Notifications.get_notification_config!(
-      notification_type_id,
-      course_id,
-      assessment_config_id
-    ).is_enabled
+    notification_config =
+      Notifications.get_notification_config(
+        notification_type_id,
+        course_id,
+        assessment_config_id
+      )
+
+    if is_nil(notification_config) do
+      false
+    else
+      notification_config.is_enabled
+    end
   end
 
   defp is_user_enabled(notification_type_id, course_reg_id) do
@@ -84,7 +91,15 @@ defmodule Cadet.Workers.NotificationWorker do
 
           true ->
             IO.puts("[AVENGER_BACKLOG] SENDING_OUT")
-            Email.avenger_backlog_email(ntype.template_file_name, avenger, ungraded_submissions)
+
+            email =
+              Email.avenger_backlog_email(ntype.template_file_name, avenger, ungraded_submissions)
+
+            {status, email} = Mailer.deliver_now(email)
+
+            if status == :ok do
+              Notifications.create_sent_notification(avenger_cr.id, email.html_body)
+            end
         end
       end
     end
@@ -122,12 +137,19 @@ defmodule Cadet.Workers.NotificationWorker do
       true ->
         IO.puts("[ASSESSMENT_SUBMISSION] SENDING_OUT")
 
-        Email.assessment_submission_email(
-          notification_type.template_file_name,
-          avenger,
-          student,
-          submission
-        )
+        email =
+          Email.assessment_submission_email(
+            notification_type.template_file_name,
+            avenger,
+            student,
+            submission
+          )
+
+        {status, email} = Mailer.deliver_now(email)
+
+        if status == :ok do
+          Notifications.create_sent_notification(course_reg.id, email.html_body)
+        end
     end
   end
 end
