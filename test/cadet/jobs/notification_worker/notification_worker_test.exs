@@ -14,11 +14,12 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
 
     # setup for assessment submission
     asssub_ntype = Cadet.Notifications.get_notification_type_by_name!("ASSESSMENT SUBMISSION")
-    {name, data} = Enum.at(assessments.assessments, 0)
+    {_name, data} = Enum.at(assessments.assessments, 0)
     submission = List.first(List.first(data.mcq_answers)).submission
 
     assessment_config = submission.assessment.config
     course = assessment_config.course
+
     insert(:notification_config,
       notification_type: asssub_ntype,
       course: course,

@@ -193,11 +193,24 @@ defmodule Cadet.NotificationsTest do
   end
 
   describe "sent_notifications" do
-    # alias Cadet.Notifications.SentNotification
+    alias Cadet.Notifications.SentNotification
 
-    # import Cadet.NotificationsFixtures
+    setup do
+      course = insert(:course)
+      course_reg = insert(:course_registration, course: course)
+      {:ok, course_reg: course_reg}
+    end
 
-    # @invalid_attrs %{content: nil}
+    test "create_sent_notification/1 with valid data creates a sent_notification",
+         %{course_reg: course_reg} do
+      assert {:ok, %SentNotification{}} =
+               Notifications.create_sent_notification(course_reg.id, "test content")
+    end
+
+    test "create_sent_notification/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} =
+               Notifications.create_sent_notification(nil, "test content")
+    end
 
     # test "list_sent_notifications/0 returns all sent_notifications" do
     #   sent_notification = sent_notification_fixture()

@@ -12,7 +12,7 @@ defmodule Cadet.Workers.NotificationWorker do
 
   defp is_course_enabled(notification_type_id, course_id, assessment_config_id) do
     notification_config =
-      Notifications.get_notification_config(
+      Notifications.get_notification_config!(
         notification_type_id,
         course_id,
         assessment_config_id

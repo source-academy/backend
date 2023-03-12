@@ -47,7 +47,7 @@ defmodule Cadet.Notifications do
     Repo.one!(from(nt in NotificationType, where: nt.name == ^name))
   end
 
-  def get_notification_config(notification_type_id, course_id, assconfig_id) do
+  def get_notification_config!(notification_type_id, course_id, assconfig_id) do
     query =
       from(n in Cadet.Notifications.NotificationConfig,
         join: ntype in Cadet.Notifications.NotificationType,
