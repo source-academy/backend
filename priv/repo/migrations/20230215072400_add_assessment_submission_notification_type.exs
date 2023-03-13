@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.AddAssessmentSubmissionNotificationType do
 
   def up do
     execute(
-      "INSERT INTO notification_types (name, template_file_name, is_autopopulated, inserted_at, updated_at) VALUES ('ASSESSMENT SUBMISSION', 'assessment_submission', TRUE, current_timestamp, current_timestamp)"
+      "INSERT INTO notification_types (name, template_file_name, is_autopopulated, inserted_at, updated_at) VALUES ('ASSESSMENT SUBMISSION', 'assessment_submission', FALSE, current_timestamp, current_timestamp)"
     )
   end
 

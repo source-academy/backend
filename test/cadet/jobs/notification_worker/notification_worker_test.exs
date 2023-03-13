@@ -17,16 +17,6 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
     {_name, data} = Enum.at(assessments.assessments, 0)
     submission = List.first(List.first(data.mcq_answers)).submission
 
-    assessment_config = submission.assessment.config
-    course = assessment_config.course
-
-    insert(:notification_config,
-      notification_type: asssub_ntype,
-      course: course,
-      assessment_config: assessment_config,
-      is_enabled: true
-    )
-
     # setup for avenger backlog
     ungraded_submissions =
       Jason.decode!(
