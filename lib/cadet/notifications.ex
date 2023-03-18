@@ -14,6 +14,8 @@ defmodule Cadet.Notifications do
     NotificationPreference
   }
 
+  alias Cadet.Accounts.Role
+
   @doc """
   Gets a single notification_type.
 
@@ -62,7 +64,67 @@ defmodule Cadet.Notifications do
         where(query, [c], c.assessment_config_id == ^assconfig_id)
       end
 
-    Repo.one(query)
+    Repo.one!(query)
+  end
+
+  @doc """
+  Gets all notification configs that belong to a course
+  """
+  def get_notification_configs(course_id) do
+    query =
+      from(n in Cadet.Notifications.NotificationConfig,
+        join: ntype in Cadet.Notifications.NotificationType,
+        on: n.notification_type_id == ntype.id,
+        join: c in Cadet.Courses.Course,
+        on: n.course_id == c.id,
+        left_join: ac in Cadet.Courses.AssessmentConfig,
+        on: n.assessment_config_id == ac.id,
+        left_join: to in Cadet.Notifications.TimeOption,
+        on: to.notification_config_id == n.id,
+        where: n.course_id == ^course_id
+      )
+
+    query
+    |> Repo.all()
+    |> Repo.preload([:notification_type, :course, :assessment_config, :time_options])
+  end
+
+  @doc """
+  Gets all notification configs with preferences that
+  1. belongs to the course of the course reg,
+  2. only notifications that it can configure based on course reg's role
+  """
+  def get_configurable_notification_configs(cr_id) do
+    cr = Repo.get(Cadet.Accounts.CourseRegistration, cr_id)
+    is_staff = cr.role == :staff
+
+    query =
+      from(n in Cadet.Notifications.NotificationConfig,
+        join: ntype in Cadet.Notifications.NotificationType,
+        on: n.notification_type_id == ntype.id,
+        join: c in Cadet.Courses.Course,
+        on: n.course_id == c.id,
+        left_join: ac in Cadet.Courses.AssessmentConfig,
+        on: n.assessment_config_id == ac.id,
+        left_join: to in Cadet.Notifications.TimeOption,
+        on: to.notification_config_id == n.id,
+        left_join: p in Cadet.Notifications.NotificationPreference,
+        on: p.notification_config_id == n.id,
+        where:
+          ntype.for_staff == ^is_staff and
+            n.course_id == ^cr.course_id and
+            p.course_reg_id == ^cr.id
+      )
+
+    query
+    |> Repo.all()
+    |> Repo.preload([
+      :notification_type,
+      :course,
+      :assessment_config,
+      :time_options,
+      :notification_preferences
+    ])
   end
 
   @doc """
@@ -112,6 +174,23 @@ defmodule Cadet.Notifications do
   """
   def get_time_option!(id), do: Repo.get!(TimeOption, id)
 
+  @doc """
+  Gets all time options for a notification config
+  """
+  def get_time_options_for_config(notification_config_id) do
+    query =
+      from(to in Cadet.Notifications.TimeOption,
+        join: nc in Cadet.Notifications.NotificationConfig,
+        on: to.notification_config_id == nc.id,
+        where: nc.id == ^notification_config_id
+      )
+
+    Repo.all(query)
+  end
+
+  @doc """
+  Gets all time options for an assessment config and notification type
+  """
   def get_time_options_for_assessment(assessment_config_id, notification_type_id) do
     query =
       from(ac in Cadet.Courses.AssessmentConfig,
@@ -126,6 +205,9 @@ defmodule Cadet.Notifications do
     Repo.all(query)
   end
 
+  @doc """
+  Gets the default time options for an assessment config and notification type
+  """
   def get_default_time_option_for_assessment!(assessment_config_id, notification_type_id) do
     query =
       from(ac in Cadet.Courses.AssessmentConfig,
@@ -176,6 +258,24 @@ defmodule Cadet.Notifications do
     Repo.delete(time_option)
   end
 
+  @doc """
+  Gets the notification preference based from its id
+  """
+  def get_notification_preference!(notification_preference_id) do
+    query =
+      from(np in NotificationPreference,
+        left_join: to in TimeOption,
+        on: to.id == np.time_option_id,
+        where: np.id == ^notification_preference_id,
+        preload: :time_option
+      )
+
+    Repo.one!(query)
+  end
+
+  @doc """
+  Gets the notification preference based from notification type and course reg
+  """
   def get_notification_preference(notification_type_id, course_reg_id) do
     query =
       from(np in NotificationPreference,
