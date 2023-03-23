@@ -19,9 +19,11 @@ defmodule CadetWeb.NewNotificationsView do
     transform_map_for_view(config, %{
       id: :id,
       isEnabled: :is_enabled,
+      course: &render_course(&1.course),
       notificationType: &render_notification_type(&1.notification_type),
       assessmentConfig: &render_assessment_config(&1.assessment_config),
-      time_options:
+      notificationPreference: &render_many_notification_preferences(&1.notification_preferences),
+      timeOptions:
         &render_many(
           &1.time_options,
           CadetWeb.NewNotificationsView,
@@ -31,11 +33,11 @@ defmodule CadetWeb.NewNotificationsView do
     })
   end
 
-  def render("preference.json", %{noti_pref: noti_pref}) do
+  def render("noti_pref.json", %{noti_pref: noti_pref}) do
     transform_map_for_view(noti_pref, %{
       id: :id,
       isEnabled: :is_enabled,
-      timeOption: :time_option
+      timeOptionId: :time_option_id
     })
   end
 
@@ -63,6 +65,19 @@ defmodule CadetWeb.NewNotificationsView do
           forStaff: :for_staff,
           isEnabled: :is_enabled
         })
+    end
+  end
+
+  defp render_many_notification_preferences(noti_prefs) do
+    case noti_prefs do
+      nil ->
+        nil
+
+      %Ecto.Association.NotLoaded{} ->
+        nil
+
+      _ ->
+        render_many(noti_prefs, CadetWeb.NewNotificationsView, "noti_pref.json", as: :noti_pref)
     end
   end
 

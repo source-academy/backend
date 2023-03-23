@@ -25,7 +25,7 @@ defmodule CadetWeb.NewNotificationsController do
     case Repo.insert(changeset) do
       {:ok, res} ->
         pref = Notifications.get_notification_preference!(res.id)
-        render(conn, "preference.json", noti_pref: pref)
+        render(conn, "noti_pref.json", noti_pref: pref)
 
       {:error, {status, message}} ->
         conn |> put_status(status) |> text(message)
@@ -51,7 +51,7 @@ defmodule CadetWeb.NewNotificationsController do
     case Repo.update(changeset) do
       {:ok, res} ->
         pref = Notifications.get_notification_preference!(res.id)
-        render(conn, "preference.json", noti_pref: pref)
+        render(conn, "noti_pref.json", noti_pref: pref)
 
       {:error, {status, message}} ->
         conn |> put_status(status) |> text(message)
