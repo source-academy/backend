@@ -3,18 +3,38 @@ defmodule CadetWeb.NewNotificationsController do
 
   alias Cadet.Repo
   alias Cadet.Notifications
-  alias Cadet.Notifications.{NotificationPreference, TimeOption}
+  alias Cadet.Notifications.{NotificationPreference, NotificationConfig, TimeOption}
 
   # NOTIFICATION CONFIGS
 
   def all_noti_configs(conn, %{"course_id" => course_id}) do
     configs = Notifications.get_notification_configs(course_id)
-    render(conn, "configs.json", configs: configs)
+    render(conn, "configs_full.json", configs: configs)
   end
 
   def get_configurable_noti_configs(conn, %{"course_reg_id" => course_reg_id}) do
     configs = Notifications.get_configurable_notification_configs(course_reg_id)
-    render(conn, "configs.json", configs: configs)
+    render(conn, "configs_full.json", configs: configs)
+  end
+
+  def update_noti_config(conn, %{"noti_config_id" => id, "is_enabled" => is_enabled}) do
+    config = Notifications.get_notification_config!(id)
+
+    if is_nil(config) do
+      conn |> put_status(404) |> text("Notification config of given ID not found")
+    end
+
+    changeset =
+      config
+      |> NotificationConfig.changeset(%{is_enabled: is_enabled})
+
+    case Repo.update(changeset) do
+      {:ok, res} ->
+        render(conn, "config.json", config: res)
+
+      {:error, {status, message}} ->
+        conn |> put_status(status) |> text(message)
+    end
   end
 
   # NOTIFICATION PREFERENCES
@@ -66,15 +86,18 @@ defmodule CadetWeb.NewNotificationsController do
     render(conn, "time_options.json", %{time_options: time_options})
   end
 
-  def create_time_option(conn, params) do
-    changeset = TimeOption.changeset(%TimeOption{}, params)
+  def create_time_options(conn, params) do
+    changesets =
+      params["_json"]
+      |> Stream.map(fn time_option -> TimeOption.changeset(%TimeOption{}, time_option) end)
+      |> Enum.to_list()
 
-    case Repo.insert(changeset) do
+    case Notifications.upsert_many_time_options(changesets) do
       {:ok, res} ->
-        render(conn, "time_option.json", time_option: res)
+        render(conn, "time_options.json", time_options: res)
 
-      {:error, {status, message}} ->
-        conn |> put_status(status) |> text(message)
+      {:error, changeset} ->
+        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
     end
   end
 
@@ -113,6 +136,26 @@ defmodule CadetWeb.NewNotificationsController do
 
       {:error, {status, message}} ->
         conn |> put_status(status) |> text(message)
+    end
+  end
+
+  def delete_time_options(conn, params) do
+    # time_option = Repo.get(TimeOption, time_option_id)
+
+    # if is_nil(time_option) do
+    #   conn |> put_status(404) |> text("Time option of given ID not found")
+    # end
+
+    # case Repo.delete(time_option) do
+    case Notifications.delete_many_time_options(params["_json"]) do
+      {:ok, res} ->
+        render(conn, "time_options.json", time_options: res)
+
+      {:error, message} ->
+        conn |> put_status(400) |> text(message)
+
+      {:error, changeset} ->
+        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
     end
   end
 end

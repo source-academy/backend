@@ -3,6 +3,7 @@ defmodule CadetWeb.NewNotificationsView do
 
   require IEx
 
+  # Notification Type
   def render("noti_types.json", %{noti_types: noti_types}) do
     render_many(noti_types, CadetWeb.NewNotificationsView, "noti_type.json", as: :noti_type)
   end
@@ -11,11 +12,12 @@ defmodule CadetWeb.NewNotificationsView do
     render_notification_type(noti_type)
   end
 
-  def render("configs.json", %{configs: configs}) do
-    render_many(configs, CadetWeb.NewNotificationsView, "config.json", as: :config)
+  # Notification Config
+  def render("configs_full.json", %{configs: configs}) do
+    render_many(configs, CadetWeb.NewNotificationsView, "config_full.json", as: :config)
   end
 
-  def render("config.json", %{config: config}) do
+  def render("config_full.json", %{config: config}) do
     transform_map_for_view(config, %{
       id: :id,
       isEnabled: :is_enabled,
@@ -33,6 +35,14 @@ defmodule CadetWeb.NewNotificationsView do
     })
   end
 
+  def render("config.json", %{config: config}) do
+    transform_map_for_view(config, %{
+      id: :id,
+      isEnabled: :is_enabled
+    })
+  end
+
+  # Notification Preference
   def render("noti_pref.json", %{noti_pref: noti_pref}) do
     transform_map_for_view(noti_pref, %{
       id: :id,
@@ -41,6 +51,7 @@ defmodule CadetWeb.NewNotificationsView do
     })
   end
 
+  # Time Options
   def render("time_options.json", %{time_options: time_options}) do
     render_many(time_options, CadetWeb.NewNotificationsView, "time_option.json", as: :time_option)
   end
@@ -53,6 +64,7 @@ defmodule CadetWeb.NewNotificationsView do
     })
   end
 
+  # Helpers
   defp render_notification_type(noti_type) do
     case noti_type do
       nil ->

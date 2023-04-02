@@ -18,30 +18,30 @@ defmodule Cadet.Notifications do
 
   @doc """
   Gets a single notification_type.
-  
+
   Raises `Ecto.NoResultsError` if the Notification type does not exist.
-  
+
   ## Examples
-  
+
       iex> get_notification_type!(123)
       %NotificationType{}
-  
+
       iex> get_notification_type!(456)
       ** (Ecto.NoResultsError)
-  
+
   """
   def get_notification_type!(id), do: Repo.get!(NotificationType, id)
 
   @doc """
   Gets a single notification_type by name.any()
-  
+
   Raises `Ecto.NoResultsError` if the Notification type does not exist.
-  
+
   ## Examples
-  
+
       iex> get_notification_type_by_name!("AVENGER BACKLOG")
       %NotificationType{}
-  
+
       iex> get_notification_type_by_name!("AVENGER BACKLOG")
       ** (Ecto.NoResultsError)
   """
@@ -66,6 +66,8 @@ defmodule Cadet.Notifications do
 
     Repo.one!(query)
   end
+
+  def get_notification_config!(id), do: Repo.get!(NotificationConfig, id)
 
   @doc """
   Gets all notification configs that belong to a course
@@ -119,15 +121,15 @@ defmodule Cadet.Notifications do
 
   @doc """
   Updates a notification_config.
-  
+
   ## Examples
-  
+
       iex> update_notification_config(notification_config, %{field: new_value})
       {:ok, %NotificationConfig{}}
-  
+
       iex> update_notification_config(notification_config, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
-  
+
   """
   def update_notification_config(notification_config = %NotificationConfig{}, attrs) do
     notification_config
@@ -137,12 +139,12 @@ defmodule Cadet.Notifications do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking notification_config changes.
-  
+
   ## Examples
-  
+
       iex> change_notification_config(notification_config)
       %Ecto.Changeset{data: %NotificationConfig{}}
-  
+
   """
   def change_notification_config(notification_config = %NotificationConfig{}, attrs \\ %{}) do
     NotificationConfig.changeset(notification_config, attrs)
@@ -150,17 +152,17 @@ defmodule Cadet.Notifications do
 
   @doc """
   Gets a single time_option.
-  
+
   Raises `Ecto.NoResultsError` if the Time option does not exist.
-  
+
   ## Examples
-  
+
       iex> get_time_option!(123)
       %TimeOption{}
-  
+
       iex> get_time_option!(456)
       ** (Ecto.NoResultsError)
-  
+
   """
   def get_time_option!(id), do: Repo.get!(TimeOption, id)
 
@@ -216,15 +218,15 @@ defmodule Cadet.Notifications do
 
   @doc """
   Creates a time_option.
-  
+
   ## Examples
-  
+
       iex> create_time_option(%{field: value})
       {:ok, %TimeOption{}}
-  
+
       iex> create_time_option(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
-  
+
   """
   def create_time_option(attrs \\ %{}) do
     %TimeOption{}
@@ -232,20 +234,50 @@ defmodule Cadet.Notifications do
     |> Repo.insert()
   end
 
+  @spec upsert_many_time_options([map()]) :: {:ok, [TimeOption.t()]} | {:error, {:bad_request, String.t()}}
+  def upsert_many_time_options(time_options) when is_list(time_options) do
+    Repo.transaction(fn ->
+      for to <- time_options do
+        case Repo.insert(to) do
+          {:ok, time_option} -> time_option
+          {:error, error} -> Repo.rollback(error)
+        end
+      end
+    end)
+  end
+
   @doc """
   Deletes a time_option.
-  
+
   ## Examples
-  
+
       iex> delete_time_option(time_option)
       {:ok, %TimeOption{}}
-  
+
       iex> delete_time_option(time_option)
       {:error, %Ecto.Changeset{}}
-  
+
   """
   def delete_time_option(time_option = %TimeOption{}) do
     Repo.delete(time_option)
+  end
+
+  @spec delete_many_time_options([map()]) :: {:ok, [TimeOption.t()]} | {:error, {:bad_request, String.t()}} | {:error, String.t}
+  def delete_many_time_options(to_ids) when is_list(to_ids) do
+    Repo.transaction(fn ->
+      for to_id <- to_ids do
+        time_option = Repo.get(TimeOption, to_id)
+
+        if is_nil(time_option) do
+          Repo.rollback("Time option do not exist")
+        else
+          case Repo.delete(time_option) do
+            {:ok, time_option} -> time_option
+            {:error, error} -> Repo.rollback(error)
+          end
+        end
+      end
+    end)
   end
 
   @doc """
@@ -282,15 +314,15 @@ defmodule Cadet.Notifications do
 
   @doc """
   Creates a notification_preference.
-  
+
   ## Examples
-  
+
       iex> create_notification_preference(%{field: value})
       {:ok, %NotificationPreference{}}
-  
+
       iex> create_notification_preference(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
-  
+
   """
   def create_notification_preference(attrs \\ %{}) do
     %NotificationPreference{}
@@ -300,15 +332,15 @@ defmodule Cadet.Notifications do
 
   @doc """
   Updates a notification_preference.
-  
+
   ## Examples
-  
+
       iex> update_notification_preference(notification_preference, %{field: new_value})
       {:ok, %NotificationPreference{}}
-  
+
       iex> update_notification_preference(notification_preference, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
-  
+
   """
   def update_notification_preference(notification_preference = %NotificationPreference{}, attrs) do
     notification_preference
@@ -318,15 +350,15 @@ defmodule Cadet.Notifications do
 
   @doc """
   Deletes a notification_preference.
-  
+
   ## Examples
-  
+
       iex> delete_notification_preference(notification_preference)
       {:ok, %NotificationPreference{}}
-  
+
       iex> delete_notification_preference(notification_preference)
       {:error, %Ecto.Changeset{}}
-  
+
   """
   def delete_notification_preference(notification_preference = %NotificationPreference{}) do
     Repo.delete(notification_preference)
@@ -334,12 +366,12 @@ defmodule Cadet.Notifications do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking notification_preference changes.
-  
+
   ## Examples
-  
+
       iex> change_notification_preference(notification_preference)
       %Ecto.Changeset{data: %NotificationPreference{}}
-  
+
   """
   def change_notification_preference(
         notification_preference = %NotificationPreference{},
@@ -350,15 +382,15 @@ defmodule Cadet.Notifications do
 
   @doc """
   Creates a sent_notification.
-  
+
   ## Examples
-  
+
       iex> create_sent_notification(%{field: value})
       {:ok, %SentNotification{}}
-  
+
       iex> create_sent_notification(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
-  
+
   """
   def create_sent_notification(course_reg_id, content) do
     %SentNotification{}
@@ -368,12 +400,12 @@ defmodule Cadet.Notifications do
 
   @doc """
   Returns the list of sent_notifications.
-  
+
   ## Examples
-  
+
       iex> list_sent_notifications()
       [%SentNotification{}, ...]
-  
+
   """
 
   # def list_sent_notifications do
