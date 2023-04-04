@@ -20,8 +20,9 @@ defmodule Cadet.Notifications.NotificationPreference do
   @doc false
   def changeset(notification_preference, attrs) do
     notification_preference
-    |> cast(attrs, [:is_enabled, :notification_config_id, :course_reg_id])
+    |> cast(attrs, [:is_enabled, :notification_config_id, :course_reg_id, :time_option_id])
     |> validate_required([:notification_config_id, :course_reg_id])
+    |> unique_constraint(:unique_course_reg_and_config, name: :single_preference_per_config)
     |> prevent_nil_is_enabled()
   end
 

@@ -24,7 +24,7 @@ defmodule CadetWeb.NewNotificationsView do
       course: &render_course(&1.course),
       notificationType: &render_notification_type(&1.notification_type),
       assessmentConfig: &render_assessment_config(&1.assessment_config),
-      notificationPreference: &render_many_notification_preferences(&1.notification_preferences),
+      notificationPreference: &render_first_notification_preferences(&1.notification_preferences),
       timeOptions:
         &render_many(
           &1.time_options,
@@ -80,7 +80,8 @@ defmodule CadetWeb.NewNotificationsView do
     end
   end
 
-  defp render_many_notification_preferences(noti_prefs) do
+  # query returns an array but there should be max 1 result
+  defp render_first_notification_preferences(noti_prefs) do
     case noti_prefs do
       nil ->
         nil
@@ -89,7 +90,11 @@ defmodule CadetWeb.NewNotificationsView do
         nil
 
       _ ->
-        render_many(noti_prefs, CadetWeb.NewNotificationsView, "noti_pref.json", as: :noti_pref)
+        if Enum.empty?(noti_prefs) do
+          nil
+        else
+          render("noti_pref.json", %{noti_pref: Enum.at(noti_prefs, 0)})
+        end
     end
   end
 

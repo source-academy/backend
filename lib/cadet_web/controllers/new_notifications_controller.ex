@@ -47,8 +47,8 @@ defmodule CadetWeb.NewNotificationsController do
         pref = Notifications.get_notification_preference!(res.id)
         render(conn, "noti_pref.json", noti_pref: pref)
 
-      {:error, {status, message}} ->
-        conn |> put_status(status) |> text(message)
+      {:error, changeset} ->
+        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
     end
   end
 

@@ -105,7 +105,7 @@ defmodule Cadet.Notifications do
         where:
           ntype.for_staff == ^is_staff and
             n.course_id == ^cr.course_id and
-            p.course_reg_id == ^cr.id
+            (p.course_reg_id == ^cr.id or is_nil(p.course_reg_id))
       )
 
     query
@@ -234,7 +234,8 @@ defmodule Cadet.Notifications do
     |> Repo.insert()
   end
 
-  @spec upsert_many_time_options([map()]) :: {:ok, [TimeOption.t()]} | {:error, {:bad_request, String.t()}}
+  @spec upsert_many_time_options([map()]) ::
+          {:ok, [TimeOption.t()]} | {:error, {:bad_request, String.t()}}
   def upsert_many_time_options(time_options) when is_list(time_options) do
     Repo.transaction(fn ->
       for to <- time_options do
@@ -262,7 +263,8 @@ defmodule Cadet.Notifications do
     Repo.delete(time_option)
   end
 
-  @spec delete_many_time_options([map()]) :: {:ok, [TimeOption.t()]} | {:error, {:bad_request, String.t()}} | {:error, String.t}
+  @spec delete_many_time_options([map()]) ::
+          {:ok, [TimeOption.t()]} | {:error, {:bad_request, String.t()}} | {:error, String.t()}
   def delete_many_time_options(to_ids) when is_list(to_ids) do
     Repo.transaction(fn ->
       for to_id <- to_ids do
