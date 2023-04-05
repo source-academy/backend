@@ -137,7 +137,8 @@ defmodule Cadet.Notifications do
     |> Repo.update()
   end
 
-  @spec update_many_noti_configs([map()]) :: {:ok, [NotificationConfig.t()]} | {:error, {:bad_request, String.t()}}
+  @spec update_many_noti_configs([map()]) ::
+          {:ok, [NotificationConfig.t()]} | {:error, {:bad_request, String.t()}}
   def update_many_noti_configs(noti_configs) when is_list(noti_configs) do
     Repo.transaction(fn ->
       for noti_config <- noti_configs do
@@ -251,7 +252,10 @@ defmodule Cadet.Notifications do
   def upsert_many_time_options(time_options) when is_list(time_options) do
     Repo.transaction(fn ->
       for to <- time_options do
-        case Repo.insert(to, on_conflict: :nothing) do
+        case Repo.insert(to,
+               on_conflict: {:replace, [:is_default]},
+               conflict_target: [:minutes, :notification_config_id]
+             ) do
           {:ok, time_option} -> time_option
           {:error, error} -> Repo.rollback(error)
         end

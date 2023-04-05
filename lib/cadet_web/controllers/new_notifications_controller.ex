@@ -20,7 +20,11 @@ defmodule CadetWeb.NewNotificationsController do
   def update_noti_configs(conn, params) do
     changesets =
       params["_json"]
-      |> Stream.map(fn noti_config -> NotificationConfig.changeset(%NotificationConfig{id: noti_config["id"]}, noti_config) end)
+      |> snake_casify_string_keys_recursive()
+      |> Stream.map(fn noti_config ->
+        config = Repo.get(NotificationConfig, noti_config["id"])
+        NotificationConfig.changeset(config, noti_config)
+      end)
       |> Enum.to_list()
 
     case Notifications.update_many_noti_configs(changesets) do
@@ -81,10 +85,17 @@ defmodule CadetWeb.NewNotificationsController do
     render(conn, "time_options.json", %{time_options: time_options})
   end
 
-  def create_time_options(conn, params) do
+  def upsert_time_options(conn, params) do
     changesets =
       params["_json"]
-      |> Stream.map(fn time_option -> TimeOption.changeset(%TimeOption{}, time_option) end)
+      |> snake_casify_string_keys_recursive()
+      |> Stream.map(fn time_option ->
+        if time_option["id"] < 0 do
+          Map.delete(time_option, "id")
+        end
+
+        TimeOption.changeset(%TimeOption{}, time_option)
+      end)
       |> Enum.to_list()
 
     case Notifications.upsert_many_time_options(changesets) do
