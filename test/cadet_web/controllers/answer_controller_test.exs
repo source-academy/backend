@@ -261,6 +261,8 @@ defmodule CadetWeb.AnswerControllerTest do
         assert response(voting_conn, 400) ==
                  "Invalid vote! Vote is not saved."
       end
+    end
+  end
 
   @tag authenticate: :student
   test "invalid params missing question is unsuccessful", %{
