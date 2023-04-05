@@ -703,8 +703,9 @@ defmodule Cadet.Assessments do
       {:error, :race_condition} ->
         {:error, {:internal_server_error, "Please try again later."}}
 
-      {:error, :vote_not_unique} ->
-        {:error, {:bad_request, "Invalid vote or vote is not unique! Vote is not saved."}}
+      # Description changed from :vote_not_unique and corresponding message changed.
+      {:error, :invalid_vote} ->
+        {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
 
       _ ->
         {:error, {:bad_request, "Missing or invalid parameter(s)"}}
@@ -1012,7 +1013,7 @@ defmodule Cadet.Assessments do
   Computes rolling leaderboard for contest votes that are still open.
   """
   def update_rolling_contest_leaderboards do
-    # 115 = 2 hours - 5 minutes
+    # 115 = 2 hours - 5 minutes is default.
     if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(115)) do
       Logger.info("Started update_rolling_contest_leaderboards")
 
@@ -1630,7 +1631,8 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
     |> case do
       {:ok, _result} -> {:ok, nil}
-      {:error, _name, _changset, _error} -> {:error, :vote_not_unique}
+      # error type has been changed to :invalid_vote as a non-unique score will no longer cause an error.
+      {:error, _name, _changeset, _error} -> {:error, :invalid_vote}
     end
   end
 
