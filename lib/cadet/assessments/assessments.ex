@@ -1631,7 +1631,7 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
     |> case do
       {:ok, _result} -> {:ok, nil}
-      # error type has been changed to :invalid_vote as a non-unique score will no longer cause an error.
+      # error type has been changed to :invalid_vote
       {:error, _name, _changeset, _error} -> {:error, :invalid_vote}
     end
   end
