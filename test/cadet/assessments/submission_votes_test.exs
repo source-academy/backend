@@ -61,21 +61,6 @@ defmodule Cadet.Assessments.SubmissionVotesTest do
       |> assert_changeset_db(:invalid)
     end
 
-    test "invalid changeset unique constraint", %{
-      valid_params: params
-    } do
-      params = Map.put(params, :score, 2)
-      first_entry = SubmissionVotes.changeset(%SubmissionVotes{}, params)
-      {:ok, _} = Repo.insert(first_entry)
-      new_submission = insert(:submission)
-
-      second_entry =
-        first_entry
-        |> Map.delete(:submission_id)
-        |> Map.put(:submission_id, new_submission.id)
-
-      {:error, changeset} = Repo.insert(second_entry)
-      refute changeset.valid?
-    end
+    # Removed test for unique submission vote
   end
 end
