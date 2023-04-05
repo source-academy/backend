@@ -173,7 +173,7 @@ defmodule CadetWeb.Router do
   scope "/v2/notifications/", CadetWeb do
     get("/config/:course_id", NewNotificationsController, :all_noti_configs)
     get("/config/user/:course_reg_id", NewNotificationsController, :get_configurable_noti_configs)
-    put("/config/:noti_config_id", NewNotificationsController, :update_noti_config)
+    put("/config/", NewNotificationsController, :update_noti_configs)
 
     post("/preference", NewNotificationsController, :create_preference)
     put("/preference/:noti_pref_id", NewNotificationsController, :update_preference)

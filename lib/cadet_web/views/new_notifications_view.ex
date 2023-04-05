@@ -26,11 +26,9 @@ defmodule CadetWeb.NewNotificationsView do
       assessmentConfig: &render_assessment_config(&1.assessment_config),
       notificationPreference: &render_first_notification_preferences(&1.notification_preferences),
       timeOptions:
-        &render_many(
-          &1.time_options,
-          CadetWeb.NewNotificationsView,
-          "time_option.json",
-          as: :time_option
+        &render(
+          "time_options.json",
+          %{time_options: &1.time_options}
         )
     })
   end
@@ -53,7 +51,12 @@ defmodule CadetWeb.NewNotificationsView do
 
   # Time Options
   def render("time_options.json", %{time_options: time_options}) do
-    render_many(time_options, CadetWeb.NewNotificationsView, "time_option.json", as: :time_option)
+    case time_options do
+      %Ecto.Association.NotLoaded{} ->
+        nil
+      _ ->
+        render_many(time_options, CadetWeb.NewNotificationsView, "time_option.json", as: :time_option)
+    end
   end
 
   def render("time_option.json", %{time_option: time_option}) do
@@ -68,6 +71,9 @@ defmodule CadetWeb.NewNotificationsView do
   defp render_notification_type(noti_type) do
     case noti_type do
       nil ->
+        nil
+
+      %Ecto.Association.NotLoaded{} ->
         nil
 
       _ ->
@@ -103,6 +109,9 @@ defmodule CadetWeb.NewNotificationsView do
       nil ->
         nil
 
+      %Ecto.Association.NotLoaded{} ->
+        nil
+
       _ ->
         transform_map_for_view(ass_config, %{
           id: :id,
@@ -114,6 +123,9 @@ defmodule CadetWeb.NewNotificationsView do
   defp render_course(course) do
     case course do
       nil ->
+        nil
+
+      %Ecto.Association.NotLoaded{} ->
         nil
 
       _ ->

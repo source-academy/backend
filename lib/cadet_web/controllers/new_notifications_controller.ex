@@ -17,23 +17,18 @@ defmodule CadetWeb.NewNotificationsController do
     render(conn, "configs_full.json", configs: configs)
   end
 
-  def update_noti_config(conn, %{"noti_config_id" => id, "is_enabled" => is_enabled}) do
-    config = Notifications.get_notification_config!(id)
+  def update_noti_configs(conn, params) do
+    changesets =
+      params["_json"]
+      |> Stream.map(fn noti_config -> NotificationConfig.changeset(%NotificationConfig{id: noti_config["id"]}, noti_config) end)
+      |> Enum.to_list()
 
-    if is_nil(config) do
-      conn |> put_status(404) |> text("Notification config of given ID not found")
-    end
-
-    changeset =
-      config
-      |> NotificationConfig.changeset(%{is_enabled: is_enabled})
-
-    case Repo.update(changeset) do
+    case Notifications.update_many_noti_configs(changesets) do
       {:ok, res} ->
-        render(conn, "config.json", config: res)
+        render(conn, "configs_full.json", configs: res)
 
-      {:error, {status, message}} ->
-        conn |> put_status(status) |> text(message)
+      {:error, changeset} ->
+        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
     end
   end
 
