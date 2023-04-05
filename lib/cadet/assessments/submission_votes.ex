@@ -17,6 +17,7 @@ defmodule Cadet.Assessments.SubmissionVotes do
   @required_fields ~w(voter_id submission_id question_id)a
   @optional_fields ~w(score)a
 
+  # |> unique_constraint(:unique, name: :unique_score) (Unique constraint removed)
   def changeset(submission_vote, params) do
     submission_vote
     |> cast(params, @required_fields ++ @optional_fields)
@@ -25,6 +26,5 @@ defmodule Cadet.Assessments.SubmissionVotes do
     |> foreign_key_constraint(:voter_id)
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
-  # |> unique_constraint(:unique, name: :unique_score) (Unique constraint removed)
   end
 end
