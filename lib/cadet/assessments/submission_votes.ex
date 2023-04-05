@@ -25,6 +25,6 @@ defmodule Cadet.Assessments.SubmissionVotes do
     |> foreign_key_constraint(:voter_id)
     |> foreign_key_constraint(:submission_id)
     |> foreign_key_constraint(:question_id)
-    |> unique_constraint(:vote_not_unique, name: :unique_score)
+    # |> unique_constraint(:unique, name: :unique_score) (Unique constraint removed)
   end
 end
