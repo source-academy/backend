@@ -703,7 +703,6 @@ defmodule Cadet.Assessments do
       {:error, :race_condition} ->
         {:error, {:internal_server_error, "Please try again later."}}
 
-      # Description changed from :vote_not_unique and corresponding message changed.
       {:error, :invalid_vote} ->
         {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
 
@@ -1631,7 +1630,6 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
     |> case do
       {:ok, _result} -> {:ok, nil}
-      # error type has been changed to :invalid_vote
       {:error, _name, _changeset, _error} -> {:error, :invalid_vote}
     end
   end
