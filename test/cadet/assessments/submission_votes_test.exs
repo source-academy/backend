@@ -61,6 +61,6 @@ defmodule Cadet.Assessments.SubmissionVotesTest do
       |> assert_changeset_db(:invalid)
     end
 
-    # Removed test for unique submission vote
+    # There is no constraint for unique vote score.
   end
 end
