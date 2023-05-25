@@ -721,11 +721,24 @@ defmodule Cadet.Assessments do
     |> Repo.one()
   end
 
+  def get_submission_by_id(submission_id) when is_ecto_id(submission_id) do
+    Submission
+    |> where(id: ^submission_id)
+    |> join(:inner, [s], a in assoc(s, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
   def finalise_submission(submission = %Submission{}) do
     with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
       # Couple with update_submission_status_and_xp_bonus to ensure notification is sent
       Notifications.write_notification_when_student_submits(submission)
+      # Send email notification to avenger
+      %{notification_type: "assessment_submission", submission_id: updated_submission.id}
+      |> Cadet.Workers.NotificationWorker.new()
+      |> Oban.insert()
+
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
 
@@ -1151,7 +1164,8 @@ defmodule Cadet.Assessments do
           {:ok, String.t()}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        group_only \\ false
+        group_only \\ false,
+        ungraded_only \\ false
       ) do
     show_all = not group_only
 
@@ -1160,6 +1174,11 @@ defmodule Cadet.Assessments do
         do: "",
         else:
           "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
+
+    ungraded_where =
+      if ungraded_only,
+        do: "where s.\"gradedCount\" < assts.\"questionCount\"",
+        else: ""
 
     params = if show_all, do: [course_id], else: [course_id, grader.id]
 
@@ -1200,7 +1219,7 @@ defmodule Cadet.Assessments do
                group by s.id) s
              inner join
                (select
-                 a.id, to_json(a) as jsn
+                 a.id, a."questionCount", to_json(a) as jsn
                from
                  (select
                    a.id,
@@ -1240,6 +1259,7 @@ defmodule Cadet.Assessments do
                  from course_registrations cr
                    inner join
                    users u on u.id = cr.user_id) cr) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+             #{ungraded_where}
            ) q
            """,
            params
