@@ -263,6 +263,20 @@ defmodule Cadet.Notifications do
     end)
   end
 
+  def upsert_many_noti_preferences(noti_prefs) when is_list(noti_prefs) do
+    Repo.transaction(fn ->
+      for np <- noti_prefs do
+        case Repo.insert(np,
+               on_conflict: {:replace, [:is_enabled, :time_option_id]},
+               conflict_target: [:course_reg_id, :notification_config_id]
+             ) do
+          {:ok, noti_pref} -> noti_pref
+          {:error, error} -> Repo.rollback(error)
+        end
+      end
+    end)
+  end
+
   @doc """
   Deletes a time_option.
 

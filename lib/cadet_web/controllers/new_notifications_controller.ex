@@ -107,6 +107,28 @@ defmodule CadetWeb.NewNotificationsController do
     end
   end
 
+  def upsert_noti_preferences(conn, params) do
+    changesets =
+      params["_json"]
+      |> snake_casify_string_keys_recursive()
+      |> Stream.map(fn noti_pref ->
+        if noti_pref["id"] < 0 do
+          Map.delete(noti_pref, "id")
+        end
+
+        NotificationPreference.changeset(%NotificationPreference{}, noti_pref)
+      end)
+      |> Enum.to_list()
+
+    case Notifications.upsert_many_noti_preferences(changesets) do
+      {:ok, res} ->
+        render(conn, "noti_prefs.json", noti_prefs: res)
+
+      {:error, changeset} ->
+        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
+    end
+  end
+
   # Only allow updating of `is_default`
   # should delete and create a new entry for other fields
   def update_time_option(conn, %{"time_option_id" => time_option_id, "is_default" => is_default}) do
@@ -153,6 +175,7 @@ defmodule CadetWeb.NewNotificationsController do
     # end
 
     # case Repo.delete(time_option) do
+    # JUNYI AND SANTOSH: NOT DEFINED???
     case Notifications.delete_many_time_options(params["_json"]) do
       {:ok, res} ->
         render(conn, "time_options.json", time_options: res)

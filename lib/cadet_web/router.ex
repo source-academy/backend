@@ -175,8 +175,7 @@ defmodule CadetWeb.Router do
     get("/config/user/:course_reg_id", NewNotificationsController, :get_configurable_noti_configs)
     put("/config/", NewNotificationsController, :update_noti_configs)
 
-    post("/preference", NewNotificationsController, :create_preference)
-    put("/preference/:noti_pref_id", NewNotificationsController, :update_preference)
+    put("/preferences", NewNotificationsController, :upsert_noti_preferences)
 
     get("/options/config/:noti_config_id", NewNotificationsController, :get_config_time_options)
     post("/options", NewNotificationsController, :upsert_time_options)

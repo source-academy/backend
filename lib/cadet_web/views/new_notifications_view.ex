@@ -49,13 +49,20 @@ defmodule CadetWeb.NewNotificationsView do
     })
   end
 
+  def render("noti_prefs.json", %{noti_prefs: noti_prefs}) do
+    render_many(noti_prefs, CadetWeb.NewNotificationsView, "noti_pref.json", as: :noti_pref)
+  end
+
   # Time Options
   def render("time_options.json", %{time_options: time_options}) do
     case time_options do
       %Ecto.Association.NotLoaded{} ->
         nil
+
       _ ->
-        render_many(time_options, CadetWeb.NewNotificationsView, "time_option.json", as: :time_option)
+        render_many(time_options, CadetWeb.NewNotificationsView, "time_option.json",
+          as: :time_option
+        )
     end
   end
 
