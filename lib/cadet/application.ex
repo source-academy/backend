@@ -20,7 +20,9 @@ defmodule Cadet.Application do
       # Start the GuardianDB sweeper
       worker(Guardian.DB.Token.SweeperServer, []),
       # Start the Quantum scheduler
-      worker(Cadet.Jobs.Scheduler, [])
+      worker(Cadet.Jobs.Scheduler, []),
+      # Start the Oban instance
+      {Oban, Application.fetch_env!(:cadet, Oban)}
     ]
 
     children =

@@ -39,7 +39,8 @@ defmodule Cadet.Updater.XMLParserTest do
         )
       )
 
-    # contest assessment need to be added before assessment containing voting questions can be added.
+    # contest assessment need to be added before assessment
+    # containing voting questions can be added.
     contest_assessment = insert(:assessment, course: course, config: hd(assessment_configs))
 
     assessments_with_config = Enum.into(assessments, %{}, &{&1, &1.config})
