@@ -20,6 +20,7 @@ defmodule Cadet.Accounts.User do
     field(:username, :string)
     field(:provider, :string)
     field(:super_admin, :boolean)
+    field(:email, :string)
 
     belongs_to(:latest_viewed_course, Course)
     has_many(:courses, CourseRegistration)

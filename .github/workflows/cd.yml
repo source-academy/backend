@@ -6,26 +6,26 @@ on:
       - master
       - deploy
     paths:
-      - 'config/**'
-      - 'lib/**'
-      - 'priv/**'
-      - 'rel/**'
-      - 'test/**'
-      - '**/*.ex'
-      - '**/*.exs'
-      - 'mix.lock'
-      - '.github/workflows/cd.yml'
-      - '!config/*.example'
+      - "config/**"
+      - "lib/**"
+      - "priv/**"
+      - "rel/**"
+      - "test/**"
+      - "**/*.ex"
+      - "**/*.exs"
+      - "mix.lock"
+      - ".github/workflows/cd.yml"
+      - "!config/*.example"
 
 jobs:
   ci:
     name: Build release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       MIX_ENV: prod
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ELIXIR_VERSION: '1.13.3'
-      OTP_VERSION: '24.2.1'
+      ELIXIR_VERSION: 1.13.4
+      OTP_VERSION: 25.3.2
     steps:
       - uses: rlespinasse/github-slug-action@v3.x
       - uses: actions/checkout@v2
@@ -63,4 +63,3 @@ jobs:
           prerelease: ${{ env.GITHUB_REF_SLUG == 'master' }}
           title: Latest commit on ${{ env.GITHUB_REF_SLUG }}
           files: _build/prod/cadet-0.0.1.tar.gz
-
