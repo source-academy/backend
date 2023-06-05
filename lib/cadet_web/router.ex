@@ -130,6 +130,16 @@ defmodule CadetWeb.Router do
     get("/users", AdminUserController, :index)
     put("/users", AdminUserController, :upsert_users_and_groups)
     get("/users/:course_reg_id/assessments", AdminAssessmentsController, :index)
+
+    # The admin route for getting assessment information for a specifc user
+    get(
+      "/users/:course_reg_id/assessments/:assessmentid",
+      AdminAssessmentsController,
+      :get_assessment
+    )
+
+    # The admin route for getting total xp of a specific user
+    get("/users/:course_reg_id/total_xp", AdminUserController, :combined_total_xp)
     put("/users/:course_reg_id/role", AdminUserController, :update_role)
     delete("/users/:course_reg_id", AdminUserController, :delete_user)
     get("/users/:course_reg_id/goals", AdminGoalsController, :index_goals_with_progress)
@@ -187,6 +197,10 @@ defmodule CadetWeb.Router do
 
   scope "/", CadetWeb do
     get("/", DefaultController, :index)
+  end
+
+  if Mix.env() == :dev do
+    forward("/sent_emails", Bamboo.SentEmailViewerPlug)
   end
 
   defp assign_course(conn, _opts) do

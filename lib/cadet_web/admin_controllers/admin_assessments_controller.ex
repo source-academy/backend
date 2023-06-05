@@ -17,6 +17,16 @@ defmodule CadetWeb.AdminAssessmentsController do
     render(conn, "index.json", assessments: assessments)
   end
 
+  def get_assessment(conn, %{"course_reg_id" => course_reg_id, "assessmentid" => assessment_id})
+      when is_ecto_id(assessment_id) do
+    course_reg = Repo.get(CourseRegistration, course_reg_id)
+
+    case Assessments.assessment_with_questions_and_answers(assessment_id, course_reg) do
+      {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
+      {:error, {status, message}} -> send_resp(conn, status, message)
+    end
+  end
+
   def create(conn, %{
         "course_id" => course_id,
         "assessment" => assessment,

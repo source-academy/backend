@@ -1,0 +1,5 @@
+<p> Dear <%= @avenger_name %>,</p>
+
+<p> There is a new submission by <%= @student_name %> for <a href="/"><%= @assessment_title %></a>. Please Review and grade the <a href="/">submission </a></p>
+
+<a href="/">Unsubscribe</a> from this email topic.
