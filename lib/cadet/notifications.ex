@@ -14,8 +14,6 @@ defmodule Cadet.Notifications do
     NotificationPreference
   }
 
-  alias Cadet.Accounts.Role
-
   @doc """
   Gets a single notification_type.
 

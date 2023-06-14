@@ -10,7 +10,8 @@ defmodule Cadet.Notifications.NotificationTypeTest do
         name: "Notification Type 1",
         template_file_name: "template_file_1",
         is_enabled: true,
-        is_autopopulated: true
+        is_autopopulated: true,
+        for_staff: true
       })
 
     {:ok, _noti_type1} = Repo.insert(changeset)
@@ -25,7 +26,8 @@ defmodule Cadet.Notifications.NotificationTypeTest do
           name: "Notification Type 2",
           template_file_name: "template_file_2",
           is_enabled: false,
-          is_autopopulated: true
+          is_autopopulated: true,
+          for_staff: true
         },
         :valid
       )
@@ -36,7 +38,8 @@ defmodule Cadet.Notifications.NotificationTypeTest do
         %{
           template_file_name: "template_file_2",
           is_enabled: false,
-          is_autopopulated: true
+          is_autopopulated: true,
+          for_staff: true
         },
         :invalid
       )
@@ -46,6 +49,19 @@ defmodule Cadet.Notifications.NotificationTypeTest do
       assert_changeset(
         %{
           name: "Notification Type 2",
+          is_enabled: false,
+          is_autopopulated: true,
+          for_staff: false
+        },
+        :invalid
+      )
+    end
+
+    test "invalid changesets missing for_staff" do
+      assert_changeset(
+        %{
+          name: "Notification Type 2",
+          template_file_name: "template_file_2",
           is_enabled: false,
           is_autopopulated: true
         },
@@ -70,7 +86,8 @@ defmodule Cadet.Notifications.NotificationTypeTest do
         %{
           name: "Notification Type 0",
           is_enabled: nil,
-          is_autopopulated: true
+          is_autopopulated: true,
+          for_staff: true
         },
         :invalid
       )
