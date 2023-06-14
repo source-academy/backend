@@ -14,8 +14,8 @@ Cadet is the web application powering Source Academy.
 
 ### System requirements
 
-1. Elixir 1.13.3
-2. Erlang/OTP 23.2.1
+1. Elixir 1.13.3+ (current version: 1.13.4)
+2. Erlang/OTP 23.2.1+ (current version: 25.3.2)
 3. PostgreSQL 13 or 14
 
 It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but using a different version of Elixir may result in differences in e.g. `mix format`.
@@ -29,14 +29,16 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    $ vim config/dev.secrets.exs
    ```
 
-- To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.) Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
+   - To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.) Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
 
 2. Install Elixir dependencies
 
    ```bash
    $ mix deps.get
    ```
+
    If you encounter error message `Fail to fetch record for 'hexpm/mime' from registry(using cache insted)`The following instruction may be useful for you.
+
    ```bash
    $ mix local.hex --force
    ```
@@ -46,12 +48,16 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    ```bash
    $ mix ecto.setup
    ```
+
    If you encounter error message about invalid password for the user "postgres".
    You should reset the "postgres" password:
+
    ```bash
    $ sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
    ```
+
    and restart postgres service:
+
    ```bash
    $ sudo service postgresql restart
    ```
@@ -62,7 +68,7 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    $ mix phx.server
    ```
 
-5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can also be accessed at http://localhost:4000/swagger.
+5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can also be accessed at <http://localhost:4000/swagger>.
 
 If you don't need to test MQTT connections for remote execution using [Sling](source-academy/sling), you can stop here. Otherwise, continue to [set up the local development environment with MQTT](#setting-up-a-local-development-environment-with-mqtt-support).
 
@@ -110,7 +116,7 @@ In addition to performing the steps [above](#setting-up-your-local-development-e
 
    - `get_endpoint_address` gives the address the EV3 should connect to (under normal operations). The address should be the local IP address of the computer hosting the MQTT server. Again, take note of the port number.
       <details><summary>Sidenote on connecting from the EV3</summary>
-      
+
       We will not actually use this return value for anything, so the actual value. We just need to hardcode something to return (and stop the backend from trying to connect to AWS). Also, it is good practice to assume that the value is going to be used anyway:
       </details>
 
@@ -138,7 +144,7 @@ $ mix help cadet.token
 
 ### Style Guide
 
-We follow this style guide: https://github.com/lexmag/elixir-style-guide and https://github.com/christopheradams/elixir_style_guide
+We follow this style guide: <https://github.com/lexmag/elixir-style-guide> and <https://github.com/christopheradams/elixir_style_guide>
 
 Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
 

@@ -14,8 +14,8 @@ defmodule Cadet.Notifications.NotificationConfig do
     belongs_to(:course, Course)
     belongs_to(:assessment_config, AssessmentConfig)
 
-    has_many :time_options, TimeOption
-    has_many :notification_preferences, NotificationPreference
+    has_many(:time_options, TimeOption)
+    has_many(:notification_preferences, NotificationPreference)
 
     timestamps()
   end
