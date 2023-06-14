@@ -182,7 +182,7 @@ defmodule CadetWeb.NewNotificationsController do
       {:error, message} ->
         conn |> put_status(400) |> text(message)
 
-      {:error, changeset} ->
+      {:delete_error, changeset} ->
         conn |> put_status(400) |> text(changeset_error_to_string(changeset))
     end
   end
