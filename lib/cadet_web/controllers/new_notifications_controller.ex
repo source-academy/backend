@@ -1,8 +1,7 @@
 defmodule CadetWeb.NewNotificationsController do
   use CadetWeb, :controller
 
-  alias Cadet.Repo
-  alias Cadet.Notifications
+  alias Cadet.{Repo, Notifications}
   alias Cadet.Notifications.{NotificationPreference, NotificationConfig, TimeOption}
 
   # NOTIFICATION CONFIGS
