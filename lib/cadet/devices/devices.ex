@@ -188,38 +188,49 @@ defmodule Cadet.Devices do
   end
 
   def get_device_ws_endpoint(%Device{id: device_id}, %User{id: user_id}, opts) do
-    with {:ok, address} <- get_endpoint_address(),
-         {:ok, %{body: creds}} <- get_temporary_token(device_id, user_id) do
-      uri = URI.to_string(%URI{scheme: "wss", host: address, path: "/mqtt"})
-      region = Application.fetch_env!(:ex_aws, :region)
+    case Keyword.get(config(), :ws_endpoint_address) do
+      nil ->
+        with {:ok, address} <- get_endpoint_address(),
+             {:ok, %{body: creds}} <- get_temporary_token(device_id, user_id) do
+          uri = URI.to_string(%URI{scheme: "wss", host: address, path: "/mqtt"})
+          region = Application.fetch_env!(:ex_aws, :region)
 
-      {:ok, signed_url} =
-        ExAws.Auth.presigned_url(
-          :get,
-          uri,
-          :iotdevicegateway,
-          Keyword.get(opts, :datetime) || :calendar.universal_time(),
-          %{
-            region: region,
-            access_key_id: creds.access_key_id,
-            secret_access_key: creds.secret_access_key
-          },
-          300,
-          [],
-          ''
-        )
+          {:ok, signed_url} =
+            ExAws.Auth.presigned_url(
+              :get,
+              uri,
+              :iotdevicegateway,
+              Keyword.get(opts, :datetime) || :calendar.universal_time(),
+              %{
+                region: region,
+                access_key_id: creds.access_key_id,
+                secret_access_key: creds.secret_access_key
+              },
+              300,
+              [],
+              ''
+            )
 
-      # ExAws includes the session token in the signed payload and doesn't allow
-      # you not to do so. Some AWS services require it to be in the signed
-      # payload, some don't. This one doesn't, so.. we manually append the
-      # security token. *sigh*
-      {:ok,
-       %{
-         endpoint:
-           "#{signed_url}&X-Amz-Security-Token=#{URI.encode_www_form(creds.session_token)}",
-         thing_name: get_thing_name(device_id),
-         client_name_prefix: get_ws_client_prefix(user_id)
-       }}
+          # ExAws includes the session token in the signed payload and doesn't allow
+          # you not to do so. Some AWS services require it to be in the signed
+          # payload, some don't. This one doesn't, so.. we manually append the
+          # security token. *sigh*
+          {:ok,
+           %{
+             endpoint:
+               "#{signed_url}&X-Amz-Security-Token=#{URI.encode_www_form(creds.session_token)}",
+             thing_name: get_thing_name(device_id),
+             client_name_prefix: get_ws_client_prefix(user_id)
+           }}
+        end
+
+      address ->
+        {:ok,
+         %{
+           endpoint: address,
+           thing_name: get_thing_name(device_id),
+           client_name_prefix: get_ws_client_prefix(user_id)
+         }}
     end
   end
 
