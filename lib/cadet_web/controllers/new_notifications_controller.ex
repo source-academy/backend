@@ -41,42 +41,25 @@ defmodule CadetWeb.NewNotificationsController do
 
   # NOTIFICATION PREFERENCES
 
-  def create_preference(conn, params) do
-    changeset = NotificationPreference.changeset(%NotificationPreference{}, params)
+  def upsert_noti_preferences(conn, params) do
+    changesets =
+      params["_json"]
+      |> snake_casify_string_keys_recursive()
+      |> Stream.map(fn noti_pref ->
+        if noti_pref["id"] < 0 do
+          Map.delete(noti_pref, "id")
+        end
 
-    case Repo.insert(changeset) do
+        NotificationPreference.changeset(%NotificationPreference{}, noti_pref)
+      end)
+      |> Enum.to_list()
+
+    case Notifications.upsert_many_noti_preferences(changesets) do
       {:ok, res} ->
-        pref = Notifications.get_notification_preference!(res.id)
-        render(conn, "noti_pref.json", noti_pref: pref)
+        render(conn, "noti_prefs.json", noti_prefs: res)
 
       {:error, changeset} ->
         conn |> put_status(400) |> text(changeset_error_to_string(changeset))
-    end
-  end
-
-  def update_preference(conn, %{
-        "noti_pref_id" => id,
-        "is_enabled" => is_enabled,
-        "time_option_id" => time_option_id
-      }) do
-    pref = Repo.get(NotificationPreference, id)
-
-    if is_nil(pref) do
-      conn |> put_status(404) |> text("Notification preference of given ID not found")
-    end
-
-    changeset =
-      pref
-      |> NotificationPreference.changeset(%{is_enabled: is_enabled})
-      |> NotificationPreference.changeset(%{time_option_id: time_option_id})
-
-    case Repo.update(changeset) do
-      {:ok, res} ->
-        pref = Notifications.get_notification_preference!(res.id)
-        render(conn, "noti_pref.json", noti_pref: pref)
-
-      {:error, {status, message}} ->
-        conn |> put_status(status) |> text(message)
     end
   end
 
@@ -107,66 +90,6 @@ defmodule CadetWeb.NewNotificationsController do
 
       {:error, changeset} ->
         conn |> put_status(400) |> text(changeset_error_to_string(changeset))
-    end
-  end
-
-  def upsert_noti_preferences(conn, params) do
-    changesets =
-      params["_json"]
-      |> snake_casify_string_keys_recursive()
-      |> Stream.map(fn noti_pref ->
-        if noti_pref["id"] < 0 do
-          Map.delete(noti_pref, "id")
-        end
-
-        NotificationPreference.changeset(%NotificationPreference{}, noti_pref)
-      end)
-      |> Enum.to_list()
-
-    case Notifications.upsert_many_noti_preferences(changesets) do
-      {:ok, res} ->
-        render(conn, "noti_prefs.json", noti_prefs: res)
-
-      {:error, changeset} ->
-        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
-    end
-  end
-
-  # Only allow updating of `is_default`
-  # should delete and create a new entry for other fields
-  def update_time_option(conn, %{"time_option_id" => time_option_id, "is_default" => is_default}) do
-    time_option = Repo.get(TimeOption, time_option_id)
-
-    if is_nil(time_option) do
-      conn |> put_status(404) |> text("Time option of given ID not found")
-    end
-
-    changeset =
-      time_option
-      |> TimeOption.changeset(%{is_default: is_default})
-
-    case Repo.update(changeset) do
-      {:ok, res} ->
-        render(conn, "time_option.json", time_option: res)
-
-      {:error, {status, message}} ->
-        conn |> put_status(status) |> text(message)
-    end
-  end
-
-  def delete_time_option(conn, %{"time_option_id" => time_option_id}) do
-    time_option = Repo.get(TimeOption, time_option_id)
-
-    if is_nil(time_option) do
-      conn |> put_status(404) |> text("Time option of given ID not found")
-    end
-
-    case Repo.delete(time_option) do
-      {:ok, res} ->
-        render(conn, "time_option.json", time_option: res)
-
-      {:error, {status, message}} ->
-        conn |> put_status(status) |> text(message)
     end
   end
 

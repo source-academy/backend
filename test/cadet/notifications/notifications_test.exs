@@ -15,6 +15,13 @@ defmodule Cadet.NotificationsTest do
   describe "notification_configs" do
     @invalid_attrs %{is_enabled: nil}
 
+    test "get_notification_config!/1 returns the notification_config with given id" do
+      notification_config = insert(:notification_config)
+
+      assert Notifications.get_notification_config!(notification_config.id).id ==
+               notification_config.id
+    end
+
     test "get_notification_config!/3 returns the notification_config with given id" do
       notification_config = insert(:notification_config)
 
@@ -33,6 +40,16 @@ defmodule Cadet.NotificationsTest do
                notification_config.course.id,
                nil
              ).id == notification_config.id
+    end
+
+    test "get_notification_configs!/1 returns all inserted notification configs" do
+      course = insert(:course)
+      assessment_config = insert(:assessment_config, course: course)
+      notification_config_1 = insert(:notification_config, assessment_config: assessment_config)
+      notification_config_2 = insert(:notification_config, assessment_config: nil)
+
+      result = Notifications.get_notification_configs(course.id)
+      assert length(result) == 2
     end
 
     test "update_notification_config/2 with valid data updates the notification_config" do
@@ -93,6 +110,19 @@ defmodule Cadet.NotificationsTest do
              ).id == time_option.id
     end
 
+    test "get_time_options_for_config/1 returns the time_options that belongs to the notification config" do
+      notification_config = insert(:notification_config)
+
+      time_options =
+        insert_list(3, :time_option, %{
+          :notification_config => notification_config,
+          :is_default => true
+        })
+
+      assert length(Notifications.get_time_options_for_config(notification_config.id)) ==
+               length(time_options)
+    end
+
     test "create_time_option/1 with invalid data returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Notifications.create_time_option(@invalid_attrs)
     end
@@ -102,13 +132,42 @@ defmodule Cadet.NotificationsTest do
       assert {:ok, %TimeOption{}} = Notifications.delete_time_option(time_option)
       assert_raise Ecto.NoResultsError, fn -> Notifications.get_time_option!(time_option.id) end
     end
+
+    test "delete_many_time_options/1 deletes all the time_options" do
+      time_options = insert_list(3, :time_option)
+      ids = Enum.map(time_options, fn to -> to.id end)
+
+      Notifications.delete_many_time_options(ids)
+
+      for to <- time_options do
+        assert_raise Ecto.NoResultsError, fn -> Notifications.get_time_option!(to.id) end
+      end
+    end
+
+    test "delete_many_time_options/1 rollsback on failed deletion" do
+      time_options = insert_list(3, :time_option)
+      ids = Enum.map(time_options, fn to -> to.id end) ++ [-1]
+
+      assert {:error, _} = Notifications.delete_many_time_options(ids)
+
+      for to <- time_options do
+        assert %TimeOption{} = Notifications.get_time_option!(to.id)
+      end
+    end
   end
 
   describe "notification_preferences" do
     @invalid_attrs %{is_enabled: nil}
 
     test "get_notification_preference!/1 returns the notification_preference with given id" do
-      notification_type = insert(:notification_type, name: "get_notification_preference!/1")
+      notification_preference = insert(:notification_preference)
+
+      assert Notifications.get_notification_preference!(notification_preference.id).id ==
+               notification_preference.id
+    end
+
+    test "get_notification_preference/2 returns the notification_preference with given values" do
+      notification_type = insert(:notification_type, name: "get_notification_preference/2")
       notification_config = insert(:notification_config, notification_type: notification_type)
 
       notification_preference =
