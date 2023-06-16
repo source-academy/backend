@@ -18,7 +18,6 @@ defmodule CadetWeb.NewNotificationsController do
       nil -> conn |> put_status(400) |> text("course_reg_id does not exist")
       _ -> render(conn, "configs_full.json", configs: configs)
     end
-
   end
 
   def update_noti_configs(conn, params) do

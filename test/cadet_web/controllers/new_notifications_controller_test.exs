@@ -10,32 +10,40 @@ defmodule CadetWeb.AssessmentsControllerTest do
   setup do
     course = insert(:course)
     assessment_config = insert(:assessment_config, %{course: course})
-    assessment = insert(:assessment, %{
-      is_published: true,
-      course: course,
-      config: assessment_config
-    })
+
+    assessment =
+      insert(:assessment, %{
+        is_published: true,
+        course: course,
+        config: assessment_config
+      })
+
     avenger = insert(:course_registration, %{role: :staff, course: course})
     student = insert(:course_registration, %{role: :student, course: course})
     submission = insert(:submission, %{student: student, assessment: assessment})
 
     Ecto.Adapters.SQL.Sandbox.checkout(Cadet.Repo)
 
-    course_noticonfig_query = from(
-      nc in NotificationConfig,
-      join: ntype in NotificationType,
-      on: nc.notification_type_id == ntype.id,
-      where: nc.course_id == ^course.id and is_nil(nc.assessment_config_id) and ntype.for_staff == true,
-      limit: 1
-    )
+    course_noticonfig_query =
+      from(
+        nc in NotificationConfig,
+        join: ntype in NotificationType,
+        on: nc.notification_type_id == ntype.id,
+        where:
+          nc.course_id == ^course.id and is_nil(nc.assessment_config_id) and
+            ntype.for_staff == true,
+        limit: 1
+      )
+
     course_noticonfig = Cadet.Repo.one(course_noticonfig_query)
 
     # insert a notification preference for the avenger
-    avenger_preference = insert(:notification_preference, %{
-      notification_config: course_noticonfig,
-      course_reg: avenger,
-      is_enabled: false
-    })
+    avenger_preference =
+      insert(:notification_preference, %{
+        notification_config: course_noticonfig,
+        course_reg: avenger,
+        is_enabled: false
+      })
 
     # insert 2 time options for the notification config
     time_options = insert_list(2, :time_option, %{notification_config: course_noticonfig})
@@ -56,7 +64,6 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   describe "GET /v2/notifications/config/:course_id" do
     test "200 suceeds", %{course: course, conn: conn} do
-
       conn = get(conn, "/v2/notifications/config/#{course.id}")
       result = Jason.decode!(response(conn, 200))
 
@@ -87,9 +94,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   describe "PUT /v2/notifications/config" do
     test "200 succeeds", %{course_noticonfig: course_noticonfig, conn: conn} do
-      conn = put(conn, "/v2/notifications/config", %{
-        "_json" => [%{:id => course_noticonfig.id, :isEnabled => true}]
-      })
+      conn =
+        put(conn, "/v2/notifications/config", %{
+          "_json" => [%{:id => course_noticonfig.id, :isEnabled => true}]
+        })
+
       result = Jason.decode!(response(conn, 200))
 
       assert length(result) == 1
@@ -104,9 +113,18 @@ defmodule CadetWeb.AssessmentsControllerTest do
       course_noticonfig: course_noticonfig,
       conn: conn
     } do
-      conn = put(conn, "/v2/notifications/preferences", %{
-        "_json" => [%{:id => avenger_preference.id, :courseRegId => avenger.id, :notificationConfigId => course_noticonfig.id, :isEnabled => true}]
-      })
+      conn =
+        put(conn, "/v2/notifications/preferences", %{
+          "_json" => [
+            %{
+              :id => avenger_preference.id,
+              :courseRegId => avenger.id,
+              :notificationConfigId => course_noticonfig.id,
+              :isEnabled => true
+            }
+          ]
+        })
+
       result = Jason.decode!(response(conn, 200))
 
       assert length(result) == 1
@@ -115,11 +133,16 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   describe "GET /options/config/:noti_config_id" do
-    test "200 succeeds", %{course_noticonfig: course_noticonfig, time_options: time_options, conn: conn} do
+    test "200 succeeds", %{
+      course_noticonfig: course_noticonfig,
+      time_options: time_options,
+      conn: conn
+    } do
       conn = get(conn, "/v2/notifications/options/config/#{course_noticonfig.id}")
       result = Jason.decode!(response(conn, 200))
 
       assert length(result) == length(time_options)
+
       for {retrieved_to, to} <- Enum.zip(result, time_options) do
         assert retrieved_to["minutes"] == to.minutes
       end
@@ -143,9 +166,18 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       time_option = List.first(time_options)
       new_minutes = :rand.uniform(200)
-      conn = put(conn, "/v2/notifications/options", %{
-        "_json" => [%{:id => time_option.id, :notificationConfigId => course_noticonfig.id, :minutes => new_minutes}]
-      })
+
+      conn =
+        put(conn, "/v2/notifications/options", %{
+          "_json" => [
+            %{
+              :id => time_option.id,
+              :notificationConfigId => course_noticonfig.id,
+              :minutes => new_minutes
+            }
+          ]
+        })
+
       result = Jason.decode!(response(conn, 200))
 
       assert length(result) == 1
@@ -157,9 +189,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn: conn
     } do
       minutes = :rand.uniform(500)
-      conn = put(conn, "/v2/notifications/options", %{
-        "_json" => [%{:notificationConfigId => course_noticonfig.id, :minutes => minutes}]
-      })
+
+      conn =
+        put(conn, "/v2/notifications/options", %{
+          "_json" => [%{:notificationConfigId => course_noticonfig.id, :minutes => minutes}]
+        })
+
       result = Jason.decode!(response(conn, 200))
 
       assert length(result) == 1
@@ -173,9 +208,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn: conn
     } do
       time_option = List.first(time_options)
-      conn = delete(conn, "/v2/notifications/options", %{
-        "_json" => [time_option.id]
-      })
+
+      conn =
+        delete(conn, "/v2/notifications/options", %{
+          "_json" => [time_option.id]
+        })
 
       assert response(conn, 200)
     end
@@ -184,10 +221,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
   test "400 fails, no such time option", %{
     conn: conn
   } do
-    conn = delete(conn, "/v2/notifications/options", %{
-      "_json" => [-1]
-    })
-    assert response(conn, 400)
+    conn =
+      delete(conn, "/v2/notifications/options", %{
+        "_json" => [-1]
+      })
 
+    assert response(conn, 400)
   end
 end

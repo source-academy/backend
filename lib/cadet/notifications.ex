@@ -98,8 +98,11 @@ defmodule Cadet.Notifications do
   """
   def get_configurable_notification_configs(cr_id) do
     cr = Repo.get(Cadet.Accounts.CourseRegistration, cr_id)
+
     case cr do
-      nil -> nil
+      nil ->
+        nil
+
       _ ->
         is_staff = cr.role == :staff
 
