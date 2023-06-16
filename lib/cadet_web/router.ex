@@ -178,7 +178,6 @@ defmodule CadetWeb.Router do
     put("/preferences", NewNotificationsController, :upsert_noti_preferences)
 
     get("/options/config/:noti_config_id", NewNotificationsController, :get_config_time_options)
-    post("/options", NewNotificationsController, :upsert_time_options)
     put("/options", NewNotificationsController, :upsert_time_options)
     delete("/options", NewNotificationsController, :delete_time_options)
   end

@@ -98,33 +98,37 @@ defmodule Cadet.Notifications do
   """
   def get_configurable_notification_configs(cr_id) do
     cr = Repo.get(Cadet.Accounts.CourseRegistration, cr_id)
-    is_staff = cr.role == :staff
+    case cr do
+      nil -> nil
+      _ ->
+        is_staff = cr.role == :staff
 
-    query =
-      from(n in Cadet.Notifications.NotificationConfig,
-        join: ntype in Cadet.Notifications.NotificationType,
-        on: n.notification_type_id == ntype.id,
-        join: c in Cadet.Courses.Course,
-        on: n.course_id == c.id,
-        left_join: ac in Cadet.Courses.AssessmentConfig,
-        on: n.assessment_config_id == ac.id,
-        left_join: p in Cadet.Notifications.NotificationPreference,
-        on: p.notification_config_id == n.id,
-        where:
-          ntype.for_staff == ^is_staff and
-            n.course_id == ^cr.course_id and
-            (p.course_reg_id == ^cr.id or is_nil(p.course_reg_id))
-      )
+        query =
+          from(n in Cadet.Notifications.NotificationConfig,
+            join: ntype in Cadet.Notifications.NotificationType,
+            on: n.notification_type_id == ntype.id,
+            join: c in Cadet.Courses.Course,
+            on: n.course_id == c.id,
+            left_join: ac in Cadet.Courses.AssessmentConfig,
+            on: n.assessment_config_id == ac.id,
+            left_join: p in Cadet.Notifications.NotificationPreference,
+            on: p.notification_config_id == n.id,
+            where:
+              ntype.for_staff == ^is_staff and
+                n.course_id == ^cr.course_id and
+                (p.course_reg_id == ^cr.id or is_nil(p.course_reg_id))
+          )
 
-    query
-    |> Repo.all()
-    |> Repo.preload([
-      :notification_type,
-      :course,
-      :assessment_config,
-      :time_options,
-      :notification_preferences
-    ])
+        query
+        |> Repo.all()
+        |> Repo.preload([
+          :notification_type,
+          :course,
+          :assessment_config,
+          :time_options,
+          :notification_preferences
+        ])
+    end
   end
 
   @doc """
