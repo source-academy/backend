@@ -1,6 +1,6 @@
 # Results of tests depends on the number of notifications implemented in Source Academy,
 # test expected values have to be updated as more notification types are introduced
-defmodule CadetWeb.AssessmentsControllerTest do
+defmodule CadetWeb.NewNotificationsControllerTest do
   use CadetWeb.ConnCase
 
   import Ecto.Query, warn: false
