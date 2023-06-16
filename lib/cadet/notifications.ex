@@ -145,8 +145,6 @@ defmodule Cadet.Notifications do
     |> Repo.update()
   end
 
-  @spec update_many_noti_configs([map()]) ::
-          {:ok, [NotificationConfig.t()]} | {:error, Ecto.Changeset.t()}
   def update_many_noti_configs(noti_configs) when is_list(noti_configs) do
     Repo.transaction(fn ->
       for noti_config <- noti_configs do
@@ -255,8 +253,6 @@ defmodule Cadet.Notifications do
     |> Repo.insert()
   end
 
-  @spec upsert_many_time_options([map()]) ::
-          {:ok, [TimeOption.t()]} | {:error, Ecto.Changeset.t()}
   def upsert_many_time_options(time_options) when is_list(time_options) do
     Repo.transaction(fn ->
       for to <- time_options do
@@ -301,8 +297,6 @@ defmodule Cadet.Notifications do
     Repo.delete(time_option)
   end
 
-  @spec delete_many_time_options([map()]) ::
-          {:ok, [TimeOption.t()]} | {:delete_error, Ecto.Changeset.t()} | {:error, String.t()}
   def delete_many_time_options(to_ids) when is_list(to_ids) do
     Repo.transaction(fn ->
       for to_id <- to_ids do
