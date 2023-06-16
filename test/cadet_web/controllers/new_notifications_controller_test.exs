@@ -10,7 +10,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
   setup do
     course = insert(:course)
     assessment_config = insert(:assessment_config, %{course: course})
-    assessment = insert(:assessment, %{is_published: true, course: course, config: assessment_config})
+    assessment = insert(:assessment, %{
+      is_published: true,
+      course: course,
+      config: assessment_config
+    })
     avenger = insert(:course_registration, %{role: :staff, course: course})
     student = insert(:course_registration, %{role: :student, course: course})
     submission = insert(:submission, %{student: student, assessment: assessment})
@@ -72,7 +76,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn = get(conn, "/v2/notifications/config/user/#{student.id}")
       result = Jason.decode!(response(conn, 200))
 
-      assert length(result) == 0
+      assert Enum.empty?(result)
     end
 
     test "400 fails, user does not exist", %{conn: conn} do
@@ -125,7 +129,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn = get(conn, "/v2/notifications/options/config/-1")
       result = Jason.decode!(response(conn, 200))
 
-      assert length(result) == 0
+      assert Enum.empty?(result)
     end
   end
 
