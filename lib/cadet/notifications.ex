@@ -62,7 +62,17 @@ defmodule Cadet.Notifications do
         where(query, [c], c.assessment_config_id == ^assconfig_id)
       end
 
-    Repo.one!(query)
+    config = Repo.one(query)
+
+    if config != nil do
+      config
+    else
+      IO.puts(
+        "No NotificationConfig found for Course #{course_id} and NotificationType #{notification_type_id}"
+      )
+
+      nil
+    end
   end
 
   def get_notification_config!(id), do: Repo.get!(NotificationConfig, id)
