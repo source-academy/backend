@@ -73,31 +73,35 @@ defmodule Cadet.Workers.NotificationWorker do
           for avenger_cr <- avengers_crs do
             avenger = Cadet.Accounts.get_user(avenger_cr.user_id)
 
-            ungraded_submissions =
-              Jason.decode!(
-                elem(
-                  Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true),
-                  1
-                )
-              )
-
-            if length(ungraded_submissions) < ungraded_threshold do
-              IO.puts("[AVENGER_BACKLOG] below threshold!")
-            else
-              IO.puts("[AVENGER_BACKLOG] SENDING_OUT")
-
-              email =
-                Email.avenger_backlog_email(
-                  ntype.template_file_name,
-                  avenger,
-                  ungraded_submissions
+            if is_user_enabled(notification_type_id, avenger_cr.id) do
+              ungraded_submissions =
+                Jason.decode!(
+                  elem(
+                    Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true),
+                    1
+                  )
                 )
 
-              {status, email} = Mailer.deliver_now(email)
+              if length(ungraded_submissions) < ungraded_threshold do
+                IO.puts("[AVENGER_BACKLOG] below threshold!")
+              else
+                IO.puts("[AVENGER_BACKLOG] SENDING_OUT")
 
-              if status == :ok do
-                Notifications.create_sent_notification(avenger_cr.id, email.html_body)
+                email =
+                  Email.avenger_backlog_email(
+                    ntype.template_file_name,
+                    avenger,
+                    ungraded_submissions
+                  )
+
+                {status, email} = Mailer.deliver_now(email)
+
+                if status == :ok do
+                  Notifications.create_sent_notification(avenger_cr.id, email.html_body)
+                end
               end
+            else
+              IO.puts("[ASSESSMENT_SUBMISSION] user-level disabled")
             end
           end
         else
