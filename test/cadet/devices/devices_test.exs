@@ -129,7 +129,7 @@ defmodule Cadet.DevicesTest do
     end
   end
 
-  test "get endpoint returns address", %{device: device, user: user} do
+  test "get endpoint returns address" do
     use_cassette "aws/devices_get_endpoint_address#1", custom: true do
       new_config =
         :cadet
@@ -142,7 +142,7 @@ defmodule Cadet.DevicesTest do
     end
   end
 
-  test "get endpoint updates environment", %{device: device, user: user} do
+  test "get endpoint updates environment" do
     use_cassette "aws/devices_get_endpoint_address#1", custom: true do
       new_config =
         :cadet
@@ -167,7 +167,7 @@ defmodule Cadet.DevicesTest do
     end
   end
 
-  test "get endpoint can be overridden using config", %{device: device, user: user} do
+  test "get endpoint can be overridden using config" do
     use_cassette "aws/devices_get_endpoint_address#1", custom: true do
       new_config =
         :cadet
