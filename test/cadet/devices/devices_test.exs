@@ -280,6 +280,7 @@ defmodule Cadet.DevicesTest do
         :cadet
         |> Application.get_env(:remote_execution)
         |> Keyword.delete(:endpoint_address)
+        |> Keyword.delete(:ws_endpoint_address)
 
       Application.put_env(:cadet, :remote_execution, new_config)
 
