@@ -172,11 +172,11 @@ defmodule Cadet.DevicesTest do
       new_config =
         :cadet
         |> Application.get_env(:remote_execution)
-        |> Keyword.put(:endpoint_address, "http://localhost:1883")
+        |> Keyword.put(:endpoint_address, "localhost:1883")
 
       Application.put_env(:cadet, :remote_execution, new_config)
 
-      assert {:ok, "http://localhost:1883"} = Devices.get_endpoint_address()
+      assert {:ok, "localhost:1883"} = Devices.get_endpoint_address()
     end
   end
 
@@ -186,6 +186,9 @@ defmodule Cadet.DevicesTest do
         :cadet
         |> Application.get_env(:remote_execution)
         |> Keyword.delete(:ws_endpoint_address)
+        # Transitive dependency on endpoint_address
+        # Needs to be removed in order to use mocked responses
+        |> Keyword.delete(:endpoint_address)
 
       Application.put_env(:cadet, :remote_execution, new_config)
 
@@ -210,6 +213,9 @@ defmodule Cadet.DevicesTest do
         :cadet
         |> Application.get_env(:remote_execution)
         |> Keyword.delete(:ws_endpoint_address)
+        # Transitive dependency on endpoint_address
+        # Needs to be removed in order to use mocked responses
+        |> Keyword.delete(:endpoint_address)
 
       Application.put_env(:cadet, :remote_execution, new_config)
 
@@ -234,6 +240,9 @@ defmodule Cadet.DevicesTest do
         :cadet
         |> Application.get_env(:remote_execution)
         |> Keyword.delete(:ws_endpoint_address)
+        # Transitive dependency on endpoint_address
+        # Needs to be removed in order to use mocked responses
+        |> Keyword.delete(:endpoint_address)
 
       Application.put_env(:cadet, :remote_execution, new_config)
 
@@ -260,6 +269,9 @@ defmodule Cadet.DevicesTest do
         :cadet
         |> Application.get_env(:remote_execution)
         |> Keyword.put(:ws_endpoint_address, "ws://localhost:9001")
+        # Transitive dependency on endpoint_address
+        # Needs to be removed in order to use mocked responses
+        |> Keyword.delete(:endpoint_address)
 
       Application.put_env(:cadet, :remote_execution, new_config)
 
@@ -280,6 +292,7 @@ defmodule Cadet.DevicesTest do
         :cadet
         |> Application.get_env(:remote_execution)
         |> Keyword.delete(:endpoint_address)
+        # Delete to ensure we are testing non-overridden config
         |> Keyword.delete(:ws_endpoint_address)
 
       Application.put_env(:cadet, :remote_execution, new_config)
