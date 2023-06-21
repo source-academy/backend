@@ -12,6 +12,16 @@ defmodule Cadet.DevicesTest do
     user = insert(:user)
     device = insert(:device, client_key: nil, client_cert: nil)
 
+    new_config =
+      :cadet
+      |> Application.get_env(:remote_execution)
+      |> Keyword.delete(:ws_endpoint_address)
+      # Transitive dependency on endpoint_address
+      # Needs to be removed in order to use mocked responses
+      |> Keyword.delete(:endpoint_address)
+
+    Application.put_env(:cadet, :remote_execution, new_config)
+
     {:ok, registration} =
       Repo.insert(%DeviceRegistration{
         title: "Test device",
@@ -131,26 +141,12 @@ defmodule Cadet.DevicesTest do
 
   test "get endpoint returns address" do
     use_cassette "aws/devices_get_endpoint_address#1", custom: true do
-      new_config =
-        :cadet
-        |> Application.get_env(:remote_execution)
-        |> Keyword.delete(:endpoint_address)
-
-      Application.put_env(:cadet, :remote_execution, new_config)
-
       assert {:ok, "test-ats.iot.ap-southeast-1.amazonaws.com"} = Devices.get_endpoint_address()
     end
   end
 
   test "get endpoint updates environment" do
     use_cassette "aws/devices_get_endpoint_address#1", custom: true do
-      new_config =
-        :cadet
-        |> Application.get_env(:remote_execution)
-        |> Keyword.delete(:endpoint_address)
-
-      Application.put_env(:cadet, :remote_execution, new_config)
-
       old_config =
         :cadet
         |> Application.get_env(:remote_execution)
@@ -182,16 +178,6 @@ defmodule Cadet.DevicesTest do
 
   test "get ws endpoint by device id", %{device: device, user: user} do
     use_cassette "aws/devices_get_ws_endpoint#1", custom: true do
-      new_config =
-        :cadet
-        |> Application.get_env(:remote_execution)
-        |> Keyword.delete(:ws_endpoint_address)
-        # Transitive dependency on endpoint_address
-        # Needs to be removed in order to use mocked responses
-        |> Keyword.delete(:endpoint_address)
-
-      Application.put_env(:cadet, :remote_execution, new_config)
-
       assert {
                :ok,
                %{
@@ -209,16 +195,6 @@ defmodule Cadet.DevicesTest do
 
   test "get ws endpoint by device secret", %{device: device, user: user} do
     use_cassette "aws/devices_get_ws_endpoint#1", custom: true do
-      new_config =
-        :cadet
-        |> Application.get_env(:remote_execution)
-        |> Keyword.delete(:ws_endpoint_address)
-        # Transitive dependency on endpoint_address
-        # Needs to be removed in order to use mocked responses
-        |> Keyword.delete(:endpoint_address)
-
-      Application.put_env(:cadet, :remote_execution, new_config)
-
       assert {
                :ok,
                %{
@@ -236,16 +212,6 @@ defmodule Cadet.DevicesTest do
 
   test "get ws endpoint by device", %{device: device, user: user} do
     use_cassette "aws/devices_get_ws_endpoint#1", custom: true do
-      new_config =
-        :cadet
-        |> Application.get_env(:remote_execution)
-        |> Keyword.delete(:ws_endpoint_address)
-        # Transitive dependency on endpoint_address
-        # Needs to be removed in order to use mocked responses
-        |> Keyword.delete(:endpoint_address)
-
-      Application.put_env(:cadet, :remote_execution, new_config)
-
       assert {
                :ok,
                %{
