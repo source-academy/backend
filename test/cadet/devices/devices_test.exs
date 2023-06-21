@@ -129,8 +129,66 @@ defmodule Cadet.DevicesTest do
     end
   end
 
+  test "get endpoint returns address", %{device: device, user: user} do
+    use_cassette "aws/devices_get_endpoint_address#1", custom: true do
+      new_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+        |> Keyword.delete(:endpoint_address)
+
+      Application.put_env(:cadet, :remote_execution, new_config)
+
+      assert {:ok, "test-ats.iot.ap-southeast-1.amazonaws.com"} = Devices.get_endpoint_address()
+    end
+  end
+
+  test "get endpoint updates environment", %{device: device, user: user} do
+    use_cassette "aws/devices_get_endpoint_address#1", custom: true do
+      new_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+        |> Keyword.delete(:endpoint_address)
+
+      Application.put_env(:cadet, :remote_execution, new_config)
+
+      old_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+
+      assert nil == Keyword.get(old_config, :endpoint_address)
+
+      {:ok, address} = Devices.get_endpoint_address()
+
+      updated_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+
+      assert ^address = Keyword.get(updated_config, :endpoint_address)
+    end
+  end
+
+  test "get endpoint can be overridden using config", %{device: device, user: user} do
+    use_cassette "aws/devices_get_endpoint_address#1", custom: true do
+      new_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+        |> Keyword.put(:endpoint_address, "http://localhost:1883")
+
+      Application.put_env(:cadet, :remote_execution, new_config)
+
+      assert {:ok, "http://localhost:1883"} = Devices.get_endpoint_address()
+    end
+  end
+
   test "get ws endpoint by device id", %{device: device, user: user} do
     use_cassette "aws/devices_get_ws_endpoint#1", custom: true do
+      new_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+        |> Keyword.delete(:ws_endpoint_address)
+
+      Application.put_env(:cadet, :remote_execution, new_config)
+
       assert {
                :ok,
                %{
@@ -148,6 +206,13 @@ defmodule Cadet.DevicesTest do
 
   test "get ws endpoint by device secret", %{device: device, user: user} do
     use_cassette "aws/devices_get_ws_endpoint#1", custom: true do
+      new_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+        |> Keyword.delete(:ws_endpoint_address)
+
+      Application.put_env(:cadet, :remote_execution, new_config)
+
       assert {
                :ok,
                %{
@@ -165,6 +230,13 @@ defmodule Cadet.DevicesTest do
 
   test "get ws endpoint by device", %{device: device, user: user} do
     use_cassette "aws/devices_get_ws_endpoint#1", custom: true do
+      new_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+        |> Keyword.delete(:ws_endpoint_address)
+
+      Application.put_env(:cadet, :remote_execution, new_config)
+
       assert {
                :ok,
                %{
@@ -179,6 +251,26 @@ defmodule Cadet.DevicesTest do
                  user,
                  datetime: {{2020, 01, 01}, {12, 34, 56}}
                )
+    end
+  end
+
+  test "get ws endpoint can be overridden using config", %{device: device, user: user} do
+    use_cassette "aws/devices_get_ws_endpoint#1", custom: true do
+      new_config =
+        :cadet
+        |> Application.get_env(:remote_execution)
+        |> Keyword.put(:ws_endpoint_address, "ws://localhost:9001")
+
+      Application.put_env(:cadet, :remote_execution, new_config)
+
+      assert {
+               :ok,
+               %{
+                 client_name_prefix: _,
+                 endpoint: "ws://localhost:9001",
+                 thing_name: _
+               }
+             } = Devices.get_device_ws_endpoint(device.id, user)
     end
   end
 
