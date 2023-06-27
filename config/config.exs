@@ -72,10 +72,6 @@ config :sentry,
   root_source_code_path: File.cwd!(),
   context_lines: 5
 
-# Import environment specific config. This must remain at the bottom
-# of this file so it overrides the configuration defined above.
-import_config "#{Mix.env()}.exs"
-
 # Configure Phoenix Swagger
 config :cadet, :phoenix_swagger,
   swagger_files: %{
@@ -93,3 +89,22 @@ config :guardian, Guardian.DB,
   token_types: ["refresh"],
   # default: 60 minute
   sweep_interval: 180
+
+config :cadet, Oban,
+  repo: Cadet.Repo,
+  plugins: [
+    # keep
+    {Oban.Plugins.Pruner, max_age: 60},
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"@daily", Cadet.Workers.NotificationWorker,
+        args: %{"notification_type" => "avenger_backlog"}}
+     ]}
+  ],
+  queues: [default: 10, notifications: 1]
+
+config :cadet, Cadet.Mailer, adapter: Bamboo.LocalAdapter
+
+# Import environment specific config. This must remain at the bottom
+# of this file so it overrides the configuration defined above.
+import_config "#{Mix.env()}.exs"

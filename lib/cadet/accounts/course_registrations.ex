@@ -63,6 +63,13 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
+  def get_staffs(course_id) do
+    CourseRegistration
+    |> where(course_id: ^course_id)
+    |> where(role: :staff)
+    |> Repo.all()
+  end
+
   def get_users(course_id, group_id) when is_ecto_id(group_id) and is_ecto_id(course_id) do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
@@ -198,6 +205,25 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> case do
       result = {:ok, _} -> result
       {:error, changeset} -> {:error, {:bad_request, full_error_messages(changeset)}}
+    end
+  end
+
+  def get_avenger_of(student_id) when is_ecto_id(student_id) do
+    CourseRegistration
+    |> Repo.get_by(id: student_id)
+    |> Repo.preload(:group)
+    |> Map.get(:group)
+    |> case do
+      nil ->
+        nil
+
+      group ->
+        avenger_id = Map.get(group, :leader_id)
+
+        CourseRegistration
+        |> where([cr], cr.id == ^avenger_id)
+        |> preload(:user)
+        |> Repo.one()
     end
   end
 end

@@ -53,11 +53,14 @@ defmodule Cadet.Assessments.Library do
   end
 
   @valid_chapter_variants [
+    {1, "typed"},
     {1, "wasm"},
     {1, "lazy"},
     {1, "native"},
+    {2, "typed"},
     {2, "lazy"},
     {2, "native"},
+    {3, "typed"},
     {3, "concurrent"},
     {3, "non-det"},
     {3, "native"},

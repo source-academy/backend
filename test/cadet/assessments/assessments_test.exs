@@ -1,6 +1,8 @@
 defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
+  import Cadet.{Factory, TestEntityHelper}
+
   alias Cadet.Assessments
   alias Cadet.Assessments.{Assessment, Question, SubmissionVotes}
 
@@ -584,6 +586,793 @@ defmodule Cadet.AssessmentsTest do
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 5)
              ) == expected_top_relative_scores(5)
+    end
+  end
+
+  describe "get combined xp function" do
+    setup do
+      course_registration = insert(:course_registration)
+      course_id = course_registration.course_id
+      user_id = course_registration.user_id
+      course_reg_id = course_registration.id
+
+      %{
+        test_cr: course_registration,
+        course_id: course_id,
+        user_id: user_id,
+        course_reg_id: course_reg_id
+      }
+    end
+
+    test "achievement, one completed goal", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 210
+    end
+
+    test "achievement, one incomplete goal", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "achievement, one completed and one incomplete goal",
+         %{
+           test_cr: test_cr,
+           course_id: course_id,
+           user_id: user_id,
+           course_reg_id: course_reg_id
+         } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal_complete =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      goal_incomplete =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal_complete.uuid},
+          %{goal_uuid: goal_incomplete.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "achievement, goal (no progress entry)", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "no assessments", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: false,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 100
+    end
+
+    test "no achievements", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "achievement (is_variable_xp: true), no goals.", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: true,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: []
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "achievement (is_variable_xp: true), one incomplete goal (no progress entry).", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: true,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "achievement (is_variable_xp: true), one incomplete goal (with progress entry).", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: true,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "achievement (is_variable_xp: true), one goal completed.", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: true,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 111
+    end
+
+    test "achievement (is_variable_xp: true), with one goal completed and one goal incomplete", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 1,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      goal2 =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(1),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: true,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid},
+          %{goal_uuid: goal2.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
+    end
+
+    test "achievement (is_variable_xp: true), one goal with 0 target_count and 0 count", %{
+      test_cr: test_cr,
+      course_id: course_id,
+      user_id: user_id,
+      course_reg_id: course_reg_id
+    } do
+      course = test_cr.course
+
+      assessment = insert(:assessment, %{is_published: true, course: course})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          student: test_cr,
+          status: :submitted,
+          xp_bonus: 100
+        })
+
+      insert(:answer, %{
+        question: question,
+        submission: submission,
+        xp: 20,
+        xp_adjustment: -10
+      })
+
+      goal =
+        insert(
+          :goal,
+          Map.merge(
+            goal_literal(0),
+            %{
+              course: course,
+              progress: [
+                %{
+                  count: 0,
+                  completed: true,
+                  course_reg_id: test_cr.id
+                }
+              ]
+            }
+          )
+        )
+
+      insert(:achievement, %{
+        course: course,
+        title: "Rune Master",
+        is_task: true,
+        is_variable_xp: true,
+        position: 1,
+        xp: 100,
+        card_tile_url:
+          "https://source-academy-assets.s3-ap-southeast-1.amazonaws.com/achievement/card-tile/rune-master-tile.png",
+        goals: [
+          %{goal_uuid: goal.uuid}
+        ]
+      })
+
+      resp =
+        Assessments.user_total_xp(
+          course_id,
+          user_id,
+          course_reg_id
+        )
+
+      assert resp == 110
     end
   end
 

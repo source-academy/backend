@@ -1,0 +1,9 @@
+<p> Dear <%= @avenger_name %>,</p>
+
+You have ungraded submissions. Please review and grade the following submissions as soon as possible.
+
+<%= for s <- @submissions do %>
+    <p> <a href="/"><%= s["assessment"]["title"] %></a> by <%= s["student"]["name"]%> </p>
+<% end %>
+
+<a href="/">Unsubscribe</a> from this email topic.

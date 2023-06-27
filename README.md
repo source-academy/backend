@@ -14,9 +14,9 @@ Cadet is the web application powering Source Academy.
 
 ### System requirements
 
-1. Elixir 1.13.3
-2. Erlang/OTP 23.2.1
-3. PostgreSQL 13 or 14
+1. Elixir 1.13.3+ (current version: 1.13.4)
+2. Erlang/OTP 23.2.1+ (current version: 25.3.2)
+3. PostgreSQL 12+ (tested to be working up to 14.5)
 
 It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but using a different version of Elixir may result in differences in e.g. `mix format`.
 
@@ -29,14 +29,16 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    $ vim config/dev.secrets.exs
    ```
 
-- To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.) Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
+   - To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.) Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
 
 2. Install Elixir dependencies
 
    ```bash
    $ mix deps.get
    ```
+
    If you encounter error message `Fail to fetch record for 'hexpm/mime' from registry(using cache insted)`The following instruction may be useful for you.
+
    ```bash
    $ mix local.hex --force
    ```
@@ -46,12 +48,16 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    ```bash
    $ mix ecto.setup
    ```
+
    If you encounter error message about invalid password for the user "postgres".
    You should reset the "postgres" password:
+
    ```bash
    $ sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
    ```
+
    and restart postgres service:
+
    ```bash
    $ sudo service postgresql restart
    ```
@@ -62,7 +68,7 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    $ mix phx.server
    ```
 
-5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can also be accessed at http://localhost:4000/swagger.
+5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can also be accessed at <http://localhost:4000/swagger>.
 
 If you don't need to test MQTT connections for remote execution using [Sling](source-academy/sling), you can stop here. Otherwise, continue to [set up the local development environment with MQTT](#setting-up-a-local-development-environment-with-mqtt-support).
 
@@ -71,9 +77,11 @@ If you don't need to test MQTT connections for remote execution using [Sling](so
 In addition to performing the steps [above](#setting-up-your-local-development-environment), you will need to do the following:
 
 1. Set up a local MQTT server.
+
    One cross-platform solution is Mosquitto. Follow their [instructions](https://mosquitto.org/download/) on how to install it for your system.
 
 2. Update Mosquitto configurations
+
    We will require two listeners on two different ports: one for listening to the WebSockets connection from Source Academy Frontend, and one to listen for the regular MQTT connection from the EV3. Locate your `mosquitto.conf` file, and add the following lines:
 
    ```conf
@@ -92,33 +100,22 @@ In addition to performing the steps [above](#setting-up-your-local-development-e
 
 3. Restart the Mosquitto service to apply configuration changes
 
-4. Manually update `lib/cadet/devices/devices.ex` to use our local MQTT server
-   The MQTT endpoints are hardcoded to use AWS. For local development, change (but **do not commit**) the following functions:
+4. Update configurations in the `config/dev.secrets.exs` file
+   Scroll down to the `remote_execution` section near the bottom of the page, uncomment the two keys below, and update their values. Take note that the port numbers should match what you have defined earlier in `mosquitto.conf`.
 
-   - `get_device_ws_endpoint` returns the address the frontend should connect to. Take not that the port number should match what you have defined earlier in `mosquitto.conf`. Assuming your backend, frontend and MQTT server are hosted on the same computer, edit the function body as follows:
+   - `endpoint_address`: The address the remote device (EV3) should connect to.
 
-     ```elixir
-     def get_device_ws_endpoint(%Device{id: device_id}, %User{id: user_id}, opts) do
-      {:ok,
-       %{
-         endpoint: "ws://localhost:9001/",
-         thing_name: get_thing_name(device_id),
-         client_name_prefix: get_ws_client_prefix(user_id)
-       }}
-     end
-     ```
+     **Example:** `"192.168.139.10:1883"`
 
-   - `get_endpoint_address` gives the address the EV3 should connect to (under normal operations). The address should be the local IP address of the computer hosting the MQTT server. Again, take note of the port number.
-      <details><summary>Sidenote on connecting from the EV3</summary>
-      
-      We will not actually use this return value for anything, so the actual value. We just need to hardcode something to return (and stop the backend from trying to connect to AWS). Also, it is good practice to assume that the value is going to be used anyway:
-      </details>
+   - `ws_endpoint_address`: The address the frontend should connect to.
 
-     ```elixir
-     def get_endpoint_address do
-      {:ok, "192.168.139.10:1883"} # This won't actually be used (for now -- see sidenote)
-     end
-     ```
+     **Example:** `"ws://localhost:9001"`
+
+     Take note that you need to include the `ws://` prefix.
+
+   > **Sidenote on connecting from the EV3**
+   >
+   > Although this value is returned to the remote device, the EV3 uses a hardcoded endpoint value, and simply discards this return value. Hence, the actual value does not matter. However, we still need to set (uncomment) `endpoint_address` to stop the backend from connecting to AWS.
 
 Your backend is now all set up for remote execution using a local MQTT server. To see how to configure the EV3 to use a local MQTT server, check out the [EV3-Source](https://github.com/source-academy/ev3-source) repository.
 
@@ -138,7 +135,7 @@ $ mix help cadet.token
 
 ### Style Guide
 
-We follow this style guide: https://github.com/lexmag/elixir-style-guide and https://github.com/christopheradams/elixir_style_guide
+We follow this style guide: <https://github.com/lexmag/elixir-style-guide> and <https://github.com/christopheradams/elixir_style_guide>
 
 Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
 

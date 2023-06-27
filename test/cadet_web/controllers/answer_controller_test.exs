@@ -259,52 +259,7 @@ defmodule CadetWeb.AnswerControllerTest do
           })
 
         assert response(voting_conn, 400) ==
-                 "Invalid vote or vote is not unique! Vote is not saved."
-      end
-
-      @tag authenticate: role
-      test "update duplicate score in submission_votes is unsuccessful", %{
-        conn: conn,
-        voting_question: voting_question
-      } do
-        course_reg = conn.assigns.test_cr
-        course_id = conn.assigns.course_id
-
-        first_contest_submission = insert(:submission)
-        second_contest_submission = insert(:submission)
-
-        Repo.insert(%SubmissionVotes{
-          voter_id: course_reg.id,
-          question_id: voting_question.id,
-          submission_id: first_contest_submission.id,
-          score: 1
-        })
-
-        Repo.insert(%SubmissionVotes{
-          voter_id: course_reg.id,
-          question_id: voting_question.id,
-          submission_id: second_contest_submission.id,
-          score: 2
-        })
-
-        voting_conn =
-          post(conn, build_url(course_id, voting_question.id), %{
-            answer: [
-              %{
-                "answer" => "hello world",
-                "submission_id" => first_contest_submission.id,
-                "score" => 3
-              },
-              %{
-                "answer" => "hello world",
-                "submission_id" => second_contest_submission.id,
-                "score" => 3
-              }
-            ]
-          })
-
-        assert response(voting_conn, 400) ==
-                 "Invalid vote or vote is not unique! Vote is not saved."
+                 "Invalid vote! Vote is not saved."
       end
     end
   end
