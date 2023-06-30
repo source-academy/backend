@@ -268,7 +268,7 @@ defmodule Cadet.Assessments do
       assessment = assessment |> Map.put(:questions, questions)
       {:ok, assessment}
     else
-      {:error, {:unauthorized, "Assessment not open"}}
+      {:error, {:forbidden, "Assessment not open"}}
     end
   end
 
@@ -1158,7 +1158,7 @@ defmodule Cadet.Assessments do
   a boolean which is false by default.
 
   The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:unauthorized, "Forbidden."}}
+  {:forbidden, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok, String.t()}
@@ -1270,7 +1270,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:bad_request | :unauthorized, String.t()}}
+          {:ok, [Answer.t()]} | {:error, {:bad_request, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -1338,7 +1338,7 @@ defmodule Cadet.Assessments do
           CourseRegistration.t()
         ) ::
           {:ok, nil}
-          | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
+          | {:error, {:forbidden | :bad_request | :internal_server_error, String.t()}}
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
@@ -1393,7 +1393,7 @@ defmodule Cadet.Assessments do
         _,
         _
       ) do
-    {:error, {:unauthorized, "User is not permitted to grade."}}
+    {:error, {:forbidden, "User is not permitted to grade."}}
   end
 
   @spec force_regrade_submission(integer() | String.t(), CourseRegistration.t()) ::
