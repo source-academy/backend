@@ -1727,7 +1727,7 @@ defmodule Cadet.Assessments do
 
   @spec get_answers_in_submission(integer() | String.t()) ::
           {:ok, {[Answer.t()], Assessment.t()}}
-          | {:error, {:bad_request | :unauthorized, String.t()}}
+          | {:error, {:bad_request, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -1803,7 +1803,7 @@ defmodule Cadet.Assessments do
           CourseRegistration.t()
         ) ::
           {:ok, nil}
-          | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
+          | {:error, {:forbidden | :bad_request | :internal_server_error, String.t()}}
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
@@ -1858,7 +1858,7 @@ defmodule Cadet.Assessments do
         _,
         _
       ) do
-    {:error, {:unauthorized, "User is not permitted to grade."}}
+    {:error, {:forbidden, "User is not permitted to grade."}}
   end
 
   @spec force_regrade_submission(integer() | String.t(), CourseRegistration.t()) ::
