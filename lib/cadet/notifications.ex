@@ -4,6 +4,7 @@ defmodule Cadet.Notifications do
   """
 
   import Ecto.Query, warn: false
+  require Logger
   alias Cadet.Repo
 
   alias Cadet.Notifications.{
@@ -49,30 +50,33 @@ defmodule Cadet.Notifications do
 
   def get_notification_config!(notification_type_id, course_id, assconfig_id) do
     query =
-      from(n in Cadet.Notifications.NotificationConfig,
-        join: ntype in Cadet.Notifications.NotificationType,
-        on: n.notification_type_id == ntype.id,
-        where: n.notification_type_id == ^notification_type_id and n.course_id == ^course_id
+      Cadet.Notifications.NotificationConfig
+      |> join(:inner, [n], ntype in Cadet.Notifications.NotificationType,
+        on: n.notification_type_id == ntype.id
       )
+      |> where([n], n.notification_type_id == ^notification_type_id and n.course_id == ^course_id)
+      |> filter_assconfig_id(assconfig_id)
+      |> Repo.one()
 
-    query =
-      if is_nil(assconfig_id) do
-        where(query, [c], is_nil(c.assessment_config_id))
-      else
-        where(query, [c], c.assessment_config_id == ^assconfig_id)
-      end
+    case query do
+      nil ->
+        Logger.error(
+          "No NotificationConfig found for Course #{course_id} and NotificationType #{notification_type_id}"
+        )
 
-    config = Repo.one(query)
+        nil
 
-    if config != nil do
-      config
-    else
-      IO.puts(
-        "No NotificationConfig found for Course #{course_id} and NotificationType #{notification_type_id}"
-      )
-
-      nil
+      config ->
+        config
     end
+  end
+
+  defp filter_assconfig_id(query, nil) do
+    query |> where([c], is_nil(c.assessment_config_id))
+  end
+
+  defp filter_assconfig_id(query, assconfig_id) do
+    query |> where([c], c.assessment_config_id == ^assconfig_id)
   end
 
   def get_notification_config!(id), do: Repo.get!(NotificationConfig, id)
