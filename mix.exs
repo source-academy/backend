@@ -80,6 +80,7 @@ defmodule Cadet.Mixfile do
       {:sentry, "~> 8.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.7"},
+      {:gettext, "~> 0.22.3"},
 
       # notifiations system dependencies
       {:phoenix_html, "~> 3.0"},
