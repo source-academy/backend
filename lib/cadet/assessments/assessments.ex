@@ -621,6 +621,7 @@ defmodule Cadet.Assessments do
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
+  IO.inspect(params)
     simple_update(
       Assessment,
       id,
