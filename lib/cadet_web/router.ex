@@ -76,6 +76,8 @@ defmodule CadetWeb.Router do
       :get_configurable_noti_configs
     )
 
+    put("/notifications/options", NewNotificationsController, :upsert_time_options)
+
     get("/sourcecast", SourcecastController, :index)
 
     get("/assessments", AssessmentsController, :index)
@@ -113,6 +115,8 @@ defmodule CadetWeb.Router do
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
     get("/notifications/config", NewNotificationsController, :all_noti_configs)
+    put("/notifications/config", NewNotificationsController, :update_noti_configs)
+    delete("/notifications/options", NewNotificationsController, :delete_time_options)
 
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
@@ -181,13 +185,14 @@ defmodule CadetWeb.Router do
   scope "/v2/notifications/", CadetWeb do
     # get("/config/:course_id", NewNotificationsController, :all_noti_configs)
     # get("/config/user/:course_reg_id", NewNotificationsController, :get_configurable_noti_configs)
-    put("/config/", NewNotificationsController, :update_noti_configs)
+    # put("/config/", NewNotificationsController, :update_noti_configs)
 
     put("/preferences", NewNotificationsController, :upsert_noti_preferences)
 
     get("/options/config/:noti_config_id", NewNotificationsController, :get_config_time_options)
-    put("/options", NewNotificationsController, :upsert_time_options)
-    delete("/options", NewNotificationsController, :delete_time_options)
+    # put("/options", NewNotificationsController, :upsert_time_options)
+
+    # delete("/options", NewNotificationsController, :delete_time_options)
   end
 
   # Other scopes may use custom stacks.
