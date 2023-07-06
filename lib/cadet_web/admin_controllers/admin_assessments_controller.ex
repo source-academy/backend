@@ -98,7 +98,6 @@ defmodule CadetWeb.AdminAssessmentsController do
         Map.put(updated_assessment, :max_team_size, max_team_size)
       end
 
-    IO.inspect(updated_assessment)
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
          {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment) do
       text(conn, "OK")
@@ -216,6 +215,7 @@ defmodule CadetWeb.AdminAssessmentsController do
             closeAt(:string, "Open date", required: false)
             openAt(:string, "Close date", required: false)
             isPublished(:boolean, "Whether the assessment is published", required: false)
+            maxTeamSize(:number, "Max team size of the assessment", required: false)
           end
         end
     }
