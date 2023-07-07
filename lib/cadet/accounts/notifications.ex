@@ -151,11 +151,35 @@ defmodule Cadet.Accounts.Notifications do
     Notification
     |> where(course_reg_id: ^student.id)
     |> where(assessment_id: ^assessment_id)
-    |> where([n], n.type in ^[:autograded, :graded])
+    |> where([n], n.type in ^[:autograded, :graded, :unpublishedGrading])
     |> Repo.delete_all()
 
     write(%{
       type: :unsubmitted,
+      role: student.role,
+      course_reg_id: student.id,
+      assessment_id: assessment_id
+    })
+  end
+
+  @doc """
+  Function that handles notifications when a submission grade is unpublished.
+  """
+  @spec handle_unpublish_grades_notifications(integer(), CourseRegistration.t()) ::
+  {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def handle_unpublish_grades_notifications(assessment_id, student = %CourseRegistration{})
+      when is_ecto_id(assessment_id) do
+    # Fetch and delete all notifications of :graded
+    # Add new notification :unpublished
+
+    Notification
+    |> where(course_reg_id: ^student.id)
+    |> where(assessment_id: ^assessment_id)
+    |> where([n], n.type in ^[:autograded, :graded, :unsubmitted])
+    |> Repo.delete_all()
+
+    write(%{
+      type: :unpublishedGrading,
       role: student.role,
       course_reg_id: student.id,
       assessment_id: assessment_id

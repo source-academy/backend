@@ -118,6 +118,8 @@ defmodule CadetWeb.Router do
     get("/grading/summary", AdminGradingController, :grading_summary)
     get("/grading/:submissionid", AdminGradingController, :show)
     post("/grading/:submissionid/unsubmit", AdminGradingController, :unsubmit)
+    post("/grading/:submissionid/unpublish_grades", AdminGradingController, :unpublish_grades)
+    post("/grading/:submissionid/publish_grades", AdminGradingController, :publish_grades)
     post("/grading/:submissionid/autograde", AdminGradingController, :autograde_submission)
     post("/grading/:submissionid/:questionid", AdminGradingController, :update)
 

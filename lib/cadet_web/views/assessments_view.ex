@@ -28,7 +28,8 @@ defmodule CadetWeb.AssessmentsView do
       private: &password_protected?(&1.password),
       isPublished: :is_published,
       questionCount: :question_count,
-      gradedCount: &(&1.graded_count || 0)
+      gradedCount: &(&1.graded_count || 0),
+      isGradingPublished: :is_grading_published
     })
   end
 

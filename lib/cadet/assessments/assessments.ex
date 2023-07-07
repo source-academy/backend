@@ -91,6 +91,7 @@ defmodule Cadet.Assessments do
     submission_xp =
       Submission
       |> where(student_id: ^cr_id)
+      |> where(is_grading_published: true)
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
@@ -248,6 +249,11 @@ defmodule Cadet.Assessments do
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^course_reg.id)
+        # change a.xp and a.xp_adjustment to 0 if a.is_grading_published is false and return all answers
+        |> select([a, s], %{
+          a
+          | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp),
+            xp_adjustment: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp_adjustment)})
 
       questions =
         Question
@@ -298,6 +304,11 @@ defmodule Cadet.Assessments do
       |> where([s], s.student_id == ^cr.id)
       |> select([s], [:assessment_id, :status])
 
+    grading_published_status =
+      Submission
+      |> where([s], s.student_id == ^cr.id)
+      |> select([s], [:assessment_id, :is_grading_published])
+
     assessments =
       cr.course_id
       |> Query.all_assessments_with_aggregates()
@@ -309,11 +320,13 @@ defmodule Cadet.Assessments do
         on: a.id == sa.assessment_id
       )
       |> join(:left, [a, _], s in subquery(submission_status), on: a.id == s.assessment_id)
-      |> select([a, sa, s], %{
+      |> join(:left, [a, _, _], gp in subquery(grading_published_status), on: a.id == gp.assessment_id)
+      |> select([a, sa, s, gp], %{
         a
-        | xp: sa.xp,
+        | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", gp.is_grading_published, sa.xp),
           graded_count: sa.graded_count,
-          user_status: s.status
+          user_status: s.status,
+          is_grading_published: gp.is_grading_published
       })
       |> filter_published_assessments(cr)
       |> order_by(:open_at)
@@ -844,6 +857,113 @@ defmodule Cadet.Assessments do
     end
   end
 
+  # This function changes the is_grading_published field of the submission to false
+  # and sends a notification to the student
+  def unpublish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
+  when is_ecto_id(submission_id) do
+submission =
+  Submission
+  |> join(:inner, [s], a in assoc(s, :assessment))
+  |> preload([_, a], assessment: a)
+  |> Repo.get(submission_id)
+
+# allows staff to unpublish own assessment
+bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
+
+with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+     {:allowed_to_unpublish?, true} <-
+       {:allowed_to_unpublish?,
+        role == :admin or bypass or
+          Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+  Multi.new()
+  |> Multi.run(
+    :unpublish_grading,
+    fn _repo, _ ->
+      submission
+      |> Submission.changeset(%{is_grading_published: false})
+      |> Repo.update()
+    end
+  )
+  |> Repo.transaction()
+
+  Cadet.Accounts.Notifications.handle_unpublish_grades_notifications(
+    submission.assessment.id,
+    Repo.get(CourseRegistration, submission.student_id)
+  )
+
+  {:ok, nil}
+else
+  {:submission_found?, false} ->
+    {:error, {:not_found, "Submission not found"}}
+
+  {:is_open?, false} ->
+    {:error, {:forbidden, "Assessment not open"}}
+
+  {:allowed_to_unpublish?, false} ->
+    {:error, {:forbidden, "Only Avenger of student is permitted to unpublish grading"}}
+
+  _ ->
+    {:error, {:internal_server_error, "Please try again later."}}
+end
+end
+
+  # This function changes the is_grading_published field of the submission to true only if all the answers are graded
+  # and sends a notification to the student
+  def publish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
+      when is_ecto_id(submission_id) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.get(submission_id)
+
+    # allows staff to publish own assessment
+    bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
+
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:status, :submitted} <- {:status, submission.status},
+         {:allowed_to_publish?, true} <-
+           {:allowed_to_publish?,
+            role == :admin or bypass or
+              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+      Multi.new()
+      |> Multi.run(
+        :publish_grading,
+        fn _repo, _ ->
+          submission
+          |> Submission.changeset(%{is_grading_published: true})
+          |> Repo.update()
+        end
+      )
+      |> Repo.transaction()
+
+      Cadet.Accounts.Notifications.write_notification_when_graded(
+        submission.assessment.id,
+        :graded
+      )
+
+      {:ok, nil}
+    else
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:is_open?, false} ->
+        {:error, {:forbidden, "Assessment not open"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      {:allowed_to_publish?, false} ->
+        {:error, {:forbidden, "Only Avenger of student is permitted to publish grading"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
   @spec update_submission_status_and_xp_bonus(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
@@ -1197,6 +1317,7 @@ defmodule Cadet.Assessments do
                s."xpAdjustment",
                s."xpBonus",
                s."gradedCount",
+               s."isGradingPublished",
                assts.jsn as assessment,
                students.jsn as student,
                unsubmitters.jsn as "unsubmittedBy"
@@ -1211,7 +1332,8 @@ defmodule Cadet.Assessments do
                  sum(ans.xp) as xp,
                  sum(ans.xp_adjustment) as "xpAdjustment",
                  s.xp_bonus as "xpBonus",
-                 count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
+                 count(ans.id) filter (where ans.grader_id is not null) as "gradedCount",
+                 s.is_grading_published as "isGradingPublished"
                from submissions s
                  left join
                  answers ans on s.id = ans.submission_id
@@ -1369,7 +1491,7 @@ defmodule Cadet.Assessments do
          {:ok, _} <- Repo.update(changeset) do
       if is_fully_graded?(answer) and not is_own_submission do
         # Every answer in this submission has been graded manually
-        Notifications.write_notification_when_graded(submission_id, :graded)
+        # Notifications.write_notification_when_graded(submission_id, :graded)
       else
         {:ok, nil}
       end

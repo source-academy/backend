@@ -82,6 +82,34 @@ defmodule CadetWeb.AdminGradingController do
     end
   end
 
+  def unpublish_grades(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
+    course_reg = conn.assigns[:course_reg]
+
+    case Assessments.unpublish_grading(submission_id, course_reg) do
+      {:ok, nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
+  def publish_grades(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
+    course_reg = conn.assigns[:course_reg]
+
+    case Assessments.publish_grading(submission_id, course_reg) do
+      {:ok, nil} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   def autograde_submission(conn, %{"submissionid" => submission_id}) do
     course_reg = conn.assigns[:course_reg]
 
@@ -277,6 +305,8 @@ defmodule CadetWeb.AdminGradingController do
 
             unsubmittedBy(Schema.ref(:GraderInfo))
             unsubmittedAt(:string, "Last unsubmitted at", format: "date-time", required: false)
+
+            isGradingPublished(:boolean, "Whether the grading is published", required: true)
           end
         end,
       AssessmentInfo:
