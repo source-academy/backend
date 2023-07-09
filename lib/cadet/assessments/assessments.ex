@@ -1492,6 +1492,7 @@ end
       if is_fully_graded?(answer) and not is_own_submission do
         # Every answer in this submission has been graded manually
         # Notifications.write_notification_when_graded(submission_id, :graded)
+        {:ok, nil}
       else
         {:ok, nil}
       end
