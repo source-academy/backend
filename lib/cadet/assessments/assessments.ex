@@ -268,7 +268,7 @@ defmodule Cadet.Assessments do
       assessment = assessment |> Map.put(:questions, questions)
       {:ok, assessment}
     else
-      {:error, {:forbidden, "Assessment not open"}}
+      {:error, {:unauthorized, "Assessment not open"}}
     end
   end
 
@@ -621,6 +621,7 @@ defmodule Cadet.Assessments do
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
+  IO.inspect(params)
     simple_update(
       Assessment,
       id,
@@ -1158,7 +1159,7 @@ defmodule Cadet.Assessments do
   a boolean which is false by default.
 
   The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:forbidden, "Forbidden."}}
+  {:unauthorized, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok, String.t()}
@@ -1270,7 +1271,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:bad_request, String.t()}}
+          {:ok, [Answer.t()]} | {:error, {:bad_request | :unauthorized, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -1338,7 +1339,7 @@ defmodule Cadet.Assessments do
           CourseRegistration.t()
         ) ::
           {:ok, nil}
-          | {:error, {:forbidden | :bad_request | :internal_server_error, String.t()}}
+          | {:error, {:unauthorized | :bad_request | :internal_server_error, String.t()}}
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
@@ -1393,7 +1394,7 @@ defmodule Cadet.Assessments do
         _,
         _
       ) do
-    {:error, {:forbidden, "User is not permitted to grade."}}
+    {:error, {:unauthorized, "User is not permitted to grade."}}
   end
 
   @spec force_regrade_submission(integer() | String.t(), CourseRegistration.t()) ::
