@@ -3,6 +3,7 @@ defmodule Cadet.Workers.NotificationWorker do
   Contain oban workers for sending notifications
   """
   use Oban.Worker, queue: :notifications, max_attempts: 1
+  require Logger
   alias Cadet.{Email, Notifications, Mailer}
   alias Cadet.Repo
 
@@ -83,9 +84,9 @@ defmodule Cadet.Workers.NotificationWorker do
                 )
 
               if length(ungraded_submissions) < ungraded_threshold do
-                IO.puts("[AVENGER_BACKLOG] below threshold!")
+                Logger.info("[AVENGER_BACKLOG] below threshold!")
               else
-                IO.puts("[AVENGER_BACKLOG] SENDING_OUT")
+                Logger.info("[AVENGER_BACKLOG] SENDING_OUT")
 
                 email =
                   Email.avenger_backlog_email(
@@ -101,15 +102,15 @@ defmodule Cadet.Workers.NotificationWorker do
                 end
               end
             else
-              IO.puts("[ASSESSMENT_SUBMISSION] user-level disabled")
+              Logger.info("[ASSESSMENT_SUBMISSION] user-level disabled")
             end
           end
         else
-          IO.puts("[AVENGER_BACKLOG] course-level disabled")
+          Logger.info("[AVENGER_BACKLOG] course-level disabled")
         end
       end
     else
-      IO.puts("[AVENGER_BACKLOG] system-level disabled!")
+      Logger.info("[AVENGER_BACKLOG] system-level disabled!")
     end
 
     :ok
@@ -136,13 +137,13 @@ defmodule Cadet.Workers.NotificationWorker do
 
       cond do
         !is_course_enabled(notification_type.id, course_id, assessment_config_id) ->
-          IO.puts("[ASSESSMENT_SUBMISSION] course-level disabled")
+          Logger.info("[ASSESSMENT_SUBMISSION] course-level disabled")
 
         !is_user_enabled(notification_type.id, avenger_cr.id) ->
-          IO.puts("[ASSESSMENT_SUBMISSION] user-level disabled")
+          Logger.info("[ASSESSMENT_SUBMISSION] user-level disabled")
 
         true ->
-          IO.puts("[ASSESSMENT_SUBMISSION] SENDING_OUT")
+          Logger.info("[ASSESSMENT_SUBMISSION] SENDING_OUT")
 
           email =
             Email.assessment_submission_email(
@@ -159,7 +160,7 @@ defmodule Cadet.Workers.NotificationWorker do
           end
       end
     else
-      IO.puts("[ASSESSMENT_SUBMISSION] system-level disabled!")
+      Logger.info("[ASSESSMENT_SUBMISSION] system-level disabled!")
     end
   end
 end

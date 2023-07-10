@@ -86,12 +86,11 @@ defmodule Cadet.Notifications do
   """
   def get_notification_configs(course_id) do
     query =
-      from(n in Cadet.Notifications.NotificationConfig,
-        where: n.course_id == ^course_id
-      )
+      Cadet.Notifications.NotificationConfig
+      |> where([n], n.course_id == ^course_id)
+      |> Repo.all()
 
     query
-    |> Repo.all()
     |> Repo.preload([:notification_type, :course, :assessment_config, :time_options])
   end
 
@@ -111,23 +110,26 @@ defmodule Cadet.Notifications do
         is_staff = cr.role == :staff
 
         query =
-          from(n in Cadet.Notifications.NotificationConfig,
-            join: ntype in Cadet.Notifications.NotificationType,
-            on: n.notification_type_id == ntype.id,
-            join: c in Cadet.Courses.Course,
-            on: n.course_id == c.id,
-            left_join: ac in Cadet.Courses.AssessmentConfig,
-            on: n.assessment_config_id == ac.id,
-            left_join: p in Cadet.Notifications.NotificationPreference,
-            on: p.notification_config_id == n.id,
-            where:
-              ntype.for_staff == ^is_staff and
-                n.course_id == ^cr.course_id and
-                (p.course_reg_id == ^cr.id or is_nil(p.course_reg_id))
+          Cadet.Notifications.NotificationConfig
+          |> join(:inner, [n], ntype in Cadet.Notifications.NotificationType,
+            on: n.notification_type_id == ntype.id
           )
+          |> join(:inner, [n], c in Cadet.Courses.Course, on: n.course_id == c.id)
+          |> join(:left, [n], ac in Cadet.Courses.AssessmentConfig,
+            on: n.assessment_config_id == ac.id
+          )
+          |> join(:left, [n], p in Cadet.Notifications.NotificationPreference,
+            on: p.notification_config_id == n.id
+          )
+          |> where(
+            [n, ntype, c, ac, p],
+            ntype.for_staff == ^is_staff and
+              n.course_id == ^cr.course_id and
+              (p.course_reg_id == ^cr.id or is_nil(p.course_reg_id))
+          )
+          |> Repo.all()
 
         query
-        |> Repo.all()
         |> Repo.preload([
           :notification_type,
           :course,
@@ -201,13 +203,14 @@ defmodule Cadet.Notifications do
   """
   def get_time_options_for_config(notification_config_id) do
     query =
-      from(to in Cadet.Notifications.TimeOption,
-        join: nc in Cadet.Notifications.NotificationConfig,
-        on: to.notification_config_id == nc.id,
-        where: nc.id == ^notification_config_id
+      Cadet.Notifications.TimeOption
+      |> join(:inner, [to], nc in Cadet.Notifications.NotificationConfig,
+        on: to.notification_config_id == nc.id
       )
+      |> where([to, nc], nc.id == ^notification_config_id)
+      |> Repo.all()
 
-    Repo.all(query)
+    query
   end
 
   @doc """
@@ -313,13 +316,15 @@ defmodule Cadet.Notifications do
       for to_id <- to_ids do
         time_option = Repo.get(TimeOption, to_id)
 
-        if is_nil(time_option) do
-          Repo.rollback("Time option do not exist")
-        else
-          case Repo.delete(time_option) do
-            {:ok, time_option} -> time_option
-            {:delete_error, error} -> Repo.rollback(error)
-          end
+        case time_option do
+          nil ->
+            Repo.rollback("Time option does not exist")
+
+          _ ->
+            case Repo.delete(time_option) do
+              {:ok, deleted_time_option} -> deleted_time_option
+              {:delete_error, error} -> Repo.rollback(error)
+            end
         end
       end
     end)
@@ -330,14 +335,13 @@ defmodule Cadet.Notifications do
   """
   def get_notification_preference!(notification_preference_id) do
     query =
-      from(np in NotificationPreference,
-        left_join: to in TimeOption,
-        on: to.id == np.time_option_id,
-        where: np.id == ^notification_preference_id,
-        preload: :time_option
-      )
+      NotificationPreference
+      |> join(:left, [np], to in TimeOption, on: to.id == np.time_option_id)
+      |> where([np, to], np.id == ^notification_preference_id)
+      |> preload(:time_option)
+      |> Repo.one!()
 
-    Repo.one!(query)
+    query
   end
 
   @doc """
