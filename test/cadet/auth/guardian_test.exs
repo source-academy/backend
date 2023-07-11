@@ -6,7 +6,14 @@ defmodule Cadet.Auth.GuardianTest do
 
   test "token subject is user id" do
     user = insert(:user)
-    assert Guardian.subject_for_token(user, nil) == {:ok, to_string(user.id)}
+
+    assert Guardian.subject_for_token(user, nil) ==
+             {:ok,
+              URI.encode_query(%{
+                id: user.id,
+                username: user.username,
+                provider: user.provider
+              })}
   end
 
   test "get user from claims" do
