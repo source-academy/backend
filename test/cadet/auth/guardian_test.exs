@@ -13,16 +13,23 @@ defmodule Cadet.Auth.GuardianTest do
     user = insert(:user)
 
     good_claims = %{
-      "sub" => to_string(user.id)
+      # Username and provider are only used for microservices
+      # The main backend only checks the user ID
+      "sub" => URI.encode_query(%{id: user.id})
     }
 
-    bad_claims = %{
-      "sub" => "2000"
+    bad_claims_user_not_found = %{
+      "sub" => URI.encode_query(%{id: 2000})
+    }
+
+    bad_claims_bad_sub = %{
+      "sub" => "bad"
     }
 
     assert Guardian.resource_from_claims(good_claims) ==
              {:ok, remove_preload(user, :latest_viewed_course)}
 
-    assert Guardian.resource_from_claims(bad_claims) == {:error, :not_found}
+    assert Guardian.resource_from_claims(bad_claims_user_not_found) == {:error, :not_found}
+    assert Guardian.resource_from_claims(bad_claims_bad_sub) == {:error, :bad_request}
   end
 end
