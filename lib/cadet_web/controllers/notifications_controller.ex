@@ -100,7 +100,7 @@ defmodule CadetWeb.NotificationsController do
       NotificationType:
         swagger_schema do
           type(:string)
-          enum([:new, :deadline, :autograded, :graded, :submitted, :unsubmitted, :new_message])
+          enum([:new, :deadline, :autograded, :graded, :submitted, :unsubmitted, :unpublishedGrading, :new_message])
         end
     }
   end

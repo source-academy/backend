@@ -860,52 +860,52 @@ defmodule Cadet.Assessments do
   # This function changes the is_grading_published field of the submission to false
   # and sends a notification to the student
   def unpublish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
-  when is_ecto_id(submission_id) do
-submission =
-  Submission
-  |> join(:inner, [s], a in assoc(s, :assessment))
-  |> preload([_, a], assessment: a)
-  |> Repo.get(submission_id)
+      when is_ecto_id(submission_id) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.get(submission_id)
 
-# allows staff to unpublish own assessment
-bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
+    # allows staff to unpublish own assessment
+    bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
-with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-     {:allowed_to_unpublish?, true} <-
-       {:allowed_to_unpublish?,
-        role == :admin or bypass or
-          Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
-  Multi.new()
-  |> Multi.run(
-    :unpublish_grading,
-    fn _repo, _ ->
-      submission
-      |> Submission.changeset(%{is_grading_published: false})
-      |> Repo.update()
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+        {:allowed_to_unpublish?, true} <-
+          {:allowed_to_unpublish?,
+            role == :admin or bypass or
+              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+      Multi.new()
+      |> Multi.run(
+        :unpublish_grading,
+        fn _repo, _ ->
+          submission
+          |> Submission.changeset(%{is_grading_published: false})
+          |> Repo.update()
+        end
+      )
+      |> Repo.transaction()
+
+      Cadet.Accounts.Notifications.handle_unpublish_grades_notifications(
+        submission.assessment.id,
+        Repo.get(CourseRegistration, submission.student_id)
+      )
+
+      {:ok, nil}
+    else
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:is_open?, false} ->
+        {:error, {:forbidden, "Assessment not open"}}
+
+      {:allowed_to_unpublish?, false} ->
+        {:error, {:forbidden, "Only Avenger of student is permitted to unpublish grading"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
     end
-  )
-  |> Repo.transaction()
-
-  Cadet.Accounts.Notifications.handle_unpublish_grades_notifications(
-    submission.assessment.id,
-    Repo.get(CourseRegistration, submission.student_id)
-  )
-
-  {:ok, nil}
-else
-  {:submission_found?, false} ->
-    {:error, {:not_found, "Submission not found"}}
-
-  {:is_open?, false} ->
-    {:error, {:forbidden, "Assessment not open"}}
-
-  {:allowed_to_unpublish?, false} ->
-    {:error, {:forbidden, "Only Avenger of student is permitted to unpublish grading"}}
-
-  _ ->
-    {:error, {:internal_server_error, "Please try again later."}}
-end
-end
+  end
 
   # This function changes the is_grading_published field of the submission to true only if all the answers are graded
   # and sends a notification to the student
@@ -938,7 +938,7 @@ end
       |> Repo.transaction()
 
       Cadet.Accounts.Notifications.write_notification_when_graded(
-        submission.assessment.id,
+        submission.id,
         :graded
       )
 
@@ -1489,11 +1489,7 @@ end
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
-      if is_fully_graded?(answer) and not is_own_submission do
-        # Every answer in this submission has been graded manually
-        # Notifications.write_notification_when_graded(submission_id, :graded)
-        {:ok, nil}
-      else
+
         {:ok, nil}
       end
     else
