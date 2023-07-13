@@ -16,6 +16,8 @@ on:
       - "mix.lock"
       - ".github/workflows/cd.yml"
       - "!config/*.example"
+env:
+  TIME: ${{ github.event.repository.pushed_at }}
 
 jobs:
   ci:
@@ -27,8 +29,9 @@ jobs:
       ELIXIR_VERSION: 1.13.4
       OTP_VERSION: 25.3.2
     steps:
-      - uses: rlespinasse/github-slug-action@v3.x
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Cache deps
         uses: actions/cache@v2
         with:
@@ -42,9 +45,9 @@ jobs:
           path: |
             _build
             !_build/prod/cadet-0.0.1.tar.gz
-          key: cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-${{ github.sha }}
+          key: cd-${{ github.ref_name }}-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-${{ github.sha }}
           restore-keys: |
-            cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-
+            cd-${{ github.ref_name }}-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-
       - name: Setup Elixir
         uses: erlef/setup-elixir@v1
         with:
@@ -55,11 +58,51 @@ jobs:
           mix deps.get
       - name: mix release
         run: mix release --overwrite
-      - name: Create release
-        uses: marvinpinto/action-automatic-releases@latest
+      - name: "[Release] Generate tag name"
+        id: release_tag
+        env:
+          OVERWRITE: ${{ github.ref_name == 'master' }}
+        run: |
+          if [ "$OVERWRITE" = "true" ]; then
+            echo "TAG=latest-${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "TAG=$(echo release-${{ env.TIME }})" >> "$GITHUB_OUTPUT"
+          fi
+      - name: "[Release] Generate release title"
+        id: release_title
+        run: |
+          echo "TITLE=$(date +"Workflow on %a, %-d %b %H:%M %Z from ${{ github.ref_name }}" -d @${{ env.TIME }})" >> "$GITHUB_OUTPUT"
+      - name: "[Release] Generate release body"
+        id: release_body
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "BODY<<$EOF" >> "$GITHUB_OUTPUT"
+          echo "## Commits" >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_OUTPUT"
+          echo "Changes since last release on branch \`${{ github.ref_name }}\`:" >> "$GITHUB_OUTPUT"
+          echo "" >> "$GITHUB_OUTPUT"
+          git log --format=oneline latest-${{ github.ref_name }}..HEAD | sed 's/^\([0-9a-f]*\)/* \1:/' >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+      - name: "[Release] Create on GitHub"
+        id: release_create # We need the id to refer to it in the next step
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          automatic_release_tag: latest-${{ env.GITHUB_REF_SLUG }}
-          prerelease: ${{ env.GITHUB_REF_SLUG == 'master' }}
-          title: Latest commit on ${{ env.GITHUB_REF_SLUG }}
-          files: _build/prod/cadet-0.0.1.tar.gz
+          tag_name: ${{ steps.release_tag.outputs.TAG }}
+          release_name: ${{ steps.release_title.outputs.TITLE }}
+          body: ${{ steps.release_body.outputs.BODY }}
+          prerelease: ${{ github.ref_name == 'master' }}
+      - name: "[Release] Update latest-branch tag"
+        run: |
+          git tag -f latest-${{ github.ref_name }}
+          git push --tags -f
+      - name: "[Release] Upload files"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release_create.outputs.upload_url }}
+          asset_path: ./_build/prod/cadet-0.0.1.tar.gz
+          asset_name: cadet-0.0.1.tar.gz
+          asset_content_type: application/gzip
