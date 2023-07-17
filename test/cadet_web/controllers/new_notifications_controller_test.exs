@@ -62,6 +62,8 @@ defmodule CadetWeb.NewNotificationsControllerTest do
      }}
   end
 
+  # /v2/courses/#{course.id}/admin/notifications/config
+  # conn = get(conn, "/v2/notifications/config/#{course.id}")
   describe "GET /v2/notifications/config/:course_id" do
     test "200 suceeds", %{course: course, conn: conn} do
       conn = get(conn, "/v2/notifications/config/#{course.id}")
@@ -71,6 +73,8 @@ defmodule CadetWeb.NewNotificationsControllerTest do
     end
   end
 
+  # /v2/courses/#{course.id}/notifications/config/user/#{avenger.id}
+  # conn = get(conn, "/v2/notifications/config/user/#{avenger.id}")
   describe "GET /v2/notifications/config/user/:course_reg_id" do
     test "200 succeeds for avenger", %{avenger: avenger, conn: conn} do
       conn = get(conn, "/v2/notifications/config/user/#{avenger.id}")
