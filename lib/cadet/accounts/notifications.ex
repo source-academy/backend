@@ -166,7 +166,7 @@ defmodule Cadet.Accounts.Notifications do
   Function that handles notifications when a submission grade is unpublished.
   """
   @spec handle_unpublish_grades_notifications(integer(), CourseRegistration.t()) ::
-  {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unpublish_grades_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
     # Fetch and delete all notifications of :graded

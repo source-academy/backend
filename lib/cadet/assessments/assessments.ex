@@ -253,7 +253,9 @@ defmodule Cadet.Assessments do
         |> select([a, s], %{
           a
           | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp),
-            xp_adjustment: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp_adjustment)})
+            xp_adjustment:
+              fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp_adjustment)
+        })
 
       questions =
         Question
@@ -320,7 +322,9 @@ defmodule Cadet.Assessments do
         on: a.id == sa.assessment_id
       )
       |> join(:left, [a, _], s in subquery(submission_status), on: a.id == s.assessment_id)
-      |> join(:left, [a, _, _], gp in subquery(grading_published_status), on: a.id == gp.assessment_id)
+      |> join(:left, [a, _, _], gp in subquery(grading_published_status),
+        on: a.id == gp.assessment_id
+      )
       |> select([a, sa, s, gp], %{
         a
         | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", gp.is_grading_published, sa.xp),
@@ -871,8 +875,8 @@ defmodule Cadet.Assessments do
     bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-        {:allowed_to_unpublish?, true} <-
-          {:allowed_to_unpublish?,
+         {:allowed_to_unpublish?, true} <-
+           {:allowed_to_unpublish?,
             role == :admin or bypass or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
       Multi.new()
@@ -1489,7 +1493,6 @@ defmodule Cadet.Assessments do
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
-
       {:ok, nil}
     else
       {:answer_found?, false} ->
