@@ -1490,8 +1490,7 @@ defmodule Cadet.Assessments do
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
 
-        {:ok, nil}
-      end
+      {:ok, nil}
     else
       {:answer_found?, false} ->
         {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
