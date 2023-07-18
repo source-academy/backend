@@ -79,7 +79,6 @@ defmodule CadetWeb.Router do
 
     put("/notifications/options", NewNotificationsController, :upsert_time_options)
     put("/notifications/preferences", NewNotificationsController, :upsert_noti_preferences)
-    # un-used?
     get(
       "notifications/options/config/:noti_config_id",
       NewNotificationsController,
@@ -190,20 +189,6 @@ defmodule CadetWeb.Router do
     )
   end
 
-  # Notifications endpoints
-  scope "/v2/notifications/", CadetWeb do
-    # get("/config/:course_id", NewNotificationsController, :all_noti_configs)
-    # get("/config/user/:course_reg_id", NewNotificationsController, :get_configurable_noti_configs)
-    # put("/config/", NewNotificationsController, :update_noti_configs)
-
-    ## put("/preferences", NewNotificationsController, :upsert_noti_preferences)
-
-    ## get("/options/config/:noti_config_id", NewNotificationsController, :get_config_time_options)
-
-    # put("/options", NewNotificationsController, :upsert_time_options)
-
-    # delete("/options", NewNotificationsController, :delete_time_options)
-  end
 
   # Other scopes may use custom stacks.
   # scope "/api", CadetWeb do
