@@ -94,14 +94,6 @@ defmodule CadetWeb.NewNotificationsController do
   end
 
   def delete_time_options(conn, params) do
-    # time_option = Repo.get(TimeOption, time_option_id)
-
-    # if is_nil(time_option) do
-    #   conn |> put_status(404) |> text("Time option of given ID not found")
-    # end
-
-    # case Repo.delete(time_option) do
-    # JUNYI AND SANTOSH: NOT DEFINED???
     case Notifications.delete_many_time_options(params["_json"]) do
       {:ok, res} ->
         render(conn, "time_options.json", time_options: res)
