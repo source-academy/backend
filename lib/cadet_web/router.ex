@@ -167,6 +167,12 @@ defmodule CadetWeb.Router do
       AdminCoursesController,
       :delete_assessment_config
     )
+
+    get("/teams", AdminTeamsController, :index)
+    post("/teams", AdminTeamsController, :create)
+    delete("/teams/:teamid", AdminTeamsController, :delete)
+    put("/teams/:teamid", AdminTeamsController, :update)
+    post("/teams/upload", AdminTeamsController, :bulk_upload)
   end
 
   # Other scopes may use custom stacks.
