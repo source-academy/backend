@@ -133,4 +133,17 @@ defmodule CadetWeb.NewNotificationsController do
         conn |> put_status(400) |> text(changeset_error_to_string(changeset))
     end
   end
+
+  def delete_preferable_times(conn, params) do
+    case Notifications.delete_many_preferable_times(params["_json"]) do
+      {:ok, res} ->
+        render(conn, "preferable_times.json", preferable_times: res)
+
+      {:error, message} ->
+        conn |> put_status(400) |> text(message)
+
+      {:delete_error, changeset} ->
+        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
+    end
+  end
 end
