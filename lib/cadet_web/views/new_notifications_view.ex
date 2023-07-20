@@ -74,6 +74,26 @@ defmodule CadetWeb.NewNotificationsView do
     })
   end
 
+  # preferable_time
+  def render("preferable_times.json", %{preferable_times: preferable_times}) do
+    case preferable_times do
+      %Ecto.Association.NotLoaded{} ->
+        nil
+
+      _ ->
+        render_many(preferable_times, CadetWeb.NewNotificationsView, "preferable_time.json",
+          as: :preferable_time
+        )
+    end
+  end
+
+  def render("preferable_time.json", %{preferable_time: preferable_time}) do
+    transform_map_for_view(preferable_time, %{
+      id: :id,
+      minutes: :minutes
+    })
+  end
+
   # Helpers
   defp render_notification_type(noti_type) do
     case noti_type do
