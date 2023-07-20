@@ -12,7 +12,8 @@ defmodule Cadet.Notifications do
     NotificationConfig,
     SentNotification,
     TimeOption,
-    NotificationPreference
+    NotificationPreference,
+    PreferableTime
   }
 
   @doc """
@@ -447,33 +448,9 @@ defmodule Cadet.Notifications do
     |> Repo.insert()
   end
 
+  # PreferableTime
   @doc """
-  Returns the list of sent_notifications.
-
-  ## Examples
-
-      iex> list_sent_notifications()
-      [%SentNotification{}, ...]
-
+  Gets the preferable times using id number.
   """
-
-  # def list_sent_notifications do
-  #   Repo.all(SentNotification)
-  # end
-
-  # @doc """
-  # Gets a single sent_notification.
-
-  # Raises `Ecto.NoResultsError` if the Sent notification does not exist.
-
-  # ## Examples
-
-  #     iex> get_sent_notification!(123)
-  #     %SentNotification{}
-
-  #     iex> get_sent_notification!(456)
-  #     ** (Ecto.NoResultsError)
-
-  # """
-  # # def get_sent_notification!(id), do: Repo.get!(SentNotification, id)
+  def get_preferable_time!(id), do: Repo.get!(PreferableTime, id)
 end
