@@ -453,4 +453,18 @@ defmodule Cadet.Notifications do
   Gets the preferable times using id number.
   """
   def get_preferable_time!(id), do: Repo.get!(PreferableTime, id)
+
+  @doc """
+  Gets all preferable times for a notification preference
+  """
+  def get_preferable_times_for_preference(notification_preference_id) do
+    query =
+      from(pt in Cadet.Notifications.PreferableTime,
+        join: np in Cadet.Notifications.NotificationPreference,
+        on: pt.notification_preference_id == np.id,
+        where: np.id == ^notification_preference_id
+      )
+
+    Repo.all(query)
+  end
 end
