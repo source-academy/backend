@@ -486,4 +486,17 @@ defmodule Cadet.Notifications do
     |> PreferableTime.changeset(attrs)
     |> Repo.insert()
   end
+
+  def upsert_many_preferable_times(preferable_times) when is_list(preferable_times) do
+    Repo.transaction(fn ->
+      for pt <- preferable_times do
+        case Repo.insert(pt,
+               conflict_target: [:minutes, :notification_config_id]
+             ) do
+          {:ok, preferable_time} -> preferable_time
+          {:error, error} -> Repo.rollback(error)
+        end
+      end
+    end)
+  end
 end
