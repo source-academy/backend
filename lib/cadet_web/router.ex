@@ -86,6 +86,9 @@ defmodule CadetWeb.Router do
       :get_config_time_options
     )
 
+    put("/notifications/preferabletime", NewNotificationsController, :upsert_preferable_times)
+    delete("/notifications/preferabletime", NewNotificationsController, :delete_preferable_times)
+
     get("/sourcecast", SourcecastController, :index)
 
     get("/assessments", AssessmentsController, :index)
