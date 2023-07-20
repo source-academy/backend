@@ -2,7 +2,13 @@ defmodule CadetWeb.NewNotificationsController do
   use CadetWeb, :controller
 
   alias Cadet.{Repo, Notifications}
-  alias Cadet.Notifications.{NotificationPreference, NotificationConfig, TimeOption}
+
+  alias Cadet.Notifications.{
+    NotificationPreference,
+    NotificationConfig,
+    TimeOption,
+    PreferableTime
+  }
 
   # NOTIFICATION CONFIGS
 
@@ -102,6 +108,28 @@ defmodule CadetWeb.NewNotificationsController do
         conn |> put_status(400) |> text(message)
 
       {:delete_error, changeset} ->
+        conn |> put_status(400) |> text(changeset_error_to_string(changeset))
+    end
+  end
+
+  def upsert_preferable_times(conn, params) do
+    changesets =
+      params["_json"]
+      |> snake_casify_string_keys_recursive()
+      |> Stream.map(fn preferable_time ->
+        if preferable_time["id"] < 0 do
+          Map.delete(preferable_time, "id")
+        end
+
+        PreferableTime.changeset(%PreferableTime{}, preferable_time)
+      end)
+      |> Enum.to_list()
+
+    case Notifications.upsert_many_preferable_times(changesets) do
+      {:ok, res} ->
+        render(conn, "preferable_times", preferable_times: res)
+
+      {:error, changeset} ->
         conn |> put_status(400) |> text(changeset_error_to_string(changeset))
     end
   end
