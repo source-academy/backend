@@ -12,6 +12,10 @@
 import Cadet.Factory
 
 alias Cadet.Assessments.SubmissionStatus
+alias Cadet.Accounts.Team
+alias Cadet.Accounts.Teams
+
+
 
 # insert default source version
 # Cadet.Repo.insert!(%Cadet.Settings.Sublanguage{chapter: 1, variant: "default"})
@@ -20,17 +24,21 @@ if Cadet.Env.env() == :dev do
   # Course
   course1 = insert(:course)
   course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
+  # IO.inspect(course1)
   # Users
   avenger1 = insert(:user, %{name: "avenger", latest_viewed_course: course1})
   admin1 = insert(:user, %{name: "admin", latest_viewed_course: course1})
 
   studenta1admin2 = insert(:user, %{name: "student a", latest_viewed_course: course1})
 
-  studentb1 = insert(:user, %{latest_viewed_course: course1})
-  studentc1 = insert(:user, %{latest_viewed_course: course1})
+  studentb1 = insert(:user, %{name: "student 1", latest_viewed_course: course1})
+  studentc1 = insert(:user, %{name: "student 2", latest_viewed_course: course1})
+  studentd1 = insert(:user, %{name: "student 3", latest_viewed_course: course1})
+  studente1 = insert(:user, %{name: "student 4", latest_viewed_course: course1})
+
   # CourseRegistration and Group
   avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
-  _admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
+  # _admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
   group = insert(:group, %{leader: avenger1_cr})
 
   student1a_cr =
@@ -47,7 +55,13 @@ if Cadet.Env.env() == :dev do
   student1c_cr =
     insert(:course_registration, %{user: studentc1, course: course1, role: :student, group: group})
 
-  students = [student1a_cr, student1b_cr, student1c_cr]
+  student1d_cr =
+    insert(:course_registration, %{user: studentd1, course: course1, role: :student, group: group})
+    
+  student1e_cr =
+    insert(:course_registration, %{user: studente1, course: course1, role: :student, group: group})
+
+  students = [student1a_cr, student1b_cr, student1c_cr, student1d_cr, student1e_cr]
 
   _admin2cr =
     insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
@@ -55,20 +69,23 @@ if Cadet.Env.env() == :dev do
   # Assessments
   for i <- 1..5 do
     config = insert(:assessment_config, %{type: "Mission#{i}", order: i, course: course1})
-    assessment = insert(:assessment, %{is_published: true, config: config, course: course1})
+    assessment1 = insert(:assessment, %{is_published: true, config: config, course: course1})
 
     config2 = insert(:assessment_config, %{type: "Homework#{i}", order: i, course: course2})
-    _assessment2 = insert(:assessment, %{is_published: true, config: config2, course: course2})
+    assessment2 = insert(:assessment, %{is_published: true, config: config2, course: course2})
+
+    config3 = insert(:assessment_config, %{type: "Path#{i}", order: i, course: course1})
+    assessment3 = insert(:assessment, %{is_published: true, config: config3, course: course1})
 
     programming_questions =
       insert_list(3, :programming_question, %{
-        assessment: assessment,
+        assessment: assessment1,
         max_xp: 1_000
       })
 
     mcq_questions =
       insert_list(3, :mcq_question, %{
-        assessment: assessment,
+        assessment: assessment1,
         max_xp: 500
       })
 
@@ -77,7 +94,7 @@ if Cadet.Env.env() == :dev do
       |> Enum.take(2)
       |> Enum.map(
         &insert(:submission, %{
-          assessment: assessment,
+          assessment: assessment1,
           student: &1,
           status: Enum.random(SubmissionStatus.__enum_map__())
         })
@@ -104,6 +121,23 @@ if Cadet.Env.env() == :dev do
         answer: build(:mcq_answer)
       })
     end
+
+    # Teams
+    team1a = insert(:team, %{assessment: assessment1})
+    team1b = insert(:team, %{assessment: assessment1})
+
+    team1a = insert(:team, %{assessment: assessment1})
+    team1b = insert(:team, %{assessment: assessment1})
+    IO.inspect(team1a)
+    IO.inspect(team1b)
+    # Team members
+    member1 = insert(:team_member, %{student: student1d_cr, team: team1a})
+    member2 = insert(:team_member, %{student: student1e_cr, team: team1a})
+    IO.inspect(member1)
+    IO.inspect(member2)
+
+    member3 = insert(:team_member, %{student: student1b_cr, team: team1b})
+    member4 = insert(:team_member, %{student: student1c_cr, team: team1b})
 
     # # Notifications
     # for submission <- submissions do
