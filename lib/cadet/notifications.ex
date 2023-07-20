@@ -454,6 +454,7 @@ defmodule Cadet.Notifications do
   """
   def get_preferable_time!(id), do: Repo.get!(PreferableTime, id)
 
+  @spec get_preferable_times_for_preference(any) :: any
   @doc """
   Gets all preferable times for a notification preference
   """
@@ -466,5 +467,23 @@ defmodule Cadet.Notifications do
       )
 
     Repo.all(query)
+  end
+
+  @spec create_preferable_time(
+          :invalid
+          | %{optional(:__struct__) => none, optional(atom | binary) => any}
+        ) :: any
+  @doc """
+  Creates a preferable_time.
+  ## Examples
+      iex> create_preferable_time(%{field: value})
+      {:ok, %TimeOption{}}
+      iex> create_preferable_time(%{field: bad_value})
+      {:error, %Ecto.Changeset{}}
+  """
+  def create_preferable_time(attrs \\ %{}) do
+    %PreferableTime{}
+    |> PreferableTime.changeset(attrs)
+    |> Repo.insert()
   end
 end
