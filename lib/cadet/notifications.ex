@@ -499,4 +499,16 @@ defmodule Cadet.Notifications do
       end
     end)
   end
+
+  @doc """
+  Deletes a preferable_time.
+  ## Examples
+      iex> delete_preferable_time(preferable_time)
+      {:ok, %PreferableTime{}}
+      iex> delete_preferable_time(preferable_time)
+      {:error, %Ecto.Changeset{}}
+  """
+  def delete_preferable_time(preferable_time = %PreferableTime{}) do
+    Repo.delete(preferable_time)
+  end
 end
