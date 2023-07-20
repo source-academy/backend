@@ -511,4 +511,21 @@ defmodule Cadet.Notifications do
   def delete_preferable_time(preferable_time = %PreferableTime{}) do
     Repo.delete(preferable_time)
   end
+
+  def delete_many_preferable_times(pt_ids) when is_list(pt_ids) do
+    Repo.transaction(fn ->
+      for pt_id <- pt_ids do
+        preferable_time = Repo.get(PreferableTime, pt_id)
+
+        if is_nil(preferable_time) do
+          Repo.rollback("Preferable Time do not exist")
+        else
+          case Repo.delete(preferable_time) do
+            {:ok, preferable_time} -> preferable_time
+            {:delete_error, error} -> Repo.rollback(error)
+          end
+        end
+      end
+    end)
+  end
 end
