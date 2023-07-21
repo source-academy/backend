@@ -29,6 +29,14 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @add_users_role ~w(admin)a
+  def get_students(conn, filter) do
+    users =
+      filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
+
+    render(conn, "get_students.json", users: users)
+  end
+
+  @add_users_role ~w(admin)a
   def upsert_users_and_groups(conn, %{
         "course_id" => course_id,
         "users" => usernames_roles_groups,
