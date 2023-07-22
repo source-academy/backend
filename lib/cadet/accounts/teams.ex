@@ -15,7 +15,7 @@ defmodule Cadet.Accounts.Teams do
 
     Enum.reduce_while(teams, {:ok, nil}, fn team_attrs, {:ok, _} ->
       student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
-      if student_already_in_team?(student_ids, assessment_id) do
+      if student_already_in_team?(-1, student_ids, assessment_id) do
         {:halt, {:error, {:conflict, "Team with the same members already exists for this assessment!"}}}
       else
         {:ok, team} = %Team{}
@@ -36,12 +36,11 @@ defmodule Cadet.Accounts.Teams do
     end)
   end
 
-  defp student_already_in_team?(student_ids, assessment_id) do
-    # Check if any of the students in team_attrs are already in a team for the same assessment
+  defp student_already_in_team?(team_id, student_ids, assessment_id) do
     query =
       from tm in TeamMember,
         join: t in assoc(tm, :team),
-        where: tm.student_id in ^student_ids and t.assessment_id == ^assessment_id,
+        where: tm.student_id in ^student_ids and t.assessment_id == ^assessment_id and t.id != ^team_id,
         select: tm.student_id
 
     existing_student_ids = Repo.all(query)
@@ -54,7 +53,7 @@ defmodule Cadet.Accounts.Teams do
     old_assessment_id = team.assessment_id
     team_id = team.id
     new_student_ids = Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
-    if student_already_in_team?(new_student_ids, new_assessment_id) do
+    if student_already_in_team?(team_id, new_student_ids, new_assessment_id) do
       {:error, {:conflict, "One or more students are already in another team for the same assessment!"}}
     else
       attrs = %{assessment_id: new_assessment_id}
@@ -106,20 +105,4 @@ defmodule Cadet.Accounts.Teams do
     team
     |> Repo.delete()
   end
-
-  # def bulk_upload_teams(teams_params) do
-  #   teams = Jason.decode!(teams_params)
-  #   Enum.map(teams, fn team ->
-  #     case get_by_assessment_id(team["assessment_id"]) do
-  #       nil -> create_team(team)
-  #       existing_team -> update_team(existing_team, team)
-  #     end
-  #   end)
-  # end
-
-  # def get_by_assessment_id(assessment_id) do
-  #   from(Team)
-  #   |> where(assessment_id: ^assessment_id)
-  #   |> Repo.one()
-  # end
 end
