@@ -39,11 +39,13 @@ defmodule CadetWeb.AdminTeamsController do
     case Teams.create_team(team_params) do
       {:ok, team} ->
         conn
-        |> put_flash(:info, "Team created successfully.")
-        |> render("create.json", team: team)
+        |> put_status(:created)
+        |> text("Teams created successfully.")
 
-      {:error, changeset} ->
-        render(conn, "create.json", changeset: changeset)
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
@@ -55,11 +57,13 @@ defmodule CadetWeb.AdminTeamsController do
     case Teams.update_team(team, team_params) do
       {:ok, updated_team} ->
         conn
-        |> put_flash(:info, "Team updated successfully.")
-        |> redirect(to: Routes.admin_teams_path(conn, :show, updated_team))
+        |> put_status(:ok)
+        |> text("Teams updated successfully.")
 
-      {:error, changeset} ->
-        render(conn, "edit.json", team: team, changeset: changeset)
+        {:error, {status, message}} ->
+          conn
+          |> put_status(status)
+          |> text(message)
     end
   end
 
@@ -73,10 +77,15 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    team = Teams |> Repo.get!(id)
-    {:ok, _} = Teams.delete_team(team)
-    text(conn, "Team deleted successfully.")
+  def delete(conn, %{"teamId" => id}) do
+    team = Repo.get!(Team, id)
+
+    case Teams.delete_team(team) do
+      {:ok, _} ->
+        text(conn, "Team deleted successfully.")
+      {:error, _changeset} ->
+        text(conn, "Error deleting the team.")
+    end
   end
 
   swagger_path :index do
