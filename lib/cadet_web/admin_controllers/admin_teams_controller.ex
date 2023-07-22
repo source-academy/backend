@@ -49,33 +49,33 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def update(conn, %{"id" => id, "team" => team_params}) do
-    team = Teams
-           |> Repo.get!(id)
-           |> Repo.preload([:assessment, team_members: [:student]])
+  def update(conn, %{"teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids}) do
+    team = Team
+           |> Repo.get!(teamId)
+           |> Repo.preload([assessment: [:config], team_members: [student: [:user]]])
 
-    case Teams.update_team(team, team_params) do
+    case Teams.update_team(team, assessmentId, student_ids) do
       {:ok, updated_team} ->
         conn
         |> put_status(:ok)
         |> text("Teams updated successfully.")
 
-        {:error, {status, message}} ->
-          conn
-          |> put_status(status)
-          |> text(message)
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
     end
   end
 
-  def bulk_upload(conn, %{"teams" => teams_params}) do
-    case Teams.bulk_upload_teams(teams_params) do
-      {:ok, _teams} ->
-        text(conn, "Teams uploaded successfully.")
+  # def bulk_upload(conn, %{"teams" => teams_params}) do
+  #   case Teams.bulk_upload_teams(teams_params) do
+  #     {:ok, _teams} ->
+  #       text(conn, "Teams uploaded successfully.")
 
-      {:error, changesets} ->
-        render(conn, "bulk_upload.json", changesets: changesets)
-    end
-  end
+  #     {:error, changesets} ->
+  #       render(conn, "bulk_upload.json", changesets: changesets)
+  #   end
+  # end
 
   def delete(conn, %{"teamId" => id}) do
     team = Repo.get!(Team, id)
