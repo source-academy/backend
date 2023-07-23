@@ -68,13 +68,13 @@ if Cadet.Env.env() == :dev do
 
   # Assessments
   for i <- 1..5 do
-    config = insert(:assessment_config, %{type: "Mission#{i}", order: i, course: course1})
+    config = insert(:assessment_config, %{type: "Missions", order: i, course: course1})
     assessment1 = insert(:assessment, %{is_published: true, config: config, course: course1})
 
     config2 = insert(:assessment_config, %{type: "Homework#{i}", order: i, course: course2})
     assessment2 = insert(:assessment, %{is_published: true, config: config2, course: course2})
 
-    config3 = insert(:assessment_config, %{type: "Path#{i}", order: i, course: course1})
+    config3 = insert(:assessment_config, %{type: "Paths", order: i, course: course1})
     assessment3 = insert(:assessment, %{is_published: true, config: config3, course: course1})
 
     programming_questions =
@@ -126,18 +126,19 @@ if Cadet.Env.env() == :dev do
     team1a = insert(:team, %{assessment: assessment1})
     team1b = insert(:team, %{assessment: assessment1})
 
-    team1a = insert(:team, %{assessment: assessment1})
-    team1b = insert(:team, %{assessment: assessment1})
-    IO.inspect(team1a)
-    IO.inspect(team1b)
-    # Team members
-    member1 = insert(:team_member, %{student: student1d_cr, team: team1a})
-    member2 = insert(:team_member, %{student: student1e_cr, team: team1a})
-    IO.inspect(member1)
-    IO.inspect(member2)
+    team3a = insert(:team, %{assessment: assessment3})
+    team3b = insert(:team, %{assessment: assessment3})
 
-    member3 = insert(:team_member, %{student: student1b_cr, team: team1b})
-    member4 = insert(:team_member, %{student: student1c_cr, team: team1b})
+    # Team members
+    member1a = insert(:team_member, %{student: student1d_cr, team: team1a})
+    member1b = insert(:team_member, %{student: student1e_cr, team: team1a})
+    member1c = insert(:team_member, %{student: student1b_cr, team: team1b})
+    member1d = insert(:team_member, %{student: student1c_cr, team: team1b})
+
+    member2a = insert(:team_member, %{student: student1d_cr, team: team3a})
+    member2b = insert(:team_member, %{student: student1e_cr, team: team3a})
+    member2c = insert(:team_member, %{student: student1b_cr, team: team3b})
+    member2d = insert(:team_member, %{student: student1c_cr, team: team3b})
 
     # # Notifications
     # for submission <- submissions do
