@@ -835,7 +835,7 @@ defmodule Cadet.Assessments do
       end)
       |> Repo.transaction()
 
-      Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+      Notifications.handle_unsubmit_notifications(
         submission.assessment.id,
         Repo.get(CourseRegistration, submission.student_id)
       )
@@ -891,7 +891,7 @@ defmodule Cadet.Assessments do
       )
       |> Repo.transaction()
 
-      Cadet.Accounts.Notifications.handle_unpublish_grades_notifications(
+      Notifications.handle_unpublish_grades_notifications(
         submission.assessment.id,
         Repo.get(CourseRegistration, submission.student_id)
       )
@@ -943,7 +943,7 @@ defmodule Cadet.Assessments do
       )
       |> Repo.transaction()
 
-      Cadet.Accounts.Notifications.write_notification_when_graded(
+      Notifications.write_notification_when_graded(
         submission.id,
         :graded
       )
