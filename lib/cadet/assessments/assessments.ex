@@ -249,7 +249,8 @@ defmodule Cadet.Assessments do
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^course_reg.id)
-        # change a.xp and a.xp_adjustment to 0 if a.is_grading_published is false and return all answers
+        # change a.xp and a.xp_adjustment to 0
+        # if a.is_grading_published is false and return all answers
         |> select([a, s], %{
           a
           | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp),
@@ -911,7 +912,8 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # This function changes the is_grading_published field of the submission to true only if all the answers are graded
+  # This function changes the is_grading_published field of the submission to true
+  # only if all the answers are graded
   # and sends a notification to the student
   def publish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
       when is_ecto_id(submission_id) do
