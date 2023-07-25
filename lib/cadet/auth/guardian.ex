@@ -8,16 +8,24 @@ defmodule Cadet.Auth.Guardian do
   alias Guardian.DB
 
   def subject_for_token(user, _claims) do
-    {:ok, to_string(user.id)}
+    {:ok,
+     URI.encode_query(%{
+       id: user.id,
+       username: user.username,
+       provider: user.provider
+     })}
   end
 
   def resource_from_claims(claims) do
-    user = Accounts.get_user(claims["sub"])
+    case claims["sub"] |> URI.decode_query() |> Map.fetch("id") do
+      :error ->
+        {:error, :bad_request}
 
-    if user == nil do
-      {:error, :not_found}
-    else
-      {:ok, user}
+      {:ok, id} ->
+        case user = Accounts.get_user(id) do
+          nil -> {:error, :not_found}
+          _ -> {:ok, user}
+        end
     end
   end
 

@@ -7,8 +7,7 @@ defmodule Cadet.Mixfile do
       version: "0.0.1",
       elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
-      # compilers: [:phoenix, :gettext] ++ Mix.compilers() ++ [:phoenix_swagger],
-      compilers: [:phoenix] ++ Mix.compilers() ++ [:phoenix_swagger],
+      compilers: Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -71,6 +70,7 @@ defmodule Cadet.Mixfile do
       {:jason, "~> 1.2"},
       {:openid_connect, "~> 0.2"},
       {:phoenix, "~> 1.5"},
+      {:phoenix_view, "~> 2.0"},
       {:phoenix_ecto, "~> 4.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:plug_cowboy, "~> 2.0"},
