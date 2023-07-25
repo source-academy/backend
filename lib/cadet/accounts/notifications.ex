@@ -179,7 +179,7 @@ defmodule Cadet.Accounts.Notifications do
     |> Repo.delete_all()
 
     write(%{
-      type: :unpublishedGrading,
+      type: :unpublished_grading,
       role: student.role,
       course_reg_id: student.id,
       assessment_id: assessment_id

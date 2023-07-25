@@ -12,5 +12,5 @@ defenum(Cadet.Accounts.NotificationType, :notification_type, [
   # Notifications for submitted assessments
   :submitted,
   # Notifications for unpublished grades
-  :unpublishedGrading
+  :unpublished_grading
 ])

@@ -305,12 +305,7 @@ defmodule Cadet.Assessments do
     submission_status =
       Submission
       |> where([s], s.student_id == ^cr.id)
-      |> select([s], [:assessment_id, :status])
-
-    grading_published_status =
-      Submission
-      |> where([s], s.student_id == ^cr.id)
-      |> select([s], [:assessment_id, :is_grading_published])
+      |> select([s], [:assessment_id, :status, :is_grading_published])
 
     assessments =
       cr.course_id
@@ -323,15 +318,12 @@ defmodule Cadet.Assessments do
         on: a.id == sa.assessment_id
       )
       |> join(:left, [a, _], s in subquery(submission_status), on: a.id == s.assessment_id)
-      |> join(:left, [a, _, _], gp in subquery(grading_published_status),
-        on: a.id == gp.assessment_id
-      )
-      |> select([a, sa, s, gp], %{
+      |> select([a, sa, s], %{
         a
-        | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", gp.is_grading_published, sa.xp),
+        | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, sa.xp),
           graded_count: sa.graded_count,
           user_status: s.status,
-          is_grading_published: gp.is_grading_published
+          is_grading_published: s.is_grading_published
       })
       |> filter_published_assessments(cr)
       |> order_by(:open_at)
@@ -880,16 +872,9 @@ defmodule Cadet.Assessments do
            {:allowed_to_unpublish?,
             role == :admin or bypass or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
-      Multi.new()
-      |> Multi.run(
-        :unpublish_grading,
-        fn _repo, _ ->
-          submission
-          |> Submission.changeset(%{is_grading_published: false})
-          |> Repo.update()
-        end
-      )
-      |> Repo.transaction()
+      submission
+      |> Submission.changeset(%{is_grading_published: false})
+      |> Repo.update()
 
       Notifications.handle_unpublish_grades_notifications(
         submission.assessment.id,
@@ -932,16 +917,9 @@ defmodule Cadet.Assessments do
            {:allowed_to_publish?,
             role == :admin or bypass or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
-      Multi.new()
-      |> Multi.run(
-        :publish_grading,
-        fn _repo, _ ->
-          submission
-          |> Submission.changeset(%{is_grading_published: true})
-          |> Repo.update()
-        end
-      )
-      |> Repo.transaction()
+      submission
+      |> Submission.changeset(%{is_grading_published: true})
+      |> Repo.update()
 
       Notifications.write_notification_when_graded(
         submission.id,
