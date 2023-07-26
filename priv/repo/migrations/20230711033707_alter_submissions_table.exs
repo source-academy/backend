@@ -2,11 +2,10 @@ defmodule Cadet.Repo.Migrations.AlterSubmissionsTable do
   use Ecto.Migration
 
   def up do
-    # Drop the existing constraint
     execute("ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_student_id_fkey;")
 
     alter table(:submissions) do
-      modify(:student_id, references(:users), null: true)
+      modify(:student_id, references(:course_registrations), null: true)
       add(:team_id, references(:teams), null: true)
     end
 
@@ -20,7 +19,7 @@ defmodule Cadet.Repo.Migrations.AlterSubmissionsTable do
     execute("ALTER TABLE submissions DROP CONSTRAINT xor_constraint;")
 
     alter table(:submissions) do
-      modify(:student_id, references(:users), null: false)
+      modify(:student_id, references(:course_registrations), null: false)
       drop(:team_id)
     end
   end
