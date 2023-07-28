@@ -151,7 +151,7 @@ defmodule Cadet.Accounts.Notifications do
     Notification
     |> where(course_reg_id: ^student.id)
     |> where(assessment_id: ^assessment_id)
-    |> where([n], n.type in ^[:autograded, :graded, :unpublishedGrading])
+    |> where([n], n.type in ^[:autograded, :graded, :unpublished_grading])
     |> Repo.delete_all()
 
     write(%{

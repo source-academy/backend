@@ -180,7 +180,9 @@ defmodule Cadet.Test.Seeds do
     submissions =
       students
       |> Enum.take(2)
-      |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1}))
+      |> Enum.map(
+        &insert(:submission, %{assessment: assessment, student: &1, is_grading_published: true})
+      )
 
     # Programming Answers
     programming_answers =

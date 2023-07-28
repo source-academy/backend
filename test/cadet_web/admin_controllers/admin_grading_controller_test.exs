@@ -137,7 +137,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "isGradingPublished" => submission.is_grading_published
           }
         end)
 
@@ -200,7 +201,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "isGradingPublished" => submission.is_grading_published
           }
         end)
 
@@ -797,7 +799,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "isGradingPublished" => submission.is_grading_published
           }
         end)
 
@@ -840,7 +843,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "isGradingPublished" => submission.is_grading_published
           }
         end)
 

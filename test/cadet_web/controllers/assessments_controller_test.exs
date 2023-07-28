@@ -88,6 +88,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> get(build_url(course1.id))
           |> json_response(200)
           |> Enum.map(&Map.delete(&1, "xp"))
+          |> Enum.map(&Map.delete(&1, "isGradingPublished"))
 
         assert expected == resp
       end
@@ -161,7 +162,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
-            "questionCount" => 9
+            "questionCount" => 9,
+            "isGradingPublished" => true
           }
         )
 
@@ -271,6 +273,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "private" => false,
               "gradedCount" => 0,
               "questionCount" => 9,
+              "isGradingPublished" => nil,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
                   false

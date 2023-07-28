@@ -79,7 +79,8 @@ if Cadet.Env.env() == :dev do
         &insert(:submission, %{
           assessment: assessment,
           student: &1,
-          status: Enum.random(SubmissionStatus.__enum_map__())
+          status: Enum.random(SubmissionStatus.__enum_map__()),
+          is_grading_published: false
         })
       )
 
