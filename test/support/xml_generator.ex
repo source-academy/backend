@@ -47,6 +47,7 @@ defmodule Cadet.Test.XMLGenerator do
             story: :story
           }),
           [
+            default_prompt("This is the default prompt for the assessment."),
             password(assessment.password),
             reading(assessment.reading),
             websummary(assessment.summary_short),
@@ -287,6 +288,11 @@ defmodule Cadet.Test.XMLGenerator do
   defp testcases(children) do
     {"TESTCASES", nil, children}
   end
+
+  defp default_prompt(content) do
+    {"DEFAULTPROMPT", nil, content}
+  end
+
 
   defp public(raw_attrs, content) do
     {"PUBLIC", map_permit_keys(raw_attrs, ~w(score answer)a), content}
