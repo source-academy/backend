@@ -1630,12 +1630,32 @@ defmodule Cadet.Assessments do
   end
 
   defp create_empty_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
-    %Submission{}
-    |> Submission.changeset(%{student: cr, assessment: assessment})
-    |> Repo.insert()
-    |> case do
-      {:ok, submission} -> {:ok, submission}
-      {:error, _} -> {:error, :race_condition}
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment.id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr.id,
+        limit: 1
+      )
+    team = Repo.one(query)
+
+    case team do
+      %Team{} ->
+        %Submission{}
+        |> Submission.changeset(%{team: team, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+          {:error, _} -> {:error, :race_condition}
+        end
+      _ ->
+        %Submission{}
+        |> Submission.changeset(%{student: cr, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+          {:error, _} -> {:error, :race_condition}
+        end
     end
   end
 
