@@ -281,10 +281,20 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(cr = %CourseRegistration{}) do
+    query =
+      from(t in Team,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr.id,
+      )
+    teams = Repo.all(query)
+
     submission_aggregates =
       Submission
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
-      |> where([s], s.student_id == ^cr.id)
+      |> where(
+        [s],
+        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, &(&1.id))
+      )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
         assessment_id: s.assessment_id,
@@ -295,7 +305,10 @@ defmodule Cadet.Assessments do
 
     submission_status =
       Submission
-      |> where([s], s.student_id == ^cr.id)
+      |> where(
+        [s],
+        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, &(&1.id))
+      )
       |> select([s], [:assessment_id, :status])
 
     assessments =
@@ -714,12 +727,30 @@ defmodule Cadet.Assessments do
 
   def get_submission(assessment_id, %CourseRegistration{id: cr_id})
       when is_ecto_id(assessment_id) do
-    Submission
-    |> where(assessment_id: ^assessment_id)
-    |> where(student_id: ^cr_id)
-    |> join(:inner, [s], a in assoc(s, :assessment))
-    |> preload([_, a], assessment: a)
-    |> Repo.one()
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment_id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id,
+        limit: 1
+      )
+    team = Repo.one(query)
+    case team do
+      %Team{} ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(team_id: ^team.id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+      _ ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(student_id: ^cr_id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+    end
   end
 
   def get_submission_by_id(submission_id) when is_ecto_id(submission_id) do
@@ -1475,11 +1506,29 @@ defmodule Cadet.Assessments do
   end
 
   defp find_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment.id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr.id,
+        limit: 1
+      )
+    team = Repo.one(query)
+
     submission =
-      Submission
-      |> where(student_id: ^cr.id)
-      |> where(assessment_id: ^assessment.id)
-      |> Repo.one()
+      case team do
+        %Team{} ->
+          Submission
+          |> where(team_id: ^team.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+
+        _ ->
+          Submission
+          |> where(student_id: ^cr.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+      end
 
     if submission do
       {:ok, submission}
