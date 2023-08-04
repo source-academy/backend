@@ -67,8 +67,6 @@ defmodule Cadet.Assessments.Assessment do
   defp validate_config_course(changeset) do
     config_id = get_field(changeset, :config_id)
     course_id = get_field(changeset, :course_id)
-    IO.puts("Course ID: #{inspect(course_id)}")
-    IO.puts("Config ID: #{inspect(config_id)}")
     case Repo.get(AssessmentConfig, config_id) do
       nil ->
         add_error(changeset, :config, "does not exist")
