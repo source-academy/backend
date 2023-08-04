@@ -90,6 +90,8 @@ defmodule CadetWeb.Router do
     put("/user/research_agreement", UserController, :update_research_agreement)
 
     get("/config", CoursesController, :index)
+
+    get("/team/:assessmentid", TeamController, :index)
   end
 
   # Authenticated Pages
