@@ -12,6 +12,9 @@ defmodule Cadet.Assessments do
     Notification,
     Notifications,
     User,
+    Team,
+    Teams,
+    TeamMember,
     CourseRegistration,
     CourseRegistrations
   }
@@ -88,9 +91,19 @@ defmodule Cadet.Assessments do
   end
 
   def assessments_total_xp(%CourseRegistration{id: cr_id}) do
+    query =
+      from(t in Team,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id,
+      )
+    teams = Repo.all(query)
+
     submission_xp =
       Submission
-      |> where(student_id: ^cr_id)
+      |> where(
+        [s],
+        s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, &(&1.id))
+      )
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
@@ -243,11 +256,27 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
+      
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment.id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^course_reg.id,
+        limit: 1
+      )
+    team = Repo.one(query)
+    team_id =
+      if team do
+        team.id
+      else
+        -1
+      end
+    
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
-        |> where([_, s], s.student_id == ^course_reg.id)
+        |> where([_, s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
 
       questions =
         Question
@@ -1325,16 +1354,20 @@ defmodule Cadet.Assessments do
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
-      |> join(:inner, [a, ..., ast], ac in assoc(ast, :config))
+      |> join(:inner, [..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
-      |> join(:left, [a, ..., g], gu in assoc(g, :user))
+      |> join(:left, [_, ..., g], gu in assoc(g, :user))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
-      |> join(:inner, [a, ..., s], st in assoc(s, :student))
-      |> join(:inner, [a, ..., st], u in assoc(st, :user))
-      |> preload([_, q, ast, ac, g, gu, s, st, u],
+      |> join(:left, [_, ..., s], st in assoc(s, :student))
+      |> join(:left, [..., st], u in assoc(st, :user))
+      |> join(:left, [..., s, _, _], t in assoc(s, :team))
+      |> join(:left, [..., t], tm in assoc(t, :team_members)) 
+      |> join(:left, [..., tm], tms in assoc(tm, :student)) 
+      |> join(:left, [..., tms], tmu in assoc(tms, :user)) 
+      |> preload([_, q, ast, ac, g, gu, s, st, u, t, tm, tms, tmu],
         question: {q, assessment: {ast, config: ac}},
         grader: {g, user: gu},
-        submission: {s, student: {st, user: u}}
+        submission: {s, student: {st, user: u}, team: {t, team_members: {tm, student: {tms, user: tmu}}}}
       )
 
     answers =
