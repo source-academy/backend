@@ -1187,10 +1187,9 @@ defmodule Cadet.Assessments do
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
     case Repo.query(
-           """
-           select json_agg(q)::TEXT from
-           (
-             select
+          """
+           SELECT json_agg(q)::TEXT FROM (
+             SELECT
                s.id,
                s.status,
                s."unsubmittedAt",
@@ -1199,12 +1198,16 @@ defmodule Cadet.Assessments do
                s."xpBonus",
                s."gradedCount",
                assts.jsn as assessment,
-               students.jsn as student,
+               CASE
+                 WHEN s.student_id IS NOT NULL THEN students.jsn
+                 ELSE to_json(team)
+               END AS participant,
                unsubmitters.jsn as "unsubmittedBy"
-             from
-               (select
+             FROM (
+               SELECT
                  s.id,
                  s.student_id,
+                 s.team_id,
                  s.assessment_id,
                  s.status,
                  s.unsubmitted_at as "unsubmittedAt",
@@ -1212,54 +1215,67 @@ defmodule Cadet.Assessments do
                  sum(ans.xp) as xp,
                  sum(ans.xp_adjustment) as "xpAdjustment",
                  s.xp_bonus as "xpBonus",
-                 count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
-               from submissions s
-                 left join
-                 answers ans on s.id = ans.submission_id
+                 count(ans.id) FILTER (WHERE ans.grader_id IS NOT NULL) as "gradedCount"
+               FROM submissions s
+               LEFT JOIN answers ans ON s.id = ans.submission_id
                #{group_where}
-               group by s.id) s
-             inner join
-               (select
+               GROUP BY s.id
+             ) s
+             INNER JOIN (
+               SELECT
                  a.id, a."questionCount", to_json(a) as jsn
-               from
-                 (select
+               FROM (
+                 SELECT
                    a.id,
                    a.title,
                    bool_or(ac.is_manually_graded) as "isManuallyGraded",
                    max(ac.type) as "type",
                    sum(q.max_xp) as "maxXp",
                    count(q.id) as "questionCount"
-                 from assessments a
-                   left join
-                   questions q on a.id = q.assessment_id
-                   inner join
-                   assessment_configs ac on ac.id = a.config_id
-                  where a.course_id = $1
-                 group by a.id) a) assts on assts.id = s.assessment_id
-             inner join
-               (select
+                 FROM assessments a
+                 LEFT JOIN questions q ON a.id = q.assessment_id
+                 INNER JOIN assessment_configs ac ON ac.id = a.config_id
+                 WHERE a.course_id = $1
+                 GROUP BY a.id
+               ) a
+             ) assts ON assts.id = s.assessment_id
+             LEFT JOIN (
+               SELECT
                  cr.id, to_json(cr) as jsn
-               from
-                 (select
+               FROM (
+                 SELECT
                    cr.id,
                    u.name as "name",
                    g.name as "groupName",
                    g.leader_id as "groupLeaderId"
-                 from course_registrations cr
-                   left join
-                   groups g on g.id = cr.group_id
-                   inner join
-                   users u on u.id = cr.user_id) cr) students on students.id = s.student_id
-             left join
-               (select
+                 FROM course_registrations cr
+                 LEFT JOIN groups g ON g.id = cr.group_id
+                 INNER JOIN users u ON u.id = cr.user_id
+               ) cr
+             ) students ON students.id = s.student_id
+             LEFT JOIN (
+               SELECT
+                 t.id,
+                 to_json(t) as jsn,
+                 array_agg(cr.id) as student_ids,
+                 array_agg(u.name) as student_names
+               FROM teams t
+               LEFT JOIN team_members tm ON t.id = tm.team_id
+               LEFT JOIN course_registrations cr ON cr.id = tm.student_id
+               LEFT JOIN users u ON u.id = cr.user_id
+               GROUP BY t.id
+             ) team ON team.id = s.team_id
+             LEFT JOIN (
+               SELECT
                  cr.id, to_json(cr) as jsn
-               from
-                 (select
+               FROM (
+                 SELECT
                    cr.id,
                    u.name
-                 from course_registrations cr
-                   inner join
-                   users u on u.id = cr.user_id) cr) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+                 FROM course_registrations cr
+                 INNER JOIN users u ON u.id = cr.user_id
+               ) cr
+             ) unsubmitters ON s.unsubmitted_by_id = unsubmitters.id
              #{ungraded_where}
            ) q
            """,
