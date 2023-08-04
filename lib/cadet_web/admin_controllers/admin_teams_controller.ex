@@ -67,16 +67,6 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  # def bulk_upload(conn, %{"teams" => teams_params}) do
-  #   case Teams.bulk_upload_teams(teams_params) do
-  #     {:ok, _teams} ->
-  #       text(conn, "Teams uploaded successfully.")
-
-  #     {:error, changesets} ->
-  #       render(conn, "bulk_upload.json", changesets: changesets)
-  #   end
-  # end
-
   def delete(conn, %{"teamId" => id}) do
     team = Repo.get!(Team, id)
 
@@ -136,28 +126,6 @@ defmodule CadetWeb.AdminTeamsController do
       teamId(:path, :integer, "Team ID", required: true)
 
       team(:body, Schema.ref(:AdminUpdateAssessmentPayload), "Updated team details",
-        required: true
-      )
-    end
-
-    response(200, "OK")
-    response(401, "Assessment is already opened")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :bulk_update do
-    post("/admin/assessments/{assessmentId}")
-
-    summary("Updates an assessment")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-
-      assessment(:body, Schema.ref(:AdminUpdateAssessmentPayload), "Updated assessment details",
         required: true
       )
     end
