@@ -7,7 +7,7 @@ defmodule Cadet.Accounts.Teams do
   import Ecto.Query
   alias Cadet.Repo
   alias Cadet.Accounts.{Team, TeamMember, CourseRegistration}
-  alias Cadet.Assessments.Assessment
+  alias Cadet.Assessments.{Answer, Assessment, Submission}
 
   def create_team(attrs) do
     assessment_id = attrs["assessment_id"]
@@ -102,6 +102,14 @@ defmodule Cadet.Accounts.Teams do
   end
 
   def delete_team(%Team{} = team) do
+    Submission
+    |> where(team_id: ^team.id)
+    |> Repo.all()
+    |> Enum.each(fn x ->
+      Answer
+      |> where(submission_id: ^x.id)
+      |> Repo.delete_all()
+    end)
     team
     |> Repo.delete()
   end
