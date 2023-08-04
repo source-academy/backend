@@ -121,7 +121,6 @@ defmodule CadetWeb.AdminAssessmentsController do
       else
         assessment = Map.put(assessment, :open_at, formatted_open_date)
         assessment = Map.put(assessment, :close_at, formatted_close_date)
-        IO.inspect("good")
         {:ok, assessment}
       end
     end
