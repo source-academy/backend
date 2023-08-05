@@ -1731,7 +1731,8 @@ defmodule Cadet.Assessments do
           answer: answer_content,
           question_id: question.id,
           submission_id: submission.id,
-          type: question.type
+          type: question.type,
+          last_modified_at: Timex.now()
         })
 
       Repo.insert(
