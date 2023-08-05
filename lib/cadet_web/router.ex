@@ -90,6 +90,8 @@ defmodule CadetWeb.Router do
     put("/user/research_agreement", UserController, :update_research_agreement)
 
     get("/config", CoursesController, :index)
+
+    get("/team/:assessmentid", TeamController, :index)
   end
 
   # Authenticated Pages
@@ -128,6 +130,7 @@ defmodule CadetWeb.Router do
     )
 
     get("/users", AdminUserController, :index)
+    get("/users/teamformation", AdminUserController, :get_students)
     put("/users", AdminUserController, :upsert_users_and_groups)
     get("/users/:course_reg_id/assessments", AdminAssessmentsController, :index)
 
@@ -167,6 +170,12 @@ defmodule CadetWeb.Router do
       AdminCoursesController,
       :delete_assessment_config
     )
+
+    get("/teams", AdminTeamsController, :index)
+    post("/teams", AdminTeamsController, :create)
+    delete("/teams/:teamid", AdminTeamsController, :delete)
+    put("/teams/:teamid", AdminTeamsController, :update)
+    post("/teams/upload", AdminTeamsController, :bulk_upload)
   end
 
   # Other scopes may use custom stacks.

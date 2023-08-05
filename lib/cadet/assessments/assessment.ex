@@ -32,7 +32,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:story, :string)
     field(:reading, :string)
     field(:password, :string, default: nil)
-    field(:max_team_size, :integer, default: 1)
+    field(:max_team_size, :integer, default: 0)
 
     belongs_to(:config, AssessmentConfig)
     belongs_to(:course, Course)
@@ -67,7 +67,6 @@ defmodule Cadet.Assessments.Assessment do
   defp validate_config_course(changeset) do
     config_id = get_field(changeset, :config_id)
     course_id = get_field(changeset, :course_id)
-
     case Repo.get(AssessmentConfig, config_id) do
       nil ->
         add_error(changeset, :config, "does not exist")

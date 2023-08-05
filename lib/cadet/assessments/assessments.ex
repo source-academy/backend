@@ -12,6 +12,9 @@ defmodule Cadet.Assessments do
     Notification,
     Notifications,
     User,
+    Team,
+    Teams,
+    TeamMember,
     CourseRegistration,
     CourseRegistrations
   }
@@ -88,9 +91,19 @@ defmodule Cadet.Assessments do
   end
 
   def assessments_total_xp(%CourseRegistration{id: cr_id}) do
+    query =
+      from(t in Team,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id,
+      )
+    teams = Repo.all(query)
+
     submission_xp =
       Submission
-      |> where(student_id: ^cr_id)
+      |> where(
+        [s],
+        s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, &(&1.id))
+      )
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
@@ -243,11 +256,27 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
+      
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment.id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^course_reg.id,
+        limit: 1
+      )
+    team = Repo.one(query)
+    team_id =
+      if team do
+        team.id
+      else
+        -1
+      end
+    
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
-        |> where([_, s], s.student_id == ^course_reg.id)
+        |> where([_, s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
 
       questions =
         Question
@@ -281,10 +310,20 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(cr = %CourseRegistration{}) do
+    query =
+      from(t in Team,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr.id,
+      )
+    teams = Repo.all(query)
+
     submission_aggregates =
       Submission
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
-      |> where([s], s.student_id == ^cr.id)
+      |> where(
+        [s],
+        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, &(&1.id))
+      )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
         assessment_id: s.assessment_id,
@@ -295,7 +334,10 @@ defmodule Cadet.Assessments do
 
     submission_status =
       Submission
-      |> where([s], s.student_id == ^cr.id)
+      |> where(
+        [s],
+        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, &(&1.id))
+      )
       |> select([s], [:assessment_id, :status])
 
     assessments =
@@ -713,12 +755,30 @@ defmodule Cadet.Assessments do
 
   def get_submission(assessment_id, %CourseRegistration{id: cr_id})
       when is_ecto_id(assessment_id) do
-    Submission
-    |> where(assessment_id: ^assessment_id)
-    |> where(student_id: ^cr_id)
-    |> join(:inner, [s], a in assoc(s, :assessment))
-    |> preload([_, a], assessment: a)
-    |> Repo.one()
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment_id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id,
+        limit: 1
+      )
+    team = Repo.one(query)
+    case team do
+      %Team{} ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(team_id: ^team.id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+      _ ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(student_id: ^cr_id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+    end
   end
 
   def get_submission_by_id(submission_id) when is_ecto_id(submission_id) do
@@ -817,10 +877,26 @@ defmodule Cadet.Assessments do
       end)
       |> Repo.transaction()
 
-      Cadet.Accounts.Notifications.handle_unsubmit_notifications(
-        submission.assessment.id,
-        Repo.get(CourseRegistration, submission.student_id)
-      )
+      case submission.student_id do
+        nil -> # Team submission, handle notifications for team members
+          team = Repo.get(Team, submission.team_id)
+          team ->
+            team_members =
+              from t in Team,
+                join: tm in TeamMember, on: t.id == tm.team_id,
+                join: cr in CourseRegistration, on: tm.student_id == cr.student_id,
+                where: t.id == ^team.id,
+                select: cr.id
+
+          Enum.each(team_members, fn tm_id ->
+            Cadet.Accounts.Notifications.handle_unsubmit_notifications(submission.assessment.id, tm_id)
+          end)
+        student_id -> 
+          Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+            submission.assessment.id,
+            Repo.get(CourseRegistration, submission.student_id)
+          )
+      end
 
       {:ok, nil}
     else
@@ -1186,10 +1262,9 @@ defmodule Cadet.Assessments do
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
     case Repo.query(
-           """
-           select json_agg(q)::TEXT from
-           (
-             select
+          """
+           SELECT json_agg(q)::TEXT FROM (
+             SELECT
                s.id,
                s.status,
                s."unsubmittedAt",
@@ -1198,12 +1273,16 @@ defmodule Cadet.Assessments do
                s."xpBonus",
                s."gradedCount",
                assts.jsn as assessment,
-               students.jsn as student,
+               CASE
+                 WHEN s.student_id IS NOT NULL THEN students.jsn
+                 ELSE to_json(team)
+               END AS participant,
                unsubmitters.jsn as "unsubmittedBy"
-             from
-               (select
+             FROM (
+               SELECT
                  s.id,
                  s.student_id,
+                 s.team_id,
                  s.assessment_id,
                  s.status,
                  s.unsubmitted_at as "unsubmittedAt",
@@ -1211,54 +1290,67 @@ defmodule Cadet.Assessments do
                  sum(ans.xp) as xp,
                  sum(ans.xp_adjustment) as "xpAdjustment",
                  s.xp_bonus as "xpBonus",
-                 count(ans.id) filter (where ans.grader_id is not null) as "gradedCount"
-               from submissions s
-                 left join
-                 answers ans on s.id = ans.submission_id
+                 count(ans.id) FILTER (WHERE ans.grader_id IS NOT NULL) as "gradedCount"
+               FROM submissions s
+               LEFT JOIN answers ans ON s.id = ans.submission_id
                #{group_where}
-               group by s.id) s
-             inner join
-               (select
+               GROUP BY s.id
+             ) s
+             INNER JOIN (
+               SELECT
                  a.id, a."questionCount", to_json(a) as jsn
-               from
-                 (select
+               FROM (
+                 SELECT
                    a.id,
                    a.title,
                    bool_or(ac.is_manually_graded) as "isManuallyGraded",
                    max(ac.type) as "type",
                    sum(q.max_xp) as "maxXp",
                    count(q.id) as "questionCount"
-                 from assessments a
-                   left join
-                   questions q on a.id = q.assessment_id
-                   inner join
-                   assessment_configs ac on ac.id = a.config_id
-                  where a.course_id = $1
-                 group by a.id) a) assts on assts.id = s.assessment_id
-             inner join
-               (select
+                 FROM assessments a
+                 LEFT JOIN questions q ON a.id = q.assessment_id
+                 INNER JOIN assessment_configs ac ON ac.id = a.config_id
+                 WHERE a.course_id = $1
+                 GROUP BY a.id
+               ) a
+             ) assts ON assts.id = s.assessment_id
+             LEFT JOIN (
+               SELECT
                  cr.id, to_json(cr) as jsn
-               from
-                 (select
+               FROM (
+                 SELECT
                    cr.id,
                    u.name as "name",
                    g.name as "groupName",
                    g.leader_id as "groupLeaderId"
-                 from course_registrations cr
-                   left join
-                   groups g on g.id = cr.group_id
-                   inner join
-                   users u on u.id = cr.user_id) cr) students on students.id = s.student_id
-             left join
-               (select
+                 FROM course_registrations cr
+                 LEFT JOIN groups g ON g.id = cr.group_id
+                 INNER JOIN users u ON u.id = cr.user_id
+               ) cr
+             ) students ON students.id = s.student_id
+             LEFT JOIN (
+               SELECT
+                 t.id,
+                 to_json(t) as jsn,
+                 array_agg(cr.id) as student_ids,
+                 array_agg(u.name) as student_names
+               FROM teams t
+               LEFT JOIN team_members tm ON t.id = tm.team_id
+               LEFT JOIN course_registrations cr ON cr.id = tm.student_id
+               LEFT JOIN users u ON u.id = cr.user_id
+               GROUP BY t.id
+             ) team ON team.id = s.team_id
+             LEFT JOIN (
+               SELECT
                  cr.id, to_json(cr) as jsn
-               from
-                 (select
+               FROM (
+                 SELECT
                    cr.id,
                    u.name
-                 from course_registrations cr
-                   inner join
-                   users u on u.id = cr.user_id) cr) unsubmitters on s.unsubmitted_by_id = unsubmitters.id
+                 FROM course_registrations cr
+                 INNER JOIN users u ON u.id = cr.user_id
+               ) cr
+             ) unsubmitters ON s.unsubmitted_by_id = unsubmitters.id
              #{ungraded_where}
            ) q
            """,
@@ -1277,16 +1369,20 @@ defmodule Cadet.Assessments do
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
-      |> join(:inner, [a, ..., ast], ac in assoc(ast, :config))
+      |> join(:inner, [..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
-      |> join(:left, [a, ..., g], gu in assoc(g, :user))
+      |> join(:left, [_, ..., g], gu in assoc(g, :user))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
-      |> join(:inner, [a, ..., s], st in assoc(s, :student))
-      |> join(:inner, [a, ..., st], u in assoc(st, :user))
-      |> preload([_, q, ast, ac, g, gu, s, st, u],
+      |> join(:left, [_, ..., s], st in assoc(s, :student))
+      |> join(:left, [..., st], u in assoc(st, :user))
+      |> join(:left, [..., s, _, _], t in assoc(s, :team))
+      |> join(:left, [..., t], tm in assoc(t, :team_members)) 
+      |> join(:left, [..., tm], tms in assoc(tm, :student)) 
+      |> join(:left, [..., tms], tmu in assoc(tms, :user)) 
+      |> preload([_, q, ast, ac, g, gu, s, st, u, t, tm, tms, tmu],
         question: {q, assessment: {ast, config: ac}},
         grader: {g, user: gu},
-        submission: {s, student: {st, user: u}}
+        submission: {s, student: {st, user: u}, team: {t, team_members: {tm, student: {tms, user: tmu}}}}
       )
 
     answers =
@@ -1458,11 +1554,29 @@ defmodule Cadet.Assessments do
   end
 
   defp find_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment.id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr.id,
+        limit: 1
+      )
+    team = Repo.one(query)
+
     submission =
-      Submission
-      |> where(student_id: ^cr.id)
-      |> where(assessment_id: ^assessment.id)
-      |> Repo.one()
+      case team do
+        %Team{} ->
+          Submission
+          |> where(team_id: ^team.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+
+        _ ->
+          Submission
+          |> where(student_id: ^cr.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+      end
 
     if submission do
       {:ok, submission}
@@ -1564,12 +1678,32 @@ defmodule Cadet.Assessments do
   end
 
   defp create_empty_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
-    %Submission{}
-    |> Submission.changeset(%{student: cr, assessment: assessment})
-    |> Repo.insert()
-    |> case do
-      {:ok, submission} -> {:ok, submission}
-      {:error, _} -> {:error, :race_condition}
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment.id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr.id,
+        limit: 1
+      )
+    team = Repo.one(query)
+
+    case team do
+      %Team{} ->
+        %Submission{}
+        |> Submission.changeset(%{team: team, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+          {:error, _} -> {:error, :race_condition}
+        end
+      _ ->
+        %Submission{}
+        |> Submission.changeset(%{student: cr, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+          {:error, _} -> {:error, :race_condition}
+        end
     end
   end
 
