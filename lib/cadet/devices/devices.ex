@@ -206,7 +206,7 @@ defmodule Cadet.Devices do
           },
           300,
           [],
-          ''
+          ~c""
         )
 
       # ExAws includes the session token in the signed payload and doesn't allow

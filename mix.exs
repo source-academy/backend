@@ -69,7 +69,7 @@ defmodule Cadet.Mixfile do
       {:httpoison, "~> 1.6"},
       {:jason, "~> 1.2"},
       {:openid_connect, "~> 0.2"},
-      {:phoenix, "~> 1.5"},
+      {:phoenix, "~> 1.6"},
       {:phoenix_ecto, "~> 4.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:plug_cowboy, "~> 2.0"},

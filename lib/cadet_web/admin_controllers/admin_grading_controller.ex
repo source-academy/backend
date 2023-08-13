@@ -273,7 +273,9 @@ defmodule CadetWeb.AdminGradingController do
               required: true
             )
 
-            student(Schema.ref(:StudentInfo), "Student who created the submission", required: true)
+            student(Schema.ref(:StudentInfo), "Student who created the submission",
+              required: true
+            )
 
             unsubmittedBy(Schema.ref(:GraderInfo))
             unsubmittedAt(:string, "Last unsubmitted at", format: "date-time", required: false)
