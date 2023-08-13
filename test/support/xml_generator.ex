@@ -293,6 +293,7 @@ defmodule Cadet.Test.XMLGenerator do
     {"DEFAULTPROMPT", nil, content}
   end
 
+
   defp public(raw_attrs, content) do
     {"PUBLIC", map_permit_keys(raw_attrs, ~w(score answer)a), content}
   end
