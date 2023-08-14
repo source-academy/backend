@@ -753,7 +753,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def get_submission(assessment_id, %CourseRegistration{id: cr_id})
+    def get_submission(assessment_id, %CourseRegistration{id: cr_id})
       when is_ecto_id(assessment_id) do
     query =
       from(t in Team,
@@ -1737,9 +1737,55 @@ defmodule Cadet.Assessments do
 
       Repo.insert(
         answer_changeset,
-        on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
+        on_conflict: [set: [answer: get_change(answer_changeset, :answer), last_modified_at: Timex.now()]],
         conflict_target: [:submission_id, :question_id]
       )
+    end
+  end
+
+  def checkLastModifiedAnswer(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        last_modified_at,
+        force_submit
+      ) do
+    with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+         {:status, true} <- {:status, force_submit or submission.status != :submitted},
+         {:ok, is_modified} <- check_last_modified_answer(submission, question, last_modified_at, cr_id)  do
+      {:ok, is_modified}
+    else
+      {:status, _} ->
+        {:error, {:forbidden, "Assessment submission already finalised"}}
+
+      {:error, :race_condition} ->
+        {:error, {:internal_server_error, "Please try again later."}}
+
+      {:error, :invalid_vote} ->
+        {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
+
+      _ ->
+        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+    end
+  end
+
+  defp check_last_modified_answer(
+         submission = %Submission{},
+         question = %Question{},
+         last_modified_at,
+         course_reg_id
+       ) do
+    case Repo.get_by(Answer, submission_id: submission.id, question_id: question.id) do
+
+      %Answer{last_modified_at: existing_last_modified_at} ->
+        existing_iso8601 = DateTime.to_iso8601(existing_last_modified_at)
+        if existing_iso8601 == last_modified_at do
+          {:ok, false}
+        else
+          {:ok, true}
+        end
+
+      nil ->
+        {:ok, false}
     end
   end
 
