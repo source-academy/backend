@@ -1,10 +1,11 @@
 defmodule Cadet.Accounts.Teams do
 
   use Cadet, [:context, :display]
-
   use Ecto.Schema
+  
   import Ecto.Changeset
   import Ecto.Query
+
   alias Cadet.Repo
   alias Cadet.Accounts.{Team, TeamMember, CourseRegistration}
   alias Cadet.Assessments.{Answer, Assessment, Submission}
@@ -19,9 +20,7 @@ defmodule Cadet.Accounts.Teams do
         {:halt, {:error, {:conflict, "Team with the same members already exists for this assessment!"}}}
       else
         {:ok, team} = %Team{}
-                    |> cast(attrs, [:assessment_id])
-                    |> validate_required([:assessment_id])
-                    |> foreign_key_constraint(:assessment_id)
+                    |> Team.changeset(attrs)
                     |> Repo.insert()
         team_id = team.id
         Enum.each(team_attrs, fn student ->
@@ -66,9 +65,6 @@ defmodule Cadet.Accounts.Teams do
       |> Repo.update()
       |> case do
         {:ok, updated_team} ->
-          if old_assessment_id != new_assessment_id do
-            delete_associated_submission(team_id, old_assessment_id)
-          end
 
           update_team_members(updated_team, student_ids, team_id)
           {:ok, updated_team}
@@ -96,9 +92,6 @@ defmodule Cadet.Accounts.Teams do
       from(tm in TeamMember, where: tm.team_id == ^team_id and tm.student_id == ^student_id)
       |> Repo.delete_all()
     end)
-  end
-
-  defp delete_associated_submission(team_id, old_assessment_id) do
   end
 
   def delete_team(%Team{} = team) do
