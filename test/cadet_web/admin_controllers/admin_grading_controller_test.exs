@@ -122,6 +122,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -185,6 +186,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -291,6 +293,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 }
               }
@@ -338,6 +341,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 }
               }
@@ -380,6 +384,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "solution" => ""
@@ -782,6 +787,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -825,6 +831,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "student" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -931,6 +938,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 }
               }
@@ -978,6 +986,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 }
               }
@@ -1020,6 +1029,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "solution" => ""
