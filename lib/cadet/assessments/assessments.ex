@@ -1242,6 +1242,7 @@ defmodule Cadet.Assessments do
                  (select
                    cr.id,
                    u.name as "name",
+                   u.username as "username",
                    g.name as "groupName",
                    g.leader_id as "groupLeaderId"
                  from course_registrations cr
