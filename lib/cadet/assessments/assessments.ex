@@ -1224,6 +1224,7 @@ defmodule Cadet.Assessments do
                  (select
                    a.id,
                    a.title,
+                   a.number as "assessmentNumber",
                    bool_or(ac.is_manually_graded) as "isManuallyGraded",
                    max(ac.type) as "type",
                    sum(q.max_xp) as "maxXp",
