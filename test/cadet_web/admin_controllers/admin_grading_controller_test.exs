@@ -133,7 +133,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
@@ -197,7 +198,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
@@ -798,7 +800,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
@@ -842,7 +845,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
