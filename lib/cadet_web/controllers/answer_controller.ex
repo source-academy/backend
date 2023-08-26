@@ -47,7 +47,7 @@ defmodule CadetWeb.AnswerController do
            {:question, Assessments.get_question(question_id)},
          {:is_open?, true} <-
            {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
-         {:ok, lastModified} <- Assessments.checkLastModifiedAnswer(question, course_reg, last_modified_at, can_bypass?) do
+         {:ok, lastModified} <- Assessments.has_last_modified_answer?(question, course_reg, last_modified_at, can_bypass?) do
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/json")

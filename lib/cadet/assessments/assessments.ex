@@ -13,7 +13,6 @@ defmodule Cadet.Assessments do
     Notifications,
     User,
     Team,
-    Teams,
     TeamMember,
     CourseRegistration,
     CourseRegistrations
@@ -1743,7 +1742,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def checkLastModifiedAnswer(
+  def has_last_modified_answer?(
         question = %Question{},
         cr = %CourseRegistration{id: cr_id},
         last_modified_at,
@@ -1751,7 +1750,7 @@ defmodule Cadet.Assessments do
       ) do
     with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
-         {:ok, is_modified} <- check_last_modified_answer(submission, question, last_modified_at, cr_id)  do
+         {:ok, is_modified} <- answer_last_modified?(submission, question, last_modified_at)  do
       {:ok, is_modified}
     else
       {:status, _} ->
@@ -1768,11 +1767,10 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp check_last_modified_answer(
+  defp answer_last_modified?(
          submission = %Submission{},
          question = %Question{},
-         last_modified_at,
-         course_reg_id
+         last_modified_at
        ) do
     case Repo.get_by(Answer, submission_id: submission.id, question_id: question.id) do
 

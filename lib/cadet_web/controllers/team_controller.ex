@@ -1,4 +1,8 @@
 defmodule CadetWeb.TeamController do
+  @moduledoc """
+  Controller module for handling team-related actions.
+  """
+
   use CadetWeb, :controller
   use PhoenixSwagger
 
@@ -50,4 +54,34 @@ defmodule CadetWeb.TeamController do
     
     teamFormationOverview
   end
+
+  swagger_path :index do
+    get("/admin/teams")
+
+    summary("Fetches team formation overview based on assessment ID")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentid(:query, :string, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.ref(:TeamFormationOverview))
+    response(403, "Forbidden")
+  end
+
+  @swagger_definitions %{
+    TeamFormationOverview: %{
+      "type" => "object",
+      "properties" => %{
+        "teamId" => %{"type" => "number", "description" => "The ID of the team"},
+        "assessmentId" => %{"type" => "number", "description" => "The ID of the assessment"},
+        "assessmentName" => %{"type" => "string", "description" => "The name of the assessment"},
+        "assessmentType" => %{"type" => "string", "description" => "The type of the assessment"},
+        "studentIds" => %{"type" => "array", "items" => %{"type" => "number"}, "description" => "List of student IDs"},
+        "studentNames" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "List of student names"}
+      },
+      "required" => ["teamId", "assessmentId", "assessmentName", "assessmentType", "studentIds", "studentNames"]
+    }
+  }
 end

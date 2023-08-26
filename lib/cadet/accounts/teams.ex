@@ -14,7 +14,7 @@ defmodule Cadet.Accounts.Teams do
   alias Cadet.Assessments.{Answer, Assessment, Submission}
 
   @doc """
-  Creates a new team and assigns team members to it.
+  Creates a new team and assigns an assessment and team members to it.
 
   ## Parameters
 
