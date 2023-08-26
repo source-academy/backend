@@ -169,20 +169,19 @@ defmodule Cadet.Accounts.Notifications do
   @spec write_notification_when_graded(integer(), any()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_when_graded(submission_id, type) when type in [:graded, :autograded] do
-    submission =
-      Submission
-      |> Repo.get_by(id: submission_id)
-    {:ok, 
-      case submission.student_id do
-        nil -> 
+    case Repo.get(Submission, submission_id) do
+      nil ->
+        {:error, %Ecto.Changeset{}}
+      submission ->
+        case submission.student_id do
+          nil ->
             team = Repo.get(Team, submission.team_id)
-            team ->
-              team_members =
-                from t in Team,
-                  join: tm in TeamMember, on: t.id == tm.team_id,
-                  join: cr in CourseRegistration, on: tm.student_id == cr.student_id,
-                  where: t.id == ^team.id,
-                  select: cr.id
+            team_members =
+              from t in Team,
+                join: tm in TeamMember, on: t.id == tm.team_id,
+                join: cr in CourseRegistration, on: tm.student_id == cr.student_id,
+                where: t.id == ^team.id,
+                select: cr.id
 
             Enum.each(team_members, fn tm_id ->
               write(%{
@@ -193,16 +192,16 @@ defmodule Cadet.Accounts.Notifications do
                 assessment_id: submission.assessment_id
               })
             end)
-        _ ->
+          student_id ->
             write(%{
               type: type,
               read: false,
               role: :student,
-              course_reg_id: submission.student_id,
+              course_reg_id: student_id,
               assessment_id: submission.assessment_id
             })
-      end
-    }
+        end
+    end
   end
 
   @doc """

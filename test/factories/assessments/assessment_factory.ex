@@ -38,7 +38,8 @@ defmodule Cadet.Assessments.AssessmentFactory do
           course: course,
           open_at: Timex.now(),
           close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
-          is_published: false
+          is_published: false,
+          max_team_size: 0
         }
       end
     end

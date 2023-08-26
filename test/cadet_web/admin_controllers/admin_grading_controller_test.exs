@@ -120,7 +120,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "student" => %{
+            "participant" => %{
               "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
@@ -183,7 +183,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "student" => %{
+            "participant" => %{
               "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
@@ -292,7 +292,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 "student" => %{
                   "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
-                }
+                },
+                "team" => %{}
               }
 
             :mcq ->
@@ -339,7 +340,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 "student" => %{
                   "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
-                }
+                },
+                "team" => %{}
               }
 
             :voting ->
@@ -382,6 +384,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 },
+                "team" => %{},
                 "solution" => ""
               }
           end
@@ -780,7 +783,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "student" => %{
+            "participant" => %{
               "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
@@ -823,7 +826,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "student" => %{
+            "participant" => %{
               "name" => submission.student.user.name,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
@@ -932,7 +935,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 "student" => %{
                   "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
-                }
+                },
+                "team" => %{}
               }
 
             :mcq ->
@@ -979,7 +983,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 "student" => %{
                   "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
-                }
+                },
+                "team" => %{}
               }
 
             :voting ->
@@ -1022,6 +1027,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "name" => &1.submission.student.user.name,
                   "id" => &1.submission.student.id
                 },
+                "team" => %{},
                 "solution" => ""
               }
           end
@@ -1258,7 +1264,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
         title: "mission",
         course: course,
         config: assessment_config,
-        is_published: true
+        is_published: true,
+        max_team_size: 0
       })
 
     questions =

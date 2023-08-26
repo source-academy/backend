@@ -3,7 +3,7 @@ defmodule Cadet.Assessments.SubmissionTest do
 
   use Cadet.ChangesetCase, entity: Submission
 
-  @required_fields ~w(student_id assessment_id)a
+  @required_fields ~w(assessment_id)a
 
   setup do
     course = insert(:course)
