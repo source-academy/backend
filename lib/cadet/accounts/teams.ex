@@ -1,4 +1,7 @@
 defmodule Cadet.Accounts.Teams do
+  @moduledoc """
+  This module provides functions to manage teams in the Cadet system.
+  """
 
   use Cadet, [:context, :display]
   use Ecto.Schema
@@ -10,6 +13,18 @@ defmodule Cadet.Accounts.Teams do
   alias Cadet.Accounts.{Team, TeamMember, CourseRegistration}
   alias Cadet.Assessments.{Answer, Assessment, Submission}
 
+  @doc """
+  Creates a new team and assigns team members to it.
+
+  ## Parameters
+
+    * `attrs` - A map containing the attributes for assessment id and creating the team and its members.
+
+  ## Returns
+
+  Returns a tuple `{:ok, team}` on success; otherwise, an error tuple.
+
+  """
   def create_team(attrs) do
     assessment_id = attrs["assessment_id"]
     teams = attrs["student_ids"]
@@ -35,6 +50,20 @@ defmodule Cadet.Accounts.Teams do
     end)
   end
 
+  @doc """
+  Checks if one or more students are already in another team for the same assessment.
+
+  ## Parameters
+
+    * `team_id` - ID of the team being updated (use -1 for team creation)
+    * `student_ids` - List of student IDs
+    * `assessment_id` - ID of the assessment
+
+  ## Returns
+
+  Returns `true` if any student in the list is already a member of another team for the same assessment; otherwise, returns `false`.
+
+  """
   defp student_already_in_team?(team_id, student_ids, assessment_id) do
     query =
       from tm in TeamMember,
@@ -47,7 +76,20 @@ defmodule Cadet.Accounts.Teams do
     Enum.any?(student_ids, fn student_id -> Enum.member?(existing_student_ids, student_id) end)
   end
 
+  @doc """
+  Updates an existing team, the corresponding assessment, and its members.
 
+  ## Parameters
+
+    * `team` - The existing team to be updated
+    * `new_assessment_id` - The ID of the updated assessment
+    * `student_ids` - List of student ids for team members
+
+  ## Returns
+
+  Returns a tuple `{:ok, updated_team}` on success, containing the updated team details; otherwise, an error tuple.
+
+  """
   def update_team(%Team{} = team, new_assessment_id, student_ids) do
     old_assessment_id = team.assessment_id
     team_id = team.id
@@ -75,6 +117,16 @@ defmodule Cadet.Accounts.Teams do
     end
   end
 
+  @doc """
+  Updates team members based on the new list of student IDs.
+
+  ## Parameters
+
+    * `team` - The team being updated
+    * `student_ids` - List of student ids for team members
+    * `team_id` - ID of the team
+
+  """
   defp update_team_members(team, student_ids, team_id) do
     current_student_ids = team.team_members |> Enum.map(&(&1.student_id))
     new_student_ids =  Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
@@ -94,6 +146,14 @@ defmodule Cadet.Accounts.Teams do
     end)
   end
 
+  @doc """
+  Deletes a team along with its associated submissions and answers.
+
+  ## Parameters
+
+    * `team` - The team to be deleted
+
+  """
   def delete_team(%Team{} = team) do
     Submission
     |> where(team_id: ^team.id)
