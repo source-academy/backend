@@ -4,7 +4,6 @@ defmodule CadetWeb.AdminTeamsController do
   alias Cadet.Repo
 
   alias Cadet.Accounts.{Teams, Team}
-  alias CadetWeb.Router.Helpers, as: Routes
 
   def index(conn, _params) do
     teams = Team
@@ -37,7 +36,7 @@ defmodule CadetWeb.AdminTeamsController do
 
   def create(conn, %{"team" => team_params}) do
     case Teams.create_team(team_params) do
-      {:ok, team} ->
+      {:ok, _team} ->
         conn
         |> put_status(:created)
         |> text("Teams created successfully.")
@@ -55,7 +54,7 @@ defmodule CadetWeb.AdminTeamsController do
            |> Repo.preload([assessment: [:config], team_members: [student: [:user]]])
 
     case Teams.update_team(team, assessmentId, student_ids) do
-      {:ok, updated_team} ->
+      {:ok, _updated_team} ->
         conn
         |> put_status(:ok)
         |> text("Teams updated successfully.")
@@ -67,8 +66,8 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def delete(conn, %{"teamId" => id}) do
-    team = Repo.get!(Team, id)
+  def delete(conn, %{"teamId" => team_id}) do
+    team = Repo.get!(Team, team_id)
 
     case Teams.delete_team(team) do
       {:ok, _} ->
@@ -79,42 +78,37 @@ defmodule CadetWeb.AdminTeamsController do
   end
 
   swagger_path :index do
-    get("/admin/users/{courseRegId}/assessments")
+    get("/admin/teams")
 
-    summary("Fetches assessment overviews of a user")
+    summary("Fetches every team in the course")
 
     security([%{JWT: []}])
 
-    parameters do
-      courseRegId(:path, :integer, "Course Reg ID", required: true)
-    end
-
-    response(200, "OK", Schema.array(:AssessmentsList))
-    response(401, "Unauthorised")
+    response(200, "OK", Schema.array(:TeamsList))
+    response(400, "Bad Request")
     response(403, "Forbidden")
   end
 
   swagger_path :create do
-    post("/admin/assessments")
+    post("/admin/teams")
 
-    summary("Creates a new team or updates an existing team")
+    summary("Creates a new team")
 
     security([%{JWT: []}])
 
-    consumes("multipart/form-data")
+    consumes("application/json")  # Adjust the content type if applicable
 
     parameters do
-      assessment(:formData, :file, "Assessment to create or update", required: true)
-      forceUpdate(:formData, :boolean, "Force update", required: true)
+      team_params(:body, :AdminCreateTeamPayload, "Team parameters", required: true)
     end
 
-    response(200, "OK")
-    response(400, "XML parse error")
+    response(201, "Created")
+    response(400, "Bad Request")
     response(403, "Forbidden")
   end
 
   swagger_path :update do
-    post("/admin/assessments/{teamId}")
+    post("/admin/teams/{teamId}")
 
     summary("Updates a team")
 
@@ -125,28 +119,88 @@ defmodule CadetWeb.AdminTeamsController do
     parameters do
       teamId(:path, :integer, "Team ID", required: true)
 
-      team(:body, Schema.ref(:AdminUpdateAssessmentPayload), "Updated team details",
+      team(:body, Schema.ref(:AdminUpdateTeamPayload), "Updated team details",
         required: true
       )
     end
 
     response(200, "OK")
-    response(401, "Assessment is already opened")
+    response(400, "Bad Request")
     response(403, "Forbidden")
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/teams/{assessmentId}")
+    PhoenixSwagger.Path.delete("/admin/teams/{teamId}")
 
-    summary("Deletes an assessment")
+    summary("Deletes a team")
 
     security([%{JWT: []}])
 
     parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
+      teamId(:path, :integer, "Team ID", required: true)
     end
 
     response(200, "OK")
+    response(400, "Bad Request")
     response(403, "Forbidden")
+  end
+
+  def swagger_definitions do
+    %{
+      # Schemas for payloads to create or modify data
+      AdminCreateTeamPayload: %{
+        "type" => "object",
+        "properties" => %{
+          "name" => %{"type" => "string", "description" => "Team name"},
+          "course" => %{"type" => "string", "description" => "Course name"},
+          "other_property" => %{"type" => "string", "description" => "Other relevant property"}
+        },
+        "required" => ["name", "course"]
+      },
+      AdminUpdateTeamPayload: %{
+        "type" => "object",
+        "properties" => %{
+          "teamId" => %{"type" => "number", "description" => "The existing team id"},
+          "assessmentId" => %{"type" => "number", "description" => "The updated assessment id"},
+          "student_ids" => %{
+            "type" => "array",
+            "items" => %{"$ref" => "#/definitions/AdminUpdateStudentId"},
+            "description" => "The updated student ids"
+          }
+        },
+        "required" => ["teamId", "assessmentId", "student_ids"]
+      },
+      AdminUpdateStudentId: %{
+        "type" => "object",
+        "properties" => %{
+          "id" => %{"type" => "number", "description" => "Student ID"}
+        },
+        "required" => ["id"]
+      },
+      TeamList: %{
+        "type" => "array",
+        "items" => %{"$ref" => "#/definitions/TeamItem"}
+      },
+      TeamItem: %{
+        "type" => "object",
+        "properties" => %{
+          "teamId" => %{"type" => "integer", "description" => "Team ID"},
+          "assessmentId" => %{"type" => "integer", "description" => "Assessment ID"},
+          "assessmentName" => %{"type" => "string", "description" => "Assessment name"},
+          "assessmentType" => %{"type" => "string", "description" => "Assessment type"},
+          "studentIds" => %{
+            "type" => "array",
+            "items" => %{"type" => "integer"},
+            "description" => "Student IDs"
+          },
+          "studentNames" => %{
+            "type" => "array",
+            "items" => %{"type" => "string"},
+            "description" => "Student names"
+          }
+        },
+        "required" => ["teamId", "assessmentId", "assessmentName", "assessmentType", "studentIds", "studentNames"]
+      }
+    }
   end
 end
