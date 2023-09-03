@@ -126,6 +126,7 @@ defmodule CadetWeb.Router do
     get("/users/:course_reg_id/assessments", AdminAssessmentsController, :index)
 
     # The admin route for getting assessment information for a specifc user
+    # FIXME: Missing Swagger path
     get(
       "/users/:course_reg_id/assessments/:assessmentid",
       AdminAssessmentsController,
