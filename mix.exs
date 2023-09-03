@@ -53,7 +53,7 @@ defmodule Cadet.Mixfile do
     [
       {:arc, "~> 0.11"},
       {:arc_ecto, "~> 0.11"},
-      {:corsica, "~> 1.1"},
+      {:corsica, "~> 2.1"},
       {:csv, "~> 2.3"},
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.1", override: true},
@@ -85,7 +85,7 @@ defmodule Cadet.Mixfile do
       # notifiations system dependencies
       {:phoenix_html, "~> 3.0"},
       {:bamboo, "~> 2.3.0"},
-      {:bamboo_ses, "~> 0.3.0"},
+      {:bamboo_ses, "~> 0.4.1"},
       {:bamboo_phoenix, "~> 1.0.0"},
       {:oban, "~> 2.13"},
 
