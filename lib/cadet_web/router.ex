@@ -79,6 +79,8 @@ defmodule CadetWeb.Router do
     post("/assessments/question/:questionid/answer", AnswerController, :submit)
 
     get("/achievements", IncentivesController, :index_achievements)
+    get("/self/goals", IncentivesController, :index_goals)
+    post("/self/goals/:uuid/progress", IncentivesController, :update_progress)
 
     get("/stories", StoriesController, :index)
 
@@ -90,14 +92,6 @@ defmodule CadetWeb.Router do
     put("/user/research_agreement", UserController, :update_research_agreement)
 
     get("/config", CoursesController, :index)
-  end
-
-  # Authenticated Pages
-  scope "/v2/courses/:course_id/self", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :course])
-
-    get("/goals", IncentivesController, :index_goals)
-    post("/goals/:uuid/progress", IncentivesController, :update_progress)
   end
 
   # Admin pages
