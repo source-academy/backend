@@ -1330,6 +1330,7 @@ defmodule Cadet.Assessments do
                  (select
                    a.id,
                    a.title,
+                   a.number as "assessmentNumber",
                    bool_or(ac.is_manually_graded) as "isManuallyGraded",
                    max(ac.type) as "type",
                    sum(q.max_xp) as "maxXp",
@@ -1348,6 +1349,7 @@ defmodule Cadet.Assessments do
                  (select
                    cr.id,
                    u.name as "name",
+                   u.username as "username",
                    g.name as "groupName",
                    g.leader_id as "groupLeaderId"
                  from course_registrations cr

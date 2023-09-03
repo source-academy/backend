@@ -340,6 +340,7 @@ defmodule CadetWeb.AdminGradingController do
           properties do
             id(:integer, "student id", required: true)
             name(:string, "student name", required: true)
+            username(:string, "student username", required: true)
             groupName(:string, "name of student's group")
             groupLeaderId(:integer, "user id of group leader")
           end
