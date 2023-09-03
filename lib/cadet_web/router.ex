@@ -154,9 +154,11 @@ defmodule CadetWeb.Router do
     post("/stories/:storyid", AdminStoriesController, :update)
 
     put("/config", AdminCoursesController, :update_course_config)
+    # FIXME: Missing corresponding Swagger path entry
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
 
+    # FIXME: Missing corresponding Swagger path entry
     delete(
       "/config/assessment_config/:assessment_config_id",
       AdminCoursesController,
