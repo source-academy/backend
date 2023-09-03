@@ -179,7 +179,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   swagger_path :index do
-    get("/v2/courses/{course_id}/admin/users")
+    get("/courses/{course_id}/admin/users")
 
     summary("Returns a list of users in the course owned by the admin")
 
@@ -190,7 +190,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   swagger_path :combined_total_xp do
-    get("/v2/courses/{course_id}/admin/users/{course_reg_id}/total_xp")
+    get("/courses/{course_id}/admin/users/{course_reg_id}/total_xp")
 
     summary("Get the specified user's total XP from achievements and assessments")
 
@@ -206,8 +206,8 @@ defmodule CadetWeb.AdminUserController do
     response(401, "Unauthorised")
   end
 
-  swagger_path :add_users do
-    put("/v2/courses/{course_id}/admin/users")
+  swagger_path :upsert_users_and_groups do
+    put("/courses/{course_id}/admin/users")
 
     summary("Adds the list of usernames and roles to the course")
     security([%{JWT: []}])
@@ -228,7 +228,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   swagger_path :update_role do
-    put("/v2/courses/{course_id}/admin/users/role")
+    put("/courses/{course_id}/admin/users/{course_reg_id}/role")
 
     summary("Updates the role of the given user in the the course")
     security([%{JWT: []}])
@@ -257,7 +257,7 @@ defmodule CadetWeb.AdminUserController do
   end
 
   swagger_path :delete_user do
-    delete("/v2/courses/{course_id}/admin/users")
+    delete("/courses/{course_id}/admin/users/{course_reg_id}")
 
     summary("Deletes a user from a course")
     consumes("application/json")
