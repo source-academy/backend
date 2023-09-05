@@ -12,7 +12,7 @@ defmodule CadetWeb.AdminUserControllerTest do
   test "swagger" do
     assert is_map(AdminUserController.swagger_definitions())
     assert is_map(AdminUserController.swagger_path_index(nil))
-    assert is_map(AdminUserController.swagger_path_add_users(nil))
+    assert is_map(AdminUserController.swagger_path_upsert_users_and_groups(nil))
     assert is_map(AdminUserController.swagger_path_update_role(nil))
     assert is_map(AdminUserController.swagger_path_delete_user(nil))
     assert is_map(AdminUserController.swagger_path_combined_total_xp(nil))

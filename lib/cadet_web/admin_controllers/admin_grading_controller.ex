@@ -118,7 +118,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :index do
-    get("/admin/grading")
+    get("/courses/{course_id}/admin/grading")
 
     summary("Get a list of all submissions with current user as the grader")
 
@@ -141,7 +141,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :unsubmit do
-    post("/admin/grading/{submissionId}/unsubmit")
+    post("/courses/{course_id}/admin/grading/{submissionId}/unsubmit")
     summary("Unsubmit submission. Can only be done by the Avenger of a student")
     security([%{JWT: []}])
 
@@ -156,7 +156,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :autograde_submission do
-    post("/admin/grading/{submissionId}/autograde")
+    post("/courses/{course_id}/admin/grading/{submissionId}/autograde")
     summary("Force re-autograding of an entire submission")
     security([%{JWT: []}])
 
@@ -171,7 +171,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :autograde_answer do
-    post("/admin/grading/{submissionId}/{questionId}/autograde")
+    post("/courses/{course_id}/admin/grading/{submissionId}/{questionId}/autograde")
     summary("Force re-autograding of a question in a submission")
     security([%{JWT: []}])
 
@@ -187,7 +187,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :show do
-    get("/admin/grading/{submissionId}")
+    get("/courses/{course_id}/admin/grading/{submissionId}")
 
     summary("Get information about a specific submission to be graded")
 
@@ -206,7 +206,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :update do
-    post("/admin/grading/{submissionId}/{questionId}")
+    post("/courses/{course_id}/admin/grading/{submissionId}/{questionId}")
 
     summary("Update marks given to the answer of a particular question in a submission")
 
@@ -228,7 +228,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :grading_summary do
-    get("/admin/grading/summary")
+    get("/courses/{course_id}/admin/grading/summary")
 
     summary("Receives a summary of grading items done by this grader")
 

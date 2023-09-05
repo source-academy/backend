@@ -127,7 +127,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   swagger_path :index do
-    get("/admin/users/{courseRegId}/assessments")
+    get("/courses/{course_id}/admin/users/{courseRegId}/assessments")
 
     summary("Fetches assessment overviews of a user")
 
@@ -143,7 +143,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   swagger_path :create do
-    post("/admin/assessments")
+    post("/courses/{course_id}/admin/assessments")
 
     summary("Creates a new assessment or updates an existing assessment")
 
@@ -162,7 +162,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/assessments/{assessmentId}")
+    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/assessments/{assessmentId}")
 
     summary("Deletes an assessment")
 
@@ -177,7 +177,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   swagger_path :update do
-    post("/admin/assessments/{assessmentId}")
+    post("/courses/{course_id}/admin/assessments/{assessmentId}")
 
     summary("Updates an assessment")
 
