@@ -71,7 +71,7 @@ defmodule CadetWeb.AdminAssetsController do
   end
 
   swagger_path :index do
-    get("/admin/assets/{folderName}")
+    get("/courses/{course_id}/admin/assets/{folderName}")
 
     summary("Get a list of all assets in a folder")
 
@@ -89,7 +89,7 @@ defmodule CadetWeb.AdminAssetsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/assets/{folderName}/{fileName}")
+    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/assets/{folderName}/{fileName}")
 
     summary("Delete a file from an asset folder")
 
@@ -108,7 +108,7 @@ defmodule CadetWeb.AdminAssetsController do
   end
 
   swagger_path :upload do
-    post("/admin/assets/{folderName}/{fileName}")
+    post("/courses/{course_id}/admin/assets/{folderName}/{fileName}")
 
     summary("Upload a file to an asset folder")
 
