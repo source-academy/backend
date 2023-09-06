@@ -10,7 +10,7 @@ defmodule CadetWeb.CoursesControllerTest do
 
   test "swagger" do
     CoursesController.swagger_definitions()
-    CoursesController.swagger_path_get_course_config(nil)
+    CoursesController.swagger_path_index(nil)
     CoursesController.swagger_path_create(nil)
   end
 

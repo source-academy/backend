@@ -53,7 +53,7 @@ defmodule CadetWeb.AdminStoriesController do
   end
 
   swagger_path :create do
-    post("/v2{course_id}/stories")
+    post("/courses/{course_id}/admin/stories")
 
     summary("Creates a new story")
 
@@ -65,7 +65,7 @@ defmodule CadetWeb.AdminStoriesController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/v2/courses/{course_id}/stories/{storyId}")
+    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/stories/{storyId}")
 
     summary("Delete a story from database by id")
 
@@ -81,7 +81,7 @@ defmodule CadetWeb.AdminStoriesController do
   end
 
   swagger_path :update do
-    post("/v2/courses/{course_id}/stories/{storyId}")
+    post("/courses/{course_id}/admin/stories/{storyId}")
 
     summary("Update details regarding a story")
 

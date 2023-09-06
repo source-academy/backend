@@ -8,7 +8,8 @@ defmodule Cadet.Mixfile do
       elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
       # compilers: [:phoenix, :gettext] ++ Mix.compilers() ++ [:phoenix_swagger],
-      compilers: [:phoenix] ++ Mix.compilers() ++ [:phoenix_swagger],
+      # compilers: [:phoenix] ++ Mix.compilers() ++ [:phoenix_swagger],
+      compilers: Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
@@ -54,7 +55,7 @@ defmodule Cadet.Mixfile do
     [
       {:arc, "~> 0.11"},
       {:arc_ecto, "~> 0.11"},
-      {:corsica, "~> 1.1"},
+      {:corsica, "~> 2.1"},
       {:csv, "~> 2.3"},
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.1", override: true},
@@ -71,6 +72,7 @@ defmodule Cadet.Mixfile do
       {:jason, "~> 1.2"},
       {:openid_connect, "~> 0.2"},
       {:phoenix, "~> 1.5"},
+      {:phoenix_view, "~> 2.0"},
       {:phoenix_ecto, "~> 4.0"},
       {:phoenix_swagger, "~> 0.8"},
       {:plug_cowboy, "~> 2.0"},
@@ -86,7 +88,7 @@ defmodule Cadet.Mixfile do
       # notifiations system dependencies
       {:phoenix_html, "~> 3.0"},
       {:bamboo, "~> 2.3.0"},
-      {:bamboo_ses, "~> 0.3.0"},
+      {:bamboo_ses, "~> 0.4.1"},
       {:bamboo_phoenix, "~> 1.0.0"},
       {:oban, "~> 2.13"},
 
