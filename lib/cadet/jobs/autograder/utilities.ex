@@ -48,6 +48,16 @@ defmodule Cadet.Autograder.Utilities do
     |> Enum.map(&sort_assessment_questions(&1))
   end
 
+  # fetch voting questions that are about to open the next day
+  def fetch_voting_questions do
+    Question
+    |> where(type: :voting)
+    |> join(:inner, [q], asst in assoc(q, :assessment))
+    |> where([q, asst], asst.open_at > ^Timex.now() and asst.open_at <= ^Timex.shift(Timex.now(), days: 1))
+    |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
+    |> Repo.all()
+  end
+
   def sort_assessment_questions(assessment = %Assessment{}) do
     sorted_questions = Enum.sort_by(assessment.questions, & &1.id)
     Map.put(assessment, :questions, sorted_questions)
