@@ -148,9 +148,19 @@ defmodule Cadet.AssessmentsTest do
 
   describe "contest voting" do
     test "inserts votes into submission_votes table" do
-      contest_question = insert(:programming_question)
-      contest_assessment = contest_question.assessment
-      course = contest_question.assessment.course
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
+
+      contest_question = insert(:programming_question, assessment: contest_assessment)
       voting_assessment = insert(:assessment, %{course: course})
 
       question =
@@ -225,18 +235,20 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "deletes submission_votes when assessment is deleted" do
-      contest_question = insert(:programming_question)
-      course = contest_question.assessment.course
-      config = contest_question.assessment.config
-
-      voting_assessment =
-        insert(:assessment, %{
-          course: course,
-          config: config,
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      contest_assessment =
+        insert(:assessment,
+          is_published: true,
           open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1)
-        })
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
 
+      contest_question = insert(:programming_question, assessment: contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course, config: config})
       question = insert(:voting_question, assessment: voting_assessment)
       students = insert_list(5, :course_registration, %{role: :student, course: course})
 
