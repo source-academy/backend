@@ -228,7 +228,15 @@ defmodule Cadet.AssessmentsTest do
       contest_question = insert(:programming_question)
       course = contest_question.assessment.course
       config = contest_question.assessment.config
-      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      voting_assessment =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1)
+        })
+
       question = insert(:voting_question, assessment: voting_assessment)
       students = insert_list(5, :course_registration, %{role: :student, course: course})
 
