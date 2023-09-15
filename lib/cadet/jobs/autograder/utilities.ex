@@ -53,7 +53,10 @@ defmodule Cadet.Autograder.Utilities do
     Question
     |> where(type: :voting)
     |> join(:inner, [q], asst in assoc(q, :assessment))
-    |> where([q, asst], asst.open_at > ^Timex.now() and asst.open_at <= ^Timex.shift(Timex.now(), days: 1))
+    |> where(
+      [q, asst],
+      asst.open_at > ^Timex.now() and asst.open_at <= ^Timex.shift(Timex.now(), days: 1)
+    )
     |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
     |> Repo.all()
   end
