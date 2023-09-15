@@ -23,6 +23,7 @@ defmodule Cadet.Assessments do
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
   alias Cadet.Incentives.Achievements
+  alias Timex.Duration
 
   require Decimal
 
@@ -502,7 +503,7 @@ defmodule Cadet.Assessments do
 
   def update_final_contest_entries do
     # 1435 = 1 day - 5 minutes
-    if Log.log_execution("update_final_contest_entries", Timex.Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_entries", Duration.from_minutes(1435)) do
       Logger.info("Started update of contest entry pools")
       questions = Utilities.fetch_voting_questions()
 
@@ -1057,7 +1058,7 @@ defmodule Cadet.Assessments do
   """
   def update_rolling_contest_leaderboards do
     # 115 = 2 hours - 5 minutes is default.
-    if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(115)) do
+    if Log.log_execution("update_rolling_contest_leaderboards", Duration.from_minutes(115)) do
       Logger.info("Started update_rolling_contest_leaderboards")
 
       voting_questions_to_update = fetch_active_voting_questions()
@@ -1084,7 +1085,7 @@ defmodule Cadet.Assessments do
   """
   def update_final_contest_leaderboards do
     # 1435 = 24 hours - 5 minutes
-    if Log.log_execution("update_final_contest_leaderboards", Timex.Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_leaderboards", Duration.from_minutes(1435)) do
       Logger.info("Started update_final_contest_leaderboards")
 
       voting_questions_to_update = fetch_voting_questions_due_yesterday()
