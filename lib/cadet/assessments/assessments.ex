@@ -18,6 +18,7 @@ defmodule Cadet.Assessments do
 
   alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.GradingJob
+  alias Cadet.Autograder.Utilities
   alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
