@@ -23,6 +23,7 @@ defmodule Cadet.Assessments do
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
   alias Cadet.Incentives.Achievements
+  alias Timex.Duration
 
   require Decimal
 
@@ -502,9 +503,9 @@ defmodule Cadet.Assessments do
 
   def update_final_contest_entries do
     # 1435 = 1 day - 5 minutes
-    if Log.log_execution("update_final_contest_entries", Timex.Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_entries", Duration.from_minutes(1435)) do
       Logger.info("Started update of contest entry pools")
-      questions = Utilities.fetch_voting_questions()
+      questions = fetch_voting_questions()
 
       for q <- questions do
         insert_voting(q.course_id, q.question.contest_number, q.question_id)
@@ -512,6 +513,19 @@ defmodule Cadet.Assessments do
 
       Logger.info("Successfully update contest entry pools")
     end
+  end
+
+  # fetch voting questions that are about to open the next day
+  def fetch_voting_questions do
+    Question
+    |> where(type: :voting)
+    |> join(:inner, [q], asst in assoc(q, :assessment))
+    |> where(
+      [q, asst],
+      asst.open_at > ^Timex.now() and asst.open_at <= ^Timex.shift(Timex.now(), days: 1)
+    )
+    |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
+    |> Repo.all()
   end
 
   @doc """
@@ -537,110 +551,118 @@ defmodule Cadet.Assessments do
       {:error, error_changeset}
     else
       if contest_assessment.close_at < Timex.now() do
-        # Returns contest submission ids with answers that contain "return"
-        contest_submission_ids =
-          Submission
-          |> join(:inner, [s], ans in assoc(s, :answers))
-          |> join(:inner, [s, ans], cr in assoc(s, :student))
-          |> where([s, ans, cr], cr.role == "student")
-          |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-          |> where(
-            [_, ans, cr],
-            fragment(
-              "?->>'code' like ?",
-              ans.answer,
-              "%return%"
-            )
-          )
-          |> select([s, _ans], {s.student_id, s.id})
-          |> Repo.all()
-          |> Enum.into(%{})
-
-        contest_submission_ids_length = Enum.count(contest_submission_ids)
-
-        voter_ids =
-          CourseRegistration
-          |> where(role: "student", course_id: ^course_id)
-          |> select([cr], cr.id)
-          |> Repo.all()
-
-        votes_per_user = min(contest_submission_ids_length, 10)
-
-        votes_per_submission =
-          if Enum.empty?(contest_submission_ids) do
-            0
-          else
-            trunc(Float.ceil(votes_per_user * length(voter_ids) / contest_submission_ids_length))
-          end
-
-        submission_id_list =
-          contest_submission_ids
-          |> Enum.map(fn {_, s_id} -> s_id end)
-          |> Enum.shuffle()
-          |> List.duplicate(votes_per_submission)
-          |> List.flatten()
-
-        {_submission_map, submission_votes_changesets} =
-          voter_ids
-          |> Enum.reduce({submission_id_list, []}, fn voter_id, acc ->
-            {submission_list, submission_votes} = acc
-
-            user_contest_submission_id = Map.get(contest_submission_ids, voter_id)
-
-            {votes, rest} =
-              submission_list
-              |> Enum.reduce_while({MapSet.new(), submission_list}, fn s_id, acc ->
-                {user_votes, submissions} = acc
-
-                max_votes =
-                  if votes_per_user == contest_submission_ids_length and
-                       not is_nil(user_contest_submission_id) do
-                    # no. of submssions is less than 10. Unable to find
-                    votes_per_user - 1
-                  else
-                    votes_per_user
-                  end
-
-                if MapSet.size(user_votes) < max_votes do
-                  if s_id != user_contest_submission_id and not MapSet.member?(user_votes, s_id) do
-                    new_user_votes = MapSet.put(user_votes, s_id)
-                    new_submissions = List.delete(submissions, s_id)
-                    {:cont, {new_user_votes, new_submissions}}
-                  else
-                    {:cont, {user_votes, submissions}}
-                  end
-                else
-                  {:halt, acc}
-                end
-              end)
-
-            votes = MapSet.to_list(votes)
-
-            new_submission_votes =
-              votes
-              |> Enum.map(fn s_id ->
-                %SubmissionVotes{
-                  voter_id: voter_id,
-                  submission_id: s_id,
-                  question_id: question_id
-                }
-              end)
-              |> Enum.concat(submission_votes)
-
-            {rest, new_submission_votes}
-          end)
-
-        submission_votes_changesets
-        |> Enum.with_index()
-        |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
-          Multi.insert(multi, Integer.to_string(index), changeset)
-        end)
-        |> Repo.transaction()
+        compile_entries(course_id, contest_assessment, question_id)
       else
         # contest has not closed, do nothing
         {:ok, nil}
       end
     end
+  end
+
+  def compile_entries(
+        course_id,
+        contest_assessment,
+        question_id
+      ) do
+    # Returns contest submission ids with answers that contain "return"
+    contest_submission_ids =
+      Submission
+      |> join(:inner, [s], ans in assoc(s, :answers))
+      |> join(:inner, [s, ans], cr in assoc(s, :student))
+      |> where([s, ans, cr], cr.role == "student")
+      |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
+      |> where(
+        [_, ans, cr],
+        fragment(
+          "?->>'code' like ?",
+          ans.answer,
+          "%return%"
+        )
+      )
+      |> select([s, _ans], {s.student_id, s.id})
+      |> Repo.all()
+      |> Enum.into(%{})
+
+    contest_submission_ids_length = Enum.count(contest_submission_ids)
+
+    voter_ids =
+      CourseRegistration
+      |> where(role: "student", course_id: ^course_id)
+      |> select([cr], cr.id)
+      |> Repo.all()
+
+    votes_per_user = min(contest_submission_ids_length, 10)
+
+    votes_per_submission =
+      if Enum.empty?(contest_submission_ids) do
+        0
+      else
+        trunc(Float.ceil(votes_per_user * length(voter_ids) / contest_submission_ids_length))
+      end
+
+    submission_id_list =
+      contest_submission_ids
+      |> Enum.map(fn {_, s_id} -> s_id end)
+      |> Enum.shuffle()
+      |> List.duplicate(votes_per_submission)
+      |> List.flatten()
+
+    {_submission_map, submission_votes_changesets} =
+      voter_ids
+      |> Enum.reduce({submission_id_list, []}, fn voter_id, acc ->
+        {submission_list, submission_votes} = acc
+
+        user_contest_submission_id = Map.get(contest_submission_ids, voter_id)
+
+        {votes, rest} =
+          submission_list
+          |> Enum.reduce_while({MapSet.new(), submission_list}, fn s_id, acc ->
+            {user_votes, submissions} = acc
+
+            max_votes =
+              if votes_per_user == contest_submission_ids_length and
+                   not is_nil(user_contest_submission_id) do
+                # no. of submssions is less than 10. Unable to find
+                votes_per_user - 1
+              else
+                votes_per_user
+              end
+
+            if MapSet.size(user_votes) < max_votes do
+              if s_id != user_contest_submission_id and not MapSet.member?(user_votes, s_id) do
+                new_user_votes = MapSet.put(user_votes, s_id)
+                new_submissions = List.delete(submissions, s_id)
+                {:cont, {new_user_votes, new_submissions}}
+              else
+                {:cont, {user_votes, submissions}}
+              end
+            else
+              {:halt, acc}
+            end
+          end)
+
+        votes = MapSet.to_list(votes)
+
+        new_submission_votes =
+          votes
+          |> Enum.map(fn s_id ->
+            %SubmissionVotes{
+              voter_id: voter_id,
+              submission_id: s_id,
+              question_id: question_id
+            }
+          end)
+          |> Enum.concat(submission_votes)
+
+        {rest, new_submission_votes}
+      end)
+
+    submission_votes_changesets
+    |> Enum.with_index()
+    |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
+      Multi.insert(multi, Integer.to_string(index), changeset)
+    end)
+    |> Repo.transaction()
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
@@ -702,10 +724,10 @@ defmodule Cadet.Assessments do
   Public internal api to submit new answers for a question. Possible return values are:
   `{:ok, nil}` -> success
   `{:error, error}` -> failed. `error` is in the format of `{http_response_code, error message}`
-  
+
   Note: In the event of `find_or_create_submission` failing due to a race condition, error will be:
    `{:bad_request, "Missing or invalid parameter(s)"}`
-  
+
   """
   def answer_question(
         question = %Question{},
@@ -1015,7 +1037,7 @@ defmodule Cadet.Assessments do
 
   @doc """
   Fetches top answers for the given question, based on the contest relative_score
-  
+
   Used for contest leaderboard fetching
   """
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
@@ -1049,7 +1071,7 @@ defmodule Cadet.Assessments do
   """
   def update_rolling_contest_leaderboards do
     # 115 = 2 hours - 5 minutes is default.
-    if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(115)) do
+    if Log.log_execution("update_rolling_contest_leaderboards", Duration.from_minutes(115)) do
       Logger.info("Started update_rolling_contest_leaderboards")
 
       voting_questions_to_update = fetch_active_voting_questions()
@@ -1076,7 +1098,7 @@ defmodule Cadet.Assessments do
   """
   def update_final_contest_leaderboards do
     # 1435 = 24 hours - 5 minutes
-    if Log.log_execution("update_final_contest_leaderboards", Timex.Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_leaderboards", Duration.from_minutes(1435)) do
       Logger.info("Started update_final_contest_leaderboards")
 
       voting_questions_to_update = fetch_voting_questions_due_yesterday()
@@ -1175,11 +1197,11 @@ defmodule Cadet.Assessments do
   fields that are exposed in the /grading endpoint. The reason we select only
   those fields is to reduce the memory usage especially when the number of
   submissions is large i.e. > 25000 submissions.
-  
+
   The input parameters are the user and group_only. group_only is used to check
   whether only the groups under the grader should be returned. The parameter is
   a boolean which is false by default.
-  
+
   The return value is {:ok, submissions} if no errors, else it is {:error,
   {:forbidden, "Forbidden."}}
   """
