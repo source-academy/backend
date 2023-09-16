@@ -505,7 +505,7 @@ defmodule Cadet.Assessments do
     # 1435 = 1 day - 5 minutes
     if Log.log_execution("update_final_contest_entries", Duration.from_minutes(1435)) do
       Logger.info("Started update of contest entry pools")
-      questions = fetch_voting_questions()
+      questions = fetch_unassigned_voting_questions()
 
       for q <- questions do
         insert_voting(q.course_id, q.question.contest_number, q.question_id)
@@ -515,15 +515,17 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # fetch voting questions that are about to open the next day
-  def fetch_voting_questions do
+  # fetch voting questions where entries have not been assigned
+  def fetch_unassigned_voting_questions do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
     Question
     |> where(type: :voting)
+    |> where([q], q.id not in ^voting_assigned_question_ids)
     |> join(:inner, [q], asst in assoc(q, :assessment))
-    |> where(
-      [q, asst],
-      asst.open_at > ^Timex.now() and asst.open_at <= ^Timex.shift(Timex.now(), days: 1)
-    )
     |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
     |> Repo.all()
   end
@@ -550,7 +552,7 @@ defmodule Cadet.Assessments do
 
       {:error, error_changeset}
     else
-      if contest_assessment.close_at < Timex.now() do
+      if Timex.compare(contest_assessment.close_at, Timex.now()) < 0 do
         compile_entries(course_id, contest_assessment, question_id)
       else
         # contest has not closed, do nothing
