@@ -508,7 +508,7 @@ defmodule Cadet.Assessments do
       questions = fetch_unassigned_voting_questions()
 
       for q <- questions do
-        insert_voting(q.course_id, q.question.contest_number, q.question_id)
+        insert_voting(q.course_id, q.question["contest_number"], q.question_id)
       end
 
       Logger.info("Successfully update contest entry pools")
