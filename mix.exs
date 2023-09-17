@@ -64,7 +64,7 @@ defmodule Cadet.Mixfile do
       {:ex_json_schema, "~> 0.7.4"},
       {:ex_machina, "~> 2.3"},
       {:guardian, "~> 2.0"},
-      {:guardian_db, "~> 2.0"},
+      {:guardian_db, "~> 3.0"},
       {:hackney, "~> 1.6"},
       {:httpoison, "~> 1.6"},
       {:jason, "~> 1.2"},
