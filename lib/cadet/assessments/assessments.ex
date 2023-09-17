@@ -36,18 +36,28 @@ defmodule Cadet.Assessments do
   def delete_assessment(id) do
     assessment = Repo.get(Assessment, id)
 
-    Submission
-    |> where(assessment_id: ^id)
-    |> delete_submission_assocation(id)
+    is_voted_on =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.question["contest_number"] == ^assessment.number)
+      |> Repo.exists?()
 
-    Question
-    |> where(assessment_id: ^id)
-    |> Repo.all()
-    |> Enum.each(fn q ->
-      delete_submission_votes_association(q)
-    end)
+    if is_voted_on do
+      {:error, {:bad_request, "Contest voting for this contest is still up"}}
+    else
+      Submission
+      |> where(assessment_id: ^id)
+      |> delete_submission_assocation(id)
 
-    Repo.delete(assessment)
+      Question
+      |> where(assessment_id: ^id)
+      |> Repo.all()
+      |> Enum.each(fn q ->
+        delete_submission_votes_association(q)
+      end)
+
+      Repo.delete(assessment)
+    end
   end
 
   defp delete_submission_votes_association(question) do
