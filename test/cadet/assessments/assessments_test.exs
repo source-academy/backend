@@ -338,8 +338,7 @@ defmodule Cadet.AssessmentsTest do
       invalid_question =
         insert(:voting_question, %{
           assessment: invalid_voting_assessment,
-          question:
-            build(:voting_question_content, contest_number: "test_invalid")
+          question: build(:voting_question_content, contest_number: "test_invalid")
         })
 
       students =
@@ -525,12 +524,13 @@ defmodule Cadet.AssessmentsTest do
 
       contest_question = insert(:programming_question, assessment: contest_assessment)
       voting_assessment = insert(:assessment, %{course: course, config: config})
+
       question =
         insert(:voting_question, %{
           assessment: voting_assessment,
-          question:
-            build(:voting_question_content, contest_number: contest_assessment.number)
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
         })
+
       students = insert_list(5, :course_registration, %{role: :student, course: course})
       error_message = {:bad_request, "Contest voting for this contest is still up"}
 
