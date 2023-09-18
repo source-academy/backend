@@ -521,6 +521,7 @@ defmodule Cadet.Assessments do
         contest_number = q.question["contest_number"]
         course_id = q.course_id
         contest_assessment = Repo.get_by(Assessment, number: contest_number, course_id: course_id)
+
         if not is_nil(contest_assessment) do
           insert_voting(course_id, contest_number, q.question_id)
         end
