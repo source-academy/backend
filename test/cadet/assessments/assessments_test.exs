@@ -311,6 +311,8 @@ defmodule Cadet.AssessmentsTest do
       closed_voting_assessment = insert(:assessment, %{course: course})
       open_voting_assessment = insert(:assessment, %{course: course})
       compiled_voting_assessment = insert(:assessment, %{course: course})
+      # voting assessment that references an invalid contest number
+      invalid_voting_assessment = insert(:assessment, %{course: course})
 
       closed_question =
         insert(:voting_question, %{
@@ -331,6 +333,13 @@ defmodule Cadet.AssessmentsTest do
           assessment: compiled_voting_assessment,
           question:
             build(:voting_question_content, contest_number: compiled_contest_assessment.number)
+        })
+
+      invalid_question =
+        insert(:voting_question, %{
+          assessment: invalid_voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: "test_invalid")
         })
 
       students =
@@ -374,6 +383,9 @@ defmodule Cadet.AssessmentsTest do
              |> where(question_id: ^compiled_question.id)
              |> Repo.all()
              |> length() == 4 * 3 + 6 * 4
+
+      assert SubmissionVotes |> where(question_id: ^invalid_question.id) |> Repo.all() |> length() ==
+               0
 
       Enum.map(students, fn student ->
         submission =
@@ -433,6 +445,9 @@ defmodule Cadet.AssessmentsTest do
              |> where(question_id: ^compiled_question.id)
              |> Repo.all()
              |> length() == 4 * 3 + 6 * 4
+
+      assert SubmissionVotes |> where(question_id: ^invalid_question.id) |> Repo.all() |> length() ==
+               0
     end
 
     test "create voting parameters with invalid contest number" do
@@ -492,6 +507,51 @@ defmodule Cadet.AssessmentsTest do
 
       Assessments.delete_assessment(voting_assessment.id)
       refute Repo.exists?(SubmissionVotes, question_id: question.id)
+    end
+
+    test "does not delete contest assessment if voting assessment is present" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config,
+          number: "test"
+        )
+
+      contest_question = insert(:programming_question, assessment: contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+      question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+      students = insert_list(5, :course_registration, %{role: :student, course: course})
+      error_message = {:bad_request, "Contest voting for this contest is still up"}
+
+      Enum.map(students, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: contest_question
+        )
+      end)
+
+      assert {:error, error_message} = Assessments.delete_assessment(contest_assessment.id)
+      # deletion should fail
+      assert Assessment |> where(id: ^contest_assessment.id) |> Repo.exists?()
     end
   end
 
