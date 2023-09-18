@@ -518,7 +518,12 @@ defmodule Cadet.Assessments do
       questions = fetch_unassigned_voting_questions()
 
       for q <- questions do
-        insert_voting(q.course_id, q.question["contest_number"], q.question_id)
+        contest_number = q.question["contest_number"]
+        course_id = q.course_id
+        contest_assessment = Repo.get_by(Assessment, number: contest_number, course_id: course_id)
+        if not is_nil(contest_assessment) do
+          insert_voting(course_id, contest_number, q.question_id)
+        end
       end
 
       Logger.info("Successfully update contest entry pools")
