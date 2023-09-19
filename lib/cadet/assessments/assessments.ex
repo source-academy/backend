@@ -39,7 +39,12 @@ defmodule Cadet.Assessments do
     is_voted_on =
       Question
       |> where(type: :voting)
-      |> where([q], q.question["contest_number"] == ^assessment.number)
+      |> join(:inner, [q], asst in assoc(q, :assessment))
+      |> where(
+        [q, asst],
+        q.question["contest_number"] == ^assessment.number and
+          asst.course_id == ^assessment.course_id
+      )
       |> Repo.exists?()
 
     if is_voted_on do
@@ -518,13 +523,7 @@ defmodule Cadet.Assessments do
       questions = fetch_unassigned_voting_questions()
 
       for q <- questions do
-        contest_number = q.question["contest_number"]
-        course_id = q.course_id
-        contest_assessment = Repo.get_by(Assessment, number: contest_number, course_id: course_id)
-
-        if not is_nil(contest_assessment) do
-          insert_voting(course_id, contest_number, q.question_id)
-        end
+        insert_voting(q.course_id, q.question["contest_number"], q.question_id)
       end
 
       Logger.info("Successfully update contest entry pools")
@@ -538,12 +537,26 @@ defmodule Cadet.Assessments do
       |> select([v], v.question_id)
       |> Repo.all()
 
-    Question
-    |> where(type: :voting)
-    |> where([q], q.id not in ^voting_assigned_question_ids)
-    |> join(:inner, [q], asst in assoc(q, :assessment))
-    |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
-    |> Repo.all()
+    valid_assessments =
+      Assessment
+      |> select([a], %{number: a.number, course_id: a.course_id})
+      |> Repo.all()
+
+    valid_questions =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.id not in ^voting_assigned_question_ids)
+      |> join(:inner, [q], asst in assoc(q, :assessment))
+      |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
+      |> Repo.all()
+
+    # fetch only voting where there is a corresponding contest
+    Enum.filter(valid_questions, fn q ->
+      Enum.any?(
+        valid_assessments,
+        fn a -> a.number == q.question["contest_number"] and a.course_id == q.course_id end
+      )
+    end)
   end
 
   @doc """

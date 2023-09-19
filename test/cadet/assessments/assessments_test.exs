@@ -431,6 +431,15 @@ defmodule Cadet.AssessmentsTest do
         )
       end)
 
+      # fetching all unassigned voting questions should only yield open and closed questions
+      unassigned_voting_questions = Assessments.fetch_unassigned_voting_questions()
+      assert Enum.count(unassigned_voting_questions) == 2
+
+      assert Enum.map(unassigned_voting_questions, fn q -> q.question_id end) == [
+               closed_question.id,
+               open_question.id
+             ]
+
       Assessments.update_final_contest_entries()
 
       # only the closed_contest should have been updated
@@ -508,10 +517,10 @@ defmodule Cadet.AssessmentsTest do
       refute Repo.exists?(SubmissionVotes, question_id: question.id)
     end
 
-    test "does not delete contest assessment if voting assessment is present" do
+    test "does not delete contest assessment if referencing voting assessment is present" do
       course = insert(:course)
       config = insert(:assessment_config)
-      # contest assessment that has closed
+
       contest_assessment =
         insert(:assessment,
           is_published: true,
@@ -522,36 +531,49 @@ defmodule Cadet.AssessmentsTest do
           number: "test"
         )
 
-      contest_question = insert(:programming_question, assessment: contest_assessment)
       voting_assessment = insert(:assessment, %{course: course, config: config})
 
-      question =
+      # insert voting question that references the contest assessment
+      _voting_question =
         insert(:voting_question, %{
           assessment: voting_assessment,
           question: build(:voting_question_content, contest_number: contest_assessment.number)
         })
 
-      students = insert_list(5, :course_registration, %{role: :student, course: course})
       error_message = {:bad_request, "Contest voting for this contest is still up"}
 
-      Enum.map(students, fn student ->
-        submission =
-          insert(:submission,
-            student: student,
-            assessment: contest_question.assessment,
-            status: "submitted"
-          )
-
-        insert(:answer,
-          answer: %{code: "return 2;"},
-          submission: submission,
-          question: contest_question
-        )
-      end)
-
-      assert {:error, error_message} = Assessments.delete_assessment(contest_assessment.id)
+      assert {:error, ^error_message} = Assessments.delete_assessment(contest_assessment.id)
       # deletion should fail
       assert Assessment |> where(id: ^contest_assessment.id) |> Repo.exists?()
+    end
+
+    test "deletes contest assessment if voting assessment references same number but different course" do
+      course_1 = insert(:course)
+      course_2 = insert(:course)
+      config = insert(:assessment_config)
+
+      contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course_1,
+          config: config,
+          number: "test"
+        )
+
+      voting_assessment = insert(:assessment, %{course: course_2, config: config})
+
+      # insert voting question from a different course that references the same contest number
+      _voting_question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+
+      assert {:ok, _} = Assessments.delete_assessment(contest_assessment.id)
+      # deletion should succeed
+      refute Assessment |> where(id: ^contest_assessment.id) |> Repo.exists?()
     end
   end
 
