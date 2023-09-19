@@ -147,16 +147,27 @@ defmodule Cadet.AssessmentsTest do
   end
 
   describe "contest voting" do
-    test "inserts votes into submission_votes table" do
-      contest_question = insert(:programming_question)
-      contest_assessment = contest_question.assessment
-      course = contest_question.assessment.course
+    test "inserts votes into submission_votes table if contest has closed" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      closed_contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
+
+      contest_question = insert(:programming_question, assessment: closed_contest_assessment)
       voting_assessment = insert(:assessment, %{course: course})
 
       question =
         insert(:voting_question, %{
           assessment: voting_assessment,
-          question: build(:voting_question_content, contest_number: contest_assessment.number)
+          question:
+            build(:voting_question_content, contest_number: closed_contest_assessment.number)
         })
 
       students =
@@ -202,7 +213,226 @@ defmodule Cadet.AssessmentsTest do
 
       # students with own contest submissions will vote for 5 entries
       # students without own contest submissin will vote for 6 entries
-      assert length(Repo.all(SubmissionVotes, question_id: question.id)) == 6 * 5 + 6
+      assert SubmissionVotes |> where(question_id: ^question.id) |> Repo.all() |> length() ==
+               6 * 5 + 6
+    end
+
+    test "does not insert entries for voting if contest is still open" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that is still open
+      open_contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: 1),
+          course: course,
+          config: config
+        )
+
+      contest_question = insert(:programming_question, assessment: open_contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course})
+
+      question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: open_contest_assessment.number)
+        })
+
+      students =
+        insert_list(6, :course_registration, %{
+          role: :student,
+          course: course
+        })
+
+      Enum.map(students, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: contest_question
+        )
+      end)
+
+      Assessments.insert_voting(course.id, contest_question.assessment.number, question.id)
+
+      # No entries should be released for students to vote on while the contest is still open
+      assert SubmissionVotes |> where(question_id: ^question.id) |> Repo.all() |> length() == 0
+    end
+
+    test "function that checks for closed contests and releases entries into voting pool" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      closed_contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
+
+      # contest assessment that is still open
+      open_contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: 1),
+          course: course,
+          config: config
+        )
+
+      # contest assessment that is closed but insert_voting has already been done
+      compiled_contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
+
+      closed_contest_question =
+        insert(:programming_question, assessment: closed_contest_assessment)
+
+      open_contest_question = insert(:programming_question, assessment: open_contest_assessment)
+
+      compiled_contest_question =
+        insert(:programming_question, assessment: compiled_contest_assessment)
+
+      closed_voting_assessment = insert(:assessment, %{course: course})
+      open_voting_assessment = insert(:assessment, %{course: course})
+      compiled_voting_assessment = insert(:assessment, %{course: course})
+
+      closed_question =
+        insert(:voting_question, %{
+          assessment: closed_voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: closed_contest_assessment.number)
+        })
+
+      open_question =
+        insert(:voting_question, %{
+          assessment: open_voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: open_contest_assessment.number)
+        })
+
+      compiled_question =
+        insert(:voting_question, %{
+          assessment: compiled_voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: compiled_contest_assessment.number)
+        })
+
+      students =
+        insert_list(10, :course_registration, %{
+          role: :student,
+          course: course
+        })
+
+      first_four = Enum.slice(students, 0..3)
+      last_six = Enum.slice(students, 4..9)
+
+      Enum.map(first_four, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: compiled_contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: compiled_contest_question
+        )
+      end)
+
+      # Only the compiled_assessment has already released entries into voting pool
+      Assessments.insert_voting(
+        course.id,
+        compiled_contest_question.assessment.number,
+        compiled_question.id
+      )
+
+      assert SubmissionVotes |> where(question_id: ^closed_question.id) |> Repo.all() |> length() ==
+               0
+
+      assert SubmissionVotes |> where(question_id: ^open_question.id) |> Repo.all() |> length() ==
+               0
+
+      assert SubmissionVotes
+             |> where(question_id: ^compiled_question.id)
+             |> Repo.all()
+             |> length() == 4 * 3 + 6 * 4
+
+      Enum.map(students, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: closed_contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: closed_contest_question
+        )
+      end)
+
+      Enum.map(students, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: open_contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: open_contest_question
+        )
+      end)
+
+      Enum.map(last_six, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: compiled_contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: compiled_contest_question
+        )
+      end)
+
+      Assessments.update_final_contest_entries()
+
+      # only the closed_contest should have been updated
+      assert SubmissionVotes |> where(question_id: ^closed_question.id) |> Repo.all() |> length() ==
+               10 * 9
+
+      assert SubmissionVotes |> where(question_id: ^open_question.id) |> Repo.all() |> length() ==
+               0
+
+      assert SubmissionVotes
+             |> where(question_id: ^compiled_question.id)
+             |> Repo.all()
+             |> length() == 4 * 3 + 6 * 4
     end
 
     test "create voting parameters with invalid contest number" do
@@ -225,9 +455,19 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "deletes submission_votes when assessment is deleted" do
-      contest_question = insert(:programming_question)
-      course = contest_question.assessment.course
-      config = contest_question.assessment.config
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
+
+      contest_question = insert(:programming_question, assessment: contest_assessment)
       voting_assessment = insert(:assessment, %{course: course, config: config})
       question = insert(:voting_question, assessment: voting_assessment)
       students = insert_list(5, :course_registration, %{role: :student, course: course})
