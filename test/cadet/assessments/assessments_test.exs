@@ -311,6 +311,8 @@ defmodule Cadet.AssessmentsTest do
       closed_voting_assessment = insert(:assessment, %{course: course})
       open_voting_assessment = insert(:assessment, %{course: course})
       compiled_voting_assessment = insert(:assessment, %{course: course})
+      # voting assessment that references an invalid contest number
+      invalid_voting_assessment = insert(:assessment, %{course: course})
 
       closed_question =
         insert(:voting_question, %{
@@ -331,6 +333,12 @@ defmodule Cadet.AssessmentsTest do
           assessment: compiled_voting_assessment,
           question:
             build(:voting_question_content, contest_number: compiled_contest_assessment.number)
+        })
+
+      invalid_question =
+        insert(:voting_question, %{
+          assessment: invalid_voting_assessment,
+          question: build(:voting_question_content, contest_number: "test_invalid")
         })
 
       students =
@@ -374,6 +382,9 @@ defmodule Cadet.AssessmentsTest do
              |> where(question_id: ^compiled_question.id)
              |> Repo.all()
              |> length() == 4 * 3 + 6 * 4
+
+      assert SubmissionVotes |> where(question_id: ^invalid_question.id) |> Repo.all() |> length() ==
+               0
 
       Enum.map(students, fn student ->
         submission =
@@ -420,6 +431,15 @@ defmodule Cadet.AssessmentsTest do
         )
       end)
 
+      # fetching all unassigned voting questions should only yield open and closed questions
+      unassigned_voting_questions = Assessments.fetch_unassigned_voting_questions()
+      assert Enum.count(unassigned_voting_questions) == 2
+
+      assert Enum.map(unassigned_voting_questions, fn q -> q.question_id end) == [
+               closed_question.id,
+               open_question.id
+             ]
+
       Assessments.update_final_contest_entries()
 
       # only the closed_contest should have been updated
@@ -433,6 +453,9 @@ defmodule Cadet.AssessmentsTest do
              |> where(question_id: ^compiled_question.id)
              |> Repo.all()
              |> length() == 4 * 3 + 6 * 4
+
+      assert SubmissionVotes |> where(question_id: ^invalid_question.id) |> Repo.all() |> length() ==
+               0
     end
 
     test "create voting parameters with invalid contest number" do
@@ -492,6 +515,65 @@ defmodule Cadet.AssessmentsTest do
 
       Assessments.delete_assessment(voting_assessment.id)
       refute Repo.exists?(SubmissionVotes, question_id: question.id)
+    end
+
+    test "does not delete contest assessment if referencing voting assessment is present" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+
+      contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config,
+          number: "test"
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      # insert voting question that references the contest assessment
+      _voting_question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+
+      error_message = {:bad_request, "Contest voting for this contest is still up"}
+
+      assert {:error, ^error_message} = Assessments.delete_assessment(contest_assessment.id)
+      # deletion should fail
+      assert Assessment |> where(id: ^contest_assessment.id) |> Repo.exists?()
+    end
+
+    test "deletes contest assessment if voting assessment references same number but different course" do
+      course_1 = insert(:course)
+      course_2 = insert(:course)
+      config = insert(:assessment_config)
+
+      contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course_1,
+          config: config,
+          number: "test"
+        )
+
+      voting_assessment = insert(:assessment, %{course: course_2, config: config})
+
+      # insert voting question from a different course that references the same contest number
+      _voting_question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+
+      assert {:ok, _} = Assessments.delete_assessment(contest_assessment.id)
+      # deletion should succeed
+      refute Assessment |> where(id: ^contest_assessment.id) |> Repo.exists?()
     end
   end
 

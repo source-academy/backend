@@ -36,18 +36,33 @@ defmodule Cadet.Assessments do
   def delete_assessment(id) do
     assessment = Repo.get(Assessment, id)
 
-    Submission
-    |> where(assessment_id: ^id)
-    |> delete_submission_assocation(id)
+    is_voted_on =
+      Question
+      |> where(type: :voting)
+      |> join(:inner, [q], asst in assoc(q, :assessment))
+      |> where(
+        [q, asst],
+        q.question["contest_number"] == ^assessment.number and
+          asst.course_id == ^assessment.course_id
+      )
+      |> Repo.exists?()
 
-    Question
-    |> where(assessment_id: ^id)
-    |> Repo.all()
-    |> Enum.each(fn q ->
-      delete_submission_votes_association(q)
-    end)
+    if is_voted_on do
+      {:error, {:bad_request, "Contest voting for this contest is still up"}}
+    else
+      Submission
+      |> where(assessment_id: ^id)
+      |> delete_submission_assocation(id)
 
-    Repo.delete(assessment)
+      Question
+      |> where(assessment_id: ^id)
+      |> Repo.all()
+      |> Enum.each(fn q ->
+        delete_submission_votes_association(q)
+      end)
+
+      Repo.delete(assessment)
+    end
   end
 
   defp delete_submission_votes_association(question) do
@@ -522,12 +537,26 @@ defmodule Cadet.Assessments do
       |> select([v], v.question_id)
       |> Repo.all()
 
-    Question
-    |> where(type: :voting)
-    |> where([q], q.id not in ^voting_assigned_question_ids)
-    |> join(:inner, [q], asst in assoc(q, :assessment))
-    |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
-    |> Repo.all()
+    valid_assessments =
+      Assessment
+      |> select([a], %{number: a.number, course_id: a.course_id})
+      |> Repo.all()
+
+    valid_questions =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.id not in ^voting_assigned_question_ids)
+      |> join(:inner, [q], asst in assoc(q, :assessment))
+      |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
+      |> Repo.all()
+
+    # fetch only voting where there is a corresponding contest
+    Enum.filter(valid_questions, fn q ->
+      Enum.any?(
+        valid_assessments,
+        fn a -> a.number == q.question["contest_number"] and a.course_id == q.course_id end
+      )
+    end)
   end
 
   @doc """
