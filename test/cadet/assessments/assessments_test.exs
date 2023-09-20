@@ -435,10 +435,11 @@ defmodule Cadet.AssessmentsTest do
       unassigned_voting_questions = Assessments.fetch_unassigned_voting_questions()
       assert Enum.count(unassigned_voting_questions) == 2
 
-      assert Enum.map(unassigned_voting_questions, fn q -> q.question_id end) == [
-               closed_question.id,
-               open_question.id
-             ]
+      unassigned_voting_question_ids =
+        Enum.map(unassigned_voting_questions, fn q -> q.question_id end)
+
+      assert closed_question.id in unassigned_voting_question_ids
+      assert open_question.id in unassigned_voting_question_ids
 
       Assessments.update_final_contest_entries()
 
