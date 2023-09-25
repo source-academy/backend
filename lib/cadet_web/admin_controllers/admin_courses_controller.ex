@@ -91,7 +91,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   swagger_path :update_course_config do
-    put("/v2/courses/{course_id}/admin/config")
+    put("/courses/{course_id}/admin/config")
 
     summary("Updates the course configuration for the specified course")
 
@@ -117,7 +117,7 @@ defmodule CadetWeb.AdminCoursesController do
   end
 
   swagger_path :update_assessment_configs do
-    put("/v2/courses/{course_id}/admin/config/assessment_configs")
+    put("/courses/{course_id}/admin/config/assessment_configs")
 
     summary("Updates the assessment configuration for the specified course")
 
