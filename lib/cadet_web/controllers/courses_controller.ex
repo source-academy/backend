@@ -41,7 +41,7 @@ defmodule CadetWeb.CoursesController do
   end
 
   swagger_path :create do
-    post("/v2/config/create")
+    post("/config/create")
 
     summary("Creates a new course")
 
@@ -65,8 +65,8 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
-  swagger_path :get_course_config do
-    get("/v2/courses/{course_id}/config")
+  swagger_path :index do
+    get("/courses/{course_id}/config")
 
     summary("Retrieves the course configuration of the specified course")
 
