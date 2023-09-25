@@ -11,7 +11,7 @@ defmodule CadetWeb.StoriesController do
   end
 
   swagger_path :index do
-    get("/v2/courses/{course_id}/stories")
+    get("/courses/{course_id}/stories")
 
     summary("Get a list of all stories")
 

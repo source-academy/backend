@@ -39,7 +39,7 @@ defmodule CadetWeb.IncentivesController do
   end
 
   swagger_path :index_achievements do
-    get("/achievements")
+    get("/courses/{course_id}/achievements")
 
     summary("Gets achievements")
     security([%{JWT: []}])
@@ -49,7 +49,7 @@ defmodule CadetWeb.IncentivesController do
   end
 
   swagger_path :index_goals do
-    get("/self/goals")
+    get("/courses/{course_id}/self/goals")
 
     summary("Gets goals, including user's progress")
     security([%{JWT: []}])
@@ -59,7 +59,7 @@ defmodule CadetWeb.IncentivesController do
   end
 
   swagger_path :update_progress do
-    post("/self/goals/{uuid}/progress")
+    post("/courses/{course_id}/self/goals/{uuid}/progress")
 
     summary("Inserts or updates own goal progress of specifed goal")
     security([%{JWT: []}])
