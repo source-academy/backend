@@ -1217,11 +1217,11 @@ defmodule Cadet.Assessments do
 
   # Calculate the score based on formula
   # score(v,t) = v - 2^(t/n) where v is the normalized_voting_score and n is the modifier
-  # n = 50 for C3 & C4, n = 70 for C6
+  # n = 50 for C3 & C4, n = 80 for C6
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    normalized_voting_score - :math.pow(2, min(1023.5, tokens / 70))
+    normalized_voting_score - :math.pow(2, min(1023.5, tokens / 80))
   end
 
   @doc """
