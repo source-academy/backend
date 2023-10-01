@@ -1708,10 +1708,11 @@ defmodule Cadet.AssessmentsTest do
   end
 
   defp expected_top_relative_scores(top_x) do
+    # test with token penalty of 70
     # "return 0;" in the factory has 3 token
     10..0
     |> Enum.to_list()
-    |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / 50) end)
+    |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / 70) end)
     |> Enum.take(top_x)
   end
 end
