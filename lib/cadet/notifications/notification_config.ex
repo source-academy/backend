@@ -5,7 +5,7 @@ defmodule Cadet.Notifications.NotificationConfig do
   use Ecto.Schema
   import Ecto.Changeset
   alias Cadet.Courses.{Course, AssessmentConfig}
-  alias Cadet.Notifications.NotificationType
+  alias Cadet.Notifications.{NotificationType, TimeOption, NotificationPreference}
 
   schema "notification_configs" do
     field(:is_enabled, :boolean, default: false)
@@ -13,6 +13,9 @@ defmodule Cadet.Notifications.NotificationConfig do
     belongs_to(:notification_type, NotificationType)
     belongs_to(:course, Course)
     belongs_to(:assessment_config, AssessmentConfig)
+
+    has_many(:time_options, TimeOption)
+    has_many(:notification_preferences, NotificationPreference)
 
     timestamps()
   end
