@@ -7,6 +7,8 @@ defmodule Cadet.Mixfile do
       version: "0.0.1",
       elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
+      # compilers: [:phoenix, :gettext] ++ Mix.compilers() ++ [:phoenix_swagger],
+      # compilers: [:phoenix] ++ Mix.compilers() ++ [:phoenix_swagger],
       compilers: Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
@@ -81,6 +83,7 @@ defmodule Cadet.Mixfile do
       {:sentry, "~> 8.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.7"},
+      {:gettext, "~> 0.22.3"},
 
       # notifiations system dependencies
       {:phoenix_html, "~> 3.0"},

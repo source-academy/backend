@@ -3,6 +3,7 @@ defmodule Cadet.Workers.NotificationWorker do
   Contain oban workers for sending notifications
   """
   use Oban.Worker, queue: :notifications, max_attempts: 1
+  require Logger
   alias Cadet.{Email, Notifications, Mailer}
   alias Cadet.Repo
 
@@ -73,39 +74,43 @@ defmodule Cadet.Workers.NotificationWorker do
           for avenger_cr <- avengers_crs do
             avenger = Cadet.Accounts.get_user(avenger_cr.user_id)
 
-            ungraded_submissions =
-              Jason.decode!(
-                elem(
-                  Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true),
-                  1
-                )
-              )
-
-            if length(ungraded_submissions) < ungraded_threshold do
-              IO.puts("[AVENGER_BACKLOG] below threshold!")
-            else
-              IO.puts("[AVENGER_BACKLOG] SENDING_OUT")
-
-              email =
-                Email.avenger_backlog_email(
-                  ntype.template_file_name,
-                  avenger,
-                  ungraded_submissions
+            if is_user_enabled(notification_type_id, avenger_cr.id) do
+              ungraded_submissions =
+                Jason.decode!(
+                  elem(
+                    Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true),
+                    1
+                  )
                 )
 
-              {status, email} = Mailer.deliver_now(email)
+              if length(ungraded_submissions) < ungraded_threshold do
+                Logger.info("[AVENGER_BACKLOG] below threshold!")
+              else
+                Logger.info("[AVENGER_BACKLOG] SENDING_OUT")
 
-              if status == :ok do
-                Notifications.create_sent_notification(avenger_cr.id, email.html_body)
+                email =
+                  Email.avenger_backlog_email(
+                    ntype.template_file_name,
+                    avenger,
+                    ungraded_submissions
+                  )
+
+                {status, email} = Mailer.deliver_now(email)
+
+                if status == :ok do
+                  Notifications.create_sent_notification(avenger_cr.id, email.html_body)
+                end
               end
+            else
+              Logger.info("[ASSESSMENT_SUBMISSION] user-level disabled")
             end
           end
         else
-          IO.puts("[AVENGER_BACKLOG] course-level disabled")
+          Logger.info("[AVENGER_BACKLOG] course-level disabled")
         end
       end
     else
-      IO.puts("[AVENGER_BACKLOG] system-level disabled!")
+      Logger.info("[AVENGER_BACKLOG] system-level disabled!")
     end
 
     :ok
@@ -132,13 +137,13 @@ defmodule Cadet.Workers.NotificationWorker do
 
       cond do
         !is_course_enabled(notification_type.id, course_id, assessment_config_id) ->
-          IO.puts("[ASSESSMENT_SUBMISSION] course-level disabled")
+          Logger.info("[ASSESSMENT_SUBMISSION] course-level disabled")
 
         !is_user_enabled(notification_type.id, avenger_cr.id) ->
-          IO.puts("[ASSESSMENT_SUBMISSION] user-level disabled")
+          Logger.info("[ASSESSMENT_SUBMISSION] user-level disabled")
 
         true ->
-          IO.puts("[ASSESSMENT_SUBMISSION] SENDING_OUT")
+          Logger.info("[ASSESSMENT_SUBMISSION] SENDING_OUT")
 
           email =
             Email.assessment_submission_email(
@@ -155,7 +160,7 @@ defmodule Cadet.Workers.NotificationWorker do
           end
       end
     else
-      IO.puts("[ASSESSMENT_SUBMISSION] system-level disabled!")
+      Logger.info("[ASSESSMENT_SUBMISSION] system-level disabled!")
     end
   end
 end

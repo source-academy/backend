@@ -12,6 +12,7 @@ defmodule Cadet.Notifications.NotificationType do
     field(:is_enabled, :boolean, default: false)
     field(:name, :string)
     field(:template_file_name, :string)
+    field(:for_staff, :boolean)
 
     timestamps()
   end
@@ -19,8 +20,8 @@ defmodule Cadet.Notifications.NotificationType do
   @doc false
   def changeset(notification_type, attrs) do
     notification_type
-    |> cast(attrs, [:name, :template_file_name, :is_enabled, :is_autopopulated])
-    |> validate_required([:name, :template_file_name, :is_autopopulated])
+    |> cast(attrs, [:name, :template_file_name, :is_enabled, :is_autopopulated, :for_staff])
+    |> validate_required([:name, :template_file_name, :is_autopopulated, :for_staff])
     |> unique_constraint(:name)
     |> prevent_nil_is_enabled()
   end

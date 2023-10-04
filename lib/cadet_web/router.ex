@@ -70,6 +70,25 @@ defmodule CadetWeb.Router do
   scope "/v2/courses/:course_id", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
 
+    # notification routers
+    get(
+      "/notifications/config/user/:course_reg_id",
+      NewNotificationsController,
+      :get_configurable_noti_configs
+    )
+
+    put("/notifications/options", NewNotificationsController, :upsert_time_options)
+    put("/notifications/preferences", NewNotificationsController, :upsert_noti_preferences)
+
+    get(
+      "/notifications/options/config/:noti_config_id",
+      NewNotificationsController,
+      :get_config_time_options
+    )
+
+    put("/notifications/preferabletime", NewNotificationsController, :upsert_preferable_times)
+    delete("/notifications/preferabletime", NewNotificationsController, :delete_preferable_times)
+
     get("/sourcecast", SourcecastController, :index)
 
     get("/assessments", AssessmentsController, :index)
@@ -99,6 +118,11 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
+
+    # notification routers
+    get("/notifications/config", NewNotificationsController, :all_noti_configs)
+    put("/notifications/config", NewNotificationsController, :update_noti_configs)
+    delete("/notifications/options", NewNotificationsController, :delete_time_options)
 
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)

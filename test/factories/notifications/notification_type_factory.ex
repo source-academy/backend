@@ -11,7 +11,7 @@ defmodule Cadet.Notifications.NotificationTypeFactory do
         %NotificationType{
           is_autopopulated: false,
           is_enabled: false,
-          name: "Generic Notificaation Type",
+          name: Faker.Pokemon.name(),
           template_file_name: "generic_template_name"
         }
       end
