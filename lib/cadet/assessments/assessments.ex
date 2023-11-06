@@ -1262,7 +1262,6 @@ defmodule Cadet.Assessments do
     # We bypass Ecto here and use a raw query to generate JSON directly from
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
-    # TODO: Implement filtering
     submissions =
       case Repo.query("""
            SELECT
