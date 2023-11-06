@@ -1250,14 +1250,20 @@ defmodule Cadet.Assessments do
       if show_all,
         do: "",
         else:
-          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
+          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $1) or s.student_id = $1"
+
+    group_filter =
+      if show_all,
+        do: "",
+        else:
+          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
 
     ungraded_where =
       if ungraded_only,
         do: "where s.\"gradedCount\" < assts.\"questionCount\"",
         else: ""
 
-    params = if show_all, do: [course_id], else: [course_id, grader.id]
+    params = if show_all, do: [], else: [grader.id]
 
     # We bypass Ecto here and use a raw query to generate JSON directly from
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
@@ -1312,7 +1318,7 @@ defmodule Cadet.Assessments do
                    questions q on a.id = q.assessment_id
                    inner join
                    assessment_configs ac on ac.id = a.config_id
-                  where a.course_id = $1
+                  where a.course_id = #{course_id}
                  group by a.id) a) assts on assts.id = s.assessment_id
              inner join
                (select
@@ -1386,7 +1392,7 @@ defmodule Cadet.Assessments do
                  assessments
                WHERE
                  assessments.course_id = #{course_id}
-             );
+             ) #{group_filter};
            """) do
         {:ok, %{columns: columns, rows: result}} ->
           result
