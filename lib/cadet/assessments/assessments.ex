@@ -1262,6 +1262,7 @@ defmodule Cadet.Assessments do
     # We bypass Ecto here and use a raw query to generate JSON directly from
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
+    # TODO: Remove old query
     case Repo.query(
            """
            select json_agg(q)::TEXT from
@@ -1346,6 +1347,84 @@ defmodule Cadet.Assessments do
       {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
       {:ok, %{rows: [[json]]}} -> {:ok, json}
     end
+
+    # TODO: Implement filtering
+    submissions =
+      case Repo.query("""
+           SELECT
+             s.id,
+             s.status,
+             s.unsubmitted_at,
+             s.unsubmitted_by_id,
+             s_ans.xp,
+             s_ans.xp_adjustment,
+             s.xp_bonus,
+             s_ans.graded_count,
+             s.student_id,
+             s.assessment_id
+           FROM
+             submissions AS s
+             LEFT JOIN (
+               SELECT
+                 ans.submission_id,
+                 SUM(ans.xp) AS xp,
+                 SUM(ans.xp_adjustment) AS xp_adjustment,
+                 COUNT(ans.id) FILTER (
+                   WHERE
+                     ans.grader_id IS NOT NULL
+                 ) AS graded_count
+               FROM
+                 answers AS ans
+               GROUP BY
+                 ans.submission_id
+             ) AS s_ans ON s_ans.submission_id = s.id
+           WHERE
+             s.assessment_id IN (
+               SELECT
+                 id
+               FROM
+                 assessments
+               WHERE
+                 assessments.course_id = #{course_id}
+             );
+           """) do
+        {:ok, %{columns: columns, rows: result}} ->
+          result
+          |> Enum.map(
+            &(columns
+              |> Enum.map(fn c -> String.to_atom(c) end)
+              |> Enum.zip(&1)
+              |> Enum.into(%{}))
+          )
+      end
+
+    {:ok, generate_grading_summary_view_model(submissions, course_id)}
+  end
+
+  defp generate_grading_summary_view_model(submissions, course_id) do
+    users =
+      CourseRegistration
+      |> where([cr], cr.course_id == ^course_id)
+      |> join(:inner, [cr], u in assoc(cr, :user))
+      |> join(:left, [cr, u], g in assoc(cr, :group))
+      |> preload([cr, u, g], user: u, group: g)
+      |> Repo.all()
+
+    assessment_ids = submissions |> Enum.map(& &1.assessment_id) |> Enum.uniq()
+
+    assessments =
+      Assessment
+      |> where([a], a.id in ^assessment_ids)
+      |> join(:left, [a], q in assoc(a, :questions))
+      |> join(:inner, [a], ac in assoc(a, :config))
+      |> preload([a, q, ac], questions: q, config: ac)
+      |> Repo.all()
+
+    %{
+      users: users,
+      assessments: assessments,
+      submissions: submissions
+    }
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
