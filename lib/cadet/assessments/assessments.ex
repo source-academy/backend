@@ -1238,7 +1238,7 @@ defmodule Cadet.Assessments do
   {:forbidden, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, String.t()}
+          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
         group_only \\ false,
