@@ -2,7 +2,7 @@ defmodule Cadet.Test.XMLGenerator do
   @moduledoc """
   This module contains functions to produce sample XML codes in accordance to
   the specification (xml_api.rst).
-
+  
   # TODO: Refactor using macros
   """
 
