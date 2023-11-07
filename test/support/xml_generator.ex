@@ -157,7 +157,8 @@ defmodule Cadet.Test.XMLGenerator do
         voting_field =
           voting(%{
             reveal_hours: question.question.reveal_hours,
-            assessment_number: question.question.contest_number
+            assessment_number: question.question.contest_number,
+            token_divider: question.question.token_divider
           })
 
         [
@@ -167,7 +168,7 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp voting(raw_attr) do
-    {"VOTING", map_permit_keys(raw_attr, ~w(assessment_number reveal_hours)a)}
+    {"VOTING", map_permit_keys(raw_attr, ~w(assessment_number reveal_hours token_divider)a)}
   end
 
   defp deployment(raw_attrs, children) do
