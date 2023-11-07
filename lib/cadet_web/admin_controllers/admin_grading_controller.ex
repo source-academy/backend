@@ -10,11 +10,11 @@ defmodule CadetWeb.AdminGradingController do
     group = String.to_atom(group)
 
     case Assessments.all_submissions_by_grader_for_index(course_reg, group) do
-      {:ok, submissions} ->
+      {:ok, view_model} ->
         conn
         |> put_status(:ok)
         |> put_resp_content_type("application/json")
-        |> text(submissions)
+        |> render("gradingsummaries.json", view_model)
     end
   end
 

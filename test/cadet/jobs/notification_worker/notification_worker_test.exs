@@ -18,10 +18,8 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
     submission = List.first(List.first(data.mcq_answers)).submission
 
     # setup for avenger backlog
-    ungraded_submissions =
-      Jason.decode!(
-        elem(Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true), 1)
-      )
+    {:ok, %{submissions: ungraded_submissions}} =
+      Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true)
 
     Repo.update_all(NotificationType, set: [is_enabled: true])
     Repo.update_all(NotificationConfig, set: [is_enabled: true])
