@@ -77,7 +77,8 @@ defmodule Cadet.AssessmentsTest do
           question: %{
             content: Faker.Pokemon.name(),
             contest_number: assessment.number,
-            reveal_hours: 48
+            reveal_hours: 48,
+            token_divider: 50
           }
         },
         assessment.id
@@ -646,13 +647,13 @@ defmodule Cadet.AssessmentsTest do
 
       top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, 5)
 
-      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(5)
+      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(5, 50)
 
       x = 3
       top_x_ans = Assessments.fetch_top_relative_score_answers(question_id, x)
 
       # verify that top x ans are queried correctly
-      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(3)
+      assert get_answer_relative_scores(top_x_ans) == expected_top_relative_scores(3, 50)
     end
   end
 
@@ -886,7 +887,7 @@ defmodule Cadet.AssessmentsTest do
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(yesterday_question.id, 5)
-             ) == expected_top_relative_scores(5)
+             ) == expected_top_relative_scores(5, 50)
     end
 
     test "update_rolling_contest_leaderboards correcly updates leaderboards which voting is active",
@@ -908,7 +909,7 @@ defmodule Cadet.AssessmentsTest do
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 5)
-             ) == expected_top_relative_scores(5)
+             ) == expected_top_relative_scores(5, 50)
     end
   end
 
@@ -1707,11 +1708,11 @@ defmodule Cadet.AssessmentsTest do
     questions |> Enum.map(fn q -> q.id end) |> Enum.sort()
   end
 
-  defp expected_top_relative_scores(top_x) do
+  defp expected_top_relative_scores(top_x, token_divider) do
     # "return 0;" in the factory has 3 token
     10..0
     |> Enum.to_list()
-    |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / 50) end)
+    |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / token_divider) end)
     |> Enum.take(top_x)
   end
 end

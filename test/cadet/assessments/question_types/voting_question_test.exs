@@ -9,7 +9,8 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestionTest do
         %{
           content: "content",
           contest_number: "C4",
-          reveal_hours: 48
+          reveal_hours: 48,
+          token_divider: 50
         },
         :valid
       )

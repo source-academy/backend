@@ -1175,7 +1175,13 @@ defmodule Cadet.Assessments do
       )
       |> Repo.all()
 
-    entry_scores = map_eligible_votes_to_entry_score(eligible_votes)
+    token_divider =
+      Question
+      |> select([q], q.question["token_divider"])
+      |> Repo.get_by(id: contest_voting_question_id)
+
+
+    entry_scores = map_eligible_votes_to_entry_score(eligible_votes, token_divider)
 
     entry_scores
     |> Enum.map(fn {ans_id, relative_score} ->
@@ -1192,7 +1198,7 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
-  defp map_eligible_votes_to_entry_score(eligible_votes) do
+  defp map_eligible_votes_to_entry_score(eligible_votes, token_divider) do
     # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
       Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
@@ -1210,17 +1216,17 @@ defmodule Cadet.Assessments do
     Enum.map(
       entry_vote_data,
       fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
-        {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens)}
+        {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider)}
       end
     )
   end
 
   # Calculate the score based on formula
-  # score(v,t) = v - 2^(t/50) where v is the normalized_voting_score
+  # score(v,t) = v - 2^(t/token_divider) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-  defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
+  defp calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    normalized_voting_score - :math.pow(2, min(1023.5, tokens / 50))
+    normalized_voting_score - :math.pow(2, min(1023.5, tokens / token_divider))
   end
 
   @doc """
