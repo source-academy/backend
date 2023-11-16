@@ -21,5 +21,6 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestion do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> validate_number(:token_divider, greater_than: 0)
   end
 end

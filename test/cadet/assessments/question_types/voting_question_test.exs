@@ -23,6 +23,26 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestionTest do
         },
         :invalid
       )
+
+      assert_changeset(
+        %{
+          content: "content",
+          contest_number: "C3",
+          reveal_hours: 48,
+          token_divider: -1
+        },
+        :invalid
+      )
+
+      assert_changeset(
+        %{
+          content: "content",
+          contest_number: "C6",
+          reveal_hours: 48,
+          token_divider: 0
+        },
+        :invalid
+      )
     end
   end
 end
