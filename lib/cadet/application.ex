@@ -16,7 +16,7 @@ defmodule Cadet.Application do
       {CadetWeb.Endpoint, []},
       {Phoenix.PubSub, [name: Cadet.PubSub, adapter: Phoenix.PubSub.PG2]},
       # Start your own worker by calling: Cadet.Worker.start_link(arg1, arg2, arg3)
-      # worker(Cadet.Worker, [arg1, arg2, arg3]),
+      # {Cadet.Worker, [arg1, arg2, arg3]},
       # Start the GuardianDB sweeper
       {Guardian.DB.Token.SweeperServer, []},
       # Start the Quantum scheduler
