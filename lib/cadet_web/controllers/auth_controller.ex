@@ -19,10 +19,11 @@ defmodule CadetWeb.AuthController do
   def create(
         conn,
         params = %{
-          "code" => code,
           "provider" => provider
         }
       ) do
+    # Code is optional as SAML flow is mainly handled by backend
+    code = Map.get(params, "code")
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
 
