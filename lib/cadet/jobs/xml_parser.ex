@@ -260,7 +260,8 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(
         ~x"./VOTING"e,
         contest_number: ~x"./@assessment_number"s,
-        reveal_hours: ~x"./@reveal_hours"i
+        reveal_hours: ~x"./@reveal_hours"i,
+        token_divider: ~x"./@token_divider"i
       )
     )
   end
