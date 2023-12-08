@@ -23,7 +23,8 @@ defmodule CadetWeb.AuthController do
         }
       ) do
     # Code is optional as SAML flow is mainly handled by backend
-    code = Map.get(params, "code")
+    # FIXME: HACKY fallback for SAML (because no code is needed)
+    code = Map.get(params, "code", conn)
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
 
