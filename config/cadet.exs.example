@@ -56,6 +56,11 @@ config :cadet,
     #      # You may need to write your own claim extractor for other providers
     #      claim_extractor: Cadet.Auth.Providers.CognitoClaimExtractor
     #    }},
+    # # To use authentication with CAS
+    # "cas" =>
+    #   {Cadet.Auth.Providers.CAS,
+    #    %{service_validate_endpoint: "https://{CAS_SERVER_ENDPOINT}/serviceValidate"}},
+
     "test" =>
       {Cadet.Auth.Providers.Config,
        [
