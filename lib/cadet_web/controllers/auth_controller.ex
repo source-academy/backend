@@ -47,7 +47,7 @@ defmodule CadetWeb.AuthController do
         |> text("Unknown error: #{reason}")
 
       {:signin, {:error, status, reason}} ->
-        # reason can be :bad_request or :internal_server_error
+        # status can be :bad_request or :internal_server_error
         conn
         |> put_status(status)
         |> text("Unable to retrieve user: #{reason}")
