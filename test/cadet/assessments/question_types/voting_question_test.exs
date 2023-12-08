@@ -9,7 +9,8 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestionTest do
         %{
           content: "content",
           contest_number: "C4",
-          reveal_hours: 48
+          reveal_hours: 48,
+          token_divider: 50
         },
         :valid
       )
@@ -19,6 +20,26 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestionTest do
       assert_changeset(
         %{
           content: 1
+        },
+        :invalid
+      )
+
+      assert_changeset(
+        %{
+          content: "content",
+          contest_number: "C3",
+          reveal_hours: 48,
+          token_divider: -1
+        },
+        :invalid
+      )
+
+      assert_changeset(
+        %{
+          content: "content",
+          contest_number: "C6",
+          reveal_hours: 48,
+          token_divider: 0
         },
         :invalid
       )
