@@ -39,7 +39,8 @@ defmodule Cadet.Assessments.QuestionTest do
       question: %{
         content: Faker.Pokemon.name(),
         contest_number: assessment.number,
-        reveal_hours: 48
+        reveal_hours: 48,
+        token_divider: 50
       }
     }
 
