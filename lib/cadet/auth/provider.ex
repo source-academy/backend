@@ -4,7 +4,7 @@ defmodule Cadet.Auth.Provider do
   it for a token with the OAuth2 provider, and then retrieves the user ID and name.
   """
 
-  @type code :: String.t()
+  @type code :: String.t() | Plug.Conn.t()
   @type token :: String.t()
   @type client_id :: String.t()
   @type redirect_uri :: String.t()
