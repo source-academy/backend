@@ -32,7 +32,7 @@ defmodule Cadet.Accounts.Teams do
     Enum.reduce_while(teams, {:ok, nil}, fn team_attrs, {:ok, _} ->
       student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
       if student_already_in_team?(-1, student_ids, assessment_id) do
-        {:halt, {:error, {:conflict, "Team with the same members already exists for this assessment!"}}}
+        {:halt, {:error, {:conflict, "One or more students already in a team for this assessment!"}}}
       else
         {:ok, team} = %Team{}
                     |> Team.changeset(attrs)
