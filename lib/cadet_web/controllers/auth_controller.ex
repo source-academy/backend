@@ -19,10 +19,12 @@ defmodule CadetWeb.AuthController do
   def create(
         conn,
         params = %{
-          "code" => code,
           "provider" => provider
         }
       ) do
+    # Code is optional as SAML flow is mainly handled by backend
+    # TODO: Potentially HACKY fallback for SAML (because no code is needed)
+    code = Map.get(params, "code", conn)
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
 
@@ -47,7 +49,7 @@ defmodule CadetWeb.AuthController do
         |> text("Unknown error: #{reason}")
 
       {:signin, {:error, status, reason}} ->
-        # reason can be :bad_request or :internal_server_error
+        # status can be :bad_request or :internal_server_error
         conn
         |> put_status(status)
         |> text("Unable to retrieve user: #{reason}")
