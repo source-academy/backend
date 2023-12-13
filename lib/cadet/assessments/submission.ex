@@ -24,7 +24,7 @@ defmodule Cadet.Assessments.Submission do
     belongs_to(:unsubmitted_by, CourseRegistration)
 
     has_many(:answers, Answer, on_delete: :delete_all)
-    has_many(:answers, Notification, on_delete: :delete_all)
+    has_one(:notification, Notification, on_delete: :delete_all)
 
     timestamps()
   end

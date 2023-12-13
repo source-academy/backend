@@ -312,7 +312,7 @@ defmodule Cadet.Assessments do
     query =
       from(t in Team,
         join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr.id,
+        where: tm.student_id == ^cr.id
       )
     teams = Repo.all(query)
 
@@ -879,21 +879,21 @@ defmodule Cadet.Assessments do
       case submission.student_id do
         nil -> # Team submission, handle notifications for team members
           team = Repo.get(Team, submission.team_id)
-          team ->
-            team_members =
-              from t in Team,
-                join: tm in TeamMember, on: t.id == tm.team_id,
-                join: cr in CourseRegistration, on: tm.student_id == cr.student_id,
-                where: t.id == ^team.id,
-                select: cr.id
+          team_members =
+            from t in Team,
+              join: tm in TeamMember, on: t.id == tm.team_id,
+              join: cr in CourseRegistration, on: tm.student_id == cr.student_id,
+              where: t.id == ^team.id,
+              select: cr.id
 
           Enum.each(team_members, fn tm_id ->
             Cadet.Accounts.Notifications.handle_unsubmit_notifications(submission.assessment.id, tm_id)
           end)
+          
         student_id -> 
           Cadet.Accounts.Notifications.handle_unsubmit_notifications(
             submission.assessment.id,
-            Repo.get(CourseRegistration, submission.student_id)
+            Repo.get(CourseRegistration, student_id)
           )
       end
 
