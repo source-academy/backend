@@ -731,7 +731,8 @@ defmodule Cadet.Assessments do
         raw_answer,
         force_submit
       ) do
-    with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+    with {:ok, team} <- find_team(question.assessment.id, cr_id),
+         {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
       update_submission_status_router(submission, question)
@@ -744,6 +745,9 @@ defmodule Cadet.Assessments do
       {:error, :race_condition} ->
         {:error, {:internal_server_error, "Please try again later."}}
 
+      {:error, :team_not_found} ->
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+
       {:error, :invalid_vote} ->
         {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
 
@@ -752,8 +756,23 @@ defmodule Cadet.Assessments do
     end
   end
 
-    def get_submission(assessment_id, %CourseRegistration{id: cr_id})
-      when is_ecto_id(assessment_id) do
+  defp find_team(assessment_id, cr_id)
+    when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
+      query =
+        from(t in Team,
+          where: t.assessment_id == ^assessment_id,
+          join: tm in assoc(t, :team_members),
+          where: tm.student_id == ^cr_id,
+          limit: 1
+        )
+      case Repo.one(query) do
+        nil -> {:error, :team_not_found}
+        team -> {:ok, team}
+      end
+    end
+
+  def get_submission(assessment_id, %CourseRegistration{id: cr_id})
+    when is_ecto_id(assessment_id) do
     query =
       from(t in Team,
         where: t.assessment_id == ^assessment_id,

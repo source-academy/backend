@@ -158,17 +158,22 @@ defmodule Cadet.Accounts.Teams do
     submission = Submission
     |> where(team_id: ^team.id)
     |> Repo.one()
-    Submission
-    |> where(team_id: ^team.id)
-    |> Repo.all()
-    |> Enum.each(fn x ->
-      Answer
-      |> where(submission_id: ^x.id)
+
+    if submission do
+      Submission
+      |> where(team_id: ^team.id)
+      |> Repo.all()
+      |> Enum.each(fn x ->
+        Answer
+        |> where(submission_id: ^x.id)
+        |> Repo.delete_all()
+      end)
+
+      Notification
+      |> where(submission_id: ^submission.id)
       |> Repo.delete_all()
-    end)
-    Notification
-    |> where(submission_id: ^submission.id)
-    |> Repo.delete_all()
+    end
+
     team
     |> Repo.delete()
   end
