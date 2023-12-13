@@ -10,7 +10,7 @@ defmodule Cadet.Accounts.Teams do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Team, TeamMember, CourseRegistration}
+  alias Cadet.Accounts.{Team, TeamMember, CourseRegistration, Notification}
   alias Cadet.Assessments.{Answer, Assessment, Submission}
 
   @doc """
@@ -155,6 +155,9 @@ defmodule Cadet.Accounts.Teams do
 
   """
   def delete_team(%Team{} = team) do
+    submission = Submission
+    |> where(team_id: ^team.id)
+    |> Repo.one()
     Submission
     |> where(team_id: ^team.id)
     |> Repo.all()
@@ -163,6 +166,9 @@ defmodule Cadet.Accounts.Teams do
       |> where(submission_id: ^x.id)
       |> Repo.delete_all()
     end)
+    Notification
+    |> where(submission_id: ^submission.id)
+    |> Repo.delete_all()
     team
     |> Repo.delete()
   end
