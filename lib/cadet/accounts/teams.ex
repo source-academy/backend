@@ -29,24 +29,65 @@ defmodule Cadet.Accounts.Teams do
     assessment_id = attrs["assessment_id"]
     teams = attrs["student_ids"]
 
-    Enum.reduce_while(teams, {:ok, nil}, fn team_attrs, {:ok, _} ->
-      student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
-      if student_already_in_team?(-1, student_ids, assessment_id) do
-        {:halt, {:error, {:conflict, "One or more students already in a team for this assessment!"}}}
-      else
-        {:ok, team} = %Team{}
-                    |> Team.changeset(attrs)
-                    |> Repo.insert()
-        team_id = team.id
-        Enum.each(team_attrs, fn student ->
-          student_id = Map.get(student, "userId")
-          attributes = %{student_id: student_id, team_id: team_id}
-          %TeamMember{}
-          |> cast(attributes, [:student_id, :team_id])
-          |> Repo.insert()
+    cond do
+      !all_students_distinct(teams) ->
+        {:halt, {:error, {:conflict, "One or more students appears multiple times in a team!"}}} 
+      
+      student_already_assigned(teams, assessment_id) ->
+        {:halt, {:error, {:conflict, "One or more students already in a team for this assessment!"}}} 
+
+      true -> 
+        Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
+          student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
+          IO.inspect(student_ids)
+          {:ok, team} = %Team{}
+                      |> Team.changeset(attrs)
+                      |> Repo.insert()
+          team_id = team.id
+          Enum.each(team_attrs, fn student ->
+            student_id = Map.get(student, "userId")
+            attributes = %{student_id: student_id, team_id: team_id}
+            %TeamMember{}
+            |> cast(attributes, [:student_id, :team_id])
+            |> Repo.insert()
+          end)
+          {:cont, {:ok, team}}
         end)
-        {:cont, {:ok, team}}
-      end
+    end
+  end
+
+  @doc """
+  Validates whether there are student(s) who are already assigned to another group.
+
+  ## Parameters
+
+    * `team_attrs` - A list of all the teams and their members.
+    * `assessment_id` - Id of the target assessment.
+
+  ## Returns
+
+  Returns `true` on success; otherwise, `false`.
+
+  """
+  defp student_already_assigned(team_attrs, assessment_id) do
+    Enum.all?(team_attrs, fn team ->
+      ids = Enum.map(team, &Map.get(&1, "userId"))
+
+      unique_ids_count = ids |> Enum.uniq() |> Enum.count()
+      all_ids_distinct = unique_ids_count == Enum.count(ids)
+
+      student_already_in_team?(-1, ids, assessment_id)
+    end)
+  end
+
+  defp all_students_distinct(team_attrs) do
+    Enum.all?(team_attrs, fn team ->
+      ids = Enum.map(team, &Map.get(&1, "userId"))
+
+      unique_ids_count = ids |> Enum.uniq() |> Enum.count()
+      all_ids_distinct = unique_ids_count == Enum.count(ids)
+
+      all_ids_distinct
     end)
   end
 
