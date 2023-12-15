@@ -31,10 +31,10 @@ defmodule Cadet.Accounts.Teams do
 
     cond do
       !all_students_distinct(teams) ->
-        {:halt, {:error, {:conflict, "One or more students appears multiple times in a team!"}}} 
+        {:error, {:conflict, "One or more students appears multiple times in a team!"}}
       
       student_already_assigned(teams, assessment_id) ->
-        {:halt, {:error, {:conflict, "One or more students already in a team for this assessment!"}}} 
+        {:error, {:conflict, "One or more students already in a team for this assessment!"}}
 
       true -> 
         Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
@@ -81,14 +81,15 @@ defmodule Cadet.Accounts.Teams do
   end
 
   defp all_students_distinct(team_attrs) do
-    Enum.all?(team_attrs, fn team ->
-      ids = Enum.map(team, &Map.get(&1, "userId"))
+    all_ids = team_attrs
+      |> Enum.flat_map(fn team ->
+        Enum.map(team, fn row -> Map.get(row, "userId") end)
+      end)
+  
+    all_ids_count = all_ids |> Enum.uniq() |> Enum.count()
+    all_ids_distinct = all_ids_count == Enum.count(all_ids)
 
-      unique_ids_count = ids |> Enum.uniq() |> Enum.count()
-      all_ids_distinct = unique_ids_count == Enum.count(ids)
-
-      all_ids_distinct
-    end)
+    all_ids_distinct
   end
 
   @doc """
