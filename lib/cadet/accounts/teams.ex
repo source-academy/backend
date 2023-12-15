@@ -29,7 +29,6 @@ defmodule Cadet.Accounts.Teams do
     assessment_id = attrs["assessment_id"]
     teams = attrs["student_ids"]
     assessment = Cadet.Repo.get(Cadet.Assessments.Assessment, assessment_id)
-    IO.inspect(assessment.max_team_size)
 
     cond do
       !all_team_within_max_size(teams, assessment.max_team_size) ->
