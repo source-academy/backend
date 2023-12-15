@@ -28,8 +28,13 @@ defmodule Cadet.Accounts.Teams do
   def create_team(attrs) do
     assessment_id = attrs["assessment_id"]
     teams = attrs["student_ids"]
+    assessment = Cadet.Repo.get(Cadet.Assessments.Assessment, assessment_id)
+    IO.inspect(assessment.max_team_size)
 
     cond do
+      !all_team_within_max_size(teams, assessment.max_team_size) ->
+        {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
+       
       !all_students_distinct(teams) ->
         {:error, {:conflict, "One or more students appears multiple times in a team!"}}
       
@@ -90,6 +95,13 @@ defmodule Cadet.Accounts.Teams do
     all_ids_distinct = all_ids_count == Enum.count(all_ids)
 
     all_ids_distinct
+  end
+
+  defp all_team_within_max_size(teams, max_team_size) do 
+    Enum.all?(teams, fn team ->
+      ids = Enum.map(team, &Map.get(&1, "userId"))
+      length(ids) <= max_team_size
+    end)
   end
 
   @doc """
