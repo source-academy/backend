@@ -176,12 +176,14 @@ defmodule Cadet.Accounts.Notifications do
         case submission.student_id do
           nil ->
             team = Repo.get(Team, submission.team_id)
-            team_members =
-              from t in Team,
+            query =
+              from(t in Team,
                 join: tm in TeamMember, on: t.id == tm.team_id,
-                join: cr in CourseRegistration, on: tm.student_id == cr.student_id,
+                join: cr in CourseRegistration, on: tm.student_id == cr.id,
                 where: t.id == ^team.id,
                 select: cr.id
+              )
+            team_members = Repo.all(query)
 
             Enum.each(team_members, fn tm_id ->
               write(%{
