@@ -77,6 +77,13 @@ defmodule Cadet.Accounts.Teams do
     end)
   end
 
+  @doc """
+  Checks there is no duplicated student during team creation.
+  ## Parameters
+    * `team_attrs` - IDs of the team members being created
+  ## Returns
+  Returns `true` if all students in the list are distinct; otherwise, returns `false`.
+  """
   defp all_students_distinct(team_attrs) do
     all_ids = team_attrs
       |> Enum.flat_map(fn team ->
@@ -89,6 +96,14 @@ defmodule Cadet.Accounts.Teams do
     all_ids_distinct
   end
 
+  @doc """
+  Checks if all the teams satisfy the max team size constraint.
+  ## Parameters
+    * `teams` - IDs of the team members being created
+    * `max_team_size` - max team size of the team
+  ## Returns
+  Returns `true` if all the teams have size less or equal to the max team size; otherwise, returns `false`.
+  """
   defp all_team_within_max_size(teams, max_team_size) do 
     Enum.all?(teams, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
@@ -96,6 +111,14 @@ defmodule Cadet.Accounts.Teams do
     end)
   end
 
+  @doc """
+  Checks if one or more students are enrolled in the course.
+  ## Parameters
+    * `teams` - ID of the team being created
+    * `course_id` - ID of the course
+  ## Returns
+  Returns `true` if all students in the list enroll in the course; otherwise, returns `false`.
+  """
   defp all_student_enrolled_in_course(teams, course_id) do
     all_ids = teams
       |> Enum.flat_map(fn team ->
