@@ -5,7 +5,7 @@ defmodule Cadet.Accounts.Teams do
 
   use Cadet, [:context, :display]
   use Ecto.Schema
-  
+
   import Ecto.Changeset
   import Ecto.Query
 
@@ -15,15 +15,10 @@ defmodule Cadet.Accounts.Teams do
 
   @doc """
   Creates a new team and assigns an assessment and team members to it.
-
   ## Parameters
-
     * `attrs` - A map containing the attributes for assessment id and creating the team and its members.
-
   ## Returns
-
   Returns a tuple `{:ok, team}` on success; otherwise, an error tuple.
-
   """
   def create_team(attrs) do
     assessment_id = attrs["assessment_id"]
@@ -33,10 +28,10 @@ defmodule Cadet.Accounts.Teams do
     cond do
       !all_team_within_max_size(teams, assessment.max_team_size) ->
         {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
-       
+
       !all_students_distinct(teams) ->
         {:error, {:conflict, "One or more students appear multiple times in a team!"}}
-      
+
       student_already_assigned(teams, assessment_id) ->
         {:error, {:conflict, "One or more students already in a team for this assessment!"}}
 
@@ -62,16 +57,11 @@ defmodule Cadet.Accounts.Teams do
 
   @doc """
   Validates whether there are student(s) who are already assigned to another group.
-
   ## Parameters
-
     * `team_attrs` - A list of all the teams and their members.
     * `assessment_id` - Id of the target assessment.
-
   ## Returns
-
   Returns `true` on success; otherwise, `false`.
-
   """
   defp student_already_assigned(team_attrs, assessment_id) do
     Enum.all?(team_attrs, fn team ->
@@ -89,7 +79,7 @@ defmodule Cadet.Accounts.Teams do
       |> Enum.flat_map(fn team ->
         Enum.map(team, fn row -> Map.get(row, "userId") end)
       end)
-  
+
     all_ids_count = all_ids |> Enum.uniq() |> Enum.count()
     all_ids_distinct = all_ids_count == Enum.count(all_ids)
 
@@ -105,17 +95,12 @@ defmodule Cadet.Accounts.Teams do
 
   @doc """
   Checks if one or more students are already in another team for the same assessment.
-
   ## Parameters
-
     * `team_id` - ID of the team being updated (use -1 for team creation)
     * `student_ids` - List of student IDs
     * `assessment_id` - ID of the assessment
-
   ## Returns
-
   Returns `true` if any student in the list is already a member of another team for the same assessment; otherwise, returns `false`.
-
   """
   defp student_already_in_team?(team_id, student_ids, assessment_id) do
     query =
@@ -131,17 +116,12 @@ defmodule Cadet.Accounts.Teams do
 
   @doc """
   Updates an existing team, the corresponding assessment, and its members.
-
   ## Parameters
-
     * `team` - The existing team to be updated
     * `new_assessment_id` - The ID of the updated assessment
     * `student_ids` - List of student ids for team members
-
   ## Returns
-
   Returns a tuple `{:ok, updated_team}` on success, containing the updated team details; otherwise, an error tuple.
-
   """
   def update_team(%Team{} = team, new_assessment_id, student_ids) do
     old_assessment_id = team.assessment_id
@@ -172,13 +152,10 @@ defmodule Cadet.Accounts.Teams do
 
   @doc """
   Updates team members based on the new list of student IDs.
-
   ## Parameters
-
     * `team` - The team being updated
     * `student_ids` - List of student ids for team members
     * `team_id` - ID of the team
-
   """
   defp update_team_members(team, student_ids, team_id) do
     current_student_ids = team.team_members |> Enum.map(&(&1.student_id))
@@ -201,11 +178,8 @@ defmodule Cadet.Accounts.Teams do
 
   @doc """
   Deletes a team along with its associated submissions and answers.
-
   ## Parameters
-
     * `team` - The team to be deleted
-
   """
   def delete_team(%Team{} = team) do
     Submission
