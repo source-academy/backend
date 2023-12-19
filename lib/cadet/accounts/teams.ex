@@ -35,7 +35,7 @@ defmodule Cadet.Accounts.Teams do
         {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
        
       !all_students_distinct(teams) ->
-        {:error, {:conflict, "One or more students appears multiple times in a team!"}}
+        {:error, {:conflict, "One or more students appear multiple times in a team!"}}
       
       student_already_assigned(teams, assessment_id) ->
         {:error, {:conflict, "One or more students already in a team for this assessment!"}}
