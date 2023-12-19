@@ -32,13 +32,16 @@ defmodule Cadet.Accounts.Teams do
       !all_students_distinct(teams) ->
         {:error, {:conflict, "One or more students appear multiple times in a team!"}}
 
+      !all_student_enrolled_in_course(teams, assessment.course_id) ->
+        {:error, {:conflict, "One or more students not enrolled in this course!"}}
+       
       student_already_assigned(teams, assessment_id) ->
         {:error, {:conflict, "One or more students already in a team for this assessment!"}}
 
       true -> 
         Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
           student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
-          IO.inspect(student_ids)
+
           {:ok, team} = %Team{}
                       |> Team.changeset(attrs)
                       |> Repo.insert()
@@ -91,6 +94,20 @@ defmodule Cadet.Accounts.Teams do
       ids = Enum.map(team, &Map.get(&1, "userId"))
       length(ids) <= max_team_size
     end)
+  end
+
+  defp all_student_enrolled_in_course(teams, course_id) do
+    all_ids = teams
+      |> Enum.flat_map(fn team ->
+        Enum.map(team, fn row -> Map.get(row, "userId") end)
+      end)
+
+    query = from(cr in Cadet.Accounts.CourseRegistration,
+                where: cr.id in ^all_ids,
+                select: count(cr.id))
+
+    count = Repo.one(query)
+    count == length(all_ids)
   end
 
   @doc """
