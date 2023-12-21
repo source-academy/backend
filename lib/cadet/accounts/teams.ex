@@ -31,16 +31,16 @@ defmodule Cadet.Accounts.Teams do
     assessment = Cadet.Repo.get(Cadet.Assessments.Assessment, assessment_id)
 
     cond do
-      !all_team_within_max_size(teams, assessment.max_team_size) ->
+      !all_team_within_max_size?(teams, assessment.max_team_size) ->
         {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
 
-      !all_students_distinct(teams) ->
+      !all_students_distinct?(teams) ->
         {:error, {:conflict, "One or more students appear multiple times in a team!"}}
 
-      !all_student_enrolled_in_course(teams, assessment.course_id) ->
+      !all_student_enrolled_in_course?(teams, assessment.course_id) ->
         {:error, {:conflict, "One or more students not enrolled in this course!"}}
        
-      student_already_assigned(teams, assessment_id) ->
+      student_already_assigned?(teams, assessment_id) ->
         {:error, {:conflict, "One or more students already in a team for this assessment!"}}
 
       true -> 
@@ -76,7 +76,7 @@ defmodule Cadet.Accounts.Teams do
   Returns `true` on success; otherwise, `false`.
 
   """
-  defp student_already_assigned(team_attrs, assessment_id) do
+  defp student_already_assigned?(team_attrs, assessment_id) do
     Enum.all?(team_attrs, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
 
@@ -99,7 +99,7 @@ defmodule Cadet.Accounts.Teams do
   Returns `true` if all students in the list are distinct; otherwise, returns `false`.
 
   """
-  defp all_students_distinct(team_attrs) do
+  defp all_students_distinct?(team_attrs) do
     all_ids = team_attrs
       |> Enum.flat_map(fn team ->
         Enum.map(team, fn row -> Map.get(row, "userId") end)
@@ -124,7 +124,7 @@ defmodule Cadet.Accounts.Teams do
   Returns `true` if all the teams have size less or equal to the max team size; otherwise, returns `false`.
 
   """
-  defp all_team_within_max_size(teams, max_team_size) do 
+  defp all_team_within_max_size?(teams, max_team_size) do 
     Enum.all?(teams, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
       length(ids) <= max_team_size
@@ -144,14 +144,14 @@ defmodule Cadet.Accounts.Teams do
   Returns `true` if all students in the list enroll in the course; otherwise, returns `false`.
 
   """
-  defp all_student_enrolled_in_course(teams, course_id) do
+  defp all_student_enrolled_in_course?(teams, course_id) do
     all_ids = teams
       |> Enum.flat_map(fn team ->
         Enum.map(team, fn row -> Map.get(row, "userId") end)
       end)
 
     query = from(cr in Cadet.Accounts.CourseRegistration,
-                where: cr.id in ^all_ids,
+                where: cr.id in ^all_ids and cr.course_id == ^course_id,
                 select: count(cr.id))
 
     count = Repo.one(query)
@@ -263,15 +263,39 @@ defmodule Cadet.Accounts.Teams do
 
   """
   def delete_team(%Team{} = team) do
-    Submission
-    |> where(team_id: ^team.id)
+    if (has_submitted_answer?(team.id)) do
+      {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
+    else
+      Submission
+      |> where(team_id: ^team.id)
+      |> Repo.all()
+      |> Enum.each(fn x ->
+        Answer
+        |> where(submission_id: ^x.id)
+        |> Repo.delete_all()
+      end)
+      team
+      |> Repo.delete()
+    end
+  end
+
+  @doc """
+  Check whether a team has subnitted submissions and answers.
+
+  ## Parameters
+
+    * `team_id` - The team id of the team to be checked
+
+  ## Returns
+
+  Returns `true` if any one of the submission has the status of "submitted", `false` otherwise
+
+  """
+  defp has_submitted_answer?(team_id) do 
+    submission = Submission
+    |> where([s], s.team_id == ^team_id and s.status == :submitted)
     |> Repo.all()
-    |> Enum.each(fn x ->
-      Answer
-      |> where(submission_id: ^x.id)
-      |> Repo.delete_all()
-    end)
-    team
-    |> Repo.delete()
+
+    length(submission) > 0
   end
 end
