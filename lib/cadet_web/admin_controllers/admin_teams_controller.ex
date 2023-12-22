@@ -70,6 +70,10 @@ defmodule CadetWeb.AdminTeamsController do
     team = Repo.get!(Team, team_id)
 
     case Teams.delete_team(team) do
+      {:error, {status, error_message}} ->
+        conn
+        |> put_status(status)
+        |> text(error_message)
       {:ok, _} ->
         text(conn, "Team deleted successfully.")
       {:error, _changeset} ->
