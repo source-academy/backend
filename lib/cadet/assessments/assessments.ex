@@ -1340,21 +1340,35 @@ defmodule Cadet.Assessments do
   The return value is {:ok, submissions} if no errors, else it is {:error,
   {:unauthorized, "Forbidden."}}
   """
+  # @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
+  #         {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
+          {:ok, String.t()}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
         group_only \\ false,
-        _ungraded_only \\ false
+        ungraded_only \\ false
       ) do
     show_all = not group_only
 
-    group_filter =
+    # group_filter =
+    #   if show_all,
+    #     do: "",
+    #     else:
+    #       "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
+
+    group_where =
       if show_all,
         do: "",
         else:
-          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
+          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
 
+    ungraded_where =
+      if ungraded_only,
+        do: "where s.\"gradedCount\" < assts.\"questionCount\"",
+        else: ""
+
+    params = if show_all, do: [course_id], else: [course_id, grader.id]
     # TODO: Restore ungraded filtering
     # ... or more likely, decouple email logic from this function
     # ungraded_where =
