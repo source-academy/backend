@@ -5,7 +5,7 @@ defmodule Cadet.Accounts.Teams do
 
   use Cadet, [:context, :display]
   use Ecto.Schema
-  
+
   import Ecto.Changeset
   import Ecto.Query
 
@@ -23,23 +23,30 @@ defmodule Cadet.Accounts.Teams do
   ## Returns
 
   Returns a tuple `{:ok, team}` on success; otherwise, an error tuple.
-
+  
   """
   def create_team(attrs) do
     assessment_id = attrs["assessment_id"]
     teams = attrs["student_ids"]
+    assessment = Cadet.Repo.get(Cadet.Assessments.Assessment, assessment_id)
 
     cond do
-      !all_students_distinct(teams) ->
-        {:halt, {:error, {:conflict, "One or more students appears multiple times in a team!"}}} 
-      
-      student_already_assigned(teams, assessment_id) ->
-        {:halt, {:error, {:conflict, "One or more students already in a team for this assessment!"}}} 
+      !all_team_within_max_size?(teams, assessment.max_team_size) ->
+        {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
+
+      !all_students_distinct?(teams) ->
+        {:error, {:conflict, "One or more students appear multiple times in a team!"}}
+
+      !all_student_enrolled_in_course?(teams, assessment.course_id) ->
+        {:error, {:conflict, "One or more students not enrolled in this course!"}}
+       
+      student_already_assigned?(teams, assessment_id) ->
+        {:error, {:conflict, "One or more students already in a team for this assessment!"}}
 
       true -> 
         Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
           student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
-          IO.inspect(student_ids)
+
           {:ok, team} = %Team{}
                       |> Team.changeset(attrs)
                       |> Repo.insert()
@@ -69,7 +76,7 @@ defmodule Cadet.Accounts.Teams do
   Returns `true` on success; otherwise, `false`.
 
   """
-  defp student_already_assigned(team_attrs, assessment_id) do
+  defp student_already_assigned?(team_attrs, assessment_id) do
     Enum.all?(team_attrs, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
 
@@ -80,15 +87,75 @@ defmodule Cadet.Accounts.Teams do
     end)
   end
 
-  defp all_students_distinct(team_attrs) do
-    Enum.all?(team_attrs, fn team ->
+  @doc """
+  Checks there is no duplicated student during team creation.
+
+  ## Parameters
+
+    * `team_attrs` - IDs of the team members being created
+
+  ## Returns
+
+  Returns `true` if all students in the list are distinct; otherwise, returns `false`.
+
+  """
+  defp all_students_distinct?(team_attrs) do
+    all_ids = team_attrs
+      |> Enum.flat_map(fn team ->
+        Enum.map(team, fn row -> Map.get(row, "userId") end)
+      end)
+
+    all_ids_count = all_ids |> Enum.uniq() |> Enum.count()
+    all_ids_distinct = all_ids_count == Enum.count(all_ids)
+
+    all_ids_distinct
+  end
+
+  @doc """
+  Checks if all the teams satisfy the max team size constraint.
+
+  ## Parameters
+
+    * `teams` - IDs of the team members being created
+    * `max_team_size` - max team size of the team
+
+  ## Returns
+
+  Returns `true` if all the teams have size less or equal to the max team size; otherwise, returns `false`.
+
+  """
+  defp all_team_within_max_size?(teams, max_team_size) do 
+    Enum.all?(teams, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
-
-      unique_ids_count = ids |> Enum.uniq() |> Enum.count()
-      all_ids_distinct = unique_ids_count == Enum.count(ids)
-
-      all_ids_distinct
+      length(ids) <= max_team_size
     end)
+  end
+
+  @doc """
+  Checks if one or more students are enrolled in the course.
+
+  ## Parameters
+
+    * `teams` - ID of the team being created
+    * `course_id` - ID of the course
+
+  ## Returns
+
+  Returns `true` if all students in the list enroll in the course; otherwise, returns `false`.
+
+  """
+  defp all_student_enrolled_in_course?(teams, course_id) do
+    all_ids = teams
+      |> Enum.flat_map(fn team ->
+        Enum.map(team, fn row -> Map.get(row, "userId") end)
+      end)
+
+    query = from(cr in Cadet.Accounts.CourseRegistration,
+                where: cr.id in ^all_ids and cr.course_id == ^course_id,
+                select: count(cr.id))
+
+    count = Repo.one(query)
+    count == length(all_ids)
   end
 
   @doc """
@@ -103,7 +170,7 @@ defmodule Cadet.Accounts.Teams do
   ## Returns
 
   Returns `true` if any student in the list is already a member of another team for the same assessment; otherwise, returns `false`.
-
+  
   """
   defp student_already_in_team?(team_id, student_ids, assessment_id) do
     query =
@@ -196,26 +263,51 @@ defmodule Cadet.Accounts.Teams do
 
   """
   def delete_team(%Team{} = team) do
-    submission = Submission
-    |> where(team_id: ^team.id)
-    |> Repo.one()
+    if (has_submitted_answer?(team.id)) do
+      {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
+    else
 
-    if submission do
-      Submission
+      submission = Submission
       |> where(team_id: ^team.id)
-      |> Repo.all()
-      |> Enum.each(fn x ->
-        Answer
-        |> where(submission_id: ^x.id)
+      |> Repo.one()
+
+      if submission do
+        Submission
+        |> where(team_id: ^team.id)
+        |> Repo.all()
+        |> Enum.each(fn x ->
+          Answer
+          |> where(submission_id: ^x.id)
+          |> Repo.delete_all()
+        end)
+
+        Notification
+        |> where(submission_id: ^submission.id)
         |> Repo.delete_all()
-      end)
+      end
 
-      Notification
-      |> where(submission_id: ^submission.id)
-      |> Repo.delete_all()
+      team
+      |> Repo.delete()
     end
+  end
 
-    team
-    |> Repo.delete()
+  @doc """
+  Check whether a team has subnitted submissions and answers.
+
+  ## Parameters
+
+    * `team_id` - The team id of the team to be checked
+
+  ## Returns
+
+  Returns `true` if any one of the submission has the status of "submitted", `false` otherwise
+
+  """
+  defp has_submitted_answer?(team_id) do 
+    submission = Submission
+    |> where([s], s.team_id == ^team_id and s.status == :submitted)
+    |> Repo.all()
+
+    length(submission) > 0
   end
 end

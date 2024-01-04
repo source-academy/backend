@@ -32,7 +32,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:story, :string)
     field(:reading, :string)
     field(:password, :string, default: nil)
-    field(:max_team_size, :integer, default: 0)
+    field(:max_team_size, :integer, default: 1)
 
     belongs_to(:config, AssessmentConfig)
     belongs_to(:course, Course)

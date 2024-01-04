@@ -1265,9 +1265,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
         course: course,
         config: assessment_config,
         is_published: true,
-        max_team_size: 0
+        max_team_size: 1
       })
-
+S
     questions =
       for index <- 0..2 do
         # insert with display order in reverse
