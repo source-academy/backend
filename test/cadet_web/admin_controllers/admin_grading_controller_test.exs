@@ -122,6 +122,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "participant" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -132,7 +133,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
@@ -185,6 +187,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "participant" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -195,7 +198,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
@@ -291,6 +295,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "team" => %{}
@@ -339,6 +344,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "team" => %{}
@@ -382,6 +388,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "team" => %{},
@@ -785,6 +792,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "participant" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -795,7 +803,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
@@ -828,6 +837,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "id" => submission.id,
             "participant" => %{
               "name" => submission.student.user.name,
+              "username" => submission.student.user.username,
               "id" => submission.student.id,
               "groupName" => submission.student.group.name,
               "groupLeaderId" => submission.student.group.leader_id
@@ -838,7 +848,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "maxXp" => 5000,
               "id" => mission.id,
               "title" => mission.title,
-              "questionCount" => 5
+              "questionCount" => 5,
+              "assessmentNumber" => mission.number
             },
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
@@ -934,6 +945,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "team" => %{}
@@ -982,6 +994,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "team" => %{}
@@ -1025,6 +1038,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                 },
                 "student" => %{
                   "name" => &1.submission.student.user.name,
+                  "username" => &1.submission.student.user.username,
                   "id" => &1.submission.student.id
                 },
                 "team" => %{},

@@ -25,6 +25,7 @@ defmodule Cadet.Assessments do
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
   alias Cadet.Incentives.Achievements
+  alias Timex.Duration
 
   require Decimal
 
@@ -37,18 +38,33 @@ defmodule Cadet.Assessments do
   def delete_assessment(id) do
     assessment = Repo.get(Assessment, id)
 
-    Submission
-    |> where(assessment_id: ^id)
-    |> delete_submission_assocation(id)
+    is_voted_on =
+      Question
+      |> where(type: :voting)
+      |> join(:inner, [q], asst in assoc(q, :assessment))
+      |> where(
+        [q, asst],
+        q.question["contest_number"] == ^assessment.number and
+          asst.course_id == ^assessment.course_id
+      )
+      |> Repo.exists?()
 
-    Question
-    |> where(assessment_id: ^id)
-    |> Repo.all()
-    |> Enum.each(fn q ->
-      delete_submission_votes_association(q)
-    end)
+    if is_voted_on do
+      {:error, {:bad_request, "Contest voting for this contest is still up"}}
+    else
+      Submission
+      |> where(assessment_id: ^id)
+      |> delete_submission_assocation(id)
 
-    Repo.delete(assessment)
+      Question
+      |> where(assessment_id: ^id)
+      |> Repo.all()
+      |> Enum.each(fn q ->
+        delete_submission_votes_association(q)
+      end)
+
+      Repo.delete(assessment)
+    end
   end
 
   defp delete_submission_votes_association(question) do
@@ -541,6 +557,49 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, params_with_assessment_id)
   end
 
+  def update_final_contest_entries do
+    # 1435 = 1 day - 5 minutes
+    if Log.log_execution("update_final_contest_entries", Duration.from_minutes(1435)) do
+      Logger.info("Started update of contest entry pools")
+      questions = fetch_unassigned_voting_questions()
+
+      for q <- questions do
+        insert_voting(q.course_id, q.question["contest_number"], q.question_id)
+      end
+
+      Logger.info("Successfully update contest entry pools")
+    end
+  end
+
+  # fetch voting questions where entries have not been assigned
+  def fetch_unassigned_voting_questions do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    valid_assessments =
+      Assessment
+      |> select([a], %{number: a.number, course_id: a.course_id})
+      |> Repo.all()
+
+    valid_questions =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.id not in ^voting_assigned_question_ids)
+      |> join(:inner, [q], asst in assoc(q, :assessment))
+      |> select([q, asst], %{course_id: asst.course_id, question: q.question, question_id: q.id})
+      |> Repo.all()
+
+    # fetch only voting where there is a corresponding contest
+    Enum.filter(valid_questions, fn q ->
+      Enum.any?(
+        valid_assessments,
+        fn a -> a.number == q.question["contest_number"] and a.course_id == q.course_id end
+      )
+    end)
+  end
+
   @doc """
   Generates and assigns contest entries for users with given usernames.
   """
@@ -563,102 +622,119 @@ defmodule Cadet.Assessments do
 
       {:error, error_changeset}
     else
-      # Returns contest submission ids with answers that contain "return"
-      contest_submission_ids =
-        Submission
-        |> join(:inner, [s], ans in assoc(s, :answers))
-        |> join(:inner, [s, ans], cr in assoc(s, :student))
-        |> where([s, ans, cr], cr.role == "student")
-        |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-        |> where(
-          [_, ans, cr],
-          fragment(
-            "?->>'code' like ?",
-            ans.answer,
-            "%return%"
-          )
-        )
-        |> select([s, _ans], {s.student_id, s.id})
-        |> Repo.all()
-        |> Enum.into(%{})
-
-      contest_submission_ids_length = Enum.count(contest_submission_ids)
-
-      voter_ids =
-        CourseRegistration
-        |> where(role: "student", course_id: ^course_id)
-        |> select([cr], cr.id)
-        |> Repo.all()
-
-      votes_per_user = min(contest_submission_ids_length, 10)
-
-      votes_per_submission =
-        if Enum.empty?(contest_submission_ids) do
-          0
-        else
-          trunc(Float.ceil(votes_per_user * length(voter_ids) / contest_submission_ids_length))
-        end
-
-      submission_id_list =
-        contest_submission_ids
-        |> Enum.map(fn {_, s_id} -> s_id end)
-        |> Enum.shuffle()
-        |> List.duplicate(votes_per_submission)
-        |> List.flatten()
-
-      {_submission_map, submission_votes_changesets} =
-        voter_ids
-        |> Enum.reduce({submission_id_list, []}, fn voter_id, acc ->
-          {submission_list, submission_votes} = acc
-
-          user_contest_submission_id = Map.get(contest_submission_ids, voter_id)
-
-          {votes, rest} =
-            submission_list
-            |> Enum.reduce_while({MapSet.new(), submission_list}, fn s_id, acc ->
-              {user_votes, submissions} = acc
-
-              max_votes =
-                if votes_per_user == contest_submission_ids_length and
-                     not is_nil(user_contest_submission_id) do
-                  # no. of submssions is less than 10. Unable to find
-                  votes_per_user - 1
-                else
-                  votes_per_user
-                end
-
-              if MapSet.size(user_votes) < max_votes do
-                if s_id != user_contest_submission_id and not MapSet.member?(user_votes, s_id) do
-                  new_user_votes = MapSet.put(user_votes, s_id)
-                  new_submissions = List.delete(submissions, s_id)
-                  {:cont, {new_user_votes, new_submissions}}
-                else
-                  {:cont, {user_votes, submissions}}
-                end
-              else
-                {:halt, acc}
-              end
-            end)
-
-          votes = MapSet.to_list(votes)
-
-          new_submission_votes =
-            votes
-            |> Enum.map(fn s_id ->
-              %SubmissionVotes{voter_id: voter_id, submission_id: s_id, question_id: question_id}
-            end)
-            |> Enum.concat(submission_votes)
-
-          {rest, new_submission_votes}
-        end)
-
-      submission_votes_changesets
-      |> Enum.with_index()
-      |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
-        Multi.insert(multi, Integer.to_string(index), changeset)
-      end)
-      |> Repo.transaction()
+      if Timex.compare(contest_assessment.close_at, Timex.now()) < 0 do
+        compile_entries(course_id, contest_assessment, question_id)
+      else
+        # contest has not closed, do nothing
+        {:ok, nil}
+      end
     end
+  end
+
+  def compile_entries(
+        course_id,
+        contest_assessment,
+        question_id
+      ) do
+    # Returns contest submission ids with answers that contain "return"
+    contest_submission_ids =
+      Submission
+      |> join(:inner, [s], ans in assoc(s, :answers))
+      |> join(:inner, [s, ans], cr in assoc(s, :student))
+      |> where([s, ans, cr], cr.role == "student")
+      |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
+      |> where(
+        [_, ans, cr],
+        fragment(
+          "?->>'code' like ?",
+          ans.answer,
+          "%return%"
+        )
+      )
+      |> select([s, _ans], {s.student_id, s.id})
+      |> Repo.all()
+      |> Enum.into(%{})
+
+    contest_submission_ids_length = Enum.count(contest_submission_ids)
+
+    voter_ids =
+      CourseRegistration
+      |> where(role: "student", course_id: ^course_id)
+      |> select([cr], cr.id)
+      |> Repo.all()
+
+    votes_per_user = min(contest_submission_ids_length, 10)
+
+    votes_per_submission =
+      if Enum.empty?(contest_submission_ids) do
+        0
+      else
+        trunc(Float.ceil(votes_per_user * length(voter_ids) / contest_submission_ids_length))
+      end
+
+    submission_id_list =
+      contest_submission_ids
+      |> Enum.map(fn {_, s_id} -> s_id end)
+      |> Enum.shuffle()
+      |> List.duplicate(votes_per_submission)
+      |> List.flatten()
+
+    {_submission_map, submission_votes_changesets} =
+      voter_ids
+      |> Enum.reduce({submission_id_list, []}, fn voter_id, acc ->
+        {submission_list, submission_votes} = acc
+
+        user_contest_submission_id = Map.get(contest_submission_ids, voter_id)
+
+        {votes, rest} =
+          submission_list
+          |> Enum.reduce_while({MapSet.new(), submission_list}, fn s_id, acc ->
+            {user_votes, submissions} = acc
+
+            max_votes =
+              if votes_per_user == contest_submission_ids_length and
+                   not is_nil(user_contest_submission_id) do
+                # no. of submssions is less than 10. Unable to find
+                votes_per_user - 1
+              else
+                votes_per_user
+              end
+
+            if MapSet.size(user_votes) < max_votes do
+              if s_id != user_contest_submission_id and not MapSet.member?(user_votes, s_id) do
+                new_user_votes = MapSet.put(user_votes, s_id)
+                new_submissions = List.delete(submissions, s_id)
+                {:cont, {new_user_votes, new_submissions}}
+              else
+                {:cont, {user_votes, submissions}}
+              end
+            else
+              {:halt, acc}
+            end
+          end)
+
+        votes = MapSet.to_list(votes)
+
+        new_submission_votes =
+          votes
+          |> Enum.map(fn s_id ->
+            %SubmissionVotes{
+              voter_id: voter_id,
+              submission_id: s_id,
+              question_id: question_id
+            }
+          end)
+          |> Enum.concat(submission_votes)
+
+        {rest, new_submission_votes}
+      end)
+
+    submission_votes_changesets
+    |> Enum.with_index()
+    |> Enum.reduce(Multi.new(), fn {changeset, index}, multi ->
+      Multi.insert(multi, Integer.to_string(index), changeset)
+    end)
+    |> Repo.transaction()
   end
 
   def update_assessment(id, params) when is_ecto_id(id) do
@@ -1125,7 +1201,7 @@ defmodule Cadet.Assessments do
   """
   def update_rolling_contest_leaderboards do
     # 115 = 2 hours - 5 minutes is default.
-    if Log.log_execution("update_rolling_contest_leaderboards", Timex.Duration.from_minutes(115)) do
+    if Log.log_execution("update_rolling_contest_leaderboards", Duration.from_minutes(115)) do
       Logger.info("Started update_rolling_contest_leaderboards")
 
       voting_questions_to_update = fetch_active_voting_questions()
@@ -1152,7 +1228,7 @@ defmodule Cadet.Assessments do
   """
   def update_final_contest_leaderboards do
     # 1435 = 24 hours - 5 minutes
-    if Log.log_execution("update_final_contest_leaderboards", Timex.Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_leaderboards", Duration.from_minutes(1435)) do
       Logger.info("Started update_final_contest_leaderboards")
 
       voting_questions_to_update = fetch_voting_questions_due_yesterday()
@@ -1198,7 +1274,12 @@ defmodule Cadet.Assessments do
       )
       |> Repo.all()
 
-    entry_scores = map_eligible_votes_to_entry_score(eligible_votes)
+    token_divider =
+      Question
+      |> select([q], q.question["token_divider"])
+      |> Repo.get_by(id: contest_voting_question_id)
+
+    entry_scores = map_eligible_votes_to_entry_score(eligible_votes, token_divider)
 
     entry_scores
     |> Enum.map(fn {ans_id, relative_score} ->
@@ -1215,7 +1296,7 @@ defmodule Cadet.Assessments do
     |> Repo.transaction()
   end
 
-  defp map_eligible_votes_to_entry_score(eligible_votes) do
+  defp map_eligible_votes_to_entry_score(eligible_votes, token_divider) do
     # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
       Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
@@ -1233,17 +1314,17 @@ defmodule Cadet.Assessments do
     Enum.map(
       entry_vote_data,
       fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
-        {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens)}
+        {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider)}
       end
     )
   end
 
   # Calculate the score based on formula
-  # score(v,t) = v - 2^(t/50) where v is the normalized_voting_score
+  # score(v,t) = v - 2^(t/token_divider) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-  defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
+  defp calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider) do
     normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    normalized_voting_score - :math.pow(2, min(1023.5, tokens / 50))
+    normalized_voting_score - :math.pow(2, min(1023.5, tokens / token_divider))
   end
 
   @doc """
@@ -1260,26 +1341,26 @@ defmodule Cadet.Assessments do
   {:unauthorized, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, String.t()}
+          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
         group_only \\ false,
-        ungraded_only \\ false
+        _ungraded_only \\ false
       ) do
     show_all = not group_only
 
-    group_where =
+    group_filter =
       if show_all,
         do: "",
         else:
-          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
+          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
 
-    ungraded_where =
-      if ungraded_only,
-        do: "where s.\"gradedCount\" < assts.\"questionCount\"",
-        else: ""
-
-    params = if show_all, do: [course_id], else: [course_id, grader.id]
+    # TODO: Restore ungraded filtering
+    # ... or more likely, decouple email logic from this function
+    # ungraded_where =
+    #   if ungraded_only,
+    #     do: "where s.\"gradedCount\" < assts.\"questionCount\"",
+    #     else: ""
 
     # We bypass Ecto here and use a raw query to generate JSON directly from
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
