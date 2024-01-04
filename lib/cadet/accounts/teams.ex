@@ -10,7 +10,7 @@ defmodule Cadet.Accounts.Teams do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Team, TeamMember, CourseRegistration}
+  alias Cadet.Accounts.{Team, TeamMember, CourseRegistration, Notification}
   alias Cadet.Assessments.{Answer, Assessment, Submission}
 
   @doc """
@@ -266,14 +266,26 @@ defmodule Cadet.Accounts.Teams do
     if (has_submitted_answer?(team.id)) do
       {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
     else
-      Submission
+
+      submission = Submission
       |> where(team_id: ^team.id)
-      |> Repo.all()
-      |> Enum.each(fn x ->
-        Answer
-        |> where(submission_id: ^x.id)
+      |> Repo.one()
+
+      if submission do
+        Submission
+        |> where(team_id: ^team.id)
+        |> Repo.all()
+        |> Enum.each(fn x ->
+          Answer
+          |> where(submission_id: ^x.id)
+          |> Repo.delete_all()
+        end)
+
+        Notification
+        |> where(submission_id: ^submission.id)
         |> Repo.delete_all()
-      end)
+      end
+
       team
       |> Repo.delete()
     end
