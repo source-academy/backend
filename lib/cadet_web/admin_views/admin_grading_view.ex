@@ -10,11 +10,18 @@ defmodule CadetWeb.AdminGradingView do
   def render("gradingsummaries.json", %{
         users: users,
         assessments: assessments,
-        submissions: submissions
+        submissions: submissions,
+        teams: teams,
+        team_members: team_members
       }) do
     for submission <- submissions do
       user = users |> Enum.find(&(&1.id == submission.student_id))
       assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
+      team = teams |> Enum.find(&(&1.id == submission.team_id))
+      team_members = team_members |> Enum.filter(&(&1.team_id == submission.team_id))
+      team_member_users = team_members |> Enum.map(fn team_member ->
+        users |> Enum.find(&(&1.id == team_member.student_id))
+      end)
 
       render(
         CadetWeb.AdminGradingView,
@@ -23,6 +30,8 @@ defmodule CadetWeb.AdminGradingView do
           user: user,
           assessment: assessment,
           submission: submission,
+          team: team,
+          team_members: team_member_users,
           unsubmitter:
             case submission.unsubmitted_by_id do
               nil -> nil
@@ -37,6 +46,8 @@ defmodule CadetWeb.AdminGradingView do
         user: user,
         assessment: a,
         submission: s,
+        team: team,
+        team_members: team_members,
         unsubmitter: unsubmitter
       }) do
     s
@@ -57,6 +68,7 @@ defmodule CadetWeb.AdminGradingView do
       assessment:
         render_one(a, CadetWeb.AdminGradingView, "gradingsummaryassessment.json", as: :assessment),
       student: render_one(user, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr),
+      team: render_one(team, CadetWeb.AdminGradingView, "gradingsummaryteam.json", as: :team, assigns: %{team_members: team_members}),      
       unsubmittedBy:
         case unsubmitter do
           nil -> nil
@@ -74,6 +86,13 @@ defmodule CadetWeb.AdminGradingView do
       type: a.config.type,
       maxXp: a.questions |> Enum.map(& &1.max_xp) |> Enum.sum(),
       questionCount: a.questions |> Enum.count()
+    }
+  end
+
+  def render("gradingsummaryteam.json", %{team: team, assigns: %{team_members: team_members}}) do
+    %{
+      id: team.id,
+      team_members: render_many(team_members, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr)
     }
   end
 

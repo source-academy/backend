@@ -1340,35 +1340,22 @@ defmodule Cadet.Assessments do
   The return value is {:ok, submissions} if no errors, else it is {:error,
   {:unauthorized, "Forbidden."}}
   """
-  # @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-  #         {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, String.t()}
+          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()],
+          :teams => [any()], :team_members => [any()]}}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
         group_only \\ false,
-        ungraded_only \\ false
+        _ungraded_only \\ false
       ) do
     show_all = not group_only
 
-    # group_filter =
-    #   if show_all,
-    #     do: "",
-    #     else:
-    #       "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
-
-    group_where =
+    group_filter =
       if show_all,
         do: "",
         else:
-          "where s.student_id in (select cr.id from course_registrations cr inner join groups g on cr.group_id = g.id where g.leader_id = $2) or s.student_id = $2"
+          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
 
-    ungraded_where =
-      if ungraded_only,
-        do: "where s.\"gradedCount\" < assts.\"questionCount\"",
-        else: ""
-
-    params = if show_all, do: [course_id], else: [course_id, grader.id]
     # TODO: Restore ungraded filtering
     # ... or more likely, decouple email logic from this function
     # ungraded_where =
@@ -1379,104 +1366,97 @@ defmodule Cadet.Assessments do
     # We bypass Ecto here and use a raw query to generate JSON directly from
     # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
 
-    case Repo.query(
-          """
-           SELECT json_agg(q)::TEXT FROM (
-             SELECT
-               s.id,
-               s.status,
-               s."unsubmittedAt",
-               s.xp,
-               s."xpAdjustment",
-               s."xpBonus",
-               s."gradedCount",
-               assts.jsn as assessment,
-               CASE
-                 WHEN s.student_id IS NOT NULL THEN students.jsn
-                 ELSE to_json(team)
-               END AS participant,
-               unsubmitters.jsn as "unsubmittedBy"
-             FROM (
-               SELECT
-                 s.id,
-                 s.student_id,
-                 s.team_id,
-                 s.assessment_id,
-                 s.status,
-                 s.unsubmitted_at as "unsubmittedAt",
-                 s.unsubmitted_by_id,
-                 sum(ans.xp) as xp,
-                 sum(ans.xp_adjustment) as "xpAdjustment",
-                 s.xp_bonus as "xpBonus",
-                 count(ans.id) FILTER (WHERE ans.grader_id IS NOT NULL) as "gradedCount"
-               FROM submissions s
-               LEFT JOIN answers ans ON s.id = ans.submission_id
-               #{group_where}
-               GROUP BY s.id
-             ) s
-             INNER JOIN (
-               SELECT
-                 a.id, a."questionCount", to_json(a) as jsn
-               FROM (
-                 SELECT
-                   a.id,
-                   a.title,
-                   bool_or(ac.is_manually_graded) as "isManuallyGraded",
-                   max(ac.type) as "type",
-                   sum(q.max_xp) as "maxXp",
-                   count(q.id) as "questionCount"
-                 FROM assessments a
-                 LEFT JOIN questions q ON a.id = q.assessment_id
-                 INNER JOIN assessment_configs ac ON ac.id = a.config_id
-                 WHERE a.course_id = $1
-                 GROUP BY a.id
-               ) a
-             ) assts ON assts.id = s.assessment_id
+    submissions =
+      case Repo.query("""
+           SELECT
+             s.id,
+             s.status,
+             s.unsubmitted_at,
+             s.unsubmitted_by_id,
+             s_ans.xp,
+             s_ans.xp_adjustment,
+             s.xp_bonus,
+             s_ans.graded_count,
+             s.student_id,
+             s.team_id,
+             s.assessment_id
+           FROM
+             submissions AS s
              LEFT JOIN (
                SELECT
-                 cr.id, to_json(cr) as jsn
-               FROM (
-                 SELECT
-                   cr.id,
-                   u.name as "name",
-                   g.name as "groupName",
-                   g.leader_id as "groupLeaderId"
-                 FROM course_registrations cr
-                 LEFT JOIN groups g ON g.id = cr.group_id
-                 INNER JOIN users u ON u.id = cr.user_id
-               ) cr
-             ) students ON students.id = s.student_id
-             LEFT JOIN (
+                 ans.submission_id,
+                 SUM(ans.xp) AS xp,
+                 SUM(ans.xp_adjustment) AS xp_adjustment,
+                 COUNT(ans.id) FILTER (
+                   WHERE
+                     ans.grader_id IS NOT NULL
+                 ) AS graded_count
+               FROM
+                 answers AS ans
+               GROUP BY
+                 ans.submission_id
+             ) AS s_ans ON s_ans.submission_id = s.id
+           WHERE
+             s.assessment_id IN (
                SELECT
-                 t.id,
-                 to_json(t) as jsn,
-                 array_agg(cr.id) as student_ids,
-                 array_agg(u.name) as student_names
-               FROM teams t
-               LEFT JOIN team_members tm ON t.id = tm.team_id
-               LEFT JOIN course_registrations cr ON cr.id = tm.student_id
-               LEFT JOIN users u ON u.id = cr.user_id
-               GROUP BY t.id
-             ) team ON team.id = s.team_id
-             LEFT JOIN (
-               SELECT
-                 cr.id, to_json(cr) as jsn
-               FROM (
-                 SELECT
-                   cr.id,
-                   u.name
-                 FROM course_registrations cr
-                 INNER JOIN users u ON u.id = cr.user_id
-               ) cr
-             ) unsubmitters ON s.unsubmitted_by_id = unsubmitters.id
-             #{ungraded_where}
-           ) q
-           """,
-           params
-         ) do
-      {:ok, %{rows: [[nil]]}} -> {:ok, "[]"}
-      {:ok, %{rows: [[json]]}} -> {:ok, json}
-    end
+                 id
+               FROM
+                 assessments
+               WHERE
+                 assessments.course_id = #{course_id}
+             ) #{group_filter};
+           """) do
+        {:ok, %{columns: columns, rows: result}} ->
+          result
+          |> Enum.map(
+            &(columns
+              |> Enum.map(fn c -> String.to_atom(c) end)
+              |> Enum.zip(&1)
+              |> Enum.into(%{}))
+          )
+      end
+
+    {:ok, generate_grading_summary_view_model(submissions, course_id)}
+  end
+
+  defp generate_grading_summary_view_model(submissions, course_id) do
+    users =
+      CourseRegistration
+      |> where([cr], cr.course_id == ^course_id)
+      |> join(:inner, [cr], u in assoc(cr, :user))
+      |> join(:left, [cr, u], g in assoc(cr, :group))
+      |> preload([cr, u, g], user: u, group: g)
+      |> Repo.all()
+
+    assessment_ids = submissions |> Enum.map(& &1.assessment_id) |> Enum.uniq()
+
+    assessments =
+      Assessment
+      |> where([a], a.id in ^assessment_ids)
+      |> join(:left, [a], q in assoc(a, :questions))
+      |> join(:inner, [a], ac in assoc(a, :config))
+      |> preload([a, q, ac], questions: q, config: ac)
+      |> Repo.all()
+    
+    team_ids = submissions |> Enum.map(& &1.team_id) |> Enum.uniq()
+
+    teams =
+      Team
+      |> where([t], t.id in ^team_ids)
+      |> Repo.all()
+
+    team_members =
+      TeamMember
+      |> where([tm], tm.team_id in ^team_ids)
+      |> Repo.all()
+
+    %{
+      users: users,
+      assessments: assessments,
+      submissions: submissions,
+      teams: teams,
+      team_members: team_members
+    }
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
