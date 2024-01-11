@@ -10,15 +10,20 @@ defmodule Cadet.Assessments.SubmissionTest do
     config = insert(:assessment_config, %{course: course})
     assessment = insert(:assessment, %{config: config, course: course})
     student = insert(:course_registration, %{course: course, role: :student})
-
+    team = nil
     valid_params = %{student_id: student.id, assessment_id: assessment.id}
 
-    {:ok, %{assessment: assessment, student: student, valid_params: valid_params}}
+    {:ok, %{assessment: assessment, student: student, team: team, valid_params: valid_params}}
   end
 
   describe "Changesets" do
     test "valid params", %{valid_params: params} do
-      assert_changeset_db(params, :valid)
+      IO.inspect("params")
+      IO.inspect(params)
+      
+      params 
+      # |> Map.put(:team_id, nil)
+      |> assert_changeset_db(:valid)
     end
 
     test "converts valid params with models into ids", %{assessment: assessment, student: student} do

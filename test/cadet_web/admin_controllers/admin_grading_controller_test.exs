@@ -120,7 +120,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "participant" => %{
+            "student" => %{
               "name" => submission.student.user.name,
               "username" => submission.student.user.username,
               "id" => submission.student.id,
@@ -139,7 +139,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "team" => nil
           }
         end)
 
@@ -185,7 +186,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "participant" => %{
+            "student" => %{
               "name" => submission.student.user.name,
               "username" => submission.student.user.username,
               "id" => submission.student.id,
@@ -204,7 +205,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "team" => nil
           }
         end)
 
@@ -790,7 +792,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "participant" => %{
+            "student" => %{
               "name" => submission.student.user.name,
               "username" => submission.student.user.username,
               "id" => submission.student.id,
@@ -809,7 +811,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "team" => nil
           }
         end)
 
@@ -835,7 +838,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "xpAdjustment" => -2500,
             "xpBonus" => 100,
             "id" => submission.id,
-            "participant" => %{
+            "student" => %{
               "name" => submission.student.user.name,
               "username" => submission.student.user.username,
               "id" => submission.student.id,
@@ -854,7 +857,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "status" => Atom.to_string(submission.status),
             "gradedCount" => 5,
             "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
+            "unsubmittedAt" => nil,
+            "team" => nil
           }
         end)
 

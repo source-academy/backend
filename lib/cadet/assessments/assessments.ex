@@ -841,9 +841,21 @@ defmodule Cadet.Assessments do
           where: tm.student_id == ^cr_id,
           limit: 1
         )
-      case Repo.one(query) do
-        nil -> {:error, :team_not_found}
-        team -> {:ok, team}
+      assessment_team_size =
+        Repo.one(
+          from(a in Assessment, where: a.id == ^assessment_id, select: %{max_team_size: a.max_team_size})
+        )
+        |> Map.get(:max_team_size, 0)
+ 
+      case assessment_team_size > 1 do
+        true ->
+          case Repo.one(query) do
+            nil -> {:error, :team_not_found}
+            team -> {:ok, team}
+          end
+        # team is nil for individual assessments
+        false ->
+          {:ok, nil}
       end
     end
 
