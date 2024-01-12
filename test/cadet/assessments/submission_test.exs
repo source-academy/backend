@@ -18,11 +18,7 @@ defmodule Cadet.Assessments.SubmissionTest do
 
   describe "Changesets" do
     test "valid params", %{valid_params: params} do
-      IO.inspect("params")
-      IO.inspect(params)
-      
       params 
-      # |> Map.put(:team_id, nil)
       |> assert_changeset_db(:valid)
     end
 
