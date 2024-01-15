@@ -10,6 +10,8 @@ defmodule Cadet.Accounts.TeamMemberFactory do
 
       def team_member_factory do
         %TeamMember{
+          student: build(:course_registration),
+          team: build(:team)
         }
       end
 
