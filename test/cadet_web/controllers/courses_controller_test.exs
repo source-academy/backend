@@ -160,6 +160,7 @@ defmodule CadetWeb.CoursesControllerTest do
                  "enableGame" => true,
                  "enableAchievements" => true,
                  "enableSourcecast" => true,
+                 "enableStories" => false,
                  "sourceChapter" => 1,
                  "sourceVariant" => "default",
                  "moduleHelpText" => "Help Text",
