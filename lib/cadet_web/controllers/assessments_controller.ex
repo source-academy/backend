@@ -64,7 +64,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :submit do
-    post("/assessments/{assessmentId}/submit")
+    post("/courses/{course_id}/assessments/{assessmentId}/submit")
     summary("Finalise submission for an assessment")
     security([%{JWT: []}])
 
@@ -84,7 +84,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :index do
-    get("/assessments")
+    get("/courses/{course_id}/assessments")
 
     summary("Get a list of all assessments")
 
@@ -97,7 +97,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :show do
-    get("/assessments/{assessmentId}")
+    get("/courses/{course_id}/assessments/{assessmentId}")
 
     summary("Get information about one particular assessment")
 
@@ -116,7 +116,7 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   swagger_path :unlock do
-    post("/assessments/{assessmentId}/unlock")
+    post("/courses/{course_id}/assessments/{assessmentId}/unlock")
 
     summary("Unlocks a password-protected assessment and returns its information")
 

@@ -7,6 +7,113 @@ defmodule CadetWeb.AdminGradingView do
     render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
   end
 
+  def render("gradingsummaries.json", %{
+        users: users,
+        assessments: assessments,
+        submissions: submissions,
+        teams: teams,
+        team_members: team_members
+      }) do
+    for submission <- submissions do
+      user = users |> Enum.find(&(&1.id == submission.student_id))
+      assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
+      team = teams |> Enum.find(&(&1.id == submission.team_id))
+      team_members = team_members |> Enum.filter(&(&1.team_id == submission.team_id))
+      team_member_users = team_members |> Enum.map(fn team_member ->
+        users |> Enum.find(&(&1.id == team_member.student_id))
+      end)
+
+      render(
+        CadetWeb.AdminGradingView,
+        "gradingsummary.json",
+        %{
+          user: user,
+          assessment: assessment,
+          submission: submission,
+          team: team,
+          team_members: team_member_users,
+          unsubmitter:
+            case submission.unsubmitted_by_id do
+              nil -> nil
+              _ -> users |> Enum.find(&(&1.id == submission.unsubmitted_by_id))
+            end
+        }
+      )
+    end
+  end
+
+  def render("gradingsummary.json", %{
+        user: user,
+        assessment: a,
+        submission: s,
+        team: team,
+        team_members: team_members,
+        unsubmitter: unsubmitter
+      }) do
+    s
+    |> transform_map_for_view(%{
+      id: :id,
+      status: :status,
+      unsubmittedAt: :unsubmitted_at,
+      xp: :xp,
+      xpAdjustment: :xp_adjustment,
+      xpBonus: :xp_bonus,
+      gradedCount:
+        &case &1.graded_count do
+          nil -> 0
+          x -> x
+        end
+    })
+    |> Map.merge(%{
+      assessment:
+        render_one(a, CadetWeb.AdminGradingView, "gradingsummaryassessment.json", as: :assessment),
+      student: render_one(user, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr),
+      team: render_one(team, CadetWeb.AdminGradingView, "gradingsummaryteam.json", as: :team, assigns: %{team_members: team_members}),      
+      unsubmittedBy:
+        case unsubmitter do
+          nil -> nil
+          cr -> transform_map_for_view(cr, %{id: :id, name: & &1.user.name})
+        end
+    })
+  end
+
+  def render("gradingsummaryassessment.json", %{assessment: a}) do
+    %{
+      id: a.id,
+      title: a.title,
+      assessmentNumber: a.number,
+      isManuallyGraded: a.config.is_manually_graded,
+      type: a.config.type,
+      maxXp: a.questions |> Enum.map(& &1.max_xp) |> Enum.sum(),
+      questionCount: a.questions |> Enum.count()
+    }
+  end
+
+  def render("gradingsummaryteam.json", %{team: team, assigns: %{team_members: team_members}}) do
+    %{
+      id: team.id,
+      team_members: render_many(team_members, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr)
+    }
+  end
+
+  def render("gradingsummaryuser.json", %{cr: cr}) do
+    %{
+      id: cr.id,
+      name: cr.user.name,
+      username: cr.user.username,
+      groupName:
+        case cr.group do
+          nil -> nil
+          _ -> cr.group.name
+        end,
+      groupLeaderId:
+        case cr.group do
+          nil -> nil
+          _ -> cr.group.leader_id
+        end
+    }
+  end
+
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
       student: &extract_student_data(&1.submission.student),
@@ -23,11 +130,11 @@ defmodule CadetWeb.AdminGradingView do
 
   defp extract_student_data(nil), do: %{}
   defp extract_student_data(student) do
-    transform_map_for_view(student, %{name: fn st -> st.user.name end, id: :id})
+    transform_map_for_view(student, %{name: fn st -> st.user.name end, id: :id, username: fn st -> st.user.username end})
   end
   
   defp extract_team_member_data(team_member) do
-    transform_map_for_view(team_member, %{name: &(&1.student.user.name), id: :id})
+    transform_map_for_view(team_member, %{name: &(&1.student.user.name), id: :id, username: &(&1.student.user.username)})
   end
   defp extract_team_data(nil), do: %{}
   defp extract_team_data(team) do

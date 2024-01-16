@@ -48,6 +48,10 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
+  def create(conn, %{"course_id" => course_id, "team" => team_params}) do
+    create(conn, %{"team" => team_params})
+  end
+
   def update(conn, %{"teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids}) do
     team = Team
            |> Repo.get!(teamId)
@@ -66,19 +70,31 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def delete(conn, %{"teamId" => team_id}) do
-    team = Repo.get!(Team, team_id)
+  def update(conn, %{"course_id" => course_id, "teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids}) do
+    update(conn, %{"teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids})
+  end
 
-    case Teams.delete_team(team) do
-      {:error, {status, error_message}} ->
-        conn
-        |> put_status(status)
-        |> text(error_message)
-      {:ok, _} ->
-        text(conn, "Team deleted successfully.")
-      {:error, _changeset} ->
-        text(conn, "Error deleting the team.")
+  def delete(conn, %{"teamId" => team_id}) do
+    team = Repo.get(Team, team_id)
+
+    if team do
+      case Teams.delete_team(team) do
+        {:error, {status, error_message}} ->
+          conn
+          |> put_status(status)
+          |> text(error_message)
+        {:ok, _} ->
+          text(conn, "Team deleted successfully.")
+      end
+    else
+      conn
+      |> put_status(:not_found)
+      |> text("Team not found!")
     end
+  end
+
+  def delete(conn, %{"course_id" => course_id, "teamid" => team_id}) do
+    delete(conn, %{"teamId" => team_id})
   end
 
   swagger_path :index do
