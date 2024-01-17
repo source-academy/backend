@@ -90,6 +90,37 @@ defmodule CadetWeb.AdminCoursesController do
     end
   end
 
+  def manage_secret_key(conn, %{"course_id" => course_id, "secret_key" => secret_key})
+      when is_ecto_id(course_id) do
+    case Courses.manage_secret_key(course_id, secret_key) do
+      {:ok, _} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
+    end
+  end
+
+  def delete_secret_key(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    case Courses.delete_secret_key(course_id) do
+      {:ok, _} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
+    end
+  end
+
+  def get_secret_key(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    case Courses.get_secret_key(course_id) do
+      {:ok, secret_key} ->
+        render(conn, "secret_key.json", %{secret_key: secret_key})
+
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
+    end
+  end
+
   swagger_path :update_course_config do
     put("/courses/{course_id}/admin/config")
 
@@ -109,6 +140,7 @@ defmodule CadetWeb.AdminCoursesController do
       enable_sourcecast(:body, :boolean, "Enable sourcecast")
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
       module_help_text(:body, :string, "Module help text")
+      secret_key(:body, :string, "Secret key")
     end
 
     response(200, "OK")
