@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.TeamTest do
     use Cadet.DataCase
-    alias Cadet.Accounts.{Teams, Team, TeamMember, User, CourseRegistration, CourseRegistrations, Notification}
-    alias Cadet.Assessments.{Assessment, Submission}
+    alias Cadet.Accounts.{Teams, TeamMember, CourseRegistrations}
+    alias Cadet.Assessments.{Submission}
     alias Cadet.Repo
 
     setup do
@@ -118,7 +118,7 @@ defmodule Cadet.Accounts.TeamTest do
         ]
         }
 
-        assert {:ok, team} = Teams.create_team(attrs_valid)
+        assert {:ok, _team} = Teams.create_team(attrs_valid)
 
         attrs_invalid = %{
             "assessment_id" => assessment1.id,
@@ -226,7 +226,7 @@ defmodule Cadet.Accounts.TeamTest do
         }
         new_ids = [[%{"userId" => course_reg1.id},%{"userId" => course_reg2.id},%{"userId" => course_reg3.id}]]
         assert {:ok, team1} = Teams.create_team(attrs1)
-        assert {:ok, team2} = Teams.create_team(attrs2)
+        assert {:ok, _team2} = Teams.create_team(attrs2)
         team1 = Repo.preload(team1, :team_members)
         
         result = Teams.update_team(team1, team1.assessment_id, new_ids)
@@ -280,7 +280,7 @@ defmodule Cadet.Accounts.TeamTest do
           status: :submitted
         }
         
-        {:ok, inserted_submission} = Repo.insert(submission)
+        {:ok, _inserted_submission} = Repo.insert(submission)
 
         result = Teams.delete_team(team)
         assert result == {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
