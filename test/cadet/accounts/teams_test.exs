@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.TeamTest do
     use Cadet.DataCase
     alias Cadet.Accounts.{Teams, TeamMember, CourseRegistrations}
-    alias Cadet.Assessments.{Submission}
+    alias Cadet.Assessments.{Submission, Answer}
     alias Cadet.Repo
 
     setup do
@@ -246,6 +246,17 @@ defmodule Cadet.Accounts.TeamTest do
         }
 
         assert {:ok, team} = Teams.create_team(attrs)
+        submission = insert(:submission, %{
+            team: team,
+            student: nil,
+            assessment: assessment1
+        })
+
+        submission_id = submission.id
+
+        _answer = %Answer{
+            submission_id: submission_id
+        }  
 
         assert {:ok, deleted_team} = Teams.delete_team(team)
         assert deleted_team.id == team.id
@@ -259,6 +270,11 @@ defmodule Cadet.Accounts.TeamTest do
             |> where([s], s.team_id == ^team.id) 
             |> Repo.all()
         assert length(submissions) == 0
+
+        answers = Answer 
+            |> where(submission_id: ^submission_id)
+            |> Repo.all()
+        assert length(answers) == 0
     end
 
     test "delete an existing team with submission", %{user1: user1, user2: user2, user3: user3, assessment1: assessment1, course1: course1} do
