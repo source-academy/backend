@@ -4,7 +4,7 @@ defmodule CadetWeb.TeamsControllerTest do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{User, CourseRegistration, Team, Teams, TeamMembers}
+  alias Cadet.Accounts.{CourseRegistration}
   alias Cadet.Courses.Course
   alias CadetWeb.TeamController
   setup do

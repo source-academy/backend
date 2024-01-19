@@ -54,7 +54,7 @@ defmodule Cadet.Assessments do
     else
       Submission
       |> where(assessment_id: ^id)
-      |> delete_submission_assocation(id)
+      |> delete_submission_association(id)
 
       Question
       |> where(assessment_id: ^id)
@@ -73,7 +73,7 @@ defmodule Cadet.Assessments do
     |> Repo.delete_all()
   end
 
-  defp delete_submission_assocation(submissions, assessment_id) do
+  defp delete_submission_association(submissions, assessment_id) do
     submissions
     |> Repo.all()
     |> Enum.each(fn submission ->
