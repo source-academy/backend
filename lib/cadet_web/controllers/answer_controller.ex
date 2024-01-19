@@ -62,11 +62,6 @@ defmodule CadetWeb.AnswerController do
         conn
         |> put_status(:forbidden)
         |> text("Assessment not open")
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 

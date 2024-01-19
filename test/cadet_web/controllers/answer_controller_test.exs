@@ -327,6 +327,94 @@ defmodule CadetWeb.AnswerControllerTest do
     assert is_nil(get_answer_value(unpublished_question, unpublished_assessment, course_reg))
   end
 
+  @tag authenticate: :student
+  test "check last modified false", %{conn: conn, programming_question: programming_question} do
+    course_id = conn.assigns.course_id
+
+    question_id = programming_question.id
+    last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
+
+    check_last_modified_conn =
+      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified/", %{
+        lastModifiedAt: last_modified_at
+      })
+
+    assert response(check_last_modified_conn, 200) =~ "{\"lastModified\":false}"
+  end
+
+  @tag authenticate: :student
+  test "check last modified true", %{conn: conn, assessment: assessment, programming_question: programming_question} do
+    course_id = conn.assigns.course_id
+    last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
+    question_id = programming_question.id
+    submission = insert(:submission, %{assessment: assessment, student: conn.assigns.test_cr})
+
+    _answer = insert(:answer, %{question: programming_question, last_modified_at: last_modified_at, submission: submission})
+
+
+    check_last_modified_conn =
+      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified/", %{
+        lastModifiedAt: last_modified_at
+      })
+
+    assert response(check_last_modified_conn, 200) =~ "{\"lastModified\":true}"
+  end
+
+  # @tag authenticate: :student
+  # test "check last modified, invalid params", %{conn: conn, assessment: assessment, mcq_question: mcq_question} do
+  #   course_reg = conn.assigns.test_cr
+  #   course_id = conn.assigns.course_id
+
+  #   question_id = mcq_question.id
+  #   invalid_last_modified_at = "invalid_timestamp"
+
+  #   check_last_modified_conn =
+  #     post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified", %{
+  #       lastModifiedAt: invalid_last_modified_at
+  #     })
+
+  #   assert response(check_last_modified_conn, 400) == "Invalid parameters"
+  # end
+
+  @tag authenticate: :student
+  test "check last modified, missing question is unsuccessful", %{conn: conn} do
+    course_id = conn.assigns.course_id
+    question_id = -1
+    last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
+
+    check_last_modified_conn =
+      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified", %{
+        lastModifiedAt: last_modified_at
+      })
+
+    assert response(check_last_modified_conn, 404) == "Question not found"
+  end
+
+  @tag authenticate: :student
+  test "check last modified, not open submission is unsuccessful", %{conn: conn} do
+    course_id = conn.assigns.course_id
+    last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
+
+    before_open_at_assessment =
+      insert(:assessment, %{
+        open_at: Timex.shift(Timex.now(), days: 5),
+        close_at: Timex.shift(Timex.now(), days: 10)
+      })
+
+    before_open_at_question = insert(:programming_question, %{assessment: before_open_at_assessment})
+
+    _unpublished_conn =
+      post(conn, build_url(course_id, before_open_at_question.id), %{answer: 5})
+    
+    question_id = before_open_at_question.id
+    check_last_modified_conn =
+      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified", %{
+        lastModifiedAt: last_modified_at
+      })
+
+    assert response(check_last_modified_conn, 403) == "Assessment not open"
+  end
+
   defp build_url(course_id, question_id) do
     "/v2/courses/#{course_id}/assessments/question/#{question_id}/answer/"
   end
