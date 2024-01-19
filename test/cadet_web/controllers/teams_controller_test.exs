@@ -1,10 +1,7 @@
 defmodule CadetWeb.TeamsControllerTest do
   use CadetWeb.ConnCase
 
-  import Ecto.Query
-
   alias Cadet.Repo
-  alias Cadet.Accounts.{CourseRegistration}
   alias Cadet.Courses.Course
   alias CadetWeb.TeamController
   setup do

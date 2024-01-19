@@ -332,8 +332,7 @@ defmodule Cadet.Accounts.NotificationTest do
 
     test "no notification when no submission", %{
       assessment: assessment,
-      student: student,
-      individual_submission: individual_submission
+      student: student
     } do
       Notifications.write_notification_when_graded(-1, :autograded)
 

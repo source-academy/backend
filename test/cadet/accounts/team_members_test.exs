@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.TeamMemberTest do
   use Cadet.DataCase, async: true
 
-  alias Cadet.Accounts.{TeamMember, Team, CourseRegistration}
+  alias Cadet.Accounts.{TeamMember}
   alias Cadet.Repo
 
   @valid_attrs %{student_id: 1, team_id: 1}
@@ -17,21 +17,21 @@ defmodule Cadet.Accounts.TeamMemberTest do
       team_member = %TeamMember{}
       changeset = TeamMember.changeset(team_member, %{})
       refute changeset.valid?
-      assert {:error, changeset} = Repo.insert(changeset)
+      assert {:error, _changeset} = Repo.insert(changeset)
     end
 
     test "returns an error when the team_id foreign key constraint is violated" do
       team_member = %TeamMember{}
       changeset = TeamMember.changeset(team_member, %{student_id: 1})
       refute changeset.valid?
-      assert {:error, changeset} = Repo.insert(changeset)
+      assert {:error, _changeset} = Repo.insert(changeset)
     end
 
     test "returns an error when the student_id foreign key constraint is violated" do
       team_member = %TeamMember{}
       changeset = TeamMember.changeset(team_member, %{team_id: 1})
       refute changeset.valid?
-      assert {:error, changeset} = Repo.insert(changeset)
+      assert {:error, _changeset} = Repo.insert(changeset)
     end
   end
 end

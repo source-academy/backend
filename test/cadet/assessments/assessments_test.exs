@@ -138,10 +138,7 @@ defmodule Cadet.AssessmentsTest do
     test "update grading info for assessment" do
       course = insert(:course)
       config = insert(:assessment_config, %{course: course})
-      assessment = insert(:assessment, %{config: config, course: course,
-          # open_at: Timex.shift(Timex.now(), days: -5),
-          # close_at: Timex.shift(Timex.now(), hours: +5),
-          is_published: false})
+      assessment = insert(:assessment, %{config: config, course: course, is_published: false})
 
       student = insert(:course_registration, %{course: course, role: :student})
       question = insert(:question, %{assessment: assessment})
@@ -157,8 +154,6 @@ defmodule Cadet.AssessmentsTest do
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: +5),
           is_published: true})
-      question1 = insert(:question, %{assessment: assessment, type: :programming})
-      question2 = insert(:question, %{assessment: assessment, type: :programming})
       assessment_params = %{
         number: assessment.number,
         course_id: course.id
@@ -207,7 +202,7 @@ defmodule Cadet.AssessmentsTest do
       teammember2 = insert(:team_member, %{student: student2})
       team = insert(:team, %{assessment: assessment, team_members: [teammember1, teammember2]})
       submission = insert(:submission, %{assessment: assessment, team: team, student: nil, status: :attempting})
-      answer = insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
+      _answer = insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
 
       assert Assessments.answer_question(question, student1, "answer", false) == {:ok, nil}
     end
@@ -220,6 +215,48 @@ defmodule Cadet.AssessmentsTest do
 
       assert {:ok, _} = Assessments.assessment_with_questions_and_answers(assessment, student)
     end
+
+    test "overdue assessments with questions and answers" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{
+        config: config, 
+        course: course, 
+        max_team_size: 10,
+        open_at: Timex.shift(Timex.now(), days: -15),
+        close_at: Timex.shift(Timex.now(), days: -5),
+        is_published: true,
+        password: "123"
+      })
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      assert {:ok, _} = Assessments.assessment_with_questions_and_answers(assessment, student, "123")
+    end
+
+    test "team assessments with questions and answers" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{
+        config: config, 
+        course: course, 
+        max_team_size: 10,
+        open_at: Timex.shift(Timex.now(), days: -15),
+        close_at: Timex.shift(Timex.now(), days: +5),
+        is_published: true
+      })
+      group = insert(:group, %{name: "group"})
+      student1 = insert(:course_registration, %{course: course, role: :student, group: group})
+      student2 = insert(:course_registration, %{course: course, role: :student, group: group})
+
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+      team = insert(:team, %{assessment: assessment, team_members: [teammember1, teammember2]})
+      submission = insert(:submission, %{assessment: assessment, team: team, student: nil, status: :submitted})
+      
+      assert {:ok, _} = Assessments.assessment_with_questions_and_answers(assessment, student1)
+      assert submission.id == Assessments.get_submission(assessment.id, student1).id
+    end
+
 
     test "create empty submission for team assessment" do
       course = insert(:course)
@@ -263,9 +300,7 @@ defmodule Cadet.AssessmentsTest do
       teammember1 = insert(:team_member, %{student: student1})
       teammember2 = insert(:team_member, %{student: student2})
       team = insert(:team, %{assessment: team_assessment, team_members: [teammember1, teammember2]})
-      question = insert(:question, %{assessment: team_assessment})
       submission = insert(:submission, %{assessment: team_assessment, team: team, student: nil, status: :submitted})
-      answer = insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
 
       assert {:ok, _} = Assessments.unsubmit_submission(submission.id, avenger)
     end
@@ -278,16 +313,31 @@ defmodule Cadet.AssessmentsTest do
           open_at: Timex.shift(Timex.now(), days: -5),
           close_at: Timex.shift(Timex.now(), hours: +5),
           is_published: true})
-
+  
       student = insert(:course_registration, %{course: course, role: :student})
       question = insert(:question, %{assessment: assessment})
       submission = insert(:submission, %{assessment: assessment, team: nil, student: student, status: :attempting})
-      answer = insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
+      _answer = insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
 
       assert {:ok, _} = Assessments.delete_assessment(assessment.id)
     end
 
-
+    test "get user xp for team assessment" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      team_assessment = insert(:assessment, %{config: config, course: course, max_team_size: 10, 
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: +5),
+          is_published: true})
+      group = insert(:group, %{name: "group"})
+      
+      student1 = insert(:course_registration, %{course: course, role: :student, group: group})
+      student2 = insert(:course_registration, %{course: course, role: :student, group: group})
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+      _team = insert(:team, %{assessment: team_assessment, team_members: [teammember1, teammember2]})
+      assert Assessments.assessments_total_xp(student1) == 0
+    end
   end
 
   describe "contest voting" do

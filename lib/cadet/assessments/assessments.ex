@@ -1804,7 +1804,6 @@ defmodule Cadet.Assessments do
         |> Repo.insert()
         |> case do
           {:ok, submission} -> {:ok, submission}
-          {:error, _} -> {:error, :race_condition}
         end
       _ ->
         %Submission{}
@@ -1812,7 +1811,6 @@ defmodule Cadet.Assessments do
         |> Repo.insert()
         |> case do
           {:ok, submission} -> {:ok, submission}
-          {:error, _} -> {:error, :race_condition}
         end
     end
   end
