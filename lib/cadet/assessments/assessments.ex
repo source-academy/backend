@@ -940,7 +940,7 @@ defmodule Cadet.Assessments do
          {:status, :submitted} <- {:status, submission.status},
          {:allowed_to_unsubmit?, true} <-
            {:allowed_to_unsubmit?,
-            role == :admin or bypass or
+            role == :admin or bypass or is_nil(submission.student_id) or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
       Multi.new()
       |> Multi.run(

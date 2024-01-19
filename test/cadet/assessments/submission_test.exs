@@ -65,7 +65,7 @@ defmodule Cadet.Assessments.SubmissionTest do
       |> assert_changeset_db(:invalid)
     end
 
-    test "invalid changeset with only team", %{
+    test "valid changeset with only team", %{
       valid_params_with_team: params
     } do
       assert_changeset_db(params, :valid)

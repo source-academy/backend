@@ -147,6 +147,50 @@ defmodule Cadet.AssessmentsTest do
     assert Repo.get(Question, question.id) == nil
   end
 
+  describe "team assessments" do
+    test "cannot answer questions without a team" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{config: config, course: course, max_team_size: 10})
+      question = insert(:question, %{assessment: assessment})
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      assert Assessments.answer_question(question, student, "answer", false) == {:error, {:bad_request, "Your existing Team has been deleted!"}}
+    end
+
+    test "assessments with questions and answers" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{config: config, course: course, max_team_size: 10})
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      assert {:ok, _} = Assessments.assessment_with_questions_and_answers(assessment, student)
+
+    end
+    @tag authenticate: :staff
+    test "unsubmit team assessment" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      team_assessment = insert(:assessment, %{config: config, course: course, max_team_size: 10, 
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: +5),
+          is_published: true})
+      group = insert(:group, %{name: "group"})
+      avenger = insert(:course_registration, %{course: course, role: :staff, group: group})
+
+      student1 = insert(:course_registration, %{course: course, role: :student, group: group})
+      student2 = insert(:course_registration, %{course: course, role: :student, group: group})
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+      team = insert(:team, %{assessment: team_assessment, team_members: [teammember1, teammember2]})
+      question = insert(:question, %{assessment: team_assessment})
+      submission = insert(:submission, %{assessment: team_assessment, team: team, student: nil, status: :submitted})
+      answer = insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
+
+      assert {:ok, _} = Assessments.unsubmit_submission(submission.id, avenger)
+    end
+  end
+
   describe "contest voting" do
     test "inserts votes into submission_votes table if contest has closed" do
       course = insert(:course)
