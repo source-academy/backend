@@ -109,7 +109,7 @@ defmodule Cadet.Assessments do
     query =
       from(t in Team,
         join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr_id,
+        where: tm.student_id == ^cr_id
       )
     teams = Repo.all(query)
 
