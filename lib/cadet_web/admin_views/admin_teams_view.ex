@@ -14,7 +14,9 @@ defmodule CadetWeb.AdminTeamsView do
 
   """
   def render("index.json", %{teamFormationOverviews: teamFormationOverviews}) do
-    render_many(teamFormationOverviews, CadetWeb.AdminTeamsView, "team_formation_overview.json", as: :team_formation_overview)
+    render_many(teamFormationOverviews, CadetWeb.AdminTeamsView, "team_formation_overview.json",
+      as: :team_formation_overview
+    )
   end
 
   @doc """
@@ -36,4 +38,3 @@ defmodule CadetWeb.AdminTeamsView do
     }
   end
 end
-

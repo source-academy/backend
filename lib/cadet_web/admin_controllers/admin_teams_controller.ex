@@ -6,11 +6,13 @@ defmodule CadetWeb.AdminTeamsController do
   alias Cadet.Accounts.{Teams, Team}
 
   def index(conn, _params) do
-    teams = Team
-            |> Repo.all()
-            |> Repo.preload([assessment: [:config], team_members: [student: [:user]]])
+    teams =
+      Team
+      |> Repo.all()
+      |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
 
-    teamFormationOverviews = teams
+    teamFormationOverviews =
+      teams
       |> Enum.map(&team_to_team_formation_overview/1)
 
     conn
@@ -27,8 +29,8 @@ defmodule CadetWeb.AdminTeamsController do
       assessmentId: assessment.id,
       assessmentName: assessment.title,
       assessmentType: assessment.config.type,
-      studentIds: team.team_members |> Enum.map(&(&1.student.user.id)),
-      studentNames: team.team_members |> Enum.map(&(&1.student.user.name))
+      studentIds: team.team_members |> Enum.map(& &1.student.user.id),
+      studentNames: team.team_members |> Enum.map(& &1.student.user.name)
     }
 
     teamFormationOverview
@@ -48,10 +50,15 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def update(conn, %{"teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids}) do
-    team = Team
-           |> Repo.get!(teamId)
-           |> Repo.preload([assessment: [:config], team_members: [student: [:user]]])
+  def update(conn, %{
+        "teamId" => teamId,
+        "assessmentId" => assessmentId,
+        "student_ids" => student_ids
+      }) do
+    team =
+      Team
+      |> Repo.get!(teamId)
+      |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
 
     case Teams.update_team(team, assessmentId, student_ids) do
       {:ok, _updated_team} ->
@@ -68,12 +75,14 @@ defmodule CadetWeb.AdminTeamsController do
 
   def delete(conn, %{"teamId" => team_id}) do
     team = Repo.get(Team, team_id)
+
     if team do
       case Teams.delete_team(team) do
         {:error, {status, error_message}} ->
           conn
           |> put_status(status)
           |> text(error_message)
+
         {:ok, _} ->
           text(conn, "Team deleted successfully.")
       end
@@ -132,9 +141,7 @@ defmodule CadetWeb.AdminTeamsController do
     parameters do
       teamId(:path, :integer, "Team ID", required: true)
 
-      team(:body, Schema.ref(:AdminUpdateTeamPayload), "Updated team details",
-        required: true
-      )
+      team(:body, Schema.ref(:AdminUpdateTeamPayload), "Updated team details", required: true)
     end
 
     response(200, "OK")
@@ -170,32 +177,33 @@ defmodule CadetWeb.AdminTeamsController do
             assessmentId(:integer, "Assessment ID")
             studentIds(:array, "Student IDs", items: %{type: :integer})
           end
-          required [:assessmentId, :studentIds]
+
+          required([:assessmentId, :studentIds])
         end,
-      AdminUpdateTeamPayload: 
+      AdminUpdateTeamPayload:
         swagger_schema do
           properties do
             teamId(:integer, "Team ID")
             assessmentId(:integer, "Assessment ID")
             studentIds(:integer, "Student IDs", items: %{type: :integer})
           end
-          required [:teamId, :assessmentId, :studentIds]
+
+          required([:teamId, :assessmentId, :studentIds])
         end,
       Teams:
         swagger_schema do
           type(:array)
           items(Schema.ref(:Team))
         end,
-      Team: 
+      Team:
         swagger_schema do
           properties do
             id(:integer, "Team Id")
-            assessment(
-              Schema.ref(:Assessment)
-            )
+            assessment(Schema.ref(:Assessment))
             team_members(Schema.ref(:TeamMembers))
           end
-          required [:id, :assessment, :team_members]
+
+          required([:id, :assessment, :team_members])
         end,
       TeamMembers:
         swagger_schema do
@@ -206,14 +214,11 @@ defmodule CadetWeb.AdminTeamsController do
         swagger_schema do
           properties do
             id(:integer, "Team Member Id")
-            student(
-              Schema.ref(:CourseRegistration)
-            )
-            team(
-              Schema.ref(:Team)
-            )
+            student(Schema.ref(:CourseRegistration))
+            team(Schema.ref(:Team))
           end
-          required [:id, :student, :team]
+
+          required([:id, :student, :team])
         end
     }
   end

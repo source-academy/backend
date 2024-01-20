@@ -63,14 +63,16 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       assessment = insert(:assessment, %{course: course, max_team_size: 2})
       student1 = insert(:course_registration, %{course: course})
       student2 = insert(:course_registration, %{course: course})
-      team_params = %{"team" => 
-        %{
-          "assessment_id" => assessment.id, 
+
+      team_params = %{
+        "team" => %{
+          "assessment_id" => assessment.id,
           # student_ids is a list of lists of maps where each map is a student with attributes
           # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student2.id}]]
-          }
         }
+      }
+
       conn = post(conn, build_url(course_id), team_params)
       assert response(conn, 201) =~ "Teams created successfully."
     end
@@ -81,14 +83,16 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       course = Repo.get(Course, course_id)
       assessment = insert(:assessment, %{course: course, max_team_size: 2})
       student1 = insert(:course_registration, %{course: course})
-      team_params = %{"team" => 
-        %{
-          "assessment_id" => assessment.id, 
+
+      team_params = %{
+        "team" => %{
+          "assessment_id" => assessment.id,
           # student_ids is a list of lists of maps where each map is a student with attributes
           # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student1.id}]]
-          }
         }
+      }
+
       conn = post(conn, build_url(course_id), team_params)
       assert response(conn, 409) =~ "One or more students appear multiple times in a team!"
     end
@@ -101,14 +105,18 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       student1 = insert(:course_registration, %{course: course})
       student2 = insert(:course_registration, %{course: course})
       student3 = insert(:course_registration, %{course: course})
-      team_params = %{"team" => 
-        %{
-          "assessment_id" => assessment.id, 
+
+      team_params = %{
+        "team" => %{
+          "assessment_id" => assessment.id,
           # student_ids is a list of lists of maps where each map is a student with attributes
           # userId where this userId is the CourseRegistration.id
-          "student_ids" => [[%{userId: student1.id}, %{userId: student2.id}, %{userId: student3.id}]]
-          }
+          "student_ids" => [
+            [%{userId: student1.id}, %{userId: student2.id}, %{userId: student3.id}]
+          ]
         }
+      }
+
       conn = post(conn, build_url(course_id), team_params)
       assert response(conn, 409) =~ "One or more teams exceed the maximum team size!"
     end
@@ -120,20 +128,24 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       assessment = insert(:assessment, %{course: course, max_team_size: 2})
       student1 = insert(:course_registration, %{course: course})
       student2 = insert(:course_registration)
-      team_params = %{"team" => 
-        %{
-          "assessment_id" => assessment.id, 
+
+      team_params = %{
+        "team" => %{
+          "assessment_id" => assessment.id,
           # student_ids is a list of lists of maps where each map is a student with attributes
           # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student2.id}]]
-          }
         }
+      }
+
       conn = post(conn, build_url(course_id), team_params)
       assert response(conn, 409) =~ "One or more students not enrolled in this course!"
     end
 
     @tag authenticate: :staff
-    test "creates an invalid team where student already has a team for this assessment", %{conn: conn} do
+    test "creates an invalid team where student already has a team for this assessment", %{
+      conn: conn
+    } do
       course_id = conn.assigns.course_id
       course = Repo.get(Course, course_id)
       assessment = insert(:assessment, %{course: course, max_team_size: 2})
@@ -143,14 +155,16 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       team = insert(:team, %{assessment: assessment})
       _team_member1 = insert(:team_member, %{team: team, student: student1})
       _team_member2 = insert(:team_member, %{team: team, student: student2})
-      team_params = %{"team" => 
-        %{
-          "assessment_id" => assessment.id, 
+
+      team_params = %{
+        "team" => %{
+          "assessment_id" => assessment.id,
           # student_ids is a list of lists of maps where each map is a student with attributes
           # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student3.id}]]
-          }
         }
+      }
+
       conn = post(conn, build_url(course_id), team_params)
       assert response(conn, 409) =~ "One or more students already in a team for this assessment!"
     end
@@ -182,12 +196,14 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       _team_member1 = insert(:team_member, %{team: team, student: student1})
       _team_member2 = insert(:team_member, %{team: team, student: student2})
       _team_member3 = insert(:team_member, %{team: team, student: student3})
+
       updated_team_params = %{
         "course_id" => course.id,
         "teamId" => team.id,
-        "assessmentId" => assessment.id, 
+        "assessmentId" => assessment.id,
         "student_ids" => [[%{userId: student1.id}, %{userId: student3.id}]]
-        }
+      }
+
       conn = put(conn, build_url(course_id, team.id), updated_team_params)
       assert response(conn, 200) =~ "Teams updated successfully."
     end
@@ -204,14 +220,18 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       _team_member1 = insert(:team_member, %{team: team1, student: student1})
       _team_member2 = insert(:team_member, %{team: team1, student: student2})
       team2 = insert(:team, %{assessment: assessment})
+
       updated_team_params = %{
         "course_id" => course.id,
         "teamId" => team2.id,
-        "assessmentId" => assessment.id, 
+        "assessmentId" => assessment.id,
         "student_ids" => [[%{userId: student1.id}, %{userId: student3.id}]]
-        }
+      }
+
       conn = put(conn, build_url(course_id, team2.id), updated_team_params)
-      assert response(conn, 409) =~ "One or more students are already in another team for the same assessment!"
+
+      assert response(conn, 409) =~
+               "One or more students are already in another team for the same assessment!"
     end
   end
 
@@ -251,19 +271,38 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       course_id = conn.assigns.course_id
       course = Repo.get(Course, course_id)
       config = insert(:assessment_config, %{course: course})
-      assessment = insert(:assessment, %{is_published: true, course: course, config: config, max_team_size: 2})
+
+      assessment =
+        insert(:assessment, %{
+          is_published: true,
+          course: course,
+          config: config,
+          max_team_size: 2
+        })
+
       student1 = insert(:course_registration, %{course: course})
       student2 = insert(:course_registration, %{course: course})
       team = insert(:team, %{assessment: assessment})
       _team_member1 = insert(:team_member, %{team: team, student: student1})
       _team_member2 = insert(:team_member, %{team: team, student: student2})
-      _submission = insert(:submission, %{assessment: assessment, team: team, student: nil, status: :submitted})
+
+      _submission =
+        insert(:submission, %{
+          assessment: assessment,
+          team: team,
+          student: nil,
+          status: :submitted
+        })
+
       conn = delete(conn, build_url(course_id, team.id))
-      assert response(conn, 409) =~ "This team has submitted their answers! Unable to delete the team!"
+
+      assert response(conn, 409) =~
+               "This team has submitted their answers! Unable to delete the team!"
     end
   end
 
   defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/teams/"
+
   defp build_url(course_id, team_id),
     do: "#{build_url(course_id)}#{team_id}"
 end

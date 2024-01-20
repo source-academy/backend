@@ -19,7 +19,6 @@ defmodule Cadet.Accounts.TeamMember do
     - `team`: A reference to the team associated with the student.
   """
   schema "team_members" do
-
     belongs_to(:student, CourseRegistration)
     belongs_to(:team, Team)
 

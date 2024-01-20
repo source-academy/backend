@@ -77,7 +77,12 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid/unlock", AssessmentsController, :unlock)
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/answer", AnswerController, :submit)
-    post("/assessments/question/:questionid/answerLastModified", AnswerController, :checkLastModified)
+
+    post(
+      "/assessments/question/:questionid/answerLastModified",
+      AnswerController,
+      :checkLastModified
+    )
 
     get("/achievements", IncentivesController, :index_achievements)
     get("/self/goals", IncentivesController, :index_goals)

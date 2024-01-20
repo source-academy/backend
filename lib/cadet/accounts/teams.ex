@@ -23,7 +23,7 @@ defmodule Cadet.Accounts.Teams do
   ## Returns
 
   Returns a tuple `{:ok, team}` on success; otherwise, an error tuple.
-  
+
   """
   def create_team(attrs) do
     assessment_id = attrs["assessment_id"]
@@ -39,25 +39,30 @@ defmodule Cadet.Accounts.Teams do
 
       !all_student_enrolled_in_course?(teams, assessment.course_id) ->
         {:error, {:conflict, "One or more students not enrolled in this course!"}}
-       
+
       student_already_assigned?(teams, assessment_id) ->
         {:error, {:conflict, "One or more students already in a team for this assessment!"}}
 
-      true -> 
+      true ->
         Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
           student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
 
-          {:ok, team} = %Team{}
-                      |> Team.changeset(attrs)
-                      |> Repo.insert()
+          {:ok, team} =
+            %Team{}
+            |> Team.changeset(attrs)
+            |> Repo.insert()
+
           team_id = team.id
+
           Enum.each(team_attrs, fn student ->
             student_id = Map.get(student, "userId")
             attributes = %{student_id: student_id, team_id: team_id}
+
             %TeamMember{}
             |> cast(attributes, [:student_id, :team_id])
             |> Repo.insert()
           end)
+
           {:cont, {:ok, team}}
         end)
     end
@@ -100,7 +105,8 @@ defmodule Cadet.Accounts.Teams do
 
   """
   defp all_students_distinct?(team_attrs) do
-    all_ids = team_attrs
+    all_ids =
+      team_attrs
       |> Enum.flat_map(fn team ->
         Enum.map(team, fn row -> Map.get(row, "userId") end)
       end)
@@ -124,7 +130,7 @@ defmodule Cadet.Accounts.Teams do
   Returns `true` if all the teams have size less or equal to the max team size; otherwise, returns `false`.
 
   """
-  defp all_team_within_max_size?(teams, max_team_size) do 
+  defp all_team_within_max_size?(teams, max_team_size) do
     Enum.all?(teams, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
       length(ids) <= max_team_size
@@ -145,14 +151,17 @@ defmodule Cadet.Accounts.Teams do
 
   """
   defp all_student_enrolled_in_course?(teams, course_id) do
-    all_ids = teams
+    all_ids =
+      teams
       |> Enum.flat_map(fn team ->
         Enum.map(team, fn row -> Map.get(row, "userId") end)
       end)
 
-    query = from(cr in Cadet.Accounts.CourseRegistration,
-                where: cr.id in ^all_ids and cr.course_id == ^course_id,
-                select: count(cr.id))
+    query =
+      from(cr in Cadet.Accounts.CourseRegistration,
+        where: cr.id in ^all_ids and cr.course_id == ^course_id,
+        select: count(cr.id)
+      )
 
     count = Repo.one(query)
     count == length(all_ids)
@@ -170,14 +179,16 @@ defmodule Cadet.Accounts.Teams do
   ## Returns
 
   Returns `true` if any student in the list is already a member of another team for the same assessment; otherwise, returns `false`.
-  
+
   """
   defp student_already_in_team?(team_id, student_ids, assessment_id) do
     query =
-      from tm in TeamMember,
+      from(tm in TeamMember,
         join: t in assoc(tm, :team),
-        where: tm.student_id in ^student_ids and t.assessment_id == ^assessment_id and t.id != ^team_id,
+        where:
+          tm.student_id in ^student_ids and t.assessment_id == ^assessment_id and t.id != ^team_id,
         select: tm.student_id
+      )
 
     existing_student_ids = Repo.all(query)
 
@@ -202,8 +213,10 @@ defmodule Cadet.Accounts.Teams do
     old_assessment_id = team.assessment_id
     team_id = team.id
     new_student_ids = Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
+
     if student_already_in_team?(team_id, new_student_ids, new_assessment_id) do
-      {:error, {:conflict, "One or more students are already in another team for the same assessment!"}}
+      {:error,
+       {:conflict, "One or more students are already in another team for the same assessment!"}}
     else
       attrs = %{assessment_id: new_assessment_id}
 
@@ -215,7 +228,6 @@ defmodule Cadet.Accounts.Teams do
       |> Repo.update()
       |> case do
         {:ok, updated_team} ->
-
           update_team_members(updated_team, student_ids, team_id)
           {:ok, updated_team}
       end
@@ -233,15 +245,19 @@ defmodule Cadet.Accounts.Teams do
 
   """
   defp update_team_members(team, student_ids, team_id) do
-    current_student_ids = team.team_members |> Enum.map(&(&1.student_id))
-    new_student_ids =  Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
+    current_student_ids = team.team_members |> Enum.map(& &1.student_id)
+    new_student_ids = Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
 
-    student_ids_to_add = Enum.filter(new_student_ids, fn elem -> not Enum.member?(current_student_ids, elem) end)
-    student_ids_to_remove = Enum.filter(current_student_ids, fn elem -> not Enum.member?(new_student_ids, elem) end)
+    student_ids_to_add =
+      Enum.filter(new_student_ids, fn elem -> not Enum.member?(current_student_ids, elem) end)
+
+    student_ids_to_remove =
+      Enum.filter(current_student_ids, fn elem -> not Enum.member?(new_student_ids, elem) end)
 
     Enum.each(student_ids_to_add, fn student_id ->
       %TeamMember{}
-      |> Ecto.Changeset.change(%{team_id: team_id, student_id: student_id}) # Change here
+      # Change here
+      |> Ecto.Changeset.change(%{team_id: team_id, student_id: student_id})
       |> Repo.insert()
     end)
 
@@ -260,13 +276,13 @@ defmodule Cadet.Accounts.Teams do
 
   """
   def delete_team(%Team{} = team) do
-    if (has_submitted_answer?(team.id)) do
+    if has_submitted_answer?(team.id) do
       {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
     else
-
-      submission = Submission
-      |> where(team_id: ^team.id)
-      |> Repo.one()
+      submission =
+        Submission
+        |> where(team_id: ^team.id)
+        |> Repo.one()
 
       if submission do
         Submission
@@ -300,10 +316,11 @@ defmodule Cadet.Accounts.Teams do
   Returns `true` if any one of the submission has the status of "submitted", `false` otherwise
 
   """
-  defp has_submitted_answer?(team_id) do 
-    submission = Submission
-    |> where([s], s.team_id == ^team_id and s.status == :submitted)
-    |> Repo.all()
+  defp has_submitted_answer?(team_id) do
+    submission =
+      Submission
+      |> where([s], s.team_id == ^team_id and s.status == :submitted)
+      |> Repo.all()
 
     length(submission) > 0
   end

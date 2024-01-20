@@ -13,7 +13,7 @@ defmodule CadetWeb.TeamController do
 
   def index(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
-    
+
     query =
       from(t in Team,
         where: t.assessment_id == ^assessment_id,
@@ -21,9 +21,11 @@ defmodule CadetWeb.TeamController do
         where: tm.student_id == ^cr.id,
         limit: 1
       )
-    team = query
+
+    team =
+      query
       |> Repo.one()
-      |> Repo.preload([assessment: [:config], team_members: [student: [:user]]])
+      |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
 
     if team == nil do
       conn
@@ -47,10 +49,10 @@ defmodule CadetWeb.TeamController do
       assessmentId: assessment.id,
       assessmentName: assessment.title,
       assessmentType: assessment.config.type,
-      studentIds: team.team_members |> Enum.map(&(&1.student.user.id)),
-      studentNames: team.team_members |> Enum.map(&(&1.student.user.name))
+      studentIds: team.team_members |> Enum.map(& &1.student.user.id),
+      studentNames: team.team_members |> Enum.map(& &1.student.user.name)
     }
-    
+
     teamFormationOverview
   end
 
@@ -78,10 +80,25 @@ defmodule CadetWeb.TeamController do
           "assessmentId" => %{"type" => "number", "description" => "The ID of the assessment"},
           "assessmentName" => %{"type" => "string", "description" => "The name of the assessment"},
           "assessmentType" => %{"type" => "string", "description" => "The type of the assessment"},
-          "studentIds" => %{"type" => "array", "items" => %{"type" => "number"}, "description" => "List of student IDs"},
-          "studentNames" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "List of student names"}
+          "studentIds" => %{
+            "type" => "array",
+            "items" => %{"type" => "number"},
+            "description" => "List of student IDs"
+          },
+          "studentNames" => %{
+            "type" => "array",
+            "items" => %{"type" => "string"},
+            "description" => "List of student names"
+          }
         },
-        "required" => ["teamId", "assessmentId", "assessmentName", "assessmentType", "studentIds", "studentNames"]
+        "required" => [
+          "teamId",
+          "assessmentId",
+          "assessmentName",
+          "assessmentType",
+          "studentIds",
+          "studentNames"
+        ]
       }
     }
   end

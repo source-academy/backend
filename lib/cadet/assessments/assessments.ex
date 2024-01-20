@@ -111,13 +111,14 @@ defmodule Cadet.Assessments do
         join: tm in assoc(t, :team_members),
         where: tm.student_id == ^cr_id
       )
+
     teams = Repo.all(query)
 
     submission_xp =
       Submission
       |> where(
         [s],
-        s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, &(&1.id))
+        s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id)
       )
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
@@ -271,7 +272,6 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
-
     query =
       from(t in Team,
         where: t.assessment_id == ^assessment.id,
@@ -279,7 +279,9 @@ defmodule Cadet.Assessments do
         where: tm.student_id == ^course_reg.id,
         limit: 1
       )
+
     team = Repo.one(query)
+
     team_id =
       if team do
         team.id
@@ -330,6 +332,7 @@ defmodule Cadet.Assessments do
         join: tm in assoc(t, :team_members),
         where: tm.student_id == ^cr.id
       )
+
     teams = Repo.all(query)
 
     submission_aggregates =
@@ -337,7 +340,7 @@ defmodule Cadet.Assessments do
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
       |> where(
         [s],
-        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, &(&1.id))
+        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, & &1.id)
       )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
@@ -351,7 +354,7 @@ defmodule Cadet.Assessments do
       Submission
       |> where(
         [s],
-        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, &(&1.id))
+        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, & &1.id)
       )
       |> select([s], [:assessment_id, :status])
 
@@ -833,34 +836,7 @@ defmodule Cadet.Assessments do
   end
 
   defp find_team(assessment_id, cr_id)
-    when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
-      query =
-        from(t in Team,
-          where: t.assessment_id == ^assessment_id,
-          join: tm in assoc(t, :team_members),
-          where: tm.student_id == ^cr_id,
-          limit: 1
-        )
-      assessment_team_size =
-        Repo.one(
-          from(a in Assessment, where: a.id == ^assessment_id, select: %{max_team_size: a.max_team_size})
-        )
-        |> Map.get(:max_team_size, 0)
-
-      case assessment_team_size > 1 do
-        true ->
-          case Repo.one(query) do
-            nil -> {:error, :team_not_found}
-            team -> {:ok, team}
-          end
-        # team is nil for individual assessments
-        false ->
-          {:ok, nil}
-      end
-    end
-
-  def get_submission(assessment_id, %CourseRegistration{id: cr_id})
-    when is_ecto_id(assessment_id) do
+       when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
     query =
       from(t in Team,
         where: t.assessment_id == ^assessment_id,
@@ -868,7 +844,41 @@ defmodule Cadet.Assessments do
         where: tm.student_id == ^cr_id,
         limit: 1
       )
+
+    assessment_team_size =
+      Repo.one(
+        from(a in Assessment,
+          where: a.id == ^assessment_id,
+          select: %{max_team_size: a.max_team_size}
+        )
+      )
+      |> Map.get(:max_team_size, 0)
+
+    case assessment_team_size > 1 do
+      true ->
+        case Repo.one(query) do
+          nil -> {:error, :team_not_found}
+          team -> {:ok, team}
+        end
+
+      # team is nil for individual assessments
+      false ->
+        {:ok, nil}
+    end
+  end
+
+  def get_submission(assessment_id, %CourseRegistration{id: cr_id})
+      when is_ecto_id(assessment_id) do
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment_id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id,
+        limit: 1
+      )
+
     team = Repo.one(query)
+
     case team do
       %Team{} ->
         Submission
@@ -877,6 +887,7 @@ defmodule Cadet.Assessments do
         |> join(:inner, [s], a in assoc(s, :assessment))
         |> preload([_, a], assessment: a)
         |> Repo.one()
+
       _ ->
         Submission
         |> where(assessment_id: ^assessment_id)
@@ -984,15 +995,20 @@ defmodule Cadet.Assessments do
       |> Repo.transaction()
 
       case submission.student_id do
-        nil -> # Team submission, handle notifications for team members
+        # Team submission, handle notifications for team members
+        nil ->
           team = Repo.get(Team, submission.team_id)
+
           query =
             from(t in Team,
-              join: tm in TeamMember, on: t.id == tm.team_id,
-              join: cr in CourseRegistration, on: tm.student_id == cr.id,
+              join: tm in TeamMember,
+              on: t.id == tm.team_id,
+              join: cr in CourseRegistration,
+              on: tm.student_id == cr.id,
               where: t.id == ^team.id,
               select: cr.id
             )
+
           team_members = Repo.all(query)
 
           Enum.each(team_members, fn tm_id ->
@@ -1353,8 +1369,14 @@ defmodule Cadet.Assessments do
   {:unauthorized, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()],
-          :teams => [any()], :team_members => [any()]}}
+          {:ok,
+           %{
+             :assessments => [any()],
+             :submissions => [any()],
+             :users => [any()],
+             :teams => [any()],
+             :team_members => [any()]
+           }}
   def all_submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
         group_only \\ false,
@@ -1492,7 +1514,8 @@ defmodule Cadet.Assessments do
       |> preload([_, q, ast, ac, g, gu, s, st, u, t, tm, tms, tmu],
         question: {q, assessment: {ast, config: ac}},
         grader: {g, user: gu},
-        submission: {s, student: {st, user: u}, team: {t, team_members: {tm, student: {tms, user: tmu}}}}
+        submission:
+          {s, student: {st, user: u}, team: {t, team_members: {tm, student: {tms, user: tmu}}}}
       )
 
     answers =
@@ -1671,6 +1694,7 @@ defmodule Cadet.Assessments do
         where: tm.student_id == ^cr.id,
         limit: 1
       )
+
     team = Repo.one(query)
 
     submission =
@@ -1795,6 +1819,7 @@ defmodule Cadet.Assessments do
         where: tm.student_id == ^cr.id,
         limit: 1
       )
+
     team = Repo.one(query)
 
     case team do
@@ -1805,6 +1830,7 @@ defmodule Cadet.Assessments do
         |> case do
           {:ok, submission} -> {:ok, submission}
         end
+
       _ ->
         %Submission{}
         |> Submission.changeset(%{student: cr, assessment: assessment})
@@ -1845,7 +1871,9 @@ defmodule Cadet.Assessments do
 
       Repo.insert(
         answer_changeset,
-        on_conflict: [set: [answer: get_change(answer_changeset, :answer), last_modified_at: Timex.now()]],
+        on_conflict: [
+          set: [answer: get_change(answer_changeset, :answer), last_modified_at: Timex.now()]
+        ],
         conflict_target: [:submission_id, :question_id]
       )
     end
@@ -1859,7 +1887,7 @@ defmodule Cadet.Assessments do
       ) do
     with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
-         {:ok, is_modified} <- answer_last_modified?(submission, question, last_modified_at)  do
+         {:ok, is_modified} <- answer_last_modified?(submission, question, last_modified_at) do
       {:ok, is_modified}
     else
       {:status, _} ->
@@ -1882,9 +1910,9 @@ defmodule Cadet.Assessments do
          last_modified_at
        ) do
     case Repo.get_by(Answer, submission_id: submission.id, question_id: question.id) do
-
       %Answer{last_modified_at: existing_last_modified_at} ->
         existing_iso8601 = DateTime.to_iso8601(existing_last_modified_at)
+
         if existing_iso8601 == last_modified_at do
           {:ok, false}
         else

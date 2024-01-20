@@ -298,7 +298,9 @@ defmodule Cadet.Accounts.NotificationTest do
 
       Notifications.write_notification_when_student_submits(team_submission)
 
-      team_members = Repo.all(from tm in TeamMember, where: tm.team_id == ^team.id, preload: :student)
+      team_members =
+        Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
+
       students = Enum.map(team_members, & &1.student)
 
       Enum.each(students, fn student ->
@@ -353,7 +355,9 @@ defmodule Cadet.Accounts.NotificationTest do
     } do
       Notifications.write_notification_when_graded(team_submission.id, :autograded)
 
-      team_members = Repo.all(from tm in TeamMember, where: tm.team_id == ^team.id, preload: :student)
+      team_members =
+        Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
+
       students = Enum.map(team_members, & &1.student)
 
       Enum.each(students, fn student ->
@@ -392,7 +396,9 @@ defmodule Cadet.Accounts.NotificationTest do
     } do
       Notifications.write_notification_when_graded(team_submission.id, :graded)
 
-      team_members = Repo.all(from tm in TeamMember, where: tm.team_id == ^team.id, preload: :student)
+      team_members =
+        Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
+
       students = Enum.map(team_members, & &1.student)
 
       Enum.each(students, fn student ->

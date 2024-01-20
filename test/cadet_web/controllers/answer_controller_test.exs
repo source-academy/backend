@@ -335,27 +335,43 @@ defmodule CadetWeb.AnswerControllerTest do
     last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
 
     check_last_modified_conn =
-      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified/", %{
-        lastModifiedAt: last_modified_at
-      })
+      post(
+        conn,
+        "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified/",
+        %{
+          lastModifiedAt: last_modified_at
+        }
+      )
 
     assert response(check_last_modified_conn, 200) =~ "{\"lastModified\":false}"
   end
 
   @tag authenticate: :student
-  test "check last modified true", %{conn: conn, assessment: assessment, programming_question: programming_question} do
+  test "check last modified true", %{
+    conn: conn,
+    assessment: assessment,
+    programming_question: programming_question
+  } do
     course_id = conn.assigns.course_id
     last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
     question_id = programming_question.id
     submission = insert(:submission, %{assessment: assessment, student: conn.assigns.test_cr})
 
-    _answer = insert(:answer, %{question: programming_question, last_modified_at: last_modified_at, submission: submission})
-
+    _answer =
+      insert(:answer, %{
+        question: programming_question,
+        last_modified_at: last_modified_at,
+        submission: submission
+      })
 
     check_last_modified_conn =
-      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified/", %{
-        lastModifiedAt: last_modified_at
-      })
+      post(
+        conn,
+        "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified/",
+        %{
+          lastModifiedAt: last_modified_at
+        }
+      )
 
     assert response(check_last_modified_conn, 200) =~ "{\"lastModified\":true}"
   end
@@ -383,9 +399,13 @@ defmodule CadetWeb.AnswerControllerTest do
     last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
 
     check_last_modified_conn =
-      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified", %{
-        lastModifiedAt: last_modified_at
-      })
+      post(
+        conn,
+        "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified",
+        %{
+          lastModifiedAt: last_modified_at
+        }
+      )
 
     assert response(check_last_modified_conn, 404) == "Question not found"
   end
@@ -401,16 +421,21 @@ defmodule CadetWeb.AnswerControllerTest do
         close_at: Timex.shift(Timex.now(), days: 10)
       })
 
-    before_open_at_question = insert(:programming_question, %{assessment: before_open_at_assessment})
+    before_open_at_question =
+      insert(:programming_question, %{assessment: before_open_at_assessment})
 
-    _unpublished_conn =
-      post(conn, build_url(course_id, before_open_at_question.id), %{answer: 5})
-    
+    _unpublished_conn = post(conn, build_url(course_id, before_open_at_question.id), %{answer: 5})
+
     question_id = before_open_at_question.id
+
     check_last_modified_conn =
-      post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified", %{
-        lastModifiedAt: last_modified_at
-      })
+      post(
+        conn,
+        "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified",
+        %{
+          lastModifiedAt: last_modified_at
+        }
+      )
 
     assert response(check_last_modified_conn, 403) == "Assessment not open"
   end

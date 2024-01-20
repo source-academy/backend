@@ -4,13 +4,14 @@ defmodule CadetWeb.TeamsControllerTest do
   alias Cadet.Repo
   alias Cadet.Courses.Course
   alias CadetWeb.TeamController
+
   setup do
     Cadet.Test.Seeds.assessments()
   end
+
   test "swagger" do
     TeamController.swagger_path_index(nil)
   end
-
 
   describe "GET /v2/admin/teams" do
     @tag authenticate: :student
@@ -43,12 +44,11 @@ defmodule CadetWeb.TeamsControllerTest do
         assessmentName: assessment.title,
         assessmentType: assessment.config.type,
         studentIds: [],
-        studentNames: [],
+        studentNames: []
       }
+
       assert response(conn, 200) == "[#{Jason.encode!(teamFormationOverview)}]"
     end
-
-
   end
 
   describe "GET /v2/courses/:course_id/team/:assessment_id" do
@@ -72,7 +72,12 @@ defmodule CadetWeb.TeamsControllerTest do
       teammember1 = insert(:team_member, %{student: cr1})
       teammember2 = insert(:team_member, %{student: cr2})
       teammember3 = insert(:team_member, %{student: cr})
-      team = insert(:team, %{assessment: assessment, team_members: [teammember1, teammember2, teammember3]})
+
+      team =
+        insert(:team, %{
+          assessment: assessment,
+          team_members: [teammember1, teammember2, teammember3]
+        })
 
       conn = get(conn, build_url_get_by_assessment(course.id, assessment.id))
 
@@ -81,12 +86,16 @@ defmodule CadetWeb.TeamsControllerTest do
         assessmentId: assessment.id,
         assessmentName: assessment.title,
         assessmentType: assessment.config.type,
-        studentIds: [cr1.user.id,cr2.user.id,cr.user.id],
-        studentNames: [cr1.user.name, cr2.user.name, cr.user.name],
+        studentIds: [cr1.user.id, cr2.user.id, cr.user.id],
+        studentNames: [cr1.user.name, cr2.user.name, cr.user.name]
       }
+
       assert response(conn, 200) == "#{Jason.encode!(teamFormationOverview)}"
     end
   end
+
   defp build_url_get(course_id), do: "/v2/courses/#{course_id}/admin/teams"
-  defp build_url_get_by_assessment(course_id, assessment_id), do: "/v2/courses/#{course_id}/team/#{assessment_id}"
+
+  defp build_url_get_by_assessment(course_id, assessment_id),
+    do: "/v2/courses/#{course_id}/team/#{assessment_id}"
 end

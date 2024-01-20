@@ -172,17 +172,22 @@ defmodule Cadet.Accounts.Notifications do
     case Repo.get(Submission, submission_id) do
       nil ->
         {:error, %Ecto.Changeset{}}
+
       submission ->
         case submission.student_id do
           nil ->
             team = Repo.get(Team, submission.team_id)
+
             query =
               from(t in Team,
-                join: tm in TeamMember, on: t.id == tm.team_id,
-                join: cr in CourseRegistration, on: tm.student_id == cr.id,
+                join: tm in TeamMember,
+                on: t.id == tm.team_id,
+                join: cr in CourseRegistration,
+                on: tm.student_id == cr.id,
                 where: t.id == ^team.id,
                 select: cr.id
               )
+
             team_members = Repo.all(query)
 
             Enum.each(team_members, fn tm_id ->
@@ -194,6 +199,7 @@ defmodule Cadet.Accounts.Notifications do
                 assessment_id: submission.assessment_id
               })
             end)
+
           student_id ->
             write(%{
               type: type,
@@ -247,21 +253,24 @@ defmodule Cadet.Accounts.Notifications do
   @spec write_notification_when_student_submits(Submission.t()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_when_student_submits(submission = %Submission{}) do
-    id = case submission.student_id do
-      nil ->
-        team_id = String.to_integer(to_string(submission.team_id))
-        team =
-          from(t in Team,
-            where: t.id == ^team_id,
-            preload: [:team_members]
-          )
-          |> Repo.one()
+    id =
+      case submission.student_id do
+        nil ->
+          team_id = String.to_integer(to_string(submission.team_id))
 
-        s_id = team.team_members |> hd() |> Map.get(:student_id)
-        s_id
-      _ ->
-        submission.student_id
-    end
+          team =
+            from(t in Team,
+              where: t.id == ^team_id,
+              preload: [:team_members]
+            )
+            |> Repo.one()
+
+          s_id = team.team_members |> hd() |> Map.get(:student_id)
+          s_id
+
+        _ ->
+          submission.student_id
+      end
 
     avenger_id = get_avenger_id_of(id)
 

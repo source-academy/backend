@@ -129,7 +129,7 @@ defmodule Cadet.Assessments.AssessmentTest do
 
     test "invalid changeset with invalid team size", %{
       course1: course1,
-      config1: config1,
+      config1: config1
     } do
       assert_changeset(
         %{
@@ -143,7 +143,6 @@ defmodule Cadet.Assessments.AssessmentTest do
         },
         :valid
       )
-
     end
   end
 end

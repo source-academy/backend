@@ -5,10 +5,10 @@ defmodule Cadet.Factory do
   use ExMachina.Ecto, repo: Cadet.Repo
 
   use Cadet.Accounts.{
-    NotificationFactory, 
-    UserFactory, 
-    CourseRegistrationFactory, 
-    TeamFactory, 
+    NotificationFactory,
+    UserFactory,
+    CourseRegistrationFactory,
+    TeamFactory,
     TeamMemberFactory
   }
 

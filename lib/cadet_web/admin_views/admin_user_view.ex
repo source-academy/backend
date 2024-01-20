@@ -29,7 +29,7 @@ defmodule CadetWeb.AdminUserView do
     %{
       userId: students.id,
       name: students.user.name,
-      username: students.user.username,
+      username: students.user.username
     }
   end
 end

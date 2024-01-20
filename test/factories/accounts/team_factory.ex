@@ -13,7 +13,6 @@ defmodule Cadet.Accounts.TeamFactory do
           assessment: build(:assessment)
         }
       end
-
     end
   end
 end

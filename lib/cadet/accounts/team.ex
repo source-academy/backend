@@ -18,7 +18,6 @@ defmodule Cadet.Accounts.Team do
     - `team_members`: A list of team members associated with the team.
   """
   schema "teams" do
-  
     belongs_to(:assessment, Assessment)
     has_one(:submission, Submission, on_delete: :delete_all)
     has_many(:team_members, TeamMember, on_delete: :delete_all)

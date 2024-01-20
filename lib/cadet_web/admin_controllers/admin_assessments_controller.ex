@@ -90,7 +90,7 @@ defmodule CadetWeb.AdminAssessmentsController do
       else
         %{:is_published => is_published}
       end
-    
+
     updated_assessment =
       if is_nil(max_team_size) do
         updated_assessment

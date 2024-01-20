@@ -19,9 +19,12 @@ defmodule CadetWeb.AdminGradingView do
       assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
       team = teams |> Enum.find(&(&1.id == submission.team_id))
       team_members = team_members |> Enum.filter(&(&1.team_id == submission.team_id))
-      team_member_users = team_members |> Enum.map(fn team_member ->
-        users |> Enum.find(&(&1.id == team_member.student_id))
-      end)
+
+      team_member_users =
+        team_members
+        |> Enum.map(fn team_member ->
+          users |> Enum.find(&(&1.id == team_member.student_id))
+        end)
 
       render(
         CadetWeb.AdminGradingView,
@@ -68,7 +71,11 @@ defmodule CadetWeb.AdminGradingView do
       assessment:
         render_one(a, CadetWeb.AdminGradingView, "gradingsummaryassessment.json", as: :assessment),
       student: render_one(user, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr),
-      team: render_one(team, CadetWeb.AdminGradingView, "gradingsummaryteam.json", as: :team, assigns: %{team_members: team_members}),
+      team:
+        render_one(team, CadetWeb.AdminGradingView, "gradingsummaryteam.json",
+          as: :team,
+          assigns: %{team_members: team_members}
+        ),
       unsubmittedBy:
         case unsubmitter do
           nil -> nil
@@ -92,7 +99,8 @@ defmodule CadetWeb.AdminGradingView do
   def render("gradingsummaryteam.json", %{team: team, assigns: %{team_members: team_members}}) do
     %{
       id: team.id,
-      team_members: render_many(team_members, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr)
+      team_members:
+        render_many(team_members, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr)
     }
   end
 
@@ -129,17 +137,28 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   defp extract_student_data(nil), do: %{}
+
   defp extract_student_data(student) do
-    transform_map_for_view(student, %{name: fn st -> st.user.name end, id: :id, username: fn st -> st.user.username end})
+    transform_map_for_view(student, %{
+      name: fn st -> st.user.name end,
+      id: :id,
+      username: fn st -> st.user.username end
+    })
   end
 
   defp extract_team_member_data(team_member) do
-    transform_map_for_view(team_member, %{name: &(&1.student.user.name), id: :id, username: &(&1.student.user.username)})
+    transform_map_for_view(team_member, %{
+      name: & &1.student.user.name,
+      id: :id,
+      username: & &1.student.user.username
+    })
   end
 
   defp extract_team_data(nil), do: %{}
+
   defp extract_team_data(team) do
     members = team.team_members
+
     case members do
       [] -> nil
       _ -> Enum.map(members, &extract_team_member_data/1)

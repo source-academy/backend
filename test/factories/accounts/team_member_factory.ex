@@ -14,7 +14,6 @@ defmodule Cadet.Accounts.TeamMemberFactory do
           team: build(:team)
         }
       end
-
     end
   end
 end

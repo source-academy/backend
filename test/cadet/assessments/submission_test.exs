@@ -13,7 +13,7 @@ defmodule Cadet.Assessments.SubmissionTest do
     student = insert(:course_registration, %{course: course, role: :student})
     student1 = insert(:course_registration, %{course: course, role: :student})
     student2 = insert(:course_registration, %{course: course, role: :student})
- 
+
     teammember1 = insert(:team_member, %{student: student1})
     teammember2 = insert(:team_member, %{student: student2})
     team = insert(:team, %{assessment: team_assessment, team_members: [teammember1, teammember2]})
@@ -21,18 +21,28 @@ defmodule Cadet.Assessments.SubmissionTest do
     valid_params = %{student_id: student.id, assessment_id: assessment.id}
     valid_params_with_team = %{student_id: nil, team_id: team.id, assessment_id: assessment.id}
     invalid_params_without_both = %{student_id: nil, team_id: nil, assessment_id: assessment.id}
-    invalid_params_with_both = %{student_id: student1.id, team_id: team.id, assessment_id: assessment.id}
 
-    {:ok, %{assessment: assessment, student: student, team: team, 
-      valid_params: valid_params, 
-      valid_params_with_team: valid_params_with_team, 
-      invalid_params_without_both: invalid_params_without_both, 
-      invalid_params_with_both: invalid_params_with_both}}
+    invalid_params_with_both = %{
+      student_id: student1.id,
+      team_id: team.id,
+      assessment_id: assessment.id
+    }
+
+    {:ok,
+     %{
+       assessment: assessment,
+       student: student,
+       team: team,
+       valid_params: valid_params,
+       valid_params_with_team: valid_params_with_team,
+       invalid_params_without_both: invalid_params_without_both,
+       invalid_params_with_both: invalid_params_with_both
+     }}
   end
 
   describe "Changesets" do
     test "valid params", %{valid_params: params} do
-      params 
+      params
       |> assert_changeset_db(:valid)
     end
 
@@ -71,7 +81,6 @@ defmodule Cadet.Assessments.SubmissionTest do
       assert_changeset_db(params, :valid)
     end
 
-    
     test "invalid changeset without team and student", %{
       invalid_params_without_both: params
     } do
