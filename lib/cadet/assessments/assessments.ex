@@ -271,7 +271,7 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
-      
+
     query =
       from(t in Team,
         where: t.assessment_id == ^assessment.id,
@@ -286,7 +286,7 @@ defmodule Cadet.Assessments do
       else
         -1
       end
-    
+
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
@@ -846,7 +846,7 @@ defmodule Cadet.Assessments do
           from(a in Assessment, where: a.id == ^assessment_id, select: %{max_team_size: a.max_team_size})
         )
         |> Map.get(:max_team_size, 0)
- 
+
       case assessment_team_size > 1 do
         true ->
           case Repo.one(query) do
@@ -997,12 +997,12 @@ defmodule Cadet.Assessments do
 
           Enum.each(team_members, fn tm_id ->
             Cadet.Accounts.Notifications.handle_unsubmit_notifications(
-              submission.assessment.id, 
+              submission.assessment.id,
               Repo.get(CourseRegistration, tm_id)
             )
           end)
-          
-        student_id -> 
+
+        student_id ->
           Cadet.Accounts.Notifications.handle_unsubmit_notifications(
             submission.assessment.id,
             Repo.get(CourseRegistration, student_id)
@@ -1449,7 +1449,7 @@ defmodule Cadet.Assessments do
       |> join(:inner, [a], ac in assoc(a, :config))
       |> preload([a, q, ac], questions: q, config: ac)
       |> Repo.all()
-    
+
     team_ids = submissions |> Enum.map(& &1.team_id) |> Enum.uniq()
 
     teams =
@@ -1486,9 +1486,9 @@ defmodule Cadet.Assessments do
       |> join(:left, [_, ..., s], st in assoc(s, :student))
       |> join(:left, [..., st], u in assoc(st, :user))
       |> join(:left, [..., s, _, _], t in assoc(s, :team))
-      |> join(:left, [..., t], tm in assoc(t, :team_members)) 
-      |> join(:left, [..., tm], tms in assoc(tm, :student)) 
-      |> join(:left, [..., tms], tmu in assoc(tms, :user)) 
+      |> join(:left, [..., t], tm in assoc(t, :team_members))
+      |> join(:left, [..., tm], tms in assoc(tm, :student))
+      |> join(:left, [..., tms], tmu in assoc(tms, :user))
       |> preload([_, q, ast, ac, g, gu, s, st, u, t, tm, tms, tmu],
         question: {q, assessment: {ast, config: ac}},
         grader: {g, user: gu},

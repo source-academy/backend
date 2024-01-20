@@ -68,7 +68,7 @@ defmodule CadetWeb.AdminGradingView do
       assessment:
         render_one(a, CadetWeb.AdminGradingView, "gradingsummaryassessment.json", as: :assessment),
       student: render_one(user, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr),
-      team: render_one(team, CadetWeb.AdminGradingView, "gradingsummaryteam.json", as: :team, assigns: %{team_members: team_members}),      
+      team: render_one(team, CadetWeb.AdminGradingView, "gradingsummaryteam.json", as: :team, assigns: %{team_members: team_members}),
       unsubmittedBy:
         case unsubmitter do
           nil -> nil
@@ -132,10 +132,11 @@ defmodule CadetWeb.AdminGradingView do
   defp extract_student_data(student) do
     transform_map_for_view(student, %{name: fn st -> st.user.name end, id: :id, username: fn st -> st.user.username end})
   end
-  
+
   defp extract_team_member_data(team_member) do
     transform_map_for_view(team_member, %{name: &(&1.student.user.name), id: :id, username: &(&1.student.user.username)})
   end
+
   defp extract_team_data(nil), do: %{}
   defp extract_team_data(team) do
     members = team.team_members
