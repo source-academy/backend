@@ -31,9 +31,10 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     test "returns a list of teams", %{conn: conn} do
       course_id = conn.assigns.course_id
       team = insert(:team)
-      _team_member1 = insert(:team_member, %{team: team})
-      _team_member2 = insert(:team_member, %{team: team})
+      insert(:team_member, %{team: team})
+      insert(:team_member, %{team: team})
 
+      IO.inspect(build_url(course_id))
       conn = get(conn, build_url(course_id))
       assert response(conn, 200)
 
@@ -67,8 +68,6 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       team_params = %{
         "team" => %{
           "assessment_id" => assessment.id,
-          # student_ids is a list of lists of maps where each map is a student with attributes
-          # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student2.id}]]
         }
       }
@@ -87,8 +86,6 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       team_params = %{
         "team" => %{
           "assessment_id" => assessment.id,
-          # student_ids is a list of lists of maps where each map is a student with attributes
-          # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student1.id}]]
         }
       }
@@ -109,8 +106,6 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       team_params = %{
         "team" => %{
           "assessment_id" => assessment.id,
-          # student_ids is a list of lists of maps where each map is a student with attributes
-          # userId where this userId is the CourseRegistration.id
           "student_ids" => [
             [%{userId: student1.id}, %{userId: student2.id}, %{userId: student3.id}]
           ]
@@ -132,8 +127,6 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       team_params = %{
         "team" => %{
           "assessment_id" => assessment.id,
-          # student_ids is a list of lists of maps where each map is a student with attributes
-          # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student2.id}]]
         }
       }
@@ -153,14 +146,12 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       student2 = insert(:course_registration, %{course: course})
       student3 = insert(:course_registration, %{course: course})
       team = insert(:team, %{assessment: assessment})
-      _team_member1 = insert(:team_member, %{team: team, student: student1})
-      _team_member2 = insert(:team_member, %{team: team, student: student2})
+      insert(:team_member, %{team: team, student: student1})
+      insert(:team_member, %{team: team, student: student2})
 
       team_params = %{
         "team" => %{
           "assessment_id" => assessment.id,
-          # student_ids is a list of lists of maps where each map is a student with attributes
-          # userId where this userId is the CourseRegistration.id
           "student_ids" => [[%{userId: student1.id}, %{userId: student3.id}]]
         }
       }
@@ -193,9 +184,9 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       student2 = insert(:course_registration, %{course: course})
       student3 = insert(:course_registration, %{course: course})
       team = insert(:team, %{assessment: assessment})
-      _team_member1 = insert(:team_member, %{team: team, student: student1})
-      _team_member2 = insert(:team_member, %{team: team, student: student2})
-      _team_member3 = insert(:team_member, %{team: team, student: student3})
+      insert(:team_member, %{team: team, student: student1})
+      insert(:team_member, %{team: team, student: student2})
+      insert(:team_member, %{team: team, student: student3})
 
       updated_team_params = %{
         "course_id" => course.id,
@@ -217,8 +208,8 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       student2 = insert(:course_registration, %{course: course})
       student3 = insert(:course_registration, %{course: course})
       team1 = insert(:team, %{assessment: assessment})
-      _team_member1 = insert(:team_member, %{team: team1, student: student1})
-      _team_member2 = insert(:team_member, %{team: team1, student: student2})
+      insert(:team_member, %{team: team1, student: student1})
+      insert(:team_member, %{team: team1, student: student2})
       team2 = insert(:team, %{assessment: assessment})
 
       updated_team_params = %{
@@ -283,16 +274,15 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       student1 = insert(:course_registration, %{course: course})
       student2 = insert(:course_registration, %{course: course})
       team = insert(:team, %{assessment: assessment})
-      _team_member1 = insert(:team_member, %{team: team, student: student1})
-      _team_member2 = insert(:team_member, %{team: team, student: student2})
+      insert(:team_member, %{team: team, student: student1})
+      insert(:team_member, %{team: team, student: student2})
 
-      _submission =
-        insert(:submission, %{
-          assessment: assessment,
-          team: team,
-          student: nil,
-          status: :submitted
-        })
+      insert(:submission, %{
+        assessment: assessment,
+        team: team,
+        student: nil,
+        status: :submitted
+      })
 
       conn = delete(conn, build_url(course_id, team.id))
 
