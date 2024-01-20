@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.AddMaxTeamSizeToAssessments do
 
   def change do
     alter table(:assessments) do
-      add(:max_team_size, :integer)
+      add(:max_team_size, :integer, null: false, default: 1)
     end
   end
 end
