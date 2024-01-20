@@ -11,7 +11,7 @@ defmodule CadetWeb.AuthController do
 
   @doc """
   Receives a /login request with valid attributes.
-
+  
   If the user is already registered in our database, simply return `Tokens`. If
   the user has not been registered before, register the user, then return the
   `Tokens`.
@@ -60,7 +60,7 @@ defmodule CadetWeb.AuthController do
 
   @doc """
   Receives a /refresh request with valid attribute.
-
+  
   Exchanges the refresh_token with a new access_token.
   """
   def refresh(conn, %{"refresh_token" => refresh_token}) do

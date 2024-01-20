@@ -2,21 +2,21 @@ defmodule Cadet.Auth.Providers.ADFSTest do
   @moduledoc """
   This test module uses pre-recorded HTTP responses saved by ExVCR. This allows
   testing without actual external ADFS API calls.
-
+  
   If you need to re-record these responses, set the ADFS API key in
   config/test.exs, retrieve a ADFS authorisation token, delete the pre-recorded
   responses, and then run
-
+  
       TOKEN=auth_code_goes_here mix test
-
+  
   You can retrieve the authorisation token by manually hitting the ADFS
   endpoints, or just by logging in to ADFS in your browser and extracting the
   token from the Authorization header in API requests.
-
+  
   If you need to re-record the authorise responses, you will have to hit ADFS
   manually to get an authorisation code, and set the appropriate environment
   variables (see the module attributes defined below).
-
+  
   Note that all the cassettes are marked as custom as they have been manually
   edited to suit the particular test case.
   """

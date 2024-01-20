@@ -2,22 +2,22 @@ defmodule ContextManager do
   @moduledoc """
     This module helps you to define context macros by providing boiletplate code.
     Usage example:
-
+  
     ```
     defmodule MyModule do
       use ContextManager
-
+  
       def my_context do
         import my_import_1
         import my_import_2
       end
-
+  
       def my_context_2 do
         import my_import_3
         import my_import_4
       end
     end
-
+  
     def MyOtherModule do
       use MyModule, :my_context
       # or

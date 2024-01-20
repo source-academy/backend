@@ -2,9 +2,9 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
   @moduledoc """
   Tests the OpenID authentication provider by simulating an OpenID
   authentication server.
-
+  
   The RSA keypair used to generate the token below is as follows (as a JWK):
-
+  
   ```
   {
     "p": "3jfRwYW0kdmSyxjalJY03koNmaoeTqDE1_UQoT3T-BvzipuZoTns44WfTZGvKpsRH8GjTxgiP4JDDl27JYfGvrFz9e-HTmJJfalycraYddmRYCRJbwfyLHj5agul0wktIpG3C20VTGo3oXWvCpo2EaCfK-8neYsm_VLyH9Am4aE",

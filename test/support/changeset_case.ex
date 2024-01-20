@@ -2,7 +2,7 @@ defmodule Cadet.ChangesetCase do
   @moduledoc """
   This module defines helper method(s) that is useful to test changeset/2 of
   an Ecto schema.
-
+  
   This module provides `assert_changeset`, `assert_changeset_db`, `generate_changeset`
   ```
   """
