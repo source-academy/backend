@@ -14,8 +14,8 @@ defmodule Cadet.Accounts.NotificationTest do
     individual_submission = insert(:submission, %{student: student, assessment: assessment})
 
     team = insert(:team)
-    _team_member1 = insert(:team_member, %{team: team})
-    _team_member2 = insert(:team_member, %{team: team})
+    insert(:team_member, %{team: team})
+    insert(:team_member, %{team: team})
     team_submission = insert(:submission, %{team: team, assessment: assessment, student: nil})
 
     valid_params_for_student = %{
