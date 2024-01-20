@@ -464,21 +464,21 @@ defmodule Cadet.Accounts.TeamTest do
       |> where([tm], tm.team_id == ^team.id)
       |> Repo.all()
 
-    assert Enum.empty(team_members)
+    assert team_members == []
 
     submissions =
       Submission
       |> where([s], s.team_id == ^team.id)
       |> Repo.all()
 
-    assert Enum.empty(submissions)
+    assert submissions == []
 
     answers =
       Answer
       |> where(submission_id: ^submission_id)
       |> Repo.all()
 
-    assert Enum.empty(answers)
+    assert answers == []
   end
 
   test "delete an existing team with submission", %{
