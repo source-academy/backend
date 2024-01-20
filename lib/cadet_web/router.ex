@@ -81,7 +81,7 @@ defmodule CadetWeb.Router do
     post(
       "/assessments/question/:questionid/answerLastModified",
       AnswerController,
-      :checkLastModified
+      :check_last_modified
     )
 
     get("/achievements", IncentivesController, :index_achievements)

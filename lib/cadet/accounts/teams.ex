@@ -6,8 +6,7 @@ defmodule Cadet.Accounts.Teams do
   use Cadet, [:context, :display]
   use Ecto.Schema
 
-  import Ecto.Changeset
-  import Ecto.Query
+  import Ecto.{Changeset, Query}
 
   alias Cadet.Repo
   alias Cadet.Accounts.{Team, TeamMember, CourseRegistration, Notification}
@@ -209,7 +208,7 @@ defmodule Cadet.Accounts.Teams do
   Returns a tuple `{:ok, updated_team}` on success, containing the updated team details; otherwise, an error tuple.
 
   """
-  def update_team(%Team{} = team, new_assessment_id, student_ids) do
+  def update_team(team = %Team{}, new_assessment_id, student_ids) do
     old_assessment_id = team.assessment_id
     team_id = team.id
     new_student_ids = Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
@@ -262,8 +261,9 @@ defmodule Cadet.Accounts.Teams do
     end)
 
     Enum.each(student_ids_to_remove, fn student_id ->
-      from(tm in TeamMember, where: tm.team_id == ^team_id and tm.student_id == ^student_id)
-      |> Repo.delete_all()
+      Repo.delete_all(
+        from(tm in TeamMember, where: tm.team_id == ^team_id and tm.student_id == ^student_id)
+      )
     end)
   end
 
@@ -275,7 +275,7 @@ defmodule Cadet.Accounts.Teams do
     * `team` - The team to be deleted
 
   """
-  def delete_team(%Team{} = team) do
+  def delete_team(team = %Team{}) do
     if has_submitted_answer?(team.id) do
       {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
     else

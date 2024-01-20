@@ -8,8 +8,7 @@ defmodule Cadet.Accounts.TeamMember do
 
   import Ecto.Changeset
 
-  alias Cadet.Accounts.CourseRegistration
-  alias Cadet.Accounts.Team
+  alias Cadet.Accounts.{CourseRegistration, Team}
 
   @doc """
   Ecto schema definition for team members.

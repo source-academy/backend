@@ -245,7 +245,7 @@ defmodule Cadet.Accounts.TeamTest do
     attrs_invalid = %{
       "assessment_id" => assessment1.id,
       "student_ids" => [
-        [%{"userId" => course_reg1.id}, %{"userId" => course_reg2.id}, %{"userId" => 99999}]
+        [%{"userId" => course_reg1.id}, %{"userId" => course_reg2.id}, %{"userId" => 99_999}]
       ]
     }
 
@@ -464,21 +464,21 @@ defmodule Cadet.Accounts.TeamTest do
       |> where([tm], tm.team_id == ^team.id)
       |> Repo.all()
 
-    assert length(team_members) == 0
+    assert Enum.empty(team_members)
 
     submissions =
       Submission
       |> where([s], s.team_id == ^team.id)
       |> Repo.all()
 
-    assert length(submissions) == 0
+    assert Enum.empty(submissions)
 
     answers =
       Answer
       |> where(submission_id: ^submission_id)
       |> Repo.all()
 
-    assert length(answers) == 0
+    assert Enum.empty(answers)
   end
 
   test "delete an existing team with submission", %{

@@ -377,7 +377,11 @@ defmodule CadetWeb.AnswerControllerTest do
   end
 
   # @tag authenticate: :student
-  # test "check last modified, invalid params", %{conn: conn, assessment: assessment, mcq_question: mcq_question} do
+  # test "check last modified, invalid params", %{
+  #   conn: conn,
+  #   assessment: assessment,
+  #   mcq_question: mcq_question
+  # } do
   #   course_reg = conn.assigns.test_cr
   #   course_id = conn.assigns.course_id
 
@@ -385,7 +389,9 @@ defmodule CadetWeb.AnswerControllerTest do
   #   invalid_last_modified_at = "invalid_timestamp"
 
   #   check_last_modified_conn =
-  #     post(conn, "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified", %{
+  #     post(
+  #       conn,
+  #       "/v2/courses/#{course_id}/assessments/question/#{question_id}/answerLastModified", %{
   #       lastModifiedAt: invalid_last_modified_at
   #     })
 

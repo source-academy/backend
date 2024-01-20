@@ -11,20 +11,20 @@ defmodule CadetWeb.AdminTeamsController do
       |> Repo.all()
       |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
 
-    teamFormationOverviews =
+    team_formation_overviews =
       teams
       |> Enum.map(&team_to_team_formation_overview/1)
 
     conn
     |> put_status(:ok)
     |> put_resp_content_type("application/json")
-    |> render("index.json", teamFormationOverviews: teamFormationOverviews)
+    |> render("index.json", team_formation_overviews: team_formation_overviews)
   end
 
   defp team_to_team_formation_overview(team) do
     assessment = team.assessment
 
-    teamFormationOverview = %{
+    team_formation_overview = %{
       teamId: team.id,
       assessmentId: assessment.id,
       assessmentName: assessment.title,
@@ -33,7 +33,7 @@ defmodule CadetWeb.AdminTeamsController do
       studentNames: team.team_members |> Enum.map(& &1.student.user.name)
     }
 
-    teamFormationOverview
+    team_formation_overview
   end
 
   def create(conn, %{"team" => team_params}) do

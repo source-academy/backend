@@ -259,11 +259,12 @@ defmodule Cadet.Accounts.Notifications do
           team_id = String.to_integer(to_string(submission.team_id))
 
           team =
-            from(t in Team,
-              where: t.id == ^team_id,
-              preload: [:team_members]
+            Repo.one(
+              from(t in Team,
+                where: t.id == ^team_id,
+                preload: [:team_members]
+              )
             )
-            |> Repo.one()
 
           s_id = team.team_members |> hd() |> Map.get(:student_id)
           s_id

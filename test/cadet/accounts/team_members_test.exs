@@ -1,7 +1,7 @@
 defmodule Cadet.Accounts.TeamMemberTest do
   use Cadet.DataCase, async: true
 
-  alias Cadet.Accounts.{TeamMember}
+  alias Cadet.Accounts.TeamMember
   alias Cadet.Repo
 
   @valid_attrs %{student_id: 1, team_id: 1}

@@ -3,7 +3,7 @@ defmodule CadetWeb.TeamViewTest do
 
   alias CadetWeb.TeamView
 
-  @teamFormationOverview %{
+  @team_formation_overview %{
     teamId: 1,
     assessmentId: 2,
     assessmentName: "Test Assessment",
@@ -14,14 +14,14 @@ defmodule CadetWeb.TeamViewTest do
 
   describe "render/2" do
     test "renders team formation overview as JSON" do
-      json = TeamView.render("index.json", %{teamFormationOverview: @teamFormationOverview})
+      json = TeamView.render("index.json", %{teamFormationOverview: @team_formation_overview})
 
-      assert json[:teamId] == @teamFormationOverview.teamId
-      assert json[:assessmentId] == @teamFormationOverview.assessmentId
-      assert json[:assessmentName] == @teamFormationOverview.assessmentName
-      assert json[:assessmentType] == @teamFormationOverview.assessmentType
-      assert json[:studentIds] == @teamFormationOverview.studentIds
-      assert json[:studentNames] == @teamFormationOverview.studentNames
+      assert json[:teamId] == @team_formation_overview.teamId
+      assert json[:assessmentId] == @team_formation_overview.assessmentId
+      assert json[:assessmentName] == @team_formation_overview.assessmentName
+      assert json[:assessmentType] == @team_formation_overview.assessmentType
+      assert json[:studentIds] == @team_formation_overview.studentIds
+      assert json[:studentNames] == @team_formation_overview.studentNames
     end
   end
 end

@@ -38,7 +38,10 @@ defmodule CadetWeb.AnswerController do
     end
   end
 
-  def checkLastModified(conn, %{"questionid" => question_id, "lastModifiedAt" => last_modified_at})
+  def check_last_modified(conn, %{
+        "questionid" => question_id,
+        "lastModifiedAt" => last_modified_at
+      })
       when is_ecto_id(question_id) do
     course_reg = conn.assigns[:course_reg]
     can_bypass? = course_reg.role in @bypass_closed_roles
@@ -47,7 +50,7 @@ defmodule CadetWeb.AnswerController do
            {:question, Assessments.get_question(question_id)},
          {:is_open?, true} <-
            {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
-         {:ok, lastModified} <-
+         {:ok, last_modified} <-
            Assessments.has_last_modified_answer?(
              question,
              course_reg,
@@ -57,7 +60,7 @@ defmodule CadetWeb.AnswerController do
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/json")
-      |> render("lastModified.json", lastModified: lastModified)
+      |> render("lastModified.json", lastModified: last_modified)
     else
       {:question, nil} ->
         conn

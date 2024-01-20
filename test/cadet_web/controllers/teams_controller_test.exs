@@ -38,7 +38,7 @@ defmodule CadetWeb.TeamsControllerTest do
       team = insert(:team, %{assessment: assessment})
       conn = get(conn, build_url_get(course.id))
 
-      teamFormationOverview = %{
+      team_formation_overview = %{
         teamId: team.id,
         assessmentId: assessment.id,
         assessmentName: assessment.title,
@@ -47,7 +47,7 @@ defmodule CadetWeb.TeamsControllerTest do
         studentNames: []
       }
 
-      assert response(conn, 200) == "[#{Jason.encode!(teamFormationOverview)}]"
+      assert response(conn, 200) == "[#{Jason.encode!(team_formation_overview)}]"
     end
   end
 
@@ -81,7 +81,7 @@ defmodule CadetWeb.TeamsControllerTest do
 
       conn = get(conn, build_url_get_by_assessment(course.id, assessment.id))
 
-      teamFormationOverview = %{
+      team_formation_overview = %{
         teamId: team.id,
         assessmentId: assessment.id,
         assessmentName: assessment.title,
@@ -90,7 +90,7 @@ defmodule CadetWeb.TeamsControllerTest do
         studentNames: [cr1.user.name, cr2.user.name, cr.user.name]
       }
 
-      assert response(conn, 200) == "#{Jason.encode!(teamFormationOverview)}"
+      assert response(conn, 200) == "#{Jason.encode!(team_formation_overview)}"
     end
   end
 

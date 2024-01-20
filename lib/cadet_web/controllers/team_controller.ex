@@ -32,19 +32,19 @@ defmodule CadetWeb.TeamController do
       |> put_status(:ok)
       |> text("Team is not found!")
     else
-      teamFormationOverview = team_to_team_formation_overview(team)
+      team_formation_overview = team_to_team_formation_overview(team)
 
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/json")
-      |> render("index.json", teamFormationOverview: teamFormationOverview)
+      |> render("index.json", teamFormationOverview: team_formation_overview)
     end
   end
 
   defp team_to_team_formation_overview(team) do
     assessment = team.assessment
 
-    teamFormationOverview = %{
+    team_formation_overview = %{
       teamId: team.id,
       assessmentId: assessment.id,
       assessmentName: assessment.title,
@@ -53,7 +53,7 @@ defmodule CadetWeb.TeamController do
       studentNames: team.team_members |> Enum.map(& &1.student.user.name)
     }
 
-    teamFormationOverview
+    team_formation_overview
   end
 
   swagger_path :index do
