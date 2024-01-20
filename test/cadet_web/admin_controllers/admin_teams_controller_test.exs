@@ -34,7 +34,6 @@ defmodule CadetWeb.AdminTeamsControllerTest do
       insert(:team_member, %{team: team})
       insert(:team_member, %{team: team})
 
-      IO.inspect(build_url(course_id))
       conn = get(conn, build_url(course_id))
       assert response(conn, 200)
 
