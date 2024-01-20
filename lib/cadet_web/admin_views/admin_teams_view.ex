@@ -13,8 +13,8 @@ defmodule CadetWeb.AdminTeamsView do
   * `teamFormationOverviews` - A list of team formation overviews to be rendered.
 
   """
-  def render("index.json", %{teamFormationOverviews: teamFormationOverviews}) do
-    render_many(teamFormationOverviews, CadetWeb.AdminTeamsView, "team_formation_overview.json",
+  def render("index.json", %{team_formation_overviews: team_formation_overviews}) do
+    render_many(team_formation_overviews, CadetWeb.AdminTeamsView, "team_formation_overview.json",
       as: :team_formation_overview
     )
   end
