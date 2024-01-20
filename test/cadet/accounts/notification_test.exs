@@ -330,6 +330,22 @@ defmodule Cadet.Accounts.NotificationTest do
       assert %{type: :autograded} = notification
     end
 
+    test "no notification when no submission", %{
+      assessment: assessment,
+      student: student
+    } do
+      Notifications.write_notification_when_graded(-1, :autograded)
+
+      notification =
+        Repo.get_by(Notification,
+          course_reg_id: student.id,
+          type: :autograded,
+          assessment_id: assessment.id
+        )
+
+      assert notification == nil
+    end
+
     test "receives notification when autograded [team submission]", %{
       assessment: assessment,
       team: team,

@@ -52,15 +52,17 @@ defmodule Cadet.Assessments.Submission do
   defp validate_xor_relationship(changeset) do
     case {get_field(changeset, :student_id), get_field(changeset, :team_id)} do
       {nil, nil} ->
-        add_error(changeset, :student_id, "either student or team_id must be present")
-        |> add_error(changeset, :team_id, "either student_id or team must be present")
+        changeset 
+        |> add_error(:student_id, "either student or team_id must be present")
+        |> add_error(:team_id, "either student_id or team must be present")
       {nil, _} ->
         changeset
       {_, nil} ->
         changeset
       {_student, _team} ->
-        add_error(changeset, :student_id, "student and team_id cannot be present at the same time")
-        |> add_error(changeset, :team_id, "student_id and team cannot be present at the same time")
+        changeset 
+        |> add_error(:student_id, "student and team_id cannot be present at the same time")
+        |> add_error(:team_id, "student_id and team cannot be present at the same time")
     end
   end
 end

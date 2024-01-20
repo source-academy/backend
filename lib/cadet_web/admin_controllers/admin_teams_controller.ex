@@ -48,10 +48,6 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def create(conn, %{"course_id" => course_id, "team" => team_params}) do
-    create(conn, %{"team" => team_params})
-  end
-
   def update(conn, %{"teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids}) do
     team = Team
            |> Repo.get!(teamId)
@@ -70,13 +66,8 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def update(conn, %{"course_id" => course_id, "teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids}) do
-    update(conn, %{"teamId" => teamId, "assessmentId" => assessmentId, "student_ids" => student_ids})
-  end
-
   def delete(conn, %{"teamId" => team_id}) do
     team = Repo.get(Team, team_id)
-
     if team do
       case Teams.delete_team(team) do
         {:error, {status, error_message}} ->
@@ -104,19 +95,19 @@ defmodule CadetWeb.AdminTeamsController do
 
     security([%{JWT: []}])
 
-    response(200, "OK", Schema.array(:TeamsList))
+    response(200, "OK", :Teams)
     response(400, "Bad Request")
     response(403, "Forbidden")
   end
 
   swagger_path :create do
-    post("/admin/teams")
+    post("/courses/{course_id}/admin/teams")
 
     summary("Creates a new team")
 
     security([%{JWT: []}])
 
-    consumes("application/json")  # Adjust the content type if applicable
+    consumes("application/json")
 
     parameters do
       team_params(:body, :AdminCreateTeamPayload, "Team parameters", required: true)
@@ -124,13 +115,15 @@ defmodule CadetWeb.AdminTeamsController do
 
     response(201, "Created")
     response(400, "Bad Request")
+    response(401, "Unauthorised")
     response(403, "Forbidden")
+    response(409, "Conflict")
   end
 
   swagger_path :update do
-    post("/admin/teams/{teamId}")
+    post("/courses/{course_id}/admin/teams/{teamId}")
 
-    summary("Updates a team")
+    summary("Updates an existing team")
 
     security([%{JWT: []}])
 
@@ -146,13 +139,15 @@ defmodule CadetWeb.AdminTeamsController do
 
     response(200, "OK")
     response(400, "Bad Request")
+    response(401, "Unauthorised")
     response(403, "Forbidden")
+    response(409, "Conflict")
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/teams/{teamId}")
+    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/teams/{teamId}")
 
-    summary("Deletes a team")
+    summary("Deletes an existing team")
 
     security([%{JWT: []}])
 
@@ -162,65 +157,64 @@ defmodule CadetWeb.AdminTeamsController do
 
     response(200, "OK")
     response(400, "Bad Request")
+    response(401, "Unauthorised")
     response(403, "Forbidden")
+    response(409, "Conflict")
   end
 
   def swagger_definitions do
     %{
-      # Schemas for payloads to create or modify data
-      AdminCreateTeamPayload: %{
-        "type" => "object",
-        "properties" => %{
-          "name" => %{"type" => "string", "description" => "Team name"},
-          "course" => %{"type" => "string", "description" => "Course name"},
-          "other_property" => %{"type" => "string", "description" => "Other relevant property"}
-        },
-        "required" => ["name", "course"]
-      },
-      AdminUpdateTeamPayload: %{
-        "type" => "object",
-        "properties" => %{
-          "teamId" => %{"type" => "number", "description" => "The existing team id"},
-          "assessmentId" => %{"type" => "number", "description" => "The updated assessment id"},
-          "student_ids" => %{
-            "type" => "array",
-            "items" => %{"$ref" => "#/definitions/AdminUpdateStudentId"},
-            "description" => "The updated student ids"
-          }
-        },
-        "required" => ["teamId", "assessmentId", "student_ids"]
-      },
-      AdminUpdateStudentId: %{
-        "type" => "object",
-        "properties" => %{
-          "id" => %{"type" => "number", "description" => "Student ID"}
-        },
-        "required" => ["id"]
-      },
-      TeamList: %{
-        "type" => "array",
-        "items" => %{"$ref" => "#/definitions/TeamItem"}
-      },
-      TeamItem: %{
-        "type" => "object",
-        "properties" => %{
-          "teamId" => %{"type" => "integer", "description" => "Team ID"},
-          "assessmentId" => %{"type" => "integer", "description" => "Assessment ID"},
-          "assessmentName" => %{"type" => "string", "description" => "Assessment name"},
-          "assessmentType" => %{"type" => "string", "description" => "Assessment type"},
-          "studentIds" => %{
-            "type" => "array",
-            "items" => %{"type" => "integer"},
-            "description" => "Student IDs"
-          },
-          "studentNames" => %{
-            "type" => "array",
-            "items" => %{"type" => "string"},
-            "description" => "Student names"
-          }
-        },
-        "required" => ["teamId", "assessmentId", "assessmentName", "assessmentType", "studentIds", "studentNames"]
-      }
+      AdminCreateTeamPayload:
+        swagger_schema do
+          properties do
+            assessmentId(:integer, "Assessment ID")
+            studentIds(:array, "Student IDs", items: %{type: :integer})
+          end
+          required [:assessmentId, :studentIds]
+        end,
+      AdminUpdateTeamPayload: 
+        swagger_schema do
+          properties do
+            teamId(:integer, "Team ID")
+            assessmentId(:integer, "Assessment ID")
+            studentIds(:integer, "Student IDs", items: %{type: :integer})
+          end
+          required [:teamId, :assessmentId, :studentIds]
+        end,
+      Teams:
+        swagger_schema do
+          type(:array)
+          items(Schema.ref(:Team))
+        end,
+      Team: 
+        swagger_schema do
+          properties do
+            id(:integer, "Team Id")
+            assessment(
+              Schema.ref(:Assessment)
+            )
+            team_members(Schema.ref(:TeamMembers))
+          end
+          required [:id, :assessment, :team_members]
+        end,
+      TeamMembers:
+        swagger_schema do
+          type(:array)
+          items(Schema.ref(:TeamMember))
+        end,
+      TeamMember:
+        swagger_schema do
+          properties do
+            id(:integer, "Team Member Id")
+            student(
+              Schema.ref(:CourseRegistration)
+            )
+            team(
+              Schema.ref(:Team)
+            )
+          end
+          required [:id, :student, :team]
+        end
     }
   end
 end

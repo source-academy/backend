@@ -54,7 +54,7 @@ defmodule Cadet.Assessments do
     else
       Submission
       |> where(assessment_id: ^id)
-      |> delete_submission_assocation(id)
+      |> delete_submission_association(id)
 
       Question
       |> where(assessment_id: ^id)
@@ -73,7 +73,7 @@ defmodule Cadet.Assessments do
     |> Repo.delete_all()
   end
 
-  defp delete_submission_assocation(submissions, assessment_id) do
+  defp delete_submission_association(submissions, assessment_id) do
     submissions
     |> Repo.all()
     |> Enum.each(fn submission ->
@@ -109,7 +109,7 @@ defmodule Cadet.Assessments do
     query =
       from(t in Team,
         join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr_id,
+        where: tm.student_id == ^cr_id
       )
     teams = Repo.all(query)
 
@@ -940,7 +940,7 @@ defmodule Cadet.Assessments do
          {:status, :submitted} <- {:status, submission.status},
          {:allowed_to_unsubmit?, true} <-
            {:allowed_to_unsubmit?,
-            role == :admin or bypass or
+            role == :admin or bypass or is_nil(submission.student_id) or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
       Multi.new()
       |> Multi.run(
@@ -1804,7 +1804,6 @@ defmodule Cadet.Assessments do
         |> Repo.insert()
         |> case do
           {:ok, submission} -> {:ok, submission}
-          {:error, _} -> {:error, :race_condition}
         end
       _ ->
         %Submission{}
@@ -1812,7 +1811,6 @@ defmodule Cadet.Assessments do
         |> Repo.insert()
         |> case do
           {:ok, submission} -> {:ok, submission}
-          {:error, _} -> {:error, :race_condition}
         end
     end
   end

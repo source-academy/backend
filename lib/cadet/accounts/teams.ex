@@ -218,9 +218,6 @@ defmodule Cadet.Accounts.Teams do
 
           update_team_members(updated_team, student_ids, team_id)
           {:ok, updated_team}
-
-        error ->
-          error
       end
     end
   end

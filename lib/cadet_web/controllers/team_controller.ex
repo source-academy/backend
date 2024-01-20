@@ -9,8 +9,7 @@ defmodule CadetWeb.TeamController do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Teams, Team}
-  alias CadetWeb.Router.Helpers, as: Routes
+  alias Cadet.Accounts.Team
 
   def index(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
@@ -70,18 +69,20 @@ defmodule CadetWeb.TeamController do
     response(403, "Forbidden")
   end
 
-  @swagger_definitions %{
-    TeamFormationOverview: %{
-      "type" => "object",
-      "properties" => %{
-        "teamId" => %{"type" => "number", "description" => "The ID of the team"},
-        "assessmentId" => %{"type" => "number", "description" => "The ID of the assessment"},
-        "assessmentName" => %{"type" => "string", "description" => "The name of the assessment"},
-        "assessmentType" => %{"type" => "string", "description" => "The type of the assessment"},
-        "studentIds" => %{"type" => "array", "items" => %{"type" => "number"}, "description" => "List of student IDs"},
-        "studentNames" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "List of student names"}
-      },
-      "required" => ["teamId", "assessmentId", "assessmentName", "assessmentType", "studentIds", "studentNames"]
+  def swagger_definitions do
+    %{
+      TeamFormationOverview: %{
+        "type" => "object",
+        "properties" => %{
+          "teamId" => %{"type" => "number", "description" => "The ID of the team"},
+          "assessmentId" => %{"type" => "number", "description" => "The ID of the assessment"},
+          "assessmentName" => %{"type" => "string", "description" => "The name of the assessment"},
+          "assessmentType" => %{"type" => "string", "description" => "The type of the assessment"},
+          "studentIds" => %{"type" => "array", "items" => %{"type" => "number"}, "description" => "List of student IDs"},
+          "studentNames" => %{"type" => "array", "items" => %{"type" => "string"}, "description" => "List of student names"}
+        },
+        "required" => ["teamId", "assessmentId", "assessmentName", "assessmentType", "studentIds", "studentNames"]
+      }
     }
-  }
+  end
 end
