@@ -332,7 +332,7 @@ defmodule Cadet.Courses do
 
   @doc """
   Upload a sourcecast file.
-  
+
   Note that there are no checks for whether the user belongs to the course,
   as this has been checked inside a plug in the router.
   """
@@ -384,7 +384,7 @@ defmodule Cadet.Courses do
 
   @doc """
   Delete a sourcecast file
-  
+
   Note that there are no checks for whether the user belongs to the course, as this has been checked
   inside a plug in the router.
   """

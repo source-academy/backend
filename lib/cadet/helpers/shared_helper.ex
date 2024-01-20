@@ -22,7 +22,7 @@ defmodule Cadet.SharedHelper do
 
   @doc """
   Snake-casifies string keys.
-  
+
   Meant for use when accepting a JSON map from the frontend, where keys are
   usually camel-case.
   """
@@ -40,7 +40,7 @@ defmodule Cadet.SharedHelper do
 
   @doc """
   Snake-casifies string keys, recursively.
-  
+
   Meant for use when accepting a JSON map from the frontend, where keys are
   usually camel-case.
   """
@@ -60,7 +60,7 @@ defmodule Cadet.SharedHelper do
 
   @doc """
   Camel-casifies atom keys and converts them to strings.
-  
+
   Meant for use when sending an Elixir map, which usually has snake-case keys,
   to the frontend.
   """
@@ -73,7 +73,7 @@ defmodule Cadet.SharedHelper do
   @doc """
   Converts a map like `%{"a" => 123}` into a keyword list like [a: 123]. Returns
   nil if any keys are not existing atoms.
-  
+
   Meant for use for GET endpoints that filter based on the query string.
   """
   def try_keywordise_string_keys(map) do

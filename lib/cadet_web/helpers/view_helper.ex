@@ -41,13 +41,13 @@ defmodule CadetWeb.ViewHelper do
 
   @doc """
   This function allows you to build a map for a view from a map of transformations or a list of fields.
-  
+
   Given a `key_list`, it is the equivalent of `Map.take(source, key_list)`.
-  
+
   Given a map of `%{view_field: source_field, ...}`, it is the equivalent of `%{view_field: Map.get(source, source_field), ...}`
-  
+
   Given a map of `%{view_field: source_function, ...}`, it is the equivalent of `%{view_field: apply(source_function, source)}`
-  
+
   Examples:
   ```
   source = %{
@@ -55,31 +55,31 @@ defmodule CadetWeb.ViewHelper do
     barbar: "ha",
     foobar: "hoha"
   }
-  
+
   field_list = [:foofoo, :barbar]
-  
+
   transform_map_for_view(source, field_list)
   > %{
     foofoo: "ho",
     barbar: "ha"
   }
-  
+
   key_transformations = %{
     foo: :foofoo,
     bar: :barbar
   }
-  
+
   transform_map_for_view(source, key_transformations)
   > %{
     foo: Map.get(source, :foofoo),
     bar: Map.get(source, :barbar)
   }
-  
+
   function_transformations = %{
     foo: fn source -> source.foofoo <> "hoho",
     bar: fn source -> source.barbar <> "barbar"
   }
-  
+
   transform_map_for_view(source, function_transformations)
   > %{
     foo: source.foofoo <> "hoho",

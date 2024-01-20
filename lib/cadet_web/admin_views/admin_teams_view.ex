@@ -7,11 +7,11 @@ defmodule CadetWeb.AdminTeamsView do
 
   @doc """
   Renders a list of team formation overviews in JSON format.
-  
+
   ## Parameters
-  
+
   * `teamFormationOverviews` - A list of team formation overviews to be rendered.
-  
+
   """
   def render("index.json", %{team_formation_overviews: team_formation_overviews}) do
     render_many(team_formation_overviews, CadetWeb.AdminTeamsView, "team_formation_overview.json",
@@ -21,11 +21,11 @@ defmodule CadetWeb.AdminTeamsView do
 
   @doc """
   Renders a single team formation overview in JSON format.
-  
+
   ## Parameters
-  
+
   * `team_formation_overview` - The team formation overview to be rendered.
-  
+
   """
   def render("team_formation_overview.json", %{team_formation_overview: team_formation_overview}) do
     %{

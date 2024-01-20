@@ -12,7 +12,7 @@ defmodule Cadet.Incentives.Achievements do
 
   @doc """
   Returns all achievements.
-  
+
   This returns Achievement structs with prerequisites and goal association maps pre-loaded.
   """
   @spec get(integer()) :: [Achievement.t()]

@@ -11,7 +11,7 @@ defmodule Cadet.Accounts do
 
   @doc """
   Register new User entity using Cadet.Accounts.Form.Registration
-  
+
   Returns {:ok, user} on success, otherwise {:error, changeset}
   """
   def register(attrs = %{username: username, provider: _provider}) when is_binary(username) do

@@ -1,13 +1,13 @@
 defmodule Cadet.Auth.Providers.Config do
   @moduledoc """
   Provides identity using configuration.
-  
+
   The configuration should be a list of users in the following format:
-  
+
   ```
   [%{code: "code1", token: "token1", username: "Username", name: "Name", role: :student}]
   ```
-  
+
   This is mainly meant for test and development use.
   """
 

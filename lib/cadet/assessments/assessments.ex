@@ -799,10 +799,10 @@ defmodule Cadet.Assessments do
   Public internal api to submit new answers for a question. Possible return values are:
   `{:ok, nil}` -> success
   `{:error, error}` -> failed. `error` is in the format of `{http_response_code, error message}`
-  
+
   Note: In the event of `find_or_create_submission` failing due to a race condition, error will be:
    `{:bad_request, "Missing or invalid parameter(s)"}`
-  
+
   """
   def answer_question(
         question = %Question{},
@@ -1198,7 +1198,7 @@ defmodule Cadet.Assessments do
 
   @doc """
   Fetches top answers for the given question, based on the contest relative_score
-  
+
   Used for contest leaderboard fetching
   """
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
@@ -1363,11 +1363,11 @@ defmodule Cadet.Assessments do
   fields that are exposed in the /grading endpoint. The reason we select only
   those fields is to reduce the memory usage especially when the number of
   submissions is large i.e. > 25000 submissions.
-  
+
   The input parameters are the user and group_only. group_only is used to check
   whether only the groups under the grader should be returned. The parameter is
   a boolean which is false by default.
-  
+
   The return value is {:ok, submissions} if no errors, else it is {:error,
   {:unauthorized, "Forbidden."}}
   """

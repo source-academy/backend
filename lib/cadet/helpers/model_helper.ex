@@ -29,7 +29,7 @@ defmodule Cadet.ModelHelper do
 
   @doc """
   Given a changeset for a model that has some `belongs_to` associations, this function will attach multiple ids to the changeset if the models are provided in the parameters.
-  
+
   example:
   ```
   defmodule MyTest do
@@ -37,10 +37,10 @@ defmodule Cadet.ModelHelper do
       belongs_to(:bossman, User)
       belongs_to(:item, Box)
     end
-  
+
     def changeset(my_test, params) do
       # params = %{bossman: %User{}, item: %Box{}}
-  
+
       my_test
       |> cast(params, [])
       |> add_belongs_to_id_from_model([:bossman, :item], params)
