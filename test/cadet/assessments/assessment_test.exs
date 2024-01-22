@@ -131,8 +131,8 @@ defmodule Cadet.Assessments.AssessmentTest do
       course1: course1,
       config1: config1
     } do
-      assert_changeset(
-        %{
+      changeset = 
+        Assessment.changeset(%Assessment{}, %{
           config_id: config1.id,
           course_id: course1.id,
           title: "mission",
@@ -140,9 +140,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           max_team_size: -1,
           open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
           close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
-        },
-        :valid
-      )
+        })
+
+      assert changeset.valid? == false
+      assert changeset.errors[:max_team_size] == {"must be greater than or equal to %{number}", [validation: :number, kind: :greater_than_or_equal_to, number: 1]}
     end
   end
 end
