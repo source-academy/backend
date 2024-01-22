@@ -55,9 +55,6 @@ defmodule CadetWeb.AdminGradingController do
       {:ok, _} ->
         text(conn, "OK")
 
-      # :ok ->
-      #   text(conn, "OK")
-
       {:error, {status, message}} ->
         conn
         |> put_status(status)
