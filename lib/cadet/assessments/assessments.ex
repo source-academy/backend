@@ -106,13 +106,7 @@ defmodule Cadet.Assessments do
   end
 
   def assessments_total_xp(%CourseRegistration{id: cr_id}) do
-    query =
-      from(t in Team,
-        join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr_id
-      )
-
-    teams = Repo.all(query)
+    teams = find_teams(cr_id)
 
     submission_xp =
       Submission
@@ -327,13 +321,7 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(cr = %CourseRegistration{}) do
-    query =
-      from(t in Team,
-        join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr.id
-      )
-
-    teams = Repo.all(query)
+    teams = find_teams(cr.id)
 
     submission_aggregates =
       Submission
@@ -834,6 +822,17 @@ defmodule Cadet.Assessments do
         {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
   end
+
+  defp find_teams(cr_id) do
+    query =
+      from(t in Team,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id
+      )
+
+    Repo.all(query)
+  end
+
 
   defp find_team(assessment_id, cr_id)
        when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
