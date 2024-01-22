@@ -314,7 +314,7 @@ defmodule Cadet.Assessments do
       assessment = assessment |> Map.put(:questions, questions)
       {:ok, assessment}
     else
-      {:error, {:unauthorized, "Assessment not open"}}
+      {:error, {:forbidden, "Assessment not open"}}
     end
   end
 
@@ -1369,7 +1369,7 @@ defmodule Cadet.Assessments do
   a boolean which is false by default.
 
   The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:unauthorized, "Forbidden."}}
+  {:forbidden, "Forbidden."}}
   """
   @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok,
