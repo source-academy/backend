@@ -107,12 +107,13 @@ defmodule Cadet.Assessments do
 
   def assessments_total_xp(%CourseRegistration{id: cr_id}) do
     teams = find_teams(cr_id)
+    submission_ids = get_submission_ids(cr_id, teams)
 
     submission_xp =
       Submission
       |> where(
         [s],
-        s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id)
+        s.id in ^submission_ids
       )
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
@@ -313,13 +314,14 @@ defmodule Cadet.Assessments do
   """
   def all_assessments(cr = %CourseRegistration{}) do
     teams = find_teams(cr.id)
+    submission_ids = get_submission_ids(cr.id, teams)
 
     submission_aggregates =
       Submission
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
       |> where(
         [s],
-        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, & &1.id)
+        s.id in ^submission_ids
       )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
@@ -333,7 +335,7 @@ defmodule Cadet.Assessments do
       Submission
       |> where(
         [s],
-        s.student_id == ^cr.id or s.team_id in ^Enum.map(teams, & &1.id)
+        s.id in ^submission_ids
       )
       |> select([s], [:assessment_id, :status])
 
@@ -360,6 +362,16 @@ defmodule Cadet.Assessments do
       |> Repo.all()
 
     {:ok, assessments}
+  end
+
+  defp get_submission_ids(cr_id, teams) do
+    query =
+      from(s in Submission,
+        where: s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id),
+        select: s.id
+      )
+
+    Repo.all(query)
   end
 
   def filter_published_assessments(assessments, cr) do
