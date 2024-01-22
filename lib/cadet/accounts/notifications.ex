@@ -266,6 +266,8 @@ defmodule Cadet.Accounts.Notifications do
               )
             )
 
+          # Does not matter if team members have different Avengers
+          # Just require one of them to be notified of the submission
           s_id = team.team_members |> hd() |> Map.get(:student_id)
           s_id
 
