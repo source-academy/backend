@@ -266,22 +266,13 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
-    query =
-      from(t in Team,
-        where: t.assessment_id == ^assessment.id,
-        join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^course_reg.id,
-        limit: 1
-      )
-
-    team = Repo.one(query)
-
-    team_id =
-      if team do
-        team.id
-      else
-        -1
-      end
+    team_id = -1
+    case find_team(id, course_reg.id) do
+      {:ok, team} ->
+        team_id = team.id
+      {:error, :team_not_found} ->
+        {:error, :team_not_found}
+    end
 
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
@@ -871,15 +862,7 @@ defmodule Cadet.Assessments do
 
   def get_submission(assessment_id, %CourseRegistration{id: cr_id})
       when is_ecto_id(assessment_id) do
-    query =
-      from(t in Team,
-        where: t.assessment_id == ^assessment_id,
-        join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr_id,
-        limit: 1
-      )
-
-    team = Repo.one(query)
+    {:ok, team} = find_team(assessment_id, cr_id)
 
     case team do
       %Team{} ->
@@ -890,7 +873,7 @@ defmodule Cadet.Assessments do
         |> preload([_, a], assessment: a)
         |> Repo.one()
 
-      _ ->
+      nil ->
         Submission
         |> where(assessment_id: ^assessment_id)
         |> where(student_id: ^cr_id)
@@ -1689,15 +1672,7 @@ defmodule Cadet.Assessments do
   end
 
   defp find_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
-    query =
-      from(t in Team,
-        where: t.assessment_id == ^assessment.id,
-        join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr.id,
-        limit: 1
-      )
-
-    team = Repo.one(query)
+    {:ok, team} = find_team(assessment.id, cr.id)
 
     submission =
       case team do
@@ -1707,7 +1682,7 @@ defmodule Cadet.Assessments do
           |> where(assessment_id: ^assessment.id)
           |> Repo.one()
 
-        _ ->
+        nil ->
           Submission
           |> where(student_id: ^cr.id)
           |> where(assessment_id: ^assessment.id)
@@ -1814,15 +1789,7 @@ defmodule Cadet.Assessments do
   end
 
   defp create_empty_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
-    query =
-      from(t in Team,
-        where: t.assessment_id == ^assessment.id,
-        join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr.id,
-        limit: 1
-      )
-
-    team = Repo.one(query)
+    {:ok, team} = find_team(assessment.id, cr.id)
 
     case team do
       %Team{} ->
@@ -1833,7 +1800,7 @@ defmodule Cadet.Assessments do
           {:ok, submission} -> {:ok, submission}
         end
 
-      _ ->
+      nil ->
         %Submission{}
         |> Submission.changeset(%{student: cr, assessment: assessment})
         |> Repo.insert()
