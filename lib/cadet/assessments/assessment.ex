@@ -62,6 +62,7 @@ defmodule Cadet.Assessments.Assessment do
     |> unique_constraint([:number, :course_id])
     |> validate_config_course
     |> validate_open_close_date
+    |> validate_number(:max_team_size, greater_than_or_equal_to: 1)
   end
 
   defp validate_config_course(changeset) do
