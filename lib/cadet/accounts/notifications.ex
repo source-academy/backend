@@ -256,7 +256,7 @@ defmodule Cadet.Accounts.Notifications do
     id =
       case submission.student_id do
         nil ->
-          team_id = String.to_integer(to_string(submission.team_id))
+          team_id = submission.team_id
 
           team =
             Repo.one(
