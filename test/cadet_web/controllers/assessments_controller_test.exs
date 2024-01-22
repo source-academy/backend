@@ -899,7 +899,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> sign_in(student.user)
         |> get(build_url(course1.id, mission.assessment.id))
 
-      assert response(conn, 401) == "Assessment not open"
+      assert response(conn, 403) == "Assessment not open"
     end
 
     test "it does not permit access to unpublished assessments", %{
