@@ -268,9 +268,11 @@ defmodule Cadet.Assessments do
         course_reg = %CourseRegistration{role: role}
       ) do
     team_id = -1
+
     case find_team(id, course_reg.id) do
       {:ok, team} ->
         team_id = team.id
+
       {:error, :team_not_found} ->
         {:error, :team_not_found}
     end
@@ -835,7 +837,6 @@ defmodule Cadet.Assessments do
 
     Repo.all(query)
   end
-
 
   defp find_team(assessment_id, cr_id)
        when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
