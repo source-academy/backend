@@ -267,15 +267,15 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
-    team_id = -1
-
-    case find_team(id, course_reg.id) do
-      {:ok, team} ->
-        team_id = team.id
-
-      {:error, :team_not_found} ->
-        {:error, :team_not_found}
-    end
+    team_id =
+      case find_team(id, course_reg.id) do
+        {:ok, nil} ->
+          -1
+        {:ok, team} ->
+          team.id
+        {:error, :team_not_found} ->
+          -1
+      end
 
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
