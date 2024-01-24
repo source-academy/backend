@@ -271,8 +271,10 @@ defmodule Cadet.Assessments do
       case find_team(id, course_reg.id) do
         {:ok, nil} ->
           -1
+
         {:ok, team} ->
           team.id
+
         {:error, :team_not_found} ->
           -1
       end
