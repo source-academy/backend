@@ -1318,6 +1318,80 @@ defmodule Cadet.Assessments do
     {:ok, generate_grading_summary_view_model(submissions, course_id)}
   end
 
+  # ! Paginated Submissions WIP
+  @spec paginated_submissions_by_grader_for_index(CourseRegistration.t())  ::
+          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
+  def paginated_submissions_by_grader_for_index(
+    grader = %CourseRegistration{course_id: course_id},
+    group_only \\ false,
+    page \\ "0",
+    page_size \\ "10"
+  ) do
+    show_all = not group_only
+    IO.puts("page in assessments.ex: #{page} and page_size: #{page_size}")
+    parsed_page = elem(Integer.parse(page), 0)
+    parsed_page_size = elem(Integer.parse(page_size), 0)
+    offset = to_string(parsed_page * parsed_page_size)
+    group_filter =
+      if show_all,
+        do: "",
+        else:
+          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
+
+    submissions =
+      case Repo.query("""
+            SELECT
+              s.id,
+              s.status,
+              s.unsubmitted_at,
+              s.unsubmitted_by_id,
+              s_ans.xp,
+              s_ans.xp_adjustment,
+              s.xp_bonus,
+              s_ans.graded_count,
+              s.student_id,
+              s.assessment_id
+            FROM
+              submissions AS s
+              LEFT JOIN (
+                SELECT
+                  ans.submission_id,
+                  SUM(ans.xp) AS xp,
+                  SUM(ans.xp_adjustment) AS xp_adjustment,
+                  COUNT(ans.id) FILTER (
+                    WHERE
+                      ans.grader_id IS NOT NULL
+                  ) AS graded_count
+                FROM
+                  answers AS ans
+                GROUP BY
+                  ans.submission_id
+              ) AS s_ans ON s_ans.submission_id = s.id
+            WHERE
+              s.assessment_id IN (
+                SELECT
+                  id
+                FROM
+                  assessments
+                WHERE
+                  assessments.course_id = #{course_id}
+              ) #{group_filter}
+            LIMIT #{page_size}
+            OFFSET #{offset};
+            """) do
+        {:ok, %{columns: columns, rows: result}} ->
+          result
+          |> Enum.map(
+            &(columns
+              |> Enum.map(fn c -> String.to_atom(c) end)
+              |> Enum.zip(&1)
+              |> Enum.into(%{}))
+          )
+      end
+
+    {:ok, generate_grading_summary_view_model(submissions, course_id)}
+  end
+
   defp generate_grading_summary_view_model(submissions, course_id) do
     users =
       CourseRegistration
