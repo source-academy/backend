@@ -4,9 +4,22 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.Assessments
 
-  def index(conn, %{"group" => group}) when group in ["true", "false"] do
+  def index(conn, %{"group" => group, "page" => page, "pageSize" => page_size})
+  when group in["true", "false"] do
     course_reg = conn.assigns[:course_reg]
+    group = String.to_atom(group)
+    case Assessments.paginated_submissions_by_grader_for_index(course_reg, group, page, page_size) do
+        {:ok, view_model} ->
+          conn
+          |> put_status(:ok)
+          |> put_resp_content_type("application/json")
+          |> render("gradingsummaries.json", view_model)
+      end
+    end
 
+  def index(conn, %{"group" => group})
+  when group in ["true", "false"] do
+    course_reg = conn.assigns[:course_reg]
     group = String.to_atom(group)
 
     case Assessments.all_submissions_by_grader_for_index(course_reg, group) do
