@@ -1324,13 +1324,10 @@ defmodule Cadet.Assessments do
   def paginated_submissions_by_grader_for_index(
     grader = %CourseRegistration{course_id: course_id},
     group_only \\ false,
-    page \\ "0",
+    offset \\ "0",
     page_size \\ "10"
   ) do
     show_all = not group_only
-    parsed_page = elem(Integer.parse(page), 0)
-    parsed_page_size = elem(Integer.parse(page_size), 0)
-    offset = to_string(parsed_page * parsed_page_size)
     group_filter =
       if show_all,
         do: "",
@@ -1361,7 +1358,7 @@ defmodule Cadet.Assessments do
                 WHERE
                   assessments.course_id = #{course_id}
               )
-        ORDER BY inserted_at DESC LIMIT #{page_size} OFFSET #{offset * page_size}) AS s
+        ORDER BY inserted_at DESC LIMIT #{page_size} OFFSET #{offset}) AS s
         LEFT JOIN (
           SELECT
             ans.submission_id,
