@@ -1345,7 +1345,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:bad_request, String.t()}}
+          {:ok, %{answers: [Answer.t()], assessment: Assessment.t()}} | {:error, {:bad_request, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -1379,10 +1379,12 @@ defmodule Cadet.Assessments do
         end
       end)
 
+    assessment_id = Submission |> where(id: ^id) |> select([s], s.assessment_id) |> Repo.one()
+    assessment = Assessment |> where(id: ^assessment_id) |> Repo.one()
     if answers == [] do
       {:error, {:bad_request, "Submission is not found."}}
     else
-      {:ok, answers}
+      {:ok, {answers, assessment}}
     end
   end
 
