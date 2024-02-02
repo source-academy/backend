@@ -1380,12 +1380,11 @@ defmodule Cadet.Assessments do
         end
       end)
 
-    assessment_id = Submission |> where(id: ^id) |> select([s], s.assessment_id) |> Repo.one()
-    assessment = Assessment |> where(id: ^assessment_id) |> Repo.one()
-
     if answers == [] do
       {:error, {:bad_request, "Submission is not found."}}
     else
+      assessment_id = Submission |> where(id: ^id) |> select([s], s.assessment_id) |> Repo.one()
+      assessment = Assessment |> where(id: ^assessment_id) |> Repo.one()
       {:ok, {answers, assessment}}
     end
   end
