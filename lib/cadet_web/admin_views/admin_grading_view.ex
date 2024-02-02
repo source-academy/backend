@@ -5,7 +5,8 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("show.json", %{answers: answers, assessment: assessment}) do
     %{
-      assessment: render_one(assessment, CadetWeb.AdminGradingView, "assessment.json", as: :assessment),
+      assessment:
+        render_one(assessment, CadetWeb.AdminGradingView, "assessment.json", as: :assessment),
       answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
     }
   end
@@ -19,7 +20,7 @@ defmodule CadetWeb.AdminGradingView do
       cover_picture: assessment.cover_picture,
       number: assessment.number,
       story: assessment.story,
-      reading: assessment.reading,
+      reading: assessment.reading
     }
   end
 
