@@ -104,6 +104,7 @@ defmodule CadetWeb.UserView do
           enableGame: :enable_game,
           enableAchievements: :enable_achievements,
           enableSourcecast: :enable_sourcecast,
+          enableStories: :enable_stories,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,
