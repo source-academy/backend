@@ -1345,7 +1345,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, %{answers: [Answer.t()], assessment: Assessment.t()}}
+          {:ok, {[Answer.t()], Assessment.t()}}
           | {:error, {:bad_request, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
