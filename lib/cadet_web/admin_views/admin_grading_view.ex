@@ -15,9 +15,9 @@ defmodule CadetWeb.AdminGradingView do
     %{
       id: assessment.id,
       title: assessment.title,
-      summary_short: assessment.summary_short,
-      summary_long: assessment.summary_long,
-      cover_picture: assessment.cover_picture,
+      summaryShort: assessment.summary_short,
+      summaryLong: assessment.summary_long,
+      coverPicture: assessment.cover_picture,
       number: assessment.number,
       story: assessment.story,
       reading: assessment.reading
