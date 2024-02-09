@@ -1323,11 +1323,9 @@ defmodule Cadet.Assessments do
           {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
   def paginated_submissions_by_grader_for_index(
     grader = %CourseRegistration{course_id: course_id},
-    group_only \\ false,
-    offset \\ "0",
-    page_size \\ "10"
+    params \\ %{"group" => "false", "page_size" => "10", "offset" => "0"}
   ) do
-    show_all = not group_only
+    show_all = not String.to_atom(params["group"])
     group_filter =
       if show_all,
         do: "",
@@ -1358,7 +1356,7 @@ defmodule Cadet.Assessments do
                 WHERE
                   assessments.course_id = #{course_id}
               )
-        ORDER BY inserted_at DESC LIMIT #{page_size} OFFSET #{offset}) AS s
+        ORDER BY inserted_at DESC LIMIT 1 OFFSET 0) AS s
         LEFT JOIN (
           SELECT
             ans.submission_id,
