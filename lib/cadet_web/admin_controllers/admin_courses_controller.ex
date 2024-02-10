@@ -138,6 +138,7 @@ defmodule CadetWeb.AdminCoursesController do
       enable_game(:body, :boolean, "Enable game")
       enable_achievements(:body, :boolean, "Enable achievements")
       enable_sourcecast(:body, :boolean, "Enable sourcecast")
+      enable_stories(:body, :boolean, "Enable stories")
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
       module_help_text(:body, :string, "Module help text")
       secret_key(:body, :string, "Secret key")
