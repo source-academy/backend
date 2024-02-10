@@ -158,10 +158,6 @@ defmodule CadetWeb.Router do
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
 
-    put("/config/key", AdminCoursesController, :manage_secret_key)
-    delete("/config/key", AdminCoursesController, :delete_secret_key)
-    get("/config/key", AdminCoursesController, :get_secret_key)
-
     # TODO: Missing corresponding Swagger path entry
     delete(
       "/config/assessment_config/:assessment_config_id",

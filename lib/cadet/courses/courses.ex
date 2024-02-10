@@ -424,42 +424,4 @@ defmodule Cadet.Courses do
   def assets_prefix(course) do
     course.assets_prefix || "#{Assets.assets_prefix()}#{course.id}/"
   end
-
-  @spec manage_secret_key(binary() | integer(), any()) :: any()
-  def manage_secret_key(course_id, secret_key) do
-    case retrieve_course(course_id) do
-      nil ->
-        {:error, {:bad_request, "Invalid course id"}}
-
-      course ->
-        course
-        |> Course.changeset(%{secret_key: secret_key})
-        |> Repo.update()
-    end
-  end
-
-  @spec get_secret_key(binary() | integer()) :: {:ok, binary()} | {:error, any()}
-  def get_secret_key(course_id) do
-    case retrieve_course(course_id) do
-      nil ->
-        {:error, {:bad_request, "Invalid course id"}}
-
-      course ->
-        {:ok, course.secret_key}
-    end
-  end
-
-  @spec delete_secret_key(binary() | integer()) :: {:ok, binary()} | {:error, any()}
-  def delete_secret_key(course_id) do
-    case retrieve_course(course_id) do
-      nil ->
-        {:error, {:bad_request, "Invalid course id"}}
-
-      course ->
-        course
-        |> Course.changeset(%{secret_key: nil})
-        |> Repo.update()
-    end
-  end
-
 end
