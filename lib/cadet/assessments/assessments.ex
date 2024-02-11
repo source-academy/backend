@@ -1325,26 +1325,6 @@ defmodule Cadet.Assessments do
     grader = %CourseRegistration{course_id: course_id},
     params \\ %{"group" => "false", "pageSize" => "10", "offset" => "0"}
   ) do
-    show_all = not String.to_atom(params["group"])
-
-    # TODO Refactor group filter
-    group_filter =
-      if show_all,
-        do: "",
-        else:
-          "WHERE s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
-
-    # student_ids_query =
-    #   from(cr in CourseRegistration,
-    #     join: g in Group, on: cr.group_id == g.id,
-    #     where: g.leader_id == ^grader.id,
-    #     select: cr.id
-    #   )
-
-    # query =
-    #   from(s in Submission,
-    #     where: s.student_id in subquery(student_ids_query) or s.student_id == ^grader.id
-    #   )
 
     submission_answers_query =
       from ans in Answer,
@@ -1367,6 +1347,7 @@ defmodule Cadet.Assessments do
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
           where: ^build_submission_filter(params),
+          where: ^build_group_filter(grader, params),
           order_by: [desc: s.inserted_at],
           limit: ^elem(Integer.parse(params["pageSize"]), 0),
           offset: ^elem(Integer.parse(params["offset"]), 0),
@@ -1404,6 +1385,21 @@ defmodule Cadet.Assessments do
         dynamic([submission], ^dynamic and submission.status == ^value)
 
       # TODO graded/ungraded for submission
+      {_, _}, dynamic -> dynamic
+    end)
+  end
+
+  defp build_group_filter(grader, params) do
+    group_query =
+      from(cr in CourseRegistration,
+        join: g in Group, on: cr.group_id == g.id,
+        where: g.leader_id == ^grader.id,
+        select: cr.id
+      )
+    Enum.reduce(params, dynamic(true), fn
+      {"group", "true"}, dynamic ->
+        dynamic([submission], ^dynamic and submission.student_id in subquery(group_query) or submission.student_id == ^grader.id)
+
       {_, _}, dynamic -> dynamic
     end)
   end
