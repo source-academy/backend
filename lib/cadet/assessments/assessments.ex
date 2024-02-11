@@ -1356,9 +1356,6 @@ defmodule Cadet.Assessments do
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
 
-    # TODO submission filtering
-    # submission_query =
-
     assessments_query =
        from a in Assessment,
         where: a.course_id == ^course_id,
@@ -1369,6 +1366,7 @@ defmodule Cadet.Assessments do
     query =
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
+          where: ^build_submission_filter(params),
           order_by: [desc: s.inserted_at],
           limit: ^elem(Integer.parse(params["pageSize"]), 0),
           offset: ^elem(Integer.parse(params["offset"]), 0),
@@ -1396,6 +1394,16 @@ defmodule Cadet.Assessments do
         dynamic([assessment], ^dynamic and assessment.title == ^value)
 
       # TODO grading progress filter
+      {_, _}, dynamic -> dynamic
+    end)
+  end
+
+  defp build_submission_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"status", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.status == ^value)
+
+      # TODO graded/ungraded for submission
       {_, _}, dynamic -> dynamic
     end)
   end
