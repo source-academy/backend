@@ -1346,6 +1346,7 @@ defmodule Cadet.Assessments do
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
           where: ^build_user_filter(params),
+          where: ^build_assessment_config_filter(params),
           where: ^build_submission_filter(params),
           where: ^build_course_registration_filter(grader, params),
           order_by: [desc: s.inserted_at],
@@ -1419,6 +1420,19 @@ defmodule Cadet.Assessments do
         dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
         where: ilike(user.username, ^"%#{value}%"),
         select: user.id
+        )))
+
+      {_, _}, dynamic -> dynamic
+    end)
+  end
+
+  defp build_assessment_config_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"type", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.assessment_id in subquery(from(assessment in Assessment,
+        inner_join: assessment_config in AssessmentConfig, on: assessment.config_id == assessment_config.id,
+        where: assessment_config.type == ^value,
+        select: assessment.id
         )))
 
       {_, _}, dynamic -> dynamic
