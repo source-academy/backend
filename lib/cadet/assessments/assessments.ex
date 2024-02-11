@@ -1390,16 +1390,19 @@ defmodule Cadet.Assessments do
   end
 
   defp build_group_filter(grader, params) do
-    group_query =
-      from(cr in CourseRegistration,
+    Enum.reduce(params, dynamic(true), fn
+      {"group", "true"}, dynamic ->
+        dynamic([submission], ^dynamic and submission.student_id in subquery(from(cr in CourseRegistration,
         join: g in Group, on: cr.group_id == g.id,
         where: g.leader_id == ^grader.id,
         select: cr.id
-      )
-    Enum.reduce(params, dynamic(true), fn
-      {"group", "true"}, dynamic ->
-        dynamic([submission], ^dynamic and submission.student_id in subquery(group_query) or submission.student_id == ^grader.id)
+      )) or submission.student_id == ^grader.id)
 
+      {"groupID", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.student_id in subquery(from(cr in CourseRegistration,
+        where: cr.group_id == ^value,
+        select: cr.id
+      )))
       {_, _}, dynamic -> dynamic
     end)
   end
