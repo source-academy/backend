@@ -1356,9 +1356,13 @@ defmodule Cadet.Assessments do
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
 
+    # TODO submission filtering
+    # submission_query =
+
     assessments_query =
        from a in Assessment,
         where: a.course_id == ^course_id,
+        where: ^build_assessment_filter(params),
         select: a.id
 
     # TODO param defaults not working.
@@ -1384,6 +1388,16 @@ defmodule Cadet.Assessments do
           }
     submissions = Repo.all(query)
     {:ok, generate_grading_summary_view_model(submissions, course_id)}
+  end
+
+  defp build_assessment_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"title", value}, dynamic ->
+        dynamic([assessment], ^dynamic and assessment.title == ^value)
+
+      # TODO grading progress filter
+      {_, _}, dynamic -> dynamic
+    end)
   end
 
   defp generate_grading_summary_view_model(submissions, course_id) do
