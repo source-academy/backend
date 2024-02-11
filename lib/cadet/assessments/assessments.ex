@@ -1342,15 +1342,14 @@ defmodule Cadet.Assessments do
         where: ^build_assessment_filter(params),
         select: a.id
 
-    # TODO param defaults not working.
     query =
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
           where: ^build_submission_filter(params),
           where: ^build_group_filter(grader, params),
           order_by: [desc: s.inserted_at],
-          limit: ^elem(Integer.parse(params["pageSize"]), 0),
-          offset: ^elem(Integer.parse(params["offset"]), 0),
+          limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
+          offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
           left_join: ans in subquery(submission_answers_query),
           on: ans.submission_id == s.id,
           select: %{
