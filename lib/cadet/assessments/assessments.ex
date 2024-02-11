@@ -1323,65 +1323,66 @@ defmodule Cadet.Assessments do
           {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
   def paginated_submissions_by_grader_for_index(
     grader = %CourseRegistration{course_id: course_id},
-    params \\ %{"group" => "false", "page_size" => "10", "offset" => "0"}
+    params \\ %{"group" => "false", "pageSize" => "10", "offset" => "0"}
   ) do
     show_all = not String.to_atom(params["group"])
+
+    # TODO Refactor group filter
     group_filter =
       if show_all,
         do: "",
         else:
           "WHERE s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
 
-    submissions =
-      case Repo.query("""
-        SELECT
-          s.id,
-          s.status,
-          s.unsubmitted_at,
-          s.unsubmitted_by_id,
-          s_ans.xp,
-          s_ans.xp_adjustment,
-          s.xp_bonus,
-          s_ans.graded_count,
-          s.student_id,
-          s.assessment_id
-        FROM
-          (SELECT * FROM submissions
-            WHERE
-              assessment_id IN (
-                SELECT
-                  id
-                FROM
-                  assessments
-                WHERE
-                  assessments.course_id = #{course_id}
-              )
-        ORDER BY inserted_at DESC LIMIT 1 OFFSET 0) AS s
-        LEFT JOIN (
-          SELECT
-            ans.submission_id,
-            SUM(ans.xp) AS xp,
-            SUM(ans.xp_adjustment) AS xp_adjustment,
-            COUNT(ans.id) FILTER (
-              WHERE
-                ans.grader_id IS NOT NULL
-            ) AS graded_count
-          FROM
-            answers AS ans
-          GROUP BY
-            ans.submission_id
-        ) AS s_ans ON s_ans.submission_id = s.id #{group_filter};
-        """) do
-        {:ok, %{columns: columns, rows: result}} ->
-          result
-          |> Enum.map(
-            &(columns
-              |> Enum.map(fn c -> String.to_atom(c) end)
-              |> Enum.zip(&1)
-              |> Enum.into(%{}))
-          )
-      end
+    # student_ids_query =
+    #   from(cr in CourseRegistration,
+    #     join: g in Group, on: cr.group_id == g.id,
+    #     where: g.leader_id == ^grader.id,
+    #     select: cr.id
+    #   )
 
+    # query =
+    #   from(s in Submission,
+    #     where: s.student_id in subquery(student_ids_query) or s.student_id == ^grader.id
+    #   )
+
+    submission_answers_query =
+      from ans in Answer,
+        group_by: ans.submission_id,
+        select: %{
+          submission_id: ans.submission_id,
+          xp: sum(ans.xp),
+          xp_adjustment: sum(ans.xp_adjustment),
+          graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
+        }
+
+    assessments_query =
+       from a in Assessment,
+        where: a.course_id == ^course_id,
+        select: a.id
+
+    # TODO param defaults not working.
+    query =
+        from s in Submission,
+          where: s.assessment_id in subquery(assessments_query),
+          order_by: [desc: s.inserted_at],
+          limit: ^elem(Integer.parse(params["pageSize"]), 0),
+          offset: ^elem(Integer.parse(params["offset"]), 0),
+          left_join: ans in subquery(submission_answers_query),
+          on: ans.submission_id == s.id,
+          select: %{
+            id: s.id,
+            status: s.status,
+            xp_bonus: s.xp_bonus,
+            unsubmitted_at: s.unsubmitted_at,
+            unsubmitted_by_id: s.unsubmitted_by_id,
+            student_id: s.student_id,
+            assessment_id: s.assessment_id,
+            xp: ans.xp,
+            xp_adjustment: ans.xp_adjustment,
+            graded_count: ans.graded_count
+          }
+    submissions = Repo.all(query)
     {:ok, generate_grading_summary_view_model(submissions, course_id)}
   end
 
