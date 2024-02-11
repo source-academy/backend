@@ -1345,6 +1345,7 @@ defmodule Cadet.Assessments do
     query =
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
+          where: ^build_user_filter(params),
           where: ^build_submission_filter(params),
           where: ^build_course_registration_filter(grader, params),
           order_by: [desc: s.inserted_at],
@@ -1402,6 +1403,24 @@ defmodule Cadet.Assessments do
         where: cr.group_id == ^value,
         select: cr.id
       )))
+      {_, _}, dynamic -> dynamic
+    end)
+  end
+
+  defp build_user_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"name", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
+        where: ilike(user.name, ^"%#{value}%"),
+        select: user.id
+        )))
+
+      {"username", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
+        where: ilike(user.username, ^"%#{value}%"),
+        select: user.id
+        )))
+
       {_, _}, dynamic -> dynamic
     end)
   end
