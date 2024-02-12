@@ -1336,15 +1336,23 @@ defmodule Cadet.Assessments do
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
 
+    # TODO refactor this code
     assessments_query =
        from a in Assessment,
         where: a.course_id == ^course_id,
         where: ^build_assessment_filter(params),
         select: a.id
 
+    # assessment_config_query =
+    #   from a in Assessment,
+    #   inner_join: assessment_config in AssessmentConfig, on: a.config_id == assessment_config.id,
+    #   where: assessment_config.type == ^value,
+    #   select: a.id
+
     query =
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
+          # where: s.assessment_id in subquery(assessment_config_query),
           where: ^build_user_filter(params),
           where: ^build_assessment_config_filter(params),
           where: ^build_submission_filter(params),
@@ -1385,7 +1393,6 @@ defmodule Cadet.Assessments do
       {"status", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
 
-      # TODO graded/ungraded for submission
       {_, _}, dynamic -> dynamic
     end)
   end
@@ -1432,6 +1439,15 @@ defmodule Cadet.Assessments do
         dynamic([submission], ^dynamic and submission.assessment_id in subquery(from(assessment in Assessment,
         inner_join: assessment_config in AssessmentConfig, on: assessment.config_id == assessment_config.id,
         where: assessment_config.type == ^value,
+        select: assessment.id
+        )))
+
+        #TODO Refactor code
+      {"isManuallyGraded", value}, dynamic ->
+        # dynamic([assessment_config], ^dynamic and assessment_config.is_manually_graded == ^value)
+        dynamic([submission], ^dynamic and submission.assessment_id in subquery(from(assessment in Assessment,
+        inner_join: assessment_config in AssessmentConfig, on: assessment.config_id == assessment_config.id,
+        where: assessment_config.is_manually_graded == ^value,
         select: assessment.id
         )))
 
