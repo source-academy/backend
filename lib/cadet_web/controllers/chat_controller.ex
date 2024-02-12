@@ -98,9 +98,8 @@ defmodule CadetWeb.ChatController do
   end
 
   defp convert_to_string(list) do
-    Enum.map(list, fn %{"content" => content, "role" => role} ->
-      "role: #{role},  content: #{content} \n"
+    Enum.map_join(list, fn %{"content" => content, "role" => role} ->
+      "role: #{role}, content: #{content} \n"
     end)
-    |> Enum.join()
   end
 end
