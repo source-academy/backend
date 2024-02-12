@@ -22,30 +22,7 @@ defmodule CadetWeb.ChatController do
 
     response(200, "OK")
     response(400, "Missing or invalid parameter(s)")
-  end
-
-  def swagger_definitions do
-    %{
-      AdminSublanguage:
-        swagger_schema do
-          title("AdminSublanguage")
-
-          properties do
-            chapter(:integer, "Chapter number from 1 to 4",
-              required: true,
-              minimum: 1,
-              maximum: 4
-            )
-
-            variant(Schema.ref(:SourceVariant), "Variant name", required: true)
-          end
-
-          example(%{
-            chapter: 2,
-            variant: "lazy"
-          })
-        end
-    }
+    response(500, "When OpenAI API returns an error")
   end
 
   def chat(conn, params) do
@@ -76,7 +53,7 @@ defmodule CadetWeb.ChatController do
             send_resp(
               conn,
               :bad_request,
-              "Request must be a non empty list of message{role:string, content:string}"
+              "Request must be a non empty list of message of format: {role:string, content:string}"
             )
         end
     end

@@ -3,7 +3,6 @@ defmodule CadetWeb.ChatControllerTest do
   use CadetWeb.ConnCase
 
   test "swagger" do
-    ChatController.swagger_definitions()
     ChatController.swagger_path_chat("json")
   end
 
@@ -24,14 +23,14 @@ defmodule CadetWeb.ChatControllerTest do
       conn = post(conn, "/chat", %{"_json" => []})
 
       assert response(conn, 400) ==
-               "Request must be a non empty list of message{role:string, content:string}"
+        "Request must be a non empty list of message of format: {role:string, content:string}"
     end
 
     test "invalid parameter format", %{conn: conn} do
       conn = post(conn, "/chat", %{"_json" => [%{rol: "role", contents: "content"}]})
 
       assert response(conn, 400) ==
-               "Request must be a non empty list of message{role:string, content:string}"
+        "Request must be a non empty list of message of format: {role:string, content:string}"
     end
 
     test "valid chat but without api key", %{conn: conn} do
