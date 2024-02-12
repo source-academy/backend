@@ -26,7 +26,6 @@ defmodule CadetWeb.Router do
 
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
-    post("/chat", ChatController, :chat)
   end
 
   # V2 API
@@ -65,6 +64,8 @@ defmodule CadetWeb.Router do
     post("/devices/:id", DevicesController, :edit)
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
+
+    post("/chat", ChatController, :chat)
   end
 
   # Authenticated Pages with course

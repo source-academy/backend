@@ -7,9 +7,17 @@ defmodule CadetWeb.ChatControllerTest do
   end
 
   describe "POST /chat" do
+    test "unauthenticated request", %{conn: conn} do
+      conn =
+        post(conn, "/v2/chat", %{"_json" => [%{"role" => "assistant", "content" => "Hello"}]})
+
+      assert response(conn, 401) == "Unauthorized"
+    end
+
+    @tag authenticate: :student
     test "parameter not in json", %{conn: conn} do
       conn =
-        post(conn, "/chat", %{
+        post(conn, "/v2/chat", %{
           "json" => [
             %{"role" => "assistant", "content" => "Hello"},
             %{"role" => "user", "content" => "Hi"}
@@ -19,23 +27,26 @@ defmodule CadetWeb.ChatControllerTest do
       assert response(conn, 400) == "Request must be in JSON format"
     end
 
+    @tag authenticate: :student
     test "parameter is empty", %{conn: conn} do
-      conn = post(conn, "/chat", %{"_json" => []})
+      conn = post(conn, "/v2/chat", %{"_json" => []})
 
       assert response(conn, 400) ==
-        "Request must be a non empty list of message of format: {role:string, content:string}"
+               "Request must be a non empty list of message of format: {role:string, content:string}"
     end
 
+    @tag authenticate: :student
     test "invalid parameter format", %{conn: conn} do
-      conn = post(conn, "/chat", %{"_json" => [%{rol: "role", contents: "content"}]})
+      conn = post(conn, "/v2/chat", %{"_json" => [%{rol: "role", contents: "content"}]})
 
       assert response(conn, 400) ==
-        "Request must be a non empty list of message of format: {role:string, content:string}"
+               "Request must be a non empty list of message of format: {role:string, content:string}"
     end
 
+    @tag authenticate: :student
     test "valid chat but without api key", %{conn: conn} do
       conn =
-        post(conn, "/chat", %{
+        post(conn, "/v2/chat", %{
           "_json" => [
             %{"role" => "assistant", "content" => "Hello"},
             %{"role" => "user", "content" => "Hi"}

@@ -22,6 +22,7 @@ defmodule CadetWeb.ChatController do
 
     response(200, "OK")
     response(400, "Missing or invalid parameter(s)")
+    response(401, "Unauthorized")
     response(500, "When OpenAI API returns an error")
   end
 
