@@ -26,6 +26,7 @@ defmodule CadetWeb.Router do
 
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
+    post("/chat", ChatController, :chat)
   end
 
   # V2 API
@@ -157,7 +158,6 @@ defmodule CadetWeb.Router do
     # TODO: Missing corresponding Swagger path entry
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
-
     # TODO: Missing corresponding Swagger path entry
     delete(
       "/config/assessment_config/:assessment_config_id",
