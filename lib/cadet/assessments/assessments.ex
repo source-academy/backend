@@ -1320,7 +1320,7 @@ defmodule Cadet.Assessments do
 
   # ! Paginated Submissions WIP
   @spec paginated_submissions_by_grader_for_index(CourseRegistration.t())  ::
-          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
+          {:ok, %{:count => integer, :data => %{:assessments => [any()], :submissions => [any()], :users => [any()]}}}
   def paginated_submissions_by_grader_for_index(
     grader = %CourseRegistration{course_id: course_id},
     params \\ %{"group" => "false", "pageSize" => "10", "offset" => "0"}
@@ -1375,7 +1375,20 @@ defmodule Cadet.Assessments do
             graded_count: ans.graded_count
           }
     submissions = Repo.all(query)
-    {:ok, generate_grading_summary_view_model(submissions, course_id)}
+
+    count_query =
+      from s in Submission,
+        where: s.assessment_id in subquery(assessments_query),
+        # where: s.assessment_id in subquery(assessment_config_query),
+        where: ^build_user_filter(params),
+        where: ^build_assessment_config_filter(params),
+        where: ^build_submission_filter(params),
+        where: ^build_course_registration_filter(grader, params),
+        select: count(s.id)
+
+    count = Repo.one(count_query)
+
+    {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
   end
 
   defp build_assessment_filter(params) do
@@ -1399,6 +1412,7 @@ defmodule Cadet.Assessments do
 
   defp build_course_registration_filter(grader, params) do
     Enum.reduce(params, dynamic(true), fn
+      # TODO Refactor code
       {"group", "true"}, dynamic ->
         dynamic([submission], ^dynamic and submission.student_id in subquery(from(cr in CourseRegistration,
         join: g in Group, on: cr.group_id == g.id,
@@ -1417,6 +1431,7 @@ defmodule Cadet.Assessments do
 
   defp build_user_filter(params) do
     Enum.reduce(params, dynamic(true), fn
+      # TODO Refactor code
       {"name", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
         where: ilike(user.name, ^"%#{value}%"),
@@ -1435,6 +1450,7 @@ defmodule Cadet.Assessments do
 
   defp build_assessment_config_filter(params) do
     Enum.reduce(params, dynamic(true), fn
+      # TODO Refactor code
       {"type", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.assessment_id in subquery(from(assessment in Assessment,
         inner_join: assessment_config in AssessmentConfig, on: assessment.config_id == assessment_config.id,
@@ -1442,7 +1458,6 @@ defmodule Cadet.Assessments do
         select: assessment.id
         )))
 
-        #TODO Refactor code
       {"isManuallyGraded", value}, dynamic ->
         # dynamic([assessment_config], ^dynamic and assessment_config.is_manually_graded == ^value)
         dynamic([submission], ^dynamic and submission.assessment_id in subquery(from(assessment in Assessment,

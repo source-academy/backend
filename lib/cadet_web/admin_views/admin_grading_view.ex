@@ -8,11 +8,16 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   def render("gradingsummaries.json", %{
-        users: users,
-        assessments: assessments,
-        submissions: submissions
+        count: count,
+        data: %{
+          users: users,
+          assessments: assessments,
+          submissions: submissions
+      }
       }) do
-    for submission <- submissions do
+    %{
+      count: count,
+      data: for submission <- submissions do
       user = users |> Enum.find(&(&1.id == submission.student_id))
       assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
 
@@ -30,7 +35,7 @@ defmodule CadetWeb.AdminGradingView do
             end
         }
       )
-    end
+    end}
   end
 
   def render("gradingsummary.json", %{
