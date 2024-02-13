@@ -376,7 +376,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "autogradingResults" => &1.autograding_results,
                   "answer" => nil,
                   "contestEntries" => [],
-                  "contestLeaderboard" => []
+                  "scoreLeaderboard" => []
                 },
                 "grade" => %{
                   "xp" => &1.xp,
@@ -1028,7 +1028,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   "autogradingResults" => &1.autograding_results,
                   "answer" => nil,
                   "contestEntries" => [],
-                  "contestLeaderboard" => []
+                  "scoreLeaderboard" => []
                 },
                 "grade" => %{
                   "xp" => &1.xp,

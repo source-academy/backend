@@ -448,7 +448,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.zip(contests_entries)
             |> Enum.map(fn {question, contest_entries} ->
               question = Map.put(question, "contestEntries", contest_entries)
-              Map.put(question, "contestLeaderboard", [])
+              Map.put(question, "scoreLeaderboard", [])
             end)
 
           expected_questions =
@@ -544,7 +544,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.find(&(&1["id"] == voting_question.id))
-          |> Map.get("contestLeaderboard")
+          |> Map.get("scoreLeaderboard")
 
         assert resp_leaderboard == expected_leaderboard
       end
@@ -616,7 +616,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.find(&(&1["id"] == voting_question.id))
-          |> Map.get("contestLeaderboard")
+          |> Map.get("scoreLeaderboard")
 
         assert resp_leaderboard == expected_leaderboard
       end
@@ -676,7 +676,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> json_response(200)
         |> Map.get("questions", [])
         |> Enum.find(&(&1["id"] == voting_question.id))
-        |> Map.get("contestLeaderboard")
+        |> Map.get("scoreLeaderboard")
 
       assert resp_leaderboard == expected_leaderboard
     end
