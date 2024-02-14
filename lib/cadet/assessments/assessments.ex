@@ -1343,18 +1343,18 @@ defmodule Cadet.Assessments do
         where: ^build_assessment_filter(params),
         select: a.id
 
-    # assessment_config_query =
-    #   from a in Assessment,
-    #   inner_join: assessment_config in AssessmentConfig, on: a.config_id == assessment_config.id,
-    #   where: assessment_config.type == ^value,
-    #   select: a.id
+    assessment_config_query =
+      from a in Assessment,
+      inner_join: config in AssessmentConfig, on: a.config_id == config.id, as: :assessment_config,
+      where: ^build_assessment_config_filter(params),
+      select: a.id
 
+    # TODO See if can combine all into one where query
     query =
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
-          # where: s.assessment_id in subquery(assessment_config_query),
+          where: s.assessment_id in subquery(assessment_config_query),
           where: ^build_user_filter(params),
-          where: ^build_assessment_config_filter(params),
           where: ^build_submission_filter(params),
           where: ^build_course_registration_filter(grader, params),
           order_by: [desc: s.inserted_at],
@@ -1379,9 +1379,8 @@ defmodule Cadet.Assessments do
     count_query =
       from s in Submission,
         where: s.assessment_id in subquery(assessments_query),
-        # where: s.assessment_id in subquery(assessment_config_query),
+        where: s.assessment_id in subquery(assessment_config_query),
         where: ^build_user_filter(params),
-        where: ^build_assessment_config_filter(params),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(grader, params),
         select: count(s.id)
@@ -1396,7 +1395,6 @@ defmodule Cadet.Assessments do
       {"title", value}, dynamic ->
         dynamic([assessment], ^dynamic and assessment.title == ^value)
 
-      # TODO grading progress filter
       {_, _}, dynamic -> dynamic
     end)
   end
@@ -1450,21 +1448,12 @@ defmodule Cadet.Assessments do
 
   defp build_assessment_config_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      # TODO Refactor code
+
       {"type", value}, dynamic ->
-        dynamic([submission], ^dynamic and submission.assessment_id in subquery(from(assessment in Assessment,
-        inner_join: assessment_config in AssessmentConfig, on: assessment.config_id == assessment_config.id,
-        where: assessment_config.type == ^value,
-        select: assessment.id
-        )))
+        dynamic([assessment_config: assessment_config], ^dynamic and assessment_config.type == ^value)
 
       {"isManuallyGraded", value}, dynamic ->
-        # dynamic([assessment_config], ^dynamic and assessment_config.is_manually_graded == ^value)
-        dynamic([submission], ^dynamic and submission.assessment_id in subquery(from(assessment in Assessment,
-        inner_join: assessment_config in AssessmentConfig, on: assessment.config_id == assessment_config.id,
-        where: assessment_config.is_manually_graded == ^value,
-        select: assessment.id
-        )))
+        dynamic([assessment_config: assessment_config], ^dynamic and assessment_config.is_manually_graded == ^value)
 
       {_, _}, dynamic -> dynamic
     end)
