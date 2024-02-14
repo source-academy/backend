@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.AnswersAddPopularScoreColumn do
 
   def change do
     alter table("answers") do
-      add(:relative_score, :float, default: 0.0)
+      add(:popular_score, :float, default: 0.0)
     end
 
   end
