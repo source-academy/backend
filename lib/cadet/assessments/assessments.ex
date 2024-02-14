@@ -1336,7 +1336,6 @@ defmodule Cadet.Assessments do
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
 
-    # TODO refactor this code
     assessments_query =
        from a in Assessment,
         where: a.course_id == ^course_id,
@@ -1349,11 +1348,18 @@ defmodule Cadet.Assessments do
       where: ^build_assessment_config_filter(params),
       select: a.id
 
-    # TODO See if can combine all into one where query
+    user_query =
+      from user in User,
+      where: ^build_user_filter(params),
+      select: user.id
+
+    # TODO Reorganise such that queries which likely filters the most are on top
+    # TODO Split submission query from limit so we don't repeat it in count
     query =
         from s in Submission,
           where: s.assessment_id in subquery(assessments_query),
           where: s.assessment_id in subquery(assessment_config_query),
+          # where: s.student_id in subquery(user_query), # TODO this is breaking the test
           where: ^build_user_filter(params),
           where: ^build_submission_filter(params),
           where: ^build_course_registration_filter(grader, params),
@@ -1380,6 +1386,7 @@ defmodule Cadet.Assessments do
       from s in Submission,
         where: s.assessment_id in subquery(assessments_query),
         where: s.assessment_id in subquery(assessment_config_query),
+        # where: s.student_id in subquery(user_query), # TODO this is breaking the test
         where: ^build_user_filter(params),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(grader, params),
@@ -1429,7 +1436,15 @@ defmodule Cadet.Assessments do
 
   defp build_user_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      # TODO Refactor code
+      # TODO Breaking Change
+      # {"name", value}, dynamic ->
+      #   dynamic([user], ^dynamic and ilike(user.name, ^"%#{value}%")
+      #   )
+
+      # {"username", value}, dynamic ->
+      #   dynamic([user], ^dynamic and ilike(user.username, ^"%#{value}%")
+      #   )
+
       {"name", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
         where: ilike(user.name, ^"%#{value}%"),
@@ -1450,10 +1465,10 @@ defmodule Cadet.Assessments do
     Enum.reduce(params, dynamic(true), fn
 
       {"type", value}, dynamic ->
-        dynamic([assessment_config: assessment_config], ^dynamic and assessment_config.type == ^value)
+        dynamic([assessment_config: config], ^dynamic and config.type == ^value)
 
       {"isManuallyGraded", value}, dynamic ->
-        dynamic([assessment_config: assessment_config], ^dynamic and assessment_config.is_manually_graded == ^value)
+        dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
 
       {_, _}, dynamic -> dynamic
     end)
