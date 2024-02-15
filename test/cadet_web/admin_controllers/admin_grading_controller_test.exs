@@ -113,7 +113,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id))
 
-      expected =
+      expected = %{"count" => length(submissions), "data" =>
         Enum.map(submissions, fn submission ->
           %{
             "xp" => 5000,
@@ -142,8 +142,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "unsubmittedAt" => nil
           }
         end)
+      }
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+      assert expected == %{"count" => res["count"], "data" => Enum.sort_by(res["data"], & &1["id"])}
     end
   end
 
@@ -161,7 +163,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> get(build_url(test_cr.course_id), %{"group" => "true"})
         |> json_response(200)
 
-      assert resp == []
+      assert resp == %{"count" => 0, "data" => []}
     end
 
     @tag authenticate: :staff
@@ -177,8 +179,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       seed_db(conn, new_staff)
 
       conn = get(conn, build_url(course.id), %{"group" => "true"})
-
-      expected =
+      expected = %{"count" => length(submissions), "data" =>
         Enum.map(submissions, fn submission ->
           %{
             "xp" => 5000,
@@ -207,8 +208,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "unsubmittedAt" => nil
           }
         end)
-
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      }
+      res = json_response(conn, 200)
+      assert expected == %{"count" => res["count"], "data" => Enum.sort_by(res["data"], & &1["id"])}
     end
   end
 
@@ -780,7 +782,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> sign_in(admin.user)
         |> get(build_url(course.id))
 
-      expected =
+      expected = %{ "count" => length(submissions), "data" =>
         Enum.map(submissions, fn submission ->
           %{
             "xp" => 5000,
@@ -809,8 +811,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "unsubmittedAt" => nil
           }
         end)
-
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      }
+      res = json_response(conn, 200)
+      assert expected == %{"count" => res["count"], "data" => Enum.sort_by(res["data"], & &1["id"])}
     end
   end
 
@@ -825,7 +828,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id), %{"group" => "true"})
 
-      expected =
+      expected = %{ "count" => length(submissions), "data" =>
         Enum.map(submissions, fn submission ->
           %{
             "xp" => 5000,
@@ -854,8 +857,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
             "unsubmittedAt" => nil
           }
         end)
+      }
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+      assert expected == %{"count" => res["count"], "data" => Enum.sort_by(res["data"], & &1["id"])}
     end
   end
 
