@@ -446,6 +446,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(fn {question, contest_entries} ->
               question = Map.put(question, "contestEntries", contest_entries)
               Map.put(question, "scoreLeaderboard", [])
+              |> Map.put("popularVoteLeaderboard", [])
             end)
 
           expected_questions =
