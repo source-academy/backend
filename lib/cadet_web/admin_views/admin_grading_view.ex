@@ -13,29 +13,31 @@ defmodule CadetWeb.AdminGradingView do
           users: users,
           assessments: assessments,
           submissions: submissions
-      }
+        }
       }) do
     %{
       count: count,
-      data: for submission <- submissions do
-      user = users |> Enum.find(&(&1.id == submission.student_id))
-      assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
+      data:
+        for submission <- submissions do
+          user = users |> Enum.find(&(&1.id == submission.student_id))
+          assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
 
-      render(
-        CadetWeb.AdminGradingView,
-        "gradingsummary.json",
-        %{
-          user: user,
-          assessment: assessment,
-          submission: submission,
-          unsubmitter:
-            case submission.unsubmitted_by_id do
-              nil -> nil
-              _ -> users |> Enum.find(&(&1.id == submission.unsubmitted_by_id))
-            end
-        }
-      )
-    end}
+          render(
+            CadetWeb.AdminGradingView,
+            "gradingsummary.json",
+            %{
+              user: user,
+              assessment: assessment,
+              submission: submission,
+              unsubmitter:
+                case submission.unsubmitted_by_id do
+                  nil -> nil
+                  _ -> users |> Enum.find(&(&1.id == submission.unsubmitted_by_id))
+                end
+            }
+          )
+        end
+    }
   end
 
   def render("gradingsummary.json", %{

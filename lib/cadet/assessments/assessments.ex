@@ -1355,7 +1355,6 @@ defmodule Cadet.Assessments do
         }
       )
 
-
     query =
       from(s in Submission,
         where: ^build_user_filter(params),
