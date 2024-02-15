@@ -1336,33 +1336,15 @@ defmodule Cadet.Assessments do
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
 
-    assessments_query =
-       from a in Assessment,
-        where: a.course_id == ^course_id,
-        where: ^build_assessment_filter(params),
-        select: a.id
 
-    assessment_config_query =
-      from a in Assessment,
-      inner_join: config in AssessmentConfig, on: a.config_id == config.id, as: :assessment_config,
-      where: ^build_assessment_config_filter(params),
-      select: a.id
-
-    user_query =
-      from user in User,
-      where: ^build_user_filter(params),
-      select: user.id
-
-    # TODO Reorganise such that queries which likely filters the most are on top
-    # TODO Split submission query from limit so we don't repeat it in count
+    # Queries which likely filters more submissions are on top.
     query =
         from s in Submission,
-          where: s.assessment_id in subquery(assessments_query),
-          where: s.assessment_id in subquery(assessment_config_query),
-          # where: s.student_id in subquery(user_query), # TODO this is breaking the test
           where: ^build_user_filter(params),
+          where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
+          where: s.assessment_id in subquery(build_assessment_config_filter(params)),
           where: ^build_submission_filter(params),
-          where: ^build_course_registration_filter(grader, params),
+          where: ^build_course_registration_filter(params, grader),
           order_by: [desc: s.inserted_at],
           limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
           offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
@@ -1384,12 +1366,11 @@ defmodule Cadet.Assessments do
 
     count_query =
       from s in Submission,
-        where: s.assessment_id in subquery(assessments_query),
-        where: s.assessment_id in subquery(assessment_config_query),
-        # where: s.student_id in subquery(user_query), # TODO this is breaking the test
+        where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
+        where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_user_filter(params),
         where: ^build_submission_filter(params),
-        where: ^build_course_registration_filter(grader, params),
+        where: ^build_course_registration_filter(params, grader),
         select: count(s.id)
 
     count = Repo.one(count_query)
@@ -1397,13 +1378,20 @@ defmodule Cadet.Assessments do
     {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
   end
 
-  defp build_assessment_filter(params) do
-    Enum.reduce(params, dynamic(true), fn
+  defp build_assessment_filter(params, course_id) do
+
+    assessments_filters =
+      Enum.reduce(params, dynamic(true), fn
       {"title", value}, dynamic ->
         dynamic([assessment], ^dynamic and assessment.title == ^value)
 
       {_, _}, dynamic -> dynamic
     end)
+
+      from a in Assessment,
+       where: a.course_id == ^course_id,
+       where: ^assessments_filters,
+       select: a.id
   end
 
   defp build_submission_filter(params) do
@@ -1415,9 +1403,9 @@ defmodule Cadet.Assessments do
     end)
   end
 
-  defp build_course_registration_filter(grader, params) do
+  defp build_course_registration_filter(params, grader) do
     Enum.reduce(params, dynamic(true), fn
-      # TODO Refactor code
+
       {"group", "true"}, dynamic ->
         dynamic([submission], ^dynamic and submission.student_id in subquery(from(cr in CourseRegistration,
         join: g in Group, on: cr.group_id == g.id,
@@ -1436,14 +1424,6 @@ defmodule Cadet.Assessments do
 
   defp build_user_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      # TODO Breaking Change
-      # {"name", value}, dynamic ->
-      #   dynamic([user], ^dynamic and ilike(user.name, ^"%#{value}%")
-      #   )
-
-      # {"username", value}, dynamic ->
-      #   dynamic([user], ^dynamic and ilike(user.username, ^"%#{value}%")
-      #   )
 
       {"name", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
@@ -1462,7 +1442,8 @@ defmodule Cadet.Assessments do
   end
 
   defp build_assessment_config_filter(params) do
-    Enum.reduce(params, dynamic(true), fn
+
+    assessment_config_filters = Enum.reduce(params, dynamic(true), fn
 
       {"type", value}, dynamic ->
         dynamic([assessment_config: config], ^dynamic and config.type == ^value)
@@ -1472,6 +1453,11 @@ defmodule Cadet.Assessments do
 
       {_, _}, dynamic -> dynamic
     end)
+
+    from a in Assessment,
+    inner_join: config in AssessmentConfig, on: a.config_id == config.id, as: :assessment_config,
+    where: ^assessment_config_filters,
+    select: a.id
   end
 
   defp generate_grading_summary_view_model(submissions, course_id) do
