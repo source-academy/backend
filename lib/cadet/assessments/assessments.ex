@@ -1318,16 +1318,19 @@ defmodule Cadet.Assessments do
     {:ok, generate_grading_summary_view_model(submissions, course_id)}
   end
 
-  # ! Paginated Submissions WIP
-  @spec paginated_submissions_by_grader_for_index(CourseRegistration.t())  ::
-          {:ok, %{:count => integer, :data => %{:assessments => [any()], :submissions => [any()], :users => [any()]}}}
-  def paginated_submissions_by_grader_for_index(
-    grader = %CourseRegistration{course_id: course_id},
-    params \\ %{"group" => "false", "pageSize" => "10", "offset" => "0"}
-  ) do
 
+  @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
+          {:ok,
+           %{
+             :count => integer,
+             :data => %{:assessments => [any()], :submissions => [any()], :users => [any()]}
+           }}
+  def submissions_by_grader_for_index(
+        grader = %CourseRegistration{course_id: course_id},
+        params \\ %{"group" => "false", "pageSize" => "10", "offset" => "0"}
+      ) do
     submission_answers_query =
-      from ans in Answer,
+      from(ans in Answer,
         group_by: ans.submission_id,
         select: %{
           submission_id: ans.submission_id,
@@ -1335,43 +1338,46 @@ defmodule Cadet.Assessments do
           xp_adjustment: sum(ans.xp_adjustment),
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
+      )
 
 
-    # Queries which likely filters more submissions are on top.
     query =
-        from s in Submission,
-          where: ^build_user_filter(params),
-          where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
-          where: s.assessment_id in subquery(build_assessment_config_filter(params)),
-          where: ^build_submission_filter(params),
-          where: ^build_course_registration_filter(params, grader),
-          order_by: [desc: s.inserted_at],
-          limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
-          offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
-          left_join: ans in subquery(submission_answers_query),
-          on: ans.submission_id == s.id,
-          select: %{
-            id: s.id,
-            status: s.status,
-            xp_bonus: s.xp_bonus,
-            unsubmitted_at: s.unsubmitted_at,
-            unsubmitted_by_id: s.unsubmitted_by_id,
-            student_id: s.student_id,
-            assessment_id: s.assessment_id,
-            xp: ans.xp,
-            xp_adjustment: ans.xp_adjustment,
-            graded_count: ans.graded_count
-          }
+      from(s in Submission,
+        where: ^build_user_filter(params),
+        where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
+        where: s.assessment_id in subquery(build_assessment_config_filter(params)),
+        where: ^build_submission_filter(params),
+        where: ^build_course_registration_filter(params, grader),
+        order_by: [desc: s.inserted_at],
+        limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
+        offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        select: %{
+          id: s.id,
+          status: s.status,
+          xp_bonus: s.xp_bonus,
+          unsubmitted_at: s.unsubmitted_at,
+          unsubmitted_by_id: s.unsubmitted_by_id,
+          student_id: s.student_id,
+          assessment_id: s.assessment_id,
+          xp: ans.xp,
+          xp_adjustment: ans.xp_adjustment,
+          graded_count: ans.graded_count
+        }
+      )
+
     submissions = Repo.all(query)
 
     count_query =
-      from s in Submission,
+      from(s in Submission,
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_user_filter(params),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(params, grader),
         select: count(s.id)
+      )
 
     count = Repo.one(count_query)
 
@@ -1379,19 +1385,20 @@ defmodule Cadet.Assessments do
   end
 
   defp build_assessment_filter(params, course_id) do
-
     assessments_filters =
       Enum.reduce(params, dynamic(true), fn
-      {"title", value}, dynamic ->
-        dynamic([assessment], ^dynamic and assessment.title == ^value)
+        {"title", value}, dynamic ->
+          dynamic([assessment], ^dynamic and assessment.title == ^value)
 
-      {_, _}, dynamic -> dynamic
-    end)
+        {_, _}, dynamic ->
+          dynamic
+      end)
 
-      from a in Assessment,
-       where: a.course_id == ^course_id,
-       where: ^assessments_filters,
-       select: a.id
+    from(a in Assessment,
+      where: a.course_id == ^course_id,
+      where: ^assessments_filters,
+      select: a.id
+    )
   end
 
   defp build_submission_filter(params) do
@@ -1399,65 +1406,95 @@ defmodule Cadet.Assessments do
       {"status", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
 
-      {_, _}, dynamic -> dynamic
+      {_, _}, dynamic ->
+        dynamic
     end)
   end
 
   defp build_course_registration_filter(params, grader) do
     Enum.reduce(params, dynamic(true), fn
-
       {"group", "true"}, dynamic ->
-        dynamic([submission], ^dynamic and submission.student_id in subquery(from(cr in CourseRegistration,
-        join: g in Group, on: cr.group_id == g.id,
-        where: g.leader_id == ^grader.id,
-        select: cr.id
-      )) or submission.student_id == ^grader.id)
+        dynamic(
+          [submission],
+          (^dynamic and
+             submission.student_id in subquery(
+               from(cr in CourseRegistration,
+                 join: g in Group,
+                 on: cr.group_id == g.id,
+                 where: g.leader_id == ^grader.id,
+                 select: cr.id
+               )
+             )) or submission.student_id == ^grader.id
+        )
 
       {"groupID", value}, dynamic ->
-        dynamic([submission], ^dynamic and submission.student_id in subquery(from(cr in CourseRegistration,
-        where: cr.group_id == ^value,
-        select: cr.id
-      )))
-      {_, _}, dynamic -> dynamic
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(cr in CourseRegistration,
+                where: cr.group_id == ^value,
+                select: cr.id
+              )
+            )
+        )
+
+      {_, _}, dynamic ->
+        dynamic
     end)
   end
 
   defp build_user_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-
       {"name", value}, dynamic ->
-        dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
-        where: ilike(user.name, ^"%#{value}%"),
-        select: user.id
-        )))
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(user in User,
+                where: ilike(user.name, ^"%#{value}%"),
+                select: user.id
+              )
+            )
+        )
 
       {"username", value}, dynamic ->
-        dynamic([submission], ^dynamic and submission.student_id in subquery(from(user in User,
-        where: ilike(user.username, ^"%#{value}%"),
-        select: user.id
-        )))
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(user in User,
+                where: ilike(user.username, ^"%#{value}%"),
+                select: user.id
+              )
+            )
+        )
 
-      {_, _}, dynamic -> dynamic
+      {_, _}, dynamic ->
+        dynamic
     end)
   end
 
   defp build_assessment_config_filter(params) do
+    assessment_config_filters =
+      Enum.reduce(params, dynamic(true), fn
+        {"type", value}, dynamic ->
+          dynamic([assessment_config: config], ^dynamic and config.type == ^value)
 
-    assessment_config_filters = Enum.reduce(params, dynamic(true), fn
+        {"isManuallyGraded", value}, dynamic ->
+          dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
 
-      {"type", value}, dynamic ->
-        dynamic([assessment_config: config], ^dynamic and config.type == ^value)
+        {_, _}, dynamic ->
+          dynamic
+      end)
 
-      {"isManuallyGraded", value}, dynamic ->
-        dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
-
-      {_, _}, dynamic -> dynamic
-    end)
-
-    from a in Assessment,
-    inner_join: config in AssessmentConfig, on: a.config_id == config.id, as: :assessment_config,
-    where: ^assessment_config_filters,
-    select: a.id
+    from(a in Assessment,
+      inner_join: config in AssessmentConfig,
+      on: a.config_id == config.id,
+      as: :assessment_config,
+      where: ^assessment_config_filters,
+      select: a.id
+    )
   end
 
   defp generate_grading_summary_view_model(submissions, course_id) do
