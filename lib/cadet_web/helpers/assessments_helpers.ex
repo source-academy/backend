@@ -193,7 +193,7 @@ defmodule CadetWeb.AssessmentsHelpers do
           contestEntries:
             &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end),
           scoreLeaderboard:
-            &Enum.map(&1[:score_leaderboard], fn entry ->
+            &Enum.map(&1[:contest_leaderboard], fn entry ->
               build_contest_leaderboard_entry(entry)
             end),
           popularVoteLeaderboard:

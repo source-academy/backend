@@ -1035,7 +1035,7 @@ defmodule Cadet.Assessments do
             q.question
             |> Map.put(:contest_entries, submission_votes)
             |> Map.put(
-              :score_leaderboard,
+              :contest_leaderboard,
               leaderboard_results
             )
             |> Map.put(
@@ -1462,7 +1462,8 @@ defmodule Cadet.Assessments do
       |> Enum.map(fn ans ->
         if ans.question.type == :voting do
           empty_contest_entries = Map.put(ans.question.question, :contest_entries, [])
-          empty_contest_leaderboard = Map.put(empty_contest_entries, :contest_leaderboard, [])
+          empty_popular_leaderboard = Map.put(empty_contest_entries, :popular_leaderboard, [])
+          empty_contest_leaderboard = Map.put(empty_popular_leaderboard, :contest_leaderboard, [])
           question = Map.put(ans.question, :question, empty_contest_leaderboard)
           Map.put(ans, :question, question)
         else
