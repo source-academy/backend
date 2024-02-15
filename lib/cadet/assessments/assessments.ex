@@ -1318,7 +1318,22 @@ defmodule Cadet.Assessments do
     {:ok, generate_grading_summary_view_model(submissions, course_id)}
   end
 
+  @doc """
+  Function returning submissions under a grader. This function returns only the
+  fields that are exposed in the /grading endpoint.
 
+  The input parameters are the user and query parameters. Query parameters are
+  used to filter the submissions. Queries are arranged such that filters which
+  likely filter more submissions are on top.
+
+  The group parameter is used to check whether only the groups under the grader
+  should be returned. If pageSize and offset are not provided, the default
+  values are 10 and 0 respectively.
+
+  The return value is
+  {:ok, %{"count": count, "data": submissions}} if no errors,
+  else it is {:error, {:forbidden, "Forbidden."}}
+  """
   @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok,
            %{
