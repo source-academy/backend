@@ -1029,7 +1029,6 @@ defmodule Cadet.Assessments do
               end
             end
 
-
           # populate entries to vote for and leaderboard data into the question
           voting_question =
             q.question
@@ -1042,6 +1041,7 @@ defmodule Cadet.Assessments do
               :popular_leaderboard,
               popular_results
             )
+
           Map.put(q, :question, voting_question)
         else
           q
@@ -1113,7 +1113,7 @@ defmodule Cadet.Assessments do
     |> Repo.all()
   end
 
-    @doc """
+  @doc """
   Fetches top answers for the given question, based on the contest popular_score
 
   Used for contest leaderboard fetching
@@ -1300,7 +1300,8 @@ defmodule Cadet.Assessments do
     Enum.map(
       entry_vote_data,
       fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
-        {ans_id, calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)}
+        {ans_id,
+         calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)}
       end
     )
   end
@@ -1309,7 +1310,9 @@ defmodule Cadet.Assessments do
   # score(v,t) = v - 2^(t/token_divider) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider) do
-    normalized_voting_score = calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)
+    normalized_voting_score =
+      calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)
+
     normalized_voting_score - :math.pow(2, min(1023.5, tokens / token_divider))
   end
 

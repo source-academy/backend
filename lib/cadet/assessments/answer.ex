@@ -124,7 +124,7 @@ defmodule Cadet.Assessments.Answer do
     |> cast(contest_score_param, [:relative_score])
   end
 
-    @doc """
+  @doc """
   Used to update popular_score of answer to contest_score
   """
   def popular_score_update_changeset(answer, popular_score_param) do
