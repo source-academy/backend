@@ -1441,16 +1441,18 @@ defmodule Cadet.Assessments do
              )) or submission.student_id == ^grader.id
         )
 
-      {"groupID", value}, dynamic ->
+      {"groupName", value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
-            submission.student_id in subquery(
-              from(cr in CourseRegistration,
-                where: cr.group_id == ^value,
-                select: cr.id
-              )
+          submission.student_id in subquery(
+            from(cr in CourseRegistration,
+              join: g in Group,
+              on: cr.group_id == g.id,
+              where: g.name == ^value,
+              select: cr.id
             )
+          )
         )
 
       {_, _}, dynamic ->
