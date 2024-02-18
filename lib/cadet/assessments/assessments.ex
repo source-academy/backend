@@ -1402,7 +1402,7 @@ defmodule Cadet.Assessments do
     assessments_filters =
       Enum.reduce(params, dynamic(true), fn
         {"title", value}, dynamic ->
-          dynamic([assessment], ^dynamic and assessment.title == ^value)
+          dynamic([assessment], ^dynamic and ilike(assessment.title, ^"%#{value}%"))
 
         {_, _}, dynamic ->
           dynamic
