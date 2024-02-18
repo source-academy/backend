@@ -1230,96 +1230,6 @@ defmodule Cadet.Assessments do
 
   @doc """
   Function returning submissions under a grader. This function returns only the
-  fields that are exposed in the /grading endpoint. The reason we select only
-  those fields is to reduce the memory usage especially when the number of
-  submissions is large i.e. > 25000 submissions.
-
-  The input parameters are the user and group_only. group_only is used to check
-  whether only the groups under the grader should be returned. The parameter is
-  a boolean which is false by default.
-
-  The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:forbidden, "Forbidden."}}
-  """
-  @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
-  def all_submissions_by_grader_for_index(
-        grader = %CourseRegistration{course_id: course_id},
-        group_only \\ false,
-        _ungraded_only \\ false
-      ) do
-    show_all = not group_only
-
-    group_filter =
-      if show_all,
-        do: "",
-        else:
-          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
-
-    # TODO: Restore ungraded filtering
-    # ... or more likely, decouple email logic from this function
-    # ungraded_where =
-    #   if ungraded_only,
-    #     do: "where s.\"gradedCount\" < assts.\"questionCount\"",
-    #     else: ""
-
-    # We bypass Ecto here and use a raw query to generate JSON directly from
-    # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
-
-    submissions =
-      case Repo.query("""
-           SELECT
-             s.id,
-             s.status,
-             s.unsubmitted_at,
-             s.unsubmitted_by_id,
-             s_ans.xp,
-             s_ans.xp_adjustment,
-             s.xp_bonus,
-             s_ans.graded_count,
-             s.student_id,
-             s.assessment_id
-           FROM
-             submissions AS s
-             LEFT JOIN (
-               SELECT
-                 ans.submission_id,
-                 SUM(ans.xp) AS xp,
-                 SUM(ans.xp_adjustment) AS xp_adjustment,
-                 COUNT(ans.id) FILTER (
-                   WHERE
-                     ans.grader_id IS NOT NULL
-                 ) AS graded_count
-               FROM
-                 answers AS ans
-               GROUP BY
-                 ans.submission_id
-             ) AS s_ans ON s_ans.submission_id = s.id
-           WHERE
-             s.assessment_id IN (
-               SELECT
-                 id
-               FROM
-                 assessments
-               WHERE
-                 assessments.course_id = #{course_id}
-             ) #{group_filter};
-           """) do
-        {:ok, %{columns: columns, rows: result}} ->
-          result
-          |> Enum.map(
-            &(columns
-              |> Enum.map(fn c -> String.to_atom(c) end)
-              |> Enum.zip(&1)
-              |> Enum.into(%{}))
-          )
-      end
-
-    {:ok, generate_grading_summary_view_model(submissions, course_id)}
-  end
-
-  @doc """
-  Function returning submissions under a grader. This function returns only the
   fields that are exposed in the /grading endpoint.
 
   The input parameters are the user and query parameters. Query parameters are
@@ -1334,6 +1244,16 @@ defmodule Cadet.Assessments do
   {:ok, %{"count": count, "data": submissions}} if no errors,
   else it is {:error, {:forbidden, "Forbidden."}}
   """
+
+  # TODO: Restore ungraded filtering
+  # ... or more likely, decouple email logic from this function
+  # ungraded_where =
+  #   if ungraded_only,
+  #     do: "where s.\"gradedCount\" < assts.\"questionCount\"",
+  #     else: ""
+
+  # We bypass Ecto here and use a raw query to generate JSON directly from
+  # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
   @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok,
            %{
@@ -1342,7 +1262,12 @@ defmodule Cadet.Assessments do
            }}
   def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        params \\ %{"group" => "false", "pageSize" => "10", "offset" => "0"}
+        params \\ %{
+          "group" => "false",
+          "ungradedOnly" => "false",
+          "pageSize" => "10",
+          "offset" => "0"
+        }
       ) do
     submission_answers_query =
       from(ans in Answer,
@@ -1445,14 +1370,14 @@ defmodule Cadet.Assessments do
         dynamic(
           [submission],
           ^dynamic and
-          submission.student_id in subquery(
-            from(cr in CourseRegistration,
-              join: g in Group,
-              on: cr.group_id == g.id,
-              where: g.name == ^value,
-              select: cr.id
+            submission.student_id in subquery(
+              from(cr in CourseRegistration,
+                join: g in Group,
+                on: cr.group_id == g.id,
+                where: g.name == ^value,
+                select: cr.id
+              )
             )
-          )
         )
 
       {_, _}, dynamic ->

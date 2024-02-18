@@ -17,20 +17,6 @@ defmodule CadetWeb.AdminGradingController do
     end
   end
 
-  def index(conn, %{"group" => group})
-      when group in ["true", "false"] do
-    course_reg = conn.assigns[:course_reg]
-    group = String.to_atom(group)
-
-    case Assessments.all_submissions_by_grader_for_index(course_reg, group) do
-      {:ok, view_model} ->
-        conn
-        |> put_status(:ok)
-        |> put_resp_content_type("application/json")
-        |> render("gradingsummaries.json", view_model)
-    end
-  end
-
   def index(conn, _) do
     index(conn, %{"group" => "false"})
   end
