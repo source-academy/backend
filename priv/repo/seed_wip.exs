@@ -6,9 +6,10 @@ use Cadet, [:context, :display]
 import Cadet.Factory
 import Ecto.Query
 alias Cadet.Assessments.SubmissionStatus
+
 alias Cadet.Accounts.{
   User,
-  CourseRegistration,
+  CourseRegistration
 }
 
 if Cadet.Env.env() == :dev do
@@ -28,7 +29,9 @@ if Cadet.Env.env() == :dev do
 
   admin_cr =
     if admin_cr == nil do
-      admin = insert(:user, %{name: "Test Admin", username: "admin", latest_viewed_course: course})
+      admin =
+        insert(:user, %{name: "Test Admin", username: "admin", latest_viewed_course: course})
+
       insert(:course_registration, %{user: admin, course: course, role: :admin})
     else
       admin_cr
@@ -38,66 +41,78 @@ if Cadet.Env.env() == :dev do
 
   # Users
 
-  students = for i <- 1..number_of_students do
-    student = insert(:user, %{latest_viewed_course: course})
+  students =
+    for i <- 1..number_of_students do
+      student = insert(:user, %{latest_viewed_course: course})
 
-    student_cr =
-      insert(:course_registration, %{user: student, course: course, role: :student, group: group})
+      student_cr =
+        insert(:course_registration, %{
+          user: student,
+          course: course,
+          role: :student,
+          group: group
+        })
 
-    student_cr
-  end
+      student_cr
+    end
 
   # Assessments and Submissions
   valid_assessment_types = [{1, "Missions"}, {2, "Paths"}, {3, "Quests"}]
-  assessment_configs = Enum.map(valid_assessment_types, fn {order, type} ->
-    insert(:assessment_config, %{type: type, order: order, course: course})
-  end
-  )
+
+  assessment_configs =
+    Enum.map(valid_assessment_types, fn {order, type} ->
+      insert(:assessment_config, %{type: type, order: order, course: course})
+    end)
 
   for i <- 1..number_of_assessments do
+    assessment =
+      insert(:assessment, %{
+        is_published: true,
+        config: Enum.random(assessment_configs),
+        course: course
+      })
 
-    assessment = insert(:assessment, %{is_published: true, config: Enum.random(assessment_configs), course: course})
-
-    questions = case assessment.config.type do
-      "Missions" ->
+    questions =
+      case assessment.config.type do
+        "Missions" ->
           insert_list(3, :programming_question, %{assessment: assessment, max_xp: 1_000})
 
-      "Paths" ->
+        "Paths" ->
           insert_list(3, :mcq_question, %{assessment: assessment, max_xp: 500})
 
-      "Quests" ->
+        "Quests" ->
           insert_list(3, :programming_question, %{assessment: assessment, max_xp: 500})
       end
 
-        submissions =
-          students
-          |> Enum.map(
-            &insert(:submission, %{
-              assessment: assessment,
-              student: &1,
-              status: Enum.random(SubmissionStatus.__enum_map__())
-            })
-          )
+    submissions =
+      students
+      |> Enum.map(
+        &insert(:submission, %{
+          assessment: assessment,
+          student: &1,
+          status: Enum.random(SubmissionStatus.__enum_map__())
+        })
+      )
 
-        for submission <- submissions,
-            question <- questions do
-          case question.type do
-            :programming ->
-              insert(:answer, %{
-                xp: Enum.random(0..1_000),
-                question: question,
-                submission: submission,
-                answer: build(:programming_answer)
-              })
+    for submission <- submissions,
+        question <- questions do
+      case question.type do
+        :programming ->
+          insert(:answer, %{
+            xp: Enum.random(0..1_000),
+            question: question,
+            submission: submission,
+            answer: build(:programming_answer)
+          })
 
-            :mcq ->
-              insert(:answer, %{
-                xp: Enum.random(0..500),
-                question: question,
-                submission: submission,
-                answer: build(:mcq_answer)
-              })
-          end
-        end
+        :mcq ->
+          insert(:answer, %{
+            xp: Enum.random(0..500),
+            question: question,
+            submission: submission,
+            answer: build(:mcq_answer)
+          })
+      end
     end
   end
+end
