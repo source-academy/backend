@@ -25,10 +25,14 @@ if Cadet.Env.env() == :dev do
       select: cr
     )
     |> Repo.one()
-  if admin_cr == nil do
-    admin = insert(:user, %{name: "Test Admin", username: "admin", latest_viewed_course: course})
-    _admin_cr = insert(:course_registration, %{user: admin, course: course, role: :admin})
-  end
+
+  admin_cr =
+    if admin_cr == nil do
+      admin = insert(:user, %{name: "Test Admin", username: "admin", latest_viewed_course: course})
+      insert(:course_registration, %{user: admin, course: course, role: :admin})
+    else
+      admin_cr
+    end
 
   group = insert(:group, %{name: "MockGroup", leader: admin_cr})
 
