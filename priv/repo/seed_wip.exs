@@ -44,7 +44,7 @@ if Cadet.Env.env() == :dev do
   end
 
   # Assessments and Submissions
-  valid_assessment_types = [{1, "Mission"}, {2, "Path"}, {3, "Quest"}]
+  valid_assessment_types = [{1, "Missions"}, {2, "Paths"}, {3, "Quests"}]
   assessment_configs = Enum.map(valid_assessment_types, fn {order, type} ->
     insert(:assessment_config, %{type: type, order: order, course: course})
   end
@@ -55,13 +55,13 @@ if Cadet.Env.env() == :dev do
     assessment = insert(:assessment, %{is_published: true, config: Enum.random(assessment_configs), course: course})
 
     questions = case assessment.config.type do
-      "Mission" ->
+      "Missions" ->
           insert_list(3, :programming_question, %{assessment: assessment, max_xp: 1_000})
 
-      "Path" ->
+      "Paths" ->
           insert_list(3, :mcq_question, %{assessment: assessment, max_xp: 500})
 
-      "Quest" ->
+      "Quests" ->
           insert_list(3, :programming_question, %{assessment: assessment, max_xp: 500})
       end
 
