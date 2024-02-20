@@ -9,72 +9,95 @@
 #
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
+use Cadet, [:context, :display]
+
 import Cadet.Factory
+import Cadet.Factory
+import Ecto.Query
 
 alias Cadet.Assessments.SubmissionStatus
+alias Cadet.Accounts.{
+  User,
+  CourseRegistration
+}
 
 # insert default source version
 # Cadet.Repo.insert!(%Cadet.Settings.Sublanguage{chapter: 1, variant: "default"})
 
 if Cadet.Env.env() == :dev do
+  number_of_assessments = 10
+  number_of_students = 100
+
   # Course
-  course1 = insert(:course)
-  course2 = insert(:course, %{course_name: "Algorithm", course_short_name: "CS2040S"})
+  course = insert(:course, %{course_name: "Mock Course", course_short_name: "CS0000S"})
+
+  # Admin and Group
+  admin_cr =
+    from(cr in CourseRegistration,
+      where: cr.user_id in subquery(from(u in User, where: u.name == ^"admin", select: u.id)),
+      select: cr
+    )
+    |> Repo.one()
+
+  admin_cr =
+    if admin_cr == nil do
+      admin =
+        insert(:user, %{name: "Test Admin", username: "admin", latest_viewed_course: course})
+
+      insert(:course_registration, %{user: admin, course: course, role: :admin})
+    else
+      admin_cr
+    end
+
+  group = insert(:group, %{name: "MockGroup", leader: admin_cr})
+
   # Users
-  avenger1 = insert(:user, %{name: "avenger", latest_viewed_course: course1})
-  admin1 = insert(:user, %{name: "admin", latest_viewed_course: course1})
 
-  studenta1admin2 = insert(:user, %{name: "student a", latest_viewed_course: course1})
+  students =
+    for i <- 1..number_of_students do
+      student = insert(:user, %{latest_viewed_course: course})
 
-  studentb1 = insert(:user, %{latest_viewed_course: course1})
-  studentc1 = insert(:user, %{latest_viewed_course: course1})
-  # CourseRegistration and Group
-  avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
-  _admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
-  group = insert(:group, %{leader: avenger1_cr})
+      student_cr =
+        insert(:course_registration, %{
+          user: student,
+          course: course,
+          role: :student,
+          group: group
+        })
 
-  student1a_cr =
-    insert(:course_registration, %{
-      user: studenta1admin2,
-      course: course1,
-      role: :student,
-      group: group
-    })
+      student_cr
+    end
 
-  student1b_cr =
-    insert(:course_registration, %{user: studentb1, course: course1, role: :student, group: group})
+  # Assessments and Submissions
+  valid_assessment_types = [{1, "Missions"}, {2, "Paths"}, {3, "Quests"}]
 
-  student1c_cr =
-    insert(:course_registration, %{user: studentc1, course: course1, role: :student, group: group})
+  assessment_configs =
+    Enum.map(valid_assessment_types, fn {order, type} ->
+      insert(:assessment_config, %{type: type, order: order, course: course})
+    end)
 
-  students = [student1a_cr, student1b_cr, student1c_cr]
-
-  _admin2cr =
-    insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
-
-  # Assessments
-  for i <- 1..5 do
-    config = insert(:assessment_config, %{type: "Mission#{i}", order: i, course: course1})
-    assessment = insert(:assessment, %{is_published: true, config: config, course: course1})
-
-    config2 = insert(:assessment_config, %{type: "Homework#{i}", order: i, course: course2})
-    _assessment2 = insert(:assessment, %{is_published: true, config: config2, course: course2})
-
-    programming_questions =
-      insert_list(3, :programming_question, %{
-        assessment: assessment,
-        max_xp: 1_000
+  for i <- 1..number_of_assessments do
+    assessment =
+      insert(:assessment, %{
+        is_published: true,
+        config: Enum.random(assessment_configs),
+        course: course
       })
 
-    mcq_questions =
-      insert_list(3, :mcq_question, %{
-        assessment: assessment,
-        max_xp: 500
-      })
+    questions =
+      case assessment.config.type do
+        "Missions" ->
+          insert_list(3, :programming_question, %{assessment: assessment, max_xp: 1_000})
+
+        "Paths" ->
+          insert_list(3, :mcq_question, %{assessment: assessment, max_xp: 500})
+
+        "Quests" ->
+          insert_list(3, :programming_question, %{assessment: assessment, max_xp: 500})
+      end
 
     submissions =
       students
-      |> Enum.take(2)
       |> Enum.map(
         &insert(:submission, %{
           assessment: assessment,
@@ -83,26 +106,25 @@ if Cadet.Env.env() == :dev do
         })
       )
 
-    # Programming Answers
     for submission <- submissions,
-        question <- programming_questions do
-      insert(:answer, %{
-        xp: Enum.random(0..1_000),
-        question: question,
-        submission: submission,
-        answer: build(:programming_answer)
-      })
-    end
+        question <- questions do
+      case question.type do
+        :programming ->
+          insert(:answer, %{
+            xp: Enum.random(0..1_000),
+            question: question,
+            submission: submission,
+            answer: build(:programming_answer)
+          })
 
-    # MCQ Answers
-    for submission <- submissions,
-        question <- mcq_questions do
-      insert(:answer, %{
-        xp: Enum.random(0..500),
-        question: question,
-        submission: submission,
-        answer: build(:mcq_answer)
-      })
+        :mcq ->
+          insert(:answer, %{
+            xp: Enum.random(0..500),
+            question: question,
+            submission: submission,
+            answer: build(:mcq_answer)
+          })
+      end
     end
 
     # # Notifications
