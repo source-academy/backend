@@ -26,8 +26,9 @@ alias Cadet.Accounts.{
 # Cadet.Repo.insert!(%Cadet.Settings.Sublanguage{chapter: 1, variant: "default"})
 
 if Cadet.Env.env() == :dev do
-  number_of_assessments = 10
   number_of_students = 100
+  number_of_assessments = 10
+  number_of_questions = 3
 
   # Course
   course = insert(:course, %{course_name: "Mock Course", course_short_name: "CS0000S"})
@@ -88,13 +89,19 @@ if Cadet.Env.env() == :dev do
     questions =
       case assessment.config.type do
         "Missions" ->
-          insert_list(3, :programming_question, %{assessment: assessment, max_xp: 1_000})
+          insert_list(number_of_questions, :programming_question, %{
+            assessment: assessment,
+            max_xp: 1_000
+          })
 
         "Paths" ->
-          insert_list(3, :mcq_question, %{assessment: assessment, max_xp: 500})
+          insert_list(number_of_questions, :mcq_question, %{assessment: assessment, max_xp: 500})
 
         "Quests" ->
-          insert_list(3, :programming_question, %{assessment: assessment, max_xp: 1_000})
+          insert_list(number_of_questions, :programming_question, %{
+            assessment: assessment,
+            max_xp: 1_000
+          })
       end
 
     submissions =
