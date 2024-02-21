@@ -180,7 +180,7 @@ defmodule CadetWeb.AssessmentsHelpers do
           solutionTemplate: "template",
           contestEntries:
             &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end),
-          contestLeaderboard:
+          scoreLeaderboard:
             &Enum.map(&1[:contest_leaderboard], fn entry ->
               build_contest_leaderboard_entry(entry)
             end)
