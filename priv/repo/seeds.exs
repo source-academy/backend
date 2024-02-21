@@ -16,6 +16,7 @@ import Cadet.Factory
 import Ecto.Query
 
 alias Cadet.Assessments.SubmissionStatus
+
 alias Cadet.Accounts.{
   User,
   CourseRegistration
