@@ -1233,8 +1233,7 @@ defmodule Cadet.Assessments do
   fields that are exposed in the /grading endpoint.
 
   The input parameters are the user and query parameters. Query parameters are
-  used to filter the submissions. Queries are arranged such that filters which
-  likely filter more submissions are on top.
+  used to filter the submissions.
 
   The group parameter is used to check whether only the groups under the grader
   should be returned. If pageSize and offset are not provided, the default
@@ -1244,13 +1243,6 @@ defmodule Cadet.Assessments do
   {:ok, %{"count": count, "data": submissions}} if no errors,
   else it is {:error, {:forbidden, "Forbidden."}}
   """
-
-  # TODO: Restore ungraded filtering
-  # ... or more likely, decouple email logic from this function
-  # ungraded_where =
-  #   if ungraded_only,
-  #     do: "where s.\"gradedCount\" < assts.\"questionCount\"",
-  #     else: ""
 
   # We bypass Ecto here and use a raw query to generate JSON directly from
   # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
