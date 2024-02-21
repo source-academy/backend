@@ -1264,7 +1264,7 @@ defmodule Cadet.Assessments do
         grader = %CourseRegistration{course_id: course_id},
         params \\ %{
           "group" => "false",
-          "ungradedOnly" => "false",
+          "notFullyGraded" => "true",
           "pageSize" => "10",
           "offset" => "0"
         }
@@ -1280,8 +1280,25 @@ defmodule Cadet.Assessments do
         }
       )
 
+    question_answers_query =
+      from(q in Question,
+        group_by: q.assessment_id,
+        join: a in Assessment,
+        on: q.assessment_id == a.id,
+        select: %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id)
+        }
+      )
+
     query =
       from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
         where: ^build_user_filter(params),
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
@@ -1290,8 +1307,6 @@ defmodule Cadet.Assessments do
         order_by: [desc: s.inserted_at],
         limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
         offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
-        left_join: ans in subquery(submission_answers_query),
-        on: ans.submission_id == s.id,
         select: %{
           id: s.id,
           status: s.status,
@@ -1302,7 +1317,8 @@ defmodule Cadet.Assessments do
           assessment_id: s.assessment_id,
           xp: ans.xp,
           xp_adjustment: ans.xp_adjustment,
-          graded_count: ans.graded_count
+          graded_count: ans.graded_count,
+          question_count: asst.question_count
         }
       )
 
@@ -1310,6 +1326,12 @@ defmodule Cadet.Assessments do
 
     count_query =
       from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_user_filter(params),
@@ -1344,6 +1366,9 @@ defmodule Cadet.Assessments do
     Enum.reduce(params, dynamic(true), fn
       {"status", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
+
+      {"notFullyGraded", "true"}, dynamic ->
+        dynamic([ans: ans, asst: asst], ^dynamic and asst.question_count > ans.graded_count)
 
       {_, _}, dynamic ->
         dynamic
