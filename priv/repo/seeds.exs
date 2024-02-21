@@ -94,7 +94,7 @@ if Cadet.Env.env() == :dev do
           insert_list(3, :mcq_question, %{assessment: assessment, max_xp: 500})
 
         "Quests" ->
-          insert_list(3, :programming_question, %{assessment: assessment, max_xp: 500})
+          insert_list(3, :programming_question, %{assessment: assessment, max_xp: 1_000})
       end
 
     submissions =
