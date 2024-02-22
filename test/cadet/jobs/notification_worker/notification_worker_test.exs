@@ -21,7 +21,7 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
     {:ok, %{data: %{submissions: ungraded_submissions}}} =
       Cadet.Assessments.submissions_by_grader_for_index(avenger_cr, %{
         "group" => "true",
-        "ungradedOnly" => "true"
+        "notFullyGraded" => "true"
       })
 
     # {:ok, %{submissions: ungraded_submissions}} =
