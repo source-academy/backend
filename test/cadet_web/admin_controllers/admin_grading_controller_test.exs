@@ -313,7 +313,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "id" => &1.submission.student.id
                   },
                   "team" => %{}
-              }
+                }
 
               :mcq ->
                 %{
@@ -362,7 +362,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "id" => &1.submission.student.id
                   },
                   "team" => %{}
-              }
+                }
 
               :voting ->
                 %{
@@ -977,7 +977,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "id" => &1.submission.student.id
                   },
                   "team" => %{}
-              }
+                }
 
               :mcq ->
                 %{
@@ -1026,7 +1026,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "id" => &1.submission.student.id
                   },
                   "team" => %{}
-              }
+                }
 
               :voting ->
                 %{
