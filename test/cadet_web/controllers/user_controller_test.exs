@@ -122,7 +122,8 @@ defmodule CadetWeb.UserControllerTest do
             "isManuallyGraded" => true,
             "assessmentConfigId" => config1.id,
             "earlySubmissionXp" => 200,
-            "hoursBeforeEarlyXpDecay" => 48
+            "hoursBeforeEarlyXpDecay" => 48,
+            "hasTokenCounter" => false
           },
           %{
             "type" => "test type 2",
@@ -130,7 +131,8 @@ defmodule CadetWeb.UserControllerTest do
             "isManuallyGraded" => true,
             "assessmentConfigId" => config2.id,
             "earlySubmissionXp" => 200,
-            "hoursBeforeEarlyXpDecay" => 48
+            "hoursBeforeEarlyXpDecay" => 48,
+            "hasTokenCounter" => false
           },
           %{
             "type" => "test type 3",
@@ -138,7 +140,8 @@ defmodule CadetWeb.UserControllerTest do
             "isManuallyGraded" => true,
             "assessmentConfigId" => config3.id,
             "earlySubmissionXp" => 200,
-            "hoursBeforeEarlyXpDecay" => 48
+            "hoursBeforeEarlyXpDecay" => 48,
+            "hasTokenCounter" => false
           }
         ]
       }
