@@ -27,7 +27,8 @@ defmodule CadetWeb.ChatController do
   end
 
   def chat(conn, params) do
-    m = params["_json"]
+    m = params["json"]
+    IO.puts("Request received: #{inspect(params)}")
 
     case m do
       nil ->
