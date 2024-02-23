@@ -24,8 +24,6 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
         "notFullyGraded" => "true"
       })
 
-    # {:ok, %{submissions: ungraded_submissions}} =
-    # Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true)
     Repo.update_all(NotificationType, set: [is_enabled: true])
     Repo.update_all(NotificationConfig, set: [is_enabled: true])
 
