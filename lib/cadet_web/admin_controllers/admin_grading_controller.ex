@@ -23,8 +23,8 @@ defmodule CadetWeb.AdminGradingController do
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
     case Assessments.get_answers_in_submission(submission_id) do
-      {:ok, answers} ->
-        render(conn, "show.json", answers: answers)
+      {:ok, {answers, assessment}} ->
+        render(conn, "show.json", answers: answers, assessment: assessment)
 
       {:error, {status, message}} ->
         conn
