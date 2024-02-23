@@ -8,8 +8,7 @@ defmodule CadetWeb.ChatControllerTest do
 
   describe "POST /chat" do
     test "unauthenticated request", %{conn: conn} do
-      conn =
-        post(conn, "/v2/chat", %{"json" => [%{"role" => "assistant", "content" => "Hello"}]})
+      conn = post(conn, "/v2/chat", %{"json" => [%{"role" => "assistant", "content" => "Hello"}]})
 
       assert response(conn, 401) == "Unauthorised"
     end
