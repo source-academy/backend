@@ -1551,52 +1551,41 @@ defmodule Cadet.Assessments do
 
   def get_ungraded_submission_for_email_notification(avenger_cr) do
     submission_answers_query =
-      from(ans in Answer,
-        group_by: ans.submission_id,
-        select: %{
-          submission_id: ans.submission_id,
-          graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
-        }
-      )
+      Answer
+      |> group_by([ans], ans.submission_id)
+      |> select([ans], %{
+        submission_id: ans.submission_id,
+        graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
+      })
 
     question_answers_query =
-      from(q in Question,
-        group_by: q.assessment_id,
-        join: a in Assessment,
-        on: q.assessment_id == a.id,
-        select: %{
-          assessment_id: q.assessment_id,
-          question_count: count(q.id)
-        }
-      )
+      Question
+      |> group_by([q], q.assessment_id)
+      |> join(:left, [q], asst in assoc(q, :assessment))
+      |> select([q, asst], %{assessment_id: q.assessment_id, question_count: count(q.id)})
 
-    query =
-      from(s in Submission,
-        left_join: ans in subquery(submission_answers_query),
-        on: ans.submission_id == s.id,
-        as: :ans,
-        left_join: asst in subquery(question_answers_query),
-        on: asst.assessment_id == s.assessment_id,
-        as: :asst,
-        where: s.status == "submitted",
-        where: asst.question_count > ans.graded_count,
-        where:
-          s.student_id in subquery(
-            from(cr in CourseRegistration,
-              join: g in Group,
-              on: cr.group_id == g.id,
-              where: g.leader_id == ^avenger_cr.id,
-              select: cr.id
-            )
-          ) or s.student_id == ^avenger_cr.id,
-        select: %{
-          id: s.id,
-          student_id: s.student_id,
-          assessment_id: s.assessment_id
-        }
-      )
+    student_query =
+      CourseRegistration
+      |> join(:inner, [cr], g in assoc(cr, :group))
+      |> where([cr, g], g.leader_id == ^avenger_cr.id)
+      |> select([cr, _], cr.id)
 
-    submissions = Repo.all(query)
+    submissions =
+      Submission
+      |> join(:inner, [s], ans in subquery(submission_answers_query),
+        on: s.id == ans.submission_id
+      )
+      |> join(:inner, [s, ans], asst in subquery(question_answers_query),
+        on: s.assessment_id == asst.assessment_id
+      )
+      |> where([s, _, _], s.status == "submitted")
+      |> where([_, ans, asst], asst.question_count > ans.graded_count)
+      |> where(
+        [s, _, _],
+        s.student_id in subquery(student_query) or s.student_id == ^avenger_cr.id
+      )
+      |> select([s, _, _], %{id: s.id, student_id: s.student_id, assessment_id: s.assessment_id})
+      |> Repo.all()
 
     formatted_submissions =
       Enum.map(submissions, fn submission ->
