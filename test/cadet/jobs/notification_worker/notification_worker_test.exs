@@ -18,9 +18,9 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
     submission = List.first(List.first(data.mcq_answers)).submission
 
     # setup for avenger backlog
-    {:ok,  ungraded_submissions} =
+    {:ok, ungraded_submissions} =
       Cadet.Assessments.get_ungraded_submission_for_email_notification(avenger_cr)
-      IO.inspect(ungraded_submissions)
+
     Repo.update_all(NotificationType, set: [is_enabled: true])
     Repo.update_all(NotificationConfig, set: [is_enabled: true])
 

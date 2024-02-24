@@ -1506,8 +1506,15 @@ defmodule Cadet.Assessments do
 
     formatted_submissions =
       Enum.map(submissions, fn submission ->
-        student_name = CourseRegistration |> join(:inner, [cr], u in assoc(cr, :user)) |> where([cr], cr.id == ^submission.student_id) |> select([cr, u], u.name) |> Repo.one()
+        student_name =
+          CourseRegistration
+          |> join(:inner, [cr], u in assoc(cr, :user))
+          |> where([cr], cr.id == ^submission.student_id)
+          |> select([cr, u], u.name)
+          |> Repo.one()
+
         assessment_title = Repo.get(Assessment, submission.assessment_id).title
+
         %{
           student_name: student_name,
           assessment_title: assessment_title,
