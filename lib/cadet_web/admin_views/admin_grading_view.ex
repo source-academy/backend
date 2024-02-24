@@ -40,14 +40,14 @@ defmodule CadetWeb.AdminGradingView do
         for submission <- submissions do
           user = users |> Enum.find(&(&1.id == submission.student_id))
           assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
-      team = teams |> Enum.find(&(&1.id == submission.team_id))
-      team_members = team_members |> Enum.filter(&(&1.team_id == submission.team_id))
+          team = teams |> Enum.find(&(&1.id == submission.team_id))
+          team_members = team_members |> Enum.filter(&(&1.team_id == submission.team_id))
 
-      team_member_users =
-        team_members
-        |> Enum.map(fn team_member ->
-          users |> Enum.find(&(&1.id == team_member.student_id))
-        end)
+          team_member_users =
+            team_members
+            |> Enum.map(fn team_member ->
+              users |> Enum.find(&(&1.id == team_member.student_id))
+            end)
 
           render(
             CadetWeb.AdminGradingView,
@@ -57,15 +57,16 @@ defmodule CadetWeb.AdminGradingView do
               assessment: assessment,
               submission: submission,
               team: team,
-          team_members: team_member_users,
-          unsubmitter:
-            case submission.unsubmitted_by_id do
-              nil -> nil
-              _ -> users |> Enum.find(&(&1.id == submission.unsubmitted_by_id))
-            end
-        }
-      )
-    end}
+              team_members: team_member_users,
+              unsubmitter:
+                case submission.unsubmitted_by_id do
+                  nil -> nil
+                  _ -> users |> Enum.find(&(&1.id == submission.unsubmitted_by_id))
+                end
+            }
+          )
+        end
+    }
   end
 
   def render("gradingsummary.json", %{

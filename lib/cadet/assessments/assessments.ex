@@ -1471,9 +1471,13 @@ defmodule Cadet.Assessments do
           {:ok,
            %{
              :count => integer,
-             :data => %{:assessments => [any()], :submissions => [any()], :users => [any()],
+             :data => %{
+               :assessments => [any()],
+               :submissions => [any()],
+               :users => [any()],
                :teams => [any()],
-               :team_members => [any()]}
+               :team_members => [any()]
+             }
            }}
   def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
@@ -1529,7 +1533,7 @@ defmodule Cadet.Assessments do
           unsubmitted_at: s.unsubmitted_at,
           unsubmitted_by_id: s.unsubmitted_by_id,
           student_id: s.student_id,
-        team_id: s.team_id,
+          team_id: s.team_id,
           assessment_id: s.assessment_id,
           xp: ans.xp,
           xp_adjustment: ans.xp_adjustment,

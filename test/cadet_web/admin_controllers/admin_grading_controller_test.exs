@@ -142,9 +142,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
-            "team" => nil
-          }
-        end)}
+              "team" => nil
+            }
+          end)
+      }
 
       res = json_response(conn, 200)
 
@@ -215,9 +216,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
-            "team" => nil
-          }
-        end)}
+              "team" => nil
+            }
+          end)
+      }
 
       res = json_response(conn, 200)
 
@@ -842,9 +844,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
-            "team" => nil
-          }
-        end)}
+              "team" => nil
+            }
+          end)
+      }
 
       res = json_response(conn, 200)
 
@@ -895,9 +898,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
-            "team" => nil
-          }
-        end)}
+              "team" => nil
+            }
+          end)
+      }
 
       res = json_response(conn, 200)
 
