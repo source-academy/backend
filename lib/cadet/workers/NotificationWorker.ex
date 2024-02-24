@@ -69,16 +69,10 @@ defmodule Cadet.Workers.NotificationWorker do
       for course_id <- Cadet.Courses.get_all_course_ids() do
         if is_course_enabled(notification_type_id, course_id, nil) do
           avengers_crs = Cadet.Accounts.CourseRegistrations.get_staffs(course_id)
-
           for avenger_cr <- avengers_crs do
             avenger = Cadet.Accounts.get_user(avenger_cr.user_id)
-
-            {:ok, %{data: %{submissions: ungraded_submissions}}} =
-              Cadet.Assessments.submissions_by_grader_for_index(avenger_cr, %{
-                "group" => "true",
-                "notFullyGraded" => "true"
-              })
-
+            {:ok, ungraded_submissions} =
+              Cadet.Assessments.get_ungraded_submission_for_email_notification(avenger_cr)
             if Enum.count(ungraded_submissions) < ungraded_threshold do
               IO.puts("[AVENGER_BACKLOG] below threshold!")
             else
@@ -90,7 +84,6 @@ defmodule Cadet.Workers.NotificationWorker do
                   avenger,
                   ungraded_submissions
                 )
-
               {status, email} = Mailer.deliver_now(email)
 
               if status == :ok do
