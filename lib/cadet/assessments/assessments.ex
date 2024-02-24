@@ -1233,8 +1233,7 @@ defmodule Cadet.Assessments do
   fields that are exposed in the /grading endpoint.
 
   The input parameters are the user and query parameters. Query parameters are
-  used to filter the submissions. Queries are arranged such that filters which
-  likely filter more submissions are on top.
+  used to filter the submissions.
 
   The group parameter is used to check whether only the groups under the grader
   should be returned. If pageSize and offset are not provided, the default
@@ -1244,13 +1243,6 @@ defmodule Cadet.Assessments do
   {:ok, %{"count": count, "data": submissions}} if no errors,
   else it is {:error, {:forbidden, "Forbidden."}}
   """
-
-  # TODO: Restore ungraded filtering
-  # ... or more likely, decouple email logic from this function
-  # ungraded_where =
-  #   if ungraded_only,
-  #     do: "where s.\"gradedCount\" < assts.\"questionCount\"",
-  #     else: ""
 
   # We bypass Ecto here and use a raw query to generate JSON directly from
   # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
@@ -1264,7 +1256,7 @@ defmodule Cadet.Assessments do
         grader = %CourseRegistration{course_id: course_id},
         params \\ %{
           "group" => "false",
-          "ungradedOnly" => "false",
+          "notFullyGraded" => "true",
           "pageSize" => "10",
           "offset" => "0"
         }
@@ -1279,9 +1271,25 @@ defmodule Cadet.Assessments do
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
       )
+    question_answers_query =
+      from(q in Question,
+        group_by: q.assessment_id,
+        join: a in Assessment,
+        on: q.assessment_id == a.id,
+        select: %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id)
+        }
+      )
 
     query =
       from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
         where: ^build_user_filter(params),
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
@@ -1290,8 +1298,6 @@ defmodule Cadet.Assessments do
         order_by: [desc: s.inserted_at],
         limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
         offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
-        left_join: ans in subquery(submission_answers_query),
-        on: ans.submission_id == s.id,
         select: %{
           id: s.id,
           status: s.status,
@@ -1302,7 +1308,8 @@ defmodule Cadet.Assessments do
           assessment_id: s.assessment_id,
           xp: ans.xp,
           xp_adjustment: ans.xp_adjustment,
-          graded_count: ans.graded_count
+          graded_count: ans.graded_count,
+          question_count: asst.question_count
         }
       )
 
@@ -1310,6 +1317,12 @@ defmodule Cadet.Assessments do
 
     count_query =
       from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_user_filter(params),
@@ -1344,6 +1357,9 @@ defmodule Cadet.Assessments do
     Enum.reduce(params, dynamic(true), fn
       {"status", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
+
+      {"notFullyGraded", "true"}, dynamic ->
+        dynamic([ans: ans, asst: asst], ^dynamic and asst.question_count > ans.graded_count)
 
       {_, _}, dynamic ->
         dynamic
@@ -1465,7 +1481,8 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:bad_request, String.t()}}
+          {:ok, {[Answer.t()], Assessment.t()}}
+          | {:error, {:bad_request, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -1502,7 +1519,9 @@ defmodule Cadet.Assessments do
     if answers == [] do
       {:error, {:bad_request, "Submission is not found."}}
     else
-      {:ok, answers}
+      assessment_id = Submission |> where(id: ^id) |> select([s], s.assessment_id) |> Repo.one()
+      assessment = Assessment |> where(id: ^assessment_id) |> Repo.one()
+      {:ok, {answers, assessment}}
     end
   end
 
