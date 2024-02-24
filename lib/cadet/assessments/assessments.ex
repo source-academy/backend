@@ -1486,14 +1486,15 @@ defmodule Cadet.Assessments do
         as: :asst,
         where: s.status == "submitted",
         where: asst.question_count > ans.graded_count,
-        where: s.student_id in subquery(
-          from(cr in CourseRegistration,
-            join: g in Group,
-            on: cr.group_id == g.id,
-            where: g.leader_id == ^avenger_cr.id,
-            select: cr.id
-          )
-        ) or s.student_id == ^avenger_cr.id,
+        where:
+          s.student_id in subquery(
+            from(cr in CourseRegistration,
+              join: g in Group,
+              on: cr.group_id == g.id,
+              where: g.leader_id == ^avenger_cr.id,
+              select: cr.id
+            )
+          ) or s.student_id == ^avenger_cr.id,
         select: %{
           id: s.id,
           student_id: s.student_id,
@@ -1502,15 +1503,19 @@ defmodule Cadet.Assessments do
       )
 
     submissions = Repo.all(query)
-    formatted_submissions = Enum.map(submissions, fn submission ->
-      student_name = Repo.get(User, submission.student_id).name
-      assessment_title = Repo.get(Assessment, submission.assessment_id).title
-      %{
-        student_name: student_name,
-        assessment_title: assessment_title,
-        submission_id: submission.id
-      }
-    end)
+
+    formatted_submissions =
+      Enum.map(submissions, fn submission ->
+        student_name = Repo.get(User, submission.student_id).name
+        assessment_title = Repo.get(Assessment, submission.assessment_id).title
+
+        %{
+          student_name: student_name,
+          assessment_title: assessment_title,
+          submission_id: submission.id
+        }
+      end)
+
     {:ok, formatted_submissions}
   end
 
