@@ -1455,6 +1455,65 @@ defmodule Cadet.Assessments do
     )
   end
 
+  def get_ungraded_submission_for_email_notification(avenger_cr) do
+    submission_answers_query =
+      from(ans in Answer,
+        group_by: ans.submission_id,
+        select: %{
+          submission_id: ans.submission_id,
+          graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
+        }
+      )
+
+    question_answers_query =
+      from(q in Question,
+        group_by: q.assessment_id,
+        join: a in Assessment,
+        on: q.assessment_id == a.id,
+        select: %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id)
+        }
+      )
+
+    query =
+      from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
+        where: s.status == "submitted",
+        where: asst.question_count > ans.graded_count,
+        where: s.student_id in subquery(
+          from(cr in CourseRegistration,
+            join: g in Group,
+            on: cr.group_id == g.id,
+            where: g.leader_id == ^avenger_cr.id,
+            select: cr.id
+          )
+        ) or s.student_id == ^avenger_cr.id,
+        select: %{
+          id: s.id,
+          student_id: s.student_id,
+          assessment_id: s.assessment_id
+        }
+      )
+
+    submissions = Repo.all(query)
+    formatted_submissions = Enum.map(submissions, fn submission ->
+      student_name = Repo.get(User, submission.student_id).name
+      assessment_title = Repo.get(Assessment, submission.assessment_id).title
+      %{
+        student_name: student_name,
+        assessment_title: assessment_title,
+        submission_id: submission.id
+      }
+    end)
+    {:ok, formatted_submissions}
+  end
+
   defp generate_grading_summary_view_model(submissions, course_id) do
     users =
       CourseRegistration
