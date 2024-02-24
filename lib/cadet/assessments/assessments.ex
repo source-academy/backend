@@ -1411,7 +1411,9 @@ defmodule Cadet.Assessments do
             submission.student_id in subquery(
               from(user in User,
                 where: ilike(user.name, ^"%#{value}%"),
-                select: user.id
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
               )
             )
         )
@@ -1423,7 +1425,9 @@ defmodule Cadet.Assessments do
             submission.student_id in subquery(
               from(user in User,
                 where: ilike(user.username, ^"%#{value}%"),
-                select: user.id
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
               )
             )
         )
