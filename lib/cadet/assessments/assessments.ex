@@ -1244,8 +1244,6 @@ defmodule Cadet.Assessments do
   else it is {:error, {:forbidden, "Forbidden."}}
   """
 
-  # We bypass Ecto here and use a raw query to generate JSON directly from
-  # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
   @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok,
            %{
@@ -1271,6 +1269,7 @@ defmodule Cadet.Assessments do
           graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
         }
       )
+
     question_answers_query =
       from(q in Question,
         group_by: q.assessment_id,
