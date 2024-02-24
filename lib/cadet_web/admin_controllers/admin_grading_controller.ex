@@ -4,12 +4,11 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.Assessments
 
-  def index(conn, %{"group" => group}) when group in ["true", "false"] do
+  def index(conn, %{"group" => group} = params)
+      when group in ["true", "false"] do
     course_reg = conn.assigns[:course_reg]
 
-    group = String.to_atom(group)
-
-    case Assessments.all_submissions_by_grader_for_index(course_reg, group) do
+    case Assessments.submissions_by_grader_for_index(course_reg, params) do
       {:ok, view_model} ->
         conn
         |> put_status(:ok)

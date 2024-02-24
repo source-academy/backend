@@ -25,15 +25,21 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   def render("gradingsummaries.json", %{
-        users: users,
-        assessments: assessments,
-        submissions: submissions,
-        teams: teams,
-        team_members: team_members
+        count: count,
+        data: %{
+          users: users,
+          assessments: assessments,
+          submissions: submissions,
+          teams: teams,
+          team_members: team_members
+        }
       }) do
-    for submission <- submissions do
-      user = users |> Enum.find(&(&1.id == submission.student_id))
-      assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
+    %{
+      count: count,
+      data:
+        for submission <- submissions do
+          user = users |> Enum.find(&(&1.id == submission.student_id))
+          assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
       team = teams |> Enum.find(&(&1.id == submission.team_id))
       team_members = team_members |> Enum.filter(&(&1.team_id == submission.team_id))
 
@@ -43,14 +49,14 @@ defmodule CadetWeb.AdminGradingView do
           users |> Enum.find(&(&1.id == team_member.student_id))
         end)
 
-      render(
-        CadetWeb.AdminGradingView,
-        "gradingsummary.json",
-        %{
-          user: user,
-          assessment: assessment,
-          submission: submission,
-          team: team,
+          render(
+            CadetWeb.AdminGradingView,
+            "gradingsummary.json",
+            %{
+              user: user,
+              assessment: assessment,
+              submission: submission,
+              team: team,
           team_members: team_member_users,
           unsubmitter:
             case submission.unsubmitted_by_id do
@@ -59,7 +65,7 @@ defmodule CadetWeb.AdminGradingView do
             end
         }
       )
-    end
+    end}
   end
 
   def render("gradingsummary.json", %{

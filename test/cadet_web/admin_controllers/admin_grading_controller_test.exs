@@ -113,38 +113,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id))
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil,
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil,
             "team" => nil
           }
-        end)
+        end)}
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -162,7 +169,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> get(build_url(test_cr.course_id), %{"group" => "true"})
         |> json_response(200)
 
-      assert resp == []
+      assert resp == %{"count" => 0, "data" => []}
     end
 
     @tag authenticate: :staff
@@ -179,38 +186,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id), %{"group" => "true"})
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil,
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil,
             "team" => nil
           }
-        end)
+        end)}
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -388,7 +402,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingResults" => &1.autograding_results,
                     "answer" => nil,
                     "contestEntries" => [],
-                    "scoreLeaderboard" => []
+                    "scoreLeaderboard" => [],
+                    "popularVoteLeaderboard" => []
                   },
                   "grade" => %{
                     "xp" => &1.xp,
@@ -798,38 +813,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> sign_in(admin.user)
         |> get(build_url(course.id))
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil,
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil,
             "team" => nil
           }
-        end)
+        end)}
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -844,38 +866,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id), %{"group" => "true"})
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil,
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil,
             "team" => nil
           }
-        end)
+        end)}
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -1052,7 +1081,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingResults" => &1.autograding_results,
                     "answer" => nil,
                     "contestEntries" => [],
-                    "scoreLeaderboard" => []
+                    "scoreLeaderboard" => [],
+                    "popularVoteLeaderboard" => []
                   },
                   "grade" => %{
                     "xp" => &1.xp,
