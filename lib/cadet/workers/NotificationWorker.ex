@@ -35,11 +35,6 @@ defmodule Cadet.Workers.NotificationWorker do
     end
   end
 
-  # TODO update this to use frontend url
-  defp build_submission_url(course_id, submission_id) do
-    "https://sourceacademy.org/courses/#{course_id}/grading/#{submission_id}"
-  end
-
   # Returns true if user preference matches the job's time option.
   # If user has made no preference, the default time option is used instead
   def is_user_time_option_matched(
@@ -85,18 +80,6 @@ defmodule Cadet.Workers.NotificationWorker do
               IO.puts("[AVENGER_BACKLOG] below threshold!")
             else
               IO.puts("[AVENGER_BACKLOG] SENDING_OUT")
-
-              ungraded_submissions =
-                Enum.map(ungraded_submissions, fn submission ->
-                  Map.put(
-                    submission,
-                    :submission_url,
-                    build_submission_url(
-                      submission[:student_course_id],
-                      submission[:submission_id]
-                    )
-                  )
-                end)
 
               email =
                 Email.avenger_backlog_email(
@@ -151,13 +134,6 @@ defmodule Cadet.Workers.NotificationWorker do
 
         true ->
           IO.puts("[ASSESSMENT_SUBMISSION] SENDING_OUT")
-
-          submission =
-            Map.put(
-              submission,
-              :submission_url,
-              build_submission_url(course_id, submission_id)
-            )
 
           email =
             Email.assessment_submission_email(

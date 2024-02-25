@@ -9,6 +9,17 @@ defmodule Cadet.Email do
     if is_nil(avenger.email) do
       nil
     else
+      ungraded_submissions =
+        Enum.map(ungraded_submissions, fn submission ->
+          Map.put(
+            submission,
+            :submission_url,
+            build_submission_url(
+              submission[:student_course_id],
+              submission[:submission_id]
+            )
+          )
+        end)
       base_email()
       |> to(avenger.email)
       |> assign(:avenger_name, avenger.name)
@@ -22,12 +33,18 @@ defmodule Cadet.Email do
     if is_nil(avenger.email) do
       nil
     else
+      submission =
+        Map.put(
+          submission,
+          :submission_url,
+          build_submission_url(submission.assessment.course_id, submission.id)
+        )
+
       base_email()
       |> to(avenger.email)
       |> assign(:avenger_name, avenger.name)
       |> assign(:student_name, student.name)
-      |> assign(:assessment_title, submission.assessment.title)
-      |> assign(:submission_url, submission.submission_url)
+      |> assign(:submission, submission)
       |> subject("New submission for #{submission.assessment.title}")
       |> render("#{template_file_name}.html")
     end
@@ -38,4 +55,9 @@ defmodule Cadet.Email do
     |> from("noreply@sourceacademy.org")
     |> put_html_layout({CadetWeb.LayoutView, "email.html"})
   end
+
+    # TODO update this to use frontend url
+    defp build_submission_url(course_id, submission_id) do
+      "https://sourceacademy.org/courses/#{course_id}/grading/#{submission_id}"
+    end
 end
