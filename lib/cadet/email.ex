@@ -27,6 +27,7 @@ defmodule Cadet.Email do
       |> assign(:avenger_name, avenger.name)
       |> assign(:student_name, student.name)
       |> assign(:assessment_title, submission.assessment.title)
+      |> assign(:submission_url, submission.submission_url)
       |> subject("New submission for #{submission.assessment.title}")
       |> render("#{template_file_name}.html")
     end
