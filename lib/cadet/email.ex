@@ -20,6 +20,7 @@ defmodule Cadet.Email do
             )
           )
         end)
+
       base_email()
       |> to(avenger.email)
       |> assign(:avenger_name, avenger.name)
@@ -56,8 +57,8 @@ defmodule Cadet.Email do
     |> put_html_layout({CadetWeb.LayoutView, "email.html"})
   end
 
-    # TODO update this to use frontend url
-    defp build_submission_url(course_id, submission_id) do
-      "https://sourceacademy.org/courses/#{course_id}/grading/#{submission_id}"
-    end
+  # TODO update this to use frontend url
+  defp build_submission_url(course_id, submission_id) do
+    "https://sourceacademy.org/courses/#{course_id}/grading/#{submission_id}"
+  end
 end
