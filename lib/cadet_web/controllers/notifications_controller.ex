@@ -39,7 +39,7 @@ defmodule CadetWeb.NotificationsController do
   end
 
   swagger_path :index do
-    get("/v2/courses/{course_id}/notifications")
+    get("/courses/{course_id}/notifications")
 
     summary("Get the unread notifications belonging to a user")
 
@@ -52,7 +52,7 @@ defmodule CadetWeb.NotificationsController do
   end
 
   swagger_path :acknowledge do
-    post("/v2/courses/{course_id}/notifications/acknowledge")
+    post("/courses/{course_id}/notifications/acknowledge")
     summary("Acknowledge notification(s)")
     security([%{JWT: []}])
 

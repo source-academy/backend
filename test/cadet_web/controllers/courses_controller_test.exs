@@ -10,7 +10,7 @@ defmodule CadetWeb.CoursesControllerTest do
 
   test "swagger" do
     CoursesController.swagger_definitions()
-    CoursesController.swagger_path_get_course_config(nil)
+    CoursesController.swagger_path_index(nil)
     CoursesController.swagger_path_create(nil)
   end
 
@@ -27,6 +27,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_game" => "true",
         "enable_achievements" => "true",
         "enable_sourcecast" => "true",
+        "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -49,6 +50,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "viewable" => "true",
         "enable_achievements" => "true",
         "enable_sourcecast" => "true",
+        "enable_stories" => "true",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
       }
@@ -70,6 +72,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_game" => "true",
         "enable_achievements" => "true",
         "enable_sourcecast" => "true",
+        "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -92,6 +95,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_game" => "true",
         "enable_achievements" => "true",
         "enable_sourcecast" => "true",
+        "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -115,6 +119,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_game" => "true",
         "enable_achievements" => "true",
         "enable_sourcecast" => "true",
+        "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -155,6 +160,7 @@ defmodule CadetWeb.CoursesControllerTest do
                  "enableGame" => true,
                  "enableAchievements" => true,
                  "enableSourcecast" => true,
+                 "enableStories" => false,
                  "sourceChapter" => 1,
                  "sourceVariant" => "default",
                  "moduleHelpText" => "Help Text",

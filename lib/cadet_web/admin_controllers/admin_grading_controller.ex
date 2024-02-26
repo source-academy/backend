@@ -4,17 +4,16 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.Assessments
 
-  def index(conn, %{"group" => group}) when group in ["true", "false"] do
+  def index(conn, %{"group" => group} = params)
+      when group in ["true", "false"] do
     course_reg = conn.assigns[:course_reg]
 
-    group = String.to_atom(group)
-
-    case Assessments.all_submissions_by_grader_for_index(course_reg, group) do
-      {:ok, submissions} ->
+    case Assessments.submissions_by_grader_for_index(course_reg, params) do
+      {:ok, view_model} ->
         conn
         |> put_status(:ok)
         |> put_resp_content_type("application/json")
-        |> text(submissions)
+        |> render("gradingsummaries.json", view_model)
     end
   end
 
@@ -24,8 +23,8 @@ defmodule CadetWeb.AdminGradingController do
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
     case Assessments.get_answers_in_submission(submission_id) do
-      {:ok, answers} ->
-        render(conn, "show.json", answers: answers)
+      {:ok, {answers, assessment}} ->
+        render(conn, "show.json", answers: answers, assessment: assessment)
 
       {:error, {status, message}} ->
         conn
@@ -146,7 +145,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :index do
-    get("/admin/grading")
+    get("/courses/{course_id}/admin/grading")
 
     summary("Get a list of all submissions with current user as the grader")
 
@@ -169,7 +168,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :unsubmit do
-    post("/admin/grading/{submissionId}/unsubmit")
+    post("/courses/{course_id}/admin/grading/{submissionId}/unsubmit")
     summary("Unsubmit submission. Can only be done by the Avenger of a student")
     security([%{JWT: []}])
 
@@ -184,7 +183,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :autograde_submission do
-    post("/admin/grading/{submissionId}/autograde")
+    post("/courses/{course_id}/admin/grading/{submissionId}/autograde")
     summary("Force re-autograding of an entire submission")
     security([%{JWT: []}])
 
@@ -199,7 +198,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :autograde_answer do
-    post("/admin/grading/{submissionId}/{questionId}/autograde")
+    post("/courses/{course_id}/admin/grading/{submissionId}/{questionId}/autograde")
     summary("Force re-autograding of a question in a submission")
     security([%{JWT: []}])
 
@@ -215,7 +214,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :show do
-    get("/admin/grading/{submissionId}")
+    get("/courses/{course_id}/admin/grading/{submissionId}")
 
     summary("Get information about a specific submission to be graded")
 
@@ -234,7 +233,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :update do
-    post("/admin/grading/{submissionId}/{questionId}")
+    post("/courses/{course_id}/admin/grading/{submissionId}/{questionId}")
 
     summary("Update marks given to the answer of a particular question in a submission")
 
@@ -256,7 +255,7 @@ defmodule CadetWeb.AdminGradingController do
   end
 
   swagger_path :grading_summary do
-    get("/admin/grading/summary")
+    get("/courses/{course_id}/admin/grading/summary")
 
     summary("Receives a summary of grading items done by this grader")
 

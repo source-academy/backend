@@ -34,7 +34,7 @@ defmodule CadetWeb.SourcecastController do
   # end
 
   swagger_path :index do
-    get("/sourcecast")
+    get("/courses/{course_id}/sourcecast")
     description("Lists all sourcecasts")
     summary("Show all sourcecasts")
     produces("application/json")
