@@ -90,7 +90,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "gradedCount" => 0,
             "questionCount" => 9,
             "xp" => (800 + 500 + 100) * 3,
-            "earlySubmissionExp" => &1.config.early_submission_xp
+            "earlySubmissionXp" => &1.config.early_submission_xp
           }
         )
 
@@ -137,7 +137,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "gradedCount" => 0,
             "questionCount" => 9,
             "xp" => 0,
-            "earlySubmissionExp" => &1.config.early_submission_xp
+            "earlySubmissionXp" => &1.config.early_submission_xp
           }
         )
 

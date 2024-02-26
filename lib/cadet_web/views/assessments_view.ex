@@ -29,7 +29,7 @@ defmodule CadetWeb.AssessmentsView do
       isPublished: :is_published,
       questionCount: :question_count,
       gradedCount: &(&1.graded_count || 0),
-      earlySubmissionExp: & &1.config.early_submission_xp
+      earlySubmissionXp: & &1.config.early_submission_xp
     })
   end
 
