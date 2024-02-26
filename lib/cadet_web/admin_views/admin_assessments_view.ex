@@ -27,7 +27,8 @@ defmodule CadetWeb.AdminAssessmentsView do
       private: &password_protected?(&1.password),
       isPublished: :is_published,
       questionCount: :question_count,
-      gradedCount: &(&1.graded_count || 0)
+      gradedCount: &(&1.graded_count || 0),
+      earlySubmissionExp: & &1.config.early_submission_xp,
     })
   end
 
