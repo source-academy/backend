@@ -807,7 +807,7 @@ defmodule Cadet.Assessments do
 
   def finalise_submission(submission = %Submission{}) do
     with {:status, :attempted} <- {:status, submission.status},
-         {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
+         {:ok, updated_submission} <- update_submission_status(submission) do
       # Couple with update_submission_status_and_xp_bonus to ensure notification is sent
       Notifications.write_notification_when_student_submits(submission)
       # Send email notification to avenger
@@ -920,29 +920,11 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec update_submission_status_and_xp_bonus(Submission.t()) ::
+  @spec update_submission_status(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
-  defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
-    assessment = submission.assessment
-    assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
-
-    max_bonus_xp = assessment_conifg.early_submission_xp
-    early_hours = assessment_conifg.hours_before_early_xp_decay
-
-    xp_bonus =
-      if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) do
-        max_bonus_xp
-      else
-        # This logic interpolates from max bonus at early hour to 0 bonus at close time
-        decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
-        remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, Timex.now(), :hours)])
-        proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
-        bonus_xp = round(max_bonus_xp * proportion)
-        Enum.max([0, bonus_xp])
-      end
-
+  defp update_submission_status(submission = %Submission{}) do
     submission
-    |> Submission.changeset(%{status: :submitted, xp_bonus: xp_bonus})
+    |> Submission.changeset(%{status: :submitted})
     |> Repo.update()
   end
 
