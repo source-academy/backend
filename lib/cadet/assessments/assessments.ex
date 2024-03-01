@@ -342,7 +342,22 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  A helper function for which removes grading information from the assessment
+  A helper function which removes grading information from all assessments
+  if it's grading is not published.
+  """
+  def format_all_assessments(assessments) do
+    Enum.map(assessments, fn a ->
+      if a.is_grading_published do
+        a
+      else
+        a
+        |> Map.put(:xp, 0)
+        |> Map.put(:graded_count, 0)
+      end
+    end)
+  end
+  @doc """
+  A helper function which removes grading information from the assessment
   if it's grading is not published.
   """
   def format_assessment_with_questions_and_answers(assessment) do

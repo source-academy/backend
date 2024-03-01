@@ -40,7 +40,7 @@ defmodule CadetWeb.AssessmentsController do
   def index(conn, _) do
     cr = conn.assigns.course_reg
     {:ok, assessments} = Assessments.all_assessments(cr)
-
+    assessments = Assessments.format_all_assessments(assessments)
     render(conn, "index.json", assessments: assessments)
   end
 
