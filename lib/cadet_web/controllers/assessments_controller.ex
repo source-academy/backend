@@ -48,8 +48,12 @@ defmodule CadetWeb.AssessmentsController do
     cr = conn.assigns.course_reg
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, cr) do
-      {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
-      {:error, {status, message}} -> send_resp(conn, status, message)
+      {:ok, assessment} ->
+        assessment = Assessments.format_assessment_with_questions_and_answers(assessment)
+        render(conn, "show.json", assessment: assessment)
+
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
     end
   end
 

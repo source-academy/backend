@@ -265,14 +265,6 @@ defmodule Cadet.Assessments do
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^course_reg.id)
-        # change a.xp and a.xp_adjustment to 0
-        # if a.is_grading_published is false and return all answers
-        |> select([a, s], %{
-          a
-          | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp),
-            xp_adjustment:
-              fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, a.xp_adjustment)
-        })
 
       questions =
         Question
@@ -336,7 +328,7 @@ defmodule Cadet.Assessments do
       |> join(:left, [a, _], s in subquery(submission_status), on: a.id == s.assessment_id)
       |> select([a, sa, s], %{
         a
-        | xp: fragment("CASE WHEN ? THEN ? ELSE 0 END", s.is_grading_published, sa.xp),
+        | xp: sa.xp,
           graded_count: sa.graded_count,
           user_status: s.status,
           is_grading_published: s.is_grading_published
@@ -347,6 +339,36 @@ defmodule Cadet.Assessments do
       |> Repo.all()
 
     {:ok, assessments}
+  end
+
+  @doc """
+  A helper function for which removes grading information from the assessment
+  if it's grading is not published.
+  """
+  def format_assessment_with_questions_and_answers(assessment) do
+    if assessment.is_grading_published do
+      assessment
+    else
+      %{
+        assessment
+        | questions:
+            Enum.map(assessment.questions, fn q ->
+              %{
+                q
+                | answer: %{
+                    q.answer
+                    | xp: 0,
+                      xp_adjustment: 0,
+                      autograding_status: :none,
+                      autograding_results: [],
+                      grader: nil,
+                      grader_id: nil,
+                      comments: nil
+                  }
+              }
+            end)
+      }
+    end
   end
 
   def filter_published_assessments(assessments, cr) do
