@@ -282,7 +282,13 @@ defmodule Cadet.Assessments do
         end)
         |> load_contest_voting_entries(course_reg, assessment)
 
-      assessment = assessment |> Map.put(:questions, questions)
+      is_grading_published =
+        Submission
+        |> where(assessment_id: ^id)
+        |> where(student_id: ^course_reg.id)
+        |> select([s], s.is_grading_published)
+        |> Repo.one()
+      assessment = assessment |> Map.put(:questions, questions) |> Map.put(:is_grading_published, is_grading_published)
       {:ok, assessment}
     else
       {:error, {:forbidden, "Assessment not open"}}
