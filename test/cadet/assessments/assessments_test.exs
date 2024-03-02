@@ -1700,6 +1700,107 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
+  describe "grading published feature" do
+
+    setup do
+        course = insert(:course)
+        config = insert(:assessment_config, %{type: "Test", course: course})
+        student = insert(:course_registration, course: course, role: :student)
+        student_2 = insert(:course_registration, course: course, role: :student)
+        avenger = insert(:course_registration, course: course, role: :staff)
+        assessment =
+          insert(
+            :assessment,
+            open_at: Timex.shift(Timex.now(), hours: -1),
+            close_at: Timex.shift(Timex.now(), hours: 500),
+            is_published: true,
+            config: config,
+            course: course
+          )
+
+        question = insert(:mcq_question, assessment: assessment)
+
+        submission =
+          insert(:submission, assessment: assessment, student: student, status: :attempted, is_grading_published: false)
+
+        answer = insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{:choice_id => 1},
+          xp: 400,
+          xp_adjustment: 300,
+          comments: "Dummy Comment",
+          autograding_status: :failed,
+          autograding_results: [
+            %{
+              errors: [
+                %{
+                  error_message: "DummyError",
+                  error_type: "systemError"
+                }
+              ],
+              result_type: "error"
+            }
+          ],
+        grader: avenger
+        )
+
+        published_submission = insert(:submission, assessment: assessment, student: student_2, status: :submitted, is_grading_published: true)
+        published_answer = insert(
+          :answer,
+          submission: published_submission,
+          question: question,
+          answer: %{:choice_id => 1},
+          xp: 400,
+          xp_adjustment: 300,
+          comments: "Dummy Comment",
+          autograding_status: :failed,
+          autograding_results: [
+            %{
+              errors: [
+                %{
+                  error_message: "DummyError",
+                  error_type: "systemError"
+                }
+              ],
+              result_type: "error"
+            }
+          ],
+        grader: avenger
+        )
+        %{assessment: assessment, student: student, student_2: student_2}
+    end
+
+    test "unpublished grades are hidden", %{assessment: assessment, student: student} do
+      {_, assessment_with_q_and_a} = Assessments.assessment_with_questions_and_answers(assessment, student)
+      formatted_assessment = Assessments.format_assessment_with_questions_and_answers(assessment_with_q_and_a)
+      formatted_answer = (hd(formatted_assessment.questions).answer)
+
+      assert formatted_answer.xp == 0
+      assert formatted_answer.xp_adjustment == 0
+      assert formatted_answer.autograding_status == :none
+      assert formatted_answer.autograding_results == []
+      assert formatted_answer.grader == nil
+      assert formatted_answer.grader_id == nil
+      assert formatted_answer.comments == nil
+    end
+
+    test "published grades are shown", %{assessment: assessment, student_2: student} do
+
+      {_, assessment_with_q_and_a} = Assessments.assessment_with_questions_and_answers(assessment, student)
+      formatted_assessment = Assessments.format_assessment_with_questions_and_answers(assessment_with_q_and_a)
+      formatted_answer = (hd(formatted_assessment.questions).answer)
+
+      assert formatted_answer.xp != 0
+      assert formatted_answer.xp_adjustment != 0
+      assert formatted_answer.autograding_status != :none
+      assert formatted_answer.autograding_results != []
+      assert formatted_answer.grader != nil
+      assert formatted_answer.grader_id != nil
+      assert formatted_answer.comments != nil
+    end
+  end
   defp get_answer_relative_scores(answers) do
     answers |> Enum.map(fn ans -> ans.relative_score end)
   end
