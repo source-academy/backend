@@ -71,6 +71,7 @@ defmodule CadetWeb.AdminGradingView do
       xp: :xp,
       xpAdjustment: :xp_adjustment,
       xpBonus: :xp_bonus,
+      isGradingPublished: :is_grading_published,
       gradedCount:
         &case &1.graded_count do
           nil -> 0
