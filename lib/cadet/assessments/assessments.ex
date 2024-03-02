@@ -288,7 +288,12 @@ defmodule Cadet.Assessments do
         |> where(student_id: ^course_reg.id)
         |> select([s], s.is_grading_published)
         |> Repo.one()
-      assessment = assessment |> Map.put(:questions, questions) |> Map.put(:is_grading_published, is_grading_published)
+
+      assessment =
+        assessment
+        |> Map.put(:questions, questions)
+        |> Map.put(:is_grading_published, is_grading_published)
+
       {:ok, assessment}
     else
       {:error, {:forbidden, "Assessment not open"}}
@@ -362,6 +367,7 @@ defmodule Cadet.Assessments do
       end
     end)
   end
+
   @doc """
   A helper function which removes grading information from the assessment
   if it's grading is not published.
