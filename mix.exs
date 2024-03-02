@@ -68,6 +68,7 @@ defmodule Cadet.Mixfile do
       {:hackney, "~> 1.6"},
       {:httpoison, "~> 1.6"},
       {:jason, "~> 1.2"},
+      {:openai, "~> 0.4.1"},
       {:openid_connect, "~> 0.2"},
       {:phoenix, "~> 1.5"},
       {:phoenix_view, "~> 2.0"},
