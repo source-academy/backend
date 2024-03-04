@@ -810,32 +810,38 @@ defmodule CadetWeb.AdminGradingControllerTest do
           course: course
         )
 
-        question = insert(:programming_question, assessment: assessment)
+      question = insert(:programming_question, assessment: assessment)
 
-        student = List.first(students)
+      student = List.first(students)
 
-        submission =
-          insert(:submission,
-            assessment: assessment,
-            student: student,
-            status: :submitted,
-            is_grading_published: true
-          )
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: true
+        )
 
-        answer =
-          insert(
-            :answer,
-            submission: submission,
-            question: question,
-            answer: %{code: "f => f(f);"},
-            grader_id: grader.id
-          )
+      answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          grader_id: grader.id
+        )
 
-      %{course: course, assessment: assessment, submission: submission, question: question, students: students}
+      %{
+        course: course,
+        assessment: assessment,
+        submission: submission,
+        question: question,
+        students: students
+      }
     end
+
     @tag authenticate: :staff
     test "succeeds", %{conn: conn, course: course, submission: submission} do
-
       conn
       |> post(build_url_unpublish(course.id, submission.id))
       |> response(200)
@@ -846,8 +852,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "avenger should not be allowed to unpublish for students outside of their group", %{conn: conn, course: course, submission: submission} do
-
+    test "avenger should not be allowed to unpublish for students outside of their group", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
       other_grader = insert(:course_registration, %{role: :staff, course: course})
 
       conn =
@@ -860,8 +869,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :admin
-    test "admin should be allowed to unpublish", %{conn: conn, course: course, submission: submission} do
-
+    test "admin should be allowed to unpublish", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
       admin = insert(:course_registration, %{role: :admin, course: course})
 
       conn
@@ -887,33 +899,38 @@ defmodule CadetWeb.AdminGradingControllerTest do
           course: course
         )
 
-        question = insert(:programming_question, assessment: assessment)
+      question = insert(:programming_question, assessment: assessment)
 
-        student = List.first(students)
+      student = List.first(students)
 
-        submission =
-          insert(:submission,
-            assessment: assessment,
-            student: student,
-            status: :submitted,
-            is_grading_published: false
-          )
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
 
-        answer =
-          insert(
-            :answer,
-            submission: submission,
-            question: question,
-            answer: %{code: "f => f(f);"},
-            grader_id: grader.id
-          )
+      answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          grader_id: grader.id
+        )
 
-      %{course: course, assessment: assessment, submission: submission, question: question, students: students}
+      %{
+        course: course,
+        assessment: assessment,
+        submission: submission,
+        question: question,
+        students: students
+      }
     end
 
     @tag authenticate: :staff
     test "succeeds", %{conn: conn, course: course, submission: submission} do
-
       conn
       |> post(build_url_publish(course.id, submission.id))
       |> response(200)
@@ -924,8 +941,13 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "assessments which have not been submitted should not be allowed to publish", %{conn: conn, course: course, students: students, assessment: assessment, question: question} do
-
+    test "assessments which have not been submitted should not be allowed to publish", %{
+      conn: conn,
+      course: course,
+      students: students,
+      assessment: assessment,
+      question: question
+    } do
       student = List.last(students)
 
       submission =
@@ -946,8 +968,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "avenger should not be allowed to publish for students outside of their group", %{conn: conn, course: course, submission: submission} do
-
+    test "avenger should not be allowed to publish for students outside of their group", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
       other_grader = insert(:course_registration, %{role: :staff, course: course})
 
       conn =
@@ -960,8 +985,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :admin
-    test "admin should be allowed to publish", %{conn: conn, course: course, submission: submission} do
-
+    test "admin should be allowed to publish", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
       admin = insert(:course_registration, %{role: :admin, course: course})
 
       conn

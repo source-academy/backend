@@ -1012,7 +1012,8 @@ defmodule Cadet.Assessments do
         {:error, {:not_found, "Submission not found"}}
 
       {:allowed_to_unpublish?, false} ->
-        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unpublish grading"}}
+        {:error,
+         {:forbidden, "Only Avenger of student or Admin is permitted to unpublish grading"}}
 
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
@@ -1060,7 +1061,7 @@ defmodule Cadet.Assessments do
         {:error, {:bad_request, "Assessment has not been submitted"}}
 
       {:allowed_to_publish?, false} ->
-        {:error, {:forbidden, "Only Avenger of student is permitted to publish grading"}}
+        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to publish grading"}}
 
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
