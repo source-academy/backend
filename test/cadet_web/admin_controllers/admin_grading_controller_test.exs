@@ -400,7 +400,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingResults" => &1.autograding_results,
                     "answer" => nil,
                     "contestEntries" => [],
-                    "scoreLeaderboard" => []
+                    "scoreLeaderboard" => [],
+                    "popularVoteLeaderboard" => []
                   },
                   "grade" => %{
                     "xp" => &1.xp,
@@ -1075,7 +1076,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingResults" => &1.autograding_results,
                     "answer" => nil,
                     "contestEntries" => [],
-                    "scoreLeaderboard" => []
+                    "scoreLeaderboard" => [],
+                    "popularVoteLeaderboard" => []
                   },
                   "grade" => %{
                     "xp" => &1.xp,

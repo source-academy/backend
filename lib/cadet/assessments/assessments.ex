@@ -1006,6 +1006,18 @@ defmodule Cadet.Assessments do
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(course_id, q)
 
+          # fetch top 10 contest coting entries with contest question id based on popular score
+          popular_results =
+            if is_nil(question_id) do
+              []
+            else
+              if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
+                fetch_top_popular_score_answers(question_id, 10)
+              else
+                []
+              end
+            end
+
           leaderboard_results =
             if is_nil(question_id) do
               []
@@ -1024,6 +1036,10 @@ defmodule Cadet.Assessments do
             |> Map.put(
               :contest_leaderboard,
               leaderboard_results
+            )
+            |> Map.put(
+              :popular_leaderboard,
+              popular_results
             )
 
           Map.put(q, :question, voting_question)
@@ -1091,6 +1107,37 @@ defmodule Cadet.Assessments do
       submission_id: a.submission_id,
       answer: a.answer,
       relative_score: a.relative_score,
+      student_name: student_user.name
+    })
+    |> limit(^number_of_answers)
+    |> Repo.all()
+  end
+
+  @doc """
+  Fetches top answers for the given question, based on the contest popular_score
+
+  Used for contest leaderboard fetching
+  """
+  def fetch_top_popular_score_answers(question_id, number_of_answers) do
+    Answer
+    |> where(question_id: ^question_id)
+    |> where(
+      [a],
+      fragment(
+        "?->>'code' like ?",
+        a.answer,
+        "%return%"
+      )
+    )
+    |> order_by(desc: :popular_score)
+    |> join(:left, [a], s in assoc(a, :submission))
+    |> join(:left, [a, s], student in assoc(s, :student))
+    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+    |> where([a, s, student], student.role == "student")
+    |> select([a, s, student, student_user], %{
+      submission_id: a.submission_id,
+      answer: a.answer,
+      popular_score: a.popular_score,
       student_name: student_user.name
     })
     |> limit(^number_of_answers)
@@ -1181,12 +1228,27 @@ defmodule Cadet.Assessments do
       |> Repo.get_by(id: contest_voting_question_id)
 
     entry_scores = map_eligible_votes_to_entry_score(eligible_votes, token_divider)
+    normalized_scores = map_eligible_votes_to_popular_score(eligible_votes, token_divider)
 
     entry_scores
     |> Enum.map(fn {ans_id, relative_score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
         relative_score: relative_score
+      })
+    end)
+    |> Enum.map(fn changeset ->
+      op_key = "answer_#{changeset.data.id}"
+      Multi.update(Multi.new(), op_key, changeset)
+    end)
+    |> Enum.reduce(Multi.new(), &Multi.append/2)
+    |> Repo.transaction()
+
+    normalized_scores
+    |> Enum.map(fn {ans_id, popular_score} ->
+      %Answer{id: ans_id}
+      |> Answer.popular_score_update_changeset(%{
+        popular_score: popular_score
       })
     end)
     |> Enum.map(fn changeset ->
@@ -1220,12 +1282,44 @@ defmodule Cadet.Assessments do
     )
   end
 
+  defp map_eligible_votes_to_popular_score(eligible_votes, token_divider) do
+    # converts eligible votes to the {total cumulative score, number of votes, tokens}
+    entry_vote_data =
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
+        {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
+
+        Map.put(
+          tracker,
+          ans_id,
+          # assume each voter is assigned 10 entries which will make it fair.
+          {prev_score + score, prev_count + 1, Lexer.count_tokens(ans)}
+        )
+      end)
+
+    # calculate the score based on formula {ans_id, score}
+    Enum.map(
+      entry_vote_data,
+      fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
+        {ans_id,
+         calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)}
+      end
+    )
+  end
+
   # Calculate the score based on formula
   # score(v,t) = v - 2^(t/token_divider) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider) do
-    normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
+    normalized_voting_score =
+      calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)
+
     normalized_voting_score - :math.pow(2, min(1023.5, tokens / token_divider))
+  end
+
+  # Calculate the normalized score based on formula
+  # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
+  defp calculate_normalized_score(sum_of_scores, number_of_voters, _tokens, _token_divider) do
+    sum_of_scores / number_of_voters / 10 * 100
   end
 
   @doc """
@@ -1409,7 +1503,9 @@ defmodule Cadet.Assessments do
             submission.student_id in subquery(
               from(user in User,
                 where: ilike(user.name, ^"%#{value}%"),
-                select: user.id
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
               )
             )
         )
@@ -1421,7 +1517,9 @@ defmodule Cadet.Assessments do
             submission.student_id in subquery(
               from(user in User,
                 where: ilike(user.username, ^"%#{value}%"),
-                select: user.id
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
               )
             )
         )
@@ -1507,7 +1605,8 @@ defmodule Cadet.Assessments do
       |> Enum.map(fn ans ->
         if ans.question.type == :voting do
           empty_contest_entries = Map.put(ans.question.question, :contest_entries, [])
-          empty_contest_leaderboard = Map.put(empty_contest_entries, :contest_leaderboard, [])
+          empty_popular_leaderboard = Map.put(empty_contest_entries, :popular_leaderboard, [])
+          empty_contest_leaderboard = Map.put(empty_popular_leaderboard, :contest_leaderboard, [])
           question = Map.put(ans.question, :question, empty_contest_leaderboard)
           Map.put(ans, :question, question)
         else
