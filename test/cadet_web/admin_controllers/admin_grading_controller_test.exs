@@ -926,8 +926,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
   end
 
   describe "POST /:submissionid/publish_grades" do
-    @tag authenticate: :staff
-    test "succeeds", %{conn: conn} do
+    setup %{conn: conn} do
       %{course: course, config: config, grader: grader, students: students} = seed_db(conn)
 
       assessment =
@@ -940,25 +939,32 @@ defmodule CadetWeb.AdminGradingControllerTest do
           course: course
         )
 
-      question = insert(:programming_question, assessment: assessment)
-      student = List.first(students)
+        question = insert(:programming_question, assessment: assessment)
 
-      submission =
-        insert(:submission,
-          assessment: assessment,
-          student: student,
-          status: :submitted,
-          is_grading_published: false
-        )
+        student = List.first(students)
 
-      answer =
-        insert(
-          :answer,
-          submission: submission,
-          question: question,
-          answer: %{code: "f => f(f);"},
-          grader_id: grader.id
-        )
+        submission =
+          insert(:submission,
+            assessment: assessment,
+            student: student,
+            status: :submitted,
+            is_grading_published: false
+          )
+
+        answer =
+          insert(
+            :answer,
+            submission: submission,
+            question: question,
+            answer: %{code: "f => f(f);"},
+            grader_id: grader.id
+          )
+
+      %{course: course, assessment: assessment, submission: submission, question: question, students: students}
+    end
+
+    @tag authenticate: :staff
+    test "succeeds", %{conn: conn, course: course, submission: submission} do
 
       conn
       |> post(build_url_publish(course.id, submission.id))
@@ -970,23 +976,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "assessments which have not been submitted should not be allowed to publish", %{
-      conn: conn
-    } do
-      %{course: course, config: config, students: students} = seed_db(conn)
+    test "assessments which have not been submitted should not be allowed to publish", %{conn: conn, course: course, students: students, assessment: assessment, question: question} do
 
-      assessment =
-        insert(
-          :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
-          is_published: true,
-          config: config,
-          course: course
-        )
-
-      question = insert(:programming_question, assessment: assessment)
-      student = List.first(students)
+      student = List.last(students)
 
       submission =
         insert(:submission, assessment: assessment, student: student, status: :attempted)
@@ -1006,34 +998,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :staff
-    test "avenger should not be allowed to publish for students outside of their group", %{
-      conn: conn
-    } do
-      %{course: course, config: config, students: students} = seed_db(conn)
-
-      assessment =
-        insert(
-          :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
-          is_published: true,
-          course: course,
-          config: config
-        )
+    test "avenger should not be allowed to publish for students outside of their group", %{conn: conn, course: course, submission: submission} do
 
       other_grader = insert(:course_registration, %{role: :staff, course: course})
-      question = insert(:programming_question, assessment: assessment)
-      student = List.first(students)
-
-      submission =
-        insert(:submission, assessment: assessment, student: student, status: :submitted)
-
-      insert(
-        :answer,
-        submission: submission,
-        question: question,
-        answer: %{code: "f => f(f);"}
-      )
 
       conn =
         conn
@@ -1045,41 +1012,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :admin
-    test "admin should be allowed to publish", %{
-      conn: conn
-    } do
-      %{course: course, config: config, students: students} = seed_db(conn)
+    test "admin should be allowed to publish", %{conn: conn, course: course, submission: submission} do
 
       admin = insert(:course_registration, %{role: :admin, course: course})
-
-      assessment =
-        insert(
-          :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
-          is_published: true,
-          course: course,
-          config: config
-        )
-
-      question = insert(:programming_question, assessment: assessment)
-      student = List.first(students)
-
-      submission =
-        insert(:submission,
-          assessment: assessment,
-          student: student,
-          status: :submitted,
-          is_grading_published: false
-        )
-
-      answer =
-        insert(
-          :answer,
-          submission: submission,
-          question: question,
-          answer: %{code: "f => f(f);"}
-        )
 
       conn
       |> sign_in(admin.user)
