@@ -1011,11 +1011,8 @@ defmodule Cadet.Assessments do
       {:submission_found?, false} ->
         {:error, {:not_found, "Submission not found"}}
 
-      {:is_open?, false} ->
-        {:error, {:forbidden, "Assessment not open"}}
-
       {:allowed_to_unpublish?, false} ->
-        {:error, {:forbidden, "Only Avenger of student is permitted to unpublish grading"}}
+        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unpublish grading"}}
 
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
@@ -1055,9 +1052,6 @@ defmodule Cadet.Assessments do
     else
       {:submission_found?, false} ->
         {:error, {:not_found, "Submission not found"}}
-
-      {:is_open?, false} ->
-        {:error, {:forbidden, "Assessment not open"}}
 
       {:status, :attempting} ->
         {:error, {:bad_request, "Some questions have not been attempted"}}
