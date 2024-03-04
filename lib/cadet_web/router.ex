@@ -64,6 +64,8 @@ defmodule CadetWeb.Router do
     post("/devices/:id", DevicesController, :edit)
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
+
+    post("/chat", ChatController, :chat)
   end
 
   # Authenticated Pages with course
@@ -159,7 +161,6 @@ defmodule CadetWeb.Router do
     # TODO: Missing corresponding Swagger path entry
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
-
     # TODO: Missing corresponding Swagger path entry
     delete(
       "/config/assessment_config/:assessment_config_id",
