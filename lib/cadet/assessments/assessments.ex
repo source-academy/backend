@@ -1006,6 +1006,18 @@ defmodule Cadet.Assessments do
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(course_id, q)
 
+          # fetch top 10 contest coting entries with contest question id based on popular score
+          popular_results =
+            if is_nil(question_id) do
+              []
+            else
+              if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
+                fetch_top_popular_score_answers(question_id, 10)
+              else
+                []
+              end
+            end
+
           leaderboard_results =
             if is_nil(question_id) do
               []
@@ -1024,6 +1036,10 @@ defmodule Cadet.Assessments do
             |> Map.put(
               :contest_leaderboard,
               leaderboard_results
+            )
+            |> Map.put(
+              :popular_leaderboard,
+              popular_results
             )
 
           Map.put(q, :question, voting_question)
@@ -1091,6 +1107,37 @@ defmodule Cadet.Assessments do
       submission_id: a.submission_id,
       answer: a.answer,
       relative_score: a.relative_score,
+      student_name: student_user.name
+    })
+    |> limit(^number_of_answers)
+    |> Repo.all()
+  end
+
+  @doc """
+  Fetches top answers for the given question, based on the contest popular_score
+
+  Used for contest leaderboard fetching
+  """
+  def fetch_top_popular_score_answers(question_id, number_of_answers) do
+    Answer
+    |> where(question_id: ^question_id)
+    |> where(
+      [a],
+      fragment(
+        "?->>'code' like ?",
+        a.answer,
+        "%return%"
+      )
+    )
+    |> order_by(desc: :popular_score)
+    |> join(:left, [a], s in assoc(a, :submission))
+    |> join(:left, [a, s], student in assoc(s, :student))
+    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+    |> where([a, s, student], student.role == "student")
+    |> select([a, s, student, student_user], %{
+      submission_id: a.submission_id,
+      answer: a.answer,
+      popular_score: a.popular_score,
       student_name: student_user.name
     })
     |> limit(^number_of_answers)
@@ -1181,12 +1228,27 @@ defmodule Cadet.Assessments do
       |> Repo.get_by(id: contest_voting_question_id)
 
     entry_scores = map_eligible_votes_to_entry_score(eligible_votes, token_divider)
+    normalized_scores = map_eligible_votes_to_popular_score(eligible_votes, token_divider)
 
     entry_scores
     |> Enum.map(fn {ans_id, relative_score} ->
       %Answer{id: ans_id}
       |> Answer.contest_score_update_changeset(%{
         relative_score: relative_score
+      })
+    end)
+    |> Enum.map(fn changeset ->
+      op_key = "answer_#{changeset.data.id}"
+      Multi.update(Multi.new(), op_key, changeset)
+    end)
+    |> Enum.reduce(Multi.new(), &Multi.append/2)
+    |> Repo.transaction()
+
+    normalized_scores
+    |> Enum.map(fn {ans_id, popular_score} ->
+      %Answer{id: ans_id}
+      |> Answer.popular_score_update_changeset(%{
+        popular_score: popular_score
       })
     end)
     |> Enum.map(fn changeset ->
@@ -1220,102 +1282,275 @@ defmodule Cadet.Assessments do
     )
   end
 
+  defp map_eligible_votes_to_popular_score(eligible_votes, token_divider) do
+    # converts eligible votes to the {total cumulative score, number of votes, tokens}
+    entry_vote_data =
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
+        {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
+
+        Map.put(
+          tracker,
+          ans_id,
+          # assume each voter is assigned 10 entries which will make it fair.
+          {prev_score + score, prev_count + 1, Lexer.count_tokens(ans)}
+        )
+      end)
+
+    # calculate the score based on formula {ans_id, score}
+    Enum.map(
+      entry_vote_data,
+      fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
+        {ans_id,
+         calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)}
+      end
+    )
+  end
+
   # Calculate the score based on formula
   # score(v,t) = v - 2^(t/token_divider) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
   defp calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider) do
-    normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
+    normalized_voting_score =
+      calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)
+
     normalized_voting_score - :math.pow(2, min(1023.5, tokens / token_divider))
+  end
+
+  # Calculate the normalized score based on formula
+  # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
+  defp calculate_normalized_score(sum_of_scores, number_of_voters, _tokens, _token_divider) do
+    sum_of_scores / number_of_voters / 10 * 100
   end
 
   @doc """
   Function returning submissions under a grader. This function returns only the
-  fields that are exposed in the /grading endpoint. The reason we select only
-  those fields is to reduce the memory usage especially when the number of
-  submissions is large i.e. > 25000 submissions.
+  fields that are exposed in the /grading endpoint.
 
-  The input parameters are the user and group_only. group_only is used to check
-  whether only the groups under the grader should be returned. The parameter is
-  a boolean which is false by default.
+  The input parameters are the user and query parameters. Query parameters are
+  used to filter the submissions.
 
-  The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:forbidden, "Forbidden."}}
+  The group parameter is used to check whether only the groups under the grader
+  should be returned. If pageSize and offset are not provided, the default
+  values are 10 and 0 respectively.
+
+  The return value is
+  {:ok, %{"count": count, "data": submissions}} if no errors,
+  else it is {:error, {:forbidden, "Forbidden."}}
   """
-  @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
-  def all_submissions_by_grader_for_index(
+
+  # We bypass Ecto here and use a raw query to generate JSON directly from
+  # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
+  @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
+          {:ok,
+           %{
+             :count => integer,
+             :data => %{:assessments => [any()], :submissions => [any()], :users => [any()]}
+           }}
+  def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        group_only \\ false,
-        _ungraded_only \\ false
+        params \\ %{
+          "group" => "false",
+          "notFullyGraded" => "true",
+          "pageSize" => "10",
+          "offset" => "0"
+        }
       ) do
-    show_all = not group_only
+    submission_answers_query =
+      from(ans in Answer,
+        group_by: ans.submission_id,
+        select: %{
+          submission_id: ans.submission_id,
+          xp: sum(ans.xp),
+          xp_adjustment: sum(ans.xp_adjustment),
+          graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
+        }
+      )
 
-    group_filter =
-      if show_all,
-        do: "",
-        else:
-          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
+    question_answers_query =
+      from(q in Question,
+        group_by: q.assessment_id,
+        join: a in Assessment,
+        on: q.assessment_id == a.id,
+        select: %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id)
+        }
+      )
 
-    # TODO: Restore ungraded filtering
-    # ... or more likely, decouple email logic from this function
-    # ungraded_where =
-    #   if ungraded_only,
-    #     do: "where s.\"gradedCount\" < assts.\"questionCount\"",
-    #     else: ""
+    query =
+      from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
+        where: ^build_user_filter(params),
+        where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
+        where: s.assessment_id in subquery(build_assessment_config_filter(params)),
+        where: ^build_submission_filter(params),
+        where: ^build_course_registration_filter(params, grader),
+        order_by: [desc: s.inserted_at],
+        limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
+        offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
+        select: %{
+          id: s.id,
+          status: s.status,
+          xp_bonus: s.xp_bonus,
+          unsubmitted_at: s.unsubmitted_at,
+          unsubmitted_by_id: s.unsubmitted_by_id,
+          student_id: s.student_id,
+          assessment_id: s.assessment_id,
+          xp: ans.xp,
+          xp_adjustment: ans.xp_adjustment,
+          graded_count: ans.graded_count,
+          question_count: asst.question_count
+        }
+      )
 
-    # We bypass Ecto here and use a raw query to generate JSON directly from
-    # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
+    submissions = Repo.all(query)
 
-    submissions =
-      case Repo.query("""
-           SELECT
-             s.id,
-             s.status,
-             s.unsubmitted_at,
-             s.unsubmitted_by_id,
-             s_ans.xp,
-             s_ans.xp_adjustment,
-             s.xp_bonus,
-             s_ans.graded_count,
-             s.student_id,
-             s.assessment_id
-           FROM
-             submissions AS s
-             LEFT JOIN (
-               SELECT
-                 ans.submission_id,
-                 SUM(ans.xp) AS xp,
-                 SUM(ans.xp_adjustment) AS xp_adjustment,
-                 COUNT(ans.id) FILTER (
-                   WHERE
-                     ans.grader_id IS NOT NULL
-                 ) AS graded_count
-               FROM
-                 answers AS ans
-               GROUP BY
-                 ans.submission_id
-             ) AS s_ans ON s_ans.submission_id = s.id
-           WHERE
-             s.assessment_id IN (
-               SELECT
-                 id
-               FROM
-                 assessments
-               WHERE
-                 assessments.course_id = #{course_id}
-             ) #{group_filter};
-           """) do
-        {:ok, %{columns: columns, rows: result}} ->
-          result
-          |> Enum.map(
-            &(columns
-              |> Enum.map(fn c -> String.to_atom(c) end)
-              |> Enum.zip(&1)
-              |> Enum.into(%{}))
-          )
-      end
+    count_query =
+      from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
+        where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
+        where: s.assessment_id in subquery(build_assessment_config_filter(params)),
+        where: ^build_user_filter(params),
+        where: ^build_submission_filter(params),
+        where: ^build_course_registration_filter(params, grader),
+        select: count(s.id)
+      )
 
-    {:ok, generate_grading_summary_view_model(submissions, course_id)}
+    count = Repo.one(count_query)
+
+    {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
+  end
+
+  defp build_assessment_filter(params, course_id) do
+    assessments_filters =
+      Enum.reduce(params, dynamic(true), fn
+        {"title", value}, dynamic ->
+          dynamic([assessment], ^dynamic and ilike(assessment.title, ^"%#{value}%"))
+
+        {_, _}, dynamic ->
+          dynamic
+      end)
+
+    from(a in Assessment,
+      where: a.course_id == ^course_id,
+      where: ^assessments_filters,
+      select: a.id
+    )
+  end
+
+  defp build_submission_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"status", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.status == ^value)
+
+      {"notFullyGraded", "true"}, dynamic ->
+        dynamic([ans: ans, asst: asst], ^dynamic and asst.question_count > ans.graded_count)
+
+      {_, _}, dynamic ->
+        dynamic
+    end)
+  end
+
+  defp build_course_registration_filter(params, grader) do
+    Enum.reduce(params, dynamic(true), fn
+      {"group", "true"}, dynamic ->
+        dynamic(
+          [submission],
+          (^dynamic and
+             submission.student_id in subquery(
+               from(cr in CourseRegistration,
+                 join: g in Group,
+                 on: cr.group_id == g.id,
+                 where: g.leader_id == ^grader.id,
+                 select: cr.id
+               )
+             )) or submission.student_id == ^grader.id
+        )
+
+      {"groupName", value}, dynamic ->
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(cr in CourseRegistration,
+                join: g in Group,
+                on: cr.group_id == g.id,
+                where: g.name == ^value,
+                select: cr.id
+              )
+            )
+        )
+
+      {_, _}, dynamic ->
+        dynamic
+    end)
+  end
+
+  defp build_user_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"name", value}, dynamic ->
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(user in User,
+                where: ilike(user.name, ^"%#{value}%"),
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
+              )
+            )
+        )
+
+      {"username", value}, dynamic ->
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(user in User,
+                where: ilike(user.username, ^"%#{value}%"),
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
+              )
+            )
+        )
+
+      {_, _}, dynamic ->
+        dynamic
+    end)
+  end
+
+  defp build_assessment_config_filter(params) do
+    assessment_config_filters =
+      Enum.reduce(params, dynamic(true), fn
+        {"type", value}, dynamic ->
+          dynamic([assessment_config: config], ^dynamic and config.type == ^value)
+
+        {"isManuallyGraded", value}, dynamic ->
+          dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
+
+        {_, _}, dynamic ->
+          dynamic
+      end)
+
+    from(a in Assessment,
+      inner_join: config in AssessmentConfig,
+      on: a.config_id == config.id,
+      as: :assessment_config,
+      where: ^assessment_config_filters,
+      select: a.id
+    )
   end
 
   defp generate_grading_summary_view_model(submissions, course_id) do
@@ -1345,7 +1580,8 @@ defmodule Cadet.Assessments do
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:bad_request, String.t()}}
+          {:ok, {[Answer.t()], Assessment.t()}}
+          | {:error, {:bad_request, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
@@ -1371,7 +1607,8 @@ defmodule Cadet.Assessments do
       |> Enum.map(fn ans ->
         if ans.question.type == :voting do
           empty_contest_entries = Map.put(ans.question.question, :contest_entries, [])
-          empty_contest_leaderboard = Map.put(empty_contest_entries, :contest_leaderboard, [])
+          empty_popular_leaderboard = Map.put(empty_contest_entries, :popular_leaderboard, [])
+          empty_contest_leaderboard = Map.put(empty_popular_leaderboard, :contest_leaderboard, [])
           question = Map.put(ans.question, :question, empty_contest_leaderboard)
           Map.put(ans, :question, question)
         else
@@ -1382,7 +1619,9 @@ defmodule Cadet.Assessments do
     if answers == [] do
       {:error, {:bad_request, "Submission is not found."}}
     else
-      {:ok, answers}
+      assessment_id = Submission |> where(id: ^id) |> select([s], s.assessment_id) |> Repo.one()
+      assessment = Assessment |> where(id: ^assessment_id) |> Repo.one()
+      {:ok, {answers, assessment}}
     end
   end
 

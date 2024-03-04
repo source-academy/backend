@@ -16,6 +16,7 @@ defmodule Cadet.Assessments.Answer do
   schema "answers" do
     # used to compare answers with others
     field(:relative_score, :float, default: 0.0)
+    field(:popular_score, :float, default: 0.0)
     field(:xp, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
     field(:comments, :string)
@@ -121,5 +122,13 @@ defmodule Cadet.Assessments.Answer do
   def contest_score_update_changeset(answer, contest_score_param) do
     answer
     |> cast(contest_score_param, [:relative_score])
+  end
+
+  @doc """
+  Used to update popular_score of answer to contest_score
+  """
+  def popular_score_update_changeset(answer, popular_score_param) do
+    answer
+    |> cast(popular_score_param, [:popular_score])
   end
 end

@@ -113,37 +113,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id))
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
-          }
-        end)
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil
+            }
+          end)
+      }
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -161,7 +169,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> get(build_url(test_cr.course_id), %{"group" => "true"})
         |> json_response(200)
 
-      assert resp == []
+      assert resp == %{"count" => 0, "data" => []}
     end
 
     @tag authenticate: :staff
@@ -178,37 +186,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id), %{"group" => "true"})
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
-          }
-        end)
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil
+            }
+          end)
+      }
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -219,180 +235,194 @@ defmodule CadetWeb.AdminGradingControllerTest do
         course: course,
         grader: grader,
         submissions: submissions,
-        answers: answers
+        answers: answers,
+        mission: assessment
       } = seed_db(conn)
 
       submission = List.first(submissions)
 
       conn = get(conn, build_url(course.id, submission.id))
 
-      expected =
-        answers
-        |> Enum.filter(&(&1.submission.id == submission.id))
-        |> Enum.sort_by(& &1.question.display_order)
-        |> Enum.map(
-          &case &1.question.type do
-            :programming ->
-              %{
-                "question" => %{
-                  "prepend" => &1.question.question.prepend,
-                  "postpend" => &1.question.question.postpend,
-                  "testcases" =>
-                    Enum.map(
-                      &1.question.question.public,
-                      fn testcase ->
-                        for {k, v} <- testcase,
-                            into: %{"type" => "public"},
-                            do: {Atom.to_string(k), v}
-                      end
-                    ) ++
+      expected = %{
+        "assessment" => %{
+          "id" => assessment.id,
+          "title" => assessment.title,
+          "summaryShort" => assessment.summary_short,
+          "summaryLong" => assessment.summary_long,
+          "coverPicture" => assessment.cover_picture,
+          "number" => assessment.number,
+          "story" => assessment.story,
+          "reading" => assessment.reading
+        },
+        "answers" =>
+          answers
+          |> Enum.filter(&(&1.submission.id == submission.id))
+          |> Enum.sort_by(& &1.question.display_order)
+          |> Enum.map(
+            &case &1.question.type do
+              :programming ->
+                %{
+                  "question" => %{
+                    "prepend" => &1.question.question.prepend,
+                    "postpend" => &1.question.question.postpend,
+                    "testcases" =>
                       Enum.map(
-                        &1.question.question.opaque,
+                        &1.question.question.public,
                         fn testcase ->
                           for {k, v} <- testcase,
-                              into: %{"type" => "opaque"},
+                              into: %{"type" => "public"},
                               do: {Atom.to_string(k), v}
                         end
                       ) ++
-                      Enum.map(
-                        &1.question.question.secret,
-                        fn testcase ->
-                          for {k, v} <- testcase,
-                              into: %{"type" => "secret"},
-                              do: {Atom.to_string(k), v}
-                        end
-                      ),
-                  "solutionTemplate" => &1.question.question.template,
-                  "type" => "#{&1.question.type}",
-                  "blocking" => &1.question.blocking,
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
+                        Enum.map(
+                          &1.question.question.opaque,
+                          fn testcase ->
+                            for {k, v} <- testcase,
+                                into: %{"type" => "opaque"},
+                                do: {Atom.to_string(k), v}
+                          end
+                        ) ++
+                        Enum.map(
+                          &1.question.question.secret,
+                          fn testcase ->
+                            for {k, v} <- testcase,
+                                into: %{"type" => "secret"},
+                                do: {Atom.to_string(k), v}
+                          end
+                        ),
+                    "solutionTemplate" => &1.question.question.template,
+                    "type" => "#{&1.question.type}",
+                    "blocking" => &1.question.blocking,
+                    "id" => &1.question.id,
+                    "library" => %{
+                      "chapter" => &1.question.library.chapter,
+                      "globals" => &1.question.library.globals,
+                      "external" => %{
+                        "name" => "#{&1.question.library.external.name}",
+                        "symbols" => &1.question.library.external.symbols
+                      },
+                      "execTimeMs" => &1.question.library.exec_time_ms,
+                      "variant" => &1.question.library.variant
                     },
-                    "execTimeMs" => &1.question.library.exec_time_ms,
-                    "variant" => &1.question.library.variant
+                    "maxXp" => &1.question.max_xp,
+                    "content" => &1.question.question.content,
+                    "answer" => &1.answer.code,
+                    "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                    "autogradingResults" => &1.autograding_results
                   },
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "answer" => &1.answer.code,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results
-                },
-                "solution" => &1.question.question.solution,
-                "grade" => %{
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.user.name,
-                    "id" => grader.id
+                  "solution" => &1.question.question.solution,
+                  "grade" => %{
+                    "xp" => &1.xp,
+                    "xpAdjustment" => &1.xp_adjustment,
+                    "grader" => %{
+                      "name" => grader.user.name,
+                      "id" => grader.id
+                    },
+                    "gradedAt" => format_datetime(&1.updated_at),
+                    "comments" => &1.comments
                   },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.user.name,
-                  "username" => &1.submission.student.user.username,
-                  "id" => &1.submission.student.id
+                  "student" => %{
+                    "name" => &1.submission.student.user.name,
+                    "username" => &1.submission.student.user.username,
+                    "id" => &1.submission.student.id
+                  }
                 }
-              }
 
-            :mcq ->
-              %{
-                "question" => %{
-                  "type" => "#{&1.question.type}",
-                  "blocking" => &1.question.blocking,
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
+              :mcq ->
+                %{
+                  "question" => %{
+                    "type" => "#{&1.question.type}",
+                    "blocking" => &1.question.blocking,
+                    "id" => &1.question.id,
+                    "library" => %{
+                      "chapter" => &1.question.library.chapter,
+                      "globals" => &1.question.library.globals,
+                      "external" => %{
+                        "name" => "#{&1.question.library.external.name}",
+                        "symbols" => &1.question.library.external.symbols
+                      },
+                      "execTimeMs" => &1.question.library.exec_time_ms,
+                      "variant" => &1.question.library.variant
                     },
-                    "execTimeMs" => &1.question.library.exec_time_ms,
-                    "variant" => &1.question.library.variant
+                    "maxXp" => &1.question.max_xp,
+                    "content" => &1.question.question.content,
+                    "answer" => &1.answer.choice_id,
+                    "choices" =>
+                      for choice <- &1.question.question.choices do
+                        %{
+                          "content" => choice.content,
+                          "hint" => choice.hint,
+                          "id" => choice.choice_id
+                        }
+                      end,
+                    "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                    "autogradingResults" => &1.autograding_results
                   },
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "answer" => &1.answer.choice_id,
-                  "choices" =>
-                    for choice <- &1.question.question.choices do
-                      %{
-                        "content" => choice.content,
-                        "hint" => choice.hint,
-                        "id" => choice.choice_id
-                      }
-                    end,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results
-                },
-                "solution" => "",
-                "grade" => %{
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.user.name,
-                    "id" => grader.id
+                  "solution" => "",
+                  "grade" => %{
+                    "xp" => &1.xp,
+                    "xpAdjustment" => &1.xp_adjustment,
+                    "grader" => %{
+                      "name" => grader.user.name,
+                      "id" => grader.id
+                    },
+                    "gradedAt" => format_datetime(&1.updated_at),
+                    "comments" => &1.comments
                   },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.user.name,
-                  "username" => &1.submission.student.user.username,
-                  "id" => &1.submission.student.id
+                  "student" => %{
+                    "name" => &1.submission.student.user.name,
+                    "username" => &1.submission.student.user.username,
+                    "id" => &1.submission.student.id
+                  }
                 }
-              }
 
-            :voting ->
-              %{
-                "question" => %{
-                  "prepend" => &1.question.question.prepend,
-                  "solutionTemplate" => &1.question.question.template,
-                  "type" => "#{&1.question.type}",
-                  "blocking" => &1.question.blocking,
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
+              :voting ->
+                %{
+                  "question" => %{
+                    "prepend" => &1.question.question.prepend,
+                    "solutionTemplate" => &1.question.question.template,
+                    "type" => "#{&1.question.type}",
+                    "blocking" => &1.question.blocking,
+                    "id" => &1.question.id,
+                    "library" => %{
+                      "chapter" => &1.question.library.chapter,
+                      "globals" => &1.question.library.globals,
+                      "external" => %{
+                        "name" => "#{&1.question.library.external.name}",
+                        "symbols" => &1.question.library.external.symbols
+                      },
+                      "execTimeMs" => &1.question.library.exec_time_ms,
+                      "variant" => &1.question.library.variant
                     },
-                    "execTimeMs" => &1.question.library.exec_time_ms,
-                    "variant" => &1.question.library.variant
+                    "maxXp" => &1.question.max_xp,
+                    "content" => &1.question.question.content,
+                    "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                    "autogradingResults" => &1.autograding_results,
+                    "answer" => nil,
+                    "contestEntries" => [],
+                    "scoreLeaderboard" => [],
+                    "popularVoteLeaderboard" => []
                   },
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results,
-                  "answer" => nil,
-                  "contestEntries" => [],
-                  "contestLeaderboard" => []
-                },
-                "grade" => %{
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.user.name,
-                    "id" => grader.id
+                  "grade" => %{
+                    "xp" => &1.xp,
+                    "xpAdjustment" => &1.xp_adjustment,
+                    "grader" => %{
+                      "name" => grader.user.name,
+                      "id" => grader.id
+                    },
+                    "gradedAt" => format_datetime(&1.updated_at),
+                    "comments" => &1.comments
                   },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.user.name,
-                  "username" => &1.submission.student.user.username,
-                  "id" => &1.submission.student.id
-                },
-                "solution" => ""
-              }
-          end
-        )
+                  "student" => %{
+                    "name" => &1.submission.student.user.name,
+                    "username" => &1.submission.student.user.username,
+                    "id" => &1.submission.student.id
+                  },
+                  "solution" => ""
+                }
+            end
+          )
+      }
 
       assert expected == json_response(conn, 200)
     end
@@ -780,37 +810,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> sign_in(admin.user)
         |> get(build_url(course.id))
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
-          }
-        end)
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil
+            }
+          end)
+      }
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -825,37 +863,45 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course.id), %{"group" => "true"})
 
-      expected =
-        Enum.map(submissions, fn submission ->
-          %{
-            "xp" => 5000,
-            "xpAdjustment" => -2500,
-            "xpBonus" => 100,
-            "id" => submission.id,
-            "student" => %{
-              "name" => submission.student.user.name,
-              "username" => submission.student.user.username,
-              "id" => submission.student.id,
-              "groupName" => submission.student.group.name,
-              "groupLeaderId" => submission.student.group.leader_id
-            },
-            "assessment" => %{
-              "type" => mission.config.type,
-              "isManuallyGraded" => mission.config.is_manually_graded,
-              "maxXp" => 5000,
-              "id" => mission.id,
-              "title" => mission.title,
-              "questionCount" => 5,
-              "assessmentNumber" => mission.number
-            },
-            "status" => Atom.to_string(submission.status),
-            "gradedCount" => 5,
-            "unsubmittedBy" => nil,
-            "unsubmittedAt" => nil
-          }
-        end)
+      expected = %{
+        "count" => length(submissions),
+        "data" =>
+          Enum.map(submissions, fn submission ->
+            %{
+              "xp" => 5000,
+              "xpAdjustment" => -2500,
+              "xpBonus" => 100,
+              "id" => submission.id,
+              "student" => %{
+                "name" => submission.student.user.name,
+                "username" => submission.student.user.username,
+                "id" => submission.student.id,
+                "groupName" => submission.student.group.name,
+                "groupLeaderId" => submission.student.group.leader_id
+              },
+              "assessment" => %{
+                "type" => mission.config.type,
+                "isManuallyGraded" => mission.config.is_manually_graded,
+                "maxXp" => 5000,
+                "id" => mission.id,
+                "title" => mission.title,
+                "questionCount" => 5,
+                "assessmentNumber" => mission.number
+              },
+              "status" => Atom.to_string(submission.status),
+              "gradedCount" => 5,
+              "unsubmittedBy" => nil,
+              "unsubmittedAt" => nil
+            }
+          end)
+      }
 
-      assert expected == Enum.sort_by(json_response(conn, 200), & &1["id"])
+      res = json_response(conn, 200)
+
+      assert expected == %{
+               "count" => res["count"],
+               "data" => Enum.sort_by(res["data"], & &1["id"])
+             }
     end
   end
 
@@ -866,180 +912,193 @@ defmodule CadetWeb.AdminGradingControllerTest do
         course: course,
         grader: grader,
         submissions: submissions,
-        answers: answers
+        answers: answers,
+        mission: assessment
       } = seed_db(conn)
 
       submission = List.first(submissions)
-
       conn = get(conn, build_url(course.id, submission.id))
 
-      expected =
-        answers
-        |> Enum.filter(&(&1.submission.id == submission.id))
-        |> Enum.sort_by(& &1.question.display_order)
-        |> Enum.map(
-          &case &1.question.type do
-            :programming ->
-              %{
-                "question" => %{
-                  "prepend" => &1.question.question.prepend,
-                  "postpend" => &1.question.question.postpend,
-                  "testcases" =>
-                    Enum.map(
-                      &1.question.question.public,
-                      fn testcase ->
-                        for {k, v} <- testcase,
-                            into: %{"type" => "public"},
-                            do: {Atom.to_string(k), v}
-                      end
-                    ) ++
+      expected = %{
+        "assessment" => %{
+          "id" => assessment.id,
+          "title" => assessment.title,
+          "summaryShort" => assessment.summary_short,
+          "summaryLong" => assessment.summary_long,
+          "coverPicture" => assessment.cover_picture,
+          "number" => assessment.number,
+          "story" => assessment.story,
+          "reading" => assessment.reading
+        },
+        "answers" =>
+          answers
+          |> Enum.filter(&(&1.submission.id == submission.id))
+          |> Enum.sort_by(& &1.question.display_order)
+          |> Enum.map(
+            &case &1.question.type do
+              :programming ->
+                %{
+                  "question" => %{
+                    "prepend" => &1.question.question.prepend,
+                    "postpend" => &1.question.question.postpend,
+                    "testcases" =>
                       Enum.map(
-                        &1.question.question.opaque,
+                        &1.question.question.public,
                         fn testcase ->
                           for {k, v} <- testcase,
-                              into: %{"type" => "opaque"},
+                              into: %{"type" => "public"},
                               do: {Atom.to_string(k), v}
                         end
                       ) ++
-                      Enum.map(
-                        &1.question.question.secret,
-                        fn testcase ->
-                          for {k, v} <- testcase,
-                              into: %{"type" => "secret"},
-                              do: {Atom.to_string(k), v}
-                        end
-                      ),
-                  "solutionTemplate" => &1.question.question.template,
-                  "type" => "#{&1.question.type}",
-                  "blocking" => &1.question.blocking,
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
+                        Enum.map(
+                          &1.question.question.opaque,
+                          fn testcase ->
+                            for {k, v} <- testcase,
+                                into: %{"type" => "opaque"},
+                                do: {Atom.to_string(k), v}
+                          end
+                        ) ++
+                        Enum.map(
+                          &1.question.question.secret,
+                          fn testcase ->
+                            for {k, v} <- testcase,
+                                into: %{"type" => "secret"},
+                                do: {Atom.to_string(k), v}
+                          end
+                        ),
+                    "solutionTemplate" => &1.question.question.template,
+                    "type" => "#{&1.question.type}",
+                    "blocking" => &1.question.blocking,
+                    "id" => &1.question.id,
+                    "library" => %{
+                      "chapter" => &1.question.library.chapter,
+                      "globals" => &1.question.library.globals,
+                      "external" => %{
+                        "name" => "#{&1.question.library.external.name}",
+                        "symbols" => &1.question.library.external.symbols
+                      },
+                      "execTimeMs" => &1.question.library.exec_time_ms,
+                      "variant" => &1.question.library.variant
                     },
-                    "execTimeMs" => &1.question.library.exec_time_ms,
-                    "variant" => &1.question.library.variant
+                    "maxXp" => &1.question.max_xp,
+                    "content" => &1.question.question.content,
+                    "answer" => &1.answer.code,
+                    "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                    "autogradingResults" => &1.autograding_results
                   },
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "answer" => &1.answer.code,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results
-                },
-                "solution" => &1.question.question.solution,
-                "grade" => %{
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.user.name,
-                    "id" => grader.id
+                  "solution" => &1.question.question.solution,
+                  "grade" => %{
+                    "xp" => &1.xp,
+                    "xpAdjustment" => &1.xp_adjustment,
+                    "grader" => %{
+                      "name" => grader.user.name,
+                      "id" => grader.id
+                    },
+                    "gradedAt" => format_datetime(&1.updated_at),
+                    "comments" => &1.comments
                   },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.user.name,
-                  "username" => &1.submission.student.user.username,
-                  "id" => &1.submission.student.id
+                  "student" => %{
+                    "name" => &1.submission.student.user.name,
+                    "username" => &1.submission.student.user.username,
+                    "id" => &1.submission.student.id
+                  }
                 }
-              }
 
-            :mcq ->
-              %{
-                "question" => %{
-                  "type" => "#{&1.question.type}",
-                  "blocking" => &1.question.blocking,
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
+              :mcq ->
+                %{
+                  "question" => %{
+                    "type" => "#{&1.question.type}",
+                    "blocking" => &1.question.blocking,
+                    "id" => &1.question.id,
+                    "library" => %{
+                      "chapter" => &1.question.library.chapter,
+                      "globals" => &1.question.library.globals,
+                      "external" => %{
+                        "name" => "#{&1.question.library.external.name}",
+                        "symbols" => &1.question.library.external.symbols
+                      },
+                      "execTimeMs" => &1.question.library.exec_time_ms,
+                      "variant" => &1.question.library.variant
                     },
-                    "execTimeMs" => &1.question.library.exec_time_ms,
-                    "variant" => &1.question.library.variant
+                    "content" => &1.question.question.content,
+                    "answer" => &1.answer.choice_id,
+                    "maxXp" => &1.question.max_xp,
+                    "choices" =>
+                      for choice <- &1.question.question.choices do
+                        %{
+                          "content" => choice.content,
+                          "hint" => choice.hint,
+                          "id" => choice.choice_id
+                        }
+                      end,
+                    "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                    "autogradingResults" => &1.autograding_results
                   },
-                  "content" => &1.question.question.content,
-                  "answer" => &1.answer.choice_id,
-                  "maxXp" => &1.question.max_xp,
-                  "choices" =>
-                    for choice <- &1.question.question.choices do
-                      %{
-                        "content" => choice.content,
-                        "hint" => choice.hint,
-                        "id" => choice.choice_id
-                      }
-                    end,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results
-                },
-                "solution" => "",
-                "grade" => %{
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.user.name,
-                    "id" => grader.id
+                  "solution" => "",
+                  "grade" => %{
+                    "xp" => &1.xp,
+                    "xpAdjustment" => &1.xp_adjustment,
+                    "grader" => %{
+                      "name" => grader.user.name,
+                      "id" => grader.id
+                    },
+                    "gradedAt" => format_datetime(&1.updated_at),
+                    "comments" => &1.comments
                   },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.user.name,
-                  "username" => &1.submission.student.user.username,
-                  "id" => &1.submission.student.id
+                  "student" => %{
+                    "name" => &1.submission.student.user.name,
+                    "username" => &1.submission.student.user.username,
+                    "id" => &1.submission.student.id
+                  }
                 }
-              }
 
-            :voting ->
-              %{
-                "question" => %{
-                  "prepend" => &1.question.question.prepend,
-                  "solutionTemplate" => &1.question.question.template,
-                  "type" => "#{&1.question.type}",
-                  "blocking" => &1.question.blocking,
-                  "id" => &1.question.id,
-                  "library" => %{
-                    "chapter" => &1.question.library.chapter,
-                    "globals" => &1.question.library.globals,
-                    "external" => %{
-                      "name" => "#{&1.question.library.external.name}",
-                      "symbols" => &1.question.library.external.symbols
+              :voting ->
+                %{
+                  "question" => %{
+                    "prepend" => &1.question.question.prepend,
+                    "solutionTemplate" => &1.question.question.template,
+                    "type" => "#{&1.question.type}",
+                    "blocking" => &1.question.blocking,
+                    "id" => &1.question.id,
+                    "library" => %{
+                      "chapter" => &1.question.library.chapter,
+                      "globals" => &1.question.library.globals,
+                      "external" => %{
+                        "name" => "#{&1.question.library.external.name}",
+                        "symbols" => &1.question.library.external.symbols
+                      },
+                      "execTimeMs" => &1.question.library.exec_time_ms,
+                      "variant" => &1.question.library.variant
                     },
-                    "execTimeMs" => &1.question.library.exec_time_ms,
-                    "variant" => &1.question.library.variant
+                    "maxXp" => &1.question.max_xp,
+                    "content" => &1.question.question.content,
+                    "autogradingStatus" => Atom.to_string(&1.autograding_status),
+                    "autogradingResults" => &1.autograding_results,
+                    "answer" => nil,
+                    "contestEntries" => [],
+                    "scoreLeaderboard" => [],
+                    "popularVoteLeaderboard" => []
                   },
-                  "maxXp" => &1.question.max_xp,
-                  "content" => &1.question.question.content,
-                  "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                  "autogradingResults" => &1.autograding_results,
-                  "answer" => nil,
-                  "contestEntries" => [],
-                  "contestLeaderboard" => []
-                },
-                "grade" => %{
-                  "xp" => &1.xp,
-                  "xpAdjustment" => &1.xp_adjustment,
-                  "grader" => %{
-                    "name" => grader.user.name,
-                    "id" => grader.id
+                  "grade" => %{
+                    "xp" => &1.xp,
+                    "xpAdjustment" => &1.xp_adjustment,
+                    "grader" => %{
+                      "name" => grader.user.name,
+                      "id" => grader.id
+                    },
+                    "gradedAt" => format_datetime(&1.updated_at),
+                    "comments" => &1.comments
                   },
-                  "gradedAt" => format_datetime(&1.updated_at),
-                  "comments" => &1.comments
-                },
-                "student" => %{
-                  "name" => &1.submission.student.user.name,
-                  "username" => &1.submission.student.user.username,
-                  "id" => &1.submission.student.id
-                },
-                "solution" => ""
-              }
-          end
-        )
+                  "student" => %{
+                    "name" => &1.submission.student.user.name,
+                    "username" => &1.submission.student.user.username,
+                    "id" => &1.submission.student.id
+                  },
+                  "solution" => ""
+                }
+            end
+          )
+      }
 
       assert expected == json_response(conn, 200)
     end
