@@ -815,7 +815,13 @@ defmodule CadetWeb.AdminGradingControllerTest do
       student = List.first(students)
 
       submission =
-        insert(:submission, assessment: assessment, student: student, status: :submitted, is_grading_published: true)
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: true
+        )
+
       answer =
         insert(
           :answer,
@@ -869,7 +875,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> sign_in(other_grader.user)
         |> post(build_url_unpublish(course.id, submission.id))
 
-      assert response(conn, 403) =~ "Only Avenger of student or Admin is permitted to unpublish grading"
+      assert response(conn, 403) =~
+               "Only Avenger of student or Admin is permitted to unpublish grading"
     end
 
     @tag authenticate: :admin
@@ -894,7 +901,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       student = List.first(students)
 
       submission =
-        insert(:submission, assessment: assessment, student: student, status: :submitted, is_grading_published: true)
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: true
+        )
 
       answer =
         insert(
@@ -910,6 +922,171 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       submission_db = Repo.get(Submission, submission.id)
       assert submission_db.is_grading_published == false
+    end
+  end
+
+  describe "POST /:submissionid/publish_grades" do
+    @tag authenticate: :staff
+    test "succeeds", %{conn: conn} do
+      %{course: course, config: config, grader: grader, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          config: config,
+          course: course
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
+
+      answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          grader_id: grader.id
+        )
+
+      conn
+      |> post(build_url_publish(course.id, submission.id))
+      |> response(200)
+
+      submission_db = Repo.get(Submission, submission.id)
+
+      assert submission_db.is_grading_published == true
+    end
+
+    @tag authenticate: :staff
+    test "assessments which have not been submitted should not be allowed to publish", %{
+      conn: conn
+    } do
+      %{course: course, config: config, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          config: config,
+          course: course
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :attempted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_publish(course.id, submission.id))
+
+      assert response(conn, 400) =~ "Assessment has not been submitted"
+    end
+
+    @tag authenticate: :staff
+    test "avenger should not be allowed to publish for students outside of their group", %{
+      conn: conn
+    } do
+      %{course: course, config: config, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          course: course,
+          config: config
+        )
+
+      other_grader = insert(:course_registration, %{role: :staff, course: course})
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :submitted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> sign_in(other_grader.user)
+        |> post(build_url_publish(course.id, submission.id))
+
+      assert response(conn, 403) =~
+               "Only Avenger of student or Admin is permitted to publish grading"
+    end
+
+    @tag authenticate: :admin
+    test "admin should be allowed to publish", %{
+      conn: conn
+    } do
+      %{course: course, config: config, students: students} = seed_db(conn)
+
+      admin = insert(:course_registration, %{role: :admin, course: course})
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          course: course,
+          config: config
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
+
+      answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"}
+        )
+
+      conn
+      |> sign_in(admin.user)
+      |> post(build_url_publish(course.id, submission.id))
+
+      submission_db = Repo.get(Submission, submission.id)
+      assert submission_db.is_grading_published == true
     end
   end
 
@@ -1433,6 +1610,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
   defp build_url_unpublish(course_id, submission_id),
     do: "#{build_url(course_id, submission_id)}/unpublish_grades"
+
+  defp build_url_publish(course_id, submission_id),
+    do: "#{build_url(course_id, submission_id)}/publish_grades"
 
   defp build_url_autograde(course_id, submission_id),
     do: "#{build_url(course_id, submission_id)}/autograde"
