@@ -84,7 +84,7 @@ defmodule Cadet.Mixfile do
       {:timex, "~> 3.7"},
 
       # notifiations system dependencies
-      {:phoenix_html, "~> 3.0"},
+      {:phoenix_html, "~> 4.1"},
       {:bamboo, "~> 2.3.0"},
       {:bamboo_ses, "~> 0.4.1"},
       {:bamboo_phoenix, "~> 1.0.0"},
