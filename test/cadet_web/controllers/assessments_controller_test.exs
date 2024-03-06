@@ -78,7 +78,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "private" => false,
               "isPublished" => &1.is_published,
               "gradedCount" => 0,
-              "questionCount" => 9
+              "questionCount" => 9,
+              "isContestRelated" => &1.config.is_contest_related
             }
           )
 
@@ -161,7 +162,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
-            "questionCount" => 9
+            "questionCount" => 9,
+            "isContestRelated" => &1.config.is_contest_related
           }
         )
 
@@ -271,6 +273,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "private" => false,
               "gradedCount" => 0,
               "questionCount" => 9,
+              "isContestRelated" => &1.config.is_contest_related,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
                   false
