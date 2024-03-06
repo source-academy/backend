@@ -12,7 +12,7 @@ defmodule CadetWeb.AdminCoursesView do
       displayInDashboard: :show_grading_summary,
       isManuallyGraded: :is_manually_graded,
       earlySubmissionXp: :early_submission_xp,
-      hasTokenCounter: :has_token_counter,
+      isContestRelated: :is_contest_related,
       hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay
     })
   end

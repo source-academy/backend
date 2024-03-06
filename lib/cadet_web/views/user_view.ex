@@ -125,7 +125,7 @@ defmodule CadetWeb.UserView do
             type: :type,
             displayInDashboard: :show_grading_summary,
             isManuallyGraded: :is_manually_graded,
-            hasTokenCounter: :has_token_counter,
+            isContestRelated: :is_contest_related,
             earlySubmissionXp: :early_submission_xp,
             hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay
           })
