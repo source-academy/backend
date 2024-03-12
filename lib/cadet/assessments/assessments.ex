@@ -1553,6 +1553,66 @@ defmodule Cadet.Assessments do
     )
   end
 
+  def get_ungraded_submission_for_email_notification(avenger_cr) do
+    submission_answers_query =
+      Answer
+      |> group_by([ans], ans.submission_id)
+      |> select([ans], %{
+        submission_id: ans.submission_id,
+        graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
+      })
+
+    question_answers_query =
+      Question
+      |> group_by([q], q.assessment_id)
+      |> join(:left, [q], asst in assoc(q, :assessment))
+      |> select([q, asst], %{assessment_id: q.assessment_id, question_count: count(q.id)})
+
+    student_query =
+      CourseRegistration
+      |> join(:inner, [cr], g in assoc(cr, :group))
+      |> where([cr, g], g.leader_id == ^avenger_cr.id)
+      |> select([cr, _], cr.id)
+
+    submissions =
+      Submission
+      |> join(:inner, [s], ans in subquery(submission_answers_query),
+        on: s.id == ans.submission_id
+      )
+      |> join(:inner, [s, ans], asst in subquery(question_answers_query),
+        on: s.assessment_id == asst.assessment_id
+      )
+      |> where([s, _, _], s.status == "submitted")
+      |> where([_, ans, asst], asst.question_count > ans.graded_count)
+      |> where(
+        [s, _, _],
+        s.student_id in subquery(student_query) or s.student_id == ^avenger_cr.id
+      )
+      |> select([s, _, _], %{id: s.id, student_id: s.student_id, assessment_id: s.assessment_id})
+      |> Repo.all()
+
+    formatted_submissions =
+      Enum.map(submissions, fn submission ->
+        [student_course_id, student_name] =
+          CourseRegistration
+          |> join(:inner, [cr], u in assoc(cr, :user))
+          |> where([cr], cr.id == ^submission.student_id)
+          |> select([cr, u], [cr.course_id, u.name])
+          |> Repo.one()
+
+        assessment_title = Repo.get(Assessment, submission.assessment_id).title
+
+        %{
+          student_name: student_name,
+          student_course_id: student_course_id,
+          assessment_title: assessment_title,
+          submission_id: submission.id
+        }
+      end)
+
+    {:ok, formatted_submissions}
+  end
+
   defp generate_grading_summary_view_model(submissions, course_id) do
     users =
       CourseRegistration

@@ -24,11 +24,8 @@ defmodule Cadet.EmailTest do
     avenger_user = insert(:user, %{email: "test@gmail.com"})
     avenger = insert(:course_registration, %{user: avenger_user, role: :staff})
 
-    {:ok, %{data: %{submissions: ungraded_submissions}}} =
-      Cadet.Assessments.submissions_by_grader_for_index(avenger, %{
-        "group" => "true",
-        "ungradedOnly" => "true"
-      })
+    {:ok, ungraded_submissions} =
+      Cadet.Assessments.get_ungraded_submission_for_email_notification(avenger)
 
     email = Email.avenger_backlog_email("avenger_backlog", avenger_user, ungraded_submissions)
 
