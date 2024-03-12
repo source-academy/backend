@@ -1700,6 +1700,33 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
+  """
+  mix test ./test/cadet/assessments/assessments_test.exs
+  TODO:
+  assessment: title
+  submission:  status, notFullyGraded
+  course_reg: group, groupName
+  user: name, username
+  assessment_config: type, isManuallyGraded
+  """
+  describe "get submission function" do
+    setup do
+      Cadet.Test.Seeds.assessments()
+
+    end
+
+    test "filter by assessment title", %{course_regs: %{avenger1_cr: avenger}, assessments: assessments} do
+
+      assessment = assessments["mission"][:assessment]
+      title = assessment.title
+      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"title" => title})
+      assessments_from_res = res[:data][:assessments]
+      Enum.each(assessments_from_res, fn a ->
+        assert a.title == title
+      end)
+    end
+  end
+
   defp get_answer_relative_scores(answers) do
     answers |> Enum.map(fn ans -> ans.relative_score end)
   end
