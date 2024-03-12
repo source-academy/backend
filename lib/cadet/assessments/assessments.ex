@@ -1665,6 +1665,12 @@ defmodule Cadet.Assessments do
          {:ok, _} <- Repo.update(changeset) do
       if is_fully_graded?(answer) and not is_own_submission do
         # Every answer in this submission has been graded manually
+        submission =
+          Submission
+          |> join(:inner, [s], a in assoc(s, :assessment))
+          |> preload([_, a], assessment: a)
+          |> Repo.get(submission_id)
+        update_xp_bonus(submission)
         Notifications.write_notification_when_graded(submission_id, :graded)
       else
         {:ok, nil}
@@ -1690,6 +1696,53 @@ defmodule Cadet.Assessments do
         _
       ) do
     {:error, {:forbidden, "User is not permitted to grade."}}
+  end
+
+  @spec update_xp_bonus(Submission.t()) ::
+          {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
+
+  defp update_xp_bonus(submission = %Submission{id: submission_id}) do
+    assessment = submission.assessment
+    assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
+
+    max_bonus_xp = assessment_conifg.early_submission_xp
+    early_hours = assessment_conifg.hours_before_early_xp_decay
+    ans_xp =
+      Answer
+      |> where(submission_id: ^submission_id)
+      |> order_by(:question_id)
+      |> group_by([a], a.id)
+      |> select([a], %{
+        # grouping by submission, so s.xp_bonus will be the same, but we need an
+        # aggregate function
+        total_xp: sum(a.xp) + sum(a.xp_adjustment)
+      })
+      total =
+        ans_xp
+        |> subquery
+        |> select([a], %{
+          total_xp: sum(a.total_xp)
+        })
+        |> Repo.one()
+    xp = Decimal.to_integer(total.total_xp)
+    xp_bonus =
+      if xp <= 0 do
+        0
+      else
+        if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) do
+          max_bonus_xp
+        else
+          # This logic interpolates from max bonus at early hour to 0 bonus at close time
+          decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+          remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, Timex.now(), :hours)])
+          proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
+          bonus_xp = round(max_bonus_xp * proportion)
+          Enum.max([0, bonus_xp])
+        end
+      end
+    submission
+    |> Submission.changeset(%{xp_bonus: xp_bonus})
+    |> Repo.update()
   end
 
   @spec force_regrade_submission(integer() | String.t(), CourseRegistration.t()) ::
