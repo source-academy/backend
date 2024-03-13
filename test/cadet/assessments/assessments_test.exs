@@ -1704,7 +1704,7 @@ defmodule Cadet.AssessmentsTest do
   mix test ./test/cadet/assessments/assessments_test.exs
   TODO:
   assessment: title(D)
-  submission:  status(D), notFullyGraded
+  submission:  status(D), notFullyGraded (D)
   course_reg: group, groupName
   user: name, username
   assessment_config: type, isManuallyGraded
@@ -1733,6 +1733,14 @@ defmodule Cadet.AssessmentsTest do
       submissions_from_res = res[:data][:submissions]
       Enum.each(submissions_from_res, fn s ->
         assert s.status == submission_status
+      end)
+    end
+
+    test "filter by submission grading status", %{course_regs: %{avenger1_cr: avenger}, assessments: assessments} do
+      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"notFullyGraded" => "true"})
+      submissions_from_res = res[:data][:submissions]
+      Enum.each(submissions_from_res, fn s ->
+        assert s.question_count > s.graded_count
       end)
     end
   end
