@@ -177,10 +177,11 @@ defmodule Cadet.Test.Seeds do
         })
       end)
 
+    submissions_status = Enum.random(Cadet.Assessments.SubmissionStatus.__enums__)
     submissions =
       students
       |> Enum.take(2)
-      |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1}))
+      |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1, status: submissions_status}))
 
     # Programming Answers
     programming_answers =
