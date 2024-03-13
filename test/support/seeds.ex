@@ -113,7 +113,7 @@ defmodule Cadet.Test.Seeds do
         |> Enum.reduce(
           %{},
           fn config, acc ->
-            Map.put(acc, config.type, insert_assessments(config, students, course1))
+            Map.put(acc, config.type, insert_assessments(config, students, course1, avenger1_cr))
           end
         )
 
@@ -139,7 +139,7 @@ defmodule Cadet.Test.Seeds do
     end
   end
 
-  defp insert_assessments(assessment_config, students, course) do
+  defp insert_assessments(assessment_config, students, course, avenger) do
     assessment =
       insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
@@ -183,6 +183,8 @@ defmodule Cadet.Test.Seeds do
       |> Enum.take(2)
       |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1, status: submissions_status}))
 
+    is_graded = Enum.random([true, false])
+    grader = if is_graded, do: avenger, else: nil
     # Programming Answers
     programming_answers =
       Enum.map(submissions, fn submission ->
@@ -191,7 +193,8 @@ defmodule Cadet.Test.Seeds do
             xp: 800,
             question: question,
             submission: submission,
-            answer: build(:programming_answer)
+            answer: build(:programming_answer),
+            grader: grader
           })
         end)
       end)
@@ -203,7 +206,8 @@ defmodule Cadet.Test.Seeds do
             xp: 500,
             question: question,
             submission: submission,
-            answer: build(:mcq_answer)
+            answer: build(:mcq_answer),
+            grader: grader
           })
         end)
       end)
@@ -215,7 +219,8 @@ defmodule Cadet.Test.Seeds do
             xp: 100,
             question: question,
             submission: submission,
-            answer: build(:voting_answer)
+            answer: build(:voting_answer),
+            grader: grader
           })
         end)
       end)
