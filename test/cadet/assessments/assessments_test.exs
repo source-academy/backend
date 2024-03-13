@@ -1703,8 +1703,8 @@ defmodule Cadet.AssessmentsTest do
   """
   mix test ./test/cadet/assessments/assessments_test.exs
   TODO:
-  assessment: title
-  submission:  status, notFullyGraded
+  assessment: title(D)
+  submission:  status(D), notFullyGraded
   course_reg: group, groupName
   user: name, username
   assessment_config: type, isManuallyGraded
@@ -1723,6 +1723,16 @@ defmodule Cadet.AssessmentsTest do
       assessments_from_res = res[:data][:assessments]
       Enum.each(assessments_from_res, fn a ->
         assert a.title == title
+      end)
+    end
+
+    test "filer by submission status", %{course_regs: %{avenger1_cr: avenger}, assessments: assessments} do
+      submission = Enum.random(assessments["mission"][:submissions])
+      submission_status = submission.status
+      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"status" => submission_status})
+      submissions_from_res = res[:data][:submissions]
+      Enum.each(submissions_from_res, fn s ->
+        assert s.status == submission_status
       end)
     end
   end
