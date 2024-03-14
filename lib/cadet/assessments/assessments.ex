@@ -1609,6 +1609,9 @@ defmodule Cadet.Assessments do
       {"notFullyGraded", "true"}, dynamic ->
         dynamic([ans: ans, asst: asst], ^dynamic and asst.question_count > ans.graded_count)
 
+      {"notPublished", "true"}, dynamic ->
+        dynamic([submission], ^dynamic and not(submission.is_grading_published))
+
       {_, _}, dynamic ->
         dynamic
     end)
