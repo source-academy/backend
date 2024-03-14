@@ -1711,34 +1711,118 @@ defmodule Cadet.AssessmentsTest do
   """
   describe "get submission function" do
     setup do
-      Cadet.Test.Seeds.assessments()
+      seed = Cadet.Test.Seeds.assessments()
 
+      total_submissions =
+        Integer.to_string(
+          Enum.reduce(seed[:assessments], 0, fn {_, %{submissions: submissions}}, acc ->
+            length(submissions) + acc
+          end)
+        )
+
+      Map.put(seed, :total_submissions, total_submissions)
     end
 
-    test "filter by assessment title", %{course_regs: %{avenger1_cr: avenger}, assessments: assessments} do
-
+    test "filter by assessment title", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
       assessment = assessments["mission"][:assessment]
       title = assessment.title
-      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"title" => title})
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "title" => title,
+          "pageSize" => total_submissions
+        })
+
       assessments_from_res = res[:data][:assessments]
+
       Enum.each(assessments_from_res, fn a ->
         assert a.title == title
       end)
     end
 
-    test "filer by submission status", %{course_regs: %{avenger1_cr: avenger}, assessments: assessments} do
-      submission = Enum.random(assessments["mission"][:submissions])
-      submission_status = submission.status
-      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"status" => submission_status})
+    test "filter by submission status :attempting", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessments, 0, fn {_, %{submissions: submissions}}, acc ->
+          Enum.count(submissions, fn s -> s.status == :attempting end) + acc
+        end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "status" => "attempting",
+          "pageSize" => total_submissions
+        })
+
       submissions_from_res = res[:data][:submissions]
+      assert length(submissions_from_res) == expected_length
+
       Enum.each(submissions_from_res, fn s ->
-        assert s.status == submission_status
+        assert s.status == :attempting
       end)
     end
 
-    test "filter by submission grading status", %{course_regs: %{avenger1_cr: avenger}, assessments: assessments} do
-      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"notFullyGraded" => "true"})
+    test "filter by submission status :attempted", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments
+    } do
+      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"status" => "attempted"})
       submissions_from_res = res[:data][:submissions]
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.status == :attempted
+      end)
+    end
+
+    test "filter by submission status :submitted", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessments, 0, fn {_, %{submissions: submissions}}, acc ->
+          Enum.count(submissions, fn s -> s.status == :submitted end) + acc
+        end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "status" => "submitted",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.status == :submitted
+      end)
+    end
+
+    test "filter by submission not fully graded", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # All but one is fully graded
+      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "notFullyGraded" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
       Enum.each(submissions_from_res, fn s ->
         assert s.question_count > s.graded_count
       end)

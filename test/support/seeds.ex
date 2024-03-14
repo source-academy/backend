@@ -48,16 +48,30 @@ defmodule Cadet.Test.Seeds do
           email: "avenger1@gmail.com"
         })
 
+      avenger2 =
+        insert(:user, %{
+          name: "avenger2",
+          latest_viewed_course: course1,
+          email: "avenger2@gmail.com"
+        })
+
       admin1 = insert(:user, %{name: "admin", latest_viewed_course: course1})
 
       studenta1admin2 = insert(:user, %{name: "student a", latest_viewed_course: course1})
 
       studentb1 = insert(:user, %{latest_viewed_course: course1})
       studentc1 = insert(:user, %{latest_viewed_course: course1})
+      student_attempted = insert(:user, %{latest_viewed_course: course1})
+      student_submitted = insert(:user, %{latest_viewed_course: course1})
+      student_graded = insert(:user, %{latest_viewed_course: course1})
+      student_different_group = insert(:user, %{latest_viewed_course: course1})
+      student_group2 = insert(:user, %{latest_viewed_course: course1})
       # CourseRegistration and Group
       avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
+      avenger2_cr = insert(:course_registration, %{user: avenger2, course: course1, role: :staff})
       admin1_cr = insert(:course_registration, %{user: admin1, course: course1, role: :admin})
       group = insert(:group, %{leader: avenger1_cr})
+      group2 = insert(:group, %{leader: avenger2_cr})
 
       student1a_cr =
         insert(:course_registration, %{
@@ -83,7 +97,58 @@ defmodule Cadet.Test.Seeds do
           group: group
         })
 
-      students = [student1a_cr, student1b_cr, student1c_cr]
+      student_attempted_cr =
+        insert(:course_registration, %{
+          user: student_attempted,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
+      student_submitted_cr =
+        insert(:course_registration, %{
+          user: student_submitted,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
+      student_graded_cr =
+        insert(:course_registration, %{
+          user: student_graded,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
+      student_different_group_cr =
+        insert(:course_registration, %{
+          user: student_different_group,
+          course: course1,
+          role: :student,
+          group: group2
+        })
+
+      students = [
+        student1a_cr,
+        student1b_cr,
+        student1c_cr,
+        student_attempted_cr,
+        student_submitted_cr,
+        student_graded_cr,
+        student_different_group_cr
+      ]
+
+      # {student_cr, submission_status, is_graded, avenger}
+      students_with_assessment_info = [
+        {student1a_cr, :attempting, false, avenger1_cr},
+        {student1b_cr, :attempting, false, avenger1_cr},
+        {student1c_cr, :attempting, false, avenger1_cr},
+        {student_attempted_cr, :attempted, false, avenger1_cr},
+        {student_submitted_cr, :submitted, false, avenger1_cr},
+        {student_graded_cr, :submitted, true, avenger1_cr},
+        {student_different_group_cr, :attempting, false, avenger2_cr}
+      ]
 
       _admin2cr =
         insert(:course_registration, %{user: studenta1admin2, course: course2, role: :admin})
@@ -113,7 +178,11 @@ defmodule Cadet.Test.Seeds do
         |> Enum.reduce(
           %{},
           fn config, acc ->
-            Map.put(acc, config.type, insert_assessments(config, students, course1, avenger1_cr))
+            Map.put(
+              acc,
+              config.type,
+              insert_assessments(config, students_with_assessment_info, course1, avenger1_cr)
+            )
           end
         )
 
@@ -177,17 +246,23 @@ defmodule Cadet.Test.Seeds do
         })
       end)
 
-    submissions_status = Enum.random(Cadet.Assessments.SubmissionStatus.__enums__)
-    submissions =
+    submissions_with_grader =
       students
-      |> Enum.take(2)
-      |> Enum.map(&insert(:submission, %{assessment: assessment, student: &1, status: submissions_status}))
+      |> Enum.map(fn {student, submission_status, is_graded, avenger} ->
+        grader = if is_graded, do: avenger, else: nil
 
-    is_graded = Enum.random([true, false])
-    grader = if is_graded, do: avenger, else: nil
+        {grader,
+         insert(:submission, %{
+           assessment: assessment,
+           student: student,
+           status: submission_status
+         })}
+      end)
+
+    submissions = Enum.map(submissions_with_grader, fn {_, submission} -> submission end)
     # Programming Answers
     programming_answers =
-      Enum.map(submissions, fn submission ->
+      Enum.map(submissions_with_grader, fn {grader, submission} ->
         Enum.map(programming_questions, fn question ->
           insert(:answer, %{
             xp: 800,
@@ -200,7 +275,7 @@ defmodule Cadet.Test.Seeds do
       end)
 
     mcq_answers =
-      Enum.map(submissions, fn submission ->
+      Enum.map(submissions_with_grader, fn {grader, submission} ->
         Enum.map(mcq_questions, fn question ->
           insert(:answer, %{
             xp: 500,
@@ -213,7 +288,7 @@ defmodule Cadet.Test.Seeds do
       end)
 
     voting_answers =
-      Enum.map(submissions, fn submission ->
+      Enum.map(submissions_with_grader, fn {grader, submission} ->
         Enum.map(voting_questions, fn question ->
           insert(:answer, %{
             xp: 100,
