@@ -609,6 +609,47 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
 
     @tag authenticate: :staff
+    test "assessments that have not been unpublished should not be allowed to unsubmit", %{
+      conn: conn
+    } do
+      %{course: course, config: config, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          config: config,
+          course: course
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: true
+        )
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_unsubmit(course.id, submission.id))
+
+      assert response(conn, 403) =~ "Grading has not been unpublished"
+    end
+
+    @tag authenticate: :staff
     test "assessment that is not open anymore cannot be unsubmitted", %{conn: conn} do
       %{course: course, config: config, students: students} = seed_db(conn)
 
