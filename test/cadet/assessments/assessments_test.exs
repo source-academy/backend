@@ -1706,7 +1706,7 @@ defmodule Cadet.AssessmentsTest do
   assessment: title(D)
   submission:  status(D), notFullyGraded (D)
   course_reg: group (D), groupName (D)
-  user: name (D), username
+  user: name (D), username (D)
   assessment_config: type, isManuallyGraded
 
   checks:
@@ -1995,6 +1995,81 @@ defmodule Cadet.AssessmentsTest do
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
           "name" => student_name,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student username 1", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments)) * 1
+
+      student = Enum.at(students, 0)
+      student_username = student.user.username
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "username" => student_username,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student username 2", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments)) * 1
+
+      student = Enum.at(students, 1)
+      student_username = student.user.username
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "username" => student_username,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student username 3", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments)) * 1
+
+      student = Enum.at(students, 2)
+      student_username = student.user.username
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "username" => student_username,
           "pageSize" => total_submissions
         })
 
