@@ -537,7 +537,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       student = List.first(students)
 
       submission =
-        insert(:submission, assessment: assessment, student: student, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       answer =
         insert(
@@ -694,7 +699,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       question = insert(:programming_question, assessment: assessment)
 
       submission =
-        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: grader,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       insert(
         :answer,
@@ -729,7 +739,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       question = insert(:programming_question, assessment: assessment)
 
       submission =
-        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: grader,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       insert(
         :answer,
@@ -767,7 +782,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       student = List.first(students)
 
       submission =
-        insert(:submission, assessment: assessment, student: student, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       answer =
         insert(
