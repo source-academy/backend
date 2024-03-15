@@ -1708,7 +1708,11 @@ defmodule Cadet.AssessmentsTest do
   course_reg: group, groupName
   user: name, username
   assessment_config: type, isManuallyGraded
+
+  checks:
+  mix test ./test/cadet/assessments/assessments_test.exs ./test/cadet/email_test.exs ./test/cadet/jobs/notification_worker/notification_worker_test.exs ./test/cadet_web/controllers/assessments_controller_test.exs ./test/cadet_web/admin_controllers/admin_assessments_controller_test.exs
   """
+
   describe "get submission function" do
     setup do
       seed = Cadet.Test.Seeds.assessments()
@@ -1863,6 +1867,56 @@ defmodule Cadet.AssessmentsTest do
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger2, %{
           "group" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group2.id
+      end)
+    end
+
+    # Chose avenger2 to ensure that the group name is not the same as the avenger's group
+    test "filter by group name group", %{
+      course_regs: %{avenger2_cr: avenger2, group: group, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # All but one is in group
+      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      group_name = group.name
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger2, %{
+          "groupName" => group_name,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group.id
+      end)
+    end
+
+    # Chose avenger to ensure that the group name is not the same as the avenger's group
+    test "filter by group name group2", %{
+      course_regs: %{avenger1_cr: avenger, group2: group2, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # One in the group
+      expected_length = length(Map.keys(assessments)) * 1
+      group_name = group2.name
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "groupName" => group_name,
           "pageSize" => total_submissions
         })
 
