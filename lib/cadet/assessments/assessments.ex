@@ -911,7 +911,8 @@ defmodule Cadet.Assessments do
            {:allowed_to_unsubmit?,
             role == :admin or bypass or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)},
-         {:is_unpublished?, true} <- {:is_unpublished?, submission.is_grading_published} do
+         {:is_grading_published?, false} <-
+           {:is_grading_published?, submission.is_grading_published} do
       Multi.new()
       |> Multi.run(
         :rollback_submission,
@@ -975,7 +976,7 @@ defmodule Cadet.Assessments do
       {:allowed_to_unsubmit?, false} ->
         {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
 
-      {:is_unpublished?, false} ->
+      {:is_grading_published?, true} ->
         {:error, {:forbidden, "Grading has not been unpublished"}}
 
       _ ->
