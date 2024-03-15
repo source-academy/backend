@@ -1827,6 +1827,54 @@ defmodule Cadet.AssessmentsTest do
         assert s.question_count > s.graded_count
       end)
     end
+
+    test "filter by group avenger", %{
+      course_regs: %{avenger1_cr: avenger, group: group, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # All but one is in the same group
+      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "group" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group.id
+      end)
+    end
+
+    test "filter by group avenger2", %{
+      course_regs: %{avenger2_cr: avenger2, group2: group2, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # One in the same group
+      expected_length = length(Map.keys(assessments)) * 1
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger2, %{
+          "group" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group2.id
+      end)
+    end
   end
 
   defp get_answer_relative_scores(answers) do
