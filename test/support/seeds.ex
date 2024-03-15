@@ -193,7 +193,9 @@ defmodule Cadet.Test.Seeds do
         },
         course_regs: %{
           avenger1_cr: avenger1_cr,
+          avenger2_cr: avenger2_cr,
           group: group,
+          group2: group2,
           students: students,
           admin1_cr: admin1_cr
         },
