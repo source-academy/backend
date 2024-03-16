@@ -65,7 +65,7 @@ defmodule Cadet.Test.Seeds do
       student_submitted = insert(:user, %{latest_viewed_course: course1})
       student_graded = insert(:user, %{latest_viewed_course: course1})
       student_different_group = insert(:user, %{latest_viewed_course: course1})
-      student_group2 = insert(:user, %{latest_viewed_course: course1})
+
       # CourseRegistration and Group
       avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
       avenger2_cr = insert(:course_registration, %{user: avenger2, course: course1, role: :staff})
@@ -181,7 +181,7 @@ defmodule Cadet.Test.Seeds do
             Map.put(
               acc,
               config.type,
-              insert_assessments(config, students_with_assessment_info, course1, avenger1_cr)
+              insert_assessments(config, students_with_assessment_info, course1)
             )
           end
         )
@@ -210,7 +210,7 @@ defmodule Cadet.Test.Seeds do
     end
   end
 
-  defp insert_assessments(assessment_config, students, course, avenger) do
+  defp insert_assessments(assessment_config, students, course) do
     assessment =
       insert(:assessment, %{course: course, config: assessment_config, is_published: true})
 
