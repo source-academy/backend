@@ -1864,7 +1864,7 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       # One in the same group
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger2, %{
@@ -1915,7 +1915,7 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       # One in the group
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
       group_name = group2.name
 
       {_, res} =
@@ -1939,7 +1939,7 @@ defmodule Cadet.AssessmentsTest do
       assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 0)
       student_name = student.user.name
 
@@ -1963,7 +1963,7 @@ defmodule Cadet.AssessmentsTest do
       assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 1)
       student_name = student.user.name
 
@@ -1987,7 +1987,7 @@ defmodule Cadet.AssessmentsTest do
       assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 2)
       student_name = student.user.name
 
@@ -2011,7 +2011,7 @@ defmodule Cadet.AssessmentsTest do
       assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 0)
       student_username = student.user.username
 
@@ -2035,7 +2035,7 @@ defmodule Cadet.AssessmentsTest do
       assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 1)
       student_username = student.user.username
 
@@ -2059,7 +2059,7 @@ defmodule Cadet.AssessmentsTest do
       assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments)) * 1
+      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 2)
       student_username = student.user.username
 
@@ -2205,7 +2205,7 @@ defmodule Cadet.AssessmentsTest do
     } do
       expected_length =
         Enum.reduce(assessment_configs, 0, fn config, acc ->
-          if !config.is_manually_graded, do: acc + 1, else: acc
+          if config.is_manually_graded, do: acc, else: acc + 1
         end) * length(students)
 
       {_, res} =
