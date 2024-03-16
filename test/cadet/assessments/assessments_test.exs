@@ -1753,6 +1753,7 @@ defmodule Cadet.AssessmentsTest do
         })
 
       submissions_from_res = res[:data][:submissions]
+
       assert length(submissions_from_res) == expected_length
 
       Enum.each(submissions_from_res, fn s ->
@@ -1762,10 +1763,23 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by submission status :attempted", %{
       course_regs: %{avenger1_cr: avenger},
-      assessments: assessments
+      assessments: assessments,
+      total_submissions: total_submissions
     } do
-      {_, res} = Assessments.submissions_by_grader_for_index(avenger, %{"status" => "attempted"})
+      expected_length =
+        Enum.reduce(assessments, 0, fn {_, %{submissions: submissions}}, acc ->
+          Enum.count(submissions, fn s -> s.status == :attempted end) + acc
+        end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "status" => "attempted",
+          "pageSize" => total_submissions
+        })
+
       submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
 
       Enum.each(submissions_from_res, fn s ->
         assert s.status == :attempted
@@ -1926,7 +1940,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       expected_length = length(Map.keys(assessments)) * 1
-
       student = Enum.at(students, 0)
       student_name = student.user.name
 
@@ -1951,7 +1964,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       expected_length = length(Map.keys(assessments)) * 1
-
       student = Enum.at(students, 1)
       student_name = student.user.name
 
@@ -1976,7 +1988,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       expected_length = length(Map.keys(assessments)) * 1
-
       student = Enum.at(students, 2)
       student_name = student.user.name
 
@@ -2001,7 +2012,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       expected_length = length(Map.keys(assessments)) * 1
-
       student = Enum.at(students, 0)
       student_username = student.user.username
 
@@ -2026,7 +2036,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       expected_length = length(Map.keys(assessments)) * 1
-
       student = Enum.at(students, 1)
       student_username = student.user.username
 
@@ -2051,7 +2060,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       expected_length = length(Map.keys(assessments)) * 1
-
       student = Enum.at(students, 2)
       student_username = student.user.username
 
@@ -2077,7 +2085,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions
     } do
       expected_length = 1 * length(students)
-
       assessment_config = Enum.at(assessment_configs, 0)
       assessment_type = assessment_config.type
 
@@ -2089,9 +2096,10 @@ defmodule Cadet.AssessmentsTest do
 
       assessments_from_res = res[:data][:assessments]
       submissions_from_res = res[:data][:submissions]
-      assert length(assessments_from_res) == 1
       assessment = Enum.at(assessments_from_res, 0)
       assessment_id = assessment.id
+
+      assert length(assessments_from_res) == 1
       assert length(submissions_from_res) == expected_length
 
       Enum.each(submissions_from_res, fn s ->
@@ -2118,9 +2126,10 @@ defmodule Cadet.AssessmentsTest do
 
       assessments_from_res = res[:data][:assessments]
       submissions_from_res = res[:data][:submissions]
-      assert length(assessments_from_res) == 1
       assessment = Enum.at(assessments_from_res, 0)
       assessment_id = assessment.id
+
+      assert length(assessments_from_res) == 1
       assert length(submissions_from_res) == expected_length
 
       Enum.each(submissions_from_res, fn s ->
@@ -2147,9 +2156,10 @@ defmodule Cadet.AssessmentsTest do
 
       assessments_from_res = res[:data][:assessments]
       submissions_from_res = res[:data][:submissions]
-      assert length(assessments_from_res) == 1
       assessment = Enum.at(assessments_from_res, 0)
       assessment_id = assessment.id
+
+      assert length(assessments_from_res) == 1
       assert length(submissions_from_res) == expected_length
 
       Enum.each(submissions_from_res, fn s ->
@@ -2176,10 +2186,9 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
       assessments_from_res = res[:data][:assessments]
+      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
 
       assert length(submissions_from_res) == expected_length
-
-      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
       Enum.each(assessment_configs_from_res, fn config -> assert config.is_manually_graded end)
 
       # We know all assessments_from_res have correct config from previous check
@@ -2207,10 +2216,9 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
       assessments_from_res = res[:data][:assessments]
+      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
 
       assert length(submissions_from_res) == expected_length
-
-      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
       Enum.each(assessment_configs_from_res, fn config -> assert !config.is_manually_graded end)
 
       # We know all assessments_from_res have correct config from previous check
