@@ -1345,8 +1345,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
         max_team_size: 1
       })
 
-    S
-
     questions =
       for index <- 0..2 do
         # insert with display order in reverse
