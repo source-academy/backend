@@ -1700,19 +1700,7 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  """
-  mix test ./test/cadet/assessments/assessments_test.exs
-  TODO:
-  assessment: title(D)
-  submission:  status(D), notFullyGraded (D)
-  course_reg: group (D), groupName (D)
-  user: name (D), username (D)
-  assessment_config: type, isManuallyGraded
-
-  checks:
-  mix test ./test/cadet/assessments/assessments_test.exs ./test/cadet/email_test.exs ./test/cadet/jobs/notification_worker/notification_worker_test.exs ./test/cadet_web/controllers/assessments_controller_test.exs ./test/cadet_web/admin_controllers/admin_assessments_controller_test.exs
-  """
-
+  # Tests assume each config has only 1 assessment
   describe "get submission function" do
     setup do
       seed = Cadet.Test.Seeds.assessments()
@@ -2079,6 +2067,155 @@ defmodule Cadet.AssessmentsTest do
 
       Enum.each(submissions_from_res, fn s ->
         assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by assessment config 1", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length = 1 * length(students)
+
+      assessment_config = Enum.at(assessment_configs, 0)
+      assessment_type = assessment_config.type
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "type" => assessment_type,
+          "pageSize" => total_submissions
+        })
+
+      assessments_from_res = res[:data][:assessments]
+      submissions_from_res = res[:data][:submissions]
+      assert length(assessments_from_res) == 1
+      assessment = Enum.at(assessments_from_res, 0)
+      assessment_id = assessment.id
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.assessment_id == assessment_id
+      end)
+    end
+
+    test "filter by assessment config 2", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length = 1 * length(students)
+
+      assessment_config = Enum.at(assessment_configs, 1)
+      assessment_type = assessment_config.type
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "type" => assessment_type,
+          "pageSize" => total_submissions
+        })
+
+      assessments_from_res = res[:data][:assessments]
+      submissions_from_res = res[:data][:submissions]
+      assert length(assessments_from_res) == 1
+      assessment = Enum.at(assessments_from_res, 0)
+      assessment_id = assessment.id
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.assessment_id == assessment_id
+      end)
+    end
+
+    test "filter by assessment config 3", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length = 1 * length(students)
+
+      assessment_config = Enum.at(assessment_configs, 2)
+      assessment_type = assessment_config.type
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "type" => assessment_type,
+          "pageSize" => total_submissions
+        })
+
+      assessments_from_res = res[:data][:assessments]
+      submissions_from_res = res[:data][:submissions]
+      assert length(assessments_from_res) == 1
+      assessment = Enum.at(assessments_from_res, 0)
+      assessment_id = assessment.id
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.assessment_id == assessment_id
+      end)
+    end
+
+    test "filter by assessment config manually graded", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessment_configs, 0, fn config, acc ->
+          if config.is_manually_graded, do: acc + 1, else: acc
+        end) * length(students)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isManuallyGraded" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+
+      assert length(submissions_from_res) == expected_length
+
+      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
+      Enum.each(assessment_configs_from_res, fn config -> assert config.is_manually_graded end)
+
+      # We know all assessments_from_res have correct config from previous check
+      Enum.each(submissions_from_res, fn s ->
+        assert Enum.find(assessments_from_res, fn a -> a.id == s.assessment_id end) != nil
+      end)
+    end
+
+    test "filter by assessment config not manually graded", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessment_configs, 0, fn config, acc ->
+          if !config.is_manually_graded, do: acc + 1, else: acc
+        end) * length(students)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isManuallyGraded" => "false",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+
+      assert length(submissions_from_res) == expected_length
+
+      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
+      Enum.each(assessment_configs_from_res, fn config -> assert !config.is_manually_graded end)
+
+      # We know all assessments_from_res have correct config from previous check
+      Enum.each(submissions_from_res, fn s ->
+        assert Enum.find(assessments_from_res, fn a -> a.id == s.assessment_id end) != nil
       end)
     end
   end
