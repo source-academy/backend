@@ -1671,6 +1671,7 @@ defmodule Cadet.Assessments do
           |> join(:inner, [s], a in assoc(s, :assessment))
           |> preload([_, a], assessment: a)
           |> Repo.get(submission_id)
+
         update_xp_bonus(submission)
         Notifications.write_notification_when_graded(submission_id, :graded)
       else
@@ -1708,6 +1709,7 @@ defmodule Cadet.Assessments do
 
     max_bonus_xp = assessment_conifg.early_submission_xp
     early_hours = assessment_conifg.hours_before_early_xp_decay
+
     ans_xp =
       Answer
       |> where(submission_id: ^submission_id)
@@ -1718,14 +1720,17 @@ defmodule Cadet.Assessments do
         # aggregate function
         total_xp: sum(a.xp) + sum(a.xp_adjustment)
       })
-      total =
-        ans_xp
-        |> subquery
-        |> select([a], %{
-          total_xp: sum(a.total_xp)
-        })
-        |> Repo.one()
+
+    total =
+      ans_xp
+      |> subquery
+      |> select([a], %{
+        total_xp: sum(a.total_xp)
+      })
+      |> Repo.one()
+
     xp = Decimal.to_integer(total.total_xp)
+
     xp_bonus =
       if xp <= 0 do
         0
@@ -1734,13 +1739,16 @@ defmodule Cadet.Assessments do
           max_bonus_xp
         else
           # This logic interpolates from max bonus at early hour to 0 bonus at close time
-          decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+          decaying_hours =
+            Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+
           remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, Timex.now(), :hours)])
           proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
           bonus_xp = round(max_bonus_xp * proportion)
           Enum.max([0, bonus_xp])
         end
       end
+
     submission
     |> Submission.changeset(%{xp_bonus: xp_bonus})
     |> Repo.update()
