@@ -9,12 +9,10 @@ defmodule Cadet.Autograder.GradingJob do
 
   require Logger
 
-  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
+  alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.Utilities
-  alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
 
-  @spec close_and_make_empty_submission(Cadet.Assessments.Assessment.t()) :: list()
   def close_and_make_empty_submission(assessment = %Assessment{id: id}) do
     id
     |> Utilities.fetch_submissions(assessment.course_id)
