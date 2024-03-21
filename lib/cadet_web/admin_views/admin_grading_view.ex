@@ -3,34 +3,58 @@ defmodule CadetWeb.AdminGradingView do
 
   import CadetWeb.AssessmentsHelpers
 
-  def render("show.json", %{answers: answers}) do
-    render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
+  def render("show.json", %{answers: answers, assessment: assessment}) do
+    %{
+      assessment:
+        render_one(assessment, CadetWeb.AdminGradingView, "assessment.json", as: :assessment),
+      answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
+    }
+  end
+
+  def render("assessment.json", %{assessment: assessment}) do
+    %{
+      id: assessment.id,
+      title: assessment.title,
+      summaryShort: assessment.summary_short,
+      summaryLong: assessment.summary_long,
+      coverPicture: assessment.cover_picture,
+      number: assessment.number,
+      story: assessment.story,
+      reading: assessment.reading
+    }
   end
 
   def render("gradingsummaries.json", %{
-        users: users,
-        assessments: assessments,
-        submissions: submissions
-      }) do
-    for submission <- submissions do
-      user = users |> Enum.find(&(&1.id == submission.student_id))
-      assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
-
-      render(
-        CadetWeb.AdminGradingView,
-        "gradingsummary.json",
-        %{
-          user: user,
-          assessment: assessment,
-          submission: submission,
-          unsubmitter:
-            case submission.unsubmitted_by_id do
-              nil -> nil
-              _ -> users |> Enum.find(&(&1.id == submission.unsubmitted_by_id))
-            end
+        count: count,
+        data: %{
+          users: users,
+          assessments: assessments,
+          submissions: submissions
         }
-      )
-    end
+      }) do
+    %{
+      count: count,
+      data:
+        for submission <- submissions do
+          user = users |> Enum.find(&(&1.id == submission.student_id))
+          assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
+
+          render(
+            CadetWeb.AdminGradingView,
+            "gradingsummary.json",
+            %{
+              user: user,
+              assessment: assessment,
+              submission: submission,
+              unsubmitter:
+                case submission.unsubmitted_by_id do
+                  nil -> nil
+                  _ -> users |> Enum.find(&(&1.id == submission.unsubmitted_by_id))
+                end
+            }
+          )
+        end
+    }
   end
 
   def render("gradingsummary.json", %{

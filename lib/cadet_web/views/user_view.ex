@@ -104,6 +104,7 @@ defmodule CadetWeb.UserView do
           enableGame: :enable_game,
           enableAchievements: :enable_achievements,
           enableSourcecast: :enable_sourcecast,
+          enableStories: :enable_stories,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,
@@ -124,6 +125,7 @@ defmodule CadetWeb.UserView do
             type: :type,
             displayInDashboard: :show_grading_summary,
             isManuallyGraded: :is_manually_graded,
+            hasTokenCounter: :has_token_counter,
             earlySubmissionXp: :early_submission_xp,
             hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay
           })
