@@ -163,7 +163,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 9,
-            "isGradingPublished" => true
+            "isGradingPublished" => false
           }
         )
 
@@ -207,15 +207,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "renders xp for students", %{
       conn: conn,
       courses: %{course1: course1},
-      role_crs: %{student: student},
       assessment_configs: configs,
-      assessments: assessments
+      assessments: assessments,
+      student_grading_published: student_grading_published
     } do
       assessment = assessments[hd(configs).type].assessment
 
       resp =
         conn
-        |> sign_in(student.user)
+        |> sign_in(student_grading_published.user)
         |> get(build_url(course1.id))
         |> json_response(200)
         |> Enum.find(&(&1["id"] == assessment.id))
@@ -776,8 +776,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn: conn,
       courses: %{course1: course1},
       role_crs: role_crs,
-      assessments: assessments
+      assessments: assessments,
+      student_grading_published: student_grading_published
     } do
+      role_crs = Map.put(role_crs, :student, student_grading_published)
+
       for role <- Role.__enum_map__() do
         course_reg = Map.get(role_crs, role)
 
