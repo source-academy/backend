@@ -2050,7 +2050,12 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions,
       students_with_assessment_info: students_with_assessment_info
     } do
-      expected_length = length(Map.keys(assessments)) * Enum.count(students_with_assessment_info, fn {student, _, _, _, _} -> student.group.id == group.id end)
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {student, _, _, _, _} ->
+            student.group.id == group.id
+          end)
+
       group_name = group.name
 
       {_, res} =
@@ -2077,7 +2082,12 @@ defmodule Cadet.AssessmentsTest do
       students_with_assessment_info: students_with_assessment_info
     } do
       # One in the group
-      expected_length = length(Map.keys(assessments)) * Enum.count(students_with_assessment_info, fn {student, _, _, _, _} -> student.group.id == group2.id end)
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {student, _, _, _, _} ->
+            student.group.id == group2.id
+          end)
+
       group_name = group2.name
 
       {_, res} =
