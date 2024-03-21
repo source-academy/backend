@@ -944,7 +944,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1012,7 +1013,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1081,7 +1083,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1168,7 +1171,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1279,7 +1283,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1315,7 +1320,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1363,7 +1369,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1424,7 +1431,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1492,7 +1500,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1560,7 +1569,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1647,7 +1657,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{

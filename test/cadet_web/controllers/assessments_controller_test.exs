@@ -1402,7 +1402,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
     course_reg = insert(:course_registration, role: :student, course: course1)
 
     submission =
-      insert(:submission, assessment: assessment, student: course_reg, status: :submitted)
+      insert(:submission,
+        assessment: assessment,
+        student: course_reg,
+        status: :submitted,
+        is_grading_published: true
+      )
 
     Enum.each(
       [question_one, question_two],

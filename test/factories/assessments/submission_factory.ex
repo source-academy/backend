@@ -11,7 +11,7 @@ defmodule Cadet.Assessments.SubmissionFactory do
         %Submission{
           student: build(:course_registration, %{role: :student}),
           assessment: build(:assessment),
-          is_grading_published: true
+          is_grading_published: false
         }
       end
     end
