@@ -28,7 +28,9 @@ defmodule CadetWeb.AssessmentsView do
       private: &password_protected?(&1.password),
       isPublished: :is_published,
       questionCount: :question_count,
-      gradedCount: &(&1.graded_count || 0)
+      gradedCount: &(&1.graded_count || 0),
+      hasVotingFeatures: :has_voting_features,
+      hasTokenCounter: :has_token_counter
     })
   end
 
@@ -44,6 +46,7 @@ defmodule CadetWeb.AssessmentsView do
         number: :number,
         reading: :reading,
         longSummary: :summary_long,
+        hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         questions:
           &Enum.map(&1.questions, fn question ->
