@@ -1960,6 +1960,33 @@ defmodule Cadet.AssessmentsTest do
       end)
     end
 
+    test "filter by submission not published", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
+    } do
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, is_published, _} ->
+            !is_published
+          end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "notPublished" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.is_grading_published == false
+      end)
+    end
+
     test "filter by group avenger", %{
       course_regs: %{avenger1_cr: avenger, group: group, students: students},
       assessments: assessments,
