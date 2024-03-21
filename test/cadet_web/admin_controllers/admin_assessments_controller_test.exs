@@ -89,7 +89,9 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 9,
-            "xp" => (800 + 500 + 100) * 3
+            "xp" => (800 + 500 + 100) * 3,
+            "hasVotingFeatures" => &1.has_voting_features,
+            "hasTokenCounter" => &1.has_token_counter
           }
         )
 
@@ -135,7 +137,9 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 9,
-            "xp" => 0
+            "xp" => 0,
+            "hasVotingFeatures" => &1.has_voting_features,
+            "hasTokenCounter" => &1.has_token_counter
           }
         )
 
