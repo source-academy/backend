@@ -151,7 +151,7 @@ defmodule Cadet.AssessmentsTest do
           status: :attempting
         })
 
-      assert {:error, {:unauthorized, "User is not permitted to grade."}} =
+      assert {:error, {:forbidden, "User is not permitted to grade."}} =
                Assessments.update_grading_info(
                  %{submission: submission, question: question},
                  %{},
