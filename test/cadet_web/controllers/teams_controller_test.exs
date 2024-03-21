@@ -58,7 +58,7 @@ defmodule CadetWeb.TeamsControllerTest do
       course = Repo.get(Course, course_id)
       assessment = insert(:assessment, %{course: course})
       conn = get(conn, build_url_get_by_assessment(course.id, assessment.id))
-      assert response(conn, 200) == "Team is not found!"
+      assert response(conn, 404) == "Team is not found!"
     end
 
     @tag authenticate: :admin
