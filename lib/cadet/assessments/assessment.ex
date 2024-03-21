@@ -32,6 +32,8 @@ defmodule Cadet.Assessments.Assessment do
     field(:story, :string)
     field(:reading, :string)
     field(:password, :string, default: nil)
+    field(:has_token_counter, :boolean, default: :false)
+    field(:has_voting_features, :boolean, default: :false)
 
     belongs_to(:config, AssessmentConfig)
     belongs_to(:course, Course)
@@ -40,9 +42,9 @@ defmodule Cadet.Assessments.Assessment do
     timestamps()
   end
 
-  @required_fields ~w(title open_at close_at number course_id config_id)a
+  @required_fields ~w(title open_at close_at number course_id config_id )a
   @optional_fields ~w(reading summary_short summary_long
-    is_published story cover_picture access password)a
+    is_published story cover_picture access password has_token_counter has_voting_features)a
   @optional_file_fields ~w(mission_pdf)a
 
   def changeset(assessment, params) do
