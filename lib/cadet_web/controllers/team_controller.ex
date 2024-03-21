@@ -29,7 +29,7 @@ defmodule CadetWeb.TeamController do
 
     if team == nil do
       conn
-      |> put_status(:ok)
+      |> put_status(:not_found)
       |> text("Team is not found!")
     else
       team_formation_overview = team_to_team_formation_overview(team)
@@ -68,6 +68,7 @@ defmodule CadetWeb.TeamController do
     end
 
     response(200, "OK", Schema.ref(:TeamFormationOverview))
+    response(404, "Not Found")
     response(403, "Forbidden")
   end
 
