@@ -1821,7 +1821,9 @@ defmodule Cadet.AssessmentsTest do
       assert formatted_answer.grader != nil
       assert formatted_answer.grader_id != nil
       assert formatted_answer.comments != nil
-      
+    end
+  end
+
   # Tests assume each config has only 1 assessment
   describe "get submission function" do
     setup do
@@ -1936,10 +1938,12 @@ defmodule Cadet.AssessmentsTest do
     test "filter by submission not fully graded", %{
       course_regs: %{avenger1_cr: avenger, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # All but one is fully graded
-      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, is_graded, _, _} -> !is_graded end)
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
@@ -1959,10 +1963,14 @@ defmodule Cadet.AssessmentsTest do
     test "filter by group avenger", %{
       course_regs: %{avenger1_cr: avenger, group: group, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # All but one is in the same group
-      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, _, avenger_cr} ->
+            avenger_cr.id == avenger.id
+          end)
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
@@ -1983,10 +1991,14 @@ defmodule Cadet.AssessmentsTest do
     test "filter by group avenger2", %{
       course_regs: %{avenger2_cr: avenger2, group2: group2, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # One in the same group
-      expected_length = length(Map.keys(assessments))
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, _, avenger_cr} ->
+            avenger_cr.id == avenger2.id
+          end)
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger2, %{
@@ -2008,10 +2020,10 @@ defmodule Cadet.AssessmentsTest do
     test "filter by group name group", %{
       course_regs: %{avenger2_cr: avenger2, group: group, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # All but one is in group
-      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      expected_length = length(Map.keys(assessments)) * Enum.count(students_with_assessment_info, fn {student, _, _, _, _} -> student.group.id == group.id end)
       group_name = group.name
 
       {_, res} =
@@ -2034,10 +2046,11 @@ defmodule Cadet.AssessmentsTest do
     test "filter by group name group2", %{
       course_regs: %{avenger1_cr: avenger, group2: group2, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
       # One in the group
-      expected_length = length(Map.keys(assessments))
+      expected_length = length(Map.keys(assessments)) * Enum.count(students_with_assessment_info, fn {student, _, _, _, _} -> student.group.id == group2.id end)
       group_name = group2.name
 
       {_, res} =
