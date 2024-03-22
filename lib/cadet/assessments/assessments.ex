@@ -1077,6 +1077,41 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def publish_grading(submission_id)
+      when is_ecto_id(submission_id) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.get(submission_id)
+
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:status, :submitted} <- {:status, submission.status} do
+      submission
+      |> Submission.changeset(%{is_grading_published: true})
+      |> Repo.update()
+
+      Notifications.write_notification_when_graded(
+        submission.id,
+        :autograded
+      )
+
+      {:ok, nil}
+    else
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
   @spec update_submission_status_and_xp_bonus(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
@@ -1784,7 +1819,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_fully_graded?(%Answer{submission_id: submission_id}) do
+  defp is_fully_graded?(submission_id) do
     submission =
       Submission
       |> Repo.get_by(id: submission_id)
@@ -1799,6 +1834,27 @@ defmodule Cadet.Assessments do
       Answer
       |> where([a], submission_id: ^submission_id)
       |> where([a], not is_nil(a.grader_id))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    question_count == graded_count
+  end
+
+  def is_fully_autograded?(submission_id) do
+    submission =
+      Submission
+      |> Repo.get_by(id: submission_id)
+
+    question_count =
+      Question
+      |> where(assessment_id: ^submission.assessment_id)
+      |> select([q], count(q.id))
+      |> Repo.one()
+
+    graded_count =
+      Answer
+      |> where([a], submission_id: ^submission_id)
+      |> where([a], a.autograding_status == :success)
       |> select([a], count(a.id))
       |> Repo.one()
 
