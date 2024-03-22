@@ -32,8 +32,8 @@ defmodule Cadet.Assessments.Assessment do
     field(:story, :string)
     field(:reading, :string)
     field(:password, :string, default: nil)
-    field(:has_token_counter, :boolean, default: :false)
-    field(:has_voting_features, :boolean, default: :false)
+    field(:has_token_counter, :boolean, default: false)
+    field(:has_voting_features, :boolean, default: false)
 
     belongs_to(:config, AssessmentConfig)
     belongs_to(:course, Course)
