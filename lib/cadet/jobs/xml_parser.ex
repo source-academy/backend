@@ -8,9 +8,7 @@ defmodule Cadet.Updater.XMLParser do
   import Ecto.Query
   import SweetXml
 
-  alias Cadet.Repo
-  alias Cadet.Courses.AssessmentConfig
-  alias Cadet.Assessments
+  alias Cadet.{Repo, Courses.AssessmentConfig, Assessments}
 
   require Logger
 
