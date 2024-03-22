@@ -1041,6 +1041,7 @@ defmodule Cadet.Assessments do
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
          {:status, :submitted} <- {:status, submission.status},
+         {:fully_graded?, true} <- {:fully_graded?, is_fully_graded?(submission_id)},
          {:allowed_to_publish?, true} <-
            {:allowed_to_publish?,
             role == :admin or bypass or
@@ -1067,6 +1068,9 @@ defmodule Cadet.Assessments do
 
       {:allowed_to_publish?, false} ->
         {:error, {:forbidden, "Only Avenger of student or Admin is permitted to publish grading"}}
+
+      {:fully_graded?, false} ->
+        {:error, {:bad_request, "Some answers are not graded"}}
 
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
