@@ -99,11 +99,22 @@ if Cadet.Env.env() == :dev do
       end
 
     # Assessments and Submissions
-    valid_assessment_types = [{1, "Missions"}, {2, "Paths"}, {3, "Quests"}]
+    valid_assessment_types = [
+      {1, "Missions", false, true},
+      {2, "Paths", true, false},
+      {3, "Quests", false, true}
+    ]
 
     assessment_configs =
-      Enum.map(valid_assessment_types, fn {order, type} ->
-        insert(:assessment_config, %{type: type, order: order, course: course})
+      Enum.map(valid_assessment_types, fn {order, type, is_grading_auto_published,
+                                           is_manually_graded} ->
+        insert(:assessment_config, %{
+          type: type,
+          order: order,
+          course: course,
+          is_grading_auto_published: is_grading_auto_published,
+          is_manually_graded: is_manually_graded
+        })
       end)
 
     for i <- 1..number_of_assessments do
