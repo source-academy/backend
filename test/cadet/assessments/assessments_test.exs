@@ -2411,6 +2411,53 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
+  describe "is_fully_autograded? helper function" do
+    setup do
+      assessment = insert(:assessment)
+      student = insert(:course_registration, role: :student)
+      question = insert(:mcq_question, assessment: assessment)
+      question2 = insert(:mcq_question, assessment: assessment)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :submitted)
+
+      %{question: question, question2: question2, submission: submission}
+    end
+
+    test "returns true when all answers are autograded successfully", %{
+      question: question,
+      question2: question2,
+      submission: submission
+    } do
+      insert(:answer, submission: submission, question: question, autograding_status: :success)
+      insert(:answer, submission: submission, question: question2, autograding_status: :success)
+
+      assert Assessments.is_fully_autograded?(submission.id) == true
+    end
+
+    test "returns false when not all answers are autograded successfully", %{
+      question: question,
+      question2: question2,
+      submission: submission
+    } do
+      insert(:answer, submission: submission, question: question, autograding_status: :success)
+      insert(:answer, submission: submission, question: question2, autograding_status: :failed)
+
+      assert Assessments.is_fully_autograded?(submission.id) == false
+    end
+
+    test "returns false when not all answers are autograded successfully 2", %{
+      question: question,
+      question2: question2,
+      submission: submission
+    } do
+      insert(:answer, submission: submission, question: question, autograding_status: :success)
+      insert(:answer, submission: submission, question: question2, autograding_status: :none)
+
+      assert Assessments.is_fully_autograded?(submission.id) == false
+    end
+  end
+
   defp get_answer_relative_scores(answers) do
     answers |> Enum.map(fn ans -> ans.relative_score end)
   end
