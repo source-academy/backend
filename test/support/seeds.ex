@@ -149,7 +149,7 @@ defmodule Cadet.Test.Seeds do
         student_grading_published_cr
       ]
 
-      # {student_cr, submission_status, is_graded, is_published, avenger}
+      # {student_cr, submission_status, is_graded, is_grading_published, avenger}
       students_with_assessment_info = [
         {student1a_cr, :attempting, false, false, avenger1_cr},
         {student1b_cr, :attempting, false, false, avenger1_cr},
@@ -263,7 +263,7 @@ defmodule Cadet.Test.Seeds do
 
     submissions_with_grader =
       students
-      |> Enum.map(fn {student, submission_status, is_graded, is_published, avenger} ->
+      |> Enum.map(fn {student, submission_status, is_graded, is_grading_published, avenger} ->
         grader = if is_graded, do: avenger, else: nil
 
         {grader,
@@ -271,7 +271,7 @@ defmodule Cadet.Test.Seeds do
            assessment: assessment,
            student: student,
            status: submission_status,
-           is_grading_published: is_published
+           is_grading_published: is_grading_published
          })}
       end)
 

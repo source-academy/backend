@@ -2092,7 +2092,7 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions,
       students_with_assessment_info: students_with_assessment_info
     } do
-      # One in the group
+
       expected_length =
         length(Map.keys(assessments)) *
           Enum.count(students_with_assessment_info, fn {student, _, _, _, _} ->
