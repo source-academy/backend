@@ -82,12 +82,23 @@ defmodule CadetWeb.AdminAssessmentsController do
     open_at = params |> Map.get("openAt")
     close_at = params |> Map.get("closeAt")
     is_published = params |> Map.get("isPublished")
+    has_token_counter = params |> Map.get("hasTokenCounter")
+    has_voting_features = params |> Map.get("hasVotingFeatures")
 
     updated_assessment =
       if is_nil(is_published) do
         %{}
       else
         %{:is_published => is_published}
+      end
+
+    updated_assessment =
+      if is_nil(has_token_counter) do
+        updated_assessment
+      else
+        updated_assessment
+        |> Map.put(:has_token_counter, has_token_counter)
+        |> Map.put(:has_voting_features, has_voting_features)
       end
 
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
