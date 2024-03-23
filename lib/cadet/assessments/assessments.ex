@@ -1664,8 +1664,7 @@ defmodule Cadet.Assessments do
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
-      if is_fully_graded?(answer) and not is_own_submission do
-        # Every answer in this submission has been graded manually
+      if is_fully_graded?(answer) do
         submission =
           Submission
           |> join(:inner, [s], a in assoc(s, :assessment))
@@ -1673,6 +1672,9 @@ defmodule Cadet.Assessments do
           |> Repo.get(submission_id)
 
         update_xp_bonus(submission)
+      end
+      if is_fully_graded?(answer) and not is_own_submission do
+        # Every answer in this submission has been graded manually
         Notifications.write_notification_when_graded(submission_id, :graded)
       else
         {:ok, nil}
