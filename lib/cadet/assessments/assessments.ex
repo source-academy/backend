@@ -1729,7 +1729,7 @@ defmodule Cadet.Assessments do
       })
       |> Repo.one()
 
-    xp = Decimal.to_integer(total.total_xp)
+    xp = decimal_to_integer(total.total_xp)
 
     xp_bonus =
       if xp <= 0 do
