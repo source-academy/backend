@@ -1084,7 +1084,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           :answer,
           submission: submission,
           question: question,
-          answer: %{code: "f => f(f);"}
+          answer: %{code: "f => f(f);"},
+          xp_adjustment: 10
         )
 
         conn
@@ -1138,7 +1139,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             :answer,
             submission: submission,
             question: question,
-            answer: %{code: "f => f(f);"}
+            answer: %{code: "f => f(f);"},
+            xp_adjustment: 10
           )
 
           conn
