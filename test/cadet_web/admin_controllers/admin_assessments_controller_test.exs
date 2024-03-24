@@ -671,6 +671,76 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert response(conn, 200) == "OK"
       assert [assessment.open_at, assessment.close_at] == [new_open_at, close_at]
     end
+
+    @tag authenticate: :staff
+    test "successful, set hasTokenCounter and hasVotingFeatures to true", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          has_token_counter: false,
+          has_voting_features: false
+        })
+
+      new_has_token_counter = true
+      new_has_voting_features = true
+
+      new_assessment_setting = %{
+        hasTokenCounter: new_has_token_counter,
+        hasVotingFeatures: new_has_voting_features
+      }
+
+      conn =
+        conn
+        |> post(build_url(course.id, assessment.id), new_assessment_setting)
+
+      assessment = Repo.get(Assessment, assessment.id)
+      assert response(conn, 200) == "OK"
+
+      assert [assessment.has_token_counter, assessment.has_voting_features] == [
+               new_has_token_counter,
+               new_has_voting_features
+             ]
+    end
+
+    @tag authenticate: :staff
+    test "successful, set hasTokenCounter and hasVotingFeatures to false", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          has_token_counter: true,
+          has_voting_features: true
+        })
+
+      new_has_token_counter = false
+      new_has_voting_features = false
+
+      new_assessment_setting = %{
+        hasTokenCounter: new_has_token_counter,
+        hasVotingFeatures: new_has_voting_features
+      }
+
+      conn =
+        conn
+        |> post(build_url(course.id, assessment.id), new_assessment_setting)
+
+      assessment = Repo.get(Assessment, assessment.id)
+      assert response(conn, 200) == "OK"
+
+      assert [assessment.has_token_counter, assessment.has_voting_features] == [
+               new_has_token_counter,
+               new_has_voting_features
+             ]
+    end
   end
 
   defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/assessments/"
