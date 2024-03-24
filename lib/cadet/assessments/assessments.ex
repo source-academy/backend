@@ -1694,11 +1694,11 @@ defmodule Cadet.Assessments do
       {"status", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
 
-      {"notFullyGraded", "true"}, dynamic ->
-        dynamic([ans: ans, asst: asst], ^dynamic and asst.question_count > ans.graded_count)
+      {"isFullyGraded", value}, dynamic ->
+        dynamic([ans: ans, asst: asst], ^dynamic and (asst.question_count == ans.graded_count) == ^value)
 
-      {"notPublished", "true"}, dynamic ->
-        dynamic([submission], ^dynamic and not submission.is_grading_published)
+      {"isGradingPublished", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.is_grading_published == ^value)
 
       {_, _}, dynamic ->
         dynamic
