@@ -1112,6 +1112,56 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def publish_all_graded(publisher = %CourseRegistration{}, assessment_id) do
+    if publisher.role == :admin do
+      answers_query =
+        Answer
+        |> group_by([ans], ans.submission_id)
+        |> select([ans], %{
+          submission_id: ans.submission_id,
+          graded_count: filter(count(ans.id), not is_nil(ans.grader_id)),
+          autograded_count: filter(count(ans.id), ans.autograding_status == :success)
+        })
+
+      question_query =
+        Question
+        |> group_by([q], q.assessment_id)
+        |> join(:inner, [q], a in Assessment, on: q.assessment_id == a.id)
+        |> select([q, a], %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id)
+        })
+
+      submissions =
+        Submission
+        |> join(:left, [s], ans in subquery(answers_query), on: ans.submission_id == s.id)
+        |> join(:left, [s, ans], asst in subquery(question_query),
+          on: s.assessment_id == asst.assessment_id
+        )
+        |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
+        |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
+        |> where(
+          [s, ans, asst, cr],
+          asst.question_count == ans.graded_count or asst.question_count == ans.autograded_count
+        )
+        |> where([s, ans, asst, cr], s.is_grading_published == false)
+        |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
+        |> select([s, ans, asst, cr], %{
+          id: s.id
+        })
+        |> Repo.all()
+
+      submissions
+      |> Enum.map(fn s ->
+        publish_grading(s.id, publisher)
+      end)
+
+      {:ok, length(submissions)}
+    else
+      {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
+    end
+  end
+
   @spec update_submission_status_and_xp_bonus(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
