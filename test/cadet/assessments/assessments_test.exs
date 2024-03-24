@@ -1945,6 +1945,31 @@ defmodule Cadet.AssessmentsTest do
       end)
     end
 
+    test "filter by submission fully graded", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
+    } do
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, is_graded, _, _} -> is_graded end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isFullyGraded" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.question_count == s.graded_count
+      end)
+    end
+
     test "filter by submission not fully graded", %{
       course_regs: %{avenger1_cr: avenger, students: students},
       assessments: assessments,
@@ -1957,7 +1982,7 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "notFullyGraded" => "true",
+          "isFullyGraded" => "false",
           "pageSize" => total_submissions
         })
 
@@ -1967,6 +1992,33 @@ defmodule Cadet.AssessmentsTest do
 
       Enum.each(submissions_from_res, fn s ->
         assert s.question_count > s.graded_count
+      end)
+    end
+
+    test "filter by submission published", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
+    } do
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, is_published, _} ->
+            is_published
+          end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isGradingPublished" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.is_grading_published == true
       end)
     end
 
@@ -1984,7 +2036,7 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "notPublished" => "true",
+          "isGradingPublished" => "false",
           "pageSize" => total_submissions
         })
 

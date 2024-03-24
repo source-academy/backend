@@ -1590,7 +1590,7 @@ defmodule Cadet.Assessments do
         grader = %CourseRegistration{course_id: course_id},
         params \\ %{
           "group" => "false",
-          "notFullyGraded" => "true",
+          "isFullyGraded" => "false",
           "pageSize" => "10",
           "offset" => "0"
         }
@@ -1695,7 +1695,10 @@ defmodule Cadet.Assessments do
         dynamic([submission], ^dynamic and submission.status == ^value)
 
       {"isFullyGraded", value}, dynamic ->
-        dynamic([ans: ans, asst: asst], ^dynamic and (asst.question_count == ans.graded_count) == ^value)
+        dynamic(
+          [ans: ans, asst: asst],
+          ^dynamic and asst.question_count == ans.graded_count == ^value
+        )
 
       {"isGradingPublished", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.is_grading_published == ^value)
