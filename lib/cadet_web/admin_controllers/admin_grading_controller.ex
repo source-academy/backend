@@ -114,8 +114,8 @@ defmodule CadetWeb.AdminGradingController do
     course_reg = conn.assigns[:course_reg]
 
     case Assessments.publish_all_graded(course_reg, assessment_id) do
-      {:ok, count} ->
-        text(conn, "Published #{count} grades")
+      {:ok, nil} ->
+        text(conn, "OK")
 
       {:error, {status, message}} ->
         conn
