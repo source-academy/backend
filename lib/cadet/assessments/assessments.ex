@@ -516,6 +516,45 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, params_with_assessment_id)
   end
 
+  def update_voting(assessment_id, publish_voting) do
+    if publish_voting do
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> delete_submission_assocation(assessment_id)
+
+        Question
+        |> where(assessment_id: ^assessment_id)
+        |> Repo.all()
+        |> Enum.each(fn q ->
+          delete_submission_votes_association(q)
+        end)
+
+        voting_assigned_question_ids =
+          SubmissionVotes
+          |> select([v], v.question_id)
+          |> Repo.all()
+
+        unpublished_voting_questions =
+          Question
+          |> where(type: :voting)
+          |> where([q], q.id not in ^voting_assigned_question_ids)
+          |> where(assessment_id: ^assessment_id)
+          |> join(:inner, [q], asst in assoc(q, :assessment))
+          |> select([q, asst], %{course_id: asst.course_id, question: q.question, id: q.id})
+          |> Repo.all()
+
+          for q <- unpublished_voting_questions do
+            insert_voting(q.course_id, q.question["contest_number"], q.id)
+          end
+
+      {:ok, nil}
+    else
+
+      {:ok, "no change to voting"}
+    end
+
+  end
+
   def update_final_contest_entries do
     # 1435 = 1 day - 5 minutes
     if Log.log_execution("update_final_contest_entries", Duration.from_minutes(1435)) do
