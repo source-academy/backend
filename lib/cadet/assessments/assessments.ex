@@ -1077,6 +1077,7 @@ defmodule Cadet.Assessments do
     end
   end
 
+  # Used by the auto-grading system to publish grading (Bypasses Course Reg checks)
   def publish_grading(submission_id)
       when is_ecto_id(submission_id) do
     submission =
@@ -1112,6 +1113,8 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @spec publish_all_graded(Cadet.Accounts.CourseRegistration.t(), any()) ::
+    {:ok, nil} | {:error, {:forbidden, String.t()}}
   def publish_all_graded(publisher = %CourseRegistration{}, assessment_id) do
     if publisher.role == :admin do
       answers_query =
@@ -1132,36 +1135,49 @@ defmodule Cadet.Assessments do
           question_count: count(q.id)
         })
 
-      submissions =
-        Submission
-        |> join(:left, [s], ans in subquery(answers_query), on: ans.submission_id == s.id)
-        |> join(:left, [s, ans], asst in subquery(question_query),
-          on: s.assessment_id == asst.assessment_id
-        )
-        |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
-        |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
-        |> where(
-          [s, ans, asst, cr],
-          asst.question_count == ans.graded_count or asst.question_count == ans.autograded_count
-        )
-        |> where([s, ans, asst, cr], s.is_grading_published == false)
-        |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
-        |> select([s, ans, asst, cr], %{
-          id: s.id
-        })
-        |> Repo.all()
+      Submission
+      |> join(:inner, [s], ans in subquery(answers_query), on: ans.submission_id == s.id)
+      |> join(:inner, [s, ans], asst in subquery(question_query),
+        on: s.assessment_id == asst.assessment_id
+      )
+      |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
+      |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
+      |> where(
+        [s, ans, asst, cr],
+        asst.question_count == ans.graded_count or asst.question_count == ans.autograded_count
+      )
+      |> where([s, ans, asst, cr], s.is_grading_published == false)
+      |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
+      |> select([s, ans, asst, cr], %{
+        id: s.id
+      })
+      |> Repo.update_all(set: [is_grading_published: true])
 
-      submissions
-      |> Enum.map(fn s ->
-        publish_grading(s.id, publisher)
-      end)
-
-      {:ok, length(submissions)}
+      {:ok, nil}
     else
       {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
     end
   end
 
+  # ! TODO
+  # def unpublish_all(publisher = %CourseRegistration{}, assessment_id) do
+  #   if publisher.role == :admin do
+  #     submissions =
+  #       Submission
+  #       |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
+  #       |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
+  #       |> where([s, ans, asst, cr], s.is_grading_published == true)
+  #       |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
+  #       |> select([s, ans, asst, cr], %{
+  #         id: s.id
+  #       })
+  #       |> Repo.update_all(set: [is_grading_published: false])
+
+  #       {:ok, nil}
+  #   else
+  #     {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
+  #   end
+  # end
   @spec update_submission_status_and_xp_bonus(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
