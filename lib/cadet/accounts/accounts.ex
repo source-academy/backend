@@ -55,9 +55,8 @@ defmodule Cadet.Accounts do
     CourseRegistration
     |> where([cr], cr.course_id == ^course_id)
     |> join(:inner, [cr], u in assoc(cr, :user))
-    |> preload([cr, u], user: u)
     |> join(:left, [cr, u], g in assoc(cr, :group))
-    |> preload([cr, u, g], group: g)
+    |> preload([cr, u, g], user: u, group: g)
     |> get_users_helper(filter)
   end
 

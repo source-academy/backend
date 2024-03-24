@@ -30,23 +30,20 @@ jobs:
       - uses: rlespinasse/github-slug-action@v3.x
       - uses: actions/checkout@v2
       - name: Cache deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: deps
-          key: ${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-mix-
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
       - name: Cache _build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             _build
             !_build/prod/cadet-0.0.1.tar.gz
-          key: cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-${{ github.sha }}
-          restore-keys: |
-            cd-${{ env.GITHUB_REF_SLUG }}-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-
+          # Elixir is smart enough to know what needs to be recompiled automatically
+          key: cd-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}
       - name: Setup Elixir
-        uses: erlef/setup-elixir@v1
+        uses: erlef/setup-beam@v1
         with:
           elixir-version: ${{ env.ELIXIR_VERSION }}
           otp-version: ${{ env.OTP_VERSION }}

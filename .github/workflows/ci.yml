@@ -37,25 +37,23 @@ jobs:
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Cache deps
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: deps
-          key: ${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
-          restore-keys: |
-            ${{ runner.os }}-mix-
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
       - name: Cache _build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             _build
             priv/plts
-          key: 1-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-${{ github.sha }}
-          restore-keys: |
-            1-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-
+          # Elixir is smart enough to know what needs to be recompiled automatically
+          key: 1-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}
       - name: Setup Elixir
-        uses: erlef/setup-elixir@v1
+        uses: erlef/setup-beam@v1
         with:
           elixir-version: ${{ env.ELIXIR_VERSION }}
           otp-version: ${{ env.OTP_VERSION }}
