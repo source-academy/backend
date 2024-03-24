@@ -4,7 +4,7 @@ defmodule Cadet.AssessmentsTest do
   import Cadet.{Factory, TestEntityHelper}
 
   alias Cadet.Assessments
-  alias Cadet.Assessments.{Assessment, Question, SubmissionVotes}
+  alias Cadet.Assessments.{Assessment, Question, Submission, SubmissionVotes}
 
   test "create assessments of all types" do
     course = insert(:course)
@@ -1835,7 +1835,6 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  # Tests assume each config has only 1 assessment
   describe "get submission function" do
     setup do
       seed = Cadet.Test.Seeds.assessments()
@@ -2092,7 +2091,6 @@ defmodule Cadet.AssessmentsTest do
       total_submissions: total_submissions,
       students_with_assessment_info: students_with_assessment_info
     } do
-
       expected_length =
         length(Map.keys(assessments)) *
           Enum.count(students_with_assessment_info, fn {student, _, _, _, _} ->
@@ -2456,6 +2454,33 @@ defmodule Cadet.AssessmentsTest do
 
       assert Assessments.is_fully_autograded?(submission.id) == false
     end
+  end
+
+  test "publish all graded submissions" do
+    %{
+      role_crs: %{admin: admin},
+      assessments: assessments,
+      students_with_assessment_info: students
+    } = Cadet.Test.Seeds.assessments()
+
+    assessment_id = assessments["mission"][:assessment].id
+
+    # 1 student has all assessments published
+    expected_length =
+      Enum.count(students, fn {_, _, is_graded, is_grading_published, _} ->
+        is_graded and not is_grading_published
+      end) + length(Map.keys(assessments))
+
+    Assessments.publish_all_graded(admin, assessment_id)
+
+    published_submissions =
+      Submission
+      |> where([s], s.is_grading_published == true)
+      |> select([s], %{count: s.id |> count()})
+      |> Repo.one()
+
+    number_of_published_submissions = published_submissions.count
+    assert number_of_published_submissions == expected_length
   end
 
   defp get_answer_relative_scores(answers) do
