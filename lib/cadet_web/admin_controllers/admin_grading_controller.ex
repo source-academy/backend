@@ -109,6 +109,21 @@ defmodule CadetWeb.AdminGradingController do
     end
   end
 
+  def publish_all_grades(conn, %{"assessmentid" => assessment_id})
+      when is_ecto_id(assessment_id) do
+    course_reg = conn.assigns[:course_reg]
+
+    case Assessments.publish_all_graded(course_reg, assessment_id) do
+      {:ok, count} ->
+        text(conn, "Published #{count} grades")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
+  end
+
   def autograde_submission(conn, %{"submissionid" => submission_id}) do
     course_reg = conn.assigns[:course_reg]
 
