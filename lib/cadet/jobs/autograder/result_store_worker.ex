@@ -14,8 +14,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
   alias Ecto.Multi
 
-  alias Cadet.Repo
-  alias Cadet.Assessments
+  alias Cadet.{Assessments, Repo}
   alias Cadet.Assessments.{Answer, Assessment, Submission}
   alias Cadet.Courses.AssessmentConfig
 
