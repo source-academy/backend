@@ -516,8 +516,8 @@ defmodule Cadet.Assessments do
     Question.changeset(%Question{}, params_with_assessment_id)
   end
 
-  def update_voting(assessment_id, publish_voting) do
-    if publish_voting do
+  def reassign_voting(assessment_id, is_reassigning_voting) do
+    if is_reassigning_voting do
         Submission
         |> where(assessment_id: ^assessment_id)
         |> delete_submission_assocation(assessment_id)
