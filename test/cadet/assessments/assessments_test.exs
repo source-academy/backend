@@ -2508,31 +2508,67 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  test "publish all graded submissions" do
-    %{
-      role_crs: %{admin: admin},
-      assessments: assessments,
-      students_with_assessment_info: students
-    } = Cadet.Test.Seeds.assessments()
+  describe "publish and unpublish all submissions for an assessment" do
+    setup do
+      Cadet.Test.Seeds.assessments()
+    end
 
-    assessment_id = assessments["mission"][:assessment].id
+    test "publish all graded submissions for an assessment",
+         %{
+           role_crs: %{admin: admin},
+           assessments: assessments,
+           students_with_assessment_info: students
+         } do
+      assessment_id = assessments["mission"][:assessment].id
 
-    # 1 student has all assessments published
-    expected_length =
-      Enum.count(students, fn {_, _, is_graded, is_grading_published, _} ->
-        is_graded and not is_grading_published
-      end) + length(Map.keys(assessments))
+      # 1 student has all assessments published
+      expected_length =
+        Enum.count(students, fn {_, _, is_graded, is_grading_published, _} ->
+          is_graded and not is_grading_published
+        end) + length(Map.keys(assessments))
 
-    Assessments.publish_all_graded(admin, assessment_id)
+      Assessments.publish_all_graded(admin, assessment_id)
 
-    published_submissions =
-      Submission
-      |> where([s], s.is_grading_published == true)
-      |> select([s], %{count: s.id |> count()})
-      |> Repo.one()
+      published_submissions =
+        Submission
+        |> where([s], s.is_grading_published == true)
+        |> select([s], %{count: s.id |> count()})
+        |> Repo.one()
 
-    number_of_published_submissions = published_submissions.count
-    assert number_of_published_submissions == expected_length
+      number_of_published_submissions = published_submissions.count
+      assert number_of_published_submissions == expected_length
+    end
+
+    test "unpublish all submissions for an assessment",
+         %{
+           role_crs: %{admin: admin},
+           assessments: assessments,
+           students_with_assessment_info: students
+         } do
+      assessment_id = assessments["mission"][:assessment].id
+
+      published_submissions_before =
+        Submission
+        |> where([s], s.is_grading_published == true)
+        |> select([s], %{count: s.id |> count()})
+        |> Repo.one()
+
+      expected_unpublished_length =
+        Enum.count(students, fn {_, _, _, is_grading_published, _} ->
+          is_grading_published
+        end)
+
+      Assessments.unpublish_all(admin, assessment_id)
+
+      published_submissions_after =
+        Submission
+        |> where([s], s.is_grading_published == true)
+        |> select([s], %{count: s.id |> count()})
+        |> Repo.one()
+
+      assert published_submissions_after.count + expected_unpublished_length ==
+               published_submissions_before.count
+    end
   end
 
   defp get_answer_relative_scores(answers) do
