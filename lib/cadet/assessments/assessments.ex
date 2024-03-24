@@ -1113,8 +1113,6 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec publish_all_graded(Cadet.Accounts.CourseRegistration.t(), any()) ::
-    {:ok, nil} | {:error, {:forbidden, String.t()}}
   def publish_all_graded(publisher = %CourseRegistration{}, assessment_id) do
     if publisher.role == :admin do
       answers_query =
@@ -1159,25 +1157,24 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # ! TODO
-  # def unpublish_all(publisher = %CourseRegistration{}, assessment_id) do
-  #   if publisher.role == :admin do
-  #     submissions =
-  #       Submission
-  #       |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
-  #       |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
-  #       |> where([s, ans, asst, cr], s.is_grading_published == true)
-  #       |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
-  #       |> select([s, ans, asst, cr], %{
-  #         id: s.id
-  #       })
-  #       |> Repo.update_all(set: [is_grading_published: false])
+  def unpublish_all(publisher = %CourseRegistration{}, assessment_id) do
+    if publisher.role == :admin do
+      Submission
+      |> join(:inner, [s], cr in CourseRegistration, on: s.student_id == cr.id)
+      |> where([s, cr], cr.course_id == ^publisher.course_id)
+      |> where([s, cr], s.is_grading_published == true)
+      |> where([s, cr], s.assessment_id == ^assessment_id)
+      |> select([s, cr], %{
+        id: s.id
+      })
+      |> Repo.update_all(set: [is_grading_published: false])
 
-  #       {:ok, nil}
-  #   else
-  #     {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
-  #   end
-  # end
+      {:ok, nil}
+    else
+      {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
+    end
+  end
+
   @spec update_submission_status_and_xp_bonus(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
   defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
