@@ -84,6 +84,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     is_published = params |> Map.get("isPublished")
     has_token_counter = params |> Map.get("hasTokenCounter")
     has_voting_features = params |> Map.get("hasVotingFeatures")
+    reassign_voting = params |> Map.get("reassignEntriesForVoting")
 
     updated_assessment =
       if is_nil(is_published) do
@@ -102,7 +103,8 @@ defmodule CadetWeb.AdminAssessmentsController do
       end
 
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
-         {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment) do
+         {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment),
+         {:ok, _nil} <- Assessments.update_voting(assessment_id, reassign_voting) do
       text(conn, "OK")
     else
       {:error, {status, message}} ->
