@@ -333,7 +333,6 @@ defmodule Cadet.AssessmentsTest do
       Assessments.insert_voting(course.id, contest_question.assessment.number, question.id)
       Assessments.reassign_voting(voting_assessment.id, true)
 
-
       # students with own contest submissions will vote for 5 entries
       # students without own contest submissin will vote for 6 entries
       assert SubmissionVotes |> where(question_id: ^question.id) |> Repo.all() |> length() ==
