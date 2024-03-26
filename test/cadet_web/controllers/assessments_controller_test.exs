@@ -79,7 +79,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "private" => false,
               "isPublished" => &1.is_published,
               "gradedCount" => 0,
-              "questionCount" => 9
+              "questionCount" => 9,
+              "hasVotingFeatures" => &1.has_voting_features,
+              "hasTokenCounter" => &1.has_token_counter
             }
           )
 
@@ -163,7 +165,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
-            "questionCount" => 9
+            "questionCount" => 9,
+            "hasVotingFeatures" => &1.has_voting_features,
+            "hasTokenCounter" => &1.has_token_counter
           }
         )
 
@@ -274,6 +278,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "private" => false,
               "gradedCount" => 0,
               "questionCount" => 9,
+              "hasVotingFeatures" => &1.has_voting_features,
+              "hasTokenCounter" => &1.has_token_counter,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
                   false
@@ -308,6 +314,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "number" => assessment.number,
             "reading" => assessment.reading,
             "longSummary" => assessment.summary_long,
+            "hasTokenCounter" => assessment.has_token_counter,
             "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
           }
 
