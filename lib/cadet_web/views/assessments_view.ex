@@ -29,6 +29,7 @@ defmodule CadetWeb.AssessmentsView do
       isPublished: :is_published,
       questionCount: :question_count,
       gradedCount: &(&1.graded_count || 0),
+      maxTeamSize: :max_team_size,
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter
     })
