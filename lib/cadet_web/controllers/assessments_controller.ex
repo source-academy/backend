@@ -174,6 +174,8 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
+            hasTokenCounter(:boolean, "Does the assessment have Token Counter enabled?")
+
             maxXp(
               :integer,
               "The maximum XP for this assessment",
@@ -195,6 +197,8 @@ defmodule CadetWeb.AssessmentsController do
               "The number of answers in the submission which have been graded",
               required: true
             )
+
+            maxTeamSize(:integer, "The maximum team size allowed", required: true)
           end
         end,
       Assessment:
@@ -214,6 +218,7 @@ defmodule CadetWeb.AssessmentsController do
             story(:string, "The story that should be shown for this assessment")
             reading(:string, "The reading for this assessment")
             longSummary(:string, "Long summary", required: true)
+            hasTokenCounter(:boolean, "Does the assessment have Token Counter enabled?")
             missionPDF(:string, "The URL to the assessment pdf")
 
             questions(Schema.ref(:Questions), "The list of questions for this assessment")

@@ -29,7 +29,10 @@ defmodule CadetWeb.AssessmentsView do
       isPublished: :is_published,
       questionCount: :question_count,
       gradedCount: &(&1.graded_count || 0),
-      earlySubmissionXp: & &1.config.early_submission_xp
+      earlySubmissionXp: & &1.config.early_submission_xp,
+      maxTeamSize: :max_team_size,
+      hasVotingFeatures: :has_voting_features,
+      hasTokenCounter: :has_token_counter
     })
   end
 
@@ -45,6 +48,7 @@ defmodule CadetWeb.AssessmentsView do
         number: :number,
         reading: :reading,
         longSummary: :summary_long,
+        hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         questions:
           &Enum.map(&1.questions, fn question ->

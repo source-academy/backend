@@ -82,12 +82,36 @@ defmodule CadetWeb.AdminAssessmentsController do
     open_at = params |> Map.get("openAt")
     close_at = params |> Map.get("closeAt")
     is_published = params |> Map.get("isPublished")
+    max_team_size = params |> Map.get("maxTeamSize")
+    has_token_counter = params |> Map.get("hasTokenCounter")
+    has_voting_features = params |> Map.get("hasVotingFeatures")
 
     updated_assessment =
       if is_nil(is_published) do
         %{}
       else
         %{:is_published => is_published}
+      end
+
+    updated_assessment =
+      if is_nil(max_team_size) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :max_team_size, max_team_size)
+      end
+
+    updated_assessment =
+      if is_nil(has_token_counter) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :has_token_counter, has_token_counter)
+      end
+
+    updated_assessment =
+      if is_nil(has_voting_features) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :has_voting_features, has_voting_features)
       end
 
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
@@ -113,7 +137,6 @@ defmodule CadetWeb.AdminAssessmentsController do
       else
         assessment = Map.put(assessment, :open_at, formatted_open_date)
         assessment = Map.put(assessment, :close_at, formatted_close_date)
-
         {:ok, assessment}
       end
     end
@@ -207,6 +230,7 @@ defmodule CadetWeb.AdminAssessmentsController do
             closeAt(:string, "Open date", required: false)
             openAt(:string, "Close date", required: false)
             isPublished(:boolean, "Whether the assessment is published", required: false)
+            maxTeamSize(:number, "Max team size of the assessment", required: false)
           end
         end
     }
