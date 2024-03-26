@@ -24,6 +24,7 @@ defmodule Cadet.Assessments.Answer do
     field(:autograding_results, {:array, :map}, default: [])
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
+    field(:last_modified_at, :utc_datetime_usec)
 
     belongs_to(:grader, CourseRegistration)
     belongs_to(:submission, Submission)
@@ -33,7 +34,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment grader_id comments)a
+  @optional_fields ~w(xp xp_adjustment grader_id comments last_modified_at)a
 
   def changeset(answer, params) do
     answer
