@@ -104,9 +104,14 @@ defmodule CadetWeb.AdminAssessmentsController do
       if is_nil(has_token_counter) do
         updated_assessment
       else
+        Map.put(updated_assessment, :has_token_counter, has_token_counter)
+      end
+
+    updated_assessment =
+      if is_nil(has_voting_features) do
         updated_assessment
-        |> Map.put(:has_token_counter, has_token_counter)
-        |> Map.put(:has_voting_features, has_voting_features)
+      else
+        Map.put(updated_assessment, :has_voting_features, has_voting_features)
       end
 
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
