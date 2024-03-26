@@ -7,7 +7,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
   alias Cadet.Repo
   alias Cadet.Accounts.CourseRegistration
-  alias Cadet.Assessments.{Assessment, Submission}
+  alias Cadet.Assessments.{Assessment, Submission, SubmissionVotes, Question}
   alias Cadet.Test.XMLGenerator
   alias CadetWeb.AdminAssessmentsController
 
@@ -91,7 +91,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "questionCount" => 9,
             "xp" => (800 + 500 + 100) * 3,
             "hasVotingFeatures" => &1.has_voting_features,
-            "hasTokenCounter" => &1.has_token_counter
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => is_voting_published(&1)
           }
         )
 
@@ -139,7 +140,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "questionCount" => 9,
             "xp" => 0,
             "hasVotingFeatures" => &1.has_voting_features,
-            "hasTokenCounter" => &1.has_token_counter
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => is_voting_published(&1)
           }
         )
 
@@ -691,5 +693,18 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       |> Repo.one()
 
     (submission && submission.status |> Atom.to_string()) || "not_attempted"
+  end
+
+  defp is_voting_published(assessment) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment.id)
+    |> where([q], q.id in ^voting_assigned_question_ids)
+    |> Repo.exists?()
   end
 end
