@@ -84,7 +84,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     is_published = params |> Map.get("isPublished")
     has_token_counter = params |> Map.get("hasTokenCounter")
     has_voting_features = params |> Map.get("hasVotingFeatures")
-    is_reassigning_voting = params |> Map.get("reassignEntriesForVoting")
+    is_reassigning_voting = params |> Map.get("assignEntriesForVoting")
 
     updated_assessment =
       if is_nil(is_published) do
