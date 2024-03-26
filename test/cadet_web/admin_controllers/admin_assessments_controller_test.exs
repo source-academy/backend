@@ -91,6 +91,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "gradedCount" => 0,
             "questionCount" => 9,
             "xp" => (800 + 500 + 100) * 3,
+            "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter
           }
@@ -140,6 +141,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "gradedCount" => 0,
             "questionCount" => 9,
             "xp" => 0,
+            "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter
           }
