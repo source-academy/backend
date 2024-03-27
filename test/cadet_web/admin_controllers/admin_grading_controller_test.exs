@@ -142,6 +142,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
+              "team" => nil,
               "isGradingPublished" => submission.is_grading_published
             }
           end)
@@ -216,6 +217,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
+              "team" => nil,
               "isGradingPublished" => submission.is_grading_published
             }
           end)
@@ -327,7 +329,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :mcq ->
@@ -375,7 +378,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :voting ->
@@ -420,6 +424,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
                   },
+                  "team" => %{},
                   "solution" => ""
                 }
             end
@@ -1107,6 +1112,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
+              "team" => nil,
               "isGradingPublished" => submission.is_grading_published
             }
           end)
@@ -1161,6 +1167,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
               "unsubmittedAt" => nil,
+              "team" => nil,
               "isGradingPublished" => submission.is_grading_published
             }
           end)
@@ -1271,7 +1278,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :mcq ->
@@ -1319,7 +1327,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :voting ->
@@ -1364,6 +1373,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
                   },
+                  "team" => %{},
                   "solution" => ""
                 }
             end
@@ -1607,7 +1617,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
         title: "mission",
         course: course,
         config: assessment_config,
-        is_published: true
+        is_published: true,
+        max_team_size: 1
       })
 
     questions =

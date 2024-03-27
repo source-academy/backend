@@ -73,12 +73,16 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => &1.config.type,
               "isManuallyGraded" => &1.config.is_manually_graded,
               "coverImage" => &1.cover_picture,
+              "maxTeamSize" => &1.max_team_size,
               "maxXp" => 4800,
               "status" => get_assessment_status(course_reg, &1),
               "private" => false,
               "isPublished" => &1.is_published,
               "gradedCount" => 0,
-              "questionCount" => 9
+              "questionCount" => 9,
+              "earlySubmissionXp" => &1.config.early_submission_xp,
+              "hasVotingFeatures" => &1.has_voting_features,
+              "hasTokenCounter" => &1.has_token_counter
             }
           )
 
@@ -157,13 +161,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "type" => &1.config.type,
             "isManuallyGraded" => &1.config.is_manually_graded,
             "coverImage" => &1.cover_picture,
+            "maxTeamSize" => &1.max_team_size,
             "maxXp" => 4800,
             "status" => get_assessment_status(student, &1),
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 9,
-            "isGradingPublished" => false
+            "isGradingPublished" => false,
+            "earlySubmissionXp" => &1.config.early_submission_xp,
+            "hasVotingFeatures" => &1.has_voting_features,
+            "hasTokenCounter" => &1.has_token_counter
           }
         )
 
@@ -268,11 +276,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => &1.config.type,
               "isManuallyGraded" => &1.config.is_manually_graded,
               "coverImage" => &1.cover_picture,
+              "maxTeamSize" => &1.max_team_size,
               "maxXp" => 4800,
               "status" => get_assessment_status(course_reg, &1),
               "private" => false,
               "gradedCount" => 0,
               "questionCount" => 9,
+              "hasVotingFeatures" => &1.has_voting_features,
+              "hasTokenCounter" => &1.has_token_counter,
+              "earlySubmissionXp" => &1.config.early_submission_xp,
               "isGradingPublished" => nil,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
@@ -308,6 +320,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "number" => assessment.number,
             "reading" => assessment.reading,
             "longSummary" => assessment.summary_long,
+            "hasTokenCounter" => assessment.has_token_counter,
             "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
           }
 
@@ -466,6 +479,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "solution"))
             |> Enum.map(&Map.delete(&1, "library"))
             |> Enum.map(&Map.delete(&1, "xp"))
+            |> Enum.map(&Map.delete(&1, "lastModifiedAt"))
             |> Enum.map(&Map.delete(&1, "maxXp"))
             |> Enum.map(&Map.delete(&1, "grader"))
             |> Enum.map(&Map.delete(&1, "gradedAt"))

@@ -29,7 +29,9 @@ defmodule CadetWeb.AdminGradingView do
         data: %{
           users: users,
           assessments: assessments,
-          submissions: submissions
+          submissions: submissions,
+          teams: teams,
+          team_members: team_members
         }
       }) do
     %{
@@ -38,6 +40,14 @@ defmodule CadetWeb.AdminGradingView do
         for submission <- submissions do
           user = users |> Enum.find(&(&1.id == submission.student_id))
           assessment = assessments |> Enum.find(&(&1.id == submission.assessment_id))
+          team = teams |> Enum.find(&(&1.id == submission.team_id))
+          team_members = team_members |> Enum.filter(&(&1.team_id == submission.team_id))
+
+          team_member_users =
+            team_members
+            |> Enum.map(fn team_member ->
+              users |> Enum.find(&(&1.id == team_member.student_id))
+            end)
 
           render(
             CadetWeb.AdminGradingView,
@@ -46,6 +56,8 @@ defmodule CadetWeb.AdminGradingView do
               user: user,
               assessment: assessment,
               submission: submission,
+              team: team,
+              team_members: team_member_users,
               unsubmitter:
                 case submission.unsubmitted_by_id do
                   nil -> nil
@@ -61,6 +73,8 @@ defmodule CadetWeb.AdminGradingView do
         user: user,
         assessment: a,
         submission: s,
+        team: team,
+        team_members: team_members,
         unsubmitter: unsubmitter
       }) do
     s
@@ -82,6 +96,11 @@ defmodule CadetWeb.AdminGradingView do
       assessment:
         render_one(a, CadetWeb.AdminGradingView, "gradingsummaryassessment.json", as: :assessment),
       student: render_one(user, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr),
+      team:
+        render_one(team, CadetWeb.AdminGradingView, "gradingsummaryteam.json",
+          as: :team,
+          assigns: %{team_members: team_members}
+        ),
       unsubmittedBy:
         case unsubmitter do
           nil -> nil
@@ -99,6 +118,14 @@ defmodule CadetWeb.AdminGradingView do
       type: a.config.type,
       maxXp: a.questions |> Enum.map(& &1.max_xp) |> Enum.sum(),
       questionCount: a.questions |> Enum.count()
+    }
+  end
+
+  def render("gradingsummaryteam.json", %{team: team, assigns: %{team_members: team_members}}) do
+    %{
+      id: team.id,
+      team_members:
+        render_many(team_members, CadetWeb.AdminGradingView, "gradingsummaryuser.json", as: :cr)
     }
   end
 
@@ -122,12 +149,8 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
-      student:
-        &transform_map_for_view(&1.submission.student, %{
-          name: fn st -> st.user.name end,
-          id: :id,
-          username: fn st -> st.user.username end
-        }),
+      student: &extract_student_data(&1.submission.student),
+      team: &extract_team_data(&1.submission.team),
       question: &build_grading_question/1,
       solution: &(&1.question.question["solution"] || ""),
       grade: &build_grade/1
@@ -136,6 +159,35 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_summary.json", %{cols: cols, summary: summary}) do
     %{cols: cols, rows: summary}
+  end
+
+  defp extract_student_data(nil), do: %{}
+
+  defp extract_student_data(student) do
+    transform_map_for_view(student, %{
+      name: fn st -> st.user.name end,
+      id: :id,
+      username: fn st -> st.user.username end
+    })
+  end
+
+  defp extract_team_member_data(team_member) do
+    transform_map_for_view(team_member, %{
+      name: & &1.student.user.name,
+      id: :id,
+      username: & &1.student.user.username
+    })
+  end
+
+  defp extract_team_data(nil), do: %{}
+
+  defp extract_team_data(team) do
+    members = team.team_members
+
+    case members do
+      [] -> nil
+      _ -> Enum.map(members, &extract_team_member_data/1)
+    end
   end
 
   defp build_grading_question(answer) do
