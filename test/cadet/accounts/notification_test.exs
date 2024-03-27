@@ -320,28 +320,31 @@ defmodule Cadet.Accounts.NotificationTest do
       student: student,
       individual_submission: individual_submission
     } do
-      Notifications.write_notification_when_graded(individual_submission.id, :autograded)
+      Notifications.write_notification_when_published(
+        individual_submission.id,
+        :published_grading
+      )
 
       notification =
         Repo.get_by(Notification,
           course_reg_id: student.id,
-          type: :autograded,
+          type: :published_grading,
           assessment_id: assessment.id
         )
 
-      assert %{type: :autograded} = notification
+      assert %{type: :published_grading} = notification
     end
 
     test "no notification when no submission", %{
       assessment: assessment,
       student: student
     } do
-      Notifications.write_notification_when_graded(-1, :autograded)
+      Notifications.write_notification_when_published(-1, :published_grading)
 
       notification =
         Repo.get_by(Notification,
           course_reg_id: student.id,
-          type: :autograded,
+          type: :published_grading,
           assessment_id: assessment.id
         )
 
@@ -353,7 +356,7 @@ defmodule Cadet.Accounts.NotificationTest do
       team: team,
       team_submission: team_submission
     } do
-      Notifications.write_notification_when_graded(team_submission.id, :autograded)
+      Notifications.write_notification_when_published(team_submission.id, :published_grading)
 
       team_members =
         Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
@@ -364,11 +367,11 @@ defmodule Cadet.Accounts.NotificationTest do
         notification =
           Repo.get_by(Notification,
             course_reg_id: student.id,
-            type: :autograded,
+            type: :published_grading,
             assessment_id: assessment.id
           )
 
-        assert %{type: :autograded} = notification
+        assert %{type: :published_grading} = notification
       end)
     end
 
@@ -377,16 +380,19 @@ defmodule Cadet.Accounts.NotificationTest do
       student: student,
       individual_submission: individual_submission
     } do
-      Notifications.write_notification_when_graded(individual_submission.id, :graded)
+      Notifications.write_notification_when_published(
+        individual_submission.id,
+        :published_grading
+      )
 
       notification =
         Repo.get_by(Notification,
           course_reg_id: student.id,
-          type: :graded,
+          type: :published_grading,
           assessment_id: assessment.id
         )
 
-      assert %{type: :graded} = notification
+      assert %{type: :published_grading} = notification
     end
 
     test "receives notification when maunally graded [team submission]", %{
@@ -394,7 +400,7 @@ defmodule Cadet.Accounts.NotificationTest do
       team: team,
       team_submission: team_submission
     } do
-      Notifications.write_notification_when_graded(team_submission.id, :graded)
+      Notifications.write_notification_when_published(team_submission.id, :published_grading)
 
       team_members =
         Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
@@ -405,11 +411,11 @@ defmodule Cadet.Accounts.NotificationTest do
         notification =
           Repo.get_by(Notification,
             course_reg_id: student.id,
-            type: :graded,
+            type: :published_grading,
             assessment_id: assessment.id
           )
 
-        assert %{type: :graded} = notification
+        assert %{type: :published_grading} = notification
       end)
     end
 

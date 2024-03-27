@@ -3,11 +3,15 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
 
   import ExUnit.CaptureLog
 
-  alias Cadet.Assessments.Answer
+  alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Autograder.ResultStoreWorker
 
   setup do
-    answer = insert(:answer, %{question: insert(:question), submission: insert(:submission)})
+    assessment_config = insert(:assessment_config, %{is_grading_auto_published: true})
+    assessment = insert(:assessment, %{config: assessment_config})
+    question = insert(:question, %{assessment: assessment})
+    submission = insert(:submission, %{status: :submitted, assessment: assessment})
+    answer = insert(:answer, %{question: question, submission: submission})
     success_no_errors = %{status: :success, score: 10, max_score: 10, result: []}
 
     success_with_errors = %{
@@ -68,7 +72,7 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
   end
 
   describe "#perform, valid answer_id" do
-    test "before manual grading", %{answer: answer, results: results} do
+    test "before manual grading and grading auto published", %{answer: answer, results: results} do
       for result <- results do
         ResultStoreWorker.perform(%{answer_id: answer.id, result: result})
 
@@ -95,18 +99,27 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
                    )
         end
 
+        submission = Repo.get(Submission, answer.submission_id)
+
+        if result.status == :success do
+          assert submission.is_grading_published == true
+        else
+          assert submission.is_grading_published == false
+        end
+
         assert answer.autograding_status == result.status
         assert answer.autograding_results == errors_string_keys
       end
     end
 
-    test "after manual grading", %{results: results} do
+    test "after manual grading and grading not auto published", %{results: results} do
       grader = insert(:course_registration, %{role: :staff})
 
+      # Question uses default assessment config (is_grading_auto_published: false)
       answer =
         insert(:answer, %{
           question: insert(:question),
-          submission: insert(:submission),
+          submission: insert(:submission, %{status: :submitted}),
           grader_id: grader.id
         })
 
@@ -135,6 +148,10 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
                      result.max_score
                    )
         end
+
+        submission = Repo.get(Submission, answer.submission_id)
+
+        assert submission.is_grading_published == false
 
         assert answer.autograding_status == result.status
         assert answer.autograding_results == errors_string_keys

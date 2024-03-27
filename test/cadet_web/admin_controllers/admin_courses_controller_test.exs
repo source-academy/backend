@@ -176,7 +176,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "type" => "Mission1",
           "assessmentConfigId" => config1.id,
           "hasVotingFeatures" => false,
-          "hasTokenCounter" => false
+          "hasTokenCounter" => false,
+          "isGradingAutoPublished" => false
         },
         %{
           "earlySubmissionXp" => 200,
@@ -186,7 +187,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "type" => "Mission2",
           "assessmentConfigId" => config2.id,
           "hasVotingFeatures" => true,
-          "hasTokenCounter" => true
+          "hasTokenCounter" => true,
+          "isGradingAutoPublished" => false
         },
         %{
           "earlySubmissionXp" => 200,
@@ -196,7 +198,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "type" => "Mission3",
           "assessmentConfigId" => config3.id,
           "hasVotingFeatures" => false,
-          "hasTokenCounter" => false
+          "hasTokenCounter" => false,
+          "isGradingAutoPublished" => false
         }
       ]
 

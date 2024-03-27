@@ -411,10 +411,12 @@ defmodule Cadet.Autograder.GradingJobTest do
     end
   end
 
-  describe "#grade_all_due_yesterday, all mcq questions" do
+  describe "#grade_all_due_yesterday, all mcq questions, grading set to auto publish" do
     setup do
       course = insert(:course)
-      assessment_config = insert(:assessment_config, %{course: course})
+
+      assessment_config =
+        insert(:assessment_config, %{course: course, is_grading_auto_published: true})
 
       assessments =
         insert_list(3, :assessment, %{
@@ -441,9 +443,10 @@ defmodule Cadet.Autograder.GradingJobTest do
          } do
       student = insert(:course_registration, %{course: course, role: :student})
 
-      for {assessment, _} <- assessments do
-        insert(:submission, %{student: student, assessment: assessment, status: :attempting})
-      end
+      submissions =
+        Enum.map(assessments, fn {assessment, _} ->
+          insert(:submission, %{student: student, assessment: assessment, status: :attempting})
+        end)
 
       GradingJob.grade_all_due_yesterday()
 
@@ -455,6 +458,12 @@ defmodule Cadet.Autograder.GradingJobTest do
         |> Repo.all()
 
       assert Enum.count(answers) == 9
+
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == true
+      end)
 
       for answer <- answers do
         assert answer.xp == 0
@@ -495,9 +504,11 @@ defmodule Cadet.Autograder.GradingJobTest do
       questions = Enum.flat_map(assessments, fn {_, questions} -> questions end)
       answers = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
 
-      for submission <- submissions do
-        assert Repo.get(Submission, submission.id).status == :submitted
-      end
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == true
+      end)
 
       for {answer, question} <- Enum.zip(answers, questions) do
         answer_db = Repo.get(Answer, answer.id)
@@ -516,10 +527,128 @@ defmodule Cadet.Autograder.GradingJobTest do
     end
   end
 
-  describe "#grade_all_due_yesterday, all voting questions" do
+  describe "#grade_all_due_yesterday, all mcq questions, grading set to not auto publish" do
     setup do
       course = insert(:course)
-      assessment_config = insert(:assessment_config, %{course: course})
+
+      assessment_config =
+        insert(:assessment_config, %{course: course, is_grading_auto_published: false})
+
+      assessments =
+        insert_list(3, :assessment, %{
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -4),
+          config: assessment_config,
+          course: course
+        })
+
+      questions =
+        for assessment <- assessments do
+          insert_list(3, :mcq_question, %{max_xp: 200, assessment: assessment})
+        end
+
+      %{course: course, assessments: Enum.zip(assessments, questions)}
+    end
+
+    test "all assessments attempted, all questions unanswered, " <>
+           "should insert empty answers, should not enqueue any",
+         %{
+           course: course,
+           assessments: assessments
+         } do
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      submissions =
+        Enum.map(assessments, fn {assessment, _} ->
+          insert(:submission, %{student: student, assessment: assessment, status: :attempting})
+        end)
+
+      GradingJob.grade_all_due_yesterday()
+
+      answers =
+        Submission
+        |> where(student_id: ^student.id)
+        |> join(:inner, [s], a in assoc(s, :answers))
+        |> select([_, a], a)
+        |> Repo.all()
+
+      assert Enum.count(answers) == 9
+
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == false
+      end)
+
+      for answer <- answers do
+        assert answer.xp == 0
+        assert answer.autograding_status == :success
+        assert answer.answer == %{"choice_id" => 0}
+      end
+
+      assert Enum.empty?(JobsQueue.all())
+    end
+
+    test "all assessments attempted, all questions answered, " <>
+           "should grade all questions, should not enqueue any",
+         %{
+           course: course,
+           assessments: assessments
+         } do
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      submissions_answers =
+        Enum.map(assessments, fn {assessment, questions} ->
+          submission =
+            insert(:submission, %{student: student, assessment: assessment, status: :attempted})
+
+          answers =
+            Enum.map(questions, fn question ->
+              insert(:answer, %{
+                question: question,
+                submission: submission,
+                answer: build(:mcq_answer)
+              })
+            end)
+
+          {submission, answers}
+        end)
+
+      GradingJob.grade_all_due_yesterday()
+      submissions = Enum.map(submissions_answers, fn {submission, _} -> submission end)
+      questions = Enum.flat_map(assessments, fn {_, questions} -> questions end)
+      answers = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
+
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == false
+      end)
+
+      for {answer, question} <- Enum.zip(answers, questions) do
+        answer_db = Repo.get(Answer, answer.id)
+
+        # seeded questions have correct choice as 0
+        if answer_db.answer["choice_id"] == 0 do
+          assert answer_db.xp == question.max_xp
+        else
+          assert answer_db.xp == 0
+        end
+
+        assert answer_db.autograding_status == :success
+      end
+
+      assert Enum.empty?(JobsQueue.all())
+    end
+  end
+
+  describe "#grade_all_due_yesterday, all voting questions, grading set to auto publish" do
+    setup do
+      course = insert(:course)
+
+      assessment_config =
+        insert(:assessment_config, %{course: course, is_grading_auto_published: true})
 
       assessments =
         insert_list(3, :assessment, %{
@@ -546,9 +675,10 @@ defmodule Cadet.Autograder.GradingJobTest do
          } do
       student = insert(:course_registration, %{course: course, role: :student})
 
-      for {assessment, _} <- assessments do
-        insert(:submission, %{student: student, assessment: assessment, status: :attempting})
-      end
+      submissions =
+        Enum.map(assessments, fn {assessment, _} ->
+          insert(:submission, %{student: student, assessment: assessment, status: :attempting})
+        end)
 
       GradingJob.grade_all_due_yesterday()
 
@@ -560,6 +690,12 @@ defmodule Cadet.Autograder.GradingJobTest do
         |> Repo.all()
 
       assert Enum.count(answers) == 9
+
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == true
+      end)
 
       for answer <- answers do
         assert answer.xp == 0
@@ -605,9 +741,138 @@ defmodule Cadet.Autograder.GradingJobTest do
       submissions = Enum.map(submissions_answers, fn {submission, _} -> submission end)
       answers = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
 
-      for submission <- submissions do
-        assert Repo.get(Submission, submission.id).status == :submitted
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == true
+      end)
+
+      for {question, answer} <- Enum.zip(questions, answers) do
+        is_nil_entries =
+          SubmissionVotes
+          |> where(voter_id: ^student.id)
+          |> where(question_id: ^question.id)
+          |> where([sv], is_nil(sv.score))
+          |> Repo.exists?()
+
+        answer_db = Repo.get(Answer, answer.id)
+
+        if is_nil_entries do
+          assert answer_db.xp == 0
+        else
+          assert answer_db.xp == question.max_xp
+        end
+
+        assert answer_db.autograding_status == :success
       end
+
+      assert Enum.empty?(JobsQueue.all())
+    end
+  end
+
+  describe "#grade_all_due_yesterday, all voting questions, grading set to not auto publish" do
+    setup do
+      course = insert(:course)
+
+      assessment_config =
+        insert(:assessment_config, %{course: course, is_grading_auto_published: false})
+
+      assessments =
+        insert_list(3, :assessment, %{
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -4),
+          config: assessment_config,
+          course: course
+        })
+
+      questions =
+        for assessment <- assessments do
+          insert_list(3, :voting_question, %{max_xp: 20, assessment: assessment})
+        end
+
+      %{course: course, assessments: Enum.zip(assessments, questions)}
+    end
+
+    test "all assessments attempted, all questions unanswered, " <>
+           "should insert empty answers, should not enqueue any",
+         %{
+           course: course,
+           assessments: assessments
+         } do
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      submissions =
+        Enum.map(assessments, fn {assessment, _} ->
+          insert(:submission, %{student: student, assessment: assessment, status: :attempting})
+        end)
+
+      GradingJob.grade_all_due_yesterday()
+
+      answers =
+        Submission
+        |> where(student_id: ^student.id)
+        |> join(:inner, [s], a in assoc(s, :answers))
+        |> select([_, a], a)
+        |> Repo.all()
+
+      assert Enum.count(answers) == 9
+
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == false
+      end)
+
+      for answer <- answers do
+        assert answer.xp == 0
+        assert answer.autograding_status == :success
+        assert answer.answer == %{"completed" => false}
+      end
+
+      assert Enum.empty?(JobsQueue.all())
+    end
+
+    test "all assessments attempted, all questions aswered, " <>
+           "should grade all questions, should not enqueue any",
+         %{
+           course: course,
+           assessments: assessments
+         } do
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      submissions_answers =
+        for {assessment, questions} <- assessments do
+          submission =
+            insert(:submission, %{student: student, assessment: assessment, status: :attempted})
+
+          answers =
+            for question <- questions do
+              case Enum.random(0..1) do
+                0 -> insert(:submission_vote, %{voter: student, question: question, score: 1})
+                1 -> insert(:submission_vote, %{voter: student, question: question})
+              end
+
+              insert(:answer, %{
+                question: question,
+                submission: submission,
+                answer: build(:voting_answer)
+              })
+            end
+
+          {submission, answers}
+        end
+
+      GradingJob.grade_all_due_yesterday()
+      questions = Enum.flat_map(assessments, fn {_, questions} -> questions end)
+      submissions = Enum.map(submissions_answers, fn {submission, _} -> submission end)
+      answers = Enum.flat_map(submissions_answers, fn {_, answers} -> answers end)
+
+      Enum.each(submissions, fn submission ->
+        submission = Repo.get(Submission, submission.id)
+        assert submission.status == :submitted
+        assert submission.is_grading_published == false
+      end)
 
       for {question, answer} <- Enum.zip(questions, answers) do
         is_nil_entries =

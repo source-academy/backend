@@ -76,7 +76,7 @@ defmodule Cadet.Workers.NotificationWorker do
             {:ok, %{data: %{submissions: ungraded_submissions}}} =
               Cadet.Assessments.submissions_by_grader_for_index(avenger_cr, %{
                 "group" => "true",
-                "notFullyGraded" => "true"
+                "isFullyGraded" => "false"
               })
 
             if Enum.count(ungraded_submissions) < ungraded_threshold do
