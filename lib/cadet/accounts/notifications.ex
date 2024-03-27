@@ -177,6 +177,7 @@ defmodule Cadet.Accounts.Notifications do
     |> where(assessment_id: ^assessment_id)
     |> where([n], n.type in ^[:published_grading])
     |> Repo.delete_all()
+
     write(%{
       type: :unpublished_grading,
       read: false,

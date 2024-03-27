@@ -320,7 +320,10 @@ defmodule Cadet.Accounts.NotificationTest do
       student: student,
       individual_submission: individual_submission
     } do
-      Notifications.write_notification_when_published(individual_submission.id, :published_grading)
+      Notifications.write_notification_when_published(
+        individual_submission.id,
+        :published_grading
+      )
 
       notification =
         Repo.get_by(Notification,
@@ -377,7 +380,10 @@ defmodule Cadet.Accounts.NotificationTest do
       student: student,
       individual_submission: individual_submission
     } do
-      Notifications.write_notification_when_published(individual_submission.id, :published_grading)
+      Notifications.write_notification_when_published(
+        individual_submission.id,
+        :published_grading
+      )
 
       notification =
         Repo.get_by(Notification,
