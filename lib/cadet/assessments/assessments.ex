@@ -1177,9 +1177,9 @@ defmodule Cadet.Assessments do
       |> Submission.changeset(%{is_grading_published: true})
       |> Repo.update()
 
-      Notifications.write_notification_when_graded(
+      Notifications.write_notification_when_published(
         submission.id,
-        :graded
+        :published_grading
       )
 
       {:ok, nil}
@@ -1219,9 +1219,9 @@ defmodule Cadet.Assessments do
       |> Submission.changeset(%{is_grading_published: true})
       |> Repo.update()
 
-      Notifications.write_notification_when_graded(
+      Notifications.write_notification_when_published(
         submission.id,
-        :autograded
+        :published_grading
       )
 
       {:ok, nil}

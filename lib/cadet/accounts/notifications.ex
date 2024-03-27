@@ -145,18 +145,18 @@ defmodule Cadet.Accounts.Notifications do
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unsubmit_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
-    # Fetch and delete all notifications of :autograded and :graded
+    # Fetch and delete all notifications of :unpublished_grading
     # Add new notification :unsubmitted
 
     Notification
     |> where(course_reg_id: ^student.id)
     |> where(assessment_id: ^assessment_id)
-    |> where([n], n.type in ^[:autograded, :graded, :unpublished_grading])
+    |> where([n], n.type in ^[:unpublished_grading])
     |> Repo.delete_all()
 
     write(%{
       type: :unsubmitted,
-      role: student.role,
+      role: :student,
       course_reg_id: student.id,
       assessment_id: assessment_id
     })
@@ -169,18 +169,18 @@ defmodule Cadet.Accounts.Notifications do
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unpublish_grades_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
-    # Fetch and delete all notifications of :graded
-    # Add new notification :unpublished
+    # Fetch and delete all notifications of :published
+    # Add new notification :unpublished_grading
 
     Notification
     |> where(course_reg_id: ^student.id)
     |> where(assessment_id: ^assessment_id)
-    |> where([n], n.type in ^[:autograded, :graded, :unsubmitted])
+    |> where([n], n.type in ^[:published_grading])
     |> Repo.delete_all()
-
     write(%{
       type: :unpublished_grading,
-      role: student.role,
+      read: false,
+      role: :student,
       course_reg_id: student.id,
       assessment_id: assessment_id
     })
@@ -190,9 +190,9 @@ defmodule Cadet.Accounts.Notifications do
   Writes a notification that a student's submission has been
   graded successfully. (for the student)
   """
-  @spec write_notification_when_graded(integer(), any()) ::
+  @spec write_notification_when_published(integer(), any()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def write_notification_when_graded(submission_id, type) when type in [:graded, :autograded] do
+  def write_notification_when_published(submission_id, type) when type in [:published_grading] do
     case Repo.get(Submission, submission_id) do
       nil ->
         {:error, %Ecto.Changeset{}}

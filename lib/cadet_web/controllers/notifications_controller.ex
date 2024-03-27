@@ -103,12 +103,10 @@ defmodule CadetWeb.NotificationsController do
 
           enum([
             :new,
-            :deadline,
-            :autograded,
-            :graded,
             :submitted,
             :unsubmitted,
             :unpublishedGrading,
+            :publishedGrading,
             :new_message
           ])
         end
