@@ -556,20 +556,20 @@ defmodule Cadet.Assessments do
   end
 
   def reassign_voting(assessment_id, is_reassigning_voting) do
-    if is_voting_published(assessment_id) do
-      Submission
-      |> where(assessment_id: ^assessment_id)
-      |> delete_submission_association(assessment_id)
-
-      Question
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.all()
-      |> Enum.each(fn q ->
-        delete_submission_votes_association(q)
-      end)
-    end
-
     if is_reassigning_voting do
+      if is_voting_published(assessment_id) do
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> delete_submission_association(assessment_id)
+
+        Question
+        |> where(assessment_id: ^assessment_id)
+        |> Repo.all()
+        |> Enum.each(fn q ->
+          delete_submission_votes_association(q)
+        end)
+      end
+
       voting_assigned_question_ids =
         SubmissionVotes
         |> select([v], v.question_id)
