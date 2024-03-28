@@ -568,6 +568,7 @@ defmodule Cadet.Assessments do
         delete_submission_votes_association(q)
       end)
     end
+
     if is_reassigning_voting do
       voting_assigned_question_ids =
         SubmissionVotes
