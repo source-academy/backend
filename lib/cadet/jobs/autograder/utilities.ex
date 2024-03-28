@@ -11,7 +11,12 @@ defmodule Cadet.Autograder.Utilities do
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
-  def dispatch_programming_answer(answer = %Answer{}, question = %Question{}, overwrite \\ false) do
+  def dispatch_programming_answer(
+    base_question = %Question{},
+    answers = [%Answer{}],
+    answer = %Answer{},
+    questions = [%Question{}],
+    overwrite \\ false) do
     # This should never fail
     answer =
       answer
@@ -19,8 +24,10 @@ defmodule Cadet.Autograder.Utilities do
       |> Repo.update!()
 
     Que.add(Cadet.Autograder.LambdaWorker, %{
-      question: question,
+      base_question: base_question,
       answer: answer,
+      questions: questions,
+      answers: answers,
       overwrite: overwrite
     })
   end
