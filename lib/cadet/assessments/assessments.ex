@@ -556,10 +556,10 @@ defmodule Cadet.Assessments do
   end
 
   def reassign_voting(assessment_id, is_reassigning_voting) do
-    if is_reassigning_voting do
+    if is_voting_published(assessment_id) do
       Submission
       |> where(assessment_id: ^assessment_id)
-      |> delete_submission_assocation(assessment_id)
+      |> delete_submission_association(assessment_id)
 
       Question
       |> where(assessment_id: ^assessment_id)
@@ -567,7 +567,8 @@ defmodule Cadet.Assessments do
       |> Enum.each(fn q ->
         delete_submission_votes_association(q)
       end)
-
+    end
+    if is_reassigning_voting do
       voting_assigned_question_ids =
         SubmissionVotes
         |> select([v], v.question_id)
@@ -590,6 +591,19 @@ defmodule Cadet.Assessments do
     else
       {:ok, "no change to voting"}
     end
+  end
+
+  def is_voting_published(assessment_id) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment_id)
+    |> where([q], q.id in ^voting_assigned_question_ids)
+    |> Repo.exists?()
   end
 
   def update_final_contest_entries do

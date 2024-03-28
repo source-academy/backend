@@ -7,7 +7,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.{Role, CourseRegistration}
-  alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus, SubmissionVotes, Question}
+  alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus}
   alias Cadet.Autograder.GradingJob
   alias CadetWeb.AssessmentsController
 
@@ -83,7 +83,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "earlySubmissionXp" => &1.config.early_submission_xp,
               "hasVotingFeatures" => &1.has_voting_features,
               "hasTokenCounter" => &1.has_token_counter,
-              "isVotingPublished" => is_voting_published(&1)
+              "isVotingPublished" => Assessments.is_voting_published(&1.id)
             }
           )
 
@@ -171,7 +171,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
-            "isVotingPublished" => is_voting_published(&1)
+            "isVotingPublished" => Assessments.is_voting_published(&1.id)
           }
         )
 
@@ -284,7 +284,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "questionCount" => 9,
               "hasVotingFeatures" => &1.has_voting_features,
               "hasTokenCounter" => &1.has_token_counter,
-              "isVotingPublished" => is_voting_published(&1),
+              "isVotingPublished" => Assessments.is_voting_published(&1.id),
               "earlySubmissionXp" => &1.config.early_submission_xp,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
@@ -1588,18 +1588,5 @@ defmodule CadetWeb.AssessmentsControllerTest do
       |> Repo.one()
 
     (submission && submission.status |> Atom.to_string()) || "not_attempted"
-  end
-
-  defp is_voting_published(assessment) do
-    voting_assigned_question_ids =
-      SubmissionVotes
-      |> select([v], v.question_id)
-      |> Repo.all()
-
-    Question
-    |> where(type: :voting)
-    |> where(assessment_id: ^assessment.id)
-    |> where([q], q.id in ^voting_assigned_question_ids)
-    |> Repo.exists?()
   end
 end

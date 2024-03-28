@@ -5,9 +5,9 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   import Ecto.Query
   import ExUnit.CaptureLog
 
-  alias Cadet.Repo
+  alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.CourseRegistration
-  alias Cadet.Assessments.{Assessment, Submission, SubmissionVotes, Question}
+  alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Test.XMLGenerator
   alias CadetWeb.AdminAssessmentsController
 
@@ -94,7 +94,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
-            "isVotingPublished" => is_voting_published(&1)
+            "isVotingPublished" => Assessments.is_voting_published(&1.id)
           }
         )
 
@@ -145,7 +145,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
-            "isVotingPublished" => is_voting_published(&1)
+            "isVotingPublished" => Assessments.is_voting_published(&1.id)
           }
         )
 
@@ -767,18 +767,5 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       |> Repo.one()
 
     (submission && submission.status |> Atom.to_string()) || "not_attempted"
-  end
-
-  defp is_voting_published(assessment) do
-    voting_assigned_question_ids =
-      SubmissionVotes
-      |> select([v], v.question_id)
-      |> Repo.all()
-
-    Question
-    |> where(type: :voting)
-    |> where(assessment_id: ^assessment.id)
-    |> where([q], q.id in ^voting_assigned_question_ids)
-    |> Repo.exists?()
   end
 end
