@@ -187,6 +187,11 @@ defmodule CadetWeb.Router do
   #   pipe_through :api
   # end
 
+  scope "/api", CadetWeb do
+    pipe_through :api
+    resources "/shared_programs", SharedProgramController, only: [:index, :show, :create, :delete]
+  end
+
   def swagger_info do
     %{
       info: %{
