@@ -197,6 +197,8 @@ defmodule CadetWeb.AssessmentsController do
               "The number of answers in the submission which have been graded",
               required: true
             )
+
+            maxTeamSize(:integer, "The maximum team size allowed", required: true)
           end
         end,
       Assessment:

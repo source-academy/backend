@@ -80,6 +80,12 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/answer", AnswerController, :submit)
 
+    post(
+      "/assessments/question/:questionid/answerLastModified",
+      AnswerController,
+      :check_last_modified
+    )
+
     get("/achievements", IncentivesController, :index_achievements)
     get("/self/goals", IncentivesController, :index_goals)
     post("/self/goals/:uuid/progress", IncentivesController, :update_progress)
@@ -94,6 +100,8 @@ defmodule CadetWeb.Router do
     put("/user/research_agreement", UserController, :update_research_agreement)
 
     get("/config", CoursesController, :index)
+
+    get("/team/:assessmentid", TeamController, :index)
   end
 
   # Admin pages
@@ -124,6 +132,7 @@ defmodule CadetWeb.Router do
     )
 
     get("/users", AdminUserController, :index)
+    get("/users/teamformation", AdminUserController, :get_students)
     put("/users", AdminUserController, :upsert_users_and_groups)
     get("/users/:course_reg_id/assessments", AdminAssessmentsController, :index)
 
@@ -165,6 +174,12 @@ defmodule CadetWeb.Router do
       AdminCoursesController,
       :delete_assessment_config
     )
+
+    get("/teams", AdminTeamsController, :index)
+    post("/teams", AdminTeamsController, :create)
+    delete("/teams/:teamid", AdminTeamsController, :delete)
+    put("/teams/:teamid", AdminTeamsController, :update)
+    post("/teams/upload", AdminTeamsController, :bulk_upload)
   end
 
   # Other scopes may use custom stacks.
