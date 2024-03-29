@@ -121,8 +121,8 @@ defmodule Cadet.Autograder.GradingJob do
     end
   end
 
-  def grade_answer(question = %Question{type: type}, answers = [%Answer{}], answer = %Answer{},
-    questions = [%Question{}], overwrite \\ false) do
+  def grade_answer(question = %Question{type: type}, answers, answer = %Answer{},
+    questions, overwrite \\ false) do
     case type do
       :programming ->
         Utilities.dispatch_programming_answer(question, answers, answer, questions, overwrite)
@@ -217,12 +217,6 @@ defmodule Cadet.Autograder.GradingJob do
        when is_boolean(regrade) and is_boolean(overwrite) and is_ecto_id(submission_id) do
     if question.id == answer.question_id do
       if regrade || answer.autograding_status in [:none, :failed] do
-        IO.inspect(question, label: "question")
-        IO.inspect(answers, label: "answers")
-        IO.inspect(answer, label: "answer")
-        IO.inspect(questions, label: "questions")
-        IO.inspect(overwrite, label: "overwrite")
-
         grade_answer(question, answers, answer, questions, overwrite)
       end
 

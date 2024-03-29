@@ -13,9 +13,9 @@ defmodule Cadet.Autograder.Utilities do
 
   def dispatch_programming_answer(
     base_question = %Question{},
-    answers = [%Answer{}],
+    answers,
     answer = %Answer{},
-    questions = [%Question{}],
+    questions,
     overwrite \\ false) do
     # This should never fail
     answer =
