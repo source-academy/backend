@@ -588,7 +588,7 @@ defmodule Cadet.Assessments do
         insert_voting(q.course_id, q.question["contest_number"], q.id)
       end
 
-      {:ok, nil}
+      {:ok, "voting assigned"}
     else
       {:ok, "no change to voting"}
     end
