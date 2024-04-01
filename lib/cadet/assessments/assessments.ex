@@ -1260,23 +1260,34 @@ defmodule Cadet.Assessments do
           question_count: count(q.id)
         })
 
-      Submission
-      |> join(:inner, [s], ans in subquery(answers_query), on: ans.submission_id == s.id)
-      |> join(:inner, [s, ans], asst in subquery(question_query),
-        on: s.assessment_id == asst.assessment_id
-      )
-      |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
-      |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
-      |> where(
-        [s, ans, asst, cr],
-        asst.question_count == ans.graded_count or asst.question_count == ans.autograded_count
-      )
-      |> where([s, ans, asst, cr], s.is_grading_published == false)
-      |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
-      |> select([s, ans, asst, cr], %{
-        id: s.id
-      })
-      |> Repo.update_all(set: [is_grading_published: true])
+      submission_query =
+        Submission
+        |> join(:inner, [s], ans in subquery(answers_query), on: ans.submission_id == s.id)
+        |> join(:inner, [s, ans], asst in subquery(question_query),
+          on: s.assessment_id == asst.assessment_id
+        )
+        |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
+        |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
+        |> where(
+          [s, ans, asst, cr],
+          asst.question_count == ans.graded_count or asst.question_count == ans.autograded_count
+        )
+        |> where([s, ans, asst, cr], s.is_grading_published == false)
+        |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
+        |> select([s, ans, asst, cr], %{
+          id: s.id
+        })
+
+      submissions = Repo.all(submission_query)
+
+      Repo.update_all(submission_query, set: [is_grading_published: true])
+
+      Enum.each(submissions, fn submission ->
+        Notifications.write_notification_when_published(
+          submission.id,
+          :published_grading
+        )
+      end)
 
       {:ok, nil}
     else
@@ -1286,15 +1297,27 @@ defmodule Cadet.Assessments do
 
   def unpublish_all(publisher = %CourseRegistration{}, assessment_id) do
     if publisher.role == :admin do
-      Submission
-      |> join(:inner, [s], cr in CourseRegistration, on: s.student_id == cr.id)
-      |> where([s, cr], cr.course_id == ^publisher.course_id)
-      |> where([s, cr], s.is_grading_published == true)
-      |> where([s, cr], s.assessment_id == ^assessment_id)
-      |> select([s, cr], %{
-        id: s.id
-      })
-      |> Repo.update_all(set: [is_grading_published: false])
+      submission_query =
+        Submission
+        |> join(:inner, [s], cr in CourseRegistration, on: s.student_id == cr.id)
+        |> where([s, cr], cr.course_id == ^publisher.course_id)
+        |> where([s, cr], s.is_grading_published == true)
+        |> where([s, cr], s.assessment_id == ^assessment_id)
+        |> select([s, cr], %{
+          id: s.id,
+          student_id: cr.id
+        })
+
+      submissions = Repo.all(submission_query)
+
+      Repo.update_all(submission_query, set: [is_grading_published: false])
+
+      Enum.each(submissions, fn submission ->
+        Notifications.handle_unpublish_grades_notifications(
+          assessment_id,
+          Repo.get(CourseRegistration, submission.student_id)
+        )
+      end)
 
       {:ok, nil}
     else
