@@ -170,7 +170,6 @@ defmodule Cadet.Accounts.Notifications do
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unpublish_grades_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
-
     Notification
     |> where(course_reg_id: ^student.id)
     |> where(assessment_id: ^assessment_id)

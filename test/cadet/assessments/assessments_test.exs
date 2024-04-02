@@ -2029,7 +2029,7 @@ defmodule Cadet.AssessmentsTest do
           is_grading_published: false
         )
 
-      answer =
+      _answer =
         insert(
           :answer,
           submission: submission,
@@ -2061,7 +2061,7 @@ defmodule Cadet.AssessmentsTest do
           is_grading_published: true
         )
 
-      published_answer =
+      _published_answer =
         insert(
           :answer,
           submission: published_submission,
@@ -2236,7 +2236,7 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "filter by submission fully graded", %{
-      course_regs: %{avenger1_cr: avenger, students: students},
+      course_regs: %{avenger1_cr: avenger},
       assessments: assessments,
       total_submissions: total_submissions,
       students_with_assessment_info: students_with_assessment_info
@@ -2261,7 +2261,7 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "filter by submission not fully graded", %{
-      course_regs: %{avenger1_cr: avenger, students: students},
+      course_regs: %{avenger1_cr: avenger},
       assessments: assessments,
       total_submissions: total_submissions,
       students_with_assessment_info: students_with_assessment_info
@@ -2286,7 +2286,7 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "filter by submission published", %{
-      course_regs: %{avenger1_cr: avenger, students: students},
+      course_regs: %{avenger1_cr: avenger},
       assessments: assessments,
       total_submissions: total_submissions,
       students_with_assessment_info: students_with_assessment_info
@@ -2313,7 +2313,7 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "filter by submission not published", %{
-      course_regs: %{avenger1_cr: avenger, students: students},
+      course_regs: %{avenger1_cr: avenger},
       assessments: assessments,
       total_submissions: total_submissions,
       students_with_assessment_info: students_with_assessment_info
@@ -2603,7 +2603,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config 1", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2632,7 +2631,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config 2", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2662,7 +2660,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config 3", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2692,7 +2689,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config manually graded", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2722,7 +2718,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config not manually graded", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do

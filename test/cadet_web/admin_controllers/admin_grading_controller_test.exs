@@ -888,7 +888,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           is_grading_published: true
         )
 
-      answer =
+      _answer =
         insert(
           :answer,
           submission: submission,
@@ -977,7 +977,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           is_grading_published: false
         )
 
-      answer =
+      _answer =
         insert(
           :answer,
           submission: submission,
