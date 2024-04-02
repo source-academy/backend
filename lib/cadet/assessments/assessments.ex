@@ -1111,8 +1111,12 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # This function changes the is_grading_published field of the submission to false
-  # and sends a notification to the student
+  @doc """
+    Unpublishes grading for a submission and send notification to student.
+    Requires admin or staff who is group leader of student.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
   def unpublish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
       when is_ecto_id(submission_id) do
     submission =
@@ -1152,9 +1156,12 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # This function changes the is_grading_published field of the submission to true
-  # only if all the answers are graded
-  # and sends a notification to the student
+  @doc """
+    Publishes grading for a submission and send notification to student.
+    Requires admin or staff who is group leader of student and all answers to be graded.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
   def publish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
       when is_ecto_id(submission_id) do
     submission =
@@ -1204,7 +1211,12 @@ defmodule Cadet.Assessments do
     end
   end
 
-  # Used by the auto-grading system to publish grading (Bypasses Course Reg checks)
+  @doc """
+    Publishes grading for a submission and send notification to student.
+    This function is used by the auto-grading system to publish grading. Bypasses Course Reg checks.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
   def publish_grading(submission_id)
       when is_ecto_id(submission_id) do
     submission =
@@ -1240,6 +1252,12 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @doc """
+    Publishes grading for all graded submissions for an assessment and sends notifications to students.
+    Requires admin.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
   def publish_all_graded(publisher = %CourseRegistration{}, assessment_id) do
     if publisher.role == :admin do
       answers_query =
@@ -1294,6 +1312,13 @@ defmodule Cadet.Assessments do
       {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
     end
   end
+
+  @doc """
+     Unpublishes grading for all submissions with grades published for an assessment and sends notifications to students.
+     Requires admin role.
+
+     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
 
   def unpublish_all(publisher = %CourseRegistration{}, assessment_id) do
     if publisher.role == :admin do
@@ -1734,13 +1759,24 @@ defmodule Cadet.Assessments do
   The input parameters are the user and query parameters. Query parameters are
   used to filter the submissions.
 
-  The group parameter is used to check whether only the groups under the grader
-  should be returned. If pageSize and offset are not provided, the default
-  values are 10 and 0 respectively.
+  The return value is `{:ok, %{"count": count, "data": submissions}}`
 
-  The return value is
-  {:ok, %{"count": count, "data": submissions}} if no errors,
-  else it is {:error, {:forbidden, "Forbidden."}}
+  # Parameters
+  - `pageSize`: Integer. The number of submissions to return. Default is 10.
+  - `offset`: Integer. The number of submissions to skip. Default is 0.
+  - `title`: String. Assessment title.
+  - `status`: String. Submission status.
+  - `isFullyGraded`: Boolean. Whether the submission is fully graded.
+  - `isGradingPublished`: Boolean. Whether the grading is published.
+  - `group`: Boolean. Only the groups under the grader should be returned.
+  - `groupName`: String. Group name.
+  - `name`: String. User name.
+  - `username`: String. User username.
+  - `type`: String. Assessment Config type.
+  - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
+
+  # Implementation
+  Uses helper functions to build the filter query. Helper functions are separated by tables in the database.
   """
 
   @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
