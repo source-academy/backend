@@ -2125,7 +2125,7 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  describe "get submission function" do
+  describe "submissions_by_grader_for_index function" do
     setup do
       seed = Cadet.Test.Seeds.assessments()
 
@@ -2751,7 +2751,7 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  describe "is_fully_autograded? helper function" do
+  describe "is_fully_autograded? function" do
     setup do
       assessment = insert(:assessment)
       student = insert(:course_registration, role: :student)
@@ -2798,7 +2798,7 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  describe "publish and unpublish all submissions for an assessment" do
+  describe "publish and unpublish all grading" do
     setup do
       Cadet.Test.Seeds.assessments()
     end
