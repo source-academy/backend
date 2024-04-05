@@ -6,9 +6,11 @@ defmodule CadetWeb.AdminAssessmentsController do
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
+  alias Cadet.Assessments.Question
   alias Cadet.{Assessments, Repo}
   alias Cadet.Assessments.Assessment
   alias Cadet.Accounts.CourseRegistration
+
 
   def index(conn, %{"course_reg_id" => course_reg_id}) do
     course_reg = Repo.get(CourseRegistration, course_reg_id)
@@ -132,6 +134,28 @@ defmodule CadetWeb.AdminAssessmentsController do
         |> put_status(status)
         |> text(message)
     end
+  end
+
+  def get_score_learderboard(conn, %{"assessmentid" => assessment_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+    result = Assessments.fetch_top_relative_score_answers(voting_questions.id, 10)
+
+    render(conn, "leaderboard.json", leaderboard: result)
+  end
+
+  def get_popular_learderboard(conn, %{"assessmentid" => assessment_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+    result = Assessments.fetch_top_popular_score_answers(voting_questions.id, 10)
+
+    render(conn, "leaderboard.json", leaderboard: result)
   end
 
   defp check_dates(open_at, close_at, assessment) do
