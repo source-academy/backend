@@ -117,8 +117,18 @@ defmodule CadetWeb.Router do
     post("/assessments", AdminAssessmentsController, :create)
     post("/assessments/:assessmentid", AdminAssessmentsController, :update)
     delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
-    get("/assessments/:assessmentid/popularVoteLeaderboard", AdminAssessmentsController, :get_popular_learderboard)
-    get("/assessments/:assessmentid/scoreLeaderboard", AdminAssessmentsController, :get_score_learderboard)
+
+    get(
+      "/assessments/:assessmentid/popularVoteLeaderboard",
+      AdminAssessmentsController,
+      :get_popular_learderboard
+    )
+
+    get(
+      "/assessments/:assessmentid/scoreLeaderboard",
+      AdminAssessmentsController,
+      :get_score_learderboard
+    )
 
     get("/grading", AdminGradingController, :index)
     get("/grading/summary", AdminGradingController, :grading_summary)

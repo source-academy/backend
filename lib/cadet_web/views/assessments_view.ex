@@ -72,15 +72,6 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   def render("answer.json", %{answer: answer}) do
-    IO.inspect(transform_map_for_view(
-      answer,
-      %{
-        student_name: :student_name,
-        answer: & &1.answer["code"],
-        popular_score: :popular_score,
-        relative_score: :relative_score
-      }
-    ))
     transform_map_for_view(
       answer,
       %{

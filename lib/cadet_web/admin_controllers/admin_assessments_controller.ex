@@ -11,7 +11,6 @@ defmodule CadetWeb.AdminAssessmentsController do
   alias Cadet.Assessments.Assessment
   alias Cadet.Accounts.CourseRegistration
 
-
   def index(conn, %{"course_reg_id" => course_reg_id}) do
     course_reg = Repo.get(CourseRegistration, course_reg_id)
     {:ok, assessments} = Assessments.all_assessments(course_reg)
@@ -142,6 +141,7 @@ defmodule CadetWeb.AdminAssessmentsController do
       |> where(type: :voting)
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
+
     result = Assessments.fetch_top_relative_score_answers(voting_questions.id, 10)
 
     render(conn, "leaderboard.json", leaderboard: result)
@@ -153,6 +153,7 @@ defmodule CadetWeb.AdminAssessmentsController do
       |> where(type: :voting)
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
+
     result = Assessments.fetch_top_popular_score_answers(voting_questions.id, 10)
 
     render(conn, "leaderboard.json", leaderboard: result)
