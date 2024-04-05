@@ -6,9 +6,8 @@ defmodule CadetWeb.AdminAssessmentsController do
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
-  alias Cadet.Assessments.Question
+  alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
-  alias Cadet.Assessments.Assessment
   alias Cadet.Accounts.CourseRegistration
 
   def index(conn, %{"course_reg_id" => course_reg_id}) do
