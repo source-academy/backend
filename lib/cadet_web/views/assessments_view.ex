@@ -1,6 +1,9 @@
 defmodule CadetWeb.AssessmentsView do
   use CadetWeb, :view
   use Timex
+  import Ecto.Query
+  alias Cadet.Assessments.{Question, SubmissionVotes}
+  alias Cadet.Repo
 
   import CadetWeb.AssessmentsHelpers
 
@@ -32,7 +35,8 @@ defmodule CadetWeb.AssessmentsView do
       earlySubmissionXp: & &1.config.early_submission_xp,
       maxTeamSize: :max_team_size,
       hasVotingFeatures: :has_voting_features,
-      hasTokenCounter: :has_token_counter
+      hasTokenCounter: :has_token_counter,
+      isVotingPublished: &is_voting_assigned(&1.id)
     })
   end
 
@@ -66,4 +70,17 @@ defmodule CadetWeb.AssessmentsView do
   defp password_protected?(nil), do: false
 
   defp password_protected?(_), do: true
+
+  defp is_voting_assigned(assessment_id) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment_id)
+    |> where([q], q.id in ^voting_assigned_question_ids)
+    |> Repo.exists?()
+  end
 end

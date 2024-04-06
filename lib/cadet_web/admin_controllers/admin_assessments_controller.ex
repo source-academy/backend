@@ -85,6 +85,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     max_team_size = params |> Map.get("maxTeamSize")
     has_token_counter = params |> Map.get("hasTokenCounter")
     has_voting_features = params |> Map.get("hasVotingFeatures")
+    assign_entries_for_voting = params |> Map.get("assignEntriesForVoting")
 
     updated_assessment =
       if is_nil(is_published) do
@@ -114,8 +115,16 @@ defmodule CadetWeb.AdminAssessmentsController do
         Map.put(updated_assessment, :has_voting_features, has_voting_features)
       end
 
+    is_reassigning_voting =
+      if is_nil(assign_entries_for_voting) do
+        false
+      else
+        assign_entries_for_voting
+      end
+
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
-         {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment) do
+         {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment),
+         {:ok, _nil} <- Assessments.reassign_voting(assessment_id, is_reassigning_voting) do
       text(conn, "OK")
     else
       {:error, {status, message}} ->

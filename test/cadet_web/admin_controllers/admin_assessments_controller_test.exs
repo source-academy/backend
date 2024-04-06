@@ -5,7 +5,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   import Ecto.Query
   import ExUnit.CaptureLog
 
-  alias Cadet.Repo
+  alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Test.XMLGenerator
@@ -93,7 +93,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "xp" => (800 + 500 + 100) * 3,
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
-            "hasTokenCounter" => &1.has_token_counter
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => Assessments.is_voting_published(&1.id)
           }
         )
 
@@ -143,7 +144,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "xp" => 0,
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
-            "hasTokenCounter" => &1.has_token_counter
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => Assessments.is_voting_published(&1.id)
           }
         )
 
