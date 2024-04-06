@@ -68,14 +68,12 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   def render("leaderboard.json", %{leaderboard: leaderboard}) do
-    render_many(leaderboard, CadetWeb.AdminAssessmentsView, "contestEntries.json",
-      as: :contestEntries
-    )
+    render_many(leaderboard, CadetWeb.AdminAssessmentsView, "contestEntry.json", as: :contestEntry)
   end
 
-  def render("contestEntries.json", %{contestEntries: contestEntries}) do
+  def render("contestEntry.json", %{contestEntry: contestEntry}) do
     transform_map_for_view(
-      contestEntries,
+      contestEntry,
       %{
         student_name: :student_name,
         answer: & &1.answer["code"],

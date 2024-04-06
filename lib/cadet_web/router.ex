@@ -121,13 +121,13 @@ defmodule CadetWeb.Router do
     get(
       "/assessments/:assessmentid/popularVoteLeaderboard",
       AdminAssessmentsController,
-      :get_popular_learderboard
+      :get_popular_leaderboard
     )
 
     get(
       "/assessments/:assessmentid/scoreLeaderboard",
       AdminAssessmentsController,
-      :get_score_learderboard
+      :get_score_leaderboard
     )
 
     get("/grading", AdminGradingController, :index)
