@@ -6,6 +6,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
+  alias CadetWeb.AssessmentsHelpers
   alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.CourseRegistration
@@ -141,7 +142,12 @@ defmodule CadetWeb.AdminAssessmentsController do
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
 
-    result = Assessments.fetch_top_relative_score_answers(voting_questions.id, 10)
+    result =
+      voting_questions.id
+      |> Assessments.fetch_top_relative_score_answers(10)
+      |> Enum.map(fn entry ->
+        AssessmentsHelpers.build_contest_leaderboard_entry(entry)
+      end)
 
     render(conn, "leaderboard.json", leaderboard: result)
   end
@@ -153,7 +159,12 @@ defmodule CadetWeb.AdminAssessmentsController do
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
 
-    result = Assessments.fetch_top_popular_score_answers(voting_questions.id, 10)
+    result =
+      voting_questions.id
+      |> Assessments.fetch_top_relative_score_answers(10)
+      |> Enum.map(fn entry ->
+        AssessmentsHelpers.build_contest_leaderboard_entry(entry)
+      end)
 
     render(conn, "leaderboard.json", leaderboard: result)
   end
