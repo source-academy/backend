@@ -1067,6 +1067,84 @@ defmodule CadetWeb.AdminGradingControllerTest do
     end
   end
 
+  describe "POST /:assessmentid/unpublish_all_grades" do
+    setup %{conn: conn} do
+      seed = Cadet.Test.Seeds.assessments()
+      assessment_id = seed[:assessments]["mission"][:assessment].id
+      %{conn: conn, assessment_id: assessment_id, course: seed[:courses][:course1]}
+    end
+
+    @tag authenticate: :admin
+    test "successful", %{conn: conn, assessment_id: assessment_id, course: course} do
+      admin = insert(:course_registration, %{role: :admin, course: course})
+
+      conn =
+        conn
+        |> sign_in(admin.user)
+        |> post(build_url_unpublish_all(course.id, assessment_id))
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :staff
+    test "staff not allowed to unpublish all grades", %{
+      conn: conn,
+      assessment_id: assessment_id,
+      course: course
+    } do
+      staff = insert(:course_registration, %{role: :staff, course: course})
+
+      conn =
+        conn
+        |> sign_in(staff.user)
+
+      conn =
+        conn
+        |> post(build_url_unpublish_all(course.id, assessment_id))
+
+      assert response(conn, 403) == "Only Admin is permitted to publish all grades"
+    end
+  end
+
+  describe "POST /:assessmentid/publish_all_grades" do
+    setup %{conn: conn} do
+      seed = Cadet.Test.Seeds.assessments()
+      assessment_id = seed[:assessments]["mission"][:assessment].id
+      %{conn: conn, assessment_id: assessment_id, course: seed[:courses][:course1]}
+    end
+
+    @tag authenticate: :admin
+    test "successful", %{conn: conn, assessment_id: assessment_id, course: course} do
+      admin = insert(:course_registration, %{role: :admin, course: course})
+
+      conn =
+        conn
+        |> sign_in(admin.user)
+        |> post(build_url_publish_all(course.id, assessment_id))
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :staff
+    test "staff not allowed to publish all grades", %{
+      conn: conn,
+      assessment_id: assessment_id,
+      course: course
+    } do
+      staff = insert(:course_registration, %{role: :staff, course: course})
+
+      conn =
+        conn
+        |> sign_in(staff.user)
+
+      conn =
+        conn
+        |> post(build_url_publish_all(course.id, assessment_id))
+
+      assert response(conn, 403) == "Only Admin is permitted to publish all grades"
+    end
+  end
+
   describe "GET /, admin" do
     @tag authenticate: :staff
     test "can see all submissions", %{conn: conn} do
@@ -1595,6 +1673,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
   defp build_url_publish(course_id, submission_id),
     do: "#{build_url(course_id, submission_id)}/publish_grades"
+
+  defp build_url_unpublish_all(course_id, assessment_id),
+    do: "#{build_url(course_id)}#{assessment_id}/unpublish_all_grades"
+
+  defp build_url_publish_all(course_id, assessment_id),
+    do: "#{build_url(course_id)}#{assessment_id}/publish_all_grades"
 
   defp build_url_autograde(course_id, submission_id),
     do: "#{build_url(course_id, submission_id)}/autograde"
