@@ -1239,7 +1239,7 @@ defmodule Cadet.Assessments do
   end
 
   # Finds the contest_question_id associated with the given voting_question id
-  defp fetch_associated_contest_question_id(course_id, voting_question) do
+  def fetch_associated_contest_question_id(course_id, voting_question) do
     contest_number = voting_question.question["contest_number"]
 
     if is_nil(contest_number) do

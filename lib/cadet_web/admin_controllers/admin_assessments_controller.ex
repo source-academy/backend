@@ -6,8 +6,9 @@ defmodule CadetWeb.AdminAssessmentsController do
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
+  alias CadetWeb.AssessmentsHelpers
+  alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
-  alias Cadet.Assessments.Assessment
   alias Cadet.Accounts.CourseRegistration
 
   def index(conn, %{"course_reg_id" => course_reg_id}) do
@@ -134,6 +135,44 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
+  def get_score_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
+    result =
+      contest_id
+      |> Assessments.fetch_top_relative_score_answers(10)
+      |> Enum.map(fn entry ->
+        AssessmentsHelpers.build_contest_leaderboard_entry(entry)
+      end)
+
+    render(conn, "leaderboard.json", leaderboard: result)
+  end
+
+  def get_popular_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
+    result =
+      contest_id
+      |> Assessments.fetch_top_popular_score_answers(10)
+      |> Enum.map(fn entry ->
+        AssessmentsHelpers.build_popular_leaderboard_entry(entry)
+      end)
+
+    render(conn, "leaderboard.json", leaderboard: result)
+  end
+
   defp check_dates(open_at, close_at, assessment) do
     if is_nil(open_at) and is_nil(close_at) do
       {:ok, assessment}
@@ -227,6 +266,38 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     response(200, "OK")
     response(401, "Assessment is already opened")
+    response(403, "Forbidden")
+  end
+
+  swagger_path :get_popular_leaderboard do
+    get("/courses/{course_id}/admin/assessments/:assessmentid/popularVoteLeaderboard")
+
+    summary("get the top 10 contest entries based on popularity")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.array(:Leaderboard))
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
+  end
+
+  swagger_path :get_score_leaderboard do
+    get("/courses/{course_id}/admin/assessments/:assessmentid/scoreLeaderboard")
+
+    summary("get the top 10 contest entries based on score")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.array(:Leaderboard))
+    response(401, "Unauthorised")
     response(403, "Forbidden")
   end
 

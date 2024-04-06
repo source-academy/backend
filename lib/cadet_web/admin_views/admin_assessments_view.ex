@@ -66,6 +66,21 @@ defmodule CadetWeb.AdminAssessmentsView do
     )
   end
 
+  def render("leaderboard.json", %{leaderboard: leaderboard}) do
+    render_many(leaderboard, CadetWeb.AdminAssessmentsView, "contestEntry.json", as: :contestEntry)
+  end
+
+  def render("contestEntry.json", %{contestEntry: contestEntry}) do
+    transform_map_for_view(
+      contestEntry,
+      %{
+        student_name: :student_name,
+        answer: & &1.answer["code"],
+        final_score: "final_score"
+      }
+    )
+  end
+
   defp password_protected?(nil), do: false
 
   defp password_protected?(_), do: true
