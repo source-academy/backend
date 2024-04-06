@@ -123,6 +123,7 @@ defmodule CadetWeb.UserControllerTest do
             "assessmentConfigId" => config1.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
             "hasTokenCounter" => false
           },
           %{
@@ -132,6 +133,7 @@ defmodule CadetWeb.UserControllerTest do
             "assessmentConfigId" => config2.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
             "hasTokenCounter" => false
           },
           %{
@@ -141,6 +143,7 @@ defmodule CadetWeb.UserControllerTest do
             "assessmentConfigId" => config3.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
             "hasTokenCounter" => false
           }
         ]

@@ -174,6 +174,8 @@ defmodule CadetWeb.AssessmentsController do
               required: true
             )
 
+            hasTokenCounter(:boolean, "Does the assessment have Token Counter enabled?")
+
             maxXp(
               :integer,
               "The maximum XP for this assessment",
@@ -195,6 +197,8 @@ defmodule CadetWeb.AssessmentsController do
               "The number of answers in the submission which have been graded",
               required: true
             )
+
+            maxTeamSize(:integer, "The maximum team size allowed", required: true)
           end
         end,
       Assessment:
@@ -214,6 +218,7 @@ defmodule CadetWeb.AssessmentsController do
             story(:string, "The story that should be shown for this assessment")
             reading(:string, "The reading for this assessment")
             longSummary(:string, "Long summary", required: true)
+            hasTokenCounter(:boolean, "Does the assessment have Token Counter enabled?")
             missionPDF(:string, "The URL to the assessment pdf")
 
             questions(Schema.ref(:Questions), "The list of questions for this assessment")
@@ -387,6 +392,20 @@ defmodule CadetWeb.AssessmentsController do
         swagger_schema do
           type(:string)
           enum([:none, :processing, :success, :failed])
+        end,
+      Leaderboard:
+        swagger_schema do
+          description("A list of top entries for leaderboard")
+          type(:array)
+          items(Schema.ref(:ContestEntries))
+        end,
+      ContestEntries:
+        swagger_schema do
+          properties do
+            student_name(:string, "Name of the student", required: true)
+            answer(:string, "The code that the student submitted", required: true)
+            final_score(:float, "The score that the student obtained", required: true)
+          end
         end,
 
       # Schemas for payloads to modify data

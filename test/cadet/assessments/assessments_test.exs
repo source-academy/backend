@@ -4,7 +4,7 @@ defmodule Cadet.AssessmentsTest do
   import Cadet.{Factory, TestEntityHelper}
 
   alias Cadet.Assessments
-  alias Cadet.Assessments.{Assessment, Question, SubmissionVotes}
+  alias Cadet.Assessments.{Assessment, Question, SubmissionVotes, Submission}
 
   test "create assessments of all types" do
     course = insert(:course)
@@ -122,16 +122,73 @@ defmodule Cadet.AssessmentsTest do
     assert assessment.is_published == true
   end
 
-  test "update assessment" do
-    course = insert(:course)
-    config = insert(:assessment_config, %{course: course})
-    assessment = insert(:assessment, %{title: "assessment", course: course, config: config})
+  describe "Update assessments" do
+    test "update assessment" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{title: "assessment", course: course, config: config})
 
-    Assessments.update_assessment(assessment.id, %{title: "changed_assessment"})
+      Assessments.update_assessment(assessment.id, %{title: "changed_assessment"})
 
-    assessment = Repo.get(Assessment, assessment.id)
+      assessment = Repo.get(Assessment, assessment.id)
 
-    assert assessment.title == "changed_assessment"
+      assert assessment.title == "changed_assessment"
+    end
+
+    test "update grading info for assessment" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{config: config, course: course, is_published: false})
+
+      student = insert(:course_registration, %{course: course, role: :student})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          team: nil,
+          student: student,
+          status: :attempting
+        })
+
+      assert {:error, {:forbidden, "User is not permitted to grade."}} =
+               Assessments.update_grading_info(
+                 %{submission: submission, question: question},
+                 %{},
+                 student
+               )
+    end
+
+    test "force update assessment with invalid params" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          config: config,
+          course: course,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: +5),
+          is_published: true
+        })
+
+      assessment_params = %{
+        number: assessment.number,
+        course_id: course.id
+      }
+
+      question_params = %{
+        assessment: assessment,
+        type: :programming
+      }
+
+      assert {:error, "Question count is different"} =
+               Assessments.insert_or_update_assessments_and_questions(
+                 assessment_params,
+                 question_params,
+                 true
+               )
+    end
   end
 
   test "update question" do
@@ -145,6 +202,239 @@ defmodule Cadet.AssessmentsTest do
     question = insert(:question)
     Assessments.delete_question(question.id)
     assert Repo.get(Question, question.id) == nil
+  end
+
+  describe "team assessments" do
+    test "cannot answer questions without a team" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{config: config, course: course, max_team_size: 10})
+      question = insert(:question, %{assessment: assessment})
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      assert Assessments.answer_question(question, student, "answer", false) ==
+               {:error, {:bad_request, "Your existing Team has been deleted!"}}
+    end
+
+    test "answer questions with a team" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{config: config, course: course, max_team_size: 10})
+      question = insert(:question, %{assessment: assessment, type: :programming})
+      student1 = insert(:course_registration, %{course: course, role: :student})
+      student2 = insert(:course_registration, %{course: course, role: :student})
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+      team = insert(:team, %{assessment: assessment, team_members: [teammember1, teammember2]})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          team: team,
+          student: nil,
+          status: :attempting
+        })
+
+      _answer =
+        insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
+
+      assert Assessments.answer_question(question, student1, "answer", false) == {:ok, nil}
+    end
+
+    test "assessments with questions and answers" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{config: config, course: course, max_team_size: 10})
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      assert {:ok, _} = Assessments.assessment_with_questions_and_answers(assessment, student)
+    end
+
+    test "overdue assessments with questions and answers" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          config: config,
+          course: course,
+          max_team_size: 10,
+          open_at: Timex.shift(Timex.now(), days: -15),
+          close_at: Timex.shift(Timex.now(), days: -5),
+          is_published: true,
+          password: "123"
+        })
+
+      student = insert(:course_registration, %{course: course, role: :student})
+
+      assert {:ok, _} =
+               Assessments.assessment_with_questions_and_answers(assessment, student, "123")
+    end
+
+    test "team assessments with questions and answers" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          config: config,
+          course: course,
+          max_team_size: 10,
+          open_at: Timex.shift(Timex.now(), days: -15),
+          close_at: Timex.shift(Timex.now(), days: +5),
+          is_published: true
+        })
+
+      group = insert(:group, %{name: "group"})
+      student1 = insert(:course_registration, %{course: course, role: :student, group: group})
+      student2 = insert(:course_registration, %{course: course, role: :student, group: group})
+
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+      team = insert(:team, %{assessment: assessment, team_members: [teammember1, teammember2]})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          team: team,
+          student: nil,
+          status: :submitted
+        })
+
+      assert {:ok, _} = Assessments.assessment_with_questions_and_answers(assessment, student1)
+      assert submission.id == Assessments.get_submission(assessment.id, student1).id
+    end
+
+    test "create empty submission for team assessment" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+
+      team_assessment =
+        insert(:assessment, %{
+          config: config,
+          course: course,
+          max_team_size: 10,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: +5),
+          is_published: true
+        })
+
+      group = insert(:group, %{name: "group"})
+
+      student1 = insert(:course_registration, %{course: course, role: :student, group: group})
+      student2 = insert(:course_registration, %{course: course, role: :student, group: group})
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+
+      team =
+        insert(:team, %{assessment: team_assessment, team_members: [teammember1, teammember2]})
+
+      question = insert(:question, %{assessment: team_assessment, type: :programming})
+
+      assert {:ok, _} = Assessments.answer_question(question, student1, "answer", false)
+
+      submission =
+        Submission
+        |> where([s], s.team_id == ^team.id)
+        |> Repo.all()
+
+      assert length(submission) == 1
+    end
+
+    @tag authenticate: :staff
+    test "unsubmit team assessment" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+
+      team_assessment =
+        insert(:assessment, %{
+          config: config,
+          course: course,
+          max_team_size: 10,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: +5),
+          is_published: true
+        })
+
+      group = insert(:group, %{name: "group"})
+      avenger = insert(:course_registration, %{course: course, role: :staff, group: group})
+
+      student1 = insert(:course_registration, %{course: course, role: :student, group: group})
+      student2 = insert(:course_registration, %{course: course, role: :student, group: group})
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+
+      team =
+        insert(:team, %{assessment: team_assessment, team_members: [teammember1, teammember2]})
+
+      submission =
+        insert(:submission, %{
+          assessment: team_assessment,
+          team: team,
+          student: nil,
+          status: :submitted
+        })
+
+      assert {:ok, _} = Assessments.unsubmit_submission(submission.id, avenger)
+    end
+
+    @tag authenticate: :staff
+    test "delete team assessment with associating submission" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          config: config,
+          course: course,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: +5),
+          is_published: true
+        })
+
+      student = insert(:course_registration, %{course: course, role: :student})
+      question = insert(:question, %{assessment: assessment})
+
+      submission =
+        insert(:submission, %{
+          assessment: assessment,
+          team: nil,
+          student: student,
+          status: :attempting
+        })
+
+      _answer =
+        insert(:answer, submission: submission, question: question, answer: %{code: "f => f(f);"})
+
+      assert {:ok, _} = Assessments.delete_assessment(assessment.id)
+    end
+
+    test "get user xp for team assessment" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{course: course})
+
+      team_assessment =
+        insert(:assessment, %{
+          config: config,
+          course: course,
+          max_team_size: 10,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: +5),
+          is_published: true
+        })
+
+      group = insert(:group, %{name: "group"})
+
+      student1 = insert(:course_registration, %{course: course, role: :student, group: group})
+      student2 = insert(:course_registration, %{course: course, role: :student, group: group})
+      teammember1 = insert(:team_member, %{student: student1})
+      teammember2 = insert(:team_member, %{student: student2})
+
+      _team =
+        insert(:team, %{assessment: team_assessment, team_members: [teammember1, teammember2]})
+
+      assert Assessments.assessments_total_xp(student1) == 0
+    end
   end
 
   describe "contest voting" do
@@ -266,6 +556,77 @@ defmodule Cadet.AssessmentsTest do
 
       # No entries should be released for students to vote on while the contest is still open
       assert SubmissionVotes |> where(question_id: ^question.id) |> Repo.all() |> length() == 0
+    end
+
+    test "function that reassign voting after voting is assigned" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      closed_contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
+
+      contest_question = insert(:programming_question, assessment: closed_contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course})
+
+      question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: closed_contest_assessment.number)
+        })
+
+      students =
+        insert_list(6, :course_registration, %{
+          role: :student,
+          course: course
+        })
+
+      Enum.map(students, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: contest_question
+        )
+      end)
+
+      unattempted_student = insert(:course_registration, %{role: :student, course: course})
+
+      # unattempted submission will automatically be submitted after the assessment closes.
+      unattempted_submission =
+        insert(:submission,
+          student: unattempted_student,
+          assessment: contest_question.assessment,
+          status: "submitted"
+        )
+
+      insert(:answer,
+        answer: %{
+          code: "// question was left blank by student"
+        },
+        submission: unattempted_submission,
+        question: contest_question
+      )
+
+      Assessments.insert_voting(course.id, contest_question.assessment.number, question.id)
+      Assessments.reassign_voting(voting_assessment.id, true)
+
+      # students with own contest submissions will vote for 5 entries
+      # students without own contest submissin will vote for 6 entries
+      assert SubmissionVotes |> where(question_id: ^question.id) |> Repo.all() |> length() ==
+               6 * 5 + 6
     end
 
     test "function that checks for closed contests and releases entries into voting pool" do
@@ -1697,6 +2058,534 @@ defmodule Cadet.AssessmentsTest do
         )
 
       assert resp == 110
+    end
+  end
+
+  # Tests assume each config has only 1 assessment
+  describe "get submission function" do
+    setup do
+      seed = Cadet.Test.Seeds.assessments()
+
+      total_submissions =
+        Integer.to_string(
+          Enum.reduce(seed[:assessments], 0, fn {_, %{submissions: submissions}}, acc ->
+            length(submissions) + acc
+          end)
+        )
+
+      Map.put(seed, :total_submissions, total_submissions)
+    end
+
+    test "filter by assessment title", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      assessment = assessments["mission"][:assessment]
+      title = assessment.title
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "title" => title,
+          "pageSize" => total_submissions
+        })
+
+      assessments_from_res = res[:data][:assessments]
+
+      Enum.each(assessments_from_res, fn a ->
+        assert a.title == title
+      end)
+    end
+
+    test "filter by submission status :attempting", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessments, 0, fn {_, %{submissions: submissions}}, acc ->
+          Enum.count(submissions, fn s -> s.status == :attempting end) + acc
+        end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "status" => "attempting",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.status == :attempting
+      end)
+    end
+
+    test "filter by submission status :attempted", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessments, 0, fn {_, %{submissions: submissions}}, acc ->
+          Enum.count(submissions, fn s -> s.status == :attempted end) + acc
+        end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "status" => "attempted",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.status == :attempted
+      end)
+    end
+
+    test "filter by submission status :submitted", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessments, 0, fn {_, %{submissions: submissions}}, acc ->
+          Enum.count(submissions, fn s -> s.status == :submitted end) + acc
+        end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "status" => "submitted",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.status == :submitted
+      end)
+    end
+
+    test "filter by submission not fully graded", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # All but one is fully graded
+      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "notFullyGraded" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.question_count > s.graded_count
+      end)
+    end
+
+    test "filter by group avenger", %{
+      course_regs: %{avenger1_cr: avenger, group: group, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # All but one is in the same group
+      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "group" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group.id
+      end)
+    end
+
+    test "filter by group avenger2", %{
+      course_regs: %{avenger2_cr: avenger2, group2: group2, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # One in the same group
+      expected_length = length(Map.keys(assessments))
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger2, %{
+          "group" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group2.id
+      end)
+    end
+
+    # Chose avenger2 to ensure that the group name is not the same as the avenger's group
+    test "filter by group name group", %{
+      course_regs: %{avenger2_cr: avenger2, group: group, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # All but one is in group
+      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      group_name = group.name
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger2, %{
+          "groupName" => group_name,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group.id
+      end)
+    end
+
+    # Chose avenger to ensure that the group name is not the same as the avenger's group
+    test "filter by group name group2", %{
+      course_regs: %{avenger1_cr: avenger, group2: group2, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      # One in the group
+      expected_length = length(Map.keys(assessments))
+      group_name = group2.name
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "groupName" => group_name,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        student = Enum.find(students, fn student -> student.id == s.student_id end)
+        assert student.group.id == group2.id
+      end)
+    end
+
+    test "filter by student name", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments))
+      student = Enum.at(students, 0)
+      student_name = student.user.name
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "name" => student_name,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student name 2", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments))
+      student = Enum.at(students, 1)
+      student_name = student.user.name
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "name" => student_name,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student name 3", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments))
+      student = Enum.at(students, 2)
+      student_name = student.user.name
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "name" => student_name,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student username 1", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments))
+      student = Enum.at(students, 0)
+      student_username = student.user.username
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "username" => student_username,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student username 2", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments))
+      student = Enum.at(students, 1)
+      student_username = student.user.username
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "username" => student_username,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by student username 3", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      expected_length = length(Map.keys(assessments))
+      student = Enum.at(students, 2)
+      student_username = student.user.username
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "username" => student_username,
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.student_id == student.id
+      end)
+    end
+
+    test "filter by assessment config 1", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length = 1 * length(students)
+      assessment_config = Enum.at(assessment_configs, 0)
+      assessment_type = assessment_config.type
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "type" => assessment_type,
+          "pageSize" => total_submissions
+        })
+
+      assessments_from_res = res[:data][:assessments]
+      submissions_from_res = res[:data][:submissions]
+      assessment = Enum.at(assessments_from_res, 0)
+      assessment_id = assessment.id
+
+      assert length(assessments_from_res) == 1
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.assessment_id == assessment_id
+      end)
+    end
+
+    test "filter by assessment config 2", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length = 1 * length(students)
+
+      assessment_config = Enum.at(assessment_configs, 1)
+      assessment_type = assessment_config.type
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "type" => assessment_type,
+          "pageSize" => total_submissions
+        })
+
+      assessments_from_res = res[:data][:assessments]
+      submissions_from_res = res[:data][:submissions]
+      assessment = Enum.at(assessments_from_res, 0)
+      assessment_id = assessment.id
+
+      assert length(assessments_from_res) == 1
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.assessment_id == assessment_id
+      end)
+    end
+
+    test "filter by assessment config 3", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length = 1 * length(students)
+
+      assessment_config = Enum.at(assessment_configs, 2)
+      assessment_type = assessment_config.type
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "type" => assessment_type,
+          "pageSize" => total_submissions
+        })
+
+      assessments_from_res = res[:data][:assessments]
+      submissions_from_res = res[:data][:submissions]
+      assessment = Enum.at(assessments_from_res, 0)
+      assessment_id = assessment.id
+
+      assert length(assessments_from_res) == 1
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.assessment_id == assessment_id
+      end)
+    end
+
+    test "filter by assessment config manually graded", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessment_configs, 0, fn config, acc ->
+          if config.is_manually_graded, do: acc + 1, else: acc
+        end) * length(students)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isManuallyGraded" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
+
+      assert length(submissions_from_res) == expected_length
+      Enum.each(assessment_configs_from_res, fn config -> assert config.is_manually_graded end)
+
+      # We know all assessments_from_res have correct config from previous check
+      Enum.each(submissions_from_res, fn s ->
+        assert Enum.find(assessments_from_res, fn a -> a.id == s.assessment_id end) != nil
+      end)
+    end
+
+    test "filter by assessment config not manually graded", %{
+      course_regs: %{avenger1_cr: avenger, students: students},
+      assessments: assessments,
+      assessment_configs: assessment_configs,
+      total_submissions: total_submissions
+    } do
+      expected_length =
+        Enum.reduce(assessment_configs, 0, fn config, acc ->
+          if config.is_manually_graded, do: acc, else: acc + 1
+        end) * length(students)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isManuallyGraded" => "false",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+      assessment_configs_from_res = Enum.map(assessments_from_res, fn a -> a.config end)
+
+      assert length(submissions_from_res) == expected_length
+      Enum.each(assessment_configs_from_res, fn config -> assert !config.is_manually_graded end)
+
+      # We know all assessments_from_res have correct config from previous check
+      Enum.each(submissions_from_res, fn s ->
+        assert Enum.find(assessments_from_res, fn a -> a.id == s.assessment_id end) != nil
+      end)
     end
   end
 

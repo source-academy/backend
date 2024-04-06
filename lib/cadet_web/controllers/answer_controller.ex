@@ -38,6 +38,47 @@ defmodule CadetWeb.AnswerController do
     end
   end
 
+  def check_last_modified(conn, %{
+        "questionid" => question_id,
+        "lastModifiedAt" => last_modified_at
+      })
+      when is_ecto_id(question_id) do
+    course_reg = conn.assigns[:course_reg]
+    can_bypass? = course_reg.role in @bypass_closed_roles
+
+    with {:question, question} when not is_nil(question) <-
+           {:question, Assessments.get_question(question_id)},
+         {:is_open?, true} <-
+           {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
+         {:ok, last_modified} <-
+           Assessments.has_last_modified_answer?(
+             question,
+             course_reg,
+             last_modified_at,
+             can_bypass?
+           ) do
+      conn
+      |> put_status(:ok)
+      |> put_resp_content_type("application/json")
+      |> render("lastModified.json", lastModified: last_modified)
+    else
+      {:question, nil} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Question not found")
+
+      {:is_open?, false} ->
+        conn
+        |> put_status(:forbidden)
+        |> text("Assessment not open")
+
+      {:error, _} ->
+        conn
+        |> put_status(:forbidden)
+        |> text("Forbidden")
+    end
+  end
+
   def submit(conn, _params) do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end

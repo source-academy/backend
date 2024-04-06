@@ -84,6 +84,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
     transform_map_for_view(answer, %{
       answer: answer_builder_for(question_type),
+      lastModifiedAt: :last_modified_at,
       grader: grader_builder(grader),
       gradedAt: graded_at_builder(grader),
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
@@ -101,7 +102,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_contest_leaderboard_entry(leaderboard_ans) do
+  def build_contest_leaderboard_entry(leaderboard_ans) do
     Map.put(
       transform_map_for_view(leaderboard_ans, %{
         submission_id: :submission_id,
@@ -113,7 +114,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     )
   end
 
-  defp build_popular_leaderboard_entry(leaderboard_ans) do
+  def build_popular_leaderboard_entry(leaderboard_ans) do
     Map.put(
       transform_map_for_view(leaderboard_ans, %{
         submission_id: :submission_id,

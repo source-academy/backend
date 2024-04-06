@@ -12,6 +12,8 @@ defmodule Cadet.Assessments do
     Notification,
     Notifications,
     User,
+    Team,
+    TeamMember,
     CourseRegistration,
     CourseRegistrations
   }
@@ -52,7 +54,7 @@ defmodule Cadet.Assessments do
     else
       Submission
       |> where(assessment_id: ^id)
-      |> delete_submission_assocation(id)
+      |> delete_submission_association(id)
 
       Question
       |> where(assessment_id: ^id)
@@ -71,7 +73,7 @@ defmodule Cadet.Assessments do
     |> Repo.delete_all()
   end
 
-  defp delete_submission_assocation(submissions, assessment_id) do
+  defp delete_submission_association(submissions, assessment_id) do
     submissions
     |> Repo.all()
     |> Enum.each(fn submission ->
@@ -104,9 +106,15 @@ defmodule Cadet.Assessments do
   end
 
   def assessments_total_xp(%CourseRegistration{id: cr_id}) do
+    teams = find_teams(cr_id)
+    submission_ids = get_submission_ids(cr_id, teams)
+
     submission_xp =
       Submission
-      |> where(student_id: ^cr_id)
+      |> where(
+        [s],
+        s.id in ^submission_ids
+      )
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
@@ -259,11 +267,23 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
+    team_id =
+      case find_team(id, course_reg.id) do
+        {:ok, nil} ->
+          -1
+
+        {:ok, team} ->
+          team.id
+
+        {:error, :team_not_found} ->
+          -1
+      end
+
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
-        |> where([_, s], s.student_id == ^course_reg.id)
+        |> where([_, s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
 
       questions =
         Question
@@ -297,10 +317,16 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(cr = %CourseRegistration{}) do
+    teams = find_teams(cr.id)
+    submission_ids = get_submission_ids(cr.id, teams)
+
     submission_aggregates =
       Submission
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
-      |> where([s], s.student_id == ^cr.id)
+      |> where(
+        [s],
+        s.id in ^submission_ids
+      )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
         assessment_id: s.assessment_id,
@@ -311,7 +337,10 @@ defmodule Cadet.Assessments do
 
     submission_status =
       Submission
-      |> where([s], s.student_id == ^cr.id)
+      |> where(
+        [s],
+        s.id in ^submission_ids
+      )
       |> select([s], [:assessment_id, :status])
 
     assessments =
@@ -337,6 +366,16 @@ defmodule Cadet.Assessments do
       |> Repo.all()
 
     {:ok, assessments}
+  end
+
+  defp get_submission_ids(cr_id, teams) do
+    query =
+      from(s in Submission,
+        where: s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id),
+        select: s.id
+      )
+
+    Repo.all(query)
   end
 
   def filter_published_assessments(assessments, cr) do
@@ -514,6 +553,58 @@ defmodule Cadet.Assessments do
     params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
 
     Question.changeset(%Question{}, params_with_assessment_id)
+  end
+
+  def reassign_voting(assessment_id, is_reassigning_voting) do
+    if is_reassigning_voting do
+      if is_voting_published(assessment_id) do
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> delete_submission_association(assessment_id)
+
+        Question
+        |> where(assessment_id: ^assessment_id)
+        |> Repo.all()
+        |> Enum.each(fn q ->
+          delete_submission_votes_association(q)
+        end)
+      end
+
+      voting_assigned_question_ids =
+        SubmissionVotes
+        |> select([v], v.question_id)
+        |> Repo.all()
+
+      unpublished_voting_questions =
+        Question
+        |> where(type: :voting)
+        |> where([q], q.id not in ^voting_assigned_question_ids)
+        |> where(assessment_id: ^assessment_id)
+        |> join(:inner, [q], asst in assoc(q, :assessment))
+        |> select([q, asst], %{course_id: asst.course_id, question: q.question, id: q.id})
+        |> Repo.all()
+
+      for q <- unpublished_voting_questions do
+        insert_voting(q.course_id, q.question["contest_number"], q.id)
+      end
+
+      {:ok, "voting assigned"}
+    else
+      {:ok, "no change to voting"}
+    end
+  end
+
+  def is_voting_published(assessment_id) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment_id)
+    |> where([q], q.id in ^voting_assigned_question_ids)
+    |> Repo.exists?()
   end
 
   def update_final_contest_entries do
@@ -766,7 +857,8 @@ defmodule Cadet.Assessments do
         raw_answer,
         force_submit
       ) do
-    with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+    with {:ok, team} <- find_team(question.assessment.id, cr_id),
+         {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
       update_submission_status_router(submission, question)
@@ -779,6 +871,9 @@ defmodule Cadet.Assessments do
       {:error, :race_condition} ->
         {:error, {:internal_server_error, "Please try again later."}}
 
+      {:error, :team_not_found} ->
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+
       {:error, :invalid_vote} ->
         {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
 
@@ -787,14 +882,72 @@ defmodule Cadet.Assessments do
     end
   end
 
+  defp find_teams(cr_id) do
+    query =
+      from(t in Team,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id
+      )
+
+    Repo.all(query)
+  end
+
+  defp find_team(assessment_id, cr_id)
+       when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment_id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id,
+        limit: 1
+      )
+
+    assessment_team_size =
+      Map.get(
+        Repo.one(
+          from(a in Assessment,
+            where: a.id == ^assessment_id,
+            select: %{max_team_size: a.max_team_size}
+          )
+        ),
+        :max_team_size,
+        0
+      )
+
+    case assessment_team_size > 1 do
+      true ->
+        case Repo.one(query) do
+          nil -> {:error, :team_not_found}
+          team -> {:ok, team}
+        end
+
+      # team is nil for individual assessments
+      false ->
+        {:ok, nil}
+    end
+  end
+
   def get_submission(assessment_id, %CourseRegistration{id: cr_id})
       when is_ecto_id(assessment_id) do
-    Submission
-    |> where(assessment_id: ^assessment_id)
-    |> where(student_id: ^cr_id)
-    |> join(:inner, [s], a in assoc(s, :assessment))
-    |> preload([_, a], assessment: a)
-    |> Repo.one()
+    {:ok, team} = find_team(assessment_id, cr_id)
+
+    case team do
+      %Team{} ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(team_id: ^team.id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+
+      nil ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(student_id: ^cr_id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+    end
   end
 
   def get_submission_by_id(submission_id) when is_ecto_id(submission_id) do
@@ -851,7 +1004,7 @@ defmodule Cadet.Assessments do
          {:status, :submitted} <- {:status, submission.status},
          {:allowed_to_unsubmit?, true} <-
            {:allowed_to_unsubmit?,
-            role == :admin or bypass or
+            role == :admin or bypass or is_nil(submission.student_id) or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
       Multi.new()
       |> Multi.run(
@@ -894,10 +1047,36 @@ defmodule Cadet.Assessments do
       end)
       |> Repo.transaction()
 
-      Cadet.Accounts.Notifications.handle_unsubmit_notifications(
-        submission.assessment.id,
-        Repo.get(CourseRegistration, submission.student_id)
-      )
+      case submission.student_id do
+        # Team submission, handle notifications for team members
+        nil ->
+          team = Repo.get(Team, submission.team_id)
+
+          query =
+            from(t in Team,
+              join: tm in TeamMember,
+              on: t.id == tm.team_id,
+              join: cr in CourseRegistration,
+              on: tm.student_id == cr.id,
+              where: t.id == ^team.id,
+              select: cr.id
+            )
+
+          team_members = Repo.all(query)
+
+          Enum.each(team_members, fn tm_id ->
+            Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+              submission.assessment.id,
+              Repo.get(CourseRegistration, tm_id)
+            )
+          end)
+
+        student_id ->
+          Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+            submission.assessment.id,
+            Repo.get(CourseRegistration, student_id)
+          )
+      end
 
       {:ok, nil}
     else
@@ -1043,7 +1222,7 @@ defmodule Cadet.Assessments do
   end
 
   # Finds the contest_question_id associated with the given voting_question id
-  defp fetch_associated_contest_question_id(course_id, voting_question) do
+  def fetch_associated_contest_question_id(course_id, voting_question) do
     contest_number = voting_question.question["contest_number"]
 
     if is_nil(contest_number) do
@@ -1321,13 +1500,17 @@ defmodule Cadet.Assessments do
   else it is {:error, {:forbidden, "Forbidden."}}
   """
 
-  # We bypass Ecto here and use a raw query to generate JSON directly from
-  # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
   @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
           {:ok,
            %{
              :count => integer,
-             :data => %{:assessments => [any()], :submissions => [any()], :users => [any()]}
+             :data => %{
+               :assessments => [any()],
+               :submissions => [any()],
+               :users => [any()],
+               :teams => [any()],
+               :team_members => [any()]
+             }
            }}
   def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
@@ -1383,6 +1566,7 @@ defmodule Cadet.Assessments do
           unsubmitted_at: s.unsubmitted_at,
           unsubmitted_by_id: s.unsubmitted_by_id,
           student_id: s.student_id,
+          team_id: s.team_id,
           assessment_id: s.assessment_id,
           xp: ans.xp,
           xp_adjustment: ans.xp_adjustment,
@@ -1555,10 +1739,24 @@ defmodule Cadet.Assessments do
       |> preload([a, q, ac], questions: q, config: ac)
       |> Repo.all()
 
+    team_ids = submissions |> Enum.map(& &1.team_id) |> Enum.uniq()
+
+    teams =
+      Team
+      |> where([t], t.id in ^team_ids)
+      |> Repo.all()
+
+    team_members =
+      TeamMember
+      |> where([tm], tm.team_id in ^team_ids)
+      |> Repo.all()
+
     %{
       users: users,
       assessments: assessments,
-      submissions: submissions
+      submissions: submissions,
+      teams: teams,
+      team_members: team_members
     }
   end
 
@@ -1571,16 +1769,21 @@ defmodule Cadet.Assessments do
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
-      |> join(:inner, [a, ..., ast], ac in assoc(ast, :config))
+      |> join(:inner, [..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
-      |> join(:left, [a, ..., g], gu in assoc(g, :user))
+      |> join(:left, [_, ..., g], gu in assoc(g, :user))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
-      |> join(:inner, [a, ..., s], st in assoc(s, :student))
-      |> join(:inner, [a, ..., st], u in assoc(st, :user))
-      |> preload([_, q, ast, ac, g, gu, s, st, u],
+      |> join(:left, [_, ..., s], st in assoc(s, :student))
+      |> join(:left, [..., st], u in assoc(st, :user))
+      |> join(:left, [..., s, _, _], t in assoc(s, :team))
+      |> join(:left, [..., t], tm in assoc(t, :team_members))
+      |> join(:left, [..., tm], tms in assoc(tm, :student))
+      |> join(:left, [..., tms], tmu in assoc(tms, :user))
+      |> preload([_, q, ast, ac, g, gu, s, st, u, t, tm, tms, tmu],
         question: {q, assessment: {ast, config: ac}},
         grader: {g, user: gu},
-        submission: {s, student: {st, user: u}}
+        submission:
+          {s, student: {st, user: u}, team: {t, team_members: {tm, student: {tms, user: tmu}}}}
       )
 
     answers =
@@ -1829,11 +2032,22 @@ defmodule Cadet.Assessments do
   end
 
   defp find_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
+    {:ok, team} = find_team(assessment.id, cr.id)
+
     submission =
-      Submission
-      |> where(student_id: ^cr.id)
-      |> where(assessment_id: ^assessment.id)
-      |> Repo.one()
+      case team do
+        %Team{} ->
+          Submission
+          |> where(team_id: ^team.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+
+        nil ->
+          Submission
+          |> where(student_id: ^cr.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+      end
 
     if submission do
       {:ok, submission}
@@ -1935,12 +2149,24 @@ defmodule Cadet.Assessments do
   end
 
   defp create_empty_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
-    %Submission{}
-    |> Submission.changeset(%{student: cr, assessment: assessment})
-    |> Repo.insert()
-    |> case do
-      {:ok, submission} -> {:ok, submission}
-      {:error, _} -> {:error, :race_condition}
+    {:ok, team} = find_team(assessment.id, cr.id)
+
+    case team do
+      %Team{} ->
+        %Submission{}
+        |> Submission.changeset(%{team: team, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+        end
+
+      nil ->
+        %Submission{}
+        |> Submission.changeset(%{student: cr, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+        end
     end
   end
 
@@ -1968,14 +2194,62 @@ defmodule Cadet.Assessments do
           answer: answer_content,
           question_id: question.id,
           submission_id: submission.id,
-          type: question.type
+          type: question.type,
+          last_modified_at: Timex.now()
         })
 
       Repo.insert(
         answer_changeset,
-        on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
+        on_conflict: [
+          set: [answer: get_change(answer_changeset, :answer), last_modified_at: Timex.now()]
+        ],
         conflict_target: [:submission_id, :question_id]
       )
+    end
+  end
+
+  def has_last_modified_answer?(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        last_modified_at,
+        force_submit
+      ) do
+    with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+         {:status, true} <- {:status, force_submit or submission.status != :submitted},
+         {:ok, is_modified} <- answer_last_modified?(submission, question, last_modified_at) do
+      {:ok, is_modified}
+    else
+      {:status, _} ->
+        {:error, {:forbidden, "Assessment submission already finalised"}}
+
+      {:error, :race_condition} ->
+        {:error, {:internal_server_error, "Please try again later."}}
+
+      {:error, :invalid_vote} ->
+        {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
+
+      _ ->
+        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+    end
+  end
+
+  defp answer_last_modified?(
+         submission = %Submission{},
+         question = %Question{},
+         last_modified_at
+       ) do
+    case Repo.get_by(Answer, submission_id: submission.id, question_id: question.id) do
+      %Answer{last_modified_at: existing_last_modified_at} ->
+        existing_iso8601 = DateTime.to_iso8601(existing_last_modified_at)
+
+        if existing_iso8601 == last_modified_at do
+          {:ok, false}
+        else
+          {:ok, true}
+        end
+
+      nil ->
+        {:ok, false}
     end
   end
 

@@ -5,9 +5,10 @@ defmodule Cadet.Updater.XMLParser do
 
   use Cadet, [:display]
 
+  import Ecto.Query
   import SweetXml
 
-  alias Cadet.Assessments
+  alias Cadet.{Repo, Courses.AssessmentConfig, Assessments}
 
   require Logger
 
@@ -80,6 +81,11 @@ defmodule Cadet.Updater.XMLParser do
 
     close_at = Timex.shift(open_at, days: 7)
 
+    assessment_config =
+      AssessmentConfig
+      |> where(id: ^assessment_config_id)
+      |> Repo.one()
+
     assessment_params =
       xml
       |> xpath(
@@ -99,6 +105,8 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:close_at, close_at)
       |> Map.put(:course_id, course_id)
       |> Map.put(:config_id, assessment_config_id)
+      |> Map.put(:has_token_counter, assessment_config.has_token_counter)
+      |> Map.put(:has_voting_features, assessment_config.has_voting_features)
       |> (&if(&1.access === "public",
             do: Map.put(&1, :password, nil),
             else: &1

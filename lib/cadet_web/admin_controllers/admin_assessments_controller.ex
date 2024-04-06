@@ -6,8 +6,9 @@ defmodule CadetWeb.AdminAssessmentsController do
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
+  alias CadetWeb.AssessmentsHelpers
+  alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
-  alias Cadet.Assessments.Assessment
   alias Cadet.Accounts.CourseRegistration
 
   def index(conn, %{"course_reg_id" => course_reg_id}) do
@@ -82,6 +83,10 @@ defmodule CadetWeb.AdminAssessmentsController do
     open_at = params |> Map.get("openAt")
     close_at = params |> Map.get("closeAt")
     is_published = params |> Map.get("isPublished")
+    max_team_size = params |> Map.get("maxTeamSize")
+    has_token_counter = params |> Map.get("hasTokenCounter")
+    has_voting_features = params |> Map.get("hasVotingFeatures")
+    assign_entries_for_voting = params |> Map.get("assignEntriesForVoting")
 
     updated_assessment =
       if is_nil(is_published) do
@@ -90,8 +95,37 @@ defmodule CadetWeb.AdminAssessmentsController do
         %{:is_published => is_published}
       end
 
+    updated_assessment =
+      if is_nil(max_team_size) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :max_team_size, max_team_size)
+      end
+
+    updated_assessment =
+      if is_nil(has_token_counter) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :has_token_counter, has_token_counter)
+      end
+
+    updated_assessment =
+      if is_nil(has_voting_features) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :has_voting_features, has_voting_features)
+      end
+
+    is_reassigning_voting =
+      if is_nil(assign_entries_for_voting) do
+        false
+      else
+        assign_entries_for_voting
+      end
+
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
-         {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment) do
+         {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment),
+         {:ok, _nil} <- Assessments.reassign_voting(assessment_id, is_reassigning_voting) do
       text(conn, "OK")
     else
       {:error, {status, message}} ->
@@ -99,6 +133,44 @@ defmodule CadetWeb.AdminAssessmentsController do
         |> put_status(status)
         |> text(message)
     end
+  end
+
+  def get_score_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
+    result =
+      contest_id
+      |> Assessments.fetch_top_relative_score_answers(10)
+      |> Enum.map(fn entry ->
+        AssessmentsHelpers.build_contest_leaderboard_entry(entry)
+      end)
+
+    render(conn, "leaderboard.json", leaderboard: result)
+  end
+
+  def get_popular_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
+    result =
+      contest_id
+      |> Assessments.fetch_top_popular_score_answers(10)
+      |> Enum.map(fn entry ->
+        AssessmentsHelpers.build_popular_leaderboard_entry(entry)
+      end)
+
+    render(conn, "leaderboard.json", leaderboard: result)
   end
 
   defp check_dates(open_at, close_at, assessment) do
@@ -113,7 +185,6 @@ defmodule CadetWeb.AdminAssessmentsController do
       else
         assessment = Map.put(assessment, :open_at, formatted_open_date)
         assessment = Map.put(assessment, :close_at, formatted_close_date)
-
         {:ok, assessment}
       end
     end
@@ -198,6 +269,38 @@ defmodule CadetWeb.AdminAssessmentsController do
     response(403, "Forbidden")
   end
 
+  swagger_path :get_popular_leaderboard do
+    get("/courses/{course_id}/admin/assessments/:assessmentid/popularVoteLeaderboard")
+
+    summary("get the top 10 contest entries based on popularity")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.array(:Leaderboard))
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
+  end
+
+  swagger_path :get_score_leaderboard do
+    get("/courses/{course_id}/admin/assessments/:assessmentid/scoreLeaderboard")
+
+    summary("get the top 10 contest entries based on score")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.array(:Leaderboard))
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
+  end
+
   def swagger_definitions do
     %{
       # Schemas for payloads to modify data
@@ -207,6 +310,7 @@ defmodule CadetWeb.AdminAssessmentsController do
             closeAt(:string, "Open date", required: false)
             openAt(:string, "Close date", required: false)
             isPublished(:boolean, "Whether the assessment is published", required: false)
+            maxTeamSize(:number, "Max team size of the assessment", required: false)
           end
         end
     }
