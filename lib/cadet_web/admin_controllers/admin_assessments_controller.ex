@@ -115,7 +115,7 @@ defmodule CadetWeb.AdminAssessmentsController do
         Map.put(updated_assessment, :has_voting_features, has_voting_features)
       end
 
-    is_assign_voting =
+    is_reassigning_voting =
       if is_nil(assign_entries_for_voting) do
         false
       else
@@ -124,7 +124,7 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     with {:ok, assessment} <- check_dates(open_at, close_at, updated_assessment),
          {:ok, _nil} <- Assessments.update_assessment(assessment_id, assessment),
-         {:ok, _nil} <- Assessments.reassign_voting(assessment_id, is_assign_voting) do
+         {:ok, _nil} <- Assessments.reassign_voting(assessment_id, is_reassigning_voting) do
       text(conn, "OK")
     else
       {:error, {status, message}} ->
