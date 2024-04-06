@@ -162,7 +162,6 @@ defmodule CadetWeb.AdminAssessmentsController do
       |> Repo.one()
 
     contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
-    IO.inspect(contest_id)
 
     result =
       contest_id
@@ -171,7 +170,6 @@ defmodule CadetWeb.AdminAssessmentsController do
         AssessmentsHelpers.build_popular_leaderboard_entry(entry)
       end)
 
-    IO.inspect(result)
     render(conn, "leaderboard.json", leaderboard: result)
   end
 
