@@ -135,15 +135,17 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def get_score_learderboard(conn, %{"assessmentid" => assessment_id}) do
+  def get_score_learderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
     voting_questions =
       Question
       |> where(type: :voting)
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
 
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
     result =
-      voting_questions.id
+      contest_id
       |> Assessments.fetch_top_relative_score_answers(10)
       |> Enum.map(fn entry ->
         AssessmentsHelpers.build_contest_leaderboard_entry(entry)
@@ -152,20 +154,24 @@ defmodule CadetWeb.AdminAssessmentsController do
     render(conn, "leaderboard.json", leaderboard: result)
   end
 
-  def get_popular_learderboard(conn, %{"assessmentid" => assessment_id}) do
+  def get_popular_learderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
     voting_questions =
       Question
       |> where(type: :voting)
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
 
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+    IO.inspect(contest_id)
+
     result =
-      voting_questions.id
-      |> Assessments.fetch_top_relative_score_answers(10)
+      contest_id
+      |> Assessments.fetch_top_popular_score_answers(10)
       |> Enum.map(fn entry ->
-        AssessmentsHelpers.build_contest_leaderboard_entry(entry)
+        AssessmentsHelpers.build_popular_leaderboard_entry(entry)
       end)
 
+    IO.inspect(result)
     render(conn, "leaderboard.json", leaderboard: result)
   end
 
