@@ -265,6 +265,38 @@ defmodule CadetWeb.AdminAssessmentsController do
     response(403, "Forbidden")
   end
 
+  swagger_path :get_popular_learderboard do
+    get("/courses/{course_id}/admin/assessments/:assessmentid/popularVoteLeaderboard")
+
+    summary("get the top 10 contest entries based on popularity")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.array(:Leaderboard))
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
+  end
+
+  swagger_path :get_score_learderboard do
+    get("/courses/{course_id}/admin/assessments/:assessmentid/scoreLeaderboard")
+
+    summary("get the top 10 contest entries based on score")
+
+    security([%{JWT: []}])
+
+    parameters do
+      assessmentId(:path, :integer, "Assessment ID", required: true)
+    end
+
+    response(200, "OK", Schema.array(:Leaderboard))
+    response(401, "Unauthorised")
+    response(403, "Forbidden")
+  end
+
   def swagger_definitions do
     %{
       # Schemas for payloads to modify data
