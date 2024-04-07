@@ -105,8 +105,8 @@ defmodule CadetWeb.NotificationsController do
             :new,
             :submitted,
             :unsubmitted,
-            :unpublishedGrading,
-            :publishedGrading,
+            :unpublished_grading,
+            :published_grading,
             :new_message
           ])
         end
