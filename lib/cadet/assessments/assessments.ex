@@ -1115,6 +1115,9 @@ defmodule Cadet.Assessments do
     Unpublishes grading for a submission and send notification to student.
     Requires admin or staff who is group leader of student.
 
+    Only manually graded assessments can be individually unpublished. We can only
+    unpublish all submissions for auto-graded assessments.
+
     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
   def unpublish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
@@ -1122,13 +1125,16 @@ defmodule Cadet.Assessments do
     submission =
       Submission
       |> join(:inner, [s], a in assoc(s, :assessment))
-      |> preload([_, a], assessment: a)
+      |> join(:inner, [_, a], c in assoc(a, :config))
+      |> preload([_, a, c], assessment: {a, config: c})
       |> Repo.get(submission_id)
 
     # allows staff to unpublish own assessment
     bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:is_manually_graded?, true} <-
+           {:is_manually_graded?, submission.assessment.config.is_manually_graded},
          {:allowed_to_unpublish?, true} <-
            {:allowed_to_unpublish?,
             role == :admin or bypass or
@@ -1151,6 +1157,10 @@ defmodule Cadet.Assessments do
         {:error,
          {:forbidden, "Only Avenger of student or Admin is permitted to unpublish grading"}}
 
+      {:is_manually_graded?, false} ->
+        {:error,
+         {:bad_request, "Only manually graded assessments can be individually unpublished"}}
+
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
     end
@@ -1160,6 +1170,9 @@ defmodule Cadet.Assessments do
     Publishes grading for a submission and send notification to student.
     Requires admin or staff who is group leader of student and all answers to be graded.
 
+    Only manually graded assessments can be individually published. We can only
+    publish all submissions for auto-graded assessments.
+
     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
   def publish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
@@ -1167,7 +1180,8 @@ defmodule Cadet.Assessments do
     submission =
       Submission
       |> join(:inner, [s], a in assoc(s, :assessment))
-      |> preload([_, a], assessment: a)
+      |> join(:inner, [_, a], c in assoc(a, :config))
+      |> preload([_, a, c], assessment: {a, config: c})
       |> Repo.get(submission_id)
 
     # allows staff to publish own assessment
@@ -1175,6 +1189,8 @@ defmodule Cadet.Assessments do
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
          {:status, :submitted} <- {:status, submission.status},
+         {:is_manually_graded?, true} <-
+           {:is_manually_graded?, submission.assessment.config.is_manually_graded},
          {:fully_graded?, true} <- {:fully_graded?, is_fully_graded?(submission_id)},
          {:allowed_to_publish?, true} <-
            {:allowed_to_publish?,
@@ -1202,6 +1218,9 @@ defmodule Cadet.Assessments do
 
       {:allowed_to_publish?, false} ->
         {:error, {:forbidden, "Only Avenger of student or Admin is permitted to publish grading"}}
+
+      {:is_manually_graded?, false} ->
+        {:error, {:bad_request, "Only manually graded assessments can be individually published"}}
 
       {:fully_graded?, false} ->
         {:error, {:bad_request, "Some answers are not graded"}}
