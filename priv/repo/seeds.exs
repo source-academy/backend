@@ -80,8 +80,8 @@ if Cadet.Env.env() == :dev do
   avenger_group = insert(:group, %{name: "MockAvengerGroup", leader: avenger_cr})
 
   groups_and_courses = [{admin_group, admin_course}, {avenger_group, avenger_course}]
-  # Users
 
+  # Users
   Enum.each(groups_and_courses, fn {group, course} ->
     students =
       for i <- 1..number_of_students do
@@ -99,6 +99,7 @@ if Cadet.Env.env() == :dev do
       end
 
     # Assessments and Submissions
+    # {order, type, is_grading_auto_published, is_manually_graded}
     valid_assessment_types = [
       {1, "Missions", false, true},
       {2, "Paths", true, false},
