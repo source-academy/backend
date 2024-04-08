@@ -397,6 +397,20 @@ defmodule CadetWeb.AssessmentsController do
           type(:string)
           enum([:none, :processing, :success, :failed])
         end,
+      Leaderboard:
+        swagger_schema do
+          description("A list of top entries for leaderboard")
+          type(:array)
+          items(Schema.ref(:ContestEntries))
+        end,
+      ContestEntries:
+        swagger_schema do
+          properties do
+            student_name(:string, "Name of the student", required: true)
+            answer(:string, "The code that the student submitted", required: true)
+            final_score(:float, "The score that the student obtained", required: true)
+          end
+        end,
 
       # Schemas for payloads to modify data
       UnlockAssessmentPayload:

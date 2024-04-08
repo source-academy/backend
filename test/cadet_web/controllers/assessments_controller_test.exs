@@ -82,7 +82,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "questionCount" => 9,
               "earlySubmissionXp" => &1.config.early_submission_xp,
               "hasVotingFeatures" => &1.has_voting_features,
-              "hasTokenCounter" => &1.has_token_counter
+              "hasTokenCounter" => &1.has_token_counter,
+              "isVotingPublished" => Assessments.is_voting_published(&1.id)
             }
           )
 
@@ -171,7 +172,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "isGradingPublished" => false,
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
-            "hasTokenCounter" => &1.has_token_counter
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => Assessments.is_voting_published(&1.id)
           }
         )
 
@@ -284,6 +286,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "questionCount" => 9,
               "hasVotingFeatures" => &1.has_voting_features,
               "hasTokenCounter" => &1.has_token_counter,
+              "isVotingPublished" => Assessments.is_voting_published(&1.id),
               "earlySubmissionXp" => &1.config.early_submission_xp,
               "isGradingPublished" => nil,
               "isPublished" =>

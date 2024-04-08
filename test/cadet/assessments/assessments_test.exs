@@ -558,6 +558,77 @@ defmodule Cadet.AssessmentsTest do
       assert SubmissionVotes |> where(question_id: ^question.id) |> Repo.all() |> length() == 0
     end
 
+    test "function that reassign voting after voting is assigned" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      # contest assessment that has closed
+      closed_contest_assessment =
+        insert(:assessment,
+          is_published: true,
+          open_at: Timex.shift(Timex.now(), days: -5),
+          close_at: Timex.shift(Timex.now(), hours: -1),
+          course: course,
+          config: config
+        )
+
+      contest_question = insert(:programming_question, assessment: closed_contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course})
+
+      question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question:
+            build(:voting_question_content, contest_number: closed_contest_assessment.number)
+        })
+
+      students =
+        insert_list(6, :course_registration, %{
+          role: :student,
+          course: course
+        })
+
+      Enum.map(students, fn student ->
+        submission =
+          insert(:submission,
+            student: student,
+            assessment: contest_question.assessment,
+            status: "submitted"
+          )
+
+        insert(:answer,
+          answer: %{code: "return 2;"},
+          submission: submission,
+          question: contest_question
+        )
+      end)
+
+      unattempted_student = insert(:course_registration, %{role: :student, course: course})
+
+      # unattempted submission will automatically be submitted after the assessment closes.
+      unattempted_submission =
+        insert(:submission,
+          student: unattempted_student,
+          assessment: contest_question.assessment,
+          status: "submitted"
+        )
+
+      insert(:answer,
+        answer: %{
+          code: "// question was left blank by student"
+        },
+        submission: unattempted_submission,
+        question: contest_question
+      )
+
+      Assessments.insert_voting(course.id, contest_question.assessment.number, question.id)
+      Assessments.reassign_voting(voting_assessment.id, true)
+
+      # students with own contest submissions will vote for 5 entries
+      # students without own contest submissin will vote for 6 entries
+      assert SubmissionVotes |> where(question_id: ^question.id) |> Repo.all() |> length() ==
+               6 * 5 + 6
+    end
+
     test "function that checks for closed contests and releases entries into voting pool" do
       course = insert(:course)
       config = insert(:assessment_config)
