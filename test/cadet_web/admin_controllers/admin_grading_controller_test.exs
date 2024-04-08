@@ -1097,9 +1097,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
       conn =
         conn
         |> sign_in(staff.user)
-
-      conn =
-        conn
         |> post(build_url_unpublish_all(course.id, assessment_id))
 
       assert response(conn, 403) == "Only Admin is permitted to publish all grades"
@@ -1136,9 +1133,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
       conn =
         conn
         |> sign_in(staff.user)
-
-      conn =
-        conn
         |> post(build_url_publish_all(course.id, assessment_id))
 
       assert response(conn, 403) == "Only Admin is permitted to publish all grades"
