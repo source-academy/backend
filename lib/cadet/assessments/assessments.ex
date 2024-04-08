@@ -1520,7 +1520,7 @@ defmodule Cadet.Assessments do
         left_join: asst in subquery(question_answers_query),
         on: asst.assessment_id == s.assessment_id,
         as: :asst,
-        inner_join: user in User,
+        left_join: user in User,
         on: user.id == s.student_id,
         as: :user,
         where: ^build_user_filter(params),
