@@ -1528,7 +1528,6 @@ defmodule Cadet.Assessments do
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(params, grader),
-        order_by: [desc: s.inserted_at],
         limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
         offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
         select: %{
@@ -1547,6 +1546,7 @@ defmodule Cadet.Assessments do
         }
       )
     query = sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
+    query = from [s, ans, asst, user] in query, order_by: [desc: s.inserted_at]
     submissions = Repo.all(query)
 
     count_query =
@@ -1569,7 +1569,10 @@ defmodule Cadet.Assessments do
 
     {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
   end
-
+  defp print_sql(queryable) do
+    IO.inspect(Ecto.Adapters.SQL.to_sql(:all, Repo, queryable))
+    queryable
+  end
   # Given a query from submissions_by_grader_for_index,
   # sorts it by the relevant field and direction
   # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
