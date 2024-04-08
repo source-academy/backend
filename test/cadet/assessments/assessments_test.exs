@@ -2516,6 +2516,73 @@ defmodule Cadet.AssessmentsTest do
         assert Enum.find(assessments_from_res, fn a -> a.id == s.assessment_id end) != nil
       end)
     end
+
+    test "sorting by assessment title ascending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "pageSize" => total_submissions,
+          "sortBy" => "assessmentName",
+          "sortDirection" => "sort-asc"
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+
+      submissions_by_title = Enum.map(
+        submissions_from_res,
+        fn s ->
+          Enum.find(assessments_from_res, fn a ->
+            s.assessment_id == a.id
+          end)
+        end
+      )
+
+      Enum.reduce(submissions_by_title,
+        fn x, y ->
+          assert x.title >= y.title
+          y
+        end
+      )
+    end
+
+    test "sorting by assessment title descending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions
+    } do
+      assessment = assessments["mission"][:assessment]
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "pageSize" => total_submissions,
+          "sortBy" => "assessmentName",
+          "sortDirection" => "sort-desc"
+        })
+
+        submissions_from_res = res[:data][:submissions]
+        assessments_from_res = res[:data][:assessments]
+
+        submissions_by_title = Enum.map(
+          submissions_from_res,
+          fn s ->
+            Enum.find(assessments_from_res, fn a ->
+              s.assessment_id == a.id
+            end)
+          end
+        )
+
+        Enum.reduce(submissions_by_title,
+          fn x, y ->
+            assert x.title <= y.title
+            y
+          end
+        )
+    end
   end
 
   defp get_answer_relative_scores(answers) do
