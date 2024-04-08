@@ -1569,10 +1569,6 @@ defmodule Cadet.Assessments do
 
     {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
   end
-  defp print_sql(queryable) do
-    IO.inspect(Ecto.Adapters.SQL.to_sql(:all, Repo, queryable))
-    queryable
-  end
   # Given a query from submissions_by_grader_for_index,
   # sorts it by the relevant field and direction
   # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
