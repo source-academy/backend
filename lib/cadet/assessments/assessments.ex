@@ -1483,7 +1483,9 @@ defmodule Cadet.Assessments do
           "group" => "false",
           "notFullyGraded" => "true",
           "pageSize" => "10",
-          "offset" => "0"
+          "offset" => "0",
+          "sortBy" => "",
+          "sortDirection" => ""
         }
       ) do
     submission_answers_query =
@@ -1504,7 +1506,9 @@ defmodule Cadet.Assessments do
         on: q.assessment_id == a.id,
         select: %{
           assessment_id: q.assessment_id,
-          question_count: count(q.id)
+          question_count: count(q.id),
+          title: max(a.title),
+          config_id: max(a.config_id)
         }
       )
 
@@ -1516,6 +1520,9 @@ defmodule Cadet.Assessments do
         left_join: asst in subquery(question_answers_query),
         on: asst.assessment_id == s.assessment_id,
         as: :asst,
+        inner_join: user in User,
+        on: user.id == s.student_id,
+        as: :user,
         where: ^build_user_filter(params),
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
@@ -1539,7 +1546,7 @@ defmodule Cadet.Assessments do
           question_count: asst.question_count
         }
       )
-
+    query = sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
     submissions = Repo.all(query)
 
     count_query =
@@ -1561,6 +1568,65 @@ defmodule Cadet.Assessments do
     count = Repo.one(count_query)
 
     {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
+  end
+
+  # Given a query from submissions_by_grader_for_index,
+  # sorts it by the relevant field and direction
+  # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
+  # "studentUsername", "groupName", "submissionStatus", "gradingStatus", "xp"
+  # sort_direction is a string of either "", "sort-asc", "sort-desc"
+  defp sort_submission(query, sort_by, sort_direction) do
+    if sort_direction == "sort-asc" do
+      cond do
+          sort_by == "" ->
+            query
+          sort_by == "assessmentName" ->
+            from [s, ans, asst, user] in query, order_by: asst.title
+          sort_by == "assessmentType" ->
+            from [s, ans, asst, user] in query, order_by: asst.config_id
+          sort_by == "studentName" ->
+            from [s, ans, asst, user] in query, order_by: user.name
+          sort_by == "studentUsername" ->
+            from [s, ans, asst, user] in query, order_by: user.username
+          sort_by == "groupName" ->
+            from [s, ans, asst, user] in query, order_by: s.team_id
+          sort_by == "submissionStatus" ->
+            from [s, ans, asst, user] in query, order_by: s.status
+          sort_by == "gradingStatus" ->
+            from [s, ans, asst, user] in query, order_by: asst.question_count - ans.graded_count
+          sort_by == "xp" ->
+            from [s, ans, asst, user] in query, order_by: ans.xp
+          true ->
+            query
+      end
+    else
+      if sort_direction == "sort-desc" do
+        cond do
+          sort_by == "" ->
+            query
+          sort_by == "assessmentName" ->
+            from [s, ans, asst, user] in query, order_by: [desc: asst.title]
+          sort_by == "assessmentType" ->
+            from [s, ans, asst, user] in query, order_by: [desc: asst.config_id]
+          sort_by == "studentName" ->
+            from [s, ans, asst, user] in query, order_by: [desc: user.name]
+          sort_by == "studentUsername" ->
+            from [s, ans, asst, user] in query, order_by: [desc: user.username]
+          sort_by == "groupName" ->
+            from [s, ans, asst, user] in query, order_by: [desc: s.team_id]
+          sort_by == "submissionStatus" ->
+            from [s, ans, asst, user] in query, order_by: [desc: s.status]
+          sort_by == "gradingStatus" ->
+            from [s, ans, asst, user] in query, order_by: [desc: asst.question_count - ans.graded_count]
+          sort_by == "xp" ->
+            from [s, ans, asst, user] in query, order_by: [desc: ans.xp]
+          true ->
+            query
+        end
+      else
+        query
+      end
+    end
   end
 
   defp build_assessment_filter(params, course_id) do
