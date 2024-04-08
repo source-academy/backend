@@ -2522,7 +2522,6 @@ defmodule Cadet.AssessmentsTest do
       assessments: assessments,
       total_submissions: total_submissions
     } do
-
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
           "pageSize" => total_submissions,
@@ -2533,16 +2532,18 @@ defmodule Cadet.AssessmentsTest do
       submissions_from_res = res[:data][:submissions]
       assessments_from_res = res[:data][:assessments]
 
-      submissions_by_title = Enum.map(
-        submissions_from_res,
-        fn s ->
-          Enum.find(assessments_from_res, fn a ->
-            s.assessment_id == a.id
-          end)
-        end
-      )
+      submissions_by_title =
+        Enum.map(
+          submissions_from_res,
+          fn s ->
+            Enum.find(assessments_from_res, fn a ->
+              s.assessment_id == a.id
+            end)
+          end
+        )
 
-      Enum.reduce(submissions_by_title,
+      Enum.reduce(
+        submissions_by_title,
         fn x, y ->
           assert x.title >= y.title
           y
@@ -2564,10 +2565,11 @@ defmodule Cadet.AssessmentsTest do
           "sortDirection" => "sort-desc"
         })
 
-        submissions_from_res = res[:data][:submissions]
-        assessments_from_res = res[:data][:assessments]
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
 
-        submissions_by_title = Enum.map(
+      submissions_by_title =
+        Enum.map(
           submissions_from_res,
           fn s ->
             Enum.find(assessments_from_res, fn a ->
@@ -2576,12 +2578,13 @@ defmodule Cadet.AssessmentsTest do
           end
         )
 
-        Enum.reduce(submissions_by_title,
-          fn x, y ->
-            assert x.title <= y.title
-            y
-          end
-        )
+      Enum.reduce(
+        submissions_by_title,
+        fn x, y ->
+          assert x.title <= y.title
+          y
+        end
+      )
     end
   end
 

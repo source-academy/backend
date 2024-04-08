@@ -1545,8 +1545,11 @@ defmodule Cadet.Assessments do
           question_count: asst.question_count
         }
       )
-    query = sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
-    query = from [s, ans, asst, user] in query, order_by: [desc: s.inserted_at]
+
+    query =
+      sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
+
+    query = from([s, ans, asst, user] in query, order_by: [desc: s.inserted_at])
     submissions = Repo.all(query)
 
     count_query =
@@ -1569,6 +1572,7 @@ defmodule Cadet.Assessments do
 
     {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
   end
+
   # Given a query from submissions_by_grader_for_index,
   # sorts it by the relevant field and direction
   # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
@@ -1577,48 +1581,68 @@ defmodule Cadet.Assessments do
   defp sort_submission(query, sort_by, sort_direction) do
     if sort_direction == "sort-asc" do
       cond do
-          sort_by == "" ->
-            query
-          sort_by == "assessmentName" ->
-            from [s, ans, asst, user] in query, order_by: asst.title
-          sort_by == "assessmentType" ->
-            from [s, ans, asst, user] in query, order_by: asst.config_id
-          sort_by == "studentName" ->
-            from [s, ans, asst, user] in query, order_by: user.name
-          sort_by == "studentUsername" ->
-            from [s, ans, asst, user] in query, order_by: user.username
-          sort_by == "groupName" ->
-            from [s, ans, asst, user] in query, order_by: s.team_id
-          sort_by == "submissionStatus" ->
-            from [s, ans, asst, user] in query, order_by: s.status
-          sort_by == "gradingStatus" ->
-            from [s, ans, asst, user] in query, order_by: asst.question_count - ans.graded_count
-          sort_by == "xp" ->
-            from [s, ans, asst, user] in query, order_by: ans.xp
-          true ->
-            query
+        sort_by == "" ->
+          query
+
+        sort_by == "assessmentName" ->
+          from([s, ans, asst, user] in query, order_by: asst.title)
+
+        sort_by == "assessmentType" ->
+          from([s, ans, asst, user] in query, order_by: asst.config_id)
+
+        sort_by == "studentName" ->
+          from([s, ans, asst, user] in query, order_by: user.name)
+
+        sort_by == "studentUsername" ->
+          from([s, ans, asst, user] in query, order_by: user.username)
+
+        sort_by == "groupName" ->
+          from([s, ans, asst, user] in query, order_by: s.team_id)
+
+        sort_by == "submissionStatus" ->
+          from([s, ans, asst, user] in query, order_by: s.status)
+
+        sort_by == "gradingStatus" ->
+          from([s, ans, asst, user] in query, order_by: asst.question_count - ans.graded_count)
+
+        sort_by == "xp" ->
+          from([s, ans, asst, user] in query, order_by: ans.xp)
+
+        true ->
+          query
       end
     else
       if sort_direction == "sort-desc" do
         cond do
           sort_by == "" ->
             query
+
           sort_by == "assessmentName" ->
-            from [s, ans, asst, user] in query, order_by: [desc: asst.title]
+            from([s, ans, asst, user] in query, order_by: [desc: asst.title])
+
           sort_by == "assessmentType" ->
-            from [s, ans, asst, user] in query, order_by: [desc: asst.config_id]
+            from([s, ans, asst, user] in query, order_by: [desc: asst.config_id])
+
           sort_by == "studentName" ->
-            from [s, ans, asst, user] in query, order_by: [desc: user.name]
+            from([s, ans, asst, user] in query, order_by: [desc: user.name])
+
           sort_by == "studentUsername" ->
-            from [s, ans, asst, user] in query, order_by: [desc: user.username]
+            from([s, ans, asst, user] in query, order_by: [desc: user.username])
+
           sort_by == "groupName" ->
-            from [s, ans, asst, user] in query, order_by: [desc: s.team_id]
+            from([s, ans, asst, user] in query, order_by: [desc: s.team_id])
+
           sort_by == "submissionStatus" ->
-            from [s, ans, asst, user] in query, order_by: [desc: s.status]
+            from([s, ans, asst, user] in query, order_by: [desc: s.status])
+
           sort_by == "gradingStatus" ->
-            from [s, ans, asst, user] in query, order_by: [desc: asst.question_count - ans.graded_count]
+            from([s, ans, asst, user] in query,
+              order_by: [desc: asst.question_count - ans.graded_count]
+            )
+
           sort_by == "xp" ->
-            from [s, ans, asst, user] in query, order_by: [desc: ans.xp]
+            from([s, ans, asst, user] in query, order_by: [desc: ans.xp])
+
           true ->
             query
         end
