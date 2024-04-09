@@ -2652,6 +2652,98 @@ defmodule Cadet.AssessmentsTest do
         end
       )
     end
+
+    test "sorting by grading status ascending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "pageSize" => total_submissions,
+          "sortBy" => "gradingStatus",
+          "sortDirection" => "sort-asc"
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      Enum.reduce(
+        submissions_from_res,
+        fn x, y ->
+          assert x.question_count - x.graded_count >= y.question_count - y.graded_count
+          y
+        end
+      )
+    end
+
+    test "sorting by grading status descending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "pageSize" => total_submissions,
+          "sortBy" => "gradingStatus",
+          "sortDirection" => "sort-desc"
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      Enum.reduce(
+        submissions_from_res,
+        fn x, y ->
+          assert x.question_count - x.graded_count <= y.question_count - y.graded_count
+          y
+        end
+      )
+    end
+
+    test "sorting by xp ascending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "pageSize" => total_submissions,
+          "sortBy" => "xp",
+          "sortDirection" => "sort-asc"
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      Enum.reduce(
+        submissions_from_res,
+        fn x, y ->
+          assert x.xp >= y.xp
+          y
+        end
+      )
+    end
+
+    test "sorting by xp descending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "pageSize" => total_submissions,
+          "sortBy" => "xp",
+          "sortDirection" => "sort-desc"
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      Enum.reduce(
+        submissions_from_res,
+        fn x, y ->
+          assert x.xp <= y.xp
+          y
+        end
+      )
+    end
   end
 
   defp get_answer_relative_scores(answers) do
