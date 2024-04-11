@@ -22,7 +22,7 @@ defmodule CadetWeb.AdminAssetsController do
 
     case Assets.delete_object(Courses.assets_prefix(course_reg.course), foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
-      _ -> conn |> put_status(204) |> text(~c"")
+      _ -> conn |> put_status(204) |> text('')
     end
   end
 
