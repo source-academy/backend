@@ -4,8 +4,7 @@ defmodule CadetWeb.SharedProgramController do
   alias Cadet.SharedPrograms
   alias Cadet.SharedPrograms.SharedProgram
 
-  action_fallback CadetWeb.FallbackController
-
+  action_fallback(CadetWeb.FallbackController)
 
   def index(conn, _params) do
     shared_programs = SharedPrograms.list_shared_programs()
@@ -13,7 +12,11 @@ defmodule CadetWeb.SharedProgramController do
   end
 
   def create(conn, %{"shared_program" => shared_program_params}) do
-    with {:ok, %SharedProgram{uuid: uuid} = shared_program} <- SharedPrograms.create_shared_program(shared_program_params) do
+    with {:ok, %SharedProgram{uuid: uuid} = shared_program} <-
+           SharedPrograms.create_shared_program(shared_program_params) do
+      # change to current server of source academy
+      # server = "http://localhost:8000"
+      # url =
       conn
       |> put_status(:created)
       |> put_resp_header("location", ~s"/api/shared_programs/#{shared_program}")
@@ -43,7 +46,8 @@ defmodule CadetWeb.SharedProgramController do
   def update(conn, %{"id" => id, "shared_program" => shared_program_params}) do
     shared_program = SharedPrograms.get_shared_program!(id)
 
-    with {:ok, %SharedProgram{} = shared_program} <- SharedPrograms.update_shared_program(shared_program, shared_program_params) do
+    with {:ok, %SharedProgram{} = shared_program} <-
+           SharedPrograms.update_shared_program(shared_program, shared_program_params) do
       render(conn, :show, shared_program: shared_program)
     end
   end
@@ -78,5 +82,4 @@ defmodule CadetWeb.SharedProgramController do
         {:error, "Unexpected response: #{inspect(other)}"}
     end
   end
-
 end

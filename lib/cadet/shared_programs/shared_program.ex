@@ -1,10 +1,13 @@
 defmodule Cadet.SharedPrograms.SharedProgram do
+  @moduledoc """
+  Contains methods for storing frontend programs to database with uuid.
+  """
   use Ecto.Schema
   import Ecto.Changeset
 
   schema "shared_programs" do
-    field :data, :map
-    field :uuid, Ecto.UUID
+    field(:data, :map)
+    field(:uuid, Ecto.UUID)
 
     timestamps()
   end
@@ -30,5 +33,4 @@ defmodule Cadet.SharedPrograms.SharedProgram do
       "SharedProgram with UUID: #{uuid}"
     end
   end
-
 end

@@ -3,8 +3,8 @@ defmodule Cadet.Repo.Migrations.CreateSharedPrograms do
 
   def change do
     create table(:shared_programs) do
-      add :uuid, :uuid
-      add :data, :map
+      add(:uuid, :uuid)
+      add(:data, :map)
 
       timestamps()
     end

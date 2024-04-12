@@ -49,7 +49,10 @@ defmodule CadetWeb.SharedProgramControllerTest do
   describe "update shared_program" do
     setup [:create_shared_program]
 
-    test "renders shared_program when data is valid", %{conn: conn, shared_program: %SharedProgram{id: id} = shared_program} do
+    test "renders shared_program when data is valid", %{
+      conn: conn,
+      shared_program: %SharedProgram{id: id} = shared_program
+    } do
       conn = put(conn, ~p"/api/shared_programs/#{shared_program}", shared_program: @update_attrs)
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
@@ -75,9 +78,9 @@ defmodule CadetWeb.SharedProgramControllerTest do
       conn = delete(conn, ~p"/api/shared_programs/#{shared_program}")
       assert response(conn, 204)
 
-      assert_error_sent 404, fn ->
+      assert_error_sent(404, fn ->
         get(conn, ~p"/api/shared_programs/#{shared_program}")
-      end
+      end)
     end
   end
 

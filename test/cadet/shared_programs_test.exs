@@ -23,7 +23,9 @@ defmodule Cadet.SharedProgramsTest do
     test "create_shared_program/1 with valid data creates a shared_program" do
       valid_attrs = %{data: %{}, uuid: "7488a646-e31f-11e4-aace-600308960662"}
 
-      assert {:ok, %SharedProgram{} = shared_program} = SharedPrograms.create_shared_program(valid_attrs)
+      assert {:ok, %SharedProgram{} = shared_program} =
+               SharedPrograms.create_shared_program(valid_attrs)
+
       assert shared_program.data == %{}
       assert shared_program.uuid == "7488a646-e31f-11e4-aace-600308960662"
     end
@@ -36,21 +38,29 @@ defmodule Cadet.SharedProgramsTest do
       shared_program = shared_program_fixture()
       update_attrs = %{data: %{}, uuid: "7488a646-e31f-11e4-aace-600308960668"}
 
-      assert {:ok, %SharedProgram{} = shared_program} = SharedPrograms.update_shared_program(shared_program, update_attrs)
+      assert {:ok, %SharedProgram{} = shared_program} =
+               SharedPrograms.update_shared_program(shared_program, update_attrs)
+
       assert shared_program.data == %{}
       assert shared_program.uuid == "7488a646-e31f-11e4-aace-600308960668"
     end
 
     test "update_shared_program/2 with invalid data returns error changeset" do
       shared_program = shared_program_fixture()
-      assert {:error, %Ecto.Changeset{}} = SharedPrograms.update_shared_program(shared_program, @invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               SharedPrograms.update_shared_program(shared_program, @invalid_attrs)
+
       assert shared_program == SharedPrograms.get_shared_program!(shared_program.id)
     end
 
     test "delete_shared_program/1 deletes the shared_program" do
       shared_program = shared_program_fixture()
       assert {:ok, %SharedProgram{}} = SharedPrograms.delete_shared_program(shared_program)
-      assert_raise Ecto.NoResultsError, fn -> SharedPrograms.get_shared_program!(shared_program.id) end
+
+      assert_raise Ecto.NoResultsError, fn ->
+        SharedPrograms.get_shared_program!(shared_program.id)
+      end
     end
 
     test "change_shared_program/1 returns a shared_program changeset" do
