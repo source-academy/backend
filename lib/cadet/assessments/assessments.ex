@@ -1198,18 +1198,19 @@ defmodule Cadet.Assessments do
   """
   def unpublish_grading(submission_id, cr = %CourseRegistration{})
       when is_ecto_id(submission_id) do
-    with {:ok, submission} <- can_publish?(submission_id, cr) do
-      submission
-      |> Submission.changeset(%{is_grading_published: false})
-      |> Repo.update()
+    case can_publish?(submission_id, cr) do
+      {:ok, submission} ->
+        submission
+        |> Submission.changeset(%{is_grading_published: false})
+        |> Repo.update()
 
-      Notifications.handle_unpublish_grades_notifications(
-        submission.assessment.id,
-        Repo.get(CourseRegistration, submission.student_id)
-      )
+        Notifications.handle_unpublish_grades_notifications(
+          submission.assessment.id,
+          Repo.get(CourseRegistration, submission.student_id)
+        )
 
-      {:ok, nil}
-    else
+        {:ok, nil}
+
       {:submission_found?, false} ->
         {:error, {:not_found, "Submission not found"}}
 
@@ -1237,18 +1238,19 @@ defmodule Cadet.Assessments do
   """
   def publish_grading(submission_id, cr = %CourseRegistration{})
       when is_ecto_id(submission_id) do
-    with {:ok, submission} <- can_publish?(submission_id, cr) do
-      submission
-      |> Submission.changeset(%{is_grading_published: true})
-      |> Repo.update()
+    case can_publish?(submission_id, cr) do
+      {:ok, submission} ->
+        submission
+        |> Submission.changeset(%{is_grading_published: true})
+        |> Repo.update()
 
-      Notifications.write_notification_when_published(
-        submission.id,
-        :published_grading
-      )
+        Notifications.write_notification_when_published(
+          submission.id,
+          :published_grading
+        )
 
-      {:ok, nil}
-    else
+        {:ok, nil}
+
       {:submission_found?, false} ->
         {:error, {:not_found, "Submission not found"}}
 
