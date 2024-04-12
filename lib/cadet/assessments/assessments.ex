@@ -1407,7 +1407,7 @@ defmodule Cadet.Assessments do
 
       {:ok, nil}
     else
-      {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
+      {:error, {:forbidden, "Only Admin is permitted to unpublish all grades"}}
     end
   end
 
