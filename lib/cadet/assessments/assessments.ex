@@ -1163,17 +1163,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @doc """
-    Unpublishes grading for a submission and send notification to student.
-    Requires admin or staff who is group leader of student.
-
-    Only manually graded assessments can be individually unpublished. We can only
-    unpublish all submissions for auto-graded assessments.
-
-    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
-  """
-  def unpublish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
-      when is_ecto_id(submission_id) do
+  defp can_publish?(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role}) do
     submission =
       Submission
       |> join(:inner, [s], a in assoc(s, :assessment))
@@ -1185,12 +1175,30 @@ defmodule Cadet.Assessments do
     bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:status, :submitted} <- {:status, submission.status},
          {:is_manually_graded?, true} <-
            {:is_manually_graded?, submission.assessment.config.is_manually_graded},
-         {:allowed_to_unpublish?, true} <-
-           {:allowed_to_unpublish?,
+         {:fully_graded?, true} <- {:fully_graded?, is_fully_graded?(submission_id)},
+         {:allowed_to_publish?, true} <-
+           {:allowed_to_publish?,
             role == :admin or bypass or
               Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+      {:ok, submission}
+    end
+  end
+
+  @doc """
+    Unpublishes grading for a submission and send notification to student.
+    Requires admin or staff who is group leader of student.
+
+    Only manually graded assessments can be individually unpublished. We can only
+    unpublish all submissions for auto-graded assessments.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def unpublish_grading(submission_id, cr = %CourseRegistration{})
+      when is_ecto_id(submission_id) do
+    with {:ok, submission} <- can_publish?(submission_id, cr) do
       submission
       |> Submission.changeset(%{is_grading_published: false})
       |> Repo.update()
@@ -1205,7 +1213,7 @@ defmodule Cadet.Assessments do
       {:submission_found?, false} ->
         {:error, {:not_found, "Submission not found"}}
 
-      {:allowed_to_unpublish?, false} ->
+      {:allowed_to_publish?, false} ->
         {:error,
          {:forbidden, "Only Avenger of student or Admin is permitted to unpublish grading"}}
 
@@ -1227,27 +1235,9 @@ defmodule Cadet.Assessments do
 
     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
-  def publish_grading(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role})
+  def publish_grading(submission_id, cr = %CourseRegistration{})
       when is_ecto_id(submission_id) do
-    submission =
-      Submission
-      |> join(:inner, [s], a in assoc(s, :assessment))
-      |> join(:inner, [_, a], c in assoc(a, :config))
-      |> preload([_, a, c], assessment: {a, config: c})
-      |> Repo.get(submission_id)
-
-    # allows staff to publish own assessment
-    bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
-
-    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-         {:status, :submitted} <- {:status, submission.status},
-         {:is_manually_graded?, true} <-
-           {:is_manually_graded?, submission.assessment.config.is_manually_graded},
-         {:fully_graded?, true} <- {:fully_graded?, is_fully_graded?(submission_id)},
-         {:allowed_to_publish?, true} <-
-           {:allowed_to_publish?,
-            role == :admin or bypass or
-              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+    with {:ok, submission} <- can_publish?(submission_id, cr) do
       submission
       |> Submission.changeset(%{is_grading_published: true})
       |> Repo.update()
