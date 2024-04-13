@@ -187,7 +187,7 @@ defmodule CadetWeb.Router do
   #   pipe_through :api
   # end
 
-  scope "/api", CadetWeb do
+  scope "/v2", CadetWeb do
     pipe_through(:api)
 
     resources("/shared_programs", SharedProgramController, only: [:index, :show, :create, :delete])
