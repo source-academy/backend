@@ -14,8 +14,9 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
   alias Ecto.Multi
 
-  alias Cadet.Repo
-  alias Cadet.Assessments.Answer
+  alias Cadet.{Assessments, Repo}
+  alias Cadet.Assessments.{Answer, Assessment, Submission}
+  alias Cadet.Courses.AssessmentConfig
 
   def perform(params = %{answer_id: answer_id, result: result})
       when is_ecto_id(answer_id) do
@@ -53,7 +54,11 @@ defmodule Cadet.Autograder.ResultStoreWorker do
     end
   end
 
-  defp update_answer(answer = %Answer{}, result = %{status: status}, overwrite) do
+  defp update_answer(
+         answer = %Answer{submission_id: submission_id},
+         result = %{status: status},
+         overwrite
+       ) do
     xp =
       cond do
         result.max_score == 0 and length(result.result) > 0 ->
@@ -79,8 +84,20 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
     changes = if(overwrite, do: Map.put(changes, :xp_adjustment, 0), else: changes)
 
-    answer
-    |> Answer.autograding_changeset(changes)
-    |> Repo.update()
+    res =
+      answer
+      |> Answer.autograding_changeset(changes)
+      |> Repo.update()
+
+    submission = Repo.get(Submission, submission_id)
+    assessment = Repo.get(Assessment, submission.assessment_id)
+    assessment_config = Repo.get_by(AssessmentConfig, id: assessment.config_id)
+    is_grading_auto_published = assessment_config.is_grading_auto_published
+
+    if Assessments.is_fully_autograded?(submission_id) and is_grading_auto_published do
+      Assessments.publish_grading(submission_id)
+    end
+
+    res
   end
 end

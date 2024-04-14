@@ -32,6 +32,7 @@ defmodule CadetWeb.AssessmentsView do
       isPublished: :is_published,
       questionCount: :question_count,
       gradedCount: &(&1.graded_count || 0),
+      isGradingPublished: :is_grading_published,
       earlySubmissionXp: & &1.config.early_submission_xp,
       maxTeamSize: :max_team_size,
       hasVotingFeatures: :has_voting_features,

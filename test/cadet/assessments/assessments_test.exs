@@ -1305,7 +1305,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1373,7 +1374,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1442,7 +1444,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1529,7 +1532,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1640,7 +1644,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1676,7 +1681,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1724,7 +1730,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1785,7 +1792,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1853,7 +1861,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -1921,7 +1930,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -2008,7 +2018,8 @@ defmodule Cadet.AssessmentsTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -2061,8 +2072,131 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  # Tests assume each config has only 1 assessment
-  describe "get submission function" do
+  describe "grading published feature" do
+    setup do
+      course = insert(:course)
+      config = insert(:assessment_config, %{type: "Test", course: course})
+      student = insert(:course_registration, course: course, role: :student)
+      student_2 = insert(:course_registration, course: course, role: :student)
+      avenger = insert(:course_registration, course: course, role: :staff)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          config: config,
+          course: course
+        )
+
+      question = insert(:mcq_question, assessment: assessment)
+
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :attempted,
+          is_grading_published: false
+        )
+
+      _answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{:choice_id => 1},
+          xp: 400,
+          xp_adjustment: 300,
+          comments: "Dummy Comment",
+          autograding_status: :failed,
+          autograding_results: [
+            %{
+              errors: [
+                %{
+                  error_message: "DummyError",
+                  error_type: "systemError"
+                }
+              ],
+              result_type: "error"
+            }
+          ],
+          grader: avenger
+        )
+
+      published_submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student_2,
+          status: :submitted,
+          is_grading_published: true
+        )
+
+      _published_answer =
+        insert(
+          :answer,
+          submission: published_submission,
+          question: question,
+          answer: %{:choice_id => 1},
+          xp: 400,
+          xp_adjustment: 300,
+          comments: "Dummy Comment",
+          autograding_status: :failed,
+          autograding_results: [
+            %{
+              errors: [
+                %{
+                  error_message: "DummyError",
+                  error_type: "systemError"
+                }
+              ],
+              result_type: "error"
+            }
+          ],
+          grader: avenger
+        )
+
+      %{assessment: assessment, student: student, student_2: student_2}
+    end
+
+    test "unpublished grades are hidden", %{assessment: assessment, student: student} do
+      {_, assessment_with_q_and_a} =
+        Assessments.assessment_with_questions_and_answers(assessment, student)
+
+      formatted_assessment =
+        Assessments.format_assessment_with_questions_and_answers(assessment_with_q_and_a)
+
+      formatted_answer = hd(formatted_assessment.questions).answer
+
+      assert formatted_answer.xp == 0
+      assert formatted_answer.xp_adjustment == 0
+      assert formatted_answer.autograding_status == :none
+      assert formatted_answer.autograding_results == []
+      assert formatted_answer.grader == nil
+      assert formatted_answer.grader_id == nil
+      assert formatted_answer.comments == nil
+    end
+
+    test "published grades are shown", %{assessment: assessment, student_2: student} do
+      {_, assessment_with_q_and_a} =
+        Assessments.assessment_with_questions_and_answers(assessment, student)
+
+      formatted_assessment =
+        Assessments.format_assessment_with_questions_and_answers(assessment_with_q_and_a)
+
+      formatted_answer = hd(formatted_assessment.questions).answer
+
+      assert formatted_answer.xp != 0
+      assert formatted_answer.xp_adjustment != 0
+      assert formatted_answer.autograding_status != :none
+      assert formatted_answer.autograding_results != []
+      assert formatted_answer.grader != nil
+      assert formatted_answer.grader_id != nil
+      assert formatted_answer.comments != nil
+    end
+  end
+
+  describe "submissions_by_grader_for_index function" do
     setup do
       seed = Cadet.Test.Seeds.assessments()
 
@@ -2172,17 +2306,44 @@ defmodule Cadet.AssessmentsTest do
       end)
     end
 
-    test "filter by submission not fully graded", %{
-      course_regs: %{avenger1_cr: avenger, students: students},
+    test "filter by submission fully graded", %{
+      course_regs: %{avenger1_cr: avenger},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # All but one is fully graded
-      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, is_graded, _, _} -> is_graded end)
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "notFullyGraded" => "true",
+          "isFullyGraded" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.question_count == s.graded_count
+      end)
+    end
+
+    test "filter by submission not fully graded", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
+    } do
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, is_graded, _, _} -> !is_graded end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isFullyGraded" => "false",
           "pageSize" => total_submissions
         })
 
@@ -2195,13 +2356,71 @@ defmodule Cadet.AssessmentsTest do
       end)
     end
 
+    test "filter by submission published", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
+    } do
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, is_published, _} ->
+            is_published
+          end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isGradingPublished" => "true",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.is_grading_published == true
+      end)
+    end
+
+    test "filter by submission not published", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments,
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
+    } do
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, is_published, _} ->
+            !is_published
+          end)
+
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          "isGradingPublished" => "false",
+          "pageSize" => total_submissions
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      assert length(submissions_from_res) == expected_length
+
+      Enum.each(submissions_from_res, fn s ->
+        assert s.is_grading_published == false
+      end)
+    end
+
     test "filter by group avenger", %{
       course_regs: %{avenger1_cr: avenger, group: group, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # All but one is in the same group
-      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, _, avenger_cr} ->
+            avenger_cr.id == avenger.id
+          end)
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
@@ -2222,10 +2441,14 @@ defmodule Cadet.AssessmentsTest do
     test "filter by group avenger2", %{
       course_regs: %{avenger2_cr: avenger2, group2: group2, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # One in the same group
-      expected_length = length(Map.keys(assessments))
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {_, _, _, _, avenger_cr} ->
+            avenger_cr.id == avenger2.id
+          end)
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger2, %{
@@ -2247,10 +2470,15 @@ defmodule Cadet.AssessmentsTest do
     test "filter by group name group", %{
       course_regs: %{avenger2_cr: avenger2, group: group, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # All but one is in group
-      expected_length = length(Map.keys(assessments)) * (length(students) - 1)
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {student, _, _, _, _} ->
+            student.group.id == group.id
+          end)
+
       group_name = group.name
 
       {_, res} =
@@ -2273,10 +2501,15 @@ defmodule Cadet.AssessmentsTest do
     test "filter by group name group2", %{
       course_regs: %{avenger1_cr: avenger, group2: group2, students: students},
       assessments: assessments,
-      total_submissions: total_submissions
+      total_submissions: total_submissions,
+      students_with_assessment_info: students_with_assessment_info
     } do
-      # One in the group
-      expected_length = length(Map.keys(assessments))
+      expected_length =
+        length(Map.keys(assessments)) *
+          Enum.count(students_with_assessment_info, fn {student, _, _, _, _} ->
+            student.group.id == group2.id
+          end)
+
       group_name = group2.name
 
       {_, res} =
@@ -2441,7 +2674,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config 1", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2470,7 +2702,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config 2", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2500,7 +2731,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config 3", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2530,7 +2760,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config manually graded", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2560,7 +2789,6 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by assessment config not manually graded", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       assessment_configs: assessment_configs,
       total_submissions: total_submissions
     } do
@@ -2586,6 +2814,116 @@ defmodule Cadet.AssessmentsTest do
       Enum.each(submissions_from_res, fn s ->
         assert Enum.find(assessments_from_res, fn a -> a.id == s.assessment_id end) != nil
       end)
+    end
+  end
+
+  describe "is_fully_autograded? function" do
+    setup do
+      assessment = insert(:assessment)
+      student = insert(:course_registration, role: :student)
+      question = insert(:mcq_question, assessment: assessment)
+      question2 = insert(:mcq_question, assessment: assessment)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :submitted)
+
+      %{question: question, question2: question2, submission: submission}
+    end
+
+    test "returns true when all answers are autograded successfully", %{
+      question: question,
+      question2: question2,
+      submission: submission
+    } do
+      insert(:answer, submission: submission, question: question, autograding_status: :success)
+      insert(:answer, submission: submission, question: question2, autograding_status: :success)
+
+      assert Assessments.is_fully_autograded?(submission.id) == true
+    end
+
+    test "returns false when not all answers are autograded successfully", %{
+      question: question,
+      question2: question2,
+      submission: submission
+    } do
+      insert(:answer, submission: submission, question: question, autograding_status: :success)
+      insert(:answer, submission: submission, question: question2, autograding_status: :failed)
+
+      assert Assessments.is_fully_autograded?(submission.id) == false
+    end
+
+    test "returns false when not all answers are autograded successfully 2", %{
+      question: question,
+      question2: question2,
+      submission: submission
+    } do
+      insert(:answer, submission: submission, question: question, autograding_status: :success)
+      insert(:answer, submission: submission, question: question2, autograding_status: :none)
+
+      assert Assessments.is_fully_autograded?(submission.id) == false
+    end
+  end
+
+  describe "publish and unpublish all grading" do
+    setup do
+      Cadet.Test.Seeds.assessments()
+    end
+
+    test "publish all graded submissions for an assessment",
+         %{
+           role_crs: %{admin: admin},
+           assessments: assessments,
+           students_with_assessment_info: students
+         } do
+      assessment_id = assessments["mission"][:assessment].id
+
+      # 1 student has all assessments published
+      expected_length =
+        Enum.count(students, fn {_, _, is_graded, is_grading_published, _} ->
+          is_graded and not is_grading_published
+        end) + length(Map.keys(assessments))
+
+      Assessments.publish_all_graded(admin, assessment_id)
+
+      published_submissions =
+        Submission
+        |> where([s], s.is_grading_published == true)
+        |> select([s], %{count: s.id |> count()})
+        |> Repo.one()
+
+      number_of_published_submissions = published_submissions.count
+      assert number_of_published_submissions == expected_length
+    end
+
+    test "unpublish all submissions for an assessment",
+         %{
+           role_crs: %{admin: admin},
+           assessments: assessments,
+           students_with_assessment_info: students
+         } do
+      assessment_id = assessments["mission"][:assessment].id
+
+      published_submissions_before =
+        Submission
+        |> where([s], s.is_grading_published == true)
+        |> select([s], %{count: s.id |> count()})
+        |> Repo.one()
+
+      expected_unpublished_length =
+        Enum.count(students, fn {_, _, _, is_grading_published, _} ->
+          is_grading_published
+        end)
+
+      Assessments.unpublish_all(admin, assessment_id)
+
+      published_submissions_after =
+        Submission
+        |> where([s], s.is_grading_published == true)
+        |> select([s], %{count: s.id |> count()})
+        |> Repo.one()
+
+      assert published_submissions_after.count + expected_unpublished_length ==
+               published_submissions_before.count
     end
   end
 
