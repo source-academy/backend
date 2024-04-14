@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.NotificationFactory do
       alias Cadet.Accounts.Notification
 
       def notification_factory do
-        valid_types = [:new, :autograded, :graded]
+        valid_types = [:new]
 
         %Notification{
           type: Enum.random(valid_types),

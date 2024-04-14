@@ -102,7 +102,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_contest_leaderboard_entry(leaderboard_ans) do
+  def build_contest_leaderboard_entry(leaderboard_ans) do
     Map.put(
       transform_map_for_view(leaderboard_ans, %{
         submission_id: :submission_id,
@@ -114,7 +114,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     )
   end
 
-  defp build_popular_leaderboard_entry(leaderboard_ans) do
+  def build_popular_leaderboard_entry(leaderboard_ans) do
     Map.put(
       transform_map_for_view(leaderboard_ans, %{
         submission_id: :submission_id,
