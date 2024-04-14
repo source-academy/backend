@@ -65,6 +65,7 @@ defmodule Cadet.Test.Seeds do
       student_submitted = insert(:user, %{latest_viewed_course: course1})
       student_graded = insert(:user, %{latest_viewed_course: course1})
       student_different_group = insert(:user, %{latest_viewed_course: course1})
+      student_grading_published = insert(:user, %{latest_viewed_course: course1})
 
       # CourseRegistration and Group
       avenger1_cr = insert(:course_registration, %{user: avenger1, course: course1, role: :staff})
@@ -129,6 +130,14 @@ defmodule Cadet.Test.Seeds do
           group: group2
         })
 
+      student_grading_published_cr =
+        insert(:course_registration, %{
+          user: student_grading_published,
+          course: course1,
+          role: :student,
+          group: group
+        })
+
       students = [
         student1a_cr,
         student1b_cr,
@@ -136,18 +145,20 @@ defmodule Cadet.Test.Seeds do
         student_attempted_cr,
         student_submitted_cr,
         student_graded_cr,
-        student_different_group_cr
+        student_different_group_cr,
+        student_grading_published_cr
       ]
 
-      # {student_cr, submission_status, is_graded, avenger}
+      # {student_cr, submission_status, is_graded, is_grading_published, avenger}
       students_with_assessment_info = [
-        {student1a_cr, :attempting, false, avenger1_cr},
-        {student1b_cr, :attempting, false, avenger1_cr},
-        {student1c_cr, :attempting, false, avenger1_cr},
-        {student_attempted_cr, :attempted, false, avenger1_cr},
-        {student_submitted_cr, :submitted, false, avenger1_cr},
-        {student_graded_cr, :submitted, true, avenger1_cr},
-        {student_different_group_cr, :attempting, false, avenger2_cr}
+        {student1a_cr, :attempting, false, false, avenger1_cr},
+        {student1b_cr, :attempting, false, false, avenger1_cr},
+        {student1c_cr, :attempting, false, false, avenger1_cr},
+        {student_attempted_cr, :attempted, false, false, avenger1_cr},
+        {student_submitted_cr, :submitted, false, false, avenger1_cr},
+        {student_graded_cr, :submitted, true, false, avenger1_cr},
+        {student_different_group_cr, :attempting, false, false, avenger2_cr},
+        {student_grading_published_cr, :submitted, true, true, avenger1_cr}
       ]
 
       _admin2cr =
@@ -205,7 +216,9 @@ defmodule Cadet.Test.Seeds do
           admin: admin1_cr
         },
         assessment_configs: assessment_configs,
-        assessments: assessments
+        assessments: assessments,
+        students_with_assessment_info: students_with_assessment_info,
+        student_grading_published: student_grading_published_cr
       }
     end
   end
@@ -250,14 +263,15 @@ defmodule Cadet.Test.Seeds do
 
     submissions_with_grader =
       students
-      |> Enum.map(fn {student, submission_status, is_graded, avenger} ->
+      |> Enum.map(fn {student, submission_status, is_graded, is_grading_published, avenger} ->
         grader = if is_graded, do: avenger, else: nil
 
         {grader,
          insert(:submission, %{
            assessment: assessment,
            student: student,
-           status: submission_status
+           status: submission_status,
+           is_grading_published: is_grading_published
          })}
       end)
 

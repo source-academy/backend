@@ -115,6 +115,7 @@ defmodule Cadet.Assessments do
         [s],
         s.id in ^submission_ids
       )
+      |> where(is_grading_published: true)
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
@@ -301,7 +302,18 @@ defmodule Cadet.Assessments do
         end)
         |> load_contest_voting_entries(course_reg, assessment)
 
-      assessment = assessment |> Map.put(:questions, questions)
+      is_grading_published =
+        Submission
+        |> where(assessment_id: ^id)
+        |> where(student_id: ^course_reg.id)
+        |> select([s], s.is_grading_published)
+        |> Repo.one()
+
+      assessment =
+        assessment
+        |> Map.put(:questions, questions)
+        |> Map.put(:is_grading_published, is_grading_published)
+
       {:ok, assessment}
     else
       {:error, {:forbidden, "Assessment not open"}}
@@ -341,7 +353,7 @@ defmodule Cadet.Assessments do
         [s],
         s.id in ^submission_ids
       )
-      |> select([s], [:assessment_id, :status])
+      |> select([s], [:assessment_id, :status, :is_grading_published])
 
     assessments =
       cr.course_id
@@ -358,7 +370,8 @@ defmodule Cadet.Assessments do
         a
         | xp: sa.xp,
           graded_count: sa.graded_count,
-          user_status: s.status
+          user_status: s.status,
+          is_grading_published: s.is_grading_published
       })
       |> filter_published_assessments(cr)
       |> order_by(:open_at)
@@ -376,6 +389,52 @@ defmodule Cadet.Assessments do
       )
 
     Repo.all(query)
+  end
+
+  @doc """
+  A helper function which removes grading information from all assessments
+  if it's grading is not published.
+  """
+  def format_all_assessments(assessments) do
+    Enum.map(assessments, fn a ->
+      if a.is_grading_published do
+        a
+      else
+        a
+        |> Map.put(:xp, 0)
+        |> Map.put(:graded_count, 0)
+      end
+    end)
+  end
+
+  @doc """
+  A helper function which removes grading information from the assessment
+  if it's grading is not published.
+  """
+  def format_assessment_with_questions_and_answers(assessment) do
+    if assessment.is_grading_published do
+      assessment
+    else
+      %{
+        assessment
+        | questions:
+            Enum.map(assessment.questions, fn q ->
+              %{
+                q
+                | answer: %{
+                    q.answer
+                    | xp: 0,
+                      xp_adjustment: 0,
+                      autograding_status: :none,
+                      autograding_results: [],
+                      grader: nil,
+                      grader_id: nil,
+                      comments: nil
+                  }
+              }
+            end)
+      }
+    end
   end
 
   def filter_published_assessments(assessments, cr) do
@@ -553,6 +612,58 @@ defmodule Cadet.Assessments do
     params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
 
     Question.changeset(%Question{}, params_with_assessment_id)
+  end
+
+  def reassign_voting(assessment_id, is_reassigning_voting) do
+    if is_reassigning_voting do
+      if is_voting_published(assessment_id) do
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> delete_submission_association(assessment_id)
+
+        Question
+        |> where(assessment_id: ^assessment_id)
+        |> Repo.all()
+        |> Enum.each(fn q ->
+          delete_submission_votes_association(q)
+        end)
+      end
+
+      voting_assigned_question_ids =
+        SubmissionVotes
+        |> select([v], v.question_id)
+        |> Repo.all()
+
+      unpublished_voting_questions =
+        Question
+        |> where(type: :voting)
+        |> where([q], q.id not in ^voting_assigned_question_ids)
+        |> where(assessment_id: ^assessment_id)
+        |> join(:inner, [q], asst in assoc(q, :assessment))
+        |> select([q, asst], %{course_id: asst.course_id, question: q.question, id: q.id})
+        |> Repo.all()
+
+      for q <- unpublished_voting_questions do
+        insert_voting(q.course_id, q.question["contest_number"], q.id)
+      end
+
+      {:ok, "voting assigned"}
+    else
+      {:ok, "no change to voting"}
+    end
+  end
+
+  def is_voting_published(assessment_id) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment_id)
+    |> where([q], q.id in ^voting_assigned_question_ids)
+    |> Repo.exists?()
   end
 
   def update_final_contest_entries do
@@ -952,7 +1063,9 @@ defmodule Cadet.Assessments do
          {:allowed_to_unsubmit?, true} <-
            {:allowed_to_unsubmit?,
             role == :admin or bypass or is_nil(submission.student_id) or
-              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)},
+         {:is_grading_published?, false} <-
+           {:is_grading_published?, submission.is_grading_published} do
       Multi.new()
       |> Multi.run(
         :rollback_submission,
@@ -1012,14 +1125,14 @@ defmodule Cadet.Assessments do
           team_members = Repo.all(query)
 
           Enum.each(team_members, fn tm_id ->
-            Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+            Notifications.handle_unsubmit_notifications(
               submission.assessment.id,
               Repo.get(CourseRegistration, tm_id)
             )
           end)
 
         student_id ->
-          Cadet.Accounts.Notifications.handle_unsubmit_notifications(
+          Notifications.handle_unsubmit_notifications(
             submission.assessment.id,
             Repo.get(CourseRegistration, student_id)
           )
@@ -1042,8 +1155,261 @@ defmodule Cadet.Assessments do
       {:allowed_to_unsubmit?, false} ->
         {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
 
+      {:is_grading_published?, true} ->
+        {:error, {:forbidden, "Grading has not been unpublished"}}
+
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  defp can_publish?(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role}) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> join(:inner, [_, a], c in assoc(a, :config))
+      |> preload([_, a, c], assessment: {a, config: c})
+      |> Repo.get(submission_id)
+
+    # allows staff to unpublish own assessment
+    bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
+
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:status, :submitted} <- {:status, submission.status},
+         {:is_manually_graded?, true} <-
+           {:is_manually_graded?, submission.assessment.config.is_manually_graded},
+         {:fully_graded?, true} <- {:fully_graded?, is_fully_graded?(submission_id)},
+         {:allowed_to_publish?, true} <-
+           {:allowed_to_publish?,
+            role == :admin or bypass or
+              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+      {:ok, submission}
+    end
+  end
+
+  @doc """
+    Unpublishes grading for a submission and send notification to student.
+    Requires admin or staff who is group leader of student.
+
+    Only manually graded assessments can be individually unpublished. We can only
+    unpublish all submissions for auto-graded assessments.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def unpublish_grading(submission_id, cr = %CourseRegistration{})
+      when is_ecto_id(submission_id) do
+    case can_publish?(submission_id, cr) do
+      {:ok, submission} ->
+        submission
+        |> Submission.changeset(%{is_grading_published: false})
+        |> Repo.update()
+
+        Notifications.handle_unpublish_grades_notifications(
+          submission.assessment.id,
+          Repo.get(CourseRegistration, submission.student_id)
+        )
+
+        {:ok, nil}
+
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:allowed_to_publish?, false} ->
+        {:error,
+         {:forbidden, "Only Avenger of student or Admin is permitted to unpublish grading"}}
+
+      {:is_manually_graded?, false} ->
+        {:error,
+         {:bad_request, "Only manually graded assessments can be individually unpublished"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  @doc """
+    Publishes grading for a submission and send notification to student.
+    Requires admin or staff who is group leader of student and all answers to be graded.
+
+    Only manually graded assessments can be individually published. We can only
+    publish all submissions for auto-graded assessments.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def publish_grading(submission_id, cr = %CourseRegistration{})
+      when is_ecto_id(submission_id) do
+    case can_publish?(submission_id, cr) do
+      {:ok, submission} ->
+        submission
+        |> Submission.changeset(%{is_grading_published: true})
+        |> Repo.update()
+
+        Notifications.write_notification_when_published(
+          submission.id,
+          :published_grading
+        )
+
+        {:ok, nil}
+
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      {:allowed_to_publish?, false} ->
+        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to publish grading"}}
+
+      {:is_manually_graded?, false} ->
+        {:error, {:bad_request, "Only manually graded assessments can be individually published"}}
+
+      {:fully_graded?, false} ->
+        {:error, {:bad_request, "Some answers are not graded"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  @doc """
+    Publishes grading for a submission and send notification to student.
+    This function is used by the auto-grading system to publish grading. Bypasses Course Reg checks.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def publish_grading(submission_id)
+      when is_ecto_id(submission_id) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.get(submission_id)
+
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:status, :submitted} <- {:status, submission.status} do
+      submission
+      |> Submission.changeset(%{is_grading_published: true})
+      |> Repo.update()
+
+      Notifications.write_notification_when_published(
+        submission.id,
+        :published_grading
+      )
+
+      {:ok, nil}
+    else
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  @doc """
+    Publishes grading for all graded submissions for an assessment and sends notifications to students.
+    Requires admin.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def publish_all_graded(publisher = %CourseRegistration{}, assessment_id) do
+    if publisher.role == :admin do
+      answers_query =
+        Answer
+        |> group_by([ans], ans.submission_id)
+        |> select([ans], %{
+          submission_id: ans.submission_id,
+          graded_count: filter(count(ans.id), not is_nil(ans.grader_id)),
+          autograded_count: filter(count(ans.id), ans.autograding_status == :success)
+        })
+
+      question_query =
+        Question
+        |> group_by([q], q.assessment_id)
+        |> join(:inner, [q], a in Assessment, on: q.assessment_id == a.id)
+        |> select([q, a], %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id)
+        })
+
+      submission_query =
+        Submission
+        |> join(:inner, [s], ans in subquery(answers_query), on: ans.submission_id == s.id)
+        |> join(:inner, [s, ans], asst in subquery(question_query),
+          on: s.assessment_id == asst.assessment_id
+        )
+        |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
+        |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
+        |> where(
+          [s, ans, asst, cr],
+          asst.question_count == ans.graded_count or asst.question_count == ans.autograded_count
+        )
+        |> where([s, ans, asst, cr], s.is_grading_published == false)
+        |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
+        |> select([s, ans, asst, cr], %{
+          id: s.id
+        })
+
+      submissions = Repo.all(submission_query)
+
+      Repo.update_all(submission_query, set: [is_grading_published: true])
+
+      Enum.each(submissions, fn submission ->
+        Notifications.write_notification_when_published(
+          submission.id,
+          :published_grading
+        )
+      end)
+
+      {:ok, nil}
+    else
+      {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
+    end
+  end
+
+  @doc """
+     Unpublishes grading for all submissions with grades published for an assessment and sends notifications to students.
+     Requires admin role.
+
+     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+
+  def unpublish_all(publisher = %CourseRegistration{}, assessment_id) do
+    if publisher.role == :admin do
+      submission_query =
+        Submission
+        |> join(:inner, [s], cr in CourseRegistration, on: s.student_id == cr.id)
+        |> where([s, cr], cr.course_id == ^publisher.course_id)
+        |> where([s, cr], s.is_grading_published == true)
+        |> where([s, cr], s.assessment_id == ^assessment_id)
+        |> select([s, cr], %{
+          id: s.id,
+          student_id: cr.id
+        })
+
+      submissions = Repo.all(submission_query)
+
+      Repo.update_all(submission_query, set: [is_grading_published: false])
+
+      Enum.each(submissions, fn submission ->
+        Notifications.handle_unpublish_grades_notifications(
+          assessment_id,
+          Repo.get(CourseRegistration, submission.student_id)
+        )
+      end)
+
+      {:ok, nil}
+    else
+      {:error, {:forbidden, "Only Admin is permitted to unpublish all grades"}}
     end
   end
 
@@ -1187,7 +1553,7 @@ defmodule Cadet.Assessments do
   end
 
   # Finds the contest_question_id associated with the given voting_question id
-  defp fetch_associated_contest_question_id(course_id, voting_question) do
+  def fetch_associated_contest_question_id(course_id, voting_question) do
     contest_number = voting_question.question["contest_number"]
 
     if is_nil(contest_number) do
@@ -1456,13 +1822,24 @@ defmodule Cadet.Assessments do
   The input parameters are the user and query parameters. Query parameters are
   used to filter the submissions.
 
-  The group parameter is used to check whether only the groups under the grader
-  should be returned. If pageSize and offset are not provided, the default
-  values are 10 and 0 respectively.
+  The return value is `{:ok, %{"count": count, "data": submissions}}`
 
-  The return value is
-  {:ok, %{"count": count, "data": submissions}} if no errors,
-  else it is {:error, {:forbidden, "Forbidden."}}
+  # Parameters
+  - `pageSize`: Integer. The number of submissions to return. Default is 10.
+  - `offset`: Integer. The number of submissions to skip. Default is 0.
+  - `title`: String. Assessment title.
+  - `status`: String. Submission status.
+  - `isFullyGraded`: Boolean. Whether the submission is fully graded.
+  - `isGradingPublished`: Boolean. Whether the grading is published.
+  - `group`: Boolean. Only the groups under the grader should be returned.
+  - `groupName`: String. Group name.
+  - `name`: String. User name.
+  - `username`: String. User username.
+  - `type`: String. Assessment Config type.
+  - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
+
+  # Implementation
+  Uses helper functions to build the filter query. Helper functions are separated by tables in the database.
   """
 
   @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
@@ -1481,7 +1858,7 @@ defmodule Cadet.Assessments do
         grader = %CourseRegistration{course_id: course_id},
         params \\ %{
           "group" => "false",
-          "notFullyGraded" => "true",
+          "isFullyGraded" => "false",
           "pageSize" => "10",
           "offset" => "0",
           "sortBy" => "",
@@ -1539,6 +1916,7 @@ defmodule Cadet.Assessments do
           student_id: s.student_id,
           team_id: s.team_id,
           assessment_id: s.assessment_id,
+          is_grading_published: s.is_grading_published,
           xp: ans.xp,
           xp_adjustment: ans.xp_adjustment,
           graded_count: ans.graded_count,
@@ -1676,8 +2054,14 @@ defmodule Cadet.Assessments do
       {"status", value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
 
-      {"notFullyGraded", "true"}, dynamic ->
-        dynamic([ans: ans, asst: asst], ^dynamic and asst.question_count > ans.graded_count)
+      {"isFullyGraded", value}, dynamic ->
+        dynamic(
+          [ans: ans, asst: asst],
+          ^dynamic and asst.question_count == ans.graded_count == ^value
+        )
+
+      {"isGradingPublished", value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.is_grading_published == ^value)
 
       {_, _}, dynamic ->
         dynamic
@@ -1867,7 +2251,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_fully_graded?(%Answer{submission_id: submission_id}) do
+  defp is_fully_graded?(submission_id) do
     submission =
       Submission
       |> Repo.get_by(id: submission_id)
@@ -1882,6 +2266,27 @@ defmodule Cadet.Assessments do
       Answer
       |> where([a], submission_id: ^submission_id)
       |> where([a], not is_nil(a.grader_id))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    question_count == graded_count
+  end
+
+  def is_fully_autograded?(submission_id) do
+    submission =
+      Submission
+      |> Repo.get_by(id: submission_id)
+
+    question_count =
+      Question
+      |> where(assessment_id: ^submission.assessment_id)
+      |> select([q], count(q.id))
+      |> Repo.one()
+
+    graded_count =
+      Answer
+      |> where([a], submission_id: ^submission_id)
+      |> where([a], a.autograding_status == :success)
       |> select([a], count(a.id))
       |> Repo.one()
 
@@ -1923,12 +2328,7 @@ defmodule Cadet.Assessments do
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
-      if is_fully_graded?(answer) and not is_own_submission do
-        # Every answer in this submission has been graded manually
-        Notifications.write_notification_when_graded(submission_id, :graded)
-      else
-        {:ok, nil}
-      end
+      {:ok, nil}
     else
       {:answer_found?, false} ->
         {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
