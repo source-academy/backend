@@ -5,6 +5,7 @@ on:
       - stable
       - master
       - deploy
+      - deploy-stg
     paths:
       - "config/**"
       - "lib/**"
