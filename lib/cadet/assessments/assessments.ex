@@ -1954,7 +1954,7 @@ defmodule Cadet.Assessments do
   # Given a query from submissions_by_grader_for_index,
   # sorts it by the relevant field and direction
   # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
-  # "studentUsername", "groupName", "submissionStatus", "gradingStatus", "xp"
+  # "studentUsername", "groupName", "progressStatus", "xp"
   # sort_direction is a string of either "", "sort-asc", "sort-desc"
   defp sort_submission(query, sort_by, sort_direction) do
     if sort_direction == "sort-asc" do
@@ -1985,11 +1985,8 @@ defmodule Cadet.Assessments do
       sort_by == "groupName" ->
         from([s, ans, asst, user] in query, order_by: s.team_id)
 
-      sort_by == "submissionStatus" ->
-        from([s, ans, asst, user] in query, order_by: s.status)
-
-      sort_by == "gradingStatus" ->
-        from([s, ans, asst, user] in query, order_by: asst.question_count - ans.graded_count)
+      sort_by == "progressStatus" ->
+        from([s, ans, asst, user] in query, order_by: [asc: s.status, asc: s.is_grading_published])
 
       sort_by == "xp" ->
         from([s, ans, asst, user] in query, order_by: ans.xp)
@@ -2016,12 +2013,9 @@ defmodule Cadet.Assessments do
       sort_by == "groupName" ->
         from([s, ans, asst, user] in query, order_by: [desc: s.team_id])
 
-      sort_by == "submissionStatus" ->
-        from([s, ans, asst, user] in query, order_by: [desc: s.status])
-
-      sort_by == "gradingStatus" ->
+      sort_by == "progressStatus" ->
         from([s, ans, asst, user] in query,
-          order_by: [desc: asst.question_count - ans.graded_count]
+          order_by: [desc: s.status, desc: s.is_grading_published]
         )
 
       sort_by == "xp" ->
