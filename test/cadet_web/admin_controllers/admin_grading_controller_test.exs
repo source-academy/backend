@@ -141,7 +141,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "status" => Atom.to_string(submission.status),
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
-              "unsubmittedAt" => nil
+              "unsubmittedAt" => nil,
+              "team" => nil,
+              "isGradingPublished" => submission.is_grading_published
             }
           end)
       }
@@ -214,7 +216,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "status" => Atom.to_string(submission.status),
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
-              "unsubmittedAt" => nil
+              "unsubmittedAt" => nil,
+              "team" => nil,
+              "isGradingPublished" => submission.is_grading_published
             }
           end)
       }
@@ -325,7 +329,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :mcq ->
@@ -373,7 +378,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :voting ->
@@ -418,6 +424,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
                   },
+                  "team" => %{},
                   "solution" => ""
                 }
             end
@@ -535,7 +542,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       student = List.first(students)
 
       submission =
-        insert(:submission, assessment: assessment, student: student, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       answer =
         insert(
@@ -599,6 +611,47 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> post(build_url_unsubmit(course.id, submission.id))
 
       assert response(conn, 400) =~ "Assessment has not been submitted"
+    end
+
+    @tag authenticate: :staff
+    test "assessments that have not been unpublished should not be allowed to unsubmit", %{
+      conn: conn
+    } do
+      %{course: course, config: config, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          config: config,
+          course: course
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+      student = List.first(students)
+
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: true
+        )
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_unsubmit(course.id, submission.id))
+
+      assert response(conn, 403) =~ "Grading has not been unpublished"
     end
 
     @tag authenticate: :staff
@@ -692,7 +745,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       question = insert(:programming_question, assessment: assessment)
 
       submission =
-        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: grader,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       insert(
         :answer,
@@ -727,7 +785,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       question = insert(:programming_question, assessment: assessment)
 
       submission =
-        insert(:submission, assessment: assessment, student: grader, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: grader,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       insert(
         :answer,
@@ -765,7 +828,12 @@ defmodule CadetWeb.AdminGradingControllerTest do
       student = List.first(students)
 
       submission =
-        insert(:submission, assessment: assessment, student: student, status: :submitted)
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
 
       answer =
         insert(
@@ -791,6 +859,283 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assert answer_db.grader_id == nil
       assert answer_db.xp == 0
       assert answer_db.xp_adjustment == 0
+    end
+  end
+
+  describe "POST /:submissionid/unpublish_grades" do
+    setup %{conn: conn} do
+      %{course: course, config: config, grader: grader, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          config: config,
+          course: course
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+
+      student = List.first(students)
+
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: true
+        )
+
+      _answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          grader_id: grader.id
+        )
+
+      %{
+        course: course,
+        assessment: assessment,
+        submission: submission,
+        question: question,
+        students: students
+      }
+    end
+
+    @tag authenticate: :staff
+    test "succeeds", %{conn: conn, course: course, submission: submission} do
+      conn
+      |> post(build_url_unpublish(course.id, submission.id))
+      |> response(200)
+
+      submission_db = Repo.get(Submission, submission.id)
+
+      assert submission_db.is_grading_published == false
+    end
+
+    @tag authenticate: :staff
+    test "avenger should not be allowed to unpublish for students outside of their group", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
+      other_grader = insert(:course_registration, %{role: :staff, course: course})
+
+      conn =
+        conn
+        |> sign_in(other_grader.user)
+        |> post(build_url_unpublish(course.id, submission.id))
+
+      assert response(conn, 403) =~
+               "Only Avenger of student or Admin is permitted to unpublish grading"
+    end
+
+    @tag authenticate: :admin
+    test "admin should be allowed to unpublish", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
+      admin = insert(:course_registration, %{role: :admin, course: course})
+
+      conn
+      |> sign_in(admin.user)
+      |> post(build_url_unpublish(course.id, submission.id))
+
+      submission_db = Repo.get(Submission, submission.id)
+      assert submission_db.is_grading_published == false
+    end
+  end
+
+  describe "POST /:submissionid/publish_grades" do
+    setup %{conn: conn} do
+      %{course: course, config: config, grader: grader, students: students} = seed_db(conn)
+
+      assessment =
+        insert(
+          :assessment,
+          open_at: Timex.shift(Timex.now(), hours: -1),
+          close_at: Timex.shift(Timex.now(), hours: 500),
+          is_published: true,
+          config: config,
+          course: course
+        )
+
+      question = insert(:programming_question, assessment: assessment)
+
+      student = List.first(students)
+
+      submission =
+        insert(:submission,
+          assessment: assessment,
+          student: student,
+          status: :submitted,
+          is_grading_published: false
+        )
+
+      _answer =
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          grader_id: grader.id
+        )
+
+      %{
+        course: course,
+        assessment: assessment,
+        submission: submission,
+        question: question,
+        students: students
+      }
+    end
+
+    @tag authenticate: :staff
+    test "succeeds", %{conn: conn, course: course, submission: submission} do
+      conn
+      |> post(build_url_publish(course.id, submission.id))
+      |> response(200)
+
+      submission_db = Repo.get(Submission, submission.id)
+
+      assert submission_db.is_grading_published == true
+    end
+
+    @tag authenticate: :staff
+    test "assessments which have not been submitted should not be allowed to publish", %{
+      conn: conn,
+      course: course,
+      students: students,
+      assessment: assessment,
+      question: question
+    } do
+      student = List.last(students)
+
+      submission =
+        insert(:submission, assessment: assessment, student: student, status: :attempted)
+
+      insert(
+        :answer,
+        submission: submission,
+        question: question,
+        answer: %{code: "f => f(f);"}
+      )
+
+      conn =
+        conn
+        |> post(build_url_publish(course.id, submission.id))
+
+      assert response(conn, 400) =~ "Assessment has not been submitted"
+    end
+
+    @tag authenticate: :staff
+    test "avenger should not be allowed to publish for students outside of their group", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
+      other_grader = insert(:course_registration, %{role: :staff, course: course})
+
+      conn =
+        conn
+        |> sign_in(other_grader.user)
+        |> post(build_url_publish(course.id, submission.id))
+
+      assert response(conn, 403) =~
+               "Only Avenger of student or Admin is permitted to publish grading"
+    end
+
+    @tag authenticate: :admin
+    test "admin should be allowed to publish", %{
+      conn: conn,
+      course: course,
+      submission: submission
+    } do
+      admin = insert(:course_registration, %{role: :admin, course: course})
+
+      conn
+      |> sign_in(admin.user)
+      |> post(build_url_publish(course.id, submission.id))
+
+      submission_db = Repo.get(Submission, submission.id)
+      assert submission_db.is_grading_published == true
+    end
+  end
+
+  describe "POST /:assessmentid/unpublish_all_grades" do
+    setup %{conn: conn} do
+      seed = Cadet.Test.Seeds.assessments()
+      assessment_id = seed[:assessments]["mission"][:assessment].id
+      %{conn: conn, assessment_id: assessment_id, course: seed[:courses][:course1]}
+    end
+
+    @tag authenticate: :admin
+    test "successful", %{conn: conn, assessment_id: assessment_id, course: course} do
+      admin = insert(:course_registration, %{role: :admin, course: course})
+
+      conn =
+        conn
+        |> sign_in(admin.user)
+        |> post(build_url_unpublish_all(course.id, assessment_id))
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :staff
+    test "staff not allowed to unpublish all grades", %{
+      conn: conn,
+      assessment_id: assessment_id,
+      course: course
+    } do
+      staff = insert(:course_registration, %{role: :staff, course: course})
+
+      conn =
+        conn
+        |> sign_in(staff.user)
+        |> post(build_url_unpublish_all(course.id, assessment_id))
+
+      assert response(conn, 403) == "Only Admin is permitted to unpublish all grades"
+    end
+  end
+
+  describe "POST /:assessmentid/publish_all_grades" do
+    setup %{conn: conn} do
+      seed = Cadet.Test.Seeds.assessments()
+      assessment_id = seed[:assessments]["mission"][:assessment].id
+      %{conn: conn, assessment_id: assessment_id, course: seed[:courses][:course1]}
+    end
+
+    @tag authenticate: :admin
+    test "successful", %{conn: conn, assessment_id: assessment_id, course: course} do
+      admin = insert(:course_registration, %{role: :admin, course: course})
+
+      conn =
+        conn
+        |> sign_in(admin.user)
+        |> post(build_url_publish_all(course.id, assessment_id))
+
+      assert response(conn, 200) == "OK"
+    end
+
+    @tag authenticate: :staff
+    test "staff not allowed to publish all grades", %{
+      conn: conn,
+      assessment_id: assessment_id,
+      course: course
+    } do
+      staff = insert(:course_registration, %{role: :staff, course: course})
+
+      conn =
+        conn
+        |> sign_in(staff.user)
+        |> post(build_url_publish_all(course.id, assessment_id))
+
+      assert response(conn, 403) == "Only Admin is permitted to publish all grades"
     end
   end
 
@@ -838,7 +1183,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "status" => Atom.to_string(submission.status),
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
-              "unsubmittedAt" => nil
+              "unsubmittedAt" => nil,
+              "team" => nil,
+              "isGradingPublished" => submission.is_grading_published
             }
           end)
       }
@@ -891,7 +1238,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
               "status" => Atom.to_string(submission.status),
               "gradedCount" => 5,
               "unsubmittedBy" => nil,
-              "unsubmittedAt" => nil
+              "unsubmittedAt" => nil,
+              "team" => nil,
+              "isGradingPublished" => submission.is_grading_published
             }
           end)
       }
@@ -1001,7 +1350,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :mcq ->
@@ -1049,7 +1399,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "name" => &1.submission.student.user.name,
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
-                  }
+                  },
+                  "team" => %{}
                 }
 
               :voting ->
@@ -1094,6 +1445,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "username" => &1.submission.student.user.username,
                     "id" => &1.submission.student.id
                   },
+                  "team" => %{},
                   "solution" => ""
                 }
             end
@@ -1310,6 +1662,18 @@ defmodule CadetWeb.AdminGradingControllerTest do
   defp build_url_unsubmit(course_id, submission_id),
     do: "#{build_url(course_id, submission_id)}/unsubmit"
 
+  defp build_url_unpublish(course_id, submission_id),
+    do: "#{build_url(course_id, submission_id)}/unpublish_grades"
+
+  defp build_url_publish(course_id, submission_id),
+    do: "#{build_url(course_id, submission_id)}/publish_grades"
+
+  defp build_url_unpublish_all(course_id, assessment_id),
+    do: "#{build_url(course_id)}#{assessment_id}/unpublish_all_grades"
+
+  defp build_url_publish_all(course_id, assessment_id),
+    do: "#{build_url(course_id)}#{assessment_id}/publish_all_grades"
+
   defp build_url_autograde(course_id, submission_id),
     do: "#{build_url(course_id, submission_id)}/autograde"
 
@@ -1331,7 +1695,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
         title: "mission",
         course: course,
         config: assessment_config,
-        is_published: true
+        is_published: true,
+        max_team_size: 1
       })
 
     questions =

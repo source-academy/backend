@@ -42,7 +42,8 @@ defmodule CadetWeb.UserControllerTest do
           assessment: assessment,
           student: cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -123,6 +124,7 @@ defmodule CadetWeb.UserControllerTest do
             "assessmentConfigId" => config1.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
             "hasTokenCounter" => false
           },
           %{
@@ -132,6 +134,7 @@ defmodule CadetWeb.UserControllerTest do
             "assessmentConfigId" => config2.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
             "hasTokenCounter" => false
           },
           %{
@@ -141,6 +144,7 @@ defmodule CadetWeb.UserControllerTest do
             "assessmentConfigId" => config3.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
             "hasTokenCounter" => false
           }
         ]
@@ -194,7 +198,8 @@ defmodule CadetWeb.UserControllerTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -265,7 +270,8 @@ defmodule CadetWeb.UserControllerTest do
           assessment: assessment,
           student: cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{

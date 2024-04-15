@@ -73,12 +73,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => &1.config.type,
               "isManuallyGraded" => &1.config.is_manually_graded,
               "coverImage" => &1.cover_picture,
+              "maxTeamSize" => &1.max_team_size,
               "maxXp" => 4800,
               "status" => get_assessment_status(course_reg, &1),
               "private" => false,
               "isPublished" => &1.is_published,
               "gradedCount" => 0,
-              "questionCount" => 9
+              "questionCount" => 9,
+              "earlySubmissionXp" => &1.config.early_submission_xp,
+              "hasVotingFeatures" => &1.has_voting_features,
+              "hasTokenCounter" => &1.has_token_counter,
+              "isVotingPublished" => Assessments.is_voting_published(&1.id)
             }
           )
 
@@ -88,6 +93,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> get(build_url(course1.id))
           |> json_response(200)
           |> Enum.map(&Map.delete(&1, "xp"))
+          |> Enum.map(&Map.delete(&1, "isGradingPublished"))
 
         assert expected == resp
       end
@@ -156,12 +162,18 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "type" => &1.config.type,
             "isManuallyGraded" => &1.config.is_manually_graded,
             "coverImage" => &1.cover_picture,
+            "maxTeamSize" => &1.max_team_size,
             "maxXp" => 4800,
             "status" => get_assessment_status(student, &1),
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
-            "questionCount" => 9
+            "questionCount" => 9,
+            "isGradingPublished" => false,
+            "earlySubmissionXp" => &1.config.early_submission_xp,
+            "hasVotingFeatures" => &1.has_voting_features,
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => Assessments.is_voting_published(&1.id)
           }
         )
 
@@ -205,15 +217,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
     test "renders xp for students", %{
       conn: conn,
       courses: %{course1: course1},
-      role_crs: %{student: student},
       assessment_configs: configs,
-      assessments: assessments
+      assessments: assessments,
+      student_grading_published: student_grading_published
     } do
       assessment = assessments[hd(configs).type].assessment
 
       resp =
         conn
-        |> sign_in(student.user)
+        |> sign_in(student_grading_published.user)
         |> get(build_url(course1.id))
         |> json_response(200)
         |> Enum.find(&(&1["id"] == assessment.id))
@@ -266,11 +278,17 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "type" => &1.config.type,
               "isManuallyGraded" => &1.config.is_manually_graded,
               "coverImage" => &1.cover_picture,
+              "maxTeamSize" => &1.max_team_size,
               "maxXp" => 4800,
               "status" => get_assessment_status(course_reg, &1),
               "private" => false,
               "gradedCount" => 0,
               "questionCount" => 9,
+              "hasVotingFeatures" => &1.has_voting_features,
+              "hasTokenCounter" => &1.has_token_counter,
+              "isVotingPublished" => Assessments.is_voting_published(&1.id),
+              "earlySubmissionXp" => &1.config.early_submission_xp,
+              "isGradingPublished" => nil,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
                   false
@@ -305,6 +323,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "number" => assessment.number,
             "reading" => assessment.reading,
             "longSummary" => assessment.summary_long,
+            "hasTokenCounter" => assessment.has_token_counter,
             "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
           }
 
@@ -463,6 +482,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "solution"))
             |> Enum.map(&Map.delete(&1, "library"))
             |> Enum.map(&Map.delete(&1, "xp"))
+            |> Enum.map(&Map.delete(&1, "lastModifiedAt"))
             |> Enum.map(&Map.delete(&1, "maxXp"))
             |> Enum.map(&Map.delete(&1, "grader"))
             |> Enum.map(&Map.delete(&1, "gradedAt"))
@@ -773,8 +793,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
       conn: conn,
       courses: %{course1: course1},
       role_crs: role_crs,
-      assessments: assessments
+      assessments: assessments,
+      student_grading_published: student_grading_published
     } do
+      role_crs = Map.put(role_crs, :student, student_grading_published)
+
       for role <- Role.__enum_map__() do
         course_reg = Map.get(role_crs, role)
 
@@ -1396,7 +1419,12 @@ defmodule CadetWeb.AssessmentsControllerTest do
     course_reg = insert(:course_registration, role: :student, course: course1)
 
     submission =
-      insert(:submission, assessment: assessment, student: course_reg, status: :submitted)
+      insert(:submission,
+        assessment: assessment,
+        student: course_reg,
+        status: :submitted,
+        is_grading_published: true
+      )
 
     Enum.each(
       [question_one, question_two],

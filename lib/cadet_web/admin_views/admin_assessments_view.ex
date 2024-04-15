@@ -2,6 +2,9 @@ defmodule CadetWeb.AdminAssessmentsView do
   use CadetWeb, :view
   use Timex
   import CadetWeb.AssessmentsHelpers
+  import Ecto.Query
+  alias Cadet.Assessments.{Question, SubmissionVotes}
+  alias Cadet.Repo
 
   def render("index.json", %{assessments: assessments}) do
     render_many(assessments, CadetWeb.AdminAssessmentsView, "overview.json", as: :assessment)
@@ -27,7 +30,12 @@ defmodule CadetWeb.AdminAssessmentsView do
       private: &password_protected?(&1.password),
       isPublished: :is_published,
       questionCount: :question_count,
-      gradedCount: &(&1.graded_count || 0)
+      gradedCount: &(&1.graded_count || 0),
+      earlySubmissionXp: & &1.config.early_submission_xp,
+      maxTeamSize: :max_team_size,
+      hasVotingFeatures: :has_voting_features,
+      hasTokenCounter: :has_token_counter,
+      isVotingPublished: &is_voting_assigned(&1.id)
     })
   end
 
@@ -43,6 +51,7 @@ defmodule CadetWeb.AdminAssessmentsView do
         number: :number,
         reading: :reading,
         longSummary: :summary_long,
+        hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         questions:
           &Enum.map(&1.questions, fn question ->
@@ -57,7 +66,35 @@ defmodule CadetWeb.AdminAssessmentsView do
     )
   end
 
+  def render("leaderboard.json", %{leaderboard: leaderboard}) do
+    render_many(leaderboard, CadetWeb.AdminAssessmentsView, "contestEntry.json", as: :contestEntry)
+  end
+
+  def render("contestEntry.json", %{contestEntry: contestEntry}) do
+    transform_map_for_view(
+      contestEntry,
+      %{
+        student_name: :student_name,
+        answer: & &1.answer["code"],
+        final_score: "final_score"
+      }
+    )
+  end
+
   defp password_protected?(nil), do: false
 
   defp password_protected?(_), do: true
+
+  defp is_voting_assigned(assessment_id) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment_id)
+    |> where([q], q.id in ^voting_assigned_question_ids)
+    |> Repo.exists?()
+  end
 end
