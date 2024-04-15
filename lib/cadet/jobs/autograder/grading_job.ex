@@ -46,10 +46,10 @@ defmodule Cadet.Autograder.GradingJob do
   Exposed as public function in case future mix tasks are needed to regrade
   certain submissions. Manual grading can also be triggered from iex with this
   function.
-
+  
   Takes in submission to be graded. Submission will be graded regardless of its
   assessment's close_by date or submission status.
-
+  
   Every answer will be regraded regardless of its current autograding status.
   """
   def force_grade_individual_submission(submission = %Submission{}, overwrite \\ false) do
@@ -123,8 +123,13 @@ defmodule Cadet.Autograder.GradingJob do
     end
   end
 
-  def grade_answer(question = %Question{type: type}, answers, answer = %Answer{},
-    questions, overwrite \\ false) do
+  def grade_answer(
+        question = %Question{type: type},
+        answers,
+        answer = %Answer{},
+        questions,
+        overwrite \\ false
+      ) do
     case type do
       :programming ->
         Utilities.dispatch_programming_answer(question, answers, answer, questions, overwrite)

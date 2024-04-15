@@ -12,11 +12,12 @@ defmodule Cadet.Autograder.Utilities do
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
   def dispatch_programming_answer(
-    base_question = %Question{},
-    answers,
-    answer = %Answer{},
-    questions,
-    overwrite \\ false) do
+        base_question = %Question{},
+        answers,
+        answer = %Answer{},
+        questions,
+        overwrite \\ false
+      ) do
     # This should never fail
     answer =
       answer

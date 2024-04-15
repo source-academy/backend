@@ -905,10 +905,10 @@ defmodule Cadet.Assessments do
   Public internal api to submit new answers for a question. Possible return values are:
   `{:ok, nil}` -> success
   `{:error, error}` -> failed. `error` is in the format of `{http_response_code, error message}`
-
+  
   Note: In the event of `find_or_create_submission` failing due to a race condition, error will be:
    `{:bad_request, "Missing or invalid parameter(s)"}`
-
+  
   """
   def answer_question(
         question = %Question{},
@@ -1190,10 +1190,10 @@ defmodule Cadet.Assessments do
   @doc """
     Unpublishes grading for a submission and send notification to student.
     Requires admin or staff who is group leader of student.
-
+  
     Only manually graded assessments can be individually unpublished. We can only
     unpublish all submissions for auto-graded assessments.
-
+  
     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
   def unpublish_grading(submission_id, cr = %CourseRegistration{})
@@ -1230,10 +1230,10 @@ defmodule Cadet.Assessments do
   @doc """
     Publishes grading for a submission and send notification to student.
     Requires admin or staff who is group leader of student and all answers to be graded.
-
+  
     Only manually graded assessments can be individually published. We can only
     publish all submissions for auto-graded assessments.
-
+  
     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
   def publish_grading(submission_id, cr = %CourseRegistration{})
@@ -1277,7 +1277,7 @@ defmodule Cadet.Assessments do
   @doc """
     Publishes grading for a submission and send notification to student.
     This function is used by the auto-grading system to publish grading. Bypasses Course Reg checks.
-
+  
     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
   def publish_grading(submission_id)
@@ -1318,7 +1318,7 @@ defmodule Cadet.Assessments do
   @doc """
     Publishes grading for all graded submissions for an assessment and sends notifications to students.
     Requires admin.
-
+  
     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
   def publish_all_graded(publisher = %CourseRegistration{}, assessment_id) do
@@ -1379,7 +1379,7 @@ defmodule Cadet.Assessments do
   @doc """
      Unpublishes grading for all submissions with grades published for an assessment and sends notifications to students.
      Requires admin role.
-
+  
      Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
   """
 
@@ -1577,7 +1577,7 @@ defmodule Cadet.Assessments do
 
   @doc """
   Fetches top answers for the given question, based on the contest relative_score
-
+  
   Used for contest leaderboard fetching
   """
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
@@ -1608,7 +1608,7 @@ defmodule Cadet.Assessments do
 
   @doc """
   Fetches top answers for the given question, based on the contest popular_score
-
+  
   Used for contest leaderboard fetching
   """
   def fetch_top_popular_score_answers(question_id, number_of_answers) do
@@ -1818,12 +1818,12 @@ defmodule Cadet.Assessments do
   @doc """
   Function returning submissions under a grader. This function returns only the
   fields that are exposed in the /grading endpoint.
-
+  
   The input parameters are the user and query parameters. Query parameters are
   used to filter the submissions.
-
+  
   The return value is `{:ok, %{"count": count, "data": submissions}}`
-
+  
   # Parameters
   - `pageSize`: Integer. The number of submissions to return. Default is 10.
   - `offset`: Integer. The number of submissions to skip. Default is 0.
@@ -1837,7 +1837,7 @@ defmodule Cadet.Assessments do
   - `username`: String. User username.
   - `type`: String. Assessment Config type.
   - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
-
+  
   # Implementation
   Uses helper functions to build the filter query. Helper functions are separated by tables in the database.
   """
@@ -2297,7 +2297,6 @@ defmodule Cadet.Assessments do
         _requesting_user = %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
-
     questions =
       Question
       |> where(question_id: ^question_id)
@@ -2320,7 +2319,7 @@ defmodule Cadet.Assessments do
          {:status, true} <-
            {:status,
             answer.submission.student_id == grader_id or answer.submission.status == :submitted} do
-      GradingJob.grade_answer(answer.question, answers, answer, questions , true)
+      GradingJob.grade_answer(answer.question, answers, answer, questions, true)
       {:ok, nil}
     else
       {:get, nil} ->

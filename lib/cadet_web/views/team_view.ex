@@ -7,11 +7,11 @@ defmodule CadetWeb.TeamView do
 
   @doc """
   Renders the JSON representation of team formation overview.
-
+  
   ## Parameters
-
+  
     * `teamFormationOverview` - A map containing team formation overview data.
-
+  
   """
   def render("index.json", %{teamFormationOverview: teamFormationOverview}) do
     %{
