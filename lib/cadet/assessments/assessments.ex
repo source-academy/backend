@@ -1999,7 +1999,7 @@ defmodule Cadet.Assessments do
         )
 
       sort_by == "xp" ->
-        from([s, ans, asst, user, cr, group] in query, order_by: ans.xp)
+        from([s, ans, asst, user, cr, group] in query, order_by: ans.xp + ans.xp_adjustment)
 
       true ->
         query
@@ -2037,7 +2037,9 @@ defmodule Cadet.Assessments do
         )
 
       sort_by == "xp" ->
-        from([s, ans, asst, user] in query, order_by: [desc: ans.xp])
+        from([s, ans, asst, user, cr, group] in query,
+          order_by: [desc: ans.xp + ans.xp_adjustment]
+        )
 
       true ->
         query
