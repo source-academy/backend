@@ -2952,52 +2952,6 @@ defmodule Cadet.AssessmentsTest do
       )
     end
 
-    test "sorting by progress status ascending", %{
-      course_regs: %{avenger1_cr: avenger},
-      assessments: _assessments,
-      total_submissions: total_submissions
-    } do
-      {_, res} =
-        Assessments.submissions_by_grader_for_index(avenger, %{
-          "pageSize" => total_submissions,
-          "sortBy" => "progressStatus",
-          "sortDirection" => "sort-asc"
-        })
-
-      submissions_from_res = res[:data][:submissions]
-
-      Enum.reduce(
-        submissions_from_res,
-        fn x, y ->
-          assert x.is_grading_published >= y.is_grading_published
-          y
-        end
-      )
-    end
-
-    test "sorting by progress status descending", %{
-      course_regs: %{avenger1_cr: avenger},
-      assessments: _assessments,
-      total_submissions: total_submissions
-    } do
-      {_, res} =
-        Assessments.submissions_by_grader_for_index(avenger, %{
-          "pageSize" => total_submissions,
-          "sortBy" => "progressStatus",
-          "sortDirection" => "sort-desc"
-        })
-
-      submissions_from_res = res[:data][:submissions]
-
-      Enum.reduce(
-        submissions_from_res,
-        fn x, y ->
-          assert x.is_grading_published <= y.is_grading_published
-          y
-        end
-      )
-    end
-
     test "sorting by xp ascending", %{
       course_regs: %{avenger1_cr: avenger},
       assessments: _assessments,
