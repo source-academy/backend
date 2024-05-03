@@ -125,7 +125,8 @@ defmodule CadetWeb.UserControllerTest do
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
             "hasVotingFeatures" => false,
-            "hasTokenCounter" => false
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           },
           %{
             "type" => "test type 2",
@@ -135,7 +136,8 @@ defmodule CadetWeb.UserControllerTest do
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
             "hasVotingFeatures" => false,
-            "hasTokenCounter" => false
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           },
           %{
             "type" => "test type 3",
@@ -145,7 +147,8 @@ defmodule CadetWeb.UserControllerTest do
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
             "hasVotingFeatures" => false,
-            "hasTokenCounter" => false
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           }
         ]
       }
