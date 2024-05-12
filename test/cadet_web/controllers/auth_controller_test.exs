@@ -54,7 +54,7 @@ defmodule CadetWeb.AuthControllerTest do
                    %{conn: conn},
                    Cadet.Auth.Provider,
                    [],
-                   authorise: fn _, _, _, _ -> {:error, :upstream, "Upstream error"} end do
+                   authorise: fn _ -> {:error, :upstream, "Upstream error"} end do
       conn =
         post(conn, "/v2/auth/login", %{
           "code" => "invalid code",
@@ -71,7 +71,7 @@ defmodule CadetWeb.AuthControllerTest do
                    %{conn: conn},
                    Cadet.Auth.Provider,
                    [],
-                   authorise: fn _, _, _, _ -> {:error, :other, "Unknown error"} end do
+                   authorise: fn _ -> {:error, :other, "Unknown error"} end do
       conn =
         post(conn, "/v2/auth/login", %{
           "code" => "code",
