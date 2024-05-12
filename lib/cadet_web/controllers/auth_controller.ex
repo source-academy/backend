@@ -19,16 +19,20 @@ defmodule CadetWeb.AuthController do
   def create(
         conn,
         params = %{
+          "code" => code,
           "provider" => provider
         }
       ) do
-    # Code is optional as SAML flow is mainly handled by backend
-    # TODO: Potentially HACKY fallback for SAML (because no code is needed)
-    code = Map.get(params, "code", conn)
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
 
-    case create_user_and_tokens(conn, provider, code, client_id, redirect_uri) do
+    case create_user_and_tokens(%{
+           conn: conn,
+           provider_instance: provider,
+           code: code,
+           client_id: client_id,
+           redirect_uri: redirect_uri
+         }) do
       {:ok, tokens} ->
         render(conn, "token.json", tokens)
 
@@ -47,13 +51,16 @@ defmodule CadetWeb.AuthController do
   def saml_redirect(
         conn,
         %{
-          "provider" => provider_instance
+          "provider" => provider
         }
       ) do
-    case create_user_and_tokens(conn, provider_instance, conn, nil, nil) do
+    case create_user_and_tokens(%{
+           conn: conn,
+           provider_instance: provider
+         }) do
       {:ok, tokens} ->
         {_provider, %{client_redirect_url: client_redirect_url}} =
-          Application.get_env(:cadet, :identity_providers, %{})[provider_instance]
+          Application.get_env(:cadet, :identity_providers, %{})[provider]
 
         encoded_tokens = tokens |> Jason.encode!()
 
@@ -75,9 +82,16 @@ defmodule CadetWeb.AuthController do
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
-  defp create_user_and_tokens(conn, provider, code, client_id, redirect_uri) do
+  @spec create_user_and_tokens(Provider.authorise_params()) ::
+          {:ok, %{access_token: String.t(), refresh_token: String.t()}} | Plug.Conn.t()
+  defp create_user_and_tokens(
+         params = %{
+           conn: conn,
+           provider_instance: provider
+         }
+       ) do
     with {:authorise, {:ok, %{token: token, username: username}}} <-
-           {:authorise, Provider.authorise(provider, code, client_id, redirect_uri)},
+           {:authorise, Provider.authorise(params)},
          {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(username, token, provider)} do
       {:ok, generate_tokens(user)}
     else

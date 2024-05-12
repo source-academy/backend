@@ -8,15 +8,12 @@ defmodule Cadet.Auth.Providers.SAML do
 
   @type config :: %{assertion_extractor: module()}
 
-  @spec authorise(
-          any(),
-          Provider.code() | Plug.Conn.t(),
-          Provider.client_id(),
-          Provider.redirect_uri()
-        ) ::
+  @spec authorise(config(), Provider.authorise_params()) ::
           {:ok, %{token: Provider.token(), username: String.t()}}
           | {:error, Provider.error(), String.t()}
-  def authorise(config, conn, _client_id, _redirect_uri) do
+  def authorise(config, %{
+        conn: conn
+      }) do
     %{assertion_extractor: assertion_extractor} = config
 
     with {:assertion, assertion} when not is_nil(assertion) <-
