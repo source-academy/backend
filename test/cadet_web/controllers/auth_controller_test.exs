@@ -100,6 +100,43 @@ defmodule CadetWeb.AuthControllerTest do
     end
   end
 
+  describe "GET /auth/saml_redirect" do
+    test_with_mock "success", %{conn: conn}, Samly, [],
+      get_active_assertion: fn _ -> %{attributes: %{"SamAccountName" => "username", "DisplayName" => "name"}} end do
+        conn = get(conn, "/v2/auth/saml_redirect", %{"provider" => "saml"})
+
+        assert response(conn, 302)
+    end
+
+    test_with_mock "missing parameter", %{conn: conn}, Samly, [],
+      get_active_assertion: fn _ -> %{attributes: %{"SamAccountName" => "username", "DisplayName" => "name"}} end do
+        conn = get(conn, "/v2/auth/saml_redirect", %{})
+
+        assert response(conn, 400) == "Missing parameter"
+      end
+
+    test_with_mock "missing SAML assertion", %{conn: conn}, Samly, [],
+      get_active_assertion: fn _ -> nil end do
+        conn = get(conn, "/v2/auth/saml_redirect", %{"provider" => "saml"})
+
+        assert response(conn, 400) == "Unable to validate token: Missing SAML assertion!"
+      end
+
+    test_with_mock "missing name attribute", %{conn: conn}, Samly, [],
+      get_active_assertion: fn _ ->  %{attributes: %{"SamAccountName" => "username"}} end do
+        conn = get(conn, "/v2/auth/saml_redirect", %{"provider" => "saml"})
+
+        assert response(conn, 400) == "Unable to validate token: Missing name attribute!"
+      end
+
+    test_with_mock "missing username attribute", %{conn: conn}, Samly, [],
+      get_active_assertion: fn _ ->  %{attributes: %{"DisplayName" => "name"}} end do
+        conn = get(conn, "/v2/auth/saml_redirect", %{"provider" => "saml"})
+
+        assert response(conn, 400) == "Unable to validate token: Missing username attribute!"
+      end
+  end
+
   describe "POST /auth/refresh" do
     test "missing parameter", %{conn: conn} do
       conn = post(conn, "/v2/auth/refresh", %{})

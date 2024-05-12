@@ -69,7 +69,7 @@ defmodule CadetWeb.AuthController do
 
         conn
         |> put_resp_cookie("jwts", encoded_tokens,
-          domain: "cadet.ap",
+          domain: URI.new!(client_redirect_url).host,
           http_only: false
         )
         |> put_resp_header("location", URI.encode(client_redirect_url))
