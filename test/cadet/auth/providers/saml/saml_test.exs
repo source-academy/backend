@@ -17,7 +17,7 @@ defmodule Cadet.Auth.Providers.SamlTest do
   @username "JohnT"
   @name_field "DisplayName"
   @name "John Tan"
-  @token "{\"name\":\"John Tan\"}"
+  @token ~s({"name":"John Tan"})
 
   test_with_mock "success", Samly,
     get_active_assertion: fn _ ->
