@@ -228,6 +228,16 @@ defmodule CadetWeb.AuthController do
     response(401, "Invalid token")
   end
 
+  swagger_path :saml_redirect do
+    get("/auth/saml_redirect")
+
+    summary(
+      "SAML redirect endpoint after Assertion Consumer Service validation. Generates JWT tokens before redirecting again to the frontend."
+    )
+
+    response(302, "Found")
+  end
+
   def swagger_definitions do
     %{
       Tokens:
