@@ -56,7 +56,10 @@ defmodule CadetWeb.AuthController do
       ) do
     case create_user_and_tokens(%{
            conn: conn,
-           provider_instance: provider
+           provider_instance: provider,
+           code: nil,
+           client_id: nil,
+           redirect_uri: nil
          }) do
       {:ok, tokens} ->
         {_provider, %{client_redirect_url: client_redirect_url}} =

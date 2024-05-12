@@ -10,11 +10,11 @@ defmodule Cadet.Auth.Provider do
   @type username :: String.t()
   @type prefix :: String.t()
   @type authorise_params :: %{
-          provider_instance: provider_instance,
-          code: String.t(),
           conn: Plug.Conn.t(),
-          client_id: String.t(),
-          redirect_uri: String.t()
+          provider_instance: provider_instance,
+          code: String.t() | nil,
+          client_id: String.t() | nil,
+          redirect_uri: String.t() | nil
         }
 
   @doc "Exchanges the OAuth2 authorisation code for a token and the user ID."
