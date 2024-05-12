@@ -23,8 +23,7 @@ defmodule Cadet.Auth.Providers.SamlTest do
     get_active_assertion: fn _ ->
       %{attributes: %{@username_field => @username, @name_field => @name}}
     end do
-    assert {:ok, %{token: @token, username: @username}} =
-             SAML.authorise(@config, %{conn: %{}})
+    assert {:ok, %{token: @token, username: @username}} = SAML.authorise(@config, %{conn: %{}})
 
     assert {:ok, @name} == SAML.get_name(@config, @token)
   end

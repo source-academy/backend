@@ -69,12 +69,12 @@ config :cadet,
            #  role: :student
          }
        ]},
-      "saml" =>
-        {Cadet.Auth.Providers.SAML,
-          %{
-            assertion_extractor: Cadet.Auth.Providers.NusstfAssertionExtractor,
-            client_redirect_url: "https://cadet.frontend/login/callback"
-          }}
+    "saml" =>
+      {Cadet.Auth.Providers.SAML,
+       %{
+         assertion_extractor: Cadet.Auth.Providers.NusstfAssertionExtractor,
+         client_redirect_url: "https://cadet.frontend/login/callback"
+       }}
   },
   autograder: [
     lambda_name: "dummy"
