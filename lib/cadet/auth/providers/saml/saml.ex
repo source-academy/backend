@@ -3,7 +3,6 @@ defmodule Cadet.Auth.Providers.SAML do
   Provides identity using SAML.
   """
   alias Cadet.Auth.Provider
-  alias Samly.Assertion
 
   @behaviour Provider
 

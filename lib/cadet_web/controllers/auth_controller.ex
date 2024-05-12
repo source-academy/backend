@@ -28,10 +28,58 @@ defmodule CadetWeb.AuthController do
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
 
+    case create_user_and_tokens(conn, provider, code, client_id, redirect_uri) do
+      {:ok, tokens} ->
+        render(conn, "token.json", tokens)
+
+      conn ->
+        conn
+    end
+  end
+
+  def create(conn, _params) do
+    send_resp(conn, :bad_request, "Missing parameter")
+  end
+
+  @doc """
+  Callback URL which processes a SAML redirect from the Assertion Consumer Service (ACS).
+  """
+  def saml_redirect(
+        conn,
+        %{
+          "provider" => provider_instance
+        }
+      ) do
+    case create_user_and_tokens(conn, provider_instance, conn, nil, nil) do
+      {:ok, tokens} ->
+        {_provider, %{client_redirect_url: client_redirect_url}} =
+          Application.get_env(:cadet, :identity_providers, %{})[provider_instance]
+
+        encoded_tokens = tokens |> Jason.encode!()
+
+        conn
+        |> put_resp_cookie("jwts", encoded_tokens,
+          domain: "cadet.ap",
+          http_only: false
+        )
+        |> put_resp_header("location", URI.encode(client_redirect_url))
+        |> send_resp(302, "")
+        |> halt()
+
+      conn ->
+        conn
+    end
+  end
+
+  def saml_redirect(conn, _params) do
+    send_resp(conn, :bad_request, "Missing parameter")
+  end
+
+  defp create_user_and_tokens(conn, provider, code, client_id, redirect_uri) do
     with {:authorise, {:ok, %{token: token, username: username}}} <-
            {:authorise, Provider.authorise(provider, code, client_id, redirect_uri)},
          {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(username, token, provider)} do
-      render(conn, "token.json", generate_tokens(user))
+      {:ok, generate_tokens(user)}
     else
       {:authorise, {:error, :upstream, reason}} ->
         conn
@@ -54,10 +102,6 @@ defmodule CadetWeb.AuthController do
         |> put_status(status)
         |> text("Unable to retrieve user: #{reason}")
     end
-  end
-
-  def create(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameter")
   end
 
   @doc """
