@@ -28,6 +28,10 @@ defmodule CadetWeb.Router do
     get("/.well-known/jwks.json", JWKSController, :index)
   end
 
+  scope "/sso" do
+    forward("/", Samly.Router)
+  end
+
   # V2 API
 
   # Public Pages
@@ -38,6 +42,7 @@ defmodule CadetWeb.Router do
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
+    get("/auth/saml_redirect", AuthController, :saml_redirect)
   end
 
   scope "/v2", CadetWeb do
