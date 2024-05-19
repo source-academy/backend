@@ -147,7 +147,7 @@ Where there is a conflict between the two, the first one (lexmag) shall be the o
 
 ## Entity-Relationship Diagram
 
-Generated with [DBeaver](https://dbeaver.io/) on 03 June 2022
+Generated with [DBeaver](https://dbeaver.io/) on 19 May 2024
 
 ![Entity-Relationship Diagram for cadet](schema.png)
 
