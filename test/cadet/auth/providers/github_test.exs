@@ -45,7 +45,11 @@ defmodule Cadet.Auth.Providers.GitHubTest do
     bypass_api_call(bypass)
 
     assert {:ok, %{token: @dummy_access_token, username: @username}} ==
-             GitHub.authorise(config(bypass), "", "dummy_client_id", "")
+             GitHub.authorise(config(bypass), %{
+               code: "",
+               client_id: "dummy_client_id",
+               redirect_uri: ""
+             })
   end
 
   test "invalid github client id", %{bypass: bypass} do
@@ -53,7 +57,11 @@ defmodule Cadet.Auth.Providers.GitHubTest do
     bypass_api_call(bypass)
 
     assert {:error, :invalid_credentials, "Invalid client id"} ==
-             GitHub.authorise(config(bypass), "", "invalid_client_id", "")
+             GitHub.authorise(config(bypass), %{
+               code: "",
+               client_id: "invalid_client_id",
+               redirect_uri: ""
+             })
   end
 
   test "non-successful HTTP status (access token)", %{bypass: bypass} do
@@ -62,7 +70,11 @@ defmodule Cadet.Auth.Providers.GitHubTest do
     end)
 
     assert {:error, :upstream, "Status code 403 from GitHub"} ==
-             GitHub.authorise(config(bypass), "", "dummy_client_id", "")
+             GitHub.authorise(config(bypass), %{
+               code: "",
+               client_id: "dummy_client_id",
+               redirect_uri: ""
+             })
   end
 
   test "error token response", %{bypass: bypass} do
@@ -72,7 +84,11 @@ defmodule Cadet.Auth.Providers.GitHubTest do
       |> PlugConn.resp(200, ~s({"error":"bad_verification_code"}))
 
       assert {:error, :invalid_credentials, "Error from GitHub: bad_verification_code"} ==
-               GitHub.authorise(config(bypass), "", "dummy_client_id", "")
+               GitHub.authorise(config(bypass), %{
+                 code: "",
+                 client_id: "dummy_client_id",
+                 redirect_uri: ""
+               })
     end)
   end
 
@@ -84,7 +100,12 @@ defmodule Cadet.Auth.Providers.GitHubTest do
     end)
 
     assert {:error, :upstream, "Status code 401 from GitHub"}
-    GitHub.authorise(config(bypass), "", "dummy_client_id", "")
+
+    GitHub.authorise(config(bypass), %{
+      code: "",
+      client_id: "dummy_client_id",
+      redirect_uri: ""
+    })
   end
 
   test "get_name successful", %{bypass: bypass} do

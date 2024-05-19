@@ -79,6 +79,7 @@ defmodule Cadet.Mixfile do
       {:quantum, "~> 3.0"},
       {:que, "~> 0.10"},
       {:recase, "~> 0.7", override: true},
+      {:samly, "~> 1.0"},
       {:sentry, "~> 8.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.7"},
