@@ -473,6 +473,213 @@ defmodule Cadet.Chatbot.SicpNotes do
   4. **User Issues:** The user, Lem E. Tweakit, encounters discrepancies in computing parallel resistors using different algebraic expressions in Alyssa's system.
   """
 
+  @summary_2_2 """
+  2.2 Hierarchical Data and the Closure Property
+  1. **Pair Representation:** Pairs, represented using box-and-pointer notation, serve as a primitive "glue" to create compound data objects.
+  2. **Universal Building Block:** Pairs, capable of combining numbers and other pairs, act as a universal building block for constructing diverse data structures.
+  3. **Closure Property:** The closure property of pairs enables the creation of hierarchical structures, facilitating the combination of elements with the same operation.
+  4. **Importance in Programming:** Closure is crucial in programming, allowing the construction of complex structures made up of parts, leading to powerful combinations.
+  """
+
+  @summary_2_2_1 """
+  2.2.1 Representing Sequences
+  1. **Sequence Representation:** Pairs are used to represent sequences, visualized as chains of pairs, forming a list structure in box-and-pointer notation.
+  2. **List Operations:** Lists, constructed using pairs, support operations like head and tail for element extraction, length for counting, and append for combining.
+  3. **Mapping with Higher-Order Function:** The higher-order function map abstracts list transformations, allowing the application of a function to each element, enhancing abstraction in list processing.
+  4. **For-Each Operation:** The for_each function applies a given function to each element in a list, useful for actions like printing, with the option to return an arbitrary value.
+  """
+
+  @summary_2_2_2 """
+  2.2.2 Hierarchical Structures
+  1. **Hierarchical Sequences:** Sequences of sequences are represented as hierarchical structures, extending the list structure to form trees.
+  2. **Tree Operations:** Recursion is used for tree operations, such as counting leaves and length, demonstrating natural tree processing with recursive functions.
+  3. **Mobile Representation:** Binary mobiles, consisting of branches and weights, are represented using compound data structures, with operations to check balance and calculate total weight.
+  4. **Mapping Over Trees:** Operations like scale_tree demonstrate mapping over trees, combining sequence operations and recursion for efficient tree manipulation.
+  """
+
+  @summary_2_2_3 """
+  2.2.3 Sequences as Conventional Interfaces
+  1. **Sequence Operations:**
+  - Use signals flowing through stages to design programs, enhancing conceptual clarity.
+  - Represent signals as lists, enabling modular program design with standard components.
+  2. **Operations on Sequences:**
+  - Implement mapping, filtering, and accumulation operations for sequence processing.
+  - Examples: map, filter, accumulate functions for various computations, providing modularity.
+  3. **Signal-Flow Structure:**
+  - Organize programs to manifest signal-flow structure for clarity.
+  - Utilize sequence operations like map, filter, and accumulate to express program designs.
+  4. **Exercises and Solutions:**
+  - Includes exercises involving list-manipulation operations and matrix operations.
+  - Demonstrates nested mappings for problem-solving, like permutations and eight-queens puzzle.
+  """
+
+  @summary_2_2_4 """
+  2.2.4 Example: A Picture Language
+  1. **Picture Language Overview:**
+  - Utilizes a simple language for drawing pictures, showcasing data abstraction, closure, and higher-order functions.
+  - Painters, representing images, draw within designated frames, enabling easy experimentation with patterns.
+  - Operations like flip, rotate, and squash transform painters, while combinations like beside and below create compound painters.
+  2. **Painter Operations:**
+  - `transform_painter` is a key operation, transforming painters based on specified frame points.
+  - Operations like flip_vert, rotate90, and squash_inwards leverage `transform_painter` to achieve specific effects.
+  - `beside` and `below` combine painters, each transformed to draw in specific regions of the frame.
+  3. **Stratified Design Principles:**
+  - Embraces stratified design, structuring complexity through levels and languages.
+  - Primitives like primitive painters are combined at lower levels, forming components for higher-level operations.
+  - Enables robust design, allowing changes at different levels with minimal impact.
+  4. **Examples and Exercises:**
+  - Illustrates examples like square_limit, flipped_pairs, and square_of_four.
+  - Exercises involve modifying patterns, defining new transformations, and demonstrating the versatility of the picture language.
+  """
+
+  @summary_2_3 """
+  2.3 Symbolic Data
+  1. **Compound Data Objects:**
+  - Constructed from numbers in previous sections.
+  - Introduction of working with strings as data.
+  2. **Representation Extension:**
+  - Enhances language capabilities.
+  - Adds versatility to data representation.
+  """
+
+  @summary_2_3_1 """
+  2.3.1 Strings
+  1. **String Usage:**
+  - Strings used for messages.
+  - Compound data with strings in lists.
+  2. **String Representation:**
+  - Strings in double quotes.
+  - Distinction from names in code.
+  3. **Comparison Operations:**
+  - Introduction of === and !== for strings.
+  - Example function using ===: `member(item, x)`.
+  4. **Exercises:**
+  - Evaluation exercises with lists and strings.
+  - Implementation exercise: `equal` function.
+  """
+
+  @summary_2_3_2 """
+  2.3.2 Example: Symbolic Differentiation
+  1. **Symbolic Differentiation:**
+  - Purpose: Deriving algebraic expressions symbolically.
+  - Historical Significance: Influential in Lisp development and symbolic mathematical systems.
+  2. **Differentiation Algorithm:**
+  - Abstract algorithm for sums, products, and variables.
+  - Recursive reduction rules for symbolic expressions.
+  3. **Expression Representation:**
+  - Use of prefix notation for mathematical structure.
+  - Variables represented as strings, sums, and products as lists.
+  4. **Algorithm Implementation:**
+  - `deriv` function for symbolic differentiation.
+  - Examples and the need for expression simplification.
+  """
+
+  @summary_2_3_3 """
+  2.3.3 Example: Representing Sets
+  1. **Set Representation:**
+  - Informal definition: a collection of distinct objects.
+  - Defined using data abstraction with operations: union_set, intersection_set, is_element_of_set, adjoin_set.
+  - Various representations: unordered lists, ordered lists, binary trees.
+  2. **Sets as Unordered Lists:**
+  - Represented as a list with no duplicate elements.
+  - Operations: is_element_of_set, adjoin_set, intersection_set.
+  - Efficiency concerns: is_element_of_set may require Θ(n) steps.
+  3. **Sets as Ordered Lists:**
+  - Elements listed in increasing order for efficiency.
+  - Operations like is_element_of_set benefit from ordered representation.
+  - Intersection_set exhibits significant speedup (Θ(n) instead of Θ(n^2)).
+  4. **Sets as Binary Trees:**
+  - Further speedup using a tree structure.
+  - Each node holds an entry and links to left and right subtrees.
+  - Operations: is_element_of_set, adjoin_set with Θ(log n) complexity.
+  - Balancing strategies needed to maintain efficiency.
+  Note: Code snippets and exercises provide implementation details for each representation.
+  """
+
+  @summary_2_3_4 """
+  2.3.4 Example: Huffman Encoding Trees
+  1. **Huffman Encoding Basics:**
+  - Describes the concept of encoding data using sequences of 0s and 1s (bits).
+  - Introduces fixed-length and variable-length codes for symbols.
+  - Illustrates an example of a fixed-length code and a variable-length code for a set of symbols.
+  2. **Variable-Length Codes:**
+  - Explains the concept of variable-length codes, where different symbols may have different bit lengths.
+  - Highlights the efficiency of variable-length codes in comparison to fixed-length codes.
+  - Introduces the idea of prefix codes, ensuring no code is a prefix of another.
+  3. **Huffman Encoding Method:**
+  - Presents the Huffman encoding method, a variable-length prefix code.
+  - Describes how Huffman codes are represented as binary trees.
+  - Explains the construction of Huffman trees based on symbol frequencies.
+  4. **Decoding with Huffman Trees:**
+  - Outlines the process of decoding a bit sequence using a Huffman tree.
+  - Describes the algorithm to traverse the tree and decode symbols.
+  - Provides functions for constructing, representing, and decoding Huffman trees in JavaScript.
+  """
+
+  @summary_2_4 """
+  2.4 Multiple Representations for Abstract Data
+  1. **Data Abstraction:**
+  - Introduces data abstraction as a methodology for structuring systems.
+  - Explains the use of abstraction barriers to separate design from implementation for rational numbers.
+  2. **Need for Multiple Representations:**
+  - Recognizes the limitation of a single underlying representation for data objects.
+  - Discusses the importance of accommodating multiple representations for flexibility.
+  3. **Generic Functions:**
+  - Highlights the concept of generic functions that operate on data with multiple representations.
+  - Introduces type tags and data-directed style for building generic functions.
+  4. **Complex-Number Example:**
+  - Illustrates the implementation of complex numbers with both rectangular and polar representations.
+  - Emphasizes the role of abstraction barriers in managing different design choices.
+  """
+
+  @summary_2_4_1 """
+  2.4.1 Representations for Complex Numbers
+  1. **Complex Number Representations:**
+  - Discusses two representations for complex numbers: rectangular form (real and imaginary parts) and polar form (magnitude and angle).
+  - Emphasizes the need for generic operations that work with both representations.
+  2. **Operations on Complex Numbers:**
+  - Describes arithmetic operations on complex numbers, highlighting differences in representation for addition, subtraction, multiplication, and division.
+  - Illustrates the use of selectors and constructors for implementing these operations.
+  3. **Programming Choices:**
+  - Introduces two programmers, Ben and Alyssa, independently choosing different representations for complex numbers.
+  - Presents the implementations of selectors and constructors for both rectangular and polar forms.
+  4. **Data Abstraction Discipline:**
+  - Ensures that the same generic operations work seamlessly with different representations.
+  - Acknowledges the example's simplification for clarity, noting the preference for rectangular form in practical computational systems.
+  """
+
+  @summary_2_4_2 """
+  2.4.2 Tagged data
+  1. **Principle of Least Commitment:**
+  - Data abstraction follows the principle of least commitment, allowing flexibility in choosing representations at the last possible moment.
+  - Maintains maximum design flexibility by deferring the choice of concrete representation for data objects.
+  2. **Tagged Data Implementation:**
+  - Introduces type tags to distinguish between different representations of complex numbers (rectangular or polar).
+  - Utilizes functions like `attach_tag`, `type_tag`, and `contents` to manage type information.
+  3. **Coexistence of Representations:**
+  - Shows how Ben and Alyssa can modify their representations to coexist in the same system using type tags.
+  - Ensures that functions do not conflict by appending "rectangular" or "polar" to their names.
+  4. **Generic Complex-Arithmetic System:**
+  - Implements generic complex-number arithmetic operations that work seamlessly with both rectangular and polar representations.
+  - The resulting system is decomposed into three parts: complex-number-arithmetic operations, polar implementation, and rectangular implementation.
+  """
+
+  @summary_2_4_3 """
+  2.4.3 Data-Directed Programming and Additivity
+  1. **Dispatching on Type:**
+  - Dispatching on type involves checking the type of a datum and calling an appropriate function.
+  - Provides modularity but has weaknesses, such as the need for generic functions to know about all representations.
+  2. **Data-Directed Programming:**
+  - Data-directed programming modularizes system design further.
+  - Uses an operation-and-type table, allowing easy addition of new representations without modifying existing functions.
+  3. **Implementation with Tables:**
+  - Uses functions like `put` and `get` for manipulating the operation-and-type table.
+  - Ben and Alyssa implement their packages by adding entries to the table, facilitating easy integration.
+  4. **Message Passing:**
+  - Message passing represents data objects as functions that dispatch on operation names.
+  - Provides an alternative to data-directed programming, where the data object receives operation names as "messages."
+  """
+
   @notes %{
     "1" => @summary_1,
     "1.1" => @summary_1_1,
@@ -501,7 +708,21 @@ defmodule Cadet.Chatbot.SicpNotes do
     "2.1.1" => @summary_2_1_1,
     "2.1.2" => @summary_2_1_2,
     "2.1.3" => @summary_2_1_3,
-    "2.1.4" => @summary_2_1_4
+    "2.1.4" => @summary_2_1_4,
+    "2.2" => @summary_2_2,
+    "2.2.1" => @summary_2_2_1,
+    "2.2.2" => @summary_2_2_2,
+    "2.2.3" => @summary_2_2_3,
+    "2.2.4" => @summary_2_2_4,
+    "2.3" => @summary_2_3,
+    "2.3.1" => @summary_2_3_1,
+    "2.3.2" => @summary_2_3_2,
+    "2.3.3" => @summary_2_3_3,
+    "2.3.4" => @summary_2_3_4,
+    "2.4" => @summary_2_4,
+    "2.4.1" => @summary_2_4_1,
+    "2.4.2" => @summary_2_4_2,
+    "2.4.3" => @summary_2_4_3
   }
 
   @spec get_summary(String.t()) :: String.t() | nil
