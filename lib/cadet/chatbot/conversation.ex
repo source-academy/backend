@@ -12,13 +12,14 @@ defmodule Cadet.Chatbot.Conversation do
 
   schema "llm_chats" do
     field(:user_id, :integer)
+    field(:prepend_context, {:array, :map}, default: [])
     field(:messages, {:array, :map}, default: [])
 
     timestamps()
   end
 
   @required_fields ~w(user_id)a
-  @optional_fields ~w(messages)a
+  @optional_fields ~w(prepend_context messages)a
 
   def changeset(conversation, params) do
     conversation
