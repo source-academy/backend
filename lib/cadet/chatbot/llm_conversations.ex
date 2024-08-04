@@ -8,8 +8,22 @@ defmodule Cadet.Chatbot.LlmConversations do
 
   alias Cadet.Chatbot.{Conversation, PromptBuilder}
 
+  # WARNING: unrestricted access to all conversations
   def get_conversation(id) when is_ecto_id(id) do
     Repo.get(Conversation, id)
+  end
+
+  # Secured against unauthorized access
+  def get_conversation_for_user(user_id, conversation_id)
+      when is_ecto_id(user_id) and is_ecto_id(conversation_id) do
+    conversation = get_conversation(conversation_id)
+
+    case conversation do
+      nil -> {:error, "Conversation not found"}
+      conversation when conversation.user_id == user_id -> {:ok, conversation}
+      # user_id does not match, intentionally vague error message
+      _ -> {:error, "Conversation not found"}
+    end
   end
 
   def get_conversations(user_id) when is_ecto_id(user_id) do
