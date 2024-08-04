@@ -77,7 +77,7 @@ defmodule CadetWeb.Router do
 
   # Authenticated Pages without course but with rate limiting
   scope "/v2", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth , :rate_limit])
+    pipe_through([:api, :auth, :ensure_auth, :rate_limit])
     post("/chat", ChatController, :chat)
   end
 

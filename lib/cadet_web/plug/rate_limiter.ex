@@ -3,7 +3,8 @@ defmodule CadetWeb.Plugs.RateLimiter do
   require Logger
 
   @rate_limit 500
-  @period 86_400_000   # 24 hours in milliseconds
+  # 24 hours in milliseconds
+  @period 86_400_000
 
   def init(default), do: default
 
@@ -16,8 +17,10 @@ defmodule CadetWeb.Plugs.RateLimiter do
       {:ok, count} ->
         Logger.info("Received request from user #{user_id} with count #{count}")
         conn
+
       {:error, limit} ->
         Logger.error("Rate limit of #{limit} exceeded for user #{user_id}")
+
         conn
         |> put_status(:too_many_requests)
         |> send_resp(:too_many_requests, "Rate limit exceeded")
