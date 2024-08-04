@@ -104,11 +104,16 @@ defmodule CadetWeb.ChatController do
   end
 
   @context_size 20
-  defp generate_payload(messages) do
+
+  @spec generate_payload(Conversation.t()) :: list(map())
+  defp generate_payload(conversation) do
     # Only get the last 20 messages into the context
-    messages
-    |> Enum.reverse()
-    |> Enum.take(@context_size)
-    |> Enum.reverse()
+    messages_payload =
+      conversation.messages
+      |> Enum.reverse()
+      |> Enum.take(@context_size)
+      |> Enum.reverse()
+
+    conversation.prepend_context ++ messages_payload
   end
 end
