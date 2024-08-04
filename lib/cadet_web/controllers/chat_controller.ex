@@ -60,62 +60,41 @@ defmodule CadetWeb.ChatController do
     response(500, "When OpenAI API returns an error")
   end
 
-  def chat(conn, %{
-        "context" => m,
-        "conversationId" => _conversationId,
-        "userMessage" => _userMessage
-      }) do
-    # user = conn.assigns.current_user
+  def chat(conn, %{"conversationId" => conversation_id, "message" => user_message}) do
+    user = conn.assigns.current_user
 
-    case m do
-      nil ->
-        send_resp(conn, :bad_request, "Request must be in JSON format")
+    with {:ok, conversation} <-
+           LlmConversations.get_conversation_for_user(user.id, conversation_id),
+         {:ok, updated_conversation} <-
+           LlmConversations.add_message(conversation, "user", user_message),
+         payload <- convert(updated_conversation) do
+      case OpenAI.chat_completion(model: "gpt-4", messages: payload) do
+        {:ok, result_map} ->
+          choices = Map.get(result_map, :choices, [])
+          bot_message = Enum.at(choices, 0)["message"]["content"]
 
-      _ ->
-        case is_message_list?(m) do
-          true ->
-            case OpenAI.chat_completion(model: "gpt-4", messages: convert(m)) do
-              {:ok, result_map} ->
-                choices = Map.get(result_map, :choices, [])
-                resp = Enum.at(choices, 0)["message"]["content"]
-                send_resp(conn, :ok, resp)
+          case LlmConversations.add_message(updated_conversation, "bot", bot_message) do
+            {:ok, _} ->
+              send_resp(conn, :ok, bot_message)
 
-              {:error, reason} ->
-                error_message = reason["error"]["message"]
-                IO.puts("Error message from openAI response: #{error_message}")
-                IO.puts("Arguement that leads to this error:\n#{convert_to_string(m)}")
-                internal_error = 500
-                send_resp(conn, internal_error, error_message)
-            end
+            {:error, error_message} ->
+              send_resp(conn, 500, error_message)
+          end
 
-          false ->
-            send_resp(
-              conn,
-              :bad_request,
-              "Request must be a non empty list of message of format: {role:string, content:string}"
-            )
-        end
+        {:error, reason} ->
+          error_message = reason["error"]["message"]
+          IO.puts("Error message from openAI response: #{error_message}")
+          send_resp(conn, 500, error_message)
+      end
+    else
+      {:error, error_message} ->
+        send_resp(conn, 500, error_message)
     end
-  end
-
-  defp is_message_list?(list) do
-    is_list(list) &&
-      Enum.all?(list, fn
-        %{"content" => _content, "role" => _role} -> true
-        _ -> false
-      end) &&
-      length(list) > 0
   end
 
   defp convert(list) do
     Enum.map(list, fn %{"content" => content, "role" => role} ->
       %{role: role, content: content}
-    end)
-  end
-
-  defp convert_to_string(list) do
-    Enum.map_join(list, fn %{"content" => content, "role" => role} ->
-      "role: #{role}, content: #{content} \n"
     end)
   end
 end
