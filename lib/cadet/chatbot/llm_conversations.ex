@@ -63,6 +63,12 @@ defmodule Cadet.Chatbot.LlmConversations do
     end
   end
 
+  @system_error_message "An error occurred while generating a response. The conversation continues below."
+
+  def add_error_message(conversation) do
+    add_message(conversation, "system", @system_error_message)
+  end
+
   defp get_initial_message do
     %{role: "bot", content: "Ask me something about this paragraph!"}
   end
