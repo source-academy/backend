@@ -70,6 +70,6 @@ defmodule Cadet.Chatbot.LlmConversations do
   end
 
   defp get_initial_message do
-    %{role: "bot", content: "Ask me something about this paragraph!"}
+    %{role: "assistant", content: "Ask me something about this paragraph!"}
   end
 end
