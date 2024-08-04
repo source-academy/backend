@@ -36,12 +36,15 @@ defmodule Cadet.Chatbot.LlmConversations do
           {:error, binary()} | {:ok, Conversation.t()}
   def create_conversation(user_id, section, visible_paragraph_texts)
       when is_ecto_id(user_id) and is_binary(section) and is_binary(visible_paragraph_texts) do
-    messages = [
-      %{role: "system", content: PromptBuilder.build_prompt(section, visible_paragraph_texts)},
-      get_initial_message()
+    context = [
+      %{role: "system", content: PromptBuilder.build_prompt(section, visible_paragraph_texts)}
     ]
 
-    case %Conversation{user_id: user_id, messages: messages}
+    case %Conversation{
+           user_id: user_id,
+           prepend_context: context,
+           messages: [get_initial_message()]
+         }
          |> Conversation.changeset(%{})
          |> Repo.insert() do
       {:ok, conversation} -> {:ok, conversation}
