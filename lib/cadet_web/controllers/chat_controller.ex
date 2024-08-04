@@ -26,9 +26,12 @@ defmodule CadetWeb.ChatController do
     response(500, "When OpenAI API returns an error")
   end
 
-  def chat(conn, params) do
-    m = params["json"]
-    IO.puts("Request received: #{inspect(params)}")
+  def chat(conn, %{
+        "context" => m,
+        "conversationId" => _conversationId,
+        "userMessage" => _userMessage
+      }) do
+    user = conn.assigns.current_user
 
     case m do
       nil ->
