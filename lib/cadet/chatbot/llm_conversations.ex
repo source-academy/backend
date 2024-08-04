@@ -6,8 +6,7 @@ defmodule Cadet.Chatbot.LlmConversations do
 
   import Ecto.Query
 
-  alias Cadet.Chatbot.Conversation
-  alias Cadet.Chatbot.PromptBuilder
+  alias Cadet.Chatbot.{Conversation, PromptBuilder}
 
   def get_conversation(id) when is_ecto_id(id) do
     Repo.get(Conversation, id)
@@ -43,7 +42,7 @@ defmodule Cadet.Chatbot.LlmConversations do
     |> Repo.update()
   end
 
-  defp get_initial_message() do
+  defp get_initial_message do
     %{role: "bot", content: "Ask me something about this paragraph!"}
   end
 end
