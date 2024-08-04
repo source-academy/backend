@@ -1,6 +1,6 @@
 defmodule Cadet.Chatbot.LlmConversations do
   @moduledoc """
-  LLM Convestation service provides functions to create, update, and fetch LLM conversations.
+  LLM Conversation service provides functions to create, update, and fetch LLM conversations.
   """
   use Cadet, [:context, :display]
 
