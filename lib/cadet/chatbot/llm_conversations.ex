@@ -51,8 +51,9 @@ defmodule Cadet.Chatbot.LlmConversations do
 
   def add_message(conversation, role, content) do
     case conversation
-         |> put_in([:messages], conversation.messages ++ [%{role: role, content: content}])
-         |> Conversation.changeset(%{})
+         |> Conversation.changeset(%{
+           messages: conversation.messages ++ [%{role: role, content: content}]
+         })
          |> Repo.update() do
       {:ok, updated} -> {:ok, updated}
       {:error, changeset} -> {:error, full_error_messages(changeset)}
