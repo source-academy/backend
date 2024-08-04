@@ -1,5 +1,6 @@
 defmodule CadetWeb.Plugs.RateLimiter do
   import Plug.Conn
+  require Logger
 
   @rate_limit 500
   @period 86_400_000   # 24 hours in milliseconds
@@ -12,9 +13,11 @@ defmodule CadetWeb.Plugs.RateLimiter do
     key = "user:#{user_id}"
 
     case ExRated.check_rate(key, @period, @rate_limit) do
-      {:ok, _count} ->
+      {:ok, count} ->
+        Logger.info("Received request from user #{user_id} with count #{count}")
         conn
-      {:error, _limit} ->
+      {:error, limit} ->
+        Logger.error("Rate limit of #{limit} exceeded for user #{user_id}")
         conn
         |> put_status(:too_many_requests)
         |> send_resp(:too_many_requests, "Rate limit exceeded")
