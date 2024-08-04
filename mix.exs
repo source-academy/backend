@@ -63,6 +63,7 @@ defmodule Cadet.Mixfile do
       {:ex_aws_sts, "~> 2.1"},
       {:ex_json_schema, "~> 0.7.4"},
       {:ex_machina, "~> 2.3"},
+      {:ex_rated, "~> 2.0"},
       {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},
       {:hackney, "~> 1.6"},
