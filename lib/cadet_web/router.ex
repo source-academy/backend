@@ -70,7 +70,8 @@ defmodule CadetWeb.Router do
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
 
-    post("/chat", ChatController, :chat)
+    post("/chat", ChatController, :init_chat)
+    # TODO: PUT chat message
   end
 
   # Authenticated Pages with course
