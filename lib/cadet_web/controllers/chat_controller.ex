@@ -69,10 +69,10 @@ defmodule CadetWeb.ChatController do
            LlmConversations.add_message(conversation, "user", user_message),
          payload <- generate_payload(updated_conversation.messages) do
       case LlmConversations.add_message(updated_conversation, "bot", "Some test response") do
-        {:ok, _} ->
+        {:ok, conversation_with_response} ->
           render(conn, "conversation.json", %{
             conversation_id: conversation_id,
-            response: updated_conversation.messages
+            response: conversation_with_response.messages
           })
 
         {:error, error_message} ->
