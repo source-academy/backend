@@ -17,6 +17,7 @@ defmodule Cadet.Assessments.Submission do
     field(:graded_count, :integer, virtual: true, default: 0)
     field(:grading_status, :string, virtual: true)
     field(:unsubmitted_at, :utc_datetime_usec)
+    field(:submitted_at, :utc_datetime_usec)
     field(:is_grading_published, :boolean, default: false)
 
     belongs_to(:assessment, Assessment)
@@ -29,7 +30,7 @@ defmodule Cadet.Assessments.Submission do
   end
 
   @required_fields ~w(assessment_id status is_grading_published)a
-  @optional_fields ~w(xp_bonus unsubmitted_by_id unsubmitted_at student_id team_id)a
+  @optional_fields ~w(xp_bonus unsubmitted_by_id unsubmitted_at submitted_at student_id team_id)a
 
   def changeset(submission, params) do
     submission
