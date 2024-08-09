@@ -25,7 +25,7 @@ defmodule CadetWeb.Plugs.RateLimiterTest do
     key = "user:1"
 
     # Simulate exceeding the rate limit
-    for _ <- 1..500 do
+    for _ <- 1..RateLimiter.rate_limit() do
       conn = RateLimiter.call(conn, %{})
       assert conn.status != 429
     end

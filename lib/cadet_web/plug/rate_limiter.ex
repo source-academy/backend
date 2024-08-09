@@ -9,6 +9,8 @@ defmodule CadetWeb.Plugs.RateLimiter do
   # 24 hours in milliseconds
   @period 86_400_000
 
+  def rate_limit, do: @rate_limit
+
   def init(default), do: default
 
   # This must be put after the AssignCurrentUser plug
