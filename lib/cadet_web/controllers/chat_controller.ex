@@ -12,7 +12,7 @@ defmodule CadetWeb.ChatController do
 
     cond do
       is_nil(section) ->
-        send_resp(conn, :bad_request, "Request must be in JSON format")
+        send_resp(conn, :bad_request, "Missing course section")
 
       # Match '\d', '\d\.\d', or '\d\.\d\.\d' to get the course section
       String.match?(section, ~r/^\d+(\.\d+){0,2}$/) ->
