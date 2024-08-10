@@ -92,7 +92,7 @@ defmodule CadetWeb.ChatController do
 
   @context_size 20
 
-  @spec generate_payload(Conversation.t()) :: list(map())
+  @spec generate_payload(Cadet.Chatbot.Conversation.t()) :: list(map())
   defp generate_payload(conversation) do
     # Only get the last 20 messages into the context
     messages_payload =
