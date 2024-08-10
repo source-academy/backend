@@ -33,17 +33,6 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
-    test "invalid course section", %{conn: conn} do
-      conn =
-        post(conn, "/v2/chats", %{
-          "section" => "invalid course section",
-          "initialContext" => "Recursion is a fundamental concept in computer science."
-        })
-
-      assert response(conn, :bad_request) == "Invalid course section"
-    end
-
-    @tag authenticate: :student
     test "missing section info", %{conn: conn} do
       conn =
         post(conn, "/v2/chats", %{

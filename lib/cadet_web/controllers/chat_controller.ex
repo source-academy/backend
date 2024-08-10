@@ -10,30 +10,24 @@ defmodule CadetWeb.ChatController do
   def init_chat(conn, %{"section" => section, "initialContext" => initialContext}) do
     user = conn.assigns.current_user
 
-    cond do
-      is_nil(section) ->
-        send_resp(conn, :bad_request, "Missing course section")
+    if is_nil(section) do
+      send_resp(conn, :bad_request, "Missing course section")
+    else
+      case LlmConversations.create_conversation(user.id, section, initialContext) do
+        {:ok, conversation} ->
+          conn
+          |> put_status(:created)
+          |> render(
+            "conversation_init.json",
+            %{
+              conversation_id: conversation.id,
+              last_message: conversation.messages |> List.last()
+            }
+          )
 
-      # Match '\d', '\d\.\d', or '\d\.\d\.\d' to get the course section
-      String.match?(section, ~r/^\d+(\.\d+){0,2}$/) ->
-        case LlmConversations.create_conversation(user.id, section, initialContext) do
-          {:ok, conversation} ->
-            conn
-            |> put_status(:created)
-            |> render(
-              "conversation_init.json",
-              %{
-                conversation_id: conversation.id,
-                last_message: conversation.messages |> List.last()
-              }
-            )
-
-          {:error, error_message} ->
-            send_resp(conn, :unprocessable_entity, error_message)
-        end
-
-      true ->
-        send_resp(conn, :bad_request, "Invalid course section")
+        {:error, error_message} ->
+          send_resp(conn, :unprocessable_entity, error_message)
+      end
     end
   end
 
