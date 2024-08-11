@@ -110,6 +110,10 @@ erl_crash.dump
 # VSCode Elixir language support
 .elixir_ls/
 
+# IDEs
+.idea
+.vscode
+
 .env
 
 # Generated lexer

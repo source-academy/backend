@@ -21,6 +21,8 @@ defmodule Cadet.Factory do
     SubmissionVotesFactory
   }
 
+  use Cadet.Chatbot.{ConversationFactory}
+
   use Cadet.Stories.{StoryFactory}
 
   use Cadet.Incentives.{
