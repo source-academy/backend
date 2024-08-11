@@ -16,6 +16,10 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
+  pipeline :rate_limit do
+    plug(CadetWeb.Plugs.RateLimiter)
+  end
+
   pipeline :course do
     plug(:assign_course)
   end
@@ -73,7 +77,7 @@ defmodule CadetWeb.Router do
 
   # LLM-related endpoints
   scope "/v2/chats", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth])
+    pipe_through([:api, :auth, :ensure_auth, :rate_limit])
 
     post("", ChatController, :init_chat)
     post("/:conversationId/message", ChatController, :chat)
