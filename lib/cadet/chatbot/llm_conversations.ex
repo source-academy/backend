@@ -55,7 +55,9 @@ defmodule Cadet.Chatbot.LlmConversations do
   def add_message(conversation, role, content) do
     case conversation
          |> Conversation.changeset(%{
-           messages: conversation.messages ++ [%{role: role, content: content}]
+           messages:
+             conversation.messages ++
+               [%{role: role, content: content, created_at: DateTime.utc_now()}]
          })
          |> Repo.update() do
       {:ok, updated} -> {:ok, updated}
@@ -70,6 +72,10 @@ defmodule Cadet.Chatbot.LlmConversations do
   end
 
   defp get_initial_message do
-    %{role: "assistant", content: "Ask me something about this paragraph!"}
+    %{
+      role: "assistant",
+      content: "Ask me something about this paragraph!",
+      created_at: DateTime.utc_now()
+    }
   end
 end
