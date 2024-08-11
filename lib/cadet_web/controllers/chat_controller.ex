@@ -102,6 +102,7 @@ defmodule CadetWeb.ChatController do
       conversation.messages
       |> Enum.reverse()
       |> Enum.take(@context_size)
+      |> Enum.map(&Map.take(&1, [:role, :content, "role", "content"]))
       |> Enum.reverse()
 
     conversation.prepend_context ++ messages_payload
