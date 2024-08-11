@@ -5,7 +5,7 @@ defmodule CadetWeb.ChatController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.Chatbot.LlmConversations
+  alias Cadet.Chatbot.{Conversation, LlmConversations}
 
   def init_chat(conn, %{"section" => section, "initialContext" => initialContext}) do
     user = conn.assigns.current_user
@@ -92,7 +92,7 @@ defmodule CadetWeb.ChatController do
 
   @context_size 20
 
-  @spec generate_payload(Cadet.Chatbot.Conversation.t()) :: list(map())
+  @spec generate_payload(Conversation.t()) :: list(map())
   defp generate_payload(conversation) do
     # Only get the last 20 messages into the context
     messages_payload =
