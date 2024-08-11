@@ -3,38 +3,16 @@
     "request": {
       "url": "https://api.openai.com/v1/chat/completions",
       "method": "post",
-      "body": {
-        "model": "gpt-4",
-        "messages": []
-      }
+      "body": "{\"model\":\"gpt-4\",\"messages\":[]}"
     },
     "response": {
+      "binary": false,
       "status": 200,
       "headers": {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Content-Length": "365"
       },
-      "body": {
-        "choices": [
-          {
-            "finish_reason": "stop",
-            "index": 0,
-            "message": {
-              "content": "The 2020 World Series was played in Texas at Globe Life Field in Arlington.",
-              "role": "assistant"
-            },
-            "logprobs": null
-          }
-        ],
-        "created": 1677664795,
-        "id": "chatcmpl-7QyqpwdfhqwajicIEznoc6Q47XAyW",
-        "model": "gpt-4o",
-        "object": "chat.completion",
-        "usage": {
-          "completion_tokens": 17,
-          "prompt_tokens": 57,
-          "total_tokens": 74
-        }
-      }
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"The 2020 World Series was played in Texas at Globe Life Field in Arlington.\",\"role\":\"assistant\"},\"logprobs\":null}],\"created\":1677664795,\"id\":\"chatcmpl-7QyqpwdfhqwajicIEznoc6Q47XAyW\",\"model\":\"gpt-4o\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":17,\"prompt_tokens\":57,\"total_tokens\":74}}\n"
     }
   }
 ]
