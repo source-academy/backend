@@ -69,8 +69,14 @@ defmodule CadetWeb.Router do
     post("/devices/:id", DevicesController, :edit)
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
+  end
 
-    post("/chat", ChatController, :chat)
+  # LLM-related endpoints
+  scope "/v2/chats", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth])
+
+    post("", ChatController, :init_chat)
+    post("/:conversationId/message", ChatController, :chat)
   end
 
   # Authenticated Pages with course

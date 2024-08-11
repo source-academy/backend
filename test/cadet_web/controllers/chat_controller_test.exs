@@ -1,58 +1,91 @@
 defmodule CadetWeb.ChatControllerTest do
   alias CadetWeb.ChatController
   use CadetWeb.ConnCase
+  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
+
+  @moduletag :serial
+
+  setup_all do
+    # This essentially does :application.ensure_all_started(:hackney)
+    HTTPoison.start()
+  end
+
+  setup context do
+    if context[:requires_setup] do
+      conversation = insert(:conversation)
+      {:ok, conversation_id: conversation.id}
+    else
+      {:ok, conversation_id: nil}
+    end
+  end
 
   test "swagger" do
     ChatController.swagger_path_chat("json")
   end
 
-  describe "POST /chat" do
+  describe "POST /chats" do
     test "unauthenticated request", %{conn: conn} do
-      conn = post(conn, "/v2/chat", %{"json" => [%{"role" => "assistant", "content" => "Hello"}]})
+      conn =
+        post(conn, "/v2/chats", %{"json" => [%{"role" => "assistant", "content" => "Hello"}]})
 
-      assert response(conn, 401) == "Unauthorised"
+      assert response(conn, :unauthorized) == "Unauthorised"
     end
 
     @tag authenticate: :student
-    test "parameter not in json", %{conn: conn} do
+    test "missing section info", %{conn: conn} do
       conn =
-        post(conn, "/v2/chat", %{
-          "_json" => [
-            %{"role" => "assistant", "content" => "Hello"},
-            %{"role" => "user", "content" => "Hi"}
-          ]
+        post(conn, "/v2/chats", %{
+          "section" => nil,
+          "initialContext" => "Recursion is a fundamental concept in computer science."
         })
 
-      assert response(conn, 400) == "Request must be in JSON format"
+      assert response(conn, :bad_request) == "Missing course section"
+    end
+  end
+
+  describe "POST /chats/:conversationId/message" do
+    @tag authenticate: :student
+    @tag requires_setup: true
+    test "Conversation belongs to another user", %{conn: conn, conversation_id: conversation_id} do
+      assert conversation_id != nil
+
+      use_cassette "chatbot/chat_conversation#1", custom: true do
+        conn =
+          post(conn, "/v2/chats/#{conversation_id}/message", %{
+            "message" => "How to implement recursion in JavaScript?"
+          })
+
+        assert response(conn, :not_found) == "Conversation not found"
+      end
     end
 
     @tag authenticate: :student
-    test "parameter is empty", %{conn: conn} do
-      conn = post(conn, "/v2/chat", %{"json" => []})
+    test "Conversation belongs to own user", %{conn: conn} do
+      use_cassette "chatbot/chat_conversation#1", custom: true do
+        conversation = insert(:conversation, user: conn.assigns.current_user)
 
-      assert response(conn, 400) ==
-               "Request must be a non empty list of message of format: {role:string, content:string}"
+        conn =
+          post(conn, "/v2/chats/#{conversation.id}/message", %{
+            "message" => "How to implement recursion in JavaScript?"
+          })
+
+        assert json_response(conn, 200) == %{
+                 "conversationId" => Integer.to_string(conversation.id),
+                 "response" => "Some hardcoded test response."
+               }
+      end
     end
 
     @tag authenticate: :student
-    test "invalid parameter format", %{conn: conn} do
-      conn = post(conn, "/v2/chat", %{"json" => [%{rol: "role", contents: "content"}]})
+    test "invalid conversation id", %{conn: conn} do
+      conversation_id = "-1"
 
-      assert response(conn, 400) ==
-               "Request must be a non empty list of message of format: {role:string, content:string}"
-    end
-
-    @tag authenticate: :student
-    test "valid chat but without api key", %{conn: conn} do
       conn =
-        post(conn, "/v2/chat", %{
-          "json" => [
-            %{"role" => "assistant", "content" => "Hello"},
-            %{"role" => "user", "content" => "Hi"}
-          ]
+        post(conn, "/v2/chats/#{conversation_id}/message", %{
+          "message" => "How to implement recursion in JavaScript?"
         })
 
-      assert response(conn, 500)
+      assert response(conn, :not_found) == "Conversation not found"
     end
   end
 end
