@@ -4,10 +4,18 @@ defmodule Cadet.Auth.Providers.NusstuAssertionExtractorTest do
   alias Cadet.Auth.Providers.NusstuAssertionExtractor, as: Testee
 
   @username "JohnT"
-  @assertion %{attributes: %{"samaccountname" => @username}}
+  @firstname "John"
+  @lastname "Tan"
+  @assertion %{
+    attributes: %{
+      "samaccountname" => @username,
+      "givenname" => @firstname,
+      "surname" => @lastname
+    }
+  }
 
   test "success" do
     assert @username == Testee.get_username(@assertion)
-    assert @username == Testee.get_name(@assertion)
+    assert @firstname <> " " <> @lastname == Testee.get_name(@assertion)
   end
 end
