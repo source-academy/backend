@@ -10,6 +10,8 @@ defmodule Cadet.Auth.Providers.NusstuAssertionExtractor do
   end
 
   def get_name(assertion) do
-    Map.get(assertion.attributes, "samaccountname")
+    first_name = Map.get(assertion.attributes, "givenname")
+    last_name = Map.get(assertion.attributes, "surname")
+    "#{first_name} #{last_name}"
   end
 end
