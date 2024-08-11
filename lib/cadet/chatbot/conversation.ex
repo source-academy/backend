@@ -4,16 +4,20 @@ defmodule Cadet.Chatbot.Conversation do
   """
   use Cadet, :model
 
+  alias Cadet.Accounts.User
+
   @type t :: %__MODULE__{
-          user_id: integer(),
+          user: User.t(),
           # { role: string; content: string }[]
+          prepend_context: list(map()),
           messages: list(map())
         }
 
   schema "llm_chats" do
-    field(:user_id, :integer)
     field(:prepend_context, {:array, :map}, default: [])
     field(:messages, {:array, :map}, default: [])
+
+    belongs_to(:user, User)
 
     timestamps()
   end
@@ -24,6 +28,7 @@ defmodule Cadet.Chatbot.Conversation do
   def changeset(conversation, params) do
     conversation
     |> cast(params, @required_fields ++ @optional_fields)
+    |> add_belongs_to_id_from_model([:user], params)
     |> validate_required(@required_fields)
   end
 end
