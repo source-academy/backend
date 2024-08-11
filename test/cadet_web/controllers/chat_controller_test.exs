@@ -69,7 +69,10 @@ defmodule CadetWeb.ChatControllerTest do
             "message" => "How to implement recursion in JavaScript?"
           })
 
-        assert response(conn, :created) == "Message sent"
+        assert json_response(conn, 200) == %{
+                 "conversationId" => Integer.to_string(conversation.id),
+                 "response" => "Some hardcoded test response."
+               }
       end
     end
 
@@ -79,7 +82,6 @@ defmodule CadetWeb.ChatControllerTest do
 
       conn =
         post(conn, "/v2/chats/#{conversation_id}/message", %{
-          "conversation_id" => conversation_id,
           "message" => "How to implement recursion in JavaScript?"
         })
 
