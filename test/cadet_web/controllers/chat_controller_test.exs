@@ -1,9 +1,15 @@
 defmodule CadetWeb.ChatControllerTest do
   alias CadetWeb.ChatController
   use CadetWeb.ConnCase
+  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
+
   @moduletag :serial
 
-  @tag authenticate: :student
+  setup_all do
+    # This essentially does :application.ensure_all_started(:hackney)
+    HTTPoison.start()
+  end
+
   setup context do
     if context[:requires_setup] do
       conversation = insert(:conversation)
@@ -40,18 +46,31 @@ defmodule CadetWeb.ChatControllerTest do
   describe "POST /chats/:conversationId/message" do
     @tag authenticate: :student
     @tag requires_setup: true
-    test "valid user message conversation. However this fails because github ci does have a valid api key",
-         %{conn: conn, conversation_id: conversation_id} do
+    test "Conversation belongs to another user", %{conn: conn, conversation_id: conversation_id} do
       assert conversation_id != nil
 
-      conn =
-        post(conn, "/v2/chats/#{conversation_id}/message", %{
-          "conversation_id" => conversation_id,
-          "message" => "How to implement recursion in JavaScript?"
-        })
+      use_cassette "chatbot/chat_conversation#1", custom: true do
+        conn =
+          post(conn, "/v2/chats/#{conversation_id}/message", %{
+            "message" => "How to implement recursion in JavaScript?"
+          })
 
-      assert response(conn, 500) ==
-               "You didn't provide an API key. You need to provide your API key in an Authorization header using Bearer auth (i.e. Authorization: Bearer YOUR_KEY), or as the password field (with blank username) if you're accessing the API from your browser and are prompted for a username and password. You can obtain an API key from https://platform.openai.com/account/api-keys."
+        assert response(conn, :not_found) == "Conversation not found"
+      end
+    end
+
+    @tag authenticate: :student
+    test "Conversation belongs to own user", %{conn: conn} do
+      use_cassette "chatbot/chat_conversation#1", custom: true do
+        conversation = insert(:conversation, user: conn.assigns.current_user)
+
+        conn =
+          post(conn, "/v2/chats/#{conversation.id}/message", %{
+            "message" => "How to implement recursion in JavaScript?"
+          })
+
+        assert response(conn, :created) == "Message sent"
+      end
     end
 
     @tag authenticate: :student
