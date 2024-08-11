@@ -24,12 +24,12 @@ defmodule CadetWeb.ChatControllerTest do
     ChatController.swagger_path_chat("json")
   end
 
-  describe "POST /chat" do
+  describe "POST /chats" do
     test "unauthenticated request", %{conn: conn} do
       conn =
         post(conn, "/v2/chats", %{"json" => [%{"role" => "assistant", "content" => "Hello"}]})
 
-      assert response(conn, 401) == "Unauthorised"
+      assert response(conn, :bad_request) == "Unauthorised"
     end
 
     @tag authenticate: :student
@@ -42,7 +42,9 @@ defmodule CadetWeb.ChatControllerTest do
 
       assert response(conn, :bad_request) == "Missing course section"
     end
+  end
 
+  describe "POST /chats/:conversationId/message" do
     @tag authenticate: :student
     @tag requires_setup: true
     test "valid user message conversation. However this fails because github ci does have a valid api key",
