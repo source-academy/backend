@@ -29,7 +29,7 @@ defmodule CadetWeb.ChatControllerTest do
       conn =
         post(conn, "/v2/chats", %{"json" => [%{"role" => "assistant", "content" => "Hello"}]})
 
-      assert response(conn, :bad_request) == "Unauthorised"
+      assert response(conn, :unauthorized) == "Unauthorised"
     end
 
     @tag authenticate: :student
