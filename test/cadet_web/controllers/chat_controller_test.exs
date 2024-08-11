@@ -6,15 +6,8 @@ defmodule CadetWeb.ChatControllerTest do
   @tag authenticate: :student
   setup context do
     if context[:requires_setup] do
-      response =
-        post(context.conn, "/v2/chats", %{
-          "section" => "1.2",
-          "initialContext" => "Recursion is a fundamental concept in computer science."
-        })
-
-      decoded_body = Jason.decode!(response.resp_body)
-      conversation_id = decoded_body["conversationId"]
-      {:ok, conversation_id: conversation_id}
+      conversation = insert(:conversation)
+      {:ok, conversation_id: conversation.id}
     else
       {:ok, conversation_id: nil}
     end
