@@ -85,6 +85,9 @@ defmodule CadetWeb.ChatController do
           send_resp(conn, 500, error_message)
       end
     else
+      {:error, {:not_found, error_message}} ->
+        send_resp(conn, :not_found, error_message)
+
       {:error, error_message} ->
         send_resp(conn, 500, error_message)
     end

@@ -19,10 +19,10 @@ defmodule Cadet.Chatbot.LlmConversations do
     conversation = get_conversation(conversation_id)
 
     case conversation do
-      nil -> {:error, "Conversation not found"}
+      nil -> {:error, {:not_found, "Conversation not found"}}
       conversation when conversation.user_id == user_id -> {:ok, conversation}
       # user_id does not match, intentionally vague error message
-      _ -> {:error, "Conversation not found"}
+      _ -> {:error, {:not_found, "Conversation not found"}}
     end
   end
 

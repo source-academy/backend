@@ -71,7 +71,7 @@ defmodule CadetWeb.ChatControllerTest do
           "message" => "How to implement recursion in JavaScript?"
         })
 
-      assert response(conn, 500) == "Conversation not found"
+      assert response(conn, :not_found) == "Conversation not found"
     end
   end
 end
