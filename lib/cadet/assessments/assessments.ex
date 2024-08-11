@@ -1424,7 +1424,6 @@ defmodule Cadet.Assessments do
 
   @spec update_xp_bonus(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
-
   defp update_xp_bonus(submission = %Submission{id: submission_id}) do
     # to ensure backwards compatibility
     if submission.xp_bonus == 0 do
