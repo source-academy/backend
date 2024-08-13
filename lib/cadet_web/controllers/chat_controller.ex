@@ -53,54 +53,54 @@ defmodule CadetWeb.ChatController do
     response(200, "OK")
     response(400, "Missing or invalid parameter(s)")
     response(401, "Unauthorized")
-    response(421, "Message exceeds the maximum allowed length")
+    response(422, "Message exceeds the maximum allowed length")
     response(500, "When OpenAI API returns an error")
   end
 
   def chat(conn, %{"conversationId" => conversation_id, "message" => user_message}) do
-    if String.length(user_message) > @max_content_size do
-      send_resp(
-        conn,
-        :unprocessable_entity,
-        "Message exceeds the maximum allowed length of #{@max_content_size}"
-      )
-    else
-      user = conn.assigns.current_user
+    user = conn.assigns.current_user
 
-      with {:ok, conversation} <-
-             LlmConversations.get_conversation_for_user(user.id, conversation_id),
-           {:ok, updated_conversation} <-
-             LlmConversations.add_message(conversation, "user", user_message),
-           payload <- generate_payload(updated_conversation) do
-        case OpenAI.chat_completion(model: "gpt-4", messages: payload) do
-          {:ok, result_map} ->
-            choices = Map.get(result_map, :choices, [])
-            bot_message = Enum.at(choices, 0)["message"]["content"]
+    with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
+         {:ok, conversation} <-
+           LlmConversations.get_conversation_for_user(user.id, conversation_id),
+         {:ok, updated_conversation} <-
+           LlmConversations.add_message(conversation, "user", user_message),
+         payload <- generate_payload(updated_conversation) do
+      case OpenAI.chat_completion(model: "gpt-4", messages: payload) do
+        {:ok, result_map} ->
+          choices = Map.get(result_map, :choices, [])
+          bot_message = Enum.at(choices, 0)["message"]["content"]
 
-            case LlmConversations.add_message(updated_conversation, "assistant", bot_message) do
-              {:ok, _} ->
-                render(conn, "conversation.json", %{
-                  conversation_id: conversation_id,
-                  response: bot_message
-                })
+          case LlmConversations.add_message(updated_conversation, "assistant", bot_message) do
+            {:ok, _} ->
+              render(conn, "conversation.json", %{
+                conversation_id: conversation_id,
+                response: bot_message
+              })
 
-              {:error, error_message} ->
-                send_resp(conn, 500, error_message)
-            end
+            {:error, error_message} ->
+              send_resp(conn, 500, error_message)
+          end
 
-          {:error, reason} ->
-            error_message = reason["error"]["message"]
-            IO.puts("Error message from openAI response: #{error_message}")
-            LlmConversations.add_error_message(updated_conversation)
-            send_resp(conn, 500, error_message)
-        end
-      else
-        {:error, {:not_found, error_message}} ->
-          send_resp(conn, :not_found, error_message)
-
-        {:error, error_message} ->
+        {:error, reason} ->
+          error_message = reason["error"]["message"]
+          IO.puts("Error message from openAI response: #{error_message}")
+          LlmConversations.add_error_message(updated_conversation)
           send_resp(conn, 500, error_message)
       end
+    else
+      {:error, :message_too_long} ->
+        send_resp(
+          conn,
+          :unprocessable_entity,
+          "Message exceeds the maximum allowed length of #{@max_content_size}"
+        )
+
+      {:error, {:not_found, error_message}} ->
+        send_resp(conn, :not_found, error_message)
+
+      {:error, error_message} ->
+        send_resp(conn, 500, error_message)
     end
   end
 

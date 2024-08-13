@@ -90,8 +90,25 @@ defmodule CadetWeb.ChatControllerTest do
           "message" => "#{message_exceed_length}"
         })
 
-      assert response(conn, 422) ==
+      assert response(conn, :unprocessable_entity) ==
                "Message exceeds the maximum allowed length of #{max_message_length}"
+    end
+
+    @tag authenticate: :student
+    @tag requires_setup: true
+    test "The content length less than the maximum allowed length but conversation belongs to another user",
+         %{conn: conn, conversation_id: conversation_id} do
+      assert conversation_id != nil
+      max_message_length = ChatController.max_content_length()
+      message_exceed_length = String.duplicate("a", max_message_length)
+
+      conn =
+        post(conn, "/v2/chats/#{conversation_id}/message", %{
+          "conversation_id" => conversation_id,
+          "message" => "#{message_exceed_length}"
+        })
+
+      assert response(conn, :not_found) == "Conversation not found"
     end
 
     @tag authenticate: :student
