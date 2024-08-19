@@ -37,7 +37,8 @@ defmodule CadetWeb.AssessmentsView do
       maxTeamSize: :max_team_size,
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter,
-      isVotingPublished: &is_voting_assigned(&1.id)
+      isVotingPublished: &is_voting_assigned(&1.id),
+      hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay
     })
   end
 
