@@ -1982,7 +1982,9 @@ defmodule Cadet.Assessments do
     query =
       sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
 
-    query = from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
+    query =
+      from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
+
     submissions = Repo.all(query)
 
     count_query =
