@@ -2010,14 +2010,15 @@ defmodule Cadet.Assessments do
   # "studentUsername", "groupName", "progressStatus", "xp"
   # sort_direction is a string of either "", "sort-asc", "sort-desc"
   defp sort_submission(query, sort_by, sort_direction) do
-    if sort_direction == "sort-asc" do
-      sort_submission_asc(query, sort_by)
-    else
-      if sort_direction == "sort-desc" do
+    cond do
+      sort_direction == "sort-asc" ->
+        sort_submission_asc(query, sort_by)
+
+      sort_direction == "sort-desc" ->
         sort_submission_desc(query, sort_by)
-      else
+
+      true ->
         query
-      end
     end
   end
 
