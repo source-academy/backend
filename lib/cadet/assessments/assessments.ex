@@ -1978,7 +1978,9 @@ defmodule Cadet.Assessments do
           question_count: asst.question_count
         }
       )
-      |> sort_submission(Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
+
+    query =
+      sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
 
     query = from([s, ans, asst, user, cr, group] in query, order_by: [desc: s.inserted_at])
     submissions = Repo.all(query)
