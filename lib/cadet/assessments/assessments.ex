@@ -1943,12 +1943,12 @@ defmodule Cadet.Assessments do
         left_join: asst in subquery(question_answers_query),
         on: asst.assessment_id == s.assessment_id,
         as: :asst,
-        left_join: user in User,
-        on: user.id == s.student_id,
-        as: :user,
         left_join: cr in CourseRegistration,
-        on: user.id == cr.user_id,
+        on: s.student_id == cr.id,
         as: :cr,
+        left_join: user in User,
+        on: user.id == cr.user_id,
+        as: :user,
         left_join: group in Group,
         on: cr.group_id == group.id,
         as: :group,
@@ -1982,7 +1982,9 @@ defmodule Cadet.Assessments do
     query =
       sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
 
-    query = from([s, ans, asst, user, cr, group] in query, order_by: [desc: s.inserted_at])
+    query =
+      from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
+
     submissions = Repo.all(query)
 
     count_query =
@@ -2027,30 +2029,30 @@ defmodule Cadet.Assessments do
   defp sort_submission_asc(query, sort_by) do
     cond do
       sort_by == "assessmentName" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: fragment("upper(?)", asst.title)
         )
 
       sort_by == "assessmentType" ->
-        from([s, ans, asst, user, cr, group, config] in query, order_by: asst.config_id)
+        from([s, ans, asst, cr, user, group, config] in query, order_by: asst.config_id)
 
       sort_by == "studentName" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: fragment("upper(?)", user.name)
         )
 
       sort_by == "studentUsername" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: fragment("upper(?)", user.username)
         )
 
       sort_by == "groupName" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: fragment("upper(?)", group.name)
         )
 
       sort_by == "progressStatus" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: [
             asc: config.is_manually_graded,
             asc: s.status,
@@ -2060,7 +2062,7 @@ defmodule Cadet.Assessments do
         )
 
       sort_by == "xp" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: ans.xp + ans.xp_adjustment
         )
 
@@ -2072,30 +2074,30 @@ defmodule Cadet.Assessments do
   defp sort_submission_desc(query, sort_by) do
     cond do
       sort_by == "assessmentName" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: [desc: fragment("upper(?)", asst.title)]
         )
 
       sort_by == "assessmentType" ->
-        from([s, ans, asst, user, cr, group, config] in query, order_by: [desc: asst.config_id])
+        from([s, ans, asst, cr, user, group, config] in query, order_by: [desc: asst.config_id])
 
       sort_by == "studentName" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: [desc: fragment("upper(?)", user.name)]
         )
 
       sort_by == "studentUsername" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: [desc: fragment("upper(?)", user.username)]
         )
 
       sort_by == "groupName" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: [desc: fragment("upper(?)", group.name)]
         )
 
       sort_by == "progressStatus" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: [
             desc: config.is_manually_graded,
             desc: s.status,
@@ -2105,7 +2107,7 @@ defmodule Cadet.Assessments do
         )
 
       sort_by == "xp" ->
-        from([s, ans, asst, user, cr, group, config] in query,
+        from([s, ans, asst, cr, user, group, config] in query,
           order_by: [desc: ans.xp + ans.xp_adjustment]
         )
 
