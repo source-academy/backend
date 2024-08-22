@@ -2409,8 +2409,10 @@ defmodule Cadet.Assessments do
     submission =
       Submission
       |> join(:inner, [s], a in assoc(s, :assessment))
-      |> preload([_, a], assessment: a)
+      |> preload([_, a], assessment: {a, :config})
       |> Repo.get(submission_id)
+
+    is_grading_auto_published = submission.assessment.config.is_grading_auto_published
 
     with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
          {:status, true} <-
@@ -2419,6 +2421,11 @@ defmodule Cadet.Assessments do
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
       update_xp_bonus(submission)
+
+      if is_grading_auto_published and is_fully_graded?(submission_id) do
+        publish_grading(submission_id)
+      end
+
       {:ok, nil}
     else
       {:answer_found?, false} ->
