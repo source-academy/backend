@@ -2421,9 +2421,11 @@ defmodule Cadet.Assessments do
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
       update_xp_bonus(submission)
+
       if is_grading_auto_published and is_fully_graded?(submission_id) do
         publish_grading(submission_id)
       end
+
       {:ok, nil}
     else
       {:answer_found?, false} ->
