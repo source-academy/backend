@@ -1906,7 +1906,9 @@ defmodule Cadet.Assessments do
           "group" => "false",
           "isFullyGraded" => "false",
           "pageSize" => "10",
-          "offset" => "0"
+          "offset" => "0",
+          "sortBy" => "",
+          "sortDirection" => ""
         }
       ) do
     submission_answers_query =
@@ -1927,7 +1929,9 @@ defmodule Cadet.Assessments do
         on: q.assessment_id == a.id,
         select: %{
           assessment_id: q.assessment_id,
-          question_count: count(q.id)
+          question_count: count(q.id),
+          title: max(a.title),
+          config_id: max(a.config_id)
         }
       )
 
@@ -1939,12 +1943,23 @@ defmodule Cadet.Assessments do
         left_join: asst in subquery(question_answers_query),
         on: asst.assessment_id == s.assessment_id,
         as: :asst,
+        left_join: cr in CourseRegistration,
+        on: s.student_id == cr.id,
+        as: :cr,
+        left_join: user in User,
+        on: user.id == cr.user_id,
+        as: :user,
+        left_join: group in Group,
+        on: cr.group_id == group.id,
+        as: :group,
+        inner_join: config in AssessmentConfig,
+        on: asst.config_id == config.id,
+        as: :config,
         where: ^build_user_filter(params),
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(params, grader),
-        order_by: [desc: s.inserted_at],
         limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
         offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
         select: %{
@@ -1963,6 +1978,12 @@ defmodule Cadet.Assessments do
           question_count: asst.question_count
         }
       )
+
+    query =
+      sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
+
+    query =
+      from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
 
     submissions = Repo.all(query)
 
@@ -1985,6 +2006,114 @@ defmodule Cadet.Assessments do
     count = Repo.one(count_query)
 
     {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
+  end
+
+  # Given a query from submissions_by_grader_for_index,
+  # sorts it by the relevant field and direction
+  # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
+  # "studentUsername", "groupName", "progressStatus", "xp"
+  # sort_direction is a string of either "", "sort-asc", "sort-desc"
+  defp sort_submission(query, sort_by, sort_direction) do
+    cond do
+      sort_direction == "sort-asc" ->
+        sort_submission_asc(query, sort_by)
+
+      sort_direction == "sort-desc" ->
+        sort_submission_desc(query, sort_by)
+
+      true ->
+        query
+    end
+  end
+
+  defp sort_submission_asc(query, sort_by) do
+    cond do
+      sort_by == "assessmentName" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: fragment("upper(?)", asst.title)
+        )
+
+      sort_by == "assessmentType" ->
+        from([s, ans, asst, cr, user, group, config] in query, order_by: asst.config_id)
+
+      sort_by == "studentName" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: fragment("upper(?)", user.name)
+        )
+
+      sort_by == "studentUsername" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: fragment("upper(?)", user.username)
+        )
+
+      sort_by == "groupName" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: fragment("upper(?)", group.name)
+        )
+
+      sort_by == "progressStatus" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [
+            asc: config.is_manually_graded,
+            asc: s.status,
+            asc: ans.graded_count - asst.question_count,
+            asc: s.is_grading_published
+          ]
+        )
+
+      sort_by == "xp" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: ans.xp + ans.xp_adjustment
+        )
+
+      true ->
+        query
+    end
+  end
+
+  defp sort_submission_desc(query, sort_by) do
+    cond do
+      sort_by == "assessmentName" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [desc: fragment("upper(?)", asst.title)]
+        )
+
+      sort_by == "assessmentType" ->
+        from([s, ans, asst, cr, user, group, config] in query, order_by: [desc: asst.config_id])
+
+      sort_by == "studentName" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [desc: fragment("upper(?)", user.name)]
+        )
+
+      sort_by == "studentUsername" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [desc: fragment("upper(?)", user.username)]
+        )
+
+      sort_by == "groupName" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [desc: fragment("upper(?)", group.name)]
+        )
+
+      sort_by == "progressStatus" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [
+            desc: config.is_manually_graded,
+            desc: s.status,
+            desc: ans.graded_count - asst.question_count,
+            desc: s.is_grading_published
+          ]
+        )
+
+      sort_by == "xp" ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [desc: ans.xp + ans.xp_adjustment]
+        )
+
+      true ->
+        query
+    end
   end
 
   defp build_assessment_filter(params, course_id) do
