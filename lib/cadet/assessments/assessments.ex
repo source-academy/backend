@@ -2387,7 +2387,7 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %CourseRegistration{id: grader_id}
+        cr = %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)
@@ -2409,8 +2409,10 @@ defmodule Cadet.Assessments do
     submission =
       Submission
       |> join(:inner, [s], a in assoc(s, :assessment))
-      |> preload([_, a], assessment: a)
+      |> preload([_, a], assessment: {a, :config})
       |> Repo.get(submission_id)
+
+    is_grading_auto_published = submission.assessment.config.is_grading_auto_published
 
     with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
          {:status, true} <-
@@ -2419,6 +2421,11 @@ defmodule Cadet.Assessments do
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
       update_xp_bonus(submission)
+
+      if is_grading_auto_published and is_fully_graded?(submission_id) do
+        publish_grading(submission_id, cr)
+      end
+
       {:ok, nil}
     else
       {:answer_found?, false} ->
