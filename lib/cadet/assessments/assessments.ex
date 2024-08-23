@@ -2387,7 +2387,7 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %CourseRegistration{id: grader_id}
+        cr = %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)
@@ -2423,7 +2423,7 @@ defmodule Cadet.Assessments do
       update_xp_bonus(submission)
 
       if is_grading_auto_published and is_fully_graded?(submission_id) do
-        publish_grading(submission_id)
+        publish_grading(submission_id, cr)
       end
 
       {:ok, nil}
