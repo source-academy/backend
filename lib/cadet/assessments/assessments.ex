@@ -1251,7 +1251,7 @@ defmodule Cadet.Assessments do
         )
 
         Notification
-        |> where([submission_id: ^submission.id, type: :submitted])
+        |> where(submission_id: ^submission.id, type: :submitted)
         |> select([n], n.id)
         |> Repo.all()
         |> Notifications.acknowledge(cr)
