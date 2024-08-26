@@ -1250,6 +1250,12 @@ defmodule Cadet.Assessments do
           :published_grading
         )
 
+        Notification
+        |> where([submission_id: ^submission.id, type: :submitted])
+        |> select([n], n.id)
+        |> Repo.all()
+        |> Notifications.acknowledge(cr)
+
         {:ok, nil}
 
       {:submission_found?, false} ->
