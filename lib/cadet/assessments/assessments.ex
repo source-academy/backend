@@ -1139,6 +1139,13 @@ defmodule Cadet.Assessments do
           )
       end
 
+      # Remove grading notifications for submissions
+      Notification
+      |> where(submission_id: ^submission_id, type: :submitted)
+      |> select([n], n.id)
+      |> Repo.all()
+      |> Notifications.acknowledge(cr)
+
       {:ok, nil}
     else
       {:submission_found?, false} ->
