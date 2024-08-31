@@ -24,7 +24,13 @@ defmodule Cadet.Autograder.GradingJobTest do
   describe "#force_grade_individual_submission, all programming questions" do
     setup do
       course = insert(:course)
-      assessment_config = insert(:assessment_config, %{course: course})
+
+      assessment_config =
+        insert(:assessment_config, %{
+          course: course,
+          is_grading_auto_published: true,
+          is_manually_graded: false
+        })
 
       assessments =
         insert_list(3, :assessment, %{
@@ -416,7 +422,11 @@ defmodule Cadet.Autograder.GradingJobTest do
       course = insert(:course)
 
       assessment_config =
-        insert(:assessment_config, %{course: course, is_grading_auto_published: true})
+        insert(:assessment_config, %{
+          course: course,
+          is_grading_auto_published: true,
+          is_manually_graded: false
+        })
 
       assessments =
         insert_list(3, :assessment, %{
@@ -648,7 +658,11 @@ defmodule Cadet.Autograder.GradingJobTest do
       course = insert(:course)
 
       assessment_config =
-        insert(:assessment_config, %{course: course, is_grading_auto_published: true})
+        insert(:assessment_config, %{
+          course: course,
+          is_grading_auto_published: true,
+          is_manually_graded: false
+        })
 
       assessments =
         insert_list(3, :assessment, %{
