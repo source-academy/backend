@@ -1021,7 +1021,12 @@ defmodule Cadet.Assessments do
     with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status(submission) do
       # Couple with update_submission_status and update_xp_bonus to ensure notification is sent
-      Notifications.write_notification_when_student_submits(submission)
+      submission = Repo.preload(submission, assessment: [:config])
+
+      if submission.assessment.config.is_manually_graded do
+        Notifications.write_notification_when_student_submits(submission)
+      end
+
       # Send email notification to avenger
       %{notification_type: "assessment_submission", submission_id: updated_submission.id}
       |> Cadet.Workers.NotificationWorker.new()
