@@ -1478,8 +1478,15 @@ defmodule Cadet.Assessments do
           submission.submitted_at
         end
 
+      xp =
+        if is_integer(total.total_xp) do
+          total.total_xp
+        else
+          decimal_to_integer(total.total_xp)
+        end
+
       xp_bonus =
-        if total.total_xp <= 0 do
+        if xp <= 0 do
           0
         else
           if Timex.before?(cur_time, Timex.shift(assessment.open_at, hours: early_hours)) do
