@@ -1257,6 +1257,8 @@ defmodule Cadet.Assessments do
         |> Submission.changeset(%{is_grading_published: true})
         |> Repo.update()
 
+        update_xp_bonus(submission)
+
         Notifications.write_notification_when_published(
           submission.id,
           :published_grading
