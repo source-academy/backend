@@ -1034,7 +1034,7 @@ defmodule Cadet.Assessments do
 
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
-      update_xp_bonus(submission)
+      update_xp_bonus(updated_submission)
 
       {:ok, nil}
     else
