@@ -1458,8 +1458,6 @@ defmodule Cadet.Assessments do
         |> where(submission_id: ^submission_id)
         |> order_by(:question_id)
         |> select([a], %{
-          # grouping by submission, so s.xp_bonus will be the same, but we need an
-          # aggregate function
           total_xp: a.xp + a.xp_adjustment
         })
 
