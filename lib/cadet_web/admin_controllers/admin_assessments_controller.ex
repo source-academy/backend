@@ -198,7 +198,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   swagger_path :index do
-    get("/courses/{course_id}/admin/users/{courseRegId}/assessments")
+    get("/courses/{course_id}/staff/users/{courseRegId}/assessments")
 
     summary("Fetches assessment overviews of a user")
 
@@ -270,7 +270,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   swagger_path :get_popular_leaderboard do
-    get("/courses/{course_id}/admin/assessments/:assessmentid/popularVoteLeaderboard")
+    get("/courses/{course_id}/staff/assessments/:assessmentid/popularVoteLeaderboard")
 
     summary("get the top 10 contest entries based on popularity")
 
@@ -286,7 +286,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   swagger_path :get_score_leaderboard do
-    get("/courses/{course_id}/admin/assessments/:assessmentid/scoreLeaderboard")
+    get("/courses/{course_id}/staff/assessments/:assessmentid/scoreLeaderboard")
 
     summary("get the top 10 contest entries based on score")
 

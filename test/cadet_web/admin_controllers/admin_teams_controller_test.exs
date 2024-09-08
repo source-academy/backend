@@ -13,7 +13,7 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     AdminTeamsController.swagger_path_delete(nil)
   end
 
-  describe "GET /admin/teams" do
+  describe "GET /staff/teams" do
     test "unauthenticated", %{conn: conn} do
       course = insert(:course)
       conn = get(conn, build_url(course.id))
@@ -42,7 +42,7 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     end
   end
 
-  describe "POST /admin/teams" do
+  describe "POST /staff/teams" do
     test "unauthenticated", %{conn: conn} do
       course = insert(:course)
       conn = post(conn, build_url(course.id), %{})
@@ -160,7 +160,7 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     end
   end
 
-  describe "PUT /admin/teams/{teamId}" do
+  describe "PUT /staff/teams/{teamId}" do
     test "unauthenticated", %{conn: conn} do
       course = insert(:course)
       conn = put(conn, build_url(course.id, 1), %{})
@@ -225,7 +225,7 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     end
   end
 
-  describe "DELETE /admin/teams/{teamId}" do
+  describe "DELETE /staff/teams/{teamId}" do
     test "unauthenticated", %{conn: conn} do
       course = insert(:course)
       team = insert(:team)
@@ -290,7 +290,7 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     end
   end
 
-  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/teams/"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/staff/teams/"
 
   defp build_url(course_id, team_id),
     do: "#{build_url(course_id)}#{team_id}"

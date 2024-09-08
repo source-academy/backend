@@ -61,7 +61,7 @@ defmodule CadetWeb.AdminAchievementsController do
   end
 
   swagger_path :update do
-    put("/courses/{course_id}/admin/achievements/{uuid}")
+    put("/courses/{course_id}/staff/achievements/{uuid}")
 
     summary("Inserts or updates an achievement")
 
@@ -87,7 +87,7 @@ defmodule CadetWeb.AdminAchievementsController do
   end
 
   swagger_path :bulk_update do
-    put("/courses/{course_id}/admin/achievements")
+    put("/courses/{course_id}/staff/achievements")
 
     summary("Inserts or updates achievements")
 
@@ -108,7 +108,7 @@ defmodule CadetWeb.AdminAchievementsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/achievements/{uuid}")
+    PhoenixSwagger.Path.delete("/courses/{course_id}/staff/achievements/{uuid}")
 
     summary("Deletes an achievement")
     security([%{JWT: []}])

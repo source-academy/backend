@@ -57,7 +57,7 @@ defmodule CadetWeb.TeamController do
   end
 
   swagger_path :index do
-    get("/admin/teams")
+    get("/staff/teams")
 
     summary("Fetches team formation overview based on assessment ID")
 
