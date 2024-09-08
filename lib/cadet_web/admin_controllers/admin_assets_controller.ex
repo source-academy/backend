@@ -1,8 +1,6 @@
 defmodule CadetWeb.AdminAssetsController do
   use CadetWeb, :controller
-
   use PhoenixSwagger
-
   alias Cadet.Assets.Assets
   alias Cadet.Courses
 
