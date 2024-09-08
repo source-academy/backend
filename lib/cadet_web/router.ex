@@ -202,6 +202,21 @@ defmodule CadetWeb.Router do
     delete("/stories/:storyid", AdminStoriesController, :delete)
     post("/stories/:storyid", AdminStoriesController, :update)
 
+    get("/teams", AdminTeamsController, :index)
+    post("/teams", AdminTeamsController, :create)
+    delete("/teams/:teamid", AdminTeamsController, :delete)
+    put("/teams/:teamid", AdminTeamsController, :update)
+    post("/teams/upload", AdminTeamsController, :bulk_upload)
+  end
+
+  # Admin pages
+  scope "/v2/courses/:course_id/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin])
+
+    post("/assessments", AdminAssessmentsController, :create)
+    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
+    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
+
     put("/config", AdminCoursesController, :update_course_config)
     # TODO: Missing corresponding Swagger path entry
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
@@ -212,21 +227,6 @@ defmodule CadetWeb.Router do
       AdminCoursesController,
       :delete_assessment_config
     )
-
-    get("/teams", AdminTeamsController, :index)
-    post("/teams", AdminTeamsController, :create)
-    delete("/teams/:teamid", AdminTeamsController, :delete)
-    put("/teams/:teamid", AdminTeamsController, :update)
-    post("/teams/upload", AdminTeamsController, :bulk_upload)
-  end
-
-  # Staff pages
-  scope "/v2/courses/:course_id/admin", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin])
-
-    post("/assessments", AdminAssessmentsController, :create)
-    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
-    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
 
     post("/grading/:assessmentid/publish_all_grades", AdminGradingController, :publish_all_grades)
 
