@@ -185,7 +185,6 @@ defmodule CadetWeb.Router do
     # The admin route for getting total xp of a specific user
     get("/users/:course_reg_id/total_xp", AdminUserController, :combined_total_xp)
     put("/users/:course_reg_id/role", AdminUserController, :update_role)
-    delete("/users/:course_reg_id", AdminUserController, :delete_user)
     get("/users/:course_reg_id/goals", AdminGoalsController, :index_goals_with_progress)
     post("/users/:course_reg_id/goals/:uuid/progress", AdminGoalsController, :update_progress)
 
@@ -235,6 +234,8 @@ defmodule CadetWeb.Router do
       AdminGradingController,
       :unpublish_all_grades
     )
+
+    delete("/users/:course_reg_id", AdminUserController, :delete_user)
   end
 
   # Other scopes may use custom stacks.
