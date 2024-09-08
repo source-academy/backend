@@ -24,6 +24,10 @@ defmodule CadetWeb.Router do
     plug(:assign_course)
   end
 
+  pipeline :ensure_admin do
+    plug(:ensure_role, [:admin])
+  end
+
   pipeline :ensure_staff do
     plug(:ensure_role, [:staff, :admin])
   end
@@ -119,8 +123,8 @@ defmodule CadetWeb.Router do
     get("/team/:assessmentid", TeamController, :index)
   end
 
-  # Admin pages
-  scope "/v2/courses/:course_id/admin", CadetWeb do
+  # Staff pages
+  scope "/v2/courses/:course_id/staff", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
@@ -128,10 +132,6 @@ defmodule CadetWeb.Router do
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
     delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
-
-    post("/assessments", AdminAssessmentsController, :create)
-    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
-    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
 
     get(
       "/assessments/:assessmentid/popularVoteLeaderboard",
@@ -218,6 +218,23 @@ defmodule CadetWeb.Router do
     delete("/teams/:teamid", AdminTeamsController, :delete)
     put("/teams/:teamid", AdminTeamsController, :update)
     post("/teams/upload", AdminTeamsController, :bulk_upload)
+  end
+
+  # Staff pages
+  scope "/v2/courses/:course_id/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin])
+
+    post("/assessments", AdminAssessmentsController, :create)
+    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
+    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
+
+    post("/grading/:assessmentid/publish_all_grades", AdminGradingController, :publish_all_grades)
+
+    post(
+      "/grading/:assessmentid/unpublish_all_grades",
+      AdminGradingController,
+      :unpublish_all_grades
+    )
   end
 
   # Other scopes may use custom stacks.
