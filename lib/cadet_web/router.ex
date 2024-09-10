@@ -28,6 +28,10 @@ defmodule CadetWeb.Router do
     plug(:ensure_role, [:staff, :admin])
   end
 
+  pipeline :ensure_admin do
+    plug(:ensure_role, [:admin])
+  end
+
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
   end
@@ -119,19 +123,11 @@ defmodule CadetWeb.Router do
     get("/team/:assessmentid", TeamController, :index)
   end
 
-  # Admin pages
+  # Admin pages (Access: All staff)
   scope "/v2/courses/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
-
-    get("/assets/:foldername", AdminAssetsController, :index)
-    post("/assets/:foldername/*filename", AdminAssetsController, :upload)
-    delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
-
-    post("/assessments", AdminAssessmentsController, :create)
-    post("/assessments/:assessmentid", AdminAssessmentsController, :update)
-    delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
 
     get(
       "/assessments/:assessmentid/popularVoteLeaderboard",
@@ -147,14 +143,6 @@ defmodule CadetWeb.Router do
 
     get("/grading", AdminGradingController, :index)
     get("/grading/summary", AdminGradingController, :grading_summary)
-
-    post("/grading/:assessmentid/publish_all_grades", AdminGradingController, :publish_all_grades)
-
-    post(
-      "/grading/:assessmentid/unpublish_all_grades",
-      AdminGradingController,
-      :unpublish_all_grades
-    )
 
     get("/grading/:submissionid", AdminGradingController, :show)
     post("/grading/:submissionid/unsubmit", AdminGradingController, :unsubmit)
@@ -184,8 +172,6 @@ defmodule CadetWeb.Router do
 
     # The admin route for getting total xp of a specific user
     get("/users/:course_reg_id/total_xp", AdminUserController, :combined_total_xp)
-    put("/users/:course_reg_id/role", AdminUserController, :update_role)
-    delete("/users/:course_reg_id", AdminUserController, :delete_user)
     get("/users/:course_reg_id/goals", AdminGoalsController, :index_goals_with_progress)
     post("/users/:course_reg_id/goals/:uuid/progress", AdminGoalsController, :update_progress)
 
@@ -209,13 +195,28 @@ defmodule CadetWeb.Router do
     post("/teams/upload", AdminTeamsController, :bulk_upload)
   end
 
-  # Admin pages
+  # Admin pages (Access: Course administrators only - these routes can cause substantial damage)
   scope "/v2/courses/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin])
+
+    get("/assets/:foldername", AdminAssetsController, :index)
+    post("/assets/:foldername/*filename", AdminAssetsController, :upload)
+    delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
 
     post("/assessments", AdminAssessmentsController, :create)
     post("/assessments/:assessmentid", AdminAssessmentsController, :update)
     delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
+
+    post("/grading/:assessmentid/publish_all_grades", AdminGradingController, :publish_all_grades)
+
+    post(
+      "/grading/:assessmentid/unpublish_all_grades",
+      AdminGradingController,
+      :unpublish_all_grades
+    )
+
+    put("/users/:course_reg_id/role", AdminUserController, :update_role)
+    delete("/users/:course_reg_id", AdminUserController, :delete_user)
 
     put("/config", AdminCoursesController, :update_course_config)
     # TODO: Missing corresponding Swagger path entry
@@ -227,12 +228,6 @@ defmodule CadetWeb.Router do
       AdminCoursesController,
       :delete_assessment_config
     )
-
-    get("/teams", AdminTeamsController, :index)
-    post("/teams", AdminTeamsController, :create)
-    delete("/teams/:teamid", AdminTeamsController, :delete)
-    put("/teams/:teamid", AdminTeamsController, :update)
-    post("/teams/upload", AdminTeamsController, :bulk_upload)
   end
 
   # Other scopes may use custom stacks.
