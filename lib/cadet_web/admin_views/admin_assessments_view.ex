@@ -67,7 +67,10 @@ defmodule CadetWeb.AdminAssessmentsView do
   end
 
   def render("leaderboard.json", %{leaderboard: leaderboard}) do
-    render_many(leaderboard, CadetWeb.AdminAssessmentsView, "contestEntry.json",
+    render_many(
+      leaderboard,
+      CadetWeb.AdminAssessmentsView,
+      "contestEntry.json",
       as: :contestEntry
     )
   end

@@ -330,7 +330,9 @@ defmodule CadetWeb.AdminGradingController do
               required: true
             )
 
-            student(Schema.ref(:StudentInfo), "Student who created the submission",
+            student(
+              Schema.ref(:StudentInfo),
+              "Student who created the submission",
               required: true
             )
 
