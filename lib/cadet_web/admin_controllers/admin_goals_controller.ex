@@ -87,7 +87,7 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :index do
-    get("/staff/goals")
+    get("/admin/goals")
 
     summary("Gets goals")
     security([%{JWT: []}])
@@ -98,7 +98,7 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :index_goals_with_progress do
-    get("/staff/goals/{courseRegId}")
+    get("/admin/goals/{courseRegId}")
 
     summary("Gets goals and goal progress of a user")
     security([%{JWT: []}])
@@ -113,7 +113,7 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :update do
-    put("/staff/goals/{uuid}")
+    put("/admin/goals/{uuid}")
 
     summary("Inserts or updates a goal")
 
@@ -136,7 +136,7 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :bulk_update do
-    put("/staff/goals")
+    put("/admin/goals")
 
     summary("Inserts or updates goals")
 
@@ -157,7 +157,7 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :update_progress do
-    post("/staff/users/{courseRegId}/goals/{uuid}/progress")
+    post("/admin/users/{courseRegId}/goals/{uuid}/progress")
 
     summary("Inserts or updates own goal progress of specifed goal")
     security([%{JWT: []}])
@@ -180,7 +180,7 @@ defmodule CadetWeb.AdminGoalsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/staff/goals/{uuid}")
+    PhoenixSwagger.Path.delete("/admin/goals/{uuid}")
 
     summary("Deletes a goal")
     security([%{JWT: []}])

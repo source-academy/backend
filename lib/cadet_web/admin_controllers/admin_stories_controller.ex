@@ -12,7 +12,7 @@ defmodule CadetWeb.AdminStoriesController do
 
     case result do
       {:ok, _story} ->
-        conn |> put_status(200) |> text(~c"")
+        conn |> put_status(200) |> text('')
 
       {:error, {status, message}} ->
         conn
@@ -29,7 +29,7 @@ defmodule CadetWeb.AdminStoriesController do
 
     case result do
       {:ok, _story} ->
-        conn |> put_status(200) |> text(~c"")
+        conn |> put_status(200) |> text('')
 
       {:error, {status, message}} ->
         conn
@@ -43,7 +43,7 @@ defmodule CadetWeb.AdminStoriesController do
 
     case result do
       {:ok, _nil} ->
-        conn |> put_status(204) |> text(~c"")
+        conn |> put_status(204) |> text('')
 
       {:error, {status, message}} ->
         conn
@@ -53,7 +53,7 @@ defmodule CadetWeb.AdminStoriesController do
   end
 
   swagger_path :create do
-    post("/courses/{course_id}/staff/stories")
+    post("/courses/{course_id}/admin/stories")
 
     summary("Creates a new story")
 
@@ -65,7 +65,7 @@ defmodule CadetWeb.AdminStoriesController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/courses/{course_id}/staff/stories/{storyId}")
+    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/stories/{storyId}")
 
     summary("Delete a story from database by id")
 
@@ -81,7 +81,7 @@ defmodule CadetWeb.AdminStoriesController do
   end
 
   swagger_path :update do
-    post("/courses/{course_id}/staff/stories/{storyId}")
+    post("/courses/{course_id}/admin/stories/{storyId}")
 
     summary("Update details regarding a story")
 

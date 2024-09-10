@@ -35,26 +35,26 @@ defmodule CadetWeb.AdminStoriesControllerTest do
   end
 
   describe "unauthenticated" do
-    test "POST /v2/courses/{course_id}/staff/stories/", %{conn: conn} do
+    test "POST /v2/courses/{course_id}/admin/stories/", %{conn: conn} do
       course = insert(:course)
       conn = post(conn, build_url(course.id), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
 
-    test "DELETE /v2/courses/{course_id}/staff/stories/:storyid", %{conn: conn} do
+    test "DELETE /v2/courses/{course_id}/admin/stories/:storyid", %{conn: conn} do
       course = insert(:course)
       conn = delete(conn, build_url(course.id, "storyid"), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
 
-    test "POST /v2/courses/{course_id}/staff/stories/:storyid", %{conn: conn} do
+    test "POST /v2/courses/{course_id}/admin/stories/:storyid", %{conn: conn} do
       course = insert(:course)
       conn = post(conn, build_url(course.id, "storyid"), %{})
       assert response(conn, 401) =~ "Unauthorised"
     end
   end
 
-  describe "DELETE /v2/courses/{course_id}/staff/stories/:storyid" do
+  describe "DELETE /v2/courses/{course_id}/admin/stories/:storyid" do
     @tag authenticate: :student
     test "student permission, forbidden", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -90,7 +90,7 @@ defmodule CadetWeb.AdminStoriesControllerTest do
     end
   end
 
-  describe "POST /v2/courses/{course_id}/staff/stories/" do
+  describe "POST /v2/courses/{course_id}/admin/stories/" do
     @tag authenticate: :student
     test "student permission, forbidden", %{conn: conn, valid_params: params} do
       course_id = conn.assigns[:course_id]
@@ -126,7 +126,7 @@ defmodule CadetWeb.AdminStoriesControllerTest do
     end
   end
 
-  describe "POST /v2/courses/{course_id}/staff/stories/:storyid" do
+  describe "POST /v2/courses/{course_id}/admin/stories/:storyid" do
     @tag authenticate: :student
     test "student permission, forbidden", %{conn: conn, valid_params: params} do
       course_id = conn.assigns[:course_id]
@@ -174,7 +174,7 @@ defmodule CadetWeb.AdminStoriesControllerTest do
     end
   end
 
-  defp build_url(course_id), do: "/v2/courses/#{course_id}/staff/stories"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/stories"
   defp build_url(course_id, story_id), do: "#{build_url(course_id)}/#{story_id}"
 
   defp stringify_camelise_keys(map) do

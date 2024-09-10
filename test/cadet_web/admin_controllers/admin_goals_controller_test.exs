@@ -17,7 +17,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     assert is_map(AdminGoalsController.swagger_path_update_progress(nil))
   end
 
-  describe "GET v2/courses/:course_id/staff/goals" do
+  describe "GET v2/courses/:course_id/admin/goals" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course_id = conn.assigns.course_id
@@ -54,7 +54,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     end
   end
 
-  describe "GET v2/courses/:course_id/staff/users/:course_reg_id/goals" do
+  describe "GET v2/courses/:course_id/admin/users/:course_reg_id/goals" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course = conn.assigns.test_cr.course
@@ -104,7 +104,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     end
   end
 
-  describe "PUT v2/courses/:course_id/staff/goals/:uuid" do
+  describe "PUT v2/courses/:course_id/admin/goals/:uuid" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course_id = conn.assigns.course_id
@@ -143,7 +143,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     end
   end
 
-  describe "PUT v2/courses/:course_id/staff/goals" do
+  describe "PUT v2/courses/:course_id/admin/goals" do
     setup do
       %{
         goals: [
@@ -195,7 +195,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
     end
   end
 
-  describe "DELETE v2/courses/:course_id/staff/goals/:uuid" do
+  describe "DELETE v2/courses/:course_id/admin/goals/:uuid" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course_id = conn.assigns.course_id
@@ -305,18 +305,18 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   defp build_path(course_id, uuid \\ nil)
 
   defp build_path(course_id, nil) do
-    "/v2/courses/#{course_id}/staff/goals"
+    "/v2/courses/#{course_id}/admin/goals"
   end
 
   defp build_path(course_id, uuid) do
-    "/v2/courses/#{course_id}/staff/goals/#{uuid}"
+    "/v2/courses/#{course_id}/admin/goals/#{uuid}"
   end
 
   defp build_path(course_id, uuid, course_reg_id) do
-    "/v2/courses/#{course_id}/staff/users/#{course_reg_id}/goals/#{uuid}/progress/"
+    "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals/#{uuid}/progress/"
   end
 
   defp build_user_goals_path(course_id, course_reg_id) do
-    "/v2/courses/#{course_id}/staff/users/#{course_reg_id}/goals"
+    "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/goals"
   end
 end

@@ -18,7 +18,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     assert is_map(AdminUserController.swagger_path_combined_total_xp(nil))
   end
 
-  describe "GET /v2/courses/{course_id}/staff/users" do
+  describe "GET /v2/courses/{course_id}/admin/users" do
     @tag authenticate: :staff
     test "success, when staff retrieves all users", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -118,7 +118,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     end
   end
 
-  describe "PUT /v2/courses/{course_id}/staff/users" do
+  describe "PUT /v2/courses/{course_id}/admin/users" do
     @tag authenticate: :admin
     test "successfully namespaces and inserts users, and assign groups", %{conn: conn} do
       course_id = conn.assigns[:course_id]
@@ -351,7 +351,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     end
   end
 
-  describe "PUT /v2/courses/{course_id}/staff/users/{course_reg_id}/role" do
+  describe "PUT /v2/courses/{course_id}/admin/users/{course_reg_id}/role" do
     @tag authenticate: :admin
     test "success (student to staff), when admin is admin of the course the user is in", %{
       conn: conn
@@ -473,7 +473,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     end
   end
 
-  describe "DELETE /v2/courses/{course_id}/staff/users/{course_reg_id}" do
+  describe "DELETE /v2/courses/{course_id}/admin/users/{course_reg_id}" do
     @tag authenticate: :admin
     test "success (delete student), when admin is admin of the course the user is in", %{
       conn: conn
@@ -566,7 +566,7 @@ defmodule CadetWeb.AdminUserControllerTest do
     end
   end
 
-  describe "GET /v2/courses/{course_id}/staff/users/{course_reg_id}/total_xp" do
+  describe "GET /v2/courses/{course_id}/admin/users/{course_reg_id}/total_xp" do
     @tag authenticate: :admin
     test "achievement, one completed goal", %{
       conn: conn
@@ -627,17 +627,17 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       resp =
         conn
-        |> get("/v2/courses/#{course.id}/staff/users/#{test_cr.id}/total_xp")
+        |> get("/v2/courses/#{course.id}/admin/users/#{test_cr.id}/total_xp")
         |> json_response(200)
 
       assert resp["totalXp"] == 210
     end
   end
 
-  defp build_url_users(course_id), do: "/v2/courses/#{course_id}/staff/users"
+  defp build_url_users(course_id), do: "/v2/courses/#{course_id}/admin/users"
 
   defp build_url_users(course_id, course_reg_id),
-    do: "/v2/courses/#{course_id}/staff/users/#{course_reg_id}"
+    do: "/v2/courses/#{course_id}/admin/users/#{course_reg_id}"
 
   defp build_url_users_role(course_id, course_reg_id),
     do: build_url_users(course_id, course_reg_id) <> "/role"

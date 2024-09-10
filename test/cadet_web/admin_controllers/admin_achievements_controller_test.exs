@@ -14,7 +14,7 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
     assert is_map(AdminAchievementsController.swagger_path_delete(nil))
   end
 
-  describe "PUT v2/courses/:course_id/staff/achievements/:uuid" do
+  describe "PUT v2/courses/:course_id/admin/achievements/:uuid" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course_id = conn.assigns.course_id
@@ -72,7 +72,7 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
     end
   end
 
-  describe "PUT v2/courses/:course_id/staff/achievements" do
+  describe "PUT v2/courses/:course_id/admin/achievements" do
     setup do
       %{
         achievements: [
@@ -124,7 +124,7 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
     end
   end
 
-  describe "DELETE v2/courses/:course_id/staff/achievements/:uuid" do
+  describe "DELETE v2/courses/:course_id/admin/achievements/:uuid" do
     @tag authenticate: :staff
     test "succeeds for staff", %{conn: conn} do
       course_id = conn.assigns.course_id
@@ -176,10 +176,10 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
   defp build_path(course_id, uuid \\ nil)
 
   defp build_path(course_id, nil) do
-    "/v2/courses/#{course_id}/staff/achievements"
+    "/v2/courses/#{course_id}/admin/achievements"
   end
 
   defp build_path(course_id, uuid) do
-    "/v2/courses/#{course_id}/staff/achievements/#{uuid}"
+    "/v2/courses/#{course_id}/admin/achievements/#{uuid}"
   end
 end

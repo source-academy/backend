@@ -300,7 +300,7 @@ defmodule CadetWeb.AdminSourcecastControllerTest do
     end
   end
 
-  defp build_url(course_id), do: "/v2/courses/#{course_id}/staff/sourcecast/"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/sourcecast/"
   defp build_url(course_id, sourcecast_id), do: "#{build_url(course_id)}#{sourcecast_id}/"
 
   defp seed_db(course_id) do

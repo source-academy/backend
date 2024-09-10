@@ -246,7 +246,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     end
   end
 
-  defp build_url(course_id), do: "/v2/courses/#{course_id}/staff/assets/"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/assets/"
   defp build_url(course_id, url), do: "#{build_url(course_id)}/#{url}"
 
   defp build_upload(path, content_type \\ "image/png") do

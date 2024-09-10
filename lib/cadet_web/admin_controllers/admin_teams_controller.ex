@@ -98,7 +98,7 @@ defmodule CadetWeb.AdminTeamsController do
   end
 
   swagger_path :index do
-    get("/staff/teams")
+    get("/admin/teams")
 
     summary("Fetches every team in the course")
 
@@ -110,7 +110,7 @@ defmodule CadetWeb.AdminTeamsController do
   end
 
   swagger_path :create do
-    post("/courses/{course_id}/staff/teams")
+    post("/courses/{course_id}/admin/teams")
 
     summary("Creates a new team")
 
@@ -130,7 +130,7 @@ defmodule CadetWeb.AdminTeamsController do
   end
 
   swagger_path :update do
-    post("/courses/{course_id}/staff/teams/{teamId}")
+    post("/courses/{course_id}/admin/teams/{teamId}")
 
     summary("Updates an existing team")
 
@@ -152,7 +152,7 @@ defmodule CadetWeb.AdminTeamsController do
   end
 
   swagger_path :delete do
-    PhoenixSwagger.Path.delete("/courses/{course_id}/staff/teams/{teamId}")
+    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/teams/{teamId}")
 
     summary("Deletes an existing team")
 

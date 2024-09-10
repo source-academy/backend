@@ -13,7 +13,7 @@ defmodule CadetWeb.TeamsControllerTest do
     TeamController.swagger_path_index(nil)
   end
 
-  describe "GET /v2/staff/teams" do
+  describe "GET /v2/admin/teams" do
     @tag authenticate: :student
     test "unauthorized with student", %{conn: conn} do
       course = insert(:course)
@@ -94,7 +94,7 @@ defmodule CadetWeb.TeamsControllerTest do
     end
   end
 
-  defp build_url_get(course_id), do: "/v2/courses/#{course_id}/staff/teams"
+  defp build_url_get(course_id), do: "/v2/courses/#{course_id}/admin/teams"
 
   defp build_url_get_by_assessment(course_id, assessment_id),
     do: "/v2/courses/#{course_id}/team/#{assessment_id}"

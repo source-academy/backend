@@ -1652,8 +1652,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
     |> length()
   end
 
-  defp build_url(course_id), do: "/v2/courses/#{course_id}/staff/grading/"
-  defp build_url_summary(course_id), do: "/v2/courses/#{course_id}/staff/grading/summary"
+  defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/grading/"
+  defp build_url_summary(course_id), do: "/v2/courses/#{course_id}/admin/grading/summary"
   defp build_url(course_id, submission_id), do: "#{build_url(course_id)}#{submission_id}"
 
   defp build_url(course_id, submission_id, question_id),

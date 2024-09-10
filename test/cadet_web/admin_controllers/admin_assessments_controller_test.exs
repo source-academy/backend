@@ -915,7 +915,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     do: "/v2/courses/#{course_id}/admin/assessments/#{assessment_id}"
 
   defp build_user_assessments_url(course_id, course_reg_id),
-    do: "/v2/courses/#{course_id}/staff/users/#{course_reg_id}/assessments"
+    do: "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/assessments"
 
   defp build_popular_leaderboard_url(course_id, assessment_id),
     do: "#{build_url(course_id, assessment_id)}/popularVoteLeaderboard"
