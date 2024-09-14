@@ -4,7 +4,7 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.Assessments
 
-  @doc"""
+  @doc """
   # Query Parameters
   - `pageSize`: Integer. The number of submissions to return. Default 10.
   - `offset`: Integer. The number of submissions to skip. Default 0.
@@ -35,8 +35,8 @@ defmodule CadetWeb.AdminGradingController do
 
     filtered_boolean_params =
       params
-        |> Map.take(boolean_params)
-        |> Map.keys()
+      |> Map.take(boolean_params)
+      |> Map.keys()
 
     params =
       params

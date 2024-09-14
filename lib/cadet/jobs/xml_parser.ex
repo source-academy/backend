@@ -149,7 +149,8 @@ defmodule Cadet.Updater.XMLParser do
       |> Enum.map(fn param ->
         with {:no_missing_attr?, true} <-
                {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_xp])},
-             question when is_map(question) <- SharedHelper.process_map_booleans(param, [:show_solution, :blocking]),
+             question when is_map(question) <-
+               SharedHelper.process_map_booleans(param, [:show_solution, :blocking]),
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
                process_question_library(question, default_library, default_grading_library),

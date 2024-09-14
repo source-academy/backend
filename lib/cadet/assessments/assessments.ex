@@ -1979,8 +1979,7 @@ defmodule Cadet.Assessments do
         }
       )
 
-    query =
-      sort_submission(query, params[:sort_by], params[:sort_direction])
+    query = sort_submission(query, params[:sort_by], params[:sort_direction])
 
     query =
       from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
@@ -2011,7 +2010,7 @@ defmodule Cadet.Assessments do
   # Given a query from submissions_by_grader_for_index,
   # sorts it by the relevant field and direction.
   defp sort_submission(query, sort_by, sort_direction)
-    when sort_direction in [:asc, :desc] do
+       when sort_direction in [:asc, :desc] do
     case sort_by do
       :assessment_name ->
         from([s, ans, asst, cr, user, group, config] in query,
@@ -2019,7 +2018,9 @@ defmodule Cadet.Assessments do
         )
 
       :assessment_type ->
-        from([s, ans, asst, cr, user, group, config] in query, order_by: [{^sort_direction, asst.config_id}])
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, asst.config_id}]
+        )
 
       :student_name ->
         from([s, ans, asst, cr, user, group, config] in query,
@@ -2033,7 +2034,7 @@ defmodule Cadet.Assessments do
 
       :group_name ->
         from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [{^sort_direction,  fragment("upper(?)", group.name)}]
+          order_by: [{^sort_direction, fragment("upper(?)", group.name)}]
         )
 
       :progress_status ->
