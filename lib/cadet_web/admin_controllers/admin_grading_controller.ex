@@ -31,6 +31,8 @@ defmodule CadetWeb.AdminGradingController do
       |> to_snake_case_atom_keys()
       |> process_map_booleans(boolean_params)
       |> process_map_integers(int_params)
+      |> Assessments.parse_sort_direction()
+      |> Assessments.parse_sort_by()
 
     case Assessments.submissions_by_grader_for_index(course_reg, params) do
       {:ok, view_model} ->
