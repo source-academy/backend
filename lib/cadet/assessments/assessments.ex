@@ -1980,7 +1980,7 @@ defmodule Cadet.Assessments do
       )
 
     query =
-      sort_submission(query, Map.get(params, :sort_by, ""), Map.get(params, :sort_direction, ""))
+      sort_submission(query, params[:sort_by], params[:sort_direction])
 
     query =
       from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
@@ -2009,110 +2009,73 @@ defmodule Cadet.Assessments do
   end
 
   # Given a query from submissions_by_grader_for_index,
-  # sorts it by the relevant field and direction
-  # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
-  # "studentUsername", "groupName", "progressStatus", "xp"
-  # sort_direction is a string of either "", "sort-asc", "sort-desc"
-  defp sort_submission(query, sort_by, sort_direction) do
-    cond do
-      sort_direction == "sort-asc" ->
-        sort_submission_asc(query, sort_by)
+  # sorts it by the relevant field and direction.
+  defp sort_submission(query, sort_by, sort_direction)
+    when sort_direction in [:asc, :desc] do
+    case sort_by do
+      :assessment_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", asst.title)}]
+        )
 
-      sort_direction == "sort-desc" ->
-        sort_submission_desc(query, sort_by)
+      :assessment_type ->
+        from([s, ans, asst, cr, user, group, config] in query, order_by: [{^sort_direction, asst.config_id}])
 
-      true ->
+      :student_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.name)}]
+        )
+
+      :student_username ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.username)}]
+        )
+
+      :group_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction,  fragment("upper(?)", group.name)}]
+        )
+
+      :progress_status ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [
+            {^sort_direction, config.is_manually_graded},
+            {^sort_direction, s.status},
+            {^sort_direction, ans.graded_count - asst.question_count},
+            {^sort_direction, s.is_grading_published}
+          ]
+        )
+
+      :xp ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, ans.xp + ans.xp_adjustment}]
+        )
+
+      _ ->
         query
     end
   end
 
-  defp sort_submission_asc(query, sort_by) do
-    cond do
-      sort_by == "assessmentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", asst.title)
-        )
+  defp sort_submission(query, _sort_by, _sort_direction), do: query
 
-      sort_by == "assessmentType" ->
-        from([s, ans, asst, cr, user, group, config] in query, order_by: asst.config_id)
-
-      sort_by == "studentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", user.name)
-        )
-
-      sort_by == "studentUsername" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", user.username)
-        )
-
-      sort_by == "groupName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", group.name)
-        )
-
-      sort_by == "progressStatus" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [
-            asc: config.is_manually_graded,
-            asc: s.status,
-            asc: ans.graded_count - asst.question_count,
-            asc: s.is_grading_published
-          ]
-        )
-
-      sort_by == "xp" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: ans.xp + ans.xp_adjustment
-        )
-
-      true ->
-        query
+  def parse_sort_direction(params) do
+    case params[:sort_direction] do
+      "sort-asc" -> Map.put(params, :sort_direction, :asc)
+      "sort-desc" -> Map.put(params, :sort_direction, :desc)
+      _ -> Map.put(params, :sort_direction, nil)
     end
   end
 
-  defp sort_submission_desc(query, sort_by) do
-    cond do
-      sort_by == "assessmentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", asst.title)]
-        )
-
-      sort_by == "assessmentType" ->
-        from([s, ans, asst, cr, user, group, config] in query, order_by: [desc: asst.config_id])
-
-      sort_by == "studentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", user.name)]
-        )
-
-      sort_by == "studentUsername" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", user.username)]
-        )
-
-      sort_by == "groupName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", group.name)]
-        )
-
-      sort_by == "progressStatus" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [
-            desc: config.is_manually_graded,
-            desc: s.status,
-            desc: ans.graded_count - asst.question_count,
-            desc: s.is_grading_published
-          ]
-        )
-
-      sort_by == "xp" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: ans.xp + ans.xp_adjustment]
-        )
-
-      true ->
-        query
+  def parse_sort_by(params) do
+    case params[:sort_by] do
+      "assessmentName" -> Map.put(params, :sort_by, :assessment_name)
+      "assessmentType" -> Map.put(params, :sort_by, :assessment_type)
+      "studentName" -> Map.put(params, :sort_by, :student_name)
+      "studentUsername" -> Map.put(params, :sort_by, :student_username)
+      "groupName" -> Map.put(params, :sort_by, :group_name)
+      "progressStatus" -> Map.put(params, :sort_by, :progress_status)
+      "xp" -> Map.put(params, :sort_by, :xp)
+      _ -> Map.put(params, :sort_by, nil)
     end
   end
 
