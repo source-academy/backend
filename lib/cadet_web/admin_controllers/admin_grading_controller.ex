@@ -6,8 +6,8 @@ defmodule CadetWeb.AdminGradingController do
 
   @doc"""
   # Query Parameters
-  - `pageSize`: Integer. The number of submissions to return.
-  - `offset`: Integer. The number of submissions to skip.
+  - `pageSize`: Integer. The number of submissions to return. Default 10.
+  - `offset`: Integer. The number of submissions to skip. Default 0.
   - `title`: String. Assessment title.
   - `status`: String. Submission status.
   - `isFullyGraded`: Boolean. Whether the submission is fully graded.
@@ -19,17 +19,28 @@ defmodule CadetWeb.AdminGradingController do
   - `type`: String. Assessment Config type.
   - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
   """
-  def index(conn, %{"group" => group, "pageSize" => page_size, "offset" => offset} = params)
-      when group in ["true", "false"] and is_binary(page_size) and is_binary(offset) do
+  def index(conn, %{"group" => group} = params)
+      when group in ["true", "false"] do
     course_reg = conn.assigns[:course_reg]
 
     boolean_params = [:is_fully_graded, :group, :is_manually_graded]
     int_params = [:page_size, :offset]
+
     # Convert string keys to atoms and parse values
     params =
       params
       |> to_snake_case_atom_keys()
-      |> process_map_booleans(boolean_params)
+      |> Map.put_new(:page_size, "10")
+      |> Map.put_new(:offset, "0")
+
+    filtered_boolean_params =
+      params
+        |> Map.take(boolean_params)
+        |> Map.keys()
+
+    params =
+      params
+      |> process_map_booleans(filtered_boolean_params)
       |> process_map_integers(int_params)
       |> Assessments.parse_sort_direction()
       |> Assessments.parse_sort_by()
