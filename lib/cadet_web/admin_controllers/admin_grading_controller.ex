@@ -4,9 +4,33 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.Assessments
 
-  def index(conn, %{"group" => group} = params)
-      when group in ["true", "false"] do
+  @doc"""
+  # Query Parameters
+  - `pageSize`: Integer. The number of submissions to return.
+  - `offset`: Integer. The number of submissions to skip.
+  - `title`: String. Assessment title.
+  - `status`: String. Submission status.
+  - `isFullyGraded`: Boolean. Whether the submission is fully graded.
+  - `isGradingPublished`: Boolean. Whether the grading is published.
+  - `group`: Boolean. Only the groups under the grader should be returned.
+  - `groupName`: String. Group name.
+  - `name`: String. User name.
+  - `username`: String. User username.
+  - `type`: String. Assessment Config type.
+  - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
+  """
+  def index(conn, %{"group" => group, "pageSize" => page_size, "offset" => offset} = params)
+      when group in ["true", "false"] and is_binary(page_size) and is_binary(offset) do
     course_reg = conn.assigns[:course_reg]
+
+    boolean_params = [:is_fully_graded, :group, :is_manually_graded]
+    int_params = [:page_size, :offset]
+    # Convert string keys to atoms and parse values
+    params =
+      params
+      |> to_snake_case_atom_keys()
+      |> process_map_booleans(boolean_params)
+      |> process_map_integers(int_params)
 
     case Assessments.submissions_by_grader_for_index(course_reg, params) do
       {:ok, view_model} ->
