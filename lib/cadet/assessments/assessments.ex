@@ -1888,25 +1888,14 @@ defmodule Cadet.Assessments do
 
   The return value is `{:ok, %{"count": count, "data": submissions}}`
 
-  # Parameters
-  - `pageSize`: Integer. The number of submissions to return. Default is 10.
-  - `offset`: Integer. The number of submissions to skip. Default is 0.
-  - `title`: String. Assessment title.
-  - `status`: String. Submission status.
-  - `isFullyGraded`: Boolean. Whether the submission is fully graded.
-  - `isGradingPublished`: Boolean. Whether the grading is published.
-  - `group`: Boolean. Only the groups under the grader should be returned.
-  - `groupName`: String. Group name.
-  - `name`: String. User name.
-  - `username`: String. User username.
-  - `type`: String. Assessment Config type.
-  - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
+  # Params
+  Refer to admin_grading_controller.ex/index for the list of query parameters.
 
   # Implementation
   Uses helper functions to build the filter query. Helper functions are separated by tables in the database.
   """
 
-  @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
+  @spec submissions_by_grader_for_index(CourseRegistration.t(), map()) ::
           {:ok,
            %{
              :count => integer,
@@ -1920,14 +1909,7 @@ defmodule Cadet.Assessments do
            }}
   def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        params \\ %{
-          "group" => "false",
-          "isFullyGraded" => "false",
-          "pageSize" => "10",
-          "offset" => "0",
-          "sortBy" => "",
-          "sortDirection" => ""
-        }
+        params
       ) do
     submission_answers_query =
       from(ans in Answer,
@@ -1978,8 +1960,8 @@ defmodule Cadet.Assessments do
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(params, grader),
-        limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
-        offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
+        limit: ^params[:limit],
+        offset: ^params[:offset],
         select: %{
           id: s.id,
           status: s.status,
@@ -1998,7 +1980,7 @@ defmodule Cadet.Assessments do
       )
 
     query =
-      sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
+      sort_submission(query, Map.get(params, :sort_by, ""), Map.get(params, :sort_direction, ""))
 
     query =
       from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
@@ -2137,7 +2119,7 @@ defmodule Cadet.Assessments do
   defp build_assessment_filter(params, course_id) do
     assessments_filters =
       Enum.reduce(params, dynamic(true), fn
-        {"title", value}, dynamic ->
+        {:title, value}, dynamic ->
           dynamic([assessment], ^dynamic and ilike(assessment.title, ^"%#{value}%"))
 
         {_, _}, dynamic ->
@@ -2153,16 +2135,16 @@ defmodule Cadet.Assessments do
 
   defp build_submission_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      {"status", value}, dynamic ->
+      {:status, value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
 
-      {"isFullyGraded", value}, dynamic ->
+      {:is_fully_graded, value}, dynamic ->
         dynamic(
           [ans: ans, asst: asst],
           ^dynamic and asst.question_count == ans.graded_count == ^value
         )
 
-      {"isGradingPublished", value}, dynamic ->
+      {:is_grading_published, value}, dynamic ->
         dynamic([submission], ^dynamic and submission.is_grading_published == ^value)
 
       {_, _}, dynamic ->
@@ -2172,7 +2154,7 @@ defmodule Cadet.Assessments do
 
   defp build_course_registration_filter(params, grader) do
     Enum.reduce(params, dynamic(true), fn
-      {"group", "true"}, dynamic ->
+      {:group, true}, dynamic ->
         dynamic(
           [submission],
           (^dynamic and
@@ -2186,7 +2168,7 @@ defmodule Cadet.Assessments do
              )) or submission.student_id == ^grader.id
         )
 
-      {"groupName", value}, dynamic ->
+      {:group_name, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2207,7 +2189,7 @@ defmodule Cadet.Assessments do
 
   defp build_user_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      {"name", value}, dynamic ->
+      {:name, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2221,7 +2203,7 @@ defmodule Cadet.Assessments do
             )
         )
 
-      {"username", value}, dynamic ->
+      {:username, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2243,10 +2225,10 @@ defmodule Cadet.Assessments do
   defp build_assessment_config_filter(params) do
     assessment_config_filters =
       Enum.reduce(params, dynamic(true), fn
-        {"type", value}, dynamic ->
+        {:type, value}, dynamic ->
           dynamic([assessment_config: config], ^dynamic and config.type == ^value)
 
-        {"isManuallyGraded", value}, dynamic ->
+        {:is_manually_graded, value}, dynamic ->
           dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
 
         {_, _}, dynamic ->
