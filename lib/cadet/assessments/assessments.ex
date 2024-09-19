@@ -1888,25 +1888,14 @@ defmodule Cadet.Assessments do
 
   The return value is `{:ok, %{"count": count, "data": submissions}}`
 
-  # Parameters
-  - `pageSize`: Integer. The number of submissions to return. Default is 10.
-  - `offset`: Integer. The number of submissions to skip. Default is 0.
-  - `title`: String. Assessment title.
-  - `status`: String. Submission status.
-  - `isFullyGraded`: Boolean. Whether the submission is fully graded.
-  - `isGradingPublished`: Boolean. Whether the grading is published.
-  - `group`: Boolean. Only the groups under the grader should be returned.
-  - `groupName`: String. Group name.
-  - `name`: String. User name.
-  - `username`: String. User username.
-  - `type`: String. Assessment Config type.
-  - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
+  # Params
+  Refer to admin_grading_controller.ex/index for the list of query parameters.
 
   # Implementation
   Uses helper functions to build the filter query. Helper functions are separated by tables in the database.
   """
 
-  @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
+  @spec submissions_by_grader_for_index(CourseRegistration.t(), map()) ::
           {:ok,
            %{
              :count => integer,
@@ -1920,14 +1909,7 @@ defmodule Cadet.Assessments do
            }}
   def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        params \\ %{
-          "group" => "false",
-          "isFullyGraded" => "false",
-          "pageSize" => "10",
-          "offset" => "0",
-          "sortBy" => "",
-          "sortDirection" => ""
-        }
+        params
       ) do
     submission_answers_query =
       from(ans in Answer,
@@ -1978,8 +1960,8 @@ defmodule Cadet.Assessments do
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(params, grader),
-        limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
-        offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
+        limit: ^params[:limit],
+        offset: ^params[:offset],
         select: %{
           id: s.id,
           status: s.status,
@@ -1997,8 +1979,7 @@ defmodule Cadet.Assessments do
         }
       )
 
-    query =
-      sort_submission(query, Map.get(params, "sortBy", ""), Map.get(params, "sortDirection", ""))
+    query = sort_submission(query, params[:sort_by], params[:sort_direction])
 
     query =
       from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
@@ -2027,117 +2008,82 @@ defmodule Cadet.Assessments do
   end
 
   # Given a query from submissions_by_grader_for_index,
-  # sorts it by the relevant field and direction
-  # sort_by is a string of either "", "assessmentName", "assessmentType", "studentName",
-  # "studentUsername", "groupName", "progressStatus", "xp"
-  # sort_direction is a string of either "", "sort-asc", "sort-desc"
-  defp sort_submission(query, sort_by, sort_direction) do
-    cond do
-      sort_direction == "sort-asc" ->
-        sort_submission_asc(query, sort_by)
+  # sorts it by the relevant field and direction.
+  defp sort_submission(query, sort_by, sort_direction)
+       when sort_direction in [:asc, :desc] do
+    case sort_by do
+      :assessment_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", asst.title)}]
+        )
 
-      sort_direction == "sort-desc" ->
-        sort_submission_desc(query, sort_by)
+      :assessment_type ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, asst.config_id}]
+        )
 
-      true ->
+      :student_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.name)}]
+        )
+
+      :student_username ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.username)}]
+        )
+
+      :group_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", group.name)}]
+        )
+
+      :progress_status ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [
+            {^sort_direction, config.is_manually_graded},
+            {^sort_direction, s.status},
+            {^sort_direction, ans.graded_count - asst.question_count},
+            {^sort_direction, s.is_grading_published}
+          ]
+        )
+
+      :xp ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, ans.xp + ans.xp_adjustment}]
+        )
+
+      _ ->
         query
     end
   end
 
-  defp sort_submission_asc(query, sort_by) do
-    cond do
-      sort_by == "assessmentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", asst.title)
-        )
+  defp sort_submission(query, _sort_by, _sort_direction), do: query
 
-      sort_by == "assessmentType" ->
-        from([s, ans, asst, cr, user, group, config] in query, order_by: asst.config_id)
-
-      sort_by == "studentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", user.name)
-        )
-
-      sort_by == "studentUsername" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", user.username)
-        )
-
-      sort_by == "groupName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: fragment("upper(?)", group.name)
-        )
-
-      sort_by == "progressStatus" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [
-            asc: config.is_manually_graded,
-            asc: s.status,
-            asc: ans.graded_count - asst.question_count,
-            asc: s.is_grading_published
-          ]
-        )
-
-      sort_by == "xp" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: ans.xp + ans.xp_adjustment
-        )
-
-      true ->
-        query
+  def parse_sort_direction(params) do
+    case params[:sort_direction] do
+      "sort-asc" -> Map.put(params, :sort_direction, :asc)
+      "sort-desc" -> Map.put(params, :sort_direction, :desc)
+      _ -> Map.put(params, :sort_direction, nil)
     end
   end
 
-  defp sort_submission_desc(query, sort_by) do
-    cond do
-      sort_by == "assessmentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", asst.title)]
-        )
-
-      sort_by == "assessmentType" ->
-        from([s, ans, asst, cr, user, group, config] in query, order_by: [desc: asst.config_id])
-
-      sort_by == "studentName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", user.name)]
-        )
-
-      sort_by == "studentUsername" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", user.username)]
-        )
-
-      sort_by == "groupName" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: fragment("upper(?)", group.name)]
-        )
-
-      sort_by == "progressStatus" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [
-            desc: config.is_manually_graded,
-            desc: s.status,
-            desc: ans.graded_count - asst.question_count,
-            desc: s.is_grading_published
-          ]
-        )
-
-      sort_by == "xp" ->
-        from([s, ans, asst, cr, user, group, config] in query,
-          order_by: [desc: ans.xp + ans.xp_adjustment]
-        )
-
-      true ->
-        query
+  def parse_sort_by(params) do
+    case params[:sort_by] do
+      "assessmentName" -> Map.put(params, :sort_by, :assessment_name)
+      "assessmentType" -> Map.put(params, :sort_by, :assessment_type)
+      "studentName" -> Map.put(params, :sort_by, :student_name)
+      "studentUsername" -> Map.put(params, :sort_by, :student_username)
+      "groupName" -> Map.put(params, :sort_by, :group_name)
+      "progressStatus" -> Map.put(params, :sort_by, :progress_status)
+      "xp" -> Map.put(params, :sort_by, :xp)
+      _ -> Map.put(params, :sort_by, nil)
     end
   end
 
   defp build_assessment_filter(params, course_id) do
     assessments_filters =
       Enum.reduce(params, dynamic(true), fn
-        {"title", value}, dynamic ->
+        {:title, value}, dynamic ->
           dynamic([assessment], ^dynamic and ilike(assessment.title, ^"%#{value}%"))
 
         {_, _}, dynamic ->
@@ -2153,16 +2099,16 @@ defmodule Cadet.Assessments do
 
   defp build_submission_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      {"status", value}, dynamic ->
+      {:status, value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
 
-      {"isFullyGraded", value}, dynamic ->
+      {:is_fully_graded, value}, dynamic ->
         dynamic(
           [ans: ans, asst: asst],
           ^dynamic and asst.question_count == ans.graded_count == ^value
         )
 
-      {"isGradingPublished", value}, dynamic ->
+      {:is_grading_published, value}, dynamic ->
         dynamic([submission], ^dynamic and submission.is_grading_published == ^value)
 
       {_, _}, dynamic ->
@@ -2172,7 +2118,7 @@ defmodule Cadet.Assessments do
 
   defp build_course_registration_filter(params, grader) do
     Enum.reduce(params, dynamic(true), fn
-      {"group", "true"}, dynamic ->
+      {:group, true}, dynamic ->
         dynamic(
           [submission],
           (^dynamic and
@@ -2186,7 +2132,7 @@ defmodule Cadet.Assessments do
              )) or submission.student_id == ^grader.id
         )
 
-      {"groupName", value}, dynamic ->
+      {:group_name, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2207,7 +2153,7 @@ defmodule Cadet.Assessments do
 
   defp build_user_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      {"name", value}, dynamic ->
+      {:name, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2221,7 +2167,7 @@ defmodule Cadet.Assessments do
             )
         )
 
-      {"username", value}, dynamic ->
+      {:username, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2243,10 +2189,10 @@ defmodule Cadet.Assessments do
   defp build_assessment_config_filter(params) do
     assessment_config_filters =
       Enum.reduce(params, dynamic(true), fn
-        {"type", value}, dynamic ->
+        {:type, value}, dynamic ->
           dynamic([assessment_config: config], ^dynamic and config.type == ^value)
 
-        {"isManuallyGraded", value}, dynamic ->
+        {:is_manually_graded, value}, dynamic ->
           dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
 
         {_, _}, dynamic ->
