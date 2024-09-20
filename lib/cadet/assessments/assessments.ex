@@ -388,12 +388,40 @@ defmodule Cadet.Assessments do
     )
   end
 
+  defp is_voting_assigned(assessment_ids) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    # Map of assessment_id to boolean
+    voting_assigned_assessment_ids =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.id in ^voting_assigned_question_ids)
+      |> where([q], q.assessment_id in ^assessment_ids)
+      |> select([q], q.assessment_id)
+      |> distinct()
+      |> Repo.all()
+
+    Enum.reduce(assessment_ids, %{}, fn id, acc ->
+      Map.put(acc, id, Enum.member?(voting_assigned_assessment_ids, id))
+    end)
+  end
+
   @doc """
   A helper function which removes grading information from all assessments
   if it's grading is not published.
   """
   def format_all_assessments(assessments) do
+    is_voting_assigned_map =
+      assessments
+      |> Enum.map(& &1.id)
+      |> is_voting_assigned()
+
     Enum.map(assessments, fn a ->
+      a = Map.put(a, :is_voting_published, Map.get(is_voting_assigned_map, a.id, false))
+
       if a.is_grading_published do
         a
       else
