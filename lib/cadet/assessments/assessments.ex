@@ -687,7 +687,7 @@ defmodule Cadet.Assessments do
     |> where(type: :voting)
     |> where(assessment_id: ^assessment_id)
     |> where([q], q.id in subquery(voting_assigned_question_ids))
-    |> Repo.exists?() == true
+    |> Repo.exists?() || false
   end
 
   def update_final_contest_entries do

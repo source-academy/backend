@@ -90,7 +90,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 9,
-            "xp" => (800 + 500 + 100) * 3,
+            "xp" => (if &1.is_grading_published, do: (800 + 500 + 100) * 3, else: 0),
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,

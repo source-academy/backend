@@ -14,7 +14,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   def index(conn, %{"course_reg_id" => course_reg_id}) do
     course_reg = Repo.get(CourseRegistration, course_reg_id)
     {:ok, assessments} = Assessments.all_assessments(course_reg)
-
+    assessments = Assessments.format_all_assessments(assessments)
     render(conn, "index.json", assessments: assessments)
   end
 
