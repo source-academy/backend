@@ -678,17 +678,16 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def is_voting_published(assessment_id) do
+  defp is_voting_published(assessment_id) do
     voting_assigned_question_ids =
       SubmissionVotes
       |> select([v], v.question_id)
-      |> Repo.all()
 
     Question
     |> where(type: :voting)
     |> where(assessment_id: ^assessment_id)
-    |> where([q], q.id in ^voting_assigned_question_ids)
-    |> Repo.exists?()
+    |> where([q], q.id in subquery(voting_assigned_question_ids))
+    |> Repo.exists?() == true
   end
 
   def update_final_contest_entries do
