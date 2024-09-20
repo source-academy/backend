@@ -401,7 +401,7 @@ defmodule Cadet.Assessments do
       |> where([q], q.id in ^voting_assigned_question_ids)
       |> where([q], q.assessment_id in ^assessment_ids)
       |> select([q], q.assessment_id)
-      |> distinct()
+      |> distinct(true)
       |> Repo.all()
 
     Enum.reduce(assessment_ids, %{}, fn id, acc ->
