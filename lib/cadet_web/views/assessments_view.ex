@@ -84,5 +84,4 @@ defmodule CadetWeb.AssessmentsView do
   defp password_protected?(nil), do: false
 
   defp password_protected?(_), do: true
-
 end
