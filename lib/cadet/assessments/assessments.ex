@@ -113,7 +113,7 @@ defmodule Cadet.Assessments do
       Submission
       |> where(
         [s],
-        s.id in ^submission_ids
+        s.id in subquery(submission_ids)
       )
       |> where(is_grading_published: true)
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
@@ -337,7 +337,7 @@ defmodule Cadet.Assessments do
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
       |> where(
         [s],
-        s.id in ^submission_ids
+        s.id in subquery(submission_ids)
       )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
@@ -351,7 +351,7 @@ defmodule Cadet.Assessments do
       Submission
       |> where(
         [s],
-        s.id in ^submission_ids
+        s.id in subquery(submission_ids)
       )
       |> select([s], [:assessment_id, :status, :is_grading_published])
 
@@ -382,13 +382,31 @@ defmodule Cadet.Assessments do
   end
 
   defp get_submission_ids(cr_id, teams) do
-    query =
-      from(s in Submission,
-        where: s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id),
-        select: s.id
-      )
+    from(s in Submission,
+      where: s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id),
+      select: s.id
+    )
+  end
 
-    Repo.all(query)
+  defp is_voting_assigned(assessment_ids) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    # Map of assessment_id to boolean
+    voting_assigned_assessment_ids =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.id in ^voting_assigned_question_ids)
+      |> where([q], q.assessment_id in ^assessment_ids)
+      |> select([q], q.assessment_id)
+      |> distinct(true)
+      |> Repo.all()
+
+    Enum.reduce(assessment_ids, %{}, fn id, acc ->
+      Map.put(acc, id, Enum.member?(voting_assigned_assessment_ids, id))
+    end)
   end
 
   @doc """
@@ -396,7 +414,14 @@ defmodule Cadet.Assessments do
   if it's grading is not published.
   """
   def format_all_assessments(assessments) do
+    is_voting_assigned_map =
+      assessments
+      |> Enum.map(& &1.id)
+      |> is_voting_assigned()
+
     Enum.map(assessments, fn a ->
+      a = Map.put(a, :is_voting_published, Map.get(is_voting_assigned_map, a.id, false))
+
       if a.is_grading_published do
         a
       else
@@ -653,17 +678,16 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def is_voting_published(assessment_id) do
+  defp is_voting_published(assessment_id) do
     voting_assigned_question_ids =
       SubmissionVotes
       |> select([v], v.question_id)
-      |> Repo.all()
 
     Question
     |> where(type: :voting)
     |> where(assessment_id: ^assessment_id)
-    |> where([q], q.id in ^voting_assigned_question_ids)
-    |> Repo.exists?()
+    |> where([q], q.id in subquery(voting_assigned_question_ids))
+    |> Repo.exists?() || false
   end
 
   def update_final_contest_entries do
@@ -1442,6 +1466,7 @@ defmodule Cadet.Assessments do
 
   @spec update_xp_bonus(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
+  # TODO: Should destructure and pattern match on the function
   defp update_xp_bonus(submission = %Submission{id: submission_id}) do
     # to ensure backwards compatibility
     if submission.xp_bonus == 0 do
