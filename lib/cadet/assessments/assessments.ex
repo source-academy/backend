@@ -1985,7 +1985,7 @@ defmodule Cadet.Assessments do
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(params, grader),
-        limit: ^params[:limit],
+        limit: ^params[:page_size],
         offset: ^params[:offset],
         select: %{
           id: s.id,
