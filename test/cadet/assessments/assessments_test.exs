@@ -2210,6 +2210,29 @@ defmodule Cadet.AssessmentsTest do
       Map.put(seed, :total_submissions, total_submissions)
     end
 
+    test "limit submissions", %{
+      course_regs: %{avenger1_cr: avenger}
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => 1
+        })
+
+      assert length(res[:data][:submissions]) == 1
+    end
+
+    test "limit submisssions 2", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => 2
+        })
+
+      assert length(res[:data][:submissions]) == 2
+    end
+
     test "filter by assessment title", %{
       course_regs: %{avenger1_cr: avenger},
       assessments: assessments,
