@@ -12,10 +12,13 @@ defmodule Cadet.Auth.Providers.CAS do
 
   @type config :: %{service_validate_endpoint: String.t(), modules: %{}}
 
-  @spec authorise(config(), Provider.code(), Provider.client_id(), Provider.redirect_uri()) ::
+  @spec authorise(config(), Provider.authorise_params()) ::
           {:ok, %{token: Provider.token(), username: String.t()}}
           | {:error, Provider.error(), String.t()}
-  def authorise(config, code, _client_id, redirect_uri) do
+  def authorise(config, %{
+        code: code,
+        redirect_uri: redirect_uri
+      }) do
     params = %{
       ticket: code,
       service: redirect_uri
