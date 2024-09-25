@@ -9,10 +9,13 @@ defmodule Cadet.Auth.Providers.OpenID do
 
   @type config :: %{openid_provider: atom(), claim_extractor: module()}
 
-  @spec authorise(config, Provider.code(), Provider.client_id(), Provider.redirect_uri()) ::
+  @spec authorise(config(), Provider.authorise_params()) ::
           {:ok, %{token: Provider.token(), username: String.t()}}
           | {:error, Provider.error(), String.t()}
-  def authorise(config, code, _client_id, redirect_uri) do
+  def authorise(config, %{
+        code: code,
+        redirect_uri: redirect_uri
+      }) do
     %{openid_provider: openid_provider, claim_extractor: claim_extractor} = config
 
     with {:token, {:ok, token_map}} <-

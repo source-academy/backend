@@ -9,8 +9,10 @@ defmodule Cadet.Autograder.GradingJob do
 
   require Logger
 
+  alias Cadet.Assessments
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.Utilities
+  alias Cadet.Courses.AssessmentConfig
   alias Cadet.Jobs.Log
 
   def close_and_make_empty_submission(assessment = %Assessment{id: id}) do
@@ -258,6 +260,16 @@ defmodule Cadet.Autograder.GradingJob do
     )
   end
 
-  defp grade_submission_question_answer_lists(_, [], [], _, _) do
+  defp grade_submission_question_answer_lists(submission_id, [], [], _, _) do
+    submission = Repo.get(Submission, submission_id)
+    assessment = Repo.get(Assessment, submission.assessment_id)
+    assessment_config = Repo.get_by(AssessmentConfig, id: assessment.config_id)
+    is_grading_auto_published = assessment_config.is_grading_auto_published
+    is_manually_graded = assessment_config.is_manually_graded
+
+    if Assessments.is_fully_autograded?(submission_id) and is_grading_auto_published and
+         not is_manually_graded do
+      Assessments.publish_grading(submission_id)
+    end
   end
 end

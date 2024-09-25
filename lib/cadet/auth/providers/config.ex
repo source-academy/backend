@@ -15,10 +15,12 @@ defmodule Cadet.Auth.Providers.Config do
 
   @behaviour Provider
 
-  @spec authorise(any(), Provider.code(), Provider.client_id(), Provider.redirect_uri()) ::
+  @spec authorise(any(), Provider.authorise_params()) ::
           {:ok, %{token: Provider.token(), username: String.t()}}
           | {:error, Provider.error(), String.t()}
-  def authorise(config, code, _client_id, _redirect_uri) do
+  def authorise(config, %{
+        code: code
+      }) do
     case Enum.find(config, nil, fn %{code: this_code} -> code == this_code end) do
       %{token: token, username: username} ->
         {:ok, %{token: token, username: username}}

@@ -8,7 +8,7 @@ defmodule Cadet.Accounts.Notifications do
   import Ecto.Query
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Notification, CourseRegistration, CourseRegistration}
+  alias Cadet.Accounts.{Notification, CourseRegistration, CourseRegistration, Team, TeamMember}
   alias Cadet.Assessments.Submission
   alias Ecto.Multi
 
@@ -145,18 +145,41 @@ defmodule Cadet.Accounts.Notifications do
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def handle_unsubmit_notifications(assessment_id, student = %CourseRegistration{})
       when is_ecto_id(assessment_id) do
-    # Fetch and delete all notifications of :autograded and :graded
+    # Fetch and delete all notifications of :unpublished_grading
     # Add new notification :unsubmitted
 
     Notification
     |> where(course_reg_id: ^student.id)
     |> where(assessment_id: ^assessment_id)
-    |> where([n], n.type in ^[:autograded, :graded])
+    |> where([n], n.type in ^[:unpublished_grading])
     |> Repo.delete_all()
 
     write(%{
       type: :unsubmitted,
-      role: student.role,
+      role: :student,
+      course_reg_id: student.id,
+      assessment_id: assessment_id
+    })
+  end
+
+  @doc """
+  Function that handles notifications when a submission grade is unpublished.
+  Deletes all :published notifications and adds a new :unpublished_grading notification.
+  """
+  @spec handle_unpublish_grades_notifications(integer(), CourseRegistration.t()) ::
+          {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
+  def handle_unpublish_grades_notifications(assessment_id, student = %CourseRegistration{})
+      when is_ecto_id(assessment_id) do
+    Notification
+    |> where(course_reg_id: ^student.id)
+    |> where(assessment_id: ^assessment_id)
+    |> where([n], n.type in ^[:published_grading])
+    |> Repo.delete_all()
+
+    write(%{
+      type: :unpublished_grading,
+      read: false,
+      role: :student,
       course_reg_id: student.id,
       assessment_id: assessment_id
     })
@@ -166,20 +189,50 @@ defmodule Cadet.Accounts.Notifications do
   Writes a notification that a student's submission has been
   graded successfully. (for the student)
   """
-  @spec write_notification_when_graded(integer(), any()) ::
+  @spec write_notification_when_published(integer(), any()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
-  def write_notification_when_graded(submission_id, type) when type in [:graded, :autograded] do
-    submission =
-      Submission
-      |> Repo.get_by(id: submission_id)
+  def write_notification_when_published(submission_id, type) when type in [:published_grading] do
+    case Repo.get(Submission, submission_id) do
+      nil ->
+        {:error, %Ecto.Changeset{}}
 
-    write(%{
-      type: type,
-      read: false,
-      role: :student,
-      course_reg_id: submission.student_id,
-      assessment_id: submission.assessment_id
-    })
+      submission ->
+        case submission.student_id do
+          nil ->
+            team = Repo.get(Team, submission.team_id)
+
+            query =
+              from(t in Team,
+                join: tm in TeamMember,
+                on: t.id == tm.team_id,
+                join: cr in CourseRegistration,
+                on: tm.student_id == cr.id,
+                where: t.id == ^team.id,
+                select: cr.id
+              )
+
+            team_members = Repo.all(query)
+
+            Enum.each(team_members, fn tm_id ->
+              write(%{
+                type: type,
+                read: false,
+                role: :student,
+                course_reg_id: tm_id,
+                assessment_id: submission.assessment_id
+              })
+            end)
+
+          student_id ->
+            write(%{
+              type: type,
+              read: false,
+              role: :student,
+              course_reg_id: student_id,
+              assessment_id: submission.assessment_id
+            })
+        end
+    end
   end
 
   @doc """
@@ -223,7 +276,29 @@ defmodule Cadet.Accounts.Notifications do
   @spec write_notification_when_student_submits(Submission.t()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_when_student_submits(submission = %Submission{}) do
-    avenger_id = get_avenger_id_of(submission.student_id)
+    id =
+      case submission.student_id do
+        nil ->
+          team_id = submission.team_id
+
+          team =
+            Repo.one(
+              from(t in Team,
+                where: t.id == ^team_id,
+                preload: [:team_members]
+              )
+            )
+
+          # Does not matter if team members have different Avengers
+          # Just require one of them to be notified of the submission
+          s_id = team.team_members |> hd() |> Map.get(:student_id)
+          s_id
+
+        _ ->
+          submission.student_id
+      end
+
+    avenger_id = get_avenger_id_of(id)
 
     if is_nil(avenger_id) do
       {:ok, nil}

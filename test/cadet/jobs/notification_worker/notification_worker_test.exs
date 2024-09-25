@@ -13,13 +13,16 @@ defmodule Cadet.NotificationWorker.NotificationWorkerTest do
     avenger_cr = assessments.course_regs.avenger1_cr
 
     # setup for assessment submission
-    asssub_ntype = Cadet.Notifications.get_notification_type_by_name!("ASSESSMENT SUBMISSION")
+    _asssub_ntype = Cadet.Notifications.get_notification_type_by_name!("ASSESSMENT SUBMISSION")
     {_name, data} = Enum.at(assessments.assessments, 0)
     submission = List.first(List.first(data.mcq_answers)).submission
 
     # setup for avenger backlog
-    {:ok, %{submissions: ungraded_submissions}} =
-      Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true)
+    {:ok, %{data: %{submissions: ungraded_submissions}}} =
+      Cadet.Assessments.submissions_by_grader_for_index(avenger_cr, %{
+        "group" => "true",
+        "isFullyGraded" => "false"
+      })
 
     Repo.update_all(NotificationType, set: [is_enabled: true])
     Repo.update_all(NotificationConfig, set: [is_enabled: true])

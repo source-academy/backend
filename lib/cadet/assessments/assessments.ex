@@ -12,6 +12,8 @@ defmodule Cadet.Assessments do
     Notification,
     Notifications,
     User,
+    Team,
+    TeamMember,
     CourseRegistration,
     CourseRegistrations
   }
@@ -52,7 +54,7 @@ defmodule Cadet.Assessments do
     else
       Submission
       |> where(assessment_id: ^id)
-      |> delete_submission_assocation(id)
+      |> delete_submission_association(id)
 
       Question
       |> where(assessment_id: ^id)
@@ -71,7 +73,7 @@ defmodule Cadet.Assessments do
     |> Repo.delete_all()
   end
 
-  defp delete_submission_assocation(submissions, assessment_id) do
+  defp delete_submission_association(submissions, assessment_id) do
     submissions
     |> Repo.all()
     |> Enum.each(fn submission ->
@@ -104,9 +106,16 @@ defmodule Cadet.Assessments do
   end
 
   def assessments_total_xp(%CourseRegistration{id: cr_id}) do
+    teams = find_teams(cr_id)
+    submission_ids = get_submission_ids(cr_id, teams)
+
     submission_xp =
       Submission
-      |> where(student_id: ^cr_id)
+      |> where(
+        [s],
+        s.id in subquery(submission_ids)
+      )
+      |> where(is_grading_published: true)
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
       |> group_by([s], s.id)
       |> select([s, a], %{
@@ -259,11 +268,23 @@ defmodule Cadet.Assessments do
         assessment = %Assessment{id: id},
         course_reg = %CourseRegistration{role: role}
       ) do
+    team_id =
+      case find_team(id, course_reg.id) do
+        {:ok, nil} ->
+          -1
+
+        {:ok, team} ->
+          team.id
+
+        {:error, :team_not_found} ->
+          -1
+      end
+
     if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
       answer_query =
         Answer
         |> join(:inner, [a], s in assoc(a, :submission))
-        |> where([_, s], s.student_id == ^course_reg.id)
+        |> where([_, s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
 
       questions =
         Question
@@ -281,7 +302,18 @@ defmodule Cadet.Assessments do
         end)
         |> load_contest_voting_entries(course_reg, assessment)
 
-      assessment = assessment |> Map.put(:questions, questions)
+      is_grading_published =
+        Submission
+        |> where(assessment_id: ^id)
+        |> where(student_id: ^course_reg.id)
+        |> select([s], s.is_grading_published)
+        |> Repo.one()
+
+      assessment =
+        assessment
+        |> Map.put(:questions, questions)
+        |> Map.put(:is_grading_published, is_grading_published)
+
       {:ok, assessment}
     else
       {:error, {:forbidden, "Assessment not open"}}
@@ -297,10 +329,16 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(cr = %CourseRegistration{}) do
+    teams = find_teams(cr.id)
+    submission_ids = get_submission_ids(cr.id, teams)
+
     submission_aggregates =
       Submission
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
-      |> where([s], s.student_id == ^cr.id)
+      |> where(
+        [s],
+        s.id in subquery(submission_ids)
+      )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
         assessment_id: s.assessment_id,
@@ -311,8 +349,11 @@ defmodule Cadet.Assessments do
 
     submission_status =
       Submission
-      |> where([s], s.student_id == ^cr.id)
-      |> select([s], [:assessment_id, :status])
+      |> where(
+        [s],
+        s.id in subquery(submission_ids)
+      )
+      |> select([s], [:assessment_id, :status, :is_grading_published])
 
     assessments =
       cr.course_id
@@ -329,7 +370,8 @@ defmodule Cadet.Assessments do
         a
         | xp: sa.xp,
           graded_count: sa.graded_count,
-          user_status: s.status
+          user_status: s.status,
+          is_grading_published: s.is_grading_published
       })
       |> filter_published_assessments(cr)
       |> order_by(:open_at)
@@ -337,6 +379,87 @@ defmodule Cadet.Assessments do
       |> Repo.all()
 
     {:ok, assessments}
+  end
+
+  defp get_submission_ids(cr_id, teams) do
+    from(s in Submission,
+      where: s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id),
+      select: s.id
+    )
+  end
+
+  defp is_voting_assigned(assessment_ids) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    # Map of assessment_id to boolean
+    voting_assigned_assessment_ids =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.id in ^voting_assigned_question_ids)
+      |> where([q], q.assessment_id in ^assessment_ids)
+      |> select([q], q.assessment_id)
+      |> distinct(true)
+      |> Repo.all()
+
+    Enum.reduce(assessment_ids, %{}, fn id, acc ->
+      Map.put(acc, id, Enum.member?(voting_assigned_assessment_ids, id))
+    end)
+  end
+
+  @doc """
+  A helper function which removes grading information from all assessments
+  if it's grading is not published.
+  """
+  def format_all_assessments(assessments) do
+    is_voting_assigned_map =
+      assessments
+      |> Enum.map(& &1.id)
+      |> is_voting_assigned()
+
+    Enum.map(assessments, fn a ->
+      a = Map.put(a, :is_voting_published, Map.get(is_voting_assigned_map, a.id, false))
+
+      if a.is_grading_published do
+        a
+      else
+        a
+        |> Map.put(:xp, 0)
+        |> Map.put(:graded_count, 0)
+      end
+    end)
+  end
+
+  @doc """
+  A helper function which removes grading information from the assessment
+  if it's grading is not published.
+  """
+  def format_assessment_with_questions_and_answers(assessment) do
+    if assessment.is_grading_published do
+      assessment
+    else
+      %{
+        assessment
+        | questions:
+            Enum.map(assessment.questions, fn q ->
+              %{
+                q
+                | answer: %{
+                    q.answer
+                    | xp: 0,
+                      xp_adjustment: 0,
+                      autograding_status: :none,
+                      autograding_results: [],
+                      grader: nil,
+                      grader_id: nil,
+                      comments: nil
+                  }
+              }
+            end)
+      }
+    end
   end
 
   def filter_published_assessments(assessments, cr) do
@@ -514,6 +637,57 @@ defmodule Cadet.Assessments do
     params_with_assessment_id = Map.put_new(params, :assessment_id, assessment_id)
 
     Question.changeset(%Question{}, params_with_assessment_id)
+  end
+
+  def reassign_voting(assessment_id, is_reassigning_voting) do
+    if is_reassigning_voting do
+      if is_voting_published(assessment_id) do
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> delete_submission_association(assessment_id)
+
+        Question
+        |> where(assessment_id: ^assessment_id)
+        |> Repo.all()
+        |> Enum.each(fn q ->
+          delete_submission_votes_association(q)
+        end)
+      end
+
+      voting_assigned_question_ids =
+        SubmissionVotes
+        |> select([v], v.question_id)
+        |> Repo.all()
+
+      unpublished_voting_questions =
+        Question
+        |> where(type: :voting)
+        |> where([q], q.id not in ^voting_assigned_question_ids)
+        |> where(assessment_id: ^assessment_id)
+        |> join(:inner, [q], asst in assoc(q, :assessment))
+        |> select([q, asst], %{course_id: asst.course_id, question: q.question, id: q.id})
+        |> Repo.all()
+
+      for q <- unpublished_voting_questions do
+        insert_voting(q.course_id, q.question["contest_number"], q.id)
+      end
+
+      {:ok, "voting assigned"}
+    else
+      {:ok, "no change to voting"}
+    end
+  end
+
+  defp is_voting_published(assessment_id) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment_id)
+    |> where([q], q.id in subquery(voting_assigned_question_ids))
+    |> Repo.exists?() || false
   end
 
   def update_final_contest_entries do
@@ -766,7 +940,8 @@ defmodule Cadet.Assessments do
         raw_answer,
         force_submit
       ) do
-    with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+    with {:ok, team} <- find_team(question.assessment.id, cr_id),
+         {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
       update_submission_status_router(submission, question)
@@ -779,6 +954,9 @@ defmodule Cadet.Assessments do
       {:error, :race_condition} ->
         {:error, {:internal_server_error, "Please try again later."}}
 
+      {:error, :team_not_found} ->
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+
       {:error, :invalid_vote} ->
         {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
 
@@ -787,14 +965,72 @@ defmodule Cadet.Assessments do
     end
   end
 
+  defp find_teams(cr_id) do
+    query =
+      from(t in Team,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id
+      )
+
+    Repo.all(query)
+  end
+
+  defp find_team(assessment_id, cr_id)
+       when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
+    query =
+      from(t in Team,
+        where: t.assessment_id == ^assessment_id,
+        join: tm in assoc(t, :team_members),
+        where: tm.student_id == ^cr_id,
+        limit: 1
+      )
+
+    assessment_team_size =
+      Map.get(
+        Repo.one(
+          from(a in Assessment,
+            where: a.id == ^assessment_id,
+            select: %{max_team_size: a.max_team_size}
+          )
+        ),
+        :max_team_size,
+        0
+      )
+
+    case assessment_team_size > 1 do
+      true ->
+        case Repo.one(query) do
+          nil -> {:error, :team_not_found}
+          team -> {:ok, team}
+        end
+
+      # team is nil for individual assessments
+      false ->
+        {:ok, nil}
+    end
+  end
+
   def get_submission(assessment_id, %CourseRegistration{id: cr_id})
       when is_ecto_id(assessment_id) do
-    Submission
-    |> where(assessment_id: ^assessment_id)
-    |> where(student_id: ^cr_id)
-    |> join(:inner, [s], a in assoc(s, :assessment))
-    |> preload([_, a], assessment: a)
-    |> Repo.one()
+    {:ok, team} = find_team(assessment_id, cr_id)
+
+    case team do
+      %Team{} ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(team_id: ^team.id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+
+      nil ->
+        Submission
+        |> where(assessment_id: ^assessment_id)
+        |> where(student_id: ^cr_id)
+        |> join(:inner, [s], a in assoc(s, :assessment))
+        |> preload([_, a], assessment: a)
+        |> Repo.one()
+    end
   end
 
   def get_submission_by_id(submission_id) when is_ecto_id(submission_id) do
@@ -807,9 +1043,14 @@ defmodule Cadet.Assessments do
 
   def finalise_submission(submission = %Submission{}) do
     with {:status, :attempted} <- {:status, submission.status},
-         {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
-      # Couple with update_submission_status_and_xp_bonus to ensure notification is sent
-      Notifications.write_notification_when_student_submits(submission)
+         {:ok, updated_submission} <- update_submission_status(submission) do
+      # Couple with update_submission_status and update_xp_bonus to ensure notification is sent
+      submission = Repo.preload(submission, assessment: [:config])
+
+      if submission.assessment.config.is_manually_graded do
+        Notifications.write_notification_when_student_submits(submission)
+      end
+
       # Send email notification to avenger
       %{notification_type: "assessment_submission", submission_id: updated_submission.id}
       |> Cadet.Workers.NotificationWorker.new()
@@ -817,6 +1058,7 @@ defmodule Cadet.Assessments do
 
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
+      update_xp_bonus(submission)
 
       {:ok, nil}
     else
@@ -850,8 +1092,10 @@ defmodule Cadet.Assessments do
          {:status, :submitted} <- {:status, submission.status},
          {:allowed_to_unsubmit?, true} <-
            {:allowed_to_unsubmit?,
-            role == :admin or bypass or
-              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+            role == :admin or bypass or is_nil(submission.student_id) or
+              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)},
+         {:is_grading_published?, false} <-
+           {:is_grading_published?, submission.is_grading_published} do
       Multi.new()
       |> Multi.run(
         :rollback_submission,
@@ -893,10 +1137,43 @@ defmodule Cadet.Assessments do
       end)
       |> Repo.transaction()
 
-      Cadet.Accounts.Notifications.handle_unsubmit_notifications(
-        submission.assessment.id,
-        Repo.get(CourseRegistration, submission.student_id)
-      )
+      case submission.student_id do
+        # Team submission, handle notifications for team members
+        nil ->
+          team = Repo.get(Team, submission.team_id)
+
+          query =
+            from(t in Team,
+              join: tm in TeamMember,
+              on: t.id == tm.team_id,
+              join: cr in CourseRegistration,
+              on: tm.student_id == cr.id,
+              where: t.id == ^team.id,
+              select: cr.id
+            )
+
+          team_members = Repo.all(query)
+
+          Enum.each(team_members, fn tm_id ->
+            Notifications.handle_unsubmit_notifications(
+              submission.assessment.id,
+              Repo.get(CourseRegistration, tm_id)
+            )
+          end)
+
+        student_id ->
+          Notifications.handle_unsubmit_notifications(
+            submission.assessment.id,
+            Repo.get(CourseRegistration, student_id)
+          )
+      end
+
+      # Remove grading notifications for submissions
+      Notification
+      |> where(submission_id: ^submission_id, type: :submitted)
+      |> select([n], n.id)
+      |> Repo.all()
+      |> Notifications.acknowledge(cr)
 
       {:ok, nil}
     else
@@ -915,35 +1192,340 @@ defmodule Cadet.Assessments do
       {:allowed_to_unsubmit?, false} ->
         {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
 
+      {:is_grading_published?, true} ->
+        {:error, {:forbidden, "Grading has not been unpublished"}}
+
       _ ->
         {:error, {:internal_server_error, "Please try again later."}}
     end
   end
 
-  @spec update_submission_status_and_xp_bonus(Submission.t()) ::
+  defp can_publish?(submission_id, cr = %CourseRegistration{id: course_reg_id, role: role}) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> join(:inner, [_, a], c in assoc(a, :config))
+      |> preload([_, a, c], assessment: {a, config: c})
+      |> Repo.get(submission_id)
+
+    # allows staff to unpublish own assessment
+    bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
+
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:status, :submitted} <- {:status, submission.status},
+         {:is_manually_graded?, true} <-
+           {:is_manually_graded?, submission.assessment.config.is_manually_graded},
+         {:fully_graded?, true} <- {:fully_graded?, is_fully_graded?(submission_id)},
+         {:allowed_to_publish?, true} <-
+           {:allowed_to_publish?,
+            role == :admin or bypass or
+              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+      {:ok, submission}
+    end
+  end
+
+  @doc """
+    Unpublishes grading for a submission and send notification to student.
+    Requires admin or staff who is group leader of student.
+
+    Only manually graded assessments can be individually unpublished. We can only
+    unpublish all submissions for auto-graded assessments.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def unpublish_grading(submission_id, cr = %CourseRegistration{})
+      when is_ecto_id(submission_id) do
+    case can_publish?(submission_id, cr) do
+      {:ok, submission} ->
+        submission
+        |> Submission.changeset(%{is_grading_published: false})
+        |> Repo.update()
+
+        Notifications.handle_unpublish_grades_notifications(
+          submission.assessment.id,
+          Repo.get(CourseRegistration, submission.student_id)
+        )
+
+        {:ok, nil}
+
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:allowed_to_publish?, false} ->
+        {:error,
+         {:forbidden, "Only Avenger of student or Admin is permitted to unpublish grading"}}
+
+      {:is_manually_graded?, false} ->
+        {:error,
+         {:bad_request, "Only manually graded assessments can be individually unpublished"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  @doc """
+    Publishes grading for a submission and send notification to student.
+    Requires admin or staff who is group leader of student and all answers to be graded.
+
+    Only manually graded assessments can be individually published. We can only
+    publish all submissions for auto-graded assessments.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def publish_grading(submission_id, cr = %CourseRegistration{})
+      when is_ecto_id(submission_id) do
+    case can_publish?(submission_id, cr) do
+      {:ok, submission} ->
+        submission
+        |> Submission.changeset(%{is_grading_published: true})
+        |> Repo.update()
+
+        Notifications.write_notification_when_published(
+          submission.id,
+          :published_grading
+        )
+
+        Notification
+        |> where(submission_id: ^submission.id, type: :submitted)
+        |> select([n], n.id)
+        |> Repo.all()
+        |> Notifications.acknowledge(cr)
+
+        {:ok, nil}
+
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      {:allowed_to_publish?, false} ->
+        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to publish grading"}}
+
+      {:is_manually_graded?, false} ->
+        {:error, {:bad_request, "Only manually graded assessments can be individually published"}}
+
+      {:fully_graded?, false} ->
+        {:error, {:bad_request, "Some answers are not graded"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  @doc """
+    Publishes grading for a submission and send notification to student.
+    This function is used by the auto-grading system to publish grading. Bypasses Course Reg checks.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def publish_grading(submission_id)
+      when is_ecto_id(submission_id) do
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: a)
+      |> Repo.get(submission_id)
+
+    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
+         {:status, :submitted} <- {:status, submission.status} do
+      submission
+      |> Submission.changeset(%{is_grading_published: true})
+      |> Repo.update()
+
+      Notifications.write_notification_when_published(
+        submission.id,
+        :published_grading
+      )
+
+      {:ok, nil}
+    else
+      {:submission_found?, false} ->
+        {:error, {:not_found, "Submission not found"}}
+
+      {:status, :attempting} ->
+        {:error, {:bad_request, "Some questions have not been attempted"}}
+
+      {:status, :attempted} ->
+        {:error, {:bad_request, "Assessment has not been submitted"}}
+
+      _ ->
+        {:error, {:internal_server_error, "Please try again later."}}
+    end
+  end
+
+  @doc """
+    Publishes grading for all graded submissions for an assessment and sends notifications to students.
+    Requires admin.
+
+    Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+  def publish_all_graded(publisher = %CourseRegistration{}, assessment_id) do
+    if publisher.role == :admin do
+      answers_query =
+        Answer
+        |> group_by([ans], ans.submission_id)
+        |> select([ans], %{
+          submission_id: ans.submission_id,
+          graded_count: filter(count(ans.id), not is_nil(ans.grader_id)),
+          autograded_count: filter(count(ans.id), ans.autograding_status == :success)
+        })
+
+      question_query =
+        Question
+        |> group_by([q], q.assessment_id)
+        |> join(:inner, [q], a in Assessment, on: q.assessment_id == a.id)
+        |> select([q, a], %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id)
+        })
+
+      submission_query =
+        Submission
+        |> join(:inner, [s], ans in subquery(answers_query), on: ans.submission_id == s.id)
+        |> join(:inner, [s, ans], asst in subquery(question_query),
+          on: s.assessment_id == asst.assessment_id
+        )
+        |> join(:inner, [s, ans, asst], cr in CourseRegistration, on: s.student_id == cr.id)
+        |> where([s, ans, asst, cr], cr.course_id == ^publisher.course_id)
+        |> where(
+          [s, ans, asst, cr],
+          asst.question_count == ans.graded_count or asst.question_count == ans.autograded_count
+        )
+        |> where([s, ans, asst, cr], s.is_grading_published == false)
+        |> where([s, ans, asst, cr], s.assessment_id == ^assessment_id)
+        |> select([s, ans, asst, cr], %{
+          id: s.id
+        })
+
+      submissions = Repo.all(submission_query)
+
+      Repo.update_all(submission_query, set: [is_grading_published: true])
+
+      Enum.each(submissions, fn submission ->
+        Notifications.write_notification_when_published(
+          submission.id,
+          :published_grading
+        )
+      end)
+
+      {:ok, nil}
+    else
+      {:error, {:forbidden, "Only Admin is permitted to publish all grades"}}
+    end
+  end
+
+  @doc """
+     Unpublishes grading for all submissions with grades published for an assessment and sends notifications to students.
+     Requires admin role.
+
+     Returns `{:ok, nil}` on success, otherwise `{:error, {status, message}}`.
+  """
+
+  def unpublish_all(publisher = %CourseRegistration{}, assessment_id) do
+    if publisher.role == :admin do
+      submission_query =
+        Submission
+        |> join(:inner, [s], cr in CourseRegistration, on: s.student_id == cr.id)
+        |> where([s, cr], cr.course_id == ^publisher.course_id)
+        |> where([s, cr], s.is_grading_published == true)
+        |> where([s, cr], s.assessment_id == ^assessment_id)
+        |> select([s, cr], %{
+          id: s.id,
+          student_id: cr.id
+        })
+
+      submissions = Repo.all(submission_query)
+
+      Repo.update_all(submission_query, set: [is_grading_published: false])
+
+      Enum.each(submissions, fn submission ->
+        Notifications.handle_unpublish_grades_notifications(
+          assessment_id,
+          Repo.get(CourseRegistration, submission.student_id)
+        )
+      end)
+
+      {:ok, nil}
+    else
+      {:error, {:forbidden, "Only Admin is permitted to unpublish all grades"}}
+    end
+  end
+
+  @spec update_submission_status(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
-  defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
-    assessment = submission.assessment
-    assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
-
-    max_bonus_xp = assessment_conifg.early_submission_xp
-    early_hours = assessment_conifg.hours_before_early_xp_decay
-
-    xp_bonus =
-      if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) do
-        max_bonus_xp
-      else
-        # This logic interpolates from max bonus at early hour to 0 bonus at close time
-        decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
-        remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, Timex.now(), :hours)])
-        proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
-        bonus_xp = round(max_bonus_xp * proportion)
-        Enum.max([0, bonus_xp])
-      end
-
+  defp update_submission_status(submission = %Submission{}) do
     submission
-    |> Submission.changeset(%{status: :submitted, xp_bonus: xp_bonus})
+    |> Submission.changeset(%{status: :submitted, submitted_at: Timex.now()})
     |> Repo.update()
+  end
+
+  @spec update_xp_bonus(Submission.t()) ::
+          {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
+  # TODO: Should destructure and pattern match on the function
+  defp update_xp_bonus(submission = %Submission{id: submission_id}) do
+    # to ensure backwards compatibility
+    if submission.xp_bonus == 0 do
+      assessment = submission.assessment
+      assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
+
+      max_bonus_xp = assessment_conifg.early_submission_xp
+      early_hours = assessment_conifg.hours_before_early_xp_decay
+
+      ans_xp =
+        Answer
+        |> where(submission_id: ^submission_id)
+        |> order_by(:question_id)
+        |> group_by([a], a.id)
+        |> select([a], %{
+          # grouping by submission, so s.xp_bonus will be the same, but we need an
+          # aggregate function
+          total_xp: sum(a.xp) + sum(a.xp_adjustment)
+        })
+
+      total =
+        ans_xp
+        |> subquery
+        |> select([a], %{
+          total_xp: sum(a.total_xp)
+        })
+        |> Repo.one()
+
+      xp = decimal_to_integer(total.total_xp)
+
+      cur_time =
+        if submission.submitted_at == nil do
+          Timex.now()
+        else
+          submission.submitted_at
+        end
+
+      xp_bonus =
+        if xp <= 0 do
+          0
+        else
+          if Timex.before?(cur_time, Timex.shift(assessment.open_at, hours: early_hours)) do
+            max_bonus_xp
+          else
+            # This logic interpolates from max bonus at early hour to 0 bonus at close time
+            decaying_hours =
+              Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+
+            remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, cur_time, :hours)])
+            proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
+            bonus_xp = round(max_bonus_xp * proportion)
+            Enum.max([0, bonus_xp])
+          end
+        end
+
+      submission
+      |> Submission.changeset(%{xp_bonus: xp_bonus})
+      |> Repo.update()
+    end
   end
 
   defp update_submission_status_router(submission = %Submission{}, question = %Question{}) do
@@ -1006,6 +1588,18 @@ defmodule Cadet.Assessments do
           # fetch top 10 contest voting entries with the contest question id
           question_id = fetch_associated_contest_question_id(course_id, q)
 
+          # fetch top 10 contest coting entries with contest question id based on popular score
+          popular_results =
+            if is_nil(question_id) do
+              []
+            else
+              if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
+                fetch_top_popular_score_answers(question_id, 10)
+              else
+                []
+              end
+            end
+
           leaderboard_results =
             if is_nil(question_id) do
               []
@@ -1024,6 +1618,10 @@ defmodule Cadet.Assessments do
             |> Map.put(
               :contest_leaderboard,
               leaderboard_results
+            )
+            |> Map.put(
+              :popular_leaderboard,
+              popular_results
             )
 
           Map.put(q, :question, voting_question)
@@ -1044,7 +1642,7 @@ defmodule Cadet.Assessments do
   end
 
   # Finds the contest_question_id associated with the given voting_question id
-  defp fetch_associated_contest_question_id(course_id, voting_question) do
+  def fetch_associated_contest_question_id(course_id, voting_question) do
     contest_number = voting_question.question["contest_number"]
 
     if is_nil(contest_number) do
@@ -1091,6 +1689,37 @@ defmodule Cadet.Assessments do
       submission_id: a.submission_id,
       answer: a.answer,
       relative_score: a.relative_score,
+      student_name: student_user.name
+    })
+    |> limit(^number_of_answers)
+    |> Repo.all()
+  end
+
+  @doc """
+  Fetches top answers for the given question, based on the contest popular_score
+
+  Used for contest leaderboard fetching
+  """
+  def fetch_top_popular_score_answers(question_id, number_of_answers) do
+    Answer
+    |> where(question_id: ^question_id)
+    |> where(
+      [a],
+      fragment(
+        "?->>'code' like ?",
+        a.answer,
+        "%return%"
+      )
+    )
+    |> order_by(desc: :popular_score)
+    |> join(:left, [a], s in assoc(a, :submission))
+    |> join(:left, [a, s], student in assoc(s, :student))
+    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+    |> where([a, s, student], student.role == "student")
+    |> select([a, s, student, student_user], %{
+      submission_id: a.submission_id,
+      answer: a.answer,
+      popular_score: a.popular_score,
       student_name: student_user.name
     })
     |> limit(^number_of_answers)
@@ -1175,7 +1804,13 @@ defmodule Cadet.Assessments do
       )
       |> Repo.all()
 
-    entry_scores = map_eligible_votes_to_entry_score(eligible_votes)
+    token_divider =
+      Question
+      |> select([q], q.question["token_divider"])
+      |> Repo.get_by(id: contest_voting_question_id)
+
+    entry_scores = map_eligible_votes_to_entry_score(eligible_votes, token_divider)
+    normalized_scores = map_eligible_votes_to_popular_score(eligible_votes, token_divider)
 
     entry_scores
     |> Enum.map(fn {ans_id, relative_score} ->
@@ -1190,9 +1825,23 @@ defmodule Cadet.Assessments do
     end)
     |> Enum.reduce(Multi.new(), &Multi.append/2)
     |> Repo.transaction()
+
+    normalized_scores
+    |> Enum.map(fn {ans_id, popular_score} ->
+      %Answer{id: ans_id}
+      |> Answer.popular_score_update_changeset(%{
+        popular_score: popular_score
+      })
+    end)
+    |> Enum.map(fn changeset ->
+      op_key = "answer_#{changeset.data.id}"
+      Multi.update(Multi.new(), op_key, changeset)
+    end)
+    |> Enum.reduce(Multi.new(), &Multi.append/2)
+    |> Repo.transaction()
   end
 
-  defp map_eligible_votes_to_entry_score(eligible_votes) do
+  defp map_eligible_votes_to_entry_score(eligible_votes, token_divider) do
     # converts eligible votes to the {total cumulative score, number of votes, tokens}
     entry_vote_data =
       Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
@@ -1210,108 +1859,378 @@ defmodule Cadet.Assessments do
     Enum.map(
       entry_vote_data,
       fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
-        {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens)}
+        {ans_id, calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider)}
+      end
+    )
+  end
+
+  defp map_eligible_votes_to_popular_score(eligible_votes, token_divider) do
+    # converts eligible votes to the {total cumulative score, number of votes, tokens}
+    entry_vote_data =
+      Enum.reduce(eligible_votes, %{}, fn %{ans_id: ans_id, score: score, ans: ans}, tracker ->
+        {prev_score, prev_count, _ans_tokens} = Map.get(tracker, ans_id, {0, 0, 0})
+
+        Map.put(
+          tracker,
+          ans_id,
+          # assume each voter is assigned 10 entries which will make it fair.
+          {prev_score + score, prev_count + 1, Lexer.count_tokens(ans)}
+        )
+      end)
+
+    # calculate the score based on formula {ans_id, score}
+    Enum.map(
+      entry_vote_data,
+      fn {ans_id, {sum_of_scores, number_of_voters, tokens}} ->
+        {ans_id,
+         calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)}
       end
     )
   end
 
   # Calculate the score based on formula
-  # score(v,t) = v - 2^(t/n) where v is the normalized_voting_score and n is the modifier
-  # n = 50 for C3 & C4, n = 80 for C6
+  # score(v,t) = v - 2^(t/token_divider) where v is the normalized_voting_score
   # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-  defp calculate_formula_score(sum_of_scores, number_of_voters, tokens) do
-    normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
-    normalized_voting_score - :math.pow(2, min(1023.5, tokens / 80))
+  defp calculate_formula_score(sum_of_scores, number_of_voters, tokens, token_divider) do
+    normalized_voting_score =
+      calculate_normalized_score(sum_of_scores, number_of_voters, tokens, token_divider)
+
+    normalized_voting_score - :math.pow(2, min(1023.5, tokens / token_divider))
+  end
+
+  # Calculate the normalized score based on formula
+  # normalized_voting_score = sum_of_scores / number_of_voters / 10 * 100
+  defp calculate_normalized_score(sum_of_scores, number_of_voters, _tokens, _token_divider) do
+    sum_of_scores / number_of_voters / 10 * 100
   end
 
   @doc """
   Function returning submissions under a grader. This function returns only the
-  fields that are exposed in the /grading endpoint. The reason we select only
-  those fields is to reduce the memory usage especially when the number of
-  submissions is large i.e. > 25000 submissions.
+  fields that are exposed in the /grading endpoint.
 
-  The input parameters are the user and group_only. group_only is used to check
-  whether only the groups under the grader should be returned. The parameter is
-  a boolean which is false by default.
+  The input parameters are the user and query parameters. Query parameters are
+  used to filter the submissions.
 
-  The return value is {:ok, submissions} if no errors, else it is {:error,
-  {:forbidden, "Forbidden."}}
+  The return value is `{:ok, %{"count": count, "data": submissions}}`
+
+  # Params
+  Refer to admin_grading_controller.ex/index for the list of query parameters.
+
+  # Implementation
+  Uses helper functions to build the filter query. Helper functions are separated by tables in the database.
   """
-  @spec all_submissions_by_grader_for_index(CourseRegistration.t()) ::
-          {:ok, %{:assessments => [any()], :submissions => [any()], :users => [any()]}}
-  def all_submissions_by_grader_for_index(
+
+  @spec submissions_by_grader_for_index(CourseRegistration.t(), map()) ::
+          {:ok,
+           %{
+             :count => integer,
+             :data => %{
+               :assessments => [any()],
+               :submissions => [any()],
+               :users => [any()],
+               :teams => [any()],
+               :team_members => [any()]
+             }
+           }}
+  def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        group_only \\ false,
-        _ungraded_only \\ false
+        params
       ) do
-    show_all = not group_only
+    submission_answers_query =
+      from(ans in Answer,
+        group_by: ans.submission_id,
+        select: %{
+          submission_id: ans.submission_id,
+          xp: sum(ans.xp),
+          xp_adjustment: sum(ans.xp_adjustment),
+          graded_count: filter(count(ans.id), not is_nil(ans.grader_id))
+        }
+      )
 
-    group_filter =
-      if show_all,
-        do: "",
-        else:
-          "AND s.student_id IN (SELECT cr.id FROM course_registrations AS cr INNER JOIN groups AS g ON cr.group_id = g.id WHERE g.leader_id = #{grader.id}) OR s.student_id = #{grader.id}"
+    question_answers_query =
+      from(q in Question,
+        group_by: q.assessment_id,
+        join: a in Assessment,
+        on: q.assessment_id == a.id,
+        select: %{
+          assessment_id: q.assessment_id,
+          question_count: count(q.id),
+          title: max(a.title),
+          config_id: max(a.config_id)
+        }
+      )
 
-    # TODO: Restore ungraded filtering
-    # ... or more likely, decouple email logic from this function
-    # ungraded_where =
-    #   if ungraded_only,
-    #     do: "where s.\"gradedCount\" < assts.\"questionCount\"",
-    #     else: ""
+    query =
+      from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
+        left_join: cr in CourseRegistration,
+        on: s.student_id == cr.id,
+        as: :cr,
+        left_join: user in User,
+        on: user.id == cr.user_id,
+        as: :user,
+        left_join: group in Group,
+        on: cr.group_id == group.id,
+        as: :group,
+        inner_join: config in AssessmentConfig,
+        on: asst.config_id == config.id,
+        as: :config,
+        where: ^build_user_filter(params),
+        where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
+        where: s.assessment_id in subquery(build_assessment_config_filter(params)),
+        where: ^build_submission_filter(params),
+        where: ^build_course_registration_filter(params, grader),
+        limit: ^params[:page_size],
+        offset: ^params[:offset],
+        select: %{
+          id: s.id,
+          status: s.status,
+          xp_bonus: s.xp_bonus,
+          unsubmitted_at: s.unsubmitted_at,
+          unsubmitted_by_id: s.unsubmitted_by_id,
+          student_id: s.student_id,
+          team_id: s.team_id,
+          assessment_id: s.assessment_id,
+          is_grading_published: s.is_grading_published,
+          xp: ans.xp,
+          xp_adjustment: ans.xp_adjustment,
+          graded_count: ans.graded_count,
+          question_count: asst.question_count
+        }
+      )
 
-    # We bypass Ecto here and use a raw query to generate JSON directly from
-    # PostgreSQL, because doing it in Elixir/Erlang is too inefficient.
+    query = sort_submission(query, params[:sort_by], params[:sort_direction])
 
-    submissions =
-      case Repo.query("""
-           SELECT
-             s.id,
-             s.status,
-             s.unsubmitted_at,
-             s.unsubmitted_by_id,
-             s_ans.xp,
-             s_ans.xp_adjustment,
-             s.xp_bonus,
-             s_ans.graded_count,
-             s.student_id,
-             s.assessment_id
-           FROM
-             submissions AS s
-             LEFT JOIN (
-               SELECT
-                 ans.submission_id,
-                 SUM(ans.xp) AS xp,
-                 SUM(ans.xp_adjustment) AS xp_adjustment,
-                 COUNT(ans.id) FILTER (
-                   WHERE
-                     ans.grader_id IS NOT NULL
-                 ) AS graded_count
-               FROM
-                 answers AS ans
-               GROUP BY
-                 ans.submission_id
-             ) AS s_ans ON s_ans.submission_id = s.id
-           WHERE
-             s.assessment_id IN (
-               SELECT
-                 id
-               FROM
-                 assessments
-               WHERE
-                 assessments.course_id = #{course_id}
-             ) #{group_filter};
-           """) do
-        {:ok, %{columns: columns, rows: result}} ->
-          result
-          |> Enum.map(
-            &(columns
-              |> Enum.map(fn c -> String.to_atom(c) end)
-              |> Enum.zip(&1)
-              |> Enum.into(%{}))
-          )
-      end
+    query =
+      from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
 
-    {:ok, generate_grading_summary_view_model(submissions, course_id)}
+    submissions = Repo.all(query)
+
+    count_query =
+      from(s in Submission,
+        left_join: ans in subquery(submission_answers_query),
+        on: ans.submission_id == s.id,
+        as: :ans,
+        left_join: asst in subquery(question_answers_query),
+        on: asst.assessment_id == s.assessment_id,
+        as: :asst,
+        where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
+        where: s.assessment_id in subquery(build_assessment_config_filter(params)),
+        where: ^build_user_filter(params),
+        where: ^build_submission_filter(params),
+        where: ^build_course_registration_filter(params, grader),
+        select: count(s.id)
+      )
+
+    count = Repo.one(count_query)
+
+    {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
+  end
+
+  # Given a query from submissions_by_grader_for_index,
+  # sorts it by the relevant field and direction.
+  defp sort_submission(query, sort_by, sort_direction)
+       when sort_direction in [:asc, :desc] do
+    case sort_by do
+      :assessment_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", asst.title)}]
+        )
+
+      :assessment_type ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, asst.config_id}]
+        )
+
+      :student_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.name)}]
+        )
+
+      :student_username ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.username)}]
+        )
+
+      :group_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", group.name)}]
+        )
+
+      :progress_status ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [
+            {^sort_direction, config.is_manually_graded},
+            {^sort_direction, s.status},
+            {^sort_direction, ans.graded_count - asst.question_count},
+            {^sort_direction, s.is_grading_published}
+          ]
+        )
+
+      :xp ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, ans.xp + ans.xp_adjustment}]
+        )
+
+      _ ->
+        query
+    end
+  end
+
+  defp sort_submission(query, _sort_by, _sort_direction), do: query
+
+  def parse_sort_direction(params) do
+    case params[:sort_direction] do
+      "sort-asc" -> Map.put(params, :sort_direction, :asc)
+      "sort-desc" -> Map.put(params, :sort_direction, :desc)
+      _ -> Map.put(params, :sort_direction, nil)
+    end
+  end
+
+  def parse_sort_by(params) do
+    case params[:sort_by] do
+      "assessmentName" -> Map.put(params, :sort_by, :assessment_name)
+      "assessmentType" -> Map.put(params, :sort_by, :assessment_type)
+      "studentName" -> Map.put(params, :sort_by, :student_name)
+      "studentUsername" -> Map.put(params, :sort_by, :student_username)
+      "groupName" -> Map.put(params, :sort_by, :group_name)
+      "progressStatus" -> Map.put(params, :sort_by, :progress_status)
+      "xp" -> Map.put(params, :sort_by, :xp)
+      _ -> Map.put(params, :sort_by, nil)
+    end
+  end
+
+  defp build_assessment_filter(params, course_id) do
+    assessments_filters =
+      Enum.reduce(params, dynamic(true), fn
+        {:title, value}, dynamic ->
+          dynamic([assessment], ^dynamic and ilike(assessment.title, ^"%#{value}%"))
+
+        {_, _}, dynamic ->
+          dynamic
+      end)
+
+    from(a in Assessment,
+      where: a.course_id == ^course_id,
+      where: ^assessments_filters,
+      select: a.id
+    )
+  end
+
+  defp build_submission_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {:status, value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.status == ^value)
+
+      {:is_fully_graded, value}, dynamic ->
+        dynamic(
+          [ans: ans, asst: asst],
+          ^dynamic and asst.question_count == ans.graded_count == ^value
+        )
+
+      {:is_grading_published, value}, dynamic ->
+        dynamic([submission], ^dynamic and submission.is_grading_published == ^value)
+
+      {_, _}, dynamic ->
+        dynamic
+    end)
+  end
+
+  defp build_course_registration_filter(params, grader) do
+    Enum.reduce(params, dynamic(true), fn
+      {:group, true}, dynamic ->
+        dynamic(
+          [submission],
+          (^dynamic and
+             submission.student_id in subquery(
+               from(cr in CourseRegistration,
+                 join: g in Group,
+                 on: cr.group_id == g.id,
+                 where: g.leader_id == ^grader.id,
+                 select: cr.id
+               )
+             )) or submission.student_id == ^grader.id
+        )
+
+      {:group_name, value}, dynamic ->
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(cr in CourseRegistration,
+                join: g in Group,
+                on: cr.group_id == g.id,
+                where: g.name == ^value,
+                select: cr.id
+              )
+            )
+        )
+
+      {_, _}, dynamic ->
+        dynamic
+    end)
+  end
+
+  defp build_user_filter(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {:name, value}, dynamic ->
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(user in User,
+                where: ilike(user.name, ^"%#{value}%"),
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
+              )
+            )
+        )
+
+      {:username, value}, dynamic ->
+        dynamic(
+          [submission],
+          ^dynamic and
+            submission.student_id in subquery(
+              from(user in User,
+                where: ilike(user.username, ^"%#{value}%"),
+                inner_join: cr in CourseRegistration,
+                on: user.id == cr.user_id,
+                select: cr.id
+              )
+            )
+        )
+
+      {_, _}, dynamic ->
+        dynamic
+    end)
+  end
+
+  defp build_assessment_config_filter(params) do
+    assessment_config_filters =
+      Enum.reduce(params, dynamic(true), fn
+        {:type, value}, dynamic ->
+          dynamic([assessment_config: config], ^dynamic and config.type == ^value)
+
+        {:is_manually_graded, value}, dynamic ->
+          dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
+
+        {_, _}, dynamic ->
+          dynamic
+      end)
+
+    from(a in Assessment,
+      inner_join: config in AssessmentConfig,
+      on: a.config_id == config.id,
+      as: :assessment_config,
+      where: ^assessment_config_filters,
+      select: a.id
+    )
   end
 
   defp generate_grading_summary_view_model(submissions, course_id) do
@@ -1333,31 +2252,51 @@ defmodule Cadet.Assessments do
       |> preload([a, q, ac], questions: q, config: ac)
       |> Repo.all()
 
+    team_ids = submissions |> Enum.map(& &1.team_id) |> Enum.uniq()
+
+    teams =
+      Team
+      |> where([t], t.id in ^team_ids)
+      |> Repo.all()
+
+    team_members =
+      TeamMember
+      |> where([tm], tm.team_id in ^team_ids)
+      |> Repo.all()
+
     %{
       users: users,
       assessments: assessments,
-      submissions: submissions
+      submissions: submissions,
+      teams: teams,
+      team_members: team_members
     }
   end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
-          {:ok, [Answer.t()]} | {:error, {:bad_request, String.t()}}
+          {:ok, {[Answer.t()], Assessment.t()}}
+          | {:error, {:bad_request, String.t()}}
   def get_answers_in_submission(id) when is_ecto_id(id) do
     answer_query =
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
-      |> join(:inner, [a, ..., ast], ac in assoc(ast, :config))
+      |> join(:inner, [..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
-      |> join(:left, [a, ..., g], gu in assoc(g, :user))
+      |> join(:left, [_, ..., g], gu in assoc(g, :user))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
-      |> join(:inner, [a, ..., s], st in assoc(s, :student))
-      |> join(:inner, [a, ..., st], u in assoc(st, :user))
-      |> preload([_, q, ast, ac, g, gu, s, st, u],
+      |> join(:left, [_, ..., s], st in assoc(s, :student))
+      |> join(:left, [..., st], u in assoc(st, :user))
+      |> join(:left, [..., s, _, _], t in assoc(s, :team))
+      |> join(:left, [..., t], tm in assoc(t, :team_members))
+      |> join(:left, [..., tm], tms in assoc(tm, :student))
+      |> join(:left, [..., tms], tmu in assoc(tms, :user))
+      |> preload([_, q, ast, ac, g, gu, s, st, u, t, tm, tms, tmu],
         question: {q, assessment: {ast, config: ac}},
         grader: {g, user: gu},
-        submission: {s, student: {st, user: u}}
+        submission:
+          {s, student: {st, user: u}, team: {t, team_members: {tm, student: {tms, user: tmu}}}}
       )
 
     answers =
@@ -1367,7 +2306,8 @@ defmodule Cadet.Assessments do
       |> Enum.map(fn ans ->
         if ans.question.type == :voting do
           empty_contest_entries = Map.put(ans.question.question, :contest_entries, [])
-          empty_contest_leaderboard = Map.put(empty_contest_entries, :contest_leaderboard, [])
+          empty_popular_leaderboard = Map.put(empty_contest_entries, :popular_leaderboard, [])
+          empty_contest_leaderboard = Map.put(empty_popular_leaderboard, :contest_leaderboard, [])
           question = Map.put(ans.question, :question, empty_contest_leaderboard)
           Map.put(ans, :question, question)
         else
@@ -1378,11 +2318,13 @@ defmodule Cadet.Assessments do
     if answers == [] do
       {:error, {:bad_request, "Submission is not found."}}
     else
-      {:ok, answers}
+      assessment_id = Submission |> where(id: ^id) |> select([s], s.assessment_id) |> Repo.one()
+      assessment = Assessment |> where(id: ^assessment_id) |> Repo.one()
+      {:ok, {answers, assessment}}
     end
   end
 
-  defp is_fully_graded?(%Answer{submission_id: submission_id}) do
+  defp is_fully_graded?(submission_id) do
     submission =
       Submission
       |> Repo.get_by(id: submission_id)
@@ -1403,6 +2345,27 @@ defmodule Cadet.Assessments do
     question_count == graded_count
   end
 
+  def is_fully_autograded?(submission_id) do
+    submission =
+      Submission
+      |> Repo.get_by(id: submission_id)
+
+    question_count =
+      Question
+      |> where(assessment_id: ^submission.assessment_id)
+      |> select([q], count(q.id))
+      |> Repo.one()
+
+    graded_count =
+      Answer
+      |> where([a], submission_id: ^submission_id)
+      |> where([a], a.autograding_status == :success)
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    question_count == graded_count
+  end
+
   @spec update_grading_info(
           %{submission_id: integer() | String.t(), question_id: integer() | String.t()},
           %{},
@@ -1413,7 +2376,7 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %CourseRegistration{id: grader_id}
+        cr = %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)
@@ -1432,18 +2395,27 @@ defmodule Cadet.Assessments do
 
     is_own_submission = grader_id == answer.submission.student_id
 
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: {a, :config})
+      |> Repo.get(submission_id)
+
+    is_grading_auto_published = submission.assessment.config.is_grading_auto_published
+
     with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
          {:status, true} <-
            {:status, answer.submission.status == :submitted or is_own_submission},
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
-      if is_fully_graded?(answer) and not is_own_submission do
-        # Every answer in this submission has been graded manually
-        Notifications.write_notification_when_graded(submission_id, :graded)
-      else
-        {:ok, nil}
+      update_xp_bonus(submission)
+
+      if is_grading_auto_published and is_fully_graded?(submission_id) do
+        publish_grading(submission_id, cr)
       end
+
+      {:ok, nil}
     else
       {:answer_found?, false} ->
         {:error, {:bad_request, "Answer not found or user not permitted to grade."}}
@@ -1529,11 +2501,22 @@ defmodule Cadet.Assessments do
   end
 
   defp find_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
+    {:ok, team} = find_team(assessment.id, cr.id)
+
     submission =
-      Submission
-      |> where(student_id: ^cr.id)
-      |> where(assessment_id: ^assessment.id)
-      |> Repo.one()
+      case team do
+        %Team{} ->
+          Submission
+          |> where(team_id: ^team.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+
+        nil ->
+          Submission
+          |> where(student_id: ^cr.id)
+          |> where(assessment_id: ^assessment.id)
+          |> Repo.one()
+      end
 
     if submission do
       {:ok, submission}
@@ -1635,12 +2618,24 @@ defmodule Cadet.Assessments do
   end
 
   defp create_empty_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
-    %Submission{}
-    |> Submission.changeset(%{student: cr, assessment: assessment})
-    |> Repo.insert()
-    |> case do
-      {:ok, submission} -> {:ok, submission}
-      {:error, _} -> {:error, :race_condition}
+    {:ok, team} = find_team(assessment.id, cr.id)
+
+    case team do
+      %Team{} ->
+        %Submission{}
+        |> Submission.changeset(%{team: team, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+        end
+
+      nil ->
+        %Submission{}
+        |> Submission.changeset(%{student: cr, assessment: assessment})
+        |> Repo.insert()
+        |> case do
+          {:ok, submission} -> {:ok, submission}
+        end
     end
   end
 
@@ -1668,14 +2663,62 @@ defmodule Cadet.Assessments do
           answer: answer_content,
           question_id: question.id,
           submission_id: submission.id,
-          type: question.type
+          type: question.type,
+          last_modified_at: Timex.now()
         })
 
       Repo.insert(
         answer_changeset,
-        on_conflict: [set: [answer: get_change(answer_changeset, :answer)]],
+        on_conflict: [
+          set: [answer: get_change(answer_changeset, :answer), last_modified_at: Timex.now()]
+        ],
         conflict_target: [:submission_id, :question_id]
       )
+    end
+  end
+
+  def has_last_modified_answer?(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        last_modified_at,
+        force_submit
+      ) do
+    with {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+         {:status, true} <- {:status, force_submit or submission.status != :submitted},
+         {:ok, is_modified} <- answer_last_modified?(submission, question, last_modified_at) do
+      {:ok, is_modified}
+    else
+      {:status, _} ->
+        {:error, {:forbidden, "Assessment submission already finalised"}}
+
+      {:error, :race_condition} ->
+        {:error, {:internal_server_error, "Please try again later."}}
+
+      {:error, :invalid_vote} ->
+        {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
+
+      _ ->
+        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+    end
+  end
+
+  defp answer_last_modified?(
+         submission = %Submission{},
+         question = %Question{},
+         last_modified_at
+       ) do
+    case Repo.get_by(Answer, submission_id: submission.id, question_id: question.id) do
+      %Answer{last_modified_at: existing_last_modified_at} ->
+        existing_iso8601 = DateTime.to_iso8601(existing_last_modified_at)
+
+        if existing_iso8601 == last_modified_at do
+          {:ok, false}
+        else
+          {:ok, true}
+        end
+
+      nil ->
+        {:ok, false}
     end
   end
 

@@ -84,6 +84,7 @@ defmodule CadetWeb.AssessmentsHelpers do
 
     transform_map_for_view(answer, %{
       answer: answer_builder_for(question_type),
+      lastModifiedAt: :last_modified_at,
       grader: grader_builder(grader),
       gradedAt: graded_at_builder(grader),
       xp: &((&1.xp || 0) + (&1.xp_adjustment || 0)),
@@ -101,7 +102,7 @@ defmodule CadetWeb.AssessmentsHelpers do
     })
   end
 
-  defp build_contest_leaderboard_entry(leaderboard_ans) do
+  def build_contest_leaderboard_entry(leaderboard_ans) do
     Map.put(
       transform_map_for_view(leaderboard_ans, %{
         submission_id: :submission_id,
@@ -110,6 +111,18 @@ defmodule CadetWeb.AssessmentsHelpers do
       }),
       "final_score",
       Float.round(leaderboard_ans.relative_score, 2)
+    )
+  end
+
+  def build_popular_leaderboard_entry(leaderboard_ans) do
+    Map.put(
+      transform_map_for_view(leaderboard_ans, %{
+        submission_id: :submission_id,
+        answer: :answer,
+        student_name: :student_name
+      }),
+      "final_score",
+      Float.round(leaderboard_ans.popular_score, 2)
     )
   end
 
@@ -180,9 +193,13 @@ defmodule CadetWeb.AssessmentsHelpers do
           solutionTemplate: "template",
           contestEntries:
             &Enum.map(&1[:contest_entries], fn entry -> build_contest_entry(entry) end),
-          contestLeaderboard:
+          scoreLeaderboard:
             &Enum.map(&1[:contest_leaderboard], fn entry ->
               build_contest_leaderboard_entry(entry)
+            end),
+          popularVoteLeaderboard:
+            &Enum.map(&1[:popular_leaderboard], fn entry ->
+              build_popular_leaderboard_entry(entry)
             end)
         })
     end

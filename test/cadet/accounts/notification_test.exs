@@ -1,5 +1,5 @@
 defmodule Cadet.Accounts.NotificationTest do
-  alias Cadet.Accounts.{Notification, Notifications}
+  alias Cadet.Accounts.{Notification, Notifications, TeamMember}
 
   use Cadet.ChangesetCase, entity: Notification
 
@@ -11,7 +11,12 @@ defmodule Cadet.Accounts.NotificationTest do
     student_user = insert(:user)
     avenger = insert(:course_registration, %{user: avenger_user, role: :staff})
     student = insert(:course_registration, %{user: student_user, role: :student})
-    submission = insert(:submission, %{student: student, assessment: assessment})
+    individual_submission = insert(:submission, %{student: student, assessment: assessment})
+
+    team = insert(:team)
+    insert(:team_member, %{team: team})
+    insert(:team_member, %{team: team})
+    team_submission = insert(:submission, %{team: team, assessment: assessment, student: nil})
 
     valid_params_for_student = %{
       type: :new,
@@ -27,7 +32,7 @@ defmodule Cadet.Accounts.NotificationTest do
       role: avenger.role,
       course_reg_id: avenger.id,
       assessment_id: assessment.id,
-      submission_id: submission.id
+      submission_id: individual_submission.id
     }
 
     {:ok,
@@ -35,7 +40,9 @@ defmodule Cadet.Accounts.NotificationTest do
        assessment: assessment,
        avenger: avenger,
        student: student,
-       submission: submission,
+       team: team,
+       individual_submission: individual_submission,
+       team_submission: team_submission,
        valid_params_for_student: valid_params_for_student,
        valid_params_for_avenger: valid_params_for_avenger
      }}
@@ -106,7 +113,7 @@ defmodule Cadet.Accounts.NotificationTest do
       assessment: assessment,
       avenger: avenger,
       student: student,
-      submission: submission
+      individual_submission: individual_submission
     } do
       params_student = %{
         type: :new,
@@ -122,7 +129,7 @@ defmodule Cadet.Accounts.NotificationTest do
         role: avenger.role,
         course_reg_id: avenger.id,
         assessment_id: assessment.id,
-        submission_id: submission.id
+        submission_id: individual_submission.id
       }
 
       assert {:ok, _} = Notifications.write(params_student)
@@ -133,7 +140,7 @@ defmodule Cadet.Accounts.NotificationTest do
       assessment: assessment,
       avenger: avenger,
       student: student,
-      submission: submission
+      individual_submission: individual_submission
     } do
       params_student = %{
         type: :new,
@@ -149,7 +156,7 @@ defmodule Cadet.Accounts.NotificationTest do
         role: avenger.role,
         course_reg_id: avenger.id,
         assessment_id: assessment.id,
-        submission_id: submission.id
+        submission_id: individual_submission.id
       }
 
       Notifications.write(params_student)
@@ -170,7 +177,7 @@ defmodule Cadet.Accounts.NotificationTest do
                from(n in Notification,
                  where:
                    n.type == ^:submitted and n.course_reg_id == ^avenger.id and
-                     n.submission_id == ^submission.id
+                     n.submission_id == ^individual_submission.id
                )
              )
     end
@@ -277,38 +284,139 @@ defmodule Cadet.Accounts.NotificationTest do
       assert %{type: :submitted} = notification
     end
 
+    test "receives notification when submitted [team submission]" do
+      assessment = insert(:assessment, %{is_published: true})
+      avenger = insert(:course_registration, %{role: :staff})
+      group = insert(:group, %{leader: avenger})
+      team = insert(:team)
+      team_submission = insert(:submission, %{team: team, assessment: assessment, student: nil})
+
+      Enum.each(1..2, fn _ ->
+        student = insert(:course_registration, %{role: :student, group: group})
+        insert(:team_member, %{team: team, student: student})
+      end)
+
+      Notifications.write_notification_when_student_submits(team_submission)
+
+      team_members =
+        Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
+
+      students = Enum.map(team_members, & &1.student)
+
+      Enum.each(students, fn student ->
+        notification =
+          Repo.get_by(Notification,
+            course_reg_id: student.id,
+            type: :submitted,
+            submission_id: team_submission.id
+          )
+
+        assert notification == nil
+      end)
+    end
+
     test "receives notification when autograded", %{
       assessment: assessment,
       student: student,
-      submission: submission
+      individual_submission: individual_submission
     } do
-      Notifications.write_notification_when_graded(submission.id, :autograded)
+      Notifications.write_notification_when_published(
+        individual_submission.id,
+        :published_grading
+      )
 
       notification =
         Repo.get_by(Notification,
           course_reg_id: student.id,
-          type: :autograded,
+          type: :published_grading,
           assessment_id: assessment.id
         )
 
-      assert %{type: :autograded} = notification
+      assert %{type: :published_grading} = notification
+    end
+
+    test "no notification when no submission", %{
+      assessment: assessment,
+      student: student
+    } do
+      Notifications.write_notification_when_published(-1, :published_grading)
+
+      notification =
+        Repo.get_by(Notification,
+          course_reg_id: student.id,
+          type: :published_grading,
+          assessment_id: assessment.id
+        )
+
+      assert notification == nil
+    end
+
+    test "receives notification when autograded [team submission]", %{
+      assessment: assessment,
+      team: team,
+      team_submission: team_submission
+    } do
+      Notifications.write_notification_when_published(team_submission.id, :published_grading)
+
+      team_members =
+        Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
+
+      students = Enum.map(team_members, & &1.student)
+
+      Enum.each(students, fn student ->
+        notification =
+          Repo.get_by(Notification,
+            course_reg_id: student.id,
+            type: :published_grading,
+            assessment_id: assessment.id
+          )
+
+        assert %{type: :published_grading} = notification
+      end)
     end
 
     test "receives notification when manually graded", %{
       assessment: assessment,
       student: student,
-      submission: submission
+      individual_submission: individual_submission
     } do
-      Notifications.write_notification_when_graded(submission.id, :graded)
+      Notifications.write_notification_when_published(
+        individual_submission.id,
+        :published_grading
+      )
 
       notification =
         Repo.get_by(Notification,
           course_reg_id: student.id,
-          type: :graded,
+          type: :published_grading,
           assessment_id: assessment.id
         )
 
-      assert %{type: :graded} = notification
+      assert %{type: :published_grading} = notification
+    end
+
+    test "receives notification when maunally graded [team submission]", %{
+      assessment: assessment,
+      team: team,
+      team_submission: team_submission
+    } do
+      Notifications.write_notification_when_published(team_submission.id, :published_grading)
+
+      team_members =
+        Repo.all(from(tm in TeamMember, where: tm.team_id == ^team.id, preload: :student))
+
+      students = Enum.map(team_members, & &1.student)
+
+      Enum.each(students, fn student ->
+        notification =
+          Repo.get_by(Notification,
+            course_reg_id: student.id,
+            type: :published_grading,
+            assessment_id: assessment.id
+          )
+
+        assert %{type: :published_grading} = notification
+      end)
     end
 
     test "every student receives notifications when a new assessment is published", %{

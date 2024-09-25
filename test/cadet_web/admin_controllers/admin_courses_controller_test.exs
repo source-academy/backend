@@ -43,6 +43,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         "enableGame" => false,
         "enableAchievements" => false,
         "enableSourcecast" => true,
+        "enableStories" => false,
         "sourceChapter" => 1,
         "sourceVariant" => "default",
         "moduleHelpText" => "help"
@@ -65,6 +66,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         "courseName" => "Data Structures and Algorithms",
         "courseShortName" => "CS2040S",
         "enableGame" => false,
+        "enableStories" => false,
         "enableAchievements" => false,
         "enableSourcecast" => true,
         "moduleHelpText" => "help"
@@ -132,6 +134,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "enableGame" => false,
           "enableAchievements" => false,
           "enableSourcecast" => true,
+          "enableStories" => false,
           "moduleHelpText" => "help",
           "sourceVariant" => "default"
         })
@@ -154,7 +157,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           is_manually_graded: false,
           order: 2,
           type: "Mission2",
-          course: course
+          course: course,
+          has_voting_features: true,
+          has_token_counter: true
         })
 
       resp =
@@ -169,7 +174,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "displayInDashboard" => true,
           "isManuallyGraded" => true,
           "type" => "Mission1",
-          "assessmentConfigId" => config1.id
+          "assessmentConfigId" => config1.id,
+          "hasVotingFeatures" => false,
+          "hasTokenCounter" => false,
+          "isGradingAutoPublished" => false
         },
         %{
           "earlySubmissionXp" => 200,
@@ -177,7 +185,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "displayInDashboard" => false,
           "isManuallyGraded" => false,
           "type" => "Mission2",
-          "assessmentConfigId" => config2.id
+          "assessmentConfigId" => config2.id,
+          "hasVotingFeatures" => true,
+          "hasTokenCounter" => true,
+          "isGradingAutoPublished" => false
         },
         %{
           "earlySubmissionXp" => 200,
@@ -185,7 +196,10 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "displayInDashboard" => true,
           "isManuallyGraded" => true,
           "type" => "Mission3",
-          "assessmentConfigId" => config3.id
+          "assessmentConfigId" => config3.id,
+          "hasVotingFeatures" => false,
+          "hasTokenCounter" => false,
+          "isGradingAutoPublished" => false
         }
       ]
 

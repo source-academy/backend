@@ -103,7 +103,7 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
     bypass_return_token(bypass, @okay_token)
 
     assert {:ok, %{token: @okay_token, username: @username}} =
-             OpenID.authorise(@config, "dummy_code", "", "")
+             OpenID.authorise(@config, %{code: "dummy_code", redirect_uri: ""})
 
     assert {:ok, @username} == OpenID.get_name(@config, @okay_token)
   end
@@ -114,7 +114,7 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
     bypass_return_token(bypass, @no_username_token)
 
     assert {:error, :invalid_credentials, "No username specified in token"} ==
-             OpenID.authorise(@config, "dummy_code", "", "")
+             OpenID.authorise(@config, %{code: "dummy_code", redirect_uri: ""})
   end
 
   test "get_name with no name in token" do
@@ -128,7 +128,7 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
     bypass_return_token(bypass, @expired_token)
 
     assert {:error, :invalid_credentials, "Failed to verify token claims (token expired?)"} ==
-             OpenID.authorise(@config, "dummy_code", "", "")
+             OpenID.authorise(@config, %{code: "dummy_code", redirect_uri: ""})
   end
 
   @invalid_signature_token "eyJraWQiOiIxIiwiYWxnIjoiUlMyNTYifQ.eyJjb2duaXRvOmdyb3VwcyI6WyJhZG1pbiJdLCJ1c2VybmFtZSI6InVzZXJuYW1lIiwiZXhwIjowfQ.M6VMo5_xtFAl75kwpLWsDRArYJLpqIp3qkks3TvExQXqOZ9eI98bm_R1VFMkbJ0-URQqURiBO6SYA1uNdXoEMoDtv0tV-P26fEy5pcdGC-sYXkbgXsw4iKAuSUfc4GSwDLEcYb9n6gQAG6pqbHAvft_L3f6RLLhP6GWWnOZ3upRDwsYcZSyYvDdpuVpCtHOfsMPANeXmZPHbYoRWQULU2okklPmXrc4sO0HO_zVocMus9DDf9hF0NmGl0diUQBA-w3i9hkcqsuhmxhOLApPre49TK37HDd1ileo9GIMGMPuOfXd44d8fHg5yr5MVqJLeH2RoHh9ZD_myPnTBG0GptA"
@@ -137,7 +137,7 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
     bypass_return_token(bypass, @invalid_signature_token)
 
     assert {:error, :invalid_credentials, "Failed to verify token"} ==
-             OpenID.authorise(@config, "dummy_code", "", "")
+             OpenID.authorise(@config, %{code: "dummy_code", redirect_uri: ""})
   end
 
   test "non-successful HTTP status", %{bypass: bypass} do
@@ -146,7 +146,7 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
     end)
 
     assert {:error, :invalid_credentials, "Failed to fetch token from OpenID provider"} ==
-             OpenID.authorise(@config, "dummy_code", "", "")
+             OpenID.authorise(@config, %{code: "dummy_code", redirect_uri: ""})
   end
 
   test "missing token", %{bypass: bypass} do
@@ -157,6 +157,6 @@ defmodule Cadet.Auth.Providers.OpenIDTest do
     end)
 
     assert {:error, :invalid_credentials, "Missing token in response from OpenID provider"} ==
-             OpenID.authorise(@config, "dummy_code", "", "")
+             OpenID.authorise(@config, %{code: "dummy_code", redirect_uri: ""})
   end
 end

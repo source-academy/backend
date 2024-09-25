@@ -42,4 +42,24 @@ defmodule Cadet.SharedHelperTest do
              }
     end
   end
+
+  test "process_map_booleans works correctly" do
+    map = %{:hello_world => "true", :bye_world => "false"}
+    flags = [:hello_world, :bye_world]
+
+    assert process_map_booleans(map, flags) == %{
+             :hello_world => true,
+             :bye_world => false
+           }
+  end
+
+  test "process_map_integers works correctly" do
+    map = %{:hello_world => "1", :bye_world => "2"}
+    flags = [:hello_world, :bye_world]
+
+    assert process_map_integers(map, flags) == %{
+             :hello_world => 1,
+             :bye_world => 2
+           }
+  end
 end

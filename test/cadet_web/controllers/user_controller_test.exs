@@ -42,7 +42,8 @@ defmodule CadetWeb.UserControllerTest do
           assessment: assessment,
           student: cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -106,6 +107,7 @@ defmodule CadetWeb.UserControllerTest do
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
+          "enableStories" => false,
           "courseShortName" => "CS1101S",
           "moduleHelpText" => "Help Text",
           "courseName" => "Programming Methodology",
@@ -121,7 +123,10 @@ defmodule CadetWeb.UserControllerTest do
             "isManuallyGraded" => true,
             "assessmentConfigId" => config1.id,
             "earlySubmissionXp" => 200,
-            "hoursBeforeEarlyXpDecay" => 48
+            "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           },
           %{
             "type" => "test type 2",
@@ -129,7 +134,10 @@ defmodule CadetWeb.UserControllerTest do
             "isManuallyGraded" => true,
             "assessmentConfigId" => config2.id,
             "earlySubmissionXp" => 200,
-            "hoursBeforeEarlyXpDecay" => 48
+            "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           },
           %{
             "type" => "test type 3",
@@ -137,7 +145,10 @@ defmodule CadetWeb.UserControllerTest do
             "isManuallyGraded" => true,
             "assessmentConfigId" => config3.id,
             "earlySubmissionXp" => 200,
-            "hoursBeforeEarlyXpDecay" => 48
+            "hoursBeforeEarlyXpDecay" => 48,
+            "hasVotingFeatures" => false,
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           }
         ]
       }
@@ -190,7 +201,8 @@ defmodule CadetWeb.UserControllerTest do
           assessment: assessment,
           student: test_cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -261,7 +273,8 @@ defmodule CadetWeb.UserControllerTest do
           assessment: assessment,
           student: cr,
           status: :submitted,
-          xp_bonus: 100
+          xp_bonus: 100,
+          is_grading_published: true
         })
 
       insert(:answer, %{
@@ -306,6 +319,7 @@ defmodule CadetWeb.UserControllerTest do
           "enableGame" => true,
           "enableSourcecast" => true,
           "courseShortName" => "CS1101S",
+          "enableStories" => false,
           "moduleHelpText" => "Help Text",
           "courseName" => "Programming Methodology",
           "sourceChapter" => 1,

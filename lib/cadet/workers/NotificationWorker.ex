@@ -73,8 +73,11 @@ defmodule Cadet.Workers.NotificationWorker do
           for avenger_cr <- avengers_crs do
             avenger = Cadet.Accounts.get_user(avenger_cr.user_id)
 
-            {:ok, %{submissions: ungraded_submissions}} =
-              Cadet.Assessments.all_submissions_by_grader_for_index(avenger_cr, true, true)
+            {:ok, %{data: %{submissions: ungraded_submissions}}} =
+              Cadet.Assessments.submissions_by_grader_for_index(avenger_cr, %{
+                "group" => "true",
+                "isFullyGraded" => "false"
+              })
 
             if Enum.count(ungraded_submissions) < ungraded_threshold do
               IO.puts("[AVENGER_BACKLOG] below threshold!")

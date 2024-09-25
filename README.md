@@ -62,6 +62,12 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    $ sudo service postgresql restart
    ```
 
+   By default, the database is populated with 10 students and 5 assessments. Each student will have a submission to the corresponding submission. This can be changed in `priv/repo/seeds.exs` with the variables `number_of_students`, `number_of_assessments` and `number_of_questions`. Save the changes and run:
+
+   ```bash
+   $ mix ecto.reset
+   ```
+
 4. Run the server on your local machine
 
    ```bash
@@ -141,7 +147,7 @@ Where there is a conflict between the two, the first one (lexmag) shall be the o
 
 ## Entity-Relationship Diagram
 
-Generated with [DBeaver](https://dbeaver.io/) on 03 June 2022
+Generated with [DBeaver](https://dbeaver.io/) on 19 May 2024
 
 ![Entity-Relationship Diagram for cadet](schema.png)
 

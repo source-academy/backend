@@ -28,7 +28,14 @@ defmodule CadetWeb.AssessmentsView do
       private: &password_protected?(&1.password),
       isPublished: :is_published,
       questionCount: :question_count,
-      gradedCount: &(&1.graded_count || 0)
+      gradedCount: &(&1.graded_count || 0),
+      isGradingPublished: :is_grading_published,
+      earlySubmissionXp: & &1.config.early_submission_xp,
+      maxTeamSize: :max_team_size,
+      hasVotingFeatures: :has_voting_features,
+      hasTokenCounter: :has_token_counter,
+      isVotingPublished: :is_voting_published,
+      hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay
     })
   end
 
@@ -44,6 +51,7 @@ defmodule CadetWeb.AssessmentsView do
         number: :number,
         reading: :reading,
         longSummary: :summary_long,
+        hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         questions:
           &Enum.map(&1.questions, fn question ->
@@ -54,6 +62,21 @@ defmodule CadetWeb.AssessmentsView do
 
             map
           end)
+      }
+    )
+  end
+
+  def render("leaderboard.json", %{leaderboard: leaderboard}) do
+    render_many(leaderboard, CadetWeb.AdminAssessmentsView, "contestEntry.json", as: :contestEntry)
+  end
+
+  def render("contestEntry.json", %{contestEntry: contestEntry}) do
+    transform_map_for_view(
+      contestEntry,
+      %{
+        student_name: :student_name,
+        answer: & &1.answer["code"],
+        final_score: "final_score"
       }
     )
   end

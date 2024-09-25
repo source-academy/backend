@@ -11,14 +11,16 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestion do
     field(:template, :string)
     field(:contest_number, :string)
     field(:reveal_hours, :integer)
+    field(:token_divider, :integer)
   end
 
-  @required_fields ~w(content contest_number reveal_hours)a
+  @required_fields ~w(content contest_number reveal_hours token_divider)a
   @optional_fields ~w(prepend template)a
 
   def changeset(question, params \\ %{}) do
     question
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> validate_number(:token_divider, greater_than: 0)
   end
 end

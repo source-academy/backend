@@ -16,6 +16,7 @@ defmodule Cadet.Assessments.Answer do
   schema "answers" do
     # used to compare answers with others
     field(:relative_score, :float, default: 0.0)
+    field(:popular_score, :float, default: 0.0)
     field(:xp, :integer, default: 0)
     field(:xp_adjustment, :integer, default: 0)
     field(:comments, :string)
@@ -23,6 +24,7 @@ defmodule Cadet.Assessments.Answer do
     field(:autograding_results, {:array, :map}, default: [])
     field(:answer, :map)
     field(:type, QuestionType, virtual: true)
+    field(:last_modified_at, :utc_datetime_usec)
 
     belongs_to(:grader, CourseRegistration)
     belongs_to(:submission, Submission)
@@ -32,7 +34,7 @@ defmodule Cadet.Assessments.Answer do
   end
 
   @required_fields ~w(answer submission_id question_id type)a
-  @optional_fields ~w(xp xp_adjustment grader_id comments)a
+  @optional_fields ~w(xp xp_adjustment grader_id comments last_modified_at)a
 
   def changeset(answer, params) do
     answer
@@ -121,5 +123,13 @@ defmodule Cadet.Assessments.Answer do
   def contest_score_update_changeset(answer, contest_score_param) do
     answer
     |> cast(contest_score_param, [:relative_score])
+  end
+
+  @doc """
+  Used to update popular_score of answer to contest_score
+  """
+  def popular_score_update_changeset(answer, popular_score_param) do
+    answer
+    |> cast(popular_score_param, [:popular_score])
   end
 end
