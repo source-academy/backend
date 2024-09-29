@@ -93,8 +93,10 @@ defmodule Cadet.Autograder.ResultStoreWorker do
     assessment = Repo.get(Assessment, submission.assessment_id)
     assessment_config = Repo.get_by(AssessmentConfig, id: assessment.config_id)
     is_grading_auto_published = assessment_config.is_grading_auto_published
+    is_manually_graded = assessment_config.is_manually_graded
 
-    if Assessments.is_fully_autograded?(submission_id) and is_grading_auto_published do
+    if Assessments.is_fully_autograded?(submission_id) and is_grading_auto_published and
+         not is_manually_graded do
       Assessments.publish_grading(submission_id)
     end
 
