@@ -12,6 +12,7 @@ defmodule Cadet.Assessments do
     Notification,
     Notifications,
     User,
+    Teams,
     Team,
     TeamMember,
     CourseRegistration,
@@ -305,7 +306,7 @@ defmodule Cadet.Assessments do
       is_grading_published =
         Submission
         |> where(assessment_id: ^id)
-        |> where(student_id: ^course_reg.id)
+        |> where([s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
         |> select([s], s.is_grading_published)
         |> Repo.one()
 
@@ -1211,6 +1212,14 @@ defmodule Cadet.Assessments do
     # allows staff to unpublish own assessment
     bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
+    # assumption: if team assessment, all team members are under the same avenger
+    effective_student_id =
+      if is_nil(submission.student_id) do
+        Teams.get_first_member(submission.team_id).student_id
+      else
+        submission.student_id
+      end
+
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
          {:status, :submitted} <- {:status, submission.status},
          {:is_manually_graded?, true} <-
@@ -1219,7 +1228,7 @@ defmodule Cadet.Assessments do
          {:allowed_to_publish?, true} <-
            {:allowed_to_publish?,
             role == :admin or bypass or
-              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+              Cadet.Accounts.Query.avenger_of?(cr, effective_student_id)} do
       {:ok, submission}
     end
   end
