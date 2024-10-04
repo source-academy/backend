@@ -1250,9 +1250,17 @@ defmodule Cadet.Assessments do
         |> Submission.changeset(%{is_grading_published: false})
         |> Repo.update()
 
+        # assumption: if team assessment, all team members are under the same avenger
+        effective_student_id =
+          if is_nil(submission.student_id) do
+            Teams.get_first_member(submission.team_id).student_id
+          else
+            submission.student_id
+          end
+
         Notifications.handle_unpublish_grades_notifications(
           submission.assessment.id,
-          Repo.get(CourseRegistration, submission.student_id)
+          Repo.get(CourseRegistration, effective_student_id)
         )
 
         {:ok, nil}
