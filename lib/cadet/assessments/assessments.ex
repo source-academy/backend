@@ -306,7 +306,7 @@ defmodule Cadet.Assessments do
       is_grading_published =
         Submission
         |> where(assessment_id: ^id)
-        |> where(student_id: ^course_reg.id)
+        |> where([s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
         |> select([s], s.is_grading_published)
         |> Repo.one()
 
