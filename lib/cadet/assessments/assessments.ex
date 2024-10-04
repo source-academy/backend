@@ -1212,6 +1212,7 @@ defmodule Cadet.Assessments do
     # allows staff to unpublish own assessment
     bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
+    # assumption: if team assessment, all team members are under the same avenger
     effective_student_id =
       if is_nil(submission.student_id) do
         Teams.get_first_member(submission.team_id).student_id
