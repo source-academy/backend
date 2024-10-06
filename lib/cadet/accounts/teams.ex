@@ -324,4 +324,24 @@ defmodule Cadet.Accounts.Teams do
 
     length(submission) > 0
   end
+
+  @doc """
+  Get the first member of a team.
+
+  ## Parameters
+
+    * `team_id` - The team id of the team to get the first member from.
+
+  ## Returns
+
+  Returns the first member of the team.
+
+  """
+
+  def get_first_member(team_id) do
+    TeamMember
+    |> where([tm], tm.team_id == ^team_id)
+    |> limit(1)
+    |> Repo.one()
+  end
 end
