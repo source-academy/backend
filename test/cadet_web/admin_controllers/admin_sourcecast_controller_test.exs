@@ -180,7 +180,7 @@ defmodule CadetWeb.AdminSourcecastControllerTest do
       conn = post(conn, build_url(course_id), %{"sourcecast" => %{}})
 
       assert response(conn, 400) =~
-               "audio can't be blank\nplaybackData can't be blank\ntitle can't be blank"
+               "title can't be blank\naudio can't be blank\nplaybackData can't be blank"
     end
   end
 
