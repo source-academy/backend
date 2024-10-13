@@ -68,12 +68,13 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     end
   end
 
-  describe "read-only permission for non-admin staff" do
+  describe "non-admin staff permission, forbidden" do
     @tag authenticate: :staff
     test "GET /assets/:foldername", %{conn: conn} do
       course_id = conn.assigns.course_id
       conn = get(conn, build_url(course_id, "testFolder"), %{})
-      assert response(conn, 200) =~ "OK"
+
+      assert response(conn, 403) =~ "Forbidden"
     end
 
     @tag authenticate: :staff

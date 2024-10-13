@@ -136,6 +136,7 @@ defmodule CadetWeb.Router do
   scope "/v2/courses/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin])
 
+    get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
     delete("/assets/:foldername/*filename", AdminAssetsController, :delete)
 
@@ -187,8 +188,6 @@ defmodule CadetWeb.Router do
       AdminAssessmentsController,
       :get_score_leaderboard
     )
-
-    get("/assets/:foldername", AdminAssetsController, :index)
 
     get("/grading", AdminGradingController, :index)
     get("/grading/summary", AdminGradingController, :grading_summary)
