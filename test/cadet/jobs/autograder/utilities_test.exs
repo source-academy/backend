@@ -108,7 +108,11 @@ defmodule Cadet.Autograder.UtilitiesTest do
 
       %{
         individual: %{students: students, assessment: assessment},
-        team: %{teams: [team1, team2], assessment: team_assessment, teamless: [Enum.at(students, 4)]}
+        team: %{
+          teams: [team1, team2],
+          assessment: team_assessment,
+          teamless: [Enum.at(students, 4)]
+        }
       }
     end
 
@@ -144,25 +148,40 @@ defmodule Cadet.Autograder.UtilitiesTest do
       assert results |> Enum.map(& &1.submission) |> Enum.uniq() == [nil]
     end
 
-    test "it returns list of students both with and without matching submissions for team assessments", %{
-      team: %{teams: teams, assessment: assessment, teamless: teamless}
-    } do
+    test "it returns list of students both with and without matching submissions for team assessments",
+         %{
+           team: %{teams: teams, assessment: assessment, teamless: teamless}
+         } do
       submissions =
-        Enum.map(teams, &%{
-          team_id: &1.id,
-          submission: insert(:submission, %{assessment: assessment, team: &1, student: nil})
-        })
+        Enum.map(
+          teams,
+          &%{
+            team_id: &1.id,
+            submission: insert(:submission, %{assessment: assessment, team: &1, student: nil})
+          }
+        )
 
-      expected = Enum.flat_map(teams, & &1.team_members) |> Enum.map(&%{
-        student_id: &1.student_id,
-        submission_id: Enum.find(submissions, fn s -> s.team_id == &1.team_id end).submission.id
-      })
+      expected =
+        Enum.flat_map(teams, & &1.team_members)
+        |> Enum.map(
+          &%{
+            student_id: &1.student_id,
+            submission_id:
+              Enum.find(submissions, fn s -> s.team_id == &1.team_id end).submission.id
+          }
+        )
+
       expected = expected ++ Enum.map(teamless, &%{student_id: &1.id, submission_id: nil})
 
       results =
         assessment.id
         |> Utilities.fetch_submissions(assessment.course_id)
-        |> Enum.map(&%{student_id: &1.student_id, submission_id: (if &1.submission, do: &1.submission.id, else: nil)})
+        |> Enum.map(
+          &%{
+            student_id: &1.student_id,
+            submission_id: if(&1.submission, do: &1.submission.id, else: nil)
+          }
+        )
 
       assert results == expected
     end
