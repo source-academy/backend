@@ -9,8 +9,8 @@ defmodule Cadet.Accounts.Teams do
   import Ecto.{Changeset, Query}
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Team, TeamMember, CourseRegistration, Notification}
-  alias Cadet.Assessments.{Answer, Assessment, Submission}
+  alias Cadet.Accounts.{Team, TeamMember, Notification}
+  alias Cadet.Assessments.{Answer, Submission}
 
   @doc """
   Creates a new team and assigns an assessment and team members to it.
