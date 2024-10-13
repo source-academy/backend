@@ -966,16 +966,18 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def get_team_size(assessment_id) when is_ecto_id(assessment_id) do
-    from(a in Assessment,
-      where: a.id == ^assessment_id,
-      select: %{max_team_size: a.max_team_size}
-    )
-    |> Repo.one()
-    |> Map.get(:max_team_size, 0)
+  def is_team_assessment?(assessment_id) when is_ecto_id(assessment_id) do
+    max_team_size =
+      from(a in Assessment,
+        where: a.id == ^assessment_id,
+        select: a.max_team_size
+      )
+      |> Repo.one()
+
+    max_team_size > 1
   end
 
-  defp find_teams(cr_id) do
+  defp find_teams(cr_id) when is_ecto_id(cr_id) do
     query =
       from(t in Team,
         join: tm in assoc(t, :team_members),
@@ -995,7 +997,7 @@ defmodule Cadet.Assessments do
         limit: 1
       )
 
-    if get_team_size(assessment_id) > 1 do
+    if is_team_assessment?(assessment_id) do
       case Repo.one(query) do
         nil -> {:error, :team_not_found}
         team -> {:ok, team}
