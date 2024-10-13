@@ -68,6 +68,35 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     end
   end
 
+  describe "read-only permission for staff" do
+    @tag authenticate: :staff
+    test "GET /assets/:foldername", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = get(conn, build_url(course_id, "testFolder"), %{})
+      assert response(conn, 200) =~ "OK"
+    end
+
+    @tag authenticate: :staff
+    test "DELETE /assets/:foldername/*filename", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = delete(conn, build_url(course_id, "testFolder/testFile.png"))
+
+      assert response(conn, 403) =~ "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "POST /assets/:foldername/*filename", %{conn: conn} do
+      course_id = conn.assigns.course_id
+
+      conn =
+        post(conn, build_url(course_id, "testFolder/testFile.png"), %{
+          :upload => build_upload("test/fixtures/upload.png")
+        })
+
+      assert response(conn, 403) =~ "Forbidden"
+    end
+  end
+
   describe "inaccessible folder name" do
     @tag authenticate: :staff
     test "index files", %{conn: conn} do
