@@ -1099,7 +1099,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> sign_in(staff.user)
         |> post(build_url_unpublish_all(course.id, assessment_id))
 
-      assert response(conn, 403) == "Only Admin is permitted to unpublish all grades"
+      assert response(conn, 403) == "Forbidden"
     end
   end
 
@@ -1135,7 +1135,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> sign_in(staff.user)
         |> post(build_url_publish_all(course.id, assessment_id))
 
-      assert response(conn, 403) == "Only Admin is permitted to publish all grades"
+      assert response(conn, 403) == "Forbidden"
     end
   end
 
