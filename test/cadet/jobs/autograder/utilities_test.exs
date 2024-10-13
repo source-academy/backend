@@ -162,7 +162,8 @@ defmodule Cadet.Autograder.UtilitiesTest do
         )
 
       expected =
-        Enum.flat_map(teams, & &1.team_members)
+        teams
+        |> Enum.flat_map(& &1.team_members)
         |> Enum.map(
           &%{
             student_id: &1.student_id,

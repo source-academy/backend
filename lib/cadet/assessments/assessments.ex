@@ -968,10 +968,9 @@ defmodule Cadet.Assessments do
 
   def is_team_assessment?(assessment_id) when is_ecto_id(assessment_id) do
     max_team_size =
-      from(a in Assessment,
-        where: a.id == ^assessment_id,
-        select: a.max_team_size
-      )
+      Assessment
+      |> where(id: ^assessment_id)
+      |> select(:max_team_size)
       |> Repo.one()
 
     max_team_size > 1
