@@ -970,7 +970,7 @@ defmodule Cadet.Assessments do
     max_team_size =
       Assessment
       |> where(id: ^assessment_id)
-      |> select(:max_team_size)
+      |> select([a], a.max_team_size)
       |> Repo.one()
 
     max_team_size > 1
