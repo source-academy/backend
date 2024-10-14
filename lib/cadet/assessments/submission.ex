@@ -45,6 +45,7 @@ defmodule Cadet.Assessments.Submission do
     |> foreign_key_constraint(:student_id)
     |> foreign_key_constraint(:assessment_id)
     |> foreign_key_constraint(:unsubmitted_by_id)
+    |> unique_constraint(:unique_team_id, name: :submissions_team_id_assessment_id_unique_index)
   end
 
   defp validate_xor_relationship(changeset) do
