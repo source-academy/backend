@@ -1,17 +1,8 @@
 defmodule Cadet.Repo.Migrations.CreateTeamsSubmissionConstraint do
   use Ecto.Migration
 
-  def up do
-    create(
-      unique_index(
-        :submissions,
-        [:team_id, :assessment_id],
-        name: :submissions_team_id_assessment_id_unique_index
-      )
-    )
-  end
-
-  def down do
-    drop(constraint(:submissions, :submissions_team_id_assessment_id_unique_index))
+  def change do
+    create(index(:submissions, :team_id))
+    create(unique_index(:submissions, [:assessment_id, :team_id]))
   end
 end
