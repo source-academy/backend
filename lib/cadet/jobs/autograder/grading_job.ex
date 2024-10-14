@@ -103,17 +103,8 @@ defmodule Cadet.Autograder.GradingJob do
   end
 
   defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do
-    if !Assessments.is_team_assessment?(assessment.id) do
-      # Individual assessment
-      %Submission{}
-      |> Submission.changeset(%{
-        student_id: student_id,
-        assessment: assessment,
-        status: :submitted
-      })
-      |> Repo.insert!()
-    else
-      # Team assessment, get current team if any
+    if Assessments.is_team_assessment?(assessment.id) do
+      # Get current team if any
       team =
         Team
         |> where(assessment_id: ^assessment.id)
@@ -142,6 +133,15 @@ defmodule Cadet.Autograder.GradingJob do
       %Submission{}
       |> Submission.changeset(%{
         team_id: team.id,
+        assessment: assessment,
+        status: :submitted
+      })
+      |> Repo.insert!()
+    else
+      # Individual assessment
+      %Submission{}
+      |> Submission.changeset(%{
+        student_id: student_id,
         assessment: assessment,
         status: :submitted
       })
