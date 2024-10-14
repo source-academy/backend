@@ -113,8 +113,10 @@ defmodule Cadet.Autograder.GradingJob do
         |> Repo.one()
 
       team =
-        if !team do
-          # Student is not in any team
+        if team do
+          team
+        else
+                    # Student is not in any team
           # Create new team just for the student
           team =
             %Team{}
@@ -130,8 +132,6 @@ defmodule Cadet.Autograder.GradingJob do
           })
           |> Repo.insert!()
 
-          team
-        else
           team
         end
 
