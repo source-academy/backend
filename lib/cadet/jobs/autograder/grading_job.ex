@@ -112,23 +112,28 @@ defmodule Cadet.Autograder.GradingJob do
         |> where([_, tm], tm.student_id == ^student_id)
         |> Repo.one()
 
-      if !team do
-        # Student is not in any team
-        # Create new team just for the student
-        team =
-          %Team{}
-          |> Team.changeset(%{
-            assessment_id: assessment.id
+      team =
+        if !team do
+          # Student is not in any team
+          # Create new team just for the student
+          team =
+            %Team{}
+            |> Team.changeset(%{
+              assessment_id: assessment.id
+            })
+            |> Repo.insert!()
+
+          %TeamMember{}
+          |> TeamMember.changeset(%{
+            team_id: team.id,
+            student_id: student_id
           })
           |> Repo.insert!()
 
-        %TeamMember{}
-        |> TeamMember.changeset(%{
-          team_id: team.id,
-          student_id: student_id
-        })
-        |> Repo.insert!()
-      end
+          team
+        else
+          team
+        end
 
       %Submission{}
       |> Submission.changeset(%{
