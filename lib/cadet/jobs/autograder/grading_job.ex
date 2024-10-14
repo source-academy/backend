@@ -116,7 +116,7 @@ defmodule Cadet.Autograder.GradingJob do
         if team do
           team
         else
-                    # Student is not in any team
+          # Student is not in any team
           # Create new team just for the student
           team =
             %Team{}
