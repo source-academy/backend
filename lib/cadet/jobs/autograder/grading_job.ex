@@ -112,36 +112,54 @@ defmodule Cadet.Autograder.GradingJob do
         |> where([_, tm], tm.student_id == ^student_id)
         |> Repo.one()
 
-      if !team do
-        # Student is not in any team
-        # Create new team just for the student
-        team =
-          %Team{}
-          |> Team.changeset(%{
-            assessment_id: assessment.id
+      team =
+        if team do
+          team
+        else
+          # Student is not in any team
+          # Create new team just for the student
+          team =
+            %Team{}
+            |> Team.changeset(%{
+              assessment_id: assessment.id
+            })
+            |> Repo.insert!()
+
+          %TeamMember{}
+          |> TeamMember.changeset(%{
+            team_id: team.id,
+            student_id: student_id
           })
           |> Repo.insert!()
 
-        %TeamMember{}
-        |> TeamMember.changeset(%{
-          team_id: team.id,
-          student_id: student_id
-        })
-        |> Repo.insert!()
-      end
+          team
+        end
 
-      %Submission{}
-      |> Submission.changeset(%{
-        team_id: team.id,
-        assessment: assessment,
-        status: :submitted
-      })
-      |> Repo.insert!()
+      find_or_create_team_submission(team.id, assessment)
     else
       # Individual assessment
       %Submission{}
       |> Submission.changeset(%{
         student_id: student_id,
+        assessment: assessment,
+        status: :submitted
+      })
+      |> Repo.insert!()
+    end
+  end
+
+  defp find_or_create_team_submission(team_id, assessment) when is_ecto_id(team_id) do
+    submission =
+      Submission
+      |> where(team_id: ^team_id, assessment_id: ^assessment.id)
+      |> Repo.one()
+
+    if submission do
+      submission
+    else
+      %Submission{}
+      |> Submission.changeset(%{
+        team_id: team_id,
         assessment: assessment,
         status: :submitted
       })
