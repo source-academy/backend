@@ -135,18 +135,31 @@ defmodule Cadet.Autograder.GradingJob do
           team
         end
 
-      %Submission{}
-      |> Submission.changeset(%{
-        team_id: team.id,
-        assessment: assessment,
-        status: :submitted
-      })
-      |> Repo.insert!()
+      find_or_create_team_submission(team.id, assessment)
     else
       # Individual assessment
       %Submission{}
       |> Submission.changeset(%{
         student_id: student_id,
+        assessment: assessment,
+        status: :submitted
+      })
+      |> Repo.insert!()
+    end
+  end
+
+  defp find_or_create_team_submission(team_id, assessment) when is_ecto_id(team_id) do
+    submission =
+      Submission
+      |> where(team_id: ^team_id, assessment_id: ^assessment.id)
+      |> Repo.one()
+
+    if submission do
+      submission
+    else
+      %Submission{}
+      |> Submission.changeset(%{
+        team_id: team_id,
         assessment: assessment,
         status: :submitted
       })
