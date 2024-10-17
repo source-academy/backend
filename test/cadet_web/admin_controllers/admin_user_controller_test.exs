@@ -450,7 +450,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       conn = put(conn, build_url_users_role(course_id, user_course_reg.id), params)
 
-      assert response(conn, 403) == "User is not permitted to change others' roles"
+      assert response(conn, 403) == "Forbidden"
       unchanged_course_reg = Repo.get(CourseRegistration, user_course_reg.id)
       assert unchanged_course_reg.role == :student
     end
@@ -512,7 +512,7 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       conn = delete(conn, build_url_users(course_id, user_course_reg.id))
 
-      assert response(conn, 403) == "User is not permitted to delete other users"
+      assert response(conn, 403) == "Forbidden"
       assert Repo.get(CourseRegistration, user_course_reg.id) != nil
     end
 

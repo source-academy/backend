@@ -1,8 +1,6 @@
 defmodule CadetWeb.AdminAssetsController do
   use CadetWeb, :controller
-
   use PhoenixSwagger
-
   alias Cadet.Assets.Assets
   alias Cadet.Courses
 
@@ -22,7 +20,7 @@ defmodule CadetWeb.AdminAssetsController do
 
     case Assets.delete_object(Courses.assets_prefix(course_reg.course), foldername, filename) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
-      _ -> conn |> put_status(204) |> text('')
+      _ -> conn |> put_status(204) |> text(~c"")
     end
   end
 
@@ -96,7 +94,12 @@ defmodule CadetWeb.AdminAssetsController do
     parameters do
       folderName(:path, :string, "Folder name", required: true)
 
-      fileName(:path, :string, "File path in folder, which may contain subfolders", required: true)
+      fileName(
+        :path,
+        :string,
+        "File path in folder, which may contain subfolders",
+        required: true
+      )
     end
 
     security([%{JWT: []}])
@@ -115,7 +118,12 @@ defmodule CadetWeb.AdminAssetsController do
     parameters do
       folderName(:path, :string, "Folder name", required: true)
 
-      fileName(:path, :string, "File path in folder, which may contain subfolders", required: true)
+      fileName(
+        :path,
+        :string,
+        "File path in folder, which may contain subfolders",
+        required: true
+      )
     end
 
     security([%{JWT: []}])
