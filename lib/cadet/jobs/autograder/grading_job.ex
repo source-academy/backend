@@ -9,6 +9,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   require Logger
 
+  alias Cadet.Accounts.{Team, TeamMember}
   alias Cadet.Assessments
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission, SubmissionVotes}
   alias Cadet.Autograder.Utilities
@@ -102,13 +103,68 @@ defmodule Cadet.Autograder.GradingJob do
   end
 
   defp insert_empty_submission(%{student_id: student_id, assessment: assessment}) do
-    %Submission{}
-    |> Submission.changeset(%{
-      student_id: student_id,
-      assessment: assessment,
-      status: :submitted
-    })
-    |> Repo.insert!()
+    if Assessments.is_team_assessment?(assessment.id) do
+      # Get current team if any
+      team =
+        Team
+        |> where(assessment_id: ^assessment.id)
+        |> join(:inner, [t], tm in assoc(t, :team_members))
+        |> where([_, tm], tm.student_id == ^student_id)
+        |> Repo.one()
+
+      team =
+        if team do
+          team
+        else
+          # Student is not in any team
+          # Create new team just for the student
+          team =
+            %Team{}
+            |> Team.changeset(%{
+              assessment_id: assessment.id
+            })
+            |> Repo.insert!()
+
+          %TeamMember{}
+          |> TeamMember.changeset(%{
+            team_id: team.id,
+            student_id: student_id
+          })
+          |> Repo.insert!()
+
+          team
+        end
+
+      find_or_create_team_submission(team.id, assessment)
+    else
+      # Individual assessment
+      %Submission{}
+      |> Submission.changeset(%{
+        student_id: student_id,
+        assessment: assessment,
+        status: :submitted
+      })
+      |> Repo.insert!()
+    end
+  end
+
+  defp find_or_create_team_submission(team_id, assessment) when is_ecto_id(team_id) do
+    submission =
+      Submission
+      |> where(team_id: ^team_id, assessment_id: ^assessment.id)
+      |> Repo.one()
+
+    if submission do
+      submission
+    else
+      %Submission{}
+      |> Submission.changeset(%{
+        team_id: team_id,
+        assessment: assessment,
+        status: :submitted
+      })
+      |> Repo.insert!()
+    end
   end
 
   defp update_submission_status_to_submitted(submission = %Submission{status: status}) do
