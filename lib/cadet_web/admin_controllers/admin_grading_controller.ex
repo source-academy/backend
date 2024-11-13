@@ -60,17 +60,15 @@ defmodule CadetWeb.AdminGradingController do
 
   @doc """
   # Description
-  Attains every assessment submission registered, regardless of grading or attempted status.
-  This is a special call of the general `index` submission whereby pagination is bypassed.
+  Attains every assessment submission registered, regardless of grading
+  or attempted status. This is a special call of the general `index`
+  submission whereby pagination is bypassed.
   """
   def index_all_submissions(conn, _) do
     # 100 billion page size here should cover all feasible table rows in 1 page
     # given that the hard limit of pages in a postgres database is ~4 billion.
     # (https://www.postgresql.org/docs/current/limits.html)
-    index(
-      conn,
-      %{"group" => "false", "pageSize" => "100000000000", "offset" => "0"}
-    )
+    index(conn, %{"group" => "false", "pageSize" => "100000000000", "offset" => "0"})
   end
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
