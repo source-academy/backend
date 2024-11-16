@@ -26,9 +26,9 @@ alias Cadet.Accounts.{
 # Cadet.Repo.insert!(%Cadet.Settings.Sublanguage{chapter: 1, variant: "default"})
 
 if Cadet.Env.env() == :dev do
-  number_of_students = 10
+  number_of_students = 100_000
   number_of_assessments = 5
-  number_of_questions = 3
+  number_of_questions = 13
 
   # Course
   admin_course =

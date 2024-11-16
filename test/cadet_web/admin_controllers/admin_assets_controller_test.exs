@@ -68,15 +68,45 @@ defmodule CadetWeb.AdminAssetsControllerTest do
     end
   end
 
-  describe "inaccessible folder name" do
+  describe "non-admin staff permission, forbidden" do
     @tag authenticate: :staff
+    test "GET /assets/:foldername", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = get(conn, build_url(course_id, "testFolder"), %{})
+
+      assert response(conn, 403) =~ "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "DELETE /assets/:foldername/*filename", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      conn = delete(conn, build_url(course_id, "testFolder/testFile.png"))
+
+      assert response(conn, 403) =~ "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "POST /assets/:foldername/*filename", %{conn: conn} do
+      course_id = conn.assigns.course_id
+
+      conn =
+        post(conn, build_url(course_id, "testFolder/testFile.png"), %{
+          :upload => build_upload("test/fixtures/upload.png")
+        })
+
+      assert response(conn, 403) =~ "Forbidden"
+    end
+  end
+
+  describe "inaccessible folder name" do
+    @tag authenticate: :admin
     test "index files", %{conn: conn} do
       course_id = conn.assigns.course_id
       conn = get(conn, build_url(course_id, "wrongFolder"))
       assert response(conn, 400) =~ "Invalid top-level folder name"
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
       conn = delete(conn, build_url(course_id, "wrongFolder/randomFile"))
@@ -84,7 +114,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       assert response(conn, 400) =~ "Invalid top-level folder name"
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -98,7 +128,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "ok request" do
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "index file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -110,7 +140,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -121,7 +151,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -138,7 +168,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "wrong file type" do
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -152,7 +182,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "empty file name" do
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -164,7 +194,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       assert response(conn, 400) =~ "Empty file name"
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
       conn = delete(conn, build_url(course_id, "testFolder"))
@@ -173,7 +203,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "nested filename request" do
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -184,7 +214,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -201,7 +231,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   end
 
   describe "course with custom assets_prefix" do
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "index file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -215,7 +245,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "delete file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
@@ -228,7 +258,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
       end
     end
 
-    @tag authenticate: :staff, course_id: 117
+    @tag authenticate: :admin, course_id: 117
     test "upload file", %{conn: conn} do
       course_id = conn.assigns.course_id
 
