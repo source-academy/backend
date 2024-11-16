@@ -58,6 +58,17 @@ defmodule CadetWeb.AdminGradingController do
     index(conn, %{"group" => "false"})
   end
 
+  def index_all_submissions(conn, _) do
+    index(
+      conn,
+      %{
+        "group" => "false",
+        "pageSize" => "100000000000",
+        "offset" => "0"
+      }
+    )
+  end
+
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
     case Assessments.get_answers_in_submission(submission_id) do
       {:ok, {answers, assessment}} ->

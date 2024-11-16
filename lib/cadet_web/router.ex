@@ -144,6 +144,8 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid", AdminAssessmentsController, :update)
     delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
 
+    get("/grading/all_submissions", AdminGradingController, :index_all_submissions)
+
     post(
       "/grading/:assessmentid/publish_all_grades",
       AdminGradingController,
