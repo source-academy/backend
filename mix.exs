@@ -112,7 +112,8 @@ defmodule Cadet.Mixfile do
       # The following are indirect dependencies, but we need to override the
       # versions due to conflicts
       {:jsx, "~> 3.1", override: true},
-      {:xml_builder, "~> 2.1", override: true}
+      {:xml_builder, "~> 2.1", override: true},
+      {:uuid, "~> 1.1"}
     ]
   end
 
