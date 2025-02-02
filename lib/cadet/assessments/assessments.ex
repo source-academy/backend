@@ -2289,8 +2289,8 @@ defmodule Cadet.Assessments do
   @spec get_answers_in_submission(integer() | String.t()) ::
           {:ok, {[Answer.t()], Assessment.t()}}
           | {:error, {:bad_request, String.t()}}
-  def get_answers_in_submission(id) when is_ecto_id(id) do
-    answer_query =
+  def get_answers_in_submission(id, question_id \\ nil) when is_ecto_id(id) do
+    base_query =
       Answer
       |> where(submission_id: ^id)
       |> join(:inner, [a], q in assoc(a, :question))
@@ -2311,6 +2311,13 @@ defmodule Cadet.Assessments do
         submission:
           {s, student: {st, user: u}, team: {t, team_members: {tm, student: {tms, user: tmu}}}}
       )
+
+    answer_query =
+      if is_nil(question_id) do
+        base_query
+      else
+        base_query |> where(question_id: ^question_id)
+      end
 
     answers =
       answer_query

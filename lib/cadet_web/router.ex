@@ -202,6 +202,12 @@ defmodule CadetWeb.Router do
     post("/grading/:submissionid/:questionid", AdminGradingController, :update)
 
     post(
+      "/generate-comments/:submissionid/:questionid",
+      AICodeAnalysisController,
+      :generate_ai_comments
+    )
+
+    post(
       "/grading/:submissionid/:questionid/autograde",
       AdminGradingController,
       :autograde_answer
