@@ -103,6 +103,8 @@ defmodule CadetWeb.UserView do
           viewable: :viewable,
           enableGame: :enable_game,
           enableAchievements: :enable_achievements,
+          enableOverallLeaderboard: :enable_overall_leaderboard,
+          enableContestLeaderboard: :enable_contest_leaderboard,
           enableSourcecast: :enable_sourcecast,
           enableStories: :enable_stories,
           sourceChapter: :source_chapter,
