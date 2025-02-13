@@ -2,27 +2,46 @@ defmodule CadetWeb.AICodeAnalysisController do
   use CadetWeb, :controller
   use PhoenixSwagger
   require HTTPoison
+  require Logger
 
   alias Cadet.Assessments
 
-  @openai_api_url "https://api.groq.com/openai/v1/chat/completions"
-  @model "llama3-8b-8192"
-  @api_key "x"
+  @openai_api_url "https://api.openai.com/v1/chat/completions"
+  @model "gpt-4o"
+  @api_key Application.get_env(:openai, :api_key)
+
+
+  # For logging outputs to a file
+  defp log_to_csv(submission_id, question_id, input, student_submission, output, error \\ nil) do
+    log_file = "log/ai_comments.csv"
+    File.mkdir_p!("log")
+
+    timestamp = NaiveDateTime.utc_now() |> NaiveDateTime.to_string()
+    input_str = Jason.encode!(input) |> String.replace("\"", "\"\"")
+    student_submission_str = Jason.encode!(student_submission) |> String.replace("\"", "\"\"")
+    output_str = Jason.encode!(output) |> String.replace("\"", "\"\"")
+    error_str = if is_nil(error), do: "", else: Jason.encode!(error) |> String.replace("\"", "\"\"")
+
+    csv_row = "\"#{timestamp}\",\"#{submission_id}\",\"#{question_id}\",\"#{input_str}\",\"#{student_submission_str}\",\"#{output_str}\",\"#{error_str}\"\n"
+
+    File.write!(log_file, csv_row, [:append])
+  end
+
 
   @doc """
   Fetches the question details and answers based on submissionid and questionid and generates AI-generated comments.
   """
   def generate_ai_comments(conn, %{"submissionid" => submission_id, "questionid" => question_id})
-      when is_ecto_id(submission_id) do
-    case Assessments.get_answers_in_submission(submission_id, question_id) do
-      {:ok, {answers, _assessment}} ->
-        analyze_code(conn, answers)
+    when is_ecto_id(submission_id) do
+      case Assessments.get_answers_in_submission(submission_id, question_id) do
+        {:ok, {answers, _assessment}} ->
+          analyze_code(conn, answers, submission_id, question_id)
 
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
-    end
+        {:error, {status, message}} ->
+          conn
+          |> put_status(status)
+          |> text(message)
+      end
   end
 
   defp transform_answers(answers) do
@@ -39,8 +58,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     end)
   end
 
-  defp analyze_code(conn, answers) do
-    # Convert each struct into a map and select only the required fields
+  defp analyze_code(conn, answers, submission_id, question_id) do
     answers_json =
       answers
       |> Enum.map(fn answer ->
@@ -48,7 +66,8 @@ defmodule CadetWeb.AICodeAnalysisController do
           if answer.question do
             %{
               id: answer.question_id,
-              content: Map.get(answer.question.question, "content")
+              content: Map.get(answer.question.question, "content"),
+              solution: Map.get(answer.question.question, "solution")
             }
           else
             %{
@@ -56,7 +75,6 @@ defmodule CadetWeb.AICodeAnalysisController do
               content: nil
             }
           end
-
         answer
         |> Map.from_struct()
         |> Map.take([
@@ -64,76 +82,78 @@ defmodule CadetWeb.AICodeAnalysisController do
           :comments,
           :autograding_status,
           :autograding_results,
-          :answer
+          :answer,
         ])
         |> Map.put(:question, question_data)
       end)
       |> Jason.encode!()
 
-    prompt = """
-    The code below was written in JavaScript.
+      raw_prompt = """
+      The code below was written in JavaScript.
 
-    Analyze the following submitted answers and provide feedback on correctness, readability, efficiency, and improvements:
+      Analyze the following submitted answers and provide feedback on correctness, readability, efficiency, and improvements:
 
-    Provide minimum 3 comment suggestions and maximum 5 comment suggestions. Keep each comment suggestion concise and specific, less than 100 words.
+      Provide minimum 3 comment suggestions and maximum 5 comment suggestions. Keep each comment suggestion concise and specific, less than 200 words.
 
-    Only provide your comment suggestions in the output and nothing else.
+      Only provide your comment suggestions in the output and nothing else.
 
-    Your output should be in the following format.
+      Your output should be in the following format.
 
-    DO NOT start the output with |||. Separate each suggestion using |||.
+      DO NOT start the output with |||. Separate each suggestion using |||.
 
-    DO NOT add spaces before or after the |||.
+      DO NOT add spaces before or after the |||.
 
-    Only provide the comment suggestions and separate each comment suggestion by using triple pipes ("|||").
+      Only provide the comment suggestions and separate each comment suggestion by using triple pipes ("|||").
 
-    For example: "This is a good answer.|||This is a bad answer.|||This is a great answer."
+      For example: "This is a good answer.|||This is a bad answer.|||This is a great answer."
 
-    Do not provide any other information in the output, like "Here are the comment suggestions for the first answer"
+      Do not provide any other information in the output, like "Here are the comment suggestions for the first answer"
 
-    Do not include any bullet points, number lists, or any other formatting in your output. Just plain text comments, separated by triple pipes.
+      Do not include any bullet points, number lists, or any other formatting in your output. Just plain text comments, separated by triple pipes ("|||").
+      """
 
-    #{answers_json}
-    """
+      prompt = raw_prompt <> "\n" <> answers_json
 
-    body =
-      %{
-        model: @model,
-        messages: [
-          %{role: "system", content: "You are an expert software engineer and educator."},
-          %{role: "user", content: prompt}
-        ],
-        temperature: 0.5
-      }
-      |> Jason.encode!()
+
+    input = %{
+      model: @model,
+      messages: [
+        %{role: "system", content: "You are an expert software engineer and educator."},
+        %{role: "user", content: prompt}
+      ],
+      temperature: 0.5
+    } |> Jason.encode!()
 
     headers = [
       {"Authorization", "Bearer #{@api_key}"},
       {"Content-Type", "application/json"}
     ]
 
-    case HTTPoison.post(@openai_api_url, body, headers) do
+
+    case HTTPoison.post(@openai_api_url, input, headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         case Jason.decode(body) do
           {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
-            IO.inspect(response, label: "DEBUG: Raw AI Response")
+            log_to_csv(submission_id, question_id, raw_prompt, answers_json, response)
             comments_list = String.split(response, "|||")
 
-            filtered_comments =
-              Enum.filter(comments_list, fn comment ->
-                String.trim(comment) != ""
-              end)
+            filtered_comments = Enum.filter(comments_list, fn comment ->
+              String.trim(comment) != ""
+            end)
 
             json(conn, %{"comments" => filtered_comments})
 
           {:error, _} ->
+            log_to_csv(submission_id, question_id, raw_prompt, answers_json, nil, "Failed to parse response from OpenAI API")
             json(conn, %{"error" => "Failed to parse response from OpenAI API"})
         end
 
       {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
+        log_to_csv(submission_id, question_id, raw_prompt, answers_json, nil, "API request failed with status #{status}")
         json(conn, %{"error" => "API request failed with status #{status}: #{body}"})
 
       {:error, %HTTPoison.Error{reason: reason}} ->
+        log_to_csv(submission_id, question_id, raw_prompt, answers_json, nil, reason)
         json(conn, %{"error" => "HTTP request error: #{inspect(reason)}"})
     end
   end
