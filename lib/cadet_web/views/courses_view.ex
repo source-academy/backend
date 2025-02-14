@@ -12,6 +12,7 @@ defmodule CadetWeb.CoursesView do
           enableAchievements: :enable_achievements,
           enableOverallLeaderboard: :enable_overall_leaderboard,
           enableContestLeaderboard: :enable_contest_leaderboard,
+          topLeaderboardDisplay: :top_leaderboard_display,
           enableSourcecast: :enable_sourcecast,
           enableStories: :enable_stories,
           sourceChapter: :source_chapter,
