@@ -6,7 +6,7 @@ defmodule CadetWeb.AdminUserController do
 
   alias Cadet.Repo
   alias Cadet.{Accounts, Assessments, Courses}
-  alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
+  alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role, User}
 
   # This controller is used to find all users of a course
 
@@ -26,6 +26,11 @@ defmodule CadetWeb.AdminUserController do
 
     total_xp = Assessments.user_total_xp(course_id, user_id, course_reg_id)
     json(conn, %{totalXp: total_xp})
+  end
+
+  def combined_total_xp_for_all_users(conn, %{"course_id" => course_id}) do
+    users_with_xp = Assessments.all_user_total_xp(course_id)
+    json(conn, %{users: users_with_xp})
   end
 
   @add_users_role ~w(admin)a
