@@ -21,6 +21,7 @@ defmodule Cadet.CoursesTest do
         enable_achievements: true,
         enable_sourcecast: true,
         enable_stories: false,
+        enable_exam_mode: false,
         source_chapter: 1,
         source_variant: "default",
         module_help_text: "Help Text"
@@ -57,6 +58,7 @@ defmodule Cadet.CoursesTest do
       assert course.enable_achievements == true
       assert course.enable_sourcecast == true
       assert course.enable_stories == false
+      assert course.enable_exam_mode == false
       assert course.source_chapter == 1
       assert course.source_variant == "default"
       assert course.module_help_text == "Help Text"
@@ -84,6 +86,7 @@ defmodule Cadet.CoursesTest do
           enable_achievements: false,
           enable_sourcecast: false,
           enable_stories: true,
+          enable_exam_mode: true,
           module_help_text: ""
         })
 
@@ -94,6 +97,7 @@ defmodule Cadet.CoursesTest do
       assert updated_course.enable_achievements == false
       assert updated_course.enable_sourcecast == false
       assert updated_course.enable_stories == true
+      assert updated_course.enable_exam_mode == true
       assert updated_course.source_chapter == 1
       assert updated_course.source_variant == "default"
       assert updated_course.module_help_text == nil
@@ -112,6 +116,7 @@ defmodule Cadet.CoursesTest do
           enable_achievements: false,
           enable_sourcecast: false,
           enable_stories: true,
+          enable_exam_mode: false,
           source_chapter: new_chapter,
           source_variant: "default",
           module_help_text: "help"
@@ -124,6 +129,7 @@ defmodule Cadet.CoursesTest do
       assert updated_course.enable_achievements == false
       assert updated_course.enable_sourcecast == false
       assert updated_course.enable_stories == true
+      assert updated_course.enable_exam_mode == false
       assert updated_course.source_chapter == new_chapter
       assert updated_course.source_variant == "default"
       assert updated_course.module_help_text == "help"
@@ -142,6 +148,7 @@ defmodule Cadet.CoursesTest do
           enable_achievements: false,
           enable_sourcecast: false,
           enable_stories: false,
+          enable_exam_mode: false,
           module_help_text: "help"
         })
 

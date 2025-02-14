@@ -12,6 +12,7 @@ defmodule CadetWeb.CoursesView do
           enableAchievements: :enable_achievements,
           enableSourcecast: :enable_sourcecast,
           enableStories: :enable_stories,
+          enableExamMode: :enable_exam_mode,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,

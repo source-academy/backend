@@ -11,6 +11,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
       add(:enable_game, :boolean, null: false, default: true)
       add(:enable_achievements, :boolean, null: false, default: true)
       add(:enable_sourcecast, :boolean, null: false, default: true)
+      add(:enable_exam_mode, :boolean, null: false, default: false)
       add(:source_chapter, :integer, null: false)
       add(:source_variant, :string, null: false)
       add(:module_help_text, :string)
@@ -144,6 +145,7 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
                 enable_game: true,
                 enable_achievements: true,
                 enable_sourcecast: true,
+                enable_exam_mode: false,
                 source_chapter: 1,
                 source_variant: "default",
                 inserted_at: Timex.now(),

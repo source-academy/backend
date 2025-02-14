@@ -317,6 +317,7 @@ defmodule CadetWeb.UserController do
             enable_achievements(:boolean, "Enable achievements", required: true)
             enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
+            enable_exam_mode(:boolean, "Enable exam mode", required: true)
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
@@ -332,6 +333,7 @@ defmodule CadetWeb.UserController do
             enable_achievements: true,
             enable_sourcecast: true,
             enable_stories: false,
+            enable_exam_mode: false,
             source_chapter: 1,
             source_variant: "default",
             module_help_text: "Help text",
