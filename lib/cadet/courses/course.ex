@@ -12,6 +12,8 @@ defmodule Cadet.Courses.Course do
           viewable: boolean(),
           enable_game: boolean(),
           enable_achievements: boolean(),
+          enable_contest_leaderboard: boolean(),
+          enable_overall_leaderboard: boolean(),
           enable_sourcecast: boolean(),
           enable_stories: boolean(),
           source_chapter: integer(),
@@ -26,6 +28,8 @@ defmodule Cadet.Courses.Course do
     field(:viewable, :boolean, default: true)
     field(:enable_game, :boolean, default: true)
     field(:enable_achievements, :boolean, default: true)
+    field(:enable_contest_leaderboard, :boolean, default: true)
+    field(:enable_overall_leaderboard, :boolean, default: true)
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
     field(:source_chapter, :integer)
@@ -41,7 +45,7 @@ defmodule Cadet.Courses.Course do
   end
 
   @required_fields ~w(course_name viewable enable_game
-    enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
+    enable_achievements enable_sourcecast enable_stories source_chapter source_variant enable_contest_leaderboard enable_overall_leaderboard)a
   @optional_fields ~w(course_short_name module_help_text)a
 
   def changeset(course, params) do

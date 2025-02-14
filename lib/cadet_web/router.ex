@@ -118,6 +118,8 @@ defmodule CadetWeb.Router do
     put("/user/game_states", UserController, :update_game_states)
     put("/user/research_agreement", UserController, :update_research_agreement)
 
+    get("/all_users_xp", AdminUserController, :combined_total_xp_for_all_users)
+
     get("/config", CoursesController, :index)
 
     get("/team/:assessmentid", TeamController, :index)

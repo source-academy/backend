@@ -4,6 +4,7 @@ defmodule Cadet.Assessments do
   missions, sidequests, paths, etc.
   """
   use Cadet, [:context, :display]
+  alias Cadet.Incentives.{Achievement, GoalProgress, Goal}
   import Ecto.Query
 
   require Logger
@@ -25,7 +26,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
-  alias Cadet.Incentives.Achievements
+  alias Cadet.Incentives.{Achievements, AchievementToGoal}
   alias Timex.Duration
 
   require Decimal
@@ -144,6 +145,128 @@ defmodule Cadet.Assessments do
     total_assessment_xp = assessments_total_xp(user_course)
 
     total_achievement_xp + total_assessment_xp
+  end
+
+  def all_user_total_xp(course_id) do
+    base_user_query =
+      from(
+        cr in CourseRegistration,
+        full_join: u in User,
+        on: cr.user_id == u.id,
+        where: cr.course_id == ^course_id,
+        select: %{
+          user_id: u.id,
+          name: u.name,
+          username: u.username
+        }
+      )
+
+    achievements_xp_query =
+      from(u in User,
+        full_join: cr in CourseRegistration,
+        on: cr.user_id == u.id and cr.course_id == ^course_id,
+        left_join: a in Achievement,
+        on: a.course_id == cr.course_id,
+        left_join: j in assoc(a, :goals),
+        left_join: g in assoc(j, :goal),
+        left_join: p in GoalProgress,
+        on: p.goal_uuid == g.uuid and p.course_reg_id == cr.id,
+        where: a.course_id == ^course_id or not is_nil(cr.id),
+        group_by: [u.id, u.name, u.username, cr.id],
+        having:
+          fragment(
+            "bool_and(?)",
+            p.completed and p.count == g.target_count and not is_nil(p.course_reg_id)
+          ),
+        select_merge: %{
+          user_id: u.id,
+          name: u.name,
+          username: u.username,
+          is_variable_xp: fragment("bool_and(is_variable_xp)"),
+          xp_count_sum: sum(p.count),
+          xp_max: max(a.xp)
+        }
+      )
+
+    achievements_xp_final_query =
+      from(ax in subquery(achievements_xp_query),
+        select: %{
+          user_id: ax.user_id,
+          name: ax.name,
+          username: ax.username,
+          achievements_xp:
+            fragment(
+              "CASE WHEN ? THEN ? ELSE ? END",
+              ax.is_variable_xp,
+              ax.xp_count_sum,
+              ax.xp_max
+            )
+        }
+      )
+
+    submissions_xp_query =
+      from(
+        sub_xp in subquery(
+          from(cr in CourseRegistration,
+            full_join: u in User,
+            on: cr.user_id == u.id,
+            full_join: tm in TeamMember,
+            on: cr.id == tm.student_id,
+            full_join: s in Submission,
+            on: tm.team_id == s.team_id or s.student_id == cr.id,
+            full_join: a in Answer,
+            on: s.id == a.submission_id,
+            where: s.is_grading_published == true and cr.course_id == ^course_id,
+            group_by: [cr.id, u.name, u.username, s.id],
+            select: %{
+              user_id: cr.id,
+              name: u.name,
+              username: u.username,
+              submission_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
+            }
+          )
+        ),
+        group_by: [sub_xp.user_id, sub_xp.name, sub_xp.username],
+        select: %{
+          user_id: sub_xp.user_id,
+          name: sub_xp.name,
+          username: sub_xp.username,
+          submission_xp: sum(sub_xp.submission_xp)
+        }
+      )
+
+    total_xp_query =
+      from(bu in subquery(base_user_query),
+        left_join: ax in subquery(achievements_xp_final_query),
+        on: bu.user_id == ax.user_id,
+        left_join: sx in subquery(submissions_xp_query),
+        on: bu.user_id == sx.user_id,
+        select: %{
+          user_id: bu.user_id,
+          name: bu.name,
+          username: bu.username,
+          total_xp:
+            fragment(
+              "COALESCE(?, 0) + COALESCE(?, 0)",
+              ax.achievements_xp,
+              sx.submission_xp
+            )
+        },
+        order_by: [desc: fragment("total_xp")]
+      )
+
+    ranked_xp_query =
+      from(t in subquery(total_xp_query),
+        select: %{
+          rank: fragment("ROW_NUMBER() OVER (ORDER BY total_xp DESC)"),
+          user_id: t.user_id,
+          name: t.name,
+          username: t.username,
+          total_xp: t.total_xp
+        }
+      )
+
+    Repo.all(ranked_xp_query)
   end
 
   defp decimal_to_integer(decimal) do

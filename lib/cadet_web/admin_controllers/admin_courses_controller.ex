@@ -106,6 +106,8 @@ defmodule CadetWeb.AdminCoursesController do
       viewable(:body, :boolean, "Course viewability")
       enable_game(:body, :boolean, "Enable game")
       enable_achievements(:body, :boolean, "Enable achievements")
+      enable_contest_leaderboard(:body, :boolean, "Enable Contest Leaderboard")
+      enable_overall_leaderboard(:body, :boolean, "Enable Overall Leaderboard")
       enable_sourcecast(:body, :boolean, "Enable sourcecast")
       enable_stories(:body, :boolean, "Enable stories")
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")

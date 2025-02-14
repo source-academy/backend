@@ -28,6 +28,11 @@ defmodule CadetWeb.AdminUserController do
     json(conn, %{totalXp: total_xp})
   end
 
+  def combined_total_xp_for_all_users(conn, %{"course_id" => course_id}) do
+    users_with_xp = Assessments.all_user_total_xp(course_id)
+    json(conn, %{users: users_with_xp})
+  end
+
   @add_users_role ~w(admin)a
   def get_students(conn, filter) do
     users =
