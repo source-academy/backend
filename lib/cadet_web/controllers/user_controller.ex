@@ -5,6 +5,7 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
+  alias Cadet.Courses.Course
   alias Cadet.Accounts.CourseRegistrations
 
   alias Cadet.{Accounts, Assessments}
@@ -12,39 +13,63 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
+    exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
-    if user.latest_viewed_course_id do
-      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-      xp = Assessments.assessments_total_xp(latest)
-      max_xp = Assessments.user_max_xp(latest)
-      story = Assessments.user_current_story(latest)
+    cond do
+      exam_mode_course ->
+        IO.puts("Course #{exam_mode_course.course_id} is under exam mode.")
+        xp = Assessments.assessments_total_xp(exam_mode_course)
+        max_xp = Assessments.user_max_xp(exam_mode_course)
+        story = Assessments.user_current_story(exam_mode_course)
 
-      render(
-        conn,
-        "index.json",
-        user: user,
-        courses: courses,
-        latest: latest,
-        max_xp: max_xp,
-        story: story,
-        xp: xp
-      )
-    else
-      render(conn, "index.json",
-        user: user,
-        courses: courses,
-        latest: nil,
-        max_xp: nil,
-        story: nil,
-        xp: nil
-      )
+        render(
+          conn,
+          "index.json",
+          user: user,
+          courses: courses |> Enum.filter(fn c -> c.course_id == exam_mode_course.course_id end),
+          latest: exam_mode_course,
+          max_xp: max_xp,
+          story: story,
+          xp: xp
+        )
+
+      user.latest_viewed_course_id ->
+        latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+        xp = Assessments.assessments_total_xp(latest)
+        max_xp = Assessments.user_max_xp(latest)
+        story = Assessments.user_current_story(latest)
+
+        render(
+          conn,
+          "index.json",
+          user: user,
+          courses: courses,
+          latest: latest,
+          max_xp: max_xp,
+          story: story,
+          xp: xp
+        )
+
+      true ->
+        render(conn, "index.json",
+          user: user,
+          courses: courses,
+          latest: nil,
+          max_xp: nil,
+          story: nil,
+          xp: nil
+        )
     end
   end
 
   def get_latest_viewed(conn, _) do
     user = conn.assigns.current_user
+    exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
     latest =
+      case exam_mode_course do
+        _ -> CourseRegistrations.get_user_course(user.id, exam_mode_course.course_id)
+      end
       case user.latest_viewed_course_id do
         nil -> nil
         _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)

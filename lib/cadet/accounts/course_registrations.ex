@@ -2,6 +2,8 @@ defmodule Cadet.Accounts.CourseRegistrations do
   @moduledoc """
   Provides functions fetch, add, update course_registration
   """
+alias Cadet.Accounts.CourseRegistrations
+alias Cadet.Courses
   use Cadet, [:context, :display]
 
   import Ecto.Query
@@ -39,12 +41,26 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.one()
   end
 
+  @spec get_courses(Cadet.Accounts.User.t()) :: any()
   def get_courses(%User{id: id}) do
     CourseRegistration
     |> where([cr], cr.user_id == ^id)
     |> join(:inner, [cr], c in assoc(cr, :course))
     |> preload(:course)
     |> Repo.all()
+  end
+
+  @spec get_exam_mode_course(Cadet.Accounts.User.t()) :: any()
+  def get_exam_mode_course(%User{id: id}) do
+    CourseRegistration
+    |> where([cr], cr.user_id == ^id)
+    |> join(:inner, [cr], c in assoc(cr, :course), on: c.enable_exam_mode == true)
+    |> join(:left, [cr, c], ac in assoc(c, :assessment_config))
+    |> preload([cr, c, ac],
+      course: {c, assessment_config: ^from(ac in AssessmentConfig, order_by: [asc: ac.order])}
+    )
+    |> preload(:group)
+    |> Repo.one()
   end
 
   def get_admin_courses_count(%User{id: id}) do
