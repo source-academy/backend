@@ -81,12 +81,12 @@ defmodule Cadet.Mixfile do
       {:que, "~> 0.10"},
       {:recase, "~> 0.7", override: true},
       {:samly, "~> 1.0"},
-      {:sentry, "~> 8.0"},
+      {:sentry, "~> 10.6"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.7"},
 
       # notifiations system dependencies
-      {:phoenix_html, "~> 3.0"},
+      {:phoenix_html, "~> 4.2"},
       {:bamboo, "~> 2.3.0"},
       {:bamboo_ses, "~> 0.4.1"},
       {:bamboo_phoenix, "~> 1.0.0"},

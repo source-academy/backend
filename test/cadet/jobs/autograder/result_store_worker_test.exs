@@ -72,7 +72,55 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
   end
 
   describe "#perform, valid answer_id" do
-    test "before manual grading and grading auto published", %{answer: answer, results: results} do
+    test "before manual grading, grading auto published and manual grading required", %{
+      answer: answer,
+      results: results
+    } do
+      for result <- results do
+        ResultStoreWorker.perform(%{answer_id: answer.id, result: result})
+
+        answer =
+          Answer
+          |> join(:inner, [a], q in assoc(a, :question))
+          |> preload([_, q], question: q)
+          |> Repo.get(answer.id)
+
+        errors_string_keys =
+          Enum.map(result.result, fn err ->
+            Enum.reduce(err, %{}, fn {k, v}, acc ->
+              Map.put(acc, "#{k}", v)
+            end)
+          end)
+
+        if result.max_score == 0 do
+          assert answer.xp == 0
+        else
+          assert answer.xp ==
+                   Integer.floor_div(
+                     answer.question.max_xp * result.score,
+                     result.max_score
+                   )
+        end
+
+        submission = Repo.get(Submission, answer.submission_id)
+
+        assert submission.is_grading_published == false
+        assert answer.autograding_status == result.status
+        assert answer.autograding_results == errors_string_keys
+      end
+    end
+
+    test "before manual grading, grading auto published and manual grading not required", %{
+      results: results
+    } do
+      assessment_config =
+        insert(:assessment_config, %{is_grading_auto_published: true, is_manually_graded: false})
+
+      assessment = insert(:assessment, %{config: assessment_config})
+      question = insert(:question, %{assessment: assessment})
+      submission = insert(:submission, %{status: :submitted, assessment: assessment})
+      answer = insert(:answer, %{question: question, submission: submission})
+
       for result <- results do
         ResultStoreWorker.perform(%{answer_id: answer.id, result: result})
 
