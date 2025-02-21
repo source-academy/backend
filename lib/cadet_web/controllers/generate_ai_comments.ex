@@ -89,27 +89,45 @@ defmodule CadetWeb.AICodeAnalysisController do
       |> Jason.encode!()
 
       raw_prompt = """
-      The code below was written in JavaScript.
+      The code below is written in Source, a variant of JavaScript that comes with a rich set of built-in constants and functions. Below is a summary of some key built-in entities available in Source:
 
-      Analyze the following submitted answers and provide feedback on correctness, readability, efficiency, and improvements:
+      Constants:
+      - Infinity: The special number value representing infinity.
+      - NaN: The special number value for "not a number."
+      - undefined: The special value for an undefined variable.
+      - math_PI: The constant π (approximately 3.14159).
+      - math_E: Euler's number (approximately 2.71828).
 
-      Provide minimum 3 comment suggestions and maximum 5 comment suggestions. Keep each comment suggestion concise and specific, less than 200 words.
+      Functions:
+      - __access_export__(exports, lookup_name): Searches for a name in an exports data structure.
+      - accumulate(f, initial, xs): Reduces a list by applying a binary function from right-to-left.
+      - append(xs, ys): Appends list ys to the end of list xs.
+      - char_at(s, i): Returns the character at index i of string s.
+      - display(v, s): Displays value v (optionally preceded by string s) in the console.
+      - filter(pred, xs): Returns a new list with elements of xs that satisfy the predicate pred.
+      - for_each(f, xs): Applies function f to each element of the list xs.
+      - get_time(): Returns the current time in milliseconds.
+      - is_list(xs): Checks whether xs is a proper list.
+      - length(xs): Returns the number of elements in list xs.
+      - list(...): Constructs a list from the provided values.
+      - map(f, xs): Applies function f to each element of list xs.
+      - math_abs(x): Returns the absolute value of x.
+      - math_ceil(x): Rounds x up to the nearest integer.
+      - math_floor(x): Rounds x down to the nearest integer.
+      - pair(x, y): A primitive function that makes a pair whose head (first component) is x and whose tail (second component) is y.
+      - head(xs): Returns the first element of pair xs.
+      - tail(xs): Returns the second element of pair xs.
+      - math_random(): Returns a random number between 0 (inclusive) and 1 (exclusive).
 
-      Only provide your comment suggestions in the output and nothing else.
+      (For a full list of built-in functions and constants, refer to the Source documentation.)
 
-      Your output should be in the following format.
+      Analyze the following submitted answers and provide detailed feedback on correctness, readability, efficiency, and possible improvements. Your evaluation should consider both standard JavaScript features and the additional built-in functions unique to Source.
 
-      DO NOT start the output with |||. Separate each suggestion using |||.
+      Provide between 3 and 5 concise comment suggestions, each under 200 words.
 
-      DO NOT add spaces before or after the |||.
-
-      Only provide the comment suggestions and separate each comment suggestion by using triple pipes ("|||").
+      Your output must include only the comment suggestions, separated exclusively by triple pipes ("|||") with no spaces before or after the pipes, and without any additional formatting, bullet points, or extra text.
 
       For example: "This is a good answer.|||This is a bad answer.|||This is a great answer."
-
-      Do not provide any other information in the output, like "Here are the comment suggestions for the first answer"
-
-      Do not include any bullet points, number lists, or any other formatting in your output. Just plain text comments, separated by triple pipes ("|||").
       """
 
       prompt = raw_prompt <> "\n" <> answers_json
