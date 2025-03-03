@@ -106,6 +106,7 @@ defmodule CadetWeb.UserView do
           enableSourcecast: :enable_sourcecast,
           enableStories: :enable_stories,
           enableExamMode: :enable_exam_mode,
+          isOfficialCourse: :is_official_course,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,

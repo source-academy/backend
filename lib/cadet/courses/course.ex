@@ -15,6 +15,7 @@ defmodule Cadet.Courses.Course do
           enable_sourcecast: boolean(),
           enable_stories: boolean(),
           enable_exam_mode: boolean(),
+          is_official_course: boolean(),
           source_chapter: integer(),
           source_variant: String.t(),
           module_help_text: String.t(),
@@ -30,6 +31,7 @@ defmodule Cadet.Courses.Course do
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
     field(:enable_exam_mode, :boolean, default: false)
+    field(:is_official_course, :boolean, default: false)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
     field(:module_help_text, :string)

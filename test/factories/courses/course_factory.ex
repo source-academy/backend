@@ -17,6 +17,7 @@ defmodule Cadet.Courses.CourseFactory do
           enable_sourcecast: true,
           enable_stories: false,
           enable_exam_mode: false,
+          is_official_course: true,
           source_chapter: 1,
           source_variant: "default",
           module_help_text: "Help Text"

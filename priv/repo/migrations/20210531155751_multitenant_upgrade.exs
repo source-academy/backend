@@ -144,7 +144,6 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
                 enable_game: true,
                 enable_achievements: true,
                 enable_sourcecast: true,
-                enable_exam_mode: false,
                 source_chapter: 1,
                 source_variant: "default",
                 inserted_at: Timex.now(),
