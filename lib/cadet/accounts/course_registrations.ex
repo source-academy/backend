@@ -2,8 +2,6 @@ defmodule Cadet.Accounts.CourseRegistrations do
   @moduledoc """
   Provides functions fetch, add, update course_registration
   """
-alias Cadet.Accounts.CourseRegistrations
-alias Cadet.Courses
   use Cadet, [:context, :display]
 
   import Ecto.Query
@@ -41,7 +39,6 @@ alias Cadet.Courses
     |> Repo.one()
   end
 
-  @spec get_courses(Cadet.Accounts.User.t()) :: any()
   def get_courses(%User{id: id}) do
     CourseRegistration
     |> where([cr], cr.user_id == ^id)
@@ -50,7 +47,6 @@ alias Cadet.Courses
     |> Repo.all()
   end
 
-  @spec get_exam_mode_course(Cadet.Accounts.User.t()) :: any()
   def get_exam_mode_course(%User{id: id}) do
     CourseRegistration
     |> where([cr], cr.user_id == ^id)
