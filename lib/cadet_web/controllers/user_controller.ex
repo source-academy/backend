@@ -5,7 +5,6 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
-  alias Cadet.Courses.Course
   alias Cadet.Accounts.CourseRegistrations
 
   alias Cadet.{Accounts, Assessments}
