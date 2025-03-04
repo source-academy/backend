@@ -12,45 +12,71 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
+    exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
-    if user.latest_viewed_course_id do
-      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-      xp = Assessments.assessments_total_xp(latest)
-      max_xp = Assessments.user_max_xp(latest)
-      story = Assessments.user_current_story(latest)
+    cond do
+      exam_mode_course ->
+        IO.puts("Course #{exam_mode_course.course_id} is under exam mode.")
+        xp = Assessments.assessments_total_xp(exam_mode_course)
+        max_xp = Assessments.user_max_xp(exam_mode_course)
+        story = Assessments.user_current_story(exam_mode_course)
 
-      render(
-        conn,
-        "index.json",
-        user: user,
-        courses: courses,
-        latest: latest,
-        max_xp: max_xp,
-        story: story,
-        xp: xp
-      )
-    else
-      render(conn, "index.json",
-        user: user,
-        courses: courses,
-        latest: nil,
-        max_xp: nil,
-        story: nil,
-        xp: nil
-      )
+        render(
+          conn,
+          "index.json",
+          user: user,
+          courses: courses |> Enum.filter(fn c -> c.course_id == exam_mode_course.course_id end),
+          latest: exam_mode_course,
+          max_xp: max_xp,
+          story: story,
+          xp: xp
+        )
+
+      user.latest_viewed_course_id ->
+        latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+        xp = Assessments.assessments_total_xp(latest)
+        max_xp = Assessments.user_max_xp(latest)
+        story = Assessments.user_current_story(latest)
+
+        render(
+          conn,
+          "index.json",
+          user: user,
+          courses: courses,
+          latest: latest,
+          max_xp: max_xp,
+          story: story,
+          xp: xp
+        )
+
+      true ->
+        render(conn, "index.json",
+          user: user,
+          courses: courses,
+          latest: nil,
+          max_xp: nil,
+          story: nil,
+          xp: nil
+        )
     end
   end
 
   def get_latest_viewed(conn, _) do
     user = conn.assigns.current_user
-
-    latest =
-      case user.latest_viewed_course_id do
-        nil -> nil
-        _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+    exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
+    if exam_mode_course do
+      latest = CourseRegistrations.get_user_course(user.id, exam_mode_course.course_id)
+      get_course_reg_config(conn, latest)
+    else
+      latest =
+        case user.latest_viewed_course_id do
+          nil -> nil
+          _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
       end
 
-    get_course_reg_config(conn, latest)
+      get_course_reg_config(conn, latest)
+    end
+
   end
 
   defp get_course_reg_config(conn, course_reg) when is_nil(course_reg) do
@@ -317,6 +343,8 @@ defmodule CadetWeb.UserController do
             enable_achievements(:boolean, "Enable achievements", required: true)
             enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
+            enable_exam_mode(:boolean, "Enable exam mode", required: true)
+            is_official_course(:boolean, "Course status (official institution course)")
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
@@ -332,6 +360,8 @@ defmodule CadetWeb.UserController do
             enable_achievements: true,
             enable_sourcecast: true,
             enable_stories: false,
+            enable_exam_mode: false,
+            is_official_course: true,
             source_chapter: 1,
             source_variant: "default",
             module_help_text: "Help text",
