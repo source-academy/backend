@@ -315,8 +315,9 @@ defmodule CadetWeb.UserController do
             viewable(:boolean, "Course viewability", required: true)
             enable_game(:boolean, "Enable game", required: true)
             enable_achievements(:boolean, "Enable achievements", required: true)
-            enable_contest_leaderboard(:boolean, "Enable Contest Leaderboard", required: true)
-            enable_overall_leaderboard(:boolean, "Enable Overall Leaderboard", required: true)
+            enable_overall_leaderboard(:boolean, "Enable overall leaderboard", required: true)
+            enable_contest_leaderboard(:boolean, "Enable contest leadeboard", required: true)
+            top_leaderboard_display(:integer, "Top leaderboard display", required: true)
             enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
@@ -332,8 +333,9 @@ defmodule CadetWeb.UserController do
             viewable: true,
             enable_game: true,
             enable_achievements: true,
-            enable_contest_leaderboard: true,
             enable_overall_leaderboard: true,
+            enable_contest_leaderboard: true,
+            top_leaderboard_display: 100,
             enable_sourcecast: true,
             enable_stories: false,
             source_chapter: 1,
