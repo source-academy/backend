@@ -120,6 +120,18 @@ defmodule CadetWeb.Router do
 
     get("/all_users_xp", AdminUserController, :combined_total_xp_for_all_users)
 
+    get(
+      "/leaderboard/contests/:assessmentid/get_score_leaderboard",
+      AdminAssessmentsController,
+      :get_contest_relative_scores
+    )
+
+    get(
+      "/leaderboard/contests/:assessmentid/get_popular_vote_leaderboard",
+      AdminAssessmentsController,
+      :get_contest_popular_scores
+    )
+
     get("/config", CoursesController, :index)
 
     get("/team/:assessmentid", TeamController, :index)
@@ -180,6 +192,12 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
 
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
+
+    post(
+      "/assessments/:assessmentid/calculateContestScore",
+      AdminAssessmentsController,
+      :calculate_contest_score
+    )
 
     get(
       "/assessments/:assessmentid/popularVoteLeaderboard",
