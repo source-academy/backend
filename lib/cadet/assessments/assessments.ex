@@ -1850,12 +1850,14 @@ defmodule Cadet.Assessments do
         username: student_user.username
       })
 
-    from(sub in subquery(subquery),
-      select_merge: %{
-        rank: fragment("ROW_NUMBER() OVER (ORDER BY ? DESC)", sub.score)
-      }
-    )
-    |> Repo.all()
+    query =
+      from(sub in subquery(subquery),
+        select_merge: %{
+          rank: fragment("ROW_NUMBER() OVER (ORDER BY ? DESC)", sub.score)
+        }
+      )
+
+    Repo.all(query)
   end
 
   @doc """
@@ -1888,12 +1890,14 @@ defmodule Cadet.Assessments do
         username: student_user.username
       })
 
-    from(sub in subquery(subquery),
-      select_merge: %{
-        rank: fragment("ROW_NUMBER() OVER (ORDER BY ? DESC)", sub.score)
-      }
-    )
-    |> Repo.all()
+    query =
+      from(sub in subquery(subquery),
+        select_merge: %{
+          rank: fragment("ROW_NUMBER() OVER (ORDER BY ? DESC)", sub.score)
+        }
+      )
+
+    Repo.all(query)
   end
 
   @doc """
