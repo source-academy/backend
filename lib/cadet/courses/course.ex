@@ -31,7 +31,7 @@ defmodule Cadet.Courses.Course do
     field(:enable_achievements, :boolean, default: true)
     field(:enable_overall_leaderboard, :boolean, default: true)
     field(:enable_contest_leaderboard, :boolean, default: true)
-    field(:top_leaderboard_display, :integer)
+    field(:top_leaderboard_display, :integer, default: 100)
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
     field(:source_chapter, :integer)
