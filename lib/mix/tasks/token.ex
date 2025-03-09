@@ -62,7 +62,7 @@ defmodule Mix.Tasks.Cadet.Token do
     if Cadet.Env.env() in @env_allow_mock do
       user =
         User
-        |> where(role: ^role)
+        |> where(username: ^role)
         |> first
         |> Repo.one()
 

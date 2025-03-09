@@ -6,7 +6,7 @@ defmodule CadetWeb.AdminUserController do
 
   alias Cadet.Repo
   alias Cadet.{Accounts, Assessments, Courses}
-  alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role, User}
+  alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
 
   # This controller is used to find all users of a course
 

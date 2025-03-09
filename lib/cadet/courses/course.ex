@@ -29,7 +29,7 @@ defmodule Cadet.Courses.Course do
     field(:viewable, :boolean, default: true)
     field(:enable_game, :boolean, default: true)
     field(:enable_achievements, :boolean, default: true)
-    field(:enable_overall_leaderboard, :boolean, default: false)
+    field(:enable_overall_leaderboard, :boolean, default: true)
     field(:enable_contest_leaderboard, :boolean, default: true)
     field(:top_leaderboard_display, :integer)
     field(:enable_sourcecast, :boolean, default: true)
