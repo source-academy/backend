@@ -117,7 +117,7 @@ defmodule CadetWeb.CoursesController do
             enable_achievements: true,
             enable_overall_leaderboard: true,
             enable_contest_leaderboard: true,
-            top_leaderboard_display: "100",
+            top_leaderboard_display: 100,
             enable_sourcecast: true,
             enable_stories: false,
             source_chapter: 1,
