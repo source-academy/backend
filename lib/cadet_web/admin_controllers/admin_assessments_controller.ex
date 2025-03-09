@@ -173,6 +173,51 @@ defmodule CadetWeb.AdminAssessmentsController do
     render(conn, "leaderboard.json", leaderboard: result)
   end
 
+  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
+    Assessments.compute_relative_score(contest_id)
+    text(conn, "CONTEST SCORE CALCULATED")
+  end
+
+  def get_contest_popular_scores(conn, %{
+        "assessmentid" => assessment_id,
+        "course_id" => course_id
+      }) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
+    contestpop = Assessments.fetch_contest_popular_scores(contest_id)
+    json(conn, %{contest_popular: contestpop})
+  end
+
+  def get_contest_relative_scores(conn, %{
+        "assessmentid" => assessment_id,
+        "course_id" => course_id
+      }) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+
+    contestscore = Assessments.fetch_contest_relative_scores(contest_id)
+    json(conn, %{contest_score: contestscore})
+  end
+
   defp check_dates(open_at, close_at, assessment) do
     if is_nil(open_at) and is_nil(close_at) do
       {:ok, assessment}

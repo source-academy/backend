@@ -148,6 +148,7 @@ defmodule Cadet.Assessments do
   end
 
   def all_user_total_xp(course_id) do
+    # get all users even if they have 0 xp
     base_user_query =
       from(
         cr in CourseRegistration,
@@ -255,6 +256,7 @@ defmodule Cadet.Assessments do
         order_by: [desc: fragment("total_xp")]
       )
 
+    # add rank index
     ranked_xp_query =
       from(t in subquery(total_xp_query),
         select: %{
@@ -267,6 +269,12 @@ defmodule Cadet.Assessments do
       )
 
     Repo.all(ranked_xp_query)
+  end
+
+  def calculate_contest_score_update_table(course_id, assessment_id) do
+    # calculate contest score for all users
+
+    # update table
   end
 
   defp decimal_to_integer(decimal) do
@@ -1798,6 +1806,82 @@ defmodule Cadet.Assessments do
       Timex.shift(assessment.close_at, hours: voting_question.question["reveal_hours"]),
       Timex.now()
     )
+  end
+
+  @doc """
+  Fetches all contest scores for the given question, sorted by relative score
+
+  Used for contest leaderboard fetching
+  """
+  def fetch_contest_relative_scores(question_id) do
+    subquery =
+      Answer
+      |> where(question_id: ^question_id)
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
+      |> order_by(desc: :relative_score)
+      |> join(:left, [a], s in assoc(a, :submission))
+      |> join(:left, [a, s], student in assoc(s, :student))
+      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+      |> where([a, s, student], student.role == "student")
+      |> select([a, s, student, student_user], %{
+        submission_id: a.submission_id,
+        code: a.answer,
+        score: a.relative_score,
+        name: student_user.name,
+        username: student_user.username
+      })
+
+    from(sub in subquery(subquery),
+      select_merge: %{
+        rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.relative_score)
+      }
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Fetches all contest scores for the given question, sorted by popular score
+
+  Used for contest leaderboard fetching
+  """
+  def fetch_contest_popular_scores(question_id) do
+    subquery =
+      Answer
+      |> where(question_id: ^question_id)
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
+      |> order_by(desc: :popular_score)
+      |> join(:left, [a], s in assoc(a, :submission))
+      |> join(:left, [a, s], student in assoc(s, :student))
+      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+      |> where([a, s, student], student.role == "student")
+      |> select([a, s, student, student_user], %{
+        submission_id: a.submission_id,
+        code: a.answer,
+        score: a.popular_score,
+        name: student_user.name,
+        username: student_user.username
+      })
+
+    from(sub in subquery(subquery),
+      select_merge: %{
+        rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.popular_score)
+      }
+    )
+    |> Repo.all()
   end
 
   @doc """
