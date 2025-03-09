@@ -58,6 +58,40 @@ defmodule CadetWeb.AICodeAnalysisController do
     end)
   end
 
+  def format_answers(json_string) do
+    {:ok, answers} = Jason.decode(json_string)
+
+    answers
+    |> Enum.map(&format_answer/1)
+    |> Enum.join("\n\n")
+  end
+
+  defp format_answer(answer) do
+    """
+    **Question ID: #{answer["question"]["id"]}**
+
+    **Question:**
+    #{answer["question"]["content"]}
+
+    **Solution:**
+    ```
+    #{answer["question"]["solution"]}
+    ```
+
+    **Answer:**
+    ```
+    #{answer["answer"]["code"]}
+    ```
+
+    **Autograding Status:** #{answer["autograding_status"]}
+    **Autograding Results:** #{format_autograding_results(answer["autograding_results"])}
+    **Comments:** #{answer["comments"] || "None"}
+    """
+  end
+
+  defp format_autograding_results([]), do: "None"
+  defp format_autograding_results(results), do: Enum.join(results, ", ")
+
   defp analyze_code(conn, answers, submission_id, question_id) do
     answers_json =
       answers
@@ -87,6 +121,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> Map.put(:question, question_data)
       end)
       |> Jason.encode!()
+      |> format_answers()
 
       raw_prompt = """
       The code below is written in Source, a variant of JavaScript that comes with a rich set of built-in constants and functions. Below is a summary of some key built-in entities available in Source:
