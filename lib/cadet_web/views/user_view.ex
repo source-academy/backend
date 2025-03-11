@@ -29,12 +29,38 @@ defmodule CadetWeb.UserView do
     }
   end
 
+    def render("index.json", %{
+        user: user,
+        courses: courses,
+        latest: latest,
+        max_xp: max_xp,
+        xp: xp,
+        story: story
+    }, is_admin) do
+    %{
+      user: %{
+        userId: user.id,
+        name: user.name,
+        courses: render_many(courses, CadetWeb.UserView, "courses.json", as: :cr)
+      },
+      courseRegistration:
+        render_latest(%{
+          latest: latest,
+          max_xp: max_xp,
+          xp: xp,
+          story: story
+        }),
+      courseConfiguration: render_config(latest, is_admin),
+      assessmentConfigurations: render_assessment_configs(latest)
+    }
+  end
+
   def render("course.json", %{
         latest: latest,
         max_xp: max_xp,
         xp: xp,
         story: story
-      }) do
+  }) do
     %{
       courseRegistration:
         render_latest(%{
@@ -44,6 +70,25 @@ defmodule CadetWeb.UserView do
           story: story
         }),
       courseConfiguration: render_config(latest),
+      assessmentConfigurations: render_assessment_configs(latest)
+    }
+  end
+
+    def render("course.json", %{
+        latest: latest,
+        max_xp: max_xp,
+        xp: xp,
+        story: story
+    }, is_admin) do
+    %{
+      courseRegistration:
+        render_latest(%{
+          latest: latest,
+          max_xp: max_xp,
+          xp: xp,
+          story: story
+        }),
+      courseConfiguration: render_config(latest, is_admin),
       assessmentConfigurations: render_assessment_configs(latest)
     }
   end
@@ -95,23 +140,44 @@ defmodule CadetWeb.UserView do
     case latest do
       nil ->
         nil
+      _ -> transform_map_for_view(latest.course, %{
+        courseName: :course_name,
+        courseShortName: :course_short_name,
+        viewable: :viewable,
+        enableGame: :enable_game,
+        enableAchievements: :enable_achievements,
+        enableSourcecast: :enable_sourcecast,
+        enableStories: :enable_stories,
+        enableExamMode: :enable_exam_mode,
+        isOfficialCourse: :is_official_course,
+        sourceChapter: :source_chapter,
+        sourceVariant: :source_variant,
+        moduleHelpText: :module_help_text,
+        assetsPrefix: &Courses.assets_prefix/1
+      })
+    end
+  end
 
-      _ ->
-        transform_map_for_view(latest.course, %{
-          courseName: :course_name,
-          courseShortName: :course_short_name,
-          viewable: :viewable,
-          enableGame: :enable_game,
-          enableAchievements: :enable_achievements,
-          enableSourcecast: :enable_sourcecast,
-          enableStories: :enable_stories,
-          enableExamMode: :enable_exam_mode,
-          isOfficialCourse: :is_official_course,
-          sourceChapter: :source_chapter,
-          sourceVariant: :source_variant,
-          moduleHelpText: :module_help_text,
-          assetsPrefix: &Courses.assets_prefix/1
-        })
+  defp render_config(latest, is_admin) do
+    case latest do
+      nil ->
+        nil
+      _ -> transform_map_for_view(latest.course, %{
+        courseName: :course_name,
+        courseShortName: :course_short_name,
+        viewable: :viewable,
+        enableGame: :enable_game,
+        enableAchievements: :enable_achievements,
+        enableSourcecast: :enable_sourcecast,
+        enableStories: :enable_stories,
+        enableExamMode: :enable_exam_mode,
+        resume_code: :resume_code,
+        isOfficialCourse: :is_official_course,
+        sourceChapter: :source_chapter,
+        sourceVariant: :source_variant,
+        moduleHelpText: :module_help_text,
+        assetsPrefix: &Courses.assets_prefix/1
+      })
     end
   end
 

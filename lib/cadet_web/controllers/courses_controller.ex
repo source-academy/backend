@@ -9,7 +9,11 @@ defmodule CadetWeb.CoursesController do
   def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
-        render(conn, "config.json", config: config)
+        if (conn.assigns.course_reg.role == :admin || conn.assigns.course_reg.role == "admin") do
+          render(conn, "config_admin.json", config: config)
+        else
+          render(conn, "config.json", config: config)
+        end
 
       # coveralls-ignore-start
       # no course error will not happen here

@@ -30,6 +30,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_stories" => "true",
         "enable_exam_mode" => "false",
         "is_official_course" => "true",
+        "resume_code" => "resume_code",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -77,6 +78,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_stories" => "true",
         "enable_exam_mode" => "false",
         "is_official_course" => "true",
+        "resume_code" => "resume_code",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -102,6 +104,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_stories" => "true",
         "enable_exam_mode" => "false",
         "is_official_course" => "true",
+        "resume_code" => "resume_code",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -128,6 +131,7 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_stories" => "true",
         "enable_exam_mode" => "false",
         "is_official_course" => "true",
+        "resume_code" => "resume_code",
         "source_chapter" => "1",
         "source_variant" => "default",
         "module_help_text" => "Help Text"

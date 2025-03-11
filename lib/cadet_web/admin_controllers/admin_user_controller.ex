@@ -3,7 +3,6 @@ defmodule CadetWeb.AdminUserController do
   use PhoenixSwagger
 
   import Ecto.Query
-
   alias Cadet.Repo
   alias Cadet.{Accounts, Assessments, Courses}
   alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
@@ -14,7 +13,7 @@ defmodule CadetWeb.AdminUserController do
     users =
       filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
 
-    render(conn, "users.json", users: users)
+    render(conn, "users.json", users: users, is_admin: false)
   end
 
   def combined_total_xp(conn, %{"course_reg_id" => course_reg_id}) do

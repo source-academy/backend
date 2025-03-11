@@ -53,8 +53,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> join(:inner, [cr], c in assoc(cr, :course), on: c.enable_exam_mode == true and c.is_official_course == true)
     |> join(:left, [cr, c], ac in assoc(c, :assessment_config))
     |> preload([cr, c, ac],
-      course: {c, assessment_config: ^from(ac in AssessmentConfig, order_by: [asc: ac.order])}
-    )
+      course: {c, assessment_config: ^from(ac in AssessmentConfig, order_by: [asc: ac.order])})
     |> preload(:group)
     |> Repo.one()
   end
