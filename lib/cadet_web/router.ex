@@ -119,6 +119,7 @@ defmodule CadetWeb.Router do
     put("/user/research_agreement", UserController, :update_research_agreement)
 
     get("/config", CoursesController, :index)
+    post("/resume_code", CoursesController, :check_resume_code)
 
     get("/team/:assessmentid", TeamController, :index)
   end

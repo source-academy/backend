@@ -44,6 +44,24 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
+  def resume_code(conn, params = %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    params = params |> to_snake_case_atom_keys()
+
+    case Courses.get_course_config(course_id) do
+      {:ok, config} ->
+        if config.resume_code == params["resume_code"] do
+          send_resp(conn, 200, "")
+        else
+          send_resp(conn, 403, "")
+        end
+            # coveralls-ignore-start
+      # no course error will not happen here
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
+        # coveralls-ignore-stop
+    end
+  end
+
   swagger_path :create do
     post("/config/create")
 
