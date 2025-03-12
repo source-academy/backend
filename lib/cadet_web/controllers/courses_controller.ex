@@ -44,12 +44,13 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
-  def resume_code(conn, params = %{"course_id" => course_id}) when is_ecto_id(course_id) do
-    params = params |> to_snake_case_atom_keys()
+  def resume_code(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    params = conn.body_params
+    resume_code = Map.get(params, "resume_code", nil)
 
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
-        if config.resume_code == params["resume_code"] do
+        if config.resume_code == resume_code do
           send_resp(conn, 200, "")
         else
           send_resp(conn, 403, "")
