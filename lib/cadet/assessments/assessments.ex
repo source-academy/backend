@@ -218,12 +218,12 @@ defmodule Cadet.Assessments do
             full_join: a in Answer,
             on: s.id == a.submission_id,
             where: s.is_grading_published == true and cr.course_id == ^course_id,
-            group_by: [cr.id, u.name, u.username, s.id],
+            group_by: [cr.id, u.name, u.username, s.id, a.xp, a.xp_adjustment],
             select: %{
               user_id: cr.id,
               name: u.name,
               username: u.username,
-              submission_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
+              submission_xp: a.xp + a.xp_adjustment + max(s.xp_bonus)
             }
           )
         ),
