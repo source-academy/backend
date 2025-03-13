@@ -44,7 +44,7 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
-  def resume_code(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+  def check_resume_code(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     params = conn.body_params
     resume_code = Map.get(params, "resume_code", nil)
 
