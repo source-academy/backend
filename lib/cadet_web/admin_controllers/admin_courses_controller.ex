@@ -5,7 +5,27 @@ defmodule CadetWeb.AdminCoursesController do
 
   alias Cadet.Courses
 
-So
+  def update_course_config(conn, params = %{"course_id" => course_id})
+      when is_ecto_id(course_id) do
+    params = params |> to_snake_case_atom_keys()
+
+    case Courses.update_course_config(course_id, params) do
+      {:ok, _} ->
+        text(conn, "OK")
+
+      # coveralls-ignore-start
+      # case of invalid course_id will not happen here
+      {:error, {status, message}} ->
+        send_resp(conn, status, message)
+
+      # coveralls-ignore-stop
+
+      {:error, _} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid parameter(s)")
+    end
+  end
 
   def get_assessment_configs(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     assessment_configs = Courses.get_assessment_configs(course_id)
