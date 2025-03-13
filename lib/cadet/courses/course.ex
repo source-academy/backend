@@ -55,6 +55,30 @@ defmodule Cadet.Courses.Course do
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_sublanguage_combination(params)
+    |> validate_exam_mode(params)
+  end
+
+  # Validates combination of exam mode, resume code, and official course state
+  defp validate_exam_mode(changeset, params) do
+    resume_code = Map.get(params, :resume_code, "")
+    enable_exam_mode = Map.get(params, :enable_exam_mode, false)
+    is_official_course = get_field(changeset, :is_official_course, false)
+
+    case {enable_exam_mode, is_official_course, resume_code} do
+      {false, _, _} -> changeset
+      {true, false, _} ->
+        add_error(
+          changeset,
+          :enable_exam_mode,
+          "Exam mode is only available for official institution course.")
+      {true, true, ""} ->
+        add_error(
+          changeset,
+          :resume_code,
+          "Resume code must be set to non-empty value upon enabling of exam mode."
+        )
+      {_, _, _} -> changeset
+    end
   end
 
   # Validates combination of Source chapter and variant

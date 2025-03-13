@@ -2,7 +2,6 @@ defmodule CadetWeb.CoursesView do
   use CadetWeb, :view
 
   def render("config.json", %{config: config}) do
-    IO.puts("resume code not sent")
     %{
       config:
         transform_map_for_view(config, %{
@@ -25,7 +24,6 @@ defmodule CadetWeb.CoursesView do
   end
 
     def render("config_admin.json", %{config: config}) do
-    IO.puts("resume code sent")
     %{
       config:
         transform_map_for_view(config, %{

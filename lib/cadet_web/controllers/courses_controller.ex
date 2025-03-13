@@ -51,9 +51,9 @@ defmodule CadetWeb.CoursesController do
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
         if config.resume_code == resume_code do
-          send_resp(conn, 200, "")
+          send_resp(conn, 200, "Resume code is correct.")
         else
-          send_resp(conn, 403, "")
+          send_resp(conn, 403, "Resume code is wrong.")
         end
             # coveralls-ignore-start
       # no course error will not happen here
