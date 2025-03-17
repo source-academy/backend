@@ -22,6 +22,7 @@ defmodule Cadet.CoursesTest do
         enable_overall_leaderboard: true,
         enable_contest_leaderboard: true,
         top_leaderboard_display: 100,
+        top_contest_leaderboard_display: 10,
         enable_sourcecast: true,
         enable_stories: false,
         source_chapter: 1,

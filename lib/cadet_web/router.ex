@@ -132,6 +132,8 @@ defmodule CadetWeb.Router do
       :get_contest_popular_scores
     )
 
+    get("/all_contests", AdminAssessmentsController, :get_all_contests)
+
     get("/config", CoursesController, :index)
 
     get("/team/:assessmentid", TeamController, :index)
@@ -200,13 +202,13 @@ defmodule CadetWeb.Router do
     )
 
     get(
-      "/assessments/:assessmentid/popularVoteLeaderboard",
+      "/assessments/:assessmentid/:visibleentries/popularVoteLeaderboard",
       AdminAssessmentsController,
       :get_popular_leaderboard
     )
 
     get(
-      "/assessments/:assessmentid/scoreLeaderboard",
+      "/assessments/:assessmentid/:visibleentries/scoreLeaderboard",
       AdminAssessmentsController,
       :get_score_leaderboard
     )

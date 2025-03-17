@@ -10,7 +10,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -21,7 +22,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -32,7 +34,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -43,7 +46,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -54,7 +58,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -65,7 +70,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -76,7 +82,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -87,7 +94,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -100,7 +108,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -114,7 +123,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -124,7 +134,8 @@ defmodule Cadet.Courses.CourseTest do
           source_chapter: 1,
           source_variant: "wasm",
           course_name: "Data Structures and Algorithms",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -134,7 +145,8 @@ defmodule Cadet.Courses.CourseTest do
           source_chapter: 2,
           source_variant: "lazy",
           course_name: "Data Structures and Algorithms",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -144,7 +156,8 @@ defmodule Cadet.Courses.CourseTest do
           source_chapter: 3,
           source_variant: "non-det",
           course_name: "Data Structures and Algorithms",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -154,7 +167,8 @@ defmodule Cadet.Courses.CourseTest do
           source_chapter: 3,
           source_variant: "native",
           course_name: "Data Structures and Algorithms",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -164,7 +178,8 @@ defmodule Cadet.Courses.CourseTest do
           source_chapter: 2,
           source_variant: "typed",
           course_name: "Data Structures and Algorithms",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -175,7 +190,8 @@ defmodule Cadet.Courses.CourseTest do
           source_variant: "default",
           enable_achievements: true,
           course_name: "Data Structures and Algorithms",
-          top_leaderboard_display: 100
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -185,7 +201,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 200
+          top_leaderboard_display: 200,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -195,7 +212,8 @@ defmodule Cadet.Courses.CourseTest do
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
-          top_leaderboard_display: 350
+          top_leaderboard_display: 350,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )

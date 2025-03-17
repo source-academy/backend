@@ -412,6 +412,13 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
 
+      visible_entries =
+        Assessment
+        |> join(:inner, [a], c in assoc(a, :course))
+        |> where([a, c], a.id == ^id)
+        |> select([a, c], c.top_contest_leaderboard_display)
+        |> Repo.one()
+
       questions =
         Question
         |> where(assessment_id: ^id)
@@ -426,7 +433,7 @@ defmodule Cadet.Assessments do
           {q, a, nil, _} -> %{q | answer: %Answer{a | grader: nil}}
           {q, a, g, u} -> %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
         end)
-        |> load_contest_voting_entries(course_reg, assessment)
+        |> load_contest_voting_entries(course_reg, assessment, visible_entries)
 
       is_grading_published =
         Submission
@@ -900,16 +907,16 @@ defmodule Cadet.Assessments do
       Submission
       |> join(:inner, [s], ans in assoc(s, :answers))
       |> join(:inner, [s, ans], cr in assoc(s, :student))
-      |> where([s, ans, cr], cr.role == "student")
+      # |> where([s, ans, cr], cr.role == "student")
       |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-      |> where(
-        [_, ans, cr],
-        fragment(
-          "?->>'code' like ?",
-          ans.answer,
-          "%return%"
-        )
-      )
+      # |> where(
+      #   [_, ans, cr],
+      #   fragment(
+      #     "?->>'code' like ?",
+      #     ans.answer,
+      #     "%return%"
+      #   )
+      # )
       |> select([s, _ans], {s.student_id, s.id})
       |> Repo.all()
       |> Enum.into(%{})
@@ -918,7 +925,8 @@ defmodule Cadet.Assessments do
 
     voter_ids =
       CourseRegistration
-      |> where(role: "student", course_id: ^course_id)
+      # |> where(role: "student", course_id: ^course_id)
+      |> where(course_id: ^course_id)
       |> select([cr], cr.id)
       |> Repo.all()
 
@@ -1716,7 +1724,8 @@ defmodule Cadet.Assessments do
   defp load_contest_voting_entries(
          questions,
          %CourseRegistration{role: role, course_id: course_id, id: voter_id},
-         assessment
+         assessment,
+         visibleEntries
        ) do
     Enum.map(
       questions,
@@ -1732,7 +1741,7 @@ defmodule Cadet.Assessments do
               []
             else
               if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
-                fetch_top_popular_score_answers(question_id, 10)
+                fetch_top_popular_score_answers(question_id, visibleEntries)
               else
                 []
               end
@@ -1743,7 +1752,7 @@ defmodule Cadet.Assessments do
               []
             else
               if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
-                fetch_top_relative_score_answers(question_id, 10)
+                fetch_top_relative_score_answers(question_id, visibleEntries)
               else
                 []
               end
@@ -1861,6 +1870,25 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
+  Fetches all contests for the course id
+
+  Used for contest leaderboard dropdown fetching
+  """
+  def fetch_all_contests(course_id) do
+    assessments =
+      Assessment
+      |> where(course_id: ^course_id)
+      |> where(is_published: true)
+      |> join(:inner, [a], q in assoc(a, :questions))
+      |> where([a, q], q.type != "voting")
+      |> join(:inner, [a, q], ac in AssessmentConfig, on: a.config_id == ac.id)
+      |> where([a, q, ac], ac.type == "Contests")
+      |> select([a], %{contest_id: a.id, title: a.title, published: a.is_published})
+
+    Repo.all(assessments)
+  end
+
+  @doc """
   Fetches all contest scores for the given question, sorted by popular score
 
   Used for contest leaderboard fetching
@@ -1908,19 +1936,19 @@ defmodule Cadet.Assessments do
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
     Answer
     |> where(question_id: ^question_id)
-    |> where(
-      [a],
-      fragment(
-        "?->>'code' like ?",
-        a.answer,
-        "%return%"
-      )
-    )
+    # |> where(
+    #   [a],
+    #   fragment(
+    #     "?->>'code' like ?",
+    #     a.answer,
+    #     "%return%"
+    #   )
+    # )
     |> order_by(desc: :relative_score)
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
     |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    |> where([a, s, student], student.role == "student")
+    # |> where([a, s, student], student.role == "student")
     |> select([a, s, student, student_user], %{
       submission_id: a.submission_id,
       answer: a.answer,
@@ -1939,19 +1967,19 @@ defmodule Cadet.Assessments do
   def fetch_top_popular_score_answers(question_id, number_of_answers) do
     Answer
     |> where(question_id: ^question_id)
-    |> where(
-      [a],
-      fragment(
-        "?->>'code' like ?",
-        a.answer,
-        "%return%"
-      )
-    )
+    # |> where(
+    #   [a],
+    #   fragment(
+    #     "?->>'code' like ?",
+    #     a.answer,
+    #     "%return%"
+    #   )
+    # )
     |> order_by(desc: :popular_score)
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
     |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    |> where([a, s, student], student.role == "student")
+    # |> where([a, s, student], student.role == "student")
     |> select([a, s, student, student_user], %{
       submission_id: a.submission_id,
       answer: a.answer,

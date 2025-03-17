@@ -135,7 +135,11 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def get_score_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def get_score_leaderboard(conn, %{
+        "assessmentid" => assessment_id,
+        "visibleentries" => visible_entries,
+        "course_id" => course_id
+      }) do
     voting_questions =
       Question
       |> where(type: :voting)
@@ -146,7 +150,7 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     result =
       contest_id
-      |> Assessments.fetch_top_relative_score_answers(10)
+      |> Assessments.fetch_top_relative_score_answers(visible_entries)
       |> Enum.map(fn entry ->
         AssessmentsHelpers.build_contest_leaderboard_entry(entry)
       end)
@@ -154,7 +158,11 @@ defmodule CadetWeb.AdminAssessmentsController do
     render(conn, "leaderboard.json", leaderboard: result)
   end
 
-  def get_popular_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def get_popular_leaderboard(conn, %{
+        "assessmentid" => assessment_id,
+        "visibleentries" => visible_entries,
+        "course_id" => course_id
+      }) do
     voting_questions =
       Question
       |> where(type: :voting)
@@ -165,7 +173,7 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     result =
       contest_id
-      |> Assessments.fetch_top_popular_score_answers(10)
+      |> Assessments.fetch_top_popular_score_answers(visible_entries)
       |> Enum.map(fn entry ->
         AssessmentsHelpers.build_popular_leaderboard_entry(entry)
       end)
@@ -214,6 +222,11 @@ defmodule CadetWeb.AdminAssessmentsController do
     contestscore = Assessments.fetch_contest_relative_scores(contest_id.id)
     voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
     json(conn, %{contest_score: contestscore, voting_id: voting_id})
+  end
+
+  def get_all_contests(conn, %{"course_id" => course_id}) do
+    contests = Assessments.fetch_all_contests(course_id)
+    json(conn, contests)
   end
 
   defp check_dates(open_at, close_at, assessment) do
@@ -331,7 +344,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   swagger_path :get_score_leaderboard do
     get("/courses/{course_id}/admin/assessments/:assessmentid/scoreLeaderboard")
 
-    summary("get the top 10 contest entries based on score")
+    summary("get the top X contest entries based on score")
 
     security([%{JWT: []}])
 
