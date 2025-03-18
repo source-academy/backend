@@ -15,6 +15,7 @@ defmodule CadetWeb.UserView do
       user: %{
         userId: user.id,
         name: user.name,
+        isPaused: user.is_paused,
         courses: render_many(courses, CadetWeb.UserView, "courses.json", as: :cr)
       },
       courseRegistration:
@@ -41,6 +42,7 @@ defmodule CadetWeb.UserView do
       user: %{
         userId: user.id,
         name: user.name,
+        isPaused: user.is_paused,
         courses: render_many(courses, CadetWeb.UserView, "courses.json", as: :cr)
       },
       courseRegistration:

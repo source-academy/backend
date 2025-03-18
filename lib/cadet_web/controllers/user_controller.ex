@@ -124,6 +124,23 @@ defmodule CadetWeb.UserController do
     end
   end
 
+  def pause_user(conn, params) do
+    user = conn.assigns.current_user
+    user
+    |> Cadet.Accounts.User.changeset(%{is_paused: true})
+    |> Cadet.Repo.update()
+    |> case do
+      result = {:ok, _} ->
+        conn
+        |> put_status(:ok)
+        |> text("User is paused.")
+      {:error, _} ->
+        conn
+        |> put_status(500)
+        |> text(:error)
+    end
+  end
+
   def update_research_agreement(conn, %{"agreedToResearch" => agreed_to_research}) do
     course_reg = conn.assigns[:course_reg]
 
