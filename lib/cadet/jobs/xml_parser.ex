@@ -269,7 +269,6 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(~x"./VOTING/XP_ARRAY/XP"el, value: ~x"./@value"i)
       |> Enum.map(& &1[:value])
 
-    IO.inspect(xp_values, label: "xp_values")
     Map.merge(question_data, %{xp_values: xp_values})
   end
 
