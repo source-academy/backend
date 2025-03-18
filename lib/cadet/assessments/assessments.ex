@@ -2025,14 +2025,21 @@ defmodule Cadet.Assessments do
     if Log.log_execution("update_final_contest_leaderboards", Duration.from_minutes(1435)) do
       Logger.info("Started update_final_contest_leaderboards")
 
-      voting_questions_to_update = fetch_voting_questions_due_yesterday()
+      voting_questions_to_update = fetch_voting_questions_due_yesterday() || []
 
-      _ =
+      voting_questions_to_update =
+        if is_nil(voting_questions_to_update), do: [], else: voting_questions_to_update
+
+      if Enum.empty?(voting_questions_to_update) do
+        Logger.warn("No voting questions to update.")
+      else
+        # Process each voting question
         voting_questions_to_update
         |> Enum.each(fn qn ->
           compute_relative_score(qn.id)
           assign_winning_contest_entries_xp(qn.id)
         end)
+      end
 
       Logger.info("Successfully update_final_contest_leaderboards")
     end
@@ -2061,8 +2068,6 @@ defmodule Cadet.Assessments do
       |> where(id: ^contest_voting_question_id)
       |> Repo.one()
 
-    scores = voting_questions.question["xp_values"]
-
     contest_question_id =
       SubmissionVotes
       |> where(question_id: ^contest_voting_question_id)
@@ -2071,8 +2076,14 @@ defmodule Cadet.Assessments do
       |> limit(1)
       |> Repo.one()
 
-    if scores == [] or is_nil(contest_question_id) do
-      Logger.warn("No XP values provided or contest question ID is missing. Terminating.")
+    if is_nil(contest_question_id) do
+      Logger.warn("Contest question ID is missing. Terminating.")
+      :ok
+    else
+      scores = voting_questions.question["xp_values"]
+
+      if scores == [] do
+        Logger.warn("No XP values provided. Terminating.")
       :ok
     else
       Repo.transaction(fn ->
@@ -2111,6 +2122,7 @@ defmodule Cadet.Assessments do
       end)
 
       Logger.info("XP assigned to winning contest entries")
+      end
     end
   end
 
