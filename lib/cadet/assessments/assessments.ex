@@ -907,16 +907,16 @@ defmodule Cadet.Assessments do
       Submission
       |> join(:inner, [s], ans in assoc(s, :answers))
       |> join(:inner, [s, ans], cr in assoc(s, :student))
-      # |> where([s, ans, cr], cr.role == "student")
+      |> where([s, ans, cr], cr.role == "student")
       |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-      # |> where(
-      #   [_, ans, cr],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     ans.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [_, ans, cr],
+        fragment(
+          "?->>'code' like ?",
+          ans.answer,
+          "%return%"
+        )
+      )
       |> select([s, _ans], {s.student_id, s.id})
       |> Repo.all()
       |> Enum.into(%{})
@@ -925,8 +925,7 @@ defmodule Cadet.Assessments do
 
     voter_ids =
       CourseRegistration
-      # |> where(role: "student", course_id: ^course_id)
-      |> where(course_id: ^course_id)
+      |> where(role: "student", course_id: ^course_id)
       |> select([cr], cr.id)
       |> Repo.all()
 
@@ -2029,7 +2028,10 @@ defmodule Cadet.Assessments do
 
       _ =
         voting_questions_to_update
-        |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+        |> Enum.each(fn qn ->
+          compute_relative_score(qn.id)
+          assign_winning_contest_entries_xp(qn.id)
+        end)
 
       Logger.info("Successfully update_final_contest_leaderboards")
     end
@@ -2046,6 +2048,64 @@ defmodule Cadet.Assessments do
       a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
     )
     |> Repo.all()
+  end
+
+  @doc """
+  Automatically assigns XP to the winning contest entries
+  """
+  def assign_winning_contest_entries_xp(contest_voting_question_id) do
+    contest_id =
+      SubmissionVotes
+      |> where(question_id: ^contest_voting_question_id)
+      |> join(:inner, [sv], ans in Answer, on: sv.submission_id == ans.submission_id)
+      |> select([sv, ans], ans.question_id)
+      |> limit(1)
+      |> Repo.one()
+
+    Repo.transaction(fn ->
+      winning_popular_entries =
+        Answer
+        |> where(question_id: ^contest_id)
+        |> order_by([a], desc: a.popular_score)
+        |> Repo.all()
+
+      winning_popular_entries
+      |> Enum.with_index()
+      |> Enum.each(fn {entry, index} ->
+        increment =
+          case index do
+            0 -> 300
+            1 -> 200
+            2 -> 100
+            _ -> 0
+          end
+
+        Repo.update!(Ecto.Changeset.change(entry, %{xp_adjustment: increment}))
+      end)
+
+      winning_score_entries =
+        Answer
+        |> where(question_id: ^contest_id)
+        |> order_by([a], desc: a.relative_score)
+        |> Repo.all()
+
+      winning_score_entries
+      |> Enum.with_index()
+      |> Enum.each(fn {entry, index} ->
+        increment =
+          case index do
+            0 -> 300
+            1 -> 200
+            2 -> 100
+            _ -> 0
+          end
+
+        new_value = entry.xp_adjustment + increment
+        Repo.update!(Ecto.Changeset.change(entry, %{xp_adjustment: new_value}))
+      end)
+    end)
+
+    Logger.info("XP assigned to winning contest entries")
   end
 
   @doc """
