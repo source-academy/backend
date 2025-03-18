@@ -907,16 +907,16 @@ defmodule Cadet.Assessments do
       Submission
       |> join(:inner, [s], ans in assoc(s, :answers))
       |> join(:inner, [s, ans], cr in assoc(s, :student))
-      |> where([s, ans, cr], cr.role == "student")
+      # |> where([s, ans, cr], cr.role == "student")
       |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-      |> where(
-        [_, ans, cr],
-        fragment(
-          "?->>'code' like ?",
-          ans.answer,
-          "%return%"
-        )
-      )
+      # |> where(
+      #   [_, ans, cr],
+      #   fragment(
+      #     "?->>'code' like ?",
+      #     ans.answer,
+      #     "%return%"
+      #   )
+      # )
       |> select([s, _ans], {s.student_id, s.id})
       |> Repo.all()
       |> Enum.into(%{})
@@ -925,7 +925,8 @@ defmodule Cadet.Assessments do
 
     voter_ids =
       CourseRegistration
-      |> where(role: "student", course_id: ^course_id)
+      # |> where(role: "student", course_id: ^course_id)
+      |> where(course_id: ^course_id)
       |> select([cr], cr.id)
       |> Repo.all()
 
@@ -2054,7 +2055,15 @@ defmodule Cadet.Assessments do
   Automatically assigns XP to the winning contest entries
   """
   def assign_winning_contest_entries_xp(contest_voting_question_id) do
-    contest_id =
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(id: ^contest_voting_question_id)
+      |> Repo.one()
+
+    scores = voting_questions.question["xp_values"]
+
+    contest_question_id =
       SubmissionVotes
       |> where(question_id: ^contest_voting_question_id)
       |> join(:inner, [sv], ans in Answer, on: sv.submission_id == ans.submission_id)
@@ -2065,43 +2074,35 @@ defmodule Cadet.Assessments do
     Repo.transaction(fn ->
       winning_popular_entries =
         Answer
-        |> where(question_id: ^contest_id)
-        |> order_by([a], desc: a.popular_score)
+        |> where(question_id: ^contest_question_id)
+        |> select([a], %{
+          id: a.id,
+          rank: fragment("rank() OVER (ORDER BY ? DESC)", a.popular_score)
+        })
         |> Repo.all()
 
       winning_popular_entries
-      |> Enum.with_index()
-      |> Enum.each(fn {entry, index} ->
-        increment =
-          case index do
-            0 -> 300
-            1 -> 200
-            2 -> 100
-            _ -> 0
-          end
-
-        Repo.update!(Ecto.Changeset.change(entry, %{xp_adjustment: increment}))
+      |> Enum.each(fn %{id: answer_id, rank: rank} ->
+        increment = Enum.at(scores, rank - 1, 0)
+        answer = Repo.get!(Answer, answer_id)
+        Repo.update!(Ecto.Changeset.change(answer, %{xp: increment}))
       end)
 
       winning_score_entries =
         Answer
-        |> where(question_id: ^contest_id)
-        |> order_by([a], desc: a.relative_score)
+        |> where(question_id: ^contest_question_id)
+        |> select([a], %{
+          id: a.id,
+          rank: fragment("rank() OVER (ORDER BY ? DESC)", a.relative_score)
+        })
         |> Repo.all()
 
       winning_score_entries
-      |> Enum.with_index()
-      |> Enum.each(fn {entry, index} ->
-        increment =
-          case index do
-            0 -> 300
-            1 -> 200
-            2 -> 100
-            _ -> 0
-          end
-
-        new_value = entry.xp_adjustment + increment
-        Repo.update!(Ecto.Changeset.change(entry, %{xp_adjustment: new_value}))
+      |> Enum.each(fn %{id: answer_id, rank: rank} ->
+        increment = Enum.at(scores, rank - 1, 0)
+        answer = Repo.get!(Answer, answer_id)
+        new_value = answer.xp + increment
+        Repo.update!(Ecto.Changeset.change(answer, %{xp: new_value}))
       end)
     end)
 

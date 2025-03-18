@@ -196,6 +196,22 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
+  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    if voting_questions do
+      Assessments.assign_winning_contest_entries_xp(voting_questions.id)
+
+      text(conn, "XP Dispatched")
+    else
+      text(conn, "No voting questions found for the given assessment")
+    end
+  end
+
   def get_contest_popular_scores(conn, %{
         "assessmentid" => assessment_id,
         "course_id" => course_id

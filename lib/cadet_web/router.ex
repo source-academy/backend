@@ -201,6 +201,12 @@ defmodule CadetWeb.Router do
       :calculate_contest_score
     )
 
+    post(
+      "/assessments/:assessmentid/dispatchContestXp",
+      AdminAssessmentsController,
+      :dispatch_contest_xp
+    )
+
     get(
       "/assessments/:assessmentid/:visibleentries/popularVoteLeaderboard",
       AdminAssessmentsController,
