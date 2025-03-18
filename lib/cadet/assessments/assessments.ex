@@ -1862,7 +1862,7 @@ defmodule Cadet.Assessments do
     query =
       from(sub in subquery(subquery),
         select_merge: %{
-          rank: fragment("ROW_NUMBER() OVER (ORDER BY ? DESC)", sub.score)
+          rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.score)
         }
       )
 
@@ -1921,7 +1921,7 @@ defmodule Cadet.Assessments do
     query =
       from(sub in subquery(subquery),
         select_merge: %{
-          rank: fragment("ROW_NUMBER() OVER (ORDER BY ? DESC)", sub.score)
+          rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.score)
         }
       )
 
