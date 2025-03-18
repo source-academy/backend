@@ -2071,42 +2071,47 @@ defmodule Cadet.Assessments do
       |> limit(1)
       |> Repo.one()
 
-    Repo.transaction(fn ->
-      winning_popular_entries =
-        Answer
-        |> where(question_id: ^contest_question_id)
-        |> select([a], %{
-          id: a.id,
-          rank: fragment("rank() OVER (ORDER BY ? DESC)", a.popular_score)
-        })
-        |> Repo.all()
+    if scores == [] or is_nil(contest_question_id) do
+      Logger.warn("No XP values provided or contest question ID is missing. Terminating.")
+      :ok
+    else
+      Repo.transaction(fn ->
+        winning_popular_entries =
+          Answer
+          |> where(question_id: ^contest_question_id)
+          |> select([a], %{
+            id: a.id,
+            rank: fragment("rank() OVER (ORDER BY ? DESC)", a.popular_score)
+          })
+          |> Repo.all()
 
-      winning_popular_entries
-      |> Enum.each(fn %{id: answer_id, rank: rank} ->
-        increment = Enum.at(scores, rank - 1, 0)
-        answer = Repo.get!(Answer, answer_id)
-        Repo.update!(Ecto.Changeset.change(answer, %{xp: increment}))
+        winning_popular_entries
+        |> Enum.each(fn %{id: answer_id, rank: rank} ->
+          increment = Enum.at(scores, rank - 1, 0)
+          answer = Repo.get!(Answer, answer_id)
+          Repo.update!(Ecto.Changeset.change(answer, %{xp: increment}))
+        end)
+
+        winning_score_entries =
+          Answer
+          |> where(question_id: ^contest_question_id)
+          |> select([a], %{
+            id: a.id,
+            rank: fragment("rank() OVER (ORDER BY ? DESC)", a.relative_score)
+          })
+          |> Repo.all()
+
+        winning_score_entries
+        |> Enum.each(fn %{id: answer_id, rank: rank} ->
+          increment = Enum.at(scores, rank - 1, 0)
+          answer = Repo.get!(Answer, answer_id)
+          new_value = answer.xp + increment
+          Repo.update!(Ecto.Changeset.change(answer, %{xp: new_value}))
+        end)
       end)
 
-      winning_score_entries =
-        Answer
-        |> where(question_id: ^contest_question_id)
-        |> select([a], %{
-          id: a.id,
-          rank: fragment("rank() OVER (ORDER BY ? DESC)", a.relative_score)
-        })
-        |> Repo.all()
-
-      winning_score_entries
-      |> Enum.each(fn %{id: answer_id, rank: rank} ->
-        increment = Enum.at(scores, rank - 1, 0)
-        answer = Repo.get!(Answer, answer_id)
-        new_value = answer.xp + increment
-        Repo.update!(Ecto.Changeset.change(answer, %{xp: new_value}))
-      end)
-    end)
-
-    Logger.info("XP assigned to winning contest entries")
+      Logger.info("XP assigned to winning contest entries")
+    end
   end
 
   @doc """
