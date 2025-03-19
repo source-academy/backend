@@ -910,14 +910,15 @@ defmodule Cadet.Assessments do
       |> join(:inner, [s, ans], cr in assoc(s, :student))
       |> where([s, ans, cr], cr.role == "student")
       |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-      |> where(
-        [_, ans, cr],
-        fragment(
-          "?->>'code' like ?",
-          ans.answer,
-          "%return%"
-        )
-      )
+      # TODO: uncomment when Leaderboard testing is finished
+      # |> where(
+      #   [_, ans, cr],
+      #   fragment(
+      #     "?->>'code' like ?",
+      #     ans.answer,
+      #     "%return%"
+      #   )
+      # )
       |> select([s, _ans], {s.student_id, s.id})
       |> Repo.all()
       |> Enum.into(%{})
@@ -926,7 +927,9 @@ defmodule Cadet.Assessments do
 
     voter_ids =
       CourseRegistration
-      |> where(role: "student", course_id: ^course_id)
+      # TODO: uncomment when Leaderboard testing is finished
+      # |> where(role: "student", course_id: ^course_id)
+      # TODO: delete when Leaderboard testing is finished
       |> where(course_id: ^course_id)
       |> select([cr], cr.id)
       |> Repo.all()
@@ -1839,19 +1842,21 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      |> where(
-        [a],
-        fragment(
-          "?->>'code' like ?",
-          a.answer,
-          "%return%"
-        )
-      )
+      # TODO: uncomment when Leaderboard testing is finished
+      # |> where(
+      #   [a],
+      #   fragment(
+      #     "?->>'code' like ?",
+      #     a.answer,
+      #     "%return%"
+      #   )
+      # )
       |> order_by(desc: :relative_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      |> where([a, s, student], student.role == "student")
+      # TODO: uncomment when Leaderboard testing is finished
+      # |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
@@ -1898,19 +1903,21 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      |> where(
-        [a],
-        fragment(
-          "?->>'code' like ?",
-          a.answer,
-          "%return%"
-        )
-      )
+      # TODO: uncomment when Leaderboard testing is finished
+      # |> where(
+      #   [a],
+      #   fragment(
+      #     "?->>'code' like ?",
+      #     a.answer,
+      #     "%return%"
+      #   )
+      # )
       |> order_by(desc: :popular_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      |> where([a, s, student], student.role == "student")
+      # TODO: uncomment when Leaderboard testing is finished
+      # |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
