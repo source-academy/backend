@@ -98,7 +98,8 @@ defmodule Cadet.Updater.XMLParser do
         reading: ~x"//READING/text()" |> transform_by(&process_charlist/1),
         summary_short: ~x"//WEBSUMMARY/text()" |> transform_by(&process_charlist/1),
         summary_long: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-        password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1)
+        password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1),
+        on_finish: ~x"//ONFINISH/text()"so |> transform_by(&process_charlist/1)
       )
       |> Map.put(:is_published, false)
       |> Map.put(:open_at, open_at)

@@ -19,6 +19,7 @@ defmodule Cadet.Repo.Migrations.CreateMissions do
       add(:reading, :string)
       add(:mission_pdf, :string)
       add(:is_published, :boolean, null: false)
+      add(:on_finish, :string, null: "")
       timestamps()
     end
 
