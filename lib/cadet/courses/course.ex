@@ -14,6 +14,7 @@ defmodule Cadet.Courses.Course do
           enable_achievements: boolean(),
           enable_sourcecast: boolean(),
           enable_stories: boolean(),
+          enable_llm_grading: boolean(),
           source_chapter: integer(),
           source_variant: String.t(),
           module_help_text: String.t(),
@@ -28,6 +29,7 @@ defmodule Cadet.Courses.Course do
     field(:enable_achievements, :boolean, default: true)
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
+    field(:enable_llm_grading, :boolean)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
     field(:module_help_text, :string)
@@ -42,7 +44,7 @@ defmodule Cadet.Courses.Course do
 
   @required_fields ~w(course_name viewable enable_game
     enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
-  @optional_fields ~w(course_short_name module_help_text)a
+  @optional_fields ~w(course_short_name module_help_text enable_llm_grading)a
 
   def changeset(course, params) do
     course

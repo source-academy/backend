@@ -6,10 +6,12 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   alias Cadet.Assessments
   alias Cadet.AIComments
+  alias Cadet.Courses
 
   @openai_api_url "https://api.openai.com/v1/chat/completions"
   @model "gpt-4o"
   @api_key Application.get_env(:openai, :api_key)
+  @default_llm_grading false
 
   # For logging outputs to both database and file
   defp log_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
@@ -54,11 +56,26 @@ defmodule CadetWeb.AICodeAnalysisController do
   @doc """
   Fetches the question details and answers based on submissionid and questionid and generates AI-generated comments.
   """
-  def generate_ai_comments(conn, %{"submissionid" => submission_id, "questionid" => question_id})
+  def generate_ai_comments(conn, %{"submissionid" => submission_id, "questionid" => question_id, "course_id" => course_id})
     when is_ecto_id(submission_id) do
-      case Assessments.get_answers_in_submission(submission_id, question_id) do
-        {:ok, {answers, _assessment}} ->
-          analyze_code(conn, answers, submission_id, question_id)
+      # Check if LLM grading is enabled for this course (default to @default_llm_grading if nil)
+      case Courses.get_course_config(course_id) do
+        {:ok, course} ->
+          if course.enable_llm_grading == true || (course.enable_llm_grading == nil && @default_llm_grading == true) do
+            case Assessments.get_answers_in_submission(submission_id, question_id) do
+              {:ok, {answers, _assessment}} ->
+                analyze_code(conn, answers, submission_id, question_id)
+
+              {:error, {status, message}} ->
+                conn
+                |> put_status(status)
+                |> text(message)
+            end
+          else
+            conn
+            |> put_status(:forbidden)
+            |> json(%{"error" => "LLM grading is not enabled for this course"})
+          end
 
         {:error, {status, message}} ->
           conn
@@ -274,6 +291,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     produces("application/json")
 
     parameters do
+      courseId(:path, :integer, "course id", required: true)
       submissionId(:path, :integer, "submission id", required: true)
       questionId(:path, :integer, "question id", required: true)
     end
@@ -282,6 +300,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     response(400, "Invalid or missing parameter(s) or submission and/or question not found")
     response(401, "Unauthorized")
     response(403, "Forbidden")
+    response(403, "LLM grading is not enabled for this course")
   end
 
   swagger_path :save_final_comment do
