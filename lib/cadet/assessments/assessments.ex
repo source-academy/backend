@@ -1881,17 +1881,23 @@ defmodule Cadet.Assessments do
   Used for contest leaderboard dropdown fetching
   """
   def fetch_all_contests(course_id) do
-    assessments =
-      Assessment
-      |> where(course_id: ^course_id)
-      |> where(is_published: true)
-      |> join(:inner, [a], q in assoc(a, :questions))
-      |> where([a, q], q.type != "voting")
-      |> join(:inner, [a, q], ac in AssessmentConfig, on: a.config_id == ac.id)
-      |> where([a, q, ac], ac.type == "Contests")
-      |> select([a], %{contest_id: a.id, title: a.title, published: a.is_published})
+    contest_numbers =
+      Question
+      |> where(type: :voting)
+      |> select([q], q.question["contest_number"])
+      |> Repo.all()
+      |> Enum.reject(&is_nil/1)
 
-    Repo.all(assessments)
+    if contest_numbers == [] do
+      []
+    else
+      Assessment
+      |> where([a], a.number in ^contest_numbers and a.course_id == ^course_id)
+      |> join(:inner, [a], ac in AssessmentConfig, on: a.config_id == ac.id)
+      |> where([a, ac], ac.type == "Contests")
+      |> select([a], %{contest_id: a.id, title: a.title, published: a.is_published})
+      |> Repo.all()
+    end
   end
 
   @doc """
