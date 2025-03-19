@@ -12,7 +12,7 @@ defmodule Cadet.Assessments.QuestionTypes.VotingQuestion do
     field(:contest_number, :string)
     field(:reveal_hours, :integer)
     field(:token_divider, :integer)
-    field(:xp_values, {:array, :integer}, default: [])
+    field(:xp_values, {:array, :integer}, default: [500, 400, 300])
   end
 
   @required_fields ~w(content contest_number reveal_hours token_divider)a

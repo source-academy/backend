@@ -27,6 +27,7 @@ defmodule Cadet.Assessments do
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.Multi
   alias Cadet.Incentives.{Achievements, AchievementToGoal}
+  alias Ecto.Changeset
   alias Timex.Duration
 
   require Decimal
@@ -907,16 +908,16 @@ defmodule Cadet.Assessments do
       Submission
       |> join(:inner, [s], ans in assoc(s, :answers))
       |> join(:inner, [s, ans], cr in assoc(s, :student))
-      # |> where([s, ans, cr], cr.role == "student")
+      |> where([s, ans, cr], cr.role == "student")
       |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-      # |> where(
-      #   [_, ans, cr],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     ans.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [_, ans, cr],
+        fragment(
+          "?->>'code' like ?",
+          ans.answer,
+          "%return%"
+        )
+      )
       |> select([s, _ans], {s.student_id, s.id})
       |> Repo.all()
       |> Enum.into(%{})
@@ -925,7 +926,7 @@ defmodule Cadet.Assessments do
 
     voter_ids =
       CourseRegistration
-      # |> where(role: "student", course_id: ^course_id)
+      |> where(role: "student", course_id: ^course_id)
       |> where(course_id: ^course_id)
       |> select([cr], cr.id)
       |> Repo.all()
@@ -1838,19 +1839,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :relative_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
@@ -1897,19 +1898,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :popular_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
@@ -2030,18 +2031,23 @@ defmodule Cadet.Assessments do
       voting_questions_to_update =
         if is_nil(voting_questions_to_update), do: [], else: voting_questions_to_update
 
+      scores =
+        Enum.map(voting_questions_to_update, fn qn ->
+          compute_relative_score(qn.id)
+        end)
+
       if Enum.empty?(voting_questions_to_update) do
         Logger.warn("No voting questions to update.")
       else
         # Process each voting question
-        voting_questions_to_update
-        |> Enum.each(fn qn ->
-          compute_relative_score(qn.id)
+        Enum.each(voting_questions_to_update, fn qn ->
           assign_winning_contest_entries_xp(qn.id)
         end)
+
+        Logger.info("Successfully update_final_contest_leaderboards")
       end
 
-      Logger.info("Successfully update_final_contest_leaderboards")
+      scores
     end
   end
 
@@ -2080,48 +2086,49 @@ defmodule Cadet.Assessments do
       Logger.warn("Contest question ID is missing. Terminating.")
       :ok
     else
-      scores = voting_questions.question["xp_values"]
+      default_xp_values = %Cadet.Assessments.QuestionTypes.VotingQuestion{} |> Map.get(:xp_values)
+      scores = voting_questions.question["xp_values"] || default_xp_values
 
       if scores == [] do
         Logger.warn("No XP values provided. Terminating.")
-      :ok
-    else
-      Repo.transaction(fn ->
-        winning_popular_entries =
-          Answer
-          |> where(question_id: ^contest_question_id)
-          |> select([a], %{
-            id: a.id,
-            rank: fragment("rank() OVER (ORDER BY ? DESC)", a.popular_score)
-          })
-          |> Repo.all()
+        :ok
+      else
+        Repo.transaction(fn ->
+          winning_popular_entries =
+            Answer
+            |> where(question_id: ^contest_question_id)
+            |> select([a], %{
+              id: a.id,
+              rank: fragment("rank() OVER (ORDER BY ? DESC)", a.popular_score)
+            })
+            |> Repo.all()
 
-        winning_popular_entries
-        |> Enum.each(fn %{id: answer_id, rank: rank} ->
-          increment = Enum.at(scores, rank - 1, 0)
-          answer = Repo.get!(Answer, answer_id)
-          Repo.update!(Ecto.Changeset.change(answer, %{xp: increment}))
+          winning_popular_entries
+          |> Enum.each(fn %{id: answer_id, rank: rank} ->
+            increment = Enum.at(scores, rank - 1, 0)
+            answer = Repo.get!(Answer, answer_id)
+            Repo.update!(Changeset.change(answer, %{xp: increment}))
+          end)
+
+          winning_score_entries =
+            Answer
+            |> where(question_id: ^contest_question_id)
+            |> select([a], %{
+              id: a.id,
+              rank: fragment("rank() OVER (ORDER BY ? DESC)", a.relative_score)
+            })
+            |> Repo.all()
+
+          winning_score_entries
+          |> Enum.each(fn %{id: answer_id, rank: rank} ->
+            increment = Enum.at(scores, rank - 1, 0)
+            answer = Repo.get!(Answer, answer_id)
+            new_value = answer.xp + increment
+            Repo.update!(Changeset.change(answer, %{xp: new_value}))
+          end)
         end)
 
-        winning_score_entries =
-          Answer
-          |> where(question_id: ^contest_question_id)
-          |> select([a], %{
-            id: a.id,
-            rank: fragment("rank() OVER (ORDER BY ? DESC)", a.relative_score)
-          })
-          |> Repo.all()
-
-        winning_score_entries
-        |> Enum.each(fn %{id: answer_id, rank: rank} ->
-          increment = Enum.at(scores, rank - 1, 0)
-          answer = Repo.get!(Answer, answer_id)
-          new_value = answer.xp + increment
-          Repo.update!(Ecto.Changeset.change(answer, %{xp: new_value}))
-        end)
-      end)
-
-      Logger.info("XP assigned to winning contest entries")
+        Logger.info("XP assigned to winning contest entries")
       end
     end
   end
@@ -2131,6 +2138,26 @@ defmodule Cadet.Assessments do
   based on current submitted votes.
   """
   def compute_relative_score(contest_voting_question_id) do
+    # reset all scores to 0 first
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(id: ^contest_voting_question_id)
+      |> Repo.one()
+
+    course_id =
+      Assessment
+      |> where(id: ^voting_questions.assessment_id)
+      |> select([a], a.course_id)
+      |> Repo.one()
+
+    contest_question_id = fetch_associated_contest_question_id(course_id, voting_questions)
+
+    Answer
+    |> where([ans], ans.question_id == ^contest_question_id)
+    |> update([ans], set: [popular_score: 0.0, relative_score: 0.0])
+    |> Repo.update_all([])
+
     # query all records from submission votes tied to the question id ->
     # map score to user id ->
     # store as grade ->
