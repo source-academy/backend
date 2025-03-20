@@ -261,7 +261,7 @@ defmodule Cadet.Assessments do
     ranked_xp_query =
       from(t in subquery(total_xp_query),
         select: %{
-          rank: fragment("ROW_NUMBER() OVER (ORDER BY total_xp DESC)"),
+          rank: fragment("RANK() OVER (ORDER BY total_xp DESC)"),
           user_id: t.user_id,
           name: t.name,
           username: t.username,
@@ -910,15 +910,14 @@ defmodule Cadet.Assessments do
       |> join(:inner, [s, ans], cr in assoc(s, :student))
       |> where([s, ans, cr], cr.role == "student")
       |> where([s, _], s.assessment_id == ^contest_assessment.id and s.status == "submitted")
-      # TODO: uncomment when Leaderboard testing is finished
-      # |> where(
-      #   [_, ans, cr],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     ans.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [_, ans, cr],
+        fragment(
+          "?->>'code' like ?",
+          ans.answer,
+          "%return%"
+        )
+      )
       |> select([s, _ans], {s.student_id, s.id})
       |> Repo.all()
       |> Enum.into(%{})
@@ -927,10 +926,7 @@ defmodule Cadet.Assessments do
 
     voter_ids =
       CourseRegistration
-      # TODO: uncomment when Leaderboard testing is finished
-      # |> where(role: "student", course_id: ^course_id)
-      # TODO: delete when Leaderboard testing is finished
-      |> where(course_id: ^course_id)
+      |> where(role: "student", course_id: ^course_id)
       |> select([cr], cr.id)
       |> Repo.all()
 
@@ -1842,21 +1838,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # TODO: uncomment when Leaderboard testing is finished
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :relative_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # TODO: uncomment when Leaderboard testing is finished
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
@@ -1876,7 +1870,7 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Fetches all contests for the course id
+  Fetches all contests for the course id where the voting assessment has been published
 
   Used for contest leaderboard dropdown fetching
   """
@@ -1909,21 +1903,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # TODO: uncomment when Leaderboard testing is finished
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :popular_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # TODO: uncomment when Leaderboard testing is finished
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
@@ -1950,19 +1942,19 @@ defmodule Cadet.Assessments do
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
     Answer
     |> where(question_id: ^question_id)
-    # |> where(
-    #   [a],
-    #   fragment(
-    #     "?->>'code' like ?",
-    #     a.answer,
-    #     "%return%"
-    #   )
-    # )
+    |> where(
+      [a],
+      fragment(
+        "?->>'code' like ?",
+        a.answer,
+        "%return%"
+      )
+    )
     |> order_by(desc: :relative_score)
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
     |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    # |> where([a, s, student], student.role == "student")
+    |> where([a, s, student], student.role == "student")
     |> select([a, s, student, student_user], %{
       submission_id: a.submission_id,
       answer: a.answer,
@@ -1981,19 +1973,19 @@ defmodule Cadet.Assessments do
   def fetch_top_popular_score_answers(question_id, number_of_answers) do
     Answer
     |> where(question_id: ^question_id)
-    # |> where(
-    #   [a],
-    #   fragment(
-    #     "?->>'code' like ?",
-    #     a.answer,
-    #     "%return%"
-    #   )
-    # )
+    |> where(
+      [a],
+      fragment(
+        "?->>'code' like ?",
+        a.answer,
+        "%return%"
+      )
+    )
     |> order_by(desc: :popular_score)
     |> join(:left, [a], s in assoc(a, :submission))
     |> join(:left, [a, s], student in assoc(s, :student))
     |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    # |> where([a, s, student], student.role == "student")
+    |> where([a, s, student], student.role == "student")
     |> select([a, s, student, student_user], %{
       submission_id: a.submission_id,
       answer: a.answer,
@@ -2158,18 +2150,28 @@ defmodule Cadet.Assessments do
       |> where(id: ^contest_voting_question_id)
       |> Repo.one()
 
-    course_id =
-      Assessment
-      |> where(id: ^voting_questions.assessment_id)
-      |> select([a], a.course_id)
-      |> Repo.one()
+    if is_nil(voting_questions) do
+      IO.puts("Voting question not found, skipping score computation.")
+      :ok
+    else
+      course_id =
+        Assessment
+        |> where(id: ^voting_questions.assessment_id)
+        |> select([a], a.course_id)
+        |> Repo.one()
 
-    contest_question_id = fetch_associated_contest_question_id(course_id, voting_questions)
+      if is_nil(course_id) do
+        IO.puts("Course ID not found, skipping score computation.")
+        :ok
+      else
+        contest_question_id = fetch_associated_contest_question_id(course_id, voting_questions)
 
-    Answer
-    |> where([ans], ans.question_id == ^contest_question_id)
-    |> update([ans], set: [popular_score: 0.0, relative_score: 0.0])
-    |> Repo.update_all([])
+        Answer
+        |> where([ans], ans.question_id == ^contest_question_id)
+        |> update([ans], set: [popular_score: 0.0, relative_score: 0.0])
+        |> Repo.update_all([])
+      end
+    end
 
     # query all records from submission votes tied to the question id ->
     # map score to user id ->
