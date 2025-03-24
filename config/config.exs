@@ -27,7 +27,7 @@ config :cadet, Cadet.Jobs.Scheduler,
     # Collate contest entries that close in the previous day at 00:01
     {"1 0 * * *", {Cadet.Assessments, :update_final_contest_entries, []}},
     # Clean up expired exchange tokens at 00:01
-    {"1 0 * * *", {Cadet.CodeExchange, :delete_expired, []}}
+    {"1 0 * * *", {Cadet.TokenExchange, :delete_expired, []}}
   ]
 
 # Configures the endpoint

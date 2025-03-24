@@ -8,7 +8,7 @@ defmodule CadetWeb.AuthController do
   alias Cadet.Accounts
   alias Cadet.Accounts.User
   alias Cadet.Auth.{Guardian, Provider}
-  alias Cadet.CodeExchange
+  alias Cadet.TokenExchange
 
   @doc """
   Receives a /login request with valid attributes.
@@ -95,7 +95,7 @@ defmodule CadetWeb.AuthController do
       "provider" => provider
     }
   ) do
-    case CodeExchange.get_by_code(code) do
+    case TokenExchange.get_by_code(code) do
       {:error, _message} ->
         conn
         |> put_status(:forbidden)
@@ -131,7 +131,7 @@ defmodule CadetWeb.AuthController do
     }) do
       {:ok, user} ->
         code = generate_code()
-        CodeExchange.insert(%{
+        TokenExchange.insert(%{
           code: code,
           generated_at: Timex.now(),
           expires_at: Timex.add(Timex.now(), Timex.Duration.from_seconds(code_ttl)),

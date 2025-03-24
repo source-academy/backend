@@ -1,6 +1,6 @@
-defmodule Cadet.CodeExchange do
+defmodule Cadet.TokenExchange do
   @moduledoc """
-  The CodeExchange entity stores short-lived codes to be exchanged for long-lived auth tokens.
+  The TokenExchange entity stores short-lived codes to be exchanged for long-lived auth tokens.
   """
   use Cadet, :model
 
@@ -9,7 +9,7 @@ defmodule Cadet.CodeExchange do
   alias Cadet.Repo
   alias Cadet.Accounts.User
 
-  schema "code_exchange" do
+  schema "token_exchange" do
     field(:code, :string)
     field(:generated_at, :utc_datetime_usec)
     field(:expires_at, :utc_datetime_usec)
