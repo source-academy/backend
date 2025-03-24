@@ -23,7 +23,9 @@ defmodule Cadet.TokenExchange do
 
   def get_by_code(code) do
     case Repo.get_by(__MODULE__, code: code) do
-      nil -> {:error, "Not found"}
+      nil ->
+        {:error, "Not found"}
+
       struct ->
         if Timex.before?(struct.expires_at, Timex.now()) do
           {:error, "Expired"}
@@ -37,6 +39,7 @@ defmodule Cadet.TokenExchange do
 
   def delete_expired do
     now = Timex.now()
+
     from(c in __MODULE__, where: c.expires_at < ^now)
     |> Repo.delete_all()
   end
@@ -48,8 +51,10 @@ defmodule Cadet.TokenExchange do
   end
 
   def insert(attrs) do
-    changeset = %__MODULE__{}
-    |> changeset(attrs)
+    changeset =
+      %__MODULE__{}
+      |> changeset(attrs)
+
     changeset
     |> Repo.insert()
   end

@@ -76,6 +76,7 @@ defmodule CadetWeb.AuthController do
         |> put_resp_header("location", URI.encode(client_redirect_url))
         |> send_resp(302, "")
         |> halt()
+
       conn ->
         conn
     end
@@ -89,12 +90,12 @@ defmodule CadetWeb.AuthController do
   Exchanges a short-lived code for access and refresh tokens.
   """
   def exchange(
-    conn,
-    %{
-      "code" => code,
-      "provider" => provider
-    }
-  ) do
+        conn,
+        %{
+          "code" => code,
+          "provider" => provider
+        }
+      ) do
     case TokenExchange.get_by_code(code) do
       {:error, _message} ->
         conn
@@ -103,34 +104,44 @@ defmodule CadetWeb.AuthController do
 
       {:ok, struct} ->
         tokens = generate_tokens(struct.user)
+
         {_provider, %{client_post_exchange_redirect_url: client_post_exchange_redirect_url}} =
           Application.get_env(:cadet, :identity_providers, %{})[provider]
 
-          conn
-          |> put_resp_header("location", URI.encode(client_post_exchange_redirect_url <> "?access_token=" <> tokens.access_token <> "&refresh_token=" <> tokens.refresh_token))
-          |> send_resp(302, "")
-          |> halt()
+        conn
+        |> put_resp_header(
+          "location",
+          URI.encode(
+            client_post_exchange_redirect_url <>
+              "?access_token=" <> tokens.access_token <> "&refresh_token=" <> tokens.refresh_token
+          )
+        )
+        |> send_resp(302, "")
+        |> halt()
     end
   end
 
   @doc """
   Alternate callback URL which redirect to VSCode via deeplinking.
   """
-  def saml_redirect_vscode(conn,
+  def saml_redirect_vscode(
+        conn,
         %{
           "provider" => provider
         }
       ) do
     code_ttl = 60
+
     case create_user(%{
-      conn: conn,
-      provider_instance: provider,
-      code: nil,
-      client_id: nil,
-      redirect_uri: nil,
-    }) do
+           conn: conn,
+           provider_instance: provider,
+           code: nil,
+           client_id: nil,
+           redirect_uri: nil
+         }) do
       {:ok, user} ->
         code = generate_code()
+
         TokenExchange.insert(%{
           code: code,
           generated_at: Timex.now(),
@@ -140,8 +151,12 @@ defmodule CadetWeb.AuthController do
 
         {_provider, %{vscode_redirect_url_prefix: vscode_redirect_url_prefix}} =
           Application.get_env(:cadet, :identity_providers, %{})[provider]
+
         conn
-        |> put_resp_header("location", vscode_redirect_url_prefix <> "?provider=" <> provider <> "&code=" <> code)
+        |> put_resp_header(
+          "location",
+          vscode_redirect_url_prefix <> "?provider=" <> provider <> "&code=" <> code
+        )
         |> send_resp(302, "")
         |> halt()
 
@@ -152,15 +167,15 @@ defmodule CadetWeb.AuthController do
 
   @spec create_user(Provider.authorise_params()) :: {:ok, User.t()} | Plug.Conn.t()
   defp create_user(
-    params = %{
-      conn: conn,
-      provider_instance: provider,
-    }
-  ) do
+         params = %{
+           conn: conn,
+           provider_instance: provider
+         }
+       ) do
     with {:authorise, {:ok, %{token: token, username: username}}} <-
            {:authorise, Provider.authorise(params)},
          {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(username, token, provider)} do
-       {:ok, user}
+      {:ok, user}
     else
       {:authorise, {:error, :upstream, reason}} ->
         conn
@@ -184,7 +199,6 @@ defmodule CadetWeb.AuthController do
         |> text("Unable to retrieve user: #{reason}")
     end
   end
-
 
   @spec create_user_and_tokens(Provider.authorise_params()) ::
           {:ok, %{access_token: String.t(), refresh_token: String.t()}} | Plug.Conn.t()
@@ -250,8 +264,8 @@ defmodule CadetWeb.AuthController do
   @spec generate_code() :: String.t()
   defp generate_code() do
     :crypto.strong_rand_bytes(16)
-      |> Base.url_encode64(padding: false)
-      |> String.slice(0, 22)
+    |> Base.url_encode64(padding: false)
+    |> String.slice(0, 22)
   end
 
   swagger_path :create do
