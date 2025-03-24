@@ -8,6 +8,7 @@ defmodule CadetWeb.AuthController do
   alias Cadet.Accounts
   alias Cadet.Accounts.User
   alias Cadet.Auth.{Guardian, Provider}
+  alias Cadet.CodeExchange
 
   @doc """
   Receives a /login request with valid attributes.
@@ -75,7 +76,6 @@ defmodule CadetWeb.AuthController do
         |> put_resp_header("location", URI.encode(client_redirect_url))
         |> send_resp(302, "")
         |> halt()
-
       conn ->
         conn
     end
@@ -84,6 +84,107 @@ defmodule CadetWeb.AuthController do
   def saml_redirect(conn, _params) do
     send_resp(conn, :bad_request, "Missing parameter")
   end
+
+  @doc """
+  Exchanges a short-lived code for access and refresh tokens.
+  """
+  def exchange(
+    conn,
+    %{
+      "code" => code,
+      "provider" => provider
+    }
+  ) do
+    case CodeExchange.get_by_code(code) do
+      {:error, _message} ->
+        conn
+        |> put_status(:forbidden)
+        |> text("Invalid code")
+
+      {:ok, struct} ->
+        tokens = generate_tokens(struct.user)
+        {_provider, %{client_post_exchange_redirect_url: client_post_exchange_redirect_url}} =
+          Application.get_env(:cadet, :identity_providers, %{})[provider]
+
+          conn
+          |> put_resp_header("location", URI.encode(client_post_exchange_redirect_url <> "?access_token=" <> tokens.access_token <> "&refresh_token=" <> tokens.refresh_token))
+          |> send_resp(302, "")
+          |> halt()
+    end
+  end
+
+  @doc """
+  Alternate callback URL which redirect to VSCode via deeplinking.
+  """
+  def saml_redirect_vscode(conn,
+        %{
+          "provider" => provider
+        }
+      ) do
+    code_ttl = 60
+    case create_user(%{
+      conn: conn,
+      provider_instance: provider,
+      code: nil,
+      client_id: nil,
+      redirect_uri: nil,
+    }) do
+      {:ok, user} ->
+        code = generate_code()
+        CodeExchange.insert(%{
+          code: code,
+          generated_at: Timex.now(),
+          expires_at: Timex.add(Timex.now(), Timex.Duration.from_seconds(code_ttl)),
+          user_id: user.id
+        })
+
+        {_provider, %{vscode_redirect_url_prefix: vscode_redirect_url_prefix}} =
+          Application.get_env(:cadet, :identity_providers, %{})[provider]
+        conn
+        |> put_resp_header("location", vscode_redirect_url_prefix <> "?provider=" <> provider <> "&code=" <> code)
+        |> send_resp(302, "")
+        |> halt()
+
+      conn ->
+        conn
+    end
+  end
+
+  @spec create_user(Provider.authorise_params()) :: {:ok, User.t()} | Plug.Conn.t()
+  defp create_user(
+    params = %{
+      conn: conn,
+      provider_instance: provider,
+    }
+  ) do
+    with {:authorise, {:ok, %{token: token, username: username}}} <-
+           {:authorise, Provider.authorise(params)},
+         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(username, token, provider)} do
+       {:ok, user}
+    else
+      {:authorise, {:error, :upstream, reason}} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Unable to retrieve token from authentication provider: #{reason}")
+
+      {:authorise, {:error, :invalid_credentials, reason}} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Unable to validate token: #{reason}")
+
+      {:authorise, {:error, _, reason}} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> text("Unknown error: #{reason}")
+
+      {:signin, {:error, status, reason}} ->
+        # status can be :bad_request or :internal_server_error
+        conn
+        |> put_status(status)
+        |> text("Unable to retrieve user: #{reason}")
+    end
+  end
+
 
   @spec create_user_and_tokens(Provider.authorise_params()) ::
           {:ok, %{access_token: String.t(), refresh_token: String.t()}} | Plug.Conn.t()
@@ -168,6 +269,13 @@ defmodule CadetWeb.AuthController do
       Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
 
     %{access_token: access_token, refresh_token: refresh_token}
+  end
+
+  @spec generate_code() :: String.t()
+  defp generate_code() do
+    :crypto.strong_rand_bytes(16)
+      |> Base.url_encode64(padding: false)
+      |> String.slice(0, 22)
   end
 
   swagger_path :create do
