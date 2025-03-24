@@ -188,37 +188,13 @@ defmodule CadetWeb.AuthController do
 
   @spec create_user_and_tokens(Provider.authorise_params()) ::
           {:ok, %{access_token: String.t(), refresh_token: String.t()}} | Plug.Conn.t()
-  defp create_user_and_tokens(
-         params = %{
-           conn: conn,
-           provider_instance: provider
-         }
-       ) do
-    with {:authorise, {:ok, %{token: token, username: username}}} <-
-           {:authorise, Provider.authorise(params)},
-         {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(username, token, provider)} do
-      {:ok, generate_tokens(user)}
-    else
-      {:authorise, {:error, :upstream, reason}} ->
-        conn
-        |> put_status(:bad_request)
-        |> text("Unable to retrieve token from authentication provider: #{reason}")
+  defp create_user_and_tokens(params) do
+    case create_user(params) do
+      {:ok, user} ->
+        {:ok, generate_tokens(user)}
 
-      {:authorise, {:error, :invalid_credentials, reason}} ->
+      conn ->
         conn
-        |> put_status(:bad_request)
-        |> text("Unable to validate token: #{reason}")
-
-      {:authorise, {:error, _, reason}} ->
-        conn
-        |> put_status(:internal_server_error)
-        |> text("Unknown error: #{reason}")
-
-      {:signin, {:error, status, reason}} ->
-        # status can be :bad_request or :internal_server_error
-        conn
-        |> put_status(status)
-        |> text("Unable to retrieve user: #{reason}")
     end
   end
 
