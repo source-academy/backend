@@ -40,8 +40,7 @@ defmodule Cadet.TokenExchange do
   def delete_expired do
     now = Timex.now()
 
-    from(c in __MODULE__, where: c.expires_at < ^now)
-    |> Repo.delete_all()
+    Repo.delete_all(from(c in __MODULE__, where: c.expires_at < ^now))
   end
 
   def changeset(struct, attrs) do

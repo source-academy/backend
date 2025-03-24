@@ -5,8 +5,7 @@ defmodule CadetWeb.AuthController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.Accounts
-  alias Cadet.Accounts.User
+  alias Cadet.{Accounts, Accounts.User}
   alias Cadet.Auth.{Guardian, Provider}
   alias Cadet.TokenExchange
 
@@ -261,9 +260,10 @@ defmodule CadetWeb.AuthController do
     %{access_token: access_token, refresh_token: refresh_token}
   end
 
-  @spec generate_code() :: String.t()
-  defp generate_code() do
-    :crypto.strong_rand_bytes(16)
+  @spec generate_code :: String.t()
+  defp generate_code do
+    16
+    |> :crypto.strong_rand_bytes()
     |> Base.url_encode64(padding: false)
     |> String.slice(0, 22)
   end
