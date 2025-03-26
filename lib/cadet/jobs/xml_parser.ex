@@ -324,7 +324,7 @@ defmodule Cadet.Updater.XMLParser do
       )
       |> Map.put(:globals, globals)
       |> Map.put(:external, external)
-      |> Map.put(:options, options_map)
+      |> Map.put(:language_options, options_map)
   end
 
   @spec process_charlist(charlist() | nil) :: String.t() | nil
