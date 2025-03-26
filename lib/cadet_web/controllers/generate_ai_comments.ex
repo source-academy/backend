@@ -10,7 +10,6 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   @openai_api_url "https://api.openai.com/v1/chat/completions"
   @model "gpt-4o"
-  @api_key Application.get_env(:openai, :api_key)
   @default_llm_grading false
 
   # For logging outputs to both database and file
@@ -62,14 +61,23 @@ defmodule CadetWeb.AICodeAnalysisController do
       case Courses.get_course_config(course_id) do
         {:ok, course} ->
           if course.enable_llm_grading == true || (course.enable_llm_grading == nil && @default_llm_grading == true) do
-            case Assessments.get_answers_in_submission(submission_id, question_id) do
-              {:ok, {answers, _assessment}} ->
-                analyze_code(conn, answers, submission_id, question_id)
+            # Get API key from course config or fall back to environment variable
+            api_key = course.llm_api_key || Application.get_env(:openai, :api_key)
 
-              {:error, {status, message}} ->
-                conn
-                |> put_status(status)
-                |> text(message)
+            if is_nil(api_key) do
+              conn
+              |> put_status(:internal_server_error)
+              |> json(%{"error" => "No OpenAI API key configured"})
+            else
+              case Assessments.get_answers_in_submission(submission_id, question_id) do
+                {:ok, {answers, _assessment}} ->
+                  analyze_code(conn, answers, submission_id, question_id, api_key)
+
+                {:error, {status, message}} ->
+                  conn
+                  |> put_status(status)
+                  |> text(message)
+              end
             end
           else
             conn
@@ -129,7 +137,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     """
   end
 
-  defp analyze_code(conn, answers, submission_id, question_id) do
+  defp analyze_code(conn, answers, submission_id, question_id, api_key) do
     answers_json =
       answers
       |> Enum.map(fn answer ->
@@ -233,7 +241,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     } |> Jason.encode!()
 
     headers = [
-      {"Authorization", "Bearer #{@api_key}"},
+      {"Authorization", "Bearer #{api_key}"},
       {"Content-Type", "application/json"}
     ]
 

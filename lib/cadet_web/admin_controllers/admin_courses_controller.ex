@@ -108,6 +108,8 @@ defmodule CadetWeb.AdminCoursesController do
       enable_achievements(:body, :boolean, "Enable achievements")
       enable_sourcecast(:body, :boolean, "Enable sourcecast")
       enable_stories(:body, :boolean, "Enable stories")
+      enable_llm_grading(:body, :boolean, "Enable LLM grading")
+      llm_api_key(:body, :string, "OpenAI API key for this course")
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
       module_help_text(:body, :string, "Module help text")
     end
