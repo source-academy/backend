@@ -53,7 +53,7 @@ defmodule CadetWeb.AssessmentsView do
         longSummary: :summary_long,
         hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
-        onFinish: :on_finish,
+        onFinishSubmitAndReturnToGame: & &1.config.on_finish_submit_and_return_to_game,
         questions:
           &Enum.map(&1.questions, fn question ->
             map =

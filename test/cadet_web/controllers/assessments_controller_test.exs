@@ -328,7 +328,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "longSummary" => assessment.summary_long,
             "hasTokenCounter" => assessment.has_token_counter,
             "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment}),
-            "onFinish" => nil
+            "onFinish" => false
           }
 
           resp_assessments =
