@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.AddOnFinishToAssessments do
 
   def change do
     alter table(:assessments) do
-      add(:on_finish, :string, null: "")
+      add(:on_finish, :string, null: true)
     end
   end
 end
