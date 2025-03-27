@@ -27,7 +27,7 @@ defmodule Cadet.Courses.AssessmentConfig do
 
   @required_fields ~w(course_id)a
   @optional_fields ~w(order type early_submission_xp
-    hours_before_early_xp_decay show_grading_summary is_manually_graded has_voting_features has_token_counter is_grading_auto_published, on_finish_submit_and_return_to_game)a
+    hours_before_early_xp_decay show_grading_summary is_manually_graded has_voting_features has_token_counter is_grading_auto_published on_finish_submit_and_return_to_game)a
 
   def changeset(assessment_config, params) do
     assessment_config
