@@ -1,4 +1,4 @@
-defmodule Cadet.Repo.Migrations.AddOnFinishToAssessmentConfig do
+defmodule Cadet.Repo.Migrations.AddIsMinigameToAssessmentConfig do
   use Ecto.Migration
 
   def change do
