@@ -5,7 +5,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   import Ecto.Query
   import ExUnit.CaptureLog
 
-  alias Cadet.Repo
+  alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Test.XMLGenerator
@@ -83,13 +83,18 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "type" => &1.config.type,
             "isManuallyGraded" => &1.config.is_manually_graded,
             "coverImage" => &1.cover_picture,
+            "maxTeamSize" => 1,
             "maxXp" => 4800,
             "status" => get_assessment_status(view_as, &1),
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 9,
-            "xp" => (800 + 500 + 100) * 3
+            "xp" => if(&1.is_grading_published, do: (800 + 500 + 100) * 3, else: 0),
+            "earlySubmissionXp" => &1.config.early_submission_xp,
+            "hasVotingFeatures" => &1.has_voting_features,
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => false
           }
         )
 
@@ -129,13 +134,18 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "type" => &1.config.type,
             "isManuallyGraded" => &1.config.is_manually_graded,
             "coverImage" => &1.cover_picture,
+            "maxTeamSize" => 1,
             "maxXp" => 4800,
             "status" => get_assessment_status(view_as, &1),
             "private" => false,
             "isPublished" => &1.is_published,
             "gradedCount" => 0,
             "questionCount" => 9,
-            "xp" => 0
+            "xp" => 0,
+            "earlySubmissionXp" => &1.config.early_submission_xp,
+            "hasVotingFeatures" => &1.has_voting_features,
+            "hasTokenCounter" => &1.has_token_counter,
+            "isVotingPublished" => false
           }
         )
 
@@ -143,6 +153,166 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
         conn
         |> sign_in(staff.user)
         |> get(build_user_assessments_url(course1.id, view_as.id))
+        |> json_response(200)
+
+      assert expected == resp
+    end
+  end
+
+  describe "GET /:assessment_id/popularVoteLeaderboard, unauthenticated" do
+    test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
+      config = insert(:assessment_config, %{course: course1})
+      assessment = insert(:assessment, %{course: course1, config: config})
+
+      conn
+      |> get(build_popular_leaderboard_url(course1.id, assessment.id))
+      |> response(401)
+    end
+  end
+
+  describe "GET /:assessment_id/popularVoteLeaderboard, student only" do
+    @tag authenticate: :student
+    test "Forbidden", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{course: course, config: config})
+
+      conn
+      |> get(build_popular_leaderboard_url(course.id, assessment.id))
+      |> response(403)
+    end
+  end
+
+  describe "GET /:assessment_id/popularVoteLeaderboard" do
+    @tag authenticate: :staff
+    test "successful", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+
+      config = insert(:assessment_config, %{course: course})
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
+      contest_question = insert(:programming_question, %{assessment: contest_assessment})
+
+      contest_submissions =
+        contest_students
+        |> Enum.map(&insert(:submission, %{assessment: contest_assessment, student: &1}))
+
+      contest_answer =
+        contest_submissions
+        |> Enum.map(
+          &insert(:answer, %{
+            question: contest_question,
+            submission: &1,
+            popular_score: 10.0,
+            answer: build(:programming_answer)
+          })
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      insert(
+        :voting_question,
+        %{
+          question: build(:voting_question_content, contest_number: contest_assessment.number),
+          assessment: voting_assessment
+        }
+      )
+
+      expected =
+        contest_answer
+        |> Enum.map(
+          &%{
+            "answer" => &1.answer.code,
+            "student_name" => &1.submission.student.user.name,
+            "final_score" => &1.popular_score
+          }
+        )
+
+      resp =
+        conn
+        |> get(build_popular_leaderboard_url(course.id, voting_assessment.id))
+        |> json_response(200)
+
+      assert expected == resp
+    end
+  end
+
+  describe "GET /:assessment_id/scoreLeaderboard, unauthenticated" do
+    test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
+      config = insert(:assessment_config, %{course: course1})
+      assessment = insert(:assessment, %{course: course1, config: config})
+
+      conn
+      |> get(build_popular_leaderboard_url(course1.id, assessment.id))
+      |> response(401)
+    end
+  end
+
+  describe "GET /:assessment_id/scoreLeaderboard, student only" do
+    @tag authenticate: :student
+    test "Forbidden", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{course: course, config: config})
+
+      conn
+      |> get(build_popular_leaderboard_url(course.id, assessment.id))
+      |> response(403)
+    end
+  end
+
+  describe "GET /:assessment_id/scoreLeaderboard" do
+    @tag authenticate: :staff
+    test "successful", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+
+      config = insert(:assessment_config, %{course: course})
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
+      contest_question = insert(:programming_question, %{assessment: contest_assessment})
+
+      contest_submissions =
+        contest_students
+        |> Enum.map(&insert(:submission, %{assessment: contest_assessment, student: &1}))
+
+      contest_answer =
+        contest_submissions
+        |> Enum.map(
+          &insert(:answer, %{
+            question: contest_question,
+            submission: &1,
+            relative_score: 10.0,
+            answer: build(:programming_answer)
+          })
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      insert(
+        :voting_question,
+        %{
+          question: build(:voting_question_content, contest_number: contest_assessment.number),
+          assessment: voting_assessment
+        }
+      )
+
+      expected =
+        contest_answer
+        |> Enum.map(
+          &%{
+            "answer" => &1.answer.code,
+            "student_name" => &1.submission.student.user.name,
+            "final_score" => &1.relative_score
+          }
+        )
+
+      resp =
+        conn
+        |> get(build_score_leaderboard_url(course.id, voting_assessment.id))
         |> json_response(200)
 
       assert expected == resp
@@ -200,8 +370,34 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "POST /, staff only" do
+  describe "POST /, non-admin staff only" do
     @tag authenticate: :staff
+    test "unauthorized", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        build(:assessment,
+          course: course,
+          course_id: course.id,
+          config: config,
+          config_id: config.id,
+          is_published: true
+        )
+
+      questions = build_list(5, :question, assessment: nil)
+
+      xml = XMLGenerator.generate_xml_for(assessment, questions)
+      force_update = "false"
+      body = %{assessment: xml, forceUpdate: force_update, assessmentConfigId: config.id}
+      conn = post(conn, build_url(course.id), body)
+      assert response(conn, 403) == "Forbidden"
+    end
+  end
+
+  describe "POST /, admin only" do
+    @tag authenticate: :admin
     test "successful", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -259,7 +455,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert expected_assessment != nil
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "upload empty xml", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -317,6 +513,18 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
   describe "DELETE /:assessment_id, staff only" do
     @tag authenticate: :staff
+    test "unauthorized", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{course: course, config: config})
+      conn = delete(conn, build_url(course.id, assessment.id))
+      assert response(conn, 403) == "Forbidden"
+    end
+  end
+
+  describe "DELETE /:assessment_id, admin only" do
+    @tag authenticate: :admin
     test "successful", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -327,7 +535,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert is_nil(Repo.get(Assessment, assessment.id))
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "error due to different course", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -339,19 +547,6 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert response(conn, 403) == "User not allow to delete assessments from another course"
       refute is_nil(Repo.get(Assessment, assessment.id))
     end
-
-    # @tag authenticate: :staff
-    # test "error due to different course", %{conn: conn} do
-    #   test_cr = conn.assigns.test_cr
-    #   course = test_cr.course
-    #   another_course = insert(:course)
-    #   config = insert(:assessment_config, %{course: another_course})
-    #   assessment = insert(:assessment, %{course: another_course, config: config})
-
-    #   conn = delete(conn, build_url(course.id, assessment.id))
-    #   assert response(conn, 403) == "User not allow to delete assessments from another course"
-    #   refute is_nil(Repo.get(Assessment, assessment.id))
-    # end
   end
 
   describe "POST /:assessment_id, unauthenticated, publish" do
@@ -374,8 +569,20 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "POST /:assessment_id, staff only, publish" do
+  describe "POST /:assessment_id, non-admin staff only, publish" do
     @tag authenticate: :staff
+    test "forbidden", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{course: course, config: config})
+      conn = post(conn, build_url(course.id, assessment.id), %{isPublished: true})
+      assert response(conn, 403) == "Forbidden"
+    end
+  end
+
+  describe "POST /:assessment_id, admin only, publish" do
+    @tag authenticate: :admin
     test "successful toggle from published to unpublished", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -387,7 +594,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       refute expected
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "successful toggle from unpublished to published", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -438,8 +645,38 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "POST /:assessment_id, staff only" do
+  describe "POST /:assessment_id, non-admin staff only" do
     @tag authenticate: :staff
+    test "forbidden", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{course: course, config: config})
+
+      new_open_at =
+        Timex.now()
+        |> Timex.beginning_of_day()
+        |> Timex.shift(days: 3)
+        |> Timex.shift(hours: 4)
+
+      new_open_at_string =
+        new_open_at
+        |> Timex.format!("{ISO:Extended}")
+
+      new_close_at = Timex.shift(new_open_at, days: 7)
+
+      new_close_at_string =
+        new_close_at
+        |> Timex.format!("{ISO:Extended}")
+
+      new_dates = %{openAt: new_open_at_string, closeAt: new_close_at_string}
+      conn = post(conn, build_url(course.id, assessment.id), new_dates)
+      assert response(conn, 403) == "Forbidden"
+    end
+  end
+
+  describe "POST /:assessment_id, admin only" do
+    @tag authenticate: :admin
     test "successful", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -488,7 +725,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert [assessment.open_at, assessment.close_at] == [new_open_at, new_close_at]
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "allowed to change open time of opened assessments", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -533,7 +770,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert [assessment.open_at, assessment.close_at] == [new_open_at, close_at]
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "not allowed to set close time to before open time", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -578,7 +815,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert [assessment.open_at, assessment.close_at] == [open_at, close_at]
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "successful, set close time to before current time", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -623,7 +860,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert [assessment.open_at, assessment.close_at] == [open_at, new_close_at]
     end
 
-    @tag authenticate: :staff
+    @tag authenticate: :admin
     test "successful, set open time to before current time", %{conn: conn} do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
@@ -667,6 +904,76 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assert response(conn, 200) == "OK"
       assert [assessment.open_at, assessment.close_at] == [new_open_at, close_at]
     end
+
+    @tag authenticate: :admin
+    test "successful, set hasTokenCounter and hasVotingFeatures to true", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          has_token_counter: false,
+          has_voting_features: false
+        })
+
+      new_has_token_counter = true
+      new_has_voting_features = true
+
+      new_assessment_setting = %{
+        hasTokenCounter: new_has_token_counter,
+        hasVotingFeatures: new_has_voting_features
+      }
+
+      conn =
+        conn
+        |> post(build_url(course.id, assessment.id), new_assessment_setting)
+
+      assessment = Repo.get(Assessment, assessment.id)
+      assert response(conn, 200) == "OK"
+
+      assert [assessment.has_token_counter, assessment.has_voting_features] == [
+               new_has_token_counter,
+               new_has_voting_features
+             ]
+    end
+
+    @tag authenticate: :admin
+    test "successful, set hasTokenCounter and hasVotingFeatures to false", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+
+      assessment =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          has_token_counter: true,
+          has_voting_features: true
+        })
+
+      new_has_token_counter = false
+      new_has_voting_features = false
+
+      new_assessment_setting = %{
+        hasTokenCounter: new_has_token_counter,
+        hasVotingFeatures: new_has_voting_features
+      }
+
+      conn =
+        conn
+        |> post(build_url(course.id, assessment.id), new_assessment_setting)
+
+      assessment = Repo.get(Assessment, assessment.id)
+      assert response(conn, 200) == "OK"
+
+      assert [assessment.has_token_counter, assessment.has_voting_features] == [
+               new_has_token_counter,
+               new_has_voting_features
+             ]
+    end
   end
 
   defp build_url(course_id), do: "/v2/courses/#{course_id}/admin/assessments/"
@@ -676,6 +983,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
   defp build_user_assessments_url(course_id, course_reg_id),
     do: "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/assessments"
+
+  defp build_popular_leaderboard_url(course_id, assessment_id),
+    do: "#{build_url(course_id, assessment_id)}/popularVoteLeaderboard"
+
+  defp build_score_leaderboard_url(course_id, assessment_id),
+    do: "#{build_url(course_id, assessment_id)}/scoreLeaderboard"
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
 

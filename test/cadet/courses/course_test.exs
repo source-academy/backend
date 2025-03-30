@@ -98,6 +98,19 @@ defmodule Cadet.Courses.CourseTest do
 
       assert_changeset(
         %{
+          enable_game: true,
+          enable_achievements: true,
+          enable_sourcecast: true,
+          enable_stories: false,
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default"
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
           source_chapter: 1,
           source_variant: "wasm",
           course_name: "Data Structures and Algorithms"

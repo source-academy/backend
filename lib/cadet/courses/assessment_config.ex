@@ -12,9 +12,12 @@ defmodule Cadet.Courses.AssessmentConfig do
     field(:type, :string)
     field(:show_grading_summary, :boolean, default: true)
     field(:is_manually_graded, :boolean, default: true)
-    # used by fronend to determine display styles
+    field(:has_token_counter, :boolean, default: false)
+    field(:has_voting_features, :boolean, default: false)
+    # used by frontend to determine display styles
     field(:early_submission_xp, :integer, default: 0)
     field(:hours_before_early_xp_decay, :integer, default: 0)
+    field(:is_grading_auto_published, :boolean, default: false)
 
     belongs_to(:course, Course)
 
@@ -23,7 +26,7 @@ defmodule Cadet.Courses.AssessmentConfig do
 
   @required_fields ~w(course_id)a
   @optional_fields ~w(order type early_submission_xp
-    hours_before_early_xp_decay show_grading_summary is_manually_graded)a
+    hours_before_early_xp_decay show_grading_summary is_manually_graded has_voting_features has_token_counter is_grading_auto_published)a
 
   def changeset(assessment_config, params) do
     assessment_config

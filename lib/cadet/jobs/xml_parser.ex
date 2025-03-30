@@ -5,9 +5,10 @@ defmodule Cadet.Updater.XMLParser do
 
   use Cadet, [:display]
 
+  import Ecto.Query
   import SweetXml
 
-  alias Cadet.Assessments
+  alias Cadet.{Repo, Courses.AssessmentConfig, Assessments, SharedHelper}
 
   require Logger
 
@@ -80,6 +81,11 @@ defmodule Cadet.Updater.XMLParser do
 
     close_at = Timex.shift(open_at, days: 7)
 
+    assessment_config =
+      AssessmentConfig
+      |> where(id: ^assessment_config_id)
+      |> Repo.one()
+
     assessment_params =
       xml
       |> xpath(
@@ -99,6 +105,8 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:close_at, close_at)
       |> Map.put(:course_id, course_id)
       |> Map.put(:config_id, assessment_config_id)
+      |> Map.put(:has_token_counter, assessment_config.has_token_counter)
+      |> Map.put(:has_voting_features, assessment_config.has_voting_features)
       |> (&if(&1.access === "public",
             do: Map.put(&1, :password, nil),
             else: &1
@@ -141,7 +149,8 @@ defmodule Cadet.Updater.XMLParser do
       |> Enum.map(fn param ->
         with {:no_missing_attr?, true} <-
                {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_xp])},
-             question when is_map(question) <- process_question_booleans(param),
+             question when is_map(question) <-
+               SharedHelper.process_map_booleans(param, [:show_solution, :blocking]),
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
                process_question_library(question, default_library, default_grading_library),
@@ -169,16 +178,6 @@ defmodule Cadet.Updater.XMLParser do
     Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset)}")
 
     Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
-  end
-
-  @spec process_question_booleans(map()) :: map()
-  defp process_question_booleans(question) do
-    flags = [:show_solution, :blocking]
-
-    flags
-    |> Enum.reduce(question, fn flag, acc ->
-      put_in(acc[flag], acc[flag] == "true")
-    end)
   end
 
   @spec process_question_by_question_type(map()) :: map() | {:error, String.t()}
@@ -259,7 +258,8 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(
         ~x"./VOTING"e,
         contest_number: ~x"./@assessment_number"s,
-        reveal_hours: ~x"./@reveal_hours"i
+        reveal_hours: ~x"./@reveal_hours"i,
+        token_divider: ~x"./@token_divider"i
       )
     )
   end
