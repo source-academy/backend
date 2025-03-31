@@ -23,7 +23,7 @@ defmodule CadetWeb.CoursesView do
     }
   end
 
-    def render("config_admin.json", %{config: config}) do
+  def render("config_admin.json", %{config: config}) do
     %{
       config:
         transform_map_for_view(config, %{
