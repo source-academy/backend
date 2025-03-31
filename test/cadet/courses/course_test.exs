@@ -9,7 +9,9 @@ defmodule Cadet.Courses.CourseTest do
         %{
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -19,7 +21,9 @@ defmodule Cadet.Courses.CourseTest do
           course_short_name: "CS2040S",
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -29,7 +33,9 @@ defmodule Cadet.Courses.CourseTest do
           viewable: false,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -39,7 +45,9 @@ defmodule Cadet.Courses.CourseTest do
           enable_game: false,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -49,7 +57,9 @@ defmodule Cadet.Courses.CourseTest do
           enable_achievements: false,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -59,7 +69,9 @@ defmodule Cadet.Courses.CourseTest do
           enable_sourcecast: false,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -69,7 +81,9 @@ defmodule Cadet.Courses.CourseTest do
           module_help_text: "",
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -79,7 +93,9 @@ defmodule Cadet.Courses.CourseTest do
           module_help_text: "Module help text",
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -91,7 +107,9 @@ defmodule Cadet.Courses.CourseTest do
           enable_sourcecast: true,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -104,7 +122,9 @@ defmodule Cadet.Courses.CourseTest do
           enable_stories: false,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
-          source_variant: "default"
+          source_variant: "default",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -113,7 +133,9 @@ defmodule Cadet.Courses.CourseTest do
         %{
           source_chapter: 1,
           source_variant: "wasm",
-          course_name: "Data Structures and Algorithms"
+          course_name: "Data Structures and Algorithms",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -122,7 +144,9 @@ defmodule Cadet.Courses.CourseTest do
         %{
           source_chapter: 2,
           source_variant: "lazy",
-          course_name: "Data Structures and Algorithms"
+          course_name: "Data Structures and Algorithms",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -131,7 +155,9 @@ defmodule Cadet.Courses.CourseTest do
         %{
           source_chapter: 3,
           source_variant: "non-det",
-          course_name: "Data Structures and Algorithms"
+          course_name: "Data Structures and Algorithms",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -140,7 +166,9 @@ defmodule Cadet.Courses.CourseTest do
         %{
           source_chapter: 3,
           source_variant: "native",
-          course_name: "Data Structures and Algorithms"
+          course_name: "Data Structures and Algorithms",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -149,7 +177,9 @@ defmodule Cadet.Courses.CourseTest do
         %{
           source_chapter: 2,
           source_variant: "typed",
-          course_name: "Data Structures and Algorithms"
+          course_name: "Data Structures and Algorithms",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )
@@ -159,7 +189,31 @@ defmodule Cadet.Courses.CourseTest do
           source_chapter: 4,
           source_variant: "default",
           enable_achievements: true,
-          course_name: "Data Structures and Algorithms"
+          course_name: "Data Structures and Algorithms",
+          top_leaderboard_display: 100,
+          top_contest_leaderboard_display: 10
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default",
+          top_leaderboard_display: 200,
+          top_contest_leaderboard_display: 10
+        },
+        :valid
+      )
+
+      assert_changeset(
+        %{
+          course_name: "Data Structures and Algorithms",
+          source_chapter: 1,
+          source_variant: "default",
+          top_leaderboard_display: 350,
+          top_contest_leaderboard_display: 10
         },
         :valid
       )

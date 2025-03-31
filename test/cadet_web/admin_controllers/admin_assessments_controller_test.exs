@@ -159,7 +159,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/popularVoteLeaderboard, unauthenticated" do
+  describe "GET /:assessment_id/:visibleentries/popularVoteLeaderboard, unauthenticated" do
     test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
       config = insert(:assessment_config, %{course: course1})
       assessment = insert(:assessment, %{course: course1, config: config})
@@ -170,7 +170,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/popularVoteLeaderboard, student only" do
+  describe "GET /:assessment_id/:visibleentries/popularVoteLeaderboard, student only" do
     @tag authenticate: :student
     test "Forbidden", %{conn: conn} do
       test_cr = conn.assigns.test_cr
@@ -184,7 +184,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/popularVoteLeaderboard" do
+  describe "GET /:assessment_id/:visibleentries/popularVoteLeaderboard" do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
       test_cr = conn.assigns.test_cr
@@ -239,7 +239,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/scoreLeaderboard, unauthenticated" do
+  describe "GET /:assessment_id/:visibleentries/scoreLeaderboard, unauthenticated" do
     test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
       config = insert(:assessment_config, %{course: course1})
       assessment = insert(:assessment, %{course: course1, config: config})
@@ -250,7 +250,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/scoreLeaderboard, student only" do
+  describe "GET /:assessment_id/:visibleentries/scoreLeaderboard, student only" do
     @tag authenticate: :student
     test "Forbidden", %{conn: conn} do
       test_cr = conn.assigns.test_cr
@@ -264,7 +264,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/scoreLeaderboard" do
+  describe "GET /:assessment_id/:visibleentries/scoreLeaderboard" do
     @tag authenticate: :staff
     test "successful", %{conn: conn} do
       test_cr = conn.assigns.test_cr
@@ -985,10 +985,10 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     do: "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/assessments"
 
   defp build_popular_leaderboard_url(course_id, assessment_id),
-    do: "#{build_url(course_id, assessment_id)}/popularVoteLeaderboard"
+    do: "#{build_url(course_id, assessment_id)}/10/popularVoteLeaderboard"
 
   defp build_score_leaderboard_url(course_id, assessment_id),
-    do: "#{build_url(course_id, assessment_id)}/scoreLeaderboard"
+    do: "#{build_url(course_id, assessment_id)}/10/scoreLeaderboard"
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
 
