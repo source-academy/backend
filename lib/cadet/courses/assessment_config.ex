@@ -18,6 +18,7 @@ defmodule Cadet.Courses.AssessmentConfig do
     field(:early_submission_xp, :integer, default: 0)
     field(:hours_before_early_xp_decay, :integer, default: 0)
     field(:is_grading_auto_published, :boolean, default: false)
+    # marks an assessment type as a minigame (with different submission and testcase behaviour)
     field(:is_minigame, :boolean, default: false)
 
     belongs_to(:course, Course)
