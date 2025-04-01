@@ -46,14 +46,29 @@ defmodule CadetWeb.CoursesController do
 
   def check_resume_code(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     params = conn.body_params
+    user = conn.assigns.current_user
     resume_code = Map.get(params, "resume_code", nil)
 
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
         if config.resume_code == resume_code do
-          send_resp(conn, 200, "Resume code is correct.")
+          user
+          |> Cadet.Accounts.User.changeset(%{is_paused: false})
+          |> Cadet.Repo.update()
+          |> case do
+            result = {:ok, _} ->
+              conn
+              |> put_status(:ok)
+              |> text("Resume code validated.")
+            {:error, _} ->
+              conn
+              |> put_status(500)
+              |> text(:error)
+          end
         else
-          send_resp(conn, 403, "Resume code is wrong.")
+          conn
+          |> put_status(403)
+          |> text("Resume code wrong.")
         end
 
       # coveralls-ignore-start

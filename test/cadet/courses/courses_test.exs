@@ -105,7 +105,7 @@ defmodule Cadet.CoursesTest do
       assert updated_course.enable_stories == true
       assert updated_course.enable_exam_mode == true
       assert updated_course.is_official_course == true
-      assert updated_course.resumce_code == "resume_code"
+      assert updated_course.resume_code == "resume_code"
       assert updated_course.source_chapter == 1
       assert updated_course.source_variant == "default"
       assert updated_course.module_help_text == nil

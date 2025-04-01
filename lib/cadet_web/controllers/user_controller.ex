@@ -16,7 +16,6 @@ defmodule CadetWeb.UserController do
 
     cond do
       exam_mode_course ->
-        IO.puts("Course #{exam_mode_course.course_id} is under exam mode.")
         xp = Assessments.assessments_total_xp(exam_mode_course)
         max_xp = Assessments.user_max_xp(exam_mode_course)
         story = Assessments.user_current_story(exam_mode_course)
@@ -121,6 +120,23 @@ defmodule CadetWeb.UserController do
         conn
         |> put_status(status)
         |> text(message)
+    end
+  end
+
+  def pause_user(conn, params) do
+    user = conn.assigns.current_user
+    user
+    |> Cadet.Accounts.User.changeset(%{is_paused: true})
+    |> Cadet.Repo.update()
+    |> case do
+      result = {:ok, _} ->
+        conn
+        |> put_status(:ok)
+        |> text("User is paused.")
+      {:error, _} ->
+        conn
+        |> put_status(500)
+        |> text(:error)
     end
   end
 
