@@ -64,11 +64,17 @@ defmodule CadetWeb.UserController do
     user = conn.assigns.current_user
     exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
-    latest = cond do
-      exam_mode_course -> CourseRegistrations.get_user_course(user.id, exam_mode_course.course_id)
-      user.latest_viewed_course_id -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-      true -> nil
-    end
+    latest =
+      cond do
+        exam_mode_course ->
+          CourseRegistrations.get_user_course(user.id, exam_mode_course.course_id)
+
+        user.latest_viewed_course_id ->
+          CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+
+        true ->
+          nil
+      end
 
     get_course_reg_config(conn, latest)
   end
@@ -120,6 +126,7 @@ defmodule CadetWeb.UserController do
 
   def pause_user(conn, params) do
     user = conn.assigns.current_user
+
     user
     |> Cadet.Accounts.User.changeset(%{is_paused: true})
     |> Cadet.Repo.update()
@@ -128,6 +135,7 @@ defmodule CadetWeb.UserController do
         conn
         |> put_status(:ok)
         |> text("User is paused.")
+
       {:error, _} ->
         conn
         |> put_status(500)

@@ -60,6 +60,7 @@ defmodule CadetWeb.CoursesController do
               conn
               |> put_status(:ok)
               |> text("Resume code validated.")
+
             {:error, _} ->
               conn
               |> put_status(500)
