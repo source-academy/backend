@@ -16,7 +16,6 @@ defmodule CadetWeb.UserController do
 
     cond do
       exam_mode_course ->
-        IO.puts("Course #{exam_mode_course.course_id} is under exam mode.")
         xp = Assessments.assessments_total_xp(exam_mode_course)
         max_xp = Assessments.user_max_xp(exam_mode_course)
         story = Assessments.user_current_story(exam_mode_course)
