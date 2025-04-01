@@ -64,18 +64,13 @@ defmodule CadetWeb.UserController do
     user = conn.assigns.current_user
     exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
-    if exam_mode_course do
-      latest = CourseRegistrations.get_user_course(user.id, exam_mode_course.course_id)
-      get_course_reg_config(conn, latest)
-    else
-      latest =
-        case user.latest_viewed_course_id do
-          nil -> nil
-          _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-        end
-
-      get_course_reg_config(conn, latest)
+    latest = cond do
+      exam_mode_course -> CourseRegistrations.get_user_course(user.id, exam_mode_course.course_id)
+      user.latest_viewed_course_id -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+      true -> nil
     end
+
+    get_course_reg_config(conn, latest)
   end
 
   defp get_course_reg_config(conn, course_reg) when is_nil(course_reg) do
