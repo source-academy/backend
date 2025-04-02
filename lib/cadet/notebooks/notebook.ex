@@ -14,8 +14,10 @@ defmodule Cadet.Notebooks.Notebook do
     field(:pin_order, :integer)
 
     belongs_to(:course, Course)
-    belongs_to(:user, User) # author
-    belongs_to(:course_registration, CourseRegistration) # to get role
+    # author
+    belongs_to(:user, User)
+    # to get role
+    belongs_to(:course_registration, CourseRegistration)
 
     timestamps()
   end
