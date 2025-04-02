@@ -118,6 +118,7 @@ defmodule CadetWeb.Router do
     put("/user/game_states", UserController, :update_game_states)
     put("/user/research_agreement", UserController, :update_research_agreement)
     put("/user/pause", UserController, :pause_user)
+    post("/user/focus/:state", UserController, :log_user_focus_change)
 
     get("/config", CoursesController, :index)
     post("/resume_code", CoursesController, :check_resume_code)

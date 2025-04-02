@@ -143,6 +143,25 @@ defmodule CadetWeb.UserController do
     end
   end
 
+  def log_user_focus_change(conn, %{"state" => state}) do
+    user = conn.assigns.current_user
+    focus_state = case state do
+      "0" -> "OUT of focus"
+      "1" -> "IN focus"
+      _ -> nil
+    end
+
+    if focus_state do
+      IO.puts("[#{Calendar.strftime(DateTime.utc_now(), "%Y-%m-%d %H:%M:%S")}] User #{user.id} (#{user.name}) is #{focus_state}.")
+      conn
+      |> put_status(200)
+    end
+
+    conn
+    |> put_status(403)
+    |> text("invalid user focus state")
+  end
+
   def update_research_agreement(conn, %{"agreedToResearch" => agreed_to_research}) do
     course_reg = conn.assigns[:course_reg]
 
