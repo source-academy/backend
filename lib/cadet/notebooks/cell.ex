@@ -18,7 +18,7 @@ defmodule Cadet.Notebooks.Cell do
     timestamps()
   end
 
-  @required_fields ~w(iscode content output index)a
+  @required_fields ~w(iscode content output index notebook environment)a
 
   def changeset(cell, attrs \\ %{}) do
     cell
