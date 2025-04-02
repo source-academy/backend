@@ -10,7 +10,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   @openai_api_url "https://api.openai.com/v1/chat/completions"
   @model "gpt-4o"
-  @default_llm_grading false
+  @default_llm_grading false # To set whether LLM grading is enabled across Source Academy
 
   # For logging outputs to both database and file
   defp log_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
@@ -60,9 +60,11 @@ defmodule CadetWeb.AICodeAnalysisController do
       # Check if LLM grading is enabled for this course (default to @default_llm_grading if nil)
       case Courses.get_course_config(course_id) do
         {:ok, course} ->
-          if course.enable_llm_grading == true || (course.enable_llm_grading == nil && @default_llm_grading == true) do
+          if course.enable_llm_grading || @default_llm_grading do
+            Logger.info("LLM Api key: #{course.llm_api_key}")
             # Get API key from course config or fall back to environment variable
-            api_key = course.llm_api_key || Application.get_env(:openai, :api_key)
+            decrypted_api_key = decrypt_llm_api_key(course.llm_api_key)
+            api_key = decrypted_api_key || Application.get_env(:openai, :api_key)
 
             if is_nil(api_key) do
               conn
@@ -348,5 +350,39 @@ defmodule CadetWeb.AICodeAnalysisController do
           end
         end
     }
+  end
+
+  defp decrypt_llm_api_key(nil), do: nil
+  defp decrypt_llm_api_key(encrypted_key) do
+    try do
+      # Get the encryption key
+      secret = Application.get_env(:openai, :encryption_key)
+
+      if is_binary(secret) and byte_size(secret) >= 16 do
+        # Use first 16 bytes for AES-128, 24 for AES-192, or 32 for AES-256
+        key = binary_part(secret, 0, min(32, byte_size(secret)))
+
+        # Decode the base64 string
+        decoded = Base.decode64!(encrypted_key)
+
+        # Extract IV, tag and ciphertext
+        iv = binary_part(decoded, 0, 16)
+        tag = binary_part(decoded, 16, 16)
+        ciphertext = binary_part(decoded, 32, byte_size(decoded) - 32)
+
+        # Decrypt
+        case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
+          plain_text when is_binary(plain_text) -> plain_text
+          _ -> nil
+        end
+      else
+        Logger.error("Encryption key not configured properly")
+        nil
+      end
+    rescue
+      e ->
+        Logger.error("Error decrypting LLM API key: #{inspect(e)}")
+        nil
+    end
   end
 end
