@@ -11,12 +11,11 @@ defmodule CadetWeb.UserController do
 
   def index(conn, _) do
     user = conn.assigns.current_user
-    role = conn.assigns.course_reg.role
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
     exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
     cond do
-      exam_mode_course && role == :student ->
+      exam_mode_course ->
         xp = Assessments.assessments_total_xp(exam_mode_course)
         max_xp = Assessments.user_max_xp(exam_mode_course)
         story = Assessments.user_current_story(exam_mode_course)
@@ -128,14 +127,19 @@ defmodule CadetWeb.UserController do
   def pause_user(conn, params) do
     user = conn.assigns.current_user
 
-    update_result =
-      user
-      |> Cadet.Accounts.User.changeset(%{is_paused: true})
-      |> Cadet.Repo.update()
+    user
+    |> Cadet.Accounts.User.changeset(%{is_paused: true})
+    |> Cadet.Repo.update()
+    |> case do
+      result = {:ok, _} ->
+        conn
+        |> put_status(:ok)
+        |> text("User is paused.")
 
-    case update_result do
-      {:ok, _} -> conn |> send_resp(:ok, "")
-      {:error, _} -> conn |> send_resp(500, "")
+      {:error, _} ->
+        conn
+        |> put_status(500)
+        |> text(:error)
     end
   end
 
