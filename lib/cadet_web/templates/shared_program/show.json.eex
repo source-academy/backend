@@ -1,0 +1,7 @@
+<%= Jason.encode!(%{
+  id: @shared_program.id,
+  uuid: @shared_program.uuid,
+  data: @shared_program.data,
+  inserted_at: @shared_program.inserted_at,
+  updated_at: @shared_program.updated_at
+}) %>
