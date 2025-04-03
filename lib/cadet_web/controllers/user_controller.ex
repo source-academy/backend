@@ -24,7 +24,7 @@ defmodule CadetWeb.UserController do
           conn,
           "index.json",
           user: user,
-          courses: courses |> Enum.filter(fn c -> c.course_id == exam_mode_course.course_id end),
+          courses: [exam_mode_course],
           latest: exam_mode_course,
           max_xp: max_xp,
           story: story,
