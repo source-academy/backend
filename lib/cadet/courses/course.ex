@@ -14,6 +14,9 @@ defmodule Cadet.Courses.Course do
           enable_achievements: boolean(),
           enable_sourcecast: boolean(),
           enable_stories: boolean(),
+          enable_exam_mode: boolean(),
+          resume_code: string(),
+          is_official_course: boolean(),
           source_chapter: integer(),
           source_variant: String.t(),
           module_help_text: String.t(),
@@ -28,6 +31,9 @@ defmodule Cadet.Courses.Course do
     field(:enable_achievements, :boolean, default: true)
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
+    field(:enable_exam_mode, :boolean, default: false)
+    field(:resume_code, :string)
+    field(:is_official_course, :boolean, default: false)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
     field(:module_help_text, :string)
@@ -41,14 +47,44 @@ defmodule Cadet.Courses.Course do
   end
 
   @required_fields ~w(course_name viewable enable_game
-    enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
-  @optional_fields ~w(course_short_name module_help_text)a
+    enable_exam_mode enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
+  @optional_fields ~w(course_short_name module_help_text resume_code)a
 
   def changeset(course, params) do
     course
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_sublanguage_combination(params)
+    |> validate_exam_mode(params)
+  end
+
+  # Validates combination of exam mode, resume code, and official course state
+  defp validate_exam_mode(changeset, params) do
+    resume_code = Map.get(params, :resume_code, "")
+    enable_exam_mode = Map.get(params, :enable_exam_mode, false)
+    is_official_course = get_field(changeset, :is_official_course, false)
+
+    case {enable_exam_mode, is_official_course, resume_code} do
+      {false, _, _} ->
+        changeset
+
+      {true, false, _} ->
+        add_error(
+          changeset,
+          :enable_exam_mode,
+          "Exam mode is only available for official institution course."
+        )
+
+      {true, true, ""} ->
+        add_error(
+          changeset,
+          :resume_code,
+          "Resume code must be set to non-empty value upon enabling of exam mode."
+        )
+
+      {_, _, _} ->
+        changeset
+    end
   end
 
   # Validates combination of Source chapter and variant
