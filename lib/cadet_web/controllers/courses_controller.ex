@@ -9,7 +9,7 @@ defmodule CadetWeb.CoursesController do
   def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
-        if conn.assigns.course_reg.role == :admin || conn.assigns.course_reg.role == "admin" do
+        if conn.assigns.course_reg.role == :admin do
           render(conn, "config_admin.json", config: config)
         else
           render(conn, "config.json", config: config)
@@ -59,7 +59,7 @@ defmodule CadetWeb.CoursesController do
 
     case update_result do
       {:ok, _} -> conn |> send_resp(:ok, "")
-      {:error, _} -> conn |> send_resp(500, :error)
+      {:error, _} -> conn |> send_resp(500, "")
     end
   end
 
