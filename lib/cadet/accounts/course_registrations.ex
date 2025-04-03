@@ -49,7 +49,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   def get_exam_mode_course(%User{id: id}) do
     CourseRegistration
-    |> where([cr], cr.user_id == ^id)
+    |> where([cr], cr.user_id == ^id and cr.role == :student)
     |> join(:inner, [cr], c in assoc(cr, :course),
       on: c.enable_exam_mode == true and c.is_official_course == true
     )
