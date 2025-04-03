@@ -120,7 +120,7 @@ defmodule CadetWeb.Router do
     put("/user/pause", UserController, :pause_user)
 
     get("/config", CoursesController, :index)
-    post("/resume_code", CoursesController, :check_resume_code)
+    post("/resume_code", CoursesController, :try_unpause_user)
 
     get("/team/:assessmentid", TeamController, :index)
   end

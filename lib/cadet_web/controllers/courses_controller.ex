@@ -44,39 +44,33 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
-  def check_resume_code(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
-    params = conn.body_params
-    user = conn.assigns.current_user
-    resume_code = Map.get(params, "resume_code", nil)
-
+  defp check_resume_code(course_id, resume_code) do
     case Courses.get_course_config(course_id) do
-      {:ok, config} ->
-        if config.resume_code == resume_code do
-          user
-          |> Cadet.Accounts.User.changeset(%{is_paused: false})
-          |> Cadet.Repo.update()
-          |> case do
-            result = {:ok, _} ->
-              conn
-              |> put_status(:ok)
-              |> text("Resume code validated.")
+      {:ok, config} -> {:ok, config.resume_code == resume_code}
+      {:error, {status_code, message}} -> {:error, {status_code, message}}
+    end
+  end
 
-            {:error, _} ->
-              conn
-              |> put_status(500)
-              |> text(:error)
-          end
-        else
-          conn
-          |> put_status(403)
-          |> text("Resume code wrong.")
-        end
+  defp unpause_user(conn, user) do
+    update_result =
+      user
+      |> Cadet.Accounts.User.changeset(%{is_paused: false})
+      |> Cadet.Repo.update()
 
-      # coveralls-ignore-start
-      # no course error will not happen here
-      {:error, {status, message}} ->
-        send_resp(conn, status, message)
-        # coveralls-ignore-stop
+    case update_result do
+      {:ok, _} -> conn |> send_resp(:ok, "")
+      {:error, _} -> conn |> send_resp(500, :error)
+    end
+  end
+
+  def try_unpause_user(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    user = conn.assigns.current_user
+    resume_code = Map.get(conn.body_params, "resume_code", nil)
+
+    case check_resume_code(course_id, resume_code) do
+      {:ok, true} -> unpause_user(conn, user)
+      {:ok, false} -> conn |> send_resp(:forbidden, "")
+      {:error, {status_code, message}} -> conn |> send_resp(status_code, message)
     end
   end
 
