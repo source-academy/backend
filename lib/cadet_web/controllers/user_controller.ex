@@ -146,15 +146,12 @@ defmodule CadetWeb.UserController do
   def log_user_focus_change(conn, %{"course_id" => course_id, "state" => state}) do
     user = conn.assigns.current_user
     focus_state = case state do
-      "0" -> "OUT of focus"
-      "1" -> "IN focus"
+      "0" -> 0
+      "1" -> 1
       _ -> nil
     end
 
     if focus_state do
-      # IO.puts("[#{Calendar.strftime(DateTime.utc_now(), "%Y-%m-%d %H:%M:%S")}] User #{user.id} (#{user.name}) is #{focus_state}.")
-      # conn
-      # |> put_status(200)
       case Cadet.FocusLogs.insert_log(user.id, course_id, state) do
         {:ok, _} -> conn |> send_resp(:ok, "")
         {:error, message} -> conn |> send_resp(500, message)
