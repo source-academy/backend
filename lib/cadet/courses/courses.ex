@@ -44,7 +44,7 @@ defmodule Cadet.Courses do
   """
   @spec get_course_config(integer) ::
           {:ok, Course.t()} | {:error, {:bad_request, String.t()}}
-  def get_course_config(course_id, is_admin \\ false) when is_ecto_id(course_id) do
+  def get_course_config(course_id) when is_ecto_id(course_id) do
     case retrieve_course(course_id) do
       nil ->
         {:error, {:bad_request, "Invalid course id"}}

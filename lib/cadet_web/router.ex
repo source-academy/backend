@@ -121,7 +121,7 @@ defmodule CadetWeb.Router do
     post("/user/focus/:state", UserController, :log_user_focus_change)
 
     get("/config", CoursesController, :index)
-    post("/resume_code", CoursesController, :check_resume_code)
+    post("/resume_code", CoursesController, :try_unpause_user)
 
     get("/team/:assessmentid", TeamController, :index)
   end
