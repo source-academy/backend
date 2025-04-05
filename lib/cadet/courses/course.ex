@@ -60,7 +60,11 @@ defmodule Cadet.Courses.Course do
 
   # Validates combination of exam mode, resume code, and official course state
   defp validate_exam_mode(changeset, params) do
-    resume_code = Map.get(params, :resume_code, "")
+    resume_code =
+      params
+      |> Map.get(:resume_code, "")
+      |> String.trim()
+
     enable_exam_mode = Map.get(params, :enable_exam_mode, false)
     is_official_course = get_field(changeset, :is_official_course, false)
 
@@ -79,7 +83,8 @@ defmodule Cadet.Courses.Course do
           "Exam mode is only available for official institution course."
         )
 
-      _ -> changeset
+      _ ->
+        changeset
     end
   end
 
