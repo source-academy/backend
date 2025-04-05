@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.AlterCoursesTableAddResumeCode do
 
   def change do
     alter table(:courses) do
-      add(:resume_code, :string, null: false, default: "")
+      add(:resume_code, :string, null: false, default: "resume_code")
     end
   end
 end

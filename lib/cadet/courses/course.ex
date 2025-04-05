@@ -65,8 +65,12 @@ defmodule Cadet.Courses.Course do
     is_official_course = get_field(changeset, :is_official_course, false)
 
     case {enable_exam_mode, is_official_course, resume_code} do
-      {false, _, _} ->
-        changeset
+      {_, _, ""} ->
+        add_error(
+          changeset,
+          :resume_code,
+          "Resume code must not be empty."
+        )
 
       {true, false, _} ->
         add_error(
@@ -75,15 +79,7 @@ defmodule Cadet.Courses.Course do
           "Exam mode is only available for official institution course."
         )
 
-      {true, true, ""} ->
-        add_error(
-          changeset,
-          :resume_code,
-          "Resume code must be set to non-empty value upon enabling of exam mode."
-        )
-
-      {_, _, _} ->
-        changeset
+      _ -> changeset
     end
   end
 
