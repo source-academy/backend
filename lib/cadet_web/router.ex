@@ -213,6 +213,12 @@ defmodule CadetWeb.Router do
       :autograde_answer
     )
 
+    post(
+      "/save-final-comment/:submissionid/:questionid",
+      AICodeAnalysisController,
+      :save_final_comment
+    )
+
     get("/users", AdminUserController, :index)
     get("/users/teamformation", AdminUserController, :get_students)
     put("/users", AdminUserController, :upsert_users_and_groups)

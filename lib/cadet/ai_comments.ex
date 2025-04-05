@@ -18,14 +18,27 @@ defmodule Cadet.AIComments do
   def get_ai_comment!(id), do: Repo.get!(AIComment, id)
 
   @doc """
-  Gets AI comments for a specific submission and question.
+  Retrieves an AI comment for a specific submission and question.
+  Returns `nil` if no comment exists.
   """
   def get_ai_comments_for_submission(submission_id, question_id) do
+    Repo.one(
+      from c in AIComment,
+        where: c.submission_id == ^submission_id and c.question_id == ^question_id
+    )
+  end
+
+  @doc """
+  Retrieves the latest AI comment for a specific submission and question.
+  Returns `nil` if no comment exists.
+  """
+  def get_latest_ai_comment(submission_id, question_id) do
     from(c in AIComment,
       where: c.submission_id == ^submission_id and c.question_id == ^question_id,
-      order_by: [desc: c.inserted_at]
+      order_by: [desc: c.inserted_at],
+      limit: 1
     )
-    |> Repo.all()
+    |> Repo.one()
   end
 
   @doc """
@@ -46,5 +59,15 @@ defmodule Cadet.AIComments do
         |> AIComment.changeset(%{final_comment: final_comment})
         |> Repo.update()
     end
+  end
+
+  @doc """
+  Updates an existing AI comment with new attributes.
+  """
+  def update_ai_comment(id, attrs) do
+    id
+    |> get_ai_comment!()
+    |> AIComment.changeset(attrs)
+    |> Repo.update()
   end
 end

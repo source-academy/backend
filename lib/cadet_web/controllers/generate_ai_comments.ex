@@ -25,30 +25,26 @@ defmodule CadetWeb.AICodeAnalysisController do
       inserted_at: NaiveDateTime.utc_now()
     }
 
-    case AIComments.create_ai_comment(attrs) do
-      {:ok, comment} -> {:ok, comment}
-      {:error, changeset} ->
-        Logger.error("Failed to log AI comment to database: #{inspect(changeset.errors)}")
-        {:error, changeset}
-    end
+    # Check if a comment already exists for the given submission_id and question_id
+    case AIComments.get_latest_ai_comment(submission_id, question_id) do
+      nil ->
+        # If no existing comment, create a new one
+        case AIComments.create_ai_comment(attrs) do
+          {:ok, comment} -> {:ok, comment}
+          {:error, changeset} ->
+            Logger.error("Failed to log AI comment to database: #{inspect(changeset.errors)}")
+            {:error, changeset}
+        end
 
-    # Log to file
-    try do
-      log_file = "log/ai_comments.csv"
-      File.mkdir_p!("log")
-
-      timestamp = NaiveDateTime.utc_now() |> NaiveDateTime.to_string()
-      raw_prompt_str = Jason.encode!(raw_prompt) |> String.replace("\"", "\"\"")
-      answers_json_str = answers_json |> String.replace("\"", "\"\"")
-      response_str = if is_nil(response), do: "", else: response |> String.replace("\"", "\"\"")
-      error_str = if is_nil(error), do: "", else: error |> String.replace("\"", "\"\"")
-
-      csv_row = "\"#{timestamp}\",\"#{submission_id}\",\"#{question_id}\",\"#{raw_prompt_str}\",\"#{answers_json_str}\",\"#{response_str}\",\"#{error_str}\"\n"
-
-      File.write!(log_file, csv_row, [:append])
-    rescue
-      e ->
-        Logger.error("Failed to log AI comment to file: #{inspect(e)}")
+      existing_comment ->
+        # If a comment exists, update it with the new data
+        updated_attrs = Map.merge(existing_comment, attrs)
+        case AIComments.update_ai_comment(existing_comment.id, updated_attrs) do
+          {:ok, updated_comment} -> {:ok, updated_comment}
+          {:error, changeset} ->
+            Logger.error("Failed to update AI comment in database: #{inspect(changeset.errors)}")
+            {:error, changeset}
+        end
     end
   end
 
