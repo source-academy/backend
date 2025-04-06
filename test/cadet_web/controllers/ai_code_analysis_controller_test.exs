@@ -22,7 +22,9 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       # Make the API call
       response =
         conn
-        |> post(Routes.ai_code_analysis_path(conn, :generate_ai_comments, submission_id, question_id))
+        |> post(
+          Routes.ai_code_analysis_path(conn, :generate_ai_comments, submission_id, question_id)
+        )
         |> json_response(200)
 
       # Verify database entry
@@ -52,7 +54,9 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       # Make the API call that should fail
       response =
         conn
-        |> post(Routes.ai_code_analysis_path(conn, :generate_ai_comments, submission_id, question_id))
+        |> post(
+          Routes.ai_code_analysis_path(conn, :generate_ai_comments, submission_id, question_id)
+        )
         |> json_response(400)
 
       # Verify error is logged in database
@@ -82,21 +86,26 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       answers_json = ~s({"test": "data"})
       response = "Comment 1|||Comment 2|||Comment 3"
 
-      {:ok, _comment} = AIComments.create_ai_comment(%{
-        submission_id: submission_id,
-        question_id: question_id,
-        raw_prompt: raw_prompt,
-        answers_json: answers_json,
-        response: response
-      })
+      {:ok, _comment} =
+        AIComments.create_ai_comment(%{
+          submission_id: submission_id,
+          question_id: question_id,
+          raw_prompt: raw_prompt,
+          answers_json: answers_json,
+          response: response
+        })
 
       # Now save the final comment
       final_comment = "This is the chosen final comment"
+
       response =
         conn
-        |> post(Routes.ai_code_analysis_path(conn, :save_final_comment, submission_id, question_id), %{
-          comment: final_comment
-        })
+        |> post(
+          Routes.ai_code_analysis_path(conn, :save_final_comment, submission_id, question_id),
+          %{
+            comment: final_comment
+          }
+        )
         |> json_response(200)
 
       assert response["status"] == "success"
@@ -113,9 +122,12 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
 
       response =
         conn
-        |> post(Routes.ai_code_analysis_path(conn, :save_final_comment, submission_id, question_id), %{
-          comment: final_comment
-        })
+        |> post(
+          Routes.ai_code_analysis_path(conn, :save_final_comment, submission_id, question_id),
+          %{
+            comment: final_comment
+          }
+        )
         |> json_response(422)
 
       assert response["error"] == "Failed to save final comment"
@@ -131,21 +143,26 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       answers_json = ~s({"test": "data"})
       response = "Comment 1|||Comment 2|||Comment 3"
 
-      {:ok, _comment} = AIComments.create_ai_comment(%{
-        submission_id: submission_id,
-        question_id: question_id,
-        raw_prompt: raw_prompt,
-        answers_json: answers_json,
-        response: response
-      })
+      {:ok, _comment} =
+        AIComments.create_ai_comment(%{
+          submission_id: submission_id,
+          question_id: question_id,
+          raw_prompt: raw_prompt,
+          answers_json: answers_json,
+          response: response
+        })
 
       # Now save the chosen comments
       chosen_comments = ["Comment 1", "Comment 2"]
+
       response =
         conn
-        |> post(Routes.ai_code_analysis_path(conn, :save_chosen_comments, submission_id, question_id), %{
-          comments: chosen_comments
-        })
+        |> post(
+          Routes.ai_code_analysis_path(conn, :save_chosen_comments, submission_id, question_id),
+          %{
+            comments: chosen_comments
+          }
+        )
         |> json_response(200)
 
       assert response["status"] == "success"
@@ -162,9 +179,12 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
 
       response =
         conn
-        |> post(Routes.ai_code_analysis_path(conn, :save_chosen_comments, submission_id, question_id), %{
-          comments: chosen_comments
-        })
+        |> post(
+          Routes.ai_code_analysis_path(conn, :save_chosen_comments, submission_id, question_id),
+          %{
+            comments: chosen_comments
+          }
+        )
         |> json_response(422)
 
       assert response["error"] == "Failed to save chosen comments"

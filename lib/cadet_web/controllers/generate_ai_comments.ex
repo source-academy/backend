@@ -10,7 +10,8 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   @openai_api_url "https://api.openai.com/v1/chat/completions"
   @model "gpt-4o"
-  @default_llm_grading false # To set whether LLM grading is enabled across Source Academy
+  # To set whether LLM grading is enabled across Source Academy
+  @default_llm_grading false
 
   # For logging outputs to both database and file
   defp log_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
@@ -30,7 +31,9 @@ defmodule CadetWeb.AICodeAnalysisController do
       nil ->
         # If no existing comment, create a new one
         case AIComments.create_ai_comment(attrs) do
-          {:ok, comment} -> {:ok, comment}
+          {:ok, comment} ->
+            {:ok, comment}
+
           {:error, changeset} ->
             Logger.error("Failed to log AI comment to database: #{inspect(changeset.errors)}")
             {:error, changeset}
@@ -39,8 +42,11 @@ defmodule CadetWeb.AICodeAnalysisController do
       existing_comment ->
         # Convert the existing comment struct to a map before merging
         updated_attrs = Map.merge(Map.from_struct(existing_comment), attrs)
+
         case AIComments.update_ai_comment(existing_comment.id, updated_attrs) do
-          {:ok, updated_comment} -> {:ok, updated_comment}
+          {:ok, updated_comment} ->
+            {:ok, updated_comment}
+
           {:error, changeset} ->
             Logger.error("Failed to update AI comment in database: #{inspect(changeset.errors)}")
             {:error, changeset}
@@ -51,43 +57,47 @@ defmodule CadetWeb.AICodeAnalysisController do
   @doc """
   Fetches the question details and answers based on submissionid and questionid and generates AI-generated comments.
   """
-  def generate_ai_comments(conn, %{"submissionid" => submission_id, "questionid" => question_id, "course_id" => course_id})
-    when is_ecto_id(submission_id) do
-      # Check if LLM grading is enabled for this course (default to @default_llm_grading if nil)
-      case Courses.get_course_config(course_id) do
-        {:ok, course} ->
-          if course.enable_llm_grading || @default_llm_grading do
-            Logger.info("LLM Api key: #{course.llm_api_key}")
-            # Get API key from course config or fall back to environment variable
-            decrypted_api_key = decrypt_llm_api_key(course.llm_api_key)
-            api_key = decrypted_api_key || Application.get_env(:openai, :api_key)
+  def generate_ai_comments(conn, %{
+        "submissionid" => submission_id,
+        "questionid" => question_id,
+        "course_id" => course_id
+      })
+      when is_ecto_id(submission_id) do
+    # Check if LLM grading is enabled for this course (default to @default_llm_grading if nil)
+    case Courses.get_course_config(course_id) do
+      {:ok, course} ->
+        if course.enable_llm_grading || @default_llm_grading do
+          Logger.info("LLM Api key: #{course.llm_api_key}")
+          # Get API key from course config or fall back to environment variable
+          decrypted_api_key = decrypt_llm_api_key(course.llm_api_key)
+          api_key = decrypted_api_key || Application.get_env(:openai, :api_key)
 
-            if is_nil(api_key) do
-              conn
-              |> put_status(:internal_server_error)
-              |> json(%{"error" => "No OpenAI API key configured"})
-            else
-              case Assessments.get_answers_in_submission(submission_id, question_id) do
-                {:ok, {answers, _assessment}} ->
-                  analyze_code(conn, answers, submission_id, question_id, api_key)
-
-                {:error, {status, message}} ->
-                  conn
-                  |> put_status(status)
-                  |> text(message)
-              end
-            end
-          else
+          if is_nil(api_key) do
             conn
-            |> put_status(:forbidden)
-            |> json(%{"error" => "LLM grading is not enabled for this course"})
-          end
+            |> put_status(:internal_server_error)
+            |> json(%{"error" => "No OpenAI API key configured"})
+          else
+            case Assessments.get_answers_in_submission(submission_id, question_id) do
+              {:ok, {answers, _assessment}} ->
+                analyze_code(conn, answers, submission_id, question_id, api_key)
 
-        {:error, {status, message}} ->
+              {:error, {status, message}} ->
+                conn
+                |> put_status(status)
+                |> text(message)
+            end
+          end
+        else
           conn
-          |> put_status(status)
-          |> text(message)
-      end
+          |> put_status(:forbidden)
+          |> json(%{"error" => "LLM grading is not enabled for this course"})
+        end
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
   end
 
   defp transform_answers(answers) do
@@ -136,6 +146,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   defp format_autograding_results(nil), do: "N/A"
+
   defp format_autograding_results(results) when is_list(results) do
     results
     |> Enum.map(fn result ->
@@ -143,6 +154,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     end)
     |> Enum.join("; ")
   end
+
   defp format_autograding_results(results), do: inspect(results)
 
   defp analyze_code(conn, answers, submission_id, question_id, api_key) do
@@ -164,6 +176,7 @@ defmodule CadetWeb.AICodeAnalysisController do
               llm_prompt: nil
             }
           end
+
         answer
         |> Map.from_struct()
         |> Map.take([
@@ -171,88 +184,90 @@ defmodule CadetWeb.AICodeAnalysisController do
           :comments,
           :autograding_status,
           :autograding_results,
-          :answer,
+          :answer
         ])
         |> Map.put(:question, question_data)
       end)
       |> Jason.encode!()
       |> format_answers()
 
-      raw_prompt = """
-      The code below is written in Source, a variant of JavaScript that comes with a rich set of built-in constants and functions. Below is a summary of some key built-in entities available in Source:
+    raw_prompt = """
+    The code below is written in Source, a variant of JavaScript that comes with a rich set of built-in constants and functions. Below is a summary of some key built-in entities available in Source:
 
-      Constants:
-      - Infinity: The special number value representing infinity.
-      - NaN: The special number value for "not a number."
-      - undefined: The special value for an undefined variable.
-      - math_PI: The constant π (approximately 3.14159).
-      - math_E: Euler's number (approximately 2.71828).
+    Constants:
+    - Infinity: The special number value representing infinity.
+    - NaN: The special number value for "not a number."
+    - undefined: The special value for an undefined variable.
+    - math_PI: The constant π (approximately 3.14159).
+    - math_E: Euler's number (approximately 2.71828).
 
-      Functions:
-      - __access_export__(exports, lookup_name): Searches for a name in an exports data structure.
-      - accumulate(f, initial, xs): Reduces a list by applying a binary function from right-to-left.
-      - append(xs, ys): Appends list ys to the end of list xs.
-      - char_at(s, i): Returns the character at index i of string s.
-      - display(v, s): Displays value v (optionally preceded by string s) in the console.
-      - filter(pred, xs): Returns a new list with elements of xs that satisfy the predicate pred.
-      - for_each(f, xs): Applies function f to each element of the list xs.
-      - get_time(): Returns the current time in milliseconds.
-      - is_list(xs): Checks whether xs is a proper list.
-      - length(xs): Returns the number of elements in list xs.
-      - list(...): Constructs a list from the provided values.
-      - map(f, xs): Applies function f to each element of list xs.
-      - math_abs(x): Returns the absolute value of x.
-      - math_ceil(x): Rounds x up to the nearest integer.
-      - math_floor(x): Rounds x down to the nearest integer.
-      - pair(x, y): A primitive function that makes a pair whose head (first component) is x and whose tail (second component) is y.
-      - head(xs): Returns the first element of pair xs.
-      - tail(xs): Returns the second element of pair xs.
-      - math_random(): Returns a random number between 0 (inclusive) and 1 (exclusive).
+    Functions:
+    - __access_export__(exports, lookup_name): Searches for a name in an exports data structure.
+    - accumulate(f, initial, xs): Reduces a list by applying a binary function from right-to-left.
+    - append(xs, ys): Appends list ys to the end of list xs.
+    - char_at(s, i): Returns the character at index i of string s.
+    - display(v, s): Displays value v (optionally preceded by string s) in the console.
+    - filter(pred, xs): Returns a new list with elements of xs that satisfy the predicate pred.
+    - for_each(f, xs): Applies function f to each element of the list xs.
+    - get_time(): Returns the current time in milliseconds.
+    - is_list(xs): Checks whether xs is a proper list.
+    - length(xs): Returns the number of elements in list xs.
+    - list(...): Constructs a list from the provided values.
+    - map(f, xs): Applies function f to each element of list xs.
+    - math_abs(x): Returns the absolute value of x.
+    - math_ceil(x): Rounds x up to the nearest integer.
+    - math_floor(x): Rounds x down to the nearest integer.
+    - pair(x, y): A primitive function that makes a pair whose head (first component) is x and whose tail (second component) is y.
+    - head(xs): Returns the first element of pair xs.
+    - tail(xs): Returns the second element of pair xs.
+    - math_random(): Returns a random number between 0 (inclusive) and 1 (exclusive).
 
-      (For a full list of built-in functions and constants, refer to the Source documentation.)
+    (For a full list of built-in functions and constants, refer to the Source documentation.)
 
-      Analyze the following submitted answers and provide detailed feedback on correctness, readability, efficiency, and possible improvements. Your evaluation should consider both standard JavaScript features and the additional built-in functions unique to Source.
+    Analyze the following submitted answers and provide detailed feedback on correctness, readability, efficiency, and possible improvements. Your evaluation should consider both standard JavaScript features and the additional built-in functions unique to Source.
 
-      Provide between 3 and 5 concise comment suggestions, each under 200 words.
+    Provide between 3 and 5 concise comment suggestions, each under 200 words.
 
-      Your output must include only the comment suggestions, separated exclusively by triple pipes ("|||") with no spaces before or after the pipes, and without any additional formatting, bullet points, or extra text.
+    Your output must include only the comment suggestions, separated exclusively by triple pipes ("|||") with no spaces before or after the pipes, and without any additional formatting, bullet points, or extra text.
 
-      Comments and documentation in the code are not necessary for the code, do not penalise based on that, do not suggest to add comments as well.
+    Comments and documentation in the code are not necessary for the code, do not penalise based on that, do not suggest to add comments as well.
 
-      Follow the XP scoring guideline provided below in the question prompt, do not be too harsh!
+    Follow the XP scoring guideline provided below in the question prompt, do not be too harsh!
 
-      For example: "This is a good answer.|||This is a bad answer.|||This is a great answer."
-      """
-      # Get the llm_prompt from the first answer's question
-      llm_prompt =
-        answers
-        |> List.first()
-        |> Map.get(:question)
-        |> Map.get(:question)
-        |> Map.get("llm_prompt")
+    For example: "This is a good answer.|||This is a bad answer.|||This is a great answer."
+    """
 
-      # Combine prompts if llm_prompt exists
-      prompt =
-        if llm_prompt && llm_prompt != "" do
-          raw_prompt <> "Additional Instructions:\n\n" <> llm_prompt <> "\n\n" <> answers_json
-        else
-          raw_prompt <> "\n" <> answers_json
-        end
+    # Get the llm_prompt from the first answer's question
+    llm_prompt =
+      answers
+      |> List.first()
+      |> Map.get(:question)
+      |> Map.get(:question)
+      |> Map.get("llm_prompt")
 
-    input = %{
-      model: @model,
-      messages: [
-        %{role: "system", content: "You are an expert software engineer and educator."},
-        %{role: "user", content: prompt}
-      ],
-      temperature: 0.5
-    } |> Jason.encode!()
+    # Combine prompts if llm_prompt exists
+    prompt =
+      if llm_prompt && llm_prompt != "" do
+        raw_prompt <> "Additional Instructions:\n\n" <> llm_prompt <> "\n\n" <> answers_json
+      else
+        raw_prompt <> "\n" <> answers_json
+      end
+
+    input =
+      %{
+        model: @model,
+        messages: [
+          %{role: "system", content: "You are an expert software engineer and educator."},
+          %{role: "user", content: prompt}
+        ],
+        temperature: 0.5
+      }
+      |> Jason.encode!()
 
     headers = [
       {"Authorization", "Bearer #{api_key}"},
       {"Content-Type", "application/json"}
     ]
-
 
     case HTTPoison.post(@openai_api_url, input, headers, timeout: 60_000, recv_timeout: 60_000) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
@@ -261,19 +276,36 @@ defmodule CadetWeb.AICodeAnalysisController do
             log_comment(submission_id, question_id, prompt, answers_json, response)
             comments_list = String.split(response, "|||")
 
-            filtered_comments = Enum.filter(comments_list, fn comment ->
-              String.trim(comment) != ""
-            end)
+            filtered_comments =
+              Enum.filter(comments_list, fn comment ->
+                String.trim(comment) != ""
+              end)
 
             json(conn, %{"comments" => filtered_comments})
 
           {:error, _} ->
-            log_comment(submission_id, question_id, prompt, answers_json, nil, "Failed to parse response from OpenAI API")
+            log_comment(
+              submission_id,
+              question_id,
+              prompt,
+              answers_json,
+              nil,
+              "Failed to parse response from OpenAI API"
+            )
+
             json(conn, %{"error" => "Failed to parse response from OpenAI API"})
         end
 
       {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
-        log_comment(submission_id, question_id, prompt, answers_json, nil, "API request failed with status #{status}")
+        log_comment(
+          submission_id,
+          question_id,
+          prompt,
+          answers_json,
+          nil,
+          "API request failed with status #{status}"
+        )
+
         json(conn, %{"error" => "API request failed with status #{status}: #{body}"})
 
       {:error, %HTTPoison.Error{reason: reason}} ->
@@ -285,10 +317,15 @@ defmodule CadetWeb.AICodeAnalysisController do
   @doc """
   Saves the final comment chosen for a submission.
   """
-  def save_final_comment(conn, %{"submissionid" => submission_id, "questionid" => question_id, "comment" => comment}) do
+  def save_final_comment(conn, %{
+        "submissionid" => submission_id,
+        "questionid" => question_id,
+        "comment" => comment
+      }) do
     case AIComments.update_final_comment(submission_id, question_id, comment) do
       {:ok, _updated_comment} ->
         json(conn, %{"status" => "success"})
+
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -300,7 +337,11 @@ defmodule CadetWeb.AICodeAnalysisController do
   Saves the chosen comments for a submission and question.
   Accepts an array of comments in the request body.
   """
-  def save_chosen_comments(conn, %{"submissionid" => submission_id, "questionid" => question_id, "comments" => comments}) do
+  def save_chosen_comments(conn, %{
+        "submissionid" => submission_id,
+        "questionid" => question_id,
+        "comments" => comments
+      }) do
     case AIComments.update_chosen_comments(submission_id, question_id, comments) do
       {:ok, _updated_comment} ->
         json(conn, %{"status" => "success"})
@@ -375,6 +416,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   defp decrypt_llm_api_key(nil), do: nil
+
   defp decrypt_llm_api_key(encrypted_key) do
     try do
       # Get the encryption key

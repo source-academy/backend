@@ -68,14 +68,23 @@ defmodule Cadet.Courses.Course do
     if llm_api_key = get_change(changeset, :llm_api_key) do
       if is_binary(llm_api_key) and llm_api_key != "" do
         secret = Application.get_env(:openai, :encryption_key)
+
         if is_binary(secret) and byte_size(secret) >= 16 do
           # Use first 16 bytes for AES-128, 24 for AES-192, or 32 for AES-256
           key = binary_part(secret, 0, min(32, byte_size(secret)))
           # Use AES in GCM mode for encryption
           iv = :crypto.strong_rand_bytes(16)
-          {ciphertext, tag} = :crypto.crypto_one_time_aead(
-            :aes_gcm, key, iv, llm_api_key, "", true
-          )
+
+          {ciphertext, tag} =
+            :crypto.crypto_one_time_aead(
+              :aes_gcm,
+              key,
+              iv,
+              llm_api_key,
+              "",
+              true
+            )
+
           # Store both the IV, ciphertext and tag
           encrypted = iv <> tag <> ciphertext
           put_change(changeset, :llm_api_key, Base.encode64(encrypted))

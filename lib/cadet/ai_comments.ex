@@ -23,8 +23,9 @@ defmodule Cadet.AIComments do
   """
   def get_ai_comments_for_submission(submission_id, question_id) do
     Repo.one(
-      from c in AIComment,
+      from(c in AIComment,
         where: c.submission_id == ^submission_id and c.question_id == ^question_id
+      )
     )
   end
 
@@ -53,7 +54,9 @@ defmodule Cadet.AIComments do
     )
     |> Repo.one()
     |> case do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       comment ->
         comment
         |> AIComment.changeset(%{final_comment: final_comment})
@@ -83,7 +86,9 @@ defmodule Cadet.AIComments do
     )
     |> Repo.one()
     |> case do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       comment ->
         comment
         |> AIComment.changeset(%{comment_chosen: new_comments})
