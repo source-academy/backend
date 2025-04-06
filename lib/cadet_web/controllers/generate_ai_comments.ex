@@ -306,7 +306,9 @@ defmodule CadetWeb.AICodeAnalysisController do
           "API request failed with status #{status}"
         )
 
-        json(conn, %{"error" => "API request failed with status #{status}: #{body}"})
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{"error" => "API request failed with status #{status}: #{body}"})
 
       {:error, %HTTPoison.Error{reason: reason}} ->
         log_comment(submission_id, question_id, prompt, answers_json, nil, reason)
