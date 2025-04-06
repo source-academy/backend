@@ -135,7 +135,11 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def get_score_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def get_score_leaderboard(conn, %{
+        "assessmentid" => assessment_id,
+        "visibleentries" => visible_entries,
+        "course_id" => course_id
+      }) do
     voting_questions =
       Question
       |> where(type: :voting)
@@ -146,7 +150,7 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     result =
       contest_id
-      |> Assessments.fetch_top_relative_score_answers(10)
+      |> Assessments.fetch_top_relative_score_answers(visible_entries)
       |> Enum.map(fn entry ->
         AssessmentsHelpers.build_contest_leaderboard_entry(entry)
       end)
@@ -154,7 +158,11 @@ defmodule CadetWeb.AdminAssessmentsController do
     render(conn, "leaderboard.json", leaderboard: result)
   end
 
-  def get_popular_leaderboard(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def get_popular_leaderboard(conn, %{
+        "assessmentid" => assessment_id,
+        "visibleentries" => visible_entries,
+        "course_id" => course_id
+      }) do
     voting_questions =
       Question
       |> where(type: :voting)
@@ -165,12 +173,43 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     result =
       contest_id
-      |> Assessments.fetch_top_popular_score_answers(10)
+      |> Assessments.fetch_top_popular_score_answers(visible_entries)
       |> Enum.map(fn entry ->
         AssessmentsHelpers.build_popular_leaderboard_entry(entry)
       end)
 
     render(conn, "leaderboard.json", leaderboard: result)
+  end
+
+  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    if voting_questions do
+      Assessments.compute_relative_score(voting_questions.id)
+      text(conn, "CONTEST SCORE CALCULATED")
+    else
+      text(conn, "No voting questions found for the given assessment")
+    end
+  end
+
+  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    if voting_questions do
+      Assessments.assign_winning_contest_entries_xp(voting_questions.id)
+
+      text(conn, "XP Dispatched")
+    else
+      text(conn, "No voting questions found for the given assessment")
+    end
   end
 
   defp check_dates(open_at, close_at, assessment) do
@@ -288,7 +327,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   swagger_path :get_score_leaderboard do
     get("/courses/{course_id}/admin/assessments/:assessmentid/scoreLeaderboard")
 
-    summary("get the top 10 contest entries based on score")
+    summary("get the top X contest entries based on score")
 
     security([%{JWT: []}])
 
