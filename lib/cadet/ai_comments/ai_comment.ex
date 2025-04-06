@@ -9,7 +9,7 @@ defmodule Cadet.AIComments.AIComment do
     field :answers_json, :string
     field :response, :string
     field :error, :string
-    field :comment_chosen, :string
+    field :comment_chosen, {:array, :string}
     field :final_comment, :string
 
     timestamps()

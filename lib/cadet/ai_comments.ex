@@ -70,4 +70,24 @@ defmodule Cadet.AIComments do
     |> AIComment.changeset(attrs)
     |> Repo.update()
   end
+
+  @doc """
+  Updates the chosen comments for a specific submission and question.
+  Accepts an array of comments and replaces the existing array in the database.
+  """
+  def update_chosen_comments(submission_id, question_id, new_comments) do
+    from(c in AIComment,
+      where: c.submission_id == ^submission_id and c.question_id == ^question_id,
+      order_by: [desc: c.inserted_at],
+      limit: 1
+    )
+    |> Repo.one()
+    |> case do
+      nil -> {:error, :not_found}
+      comment ->
+        comment
+        |> AIComment.changeset(%{comment_chosen: new_comments})
+        |> Repo.update()
+    end
+  end
 end

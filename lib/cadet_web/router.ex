@@ -219,6 +219,12 @@ defmodule CadetWeb.Router do
       :save_final_comment
     )
 
+    post(
+      "/save-chosen-comments/:submissionid/:questionid",
+      AICodeAnalysisController,
+      :save_chosen_comments
+    )
+
     get("/users", AdminUserController, :index)
     get("/users/teamformation", AdminUserController, :get_students)
     put("/users", AdminUserController, :upsert_users_and_groups)
