@@ -37,8 +37,8 @@ defmodule CadetWeb.AICodeAnalysisController do
         end
 
       existing_comment ->
-        # If a comment exists, update it with the new data
-        updated_attrs = Map.merge(existing_comment, attrs)
+        # Convert the existing comment struct to a map before merging
+        updated_attrs = Map.merge(Map.from_struct(existing_comment), attrs)
         case AIComments.update_ai_comment(existing_comment.id, updated_attrs) do
           {:ok, updated_comment} -> {:ok, updated_comment}
           {:error, changeset} ->
@@ -114,26 +114,36 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp format_answer(answer) do
     """
-    **Question ID: #{answer["question"]["id"]}**
+    **Question ID: #{answer["question"]["id"] || "N/A"}**
 
     **Question:**
-    #{answer["question"]["content"]}
+    #{answer["question"]["content"] || "N/A"}
 
     **Solution:**
     ```
-    #{answer["question"]["solution"]}
+    #{answer["question"]["solution"] || "N/A"}
     ```
 
     **Answer:**
     ```
-    #{answer["answer"]["code"]}
+    #{answer["answer"]["code"] || "N/A"}
     ```
 
-    **Autograding Status:** #{answer["autograding_status"]}
-    **Autograding Results:** #{answer["autograding_results"]}
+    **Autograding Status:** #{answer["autograding_status"] || "N/A"}
+    **Autograding Results:** #{format_autograding_results(answer["autograding_results"])}
     **Comments:** #{answer["comments"] || "None"}
     """
   end
+
+  defp format_autograding_results(nil), do: "N/A"
+  defp format_autograding_results(results) when is_list(results) do
+    results
+    |> Enum.map(fn result ->
+      "Error: #{result["errorMessage"] || "N/A"}, Type: #{result["errorType"] || "N/A"}"
+    end)
+    |> Enum.join("; ")
+  end
+  defp format_autograding_results(results), do: inspect(results)
 
   defp analyze_code(conn, answers, submission_id, question_id, api_key) do
     answers_json =
