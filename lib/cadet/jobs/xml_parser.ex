@@ -316,15 +316,15 @@ defmodule Cadet.Updater.XMLParser do
       end)
 
     library_entity
-      |> xpath(
-        ~x"."e,
-        chapter: ~x"./@chapter"i,
-        exec_time_ms: ~x"./@exectime"oi,
-        variant: ~x"./@variant"os
-      )
-      |> Map.put(:globals, globals)
-      |> Map.put(:external, external)
-      |> Map.put(:language_options, options_map)
+    |> xpath(
+      ~x"."e,
+      chapter: ~x"./@chapter"i,
+      exec_time_ms: ~x"./@exectime"oi,
+      variant: ~x"./@variant"os
+    )
+    |> Map.put(:globals, globals)
+    |> Map.put(:external, external)
+    |> Map.put(:language_options, options_map)
   end
 
   @spec process_charlist(charlist() | nil) :: String.t() | nil
