@@ -124,6 +124,7 @@ defmodule CadetWeb.UserView do
             assessmentConfigId: :id,
             type: :type,
             displayInDashboard: :show_grading_summary,
+            isMinigame: :is_minigame,
             isManuallyGraded: :is_manually_graded,
             hasVotingFeatures: :has_voting_features,
             hasTokenCounter: :has_token_counter,
