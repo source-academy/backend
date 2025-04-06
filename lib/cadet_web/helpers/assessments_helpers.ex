@@ -10,7 +10,8 @@ defmodule CadetWeb.AssessmentsHelpers do
       variant: :variant,
       execTimeMs: :exec_time_ms,
       globals: :globals,
-      external: &build_external_library(%{external_library: &1.external})
+      external: &build_external_library(%{external_library: &1.external}),
+      languageOptions: :language_options
     })
   end
 
