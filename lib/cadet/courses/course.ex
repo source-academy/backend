@@ -32,7 +32,7 @@ defmodule Cadet.Courses.Course do
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
     field(:enable_exam_mode, :boolean, default: false)
-    field(:resume_code, :string, default: "resume_code")
+    field(:resume_code, :string)
     field(:is_official_course, :boolean, default: false)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
@@ -47,8 +47,8 @@ defmodule Cadet.Courses.Course do
   end
 
   @required_fields ~w(course_name viewable enable_game
-    enable_exam_mode enable_achievements enable_sourcecast enable_stories source_chapter source_variant resume_code)a
-  @optional_fields ~w(course_short_name module_help_text)a
+    enable_exam_mode enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
+  @optional_fields ~w(course_short_name module_help_text resume_code)a
 
   def changeset(course, params) do
     course
@@ -60,23 +60,29 @@ defmodule Cadet.Courses.Course do
 
   # Validates combination of exam mode, resume code, and official course state
   defp validate_exam_mode(changeset, params) do
-    resume_code =
+    has_resume_code = params |> Map.has_key?(:resume_code)
+
+    resume_code_params =
       params
       |> Map.get(:resume_code, "")
       |> String.trim()
 
+    resume_code =
+      changeset
+      |> get_field(:resume_code)
+
     enable_exam_mode = Map.get(params, :enable_exam_mode, false)
     is_official_course = get_field(changeset, :is_official_course, false)
 
-    case {enable_exam_mode, is_official_course, resume_code} do
-      {_, _, ""} ->
+    case {enable_exam_mode, is_official_course, has_resume_code, resume_code_params} do
+      {_, _, true, ""} ->
         add_error(
           changeset,
           :resume_code,
           "Resume code must not be empty."
         )
 
-      {true, false, _} ->
+      {true, false, _, _} ->
         add_error(
           changeset,
           :enable_exam_mode,

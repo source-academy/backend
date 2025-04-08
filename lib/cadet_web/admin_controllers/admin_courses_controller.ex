@@ -109,7 +109,13 @@ defmodule CadetWeb.AdminCoursesController do
       enable_sourcecast(:body, :boolean, "Enable sourcecast")
       enable_stories(:body, :boolean, "Enable stories")
       enable_exam_mode(:body, :boolean, "Enable exam mode")
-      resume_code(:body, :string, "Resume code that students that attempt to open developer tools will be prompted to enter")
+
+      resume_code(
+        :body,
+        :string,
+        "Resume code that students that attempt to open developer tools will be prompted to enter"
+      )
+
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
       module_help_text(:body, :string, "Module help text")
     end
@@ -145,7 +151,11 @@ defmodule CadetWeb.AdminCoursesController do
           title("AdminSublanguage")
 
           properties do
-            chapter(:integer, "Chapter number from 1 to 4", required: true, minimum: 1, maximum: 4)
+            chapter(:integer, "Chapter number from 1 to 4",
+              required: true,
+              minimum: 1,
+              maximum: 4
+            )
 
             variant(Schema.ref(:SourceVariant), "Variant name", required: true)
           end
