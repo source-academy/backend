@@ -32,7 +32,7 @@ defmodule Cadet.Courses.Course do
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
     field(:enable_exam_mode, :boolean, default: false)
-    field(:resume_code, :string)
+    field(:resume_code, :string, default: "resume_code")
     field(:is_official_course, :boolean, default: false)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
@@ -47,8 +47,8 @@ defmodule Cadet.Courses.Course do
   end
 
   @required_fields ~w(course_name viewable enable_game
-    enable_exam_mode enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
-  @optional_fields ~w(course_short_name module_help_text resume_code)a
+    enable_exam_mode enable_achievements enable_sourcecast enable_stories source_chapter source_variant resume_code)a
+  @optional_fields ~w(course_short_name module_help_text)a
 
   def changeset(course, params) do
     course
