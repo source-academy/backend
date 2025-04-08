@@ -3,6 +3,7 @@ defmodule CadetWeb.AdminUserController do
   use PhoenixSwagger
 
   import Ecto.Query
+
   alias Cadet.Repo
   alias Cadet.{Accounts, Assessments, Courses}
   alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
