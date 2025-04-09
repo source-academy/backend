@@ -55,7 +55,9 @@ defmodule Cadet.AIComments do
     comment = get_latest_ai_comment(submission_id, question_id)
 
     case comment do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       _ ->
         comment
         |> AIComment.changeset(%{final_comment: final_comment})
@@ -81,7 +83,9 @@ defmodule Cadet.AIComments do
     comment = get_latest_ai_comment(submission_id, question_id)
 
     case comment do
-      nil -> {:error, :not_found}
+      nil ->
+        {:error, :not_found}
+
       _ ->
         comment
         |> AIComment.changeset(%{comment_chosen: new_comments})
