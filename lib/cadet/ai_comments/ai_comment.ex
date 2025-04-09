@@ -1,4 +1,8 @@
 defmodule Cadet.AIComments.AIComment do
+  @moduledoc """
+  Defines the schema and changeset for AI comments.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

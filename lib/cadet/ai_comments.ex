@@ -1,4 +1,8 @@
 defmodule Cadet.AIComments do
+  @moduledoc """
+  Handles operations related to AI comments, including creation, updates, and retrieval.
+  """
+
   import Ecto.Query
   alias Cadet.Repo
   alias Cadet.AIComments.AIComment
@@ -34,12 +38,13 @@ defmodule Cadet.AIComments do
   Returns `nil` if no comment exists.
   """
   def get_latest_ai_comment(submission_id, question_id) do
-    from(c in AIComment,
-      where: c.submission_id == ^submission_id and c.question_id == ^question_id,
-      order_by: [desc: c.inserted_at],
-      limit: 1
+    Repo.one(
+      from(c in AIComment,
+        where: c.submission_id == ^submission_id and c.question_id == ^question_id,
+        order_by: [desc: c.inserted_at],
+        limit: 1
+      )
     )
-    |> Repo.one()
   end
 
   @doc """
@@ -47,17 +52,11 @@ defmodule Cadet.AIComments do
   Returns the most recent comment entry for that submission/question.
   """
   def update_final_comment(submission_id, question_id, final_comment) do
-    from(c in AIComment,
-      where: c.submission_id == ^submission_id and c.question_id == ^question_id,
-      order_by: [desc: c.inserted_at],
-      limit: 1
-    )
-    |> Repo.one()
-    |> case do
-      nil ->
-        {:error, :not_found}
+    comment = get_latest_ai_comment(submission_id, question_id)
 
-      comment ->
+    case comment do
+      nil -> {:error, :not_found}
+      _ ->
         comment
         |> AIComment.changeset(%{final_comment: final_comment})
         |> Repo.update()
@@ -79,17 +78,11 @@ defmodule Cadet.AIComments do
   Accepts an array of comments and replaces the existing array in the database.
   """
   def update_chosen_comments(submission_id, question_id, new_comments) do
-    from(c in AIComment,
-      where: c.submission_id == ^submission_id and c.question_id == ^question_id,
-      order_by: [desc: c.inserted_at],
-      limit: 1
-    )
-    |> Repo.one()
-    |> case do
-      nil ->
-        {:error, :not_found}
+    comment = get_latest_ai_comment(submission_id, question_id)
 
-      comment ->
+    case comment do
+      nil -> {:error, :not_found}
+      _ ->
         comment
         |> AIComment.changeset(%{comment_chosen: new_comments})
         |> Repo.update()

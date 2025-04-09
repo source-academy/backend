@@ -4,9 +4,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   require HTTPoison
   require Logger
 
-  alias Cadet.Assessments
-  alias Cadet.AIComments
-  alias Cadet.Courses
+  alias Cadet.{Assessments, AIComments, Courses}
 
   @openai_api_url "https://api.openai.com/v1/chat/completions"
   @model "gpt-4o"
@@ -114,12 +112,10 @@ defmodule CadetWeb.AICodeAnalysisController do
     end)
   end
 
-  def format_answers(json_string) do
+  defp format_answers(json_string) do
     {:ok, answers} = Jason.decode(json_string)
 
-    answers
-    |> Enum.map(&format_answer/1)
-    |> Enum.join("\n\n")
+    Enum.map_join(answers, "\n\n", &format_answer/1)
   end
 
   defp format_answer(answer) do
@@ -148,11 +144,9 @@ defmodule CadetWeb.AICodeAnalysisController do
   defp format_autograding_results(nil), do: "N/A"
 
   defp format_autograding_results(results) when is_list(results) do
-    results
-    |> Enum.map(fn result ->
+    Enum.map_join(results, "; ", fn result ->
       "Error: #{result["errorMessage"] || "N/A"}, Type: #{result["errorType"] || "N/A"}"
     end)
-    |> Enum.join("; ")
   end
 
   defp format_autograding_results(results), do: inspect(results)
@@ -420,34 +414,28 @@ defmodule CadetWeb.AICodeAnalysisController do
   defp decrypt_llm_api_key(nil), do: nil
 
   defp decrypt_llm_api_key(encrypted_key) do
-    try do
-      # Get the encryption key
-      secret = Application.get_env(:openai, :encryption_key)
-
-      if is_binary(secret) and byte_size(secret) >= 16 do
-        # Use first 16 bytes for AES-128, 24 for AES-192, or 32 for AES-256
+    case Application.get_env(:openai, :encryption_key) do
+      secret when is_binary(secret) and byte_size(secret) >= 16 ->
         key = binary_part(secret, 0, min(32, byte_size(secret)))
 
-        # Decode the base64 string
-        decoded = Base.decode64!(encrypted_key)
+        case Base.decode64(encrypted_key) do
+          {:ok, decoded} ->
+            iv = binary_part(decoded, 0, 16)
+            tag = binary_part(decoded, 16, 16)
+            ciphertext = binary_part(decoded, 32, byte_size(decoded) - 32)
 
-        # Extract IV, tag and ciphertext
-        iv = binary_part(decoded, 0, 16)
-        tag = binary_part(decoded, 16, 16)
-        ciphertext = binary_part(decoded, 32, byte_size(decoded) - 32)
+            case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
+              plain_text when is_binary(plain_text) -> plain_text
+              _ -> nil
+            end
 
-        # Decrypt
-        case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
-          plain_text when is_binary(plain_text) -> plain_text
-          _ -> nil
+          _ ->
+            Logger.error("Failed to decode encrypted key")
+            nil
         end
-      else
+
+      _ ->
         Logger.error("Encryption key not configured properly")
-        nil
-      end
-    rescue
-      e ->
-        Logger.error("Error decrypting LLM API key: #{inspect(e)}")
         nil
     end
   end
