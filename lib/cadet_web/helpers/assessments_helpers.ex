@@ -177,6 +177,7 @@ defmodule CadetWeb.AssessmentsHelpers do
           prepend: "prepend",
           solutionTemplate: "template",
           postpend: "postpend",
+          llm_prompt: "llm_prompt",
           testcases: build_testcases(all_testcases?)
         })
 

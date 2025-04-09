@@ -14,6 +14,8 @@ defmodule Cadet.Courses.Course do
           enable_achievements: boolean(),
           enable_sourcecast: boolean(),
           enable_stories: boolean(),
+          enable_llm_grading: boolean(),
+          llm_api_key: String.t() | nil,
           source_chapter: integer(),
           source_variant: String.t(),
           module_help_text: String.t(),
@@ -28,6 +30,8 @@ defmodule Cadet.Courses.Course do
     field(:enable_achievements, :boolean, default: true)
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
+    field(:enable_llm_grading, :boolean)
+    field(:llm_api_key, :string)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
     field(:module_help_text, :string)
@@ -42,13 +46,59 @@ defmodule Cadet.Courses.Course do
 
   @required_fields ~w(course_name viewable enable_game
     enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
-  @optional_fields ~w(course_short_name module_help_text)a
+  @optional_fields ~w(course_short_name module_help_text enable_llm_grading llm_api_key)a
 
+  @spec changeset(
+          {map(), map()}
+          | %{
+              :__struct__ => atom() | %{:__changeset__ => map(), optional(any()) => any()},
+              optional(atom()) => any()
+            },
+          %{optional(:__struct__) => none(), optional(atom() | binary()) => any()}
+        ) :: Ecto.Changeset.t()
   def changeset(course, params) do
     course
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_sublanguage_combination(params)
+    |> put_encrypted_llm_api_key()
+  end
+
+  def put_encrypted_llm_api_key(changeset) do
+    if llm_api_key = get_change(changeset, :llm_api_key) do
+      if is_binary(llm_api_key) and llm_api_key != "" do
+        secret = Application.get_env(:openai, :encryption_key)
+
+        if is_binary(secret) and byte_size(secret) >= 16 do
+          # Use first 16 bytes for AES-128, 24 for AES-192, or 32 for AES-256
+          key = binary_part(secret, 0, min(32, byte_size(secret)))
+          # Use AES in GCM mode for encryption
+          iv = :crypto.strong_rand_bytes(16)
+
+          {ciphertext, tag} =
+            :crypto.crypto_one_time_aead(
+              :aes_gcm,
+              key,
+              iv,
+              llm_api_key,
+              "",
+              true
+            )
+
+          # Store both the IV, ciphertext and tag
+          encrypted = iv <> tag <> ciphertext
+          put_change(changeset, :llm_api_key, Base.encode64(encrypted))
+        else
+          add_error(changeset, :llm_api_key, "encryption key not configured properly")
+        end
+      else
+        # If empty string or nil is provided, don't encrypt but don't add error
+        changeset
+      end
+    else
+      # The key is not being changed, so we need to preserve the existing value
+      put_change(changeset, :llm_api_key, changeset.data.llm_api_key)
+    end
   end
 
   # Validates combination of Source chapter and variant
