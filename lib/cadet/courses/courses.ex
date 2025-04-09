@@ -24,11 +24,12 @@ defmodule Cadet.Courses do
 
   @doc """
   Creates a new course configuration, course registration, and sets
-  the user's latest course id to the newly created course.
+  the user's latest course id to the newly created course. A 4-digit
+  course resume code will be randomly generated.
   """
   def create_course_config(params, user) do
     Multi.new()
-    |> Multi.insert(:course, Course.changeset(%Course{}, params))
+    |> Multi.insert(:course, Course.changeset(%Course{}, set_default_resume_code(params)))
     |> Multi.run(:course_reg, fn _repo, %{course: course} ->
       CourseRegistrations.enroll_course(%{
         course_id: course.id,
@@ -80,6 +81,11 @@ defmodule Cadet.Courses do
         |> Course.changeset(params)
         |> Repo.update()
     end
+  end
+
+  defp set_default_resume_code(params) do
+    params
+    |> Map.put(:resume_code, Integer.to_string(:rand.uniform(9000) + 999))
   end
 
   def get_all_course_ids do

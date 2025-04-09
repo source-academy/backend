@@ -12,42 +12,68 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
+    exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
-    if user.latest_viewed_course_id do
-      latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
-      xp = Assessments.assessments_total_xp(latest)
-      max_xp = Assessments.user_max_xp(latest)
-      story = Assessments.user_current_story(latest)
+    cond do
+      exam_mode_course ->
+        xp = Assessments.assessments_total_xp(exam_mode_course)
+        max_xp = Assessments.user_max_xp(exam_mode_course)
+        story = Assessments.user_current_story(exam_mode_course)
 
-      render(
-        conn,
-        "index.json",
-        user: user,
-        courses: courses,
-        latest: latest,
-        max_xp: max_xp,
-        story: story,
-        xp: xp
-      )
-    else
-      render(conn, "index.json",
-        user: user,
-        courses: courses,
-        latest: nil,
-        max_xp: nil,
-        story: nil,
-        xp: nil
-      )
+        render(
+          conn,
+          "index.json",
+          user: user,
+          courses: [exam_mode_course],
+          latest: exam_mode_course,
+          max_xp: max_xp,
+          story: story,
+          xp: xp
+        )
+
+      user.latest_viewed_course_id ->
+        latest = CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+        xp = Assessments.assessments_total_xp(latest)
+        max_xp = Assessments.user_max_xp(latest)
+        story = Assessments.user_current_story(latest)
+
+        render(
+          conn,
+          "index.json",
+          user: user,
+          courses: courses,
+          latest: latest,
+          max_xp: max_xp,
+          story: story,
+          xp: xp
+        )
+
+      true ->
+        render(conn, "index.json",
+          user: user,
+          courses: courses,
+          latest: nil,
+          max_xp: nil,
+          story: nil,
+          xp: nil
+        )
     end
   end
 
   def get_latest_viewed(conn, _) do
     user = conn.assigns.current_user
+    exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
     latest =
-      case user.latest_viewed_course_id do
-        nil -> nil
-        _ -> CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+      cond do
+        exam_mode_course ->
+          CourseRegistrations.get_user_course(user.id, exam_mode_course.course_id)
+
+        user.latest_viewed_course_id ->
+          CourseRegistrations.get_user_course(user.id, user.latest_viewed_course_id)
+
+        true ->
+          nil
       end
 
     get_course_reg_config(conn, latest)
@@ -95,6 +121,47 @@ defmodule CadetWeb.UserController do
         conn
         |> put_status(status)
         |> text(message)
+    end
+  end
+
+  def pause_user(conn, params) do
+    user = conn.assigns.current_user
+
+    user
+    |> Cadet.Accounts.User.changeset(%{is_paused: true})
+    |> Cadet.Repo.update()
+    |> case do
+      result = {:ok, _} ->
+        conn
+        |> put_status(:ok)
+        |> text("User is paused.")
+
+      {:error, _} ->
+        conn
+        |> put_status(500)
+        |> text(:error)
+    end
+  end
+
+  def log_user_focus_change(conn, %{"course_id" => course_id, "state" => state}) do
+    user = conn.assigns.current_user
+
+    focus_state =
+      case state do
+        "0" -> 0
+        "1" -> 1
+        _ -> nil
+      end
+
+    if focus_state do
+      case Cadet.FocusLogs.insert_log(user.id, course_id, state) do
+        {:ok, _} -> conn |> send_resp(:ok, "")
+        {:error, message} -> conn |> send_resp(500, message)
+      end
+    else
+      conn
+      |> put_status(403)
+      |> text("Invalid user focus state")
     end
   end
 
@@ -317,6 +384,8 @@ defmodule CadetWeb.UserController do
             enable_achievements(:boolean, "Enable achievements", required: true)
             enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
+            enable_exam_mode(:boolean, "Enable exam mode", required: true)
+            is_official_course(:boolean, "Course status (official institution course)")
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
@@ -332,6 +401,8 @@ defmodule CadetWeb.UserController do
             enable_achievements: true,
             enable_sourcecast: true,
             enable_stories: false,
+            enable_exam_mode: false,
+            is_official_course: true,
             source_chapter: 1,
             source_variant: "default",
             module_help_text: "Help text",
