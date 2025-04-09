@@ -1,6 +1,7 @@
 defmodule Cadet.FocusLogs.FocusLog do
   @moduledoc """
-  The Conversation entity stores the messages exchanged between the user and the chatbot.
+  The FocusLog entity represents a log of user's browser focus
+  while using Source Academy under exam mode.
   """
   use Cadet, :model
 

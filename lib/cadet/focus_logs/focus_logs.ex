@@ -1,4 +1,8 @@
 defmodule Cadet.FocusLogs do
+  @moduledoc """
+  Contains logic to manage user's browser focus log
+  such as insertion
+  """
   alias Cadet.FocusLogs.FocusLog
 
   use Cadet, [:context, :display]
