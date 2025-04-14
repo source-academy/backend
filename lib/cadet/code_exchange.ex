@@ -9,8 +9,8 @@ defmodule Cadet.TokenExchange do
   alias Cadet.Repo
   alias Cadet.Accounts.User
 
+  @primary_key {:code, :string, []}
   schema "token_exchange" do
-    field(:code, :string)
     field(:generated_at, :utc_datetime_usec)
     field(:expires_at, :utc_datetime_usec)
 
