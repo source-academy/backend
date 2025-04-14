@@ -25,7 +25,9 @@ config :cadet, Cadet.Jobs.Scheduler,
     # Compute rolling leaderboard every 2 hours
     {"0 */2 * * *", {Cadet.Assessments, :update_rolling_contest_leaderboards, []}},
     # Collate contest entries that close in the previous day at 00:01
-    {"1 0 * * *", {Cadet.Assessments, :update_final_contest_entries, []}}
+    {"1 0 * * *", {Cadet.Assessments, :update_final_contest_entries, []}},
+    # Clean up expired exchange tokens at 00:01
+    {"1 0 * * *", {Cadet.TokenExchange, :delete_expired, []}}
   ]
 
 # Configures the endpoint

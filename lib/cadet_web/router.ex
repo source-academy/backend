@@ -51,6 +51,8 @@ defmodule CadetWeb.Router do
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
     get("/auth/saml_redirect", AuthController, :saml_redirect)
+    get("/auth/saml_redirect_vscode", AuthController, :saml_redirect_vscode)
+    get("/auth/exchange", AuthController, :exchange)
   end
 
   scope "/v2", CadetWeb do
