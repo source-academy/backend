@@ -1940,29 +1940,42 @@ defmodule Cadet.Assessments do
   Used for contest leaderboard fetching
   """
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
-    Answer
-    |> where(question_id: ^question_id)
-    # |> where(
-    #   [a],
-    #   fragment(
-    #     "?->>'code' like ?",
-    #     a.answer,
-    #     "%return%"
-    #   )
-    # )
-    |> order_by(desc: :relative_score)
-    |> join(:left, [a], s in assoc(a, :submission))
-    |> join(:left, [a, s], student in assoc(s, :student))
-    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    # |> where([a, s, student], student.role == "student")
-    |> select([a, s, student, student_user], %{
-      submission_id: a.submission_id,
-      answer: a.answer,
-      relative_score: a.relative_score,
-      student_name: student_user.name
-    })
-    |> limit(^number_of_answers)
-    |> Repo.all()
+    subquery =
+      Answer
+      |> where(question_id: ^question_id)
+      # |> where(
+      #   [a],
+      #   fragment(
+      #     "?->>'code' like ?",
+      #     a.answer,
+      #     "%return%"
+      #   )
+      # )
+      |> order_by(desc: :relative_score)
+      |> join(:left, [a], s in assoc(a, :submission))
+      |> join(:left, [a, s], student in assoc(s, :student))
+      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+      # |> where([a, s, student], student.role == "student")
+      |> select([a, s, student, student_user], %{
+        submission_id: a.submission_id,
+        answer: a.answer,
+        relative_score: a.relative_score,
+        student_name: student_user.name
+      })
+
+    ranked_subquery =
+      from(sub in subquery(subquery),
+        select_merge: %{
+          rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.relative_score)
+        }
+      )
+
+    final_query =
+      from(r in subquery(ranked_subquery),
+        where: r.rank <= ^number_of_answers
+      )
+
+    Repo.all(final_query)
   end
 
   @doc """
@@ -1971,29 +1984,42 @@ defmodule Cadet.Assessments do
   Used for contest leaderboard fetching
   """
   def fetch_top_popular_score_answers(question_id, number_of_answers) do
-    Answer
-    |> where(question_id: ^question_id)
-    # |> where(
-    #   [a],
-    #   fragment(
-    #     "?->>'code' like ?",
-    #     a.answer,
-    #     "%return%"
-    #   )
-    # )
-    |> order_by(desc: :popular_score)
-    |> join(:left, [a], s in assoc(a, :submission))
-    |> join(:left, [a, s], student in assoc(s, :student))
-    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    # |> where([a, s, student], student.role == "student")
-    |> select([a, s, student, student_user], %{
-      submission_id: a.submission_id,
-      answer: a.answer,
-      popular_score: a.popular_score,
-      student_name: student_user.name
-    })
-    |> limit(^number_of_answers)
-    |> Repo.all()
+    subquery =
+      Answer
+      |> where(question_id: ^question_id)
+      # |> where(
+      #   [a],
+      #   fragment(
+      #     "?->>'code' like ?",
+      #     a.answer,
+      #     "%return%"
+      #   )
+      # )
+      |> order_by(desc: :popular_score)
+      |> join(:left, [a], s in assoc(a, :submission))
+      |> join(:left, [a, s], student in assoc(s, :student))
+      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+      # |> where([a, s, student], student.role == "student")
+      |> select([a, s, student, student_user], %{
+        submission_id: a.submission_id,
+        answer: a.answer,
+        popular_score: a.popular_score,
+        student_name: student_user.name
+      })
+
+    ranked_subquery =
+      from(sub in subquery(subquery),
+        select_merge: %{
+          rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.popular_score)
+        }
+      )
+
+    final_query =
+      from(r in subquery(ranked_subquery),
+        where: r.rank <= ^number_of_answers
+      )
+
+    Repo.all(final_query)
   end
 
   @doc """
