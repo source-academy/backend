@@ -3,7 +3,11 @@ defmodule CadetWeb.AssessmentsController do
 
   use PhoenixSwagger
 
+  import Ecto.Query, only: [where: 2]
+
   alias Cadet.Assessments
+  alias Cadet.Assessments.{Question, Assessment}
+  alias Cadet.{Assessments, Repo}
 
   # These roles can save and finalise answers for closed assessments and
   # submitted answers
@@ -65,6 +69,44 @@ defmodule CadetWeb.AssessmentsController do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
+  end
+
+  def combined_total_xp_for_all_users(conn, %{"course_id" => course_id}) do
+    users_with_xp = Assessments.all_user_total_xp(course_id)
+    json(conn, %{users: users_with_xp})
+  end
+
+  def get_contest_popular_scores(conn, %{
+        "assessmentid" => assessment_id,
+        "course_id" => course_id
+      }) do
+    contest_id =
+      Question
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contestpop = Assessments.fetch_contest_popular_scores(contest_id.id)
+    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    json(conn, %{contest_popular: contestpop, voting_id: voting_id})
+  end
+
+  def get_contest_relative_scores(conn, %{
+        "assessmentid" => assessment_id,
+        "course_id" => course_id
+      }) do
+    contest_id =
+      Question
+      |> where(assessment_id: ^assessment_id)
+      |> Repo.one()
+
+    contestscore = Assessments.fetch_contest_relative_scores(contest_id.id)
+    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    json(conn, %{contest_score: contestscore, voting_id: voting_id})
+  end
+
+  def get_all_contests(conn, %{"course_id" => course_id}) do
+    contests = Assessments.fetch_all_contests(course_id)
+    json(conn, contests)
   end
 
   swagger_path :submit do

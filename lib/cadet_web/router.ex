@@ -118,6 +118,22 @@ defmodule CadetWeb.Router do
     put("/user/game_states", UserController, :update_game_states)
     put("/user/research_agreement", UserController, :update_research_agreement)
 
+    get("/all_users_xp", AssessmentsController, :combined_total_xp_for_all_users)
+
+    get(
+      "/leaderboard/contests/:assessmentid/get_score_leaderboard",
+      AssessmentsController,
+      :get_contest_relative_scores
+    )
+
+    get(
+      "/leaderboard/contests/:assessmentid/get_popular_vote_leaderboard",
+      AssessmentsController,
+      :get_contest_popular_scores
+    )
+
+    get("/all_contests", AssessmentsController, :get_all_contests)
+
     get("/config", CoursesController, :index)
 
     get("/team/:assessmentid", TeamController, :index)
@@ -179,14 +195,26 @@ defmodule CadetWeb.Router do
 
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
+    post(
+      "/assessments/:assessmentid/calculateContestScore",
+      AdminAssessmentsController,
+      :calculate_contest_score
+    )
+
+    post(
+      "/assessments/:assessmentid/dispatchContestXp",
+      AdminAssessmentsController,
+      :dispatch_contest_xp
+    )
+
     get(
-      "/assessments/:assessmentid/popularVoteLeaderboard",
+      "/assessments/:assessmentid/:visibleentries/popularVoteLeaderboard",
       AdminAssessmentsController,
       :get_popular_leaderboard
     )
 
     get(
-      "/assessments/:assessmentid/scoreLeaderboard",
+      "/assessments/:assessmentid/:visibleentries/scoreLeaderboard",
       AdminAssessmentsController,
       :get_score_leaderboard
     )
