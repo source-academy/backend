@@ -20,7 +20,10 @@ defmodule Cadet.Jobs.LogEntryTest do
   test "returns true (job runs) when log entry old enough" do
     %LogEntry{
       name: @name,
-      last_run: Timex.subtract(DateTime.truncate(Timex.now(), :second), Duration.from_hours(25))
+      last_run:
+        Timex.now()
+        |> Timex.subtract(Duration.from_hours(25))
+        |> DateTime.truncate(:second)
     }
     |> Repo.insert!()
 
@@ -37,7 +40,10 @@ defmodule Cadet.Jobs.LogEntryTest do
   test "returns false (job does not run) when log entry too recent" do
     %LogEntry{
       name: @name,
-      last_run: Timex.subtract(DateTime.truncate(Timex.now(), :second), Duration.from_hours(23))
+      last_run:
+        Timex.now()
+        |> Timex.subtract(Duration.from_hours(23))
+        |> DateTime.truncate(:second)
     }
     |> Repo.insert!()
 
