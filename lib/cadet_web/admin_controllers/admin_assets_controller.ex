@@ -96,7 +96,9 @@ defmodule CadetWeb.AdminAssetsController do
     parameters do
       folderName(:path, :string, "Folder name", required: true)
 
-      fileName(:path, :string, "File path in folder, which may contain subfolders", required: true)
+      fileName(:path, :string, "File path in folder, which may contain subfolders",
+        required: true
+      )
     end
 
     security([%{JWT: []}])
@@ -115,7 +117,9 @@ defmodule CadetWeb.AdminAssetsController do
     parameters do
       folderName(:path, :string, "Folder name", required: true)
 
-      fileName(:path, :string, "File path in folder, which may contain subfolders", required: true)
+      fileName(:path, :string, "File path in folder, which may contain subfolders",
+        required: true
+      )
     end
 
     security([%{JWT: []}])
