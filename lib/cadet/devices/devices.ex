@@ -72,7 +72,11 @@ defmodule Cadet.Devices do
     with {:ok, device} <- maybe_insert_device(type, secret),
          {:ok, registration} <-
            %DeviceRegistration{}
-           |> DeviceRegistration.changeset(%{user_id: user_id, device_id: device.id, title: title})
+           |> DeviceRegistration.changeset(%{
+             user_id: user_id,
+             device_id: device.id,
+             title: title
+           })
            |> Repo.insert() do
       {:ok, registration |> Repo.preload(:device)}
     end

@@ -16,12 +16,14 @@ defmodule CadetWeb.ControllerHelperTest do
       assert_called(Conn.send_resp(:conn, :no_content, ""))
     end
 
-    test_with_mock "sends 204 with {:ok} and empty string", Conn, send_resp: fn _, _, _ -> nil end do
+    test_with_mock "sends 204 with {:ok} and empty string", Conn,
+      send_resp: fn _, _, _ -> nil end do
       handle_standard_result({:ok, nil}, :conn, "")
       assert_called(Conn.send_resp(:conn, :no_content, ""))
     end
 
-    test_with_mock "sends 204 with :ok and empty string", Conn, send_resp: fn _, _, _ -> nil end do
+    test_with_mock "sends 204 with :ok and empty string", Conn,
+      send_resp: fn _, _, _ -> nil end do
       handle_standard_result(:ok, :conn, "")
       assert_called(Conn.send_resp(:conn, :no_content, ""))
     end
