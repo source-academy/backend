@@ -1838,19 +1838,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :relative_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
@@ -1903,19 +1903,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :popular_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         code: a.answer["code"],
@@ -1943,19 +1943,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :relative_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         answer: a.answer,
@@ -1987,19 +1987,19 @@ defmodule Cadet.Assessments do
     subquery =
       Answer
       |> where(question_id: ^question_id)
-      # |> where(
-      #   [a],
-      #   fragment(
-      #     "?->>'code' like ?",
-      #     a.answer,
-      #     "%return%"
-      #   )
-      # )
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
+      )
       |> order_by(desc: :popular_score)
       |> join(:left, [a], s in assoc(a, :submission))
       |> join(:left, [a, s], student in assoc(s, :student))
       |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      # |> where([a, s, student], student.role == "student")
+      |> where([a, s, student], student.role == "student")
       |> select([a, s, student, student_user], %{
         submission_id: a.submission_id,
         answer: a.answer,
