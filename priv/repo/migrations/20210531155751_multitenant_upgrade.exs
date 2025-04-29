@@ -10,10 +10,6 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
       add(:viewable, :boolean, null: false, default: true)
       add(:enable_game, :boolean, null: false, default: true)
       add(:enable_achievements, :boolean, null: false, default: true)
-      add(:enable_overall_leaderboard, :boolean, null: false, default: true)
-      add(:enable_contest_leaderboard, :boolean, null: false, default: true)
-      add(:top_leaderboard_display, :integer, default: 100)
-      add(:top_contest_leaderboard_display, :integer, default: 10)
       add(:enable_sourcecast, :boolean, null: false, default: true)
       add(:source_chapter, :integer, null: false)
       add(:source_variant, :string, null: false)
@@ -147,10 +143,6 @@ defmodule Cadet.Repo.Migrations.MultitenantUpgrade do
                 viewable: true,
                 enable_game: true,
                 enable_achievements: true,
-                enable_overall_leaderboard: true,
-                enable_contest_leaderboard: true,
-                top_leaderboard_display: 100,
-                top_contest_leaderboard_display: 10,
                 enable_sourcecast: true,
                 source_chapter: 1,
                 source_variant: "default",
