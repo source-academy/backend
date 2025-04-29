@@ -4,7 +4,7 @@ defmodule Cadet.Assessments do
   missions, sidequests, paths, etc.
   """
   use Cadet, [:context, :display]
-  alias Cadet.Incentives.{Achievement, GoalProgress, Goal}
+  alias Cadet.Incentives.{Achievement, GoalProgress}
   import Ecto.Query
 
   require Logger
@@ -25,9 +25,8 @@ defmodule Cadet.Assessments do
   alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
-  alias Ecto.Multi
-  alias Cadet.Incentives.{Achievements, AchievementToGoal}
-  alias Ecto.Changeset
+  alias Ecto.{Multi, Changeset}
+  alias Cadet.Incentives.Achievements
   alias Timex.Duration
 
   require Decimal

@@ -5,9 +5,8 @@ defmodule CadetWeb.AssessmentsController do
 
   import Ecto.Query, only: [where: 2]
 
-  alias Cadet.Assessments
-  alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
+  alias Cadet.Assessments.Question
 
   # These roles can save and finalise answers for closed assessments and
   # submitted answers
