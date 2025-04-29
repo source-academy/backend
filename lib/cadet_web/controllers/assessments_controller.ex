@@ -73,13 +73,13 @@ defmodule CadetWeb.AssessmentsController do
 
   def combined_total_xp_for_all_users(conn, %{"course_id" => course_id}) do
     users_with_xp = Assessments.all_user_total_xp(course_id)
-    json(conn, %{users: users_with_xp})
+    json(conn, %{users: users_with_xp.users})
   end
 
   def paginated_total_xp_for_leaderboard_display(conn, %{"course_id" => course_id, "page" => page, "page_size" => page_size}) do
     offset = (String.to_integer(page) - 1) * String.to_integer(page_size)
     paginated_display = Assessments.all_user_total_xp(course_id, offset, page_size)
-    json(conn, %{users: paginated_display})
+    json(conn, paginated_display)
   end
 
   def get_contest_popular_scores(conn, %{

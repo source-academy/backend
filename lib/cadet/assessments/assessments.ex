@@ -271,7 +271,18 @@ defmodule Cadet.Assessments do
         offset: ^offset
       )
 
-    Repo.all(ranked_xp_query)
+    count_query =
+      from(t in subquery(total_xp_query),
+        select: count("*")
+      )
+
+    rows = Repo.all(ranked_xp_query)
+    total_count = Repo.one(count_query)
+
+    %{
+      users: rows,
+      total_count: total_count
+    }
   end
 
   defp decimal_to_integer(decimal) do
