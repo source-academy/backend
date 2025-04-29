@@ -119,6 +119,7 @@ defmodule CadetWeb.Router do
     put("/user/research_agreement", UserController, :update_research_agreement)
 
     get("/all_users_xp", AssessmentsController, :combined_total_xp_for_all_users)
+    get("/get_paginated_display/:page/:page_size", AssessmentsController, :paginated_total_xp_for_leaderboard_display)
 
     get(
       "/leaderboard/contests/:assessmentid/get_score_leaderboard",

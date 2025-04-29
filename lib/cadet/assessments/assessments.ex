@@ -148,7 +148,7 @@ defmodule Cadet.Assessments do
     total_achievement_xp + total_assessment_xp
   end
 
-  def all_user_total_xp(course_id) do
+  def all_user_total_xp(course_id, offset \\ nil, limit \\ nil) do
     # get all users even if they have 0 xp
     base_user_query =
       from(
@@ -266,7 +266,9 @@ defmodule Cadet.Assessments do
           name: t.name,
           username: t.username,
           total_xp: t.total_xp
-        }
+        },
+        limit: ^limit,
+        offset: ^offset
       )
 
     Repo.all(ranked_xp_query)
