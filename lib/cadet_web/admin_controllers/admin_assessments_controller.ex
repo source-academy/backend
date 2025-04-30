@@ -136,31 +136,57 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   def get_contest_popular_scores(conn, %{
-      "assessmentid" => assessment_id,
-      "course_id" => course_id
-    }) do
-    contest_id =
+        "assessmentid" => assessment_id,
+        "course_id" => course_id
+      }) do
+    questions =
       Question
       |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
+      |> Repo.all()
 
-    contestpop = Assessments.fetch_contest_popular_scores(contest_id.id)
-    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
-    json(conn, %{contest_popular: contestpop, voting_id: voting_id})
+    case questions do
+      [question] ->
+        contestpop = Assessments.fetch_contest_popular_scores(question.id)
+        voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+        json(conn, %{contest_popular: contestpop, voting_id: voting_id})
+
+      [] ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "No contest question found for assessment #{assessment_id}"})
+
+      _ ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "Multiple contest questions found for assessment #{assessment_id}"})
+    end
   end
 
   def get_contest_relative_scores(conn, %{
-      "assessmentid" => assessment_id,
-      "course_id" => course_id
-    }) do
-    contest_id =
+        "assessmentid" => assessment_id,
+        "course_id" => course_id
+      }) do
+    questions =
       Question
       |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
+      |> Repo.all()
 
-    contestscore = Assessments.fetch_contest_relative_scores(contest_id.id)
-    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
-    json(conn, %{contest_score: contestscore, voting_id: voting_id})
+    case questions do
+      [question] ->
+        contestscore = Assessments.fetch_contest_relative_scores(question.id)
+        voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+        json(conn, %{contest_score: contestscore, voting_id: voting_id})
+
+      [] ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "No contest question found for assessment #{assessment_id}"})
+
+      _ ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "Multiple contest questions found for assessment #{assessment_id}"})
+    end
   end
 
   def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
