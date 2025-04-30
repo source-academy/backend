@@ -1972,7 +1972,8 @@ defmodule Cadet.Assessments do
         submission_id: a.submission_id,
         answer: a.answer,
         relative_score: a.relative_score,
-        student_name: student_user.name
+        student_name: student_user.name,
+        student_username: student_user.username
       })
 
     ranked_subquery =
@@ -2016,7 +2017,8 @@ defmodule Cadet.Assessments do
         submission_id: a.submission_id,
         answer: a.answer,
         popular_score: a.popular_score,
-        student_name: student_user.name
+        student_name: student_user.name,
+        student_username: student_user.username
       })
 
     ranked_subquery =
@@ -2137,6 +2139,15 @@ defmodule Cadet.Assessments do
         :ok
       else
         Repo.transaction(fn ->
+          submission_ids =
+            Answer
+            |> where(question_id: ^contest_question_id)
+            |> select([a], a.submission_id)
+            |> Repo.all()
+
+          from(s in Submission, where: s.id in ^submission_ids)
+          |> Repo.update_all(set: [is_grading_published: true])
+
           winning_popular_entries =
             Answer
             |> where(question_id: ^contest_question_id)
@@ -2148,7 +2159,7 @@ defmodule Cadet.Assessments do
 
           winning_popular_entries
           |> Enum.each(fn %{id: answer_id, rank: rank} ->
-            increment = Enum.at(scores, rank - 1, 0)
+            increment = Enum.at(scores, rank, 0)
             answer = Repo.get!(Answer, answer_id)
             Repo.update!(Changeset.change(answer, %{xp: increment}))
           end)
@@ -2164,7 +2175,7 @@ defmodule Cadet.Assessments do
 
           winning_score_entries
           |> Enum.each(fn %{id: answer_id, rank: rank} ->
-            increment = Enum.at(scores, rank - 1, 0)
+            increment = Enum.at(scores, rank, 0)
             answer = Repo.get!(Answer, answer_id)
             new_value = answer.xp + increment
             Repo.update!(Changeset.change(answer, %{xp: new_value}))

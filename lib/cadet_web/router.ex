@@ -119,18 +119,23 @@ defmodule CadetWeb.Router do
     put("/user/research_agreement", UserController, :update_research_agreement)
 
     get("/all_users_xp", AssessmentsController, :combined_total_xp_for_all_users)
-    get("/get_paginated_display/:page/:page_size", AssessmentsController, :paginated_total_xp_for_leaderboard_display)
 
     get(
-      "/leaderboard/contests/:assessmentid/get_score_leaderboard",
+      "/get_paginated_display/:page/:page_size",
       AssessmentsController,
-      :get_contest_relative_scores
+      :paginated_total_xp_for_leaderboard_display
     )
 
     get(
-      "/leaderboard/contests/:assessmentid/get_popular_vote_leaderboard",
+      "/assessments/:assessmentid/:visibleentries/popularVoteLeaderboard",
       AssessmentsController,
-      :get_contest_popular_scores
+      :get_popular_leaderboard
+    )
+
+    get(
+      "/assessments/:assessmentid/:visibleentries/scoreLeaderboard",
+      AssessmentsController,
+      :get_score_leaderboard
     )
 
     get("/all_contests", AssessmentsController, :get_all_contests)
@@ -209,15 +214,15 @@ defmodule CadetWeb.Router do
     )
 
     get(
-      "/assessments/:assessmentid/:visibleentries/popularVoteLeaderboard",
+      "/leaderboard/contests/:assessmentid/get_score_leaderboard",
       AdminAssessmentsController,
-      :get_popular_leaderboard
+      :get_contest_relative_scores
     )
 
     get(
-      "/assessments/:assessmentid/:visibleentries/scoreLeaderboard",
+      "/leaderboard/contests/:assessmentid/get_popular_vote_leaderboard",
       AdminAssessmentsController,
-      :get_score_leaderboard
+      :get_contest_popular_scores
     )
 
     get("/grading", AdminGradingController, :index)

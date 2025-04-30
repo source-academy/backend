@@ -108,6 +108,7 @@ defmodule CadetWeb.AssessmentsHelpers do
         submission_id: :submission_id,
         answer: :answer,
         student_name: :student_name,
+        student_username: :student_username,
         rank: :rank
       }),
       "final_score",
@@ -121,6 +122,7 @@ defmodule CadetWeb.AssessmentsHelpers do
         submission_id: :submission_id,
         answer: :answer,
         student_name: :student_name,
+        student_username: :student_username,
         rank: :rank
       }),
       "final_score",

@@ -135,50 +135,32 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def get_score_leaderboard(conn, %{
-        "assessmentid" => assessment_id,
-        "visibleentries" => visible_entries,
-        "course_id" => course_id
-      }) do
-    voting_questions =
+  def get_contest_popular_scores(conn, %{
+      "assessmentid" => assessment_id,
+      "course_id" => course_id
+    }) do
+    contest_id =
       Question
-      |> where(type: :voting)
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
 
-    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
-
-    result =
-      contest_id
-      |> Assessments.fetch_top_relative_score_answers(visible_entries)
-      |> Enum.map(fn entry ->
-        AssessmentsHelpers.build_contest_leaderboard_entry(entry)
-      end)
-
-    render(conn, "leaderboard.json", leaderboard: result)
+    contestpop = Assessments.fetch_contest_popular_scores(contest_id.id)
+    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    json(conn, %{contest_popular: contestpop, voting_id: voting_id})
   end
 
-  def get_popular_leaderboard(conn, %{
-        "assessmentid" => assessment_id,
-        "visibleentries" => visible_entries,
-        "course_id" => course_id
-      }) do
-    voting_questions =
+  def get_contest_relative_scores(conn, %{
+      "assessmentid" => assessment_id,
+      "course_id" => course_id
+    }) do
+    contest_id =
       Question
-      |> where(type: :voting)
       |> where(assessment_id: ^assessment_id)
       |> Repo.one()
 
-    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
-
-    result =
-      contest_id
-      |> Assessments.fetch_top_popular_score_answers(visible_entries)
-      |> Enum.map(fn entry ->
-        AssessmentsHelpers.build_popular_leaderboard_entry(entry)
-      end)
-
-    render(conn, "leaderboard.json", leaderboard: result)
+    contestscore = Assessments.fetch_contest_relative_scores(contest_id.id)
+    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    json(conn, %{contest_score: contestscore, voting_id: voting_id})
   end
 
   def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
