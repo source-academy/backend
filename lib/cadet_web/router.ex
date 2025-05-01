@@ -213,18 +213,6 @@ defmodule CadetWeb.Router do
       :dispatch_contest_xp
     )
 
-    get(
-      "/leaderboard/contests/:assessmentid/get_score_leaderboard",
-      AdminAssessmentsController,
-      :get_contest_relative_scores
-    )
-
-    get(
-      "/leaderboard/contests/:assessmentid/get_popular_vote_leaderboard",
-      AdminAssessmentsController,
-      :get_contest_popular_scores
-    )
-
     get("/grading", AdminGradingController, :index)
     get("/grading/summary", AdminGradingController, :grading_summary)
 

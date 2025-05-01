@@ -151,7 +151,7 @@ defmodule Cadet.Assessments do
     base_user_query =
       from(
         cr in CourseRegistration,
-        full_join: u in User,
+        join: u in User,
         on: cr.user_id == u.id,
         where: cr.course_id == ^course_id,
         select: %{
@@ -163,7 +163,7 @@ defmodule Cadet.Assessments do
 
     achievements_xp_query =
       from(u in User,
-        full_join: cr in CourseRegistration,
+        join: cr in CourseRegistration,
         on: cr.user_id == u.id and cr.course_id == ^course_id,
         left_join: a in Achievement,
         on: a.course_id == cr.course_id,
@@ -191,13 +191,13 @@ defmodule Cadet.Assessments do
       from(
         sub_xp in subquery(
           from(cr in CourseRegistration,
-            full_join: u in User,
+            join: u in User,
             on: cr.user_id == u.id,
             full_join: tm in TeamMember,
             on: cr.id == tm.student_id,
-            full_join: s in Submission,
+            join: s in Submission,
             on: tm.team_id == s.team_id or s.student_id == cr.id,
-            full_join: a in Answer,
+            join: a in Answer,
             on: s.id == a.submission_id,
             where: s.is_grading_published == true and cr.course_id == ^course_id,
             group_by: [cr.id, u.id, u.name, u.username, s.id, a.xp, a.xp_adjustment],
@@ -250,11 +250,15 @@ defmodule Cadet.Assessments do
 
     count_query =
       from(t in subquery(total_xp_query),
-        select: count("*")
+        select: count(t.user_id)
       )
 
-    rows = Repo.all(ranked_xp_query)
-    total_count = Repo.one(count_query)
+    {status, {rows, total_count}} =
+      Repo.transaction(fn ->
+        users = Repo.all(ranked_xp_query)
+        count = Repo.one(count_query)
+        {users, count}
+      end)
 
     %{
       users: rows,
@@ -1845,74 +1849,6 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
-  Fetches all contest scores for the given question, sorted by relative score
-
-  Used for contest leaderboard fetching
-  """
-  def fetch_contest_relative_scores(question_id) do
-    query =
-      Answer
-      |> where(question_id: ^question_id)
-      |> where(
-        [a],
-        fragment(
-          "?->>'code' like ?",
-          a.answer,
-          "%return%"
-        )
-      )
-      |> order_by(desc: :relative_score)
-      |> join(:left, [a], s in assoc(a, :submission))
-      |> join(:left, [a, s], student in assoc(s, :student))
-      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      |> where([a, s, student], student.role == "student")
-      |> select([a, s, student, student_user], %{
-        submission_id: a.submission_id,
-        code: a.answer["code"],
-        score: a.relative_score,
-        name: student_user.name,
-        username: student_user.username,
-        rank: fragment("RANK() OVER (ORDER BY ? DESC)", a.relative_score)
-      })
-
-    Repo.all(query)
-  end
-
-  @doc """
-  Fetches all contest scores for the given question, sorted by popular score
-
-  Used for contest leaderboard fetching
-  """
-  def fetch_contest_popular_scores(question_id) do
-    query =
-      Answer
-      |> where(question_id: ^question_id)
-      |> where(
-        [a],
-        fragment(
-          "?->>'code' like ?",
-          a.answer,
-          "%return%"
-        )
-      )
-      |> order_by(desc: :popular_score)
-      |> join(:left, [a], s in assoc(a, :submission))
-      |> join(:left, [a, s], student in assoc(s, :student))
-      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-      |> where([a, s, student], student.role == "student")
-      |> select([a, s, student, student_user], %{
-        submission_id: a.submission_id,
-        code: a.answer["code"],
-        score: a.popular_score,
-        name: student_user.name,
-        username: student_user.username,
-        rank: fragment("RANK() OVER (ORDER BY ? DESC)", a.popular_score)
-      })
-
-    Repo.all(query)
-  end
-
-  @doc """
   Fetches top answers for the given question, based on the contest relative_score
 
   Used for contest leaderboard fetching
@@ -1939,18 +1875,12 @@ defmodule Cadet.Assessments do
         answer: a.answer,
         relative_score: a.relative_score,
         student_name: student_user.name,
-        student_username: student_user.username
+        student_username: student_user.username,
+        rank: fragment("RANK() OVER (ORDER BY ? DESC)", a.relative_score)
       })
 
-    ranked_subquery =
-      from(sub in subquery(subquery),
-        select_merge: %{
-          rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.relative_score)
-        }
-      )
-
     final_query =
-      from(r in subquery(ranked_subquery),
+      from(r in subquery(subquery),
         where: r.rank <= ^number_of_answers
       )
 
@@ -1984,18 +1914,12 @@ defmodule Cadet.Assessments do
         answer: a.answer,
         popular_score: a.popular_score,
         student_name: student_user.name,
-        student_username: student_user.username
+        student_username: student_user.username,
+        rank: fragment("RANK() OVER (ORDER BY ? DESC)", a.popular_score)
       })
 
-    ranked_subquery =
-      from(sub in subquery(subquery),
-        select_merge: %{
-          rank: fragment("RANK() OVER (ORDER BY ? DESC)", sub.popular_score)
-        }
-      )
-
     final_query =
-      from(r in subquery(ranked_subquery),
+      from(r in subquery(subquery),
         where: r.rank <= ^number_of_answers
       )
 
