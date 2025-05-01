@@ -121,19 +121,19 @@ defmodule CadetWeb.Router do
     get("/all_users_xp", AssessmentsController, :combined_total_xp_for_all_users)
 
     get(
-      "/get_paginated_display/:page/:page_size",
+      "/get_paginated_display",
       AssessmentsController,
       :paginated_total_xp_for_leaderboard_display
     )
 
     get(
-      "/assessments/:assessmentid/:visibleentries/popularVoteLeaderboard",
+      "/assessments/:assessmentid/popularVoteLeaderboard",
       AssessmentsController,
       :get_popular_leaderboard
     )
 
     get(
-      "/assessments/:assessmentid/:visibleentries/scoreLeaderboard",
+      "/assessments/:assessmentid/scoreLeaderboard",
       AssessmentsController,
       :get_score_leaderboard
     )
