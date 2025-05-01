@@ -1240,11 +1240,11 @@ defmodule Cadet.AssessmentsTest do
       # does not update scores for voting assessments closed  >1 days and those ongoing ago
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(past_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(yesterday_question.id, 5)
@@ -1262,11 +1262,11 @@ defmodule Cadet.AssessmentsTest do
       # does not update scores for voting assessments closed >1 days ago
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(past_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(yesterday_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 5)

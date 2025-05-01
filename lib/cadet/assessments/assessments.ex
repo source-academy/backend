@@ -2105,10 +2105,13 @@ defmodule Cadet.Assessments do
       else
         contest_question_id = fetch_associated_contest_question_id(course_id, voting_questions)
 
-        Answer
-        |> where([ans], ans.question_id == ^contest_question_id)
-        |> update([ans], set: [popular_score: 0.0, relative_score: 0.0])
-        |> Repo.update_all([])
+        if !is_nil(contest_question_id) do
+          # reset all scores to 0 first
+          Answer
+          |> where([ans], ans.question_id == ^contest_question_id)
+          |> update([ans], set: [popular_score: 0.0, relative_score: 0.0])
+          |> Repo.update_all([])
+        end
       end
     end
 
