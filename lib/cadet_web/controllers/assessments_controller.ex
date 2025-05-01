@@ -76,20 +76,18 @@ defmodule CadetWeb.AssessmentsController do
     json(conn, %{users: users_with_xp.users})
   end
 
-  def paginated_total_xp_for_leaderboard_display(conn, %{
-        "course_id" => course_id,
-        "offset" => offset,
-        "page_size" => page_size
-      }) do
+  def paginated_total_xp_for_leaderboard_display(conn, %{"course_id" => course_id}) do
+    offset = String.to_integer(conn.params["offset"] || "1");
+    page_size = String.to_integer(conn.params["page_size"] || "25")
     paginated_display = Assessments.all_user_total_xp(course_id, offset, page_size)
     json(conn, paginated_display)
   end
 
   def get_score_leaderboard(conn, %{
         "assessmentid" => assessment_id,
-        "visibleentries" => visible_entries,
         "course_id" => course_id
       }) do
+    visible_entries = String.to_integer(conn.params["visible_entries"] || "10")
     voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
 
     voting_questions =
@@ -112,7 +110,7 @@ defmodule CadetWeb.AssessmentsController do
 
     result =
       contest_id
-      |> Assessments.fetch_top_relative_score_answers(String.to_integer(visible_entries))
+      |> Assessments.fetch_top_relative_score_answers(visible_entries)
       |> Enum.map(fn entry ->
         updated_entry = %{
           entry
@@ -127,9 +125,9 @@ defmodule CadetWeb.AssessmentsController do
 
   def get_popular_leaderboard(conn, %{
         "assessmentid" => assessment_id,
-        "visibleentries" => visible_entries,
         "course_id" => course_id
       }) do
+    visible_entries = String.to_integer(conn.params["visible_entries"] || "10")
     voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
 
     voting_questions =
@@ -152,7 +150,7 @@ defmodule CadetWeb.AssessmentsController do
 
     result =
       contest_id
-      |> Assessments.fetch_top_popular_score_answers(String.to_integer(visible_entries))
+      |> Assessments.fetch_top_popular_score_answers(visible_entries)
       |> Enum.map(fn entry ->
         updated_entry = %{
           entry
