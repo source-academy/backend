@@ -3131,6 +3131,71 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
+  describe "all_user_total_xp pagination with offset and limit" do
+    setup do
+      course = insert(:course)
+      config = insert(:assessment_config)
+
+      # generate question to award xp
+      assessment = insert(:assessment, %{course: course, config: config})
+      question = insert(:programming_question, assessment: assessment)
+
+      # generate 50 students
+      student_list = insert_list(50, :course_registration, %{course: course, role: :student})
+
+      # generate submission for each student
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: assessment,
+              status: "submitted",
+              is_grading_published: true
+            )
+          end
+        )
+
+      # generate answer for each student with xp
+      random_perm = Enum.shuffle(1..50)
+      _ans_list =
+        Enum.map(
+          Enum.with_index(submission_list),
+          fn {submission, index} ->
+            insert(
+              :answer,
+              answer: build(:programming_answer),
+              submission: submission,
+              question: question,
+              xp: Enum.at(random_perm, index)
+            )
+          end
+        )
+      %{course: course}
+    end
+
+    test "correctly fetches all students with their xp in descending order", %{course: course} do
+      all_user_xp = Assessments.all_user_total_xp(course.id)
+      assert get_all_student_xp(all_user_xp) == 50..1 |> Enum.to_list()
+    end
+
+    test "correctly fetches only relevant students for leaderboard display with potential overflow", %{course: course} do
+      Enum.each(1..50, fn x ->
+        offset = Enum.random(0..49)
+        limit = Enum.random(1..50)
+        paginated_user_xp = Assessments.all_user_total_xp(course.id, offset, limit)
+
+        expected_xp_list =
+          50..1
+          |> Enum.to_list()
+          |> Enum.slice(offset, limit)
+        assert get_all_student_xp(paginated_user_xp) == expected_xp_list
+      end)
+    end
+  end
+
   describe "automatic xp assignment for contest winners function" do
     setup do
       course = insert(:course)
@@ -3141,7 +3206,7 @@ defmodule Cadet.AssessmentsTest do
       voting_assessment = insert(:assessment, %{course: course, config: config})
       voting_question = insert(:voting_question, assessment: voting_assessment)
 
-      # generate 10 students
+      # generate 5 students
       student_list = insert_list(5, :course_registration, %{course: course, role: :student})
 
       # generate contest submission for each student
