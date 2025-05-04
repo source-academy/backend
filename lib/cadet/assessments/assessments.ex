@@ -2049,9 +2049,9 @@ defmodule Cadet.Assessments do
 
           winning_popular_entries
           |> Enum.each(fn %{id: answer_id, rank: rank} ->
-            increment = Enum.at(scores, rank, 0)
+            increment = Enum.at(scores, rank - 1, 0)
             answer = Repo.get!(Answer, answer_id)
-            Repo.update!(Changeset.change(answer, %{xp: increment}))
+            Repo.update!(Changeset.change(answer, %{xp_adjustment: increment}))
           end)
 
           winning_score_entries =
@@ -2065,10 +2065,10 @@ defmodule Cadet.Assessments do
 
           winning_score_entries
           |> Enum.each(fn %{id: answer_id, rank: rank} ->
-            increment = Enum.at(scores, rank, 0)
+            increment = Enum.at(scores, rank - 1, 0)
             answer = Repo.get!(Answer, answer_id)
-            new_value = answer.xp + increment
-            Repo.update!(Changeset.change(answer, %{xp: new_value}))
+            new_value = answer.xp_adjustment + increment
+            Repo.update!(Changeset.change(answer, %{xp_adjustment: new_value}))
           end)
         end)
 
