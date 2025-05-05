@@ -2,9 +2,8 @@ defmodule Cadet.AssessmentsTest do
   use Cadet.DataCase
 
   import Cadet.{Factory, TestEntityHelper}
-
   alias Cadet.Assessments
-  alias Cadet.Assessments.{Assessment, Question, SubmissionVotes, Submission}
+  alias Cadet.Assessments.{Assessment, Question, SubmissionVotes, Submission, Answer}
 
   test "create assessments of all types" do
     course = insert(:course)
@@ -1240,11 +1239,11 @@ defmodule Cadet.AssessmentsTest do
       # does not update scores for voting assessments closed  >1 days and those ongoing ago
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(past_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(yesterday_question.id, 5)
@@ -1262,11 +1261,11 @@ defmodule Cadet.AssessmentsTest do
       # does not update scores for voting assessments closed >1 days ago
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(past_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(yesterday_question.id, 1)
-             ) == [0]
+             ) == [0.0, 0.0, 0.0, 0.0, 0.0]
 
       assert get_answer_relative_scores(
                Assessments.fetch_top_relative_score_answers(current_question.id, 5)
@@ -3132,6 +3131,241 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
+  describe "all_user_total_xp pagination with offset and limit" do
+    setup do
+      course = insert(:course)
+      config = insert(:assessment_config)
+
+      # generate question to award xp
+      assessment = insert(:assessment, %{course: course, config: config})
+      question = insert(:programming_question, assessment: assessment)
+
+      # generate 50 students
+      student_list = insert_list(50, :course_registration, %{course: course, role: :student})
+
+      # generate submission for each student
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: assessment,
+              status: "submitted",
+              is_grading_published: true
+            )
+          end
+        )
+
+      # generate answer for each student with xp
+      random_perm = Enum.shuffle(1..50)
+
+      _ans_list =
+        Enum.map(
+          Enum.with_index(submission_list),
+          fn {submission, index} ->
+            insert(
+              :answer,
+              answer: build(:programming_answer),
+              submission: submission,
+              question: question,
+              xp: Enum.at(random_perm, index)
+            )
+          end
+        )
+
+      %{course: course}
+    end
+
+    test "correctly fetches all students with their xp in descending order", %{course: course} do
+      all_user_xp = Assessments.all_user_total_xp(course.id)
+      assert get_all_student_xp(all_user_xp) == 50..1 |> Enum.to_list()
+    end
+
+    test "correctly fetches only relevant students for leaderboard display with potential overflow",
+         %{course: course} do
+      Enum.each(1..50, fn x ->
+        offset = Enum.random(0..49)
+        limit = Enum.random(1..50)
+        paginated_user_xp = Assessments.all_user_total_xp(course.id, offset, limit)
+
+        expected_xp_list =
+          50..1
+          |> Enum.to_list()
+          |> Enum.slice(offset, limit)
+
+        assert get_all_student_xp(paginated_user_xp) == expected_xp_list
+      end)
+    end
+  end
+
+  describe "automatic xp assignment for contest winners function" do
+    setup do
+      course = insert(:course)
+      config = insert(:assessment_config)
+
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_question = insert(:programming_question, assessment: contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+      voting_question = insert(:voting_question, assessment: voting_assessment)
+
+      # generate 5 students
+      student_list = insert_list(5, :course_registration, %{course: course, role: :student})
+
+      # generate contest submission for each student
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: contest_assessment,
+              status: "submitted"
+            )
+          end
+        )
+
+      # generate answer for each student
+      ans_list =
+        Enum.map(
+          Enum.with_index(submission_list),
+          fn {submission, index} ->
+            insert(
+              :answer,
+              answer: build(:programming_answer),
+              submission: submission,
+              question: contest_question,
+              popular_score: index,
+              relative_score: 10 - index,
+              xp: 100
+            )
+          end
+        )
+
+      # generate submission votes for each student
+      _submission_votes =
+        Enum.map(
+          student_list,
+          fn student ->
+            Enum.map(
+              Enum.with_index(submission_list),
+              fn {submission, index} ->
+                insert(
+                  :submission_vote,
+                  voter: student,
+                  submission: submission,
+                  question: voting_question
+                )
+              end
+            )
+          end
+        )
+
+      %{
+        course: course,
+        voting_question: voting_question,
+        ans_list: ans_list
+      }
+    end
+
+    test "correctly assigns xp to winning contest entries with default xp values", %{
+      course: course,
+      voting_question: voting_question,
+      ans_list: _ans_list
+    } do
+      # verify that xp is adjusted correctly
+      Assessments.assign_winning_contest_entries_xp(voting_question.id)
+      all_user_xp = Assessments.all_user_total_xp(course.id)
+      assert get_all_student_xp(all_user_xp) == [700, 600, 600, 500, 500]
+    end
+
+    test "correctly reassigns xp to winning contest entries upon mutliple calls", %{
+      course: course,
+      voting_question: voting_question,
+      ans_list: ans_list
+    } do
+      # reset scores to 0
+      Answer
+      |> Repo.update_all(set: [popular_score: 0, relative_score: 0, xp: 0])
+
+      # assign rank 1 xp to all students
+      Assessments.assign_winning_contest_entries_xp(voting_question.id)
+      all_user_xp = Assessments.all_user_total_xp(course.id)
+      assert get_all_student_xp(all_user_xp) == [1000, 1000, 1000, 1000, 1000]
+
+      # reassign scores and xp
+      ans_list
+      |> Enum.with_index()
+      |> Enum.each(fn {answer, index} ->
+        Answer
+        |> where([a], a.id == ^answer.id)
+        |> Repo.update_all(
+          set: [
+            popular_score: index,
+            relative_score: 10 - index
+          ]
+        )
+      end)
+
+      # verify that xp is assigned correctly
+      Assessments.assign_winning_contest_entries_xp(voting_question.id)
+      all_user_xp = Assessments.all_user_total_xp(course.id)
+      assert get_all_student_xp(all_user_xp) == [600, 500, 500, 400, 400]
+    end
+
+    test "correctly assigns xp to tied winning contest entries", %{
+      course: course,
+      voting_question: voting_question,
+      ans_list: ans_list
+    } do
+      # assign tied scores
+      # score_rank = [3, 3, 3, 1, 1]
+      # popular_rank = [1, 1, 3, 3, 3]
+      ans_list
+      |> Enum.with_index()
+      |> Enum.each(fn {answer, index} ->
+        p_score = if index <= 1, do: 1, else: 0
+        r_score = if index >= 3, do: 1, else: 0
+
+        Answer
+        |> where([a], a.id == ^answer.id)
+        |> Repo.update_all(
+          set: [
+            popular_score: p_score,
+            relative_score: r_score
+          ]
+        )
+      end)
+
+      # verify that xp is assigned correctly to tied entries
+      Assessments.assign_winning_contest_entries_xp(voting_question.id)
+      all_user_xp = Assessments.all_user_total_xp(course.id)
+      assert get_all_student_xp(all_user_xp) == [900, 900, 900, 900, 700]
+    end
+
+    test "correctly assigns xp to winning contest entries with defined xp values", %{
+      course: course,
+      voting_question: voting_question,
+      ans_list: ans_list
+    } do
+      # update defined xp_values for voting question
+      Question
+      |> where([q], q.id == ^voting_question.id)
+      |> Repo.update_all(
+        set: [
+          question: Map.merge(voting_question.question, %{xp_values: [50, 40, 30, 20, 10]})
+        ]
+      )
+
+      # verify that xp is assigned correctly with predefined xp_values
+      Assessments.assign_winning_contest_entries_xp(voting_question.id)
+      all_user_xp = Assessments.all_user_total_xp(course.id)
+      assert get_all_student_xp(all_user_xp) == List.duplicate(160, 5)
+    end
+  end
+
   defp get_answer_relative_scores(answers) do
     answers |> Enum.map(fn ans -> ans.relative_score end)
   end
@@ -3146,5 +3380,10 @@ defmodule Cadet.AssessmentsTest do
     |> Enum.to_list()
     |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / token_divider) end)
     |> Enum.take(top_x)
+  end
+
+  defp get_all_student_xp(all_users) do
+    all_users.users
+    |> Enum.map(fn user -> user.total_xp end)
   end
 end
