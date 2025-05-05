@@ -2035,7 +2035,8 @@ defmodule Cadet.Assessments do
             |> select([a], a.submission_id)
             |> Repo.all()
 
-          from(s in Submission, where: s.id in ^submission_ids)
+          Submission
+          |> where([s], s.id in ^submission_ids)
           |> Repo.update_all(set: [is_grading_published: true])
 
           winning_popular_entries =

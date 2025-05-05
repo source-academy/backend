@@ -3160,6 +3160,7 @@ defmodule Cadet.AssessmentsTest do
 
       # generate answer for each student with xp
       random_perm = Enum.shuffle(1..50)
+
       _ans_list =
         Enum.map(
           Enum.with_index(submission_list),
@@ -3173,6 +3174,7 @@ defmodule Cadet.AssessmentsTest do
             )
           end
         )
+
       %{course: course}
     end
 
@@ -3181,7 +3183,8 @@ defmodule Cadet.AssessmentsTest do
       assert get_all_student_xp(all_user_xp) == 50..1 |> Enum.to_list()
     end
 
-    test "correctly fetches only relevant students for leaderboard display with potential overflow", %{course: course} do
+    test "correctly fetches only relevant students for leaderboard display with potential overflow",
+         %{course: course} do
       Enum.each(1..50, fn x ->
         offset = Enum.random(0..49)
         limit = Enum.random(1..50)
@@ -3191,6 +3194,7 @@ defmodule Cadet.AssessmentsTest do
           50..1
           |> Enum.to_list()
           |> Enum.slice(offset, limit)
+
         assert get_all_student_xp(paginated_user_xp) == expected_xp_list
       end)
     end
@@ -3252,7 +3256,7 @@ defmodule Cadet.AssessmentsTest do
                   :submission_vote,
                   voter: student,
                   submission: submission,
-                  question: voting_question,
+                  question: voting_question
                 )
               end
             )
@@ -3282,7 +3286,6 @@ defmodule Cadet.AssessmentsTest do
       voting_question: voting_question,
       ans_list: ans_list
     } do
-
       # reset scores to 0
       Answer
       |> Repo.update_all(set: [popular_score: 0, relative_score: 0, xp: 0])
@@ -3298,10 +3301,12 @@ defmodule Cadet.AssessmentsTest do
       |> Enum.each(fn {answer, index} ->
         Answer
         |> where([a], a.id == ^answer.id)
-        |> Repo.update_all(set: [
-          popular_score: index,
-          relative_score: 10 - index
-        ])
+        |> Repo.update_all(
+          set: [
+            popular_score: index,
+            relative_score: 10 - index
+          ]
+        )
       end)
 
       # verify that xp is assigned correctly
@@ -3323,12 +3328,15 @@ defmodule Cadet.AssessmentsTest do
       |> Enum.each(fn {answer, index} ->
         p_score = if index <= 1, do: 1, else: 0
         r_score = if index >= 3, do: 1, else: 0
+
         Answer
         |> where([a], a.id == ^answer.id)
-        |> Repo.update_all(set: [
-          popular_score: p_score,
-          relative_score: r_score
-        ])
+        |> Repo.update_all(
+          set: [
+            popular_score: p_score,
+            relative_score: r_score
+          ]
+        )
       end)
 
       # verify that xp is assigned correctly to tied entries
@@ -3345,9 +3353,11 @@ defmodule Cadet.AssessmentsTest do
       # update defined xp_values for voting question
       Question
       |> where([q], q.id == ^voting_question.id)
-      |> Repo.update_all(set: [
-        question: Map.merge(voting_question.question, %{xp_values: [50, 40, 30, 20, 10]})
-      ])
+      |> Repo.update_all(
+        set: [
+          question: Map.merge(voting_question.question, %{xp_values: [50, 40, 30, 20, 10]})
+        ]
+      )
 
       # verify that xp is assigned correctly with predefined xp_values
       Assessments.assign_winning_contest_entries_xp(voting_question.id)
