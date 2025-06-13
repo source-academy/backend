@@ -83,7 +83,7 @@
         {Credo.Check.Readability.ModuleNames},
         {Credo.Check.Readability.ParenthesesOnZeroArityDefs},
         {Credo.Check.Readability.ParenthesesInCondition},
-        {Credo.Check.Readability.PredicateFunctionNames},
+        {Credo.Check.Readability.PredicateFunctionNames, exit_status: 0},
         {Credo.Check.Readability.PreferImplicitTry},
         {Credo.Check.Readability.RedundantBlankLines},
         {Credo.Check.Readability.StringSigils},

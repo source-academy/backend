@@ -941,7 +941,7 @@ defmodule Cadet.Assessments do
         raw_answer,
         force_submit
       ) do
-    with {:ok, team} <- find_team(question.assessment.id, cr_id),
+    with {:ok, _team} <- find_team(question.assessment.id, cr_id),
          {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
@@ -1055,7 +1055,7 @@ defmodule Cadet.Assessments do
 
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
-      update_xp_bonus(submission)
+      update_xp_bonus(updated_submission)
 
       {:ok, nil}
     else
@@ -1294,6 +1294,8 @@ defmodule Cadet.Assessments do
         |> Submission.changeset(%{is_grading_published: true})
         |> Repo.update()
 
+        update_xp_bonus(submission)
+
         Notifications.write_notification_when_published(
           submission.id,
           :published_grading
@@ -1493,22 +1495,17 @@ defmodule Cadet.Assessments do
         Answer
         |> where(submission_id: ^submission_id)
         |> order_by(:question_id)
-        |> group_by([a], a.id)
         |> select([a], %{
-          # grouping by submission, so s.xp_bonus will be the same, but we need an
-          # aggregate function
-          total_xp: sum(a.xp) + sum(a.xp_adjustment)
+          total_xp: a.xp + a.xp_adjustment
         })
 
       total =
         ans_xp
         |> subquery
         |> select([a], %{
-          total_xp: sum(a.total_xp)
+          total_xp: coalesce(sum(a.total_xp), 0)
         })
         |> Repo.one()
-
-      xp = decimal_to_integer(total.total_xp)
 
       cur_time =
         if submission.submitted_at == nil do
@@ -1518,7 +1515,7 @@ defmodule Cadet.Assessments do
         end
 
       xp_bonus =
-        if xp <= 0 do
+        if total.total_xp <= 0 do
           0
         else
           if Timex.before?(cur_time, Timex.shift(assessment.open_at, hours: early_hours)) do
@@ -2699,7 +2696,7 @@ defmodule Cadet.Assessments do
 
   def has_last_modified_answer?(
         question = %Question{},
-        cr = %CourseRegistration{id: cr_id},
+        cr = %CourseRegistration{id: _cr_id},
         last_modified_at,
         force_submit
       ) do
@@ -2710,15 +2707,6 @@ defmodule Cadet.Assessments do
     else
       {:status, _} ->
         {:error, {:forbidden, "Assessment submission already finalised"}}
-
-      {:error, :race_condition} ->
-        {:error, {:internal_server_error, "Please try again later."}}
-
-      {:error, :invalid_vote} ->
-        {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
-
-      _ ->
-        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
   end
 
