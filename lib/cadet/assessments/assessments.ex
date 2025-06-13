@@ -941,7 +941,7 @@ defmodule Cadet.Assessments do
         raw_answer,
         force_submit
       ) do
-    with {:ok, team} <- find_team(question.assessment.id, cr_id),
+    with {:ok, _team} <- find_team(question.assessment.id, cr_id),
          {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
          {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
@@ -2689,7 +2689,7 @@ defmodule Cadet.Assessments do
 
   def has_last_modified_answer?(
         question = %Question{},
-        cr = %CourseRegistration{id: cr_id},
+        cr = %CourseRegistration{id: _cr_id},
         last_modified_at,
         force_submit
       ) do
@@ -2700,15 +2700,6 @@ defmodule Cadet.Assessments do
     else
       {:status, _} ->
         {:error, {:forbidden, "Assessment submission already finalised"}}
-
-      {:error, :race_condition} ->
-        {:error, {:internal_server_error, "Please try again later."}}
-
-      {:error, :invalid_vote} ->
-        {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
-
-      _ ->
-        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
     end
   end
 
