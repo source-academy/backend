@@ -26,6 +26,11 @@ defmodule CadetWeb.AdminAssetsController do
     end
   end
 
+  # Ignore the dialyzer warning, just ctrl click the
+  # `Assets.upload_to_s3` function to see the type,
+  # it clearly returns a string URL
+  @dialyzer {:no_match, upload: 2}
+
   def upload(conn, %{
         "upload" => upload_params,
         "filename" => filename,
