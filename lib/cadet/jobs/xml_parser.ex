@@ -8,7 +8,7 @@ defmodule Cadet.Updater.XMLParser do
   import Ecto.Query
   import SweetXml
 
-  alias Cadet.{Repo, Courses.AssessmentConfig, Assessments}
+  alias Cadet.{Repo, Courses.AssessmentConfig, Assessments, SharedHelper}
 
   require Logger
 
@@ -149,7 +149,8 @@ defmodule Cadet.Updater.XMLParser do
       |> Enum.map(fn param ->
         with {:no_missing_attr?, true} <-
                {:no_missing_attr?, not is_nil(param[:type]) and not is_nil(param[:max_xp])},
-             question when is_map(question) <- process_question_booleans(param),
+             question when is_map(question) <-
+               SharedHelper.process_map_booleans(param, [:show_solution, :blocking]),
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
                process_question_library(question, default_library, default_grading_library),
@@ -177,16 +178,6 @@ defmodule Cadet.Updater.XMLParser do
     Logger.error("Invalid #{entity} changeset. Error: #{full_error_messages(changeset)}")
 
     Logger.error("Changeset: #{inspect(changeset, pretty: true)}")
-  end
-
-  @spec process_question_booleans(map()) :: map()
-  defp process_question_booleans(question) do
-    flags = [:show_solution, :blocking]
-
-    flags
-    |> Enum.reduce(question, fn flag, acc ->
-      put_in(acc[flag], acc[flag] == "true")
-    end)
   end
 
   @spec process_question_by_question_type(map()) :: map() | {:error, String.t()}

@@ -43,6 +43,7 @@ defmodule Cadet.Assessments.Submission do
     |> validate_xor_relationship
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:student_id)
+    |> foreign_key_constraint(:team_id)
     |> foreign_key_constraint(:assessment_id)
     |> foreign_key_constraint(:unsubmitted_by_id)
   end

@@ -9,8 +9,8 @@ defmodule Cadet.Accounts.Teams do
   import Ecto.{Changeset, Query}
 
   alias Cadet.Repo
-  alias Cadet.Accounts.{Team, TeamMember, CourseRegistration, Notification}
-  alias Cadet.Assessments.{Answer, Assessment, Submission}
+  alias Cadet.Accounts.{Team, TeamMember, Notification}
+  alias Cadet.Assessments.{Answer, Submission}
 
   @doc """
   Creates a new team and assigns an assessment and team members to it.
@@ -323,5 +323,25 @@ defmodule Cadet.Accounts.Teams do
       |> Repo.all()
 
     length(submission) > 0
+  end
+
+  @doc """
+  Get the first member of a team.
+
+  ## Parameters
+
+    * `team_id` - The team id of the team to get the first member from.
+
+  ## Returns
+
+  Returns the first member of the team.
+
+  """
+
+  def get_first_member(team_id) do
+    TeamMember
+    |> where([tm], tm.team_id == ^team_id)
+    |> limit(1)
+    |> Repo.one()
   end
 end

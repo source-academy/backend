@@ -96,4 +96,26 @@ defmodule Cadet.SharedHelper do
 
     Sentry.capture_exception(error, stacktrace: stacktrace)
   end
+
+  @doc """
+  Converts a map with string booleans to booleans.
+  """
+  @spec process_map_booleans(map(), list(atom())) :: map()
+  def process_map_booleans(map, flags) do
+    flags
+    |> Enum.reduce(map, fn flag, acc ->
+      put_in(acc[flag], acc[flag] == "true")
+    end)
+  end
+
+  @doc """
+  Converts a map with string integers to integers.
+  """
+  @spec process_map_integers(map(), list(atom())) :: map()
+  def process_map_integers(map, flags) do
+    flags
+    |> Enum.reduce(map, fn flag, acc ->
+      put_in(acc[flag], String.to_integer(acc[flag]))
+    end)
+  end
 end

@@ -10,6 +10,7 @@ defmodule CadetWeb.AdminCoursesView do
       assessmentConfigId: :id,
       type: :type,
       displayInDashboard: :show_grading_summary,
+      isMinigame: :is_minigame,
       isManuallyGraded: :is_manually_graded,
       earlySubmissionXp: :early_submission_xp,
       hasVotingFeatures: :has_voting_features,
