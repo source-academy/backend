@@ -41,7 +41,6 @@ defmodule CadetWeb.AdminAssetsController do
            filename
          ) do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
-      resp -> render(conn, "show.json", resp: resp)
     end
   end
 
