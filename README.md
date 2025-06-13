@@ -20,6 +20,16 @@ Cadet is the web application powering Source Academy.
 
 It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but using a different version of Elixir may result in differences in e.g. `mix format`.
 
+> ## Setting up PostgreSQL
+>
+> The simplest way to get started is to use Docker. Simply [install Docker](https://docs.docker.com/get-docker/) and run the following command:
+> 
+> ```bash
+> $ docker run --name sa-backend-db -e POSTGRES_HOST_AUTH_METHOD=trust -e -p 5432:5432 -d postgres
+> ```
+>
+> This configures PostgreSQL on port 5432. You can then connect to the database using `localhost:5432` as the host and `postgres` as the username. Note: `-e POSTGRES_HOST_AUTH_METHOD=trust` is used to disable password authentication for local development; since we are only accesing the database locally from our own machine, it is safe to do so.
+
 ### Setting up your local development environment
 
 1. Set up the development secrets (replace the values appropriately)
@@ -28,8 +38,6 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
    $ cp config/dev.secrets.exs.example config/dev.secrets.exs
    $ vim config/dev.secrets.exs
    ```
-
-   - To use NUSNET authentication, specify the NUS ADFS OAuth2 URL. (Ask for it.) Note that the frontend will supply the ADFS client ID and redirect URL (so you will need that too, but not here).
 
 2. Install Elixir dependencies
 
@@ -47,19 +55,6 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
 
    ```bash
    $ mix ecto.setup
-   ```
-
-   If you encounter error message about invalid password for the user "postgres".
-   You should reset the "postgres" password:
-
-   ```bash
-   $ sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
-   ```
-
-   and restart postgres service:
-
-   ```bash
-   $ sudo service postgresql restart
    ```
 
    By default, the database is populated with 10 students and 5 assessments. Each student will have a submission to the corresponding submission. This can be changed in `priv/repo/seeds.exs` with the variables `number_of_students`, `number_of_assessments` and `number_of_questions`. Save the changes and run:
