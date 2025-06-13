@@ -12,10 +12,14 @@ defmodule Cadet.Auth.Providers.GitHub do
           user_api: String.t()
         }
 
-  @spec authorise(config(), Provider.code(), Provider.client_id(), Provider.redirect_uri()) ::
+  @spec authorise(config(), Provider.authorise_params()) ::
           {:ok, %{token: Provider.token(), username: String.t()}}
           | {:error, Provider.error(), String.t()}
-  def authorise(config, code, client_id, redirect_uri) do
+  def authorise(config, %{
+        code: code,
+        client_id: client_id,
+        redirect_uri: redirect_uri
+      }) do
     token_headers = [
       {"Content-Type", "application/x-www-form-urlencoded"},
       {"Accept", "application/json"}

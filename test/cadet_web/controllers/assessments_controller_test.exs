@@ -83,7 +83,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "earlySubmissionXp" => &1.config.early_submission_xp,
               "hasVotingFeatures" => &1.has_voting_features,
               "hasTokenCounter" => &1.has_token_counter,
-              "isVotingPublished" => Assessments.is_voting_published(&1.id)
+              "isVotingPublished" => false,
+              "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay
             }
           )
 
@@ -173,7 +174,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
-            "isVotingPublished" => Assessments.is_voting_published(&1.id)
+            "isVotingPublished" => false,
+            "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay
           }
         )
 
@@ -286,9 +288,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "questionCount" => 9,
               "hasVotingFeatures" => &1.has_voting_features,
               "hasTokenCounter" => &1.has_token_counter,
-              "isVotingPublished" => Assessments.is_voting_published(&1.id),
+              "isVotingPublished" => false,
               "earlySubmissionXp" => &1.config.early_submission_xp,
               "isGradingPublished" => nil,
+              "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
                   false
@@ -324,7 +327,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "reading" => assessment.reading,
             "longSummary" => assessment.summary_long,
             "hasTokenCounter" => assessment.has_token_counter,
-            "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment})
+            "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment}),
+            "isMinigame" => false
           }
 
           resp_assessments =
@@ -1069,7 +1073,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
       end
     end
 
-    test "submission of answer within early hours(seeded 48) of opening grants full XP bonus", %{
+    test "submission of answer with no effort grants 0 XP bonus", %{
       conn: conn,
       courses: %{course1: course1},
       role_crs: role_crs
@@ -1108,6 +1112,194 @@ defmodule CadetWeb.AssessmentsControllerTest do
           submission: submission,
           question: question,
           answer: %{code: "f => f(f);"}
+        )
+
+        conn
+        |> sign_in(course_reg.user)
+        |> post(build_url_submit(course1.id, assessment.id))
+        |> response(200)
+
+        submission_db = Repo.get(Submission, submission.id)
+
+        assert submission_db.status == :submitted
+        assert submission_db.xp_bonus == 0
+      end
+    end
+
+    test "submission of answer grants XP bonus only after being marked by an avenger", %{
+      conn: conn,
+      courses: %{course1: course1},
+      role_crs: role_crs
+    } do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        assessment_config =
+          insert(
+            :assessment_config,
+            early_submission_xp: 100,
+            hours_before_early_xp_decay: 48,
+            course: course1
+          )
+
+        assessment =
+          insert(
+            :assessment,
+            open_at: Timex.shift(Timex.now(), hours: -40),
+            close_at: Timex.shift(Timex.now(), days: 7),
+            is_published: true,
+            config: assessment_config,
+            course: course1
+          )
+
+        question = insert(:programming_question, assessment: assessment)
+
+        group = insert(:group, leader: role_crs.staff)
+
+        course_reg =
+          insert(:course_registration, %{role: :student, group: group, course: course1})
+
+        submission =
+          insert(:submission, assessment: assessment, student: course_reg, status: :attempted)
+
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          xp_adjustment: 0
+        )
+
+        conn
+        |> sign_in(course_reg.user)
+        |> post(build_url_submit(course1.id, assessment.id))
+        |> response(200)
+
+        submission_db = Repo.get(Submission, submission.id)
+
+        assert submission_db.status == :submitted
+        assert submission_db.xp_bonus == 0
+
+        grade_question = fn question ->
+          Assessments.update_grading_info(
+            %{submission_id: submission.id, question_id: question.id},
+            %{"xp_adjustment" => 10},
+            role_crs.staff
+          )
+        end
+
+        grade_question.(question)
+
+        submission_db = Repo.get(Submission, submission.id)
+        assert submission_db.xp_bonus == 100
+      end
+    end
+
+    test "submission of answer grants 0 XP bonus if an avenger gives 0 as well", %{
+      conn: conn,
+      courses: %{course1: course1},
+      role_crs: role_crs
+    } do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        assessment_config =
+          insert(
+            :assessment_config,
+            early_submission_xp: 100,
+            hours_before_early_xp_decay: 48,
+            course: course1
+          )
+
+        assessment =
+          insert(
+            :assessment,
+            open_at: Timex.shift(Timex.now(), hours: -40),
+            close_at: Timex.shift(Timex.now(), days: 7),
+            is_published: true,
+            config: assessment_config,
+            course: course1
+          )
+
+        question = insert(:programming_question, assessment: assessment)
+
+        group = insert(:group, leader: role_crs.staff)
+
+        course_reg =
+          insert(:course_registration, %{role: :student, group: group, course: course1})
+
+        submission =
+          insert(:submission, assessment: assessment, student: course_reg, status: :attempted)
+
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          xp_adjustment: 0
+        )
+
+        conn
+        |> sign_in(course_reg.user)
+        |> post(build_url_submit(course1.id, assessment.id))
+        |> response(200)
+
+        submission_db = Repo.get(Submission, submission.id)
+
+        assert submission_db.status == :submitted
+        assert submission_db.xp_bonus == 0
+
+        grade_question = fn question ->
+          Assessments.update_grading_info(
+            %{submission_id: submission.id, question_id: question.id},
+            %{"xp_adjustment" => 0},
+            role_crs.staff
+          )
+        end
+
+        grade_question.(question)
+
+        submission_db = Repo.get(Submission, submission.id)
+        assert submission_db.xp_bonus == 0
+      end
+    end
+
+    test "submission of answer within early hours(seeded 48) of opening grants full XP bonus", %{
+      conn: conn,
+      courses: %{course1: course1},
+      role_crs: role_crs
+    } do
+      with_mock GradingJob, force_grade_individual_submission: fn _ -> nil end do
+        assessment_config =
+          insert(
+            :assessment_config,
+            early_submission_xp: 100,
+            hours_before_early_xp_decay: 48,
+            course: course1
+          )
+
+        assessment =
+          insert(
+            :assessment,
+            open_at: Timex.shift(Timex.now(), hours: -40),
+            close_at: Timex.shift(Timex.now(), days: 7),
+            is_published: true,
+            config: assessment_config,
+            course: course1
+          )
+
+        question = insert(:programming_question, assessment: assessment)
+
+        group = insert(:group, leader: role_crs.staff)
+
+        course_reg =
+          insert(:course_registration, %{role: :student, group: group, course: course1})
+
+        submission =
+          insert(:submission, assessment: assessment, student: course_reg, status: :attempted)
+
+        insert(
+          :answer,
+          submission: submission,
+          question: question,
+          answer: %{code: "f => f(f);"},
+          xp: 10
         )
 
         conn
@@ -1161,7 +1353,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             :answer,
             submission: submission,
             question: question,
-            answer: %{code: "f => f(f);"}
+            answer: %{code: "f => f(f);"},
+            xp: 10
           )
 
           conn
@@ -1219,7 +1412,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             :answer,
             submission: submission,
             question: question,
-            answer: %{code: "f => f(f);"}
+            answer: %{code: "f => f(f);"},
+            xp: 10
           )
 
           conn

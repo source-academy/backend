@@ -2210,6 +2210,29 @@ defmodule Cadet.AssessmentsTest do
       Map.put(seed, :total_submissions, total_submissions)
     end
 
+    test "limit submissions", %{
+      course_regs: %{avenger1_cr: avenger}
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => 1
+        })
+
+      assert length(res[:data][:submissions]) == 1
+    end
+
+    test "limit submisssions 2", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: assessments
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => 2
+        })
+
+      assert length(res[:data][:submissions]) == 2
+    end
+
     test "filter by assessment title", %{
       course_regs: %{avenger1_cr: avenger},
       assessments: assessments,
@@ -2220,8 +2243,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "title" => title,
-          "pageSize" => total_submissions
+          :title => title,
+          :page_size => total_submissions
         })
 
       assessments_from_res = res[:data][:assessments]
@@ -2243,8 +2266,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "status" => "attempting",
-          "pageSize" => total_submissions
+          :status => "attempting",
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2268,8 +2291,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "status" => "attempted",
-          "pageSize" => total_submissions
+          :status => "attempted",
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2293,8 +2316,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "status" => "submitted",
-          "pageSize" => total_submissions
+          :status => "submitted",
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2318,8 +2341,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "isFullyGraded" => "true",
-          "pageSize" => total_submissions
+          :is_fully_graded => true,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2343,8 +2366,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "isFullyGraded" => "false",
-          "pageSize" => total_submissions
+          :is_fully_graded => false,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2370,8 +2393,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "isGradingPublished" => "true",
-          "pageSize" => total_submissions
+          :is_grading_published => true,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2397,8 +2420,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "isGradingPublished" => "false",
-          "pageSize" => total_submissions
+          :is_grading_published => false,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2424,8 +2447,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "group" => "true",
-          "pageSize" => total_submissions
+          :group => true,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2452,8 +2475,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger2, %{
-          "group" => "true",
-          "pageSize" => total_submissions
+          :group => true,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2483,8 +2506,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger2, %{
-          "groupName" => group_name,
-          "pageSize" => total_submissions
+          :group_name => group_name,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2514,8 +2537,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "groupName" => group_name,
-          "pageSize" => total_submissions
+          :group_name => group_name,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2539,8 +2562,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "name" => student_name,
-          "pageSize" => total_submissions
+          :name => student_name,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2563,8 +2586,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "name" => student_name,
-          "pageSize" => total_submissions
+          :name => student_name,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2587,8 +2610,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "name" => student_name,
-          "pageSize" => total_submissions
+          :name => student_name,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2611,8 +2634,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "username" => student_username,
-          "pageSize" => total_submissions
+          :username => student_username,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2635,8 +2658,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "username" => student_username,
-          "pageSize" => total_submissions
+          :username => student_username,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2659,8 +2682,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "username" => student_username,
-          "pageSize" => total_submissions
+          :username => student_username,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2683,8 +2706,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "type" => assessment_type,
-          "pageSize" => total_submissions
+          :type => assessment_type,
+          :page_size => total_submissions
         })
 
       assessments_from_res = res[:data][:assessments]
@@ -2712,8 +2735,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "type" => assessment_type,
-          "pageSize" => total_submissions
+          :type => assessment_type,
+          :page_size => total_submissions
         })
 
       assessments_from_res = res[:data][:assessments]
@@ -2741,8 +2764,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "type" => assessment_type,
-          "pageSize" => total_submissions
+          :type => assessment_type,
+          :page_size => total_submissions
         })
 
       assessments_from_res = res[:data][:assessments]
@@ -2770,8 +2793,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "isManuallyGraded" => "true",
-          "pageSize" => total_submissions
+          :is_manually_graded => true,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2799,8 +2822,8 @@ defmodule Cadet.AssessmentsTest do
 
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
-          "isManuallyGraded" => "false",
-          "pageSize" => total_submissions
+          :is_manually_graded => false,
+          :page_size => total_submissions
         })
 
       submissions_from_res = res[:data][:submissions]
@@ -2814,6 +2837,188 @@ defmodule Cadet.AssessmentsTest do
       Enum.each(submissions_from_res, fn s ->
         assert Enum.find(assessments_from_res, fn a -> a.id == s.assessment_id end) != nil
       end)
+    end
+
+    test "sorting by assessment title ascending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => total_submissions,
+          :sort_by => :assessment_name,
+          :sort_direction => :asc
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+
+      submissions_by_title =
+        Enum.map(
+          submissions_from_res,
+          fn s ->
+            Enum.find(assessments_from_res, fn a ->
+              s.assessment_id == a.id
+            end)
+          end
+        )
+
+      Enum.reduce(
+        submissions_by_title,
+        fn x, y ->
+          assert x.title >= y.title
+          y
+        end
+      )
+    end
+
+    test "sorting by assessment title descending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => total_submissions,
+          :sort_by => :assessment_name,
+          :sort_direction => :desc
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+
+      submissions_by_title =
+        Enum.map(
+          submissions_from_res,
+          fn s ->
+            Enum.find(assessments_from_res, fn a ->
+              s.assessment_id == a.id
+            end)
+          end
+        )
+
+      Enum.reduce(
+        submissions_by_title,
+        fn x, y ->
+          assert x.title <= y.title
+          y
+        end
+      )
+    end
+
+    test "sorting by assessment type ascending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => total_submissions,
+          :sort_by => :assessment_type,
+          :sort_direction => :asc
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+
+      submissions_by_assessments_type =
+        Enum.map(
+          submissions_from_res,
+          fn s ->
+            Enum.find(assessments_from_res, fn a ->
+              s.assessment_id == a.id
+            end)
+          end
+        )
+
+      Enum.reduce(
+        submissions_by_assessments_type,
+        fn x, y ->
+          assert x.config_id >= y.config_id
+          y
+        end
+      )
+    end
+
+    test "sorting by assessment type descending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => total_submissions,
+          :sort_by => :assessment_type,
+          :sort_direction => :desc
+        })
+
+      submissions_from_res = res[:data][:submissions]
+      assessments_from_res = res[:data][:assessments]
+
+      submissions_by_assessments_type =
+        Enum.map(
+          submissions_from_res,
+          fn s ->
+            Enum.find(assessments_from_res, fn a ->
+              s.assessment_id == a.id
+            end)
+          end
+        )
+
+      Enum.reduce(
+        submissions_by_assessments_type,
+        fn x, y ->
+          assert x.config_id <= y.config_id
+          y
+        end
+      )
+    end
+
+    test "sorting by xp ascending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => total_submissions,
+          :sort_by => :xp,
+          :sort_direction => :asc
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      Enum.reduce(
+        submissions_from_res,
+        fn x, y ->
+          assert x.xp >= y.xp
+          y
+        end
+      )
+    end
+
+    test "sorting by xp descending", %{
+      course_regs: %{avenger1_cr: avenger},
+      assessments: _assessments,
+      total_submissions: total_submissions
+    } do
+      {_, res} =
+        Assessments.submissions_by_grader_for_index(avenger, %{
+          :page_size => total_submissions,
+          :sort_by => :xp,
+          :sort_direction => :desc
+        })
+
+      submissions_from_res = res[:data][:submissions]
+
+      Enum.reduce(
+        submissions_from_res,
+        fn x, y ->
+          assert x.xp <= y.xp
+          y
+        end
+      )
     end
   end
 

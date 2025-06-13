@@ -4,9 +4,46 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.Assessments
 
+  @doc """
+  # Query Parameters
+  - `pageSize`: Integer. The number of submissions to return. Default 10.
+  - `offset`: Integer. The number of submissions to skip. Default 0.
+  - `title`: String. Assessment title.
+  - `status`: String. Submission status.
+  - `isFullyGraded`: Boolean. Whether the submission is fully graded.
+  - `isGradingPublished`: Boolean. Whether the grading is published.
+  - `group`: Boolean. Only the groups under the grader should be returned.
+  - `groupName`: String. Group name.
+  - `name`: String. User name.
+  - `username`: String. User username.
+  - `type`: String. Assessment Config type.
+  - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
+  """
   def index(conn, %{"group" => group} = params)
       when group in ["true", "false"] do
     course_reg = conn.assigns[:course_reg]
+
+    boolean_params = [:is_fully_graded, :group, :is_manually_graded]
+    int_params = [:page_size, :offset]
+
+    # Convert string keys to atoms and parse values
+    params =
+      params
+      |> to_snake_case_atom_keys()
+      |> Map.put_new(:page_size, "10")
+      |> Map.put_new(:offset, "0")
+
+    filtered_boolean_params =
+      params
+      |> Map.take(boolean_params)
+      |> Map.keys()
+
+    params =
+      params
+      |> process_map_booleans(filtered_boolean_params)
+      |> process_map_integers(int_params)
+      |> Assessments.parse_sort_direction()
+      |> Assessments.parse_sort_by()
 
     case Assessments.submissions_by_grader_for_index(course_reg, params) do
       {:ok, view_model} ->
@@ -19,6 +56,17 @@ defmodule CadetWeb.AdminGradingController do
 
   def index(conn, _) do
     index(conn, %{"group" => "false"})
+  end
+
+  def index_all_submissions(conn, _) do
+    index(
+      conn,
+      %{
+        "group" => "false",
+        "pageSize" => "100000000000",
+        "offset" => "0"
+      }
+    )
   end
 
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do

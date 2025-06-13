@@ -12,6 +12,7 @@ defmodule Cadet.Assessments do
     Notification,
     Notifications,
     User,
+    Teams,
     Team,
     TeamMember,
     CourseRegistration,
@@ -113,7 +114,7 @@ defmodule Cadet.Assessments do
       Submission
       |> where(
         [s],
-        s.id in ^submission_ids
+        s.id in subquery(submission_ids)
       )
       |> where(is_grading_published: true)
       |> join(:inner, [s], a in Answer, on: s.id == a.submission_id)
@@ -305,7 +306,7 @@ defmodule Cadet.Assessments do
       is_grading_published =
         Submission
         |> where(assessment_id: ^id)
-        |> where(student_id: ^course_reg.id)
+        |> where([s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
         |> select([s], s.is_grading_published)
         |> Repo.one()
 
@@ -337,7 +338,7 @@ defmodule Cadet.Assessments do
       |> join(:left, [s], ans in Answer, on: ans.submission_id == s.id)
       |> where(
         [s],
-        s.id in ^submission_ids
+        s.id in subquery(submission_ids)
       )
       |> group_by([s], s.assessment_id)
       |> select([s, ans], %{
@@ -351,7 +352,7 @@ defmodule Cadet.Assessments do
       Submission
       |> where(
         [s],
-        s.id in ^submission_ids
+        s.id in subquery(submission_ids)
       )
       |> select([s], [:assessment_id, :status, :is_grading_published])
 
@@ -382,13 +383,31 @@ defmodule Cadet.Assessments do
   end
 
   defp get_submission_ids(cr_id, teams) do
-    query =
-      from(s in Submission,
-        where: s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id),
-        select: s.id
-      )
+    from(s in Submission,
+      where: s.student_id == ^cr_id or s.team_id in ^Enum.map(teams, & &1.id),
+      select: s.id
+    )
+  end
 
-    Repo.all(query)
+  defp is_voting_assigned(assessment_ids) do
+    voting_assigned_question_ids =
+      SubmissionVotes
+      |> select([v], v.question_id)
+      |> Repo.all()
+
+    # Map of assessment_id to boolean
+    voting_assigned_assessment_ids =
+      Question
+      |> where(type: :voting)
+      |> where([q], q.id in ^voting_assigned_question_ids)
+      |> where([q], q.assessment_id in ^assessment_ids)
+      |> select([q], q.assessment_id)
+      |> distinct(true)
+      |> Repo.all()
+
+    Enum.reduce(assessment_ids, %{}, fn id, acc ->
+      Map.put(acc, id, Enum.member?(voting_assigned_assessment_ids, id))
+    end)
   end
 
   @doc """
@@ -396,7 +415,14 @@ defmodule Cadet.Assessments do
   if it's grading is not published.
   """
   def format_all_assessments(assessments) do
+    is_voting_assigned_map =
+      assessments
+      |> Enum.map(& &1.id)
+      |> is_voting_assigned()
+
     Enum.map(assessments, fn a ->
+      a = Map.put(a, :is_voting_published, Map.get(is_voting_assigned_map, a.id, false))
+
       if a.is_grading_published do
         a
       else
@@ -653,17 +679,16 @@ defmodule Cadet.Assessments do
     end
   end
 
-  def is_voting_published(assessment_id) do
+  defp is_voting_published(assessment_id) do
     voting_assigned_question_ids =
       SubmissionVotes
       |> select([v], v.question_id)
-      |> Repo.all()
 
     Question
     |> where(type: :voting)
     |> where(assessment_id: ^assessment_id)
-    |> where([q], q.id in ^voting_assigned_question_ids)
-    |> Repo.exists?()
+    |> where([q], q.id in subquery(voting_assigned_question_ids))
+    |> Repo.exists?() || false
   end
 
   def update_final_contest_entries do
@@ -941,7 +966,17 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp find_teams(cr_id) do
+  def is_team_assessment?(assessment_id) when is_ecto_id(assessment_id) do
+    max_team_size =
+      Assessment
+      |> where(id: ^assessment_id)
+      |> select([a], a.max_team_size)
+      |> Repo.one()
+
+    max_team_size > 1
+  end
+
+  defp find_teams(cr_id) when is_ecto_id(cr_id) do
     query =
       from(t in Team,
         join: tm in assoc(t, :team_members),
@@ -961,28 +996,14 @@ defmodule Cadet.Assessments do
         limit: 1
       )
 
-    assessment_team_size =
-      Map.get(
-        Repo.one(
-          from(a in Assessment,
-            where: a.id == ^assessment_id,
-            select: %{max_team_size: a.max_team_size}
-          )
-        ),
-        :max_team_size,
-        0
-      )
-
-    case assessment_team_size > 1 do
-      true ->
-        case Repo.one(query) do
-          nil -> {:error, :team_not_found}
-          team -> {:ok, team}
-        end
-
+    if is_team_assessment?(assessment_id) do
+      case Repo.one(query) do
+        nil -> {:error, :team_not_found}
+        team -> {:ok, team}
+      end
+    else
       # team is nil for individual assessments
-      false ->
-        {:ok, nil}
+      {:ok, nil}
     end
   end
 
@@ -1019,9 +1040,14 @@ defmodule Cadet.Assessments do
 
   def finalise_submission(submission = %Submission{}) do
     with {:status, :attempted} <- {:status, submission.status},
-         {:ok, updated_submission} <- update_submission_status_and_xp_bonus(submission) do
-      # Couple with update_submission_status_and_xp_bonus to ensure notification is sent
-      Notifications.write_notification_when_student_submits(submission)
+         {:ok, updated_submission} <- update_submission_status(submission) do
+      # Couple with update_submission_status and update_xp_bonus to ensure notification is sent
+      submission = Repo.preload(submission, assessment: [:config])
+
+      if submission.assessment.config.is_manually_graded do
+        Notifications.write_notification_when_student_submits(submission)
+      end
+
       # Send email notification to avenger
       %{notification_type: "assessment_submission", submission_id: updated_submission.id}
       |> Cadet.Workers.NotificationWorker.new()
@@ -1029,6 +1055,7 @@ defmodule Cadet.Assessments do
 
       # Begin autograding job
       GradingJob.force_grade_individual_submission(updated_submission)
+      update_xp_bonus(submission)
 
       {:ok, nil}
     else
@@ -1138,6 +1165,13 @@ defmodule Cadet.Assessments do
           )
       end
 
+      # Remove grading notifications for submissions
+      Notification
+      |> where(submission_id: ^submission_id, type: :submitted)
+      |> select([n], n.id)
+      |> Repo.all()
+      |> Notifications.acknowledge(cr)
+
       {:ok, nil}
     else
       {:submission_found?, false} ->
@@ -1174,6 +1208,14 @@ defmodule Cadet.Assessments do
     # allows staff to unpublish own assessment
     bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
 
+    # assumption: if team assessment, all team members are under the same avenger
+    effective_student_id =
+      if is_nil(submission.student_id) do
+        Teams.get_first_member(submission.team_id).student_id
+      else
+        submission.student_id
+      end
+
     with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
          {:status, :submitted} <- {:status, submission.status},
          {:is_manually_graded?, true} <-
@@ -1182,7 +1224,7 @@ defmodule Cadet.Assessments do
          {:allowed_to_publish?, true} <-
            {:allowed_to_publish?,
             role == :admin or bypass or
-              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)} do
+              Cadet.Accounts.Query.avenger_of?(cr, effective_student_id)} do
       {:ok, submission}
     end
   end
@@ -1204,9 +1246,17 @@ defmodule Cadet.Assessments do
         |> Submission.changeset(%{is_grading_published: false})
         |> Repo.update()
 
+        # assumption: if team assessment, all team members are under the same avenger
+        effective_student_id =
+          if is_nil(submission.student_id) do
+            Teams.get_first_member(submission.team_id).student_id
+          else
+            submission.student_id
+          end
+
         Notifications.handle_unpublish_grades_notifications(
           submission.assessment.id,
-          Repo.get(CourseRegistration, submission.student_id)
+          Repo.get(CourseRegistration, effective_student_id)
         )
 
         {:ok, nil}
@@ -1248,6 +1298,12 @@ defmodule Cadet.Assessments do
           submission.id,
           :published_grading
         )
+
+        Notification
+        |> where(submission_id: ^submission.id, type: :submitted)
+        |> select([n], n.id)
+        |> Repo.all()
+        |> Notifications.acknowledge(cr)
 
         {:ok, nil}
 
@@ -1413,30 +1469,76 @@ defmodule Cadet.Assessments do
     end
   end
 
-  @spec update_submission_status_and_xp_bonus(Submission.t()) ::
+  @spec update_submission_status(Submission.t()) ::
           {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
-  defp update_submission_status_and_xp_bonus(submission = %Submission{}) do
-    assessment = submission.assessment
-    assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
-
-    max_bonus_xp = assessment_conifg.early_submission_xp
-    early_hours = assessment_conifg.hours_before_early_xp_decay
-
-    xp_bonus =
-      if Timex.before?(Timex.now(), Timex.shift(assessment.open_at, hours: early_hours)) do
-        max_bonus_xp
-      else
-        # This logic interpolates from max bonus at early hour to 0 bonus at close time
-        decaying_hours = Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
-        remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, Timex.now(), :hours)])
-        proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
-        bonus_xp = round(max_bonus_xp * proportion)
-        Enum.max([0, bonus_xp])
-      end
-
+  defp update_submission_status(submission = %Submission{}) do
     submission
-    |> Submission.changeset(%{status: :submitted, xp_bonus: xp_bonus})
+    |> Submission.changeset(%{status: :submitted, submitted_at: Timex.now()})
     |> Repo.update()
+  end
+
+  @spec update_xp_bonus(Submission.t()) ::
+          {:ok, Submission.t()} | {:error, Ecto.Changeset.t()}
+  # TODO: Should destructure and pattern match on the function
+  defp update_xp_bonus(submission = %Submission{id: submission_id}) do
+    # to ensure backwards compatibility
+    if submission.xp_bonus == 0 do
+      assessment = submission.assessment
+      assessment_conifg = Repo.get_by(AssessmentConfig, id: assessment.config_id)
+
+      max_bonus_xp = assessment_conifg.early_submission_xp
+      early_hours = assessment_conifg.hours_before_early_xp_decay
+
+      ans_xp =
+        Answer
+        |> where(submission_id: ^submission_id)
+        |> order_by(:question_id)
+        |> group_by([a], a.id)
+        |> select([a], %{
+          # grouping by submission, so s.xp_bonus will be the same, but we need an
+          # aggregate function
+          total_xp: sum(a.xp) + sum(a.xp_adjustment)
+        })
+
+      total =
+        ans_xp
+        |> subquery
+        |> select([a], %{
+          total_xp: sum(a.total_xp)
+        })
+        |> Repo.one()
+
+      xp = decimal_to_integer(total.total_xp)
+
+      cur_time =
+        if submission.submitted_at == nil do
+          Timex.now()
+        else
+          submission.submitted_at
+        end
+
+      xp_bonus =
+        if xp <= 0 do
+          0
+        else
+          if Timex.before?(cur_time, Timex.shift(assessment.open_at, hours: early_hours)) do
+            max_bonus_xp
+          else
+            # This logic interpolates from max bonus at early hour to 0 bonus at close time
+            decaying_hours =
+              Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+
+            remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, cur_time, :hours)])
+            proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
+            bonus_xp = round(max_bonus_xp * proportion)
+            Enum.max([0, bonus_xp])
+          end
+        end
+
+      submission
+      |> Submission.changeset(%{xp_bonus: xp_bonus})
+      |> Repo.update()
+    end
   end
 
   defp update_submission_status_router(submission = %Submission{}, question = %Question{}) do
@@ -1824,25 +1926,14 @@ defmodule Cadet.Assessments do
 
   The return value is `{:ok, %{"count": count, "data": submissions}}`
 
-  # Parameters
-  - `pageSize`: Integer. The number of submissions to return. Default is 10.
-  - `offset`: Integer. The number of submissions to skip. Default is 0.
-  - `title`: String. Assessment title.
-  - `status`: String. Submission status.
-  - `isFullyGraded`: Boolean. Whether the submission is fully graded.
-  - `isGradingPublished`: Boolean. Whether the grading is published.
-  - `group`: Boolean. Only the groups under the grader should be returned.
-  - `groupName`: String. Group name.
-  - `name`: String. User name.
-  - `username`: String. User username.
-  - `type`: String. Assessment Config type.
-  - `isManuallyGraded`: Boolean. Whether the assessment is manually graded.
+  # Params
+  Refer to admin_grading_controller.ex/index for the list of query parameters.
 
   # Implementation
   Uses helper functions to build the filter query. Helper functions are separated by tables in the database.
   """
 
-  @spec submissions_by_grader_for_index(CourseRegistration.t()) ::
+  @spec submissions_by_grader_for_index(CourseRegistration.t(), map()) ::
           {:ok,
            %{
              :count => integer,
@@ -1856,12 +1947,7 @@ defmodule Cadet.Assessments do
            }}
   def submissions_by_grader_for_index(
         grader = %CourseRegistration{course_id: course_id},
-        params \\ %{
-          "group" => "false",
-          "isFullyGraded" => "false",
-          "pageSize" => "10",
-          "offset" => "0"
-        }
+        params
       ) do
     submission_answers_query =
       from(ans in Answer,
@@ -1881,7 +1967,9 @@ defmodule Cadet.Assessments do
         on: q.assessment_id == a.id,
         select: %{
           assessment_id: q.assessment_id,
-          question_count: count(q.id)
+          question_count: count(q.id),
+          title: max(a.title),
+          config_id: max(a.config_id)
         }
       )
 
@@ -1893,14 +1981,25 @@ defmodule Cadet.Assessments do
         left_join: asst in subquery(question_answers_query),
         on: asst.assessment_id == s.assessment_id,
         as: :asst,
+        left_join: cr in CourseRegistration,
+        on: s.student_id == cr.id,
+        as: :cr,
+        left_join: user in User,
+        on: user.id == cr.user_id,
+        as: :user,
+        left_join: group in Group,
+        on: cr.group_id == group.id,
+        as: :group,
+        inner_join: config in AssessmentConfig,
+        on: asst.config_id == config.id,
+        as: :config,
         where: ^build_user_filter(params),
         where: s.assessment_id in subquery(build_assessment_filter(params, course_id)),
         where: s.assessment_id in subquery(build_assessment_config_filter(params)),
         where: ^build_submission_filter(params),
         where: ^build_course_registration_filter(params, grader),
-        order_by: [desc: s.inserted_at],
-        limit: ^elem(Integer.parse(Map.get(params, "pageSize", "10")), 0),
-        offset: ^elem(Integer.parse(Map.get(params, "offset", "0")), 0),
+        limit: ^params[:page_size],
+        offset: ^params[:offset],
         select: %{
           id: s.id,
           status: s.status,
@@ -1917,6 +2016,11 @@ defmodule Cadet.Assessments do
           question_count: asst.question_count
         }
       )
+
+    query = sort_submission(query, params[:sort_by], params[:sort_direction])
+
+    query =
+      from([s, ans, asst, cr, user, group] in query, order_by: [desc: s.inserted_at, asc: s.id])
 
     submissions = Repo.all(query)
 
@@ -1941,10 +2045,83 @@ defmodule Cadet.Assessments do
     {:ok, %{count: count, data: generate_grading_summary_view_model(submissions, course_id)}}
   end
 
+  # Given a query from submissions_by_grader_for_index,
+  # sorts it by the relevant field and direction.
+  defp sort_submission(query, sort_by, sort_direction)
+       when sort_direction in [:asc, :desc] do
+    case sort_by do
+      :assessment_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", asst.title)}]
+        )
+
+      :assessment_type ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, asst.config_id}]
+        )
+
+      :student_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.name)}]
+        )
+
+      :student_username ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", user.username)}]
+        )
+
+      :group_name ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, fragment("upper(?)", group.name)}]
+        )
+
+      :progress_status ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [
+            {^sort_direction, config.is_manually_graded},
+            {^sort_direction, s.status},
+            {^sort_direction, ans.graded_count - asst.question_count},
+            {^sort_direction, s.is_grading_published}
+          ]
+        )
+
+      :xp ->
+        from([s, ans, asst, cr, user, group, config] in query,
+          order_by: [{^sort_direction, ans.xp + ans.xp_adjustment}]
+        )
+
+      _ ->
+        query
+    end
+  end
+
+  defp sort_submission(query, _sort_by, _sort_direction), do: query
+
+  def parse_sort_direction(params) do
+    case params[:sort_direction] do
+      "sort-asc" -> Map.put(params, :sort_direction, :asc)
+      "sort-desc" -> Map.put(params, :sort_direction, :desc)
+      _ -> Map.put(params, :sort_direction, nil)
+    end
+  end
+
+  def parse_sort_by(params) do
+    case params[:sort_by] do
+      "assessmentName" -> Map.put(params, :sort_by, :assessment_name)
+      "assessmentType" -> Map.put(params, :sort_by, :assessment_type)
+      "studentName" -> Map.put(params, :sort_by, :student_name)
+      "studentUsername" -> Map.put(params, :sort_by, :student_username)
+      "groupName" -> Map.put(params, :sort_by, :group_name)
+      "progressStatus" -> Map.put(params, :sort_by, :progress_status)
+      "xp" -> Map.put(params, :sort_by, :xp)
+      _ -> Map.put(params, :sort_by, nil)
+    end
+  end
+
   defp build_assessment_filter(params, course_id) do
     assessments_filters =
       Enum.reduce(params, dynamic(true), fn
-        {"title", value}, dynamic ->
+        {:title, value}, dynamic ->
           dynamic([assessment], ^dynamic and ilike(assessment.title, ^"%#{value}%"))
 
         {_, _}, dynamic ->
@@ -1960,16 +2137,16 @@ defmodule Cadet.Assessments do
 
   defp build_submission_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      {"status", value}, dynamic ->
+      {:status, value}, dynamic ->
         dynamic([submission], ^dynamic and submission.status == ^value)
 
-      {"isFullyGraded", value}, dynamic ->
+      {:is_fully_graded, value}, dynamic ->
         dynamic(
           [ans: ans, asst: asst],
           ^dynamic and asst.question_count == ans.graded_count == ^value
         )
 
-      {"isGradingPublished", value}, dynamic ->
+      {:is_grading_published, value}, dynamic ->
         dynamic([submission], ^dynamic and submission.is_grading_published == ^value)
 
       {_, _}, dynamic ->
@@ -1979,7 +2156,7 @@ defmodule Cadet.Assessments do
 
   defp build_course_registration_filter(params, grader) do
     Enum.reduce(params, dynamic(true), fn
-      {"group", "true"}, dynamic ->
+      {:group, true}, dynamic ->
         dynamic(
           [submission],
           (^dynamic and
@@ -1993,7 +2170,7 @@ defmodule Cadet.Assessments do
              )) or submission.student_id == ^grader.id
         )
 
-      {"groupName", value}, dynamic ->
+      {:group_name, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2014,7 +2191,7 @@ defmodule Cadet.Assessments do
 
   defp build_user_filter(params) do
     Enum.reduce(params, dynamic(true), fn
-      {"name", value}, dynamic ->
+      {:name, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2028,7 +2205,7 @@ defmodule Cadet.Assessments do
             )
         )
 
-      {"username", value}, dynamic ->
+      {:username, value}, dynamic ->
         dynamic(
           [submission],
           ^dynamic and
@@ -2050,10 +2227,10 @@ defmodule Cadet.Assessments do
   defp build_assessment_config_filter(params) do
     assessment_config_filters =
       Enum.reduce(params, dynamic(true), fn
-        {"type", value}, dynamic ->
+        {:type, value}, dynamic ->
           dynamic([assessment_config: config], ^dynamic and config.type == ^value)
 
-        {"isManuallyGraded", value}, dynamic ->
+        {:is_manually_graded, value}, dynamic ->
           dynamic([assessment_config: config], ^dynamic and config.is_manually_graded == ^value)
 
         {_, _}, dynamic ->
@@ -2212,7 +2389,7 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        %CourseRegistration{id: grader_id}
+        cr = %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)
@@ -2231,12 +2408,26 @@ defmodule Cadet.Assessments do
 
     is_own_submission = grader_id == answer.submission.student_id
 
+    submission =
+      Submission
+      |> join(:inner, [s], a in assoc(s, :assessment))
+      |> preload([_, a], assessment: {a, :config})
+      |> Repo.get(submission_id)
+
+    is_grading_auto_published = submission.assessment.config.is_grading_auto_published
+
     with {:answer_found?, true} <- {:answer_found?, is_map(answer)},
          {:status, true} <-
            {:status, answer.submission.status == :submitted or is_own_submission},
          {:valid, changeset = %Ecto.Changeset{valid?: true}} <-
            {:valid, Answer.grading_changeset(answer, attrs)},
          {:ok, _} <- Repo.update(changeset) do
+      update_xp_bonus(submission)
+
+      if is_grading_auto_published and is_fully_graded?(submission_id) do
+        publish_grading(submission_id, cr)
+      end
+
       {:ok, nil}
     else
       {:answer_found?, false} ->

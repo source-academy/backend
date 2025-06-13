@@ -120,32 +120,38 @@ defmodule CadetWeb.UserControllerTest do
           %{
             "type" => "test type 1",
             "displayInDashboard" => true,
+            "isMinigame" => false,
             "isManuallyGraded" => true,
             "assessmentConfigId" => config1.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
             "hasVotingFeatures" => false,
-            "hasTokenCounter" => false
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           },
           %{
             "type" => "test type 2",
             "displayInDashboard" => true,
+            "isMinigame" => false,
             "isManuallyGraded" => true,
             "assessmentConfigId" => config2.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
             "hasVotingFeatures" => false,
-            "hasTokenCounter" => false
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           },
           %{
             "type" => "test type 3",
             "displayInDashboard" => true,
+            "isMinigame" => false,
             "isManuallyGraded" => true,
             "assessmentConfigId" => config3.id,
             "earlySubmissionXp" => 200,
             "hoursBeforeEarlyXpDecay" => 48,
             "hasVotingFeatures" => false,
-            "hasTokenCounter" => false
+            "hasTokenCounter" => false,
+            "isGradingAutoPublished" => false
           }
         ]
       }

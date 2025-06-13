@@ -44,7 +44,12 @@ defmodule Cadet.Auth.Providers.ADFSTest do
   describe "authorise" do
     test "using a valid code" do
       use_cassette "adfs/authorise#1", custom: true do
-        assert {:ok, _} = ADFS.authorise(@config, @code, @client_id, @redirect_uri)
+        assert {:ok, _} =
+                 ADFS.authorise(@config, %{
+                   code: @code,
+                   client_id: @client_id,
+                   redirect_uri: @redirect_uri
+                 })
       end
     end
 
@@ -52,7 +57,11 @@ defmodule Cadet.Auth.Providers.ADFSTest do
       use_cassette "adfs/authorise#2", custom: true do
         assert {:error, :upstream,
                 "Status code 400 from ADFS: {\"error\":\"invalid_grant\",\"error_description\":\"MSIS9612: The authorization code received in \\u0027code\\u0027 parameter is invalid. \"}"} =
-                 ADFS.authorise(@config, @code <> "_invalid", @client_id, @redirect_uri)
+                 ADFS.authorise(@config, %{
+                   code: @code <> "_invalid",
+                   client_id: @client_id,
+                   redirect_uri: @redirect_uri
+                 })
       end
     end
 
@@ -60,7 +69,11 @@ defmodule Cadet.Auth.Providers.ADFSTest do
       use_cassette "adfs/authorise#3", custom: true do
         assert {:error, :upstream,
                 "Status code 400 from ADFS: {\"error\":\"invalid_request\",\"error_description\":\"MSIS9609: The \\u0027redirect_uri\\u0027 parameter is invalid. No redirect uri with the specified value is registered for the received \\u0027client_id\\u0027. \"}"} =
-                 ADFS.authorise(@config, @code, @client_id, @redirect_uri <> "_invalid")
+                 ADFS.authorise(@config, %{
+                   code: @code,
+                   client_id: @client_id,
+                   redirect_uri: @redirect_uri <> "_invalid"
+                 })
       end
     end
 
@@ -68,7 +81,11 @@ defmodule Cadet.Auth.Providers.ADFSTest do
       use_cassette "adfs/authorise#4", custom: true do
         assert {:error, :upstream,
                 "Status code 400 from ADFS: {\"error\":\"invalid_client\",\"error_description\":\"MSIS9607: The \\u0027client_id\\u0027 parameter in the request is invalid. No registered client is found with this identifier.\"}"} =
-                 ADFS.authorise(@config, @code, @client_id <> "_invalid", @redirect_uri)
+                 ADFS.authorise(@config, %{
+                   code: @code,
+                   client_id: @client_id <> "_invalid",
+                   redirect_uri: @redirect_uri
+                 })
       end
     end
 
@@ -76,21 +93,33 @@ defmodule Cadet.Auth.Providers.ADFSTest do
       use_cassette "adfs/authorise#5", custom: true do
         assert {:error, :upstream,
                 "Status code 500 from ADFS: {\"error\":\"invalid_client\",\"error_description\":\"boom.\"}"} =
-                 ADFS.authorise(@config, @code, @client_id, @redirect_uri)
+                 ADFS.authorise(@config, %{
+                   code: @code,
+                   client_id: @client_id,
+                   redirect_uri: @redirect_uri
+                 })
       end
     end
 
     test "no username in token from upstream" do
       use_cassette "adfs/authorise#6", custom: true do
         assert {:error, :invalid_credentials, "Could not retrieve username from token"} =
-                 ADFS.authorise(@config, @code, @client_id, @redirect_uri)
+                 ADFS.authorise(@config, %{
+                   code: @code,
+                   client_id: @client_id,
+                   redirect_uri: @redirect_uri
+                 })
       end
     end
 
     test "expired token from upstream" do
       use_cassette "adfs/authorise#7", custom: true do
         assert {:error, :invalid_credentials, "Failed to verify token claims (token expired?)"} =
-                 ADFS.authorise(@config, @code, @client_id, @redirect_uri)
+                 ADFS.authorise(@config, %{
+                   code: @code,
+                   client_id: @client_id,
+                   redirect_uri: @redirect_uri
+                 })
       end
     end
   end

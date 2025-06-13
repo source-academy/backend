@@ -8,7 +8,9 @@ defmodule Cadet.Autograder.Utilities do
 
   import Ecto.Query
 
-  alias Cadet.Accounts.CourseRegistration
+  alias Cadet.Accounts.{CourseRegistration, TeamMember}
+
+  alias Cadet.Assessments
   alias Cadet.Assessments.{Answer, Assessment, Question, Submission}
 
   def dispatch_programming_answer(
@@ -33,7 +35,37 @@ defmodule Cadet.Autograder.Utilities do
     })
   end
 
-  def fetch_submissions(assessment_id, course_id) when is_ecto_id(assessment_id) do
+  def fetch_submissions(assessment_id, course_id)
+      when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
+    if Assessments.is_team_assessment?(assessment_id) do
+      fetch_team_submissions(assessment_id, course_id)
+    else
+      fetch_student_submissions(assessment_id, course_id)
+    end
+  end
+
+  defp fetch_team_submissions(assessment_id, course_id)
+       when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
+    CourseRegistration
+    |> where(role: "student", course_id: ^course_id)
+    |> join(
+      :left,
+      [cr],
+      tm in TeamMember,
+      on: cr.id == tm.student_id
+    )
+    |> join(
+      :left,
+      [cr, tm],
+      s in Submission,
+      on: tm.team_id == s.team_id and s.assessment_id == ^assessment_id
+    )
+    |> select([cr, tm, s], %{student_id: cr.id, submission: s})
+    |> Repo.all()
+  end
+
+  defp fetch_student_submissions(assessment_id, course_id)
+       when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
     CourseRegistration
     |> where(role: "student", course_id: ^course_id)
     |> join(

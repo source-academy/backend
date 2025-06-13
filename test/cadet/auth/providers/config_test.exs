@@ -22,11 +22,11 @@ defmodule Cadet.Auth.Providers.ConfigTest do
   describe "authorise" do
     test "successfully" do
       assert {:ok, %{token: @token, username: @username}} =
-               Config.authorise(@config, @code, nil, nil)
+               Config.authorise(@config, %{code: @code})
     end
 
     test "with wrong code" do
-      assert {:error, _, _} = Config.authorise(@config, @code <> "dflajhdfs", nil, nil)
+      assert {:error, _, _} = Config.authorise(@config, %{code: @code <> "dflajhdfs"})
     end
   end
 

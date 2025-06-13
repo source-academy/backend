@@ -16,6 +16,10 @@ defmodule CadetWeb.Router do
     plug(Guardian.Plug.EnsureAuthenticated)
   end
 
+  pipeline :rate_limit do
+    plug(CadetWeb.Plugs.RateLimiter)
+  end
+
   pipeline :course do
     plug(:assign_course)
   end
@@ -24,8 +28,16 @@ defmodule CadetWeb.Router do
     plug(:ensure_role, [:staff, :admin])
   end
 
+  pipeline :ensure_admin do
+    plug(:ensure_role, [:admin])
+  end
+
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
+  end
+
+  scope "/sso" do
+    forward("/", Samly.Router)
   end
 
   # V2 API
@@ -38,6 +50,7 @@ defmodule CadetWeb.Router do
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
+    get("/auth/saml_redirect", AuthController, :saml_redirect)
   end
 
   scope "/v2", CadetWeb do
@@ -64,8 +77,14 @@ defmodule CadetWeb.Router do
     post("/devices/:id", DevicesController, :edit)
     delete("/devices/:id", DevicesController, :deregister)
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
+  end
 
-    post("/chat", ChatController, :chat)
+  # LLM-related endpoints
+  scope "/v2/chats", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :rate_limit])
+
+    post("", ChatController, :init_chat)
+    post("/:conversationId/message", ChatController, :chat)
   end
 
   # Authenticated Pages with course
@@ -104,11 +123,18 @@ defmodule CadetWeb.Router do
     get("/team/:assessmentid", TeamController, :index)
   end
 
-  # Admin pages
-  scope "/v2/courses/:course_id/admin", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
+  # Admin pages (Access: Course administrators only - these routes can cause substantial damage)
+  @doc """
+    NOTE: This scope must come before the routes for all staff below.
 
-    resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
+    This is due to the all-staff route "/grading/:submissionid/:questionid", which would pattern match
+    and overshadow "/grading/:assessmentid/publish_all_grades".
+
+    If an admin route will overshadow an all-staff route as well, a suggested better solution would be a
+    per-route permission level check.
+  """
+  scope "/v2/courses/:course_id/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin])
 
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
@@ -117,6 +143,41 @@ defmodule CadetWeb.Router do
     post("/assessments", AdminAssessmentsController, :create)
     post("/assessments/:assessmentid", AdminAssessmentsController, :update)
     delete("/assessments/:assessmentid", AdminAssessmentsController, :delete)
+
+    get("/grading/all_submissions", AdminGradingController, :index_all_submissions)
+
+    post(
+      "/grading/:assessmentid/publish_all_grades",
+      AdminGradingController,
+      :publish_all_grades
+    )
+
+    post(
+      "/grading/:assessmentid/unpublish_all_grades",
+      AdminGradingController,
+      :unpublish_all_grades
+    )
+
+    put("/users/:course_reg_id/role", AdminUserController, :update_role)
+    delete("/users/:course_reg_id", AdminUserController, :delete_user)
+
+    put("/config", AdminCoursesController, :update_course_config)
+    # TODO: Missing corresponding Swagger path entry
+    get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
+    put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
+    # TODO: Missing corresponding Swagger path entry
+    delete(
+      "/config/assessment_config/:assessment_config_id",
+      AdminCoursesController,
+      :delete_assessment_config
+    )
+  end
+
+  # Admin pages (Access: All staff)
+  scope "/v2/courses/:course_id/admin", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
+
+    resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
     get(
       "/assessments/:assessmentid/popularVoteLeaderboard",
@@ -132,14 +193,6 @@ defmodule CadetWeb.Router do
 
     get("/grading", AdminGradingController, :index)
     get("/grading/summary", AdminGradingController, :grading_summary)
-
-    post("/grading/:assessmentid/publish_all_grades", AdminGradingController, :publish_all_grades)
-
-    post(
-      "/grading/:assessmentid/unpublish_all_grades",
-      AdminGradingController,
-      :unpublish_all_grades
-    )
 
     get("/grading/:submissionid", AdminGradingController, :show)
     post("/grading/:submissionid/unsubmit", AdminGradingController, :unsubmit)
@@ -169,8 +222,6 @@ defmodule CadetWeb.Router do
 
     # The admin route for getting total xp of a specific user
     get("/users/:course_reg_id/total_xp", AdminUserController, :combined_total_xp)
-    put("/users/:course_reg_id/role", AdminUserController, :update_role)
-    delete("/users/:course_reg_id", AdminUserController, :delete_user)
     get("/users/:course_reg_id/goals", AdminGoalsController, :index_goals_with_progress)
     post("/users/:course_reg_id/goals/:uuid/progress", AdminGoalsController, :update_progress)
 
@@ -186,17 +237,6 @@ defmodule CadetWeb.Router do
     post("/stories", AdminStoriesController, :create)
     delete("/stories/:storyid", AdminStoriesController, :delete)
     post("/stories/:storyid", AdminStoriesController, :update)
-
-    put("/config", AdminCoursesController, :update_course_config)
-    # TODO: Missing corresponding Swagger path entry
-    get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
-    put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
-    # TODO: Missing corresponding Swagger path entry
-    delete(
-      "/config/assessment_config/:assessment_config_id",
-      AdminCoursesController,
-      :delete_assessment_config
-    )
 
     get("/teams", AdminTeamsController, :index)
     post("/teams", AdminTeamsController, :create)

@@ -26,10 +26,77 @@ defmodule CadetWeb.AuthController do
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
 
+    case create_user_and_tokens(%{
+           conn: conn,
+           provider_instance: provider,
+           code: code,
+           client_id: client_id,
+           redirect_uri: redirect_uri
+         }) do
+      {:ok, tokens} ->
+        render(conn, "token.json", tokens)
+
+      conn ->
+        conn
+    end
+  end
+
+  def create(conn, _params) do
+    send_resp(conn, :bad_request, "Missing parameter")
+  end
+
+  @doc """
+  Callback URL which processes a SAML redirect from the Assertion Consumer Service (ACS).
+  """
+  def saml_redirect(
+        conn,
+        %{
+          "provider" => provider
+        }
+      ) do
+    case create_user_and_tokens(%{
+           conn: conn,
+           provider_instance: provider,
+           code: nil,
+           client_id: nil,
+           redirect_uri: nil
+         }) do
+      {:ok, tokens} ->
+        {_provider, %{client_redirect_url: client_redirect_url}} =
+          Application.get_env(:cadet, :identity_providers, %{})[provider]
+
+        encoded_tokens = tokens |> Jason.encode!()
+
+        conn
+        |> put_resp_cookie("jwts", encoded_tokens,
+          domain: URI.new!(client_redirect_url).host,
+          http_only: false
+        )
+        |> put_resp_header("location", URI.encode(client_redirect_url))
+        |> send_resp(302, "")
+        |> halt()
+
+      conn ->
+        conn
+    end
+  end
+
+  def saml_redirect(conn, _params) do
+    send_resp(conn, :bad_request, "Missing parameter")
+  end
+
+  @spec create_user_and_tokens(Provider.authorise_params()) ::
+          {:ok, %{access_token: String.t(), refresh_token: String.t()}} | Plug.Conn.t()
+  defp create_user_and_tokens(
+         params = %{
+           conn: conn,
+           provider_instance: provider
+         }
+       ) do
     with {:authorise, {:ok, %{token: token, username: username}}} <-
-           {:authorise, Provider.authorise(provider, code, client_id, redirect_uri)},
+           {:authorise, Provider.authorise(params)},
          {:signin, {:ok, user}} <- {:signin, Accounts.sign_in(username, token, provider)} do
-      render(conn, "token.json", generate_tokens(user))
+      {:ok, generate_tokens(user)}
     else
       {:authorise, {:error, :upstream, reason}} ->
         conn
@@ -47,15 +114,11 @@ defmodule CadetWeb.AuthController do
         |> text("Unknown error: #{reason}")
 
       {:signin, {:error, status, reason}} ->
-        # reason can be :bad_request or :internal_server_error
+        # status can be :bad_request or :internal_server_error
         conn
         |> put_status(status)
         |> text("Unable to retrieve user: #{reason}")
     end
-  end
-
-  def create(conn, _params) do
-    send_resp(conn, :bad_request, "Missing parameter")
   end
 
   @doc """
@@ -166,6 +229,16 @@ defmodule CadetWeb.AuthController do
     response(200, "OK")
     response(400, "Missing parameter(s)")
     response(401, "Invalid token")
+  end
+
+  swagger_path :saml_redirect do
+    get("/auth/saml_redirect")
+
+    summary(
+      "SAML redirect endpoint after Assertion Consumer Service validation. Generates JWT tokens before redirecting again to the frontend."
+    )
+
+    response(302, "Found")
   end
 
   def swagger_definitions do

@@ -1,9 +1,6 @@
 defmodule CadetWeb.AssessmentsView do
   use CadetWeb, :view
   use Timex
-  import Ecto.Query
-  alias Cadet.Assessments.{Question, SubmissionVotes}
-  alias Cadet.Repo
 
   import CadetWeb.AssessmentsHelpers
 
@@ -37,7 +34,8 @@ defmodule CadetWeb.AssessmentsView do
       maxTeamSize: :max_team_size,
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter,
-      isVotingPublished: &is_voting_assigned(&1.id)
+      isVotingPublished: :is_voting_published,
+      hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay
     })
   end
 
@@ -55,6 +53,7 @@ defmodule CadetWeb.AssessmentsView do
         longSummary: :summary_long,
         hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
+        isMinigame: & &1.config.is_minigame,
         questions:
           &Enum.map(&1.questions, fn question ->
             map =
@@ -86,17 +85,4 @@ defmodule CadetWeb.AssessmentsView do
   defp password_protected?(nil), do: false
 
   defp password_protected?(_), do: true
-
-  defp is_voting_assigned(assessment_id) do
-    voting_assigned_question_ids =
-      SubmissionVotes
-      |> select([v], v.question_id)
-      |> Repo.all()
-
-    Question
-    |> where(type: :voting)
-    |> where(assessment_id: ^assessment_id)
-    |> where([q], q.id in ^voting_assigned_question_ids)
-    |> Repo.exists?()
-  end
 end
