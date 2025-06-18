@@ -99,7 +99,8 @@ defmodule Cadet.Logger.CloudWatchLogger do
   defp init(config, state) do
     level = Keyword.get(config, :level)
     format = Logger.Formatter.compile(Keyword.get(config, :format))
-    metadata = Keyword.get(config, :metadata, []) |> configure_metadata()
+    raw_metadata = Keyword.get(config, :metadata, [])
+    metadata = configure_metadata(raw_metadata)
     log_group = Keyword.get(config, :log_group, "cadet-logs")
     log_stream = Keyword.get(config, :log_stream, "#{node()}-#{:os.system_time(:second)}")
 
