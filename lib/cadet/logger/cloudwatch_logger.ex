@@ -33,7 +33,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
 
     if meet_level?(level, state.level) do
       formatted_msg = Logger.Formatter.format(format, level, msg, ts, take_metadata(md, metadata))
-      spawn(fn -> send_to_cloudwatch(formatted_msg, state) end)
+      send_to_cloudwatch_async(formatted_msg, state)
     end
 
     {:ok, state}
@@ -56,44 +56,76 @@ defmodule Cadet.Logger.CloudWatchLogger do
     Logger.compare_levels(lvl, min) != :lt
   end
 
+  defp send_to_cloudwatch_async(msg, state) do
+    Task.start(fn -> send_to_cloudwatch(msg, state) end)
+  end
+
   defp send_to_cloudwatch(msg, state) do
     %{log_group: log_group, log_stream: log_stream} = state
 
     # Ensure that the already have ExAws authentication configured
-    if :ets.whereis(ExAws.Config.AuthCache) != :undefined do
-      # The headers and body structure can be found in the AWS API documentation:
-      # https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html
-      operation = %ExAws.Operation.JSON{
-        http_method: :post,
-        service: :logs,
-        headers: [
-          {"x-amz-target", "Logs_20140328.PutLogEvents"},
-          {"content-type", "application/x-amz-json-1.1"}
-        ],
-        data: %{
-          "logGroupName" => log_group,
-          "logStreamName" => log_stream,
-          "logEvents" => [
-            %{
-              "timestamp" => :os.system_time(:millisecond),
-              "message" => msg
-            }
-          ]
-        }
-      }
+    with :ok <- check_exaws_config() do
+      operation = build_log_operation(msg, state)
 
       operation
-      |> ExAws.request()
-      |> case do
-        {:ok, _response} ->
-          :ok
-
-        {:error, reason} ->
-          Logger.error("Failed to send log to CloudWatch: #{inspect(reason)}")
-      end
-    else
-      Logger.error("ExAws.Config.AuthCache is not available. Cannot send logs to CloudWatch.")
+      |> send_with_retry()
     end
+  end
+
+  defp build_log_operation(msg, state) do
+    %{log_group: log_group, log_stream: log_stream} = state
+
+    # The headers and body structure can be found in the AWS API documentation:
+    # https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html
+    %ExAws.Operation.JSON{
+      http_method: :post,
+      service: :logs,
+      headers: [
+        {"x-amz-target", "Logs_20140328.PutLogEvents"},
+        {"content-type", "application/x-amz-json-1.1"}
+      ],
+      data: %{
+        "logGroupName" => log_group,
+        "logStreamName" => log_stream,
+        "logEvents" => [
+          %{
+            "timestamp" => :os.system_time(:millisecond),
+            "message" => msg
+          }
+        ]
+      }
+    }
+  end
+
+  defp check_exaws_config do
+    if :ets.whereis(ExAws.Config.AuthCache) == :undefined do
+      Logger.error(
+        "ExAws.Config.AuthCache is not available. Please ensure ExAws is properly configured."
+      )
+
+      :error
+    else
+      :ok
+    end
+  end
+
+  defp send_with_retry(operation, retries \\ 3)
+
+  defp send_with_retry(operation, retries) when retries > 0 do
+    case ExAws.request(operation) do
+      {:ok, _response} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to send log to CloudWatch: #{inspect(reason)}. Retrying...")
+        # Wait before retrying
+        :timer.sleep(500)
+        send_with_retry(operation, retries - 1)
+    end
+  end
+
+  defp send_with_retry(_, 0) do
+    Logger.error("Failed to send log to CloudWatch after multiple retries.")
   end
 
   defp init(config, state) do
@@ -134,10 +166,11 @@ defmodule Cadet.Logger.CloudWatchLogger do
     Application.get_env(:logger, __MODULE__, Application.get_env(:logger, :cloudwatch_logger, []))
   end
 
-  @doc """
+  """
   Merges the given options with the existing environment configuration.
   If a key exists in both, the value from `options` will take precedence.
   """
+
   defp configure_merge(env, options) do
     Keyword.merge(env, options, fn
       _, _v1, v2 -> v2
