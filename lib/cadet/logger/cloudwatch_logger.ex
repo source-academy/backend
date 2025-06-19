@@ -8,7 +8,12 @@ defmodule Cadet.Logger.CloudWatchLogger do
   @behaviour :gen_event
   require Logger
 
-  defstruct [:level, :format, :metadata, :log_group, :log_stream]
+  defstruct [:level, :format, :metadata, :log_group, :log_stream, :buffer, :timer_ref]
+
+  @max_buffer_size 1000
+  @max_retries 3
+  @retry_delay 500
+  @flush_interval 5000
 
   @impl true
   def init({__MODULE__, opts}) when is_list(opts) do
@@ -29,14 +34,62 @@ defmodule Cadet.Logger.CloudWatchLogger do
 
   @impl true
   def handle_event({level, _gl, {Logger, msg, ts, md}}, state) do
-    %{format: format, metadata: metadata} = state
+    %{
+      format: format,
+      metadata: metadata,
+      buffer: buffer,
+      log_stream: log_stream,
+      log_group: log_group
+    } = state
 
     if meet_level?(level, state.level) do
       formatted_msg = Logger.Formatter.format(format, level, msg, ts, take_metadata(md, metadata))
-      send_to_cloudwatch_async(formatted_msg, state)
-    end
+      timestamp = timestamp_from_logger_ts(ts)
 
-    {:ok, state}
+      log_event = %{
+        "timestamp" => timestamp,
+        "message" => IO.chardata_to_string(formatted_msg)
+      }
+
+      new_buffer = [log_event | buffer]
+
+      new_buffer =
+        if length(new_buffer) >= @max_buffer_size do
+          flush_buffer_async(log_stream, log_group, new_buffer)
+          []
+        else
+          new_buffer
+        end
+
+      {:ok, %{state | buffer: new_buffer}}
+    else
+      {:ok, state}
+    end
+  end
+
+  @impl true
+  def handle_info(:flush_buffer, state) do
+    %{buffer: buffer, timer_ref: timer_ref, log_stream: log_stream, log_group: log_group} = state
+
+    new_state =
+      if length(buffer) > 0 do
+        flush_buffer_sync(log_stream, log_group, buffer)
+        %{state | buffer: []}
+      else
+        state
+      end
+
+    new_timer_ref = schedule_flush(@flush_interval)
+    {:ok, %{new_state | timer_ref: new_timer_ref}}
+  end
+
+  @impl true
+  def terminate(_reason, state) do
+    %{log_stream: log_stream, log_group: log_group, buffer: buffer, timer_ref: timer_ref} = state
+
+    if timer_ref, do: Process.cancel_timer(timer_ref)
+    flush_buffer_sync(log_stream, log_group, buffer)
+    :ok
   end
 
   def handle_event(_, state), do: {:ok, state}
@@ -56,25 +109,33 @@ defmodule Cadet.Logger.CloudWatchLogger do
     Logger.compare_levels(lvl, min) != :lt
   end
 
-  defp send_to_cloudwatch_async(msg, state) do
-    Task.start(fn -> send_to_cloudwatch(msg, state) end)
+  defp flush_buffer_async(log_stream, log_group, buffer) do
+    if length(buffer) > 0 do
+      Task.start(fn -> send_to_cloudwatch(log_stream, log_group, buffer) end)
+    end
   end
 
-  defp send_to_cloudwatch(msg, state) do
-    %{log_group: log_group, log_stream: log_stream} = state
+  defp flush_buffer_sync(log_stream, log_group, buffer) do
+    if length(buffer) > 0 do
+      send_to_cloudwatch(log_stream, log_group, buffer)
+    end
+  end
 
+  defp schedule_flush(interval) do
+    Process.send_after(self(), :flush_buffer, interval)
+  end
+
+  defp send_to_cloudwatch(log_stream, log_group, buffer) do
     # Ensure that the already have ExAws authentication configured
     with :ok <- check_exaws_config() do
-      operation = build_log_operation(msg, state)
+      operation = build_log_operation(log_stream, log_group, buffer)
 
       operation
       |> send_with_retry()
     end
   end
 
-  defp build_log_operation(msg, state) do
-    %{log_group: log_group, log_stream: log_stream} = state
-
+  defp build_log_operation(log_stream, log_group, buffer) do
     # The headers and body structure can be found in the AWS API documentation:
     # https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_PutLogEvents.html
     %ExAws.Operation.JSON{
@@ -87,12 +148,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
       data: %{
         "logGroupName" => log_group,
         "logStreamName" => log_stream,
-        "logEvents" => [
-          %{
-            "timestamp" => :os.system_time(:millisecond),
-            "message" => msg
-          }
-        ]
+        "logEvents" => Enum.reverse(buffer)
       }
     }
   end
@@ -109,7 +165,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
     end
   end
 
-  defp send_with_retry(operation, retries \\ 3)
+  defp send_with_retry(operation, retries \\ @max_retries)
 
   defp send_with_retry(operation, retries) when retries > 0 do
     case ExAws.request(operation) do
@@ -119,7 +175,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
       {:error, reason} ->
         Logger.error("Failed to send log to CloudWatch: #{inspect(reason)}. Retrying...")
         # Wait before retrying
-        :timer.sleep(500)
+        :timer.sleep(@retry_delay)
         send_with_retry(operation, retries - 1)
     end
   end
@@ -135,6 +191,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
     metadata = configure_metadata(raw_metadata)
     log_group = Keyword.get(config, :log_group, "cadet-logs")
     log_stream = Keyword.get(config, :log_stream, "#{node()}-#{:os.system_time(:second)}")
+    timer_ref = schedule_flush(@flush_interval)
 
     %{
       state
@@ -142,7 +199,9 @@ defmodule Cadet.Logger.CloudWatchLogger do
         format: format,
         metadata: metadata,
         log_group: log_group,
-        log_stream: log_stream
+        log_stream: log_stream,
+        buffer: [],
+        timer_ref: timer_ref
     }
   end
 
@@ -160,6 +219,24 @@ defmodule Cadet.Logger.CloudWatchLogger do
         :error -> acc
       end
     end)
+  end
+
+  defp timestamp_from_logger_ts({{year, month, day}, {hour, minute, second, microsecond}}) do
+    datetime = %DateTime{
+      year: year,
+      month: month,
+      day: day,
+      hour: hour,
+      minute: minute,
+      second: second,
+      microsecond: {microsecond, 6},
+      time_zone: "Etc/UTC",
+      zone_abbr: "UTC",
+      utc_offset: 0,
+      std_offset: 0
+    }
+
+    DateTime.to_unix(datetime, :millisecond)
   end
 
   defp read_env do
