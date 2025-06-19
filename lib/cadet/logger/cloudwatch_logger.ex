@@ -134,9 +134,12 @@ defmodule Cadet.Logger.CloudWatchLogger do
     Application.get_env(:logger, __MODULE__, Application.get_env(:logger, :cloudwatch_logger, []))
   end
 
+  @doc """
+  Merges the given options with the existing environment configuration.
+  If a key exists in both, the value from `options` will take precedence.
+  """
   defp configure_merge(env, options) do
     Keyword.merge(env, options, fn
-      :colors, v1, v2 -> Keyword.merge(v1, v2)
       _, _v1, v2 -> v2
     end)
   end
