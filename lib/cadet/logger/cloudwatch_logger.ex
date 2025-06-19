@@ -42,7 +42,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
       log_group: log_group
     } = state
 
-    if meet_level?(level, state.level) do
+    if meet_level?(level, state.level) and not meet_cloudwatch_error?(msg) do
       formatted_msg = Logger.Formatter.format(format, level, msg, ts, take_metadata(md, metadata))
       timestamp = timestamp_from_logger_ts(ts)
 
@@ -109,6 +109,14 @@ defmodule Cadet.Logger.CloudWatchLogger do
     Logger.compare_levels(lvl, min) != :lt
   end
 
+  defp meet_cloudwatch_error?(msg) when is_binary(msg) do
+    String.starts_with?(msg, "Failed to send log to CloudWatch")
+  end
+
+  defp meet_cloudwatch_error?(_) do
+    false
+  end
+
   defp flush_buffer_async(log_stream, log_group, buffer) do
     if length(buffer) > 0 do
       Task.start(fn -> send_to_cloudwatch(log_stream, log_group, buffer) end)
@@ -154,14 +162,29 @@ defmodule Cadet.Logger.CloudWatchLogger do
   end
 
   defp check_exaws_config do
-    if :ets.whereis(ExAws.Config.AuthCache) == :undefined do
-      Logger.error(
-        "ExAws.Config.AuthCache is not available. Please ensure ExAws is properly configured."
-      )
+    id = System.get_env("AWS_ACCESS_KEY_ID")
+    secret = System.get_env("AWS_SECRET_ACCESS_KEY")
+    region = Application.get_env(:ex_aws, :region) || System.get_env("AWS_REGION")
 
-      :error
-    else
-      :ok
+    cond do
+      is_nil(id) or id == "" or is_nil(secret) or secret == "" ->
+        Logger.error(
+          "Failed to send log to CloudWatch. AWS credentials missing. Ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set.
+        "
+        )
+
+        :error
+
+      region in [nil, ""] ->
+        Logger.error(
+          "Failed to send log to CloudWatch. AWS region not configured. Set AWS_REGION or :region under :ex_aws in config.
+        "
+        )
+
+        :error
+
+      true ->
+        :ok
     end
   end
 
