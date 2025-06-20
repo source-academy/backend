@@ -71,6 +71,8 @@ defmodule Cadet.Logger.CloudWatchLogger do
   def handle_info(:flush_buffer, state) do
     %{buffer: buffer, timer_ref: timer_ref, log_stream: log_stream, log_group: log_group} = state
 
+    if timer_ref, do: Process.cancel_timer(timer_ref)
+
     new_state =
       if length(buffer) > 0 do
         flush_buffer_sync(log_stream, log_group, buffer)
