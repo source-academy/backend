@@ -114,6 +114,10 @@ defmodule CadetWeb.UserControllerTest do
           "sourceChapter" => 1,
           "sourceVariant" => "default",
           "viewable" => true,
+          "enableContestLeaderboard" => true,
+          "enableOverallLeaderboard" => true,
+          "topLeaderboardDisplay" => 100,
+          "topContestLeaderboardDisplay" => 10,
           "assetsPrefix" => Courses.assets_prefix(course)
         },
         "assessmentConfigurations" => [
@@ -328,6 +332,10 @@ defmodule CadetWeb.UserControllerTest do
           "sourceChapter" => 1,
           "sourceVariant" => "default",
           "viewable" => true,
+          "enableContestLeaderboard" => true,
+          "enableOverallLeaderboard" => true,
+          "topLeaderboardDisplay" => 100,
+          "topContestLeaderboardDisplay" => 10,
           "assetsPrefix" => Courses.assets_prefix(course)
         },
         "assessmentConfigurations" => []
