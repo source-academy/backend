@@ -5,7 +5,7 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
-  alias Cadet.Accounts.CourseRegistrations
+  alias Cadet.Accounts.{CourseRegistrations, Pages}
 
   alias Cadet.{Accounts, Assessments}
 
@@ -119,6 +119,24 @@ defmodule CadetWeb.UserController do
 
     total_xp = Assessments.user_total_xp(course_id, user_id, course_reg_id)
     json(conn, %{totalXp: total_xp})
+  end
+
+  def update_time_spent(conn, %{"path" => site_path, "time" => time_spent}) do
+    course_registration_id = conn.assigns.course_reg.id
+
+    case Pages.upsert_time_spent_by_course_registration(
+           course_registration_id,
+           site_path,
+           time_spent
+         ) do
+      {:ok, %{}} ->
+        text(conn, "OK")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
   end
 
   swagger_path :index do
