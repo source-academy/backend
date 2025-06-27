@@ -79,7 +79,8 @@ defmodule CadetWeb.AssessmentsView do
       %{
         student_name: :student_name,
         answer: & &1.answer["code"],
-        final_score: "final_score"
+        final_score: "final_score",
+        rank: :rank
       }
     )
   end
