@@ -82,12 +82,12 @@ defmodule CadetWeb.Router do
   end
 
   # LLM-related endpoints
-  scope "/v2/chats", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :rate_limit])
+  # scope "/v2/chats", CadetWeb do
+  #   pipe_through([:api, :auth, :ensure_auth, :rate_limit])
 
-    post("", ChatController, :init_chat)
-    post("/:conversationId/message", ChatController, :chat)
-  end
+  #   post("", ChatController, :init_chat)
+  #   post("/:conversationId/message", ChatController, :chat)
+  # end
 
   # Authenticated Pages with course
   scope "/v2/courses/:course_id", CadetWeb do
