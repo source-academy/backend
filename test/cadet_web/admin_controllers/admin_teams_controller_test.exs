@@ -28,17 +28,39 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     end
 
     @tag authenticate: :staff
-    test "returns a list of teams", %{conn: conn} do
+    test "returns a list of teams for the specified course only", %{conn: conn} do
       course_id = conn.assigns.course_id
-      team = insert(:team)
-      insert(:team_member, %{team: team})
-      insert(:team_member, %{team: team})
+      course = Repo.get(Course, course_id)
+      assessment = insert(:assessment, %{course: course, max_team_size: 2})
+      team1 = insert(:team, %{assessment: assessment})
+      insert(:team_member, %{team: team1})
+      insert(:team_member, %{team: team1})
+      team2 = insert(:team, %{assessment: assessment})
+      insert(:team_member, %{team: team2})
+      insert(:team_member, %{team: team2})
 
       conn = get(conn, build_url(course_id))
       assert response(conn, 200)
 
-      response_body = conn.resp_body |> Jason.decode!()
-      assert Enum.any?(response_body, fn team_map -> team_map["teamId"] == team.id end)
+      # Insert other random teams to test filtering
+      other_course = insert(:course)
+      other_assessment = insert(:assessment, %{course: other_course, max_team_size: 2})
+      team3 = insert(:team, %{assessment: other_assessment})
+      insert(:team_member, %{team: team3})
+      insert(:team_member, %{team: team3})
+
+      response_body =
+        conn.resp_body
+        |> Jason.decode!()
+        # Sort the teams by teamId for consistent testing
+        |> Enum.sort_by(& &1["teamId"])
+
+      assert is_list(response_body)
+      assert length(response_body) == 2
+      assert response_body |> hd() |> Map.get("teamId") == team1.id
+      assert response_body |> hd() |> Map.get("assessmentId") == assessment.id
+      assert response_body |> tl() |> hd() |> Map.get("teamId") == team2.id
+      assert response_body |> tl() |> hd() |> Map.get("assessmentId") == assessment.id
     end
   end
 
