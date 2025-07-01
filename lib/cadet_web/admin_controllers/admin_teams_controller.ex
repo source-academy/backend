@@ -6,8 +6,10 @@ defmodule CadetWeb.AdminTeamsController do
   alias Cadet.Accounts.{Teams, Team}
 
   def index(conn, %{"course_id" => course_id}) do
+    teams = Teams.all_teams_for_course(course_id)
+
     team_formation_overviews =
-      Teams.all_teams_for_course(course_id)
+      teams
       |> Enum.map(&team_to_team_formation_overview/1)
 
     conn
