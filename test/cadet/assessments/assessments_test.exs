@@ -2223,7 +2223,7 @@ defmodule Cadet.AssessmentsTest do
 
     test "limit submisssions 2", %{
       course_regs: %{avenger1_cr: avenger},
-      assessments: assessments
+      assessments: _assessments
     } do
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{

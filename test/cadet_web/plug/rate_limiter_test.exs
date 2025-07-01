@@ -22,7 +22,7 @@ defmodule CadetWeb.Plugs.RateLimiterTest do
   end
 
   test "rate limit exceeded", %{conn: conn} do
-    key = "user:1"
+    _ = "user:1"
 
     # Simulate exceeding the rate limit
     for _ <- 1..RateLimiter.rate_limit() do
