@@ -13,6 +13,26 @@ defmodule Cadet.Accounts.Teams do
   alias Cadet.Assessments.{Answer, Submission}
 
   @doc """
+  Returns all teams for a given course.
+
+  ## Parameters
+
+    * `course_id` - The ID of the course.
+
+  ## Returns
+
+  Returns a list of teams.
+
+  """
+  def all_teams_for_course(course_id) do
+    Team
+    |> join(:inner, [t], a in assoc(t, :assessment))
+    |> where([t, a], a.course_id == ^course_id)
+    |> Repo.all()
+    |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
+  end
+
+  @doc """
   Creates a new team and assigns an assessment and team members to it.
 
   ## Parameters
