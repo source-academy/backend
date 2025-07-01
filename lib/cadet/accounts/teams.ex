@@ -64,8 +64,6 @@ defmodule Cadet.Accounts.Teams do
 
       true ->
         Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
-          _student_ids = Enum.map(team_attrs, &Map.get(&1, "userId"))
-
           {:ok, team} =
             %Team{}
             |> Team.changeset(attrs)
@@ -105,7 +103,6 @@ defmodule Cadet.Accounts.Teams do
       ids = Enum.map(team, &Map.get(&1, "userId"))
 
       unique_ids_count = ids |> Enum.uniq() |> Enum.count()
-      _all_ids_distinct = unique_ids_count == Enum.count(ids)
 
       student_already_in_team?(-1, ids, assessment_id)
     end)
@@ -229,7 +226,6 @@ defmodule Cadet.Accounts.Teams do
 
   """
   def update_team(team = %Team{}, new_assessment_id, student_ids) do
-    _old_assessment_id = team.assessment_id
     team_id = team.id
     new_student_ids = Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
 
