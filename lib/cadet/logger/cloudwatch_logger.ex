@@ -8,7 +8,15 @@ defmodule Cadet.Logger.CloudWatchLogger do
   @behaviour :gen_event
   require Logger
 
-  defstruct [:level, :format, :metadata, :log_group, :log_stream, :buffer, :timer_ref]
+  defstruct [
+    :level,
+    :format,
+    :metadata,
+    :log_group,
+    :log_stream,
+    :buffer,
+    :timer_ref
+  ]
 
   @max_buffer_size 1000
   @max_retries 3
@@ -196,7 +204,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
   defp send_with_retry(operation, retries \\ @max_retries)
 
   defp send_with_retry(operation, retries) when retries > 0 do
-    case ExAws.request(operation) do
+    case request(operation) do
       {:ok, _response} ->
         :ok
 
@@ -280,5 +288,10 @@ defmodule Cadet.Logger.CloudWatchLogger do
     Keyword.merge(env, options, fn
       _, _v1, v2 -> v2
     end)
+  end
+
+  defp request(operation) do
+    client = Application.get_env(:ex_aws, :ex_aws_mock, ExAws)
+    client.request(operation)
   end
 end
