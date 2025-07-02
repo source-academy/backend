@@ -5,7 +5,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   import Ecto.Query
   import ExUnit.CaptureLog
 
-  alias Cadet.{Assessments, Repo}
+  alias Cadet.Repo
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Test.XMLGenerator

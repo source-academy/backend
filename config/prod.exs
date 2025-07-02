@@ -3,6 +3,17 @@ import Config
 # Do not print debug messages in production
 config :logger, level: :info
 
+# Add the CloudWatch logger backend in production
+config :logger, backends: [:console, {Cadet.Logger.CloudWatchLogger, :cloudwatch_logger}]
+
+# Configure CloudWatch Logger
+config :logger, :cloudwatch_logger,
+  level: :info,
+  format: "$time $metadata[$level] $message\n",
+  metadata: [:request_id],
+  log_group: "cadet-logs",
+  log_stream: "#{node()}-#{:os.system_time(:second)}"
+
 # ## SSL Support
 #
 # To get SSL working, you will need to add the `https` key
