@@ -20,8 +20,9 @@ defmodule Cadet.Logger.CloudWatchLogger do
 
   @max_buffer_size 1000
   @max_retries 3
-  @retry_delay 500
+  @retry_delay 200
   @flush_interval 5000
+  @failed_message "Failed to send log to CloudWatch."
 
   @impl true
   def init({__MODULE__, opts}) when is_list(opts) do
@@ -113,14 +114,19 @@ defmodule Cadet.Logger.CloudWatchLogger do
     init(config, state)
   end
 
+  defp normalize_level(lvl) when lvl in [:warn, :warning], do: :warning
+  defp normalize_level(lvl), do: lvl
+
   defp meet_level?(_lvl, nil), do: true
 
   defp meet_level?(lvl, min) do
+    lvl = normalize_level(lvl)
+    min = normalize_level(min)
     Logger.compare_levels(lvl, min) != :lt
   end
 
   defp meet_cloudwatch_error?(msg) when is_binary(msg) do
-    String.starts_with?(msg, "Failed to send log to CloudWatch")
+    String.contains?(msg, @failed_message)
   end
 
   defp meet_cloudwatch_error?(_) do
@@ -182,16 +188,14 @@ defmodule Cadet.Logger.CloudWatchLogger do
     cond do
       is_nil(id) or id == "" or is_nil(secret) or secret == "" ->
         Logger.error(
-          "Failed to send log to CloudWatch. AWS credentials missing. Ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set.
-        "
+          "#{@failed_message} AWS credentials missing. Ensure AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set or configured in ex_aws."
         )
 
         :error
 
       region in [nil, ""] ->
         Logger.error(
-          "Failed to send log to CloudWatch. AWS region not configured. Set AWS_REGION or :region under :ex_aws in config.
-        "
+          "#{@failed_message} AWS region not configured. Ensure AWS_REGION is set or configured in ex_aws."
         )
 
         :error
@@ -209,7 +213,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
         :ok
 
       {:error, reason} ->
-        Logger.error("Failed to send log to CloudWatch: #{inspect(reason)}. Retrying...")
+        Logger.error("#{@failed_message} #{inspect(reason)}. Retrying...")
         # Wait before retrying
         :timer.sleep(@retry_delay)
         send_with_retry(operation, retries - 1)
@@ -217,7 +221,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
   end
 
   defp send_with_retry(_, 0) do
-    Logger.error("Failed to send log to CloudWatch after multiple retries.")
+    Logger.error("#{@failed_message} After multiple retries.")
   end
 
   defp init(config, state) do
