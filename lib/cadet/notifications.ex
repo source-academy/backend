@@ -276,15 +276,15 @@ defmodule Cadet.Notifications do
     |> Repo.insert()
   end
 
-  @doc """
-  Returns the list of sent_notifications.
+  # @doc """
+  # Returns the list of sent_notifications.
 
-  ## Examples
+  # ## Examples
 
-      iex> list_sent_notifications()
-      [%SentNotification{}, ...]
+  #    iex> list_sent_notifications()
+  #    [%SentNotification{}, ...]
 
-  """
+  # """
 
   # def list_sent_notifications do
   #   Repo.all(SentNotification)

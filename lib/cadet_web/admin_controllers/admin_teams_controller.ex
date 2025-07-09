@@ -5,11 +5,8 @@ defmodule CadetWeb.AdminTeamsController do
 
   alias Cadet.Accounts.{Teams, Team}
 
-  def index(conn, _params) do
-    teams =
-      Team
-      |> Repo.all()
-      |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
+  def index(conn, %{"course_id" => course_id}) do
+    teams = Teams.all_teams_for_course(course_id)
 
     team_formation_overviews =
       teams

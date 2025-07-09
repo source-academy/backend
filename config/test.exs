@@ -9,7 +9,7 @@ config :cadet, CadetWeb.Endpoint,
 config :cadet, environment: :test
 
 # Print only warnings and errors during test
-config :logger, level: :warn, compile_time_purge_matching: [[level_lower_than: :warn]]
+config :logger, level: :warning, compile_time_purge_matching: [[level_lower_than: :warning]]
 
 config :ex_aws,
   access_key_id: "hello",
