@@ -12,7 +12,7 @@ defmodule CadetWeb.AdminStoriesController do
 
     case result do
       {:ok, _story} ->
-        conn |> put_status(200) |> text("")
+        conn |> put_status(200) |> text('')
 
       {:error, {status, message}} ->
         conn
@@ -29,7 +29,7 @@ defmodule CadetWeb.AdminStoriesController do
 
     case result do
       {:ok, _story} ->
-        conn |> put_status(200) |> text("")
+        conn |> put_status(200) |> text('')
 
       {:error, {status, message}} ->
         conn
@@ -43,7 +43,7 @@ defmodule CadetWeb.AdminStoriesController do
 
     case result do
       {:ok, _nil} ->
-        conn |> put_status(204) |> text("")
+        conn |> put_status(204) |> text('')
 
       {:error, {status, message}} ->
         conn

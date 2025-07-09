@@ -2223,7 +2223,7 @@ defmodule Cadet.AssessmentsTest do
 
     test "limit submisssions 2", %{
       course_regs: %{avenger1_cr: avenger},
-      assessments: _assessments
+      assessments: assessments
     } do
       {_, res} =
         Assessments.submissions_by_grader_for_index(avenger, %{
@@ -3142,7 +3142,7 @@ defmodule Cadet.AssessmentsTest do
 
   defp expected_top_relative_scores(top_x, token_divider) do
     # "return 0;" in the factory has 3 token
-    10..0//-1
+    10..0
     |> Enum.to_list()
     |> Enum.map(fn score -> 10 * score - :math.pow(2, 3 / token_divider) end)
     |> Enum.take(top_x)

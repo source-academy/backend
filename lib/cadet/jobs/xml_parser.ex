@@ -34,7 +34,7 @@ defmodule Cadet.Updater.XMLParser do
       :ok
     else
       {:error, stage, %{errors: [assessment: {"has submissions", []}]}, _} when is_atom(stage) ->
-        Logger.warning("Assessment has submissions, ignoring...")
+        Logger.warn("Assessment has submissions, ignoring...")
         {:ok, "Assessment has submissions, ignoring..."}
 
       {:error, error_message} ->
