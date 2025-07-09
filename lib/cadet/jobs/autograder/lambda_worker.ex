@@ -21,7 +21,7 @@ defmodule Cadet.Autograder.LambdaWorker do
     lambda_params = build_request_params(params)
 
     if Enum.empty?(lambda_params.testcases) do
-      Logger.warn("No testcases found. Skipping autograding for answer_id: #{answer.id}")
+      Logger.warning("No testcases found. Skipping autograding for answer_id: #{answer.id}")
       # Fix for https://github.com/source-academy/backend/issues/472
       Process.sleep(1000)
     else
