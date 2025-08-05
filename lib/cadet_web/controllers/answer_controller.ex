@@ -38,6 +38,10 @@ defmodule CadetWeb.AnswerController do
     end
   end
 
+  def submit(conn, _params) do
+    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+  end
+
   def check_last_modified(conn, %{
         "questionid" => question_id,
         "lastModifiedAt" => last_modified_at
@@ -77,10 +81,6 @@ defmodule CadetWeb.AnswerController do
         |> put_status(:forbidden)
         |> text("Forbidden")
     end
-  end
-
-  def submit(conn, _params) do
-    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
   swagger_path :submit do
