@@ -4,6 +4,7 @@ defmodule Cadet.Assessments do
   missions, sidequests, paths, etc.
   """
   use Cadet, [:context, :display]
+  alias Cadet.Incentives.{Achievement, Achievements, GoalProgress}
   import Ecto.Query
 
   require Logger
@@ -24,8 +25,7 @@ defmodule Cadet.Assessments do
   alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
-  alias Ecto.Multi
-  alias Cadet.Incentives.Achievements
+  alias Ecto.{Multi, Changeset}
   alias Timex.Duration
 
   require Decimal
@@ -144,6 +144,126 @@ defmodule Cadet.Assessments do
     total_assessment_xp = assessments_total_xp(user_course)
 
     total_achievement_xp + total_assessment_xp
+  end
+
+  def all_user_total_xp(course_id, offset \\ nil, limit \\ nil) do
+    # get all users even if they have 0 xp
+    base_user_query =
+      from(
+        cr in CourseRegistration,
+        join: u in User,
+        on: cr.user_id == u.id,
+        where: cr.course_id == ^course_id,
+        select: %{
+          user_id: u.id,
+          name: u.name,
+          username: u.username
+        }
+      )
+
+    achievements_xp_query =
+      from(u in User,
+        join: cr in CourseRegistration,
+        on: cr.user_id == u.id and cr.course_id == ^course_id,
+        left_join: a in Achievement,
+        on: a.course_id == cr.course_id,
+        left_join: j in assoc(a, :goals),
+        left_join: g in assoc(j, :goal),
+        left_join: p in GoalProgress,
+        on: p.goal_uuid == g.uuid and p.course_reg_id == cr.id,
+        where:
+          a.course_id == ^course_id and p.completed and
+            p.count == g.target_count,
+        group_by: [u.id, u.name, u.username, cr.id],
+        select_merge: %{
+          user_id: u.id,
+          achievements_xp:
+            fragment(
+              "CASE WHEN bool_and(?) THEN ? ELSE ? END",
+              a.is_variable_xp,
+              sum(p.count),
+              max(a.xp)
+            )
+        }
+      )
+
+    submissions_xp_query =
+      from(
+        sub_xp in subquery(
+          from(cr in CourseRegistration,
+            join: u in User,
+            on: cr.user_id == u.id,
+            full_join: tm in TeamMember,
+            on: cr.id == tm.student_id,
+            join: s in Submission,
+            on: tm.team_id == s.team_id or s.student_id == cr.id,
+            join: a in Answer,
+            on: s.id == a.submission_id,
+            where: s.is_grading_published == true and cr.course_id == ^course_id,
+            group_by: [cr.id, u.id, u.name, u.username, s.id, a.xp, a.xp_adjustment],
+            select: %{
+              user_id: u.id,
+              submission_xp: a.xp + a.xp_adjustment + max(s.xp_bonus)
+            }
+          )
+        ),
+        group_by: sub_xp.user_id,
+        select: %{
+          user_id: sub_xp.user_id,
+          submission_xp: sum(sub_xp.submission_xp)
+        }
+      )
+
+    total_xp_query =
+      from(bu in subquery(base_user_query),
+        left_join: ax in subquery(achievements_xp_query),
+        on: bu.user_id == ax.user_id,
+        left_join: sx in subquery(submissions_xp_query),
+        on: bu.user_id == sx.user_id,
+        select: %{
+          user_id: bu.user_id,
+          name: bu.name,
+          username: bu.username,
+          total_xp:
+            fragment(
+              "COALESCE(?, 0) + COALESCE(?, 0)",
+              ax.achievements_xp,
+              sx.submission_xp
+            )
+        },
+        order_by: [desc: fragment("total_xp")]
+      )
+
+    # add rank index
+    ranked_xp_query =
+      from(t in subquery(total_xp_query),
+        select: %{
+          rank: fragment("RANK() OVER (ORDER BY total_xp DESC)"),
+          user_id: t.user_id,
+          name: t.name,
+          username: t.username,
+          total_xp: t.total_xp
+        },
+        limit: ^limit,
+        offset: ^offset
+      )
+
+    count_query =
+      from(t in subquery(total_xp_query),
+        select: count(t.user_id)
+      )
+
+    {status, {rows, total_count}} =
+      Repo.transaction(fn ->
+        users = Repo.all(ranked_xp_query)
+        count = Repo.one(count_query)
+        {users, count}
+      end)
+
+    %{
+      users: rows,
+      total_count: total_count
+    }
   end
 
   defp decimal_to_integer(decimal) do
@@ -287,6 +407,13 @@ defmodule Cadet.Assessments do
         |> join(:inner, [a], s in assoc(a, :submission))
         |> where([_, s], s.student_id == ^course_reg.id or s.team_id == ^team_id)
 
+      visible_entries =
+        Assessment
+        |> join(:inner, [a], c in assoc(a, :course))
+        |> where([a, c], a.id == ^id)
+        |> select([a, c], c.top_contest_leaderboard_display)
+        |> Repo.one()
+
       questions =
         Question
         |> where(assessment_id: ^id)
@@ -301,7 +428,7 @@ defmodule Cadet.Assessments do
           {q, a, nil, _} -> %{q | answer: %Answer{a | grader: nil}}
           {q, a, g, u} -> %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
         end)
-        |> load_contest_voting_entries(course_reg, assessment)
+        |> load_contest_voting_entries(course_reg, assessment, visible_entries)
 
       is_grading_published =
         Submission
@@ -1588,7 +1715,8 @@ defmodule Cadet.Assessments do
   defp load_contest_voting_entries(
          questions,
          %CourseRegistration{role: role, course_id: course_id, id: voter_id},
-         assessment
+         assessment,
+         visible_entries
        ) do
     Enum.map(
       questions,
@@ -1604,7 +1732,7 @@ defmodule Cadet.Assessments do
               []
             else
               if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
-                fetch_top_popular_score_answers(question_id, 10)
+                fetch_top_popular_score_answers(question_id, visible_entries)
               else
                 []
               end
@@ -1615,7 +1743,7 @@ defmodule Cadet.Assessments do
               []
             else
               if leaderboard_open?(assessment, q) or role in @open_all_assessment_roles do
-                fetch_top_relative_score_answers(question_id, 10)
+                fetch_top_relative_score_answers(question_id, visible_entries)
               else
                 []
               end
@@ -1674,35 +1802,86 @@ defmodule Cadet.Assessments do
     )
   end
 
+  def fetch_contest_voting_assesment_id(assessment_id) do
+    contest_number =
+      Assessment
+      |> where(id: ^assessment_id)
+      |> select([a], a.number)
+      |> Repo.one()
+
+    if is_nil(contest_number) do
+      nil
+    else
+      Assessment
+      |> join(:inner, [a], q in assoc(a, :questions))
+      |> where([a, q], q.question["contest_number"] == ^contest_number)
+      |> select([a], a.id)
+      |> Repo.one()
+    end
+  end
+
+  @doc """
+  Fetches all contests for the course id where the voting assessment has been published
+
+  Used for contest leaderboard dropdown fetching
+  """
+  def fetch_all_contests(course_id) do
+    contest_numbers =
+      Question
+      |> where(type: :voting)
+      |> select([q], q.question["contest_number"])
+      |> Repo.all()
+      |> Enum.reject(&is_nil/1)
+
+    if contest_numbers == [] do
+      []
+    else
+      Assessment
+      |> where([a], a.number in ^contest_numbers and a.course_id == ^course_id)
+      |> join(:inner, [a], ac in AssessmentConfig, on: a.config_id == ac.id)
+      |> where([a, ac], ac.type == "Contests")
+      |> select([a], %{contest_id: a.id, title: a.title, published: a.is_published})
+      |> Repo.all()
+    end
+  end
+
   @doc """
   Fetches top answers for the given question, based on the contest relative_score
 
   Used for contest leaderboard fetching
   """
   def fetch_top_relative_score_answers(question_id, number_of_answers) do
-    Answer
-    |> where(question_id: ^question_id)
-    |> where(
-      [a],
-      fragment(
-        "?->>'code' like ?",
-        a.answer,
-        "%return%"
+    subquery =
+      Answer
+      |> where(question_id: ^question_id)
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
       )
-    )
-    |> order_by(desc: :relative_score)
-    |> join(:left, [a], s in assoc(a, :submission))
-    |> join(:left, [a, s], student in assoc(s, :student))
-    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    |> where([a, s, student], student.role == "student")
-    |> select([a, s, student, student_user], %{
-      submission_id: a.submission_id,
-      answer: a.answer,
-      relative_score: a.relative_score,
-      student_name: student_user.name
-    })
-    |> limit(^number_of_answers)
-    |> Repo.all()
+      |> order_by(desc: :relative_score)
+      |> join(:left, [a], s in assoc(a, :submission))
+      |> join(:left, [a, s], student in assoc(s, :student))
+      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+      |> where([a, s, student], student.role == "student")
+      |> select([a, s, student, student_user], %{
+        submission_id: a.submission_id,
+        answer: a.answer,
+        relative_score: a.relative_score,
+        student_name: student_user.name,
+        student_username: student_user.username,
+        rank: fragment("RANK() OVER (ORDER BY ? DESC)", a.relative_score)
+      })
+
+    final_query =
+      from(r in subquery(subquery),
+        where: r.rank <= ^number_of_answers
+      )
+
+    Repo.all(final_query)
   end
 
   @doc """
@@ -1711,29 +1890,37 @@ defmodule Cadet.Assessments do
   Used for contest leaderboard fetching
   """
   def fetch_top_popular_score_answers(question_id, number_of_answers) do
-    Answer
-    |> where(question_id: ^question_id)
-    |> where(
-      [a],
-      fragment(
-        "?->>'code' like ?",
-        a.answer,
-        "%return%"
+    subquery =
+      Answer
+      |> where(question_id: ^question_id)
+      |> where(
+        [a],
+        fragment(
+          "?->>'code' like ?",
+          a.answer,
+          "%return%"
+        )
       )
-    )
-    |> order_by(desc: :popular_score)
-    |> join(:left, [a], s in assoc(a, :submission))
-    |> join(:left, [a, s], student in assoc(s, :student))
-    |> join(:inner, [a, s, student], student_user in assoc(student, :user))
-    |> where([a, s, student], student.role == "student")
-    |> select([a, s, student, student_user], %{
-      submission_id: a.submission_id,
-      answer: a.answer,
-      popular_score: a.popular_score,
-      student_name: student_user.name
-    })
-    |> limit(^number_of_answers)
-    |> Repo.all()
+      |> order_by(desc: :popular_score)
+      |> join(:left, [a], s in assoc(a, :submission))
+      |> join(:left, [a, s], student in assoc(s, :student))
+      |> join(:inner, [a, s, student], student_user in assoc(student, :user))
+      |> where([a, s, student], student.role == "student")
+      |> select([a, s, student, student_user], %{
+        submission_id: a.submission_id,
+        answer: a.answer,
+        popular_score: a.popular_score,
+        student_name: student_user.name,
+        student_username: student_user.username,
+        rank: fragment("RANK() OVER (ORDER BY ? DESC)", a.popular_score)
+      })
+
+    final_query =
+      from(r in subquery(subquery),
+        where: r.rank <= ^number_of_answers
+      )
+
+    Repo.all(final_query)
   end
 
   @doc """
@@ -1771,13 +1958,28 @@ defmodule Cadet.Assessments do
     if Log.log_execution("update_final_contest_leaderboards", Duration.from_minutes(1435)) do
       Logger.info("Started update_final_contest_leaderboards")
 
-      voting_questions_to_update = fetch_voting_questions_due_yesterday()
+      voting_questions_to_update = fetch_voting_questions_due_yesterday() || []
 
-      _ =
-        voting_questions_to_update
-        |> Enum.map(fn qn -> compute_relative_score(qn.id) end)
+      voting_questions_to_update =
+        if is_nil(voting_questions_to_update), do: [], else: voting_questions_to_update
 
-      Logger.info("Successfully update_final_contest_leaderboards")
+      scores =
+        Enum.map(voting_questions_to_update, fn qn ->
+          compute_relative_score(qn.id)
+        end)
+
+      if Enum.empty?(voting_questions_to_update) do
+        Logger.warn("No voting questions to update.")
+      else
+        # Process each voting question
+        Enum.each(voting_questions_to_update, fn qn ->
+          assign_winning_contest_entries_xp(qn.id)
+        end)
+
+        Logger.info("Successfully update_final_contest_leaderboards")
+      end
+
+      scores
     end
   end
 
@@ -1795,10 +1997,122 @@ defmodule Cadet.Assessments do
   end
 
   @doc """
+  Automatically assigns XP to the winning contest entries
+  """
+  def assign_winning_contest_entries_xp(contest_voting_question_id) do
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(id: ^contest_voting_question_id)
+      |> Repo.one()
+
+    contest_question_id =
+      SubmissionVotes
+      |> where(question_id: ^contest_voting_question_id)
+      |> join(:inner, [sv], ans in Answer, on: sv.submission_id == ans.submission_id)
+      |> select([sv, ans], ans.question_id)
+      |> limit(1)
+      |> Repo.one()
+
+    if is_nil(contest_question_id) do
+      Logger.warn("Contest question ID is missing. Terminating.")
+      :ok
+    else
+      default_xp_values = %Cadet.Assessments.QuestionTypes.VotingQuestion{} |> Map.get(:xp_values)
+      scores = voting_questions.question["xp_values"] || default_xp_values
+
+      if scores == [] do
+        Logger.warn("No XP values provided. Terminating.")
+        :ok
+      else
+        Repo.transaction(fn ->
+          submission_ids =
+            Answer
+            |> where(question_id: ^contest_question_id)
+            |> select([a], a.submission_id)
+            |> Repo.all()
+
+          Submission
+          |> where([s], s.id in ^submission_ids)
+          |> Repo.update_all(set: [is_grading_published: true])
+
+          winning_popular_entries =
+            Answer
+            |> where(question_id: ^contest_question_id)
+            |> select([a], %{
+              id: a.id,
+              rank: fragment("rank() OVER (ORDER BY ? DESC)", a.popular_score)
+            })
+            |> Repo.all()
+
+          winning_popular_entries
+          |> Enum.each(fn %{id: answer_id, rank: rank} ->
+            increment = Enum.at(scores, rank - 1, 0)
+            answer = Repo.get!(Answer, answer_id)
+            Repo.update!(Changeset.change(answer, %{xp_adjustment: increment}))
+          end)
+
+          winning_score_entries =
+            Answer
+            |> where(question_id: ^contest_question_id)
+            |> select([a], %{
+              id: a.id,
+              rank: fragment("rank() OVER (ORDER BY ? DESC)", a.relative_score)
+            })
+            |> Repo.all()
+
+          winning_score_entries
+          |> Enum.each(fn %{id: answer_id, rank: rank} ->
+            increment = Enum.at(scores, rank - 1, 0)
+            answer = Repo.get!(Answer, answer_id)
+            new_value = answer.xp_adjustment + increment
+            Repo.update!(Changeset.change(answer, %{xp_adjustment: new_value}))
+          end)
+        end)
+
+        Logger.info("XP assigned to winning contest entries")
+      end
+    end
+  end
+
+  @doc """
   Computes the current relative_score of each voting submission answer
   based on current submitted votes.
   """
   def compute_relative_score(contest_voting_question_id) do
+    # reset all scores to 0 first
+    voting_questions =
+      Question
+      |> where(type: :voting)
+      |> where(id: ^contest_voting_question_id)
+      |> Repo.one()
+
+    if is_nil(voting_questions) do
+      IO.puts("Voting question not found, skipping score computation.")
+      :ok
+    else
+      course_id =
+        Assessment
+        |> where(id: ^voting_questions.assessment_id)
+        |> select([a], a.course_id)
+        |> Repo.one()
+
+      if is_nil(course_id) do
+        IO.puts("Course ID not found, skipping score computation.")
+        :ok
+      else
+        contest_question_id = fetch_associated_contest_question_id(course_id, voting_questions)
+
+        if !is_nil(contest_question_id) do
+          # reset all scores to 0 first
+          Answer
+          |> where([ans], ans.question_id == ^contest_question_id)
+          |> update([ans], set: [popular_score: 0.0, relative_score: 0.0])
+          |> Repo.update_all([])
+        end
+      end
+    end
+
     # query all records from submission votes tied to the question id ->
     # map score to user id ->
     # store as grade ->
