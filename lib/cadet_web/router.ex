@@ -120,13 +120,8 @@ defmodule CadetWeb.Router do
     put("/user/game_states", UserController, :update_game_states)
     put("/user/research_agreement", UserController, :update_research_agreement)
 
-    get("/all_users_xp", AssessmentsController, :combined_total_xp_for_all_users)
-
-    get(
-      "/get_paginated_display",
-      AssessmentsController,
-      :paginated_total_xp_for_leaderboard_display
-    )
+    get("/leaderboards/xp_all", LeaderboardController, :xp_all)
+    get("/leaderboards/xp", LeaderboardController, :xp_paginated)
 
     get(
       "/assessments/:assessmentid/popularVoteLeaderboard",
