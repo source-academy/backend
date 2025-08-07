@@ -71,7 +71,7 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  def get_score_leaderboard(conn, %{
+  def contest_score_leaderboard(conn, %{
         "assessmentid" => assessment_id,
         "course_id" => course_id
       }) do
@@ -111,7 +111,7 @@ defmodule CadetWeb.AssessmentsController do
     json(conn, %{leaderboard: result, voting_id: voting_id})
   end
 
-  def get_popular_leaderboard(conn, %{
+  def contest_popular_leaderboard(conn, %{
         "assessmentid" => assessment_id,
         "course_id" => course_id
       }) do

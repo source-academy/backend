@@ -124,15 +124,15 @@ defmodule CadetWeb.Router do
     get("/leaderboards/xp", LeaderboardController, :xp_paginated)
 
     get(
-      "/assessments/:assessmentid/popularVoteLeaderboard",
+      "/assessments/:assessmentid/contest_popular_leaderboard",
       AssessmentsController,
-      :get_popular_leaderboard
+      :contest_popular_leaderboard
     )
 
     get(
-      "/assessments/:assessmentid/scoreLeaderboard",
+      "/assessments/:assessmentid/contest_score_leaderboard",
       AssessmentsController,
-      :get_score_leaderboard
+      :contest_score_leaderboard
     )
 
     get("/all_contests", AssessmentsController, :get_all_contests)
