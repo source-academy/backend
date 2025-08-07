@@ -74,7 +74,7 @@ defmodule CadetWeb.AssessmentsController do
       }) do
     count = String.to_integer(conn.params["count"] || "10")
 
-    with {:voting_question, voting_question} <-
+    with {:voting_question, voting_question} when not is_nil(voting_question) <-
            {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
       question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
@@ -105,7 +105,7 @@ defmodule CadetWeb.AssessmentsController do
       }) do
     count = String.to_integer(conn.params["count"] || "10")
 
-    with {:voting_question, voting_question} <-
+    with {:voting_question, voting_question} when not is_nil(voting_question) <-
            {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
       question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
