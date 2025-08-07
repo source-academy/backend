@@ -199,13 +199,13 @@ defmodule CadetWeb.Router do
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
     post(
-      "/assessments/:assessmentid/calculateContestScore",
+      "/assessments/:assessmentid/contest_calculate_score",
       AdminAssessmentsController,
       :calculate_contest_score
     )
 
     post(
-      "/assessments/:assessmentid/dispatchContestXp",
+      "/assessments/:assessmentid/contest_dispatch_xp",
       AdminAssessmentsController,
       :dispatch_contest_xp
     )
