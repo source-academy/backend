@@ -74,24 +74,24 @@ defmodule CadetWeb.AssessmentsController do
       }) do
     count = String.to_integer(conn.params["count"] || "10")
 
-    with {:voting_question, voting_question} when not is_nil(voting_question) <-
-           {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
-      question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
+    case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+      {:voting_question, voting_question} when not is_nil(voting_question) ->
+        question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
-      result =
-        question_id
-        |> Assessments.fetch_top_relative_score_answers(count)
-        |> Enum.map(fn entry ->
-          updated_entry = %{
-            entry
-            | answer: entry.answer["code"]
-          }
+        result =
+          question_id
+          |> Assessments.fetch_top_relative_score_answers(count)
+          |> Enum.map(fn entry ->
+            updated_entry = %{
+              entry
+              | answer: entry.answer["code"]
+            }
 
-          AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
-        end)
+            AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
+          end)
 
-      json(conn, %{leaderboard: result})
-    else
+        json(conn, %{leaderboard: result})
+
       {:voting_question, nil} ->
         conn
         |> put_status(:not_found)
@@ -105,24 +105,24 @@ defmodule CadetWeb.AssessmentsController do
       }) do
     count = String.to_integer(conn.params["count"] || "10")
 
-    with {:voting_question, voting_question} when not is_nil(voting_question) <-
-           {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
-      question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
+    case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+      {:voting_question, voting_question} when not is_nil(voting_question) ->
+        question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
-      result =
-        question_id
-        |> Assessments.fetch_top_popular_score_answers(count)
-        |> Enum.map(fn entry ->
-          updated_entry = %{
-            entry
-            | answer: entry.answer["code"]
-          }
+        result =
+          question_id
+          |> Assessments.fetch_top_popular_score_answers(count)
+          |> Enum.map(fn entry ->
+            updated_entry = %{
+              entry
+              | answer: entry.answer["code"]
+            }
 
-          AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
-        end)
+            AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
+          end)
 
-      json(conn, %{leaderboard: result})
-    else
+        json(conn, %{leaderboard: result})
+
       {:voting_question, nil} ->
         conn
         |> put_status(:not_found)
