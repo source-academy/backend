@@ -3,10 +3,7 @@ defmodule CadetWeb.AssessmentsController do
 
   use PhoenixSwagger
 
-  import Ecto.Query, only: [where: 2]
-
   alias Cadet.{Assessments, Repo}
-  alias Cadet.Assessments.Question
   alias CadetWeb.AssessmentsHelpers
 
   # These roles can save and finalise answers for closed assessments and
@@ -81,17 +78,17 @@ defmodule CadetWeb.AssessmentsController do
            {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
       question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
-    result =
+      result =
         question_id
         |> Assessments.fetch_top_relative_score_answers(count)
-      |> Enum.map(fn entry ->
-        updated_entry = %{
-          entry
-          | answer: entry.answer["code"]
-        }
+        |> Enum.map(fn entry ->
+          updated_entry = %{
+            entry
+            | answer: entry.answer["code"]
+          }
 
-        AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
-      end)
+          AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
+        end)
 
       json(conn, %{leaderboard: result})
     else
@@ -112,17 +109,17 @@ defmodule CadetWeb.AssessmentsController do
            {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
       question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
-    result =
+      result =
         question_id
         |> Assessments.fetch_top_popular_score_answers(count)
-      |> Enum.map(fn entry ->
-        updated_entry = %{
-          entry
-          | answer: entry.answer["code"]
-        }
+        |> Enum.map(fn entry ->
+          updated_entry = %{
+            entry
+            | answer: entry.answer["code"]
+          }
 
-        AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
-      end)
+          AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
+        end)
 
       json(conn, %{leaderboard: result})
     else
