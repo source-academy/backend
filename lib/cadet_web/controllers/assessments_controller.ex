@@ -75,30 +75,15 @@ defmodule CadetWeb.AssessmentsController do
         "assessmentid" => assessment_id,
         "course_id" => course_id
       }) do
-    visible_entries = String.to_integer(conn.params["visible_entries"] || "10")
-    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    count = String.to_integer(conn.params["count"] || "10")
 
-    voting_questions =
-      Question
-      |> where(type: :voting)
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
-      |> case do
-        nil ->
-          Question
-          |> where(type: :voting)
-          |> where(assessment_id: ^voting_id)
-          |> Repo.one()
-
-        question ->
-          question
-      end
-
-    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+    with {:voting_question, voting_question} <-
+           {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+      question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
     result =
-      contest_id
-      |> Assessments.fetch_top_relative_score_answers(visible_entries)
+        question_id
+        |> Assessments.fetch_top_relative_score_answers(count)
       |> Enum.map(fn entry ->
         updated_entry = %{
           entry
@@ -108,37 +93,28 @@ defmodule CadetWeb.AssessmentsController do
         AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
       end)
 
-    json(conn, %{leaderboard: result, voting_id: voting_id})
+      json(conn, %{leaderboard: result})
+    else
+      {:voting_question, nil} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Not a contest voting assessment")
+    end
   end
 
   def contest_popular_leaderboard(conn, %{
         "assessmentid" => assessment_id,
         "course_id" => course_id
       }) do
-    visible_entries = String.to_integer(conn.params["visible_entries"] || "10")
-    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    count = String.to_integer(conn.params["count"] || "10")
 
-    voting_questions =
-      Question
-      |> where(type: :voting)
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
-      |> case do
-        nil ->
-          Question
-          |> where(type: :voting)
-          |> where(assessment_id: ^voting_id)
-          |> Repo.one()
-
-        question ->
-          question
-      end
-
-    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+    with {:voting_question, voting_question} <-
+           {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+      question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
     result =
-      contest_id
-      |> Assessments.fetch_top_popular_score_answers(visible_entries)
+        question_id
+        |> Assessments.fetch_top_popular_score_answers(count)
       |> Enum.map(fn entry ->
         updated_entry = %{
           entry
@@ -148,7 +124,13 @@ defmodule CadetWeb.AssessmentsController do
         AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
       end)
 
-    json(conn, %{leaderboard: result, voting_id: voting_id})
+      json(conn, %{leaderboard: result})
+    else
+      {:voting_question, nil} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Not a contest voting assessment")
+    end
   end
 
   def get_all_contests(conn, %{"course_id" => course_id}) do
