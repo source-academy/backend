@@ -1053,6 +1053,13 @@ defmodule Cadet.Assessments do
     Repo.delete(question)
   end
 
+  def get_contest_voting_question(assessment_id) do
+    Question
+    |> where(type: :voting)
+    |> where(assessment_id: ^assessment_id)
+    |> Repo.one()
+  end
+
   @doc """
   Public internal api to submit new answers for a question. Possible return values are:
   `{:ok, nil}` -> success

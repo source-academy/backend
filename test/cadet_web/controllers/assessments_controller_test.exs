@@ -1800,13 +1800,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/popularVoteLeaderboard, unauthenticated" do
+  describe "GET /:assessment_id/contest_popular_leaderboard, unauthenticated" do
     test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
       config = insert(:assessment_config, %{course: course1})
       assessment = insert(:assessment, %{course: course1, config: config})
 
       params = %{
-        "visible_entries" => 9
+        "count" => 9
       }
 
       conn
@@ -1815,13 +1815,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/scoreLeaderboard, unauthenticated" do
+  describe "GET /:assessment_id/contest_score_leaderboard, unauthenticated" do
     test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
       config = insert(:assessment_config, %{course: course1})
       assessment = insert(:assessment, %{course: course1, config: config})
 
       params = %{
-        "visible_entries" => 9
+        "count" => 9
       }
 
       conn
@@ -1830,7 +1830,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/popularVoteLeaderboard" do
+  describe "GET /:assessment_id/contest_popular_leaderboard" do
     @tag authenticate: :student
     test "successful", %{conn: conn, courses: %{course1: course1}} do
       user = conn.assigns[:current_user]
@@ -1882,7 +1882,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         )
 
       params = %{
-        "visible_entries" => 1
+        "count" => 1
       }
 
       resp =
@@ -1894,7 +1894,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  describe "GET /:assessment_id/scoreLeaderboard" do
+  describe "GET /:assessment_id/contest_score_leaderboard" do
     @tag authenticate: :student
     test "successful", %{conn: conn, courses: %{course1: course1}} do
       user = conn.assigns[:current_user]
@@ -1946,7 +1946,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         )
 
       params = %{
-        "visible_entries" => 1
+        "count" => 1
       }
 
       resp =
@@ -1970,7 +1970,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     do: "/v2/courses/#{course_id}/assessments/#{assessment_id}/unlock"
 
   defp build_popular_leaderboard_url(course_id, assessment_id, params \\ %{}) do
-    base_url = "#{build_url(course_id, assessment_id)}/popularVoteLeaderboard"
+    base_url = "#{build_url(course_id, assessment_id)}/contest_popular_leaderboard"
 
     if params != %{} do
       query_string = URI.encode_query(params)
@@ -1981,7 +1981,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   end
 
   defp build_score_leaderboard_url(course_id, assessment_id, params \\ %{}) do
-    base_url = "#{build_url(course_id, assessment_id)}/scoreLeaderboard"
+    base_url = "#{build_url(course_id, assessment_id)}/contest_score_leaderboard"
 
     if params != %{} do
       query_string = URI.encode_query(params)
