@@ -109,6 +109,10 @@ defmodule Cadet.Mixfile do
       {:exvcr, "~> 0.10", only: :test},
       {:mock, "~> 0.3.0", only: :test},
 
+      # Dependencies for logger unit testing
+      {:mox, "~> 1.2", only: :test},
+      {:logger_backends, "~> 1.0.0", only: :test},
+
       # The following are indirect dependencies, but we need to override the
       # versions due to conflicts
       {:jsx, "~> 3.1", override: true},
