@@ -157,7 +157,8 @@ defmodule Cadet.Logger.CloudWatchLogger do
 
   defp send_to_cloudwatch(log_stream, log_group, buffer) do
     # Ensure that the already have ExAws authentication configured
-    with :ok <- check_exaws_config() do
+    with :ok <- check_exaws_config(),
+         :ok <- ensure_log_stream_exists(log_group, log_stream) do
       operation = build_log_operation(log_stream, log_group, buffer)
 
       operation
