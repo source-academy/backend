@@ -26,8 +26,9 @@ defmodule CadetWeb do
 
       import Plug.Conn
       import CadetWeb.Router.Helpers
-      import CadetWeb.{ControllerHelper, Gettext}
+      import CadetWeb.ControllerHelper
       import Cadet.SharedHelper
+      use Gettext, backend: CadetWeb.Gettext
     end
   end
 
@@ -44,7 +45,8 @@ defmodule CadetWeb do
       # use Phoenix.HTML
 
       import CadetWeb.Router.Helpers
-      import CadetWeb.{Gettext, ViewHelper}
+      import CadetWeb.ViewHelper
+      use Gettext, backend: CadetWeb.Gettext
     end
   end
 
@@ -60,7 +62,7 @@ defmodule CadetWeb do
   def channel do
     quote do
       use Phoenix.Channel
-      import CadetWeb.Gettext
+      use Gettext, backend: CadetWeb.Gettext
     end
   end
 end

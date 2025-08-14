@@ -144,7 +144,7 @@ defmodule CadetWeb.AdminAssessmentsController do
 
     if voting_questions do
       Assessments.compute_relative_score(voting_questions.id)
-      text(conn, "CONTEST SCORE CALCULATED")
+      text(conn, "Contest scores calculated")
     else
       text(conn, "No voting questions found for the given assessment")
     end

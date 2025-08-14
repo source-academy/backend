@@ -3,10 +3,7 @@ defmodule CadetWeb.AssessmentsController do
 
   use PhoenixSwagger
 
-  import Ecto.Query, only: [where: 2]
-
   alias Cadet.{Assessments, Repo}
-  alias Cadet.Assessments.Question
   alias CadetWeb.AssessmentsHelpers
 
   # These roles can save and finalise answers for closed assessments and
@@ -71,96 +68,66 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
-  def combined_total_xp_for_all_users(conn, %{"course_id" => course_id}) do
-    users_with_xp = Assessments.all_user_total_xp(course_id)
-    json(conn, %{users: users_with_xp.users})
-  end
-
-  def paginated_total_xp_for_leaderboard_display(conn, %{"course_id" => course_id}) do
-    offset = String.to_integer(conn.params["offset"] || "0")
-    page_size = String.to_integer(conn.params["page_size"] || "25")
-    paginated_display = Assessments.all_user_total_xp(course_id, offset, page_size)
-    json(conn, paginated_display)
-  end
-
-  def get_score_leaderboard(conn, %{
+  def contest_score_leaderboard(conn, %{
         "assessmentid" => assessment_id,
         "course_id" => course_id
       }) do
-    visible_entries = String.to_integer(conn.params["visible_entries"] || "10")
-    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    count = String.to_integer(conn.params["count"] || "10")
 
-    voting_questions =
-      Question
-      |> where(type: :voting)
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
-      |> case do
-        nil ->
-          Question
-          |> where(type: :voting)
-          |> where(assessment_id: ^voting_id)
-          |> Repo.one()
+    case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+      {:voting_question, voting_question} when not is_nil(voting_question) ->
+        question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
-        question ->
-          question
-      end
+        result =
+          question_id
+          |> Assessments.fetch_top_relative_score_answers(count)
+          |> Enum.map(fn entry ->
+            updated_entry = %{
+              entry
+              | answer: entry.answer["code"]
+            }
 
-    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+            AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
+          end)
 
-    result =
-      contest_id
-      |> Assessments.fetch_top_relative_score_answers(visible_entries)
-      |> Enum.map(fn entry ->
-        updated_entry = %{
-          entry
-          | answer: entry.answer["code"]
-        }
+        json(conn, %{leaderboard: result})
 
-        AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
-      end)
-
-    json(conn, %{leaderboard: result, voting_id: voting_id})
+      {:voting_question, nil} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Not a contest voting assessment")
+    end
   end
 
-  def get_popular_leaderboard(conn, %{
+  def contest_popular_leaderboard(conn, %{
         "assessmentid" => assessment_id,
         "course_id" => course_id
       }) do
-    visible_entries = String.to_integer(conn.params["visible_entries"] || "10")
-    voting_id = Assessments.fetch_contest_voting_assesment_id(assessment_id)
+    count = String.to_integer(conn.params["count"] || "10")
 
-    voting_questions =
-      Question
-      |> where(type: :voting)
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
-      |> case do
-        nil ->
-          Question
-          |> where(type: :voting)
-          |> where(assessment_id: ^voting_id)
-          |> Repo.one()
+    case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+      {:voting_question, voting_question} when not is_nil(voting_question) ->
+        question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
-        question ->
-          question
-      end
+        result =
+          question_id
+          |> Assessments.fetch_top_popular_score_answers(count)
+          |> Enum.map(fn entry ->
+            updated_entry = %{
+              entry
+              | answer: entry.answer["code"]
+            }
 
-    contest_id = Assessments.fetch_associated_contest_question_id(course_id, voting_questions)
+            AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
+          end)
 
-    result =
-      contest_id
-      |> Assessments.fetch_top_popular_score_answers(visible_entries)
-      |> Enum.map(fn entry ->
-        updated_entry = %{
-          entry
-          | answer: entry.answer["code"]
-        }
+        json(conn, %{leaderboard: result})
 
-        AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
-      end)
-
-    json(conn, %{leaderboard: result, voting_id: voting_id})
+      {:voting_question, nil} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Not a contest voting assessment")
+    end
   end
 
   def get_all_contests(conn, %{"course_id" => course_id}) do
