@@ -21,6 +21,26 @@ defmodule Cadet.Logger.CloudWatchLoggerTest do
       metadata: [:request_id]
     )
 
+    # Mock the DescribeLogStreams request during initialization
+    expect(ExAwsMock, :request, fn %ExAws.Operation.JSON{} = op
+                                   when op.headers == [
+                                          {"x-amz-target", "Logs_20140328.DescribeLogStreams"},
+                                          {"content-type", "application/x-amz-json-1.1"}
+                                        ] ->
+      # Simulate no existing log streams
+      {:ok, %{"logStreams" => []}}
+    end)
+
+    # Mock the CreateLogStream request during initialization
+    expect(ExAwsMock, :request, fn %ExAws.Operation.JSON{} = op
+                                   when op.headers == [
+                                          {"x-amz-target", "Logs_20140328.CreateLogStream"},
+                                          {"content-type", "application/x-amz-json-1.1"}
+                                        ] ->
+      # Simulate successful log stream creation
+      {:ok, %{}}
+    end)
+
     LoggerBackends.add({CloudWatchLogger, :cloudwatch_logger})
 
     Logger.configure_backend(:console, level: :error, format: "$metadata[$level] $message\n")
