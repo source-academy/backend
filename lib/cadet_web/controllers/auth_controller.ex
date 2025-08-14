@@ -4,6 +4,7 @@ defmodule CadetWeb.AuthController do
   """
   use CadetWeb, :controller
   use PhoenixSwagger
+  require Logger
 
   alias Cadet.{Accounts, Accounts.User}
   alias Cadet.Auth.{Guardian, Provider}
@@ -25,6 +26,7 @@ defmodule CadetWeb.AuthController do
       ) do
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
+    Logger.info("AuthController.create: provider=#{provider} client_id=#{client_id}")
 
     case create_user_and_tokens(%{
            conn: conn,
@@ -34,14 +36,17 @@ defmodule CadetWeb.AuthController do
            redirect_uri: redirect_uri
          }) do
       {:ok, tokens} ->
+        Logger.info("AuthController.create: success provider=#{provider}")
         render(conn, "token.json", tokens)
 
       conn ->
+        Logger.warning("AuthController.create: failed provider=#{provider}")
         conn
     end
   end
 
   def create(conn, _params) do
+    Logger.warning("AuthController.create: missing parameters")
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
@@ -217,17 +222,22 @@ defmodule CadetWeb.AuthController do
   Exchanges the refresh_token with a new access_token.
   """
   def refresh(conn, %{"refresh_token" => refresh_token}) do
+    Logger.info("AuthController.refresh: attempt")
+    
     # TODO: Refactor to use refresh after guardian_db > v1.1.0 is released.
     case Guardian.resource_from_token(refresh_token) do
       {:ok, user, %{"typ" => "refresh"}} ->
+        Logger.info("AuthController.refresh: success user_id=#{user.id}")
         render(conn, "token.json", generate_tokens(user))
 
       _ ->
+        Logger.warning("AuthController.refresh: invalid refresh token")
         send_resp(conn, :unauthorized, "Invalid refresh token")
     end
   end
 
   def refresh(conn, _params) do
+    Logger.warning("AuthController.refresh: missing parameters")
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
@@ -235,12 +245,16 @@ defmodule CadetWeb.AuthController do
   Receives a /logout request with valid attribute.
   """
   def logout(conn, %{"refresh_token" => refresh_token}) do
+    Logger.info("AuthController.logout: attempt")
+    
     case Guardian.decode_and_verify(refresh_token) do
       {:ok, _} ->
         Guardian.revoke(refresh_token)
+        Logger.info("AuthController.logout: success")
         text(conn, "OK")
 
       {:error, _} ->
+        Logger.warning("AuthController.logout: invalid token")
         send_resp(conn, :unauthorized, "Invalid token")
     end
   end
