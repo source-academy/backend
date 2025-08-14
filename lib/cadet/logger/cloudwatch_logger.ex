@@ -27,13 +27,17 @@ defmodule Cadet.Logger.CloudWatchLogger do
   @impl true
   def init({__MODULE__, opts}) when is_list(opts) do
     config = configure_merge(read_env(), opts)
-    {:ok, init(config, %__MODULE__{})}
+    state = init(config, %__MODULE__{})
+    ensure_log_stream_exists(state.log_group, state.log_stream)
+    {:ok, state}
   end
 
   @impl true
   def init({__MODULE__, name}) when is_atom(name) do
     config = read_env()
-    {:ok, init(config, %__MODULE__{})}
+    state = init(config, %__MODULE__{})
+    ensure_log_stream_exists(state.log_group, state.log_stream)
+    {:ok, state}
   end
 
   @impl true
@@ -151,8 +155,7 @@ defmodule Cadet.Logger.CloudWatchLogger do
 
   defp send_to_cloudwatch(log_stream, log_group, buffer) do
     # Ensure that the already have ExAws authentication configured
-    with :ok <- check_exaws_config(),
-         :ok <- ensure_log_stream_exists(log_group, log_stream) do
+    with :ok <- check_exaws_config() do
       operation = build_log_operation(log_stream, log_group, buffer)
 
       operation
