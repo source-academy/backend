@@ -27,13 +27,17 @@ defmodule Cadet.Logger.CloudWatchLogger do
   @impl true
   def init({__MODULE__, opts}) when is_list(opts) do
     config = configure_merge(read_env(), opts)
-    {:ok, init(config, %__MODULE__{})}
+    state = init(config, %__MODULE__{})
+    ensure_log_stream_exists(state.log_group, state.log_stream)
+    {:ok, state}
   end
 
   @impl true
   def init({__MODULE__, name}) when is_atom(name) do
     config = read_env()
-    {:ok, init(config, %__MODULE__{})}
+    state = init(config, %__MODULE__{})
+    ensure_log_stream_exists(state.log_group, state.log_stream)
+    {:ok, state}
   end
 
   @impl true
@@ -156,6 +160,65 @@ defmodule Cadet.Logger.CloudWatchLogger do
 
       operation
       |> send_with_retry()
+    end
+  end
+
+  # Ensures the log stream exists, creates it if not
+  # Returns :ok or :error
+  # Uses ExAws.Logs.describe_log_streams and ExAws.Logs.create_log_stream
+  # Assumes ExAws.Logs is available
+
+  defp ensure_log_stream_exists(log_group, log_stream) do
+    describe_op = %ExAws.Operation.JSON{
+      http_method: :post,
+      service: :logs,
+      headers: [
+        {"x-amz-target", "Logs_20140328.DescribeLogStreams"},
+        {"content-type", "application/x-amz-json-1.1"}
+      ],
+      data: %{
+        "logGroupName" => log_group,
+        "logStreamNamePrefix" => log_stream
+      }
+    }
+
+    client = Application.get_env(:ex_aws, :ex_aws_mock, ExAws)
+
+    case client.request(describe_op) do
+      {:ok, %{"logStreams" => streams}} ->
+        if Enum.any?(streams, fn s -> s["logStreamName"] == log_stream end) do
+          :ok
+        else
+          create_log_stream(log_group, log_stream, client)
+        end
+
+      {:error, reason} ->
+        Logger.error("Failed to describe log streams: #{inspect(reason)}")
+        :error
+    end
+  end
+
+  defp create_log_stream(log_group, log_stream, client) do
+    create_op = %ExAws.Operation.JSON{
+      http_method: :post,
+      service: :logs,
+      headers: [
+        {"x-amz-target", "Logs_20140328.CreateLogStream"},
+        {"content-type", "application/x-amz-json-1.1"}
+      ],
+      data: %{
+        "logGroupName" => log_group,
+        "logStreamName" => log_stream
+      }
+    }
+
+    case client.request(create_op) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to create log stream: #{inspect(reason)}")
+        :error
     end
   end
 
