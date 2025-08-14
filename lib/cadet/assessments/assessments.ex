@@ -362,6 +362,8 @@ defmodule Cadet.Assessments do
 
   def assessment_with_questions_and_answers(id, cr = %CourseRegistration{}, password)
       when is_ecto_id(id) do
+    Logger.info("Assessments.assessment_with_questions_and_answers: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{id}")
+    
     role = cr.role
 
     assessment =
@@ -379,8 +381,14 @@ defmodule Cadet.Assessments do
       end
 
     if assessment do
-      assessment_with_questions_and_answers(assessment, cr, password)
+      result = assessment_with_questions_and_answers(assessment, cr, password)
+      case result do
+        {:ok, _} -> Logger.info("Assessments.assessment_with_questions_and_answers: success user_id=#{cr.user_id} assessment_id=#{id}")
+        {:error, {status, message}} -> Logger.warning("Assessments.assessment_with_questions_and_answers: error user_id=#{cr.user_id} assessment_id=#{id} status=#{status} message=#{message}")
+      end
+      result
     else
+      Logger.warning("Assessments.assessment_with_questions_and_answers: assessment not found user_id=#{cr.user_id} assessment_id=#{id}")
       {:error, {:bad_request, "Assessment not found"}}
     end
   end
@@ -457,6 +465,8 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(cr = %CourseRegistration{}) do
+    Logger.info("Assessments.all_assessments: user_id=#{cr.user_id} course_id=#{cr.course_id}")
+    
     teams = find_teams(cr.id)
     submission_ids = get_submission_ids(cr.id, teams)
 
@@ -506,6 +516,7 @@ defmodule Cadet.Assessments do
       |> preload(:config)
       |> Repo.all()
 
+    Logger.info("Assessments.all_assessments: success user_id=#{cr.user_id} count=#{length(assessments)}")
     {:ok, assessments}
   end
 

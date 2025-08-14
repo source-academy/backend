@@ -1,5 +1,6 @@
 defmodule CadetWeb.Router do
   use CadetWeb, :router
+  require Logger
 
   pipeline :api do
     plug(:accepts, ["json"])
@@ -32,6 +33,10 @@ defmodule CadetWeb.Router do
     plug(:ensure_role, [:admin])
   end
 
+  pipeline :request_logging do
+    plug(:log_request)
+  end
+
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
   end
@@ -44,7 +49,7 @@ defmodule CadetWeb.Router do
 
   # Public Pages
   scope "/v2", CadetWeb do
-    pipe_through([:api, :auth])
+    pipe_through([:api, :auth, :request_logging])
 
     # get("/sourcecast", SourcecastController, :index)
     post("/auth/refresh", AuthController, :refresh)
@@ -66,7 +71,7 @@ defmodule CadetWeb.Router do
 
   # Authenticated Pages without course
   scope "/v2", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth])
+    pipe_through([:api, :auth, :ensure_auth, :request_logging])
 
     get("/user", UserController, :index)
     get("/user/latest_viewed_course", UserController, :get_latest_viewed)
@@ -83,7 +88,7 @@ defmodule CadetWeb.Router do
 
   # LLM-related endpoints
   scope "/v2/chats", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :rate_limit])
+    pipe_through([:api, :auth, :ensure_auth, :rate_limit, :request_logging])
 
     post("", ChatController, :init_chat)
     post("/:conversationId/message", ChatController, :chat)
@@ -91,7 +96,7 @@ defmodule CadetWeb.Router do
 
   # Authenticated Pages with course
   scope "/v2/courses/:course_id", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :course])
+    pipe_through([:api, :auth, :ensure_auth, :course, :request_logging])
 
     get("/sourcecast", SourcecastController, :index)
 
@@ -153,7 +158,7 @@ defmodule CadetWeb.Router do
     per-route permission level check.
   """
   scope "/v2/courses/:course_id/admin", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin])
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_admin, :request_logging])
 
     get("/assets/:foldername", AdminAssetsController, :index)
     post("/assets/:foldername/*filename", AdminAssetsController, :upload)
@@ -194,7 +199,7 @@ defmodule CadetWeb.Router do
 
   # Admin pages (Access: All staff)
   scope "/v2/courses/:course_id/admin", CadetWeb do
-    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
+    pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff, :request_logging])
 
     resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
@@ -318,5 +323,17 @@ defmodule CadetWeb.Router do
       |> send_resp(403, "Forbidden")
       |> halt()
     end
+  end
+
+  defp log_request(conn, _opts) do
+    user_id = get_in(conn.assigns, [:current_user, :id]) || "anonymous"
+    method = conn.method
+    path = conn.request_path
+    query_string = if conn.query_string != "", do: "?#{conn.query_string}", else: ""
+    full_path = "#{path}#{query_string}"
+    
+    Logger.info("Router request: method=#{method} path=#{full_path} user_id=#{user_id}")
+    
+    conn
   end
 end

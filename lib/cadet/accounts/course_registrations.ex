@@ -5,6 +5,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
   use Cadet, [:context, :display]
 
   import Ecto.Query
+  require Logger
 
   alias Cadet.{Repo, Accounts}
   alias Cadet.Accounts.{User, CourseRegistration}
@@ -18,12 +19,21 @@ defmodule Cadet.Accounts.CourseRegistrations do
   # otherwise just use CourseRegistration
 
   def get_user_record(user_id, course_id) when is_ecto_id(user_id) and is_ecto_id(course_id) do
-    CourseRegistration
+    Logger.info("CourseRegistrations.get_user_record: user_id=#{user_id} course_id=#{course_id}")
+    
+    result = CourseRegistration
     |> where([cr], cr.user_id == ^user_id)
     |> where([cr], cr.course_id == ^course_id)
     |> preload(:course)
     |> preload(:group)
     |> Repo.one()
+    
+    case result do
+      nil -> Logger.warning("CourseRegistrations.get_user_record: not found user_id=#{user_id} course_id=#{course_id}")
+      _ -> Logger.info("CourseRegistrations.get_user_record: success user_id=#{user_id} course_id=#{course_id}")
+    end
+    
+    result
   end
 
   def get_user_course(user_id, course_id) when is_ecto_id(user_id) and is_ecto_id(course_id) do

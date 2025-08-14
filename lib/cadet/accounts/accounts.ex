@@ -5,6 +5,7 @@ defmodule Cadet.Accounts do
   use Cadet, [:context, :display]
 
   import Ecto.Query
+  require Logger
 
   alias Cadet.Accounts.{Query, User, CourseRegistration}
   alias Cadet.Auth.Provider
@@ -101,12 +102,15 @@ defmodule Cadet.Accounts do
 
   def update_latest_viewed(user = %User{id: user_id}, latest_viewed_course_id)
       when is_ecto_id(latest_viewed_course_id) do
+    Logger.info("Accounts.update_latest_viewed: user_id=#{user_id} course_id=#{latest_viewed_course_id}")
+    
     CourseRegistration
     |> where(user_id: ^user_id)
     |> where(course_id: ^latest_viewed_course_id)
     |> Repo.one()
     |> case do
       nil ->
+        Logger.warning("Accounts.update_latest_viewed: user not in course user_id=#{user_id} course_id=#{latest_viewed_course_id}")
         {:error, {:bad_request, "user is not in the course"}}
 
       _ ->
@@ -114,10 +118,13 @@ defmodule Cadet.Accounts do
              |> User.changeset(%{latest_viewed_course_id: latest_viewed_course_id})
              |> Repo.update() do
           result = {:ok, _} ->
+            Logger.info("Accounts.update_latest_viewed: success user_id=#{user_id}")
             result
 
           {:error, changeset} ->
-            {:error, {:internal_server_error, full_error_messages(changeset)}}
+            error_msg = full_error_messages(changeset)
+            Logger.error("Accounts.update_latest_viewed: error user_id=#{user_id} error=#{error_msg}")
+            {:error, {:internal_server_error, error_msg}}
         end
     end
   end
