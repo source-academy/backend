@@ -151,11 +151,71 @@ defmodule Cadet.Logger.CloudWatchLogger do
 
   defp send_to_cloudwatch(log_stream, log_group, buffer) do
     # Ensure that the already have ExAws authentication configured
-    with :ok <- check_exaws_config() do
+    with :ok <- check_exaws_config(),
+         :ok <- ensure_log_stream_exists(log_group, log_stream) do
       operation = build_log_operation(log_stream, log_group, buffer)
 
       operation
       |> send_with_retry()
+    end
+  end
+
+  # Ensures the log stream exists, creates it if not
+  # Returns :ok or :error
+  # Uses ExAws.Logs.describe_log_streams and ExAws.Logs.create_log_stream
+  # Assumes ExAws.Logs is available
+
+  defp ensure_log_stream_exists(log_group, log_stream) do
+    describe_op = %ExAws.Operation.JSON{
+      http_method: :post,
+      service: :logs,
+      headers: [
+        {"x-amz-target", "Logs_20140328.DescribeLogStreams"},
+        {"content-type", "application/x-amz-json-1.1"}
+      ],
+      data: %{
+        "logGroupName" => log_group,
+        "logStreamNamePrefix" => log_stream
+      }
+    }
+
+    client = Application.get_env(:ex_aws, :ex_aws_mock, ExAws)
+
+    case client.request(describe_op) do
+      {:ok, %{"logStreams" => streams}} ->
+        if Enum.any?(streams, fn s -> s["logStreamName"] == log_stream end) do
+          :ok
+        else
+          create_log_stream(log_group, log_stream, client)
+        end
+
+      {:error, reason} ->
+        Logger.error("Failed to describe log streams: #{inspect(reason)}")
+        :error
+    end
+  end
+
+  defp create_log_stream(log_group, log_stream, client) do
+    create_op = %ExAws.Operation.JSON{
+      http_method: :post,
+      service: :logs,
+      headers: [
+        {"x-amz-target", "Logs_20140328.CreateLogStream"},
+        {"content-type", "application/x-amz-json-1.1"}
+      ],
+      data: %{
+        "logGroupName" => log_group,
+        "logStreamName" => log_stream
+      }
+    }
+
+    case client.request(create_op) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to create log stream: #{inspect(reason)}")
+        :error
     end
   end
 
