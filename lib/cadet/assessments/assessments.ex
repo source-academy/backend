@@ -115,7 +115,7 @@ defmodule Cadet.Assessments do
   end
 
   @spec user_max_xp(CourseRegistration.t()) :: integer()
-  def user_max_xp(%CourseRegistration{id: cr_id} = cr) do
+  def user_max_xp(cr = %CourseRegistration{id: cr_id}) do
     Logger.info("Calculating maximum XP for user #{cr.user_id} in course #{cr.course_id}")
 
     result =
@@ -1332,10 +1332,9 @@ defmodule Cadet.Assessments do
     Logger.info("Finding teams for user #{cr_id}")
 
     teams =
-      from(t in Team,
-        join: tm in assoc(t, :team_members),
-        where: tm.student_id == ^cr_id
-      )
+      Team
+      |> join(:inner, [t], tm in assoc(t, :team_members))
+      |> where([_, tm], tm.student_id == ^cr_id)
       |> Repo.all()
 
     Logger.info("Found #{length(teams)} teams for user #{cr_id}")
