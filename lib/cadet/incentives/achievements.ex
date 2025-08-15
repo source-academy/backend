@@ -19,12 +19,13 @@ defmodule Cadet.Incentives.Achievements do
   @spec get(integer()) :: [Achievement.t()]
   def get(course_id) when is_ecto_id(course_id) do
     Logger.info("Retrieving achievements for course #{course_id}")
-    
-    achievements = Achievement
-    |> where(course_id: ^course_id)
-    |> preload([:prerequisites, :goals])
-    |> Repo.all()
-    
+
+    achievements =
+      Achievement
+      |> where(course_id: ^course_id)
+      |> preload([:prerequisites, :goals])
+      |> Repo.all()
+
     Logger.info("Retrieved #{length(achievements)} achievements for course #{course_id}")
     achievements
   end
@@ -33,8 +34,10 @@ defmodule Cadet.Incentives.Achievements do
   Returns a user's total xp from their completed achievements.
   """
   def achievements_total_xp(course_id, course_reg_id) when is_ecto_id(course_id) do
-    Logger.info("Calculating total achievement XP for user #{course_reg_id} in course #{course_id}")
-    
+    Logger.info(
+      "Calculating total achievement XP for user #{course_reg_id} in course #{course_id}"
+    )
+
     xp =
       Achievement
       |> join(:inner, [a], j in assoc(a, :goals))
@@ -79,7 +82,7 @@ defmodule Cadet.Incentives.Achievements do
   def upsert(attrs) when is_map(attrs) do
     uuid = attrs[:uuid] || attrs["uuid"]
     Logger.info("Upserting achievement #{uuid}")
-    
+
     # course_id not nil check is left to the changeset
     case uuid do
       nil ->
@@ -87,22 +90,26 @@ defmodule Cadet.Incentives.Achievements do
         {:error, {:bad_request, "No UUID specified in Achievement"}}
 
       uuid ->
-        result = Achievement
-        |> preload([:prerequisites, :goals])
-        |> Repo.get(uuid)
-        |> (&(&1 || %Achievement{})).()
-        |> Achievement.changeset(attrs)
-        |> Repo.insert_or_update()
-        |> case do
-          result = {:ok, _} ->
-            Logger.info("Successfully upserted achievement #{uuid}")
-            result
+        result =
+          Achievement
+          |> preload([:prerequisites, :goals])
+          |> Repo.get(uuid)
+          |> (&(&1 || %Achievement{})).()
+          |> Achievement.changeset(attrs)
+          |> Repo.insert_or_update()
+          |> case do
+            result = {:ok, _} ->
+              Logger.info("Successfully upserted achievement #{uuid}")
+              result
 
-          {:error, changeset} ->
-            Logger.error("Failed to upsert achievement #{uuid}: #{full_error_messages(changeset)}")
-            {:error, {:bad_request, full_error_messages(changeset)}}
-        end
-        
+            {:error, changeset} ->
+              Logger.error(
+                "Failed to upsert achievement #{uuid}: #{full_error_messages(changeset)}"
+              )
+
+              {:error, {:bad_request, full_error_messages(changeset)}}
+          end
+
         result
     end
   end
@@ -126,14 +133,15 @@ defmodule Cadet.Incentives.Achievements do
           :ok | {:error, {:not_found, String.t()}}
   def delete(uuid) when is_binary(uuid) do
     Logger.info("Deleting achievement #{uuid}")
-    
+
     case Achievement
          |> where(uuid: ^uuid)
          |> Repo.delete_all() do
-      {0, _} -> 
+      {0, _} ->
         Logger.warning("Cannot delete achievement #{uuid} - not found")
         {:error, {:not_found, "Achievement not found"}}
-      {count, _} -> 
+
+      {count, _} ->
         Logger.info("Successfully deleted achievement #{uuid} (#{count} records)")
         :ok
     end

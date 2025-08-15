@@ -19,12 +19,13 @@ defmodule Cadet.Devices do
 
   def get_user_registrations(user_id) when is_ecto_id(user_id) do
     Logger.info("Retrieving device registrations for user #{user_id}")
-    
-    registrations = DeviceRegistration
-    |> where(user_id: ^user_id)
-    |> preload(:device)
-    |> Repo.all()
-    
+
+    registrations =
+      DeviceRegistration
+      |> where(user_id: ^user_id)
+      |> preload(:device)
+      |> Repo.all()
+
     Logger.info("Retrieved #{length(registrations)} device registrations for user #{user_id}")
     registrations
   end
@@ -38,31 +39,39 @@ defmodule Cadet.Devices do
   def get_user_registration(user_id, id)
       when is_ecto_id(user_id) and is_ecto_id(id) do
     Logger.info("Retrieving device registration #{id} for user #{user_id}")
-    
-    registration = DeviceRegistration
-    |> preload(:device)
-    |> where(user_id: ^user_id)
-    |> Repo.get(id)
-    
+
+    registration =
+      DeviceRegistration
+      |> preload(:device)
+      |> where(user_id: ^user_id)
+      |> Repo.get(id)
+
     case registration do
       nil -> Logger.warning("Device registration #{id} not found for user #{user_id}")
       _ -> Logger.info("Successfully retrieved device registration #{id} for user #{user_id}")
     end
-    
+
     registration
   end
 
   @spec delete_registration(DeviceRegistration.t()) :: {:ok, DeviceRegistration.t()}
   def delete_registration(registration = %DeviceRegistration{}) do
-    Logger.info("Deleting device registration #{registration.id} for user #{registration.user_id}")
-    
+    Logger.info(
+      "Deleting device registration #{registration.id} for user #{registration.user_id}"
+    )
+
     result = Repo.delete(registration)
+
     case result do
-      {:ok, _} -> 
+      {:ok, _} ->
         Logger.info("Successfully deleted device registration #{registration.id}")
         result
-      {:error, changeset} -> 
-        Logger.error("Failed to delete device registration #{registration.id}: #{inspect(changeset)}")
+
+      {:error, changeset} ->
+        Logger.error(
+          "Failed to delete device registration #{registration.id}: #{inspect(changeset)}"
+        )
+
         result
     end
   end
@@ -71,17 +80,22 @@ defmodule Cadet.Devices do
           {:ok, DeviceRegistration.t()} | {:error, Ecto.Changeset.t()}
   def rename_registration(registration = %DeviceRegistration{}, title) do
     Logger.info("Renaming device registration #{registration.id} to '#{title}'")
-    
-    result = registration
-    |> DeviceRegistration.changeset(%{title: title})
-    |> Repo.update()
-    
+
+    result =
+      registration
+      |> DeviceRegistration.changeset(%{title: title})
+      |> Repo.update()
+
     case result do
-      {:ok, _} -> 
+      {:ok, _} ->
         Logger.info("Successfully renamed device registration #{registration.id}")
         result
-      {:error, changeset} -> 
-        Logger.error("Failed to rename device registration #{registration.id}: #{full_error_messages(changeset)}")
+
+      {:error, changeset} ->
+        Logger.error(
+          "Failed to rename device registration #{registration.id}: #{full_error_messages(changeset)}"
+        )
+
         result
     end
   end

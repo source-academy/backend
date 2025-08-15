@@ -223,7 +223,7 @@ defmodule CadetWeb.AuthController do
   """
   def refresh(conn, %{"refresh_token" => refresh_token}) do
     Logger.info("AuthController.refresh: attempt")
-    
+
     # TODO: Refactor to use refresh after guardian_db > v1.1.0 is released.
     case Guardian.resource_from_token(refresh_token) do
       {:ok, user, %{"typ" => "refresh"}} ->
@@ -246,7 +246,7 @@ defmodule CadetWeb.AuthController do
   """
   def logout(conn, %{"refresh_token" => refresh_token}) do
     Logger.info("AuthController.logout: attempt")
-    
+
     case Guardian.decode_and_verify(refresh_token) do
       {:ok, _} ->
         Guardian.revoke(refresh_token)

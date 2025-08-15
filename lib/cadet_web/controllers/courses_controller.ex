@@ -10,7 +10,7 @@ defmodule CadetWeb.CoursesController do
   def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     user = conn.assigns.current_user
     Logger.info("CoursesController.index: user_id=#{user.id} course_id=#{course_id}")
-    
+
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
         Logger.info("CoursesController.index: success user_id=#{user.id} course_id=#{course_id}")
@@ -19,7 +19,10 @@ defmodule CadetWeb.CoursesController do
       # coveralls-ignore-start
       # no course error will not happen here
       {:error, {status, message}} ->
-        Logger.warning("CoursesController.index: error user_id=#{user.id} course_id=#{course_id} status=#{status}")
+        Logger.warning(
+          "CoursesController.index: error user_id=#{user.id} course_id=#{course_id} status=#{status}"
+        )
+
         send_resp(conn, status, message)
         # coveralls-ignore-stop
     end
@@ -28,23 +31,28 @@ defmodule CadetWeb.CoursesController do
   def create(conn, params) do
     user = conn.assigns.current_user
     Logger.info("CoursesController.create: user_id=#{user.id} is_super_admin=#{user.super_admin}")
-    
+
     params = params |> to_snake_case_atom_keys()
 
     if user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 do
       case Courses.create_course_config(params, user) do
         {:ok, course} ->
-          Logger.info("CoursesController.create: success user_id=#{user.id} course_id=#{course.id}")
+          Logger.info(
+            "CoursesController.create: success user_id=#{user.id} course_id=#{course.id}"
+          )
+
           text(conn, "OK")
 
         {:error, _, _, _} ->
           Logger.warning("CoursesController.create: invalid_params user_id=#{user.id}")
+
           conn
           |> put_status(:bad_request)
           |> text("Invalid parameter(s)")
       end
     else
       Logger.warning("CoursesController.create: too_many_courses user_id=#{user.id}")
+
       conn
       |> put_status(:forbidden)
       |> text("User not allowed to be admin of more than 5 courses.")

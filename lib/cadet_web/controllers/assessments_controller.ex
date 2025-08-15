@@ -13,7 +13,10 @@ defmodule CadetWeb.AssessmentsController do
 
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
-    Logger.info("AssessmentsController.submit: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}")
+
+    Logger.info(
+      "AssessmentsController.submit: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}"
+    )
 
     with {:submission, submission} when not is_nil(submission) <-
            {:submission, Assessments.get_submission(assessment_id, cr)},
@@ -21,23 +24,35 @@ defmodule CadetWeb.AssessmentsController do
            {:is_open?,
             cr.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
          {:ok, _nil} <- Assessments.finalise_submission(submission) do
-      Logger.info("AssessmentsController.submit: success user_id=#{cr.user_id} assessment_id=#{assessment_id}")
+      Logger.info(
+        "AssessmentsController.submit: success user_id=#{cr.user_id} assessment_id=#{assessment_id}"
+      )
+
       text(conn, "OK")
     else
       {:submission, nil} ->
-        Logger.warning("AssessmentsController.submit: submission not found user_id=#{cr.user_id} assessment_id=#{assessment_id}")
+        Logger.warning(
+          "AssessmentsController.submit: submission not found user_id=#{cr.user_id} assessment_id=#{assessment_id}"
+        )
+
         conn
         |> put_status(:not_found)
         |> text("Submission not found")
 
       {:is_open?, false} ->
-        Logger.warning("AssessmentsController.submit: assessment not open user_id=#{cr.user_id} assessment_id=#{assessment_id}")
+        Logger.warning(
+          "AssessmentsController.submit: assessment not open user_id=#{cr.user_id} assessment_id=#{assessment_id}"
+        )
+
         conn
         |> put_status(:forbidden)
         |> text("Assessment not open")
 
       {:error, {status, message}} ->
-        Logger.error("AssessmentsController.submit: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}")
+        Logger.error(
+          "AssessmentsController.submit: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}"
+        )
+
         conn
         |> put_status(status)
         |> text(message)
@@ -47,25 +62,39 @@ defmodule CadetWeb.AssessmentsController do
   def index(conn, _) do
     cr = conn.assigns.course_reg
     Logger.info("AssessmentsController.index: user_id=#{cr.user_id} course_id=#{cr.course_id}")
-    
+
     {:ok, assessments} = Assessments.all_assessments(cr)
     assessments = Assessments.format_all_assessments(assessments)
-    Logger.info("AssessmentsController.index: success user_id=#{cr.user_id} count=#{length(assessments)}")
+
+    Logger.info(
+      "AssessmentsController.index: success user_id=#{cr.user_id} count=#{length(assessments)}"
+    )
+
     render(conn, "index.json", assessments: assessments)
   end
 
   def show(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
-    Logger.info("AssessmentsController.show: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}")
+
+    Logger.info(
+      "AssessmentsController.show: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}"
+    )
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, cr) do
       {:ok, assessment} ->
         assessment = Assessments.format_assessment_with_questions_and_answers(assessment)
-        Logger.info("AssessmentsController.show: success user_id=#{cr.user_id} assessment_id=#{assessment_id}")
+
+        Logger.info(
+          "AssessmentsController.show: success user_id=#{cr.user_id} assessment_id=#{assessment_id}"
+        )
+
         render(conn, "show.json", assessment: assessment)
 
       {:error, {status, message}} ->
-        Logger.warning("AssessmentsController.show: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}")
+        Logger.warning(
+          "AssessmentsController.show: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}"
+        )
+
         send_resp(conn, status, message)
     end
   end
@@ -73,14 +102,24 @@ defmodule CadetWeb.AssessmentsController do
   def unlock(conn, %{"assessmentid" => assessment_id, "password" => password})
       when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
-    Logger.info("AssessmentsController.unlock: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}")
+
+    Logger.info(
+      "AssessmentsController.unlock: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}"
+    )
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, cr, password) do
-      {:ok, assessment} -> 
-        Logger.info("AssessmentsController.unlock: success user_id=#{cr.user_id} assessment_id=#{assessment_id}")
+      {:ok, assessment} ->
+        Logger.info(
+          "AssessmentsController.unlock: success user_id=#{cr.user_id} assessment_id=#{assessment_id}"
+        )
+
         render(conn, "show.json", assessment: assessment)
-      {:error, {status, message}} -> 
-        Logger.warning("AssessmentsController.unlock: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}")
+
+      {:error, {status, message}} ->
+        Logger.warning(
+          "AssessmentsController.unlock: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}"
+        )
+
         send_resp(conn, status, message)
     end
   end

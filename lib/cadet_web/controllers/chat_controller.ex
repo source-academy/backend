@@ -19,7 +19,10 @@ defmodule CadetWeb.ChatController do
     else
       case LlmConversations.create_conversation(user.id, section, initialContext) do
         {:ok, conversation} ->
-          Logger.info("ChatController.init_chat: success user_id=#{user.id} conversation_id=#{conversation.id}")
+          Logger.info(
+            "ChatController.init_chat: success user_id=#{user.id} conversation_id=#{conversation.id}"
+          )
+
           conn
           |> put_status(:created)
           |> render(
@@ -32,7 +35,10 @@ defmodule CadetWeb.ChatController do
           )
 
         {:error, error_message} ->
-          Logger.error("ChatController.init_chat: error user_id=#{user.id} error=#{error_message}")
+          Logger.error(
+            "ChatController.init_chat: error user_id=#{user.id} error=#{error_message}"
+          )
+
           send_resp(conn, :unprocessable_entity, error_message)
       end
     end
@@ -64,7 +70,10 @@ defmodule CadetWeb.ChatController do
 
   def chat(conn, %{"conversationId" => conversation_id, "message" => user_message}) do
     user = conn.assigns.current_user
-    Logger.info("ChatController.chat: user_id=#{user.id} conversation_id=#{conversation_id} message_length=#{String.length(user_message)}")
+
+    Logger.info(
+      "ChatController.chat: user_id=#{user.id} conversation_id=#{conversation_id} message_length=#{String.length(user_message)}"
+    )
 
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
          {:ok, conversation} <-
@@ -79,27 +88,40 @@ defmodule CadetWeb.ChatController do
 
           case LlmConversations.add_message(updated_conversation, "assistant", bot_message) do
             {:ok, _} ->
-              Logger.info("ChatController.chat: success user_id=#{user.id} conversation_id=#{conversation_id}")
+              Logger.info(
+                "ChatController.chat: success user_id=#{user.id} conversation_id=#{conversation_id}"
+              )
+
               render(conn, "conversation.json", %{
                 conversation_id: conversation_id,
                 response: bot_message
               })
 
             {:error, error_message} ->
-              Logger.error("ChatController.chat: db_error user_id=#{user.id} error=#{error_message}")
+              Logger.error(
+                "ChatController.chat: db_error user_id=#{user.id} error=#{error_message}"
+              )
+
               send_resp(conn, 500, error_message)
           end
 
         {:error, reason} ->
           error_message = reason["error"]["message"]
-          Logger.error("ChatController.chat: openai_error user_id=#{user.id} error=#{error_message}")
+
+          Logger.error(
+            "ChatController.chat: openai_error user_id=#{user.id} error=#{error_message}"
+          )
+
           IO.puts("Error message from openAI response: #{error_message}")
           LlmConversations.add_error_message(updated_conversation)
           send_resp(conn, 500, error_message)
       end
     else
       {:error, :message_too_long} ->
-        Logger.warning("ChatController.chat: message_too_long user_id=#{user.id} length=#{String.length(user_message)}")
+        Logger.warning(
+          "ChatController.chat: message_too_long user_id=#{user.id} length=#{String.length(user_message)}"
+        )
+
         send_resp(
           conn,
           :unprocessable_entity,
@@ -107,7 +129,10 @@ defmodule CadetWeb.ChatController do
         )
 
       {:error, {:not_found, error_message}} ->
-        Logger.warning("ChatController.chat: not_found user_id=#{user.id} conversation_id=#{conversation_id}")
+        Logger.warning(
+          "ChatController.chat: not_found user_id=#{user.id} conversation_id=#{conversation_id}"
+        )
+
         send_resp(conn, :not_found, error_message)
 
       {:error, error_message} ->

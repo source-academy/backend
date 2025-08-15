@@ -20,53 +20,66 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
   def get_user_record(user_id, course_id) when is_ecto_id(user_id) and is_ecto_id(course_id) do
     Logger.info("Retrieving user record for user #{user_id} in course #{course_id}")
-    
-    result = CourseRegistration
-    |> where([cr], cr.user_id == ^user_id)
-    |> where([cr], cr.course_id == ^course_id)
-    |> preload(:course)
-    |> preload(:group)
-    |> Repo.one()
-    
+
+    result =
+      CourseRegistration
+      |> where([cr], cr.user_id == ^user_id)
+      |> where([cr], cr.course_id == ^course_id)
+      |> preload(:course)
+      |> preload(:group)
+      |> Repo.one()
+
     case result do
-      nil -> Logger.warning("User record not found for user #{user_id} in course #{course_id}")
-      _ -> Logger.info("Successfully retrieved user record for user #{user_id} in course #{course_id}")
+      nil ->
+        Logger.warning("User record not found for user #{user_id} in course #{course_id}")
+
+      _ ->
+        Logger.info(
+          "Successfully retrieved user record for user #{user_id} in course #{course_id}"
+        )
     end
-    
+
     result
   end
 
   def get_user_course(user_id, course_id) when is_ecto_id(user_id) and is_ecto_id(course_id) do
     Logger.info("Retrieving course details for user #{user_id} in course #{course_id}")
-    
-    result = CourseRegistration
-    |> where([cr], cr.user_id == ^user_id)
-    |> where([cr], cr.course_id == ^course_id)
-    |> join(:inner, [cr], c in assoc(cr, :course))
-    |> join(:left, [cr, c], ac in assoc(c, :assessment_config))
-    |> preload([cr, c, ac],
-      course: {c, assessment_config: ^from(ac in AssessmentConfig, order_by: [asc: ac.order])}
-    )
-    |> preload(:group)
-    |> Repo.one()
-    
+
+    result =
+      CourseRegistration
+      |> where([cr], cr.user_id == ^user_id)
+      |> where([cr], cr.course_id == ^course_id)
+      |> join(:inner, [cr], c in assoc(cr, :course))
+      |> join(:left, [cr, c], ac in assoc(c, :assessment_config))
+      |> preload([cr, c, ac],
+        course: {c, assessment_config: ^from(ac in AssessmentConfig, order_by: [asc: ac.order])}
+      )
+      |> preload(:group)
+      |> Repo.one()
+
     case result do
-      nil -> Logger.warning("Course details not found for user #{user_id} in course #{course_id}")
-      _ -> Logger.info("Successfully retrieved course details for user #{user_id} in course #{course_id}")
+      nil ->
+        Logger.warning("Course details not found for user #{user_id} in course #{course_id}")
+
+      _ ->
+        Logger.info(
+          "Successfully retrieved course details for user #{user_id} in course #{course_id}"
+        )
     end
-    
+
     result
   end
 
   def get_courses(%User{id: id}) do
     Logger.info("Retrieving all courses for user #{id}")
-    
-    courses = CourseRegistration
-    |> where([cr], cr.user_id == ^id)
-    |> join(:inner, [cr], c in assoc(cr, :course))
-    |> preload(:course)
-    |> Repo.all()
-    
+
+    courses =
+      CourseRegistration
+      |> where([cr], cr.user_id == ^id)
+      |> join(:inner, [cr], c in assoc(cr, :course))
+      |> preload(:course)
+      |> Repo.all()
+
     Logger.info("Retrieved #{length(courses)} courses for user #{id}")
     courses
   end
@@ -143,7 +156,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
   def enroll_course(params = %{user_id: user_id, course_id: course_id, role: _role})
       when is_ecto_id(user_id) and is_ecto_id(course_id) do
     Logger.info("Enrolling user #{user_id} in course #{course_id}")
-    
+
     case params |> insert_or_update_course_registration() do
       {:ok, _course_reg} = ok ->
         # Ensures that the user has a latest_viewed_course
@@ -157,7 +170,10 @@ defmodule Cadet.Accounts.CourseRegistrations do
         ok
 
       {:error, changeset} = error ->
-        Logger.error("Failed to enroll user #{user_id} in course #{course_id}: #{full_error_messages(changeset)}")
+        Logger.error(
+          "Failed to enroll user #{user_id} in course #{course_id}: #{full_error_messages(changeset)}"
+        )
+
         error
     end
   end

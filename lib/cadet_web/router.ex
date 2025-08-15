@@ -1,6 +1,5 @@
 defmodule CadetWeb.Router do
   use CadetWeb, :router
-  require Logger
 
   pipeline :api do
     plug(:accepts, ["json"])

@@ -13,7 +13,7 @@ defmodule CadetWeb.UserController do
   def index(conn, _) do
     user = conn.assigns.current_user
     Logger.info("UserController.index: user_id=#{user.id}")
-    
+
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
 
     if user.latest_viewed_course_id do
@@ -79,14 +79,17 @@ defmodule CadetWeb.UserController do
   def update_latest_viewed(conn, %{"courseId" => course_id}) do
     user = conn.assigns.current_user
     Logger.info("UserController.update_latest_viewed: user_id=#{user.id} course_id=#{course_id}")
-    
+
     case Accounts.update_latest_viewed(conn.assigns.current_user, course_id) do
       {:ok, %{}} ->
         Logger.info("UserController.update_latest_viewed: success user_id=#{user.id}")
         text(conn, "OK")
 
       {:error, {status, message}} ->
-        Logger.warning("UserController.update_latest_viewed: error user_id=#{user.id} status=#{status} message=#{message}")
+        Logger.warning(
+          "UserController.update_latest_viewed: error user_id=#{user.id} status=#{status} message=#{message}"
+        )
+
         conn
         |> put_status(status)
         |> text(message)
@@ -95,7 +98,10 @@ defmodule CadetWeb.UserController do
 
   def update_game_states(conn, %{"gameStates" => new_game_states}) do
     cr = conn.assigns[:course_reg]
-    Logger.info("UserController.update_game_states: user_id=#{cr.user_id} course_id=#{cr.course_id}")
+
+    Logger.info(
+      "UserController.update_game_states: user_id=#{cr.user_id} course_id=#{cr.course_id}"
+    )
 
     case CourseRegistrations.update_game_states(cr, new_game_states) do
       {:ok, %{}} ->
@@ -103,7 +109,10 @@ defmodule CadetWeb.UserController do
         text(conn, "OK")
 
       {:error, {status, message}} ->
-        Logger.warning("UserController.update_game_states: error user_id=#{cr.user_id} status=#{status} message=#{message}")
+        Logger.warning(
+          "UserController.update_game_states: error user_id=#{cr.user_id} status=#{status} message=#{message}"
+        )
+
         conn
         |> put_status(status)
         |> text(message)
@@ -112,15 +121,24 @@ defmodule CadetWeb.UserController do
 
   def update_research_agreement(conn, %{"agreedToResearch" => agreed_to_research}) do
     course_reg = conn.assigns[:course_reg]
-    Logger.info("UserController.update_research_agreement: user_id=#{course_reg.user_id} course_id=#{course_reg.course_id} agreed=#{agreed_to_research}")
+
+    Logger.info(
+      "UserController.update_research_agreement: user_id=#{course_reg.user_id} course_id=#{course_reg.course_id} agreed=#{agreed_to_research}"
+    )
 
     case CourseRegistrations.update_research_agreement(course_reg, agreed_to_research) do
       {:ok, %{}} ->
-        Logger.info("UserController.update_research_agreement: success user_id=#{course_reg.user_id}")
+        Logger.info(
+          "UserController.update_research_agreement: success user_id=#{course_reg.user_id}"
+        )
+
         text(conn, "OK")
 
       {:error, {status, message}} ->
-        Logger.warning("UserController.update_research_agreement: error user_id=#{course_reg.user_id} status=#{status} message=#{message}")
+        Logger.warning(
+          "UserController.update_research_agreement: error user_id=#{course_reg.user_id} status=#{status} message=#{message}"
+        )
+
         conn
         |> put_status(status)
         |> text(message)
@@ -134,7 +152,11 @@ defmodule CadetWeb.UserController do
     Logger.info("UserController.combined_total_xp: user_id=#{user_id} course_id=#{course_id}")
 
     total_xp = Assessments.user_total_xp(course_id, user_id, course_reg_id)
-    Logger.info("UserController.combined_total_xp: success user_id=#{user_id} total_xp=#{total_xp}")
+
+    Logger.info(
+      "UserController.combined_total_xp: success user_id=#{user_id} total_xp=#{total_xp}"
+    )
+
     json(conn, %{totalXp: total_xp})
   end
 

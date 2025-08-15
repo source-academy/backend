@@ -17,20 +17,33 @@ defmodule Cadet.Chatbot.LlmConversations do
   # Secured against unauthorized access
   def get_conversation_for_user(user_id, conversation_id)
       when is_ecto_id(user_id) and is_ecto_id(conversation_id) do
-    Logger.info("LlmConversations.get_conversation_for_user: user_id=#{user_id} conversation_id=#{conversation_id}")
-    
+    Logger.info(
+      "LlmConversations.get_conversation_for_user: user_id=#{user_id} conversation_id=#{conversation_id}"
+    )
+
     conversation = get_conversation(conversation_id)
 
     case conversation do
-      nil -> 
-        Logger.warning("LlmConversations.get_conversation_for_user: not_found user_id=#{user_id} conversation_id=#{conversation_id}")
+      nil ->
+        Logger.warning(
+          "LlmConversations.get_conversation_for_user: not_found user_id=#{user_id} conversation_id=#{conversation_id}"
+        )
+
         {:error, {:not_found, "Conversation not found"}}
-      conversation when conversation.user_id == user_id -> 
-        Logger.info("LlmConversations.get_conversation_for_user: success user_id=#{user_id} conversation_id=#{conversation_id}")
+
+      conversation when conversation.user_id == user_id ->
+        Logger.info(
+          "LlmConversations.get_conversation_for_user: success user_id=#{user_id} conversation_id=#{conversation_id}"
+        )
+
         {:ok, conversation}
+
       # user_id does not match, intentionally vague error message
-      _ -> 
-        Logger.warning("LlmConversations.get_conversation_for_user: unauthorized user_id=#{user_id} conversation_id=#{conversation_id}")
+      _ ->
+        Logger.warning(
+          "LlmConversations.get_conversation_for_user: unauthorized user_id=#{user_id} conversation_id=#{conversation_id}"
+        )
+
         {:error, {:not_found, "Conversation not found"}}
     end
   end
@@ -46,7 +59,7 @@ defmodule Cadet.Chatbot.LlmConversations do
   def create_conversation(user_id, section, visible_paragraph_texts)
       when is_ecto_id(user_id) and is_binary(section) and is_binary(visible_paragraph_texts) do
     Logger.info("LlmConversations.create_conversation: user_id=#{user_id} section=#{section}")
-    
+
     context = [
       %{role: "system", content: PromptBuilder.build_prompt(section, visible_paragraph_texts)}
     ]
@@ -58,12 +71,20 @@ defmodule Cadet.Chatbot.LlmConversations do
          }
          |> Conversation.changeset(%{})
          |> Repo.insert() do
-      {:ok, conversation} -> 
-        Logger.info("LlmConversations.create_conversation: success user_id=#{user_id} conversation_id=#{conversation.id}")
+      {:ok, conversation} ->
+        Logger.info(
+          "LlmConversations.create_conversation: success user_id=#{user_id} conversation_id=#{conversation.id}"
+        )
+
         {:ok, conversation}
-      {:error, changeset} -> 
+
+      {:error, changeset} ->
         error_msg = full_error_messages(changeset)
-        Logger.error("LlmConversations.create_conversation: error user_id=#{user_id} error=#{error_msg}")
+
+        Logger.error(
+          "LlmConversations.create_conversation: error user_id=#{user_id} error=#{error_msg}"
+        )
+
         {:error, error_msg}
     end
   end
