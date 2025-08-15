@@ -2,7 +2,7 @@ defmodule Cadet.Devices do
   @moduledoc """
   Contains domain logic for remote execution devices.
   """
-  use Cadet, :context
+  use Cadet, [:context, :display]
 
   import Ecto.Query
   require Logger
