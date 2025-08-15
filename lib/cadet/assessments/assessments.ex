@@ -37,6 +37,7 @@ defmodule Cadet.Assessments do
   @bypass_closed_roles ~w(staff admin)a
 
   def delete_assessment(id) do
+    Logger.info("Attempting to delete assessment #{id}")
     assessment = Repo.get(Assessment, id)
 
     is_voted_on =
@@ -51,6 +52,7 @@ defmodule Cadet.Assessments do
       |> Repo.exists?()
 
     if is_voted_on do
+      Logger.warning("Cannot delete assessment #{id} - contest voting is still active")
       {:error, {:bad_request, "Contest voting for this contest is still up"}}
     else
       Submission
@@ -64,7 +66,12 @@ defmodule Cadet.Assessments do
         delete_submission_votes_association(q)
       end)
 
-      Repo.delete(assessment)
+      result = Repo.delete(assessment)
+      case result do
+        {:ok, _} -> Logger.info("Successfully deleted assessment #{id}")
+        {:error, changeset} -> Logger.error("Failed to delete assessment #{id}: #{full_error_messages(changeset)}")
+      end
+      result
     end
   end
 
@@ -91,8 +98,10 @@ defmodule Cadet.Assessments do
   end
 
   @spec user_max_xp(CourseRegistration.t()) :: integer()
-  def user_max_xp(%CourseRegistration{id: cr_id}) do
-    Submission
+  def user_max_xp(%CourseRegistration{id: cr_id} = cr) do
+    Logger.info("Calculating maximum XP for user #{cr.user_id} in course #{cr.course_id}")
+    
+    result = Submission
     |> where(status: ^:submitted)
     |> where(student_id: ^cr_id)
     |> join(
@@ -104,6 +113,9 @@ defmodule Cadet.Assessments do
     |> select([_, a], sum(a.max_xp))
     |> Repo.one()
     |> decimal_to_integer()
+    
+    Logger.info("Calculated maximum XP for user #{cr.user_id}: #{result}")
+    result
   end
 
   def assessments_total_xp(%CourseRegistration{id: cr_id}) do
@@ -362,7 +374,7 @@ defmodule Cadet.Assessments do
 
   def assessment_with_questions_and_answers(id, cr = %CourseRegistration{}, password)
       when is_ecto_id(id) do
-    Logger.info("Assessments.assessment_with_questions_and_answers: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{id}")
+    Logger.info("Fetching assessment #{id} with questions and answers for user #{cr.user_id} in course #{cr.course_id}")
     
     role = cr.role
 
@@ -383,12 +395,12 @@ defmodule Cadet.Assessments do
     if assessment do
       result = assessment_with_questions_and_answers(assessment, cr, password)
       case result do
-        {:ok, _} -> Logger.info("Assessments.assessment_with_questions_and_answers: success user_id=#{cr.user_id} assessment_id=#{id}")
-        {:error, {status, message}} -> Logger.warning("Assessments.assessment_with_questions_and_answers: error user_id=#{cr.user_id} assessment_id=#{id} status=#{status} message=#{message}")
+        {:ok, _} -> Logger.info("Successfully retrieved assessment #{id} for user #{cr.user_id}")
+        {:error, {status, message}} -> Logger.warning("Failed to retrieve assessment #{id} for user #{cr.user_id}: #{status} - #{message}")
       end
       result
     else
-      Logger.warning("Assessments.assessment_with_questions_and_answers: assessment not found user_id=#{cr.user_id} assessment_id=#{id}")
+      Logger.warning("Assessment #{id} not found or not published for user #{cr.user_id}")
       {:error, {:bad_request, "Assessment not found"}}
     end
   end
@@ -465,7 +477,7 @@ defmodule Cadet.Assessments do
   by the supplied user
   """
   def all_assessments(cr = %CourseRegistration{}) do
-    Logger.info("Assessments.all_assessments: user_id=#{cr.user_id} course_id=#{cr.course_id}")
+    Logger.info("Retrieving all assessments for user #{cr.user_id} in course #{cr.course_id}")
     
     teams = find_teams(cr.id)
     submission_ids = get_submission_ids(cr.id, teams)
@@ -516,7 +528,7 @@ defmodule Cadet.Assessments do
       |> preload(:config)
       |> Repo.all()
 
-    Logger.info("Assessments.all_assessments: success user_id=#{cr.user_id} count=#{length(assessments)}")
+    Logger.info("Successfully retrieved #{length(assessments)} assessments for user #{cr.user_id}")
     {:ok, assessments}
   end
 
@@ -1184,6 +1196,8 @@ defmodule Cadet.Assessments do
   end
 
   def finalise_submission(submission = %Submission{}) do
+    Logger.info("Finalizing submission #{submission.id} for assessment #{submission.assessment_id}")
+    
     with {:status, :attempted} <- {:status, submission.status},
          {:ok, updated_submission} <- update_submission_status(submission) do
       # Couple with update_submission_status and update_xp_bonus to ensure notification is sent
@@ -1202,15 +1216,19 @@ defmodule Cadet.Assessments do
       GradingJob.force_grade_individual_submission(updated_submission)
       update_xp_bonus(updated_submission)
 
+      Logger.info("Successfully finalized submission #{submission.id}")
       {:ok, nil}
     else
       {:status, :attempting} ->
+        Logger.warning("Cannot finalize submission #{submission.id} - some questions have not been attempted")
         {:error, {:bad_request, "Some questions have not been attempted"}}
 
       {:status, :submitted} ->
+        Logger.warning("Cannot finalize submission #{submission.id} - assessment has already been submitted")
         {:error, {:forbidden, "Assessment has already been submitted"}}
 
       _ ->
+        Logger.error("Failed to finalize submission #{submission.id} - unknown error")
         {:error, {:internal_server_error, "Please try again later."}}
     end
   end

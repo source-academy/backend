@@ -7,6 +7,7 @@ defmodule Cadet.Accounts.Teams do
   use Ecto.Schema
 
   import Ecto.{Changeset, Query}
+  require Logger
 
   alias Cadet.Repo
   alias Cadet.Accounts.{Team, TeamMember, Notification}
@@ -25,11 +26,16 @@ defmodule Cadet.Accounts.Teams do
 
   """
   def all_teams_for_course(course_id) do
-    Team
+    Logger.info("Retrieving all teams for course #{course_id}")
+    
+    teams = Team
     |> join(:inner, [t], a in assoc(t, :assessment))
     |> where([t, a], a.course_id == ^course_id)
     |> Repo.all()
     |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
+    
+    Logger.info("Retrieved #{length(teams)} teams for course #{course_id}")
+    teams
   end
 
   @doc """
@@ -46,24 +52,30 @@ defmodule Cadet.Accounts.Teams do
   """
   def create_team(attrs) do
     assessment_id = attrs["assessment_id"]
+    Logger.info("Creating teams for assessment #{assessment_id}")
+    
     teams = attrs["student_ids"]
     assessment = Cadet.Repo.get(Cadet.Assessments.Assessment, assessment_id)
 
     cond do
       !all_team_within_max_size?(teams, assessment.max_team_size) ->
+        Logger.warning("Team creation failed for assessment #{assessment_id} - teams exceed maximum size")
         {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
 
       !all_students_distinct?(teams) ->
+        Logger.warning("Team creation failed for assessment #{assessment_id} - duplicate students")
         {:error, {:conflict, "One or more students appear multiple times in a team!"}}
 
       !all_student_enrolled_in_course?(teams, assessment.course_id) ->
+        Logger.warning("Team creation failed for assessment #{assessment_id} - students not enrolled in course")
         {:error, {:conflict, "One or more students not enrolled in this course!"}}
 
       student_already_assigned?(teams, assessment_id) ->
+        Logger.warning("Team creation failed for assessment #{assessment_id} - students already assigned to teams")
         {:error, {:conflict, "One or more students already in a team for this assessment!"}}
 
       true ->
-        Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
+        result = Enum.reduce_while(attrs["student_ids"], {:ok, nil}, fn team_attrs, {:ok, _} ->
           {:ok, team} =
             %Team{}
             |> Team.changeset(attrs)
@@ -82,6 +94,9 @@ defmodule Cadet.Accounts.Teams do
 
           {:cont, {:ok, team}}
         end)
+        
+        Logger.info("Successfully created teams for assessment #{assessment_id}")
+        result
     end
   end
 
@@ -292,7 +307,10 @@ defmodule Cadet.Accounts.Teams do
 
   """
   def delete_team(team = %Team{}) do
+    Logger.info("Deleting team #{team.id} for assessment #{team.assessment_id}")
+    
     if has_submitted_answer?(team.id) do
+      Logger.warning("Cannot delete team #{team.id} - team has submitted answers")
       {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
     else
       submission =
@@ -315,8 +333,17 @@ defmodule Cadet.Accounts.Teams do
         |> Repo.delete_all()
       end
 
-      team
+      result = team
       |> Repo.delete()
+      
+      case result do
+        {:ok, _} -> 
+          Logger.info("Successfully deleted team #{team.id}")
+          result
+        {:error, changeset} -> 
+          Logger.error("Failed to delete team #{team.id}: #{full_error_messages(changeset)}")
+          result
+      end
     end
   end
 

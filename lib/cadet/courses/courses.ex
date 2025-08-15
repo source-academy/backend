@@ -6,6 +6,7 @@ defmodule Cadet.Courses do
   use Cadet, [:context, :display]
 
   import Ecto.Query
+  require Logger
   alias Ecto.Multi
 
   alias Cadet.Accounts.{CourseRegistration, User, CourseRegistrations}
@@ -27,7 +28,9 @@ defmodule Cadet.Courses do
   the user's latest course id to the newly created course.
   """
   def create_course_config(params, user) do
-    Multi.new()
+    Logger.info("Creating new course configuration for user #{user.id}")
+    
+    result = Multi.new()
     |> Multi.insert(:course, Course.changeset(%Course{}, params))
     |> Multi.run(:course_reg, fn _repo, %{course: course} ->
       CourseRegistrations.enroll_course(%{
@@ -37,6 +40,15 @@ defmodule Cadet.Courses do
       })
     end)
     |> Repo.transaction()
+    
+    case result do
+      {:ok, %{course: course}} -> 
+        Logger.info("Successfully created course #{course.id} for user #{user.id}")
+        result
+      {:error, _operation, changeset, _changes} -> 
+        Logger.error("Failed to create course for user #{user.id}: #{full_error_messages(changeset)}")
+        result
+    end
   end
 
   @doc """
@@ -45,8 +57,11 @@ defmodule Cadet.Courses do
   @spec get_course_config(integer) ::
           {:ok, Course.t()} | {:error, {:bad_request, String.t()}}
   def get_course_config(course_id) when is_ecto_id(course_id) do
+    Logger.info("Retrieving course configuration for course #{course_id}")
+    
     case retrieve_course(course_id) do
       nil ->
+        Logger.warning("Course #{course_id} not found")
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
@@ -57,6 +72,7 @@ defmodule Cadet.Courses do
           |> Enum.sort(&(&1.order < &2.order))
           |> Enum.map(& &1.type)
 
+        Logger.info("Successfully retrieved course configuration for course #{course_id}")
         {:ok, Map.put_new(course, :assessment_configs, assessment_configs)}
     end
   end
@@ -67,8 +83,11 @@ defmodule Cadet.Courses do
   @spec update_course_config(integer, %{}) ::
           {:ok, Course.t()} | {:error, Ecto.Changeset.t()} | {:error, {:bad_request, String.t()}}
   def update_course_config(course_id, params) when is_ecto_id(course_id) do
+    Logger.info("Updating course configuration for course #{course_id}")
+    
     case retrieve_course(course_id) do
       nil ->
+        Logger.warning("Cannot update course #{course_id} - course not found")
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
@@ -76,9 +95,18 @@ defmodule Cadet.Courses do
           remove_latest_viewed_course_id(course_id)
         end
 
-        course
+        result = course
         |> Course.changeset(params)
         |> Repo.update()
+        
+        case result do
+          {:ok, _} -> 
+            Logger.info("Successfully updated course configuration for course #{course_id}")
+            result
+          {:error, changeset} -> 
+            Logger.error("Failed to update course configuration for course #{course_id}: #{full_error_messages(changeset)}")
+            result
+        end
     end
   end
 
@@ -340,14 +368,18 @@ defmodule Cadet.Courses do
         _inserter = %CourseRegistration{user_id: user_id, course_id: course_id},
         attrs = %{}
       ) do
+    Logger.info("Uploading sourcecast file for user #{user_id} in course #{course_id}")
+    
     changeset =
       Sourcecast.changeset(%Sourcecast{uploader_id: user_id, course_id: course_id}, attrs)
 
     case Repo.insert(changeset) do
       {:ok, sourcecast} ->
+        Logger.info("Successfully uploaded sourcecast #{sourcecast.id} for user #{user_id}")
         {:ok, sourcecast}
 
       {:error, changeset} ->
+        Logger.error("Failed to upload sourcecast for user #{user_id}: #{full_error_messages(changeset)}")
         {:error, {:bad_request, full_error_messages(changeset)}}
     end
   end
@@ -389,15 +421,27 @@ defmodule Cadet.Courses do
   inside a plug in the router.
   """
   def delete_sourcecast_file(sourcecast_id) do
+    Logger.info("Deleting sourcecast file #{sourcecast_id}")
+    
     sourcecast = Repo.get(Sourcecast, sourcecast_id)
 
     case sourcecast do
       nil ->
+        Logger.warning("Cannot delete sourcecast #{sourcecast_id} - not found")
         {:error, {:not_found, "Sourcecast not found!"}}
 
       sourcecast ->
         SourcecastUpload.delete({sourcecast.audio, sourcecast})
-        Repo.delete(sourcecast)
+        result = Repo.delete(sourcecast)
+        
+        case result do
+          {:ok, _} -> 
+            Logger.info("Successfully deleted sourcecast #{sourcecast_id}")
+            result
+          {:error, changeset} -> 
+            Logger.error("Failed to delete sourcecast #{sourcecast_id}: #{full_error_messages(changeset)}")
+            result
+        end
     end
   end
 
@@ -405,10 +449,15 @@ defmodule Cadet.Courses do
   Get sourcecast files
   """
   def get_sourcecast_files(course_id) when is_ecto_id(course_id) do
-    Sourcecast
+    Logger.info("Retrieving sourcecast files for course #{course_id}")
+    
+    sourcecasts = Sourcecast
     |> where(course_id: ^course_id)
     |> Repo.all()
     |> Repo.preload(:uploader)
+    
+    Logger.info("Retrieved #{length(sourcecasts)} sourcecast files for course #{course_id}")
+    sourcecasts
   end
 
   # unused in the current version
