@@ -102,15 +102,15 @@ defmodule Cadet.Accounts do
 
   def update_latest_viewed(user = %User{id: user_id}, latest_viewed_course_id)
       when is_ecto_id(latest_viewed_course_id) do
-    Logger.info("Accounts.update_latest_viewed: user_id=#{user_id} course_id=#{latest_viewed_course_id}")
-    
+    Logger.info("Updating latest viewed course for user #{user_id} to #{latest_viewed_course_id}")
+
     CourseRegistration
     |> where(user_id: ^user_id)
     |> where(course_id: ^latest_viewed_course_id)
     |> Repo.one()
     |> case do
       nil ->
-        Logger.warning("Accounts.update_latest_viewed: user not in course user_id=#{user_id} course_id=#{latest_viewed_course_id}")
+        Logger.warning("User is not enrolled in the specified course")
         {:error, {:bad_request, "user is not in the course"}}
 
       _ ->
@@ -118,12 +118,12 @@ defmodule Cadet.Accounts do
              |> User.changeset(%{latest_viewed_course_id: latest_viewed_course_id})
              |> Repo.update() do
           result = {:ok, _} ->
-            Logger.info("Accounts.update_latest_viewed: success user_id=#{user_id}")
+            Logger.info("Successfully updated latest viewed course for user")
             result
 
           {:error, changeset} ->
             error_msg = full_error_messages(changeset)
-            Logger.error("Accounts.update_latest_viewed: error user_id=#{user_id} error=#{error_msg}")
+            Logger.error("Failed to update latest viewed course for user: #{error_msg}")
             {:error, {:internal_server_error, error_msg}}
         end
     end
