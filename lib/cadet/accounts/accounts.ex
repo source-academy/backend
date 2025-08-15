@@ -110,7 +110,7 @@ defmodule Cadet.Accounts do
     |> Repo.one()
     |> case do
       nil ->
-        Logger.warning("User is not enrolled in the specified course")
+        Logger.warning("User #{user_id} is not enrolled in course #{latest_viewed_course_id}")
         {:error, {:bad_request, "user is not in the course"}}
 
       _ ->
