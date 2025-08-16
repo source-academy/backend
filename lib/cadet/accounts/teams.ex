@@ -67,9 +67,7 @@ defmodule Cadet.Accounts.Teams do
         {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
 
       !all_students_distinct?(teams) ->
-        Logger.error(
-          "Team creation failed for assessment #{assessment_id} - duplicate students"
-        )
+        Logger.error("Team creation failed for assessment #{assessment_id} - duplicate students")
 
         {:error, {:conflict, "One or more students appear multiple times in a team!"}}
 
