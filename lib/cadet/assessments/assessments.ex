@@ -146,7 +146,7 @@ defmodule Cadet.Assessments do
     total_achievement_xp + total_assessment_xp
   end
 
-  def all_user_total_xp(course_id, offset \\ nil, limit \\ nil) do
+  def all_user_total_xp(course_id, options \\ %{}) do
     # get all users even if they have 0 xp
     base_user_query =
       from(
@@ -244,8 +244,8 @@ defmodule Cadet.Assessments do
           username: t.username,
           total_xp: t.total_xp
         },
-        limit: ^limit,
-        offset: ^offset
+        limit: ^options[:limit],
+        offset: ^options[:offset]
       )
 
     count_query =
