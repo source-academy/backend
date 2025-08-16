@@ -2070,12 +2070,12 @@ defmodule Cadet.Assessments do
           end
         end
 
+      Logger.info("XP bonus updated for submission #{submission_id}")
+
       submission
       |> Submission.changeset(%{xp_bonus: xp_bonus})
       |> Repo.update()
     end
-
-    Logger.info("XP bonus updated for submission #{submission_id}")
   end
 
   defp update_submission_status_router(submission = %Submission{}, question = %Question{}) do
