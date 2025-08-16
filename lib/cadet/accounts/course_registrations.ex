@@ -31,7 +31,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
     case result do
       nil ->
-        Logger.warning("User record not found for user #{user_id} in course #{course_id}")
+        Logger.error("User record not found for user #{user_id} in course #{course_id}")
 
       _ ->
         Logger.info(
@@ -59,7 +59,7 @@ defmodule Cadet.Accounts.CourseRegistrations do
 
     case result do
       nil ->
-        Logger.warning("Course details not found for user #{user_id} in course #{course_id}")
+        Logger.error("Course details not found for user #{user_id} in course #{course_id}")
 
       _ ->
         Logger.info(

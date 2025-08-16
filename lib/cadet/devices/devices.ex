@@ -47,7 +47,7 @@ defmodule Cadet.Devices do
       |> Repo.get(id)
 
     case registration do
-      nil -> Logger.warning("Device registration #{id} not found for user #{user_id}")
+      nil -> Logger.error("Device registration #{id} not found for user #{user_id}")
       _ -> Logger.info("Successfully retrieved device registration #{id} for user #{user_id}")
     end
 

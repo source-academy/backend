@@ -65,7 +65,7 @@ defmodule Cadet.Courses do
 
     case retrieve_course(course_id) do
       nil ->
-        Logger.warning("Course #{course_id} not found")
+        Logger.error("Course #{course_id} not found")
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
@@ -91,7 +91,7 @@ defmodule Cadet.Courses do
 
     case retrieve_course(course_id) do
       nil ->
-        Logger.warning("Cannot update course #{course_id} - course not found")
+        Logger.error("Cannot update course #{course_id} - course not found")
         {:error, {:bad_request, "Invalid course id"}}
 
       course ->
@@ -438,7 +438,7 @@ defmodule Cadet.Courses do
 
     case sourcecast do
       nil ->
-        Logger.warning("Cannot delete sourcecast #{sourcecast_id} - not found")
+        Logger.error("Sourcecast #{sourcecast_id} not found")
         {:error, {:not_found, "Sourcecast not found!"}}
 
       sourcecast ->

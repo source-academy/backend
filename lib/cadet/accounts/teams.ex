@@ -60,28 +60,28 @@ defmodule Cadet.Accounts.Teams do
 
     cond do
       !all_team_within_max_size?(teams, assessment.max_team_size) ->
-        Logger.warning(
+        Logger.error(
           "Team creation failed for assessment #{assessment_id} - teams exceed maximum size"
         )
 
         {:error, {:conflict, "One or more teams exceed the maximum team size!"}}
 
       !all_students_distinct?(teams) ->
-        Logger.warning(
+        Logger.error(
           "Team creation failed for assessment #{assessment_id} - duplicate students"
         )
 
         {:error, {:conflict, "One or more students appear multiple times in a team!"}}
 
       !all_student_enrolled_in_course?(teams, assessment.course_id) ->
-        Logger.warning(
+        Logger.error(
           "Team creation failed for assessment #{assessment_id} - students not enrolled in course"
         )
 
         {:error, {:conflict, "One or more students not enrolled in this course!"}}
 
       student_already_assigned?(teams, assessment_id) ->
-        Logger.warning(
+        Logger.error(
           "Team creation failed for assessment #{assessment_id} - students already assigned to teams"
         )
 
@@ -324,7 +324,7 @@ defmodule Cadet.Accounts.Teams do
     Logger.info("Deleting team #{team.id} for assessment #{team.assessment_id}")
 
     if has_submitted_answer?(team.id) do
-      Logger.warning("Cannot delete team #{team.id} - team has submitted answers")
+      Logger.error("Cannot delete team #{team.id} - team has submitted answers")
       {:error, {:conflict, "This team has submitted their answers! Unable to delete the team!"}}
     else
       submission =
