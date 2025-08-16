@@ -65,15 +65,14 @@ defmodule Cadet.Devices do
     case result do
       {:ok, _} ->
         Logger.info("Successfully deleted device registration #{registration.id}")
-        result
 
       {:error, changeset} ->
         Logger.error(
-          "Failed to delete device registration #{registration.id}: #{inspect(changeset)}"
+          "Failed to delete device registration #{registration.id}: #{full_error_messages(changeset)}"
         )
-
-        result
     end
+
+    result
   end
 
   @spec rename_registration(DeviceRegistration.t(), String.t()) ::
@@ -89,15 +88,14 @@ defmodule Cadet.Devices do
     case result do
       {:ok, _} ->
         Logger.info("Successfully renamed device registration #{registration.id}")
-        result
 
       {:error, changeset} ->
         Logger.error(
           "Failed to rename device registration #{registration.id}: #{full_error_messages(changeset)}"
         )
-
-        result
     end
+
+    result
   end
 
   @spec get_device(binary | integer) :: Device.t() | nil

@@ -45,15 +45,14 @@ defmodule Cadet.Courses do
     case result do
       {:ok, %{course: course}} ->
         Logger.info("Successfully created course #{course.id} for user #{user.id}")
-        result
 
       {:error, _operation, changeset, _changes} ->
         Logger.error(
           "Failed to create course for user #{user.id}: #{full_error_messages(changeset)}"
         )
-
-        result
     end
+
+    result
   end
 
   @doc """
@@ -108,15 +107,14 @@ defmodule Cadet.Courses do
         case result do
           {:ok, _} ->
             Logger.info("Successfully updated course configuration for course #{course_id}")
-            result
 
           {:error, changeset} ->
             Logger.error(
               "Failed to update course configuration for course #{course_id}: #{full_error_messages(changeset)}"
             )
-
-            result
         end
+
+        result
     end
   end
 
@@ -450,15 +448,14 @@ defmodule Cadet.Courses do
         case result do
           {:ok, _} ->
             Logger.info("Successfully deleted sourcecast #{sourcecast_id}")
-            result
 
           {:error, changeset} ->
             Logger.error(
               "Failed to delete sourcecast #{sourcecast_id}: #{full_error_messages(changeset)}"
             )
-
-            result
         end
+
+        result
     end
   end
 

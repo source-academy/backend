@@ -86,31 +86,28 @@ defmodule Cadet.Incentives.Achievements do
     # course_id not nil check is left to the changeset
     case uuid do
       nil ->
-        Logger.warning("Achievement upsert failed - no UUID specified")
+        Logger.error("Achievement upsert failed - no UUID specified")
         {:error, {:bad_request, "No UUID specified in Achievement"}}
 
       uuid ->
-        result =
-          Achievement
-          |> preload([:prerequisites, :goals])
-          |> Repo.get(uuid)
-          |> (&(&1 || %Achievement{})).()
-          |> Achievement.changeset(attrs)
-          |> Repo.insert_or_update()
-          |> case do
-            result = {:ok, _} ->
-              Logger.info("Successfully upserted achievement #{uuid}")
-              result
+        Achievement
+        |> preload([:prerequisites, :goals])
+        |> Repo.get(uuid)
+        |> (&(&1 || %Achievement{})).()
+        |> Achievement.changeset(attrs)
+        |> Repo.insert_or_update()
+        |> case do
+          result = {:ok, _} ->
+            Logger.info("Successfully upserted achievement #{uuid}")
+            result
 
-            {:error, changeset} ->
-              Logger.error(
-                "Failed to upsert achievement #{uuid}: #{full_error_messages(changeset)}"
-              )
+          {:error, changeset} ->
+            Logger.error(
+              "Failed to upsert achievement #{uuid}: #{full_error_messages(changeset)}"
+            )
 
-              {:error, {:bad_request, full_error_messages(changeset)}}
-          end
-
-        result
+            {:error, {:bad_request, full_error_messages(changeset)}}
+        end
     end
   end
 
@@ -138,7 +135,7 @@ defmodule Cadet.Incentives.Achievements do
          |> where(uuid: ^uuid)
          |> Repo.delete_all() do
       {0, _} ->
-        Logger.warning("Cannot delete achievement #{uuid} - not found")
+        Logger.error("Cannot delete achievement #{uuid} - not found")
         {:error, {:not_found, "Achievement not found"}}
 
       {count, _} ->

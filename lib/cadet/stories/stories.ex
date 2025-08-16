@@ -54,7 +54,7 @@ defmodule Cadet.Stories.Stories do
 
     case Repo.get(Story, id) do
       nil ->
-        Logger.warning("Cannot update story #{id} - story not found")
+        Logger.error("Cannot update story #{id} - story not found")
         {:error, {:not_found, "Story not found"}}
 
       story ->
@@ -67,14 +67,14 @@ defmodule Cadet.Stories.Stories do
           case result do
             {:ok, _} ->
               Logger.info("Successfully updated story #{id}")
-              result
 
             {:error, changeset} ->
               Logger.error("Failed to update story #{id}: #{full_error_messages(changeset)}")
-              result
           end
+
+          result
         else
-          Logger.warning(
+          Logger.error(
             "Cannot update story #{id} - user not allowed to manage stories from another course"
           )
 
@@ -88,7 +88,7 @@ defmodule Cadet.Stories.Stories do
 
     case Repo.get(Story, id) do
       nil ->
-        Logger.warning("Cannot delete story #{id} - story not found")
+        Logger.error("Cannot delete story #{id} - story not found")
         {:error, {:not_found, "Story not found"}}
 
       story ->
@@ -98,14 +98,14 @@ defmodule Cadet.Stories.Stories do
           case result do
             {:ok, _} ->
               Logger.info("Successfully deleted story #{id}")
-              result
 
             {:error, changeset} ->
               Logger.error("Failed to delete story #{id}: #{full_error_messages(changeset)}")
-              result
           end
+
+          result
         else
-          Logger.warning(
+          Logger.error(
             "Cannot delete story #{id} - user not allowed to manage stories from another course"
           )
 
