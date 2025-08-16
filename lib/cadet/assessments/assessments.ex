@@ -2406,7 +2406,7 @@ defmodule Cadet.Assessments do
         end)
 
       if Enum.empty?(voting_questions_to_update) do
-        Logger.warn("No voting questions to update.")
+        Logger.error("No voting questions to update.")
       else
         # Process each voting question
         Enum.each(voting_questions_to_update, fn qn ->
@@ -2456,14 +2456,14 @@ defmodule Cadet.Assessments do
       |> Repo.one()
 
     if is_nil(contest_question_id) do
-      Logger.warn("Contest question ID is missing. Terminating.")
+      Logger.error("Contest question ID is missing. Terminating.")
       :ok
     else
       default_xp_values = %Cadet.Assessments.QuestionTypes.VotingQuestion{} |> Map.get(:xp_values)
       scores = voting_questions.question["xp_values"] || default_xp_values
 
       if scores == [] do
-        Logger.warn("No XP values provided. Terminating.")
+        Logger.error("No XP values provided. Terminating.")
         :ok
       else
         Repo.transaction(fn ->
