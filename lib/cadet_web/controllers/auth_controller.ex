@@ -26,7 +26,10 @@ defmodule CadetWeb.AuthController do
       ) do
     client_id = Map.get(params, "client_id")
     redirect_uri = Map.get(params, "redirect_uri")
-    Logger.info("AuthController.create: provider=#{provider} client_id=#{client_id}")
+
+    Logger.info(
+      "Starting login process for provider '#{provider}' with client ID '#{client_id}'."
+    )
 
     case create_user_and_tokens(%{
            conn: conn,
@@ -36,17 +39,17 @@ defmodule CadetWeb.AuthController do
            redirect_uri: redirect_uri
          }) do
       {:ok, tokens} ->
-        Logger.info("AuthController.create: success provider=#{provider}")
+        Logger.info("Login successful for provider '#{provider}'. Tokens generated.")
         render(conn, "token.json", tokens)
 
       conn ->
-        Logger.warning("AuthController.create: failed provider=#{provider}")
+        Logger.error("Login failed for provider '#{provider}'.")
         conn
     end
   end
 
   def create(conn, _params) do
-    Logger.warning("AuthController.create: missing parameters")
+    Logger.error("Login request failed due to missing parameters.")
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
@@ -59,6 +62,8 @@ defmodule CadetWeb.AuthController do
           "provider" => provider
         }
       ) do
+    Logger.info("Processing SAML redirect for provider '#{provider}'.")
+
     case create_user_and_tokens(%{
            conn: conn,
            provider_instance: provider,
@@ -72,6 +77,8 @@ defmodule CadetWeb.AuthController do
 
         encoded_tokens = tokens |> Jason.encode!()
 
+        Logger.info("SAML redirect successful for provider '#{provider}'. Redirecting to client.")
+
         conn
         |> put_resp_cookie("jwts", encoded_tokens,
           domain: URI.new!(client_redirect_url).host,
@@ -82,11 +89,13 @@ defmodule CadetWeb.AuthController do
         |> halt()
 
       conn ->
+        Logger.error("SAML redirect failed for provider '#{provider}'.")
         conn
     end
   end
 
   def saml_redirect(conn, _params) do
+    Logger.error("SAML redirect request failed due to missing parameters.")
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
@@ -100,8 +109,12 @@ defmodule CadetWeb.AuthController do
           "provider" => provider
         }
       ) do
+    Logger.info("Exchanging code for tokens for provider '#{provider}'.")
+
     case TokenExchange.get_by_code(code) do
       {:error, _message} ->
+        Logger.error("Code exchange failed. Invalid code provided.")
+
         conn
         |> put_status(:forbidden)
         |> text("Invalid code")
@@ -111,6 +124,8 @@ defmodule CadetWeb.AuthController do
 
         {_provider, %{client_post_exchange_redirect_url: client_post_exchange_redirect_url}} =
           Application.get_env(:cadet, :identity_providers, %{})[provider]
+
+        Logger.info("Code exchange successful for provider '#{provider}'. Redirecting to client.")
 
         conn
         |> put_resp_header(
@@ -134,6 +149,8 @@ defmodule CadetWeb.AuthController do
           "provider" => provider
         }
       ) do
+    Logger.info("Processing SAML redirect for VSCode with provider '#{provider}'.")
+
     code_ttl = 60
 
     case create_user(%{
@@ -156,6 +173,8 @@ defmodule CadetWeb.AuthController do
         {_provider, %{vscode_redirect_url_prefix: vscode_redirect_url_prefix}} =
           Application.get_env(:cadet, :identity_providers, %{})[provider]
 
+        Logger.info("SAML redirect for VSCode successful. Redirecting with generated code.")
+
         conn
         |> put_resp_header(
           "location",
@@ -165,6 +184,7 @@ defmodule CadetWeb.AuthController do
         |> halt()
 
       conn ->
+        Logger.error("SAML redirect for VSCode failed for provider '#{provider}'.")
         conn
     end
   end
@@ -222,22 +242,22 @@ defmodule CadetWeb.AuthController do
   Exchanges the refresh_token with a new access_token.
   """
   def refresh(conn, %{"refresh_token" => refresh_token}) do
-    Logger.info("AuthController.refresh: attempt")
+    Logger.info("Attempting to refresh tokens for the provided refresh token.")
 
     # TODO: Refactor to use refresh after guardian_db > v1.1.0 is released.
     case Guardian.resource_from_token(refresh_token) do
       {:ok, user, %{"typ" => "refresh"}} ->
-        Logger.info("AuthController.refresh: success user_id=#{user.id}")
+        Logger.info("Successfully refreshed tokens for user with ID #{user.id}.")
         render(conn, "token.json", generate_tokens(user))
 
       _ ->
-        Logger.warning("AuthController.refresh: invalid refresh token")
+        Logger.error("Invalid refresh token provided.")
         send_resp(conn, :unauthorized, "Invalid refresh token")
     end
   end
 
   def refresh(conn, _params) do
-    Logger.warning("AuthController.refresh: missing parameters")
+    Logger.error("Refresh request failed due to missing parameters.")
     send_resp(conn, :bad_request, "Missing parameter")
   end
 
@@ -245,21 +265,22 @@ defmodule CadetWeb.AuthController do
   Receives a /logout request with valid attribute.
   """
   def logout(conn, %{"refresh_token" => refresh_token}) do
-    Logger.info("AuthController.logout: attempt")
+    Logger.info("Attempting to log out using the provided refresh token.")
 
     case Guardian.decode_and_verify(refresh_token) do
       {:ok, _} ->
         Guardian.revoke(refresh_token)
-        Logger.info("AuthController.logout: success")
+        Logger.info("Successfully logged out and invalidated the refresh token.")
         text(conn, "OK")
 
       {:error, _} ->
-        Logger.warning("AuthController.logout: invalid token")
+        Logger.error("Invalid token provided for logout.")
         send_resp(conn, :unauthorized, "Invalid token")
     end
   end
 
   def logout(conn, _params) do
+    Logger.error("Logout request failed due to missing parameters.")
     send_resp(conn, :bad_request, "Missing parameter")
   end
 

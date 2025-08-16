@@ -9,18 +9,21 @@ defmodule CadetWeb.CoursesController do
 
   def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     user = conn.assigns.current_user
-    Logger.info("CoursesController.index: user_id=#{user.id} course_id=#{course_id}")
+    Logger.info("Fetching course configuration for user #{user.id} and course #{course_id}")
 
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
-        Logger.info("CoursesController.index: success user_id=#{user.id} course_id=#{course_id}")
+        Logger.info(
+          "Successfully retrieved course configuration for user #{user.id} and course #{course_id}."
+        )
+
         render(conn, "config.json", config: config)
 
       # coveralls-ignore-start
       # no course error will not happen here
       {:error, {status, message}} ->
-        Logger.warning(
-          "CoursesController.index: error user_id=#{user.id} course_id=#{course_id} status=#{status}"
+        Logger.error(
+          "Failed to fetch course configuration for user #{user.id} and course #{course_id}. Status: #{status}."
         )
 
         send_resp(conn, status, message)
@@ -30,28 +33,25 @@ defmodule CadetWeb.CoursesController do
 
   def create(conn, params) do
     user = conn.assigns.current_user
-    Logger.info("CoursesController.create: user_id=#{user.id} is_super_admin=#{user.super_admin}")
+    Logger.info("Creating a new course for user #{user.id}. Super admin: #{user.super_admin}.")
 
     params = params |> to_snake_case_atom_keys()
 
     if user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 do
       case Courses.create_course_config(params, user) do
         {:ok, course} ->
-          Logger.info(
-            "CoursesController.create: success user_id=#{user.id} course_id=#{course.id}"
-          )
-
+          Logger.info("Successfully created course #{course.id} for user #{user.id}.")
           text(conn, "OK")
 
         {:error, _, _, _} ->
-          Logger.warning("CoursesController.create: invalid_params user_id=#{user.id}")
+          Logger.error("Invalid parameters provided by user #{user.id} while creating a course.")
 
           conn
           |> put_status(:bad_request)
           |> text("Invalid parameter(s)")
       end
     else
-      Logger.warning("CoursesController.create: too_many_courses user_id=#{user.id}")
+      Logger.error("User #{user.id} has exceeded the limit of 5 admin courses.")
 
       conn
       |> put_status(:forbidden)

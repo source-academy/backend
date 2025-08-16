@@ -11,16 +11,16 @@ defmodule CadetWeb.ChatController do
 
   def init_chat(conn, %{"section" => section, "initialContext" => initialContext}) do
     user = conn.assigns.current_user
-    Logger.info("ChatController.init_chat: user_id=#{user.id} section=#{section}")
+    Logger.info("Initializing chat for user #{user.id} in section #{section}")
 
     if is_nil(section) do
-      Logger.warning("ChatController.init_chat: missing section user_id=#{user.id}")
+      Logger.error("Section is missing for user #{user.id}.")
       send_resp(conn, :bad_request, "Missing course section")
     else
       case LlmConversations.create_conversation(user.id, section, initialContext) do
         {:ok, conversation} ->
           Logger.info(
-            "ChatController.init_chat: success user_id=#{user.id} conversation_id=#{conversation.id}"
+            "Chat initialized successfully for user #{user.id}. Conversation ID: #{conversation.id}."
           )
 
           conn
@@ -35,9 +35,7 @@ defmodule CadetWeb.ChatController do
           )
 
         {:error, error_message} ->
-          Logger.error(
-            "ChatController.init_chat: error user_id=#{user.id} error=#{error_message}"
-          )
+          Logger.error("Failed to initialize chat for user #{user.id}. Error: #{error_message}.")
 
           send_resp(conn, :unprocessable_entity, error_message)
       end
@@ -72,7 +70,7 @@ defmodule CadetWeb.ChatController do
     user = conn.assigns.current_user
 
     Logger.info(
-      "ChatController.chat: user_id=#{user.id} conversation_id=#{conversation_id} message_length=#{String.length(user_message)}"
+      "Processing chat message for user #{user.id}, conversation #{conversation_id}. Message length: #{String.length(user_message)}."
     )
 
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
@@ -89,7 +87,7 @@ defmodule CadetWeb.ChatController do
           case LlmConversations.add_message(updated_conversation, "assistant", bot_message) do
             {:ok, _} ->
               Logger.info(
-                "ChatController.chat: success user_id=#{user.id} conversation_id=#{conversation_id}"
+                "Chat message processed successfully for user #{user.id}, conversation #{conversation_id}."
               )
 
               render(conn, "conversation.json", %{
@@ -99,7 +97,7 @@ defmodule CadetWeb.ChatController do
 
             {:error, error_message} ->
               Logger.error(
-                "ChatController.chat: db_error user_id=#{user.id} error=#{error_message}"
+                "Failed to save bot response for user #{user.id}, conversation #{conversation_id}: #{error_message}."
               )
 
               send_resp(conn, 500, error_message)
@@ -109,17 +107,16 @@ defmodule CadetWeb.ChatController do
           error_message = reason["error"]["message"]
 
           Logger.error(
-            "ChatController.chat: openai_error user_id=#{user.id} error=#{error_message}"
+            "OpenAI API error for user #{user.id}, conversation #{conversation_id}: #{error_message}."
           )
 
-          IO.puts("Error message from openAI response: #{error_message}")
           LlmConversations.add_error_message(updated_conversation)
           send_resp(conn, 500, error_message)
       end
     else
       {:error, :message_too_long} ->
-        Logger.warning(
-          "ChatController.chat: message_too_long user_id=#{user.id} length=#{String.length(user_message)}"
+        Logger.error(
+          "Message too long for user #{user.id}. Length: #{String.length(user_message)}."
         )
 
         send_resp(
@@ -129,14 +126,14 @@ defmodule CadetWeb.ChatController do
         )
 
       {:error, {:not_found, error_message}} ->
-        Logger.warning(
-          "ChatController.chat: not_found user_id=#{user.id} conversation_id=#{conversation_id}"
+        Logger.error(
+          "Conversation not found for user #{user.id}, conversation #{conversation_id}."
         )
 
         send_resp(conn, :not_found, error_message)
 
       {:error, error_message} ->
-        Logger.error("ChatController.chat: error user_id=#{user.id} error=#{error_message}")
+        Logger.error("An error occurred for user #{user.id}. Error: #{error_message}.")
         send_resp(conn, 500, error_message)
     end
   end

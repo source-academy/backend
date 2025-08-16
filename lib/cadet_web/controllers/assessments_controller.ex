@@ -15,7 +15,7 @@ defmodule CadetWeb.AssessmentsController do
     cr = conn.assigns.course_reg
 
     Logger.info(
-      "AssessmentsController.submit: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}"
+      "Submitting assessment #{assessment_id} for user #{cr.id} in course #{cr.course_id}"
     )
 
     with {:submission, submission} when not is_nil(submission) <-
@@ -24,25 +24,19 @@ defmodule CadetWeb.AssessmentsController do
            {:is_open?,
             cr.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
          {:ok, _nil} <- Assessments.finalise_submission(submission) do
-      Logger.info(
-        "AssessmentsController.submit: success user_id=#{cr.user_id} assessment_id=#{assessment_id}"
-      )
+      Logger.info("Successfully submitted assessment #{assessment_id} for user #{cr.id}.")
 
       text(conn, "OK")
     else
       {:submission, nil} ->
-        Logger.warning(
-          "AssessmentsController.submit: submission not found user_id=#{cr.user_id} assessment_id=#{assessment_id}"
-        )
+        Logger.error("Submission not found for assessment #{assessment_id} and user #{cr.id}.")
 
         conn
         |> put_status(:not_found)
         |> text("Submission not found")
 
       {:is_open?, false} ->
-        Logger.warning(
-          "AssessmentsController.submit: assessment not open user_id=#{cr.user_id} assessment_id=#{assessment_id}"
-        )
+        Logger.error("Assessment #{assessment_id} is not open for user #{cr.id}.")
 
         conn
         |> put_status(:forbidden)
@@ -50,7 +44,7 @@ defmodule CadetWeb.AssessmentsController do
 
       {:error, {status, message}} ->
         Logger.error(
-          "AssessmentsController.submit: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}"
+          "Error submitting assessment #{assessment_id} for user #{cr.id}: #{message} (status: #{status})."
         )
 
         conn
@@ -61,14 +55,12 @@ defmodule CadetWeb.AssessmentsController do
 
   def index(conn, _) do
     cr = conn.assigns.course_reg
-    Logger.info("AssessmentsController.index: user_id=#{cr.user_id} course_id=#{cr.course_id}")
+    Logger.info("Fetching all assessments for user #{cr.id} in course #{cr.course_id}")
 
     {:ok, assessments} = Assessments.all_assessments(cr)
     assessments = Assessments.format_all_assessments(assessments)
 
-    Logger.info(
-      "AssessmentsController.index: success user_id=#{cr.user_id} count=#{length(assessments)}"
-    )
+    Logger.info("Successfully fetched #{length(assessments)} assessments for user #{cr.id}.")
 
     render(conn, "index.json", assessments: assessments)
   end
@@ -77,7 +69,7 @@ defmodule CadetWeb.AssessmentsController do
     cr = conn.assigns.course_reg
 
     Logger.info(
-      "AssessmentsController.show: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}"
+      "Fetching details for assessment #{assessment_id} for user #{cr.id} in course #{cr.course_id}"
     )
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, cr) do
@@ -85,14 +77,14 @@ defmodule CadetWeb.AssessmentsController do
         assessment = Assessments.format_assessment_with_questions_and_answers(assessment)
 
         Logger.info(
-          "AssessmentsController.show: success user_id=#{cr.user_id} assessment_id=#{assessment_id}"
+          "Successfully fetched details for assessment #{assessment_id} for user #{cr.id}."
         )
 
         render(conn, "show.json", assessment: assessment)
 
       {:error, {status, message}} ->
-        Logger.warning(
-          "AssessmentsController.show: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}"
+        Logger.error(
+          "Error fetching assessment #{assessment_id} for user #{cr.id}: #{message} (status: #{status})."
         )
 
         send_resp(conn, status, message)
@@ -104,20 +96,18 @@ defmodule CadetWeb.AssessmentsController do
     cr = conn.assigns.course_reg
 
     Logger.info(
-      "AssessmentsController.unlock: user_id=#{cr.user_id} course_id=#{cr.course_id} assessment_id=#{assessment_id}"
+      "Attempting to unlock assessment #{assessment_id} for user #{cr.id} in course #{cr.course_id}"
     )
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, cr, password) do
       {:ok, assessment} ->
-        Logger.info(
-          "AssessmentsController.unlock: success user_id=#{cr.user_id} assessment_id=#{assessment_id}"
-        )
+        Logger.info("Successfully unlocked assessment #{assessment_id} for user #{cr.id}.")
 
         render(conn, "show.json", assessment: assessment)
 
       {:error, {status, message}} ->
-        Logger.warning(
-          "AssessmentsController.unlock: error user_id=#{cr.user_id} assessment_id=#{assessment_id} status=#{status} message=#{message}"
+        Logger.error(
+          "Failed to unlock assessment #{assessment_id} for user #{cr.id}: #{message} (status: #{status})."
         )
 
         send_resp(conn, status, message)
@@ -129,6 +119,10 @@ defmodule CadetWeb.AssessmentsController do
         "course_id" => course_id
       }) do
     count = String.to_integer(conn.params["count"] || "10")
+
+    Logger.info(
+      "Fetching contest score leaderboard for assessment #{assessment_id} in course #{course_id}"
+    )
 
     case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
       {:voting_question, voting_question} when not is_nil(voting_question) ->
@@ -146,9 +140,15 @@ defmodule CadetWeb.AssessmentsController do
             AssessmentsHelpers.build_contest_leaderboard_entry(updated_entry)
           end)
 
+        Logger.info(
+          "Successfully fetched contest score leaderboard for assessment #{assessment_id}."
+        )
+
         json(conn, %{leaderboard: result})
 
       {:voting_question, nil} ->
+        Logger.error("Assessment #{assessment_id} is not a contest voting assessment.")
+
         conn
         |> put_status(:not_found)
         |> text("Not a contest voting assessment")
@@ -160,6 +160,10 @@ defmodule CadetWeb.AssessmentsController do
         "course_id" => course_id
       }) do
     count = String.to_integer(conn.params["count"] || "10")
+
+    Logger.info(
+      "Fetching contest popular leaderboard for assessment #{assessment_id} in course #{course_id}"
+    )
 
     case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
       {:voting_question, voting_question} when not is_nil(voting_question) ->
@@ -177,9 +181,15 @@ defmodule CadetWeb.AssessmentsController do
             AssessmentsHelpers.build_popular_leaderboard_entry(updated_entry)
           end)
 
+        Logger.info(
+          "Successfully fetched contest popular leaderboard for assessment #{assessment_id}."
+        )
+
         json(conn, %{leaderboard: result})
 
       {:voting_question, nil} ->
+        Logger.error("Assessment #{assessment_id} is not a contest voting assessment.")
+
         conn
         |> put_status(:not_found)
         |> text("Not a contest voting assessment")
@@ -187,7 +197,12 @@ defmodule CadetWeb.AssessmentsController do
   end
 
   def get_all_contests(conn, %{"course_id" => course_id}) do
+    Logger.info("Fetching all contests for course #{course_id}")
+
     contests = Assessments.fetch_all_contests(course_id)
+
+    Logger.info("Successfully fetched all contests for course #{course_id}.")
+
     json(conn, contests)
   end
 
