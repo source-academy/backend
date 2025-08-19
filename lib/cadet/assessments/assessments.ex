@@ -237,12 +237,8 @@ defmodule Cadet.Assessments do
     # add rank index
     ranked_xp_query =
       from(t in subquery(total_xp_query),
-        select: %{
+        select_merge: %{
           rank: fragment("RANK() OVER (ORDER BY total_xp DESC)"),
-          user_id: t.user_id,
-          name: t.name,
-          username: t.username,
-          total_xp: t.total_xp
         },
         limit: ^options[:limit],
         offset: ^options[:offset]
