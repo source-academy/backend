@@ -148,17 +148,12 @@ defmodule Cadet.Assessments do
 
   def all_user_total_xp(course_id, options \\ %{}) do
     # get all users even if they have 0 xp
-    base_user_query =
+    course_userid_query =
       from(
-        cr in CourseRegistration,
-        join: u in User,
-        on: cr.user_id == u.id,
-        where: cr.course_id == ^course_id,
-        select: %{
-          user_id: u.id,
-          name: u.name,
-          username: u.username
-        }
+        u in User,
+        join: cr in CourseRegistration,
+        where: cr.user_id == u.id and cr.course_id == ^course_id,
+        select: %{id: u.id, cr_id: cr.id}
       )
 
     achievements_xp_query =
@@ -215,15 +210,17 @@ defmodule Cadet.Assessments do
       )
 
     total_xp_query =
-      from(bu in subquery(base_user_query),
+      from(cu in subquery(course_userid_query),
+        inner_join: u in User,
+        on: u.id == cu.id,
         left_join: ax in subquery(achievements_xp_query),
-        on: bu.user_id == ax.user_id,
+        on: u.id == ax.user_id,
         left_join: sx in subquery(submissions_xp_query),
-        on: bu.user_id == sx.user_id,
+        on: u.id == sx.user_id,
         select: %{
-          user_id: bu.user_id,
-          name: bu.name,
-          username: bu.username,
+          user_id: u.id,
+          name: u.name,
+          username: u.username,
           total_xp:
             fragment(
               "COALESCE(?, 0) + COALESCE(?, 0)",
