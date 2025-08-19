@@ -3188,7 +3188,7 @@ defmodule Cadet.AssessmentsTest do
       Enum.each(1..50, fn x ->
         offset = Enum.random(0..49)
         limit = Enum.random(1..50)
-        paginated_user_xp = Assessments.all_user_total_xp(course.id, offset, limit)
+        paginated_user_xp = Assessments.all_user_total_xp(course.id, %{offset: offset, limit: limit})
 
         expected_xp_list =
           50..1
