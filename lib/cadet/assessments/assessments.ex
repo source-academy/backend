@@ -170,7 +170,7 @@ defmodule Cadet.Assessments do
           a.course_id == ^course_id and p.completed and
             p.count == g.target_count,
         group_by: [u.id, u.name, u.username, cr.id],
-        select_merge: %{
+        select: %{
           user_id: u.id,
           achievements_xp:
             fragment(
