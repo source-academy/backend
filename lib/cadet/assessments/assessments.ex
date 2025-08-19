@@ -147,16 +147,18 @@ defmodule Cadet.Assessments do
   end
 
   def all_user_total_xp(course_id, options \\ %{}) do
+    include_admin_staff_users = fn q ->
+      if options[:include_admin_staff],
+        do: q,
+        else: where(q, [_, cr], cr.role == "student")
+    end
+
     # get all users even if they have 0 xp
     course_userid_query =
       User
       |> join(:inner, [u], cr in CourseRegistration, on: cr.user_id == u.id)
       |> where([_, cr], cr.course_id == ^course_id)
-      |> (fn q ->
-            if options[:include_admin_staff],
-              do: q,
-              else: where(q, [_, cr], cr.role == "student")
-          end).()
+      |> include_admin_staff_users.()
       |> select([u, cr], %{
         id: u.id,
         cr_id: cr.id
