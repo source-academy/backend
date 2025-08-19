@@ -146,20 +146,23 @@ defmodule Cadet.Assessments do
     total_achievement_xp + total_assessment_xp
   end
 
-  def all_user_total_xp(course_id, offset \\ nil, limit \\ nil) do
+  def all_user_total_xp(course_id, options \\ %{}) do
+    include_admin_staff_users = fn q ->
+      if options[:include_admin_staff],
+        do: q,
+        else: where(q, [_, cr], cr.role == "student")
+    end
+
     # get all users even if they have 0 xp
-    base_user_query =
-      from(
-        cr in CourseRegistration,
-        join: u in User,
-        on: cr.user_id == u.id,
-        where: cr.course_id == ^course_id,
-        select: %{
-          user_id: u.id,
-          name: u.name,
-          username: u.username
-        }
-      )
+    course_userid_query =
+      User
+      |> join(:inner, [u], cr in CourseRegistration, on: cr.user_id == u.id)
+      |> where([_, cr], cr.course_id == ^course_id)
+      |> include_admin_staff_users.()
+      |> select([u, cr], %{
+        id: u.id,
+        cr_id: cr.id
+      })
 
     achievements_xp_query =
       from(u in User,
@@ -175,7 +178,7 @@ defmodule Cadet.Assessments do
           a.course_id == ^course_id and p.completed and
             p.count == g.target_count,
         group_by: [u.id, u.name, u.username, cr.id],
-        select_merge: %{
+        select: %{
           user_id: u.id,
           achievements_xp:
             fragment(
@@ -188,42 +191,30 @@ defmodule Cadet.Assessments do
       )
 
     submissions_xp_query =
-      from(
-        sub_xp in subquery(
-          from(cr in CourseRegistration,
-            join: u in User,
-            on: cr.user_id == u.id,
-            full_join: tm in TeamMember,
-            on: cr.id == tm.student_id,
-            join: s in Submission,
-            on: tm.team_id == s.team_id or s.student_id == cr.id,
-            join: a in Answer,
-            on: s.id == a.submission_id,
-            where: s.is_grading_published == true and cr.course_id == ^course_id,
-            group_by: [cr.id, u.id, u.name, u.username, s.id, a.xp, a.xp_adjustment],
-            select: %{
-              user_id: u.id,
-              submission_xp: a.xp + a.xp_adjustment + max(s.xp_bonus)
-            }
-          )
-        ),
-        group_by: sub_xp.user_id,
-        select: %{
-          user_id: sub_xp.user_id,
-          submission_xp: sum(sub_xp.submission_xp)
-        }
-      )
+      course_userid_query
+      |> subquery()
+      |> join(:left, [u], tm in TeamMember, on: tm.student_id == u.cr_id)
+      |> join(:left, [u, tm], s in Submission, on: s.student_id == u.cr_id or s.team_id == tm.id)
+      |> join(:left, [u, tm, s], a in Answer, on: s.id == a.submission_id)
+      |> where([_, _, s, _], s.is_grading_published == true)
+      |> group_by([u, _, s, _], [u.id, s.id])
+      |> select([u, _, s, a], %{
+        user_id: u.id,
+        submission_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
+      })
 
     total_xp_query =
-      from(bu in subquery(base_user_query),
+      from(cu in subquery(course_userid_query),
+        inner_join: u in User,
+        on: u.id == cu.id,
         left_join: ax in subquery(achievements_xp_query),
-        on: bu.user_id == ax.user_id,
+        on: u.id == ax.user_id,
         left_join: sx in subquery(submissions_xp_query),
-        on: bu.user_id == sx.user_id,
+        on: u.id == sx.user_id,
         select: %{
-          user_id: bu.user_id,
-          name: bu.name,
-          username: bu.username,
+          user_id: u.id,
+          name: u.name,
+          username: u.username,
           total_xp:
             fragment(
               "COALESCE(?, 0) + COALESCE(?, 0)",
@@ -237,15 +228,11 @@ defmodule Cadet.Assessments do
     # add rank index
     ranked_xp_query =
       from(t in subquery(total_xp_query),
-        select: %{
-          rank: fragment("RANK() OVER (ORDER BY total_xp DESC)"),
-          user_id: t.user_id,
-          name: t.name,
-          username: t.username,
-          total_xp: t.total_xp
+        select_merge: %{
+          rank: fragment("RANK() OVER (ORDER BY total_xp DESC)")
         },
-        limit: ^limit,
-        offset: ^offset
+        limit: ^options[:limit],
+        offset: ^options[:offset]
       )
 
     count_query =
