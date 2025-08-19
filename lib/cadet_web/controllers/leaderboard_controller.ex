@@ -13,7 +13,10 @@ defmodule CadetWeb.LeaderboardController do
   def xp_paginated(conn, %{"course_id" => course_id}) do
     offset = String.to_integer(conn.params["offset"] || "0")
     page_size = String.to_integer(conn.params["page_size"] || "25")
-    paginated_display = Assessments.all_user_total_xp(course_id, offset, page_size)
+
+    paginated_display =
+      Assessments.all_user_total_xp(course_id, %{offset: offset, limit: page_size})
+
     json(conn, paginated_display)
   end
 
