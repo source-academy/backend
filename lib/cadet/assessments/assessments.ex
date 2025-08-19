@@ -187,31 +187,19 @@ defmodule Cadet.Assessments do
       )
 
     submissions_xp_query =
-      from(
-        sub_xp in subquery(
-          from(cr in CourseRegistration,
-            join: u in User,
-            on: cr.user_id == u.id,
-            full_join: tm in TeamMember,
-            on: cr.id == tm.student_id,
-            join: s in Submission,
-            on: tm.team_id == s.team_id or s.student_id == cr.id,
-            join: a in Answer,
-            on: s.id == a.submission_id,
-            where: s.is_grading_published == true and cr.course_id == ^course_id,
-            group_by: [cr.id, u.id, u.name, u.username, s.id, a.xp, a.xp_adjustment],
-            select: %{
-              user_id: u.id,
-              submission_xp: a.xp + a.xp_adjustment + max(s.xp_bonus)
-            }
-          )
-        ),
-        group_by: sub_xp.user_id,
-        select: %{
-          user_id: sub_xp.user_id,
-          submission_xp: sum(sub_xp.submission_xp)
-        }
+      course_userid_query
+      |> subquery()
+      |> join(:left, [u], tm in TeamMember, on: tm.student_id == u.cr_id)
+      |> join(:left, [u, tm], s in Submission,
+        on: s.student_id == u.cr_id or s.team_id == tm.id
       )
+      |> join(:left, [u, tm, s], a in Answer, on: s.id == a.submission_id)
+      |> where([_, _, s, _], s.is_grading_published == true)
+      |> group_by([u, _, s, _], [u.id, s.id])
+      |> select([u, _, s, a], %{
+        user_id: u.id,
+        submission_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
+      })
 
     total_xp_query =
       from(cu in subquery(course_userid_query),
