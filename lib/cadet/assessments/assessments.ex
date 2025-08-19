@@ -148,13 +148,15 @@ defmodule Cadet.Assessments do
 
   def all_user_total_xp(course_id, options \\ %{}) do
     # get all users even if they have 0 xp
-    course_userid_query = User
+    course_userid_query =
+      User
       |> join(:inner, [u], cr in CourseRegistration, on: cr.user_id == u.id)
       |> where([_, cr], cr.course_id == ^course_id)
-      |> (fn q -> if options[:include_admin_staff],
-          do: q,
-          else: where(q, [_, cr], cr.role == "student")
-      end).()
+      |> (fn q ->
+            if options[:include_admin_staff],
+              do: q,
+              else: where(q, [_, cr], cr.role == "student")
+          end).()
       |> select([u, cr], %{
         id: u.id,
         cr_id: cr.id
@@ -190,9 +192,7 @@ defmodule Cadet.Assessments do
       course_userid_query
       |> subquery()
       |> join(:left, [u], tm in TeamMember, on: tm.student_id == u.cr_id)
-      |> join(:left, [u, tm], s in Submission,
-        on: s.student_id == u.cr_id or s.team_id == tm.id
-      )
+      |> join(:left, [u, tm], s in Submission, on: s.student_id == u.cr_id or s.team_id == tm.id)
       |> join(:left, [u, tm, s], a in Answer, on: s.id == a.submission_id)
       |> where([_, _, s, _], s.is_grading_published == true)
       |> group_by([u, _, s, _], [u.id, s.id])
@@ -227,7 +227,7 @@ defmodule Cadet.Assessments do
     ranked_xp_query =
       from(t in subquery(total_xp_query),
         select_merge: %{
-          rank: fragment("RANK() OVER (ORDER BY total_xp DESC)"),
+          rank: fragment("RANK() OVER (ORDER BY total_xp DESC)")
         },
         limit: ^options[:limit],
         offset: ^options[:offset]
