@@ -148,13 +148,13 @@ defmodule Cadet.Assessments do
 
   def all_user_total_xp(course_id, options \\ %{}) do
     # get all users even if they have 0 xp
-    course_userid_query =
-      from(
-        u in User,
-        join: cr in CourseRegistration,
-        where: cr.user_id == u.id and cr.course_id == ^course_id,
-        select: %{id: u.id, cr_id: cr.id}
-      )
+    course_userid_query = User
+      |> join(:inner, [u], cr in CourseRegistration, on: cr.user_id == u.id)
+      |> where([_, cr], cr.course_id == ^course_id)
+      |> select([u, cr], %{
+        id: u.id,
+        cr_id: cr.id
+      })
 
     achievements_xp_query =
       from(u in User,
