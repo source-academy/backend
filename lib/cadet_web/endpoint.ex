@@ -4,7 +4,7 @@ defmodule CadetWeb.Endpoint do
 
   plug(
     Corsica,
-    origins: Application.compile_env(:cadet, [CadetWeb.Endpoint, :cors_endpoints], "*"),
+    origins: Application.get_env(:cadet, [CadetWeb.Endpoint, :cors_endpoints], "*"),
     allow_methods: :all,
     allow_headers: :all,
     expose_headers: ~w(Content-Length Content-Range),
