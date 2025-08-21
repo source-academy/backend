@@ -240,6 +240,12 @@ defmodule Cadet.Assessments do
         user_id: u.id,
         submission_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
       })
+      |> subquery()
+      |> group_by([t], t.user_id)
+      |> select([t], %{
+        user_id: t.user_id,
+        submission_xp: sum(t.submission_xp)
+      })
 
     total_xp_query =
       from(cu in subquery(course_userid_query),
