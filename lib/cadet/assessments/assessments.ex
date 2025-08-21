@@ -280,9 +280,9 @@ defmodule Cadet.Assessments do
       )
 
     count_query =
-      from(t in subquery(total_xp_query),
-        select: count(t.user_id)
-      )
+      total_xp_query
+      |> subquery()
+      |> select([t], count(t.user_id))
 
     {status, {rows, total_count}} =
       Repo.transaction(fn ->
