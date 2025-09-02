@@ -248,26 +248,23 @@ defmodule Cadet.Assessments do
       })
 
     total_xp_query =
-      from(cu in subquery(course_userid_query),
-        inner_join: u in User,
-        on: u.id == cu.id,
-        left_join: ax in subquery(achievements_xp_query),
-        on: u.id == ax.user_id,
-        left_join: sx in subquery(submissions_xp_query),
-        on: u.id == sx.user_id,
-        select: %{
-          user_id: u.id,
-          name: u.name,
-          username: u.username,
-          total_xp:
-            fragment(
-              "COALESCE(?, 0) + COALESCE(?, 0)",
-              ax.achievements_xp,
-              sx.submission_xp
-            )
-        },
-        order_by: [desc: fragment("total_xp")]
-      )
+      course_userid_query
+      |> subquery()
+      |> join(:inner, [cu], u in User, on: cu.id == u.id)
+      |> join(:left, [cu, _], ax in subquery(achievements_xp_query), on: cu.id == ax.user_id)
+      |> join(:left, [cu, _, _], sx in subquery(submissions_xp_query), on: cu.id == sx.user_id)
+      |> select([_, u, ax, sx], %{
+        user_id: u.id,
+        name: u.name,
+        username: u.username,
+        total_xp:
+          fragment(
+            "COALESCE(?, 0) + COALESCE(?, 0)",
+            ax.achievements_xp,
+            sx.submission_xp
+          )
+      })
+      |> order_by(desc: fragment("total_xp"))
 
     # add rank index
     ranked_xp_query =
