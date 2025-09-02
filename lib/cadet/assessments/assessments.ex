@@ -283,7 +283,12 @@ defmodule Cadet.Assessments do
 
     {status, {rows, total_count}} =
       Repo.transaction(fn ->
-        users = Repo.all(ranked_xp_query)
+        users =
+          Repo.all(ranked_xp_query)
+          |> Enum.map(fn user ->
+            %{user | total_xp: Decimal.to_integer(user.total_xp)}
+          end)
+
         count = Repo.one(count_query)
         {users, count}
       end)
