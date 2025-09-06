@@ -240,28 +240,31 @@ defmodule Cadet.Assessments do
         user_id: u.id,
         submission_xp: sum(a.xp) + sum(a.xp_adjustment) + max(s.xp_bonus)
       })
+      |> subquery()
+      |> group_by([t], t.user_id)
+      |> select([t], %{
+        user_id: t.user_id,
+        submission_xp: sum(t.submission_xp)
+      })
 
     total_xp_query =
-      from(cu in subquery(course_userid_query),
-        inner_join: u in User,
-        on: u.id == cu.id,
-        left_join: ax in subquery(achievements_xp_query),
-        on: u.id == ax.user_id,
-        left_join: sx in subquery(submissions_xp_query),
-        on: u.id == sx.user_id,
-        select: %{
-          user_id: u.id,
-          name: u.name,
-          username: u.username,
-          total_xp:
-            fragment(
-              "COALESCE(?, 0) + COALESCE(?, 0)",
-              ax.achievements_xp,
-              sx.submission_xp
-            )
-        },
-        order_by: [desc: fragment("total_xp")]
-      )
+      course_userid_query
+      |> subquery()
+      |> join(:inner, [cu], u in User, on: cu.id == u.id)
+      |> join(:left, [cu, _], ax in subquery(achievements_xp_query), on: cu.id == ax.user_id)
+      |> join(:left, [cu, _, _], sx in subquery(submissions_xp_query), on: cu.id == sx.user_id)
+      |> select([_, u, ax, sx], %{
+        user_id: u.id,
+        name: u.name,
+        username: u.username,
+        total_xp:
+          fragment(
+            "COALESCE(?, 0) + COALESCE(?, 0)",
+            ax.achievements_xp,
+            sx.submission_xp
+          )
+      })
+      |> order_by(desc: fragment("total_xp"))
 
     # add rank index
     ranked_xp_query =
@@ -274,13 +277,17 @@ defmodule Cadet.Assessments do
       )
 
     count_query =
-      from(t in subquery(total_xp_query),
-        select: count(t.user_id)
-      )
+      total_xp_query
+      |> subquery()
+      |> select([t], count(t.user_id))
 
     {status, {rows, total_count}} =
       Repo.transaction(fn ->
-        users = Repo.all(ranked_xp_query)
+        users =
+          Enum.map(Repo.all(ranked_xp_query), fn user ->
+            %{user | total_xp: Decimal.to_integer(user.total_xp)}
+          end)
+
         count = Repo.one(count_query)
         {users, count}
       end)
