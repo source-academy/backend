@@ -77,7 +77,9 @@ defmodule Cadet.AIComments do
     id
     |> get_ai_comment()
     |> case do
-      {:error, :not_found} -> {:error, :not_found}
+      {:error, :not_found} ->
+        {:error, :not_found}
+
       {:ok, comment} ->
         comment
         |> AIComment.changeset(attrs)
