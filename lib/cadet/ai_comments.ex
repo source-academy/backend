@@ -19,7 +19,12 @@ defmodule Cadet.AIComments do
   @doc """
   Gets an AI comment by ID.
   """
-  def get_ai_comment!(id), do: Repo.get!(AIComment, id)
+  def get_ai_comment(id) do
+    case Repo.get(AIComment, id) do
+      nil -> {:error, :not_found}
+      comment -> {:ok, comment}
+    end
+  end
 
   @doc """
   Retrieves an AI comment for a specific submission and question.
@@ -70,9 +75,14 @@ defmodule Cadet.AIComments do
   """
   def update_ai_comment(id, attrs) do
     id
-    |> get_ai_comment!()
-    |> AIComment.changeset(attrs)
-    |> Repo.update()
+    |> get_ai_comment()
+    |> case do
+      {:error, :not_found} -> {:error, :not_found}
+      {:ok, comment} ->
+        comment
+        |> AIComment.changeset(attrs)
+        |> Repo.update()
+    end
   end
 
   @doc """

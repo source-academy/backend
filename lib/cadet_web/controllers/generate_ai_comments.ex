@@ -12,7 +12,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   @default_llm_grading false
 
   # For logging outputs to both database and file
-  defp log_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
+  defp save_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
     # Log to database
     attrs = %{
       submission_id: submission_id,
@@ -42,6 +42,10 @@ defmodule CadetWeb.AICodeAnalysisController do
         updated_attrs = Map.merge(Map.from_struct(existing_comment), attrs)
 
         case AIComments.update_ai_comment(existing_comment.id, updated_attrs) do
+          {:error, :not_found} ->
+            Logger.error("AI comment to update not found in database")
+            {:error, :not_found}
+
           {:ok, updated_comment} ->
             {:ok, updated_comment}
 
@@ -65,7 +69,6 @@ defmodule CadetWeb.AICodeAnalysisController do
     case Courses.get_course_config(course_id) do
       {:ok, course} ->
         if course.enable_llm_grading || @default_llm_grading do
-          Logger.info("LLM Api key: #{course.llm_api_key}")
           # Get API key from course config or fall back to environment variable
           decrypted_api_key = decrypt_llm_api_key(course.llm_api_key)
           api_key = decrypted_api_key || Application.get_env(:openai, :api_key)
@@ -155,6 +158,8 @@ defmodule CadetWeb.AICodeAnalysisController do
     answers_json =
       answers
       |> Enum.map(fn answer ->
+        IO.inspect(answer, label: "Answer:")
+
         question_data =
           if answer.question do
             %{
@@ -267,7 +272,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         case Jason.decode(body) do
           {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
-            log_comment(submission_id, question_id, prompt, answers_json, response)
+            save_comment(submission_id, question_id, prompt, answers_json, response)
             comments_list = String.split(response, "|||")
 
             filtered_comments =
@@ -278,7 +283,7 @@ defmodule CadetWeb.AICodeAnalysisController do
             json(conn, %{"comments" => filtered_comments})
 
           {:error, _} ->
-            log_comment(
+            save_comment(
               submission_id,
               question_id,
               prompt,
@@ -291,7 +296,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         end
 
       {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
-        log_comment(
+        save_comment(
           submission_id,
           question_id,
           prompt,
@@ -305,7 +310,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> json(%{"error" => "API request failed with status #{status}: #{body}"})
 
       {:error, %HTTPoison.Error{reason: reason}} ->
-        log_comment(submission_id, question_id, prompt, answers_json, nil, reason)
+        save_comment(submission_id, question_id, prompt, answers_json, nil, reason)
         json(conn, %{"error" => "HTTP request error: #{inspect(reason)}"})
     end
   end
