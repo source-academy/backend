@@ -158,7 +158,6 @@ defmodule CadetWeb.AICodeAnalysisController do
     answers_json =
       answers
       |> Enum.map(fn answer ->
-
         question_data =
           if answer.question do
             %{
