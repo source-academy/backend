@@ -30,7 +30,7 @@ defmodule Cadet.Courses.Course do
     field(:enable_achievements, :boolean, default: true)
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
-    field(:enable_llm_grading, :boolean)
+    field(:enable_llm_grading, :boolean, default: false)
     field(:llm_api_key, :string)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
