@@ -2310,10 +2310,9 @@ defmodule Cadet.Assessments do
       )
 
     answer_query =
-      if is_nil(question_id) do
-        base_query
-      else
-        base_query |> where(question_id: ^question_id)
+      case question_id do
+        nil -> base_query
+        _ -> base_query |> where(question_id: ^question_id)
       end
 
     answers =
