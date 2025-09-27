@@ -12,16 +12,15 @@ defmodule CadetWeb.AICodeAnalysisController do
   @default_llm_grading false
 
   # For logging outputs to both database and file
-  defp save_comment(submission_id, question_id, raw_prompt, answer, response, error \\ nil) do
+  defp save_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
     # Log to database
     attrs = %{
       submission_id: submission_id,
       question_id: question_id,
       raw_prompt: raw_prompt,
-      answer: answer,
+      answers_json: answers_json,
       response: response,
       error: error,
-      inserted_at: NaiveDateTime.utc_now()
     }
 
     # Check if a comment already exists for the given submission_id and question_id
