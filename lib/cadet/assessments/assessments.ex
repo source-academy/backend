@@ -2290,19 +2290,21 @@ defmodule Cadet.Assessments do
     base_query =
       Answer
       |> where(submission_id: ^id)
-      |> join(:inner, [a], q in assoc(a, :question))
+      |> join(:inner, [a], q in assoc(a, :question))  # [a] are bindings (in SQL it is similar to FROM answers "AS a"), this line's alias is INNER JOIN ... "AS q"
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
       |> join(:inner, [..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
       |> join(:left, [_, ..., g], gu in assoc(g, :user))
       |> join(:inner, [a, ...], s in assoc(a, :submission))
-      |> join(:left, [_, ..., s], st in assoc(s, :student))
+      |> join(:left, [..., s], ai in assoc(s, :ai_comments))
+      |> join(:left, [_, ..., s, _], st in assoc(s, :student))
       |> join(:left, [..., st], u in assoc(st, :user))
-      |> join(:left, [..., s, _, _], t in assoc(s, :team))
+      |> join(:left, [..., s, _, _, _], t in assoc(s, :team))
       |> join(:left, [..., t], tm in assoc(t, :team_members))
       |> join(:left, [..., tm], tms in assoc(tm, :student))
       |> join(:left, [..., tms], tmu in assoc(tms, :user))
-      |> preload([_, q, ast, ac, g, gu, s, st, u, t, tm, tms, tmu],
+      |> preload([_, q, ast, ac, g, gu, s, ai, st, u, t, tm, tms, tmu],
+        ai_comments: ai,
         question: {q, assessment: {ast, config: ac}},
         grader: {g, user: gu},
         submission:
