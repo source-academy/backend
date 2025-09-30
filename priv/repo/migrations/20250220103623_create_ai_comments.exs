@@ -9,7 +9,7 @@ defmodule Cadet.Repo.Migrations.CreateAiCommentLogs do
       add(:answers_json, :text, null: false)
       add(:response, :text)
       add(:error, :text)
-      add(:comment_chosen, :text)
+      add(:comment_chosen, {:array, :text})
       add(:final_comment, :text)
       timestamps()
     end

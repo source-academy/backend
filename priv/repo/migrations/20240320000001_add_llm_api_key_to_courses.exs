@@ -3,7 +3,7 @@ defmodule Cadet.Repo.Migrations.AddLlmApiKeyToCourses do
 
   def up do
     alter table(:courses) do
-      add(:llm_api_key, :string, null: true)
+      add(:llm_api_key, :text, null: true)
     end
   end
 
