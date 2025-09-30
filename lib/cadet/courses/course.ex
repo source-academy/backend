@@ -16,6 +16,9 @@ defmodule Cadet.Courses.Course do
           enable_stories: boolean(),
           enable_llm_grading: boolean(),
           llm_api_key: String.t() | nil,
+          llm_model: String.t() | nil,
+          llm_api_url: String.t() | nil,
+          llm_course_level_prompt: String.t() | nil,
           source_chapter: integer(),
           source_variant: String.t(),
           module_help_text: String.t(),
@@ -31,9 +34,10 @@ defmodule Cadet.Courses.Course do
     field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
     field(:enable_llm_grading, :boolean, default: false)
-    field(:llm_api_key, :string)
-    field(:llm_model, :string, default: "gpt-5-mini")
-    field(:llm_api_url, :string, default: "https://api.openai.com/v1/chat/completions")
+    field(:llm_api_key, :string, default: nil)
+    field(:llm_model, :string, default: nil)
+    field(:llm_api_url, :string, default: nil)
+    field(:llm_course_level_prompt, :string, default: nil)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
     field(:module_help_text, :string)
@@ -48,7 +52,7 @@ defmodule Cadet.Courses.Course do
 
   @required_fields ~w(course_name viewable enable_game
     enable_achievements enable_sourcecast enable_stories source_chapter source_variant)a
-  @optional_fields ~w(course_short_name module_help_text enable_llm_grading llm_api_key)a
+  @optional_fields ~w(course_short_name module_help_text enable_llm_grading llm_api_key llm_model llm_api_url llm_course_level_prompt)a
 
   @spec changeset(
           {map(), map()}

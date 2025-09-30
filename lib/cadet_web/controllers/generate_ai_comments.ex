@@ -82,6 +82,10 @@ defmodule CadetWeb.AICodeAnalysisController do
               conn
               |> put_status(:internal_server_error)
               |> json(%{"error" => "No LLM API URL configured for this course"})
+            is_nil(course.llm_course_level_prompt) or course.llm_course_level_prompt == "" ->
+              conn
+              |> put_status(:internal_server_error)
+              |> json(%{"error" => "No course-level prompt configured for this course"})
             true ->
               case Assessments.get_answers_in_submission(submission_id, question_id) do
               {:ok, {answers, _assessment}} ->
@@ -92,7 +96,7 @@ defmodule CadetWeb.AICodeAnalysisController do
                   |> json(%{"error" => "No answer found for the given submission and question_id"})
                   _ ->
                     # Get head of answers (should only be one answer for given submission and question)
-                    analyze_code(conn, hd(answers), submission_id, question_id, api_key, course.llm_model, course.llm_api_url)
+                    analyze_code(conn, hd(answers), submission_id, question_id, api_key, course.llm_model, course.llm_api_url, course.llm_course_level_prompt)
                 end
 
               {:error, {status, message}} ->
@@ -129,26 +133,40 @@ defmodule CadetWeb.AICodeAnalysisController do
     end)
   end
 
-  defp format_answer(answer) do
+  defp format_student_answer(answer) do
     """
-    **Question ID: #{answer.question.id || "N/A"}**
+    **Student Answer:**
+    ```
+    #{answer.answer["code"] || "N/A"}
+    ```
+    """
+  end
+
+  defp format_system_prompt(course_prompt, answer) do
+    course_prompt <> "\n\n" <>
+    """
+    **Additional Instructions for this Question:**
+    #{answer.question.question["llm_prompt"] || "N/A"}
 
     **Question:**
+    ```
     #{answer.question.question["content"] || "N/A"}
+    ```
 
     **Model Solution:**
     ```
     #{answer.question.question["solution"] || "N/A"}
     ```
 
-    **Student Answer:**
-    ```
-    #{answer.answer["code"] || "N/A"}
-    ```
-
     **Autograding Status:** #{answer.autograding_status || "N/A"}
     **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
     **Comments:** #{answer.comments || "None"}
+
+    Your output must include only the comment suggestions, separated exclusively by triple pipes ("|||") with no spaces before or after the pipes, and without any additional formatting, bullet points, or extra text.
+
+    For example: "This is a good answer.|||This is a bad answer.|||This is a great
+
+    The student answer will be given below as part of the USer Prompt.
     """
   end
 
@@ -162,76 +180,23 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp format_autograding_results(results), do: inspect(results)
 
-  defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url) do
-
-        raw_prompt = """
-        The code below is written in Source, a variant of JavaScript that comes with a rich set of built-in constants and functions. Below is a summary of some key built-in entities available in Source:
-
-        Constants:
-        - Infinity: The special number value representing infinity.
-        - NaN: The special number value for "not a number."
-        - undefined: The special value for an undefined variable.
-        - math_PI: The constant π (approximately 3.14159).
-        - math_E: Euler's number (approximately 2.71828).
-
-        Functions:
-        - __access_export__(exports, lookup_name): Searches for a name in an exports data structure.
-        - accumulate(f, initial, xs): Reduces a list by applying a binary function from right-to-left.
-        - append(xs, ys): Appends list ys to the end of list xs.
-        - char_at(s, i): Returns the character at index i of string s.
-        - display(v, s): Displays value v (optionally preceded by string s) in the console.
-        - filter(pred, xs): Returns a new list with elements of xs that satisfy the predicate pred.
-        - for_each(f, xs): Applies function f to each element of the list xs.
-        - get_time(): Returns the current time in milliseconds.
-        - is_list(xs): Checks whether xs is a proper list.
-        - length(xs): Returns the number of elements in list xs.
-        - list(...): Constructs a list from the provided values.
-        - map(f, xs): Applies function f to each element of list xs.
-        - math_abs(x): Returns the absolute value of x.
-        - math_ceil(x): Rounds x up to the nearest integer.
-        - math_floor(x): Rounds x down to the nearest integer.
-        - pair(x, y): A primitive function that makes a pair whose head (first component) is x and whose tail (second component) is y.
-        - head(xs): Returns the first element of pair xs.
-        - tail(xs): Returns the second element of pair xs.
-        - math_random(): Returns a random number between 0 (inclusive) and 1 (exclusive).
-
-        (For a full list of built-in functions and constants, refer to the Source documentation.)
-
-        Analyze the following submitted "Student Answer" (ONLY) against the given information and provide detailed feedback on correctness, readability, efficiency, and possible improvements. Your evaluation should consider both standard JavaScript features and the additional built-in functions unique to Source.
-
-        Provide between 3 and 5 concise comment suggestions, each under 200 words.
-
-        Your output must include only the comment suggestions, separated exclusively by triple pipes ("|||") with no spaces before or after the pipes, and without any additional formatting, bullet points, or extra text.
-
-        Comments and documentation in the code are not necessary for the code, do not penalise based on that, do not suggest to add comments as well.
-
-        Follow the XP scoring guideline provided below in the question prompt, do not be too harsh!
-
-        For example: "This is a good answer.|||This is a bad answer.|||This is a great answer."
-        """
+  defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url, course_prompt) do
 
         IO.inspect(answer, label: "Answer being analyzed")
         formatted_answer =
-          format_answer(answer)
+          format_student_answer(answer)
           |> Jason.encode!()
 
         IO.inspect("Formatted answer: #{formatted_answer}", label: "Formatted Answer")
-        llm_prompt = answer.question.question["llm_prompt"] # "llm_prompt" is a string key, so we can't use the (.) operator directly. optional
 
+        system_prompt = format_system_prompt(course_prompt, answer)
         # Combine prompts if llm_prompt exists
-        prompt =
-          if llm_prompt && llm_prompt != "" do
-            raw_prompt <> "Additional Instructions:\n\n" <> llm_prompt <> "\n\n" <> formatted_answer
-          else
-            raw_prompt <> "\n" <> formatted_answer
-          end
-
         input =
           %{
             model: llm_model,
             messages: [
-              %{role: "system", content: "You are an expert software engineer and educator."},
-              %{role: "user", content: prompt}
+              %{role: "system", content: system_prompt},
+              %{role: "user", content: formatted_answer}
             ],
           }
           |> Jason.encode!()
@@ -250,7 +215,7 @@ defmodule CadetWeb.AICodeAnalysisController do
             case Jason.decode(body) do
               {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
                 IO.inspect(response, label: "Response from OpenAI API")
-                save_comment(submission_id, question_id, prompt, formatted_answer, response)
+                save_comment(submission_id, question_id, system_prompt, formatted_answer, response)
                 comments_list = String.split(response, "|||")
 
                 filtered_comments =
@@ -264,7 +229,7 @@ defmodule CadetWeb.AICodeAnalysisController do
                 save_comment(
                   submission_id,
                   question_id,
-                  prompt,
+                  system_prompt,
                   formatted_answer,
                   nil,
                   "Failed to parse response from OpenAI API"
@@ -278,7 +243,7 @@ defmodule CadetWeb.AICodeAnalysisController do
             save_comment(
               submission_id,
               question_id,
-              prompt,
+              system_prompt,
               formatted_answer,
               nil,
               "API request failed with status #{status}"
@@ -289,7 +254,7 @@ defmodule CadetWeb.AICodeAnalysisController do
             |> json(%{"error" => "API request failed with status #{status}: #{body}"})
 
           {:error, %HTTPoison.Error{reason: reason}} ->
-            save_comment(submission_id, question_id, prompt, formatted_answer, nil, reason)
+            save_comment(submission_id, question_id, system_prompt, formatted_answer, nil, reason)
             json(conn, %{"error" => "HTTP request error: #{inspect(reason)}"})
         end
     end
