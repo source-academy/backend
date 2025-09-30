@@ -6,11 +6,6 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   alias Cadet.{Assessments, AIComments, Courses}
 
-  @openai_api_url "https://api.openai.com/v1/chat/completions"
-  @model "gpt-5-mini"
-  # To set whether LLM grading is enabled across Source Academy
-  @default_llm_grading false
-
   # For logging outputs to both database and file
   defp save_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
     # Log to database
@@ -64,22 +59,31 @@ defmodule CadetWeb.AICodeAnalysisController do
         "course_id" => course_id
       })
       when is_ecto_id(submission_id) do
-    # Check if LLM grading is enabled for this course (default to @default_llm_grading if nil)
+    # Check if LLM grading is enabled for this course
     question_id = String.to_integer(question_id)
 
     case Courses.get_course_config(course_id) do
       {:ok, course} ->
-        if course.enable_llm_grading || @default_llm_grading do
+        if course.enable_llm_grading do
           # Get API key from course config or fall back to environment variable
           decrypted_api_key = decrypt_llm_api_key(course.llm_api_key)
           api_key = decrypted_api_key || Application.get_env(:openai, :api_key)
 
-          if is_nil(api_key) do
-            conn
-            |> put_status(:internal_server_error)
-            |> json(%{"error" => "No OpenAI API key configured"})
-          else
-            case Assessments.get_answers_in_submission(submission_id, question_id) do
+          cond do
+            is_nil(api_key) ->
+              conn
+              |> put_status(:internal_server_error)
+              |> json(%{"error" => "No OpenAI API key configured"})
+            is_nil(course.llm_model) or course.llm_model == "" ->
+              conn
+              |> put_status(:internal_server_error)
+              |> json(%{"error" => "No LLM model configured for this course"})
+            is_nil(course.llm_api_url) or course.llm_api_url == "" ->
+              conn
+              |> put_status(:internal_server_error)
+              |> json(%{"error" => "No LLM API URL configured for this course"})
+            true ->
+              case Assessments.get_answers_in_submission(submission_id, question_id) do
               {:ok, {answers, _assessment}} ->
                 case answers do
                   [] ->
@@ -88,7 +92,7 @@ defmodule CadetWeb.AICodeAnalysisController do
                   |> json(%{"error" => "No answer found for the given submission and question_id"})
                   _ ->
                     # Get head of answers (should only be one answer for given submission and question)
-                    analyze_code(conn, hd(answers), submission_id, question_id, api_key)
+                    analyze_code(conn, hd(answers), submission_id, question_id, api_key, course.llm_model, course.llm_api_url)
                 end
 
               {:error, {status, message}} ->
@@ -96,6 +100,7 @@ defmodule CadetWeb.AICodeAnalysisController do
                 |> put_status(status)
                 |> text(message)
             end
+
           end
         else
           conn
@@ -157,7 +162,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp format_autograding_results(results), do: inspect(results)
 
-  defp analyze_code(conn, answer, submission_id, question_id, api_key) do
+  defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url) do
 
         raw_prompt = """
         The code below is written in Source, a variant of JavaScript that comes with a rich set of built-in constants and functions. Below is a summary of some key built-in entities available in Source:
@@ -223,7 +228,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
         input =
           %{
-            model: @model,
+            model: llm_model,
             messages: [
               %{role: "system", content: "You are an expert software engineer and educator."},
               %{role: "user", content: prompt}
@@ -237,7 +242,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         ]
 
         IO.inspect(input, label: "Input to OpenAI API")
-        case HTTPoison.post(@openai_api_url, input, headers,
+        case HTTPoison.post(llm_api_url, input, headers,
                timeout: 60_000,
                recv_timeout: 60_000
              ) do

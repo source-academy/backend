@@ -32,6 +32,8 @@ defmodule Cadet.Courses.Course do
     field(:enable_stories, :boolean, default: false)
     field(:enable_llm_grading, :boolean, default: false)
     field(:llm_api_key, :string)
+    field(:llm_model, :string, default: "gpt-5-mini")
+    field(:llm_api_url, :string, default: "https://api.openai.com/v1/chat/completions")
     field(:source_chapter, :integer)
     field(:source_variant, :string)
     field(:module_help_text, :string)
