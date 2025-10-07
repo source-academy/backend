@@ -286,26 +286,6 @@ defmodule CadetWeb.AICodeAnalysisController do
     end
   end
 
-  @doc """
-  Saves the chosen comments for a submission and question.
-  Accepts an array of comments in the request body.
-  """
-  def save_chosen_comments(conn, %{
-        "submissionid" => submission_id,
-        "questionid" => question_id,
-        "comments" => comments
-      }) do
-    case AIComments.update_chosen_comments(submission_id, question_id, comments) do
-      {:ok, _updated_comment} ->
-        json(conn, %{"status" => "success"})
-
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{"error" => "Failed to save chosen comments"})
-    end
-  end
-
   swagger_path :generate_ai_comments do
     post("/courses/{courseId}/admin/generate-comments/{submissionId}/{questionId}")
 
