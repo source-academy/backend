@@ -154,8 +154,8 @@ defmodule CadetWeb.AICodeAnalysisController do
     """
   end
 
-  defp format_system_prompt(course_prompt, answer) do
-    course_prompt <> "\n\n" <>
+  defp format_system_prompt(course_prompt, assessment_prompt, answer) do
+    course_prompt || "" <> "\n\n" <> assessment_prompt || "" <> "\n\n" <>
     """
     **Additional Instructions for this Question:**
     #{answer.question.question["llm_prompt"] || "N/A"}
@@ -172,7 +172,6 @@ defmodule CadetWeb.AICodeAnalysisController do
 
     **Autograding Status:** #{answer.autograding_status || "N/A"}
     **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
-    **Comments:** #{answer.comments || "None"}
 
     The student answer will be given below as part of the User Prompt.
     """
@@ -198,7 +197,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         IO.inspect("Formatted answer: #{formatted_answer}", label: "Formatted Answer")
         IO.inspect(assessment_prompt, label: "Assessment Prompt")
 
-        system_prompt = format_system_prompt(course_prompt, answer)
+        system_prompt = format_system_prompt(course_prompt, assessment_prompt, answer)
         # Combine prompts if llm_prompt exists
         input =
           %{

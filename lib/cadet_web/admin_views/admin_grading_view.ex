@@ -20,7 +20,8 @@ defmodule CadetWeb.AdminGradingView do
       coverPicture: assessment.cover_picture,
       number: assessment.number,
       story: assessment.story,
-      reading: assessment.reading
+      reading: assessment.reading,
+      llm_assessment_prompt: assessment.llm_assessment_prompt,
     }
   end
 
@@ -154,7 +155,9 @@ defmodule CadetWeb.AdminGradingView do
       team: &extract_team_data(&1.submission.team),
       question: &build_grading_question/1,
       solution: &(&1.question.question["solution"] || ""),
-      grade: &build_grade/1
+      grade: &build_grade/1,
+      autogradingStatus: &(&1.autograding_status || ""),
+      autogradingResults: &(&1.autograding_results || ""),
     })
   end
 
