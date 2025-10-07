@@ -2792,4 +2792,13 @@ defmodule Cadet.Assessments do
         end)
     end
   end
+
+  def get_llm_assessment_prompt(question_id) do
+     from(q in Question,
+    where: q.id == ^question_id,
+    join: a in assoc(q, :assessment),
+    select: a.llm_assessment_prompt
+  )
+  |> Repo.one()
+  end
 end

@@ -95,8 +95,20 @@ defmodule CadetWeb.AICodeAnalysisController do
                   |> put_status(:not_found)
                   |> json(%{"error" => "No answer found for the given submission and question_id"})
                   _ ->
-                    # Get head of answers (should only be one answer for given submission and question)
-                    analyze_code(conn, hd(answers), submission_id, question_id, api_key, course.llm_model, course.llm_api_url, course.llm_course_level_prompt)
+
+                    # Get head of answers (should only be one answer for given submission and question since we filter to only 1 question)
+                    analyze_code(
+                      conn,
+                      hd(answers),
+                      submission_id,
+                      question_id,
+                      api_key,
+                      course.llm_model,
+                      course.llm_api_url,
+                      course.llm_course_level_prompt,
+                      Assessments.get_llm_assessment_prompt(question_id)
+                      )
+
                 end
 
               {:error, {status, message}} ->
@@ -176,7 +188,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp format_autograding_results(results), do: inspect(results)
 
-  defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url, course_prompt) do
+  defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url, course_prompt, assessment_prompt) do
 
         IO.inspect(answer, label: "Answer being analyzed")
         formatted_answer =
@@ -184,6 +196,7 @@ defmodule CadetWeb.AICodeAnalysisController do
           |> Jason.encode!()
 
         IO.inspect("Formatted answer: #{formatted_answer}", label: "Formatted Answer")
+        IO.inspect(assessment_prompt, label: "Assessment Prompt")
 
         system_prompt = format_system_prompt(course_prompt, answer)
         # Combine prompts if llm_prompt exists
