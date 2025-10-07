@@ -162,11 +162,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
     **Comments:** #{answer.comments || "None"}
 
-    Your output must include only the comment suggestions, separated exclusively by triple pipes ("|||") with no spaces before or after the pipes, and without any additional formatting, bullet points, or extra text.
-
-    For example: "This is a good answer.|||This is a bad answer.|||This is a great
-
-    The student answer will be given below as part of the USer Prompt.
+    The student answer will be given below as part of the User Prompt.
     """
   end
 
