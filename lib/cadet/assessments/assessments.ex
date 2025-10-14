@@ -2290,7 +2290,8 @@ defmodule Cadet.Assessments do
     base_query =
       Answer
       |> where(submission_id: ^id)
-      |> join(:inner, [a], q in assoc(a, :question))  # [a] are bindings (in SQL it is similar to FROM answers "AS a"), this line's alias is INNER JOIN ... "AS q"
+      # [a] are bindings (in SQL it is similar to FROM answers "AS a"), this line's alias is INNER JOIN ... "AS q"
+      |> join(:inner, [a], q in assoc(a, :question))
       |> join(:inner, [_, q], ast in assoc(q, :assessment))
       |> join(:inner, [..., ast], ac in assoc(ast, :config))
       |> join(:left, [a, ...], g in assoc(a, :grader))
@@ -2794,11 +2795,11 @@ defmodule Cadet.Assessments do
   end
 
   def get_llm_assessment_prompt(question_id) do
-     from(q in Question,
-    where: q.id == ^question_id,
-    join: a in assoc(q, :assessment),
-    select: a.llm_assessment_prompt
-  )
-  |> Repo.one()
+    from(q in Question,
+      where: q.id == ^question_id,
+      join: a in assoc(q, :assessment),
+      select: a.llm_assessment_prompt
+    )
+    |> Repo.one()
   end
 end

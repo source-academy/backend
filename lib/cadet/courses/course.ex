@@ -100,6 +100,7 @@ defmodule Cadet.Courses.Course do
     if llm_api_key = get_change(changeset, :llm_api_key) do
       if is_binary(llm_api_key) and llm_api_key != "" do
         encrypted = encrypt_llm_api_key(llm_api_key)
+
         case encrypted do
           nil ->
             add_error(
@@ -111,7 +112,6 @@ defmodule Cadet.Courses.Course do
           encrypted ->
             put_change(changeset, :llm_api_key, encrypted)
         end
-
       else
         # If empty string or nil is provided, don't encrypt but don't add error
         changeset

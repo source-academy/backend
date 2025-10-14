@@ -15,7 +15,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       raw_prompt: raw_prompt,
       answers_json: answers_json,
       response: response,
-      error: error,
+      error: error
     }
 
     # Check if a comment already exists for the given submission_id and question_id
@@ -74,49 +74,51 @@ defmodule CadetWeb.AICodeAnalysisController do
               conn
               |> put_status(:internal_server_error)
               |> text("No OpenAI API key configured")
+
             is_nil(course.llm_model) or course.llm_model == "" ->
               conn
               |> put_status(:internal_server_error)
               |> text("No LLM model configured for this course")
+
             is_nil(course.llm_api_url) or course.llm_api_url == "" ->
               conn
               |> put_status(:internal_server_error)
               |> text("No LLM API URL configured for this course")
+
             is_nil(course.llm_course_level_prompt) or course.llm_course_level_prompt == "" ->
               conn
               |> put_status(:internal_server_error)
               |> text("No course-level prompt configured for this course")
+
             true ->
               case Assessments.get_answers_in_submission(submission_id, question_id) do
-              {:ok, {answers, _assessment}} ->
-                case answers do
-                  [] ->
-                  conn
-                  |> put_status(:not_found)
-                  |> text("No answer found for the given submission and question_id")
-                  _ ->
+                {:ok, {answers, _assessment}} ->
+                  case answers do
+                    [] ->
+                      conn
+                      |> put_status(:not_found)
+                      |> text("No answer found for the given submission and question_id")
 
-                    # Get head of answers (should only be one answer for given submission and question since we filter to only 1 question)
-                    analyze_code(
-                      conn,
-                      hd(answers),
-                      submission_id,
-                      question_id,
-                      api_key,
-                      course.llm_model,
-                      course.llm_api_url,
-                      course.llm_course_level_prompt,
-                      Assessments.get_llm_assessment_prompt(question_id)
+                    _ ->
+                      # Get head of answers (should only be one answer for given submission and question since we filter to only 1 question)
+                      analyze_code(
+                        conn,
+                        hd(answers),
+                        submission_id,
+                        question_id,
+                        api_key,
+                        course.llm_model,
+                        course.llm_api_url,
+                        course.llm_course_level_prompt,
+                        Assessments.get_llm_assessment_prompt(question_id)
                       )
+                  end
 
-                end
-
-              {:error, {status, message}} ->
-                conn
-                |> put_status(status)
-                |> text(message)
-            end
-
+                {:error, {status, message}} ->
+                  conn
+                  |> put_status(status)
+                  |> text(message)
+              end
           end
         else
           conn
@@ -155,26 +157,28 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   defp format_system_prompt(course_prompt, assessment_prompt, answer) do
-    course_prompt || "" <> "\n\n" <> assessment_prompt || "" <> "\n\n" <>
-    """
-    **Additional Instructions for this Question:**
-    #{answer.question.question["llm_prompt"] || "N/A"}
+    course_prompt || "" <> "\n\n" <> assessment_prompt ||
+      "" <>
+        "\n\n" <>
+        """
+        **Additional Instructions for this Question:**
+        #{answer.question.question["llm_prompt"] || "N/A"}
 
-    **Question:**
-    ```
-    #{answer.question.question["content"] || "N/A"}
-    ```
+        **Question:**
+        ```
+        #{answer.question.question["content"] || "N/A"}
+        ```
 
-    **Model Solution:**
-    ```
-    #{answer.question.question["solution"] || "N/A"}
-    ```
+        **Model Solution:**
+        ```
+        #{answer.question.question["solution"] || "N/A"}
+        ```
 
-    **Autograding Status:** #{answer.autograding_status || "N/A"}
-    **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
+        **Autograding Status:** #{answer.autograding_status || "N/A"}
+        **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
 
-    The student answer will be given below as part of the User Prompt.
-    """
+        The student answer will be given below as part of the User Prompt.
+        """
   end
 
   defp format_autograding_results(nil), do: "N/A"
@@ -189,87 +193,94 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   def call_llm_endpoint(llm_api_url, input, headers) do
     HTTPoison.post(llm_api_url, input, headers,
-               timeout: 60_000,
-               recv_timeout: 60_000
-             )
+      timeout: 60_000,
+      recv_timeout: 60_000
+    )
   end
 
-  defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url, course_prompt, assessment_prompt) do
+  defp analyze_code(
+         conn,
+         answer,
+         submission_id,
+         question_id,
+         api_key,
+         llm_model,
+         llm_api_url,
+         course_prompt,
+         assessment_prompt
+       ) do
+    formatted_answer =
+      format_student_answer(answer)
+      |> Jason.encode!()
 
-        formatted_answer =
-          format_student_answer(answer)
-          |> Jason.encode!()
-
-
-        system_prompt = format_system_prompt(course_prompt, assessment_prompt, answer)
-        # Combine prompts if llm_prompt exists
-        input =
-          %{
-            model: llm_model,
-            messages: [
-              %{role: "system", content: system_prompt},
-              %{role: "user", content: formatted_answer}
-            ],
-          }
-          |> Jason.encode!()
-
-        headers = [
-          {"Authorization", "Bearer #{api_key}"},
-          {"Content-Type", "application/json"}
+    system_prompt = format_system_prompt(course_prompt, assessment_prompt, answer)
+    # Combine prompts if llm_prompt exists
+    input =
+      %{
+        model: llm_model,
+        messages: [
+          %{role: "system", content: system_prompt},
+          %{role: "user", content: formatted_answer}
         ]
+      }
+      |> Jason.encode!()
 
-        case call_llm_endpoint(llm_api_url, input, headers) do
-        {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-            case Jason.decode(body) do
-              {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
-                save_comment(submission_id, question_id, system_prompt, formatted_answer, response)
-                comments_list = String.split(response, "|||")
+    headers = [
+      {"Authorization", "Bearer #{api_key}"},
+      {"Content-Type", "application/json"}
+    ]
 
-                filtered_comments =
-                  Enum.filter(comments_list, fn comment ->
-                    String.trim(comment) != ""
-                  end)
+    case call_llm_endpoint(llm_api_url, input, headers) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        case Jason.decode(body) do
+          {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
+            save_comment(submission_id, question_id, system_prompt, formatted_answer, response)
+            comments_list = String.split(response, "|||")
 
-                json(conn, %{"comments" => filtered_comments})
+            filtered_comments =
+              Enum.filter(comments_list, fn comment ->
+                String.trim(comment) != ""
+              end)
 
-              {:error, err} ->
-                save_comment(
-                  submission_id,
-                  question_id,
-                  system_prompt,
-                  formatted_answer,
-                  nil,
-                  "Failed to parse response from OpenAI API"
-                )
+            json(conn, %{"comments" => filtered_comments})
 
-                conn
-                |> put_status(:internal_server_error)
-                |> text("Failed to parse response from OpenAI API")
-            end
-
-          {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
+          {:error, err} ->
             save_comment(
               submission_id,
               question_id,
               system_prompt,
               formatted_answer,
               nil,
-              "API request failed with status #{status}"
+              "Failed to parse response from OpenAI API"
             )
 
             conn
             |> put_status(:internal_server_error)
-            |> text("API request failed with status #{status}: #{body}")
+            |> text("Failed to parse response from OpenAI API")
+        end
 
-          {:error, %HTTPoison.Error{reason: reason}} ->
-            save_comment(submission_id, question_id, system_prompt, formatted_answer, nil, reason)
+      {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
+        save_comment(
+          submission_id,
+          question_id,
+          system_prompt,
+          formatted_answer,
+          nil,
+          "API request failed with status #{status}"
+        )
 
-            conn
-            |> put_status(:internal_server_error)
-            |> text( "HTTP request error: #{inspect(reason)}")
-          end
+        conn
+        |> put_status(:internal_server_error)
+        |> text("API request failed with status #{status}: #{body}")
 
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        save_comment(submission_id, question_id, system_prompt, formatted_answer, nil, reason)
+
+        conn
+        |> put_status(:internal_server_error)
+        |> text("HTTP request error: #{inspect(reason)}")
     end
+  end
 
   @doc """
   Saves the final comment chosen for a submission.

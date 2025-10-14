@@ -8,7 +8,7 @@ defmodule CadetWeb.AdminGradingView do
       assessment:
         render_one(assessment, CadetWeb.AdminGradingView, "assessment.json", as: :assessment),
       answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer),
-      enable_llm_grading: course.enable_llm_grading,
+      enable_llm_grading: course.enable_llm_grading
     }
   end
 
@@ -22,8 +22,7 @@ defmodule CadetWeb.AdminGradingView do
       number: assessment.number,
       story: assessment.story,
       reading: assessment.reading,
-      llm_assessment_prompt: assessment.llm_assessment_prompt,
-
+      llm_assessment_prompt: assessment.llm_assessment_prompt
     }
   end
 
@@ -157,7 +156,7 @@ defmodule CadetWeb.AdminGradingView do
       team: &extract_team_data(&1.submission.team),
       question: &build_grading_question/1,
       solution: &(&1.question.question["solution"] || ""),
-      grade: &build_grade/1,
+      grade: &build_grade/1
     })
   end
 
@@ -166,8 +165,10 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   defp extract_ai_comments_per_answer(question_id, ai_comments) do
-    matching_comment = ai_comments
-    |> Enum.find(&(&1.question_id == question_id)) # Equivalent to fn comment -> comment.question_id == question_id end
+    matching_comment =
+      ai_comments
+      # Equivalent to fn comment -> comment.question_id == question_id end
+      |> Enum.find(&(&1.question_id == question_id))
 
     case matching_comment do
       nil -> nil
