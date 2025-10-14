@@ -365,7 +365,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         }
                       end,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                    "autogradingResults" => &1.autograding_results,
+                    "autogradingResults" => &1.autograding_results
                   },
                   "ai_comments" => nil,
                   "solution" => "",
@@ -431,7 +431,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "id" => &1.submission.student.id
                   },
                   "team" => %{},
-                  "solution" => "",
+                  "solution" => ""
                 }
             end
           )
@@ -1392,7 +1392,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         }
                       end,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                    "autogradingResults" => &1.autograding_results,
+                    "autogradingResults" => &1.autograding_results
                   },
                   "ai_comments" => nil,
                   "solution" => "",
@@ -1439,7 +1439,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "answer" => nil,
                     "contestEntries" => [],
                     "scoreLeaderboard" => [],
-                    "popularVoteLeaderboard" => [],
+                    "popularVoteLeaderboard" => []
                   },
                   "ai_comments" => nil,
                   "grade" => %{
