@@ -70,33 +70,48 @@ defmodule Cadet.Courses.Course do
     |> put_encrypted_llm_api_key()
   end
 
+  def encrypt_llm_api_key(llm_api_key) do
+    secret = Application.get_env(:openai, :encryption_key)
+
+    if is_binary(secret) and byte_size(secret) >= 16 do
+      # Use first 16 bytes for AES-128, 24 for AES-192, or 32 for AES-256
+      key = binary_part(secret, 0, min(32, byte_size(secret)))
+      # Use AES in GCM mode for encryption
+      iv = :crypto.strong_rand_bytes(16)
+
+      {ciphertext, tag} =
+        :crypto.crypto_one_time_aead(
+          :aes_gcm,
+          key,
+          iv,
+          llm_api_key,
+          "",
+          true
+        )
+
+      # Store both the IV, ciphertext and tag
+      encrypted = Base.encode64(iv <> tag <> ciphertext)
+    else
+      nil
+    end
+  end
+
   def put_encrypted_llm_api_key(changeset) do
     if llm_api_key = get_change(changeset, :llm_api_key) do
       if is_binary(llm_api_key) and llm_api_key != "" do
-        secret = Application.get_env(:openai, :encryption_key)
-
-        if is_binary(secret) and byte_size(secret) >= 16 do
-          # Use first 16 bytes for AES-128, 24 for AES-192, or 32 for AES-256
-          key = binary_part(secret, 0, min(32, byte_size(secret)))
-          # Use AES in GCM mode for encryption
-          iv = :crypto.strong_rand_bytes(16)
-
-          {ciphertext, tag} =
-            :crypto.crypto_one_time_aead(
-              :aes_gcm,
-              key,
-              iv,
-              llm_api_key,
-              "",
-              true
+        encrypted = encrypt_llm_api_key(llm_api_key)
+        case encrypted do
+          nil ->
+            add_error(
+              changeset,
+              :llm_api_key,
+              "encryption key is not configured properly, cannot store LLM API key"
             )
 
-          # Store both the IV, ciphertext and tag
-          encrypted = iv <> tag <> ciphertext
-          put_change(changeset, :llm_api_key, Base.encode64(encrypted))
-        else
-          add_error(changeset, :llm_api_key, "encryption key not configured properly")
+          encrypted ->
+            put_change(changeset, :llm_api_key, encrypted)
         end
+
       else
         # If empty string or nil is provided, don't encrypt but don't add error
         changeset
