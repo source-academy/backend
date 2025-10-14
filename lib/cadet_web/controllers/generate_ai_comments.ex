@@ -50,6 +50,25 @@ defmodule CadetWeb.AICodeAnalysisController do
     end
   end
 
+  defp check_llm_grading_parameters(llm_api_key, llm_model, llm_api_url, llm_course_level_prompt) do
+    cond do
+      is_nil(llm_api_key) ->
+        {:error, "LLM API key is not configured for this course or in the environment"}
+
+      is_nil(llm_model) or llm_model == "" ->
+        {:error, "LLM model is not configured for this course"}
+
+      is_nil(llm_api_url) or llm_api_url == "" ->
+        {:error, "LLM API URL is not configured for this course"}
+
+      is_nil(llm_course_level_prompt) or llm_course_level_prompt == "" ->
+        {:error, "LLM course-level prompt is not configured for this course"}
+
+      true ->
+        :ok
+    end
+  end
+
   @doc """
   Fetches the question details and answers based on submissionid and questionid and generates AI-generated comments.
   """
@@ -69,26 +88,16 @@ defmodule CadetWeb.AICodeAnalysisController do
           decrypted_api_key = decrypt_llm_api_key(course.llm_api_key)
           api_key = decrypted_api_key || Application.get_env(:openai, :api_key)
 
-          cond do
-            is_nil(api_key) ->
+          case check_llm_grading_parameters(
+                 api_key,
+                 course.llm_model,
+                 course.llm_api_url,
+                 course.llm_course_level_prompt
+               ) do
+            {:error, error_msg} ->
               conn
-              |> put_status(:internal_server_error)
-              |> text("No OpenAI API key configured")
-
-            is_nil(course.llm_model) or course.llm_model == "" ->
-              conn
-              |> put_status(:internal_server_error)
-              |> text("No LLM model configured for this course")
-
-            is_nil(course.llm_api_url) or course.llm_api_url == "" ->
-              conn
-              |> put_status(:internal_server_error)
-              |> text("No LLM API URL configured for this course")
-
-            is_nil(course.llm_course_level_prompt) or course.llm_course_level_prompt == "" ->
-              conn
-              |> put_status(:internal_server_error)
-              |> text("No course-level prompt configured for this course")
+              |> put_status(:bad_request)
+              |> text(error_msg)
 
             true ->
               case Assessments.get_answers_in_submission(submission_id, question_id) do
@@ -104,14 +113,16 @@ defmodule CadetWeb.AICodeAnalysisController do
                       # and question since we filter to only 1 question)
                       analyze_code(
                         conn,
-                        hd(answers),
-                        submission_id,
-                        question_id,
-                        api_key,
-                        course.llm_model,
-                        course.llm_api_url,
-                        course.llm_course_level_prompt,
-                        Assessments.get_llm_assessment_prompt(question_id)
+                        %{
+                          answers: hd(answers),
+                          submission_id: submission_id,
+                          question_id: question_id,
+                          api_key: api_key,
+                          llm_model: course.llm_model,
+                          llm_api_url: course.llm_api_url,
+                          llm_course_level_prompt: course.llm_course_level_prompt,
+                          assessment_prompt: Assessments.get_llm_assessment_prompt(question_id)
+                        }
                       )
                   end
 
@@ -201,14 +212,16 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp analyze_code(
          conn,
-         answer,
-         submission_id,
-         question_id,
-         api_key,
-         llm_model,
-         llm_api_url,
-         course_prompt,
-         assessment_prompt
+         %{
+           answer: answer,
+           submission_id: submission_id,
+           question_id: question_id,
+           api_key: api_key,
+           llm_model: llm_model,
+           llm_api_url: llm_api_url,
+           course_prompt: course_prompt,
+           assessment_prompt: assessment_prompt
+         }
        ) do
     formatted_answer =
       answer
