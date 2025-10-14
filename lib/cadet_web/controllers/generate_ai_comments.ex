@@ -100,7 +100,8 @@ defmodule CadetWeb.AICodeAnalysisController do
                       |> text("No answer found for the given submission and question_id")
 
                     _ ->
-                      # Get head of answers (should only be one answer for given submission and question since we filter to only 1 question)
+                      # Get head of answers (should only be one answer for given submission
+                      # and question since we filter to only 1 question)
                       analyze_code(
                         conn,
                         hd(answers),
@@ -210,7 +211,8 @@ defmodule CadetWeb.AICodeAnalysisController do
          assessment_prompt
        ) do
     formatted_answer =
-      format_student_answer(answer)
+      answer
+      |> format_student_answer()
       |> Jason.encode!()
 
     system_prompt = format_system_prompt(course_prompt, assessment_prompt, answer)

@@ -5,7 +5,7 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
   alias Cadet.AIComments
   alias Cadet.AIComments.AIComment
   alias Cadet.Courses.Course
-  alias Cadet.{Repo}
+  alias Cadet.Repo
 
   setup do
     course_with_llm =
