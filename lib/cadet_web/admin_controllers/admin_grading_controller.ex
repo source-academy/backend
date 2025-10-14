@@ -2,8 +2,7 @@ defmodule CadetWeb.AdminGradingController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.Assessments
-  alias Cadet.Courses
+  alias Cadet.{Assessments, Courses}
 
   @doc """
   # Query Parameters

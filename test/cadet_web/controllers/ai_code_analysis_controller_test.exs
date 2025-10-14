@@ -2,10 +2,8 @@ import Mock
 
 defmodule CadetWeb.AICodeAnalysisControllerTest do
   use CadetWeb.ConnCase
-  alias Cadet.AIComments
-  alias Cadet.AIComments.AIComment
-  alias Cadet.Courses.Course
-  alias Cadet.Repo
+  alias Cadet.{Repo, AIComments}
+  alias Cadet.{AIComments.AIComment, Courses.Course}
 
   setup do
     course_with_llm =

@@ -65,7 +65,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         {:error, "LLM course-level prompt is not configured for this course"}
 
       true ->
-        :ok
+        {:ok}
     end
   end
 
@@ -99,7 +99,7 @@ defmodule CadetWeb.AICodeAnalysisController do
               |> put_status(:bad_request)
               |> text(error_msg)
 
-            true ->
+            {:ok} ->
               case Assessments.get_answers_in_submission(submission_id, question_id) do
                 {:ok, {answers, _assessment}} ->
                   case answers do
@@ -114,13 +114,13 @@ defmodule CadetWeb.AICodeAnalysisController do
                       analyze_code(
                         conn,
                         %{
-                          answers: hd(answers),
+                          answer: hd(answers),
                           submission_id: submission_id,
                           question_id: question_id,
                           api_key: api_key,
                           llm_model: course.llm_model,
                           llm_api_url: course.llm_api_url,
-                          llm_course_level_prompt: course.llm_course_level_prompt,
+                          course_prompt: course.llm_course_level_prompt,
                           assessment_prompt: Assessments.get_llm_assessment_prompt(question_id)
                         }
                       )
