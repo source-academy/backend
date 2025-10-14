@@ -73,19 +73,19 @@ defmodule CadetWeb.AICodeAnalysisController do
             is_nil(api_key) ->
               conn
               |> put_status(:internal_server_error)
-              |> json(%{"error" => "No OpenAI API key configured"})
+              |> text("No OpenAI API key configured")
             is_nil(course.llm_model) or course.llm_model == "" ->
               conn
               |> put_status(:internal_server_error)
-              |> json(%{"error" => "No LLM model configured for this course"})
+              |> text("No LLM model configured for this course")
             is_nil(course.llm_api_url) or course.llm_api_url == "" ->
               conn
               |> put_status(:internal_server_error)
-              |> json(%{"error" => "No LLM API URL configured for this course"})
+              |> text("No LLM API URL configured for this course")
             is_nil(course.llm_course_level_prompt) or course.llm_course_level_prompt == "" ->
               conn
               |> put_status(:internal_server_error)
-              |> json(%{"error" => "No course-level prompt configured for this course"})
+              |> text("No course-level prompt configured for this course")
             true ->
               case Assessments.get_answers_in_submission(submission_id, question_id) do
               {:ok, {answers, _assessment}} ->
@@ -93,7 +93,7 @@ defmodule CadetWeb.AICodeAnalysisController do
                   [] ->
                   conn
                   |> put_status(:not_found)
-                  |> json(%{"error" => "No answer found for the given submission and question_id"})
+                  |> text("No answer found for the given submission and question_id")
                   _ ->
 
                     # Get head of answers (should only be one answer for given submission and question since we filter to only 1 question)
@@ -121,7 +121,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         else
           conn
           |> put_status(:forbidden)
-          |> json(%{"error" => "LLM grading is not enabled for this course"})
+          |> text("LLM grading is not enabled for this course")
         end
 
       {:error, {status, message}} ->
@@ -187,6 +187,13 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp format_autograding_results(results), do: inspect(results)
 
+  def call_llm_endpoint(llm_api_url, input, headers) do
+    HTTPoison.post(llm_api_url, input, headers,
+               timeout: 60_000,
+               recv_timeout: 60_000
+             )
+  end
+
   defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url, course_prompt, assessment_prompt) do
 
         formatted_answer =
@@ -211,11 +218,8 @@ defmodule CadetWeb.AICodeAnalysisController do
           {"Content-Type", "application/json"}
         ]
 
-        case HTTPoison.post(llm_api_url, input, headers,
-               timeout: 60_000,
-               recv_timeout: 60_000
-             ) do
-          {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        case call_llm_endpoint(llm_api_url, input, headers) do
+        {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
             case Jason.decode(body) do
               {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
                 save_comment(submission_id, question_id, system_prompt, formatted_answer, response)
@@ -228,7 +232,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
                 json(conn, %{"comments" => filtered_comments})
 
-              {:error, _} ->
+              {:error, err} ->
                 save_comment(
                   submission_id,
                   question_id,
@@ -238,7 +242,9 @@ defmodule CadetWeb.AICodeAnalysisController do
                   "Failed to parse response from OpenAI API"
                 )
 
-                json(conn, %{"error" => "Failed to parse response from OpenAI API"})
+                conn
+                |> put_status(:internal_server_error)
+                |> text("Failed to parse response from OpenAI API")
             end
 
           {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
@@ -253,12 +259,16 @@ defmodule CadetWeb.AICodeAnalysisController do
 
             conn
             |> put_status(:internal_server_error)
-            |> json(%{"error" => "API request failed with status #{status}: #{body}"})
+            |> text("API request failed with status #{status}: #{body}")
 
           {:error, %HTTPoison.Error{reason: reason}} ->
             save_comment(submission_id, question_id, system_prompt, formatted_answer, nil, reason)
-            json(conn, %{"error" => "HTTP request error: #{inspect(reason)}"})
-        end
+
+            conn
+            |> put_status(:internal_server_error)
+            |> text( "HTTP request error: #{inspect(reason)}")
+          end
+
     end
 
   @doc """
@@ -276,7 +286,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{"error" => "Failed to save final comment"})
+        |> text("Failed to save final comment")
     end
   end
 

@@ -1,3 +1,4 @@
+import Mock
 defmodule CadetWeb.AICodeAnalysisControllerTest do
   use CadetWeb.ConnCase
   alias Cadet.AIComments
@@ -38,19 +39,30 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       question: question,
       answer: answer
     } do
-      # Test data
+
       # Make the API call
-      response =
+      with_mock HTTPoison, [:passthrough],
+      post: fn _url, _body, _headers, _opts ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: Jason.encode!(%{"choices" => [%{"message" => %{"content" => "Comment1|||Comment2"}}]})}}
+      end do
         conn
         |> sign_in(staff_user.user)
         |> post(build_url_generate_ai_comments(course_with_llm.id, new_submission.id, question.id))
         |> json_response(200)
+      end
 
-      response =
-        conn
+      with_mock HTTPoison, [:passthrough],
+      post: fn _url, _body, _headers, _opts ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: Jason.encode!(%{"choices" => [%{"message" => %{"content" => "Comment1|||Comment2"}}]})}}
+      end do
+        response = conn
         |> sign_in(admin_user.user)
         |> post(build_url_generate_ai_comments(course_with_llm.id, new_submission.id, question.id))
         |> json_response(200)
+
+        # Verify response
+        assert response["comments"] == ["Comment1", "Comment2"]
+      end
 
       # Verify database entry
       comments = Repo.all(AIComment)
@@ -61,30 +73,70 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       assert latest_comment.raw_prompt != nil
       assert latest_comment.answers_json != nil
 
+
+
     end
 
-    # test "logs error when API call fails", %{conn: conn} do
-    #   # Test data with invalid submission_id to trigger error
-    #   course_1 = courses.course1
-    #   submission_id = -1
-    #   question_id = 456
+    test "errors out when given an invalid submission", %{
+      conn: conn,
+      admin_user: admin_user,
+      staff_user: staff_user,
+      course_with_llm: course_with_llm,
+      example_assessment: example_assessment,
+      new_submission: new_submission,
+      question: question,
+      answer: answer
+    } do
 
-    #   admin_user = insert(:course_registration, %{role: :admin, course: course_1})
-    #   # Make the API call that should fail
-    #   response =
-    #     conn
-    #     |> sign_in(admin_user.user)
-    #     |> post(build_url_generate_ai_comments(course_1.id, submission_id, question_id))
-    #     |> json_response(400)
+      random_submission_id = 123
 
-    #   # Verify error is logged in database
-    #   comments = Repo.all(AIComment)
-    #   assert length(comments) > 0
-    #   error_log = List.first(comments)
-    #   assert error_log.error != nil
-    #   assert error_log.submission_id == submission_id
-    #   assert error_log.question_id == question_id
-    # end
+      # Make the API call that should fail
+      with_mock HTTPoison, [:passthrough],
+      post: fn _url, _body, _headers, _opts ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: Jason.encode!(%{"choices" => [%{"message" => %{"content" => "Comment1|||Comment2"}}]})}}
+      end do
+        response =
+          conn
+          |> sign_in(admin_user.user)
+          |> post(build_url_generate_ai_comments(course_with_llm.id, random_submission_id, question.id))
+          |> text_response(400)
+      end
+    end
+
+    test "LLM endpoint returns an invalid response - should log errors in database", %{
+      conn: conn,
+      admin_user: admin_user,
+      staff_user: staff_user,
+      course_with_llm: course_with_llm,
+      example_assessment: example_assessment,
+      new_submission: new_submission,
+      question: question,
+      answer: answer
+    } do
+
+      random_submission_id = 123
+
+      # Make the API call that should fail
+      with_mock HTTPoison, [:passthrough],
+      post: fn _url, _body, _headers, _opts ->
+        {:ok, %HTTPoison.Response{status_code: 200, body: "invalid response"}}
+      end do
+        response =
+          conn
+          |> sign_in(admin_user.user)
+          |> post(build_url_generate_ai_comments(course_with_llm.id, new_submission.id, question.id))
+          |> text_response(500)
+      end
+
+      # Verify database entry even with error
+      comments = Repo.all(AIComment)
+      assert length(comments) > 0
+      latest_comment = List.first(comments)
+      assert latest_comment.submission_id == new_submission.id
+      assert latest_comment.question_id == question.id
+      assert latest_comment.raw_prompt != nil
+      assert latest_comment.answers_json != nil
+    end
   end
 
   defp build_url_generate_ai_comments(course_id, submission_id, question_id) do

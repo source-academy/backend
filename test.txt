@@ -1,7 +1,0 @@
-
-22:44:01.241 [info] Migrations already up
-Running ExUnit with seed: 808401, max_cases: 44
-
-.
-Finished in 1.7 seconds (0.00s async, 1.7s sync)
-1 test, 0 failures
