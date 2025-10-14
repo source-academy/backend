@@ -256,7 +256,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
           "coverPicture" => assessment.cover_picture,
           "number" => assessment.number,
           "story" => assessment.story,
-          "reading" => assessment.reading
+          "reading" => assessment.reading,
+          "llm_assessment_prompt" =>
+            assessment.llm_assessment_prompt,
         },
         "answers" =>
           answers
@@ -312,8 +314,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.code,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                    "autogradingResults" => &1.autograding_results
+                    "autogradingResults" => &1.autograding_results,
+                    "llm_prompt" => &1.question.question.llm_prompt,
                   },
+                  "ai_comments" => nil,
                   "solution" => &1.question.question.solution,
                   "grade" => %{
                     "xp" => &1.xp,
@@ -361,7 +365,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         }
                       end,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                    "autogradingResults" => &1.autograding_results
+                    "autogradingResults" => &1.autograding_results,
+                    "ai_comments" => nil,
                   },
                   "solution" => "",
                   "grade" => %{
@@ -425,7 +430,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "id" => &1.submission.student.id
                   },
                   "team" => %{},
-                  "solution" => ""
+                  "solution" => "",
+                  "ai_comments" => nil,
                 }
             end
           )
@@ -1277,7 +1283,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
           "coverPicture" => assessment.cover_picture,
           "number" => assessment.number,
           "story" => assessment.story,
-          "reading" => assessment.reading
+          "reading" => assessment.reading,
+          "llm_assessment_prompt" => assessment.llm_assessment_prompt,
         },
         "answers" =>
           answers
@@ -1333,8 +1340,10 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.code,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                    "autogradingResults" => &1.autograding_results
+                    "autogradingResults" => &1.autograding_results,
+                    "llm_prompt" => &1.question.question.llm_prompt
                   },
+                  "ai_comments" => nil,
                   "solution" => &1.question.question.solution,
                   "grade" => %{
                     "xp" => &1.xp,
@@ -1382,7 +1391,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         }
                       end,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
-                    "autogradingResults" => &1.autograding_results
+                    "autogradingResults" => &1.autograding_results,
+                    "ai_comments" => nil
                   },
                   "solution" => "",
                   "grade" => %{
@@ -1428,7 +1438,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "answer" => nil,
                     "contestEntries" => [],
                     "scoreLeaderboard" => [],
-                    "popularVoteLeaderboard" => []
+                    "popularVoteLeaderboard" => [],
+                    "ai_comments" => nil
                   },
                   "grade" => %{
                     "xp" => &1.xp,
@@ -1696,7 +1707,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
         course: course,
         config: assessment_config,
         is_published: true,
-        max_team_size: 1
+        max_team_size: 1,
       })
 
     questions =

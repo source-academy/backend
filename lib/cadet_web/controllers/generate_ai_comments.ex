@@ -189,13 +189,10 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp analyze_code(conn, answer, submission_id, question_id, api_key, llm_model, llm_api_url, course_prompt, assessment_prompt) do
 
-        IO.inspect(answer, label: "Answer being analyzed")
         formatted_answer =
           format_student_answer(answer)
           |> Jason.encode!()
 
-        IO.inspect("Formatted answer: #{formatted_answer}", label: "Formatted Answer")
-        IO.inspect(assessment_prompt, label: "Assessment Prompt")
 
         system_prompt = format_system_prompt(course_prompt, assessment_prompt, answer)
         # Combine prompts if llm_prompt exists
@@ -214,7 +211,6 @@ defmodule CadetWeb.AICodeAnalysisController do
           {"Content-Type", "application/json"}
         ]
 
-        IO.inspect(input, label: "Input to OpenAI API")
         case HTTPoison.post(llm_api_url, input, headers,
                timeout: 60_000,
                recv_timeout: 60_000
@@ -222,7 +218,6 @@ defmodule CadetWeb.AICodeAnalysisController do
           {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
             case Jason.decode(body) do
               {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
-                IO.inspect(response, label: "Response from OpenAI API")
                 save_comment(submission_id, question_id, system_prompt, formatted_answer, response)
                 comments_list = String.split(response, "|||")
 
@@ -247,7 +242,6 @@ defmodule CadetWeb.AICodeAnalysisController do
             end
 
           {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
-            IO.inspect(body, label: "Error response from OpenAI API")
             save_comment(
               submission_id,
               question_id,

@@ -156,8 +156,6 @@ defmodule CadetWeb.AdminGradingView do
       question: &build_grading_question/1,
       solution: &(&1.question.question["solution"] || ""),
       grade: &build_grade/1,
-      autogradingStatus: &(&1.autograding_status || ""),
-      autogradingResults: &(&1.autograding_results || ""),
     })
   end
 
