@@ -552,10 +552,24 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "answer" => %{"code" => answer.answer.code},
             "final_score" => answer.relative_score,
             "student_name" => answer.submission.student.user.name,
-            "submission_id" => answer.submission.id
+            "submission_id" => answer.submission.id,
+            "student_username" => answer.submission.student.user.username
           }
         end
         |> Enum.sort_by(& &1["final_score"], &>=/2)
+        |> Enum.reduce({[], nil, 0, 0}, fn entry, {acc, prev_score, current_rank, index} ->
+          new_rank =
+            if entry["final_score"] == prev_score do
+              current_rank
+            else
+              index + 1
+            end
+
+          updated_entry = Map.put(entry, "rank", new_rank)
+          {[updated_entry | acc], entry["final_score"], new_rank, index + 1}
+        end)
+        |> elem(0)
+        |> Enum.reverse()
 
       for role <- Role.__enum_map__() do
         course_reg = Map.get(role_crs, role)
@@ -624,10 +638,24 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "answer" => %{"code" => answer.answer.code},
             "final_score" => answer.relative_score,
             "student_name" => answer.submission.student.user.name,
-            "submission_id" => answer.submission.id
+            "submission_id" => answer.submission.id,
+            "student_username" => answer.submission.student.user.username
           }
         end
         |> Enum.sort_by(& &1["final_score"], &>=/2)
+        |> Enum.reduce({[], nil, 0, 0}, fn entry, {acc, prev_score, current_rank, index} ->
+          new_rank =
+            if entry["final_score"] == prev_score do
+              current_rank
+            else
+              index + 1
+            end
+
+          updated_entry = Map.put(entry, "rank", new_rank)
+          {[updated_entry | acc], entry["final_score"], new_rank, index + 1}
+        end)
+        |> elem(0)
+        |> Enum.reverse()
 
       for role <- [:admin, :staff] do
         course_reg = Map.get(role_crs, role)
@@ -1773,6 +1801,164 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
+  describe "GET /:assessment_id/contest_popular_leaderboard, unauthenticated" do
+    test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
+      config = insert(:assessment_config, %{course: course1})
+      assessment = insert(:assessment, %{course: course1, config: config})
+
+      params = %{
+        "count" => 9
+      }
+
+      conn
+      |> get(build_popular_leaderboard_url(course1.id, assessment.id, params))
+      |> response(401)
+    end
+  end
+
+  describe "GET /:assessment_id/contest_score_leaderboard, unauthenticated" do
+    test "unauthorized", %{conn: conn, courses: %{course1: course1}} do
+      config = insert(:assessment_config, %{course: course1})
+      assessment = insert(:assessment, %{course: course1, config: config})
+
+      params = %{
+        "count" => 9
+      }
+
+      conn
+      |> get(build_score_leaderboard_url(course1.id, assessment.id, params))
+      |> response(401)
+    end
+  end
+
+  describe "GET /:assessment_id/contest_popular_leaderboard" do
+    @tag authenticate: :student
+    test "successful", %{conn: conn, courses: %{course1: course1}} do
+      user = conn.assigns[:current_user]
+      test_cr = insert(:course_registration, %{course: course1, role: :student, user: user})
+      conn = assign(conn, :test_cr, test_cr)
+      course = test_cr.course
+
+      config = insert(:assessment_config, %{course: course})
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
+      contest_question = insert(:programming_question, %{assessment: contest_assessment})
+
+      contest_submissions =
+        contest_students
+        |> Enum.map(&insert(:submission, %{assessment: contest_assessment, student: &1}))
+
+      contest_answer =
+        contest_submissions
+        |> Enum.map(
+          &insert(:answer, %{
+            question: contest_question,
+            submission: &1,
+            popular_score: 10.0,
+            answer: build(:programming_answer)
+          })
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      insert(
+        :voting_question,
+        %{
+          question: build(:voting_question_content, contest_number: contest_assessment.number),
+          assessment: voting_assessment
+        }
+      )
+
+      expected =
+        contest_answer
+        |> Enum.map(
+          &%{
+            "answer" => &1.answer.code,
+            "student_name" => &1.submission.student.user.name,
+            "final_score" => &1.popular_score,
+            "rank" => 1,
+            "student_username" => &1.submission.student.user.username,
+            "submission_id" => &1.submission.id
+          }
+        )
+
+      params = %{
+        "count" => 1
+      }
+
+      resp =
+        conn
+        |> get(build_popular_leaderboard_url(course.id, voting_assessment.id, params))
+        |> json_response(200)
+
+      assert expected == resp["leaderboard"]
+    end
+  end
+
+  describe "GET /:assessment_id/contest_score_leaderboard" do
+    @tag authenticate: :student
+    test "successful", %{conn: conn, courses: %{course1: course1}} do
+      user = conn.assigns[:current_user]
+      test_cr = insert(:course_registration, %{course: course1, role: :student, user: user})
+      conn = assign(conn, :test_cr, test_cr)
+      course = test_cr.course
+
+      config = insert(:assessment_config, %{course: course})
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
+      contest_question = insert(:programming_question, %{assessment: contest_assessment})
+
+      contest_submissions =
+        contest_students
+        |> Enum.map(&insert(:submission, %{assessment: contest_assessment, student: &1}))
+
+      contest_answer =
+        contest_submissions
+        |> Enum.map(
+          &insert(:answer, %{
+            question: contest_question,
+            submission: &1,
+            relative_score: 10.0,
+            answer: build(:programming_answer)
+          })
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      insert(
+        :voting_question,
+        %{
+          question: build(:voting_question_content, contest_number: contest_assessment.number),
+          assessment: voting_assessment
+        }
+      )
+
+      expected =
+        contest_answer
+        |> Enum.map(
+          &%{
+            "answer" => &1.answer.code,
+            "student_name" => &1.submission.student.user.name,
+            "final_score" => &1.relative_score,
+            "rank" => 1,
+            "student_username" => &1.submission.student.user.username,
+            "submission_id" => &1.submission.id
+          }
+        )
+
+      params = %{
+        "count" => 1
+      }
+
+      resp =
+        conn
+        |> get(build_score_leaderboard_url(course.id, voting_assessment.id, params))
+        |> json_response(200)
+
+      assert expected == resp["leaderboard"]
+    end
+  end
+
   defp build_url(course_id), do: "/v2/courses/#{course_id}/assessments/"
 
   defp build_url(course_id, assessment_id),
@@ -1783,6 +1969,28 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
   defp build_url_unlock(course_id, assessment_id),
     do: "/v2/courses/#{course_id}/assessments/#{assessment_id}/unlock"
+
+  defp build_popular_leaderboard_url(course_id, assessment_id, params \\ %{}) do
+    base_url = "#{build_url(course_id, assessment_id)}/contest_popular_leaderboard"
+
+    if params != %{} do
+      query_string = URI.encode_query(params)
+      "#{base_url}?#{query_string}"
+    else
+      base_url
+    end
+  end
+
+  defp build_score_leaderboard_url(course_id, assessment_id, params \\ %{}) do
+    base_url = "#{build_url(course_id, assessment_id)}/contest_score_leaderboard"
+
+    if params != %{} do
+      query_string = URI.encode_query(params)
+      "#{base_url}?#{query_string}"
+    else
+      base_url
+    end
+  end
 
   defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
 
