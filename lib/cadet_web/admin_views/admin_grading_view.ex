@@ -3,11 +3,12 @@ defmodule CadetWeb.AdminGradingView do
 
   import CadetWeb.AssessmentsHelpers
 
-  def render("show.json", %{answers: answers, assessment: assessment}) do
+  def render("show.json", %{course: course, answers: answers, assessment: assessment}) do
     %{
       assessment:
         render_one(assessment, CadetWeb.AdminGradingView, "assessment.json", as: :assessment),
-      answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
+      answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer),
+      enable_llm_grading: course.enable_llm_grading,
     }
   end
 
@@ -22,6 +23,7 @@ defmodule CadetWeb.AdminGradingView do
       story: assessment.story,
       reading: assessment.reading,
       llm_assessment_prompt: assessment.llm_assessment_prompt,
+
     }
   end
 

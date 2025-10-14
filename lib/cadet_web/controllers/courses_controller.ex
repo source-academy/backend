@@ -58,6 +58,9 @@ defmodule CadetWeb.CoursesController do
       enable_stories(:body, :boolean, "Enable stories", required: true)
       enable_llm_grading(:body, :boolean, "Enable LLM grading", required: false)
       llm_api_key(:body, :string, "OpenAI API key for this course", required: false)
+      llm_model(:body, :string, "LLM model to be used for this course", required: false)
+      llm_api_url(:body, :string, "LLM API URL to be used for this course", required: false)
+      llm_course_level_prompt(:body, :string, "LLM course level prompt to be used for this course", required: false)
       source_chapter(:body, :number, "Default source chapter", required: true)
 
       source_variant(:body, Schema.ref(:SourceVariant), "Default source variant name",
@@ -101,6 +104,9 @@ defmodule CadetWeb.CoursesController do
             enable_stories(:boolean, "Enable stories", required: true)
             enable_llm_grading(:boolean, "Enable LLM grading", required: false)
             llm_api_key(:string, "OpenAI API key for this course", required: false)
+            llm_model(:string, "LLM model to be used for this course", required: false)
+            llm_api_url(:string, "LLM API URL to be used for this course", required: false)
+            llm_course_level_prompt(:string, "LLM course level prompt to be used for this course", required: false)
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
@@ -117,6 +123,9 @@ defmodule CadetWeb.CoursesController do
             enable_stories: false,
             enable_llm_grading: false,
             llm_api_key: "sk-1234567890",
+            llm_model: "gpt-4",
+            llm_api_url: "https://api.openai.com/v1/chat/completions",
+            llm_course_level_prompt: "You are a helpful teaching assistant for an introductory programming course",
             source_chapter: 1,
             source_variant: "default",
             module_help_text: "Help text",
