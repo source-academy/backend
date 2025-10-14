@@ -248,6 +248,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       conn = get(conn, build_url(course.id, submission.id))
 
       expected = %{
+        "enable_llm_grading" => false,
         "assessment" => %{
           "id" => assessment.id,
           "title" => assessment.title,
@@ -365,8 +366,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       end,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
                     "autogradingResults" => &1.autograding_results,
-                    "ai_comments" => nil
                   },
+                  "ai_comments" => nil,
                   "solution" => "",
                   "grade" => %{
                     "xp" => &1.xp,
@@ -413,6 +414,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "scoreLeaderboard" => [],
                     "popularVoteLeaderboard" => []
                   },
+                  "ai_comments" => nil,
                   "grade" => %{
                     "xp" => &1.xp,
                     "xpAdjustment" => &1.xp_adjustment,
@@ -430,7 +432,6 @@ defmodule CadetWeb.AdminGradingControllerTest do
                   },
                   "team" => %{},
                   "solution" => "",
-                  "ai_comments" => nil
                 }
             end
           )
@@ -1274,6 +1275,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       conn = get(conn, build_url(course.id, submission.id))
 
       expected = %{
+        "enable_llm_grading" => false,
         "assessment" => %{
           "id" => assessment.id,
           "title" => assessment.title,
@@ -1391,8 +1393,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       end,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
                     "autogradingResults" => &1.autograding_results,
-                    "ai_comments" => nil
                   },
+                  "ai_comments" => nil,
                   "solution" => "",
                   "grade" => %{
                     "xp" => &1.xp,
@@ -1438,8 +1440,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "contestEntries" => [],
                     "scoreLeaderboard" => [],
                     "popularVoteLeaderboard" => [],
-                    "ai_comments" => nil
                   },
+                  "ai_comments" => nil,
                   "grade" => %{
                     "xp" => &1.xp,
                     "xpAdjustment" => &1.xp_adjustment,
