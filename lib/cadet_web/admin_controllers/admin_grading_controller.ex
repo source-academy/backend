@@ -2,7 +2,7 @@ defmodule CadetWeb.AdminGradingController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  alias Cadet.Assessments
+  alias Cadet.{Assessments, Courses}
 
   @doc """
   # Query Parameters
@@ -72,7 +72,15 @@ defmodule CadetWeb.AdminGradingController do
   def show(conn, %{"submissionid" => submission_id}) when is_ecto_id(submission_id) do
     case Assessments.get_answers_in_submission(submission_id) do
       {:ok, {answers, assessment}} ->
-        render(conn, "show.json", answers: answers, assessment: assessment)
+        case Courses.get_course_config(assessment.course_id) do
+          {:ok, course} ->
+            render(conn, "show.json", course: course, answers: answers, assessment: assessment)
+
+          {:error, {status, message}} ->
+            conn
+            |> put_status(status)
+            |> text(message)
+        end
 
       {:error, {status, message}} ->
         conn

@@ -29,6 +29,7 @@ defmodule Cadet.Assessments.Answer do
     belongs_to(:grader, CourseRegistration)
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
+    has_many(:ai_comments, through: [:submission, :ai_comments])
 
     timestamps()
   end

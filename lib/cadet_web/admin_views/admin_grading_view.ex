@@ -3,11 +3,12 @@ defmodule CadetWeb.AdminGradingView do
 
   import CadetWeb.AssessmentsHelpers
 
-  def render("show.json", %{answers: answers, assessment: assessment}) do
+  def render("show.json", %{course: course, answers: answers, assessment: assessment}) do
     %{
       assessment:
         render_one(assessment, CadetWeb.AdminGradingView, "assessment.json", as: :assessment),
-      answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
+      answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer),
+      enable_llm_grading: course.enable_llm_grading
     }
   end
 
@@ -20,7 +21,8 @@ defmodule CadetWeb.AdminGradingView do
       coverPicture: assessment.cover_picture,
       number: assessment.number,
       story: assessment.story,
-      reading: assessment.reading
+      reading: assessment.reading,
+      llm_assessment_prompt: assessment.llm_assessment_prompt
     }
   end
 
@@ -149,6 +151,7 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
+      ai_comments: &extract_ai_comments_per_answer(&1.question_id, &1.ai_comments),
       student: &extract_student_data(&1.submission.student),
       team: &extract_team_data(&1.submission.team),
       question: &build_grading_question/1,
@@ -159,6 +162,18 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_summary.json", %{cols: cols, summary: summary}) do
     %{cols: cols, rows: summary}
+  end
+
+  defp extract_ai_comments_per_answer(question_id, ai_comments) do
+    matching_comment =
+      ai_comments
+      # Equivalent to fn comment -> comment.question_id == question_id end
+      |> Enum.find(&(&1.question_id == question_id))
+
+    case matching_comment do
+      nil -> nil
+      comment -> %{response: matching_comment.response, insertedAt: matching_comment.inserted_at}
+    end
   end
 
   defp extract_student_data(nil), do: %{}
