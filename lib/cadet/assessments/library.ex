@@ -12,11 +12,12 @@ defmodule Cadet.Assessments.Library do
     field(:variant, :string, default: nil)
     field(:exec_time_ms, :integer, default: 1000)
     field(:globals, :map, default: %{})
+    field(:language_options, :map, default: %{})
     embeds_one(:external, ExternalLibrary, on_replace: :update)
   end
 
   @required_fields ~w(chapter)a
-  @optional_fields ~w(globals variant exec_time_ms)a
+  @optional_fields ~w(globals variant language_options exec_time_ms)a
   @required_embeds ~w(external)a
 
   def changeset(library, params \\ %{}) do
