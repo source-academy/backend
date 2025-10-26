@@ -142,8 +142,6 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       question: question,
       answer: answer
     } do
-      random_submission_id = 123
-
       # Make the API call that should fail
       with_mock HTTPoison, [:passthrough],
         post: fn _url, _body, _headers, _opts ->

@@ -3,7 +3,6 @@ defmodule Cadet.Repo.Migrations.AddLlmApiKeyToCourses do
 
   def up do
     alter table(:courses) do
-      add(:course_level_prompt, :text, null: true)
       add(:llm_api_key, :text, null: true)
       add(:llm_model, :text, null: true)
       add(:llm_api_url, :text, null: true)
@@ -13,7 +12,6 @@ defmodule Cadet.Repo.Migrations.AddLlmApiKeyToCourses do
 
   def down do
     alter table(:courses) do
-      remove(:course_level_prompt)
       remove(:llm_course_level_prompt)
       remove(:llm_api_key)
       remove(:llm_model)

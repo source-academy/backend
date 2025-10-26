@@ -92,7 +92,7 @@ defmodule Cadet.Courses.Course do
       # Store both the IV, ciphertext and tag
       encrypted = Base.encode64(iv <> tag <> ciphertext)
     else
-      nil
+      {:error, :invalid_encryption_key}
     end
   end
 
@@ -102,7 +102,7 @@ defmodule Cadet.Courses.Course do
         encrypted = encrypt_llm_api_key(llm_api_key)
 
         case encrypted do
-          nil ->
+          {:error, :invalid_encryption_key} ->
             add_error(
               changeset,
               :llm_api_key,

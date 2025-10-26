@@ -53,19 +53,27 @@ defmodule CadetWeb.AICodeAnalysisController do
   defp check_llm_grading_parameters(llm_api_key, llm_model, llm_api_url, llm_course_level_prompt) do
     cond do
       is_nil(llm_api_key) ->
-        {:error, "LLM API key is not configured for this course or in the environment"}
+        {:parameter_error, "LLM API key is not configured for this course or in the environment"}
 
       is_nil(llm_model) or llm_model == "" ->
-        {:error, "LLM model is not configured for this course"}
+        {:parameter_error, "LLM model is not configured for this course"}
 
       is_nil(llm_api_url) or llm_api_url == "" ->
-        {:error, "LLM API URL is not configured for this course"}
+        {:parameter_error, "LLM API URL is not configured for this course"}
 
       is_nil(llm_course_level_prompt) or llm_course_level_prompt == "" ->
-        {:error, "LLM course-level prompt is not configured for this course"}
+        {:parameter_error, "LLM course-level prompt is not configured for this course"}
 
       true ->
         {:ok}
+    end
+  end
+
+  defp ensure_llm_enabled(course) do
+    if course.enable_llm_grading do
+      {:ok}
+    else
+      {:error, {:forbidden, "LLM grading is not enabled for this course"}}
     end
   end
 
@@ -78,65 +86,57 @@ defmodule CadetWeb.AICodeAnalysisController do
         "course_id" => course_id
       })
       when is_ecto_id(submission_id) do
-    # Check if LLM grading is enabled for this course
-    question_id = String.to_integer(question_id)
-
-    case Courses.get_course_config(course_id) do
-      {:ok, course} ->
-        if course.enable_llm_grading do
-          # Get API key from course config or fall back to environment variable
-          decrypted_api_key = decrypt_llm_api_key(course.llm_api_key)
-          api_key = decrypted_api_key || Application.get_env(:openai, :api_key)
-
-          case check_llm_grading_parameters(
-                 api_key,
-                 course.llm_model,
-                 course.llm_api_url,
-                 course.llm_course_level_prompt
-               ) do
-            {:error, error_msg} ->
-              conn
-              |> put_status(:bad_request)
-              |> text(error_msg)
-
-            {:ok} ->
-              case Assessments.get_answers_in_submission(submission_id, question_id) do
-                {:ok, {answers, _assessment}} ->
-                  case answers do
-                    [] ->
-                      conn
-                      |> put_status(:not_found)
-                      |> text("No answer found for the given submission and question_id")
-
-                    _ ->
-                      # Get head of answers (should only be one answer for given submission
-                      # and question since we filter to only 1 question)
-                      analyze_code(
-                        conn,
-                        %{
-                          answer: hd(answers),
-                          submission_id: submission_id,
-                          question_id: question_id,
-                          api_key: api_key,
-                          llm_model: course.llm_model,
-                          llm_api_url: course.llm_api_url,
-                          course_prompt: course.llm_course_level_prompt,
-                          assessment_prompt: Assessments.get_llm_assessment_prompt(question_id)
-                        }
-                      )
-                  end
-
-                {:error, {status, message}} ->
-                  conn
-                  |> put_status(status)
-                  |> text(message)
-              end
-          end
-        else
+    with {qid, ""} <- Integer.parse(question_id),
+         {:ok, course} <- Courses.get_course_config(course_id),
+         {:ok} <- ensure_llm_enabled(course),
+         {:ok, key} <- decrypt_llm_api_key(course.llm_api_key),
+         {:ok} <-
+           check_llm_grading_parameters(
+             key,
+             course.llm_model,
+             course.llm_api_url,
+             course.llm_course_level_prompt
+           ),
+         {:ok, {answers, _}} <- Assessments.get_answers_in_submission(submission_id, qid) do
+      # Get head of answers (should only be one answer for given submission
+      # and question since we filter to only 1 question)
+      case answers do
+        [] ->
           conn
-          |> put_status(:forbidden)
-          |> text("LLM grading is not enabled for this course")
-        end
+          |> put_status(:not_found)
+          |> text("No answer found for the given submission and question_id")
+
+        _ ->
+          analyze_code(
+            conn,
+            %{
+              answer: hd(answers),
+              submission_id: submission_id,
+              question_id: qid,
+              api_key: key,
+              llm_model: course.llm_model,
+              llm_api_url: course.llm_api_url,
+              course_prompt: course.llm_course_level_prompt,
+              assessment_prompt: Assessments.get_llm_assessment_prompt(qid)
+            }
+          )
+      end
+    else
+      :error ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid question ID format")
+
+      {:decrypt_error, err} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> text("Failed to decrypt LLM API key: #{inspect(err)}")
+
+      # Errors for check_llm_grading_parameters
+      {:parameter_error, error_msg} ->
+        conn
+        |> put_status(:bad_request)
+        |> text(error_msg)
 
       {:error, {status, message}} ->
         conn
@@ -259,6 +259,20 @@ defmodule CadetWeb.AICodeAnalysisController do
               end)
 
             json(conn, %{"comments" => filtered_comments})
+
+          {:ok, other} ->
+            save_comment(
+              submission_id,
+              question_id,
+              system_prompt,
+              formatted_answer,
+              Jason.encode!(other),
+              "Unexpected JSON shape"
+            )
+
+            conn
+            |> put_status(:bad_gateway)
+            |> text("Unexpected response format from OpenAI API")
 
           {:error, err} ->
             save_comment(
@@ -393,18 +407,21 @@ defmodule CadetWeb.AICodeAnalysisController do
             ciphertext = binary_part(decoded, 32, byte_size(decoded) - 32)
 
             case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
-              plain_text when is_binary(plain_text) -> plain_text
-              _ -> nil
+              plain_text when is_binary(plain_text) -> {:ok, plain_text}
+              _ -> {:decrypt_error, :decryption_failed}
             end
 
           _ ->
-            Logger.error("Failed to decode encrypted key")
-            nil
+            Logger.error(
+              "Failed to decode encrypted key, is it a valid AES-256 key of 16, 24 or 32 bytes?"
+            )
+
+            {:decrypt_error, :decryption_failed}
         end
 
       _ ->
-        Logger.error("Encryption key not configured properly")
-        nil
+        Logger.error("Encryption key not configured")
+        {:decrypt_error, :invalid_encryption_key}
     end
   end
 end
