@@ -169,27 +169,29 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   defp format_system_prompt(course_prompt, assessment_prompt, answer) do
-    (course_prompt || "") <> "\n\n" <> (assessment_prompt || "") <>
+    (course_prompt || "") <>
       "\n\n" <>
-        """
-        **Additional Instructions for this Question:**
-        #{answer.question.question["llm_prompt"] || "N/A"}
+      (assessment_prompt || "") <>
+      "\n\n" <>
+      """
+      **Additional Instructions for this Question:**
+      #{answer.question.question["llm_prompt"] || "N/A"}
 
-        **Question:**
-        ```
-        #{answer.question.question["content"] || "N/A"}
-        ```
+      **Question:**
+      ```
+      #{answer.question.question["content"] || "N/A"}
+      ```
 
-        **Model Solution:**
-        ```
-        #{answer.question.question["solution"] || "N/A"}
-        ```
+      **Model Solution:**
+      ```
+      #{answer.question.question["solution"] || "N/A"}
+      ```
 
-        **Autograding Status:** #{answer.autograding_status || "N/A"}
-        **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
+      **Autograding Status:** #{answer.autograding_status || "N/A"}
+      **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
 
-        The student answer will be given below as part of the User Prompt.
-        """
+      The student answer will be given below as part of the User Prompt.
+      """
   end
 
   defp format_autograding_results(nil), do: "N/A"
