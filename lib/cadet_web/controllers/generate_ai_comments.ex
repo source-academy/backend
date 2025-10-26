@@ -169,9 +169,8 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   defp format_system_prompt(course_prompt, assessment_prompt, answer) do
-    course_prompt || "" <> "\n\n" <> assessment_prompt ||
-      "" <>
-        "\n\n" <>
+    (course_prompt || "") <> "\n\n" <> (assessment_prompt || "") <>
+      "\n\n" <>
         """
         **Additional Instructions for this Question:**
         #{answer.question.question["llm_prompt"] || "N/A"}
