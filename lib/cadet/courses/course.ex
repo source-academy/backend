@@ -117,8 +117,7 @@ defmodule Cadet.Courses.Course do
         changeset
       end
     else
-      # The key is not being changed, so we need to preserve the existing value
-      put_change(changeset, :llm_api_key, changeset.data.llm_api_key)
+      changeset
     end
   end
 

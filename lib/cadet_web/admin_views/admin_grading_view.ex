@@ -172,7 +172,7 @@ defmodule CadetWeb.AdminGradingView do
 
     case matching_comment do
       nil -> nil
-      comment -> %{response: matching_comment.response, insertedAt: matching_comment.inserted_at}
+      comment -> %{response: comment.response, insertedAt: comment.inserted_at}
     end
   end
 
