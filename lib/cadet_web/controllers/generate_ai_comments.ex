@@ -52,9 +52,6 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp check_llm_grading_parameters(llm_api_key, llm_model, llm_api_url, llm_course_level_prompt) do
     cond do
-      is_nil(llm_api_key) ->
-        {:parameter_error, "LLM API key is not configured for this course or in the environment"}
-
       is_nil(llm_model) or llm_model == "" ->
         {:parameter_error, "LLM model is not configured for this course"}
 
