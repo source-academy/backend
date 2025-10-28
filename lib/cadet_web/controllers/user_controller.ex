@@ -5,12 +5,15 @@ defmodule CadetWeb.UserController do
 
   use CadetWeb, :controller
   use PhoenixSwagger
+  require Logger
   alias Cadet.Accounts.CourseRegistrations
 
   alias Cadet.{Accounts, Assessments}
 
   def index(conn, _) do
     user = conn.assigns.current_user
+    Logger.info("Fetching user details for user #{user.id}")
+
     courses = CourseRegistrations.get_courses(conn.assigns.current_user)
     exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
@@ -62,6 +65,7 @@ defmodule CadetWeb.UserController do
 
   def get_latest_viewed(conn, _) do
     user = conn.assigns.current_user
+    Logger.info("Fetching latest viewed course for user #{user.id}")
     exam_mode_course = CourseRegistrations.get_exam_mode_course(conn.assigns.current_user)
 
     latest =
@@ -99,11 +103,19 @@ defmodule CadetWeb.UserController do
   end
 
   def update_latest_viewed(conn, %{"courseId" => course_id}) do
+    user = conn.assigns.current_user
+    Logger.info("Updating latest viewed course to #{course_id} for user #{user.id}")
+
     case Accounts.update_latest_viewed(conn.assigns.current_user, course_id) do
       {:ok, %{}} ->
+        Logger.info("Successfully updated latest viewed course for user #{user.id}.")
         text(conn, "OK")
 
       {:error, {status, message}} ->
+        Logger.error(
+          "Failed to update latest viewed course for user #{user.id}. Status: #{status}, Message: #{message}."
+        )
+
         conn
         |> put_status(status)
         |> text(message)
@@ -113,11 +125,18 @@ defmodule CadetWeb.UserController do
   def update_game_states(conn, %{"gameStates" => new_game_states}) do
     cr = conn.assigns[:course_reg]
 
+    Logger.info("Updating game states for user #{cr.user_id} in course #{cr.course_id}")
+
     case CourseRegistrations.update_game_states(cr, new_game_states) do
       {:ok, %{}} ->
+        Logger.info("Successfully updated game states for user #{cr.user_id}.")
         text(conn, "OK")
 
       {:error, {status, message}} ->
+        Logger.error(
+          "Failed to update game states for user #{cr.user_id}. Status: #{status}, Message: #{message}."
+        )
+
         conn
         |> put_status(status)
         |> text(message)
@@ -168,11 +187,21 @@ defmodule CadetWeb.UserController do
   def update_research_agreement(conn, %{"agreedToResearch" => agreed_to_research}) do
     course_reg = conn.assigns[:course_reg]
 
+    Logger.info(
+      "Updating research agreement to #{agreed_to_research} for user #{course_reg.user_id} in course #{course_reg.course_id}"
+    )
+
     case CourseRegistrations.update_research_agreement(course_reg, agreed_to_research) do
       {:ok, %{}} ->
+        Logger.info("Successfully updated research agreement for user #{course_reg.user_id}.")
+
         text(conn, "OK")
 
       {:error, {status, message}} ->
+        Logger.error(
+          "Failed to update research agreement for user #{course_reg.user_id}. Status: #{status}, Message: #{message}."
+        )
+
         conn
         |> put_status(status)
         |> text(message)
@@ -183,8 +212,12 @@ defmodule CadetWeb.UserController do
     course_id = conn.assigns.course_reg.course_id
     user_id = conn.assigns.course_reg.user_id
     course_reg_id = conn.assigns.course_reg.id
+    Logger.info("Calculating total XP for user #{user_id} in course #{course_id}")
 
     total_xp = Assessments.user_total_xp(course_id, user_id, course_reg_id)
+
+    Logger.info("Successfully calculated total XP for user #{user_id}: #{total_xp}.")
+
     json(conn, %{totalXp: total_xp})
   end
 
@@ -382,6 +415,14 @@ defmodule CadetWeb.UserController do
             viewable(:boolean, "Course viewability", required: true)
             enable_game(:boolean, "Enable game", required: true)
             enable_achievements(:boolean, "Enable achievements", required: true)
+            enable_overall_leaderboard(:boolean, "Enable overall leaderboard", required: true)
+            enable_contest_leaderboard(:boolean, "Enable contest leadeboard", required: true)
+            top_leaderboard_display(:integer, "Top leaderboard display", required: true)
+
+            top_contest_leaderboard_display(:integer, "Top contest leaderboard display",
+              required: true
+            )
+
             enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
             enable_exam_mode(:boolean, "Enable exam mode", required: true)
@@ -399,6 +440,10 @@ defmodule CadetWeb.UserController do
             viewable: true,
             enable_game: true,
             enable_achievements: true,
+            enable_overall_leaderboard: true,
+            enable_contest_leaderboard: true,
+            top_leaderboard_display: 100,
+            top_contest_leaderboard_display: 10,
             enable_sourcecast: true,
             enable_stories: false,
             enable_exam_mode: false,

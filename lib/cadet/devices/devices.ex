@@ -2,9 +2,10 @@ defmodule Cadet.Devices do
   @moduledoc """
   Contains domain logic for remote execution devices.
   """
-  use Cadet, :context
+  use Cadet, [:context, :display]
 
   import Ecto.Query
+  require Logger
 
   alias Cadet.AwsHelper
   alias Cadet.Accounts.User
@@ -17,10 +18,16 @@ defmodule Cadet.Devices do
   end
 
   def get_user_registrations(user_id) when is_ecto_id(user_id) do
-    DeviceRegistration
-    |> where(user_id: ^user_id)
-    |> preload(:device)
-    |> Repo.all()
+    Logger.info("Retrieving device registrations for user #{user_id}")
+
+    registrations =
+      DeviceRegistration
+      |> where(user_id: ^user_id)
+      |> preload(:device)
+      |> Repo.all()
+
+    Logger.info("Retrieved #{length(registrations)} device registrations for user #{user_id}")
+    registrations
   end
 
   @spec get_user_registration(integer | String.t() | User.t(), integer | String.t()) ::
@@ -31,23 +38,64 @@ defmodule Cadet.Devices do
 
   def get_user_registration(user_id, id)
       when is_ecto_id(user_id) and is_ecto_id(id) do
-    DeviceRegistration
-    |> preload(:device)
-    |> where(user_id: ^user_id)
-    |> Repo.get(id)
+    Logger.info("Retrieving device registration #{id} for user #{user_id}")
+
+    registration =
+      DeviceRegistration
+      |> preload(:device)
+      |> where(user_id: ^user_id)
+      |> Repo.get(id)
+
+    case registration do
+      nil -> Logger.error("Device registration #{id} not found for user #{user_id}")
+      _ -> Logger.info("Successfully retrieved device registration #{id} for user #{user_id}")
+    end
+
+    registration
   end
 
   @spec delete_registration(DeviceRegistration.t()) :: {:ok, DeviceRegistration.t()}
   def delete_registration(registration = %DeviceRegistration{}) do
-    Repo.delete(registration)
+    Logger.info(
+      "Deleting device registration #{registration.id} for user #{registration.user_id}"
+    )
+
+    result = Repo.delete(registration)
+
+    case result do
+      {:ok, _} ->
+        Logger.info("Successfully deleted device registration #{registration.id}")
+
+      {:error, changeset} ->
+        Logger.error(
+          "Failed to delete device registration #{registration.id}: #{full_error_messages(changeset)}"
+        )
+    end
+
+    result
   end
 
   @spec rename_registration(DeviceRegistration.t(), String.t()) ::
           {:ok, DeviceRegistration.t()} | {:error, Ecto.Changeset.t()}
   def rename_registration(registration = %DeviceRegistration{}, title) do
-    registration
-    |> DeviceRegistration.changeset(%{title: title})
-    |> Repo.update()
+    Logger.info("Renaming device registration #{registration.id} to '#{title}'")
+
+    result =
+      registration
+      |> DeviceRegistration.changeset(%{title: title})
+      |> Repo.update()
+
+    case result do
+      {:ok, _} ->
+        Logger.info("Successfully renamed device registration #{registration.id}")
+
+      {:error, changeset} ->
+        Logger.error(
+          "Failed to rename device registration #{registration.id}: #{full_error_messages(changeset)}"
+        )
+    end
+
+    result
   end
 
   @spec get_device(binary | integer) :: Device.t() | nil
@@ -212,7 +260,7 @@ defmodule Cadet.Devices do
               },
               300,
               [],
-              ''
+              ""
             )
 
           # ExAws includes the session token in the signed payload and doesn't allow
