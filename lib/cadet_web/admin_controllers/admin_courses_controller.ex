@@ -112,6 +112,14 @@ defmodule CadetWeb.AdminCoursesController do
       top_contest_leaderboard_display(:body, :integer, "Top Contest Leaderboard Display")
       enable_sourcecast(:body, :boolean, "Enable sourcecast")
       enable_stories(:body, :boolean, "Enable stories")
+      enable_exam_mode(:body, :boolean, "Enable exam mode")
+
+      resume_code(
+        :body,
+        :string,
+        "Resume code that students that attempt to open developer tools will be prompted to enter"
+      )
+
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
       module_help_text(:body, :string, "Module help text")
     end

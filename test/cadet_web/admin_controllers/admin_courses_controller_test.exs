@@ -68,6 +68,7 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         "enableGame" => false,
         "enableStories" => false,
         "enableAchievements" => false,
+        "resumeCode" => "spanning_tree",
         "enableSourcecast" => true,
         "moduleHelpText" => "help"
       }
@@ -135,6 +136,30 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         put(conn, build_url_course_config(course_id), %{
           "sourceChapter" => 4,
           "sourceVariant" => "wasm"
+        })
+
+      assert response(conn, 400) == "Invalid parameter(s)"
+    end
+
+    @tag authenticate: :admin
+    test "rejects requests with invalid resume code", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn =
+        put(conn, build_url_course_config(course_id), %{
+          "resumeCode" => ""
+        })
+
+      assert response(conn, 400) == "Invalid parameter(s)"
+    end
+
+    @tag authenticate: :admin
+    test "rejects requests with invalid resume code 2", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+
+      conn =
+        put(conn, build_url_course_config(course_id), %{
+          "resumeCode" => "           "
         })
 
       assert response(conn, 400) == "Invalid parameter(s)"
