@@ -1,4 +1,4 @@
-defmodule Cadet.Repo.Migrations.AddLLMGradingAccess do
+defmodule Cadet.Repo.Migrations.AddLlmGradingAccess do
   use Ecto.Migration
 
   def up do
