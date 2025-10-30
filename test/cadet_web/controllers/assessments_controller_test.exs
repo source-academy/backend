@@ -371,7 +371,6 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 "solutionTemplate" => &1.question.template,
                 "prepend" => &1.question.prepend,
                 "postpend" => &1.question.postpend,
-                "llm_prompt" => &1.question.llm_prompt,
                 "testcases" =>
                   Enum.map(
                     &1.question.public,

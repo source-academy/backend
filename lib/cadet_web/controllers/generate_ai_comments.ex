@@ -5,8 +5,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   require Logger
 
   alias Cadet.{Assessments, AIComments, Courses}
-  alias CadetWeb.AICodeAnalysisController
-  alias CadetWeb.AICommentsHelpers
+  alias CadetWeb.{AICodeAnalysisController, AICommentsHelpers}
 
   # For logging outputs to both database and file
   defp save_comment(answer_id, raw_prompt, answers_json, response, error \\ nil) do
@@ -150,8 +149,9 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   defp format_system_prompt(course_prompt, assessment_prompt, answer) do
-    (course_prompt || "") <>
-      "\n\n" <>
+    "**Course Level Prompt:**\n\n" <>
+      (course_prompt || "") <>
+      "\n\n**Assessment Level Prompt:**" <>
       (assessment_prompt || "") <>
       "\n\n" <>
       """
@@ -175,6 +175,22 @@ defmodule CadetWeb.AICodeAnalysisController do
       """
   end
 
+  def create_final_messages(
+        course_prompt,
+        assessment_prompt,
+        answer
+      ) do
+    formatted_answer =
+      answer
+      |> format_student_answer()
+      |> Jason.encode!()
+
+    [
+      %{role: "system", content: format_system_prompt(course_prompt, assessment_prompt, answer)},
+      %{role: "user", content: formatted_answer}
+    ]
+  end
+
   defp format_autograding_results(nil), do: "N/A"
 
   defp format_autograding_results(results) when is_list(results) do
@@ -196,50 +212,68 @@ defmodule CadetWeb.AICodeAnalysisController do
            assessment_prompt: assessment_prompt
          }
        ) do
-    formatted_answer =
-      answer
-      |> format_student_answer()
-      |> Jason.encode!()
-
-    system_prompt = format_system_prompt(course_prompt, assessment_prompt, answer)
     # Combine prompts if llm_prompt exists
+    final_messages =
+      create_final_messages(
+        course_prompt,
+        assessment_prompt,
+        answer
+      )
+
     input =
       [
         model: llm_model,
-        messages: [
-          %{role: "system", content: system_prompt},
-          %{role: "user", content: formatted_answer}
-        ]
+        messages: final_messages
       ]
 
     case OpenAI.chat_completion(input, %OpenAI.Config{
            api_url: llm_api_url,
            api_key: api_key,
-          http_options: [
-              timeout: 60_000,        # connect timeout
-              recv_timeout: 60_000     # response timeout
-          ]
+           http_options: [
+             # connect timeout
+             timeout: 60_000,
+             # response timeout
+             recv_timeout: 60_000
+           ]
          }) do
       {:ok, %{choices: [%{"message" => %{"content" => content}} | _]}} ->
-        save_comment(answer.id, system_prompt, formatted_answer, content)
+        save_comment(
+          answer.id,
+          Enum.at(final_messages, 0).content,
+          Enum.at(final_messages, 1).content,
+          content
+        )
+
         comments_list = String.split(content, "|||")
 
-            filtered_comments =
-              Enum.filter(comments_list, fn comment ->
-                String.trim(comment) != ""
-              end)
+        filtered_comments =
+          Enum.filter(comments_list, fn comment ->
+            String.trim(comment) != ""
+          end)
 
-            json(conn, %{"comments" => filtered_comments})
+        json(conn, %{"comments" => filtered_comments})
 
       {:ok, other} ->
-        save_comment(answer.id, system_prompt, formatted_answer, other, "Unexpected JSON shape")
+        save_comment(
+          answer.id,
+          Enum.at(final_messages, 0).content,
+          Enum.at(final_messages, 1).content,
+          other,
+          "Unexpected JSON shape"
+        )
 
         conn
         |> put_status(:bad_gateway)
         |> text("Unexpected response format from LLM")
 
       {:error, reason} ->
-        save_comment(answer.id, system_prompt, formatted_answer, nil, inspect(reason))
+        save_comment(
+          answer.id,
+          Enum.at(final_messages, 0).content,
+          Enum.at(final_messages, 1).content,
+          nil,
+          inspect(reason)
+        )
 
         conn
         |> put_status(:internal_server_error)

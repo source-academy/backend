@@ -25,7 +25,6 @@ defmodule Cadet.Assessments.Submission do
     belongs_to(:team, Team)
     belongs_to(:unsubmitted_by, CourseRegistration)
     has_many(:answers, Answer, on_delete: :delete_all)
-    has_many(:ai_comments, Cadet.AIComments.AIComment, on_delete: :delete_all)
 
     timestamps()
   end
