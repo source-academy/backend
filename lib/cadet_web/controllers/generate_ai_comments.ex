@@ -220,11 +220,23 @@ defmodule CadetWeb.AICodeAnalysisController do
       ]
 
     case OpenAI.chat_completion(input, %OpenAI.Config{
-           base_url: llm_api_url,
-           api_key: api_key
+           api_url: llm_api_url,
+           api_key: api_key,
+          http_options: [
+              timeout: 60_000,        # connect timeout
+              recv_timeout: 60_000     # response timeout
+          ]
          }) do
-      {:ok, %{"choices" => [%{"message" => %{"content" => content}} | _]}} ->
-        {:ok, content}
+      {:ok, %{choices: [%{"message" => %{"content" => content}} | _]}} ->
+        save_comment(answer.id, system_prompt, formatted_answer, content)
+        comments_list = String.split(content, "|||")
+
+            filtered_comments =
+              Enum.filter(comments_list, fn comment ->
+                String.trim(comment) != ""
+              end)
+
+            json(conn, %{"comments" => filtered_comments})
 
       {:ok, other} ->
         save_comment(answer.id, system_prompt, formatted_answer, other, "Unexpected JSON shape")
