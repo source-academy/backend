@@ -5,6 +5,8 @@ defmodule CadetWeb.AICodeAnalysisController do
   require Logger
 
   alias Cadet.{Assessments, AIComments, Courses}
+  alias CadetWeb.AICodeAnalysisController
+  alias CadetWeb.AICommentsHelpers
 
   # For logging outputs to both database and file
   defp save_comment(answer_id, raw_prompt, answers_json, response, error \\ nil) do
@@ -84,7 +86,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     with {answer_id_parsed, ""} <- Integer.parse(answer_id),
          {:ok, course} <- Courses.get_course_config(course_id),
          {:ok} <- ensure_llm_enabled(course),
-         {:ok, key} <- decrypt_llm_api_key(course.llm_api_key),
+         {:ok, key} <- AICommentsHelpers.decrypt_llm_api_key(course.llm_api_key),
          {:ok} <-
            check_llm_grading_parameters(
              key,
@@ -123,7 +125,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       {:decrypt_error, err} ->
         conn
         |> put_status(:internal_server_error)
-        |> text("Failed to decrypt LLM API key: #{inspect(err)}")
+        |> text("Failed to decrypt LLM API key")
 
       # Errors for check_llm_grading_parameters
       {:parameter_error, error_msg} ->
@@ -152,25 +154,25 @@ defmodule CadetWeb.AICodeAnalysisController do
       "\n\n" <>
       (assessment_prompt || "") <>
       "\n\n" <>
-      """
-      **Additional Instructions for this Question:**
-      #{answer.question.question["llm_prompt"] || "N/A"}
+"""
+**Additional Instructions for this Question:**
+#{answer.question.question["llm_prompt"] || "N/A"}
 
-      **Question:**
-      ```
-      #{answer.question.question["content"] || "N/A"}
-      ```
+**Question:**
+```
+#{answer.question.question["content"] || "N/A"}
+```
 
-      **Model Solution:**
-      ```
-      #{answer.question.question["solution"] || "N/A"}
-      ```
+**Model Solution:**
+```
+#{answer.question.question["solution"] || "N/A"}
+```
 
-      **Autograding Status:** #{answer.autograding_status || "N/A"}
-      **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
+**Autograding Status:** #{answer.autograding_status || "N/A"}
+**Autograding Results:** #{format_autograding_results(answer.autograding_results)}
 
-      The student answer will be given below as part of the User Prompt.
-      """
+The student answer will be given below as part of the User Prompt.
+"""
   end
 
   defp format_autograding_results(nil), do: "N/A"
@@ -365,35 +367,5 @@ defmodule CadetWeb.AICodeAnalysisController do
     }
   end
 
-  defp decrypt_llm_api_key(nil), do: nil
 
-  defp decrypt_llm_api_key(encrypted_key) do
-    case Application.get_env(:openai, :encryption_key) do
-      secret when is_binary(secret) and byte_size(secret) >= 16 ->
-        key = binary_part(secret, 0, min(32, byte_size(secret)))
-
-        case Base.decode64(encrypted_key) do
-          {:ok, decoded} ->
-            iv = binary_part(decoded, 0, 16)
-            tag = binary_part(decoded, 16, 16)
-            ciphertext = binary_part(decoded, 32, byte_size(decoded) - 32)
-
-            case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
-              plain_text when is_binary(plain_text) -> {:ok, plain_text}
-              _ -> {:decrypt_error, :decryption_failed}
-            end
-
-          _ ->
-            Logger.error(
-              "Failed to decode encrypted key, is it a valid AES-256 key of 16, 24 or 32 bytes?"
-            )
-
-            {:decrypt_error, :decryption_failed}
-        end
-
-      _ ->
-        Logger.error("Encryption key not configured")
-        {:decrypt_error, :invalid_encryption_key}
-    end
-  end
 end

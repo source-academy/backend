@@ -11,7 +11,6 @@ defmodule Cadet.AIComments.AIComment do
     field(:answers_json, :string)
     field(:response, :string)
     field(:error, :string)
-    field(:comment_chosen, {:array, :string})
     field(:final_comment, :string)
 
     belongs_to(:answer, Cadet.Assessments.Answer)
@@ -27,7 +26,6 @@ defmodule Cadet.AIComments.AIComment do
       :answers_json,
       :response,
       :error,
-      :comment_chosen,
       :final_comment
     ])
     |> validate_required([:answer_id, :raw_prompt, :answers_json])

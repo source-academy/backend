@@ -5,6 +5,7 @@ defmodule Cadet.Courses.Course do
   use Cadet, :model
 
   alias Cadet.Courses.AssessmentConfig
+  alias Cadet.AICommentsHelpers
 
   @type t :: %__MODULE__{
           course_name: String.t(),
@@ -70,36 +71,10 @@ defmodule Cadet.Courses.Course do
     |> put_encrypted_llm_api_key()
   end
 
-  def encrypt_llm_api_key(llm_api_key) do
-    secret = Application.get_env(:openai, :encryption_key)
-
-    if is_binary(secret) and byte_size(secret) >= 16 do
-      # Use first 16 bytes for AES-128, 24 for AES-192, or 32 for AES-256
-      key = binary_part(secret, 0, min(32, byte_size(secret)))
-      # Use AES in GCM mode for encryption
-      iv = :crypto.strong_rand_bytes(16)
-
-      {ciphertext, tag} =
-        :crypto.crypto_one_time_aead(
-          :aes_gcm,
-          key,
-          iv,
-          llm_api_key,
-          "",
-          true
-        )
-
-      # Store both the IV, ciphertext and tag
-      encrypted = Base.encode64(iv <> tag <> ciphertext)
-    else
-      {:error, :invalid_encryption_key}
-    end
-  end
-
   def put_encrypted_llm_api_key(changeset) do
     if llm_api_key = get_change(changeset, :llm_api_key) do
       if is_binary(llm_api_key) and llm_api_key != "" do
-        encrypted = encrypt_llm_api_key(llm_api_key)
+        encrypted = AICommentsHelpers.encrypt_llm_api_key(llm_api_key)
 
         case encrypted do
           {:error, :invalid_encryption_key} ->
