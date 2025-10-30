@@ -152,7 +152,7 @@ defmodule CadetWeb.AdminGradingView do
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
       id: &(&1.id),
-      ai_comments: &extract_ai_comments_per_answer(&1.question_id, &1.ai_comments),
+      ai_comments: &extract_ai_comments_per_answer(&1.id, &1.ai_comments),
       student: &extract_student_data(&1.submission.student),
       team: &extract_team_data(&1.submission.team),
       question: &build_grading_question/1,
@@ -165,11 +165,11 @@ defmodule CadetWeb.AdminGradingView do
     %{cols: cols, rows: summary}
   end
 
-  defp extract_ai_comments_per_answer(question_id, ai_comments) do
+  defp extract_ai_comments_per_answer(id, ai_comments) do
     matching_comment =
       ai_comments
       # Equivalent to fn comment -> comment.question_id == question_id end
-      |> Enum.find(&(&1.question_id == question_id))
+      |> Enum.find(&(&1.answer_id == id))
 
     case matching_comment do
       nil -> nil

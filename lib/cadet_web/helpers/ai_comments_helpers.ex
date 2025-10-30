@@ -12,14 +12,17 @@ defmodule CadetWeb.AICommentsHelpers do
 
         case Base.decode64(encrypted_key) do
           {:ok, decoded} ->
-            iv = binary_part(decoded, 0, 16)
-            tag = binary_part(decoded, 16, 16)
-            ciphertext = binary_part(decoded, 32, byte_size(decoded) - 32)
 
-            case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
-              plain_text when is_binary(plain_text) -> {:ok, plain_text}
-              _ -> {:decrypt_error, :decryption_failed}
+            with [iv, tag, ciphertext] <- :binary.split(decoded, <<"|">>, [:global]) do
+              case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
+                plain_text when is_binary(plain_text) -> {:ok, plain_text}
+                _ -> {:decrypt_error, :decryption_failed}
+              end
+            else
+              _ -> {:error, :invalid_format}
             end
+
+
 
           _ ->
             Logger.error(
@@ -55,7 +58,7 @@ defmodule CadetWeb.AICommentsHelpers do
         )
 
       # Store both the IV, ciphertext and tag
-      encrypted = Base.encode64(iv <> tag <> ciphertext)
+      encrypted = Base.encode64(iv <> "|" <> tag <> "|" <> ciphertext)
     else
       {:error, :invalid_encryption_key}
     end

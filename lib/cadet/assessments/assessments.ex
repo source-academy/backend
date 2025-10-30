@@ -3135,7 +3135,6 @@ end
           question = Map.put(ans.question, :question, empty_contest_leaderboard)
           Map.put(ans, :question, question)
         else
-
           ans
         end
       end)

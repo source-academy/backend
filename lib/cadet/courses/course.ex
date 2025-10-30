@@ -5,7 +5,7 @@ defmodule Cadet.Courses.Course do
   use Cadet, :model
 
   alias Cadet.Courses.AssessmentConfig
-  alias Cadet.AICommentsHelpers
+  alias CadetWeb.AICommentsHelpers
 
   @type t :: %__MODULE__{
           course_name: String.t(),
