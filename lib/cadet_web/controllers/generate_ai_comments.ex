@@ -258,7 +258,7 @@ defmodule CadetWeb.AICodeAnalysisController do
           answer.id,
           Enum.at(final_messages, 0).content,
           Enum.at(final_messages, 1).content,
-          other,
+          Jason.encode!(other),
           "Unexpected JSON shape"
         )
 

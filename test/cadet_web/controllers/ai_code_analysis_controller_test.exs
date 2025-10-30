@@ -4,12 +4,13 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
   use CadetWeb.ConnCase
   alias Cadet.{Repo, AIComments}
   alias Cadet.{AIComments.AIComment, Courses.Course}
+  alias CadetWeb.AICommentsHelpers
 
   setup do
     course_with_llm =
       insert(:course, %{
         enable_llm_grading: true,
-        llm_api_key: Course.encrypt_llm_api_key("test_key"),
+        llm_api_key: AICommentsHelpers.encrypt_llm_api_key("test_key"),
         llm_model: "gpt-5-mini",
         llm_api_url: "http://testapi.com",
         llm_course_level_prompt: "Example Prompt"
@@ -34,7 +35,7 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
      }}
   end
 
-  describe "GET /v2/courses/:course_id/admin/generate-comments/:submissionid/:questionid" do
+  describe "GET /v2/courses/:course_id/admin/generate-comments/:answer_id" do
     test "success with happy path, admin and staff", %{
       conn: conn,
       admin_user: admin_user,
@@ -46,42 +47,24 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       answer: answer
     } do
       # Make the API call
-      with_mock HTTPoison, [:passthrough],
-        post: fn _url, _body, _headers, _opts ->
-          {:ok,
-           %HTTPoison.Response{
-             status_code: 200,
-             body:
-               Jason.encode!(%{
-                 "choices" => [%{"message" => %{"content" => "Comment1|||Comment2"}}]
-               })
-           }}
+      with_mock OpenAI,
+        chat_completion: fn _input, _overrides ->
+          {:ok, %{:choices => [%{"message" => %{"content" => "Comment1|||Comment2"}}]}}
         end do
         conn
         |> sign_in(staff_user.user)
-        |> post(
-          build_url_generate_ai_comments(course_with_llm.id, new_submission.id, question.id)
-        )
+        |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
         |> json_response(200)
       end
 
-      with_mock HTTPoison, [:passthrough],
-        post: fn _url, _body, _headers, _opts ->
-          {:ok,
-           %HTTPoison.Response{
-             status_code: 200,
-             body:
-               Jason.encode!(%{
-                 "choices" => [%{"message" => %{"content" => "Comment1|||Comment2"}}]
-               })
-           }}
+      with_mock OpenAI,
+        chat_completion: fn _input, _overrides ->
+          {:ok, %{:choices => [%{"message" => %{"content" => "Comment1|||Comment2"}}]}}
         end do
         response =
           conn
           |> sign_in(admin_user.user)
-          |> post(
-            build_url_generate_ai_comments(course_with_llm.id, new_submission.id, question.id)
-          )
+          |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
           |> json_response(200)
 
         # Verify response
@@ -92,13 +75,12 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       comments = Repo.all(AIComment)
       assert length(comments) > 0
       latest_comment = List.first(comments)
-      assert latest_comment.submission_id == new_submission.id
-      assert latest_comment.question_id == question.id
+      assert latest_comment.answer_id == answer.id
       assert latest_comment.raw_prompt != nil
       assert latest_comment.answers_json != nil
     end
 
-    test "errors out when given an invalid submission", %{
+    test "errors out when given an invalid answer id", %{
       conn: conn,
       admin_user: admin_user,
       staff_user: staff_user,
@@ -108,26 +90,17 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       question: question,
       answer: answer
     } do
-      random_submission_id = 123
+      random_answer_id = 324_324
 
       # Make the API call that should fail
-      with_mock HTTPoison, [:passthrough],
-        post: fn _url, _body, _headers, _opts ->
-          {:ok,
-           %HTTPoison.Response{
-             status_code: 200,
-             body:
-               Jason.encode!(%{
-                 "choices" => [%{"message" => %{"content" => "Comment1|||Comment2"}}]
-               })
-           }}
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _input, _overrides ->
+          {:ok, %{:choices => [%{"message" => %{"content" => "Comment1|||Comment2"}}]}}
         end do
         response =
           conn
           |> sign_in(admin_user.user)
-          |> post(
-            build_url_generate_ai_comments(course_with_llm.id, random_submission_id, question.id)
-          )
+          |> post(build_url_generate_ai_comments(course_with_llm.id, random_answer_id))
           |> text_response(400)
       end
     end
@@ -143,31 +116,28 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       answer: answer
     } do
       # Make the API call that should fail
-      with_mock HTTPoison, [:passthrough],
-        post: fn _url, _body, _headers, _opts ->
-          {:ok, %HTTPoison.Response{status_code: 200, body: "invalid response"}}
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _input, _overrides ->
+          {:ok, %{"body" => "Some unexpected response"}}
         end do
         response =
           conn
           |> sign_in(admin_user.user)
-          |> post(
-            build_url_generate_ai_comments(course_with_llm.id, new_submission.id, question.id)
-          )
-          |> text_response(500)
+          |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
+          |> text_response(502)
       end
 
       # Verify database entry even with error
       comments = Repo.all(AIComment)
       assert length(comments) > 0
       latest_comment = List.first(comments)
-      assert latest_comment.submission_id == new_submission.id
-      assert latest_comment.question_id == question.id
+      assert latest_comment.answer_id == answer.id
       assert latest_comment.raw_prompt != nil
       assert latest_comment.answers_json != nil
     end
   end
 
-  defp build_url_generate_ai_comments(course_id, submission_id, question_id) do
-    "/v2/courses/#{course_id}/admin/generate-comments/#{submission_id}/#{question_id}"
+  defp build_url_generate_ai_comments(course_id, answer_id) do
+    "/v2/courses/#{course_id}/admin/generate-comments/#{answer_id}"
   end
 end
