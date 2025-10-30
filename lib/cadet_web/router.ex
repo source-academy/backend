@@ -221,7 +221,7 @@ defmodule CadetWeb.Router do
     post("/grading/:submissionid/:questionid", AdminGradingController, :update)
 
     post(
-      "/generate-comments/:submissionid/:questionid",
+      "/generate-comments/:answer_id",
       AICodeAnalysisController,
       :generate_ai_comments
     )
@@ -233,7 +233,7 @@ defmodule CadetWeb.Router do
     )
 
     post(
-      "/save-final-comment/:submissionid/:questionid",
+      "/save-final-comment/:answer_id",
       AICodeAnalysisController,
       :save_final_comment
     )

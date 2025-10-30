@@ -3,8 +3,7 @@ defmodule Cadet.Repo.Migrations.CreateAiCommentLogs do
 
   def change do
     create table(:ai_comment_logs) do
-      add(:submission_id, references(:submissions, on_delete: :delete_all), null: false)
-      add(:question_id, references(:questions, on_delete: :delete_all), null: false)
+      add(:answer_id, references(:answers, on_delete: :delete_all), null: false)
       add(:raw_prompt, :text, null: false)
       add(:answers_json, :text, null: false)
       add(:response, :text)

@@ -14,8 +14,7 @@ defmodule Cadet.AIComments.AIComment do
     field(:comment_chosen, {:array, :string})
     field(:final_comment, :string)
 
-    belongs_to(:submission, Cadet.Assessments.Submission)
-    belongs_to(:question, Cadet.Assessments.Question)
+    belongs_to(:answer, Cadet.Assessments.Answer)
 
     timestamps()
   end
@@ -23,8 +22,7 @@ defmodule Cadet.AIComments.AIComment do
   def changeset(ai_comment, attrs) do
     ai_comment
     |> cast(attrs, [
-      :submission_id,
-      :question_id,
+      :answer_id,
       :raw_prompt,
       :answers_json,
       :response,
@@ -32,8 +30,7 @@ defmodule Cadet.AIComments.AIComment do
       :comment_chosen,
       :final_comment
     ])
-    |> validate_required([:submission_id, :question_id, :raw_prompt, :answers_json])
-    |> foreign_key_constraint(:submission_id)
-    |> foreign_key_constraint(:question_id)
+    |> validate_required([:answer_id, :raw_prompt, :answers_json])
+    |> foreign_key_constraint(:answer_id)
   end
 end

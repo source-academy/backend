@@ -7,19 +7,18 @@ defmodule CadetWeb.AICodeAnalysisController do
   alias Cadet.{Assessments, AIComments, Courses}
 
   # For logging outputs to both database and file
-  defp save_comment(submission_id, question_id, raw_prompt, answers_json, response, error \\ nil) do
+  defp save_comment(answer_id, raw_prompt, answers_json, response, error \\ nil) do
     # Log to database
     attrs = %{
-      submission_id: submission_id,
-      question_id: question_id,
+      answer_id: answer_id,
       raw_prompt: raw_prompt,
       answers_json: answers_json,
       response: response,
       error: error
     }
 
-    # Check if a comment already exists for the given submission_id and question_id
-    case AIComments.get_latest_ai_comment(submission_id, question_id) do
+    # Check if a comment already exists for the given answer_id
+    case AIComments.get_latest_ai_comment(answer_id) do
       nil ->
         # If no existing comment, create a new one
         case AIComments.create_ai_comment(attrs) do
@@ -75,15 +74,14 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   @doc """
-  Fetches the question details and answers based on submissionid and questionid and generates AI-generated comments.
+  Fetches the question details and answers based on answer_id and generates AI-generated comments.
   """
   def generate_ai_comments(conn, %{
-        "submissionid" => submission_id,
-        "questionid" => question_id,
+        "answer_id" => answer_id,
         "course_id" => course_id
       })
-      when is_ecto_id(submission_id) do
-    with {qid, ""} <- Integer.parse(question_id),
+      when is_ecto_id(answer_id) do
+    with {answer_id_parsed, ""} <- Integer.parse(answer_id),
          {:ok, course} <- Courses.get_course_config(course_id),
          {:ok} <- ensure_llm_enabled(course),
          {:ok, key} <- decrypt_llm_api_key(course.llm_api_key),
@@ -94,27 +92,25 @@ defmodule CadetWeb.AICodeAnalysisController do
              course.llm_api_url,
              course.llm_course_level_prompt
            ),
-         {:ok, {answers, _}} <- Assessments.get_answers_in_submission(submission_id, qid) do
+         {:ok, answer} <- Assessments.get_answer(answer_id_parsed) do
       # Get head of answers (should only be one answer for given submission
       # and question since we filter to only 1 question)
-      case answers do
-        [] ->
+      case answer do
+        nil ->
           conn
           |> put_status(:not_found)
-          |> text("No answer found for the given submission and question_id")
+          |> text("No answer found for the given answer_id")
 
         _ ->
           analyze_code(
             conn,
             %{
-              answer: hd(answers),
-              submission_id: submission_id,
-              question_id: qid,
+              answer: answer,
               api_key: key,
               llm_model: course.llm_model,
               llm_api_url: course.llm_api_url,
               course_prompt: course.llm_course_level_prompt,
-              assessment_prompt: Assessments.get_llm_assessment_prompt(qid)
+              assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id)
             }
           )
       end
@@ -140,20 +136,6 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> put_status(status)
         |> text(message)
     end
-  end
-
-  defp transform_answers(answers) do
-    Enum.map(answers, fn answer ->
-      %{
-        id: answer.id,
-        comments: answer.comments,
-        autograding_status: answer.autograding_status,
-        autograding_results: answer.autograding_results,
-        code: answer.answer["code"],
-        question_id: answer.question_id,
-        question_content: answer.question["content"]
-      }
-    end)
   end
 
   defp format_student_answer(answer) do
@@ -212,8 +194,6 @@ defmodule CadetWeb.AICodeAnalysisController do
          conn,
          %{
            answer: answer,
-           submission_id: submission_id,
-           question_id: question_id,
            api_key: api_key,
            llm_model: llm_model,
            llm_api_url: llm_api_url,
@@ -247,7 +227,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         case Jason.decode(body) do
           {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
-            save_comment(submission_id, question_id, system_prompt, formatted_answer, response)
+            save_comment(answer.id, system_prompt, formatted_answer, response)
             comments_list = String.split(response, "|||")
 
             filtered_comments =
@@ -259,8 +239,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
           {:ok, other} ->
             save_comment(
-              submission_id,
-              question_id,
+              answer.id,
               system_prompt,
               formatted_answer,
               Jason.encode!(other),
@@ -273,8 +252,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
           {:error, err} ->
             save_comment(
-              submission_id,
-              question_id,
+              answer.id,
               system_prompt,
               formatted_answer,
               nil,
@@ -288,8 +266,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
       {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
         save_comment(
-          submission_id,
-          question_id,
+          answer.id,
           system_prompt,
           formatted_answer,
           nil,
@@ -301,7 +278,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> text("API request failed with status #{status}: #{body}")
 
       {:error, %HTTPoison.Error{reason: reason}} ->
-        save_comment(submission_id, question_id, system_prompt, formatted_answer, nil, reason)
+        save_comment(answer.id, system_prompt, formatted_answer, nil, reason)
 
         conn
         |> put_status(:internal_server_error)
@@ -313,11 +290,10 @@ defmodule CadetWeb.AICodeAnalysisController do
   Saves the final comment chosen for a submission.
   """
   def save_final_comment(conn, %{
-        "submissionid" => submission_id,
-        "questionid" => question_id,
+        "answer_id" => answer_id,
         "comment" => comment
       }) do
-    case AIComments.update_final_comment(submission_id, question_id, comment) do
+    case AIComments.update_final_comment(answer_id, comment) do
       {:ok, _updated_comment} ->
         json(conn, %{"status" => "success"})
 
@@ -329,7 +305,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   swagger_path :generate_ai_comments do
-    post("/courses/{courseId}/admin/generate-comments/{submissionId}/{questionId}")
+    post("/courses/{course_id}/admin/generate-comments/{answer_id}")
 
     summary("Generate AI comments for a given submission.")
 
@@ -339,9 +315,8 @@ defmodule CadetWeb.AICodeAnalysisController do
     produces("application/json")
 
     parameters do
-      courseId(:path, :integer, "course id", required: true)
-      submissionId(:path, :integer, "submission id", required: true)
-      questionId(:path, :integer, "question id", required: true)
+      course_id(:path, :integer, "course id", required: true)
+      answer_id(:path, :integer, "answer id", required: true)
     end
 
     response(200, "OK", Schema.ref(:GenerateAIComments))
@@ -352,7 +327,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   swagger_path :save_final_comment do
-    post("/courses/{courseId}/admin/save-final-comment/{submissionId}/{questionId}")
+    post("/courses/{course_id}/admin/save-final-comment/{answer_id}")
 
     summary("Save the final comment chosen for a submission.")
 
@@ -362,8 +337,8 @@ defmodule CadetWeb.AICodeAnalysisController do
     produces("application/json")
 
     parameters do
-      submissionId(:path, :integer, "submission id", required: true)
-      questionId(:path, :integer, "question id", required: true)
+      course_id(:path, :integer, "course id", required: true)
+      answer_id(:path, :integer, "answer id", required: true)
       comment(:body, :string, "The final comment to save", required: true)
     end
 

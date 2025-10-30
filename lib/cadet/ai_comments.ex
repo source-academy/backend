@@ -27,25 +27,13 @@ defmodule Cadet.AIComments do
   end
 
   @doc """
-  Retrieves an AI comment for a specific submission and question.
-  Returns `nil` if no comment exists.
-  """
-  def get_ai_comments_for_submission(submission_id, question_id) do
-    Repo.one(
-      from(c in AIComment,
-        where: c.submission_id == ^submission_id and c.question_id == ^question_id
-      )
-    )
-  end
-
-  @doc """
   Retrieves the latest AI comment for a specific submission and question.
   Returns `nil` if no comment exists.
   """
-  def get_latest_ai_comment(submission_id, question_id) do
+  def get_latest_ai_comment(answer_id) do
     Repo.one(
       from(c in AIComment,
-        where: c.submission_id == ^submission_id and c.question_id == ^question_id,
+        where: c.answer_id == ^answer_id,
         order_by: [desc: c.inserted_at],
         limit: 1
       )
@@ -56,8 +44,8 @@ defmodule Cadet.AIComments do
   Updates the final comment for a specific submission and question.
   Returns the most recent comment entry for that submission/question.
   """
-  def update_final_comment(submission_id, question_id, final_comment) do
-    comment = get_latest_ai_comment(submission_id, question_id)
+  def update_final_comment(answer_id, final_comment) do
+    comment = get_latest_ai_comment(answer_id)
 
     case comment do
       nil ->
@@ -83,24 +71,6 @@ defmodule Cadet.AIComments do
       {:ok, comment} ->
         comment
         |> AIComment.changeset(attrs)
-        |> Repo.update()
-    end
-  end
-
-  @doc """
-  Updates the chosen comments for a specific submission and question.
-  Accepts an array of comments and replaces the existing array in the database.
-  """
-  def update_chosen_comments(submission_id, question_id, new_comments) do
-    comment = get_latest_ai_comment(submission_id, question_id)
-
-    case comment do
-      nil ->
-        {:error, :not_found}
-
-      _ ->
-        comment
-        |> AIComment.changeset(%{comment_chosen: new_comments})
         |> Repo.update()
     end
   end
