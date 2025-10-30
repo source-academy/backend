@@ -185,13 +185,6 @@ defmodule CadetWeb.AICodeAnalysisController do
 
   defp format_autograding_results(results), do: inspect(results)
 
-  def call_llm_endpoint(llm_api_url, input, headers) do
-    HTTPoison.post(llm_api_url, input, headers,
-      timeout: 60_000,
-      recv_timeout: 60_000
-    )
-  end
-
   defp analyze_code(
          conn,
          %{
