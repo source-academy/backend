@@ -102,5 +102,5 @@ config :cadet, Oban,
 config :cadet, Cadet.Mailer, adapter: Bamboo.TestAdapter
 
 config :openai,
-  # TODO: Input your own AES-256 encryption key here for encrypting LLM API keys
+  # Input your own AES-256 encryption key here for encrypting LLM API keys
   encryption_key: "b4u7g0AyN3Tu2br9WSdZQjLMQ8bed/wgQWrH2x3qPdW8D55iv10+ySgs+bxDirWE"
