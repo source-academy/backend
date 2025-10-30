@@ -13,8 +13,5 @@ defmodule Cadet.Repo.Migrations.CreateAiCommentLogs do
       add(:final_comment, :text)
       timestamps()
     end
-
-    create(index(:ai_comment_logs, [:submission_id]))
-    create(index(:ai_comment_logs, [:question_id]))
   end
 end
