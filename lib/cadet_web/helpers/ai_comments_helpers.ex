@@ -12,7 +12,6 @@ defmodule CadetWeb.AICommentsHelpers do
 
         case Base.decode64(encrypted_key) do
           {:ok, decoded} ->
-
             with [iv, tag, ciphertext] <- :binary.split(decoded, <<"|">>, [:global]) do
               case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
                 plain_text when is_binary(plain_text) -> {:ok, plain_text}
@@ -21,8 +20,6 @@ defmodule CadetWeb.AICommentsHelpers do
             else
               _ -> {:error, :invalid_format}
             end
-
-
 
           _ ->
             Logger.error(
@@ -63,5 +60,4 @@ defmodule CadetWeb.AICommentsHelpers do
       {:error, :invalid_encryption_key}
     end
   end
-
 end

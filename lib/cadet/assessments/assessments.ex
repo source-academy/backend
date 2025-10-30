@@ -3043,10 +3043,10 @@ defmodule Cadet.Assessments do
     }
   end
 
-@spec get_answer(integer() | String.t()) ::
-        {:ok, Answer.t()} | {:error, {:bad_request, String.t()}}
-def get_answer(id) when is_ecto_id(id) do
-  answer =
+  @spec get_answer(integer() | String.t()) ::
+          {:ok, Answer.t()} | {:error, {:bad_request, String.t()}}
+  def get_answer(id) when is_ecto_id(id) do
+    answer =
       Answer
       |> where(id: ^id)
       # [a] are bindings (in SQL it is similar to FROM answers "AS a"),
@@ -3076,8 +3076,6 @@ def get_answer(id) when is_ecto_id(id) do
     if is_nil(answer) do
       {:error, {:bad_request, "Answer not found."}}
     else
-
-
       if answer.question.type == :voting do
         empty_contest_entries = Map.put(answer.question.question, :contest_entries, [])
         empty_popular_leaderboard = Map.put(empty_contest_entries, :popular_leaderboard, [])
@@ -3088,10 +3086,7 @@ def get_answer(id) when is_ecto_id(id) do
 
       {:ok, answer}
     end
-
-
-
-end
+  end
 
   @spec get_answers_in_submission(integer() | String.t()) ::
           {:ok, {[Answer.t()], Assessment.t()}}

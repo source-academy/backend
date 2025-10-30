@@ -154,25 +154,25 @@ defmodule CadetWeb.AICodeAnalysisController do
       "\n\n" <>
       (assessment_prompt || "") <>
       "\n\n" <>
-"""
-**Additional Instructions for this Question:**
-#{answer.question.question["llm_prompt"] || "N/A"}
+      """
+      **Additional Instructions for this Question:**
+      #{answer.question.question["llm_prompt"] || "N/A"}
 
-**Question:**
-```
-#{answer.question.question["content"] || "N/A"}
-```
+      **Question:**
+      ```
+      #{answer.question.question["content"] || "N/A"}
+      ```
 
-**Model Solution:**
-```
-#{answer.question.question["solution"] || "N/A"}
-```
+      **Model Solution:**
+      ```
+      #{answer.question.question["solution"] || "N/A"}
+      ```
 
-**Autograding Status:** #{answer.autograding_status || "N/A"}
-**Autograding Results:** #{format_autograding_results(answer.autograding_results)}
+      **Autograding Status:** #{answer.autograding_status || "N/A"}
+      **Autograding Results:** #{format_autograding_results(answer.autograding_results)}
 
-The student answer will be given below as part of the User Prompt.
-"""
+      The student answer will be given below as part of the User Prompt.
+      """
   end
 
   defp format_autograding_results(nil), do: "N/A"
@@ -211,80 +211,34 @@ The student answer will be given below as part of the User Prompt.
     system_prompt = format_system_prompt(course_prompt, assessment_prompt, answer)
     # Combine prompts if llm_prompt exists
     input =
-      %{
+      [
         model: llm_model,
         messages: [
           %{role: "system", content: system_prompt},
           %{role: "user", content: formatted_answer}
         ]
-      }
-      |> Jason.encode!()
+      ]
 
-    headers = [
-      {"Authorization", "Bearer #{api_key}"},
-      {"Content-Type", "application/json"}
-    ]
+    case OpenAI.chat_completion(input, %OpenAI.Config{
+           base_url: llm_api_url,
+           api_key: api_key
+         }) do
+      {:ok, %{"choices" => [%{"message" => %{"content" => content}} | _]}} ->
+        {:ok, content}
 
-    case call_llm_endpoint(llm_api_url, input, headers) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        case Jason.decode(body) do
-          {:ok, %{"choices" => [%{"message" => %{"content" => response}}]}} ->
-            save_comment(answer.id, system_prompt, formatted_answer, response)
-            comments_list = String.split(response, "|||")
+      {:ok, other} ->
+        save_comment(answer.id, system_prompt, formatted_answer, other, "Unexpected JSON shape")
 
-            filtered_comments =
-              Enum.filter(comments_list, fn comment ->
-                String.trim(comment) != ""
-              end)
+        conn
+        |> put_status(:bad_gateway)
+        |> text("Unexpected response format from LLM")
 
-            json(conn, %{"comments" => filtered_comments})
-
-          {:ok, other} ->
-            save_comment(
-              answer.id,
-              system_prompt,
-              formatted_answer,
-              Jason.encode!(other),
-              "Unexpected JSON shape"
-            )
-
-            conn
-            |> put_status(:bad_gateway)
-            |> text("Unexpected response format from OpenAI API")
-
-          {:error, err} ->
-            save_comment(
-              answer.id,
-              system_prompt,
-              formatted_answer,
-              nil,
-              "Failed to parse response from OpenAI API"
-            )
-
-            conn
-            |> put_status(:internal_server_error)
-            |> text("Failed to parse response from OpenAI API")
-        end
-
-      {:ok, %HTTPoison.Response{status_code: status, body: body}} ->
-        save_comment(
-          answer.id,
-          system_prompt,
-          formatted_answer,
-          nil,
-          "API request failed with status #{status}"
-        )
+      {:error, reason} ->
+        save_comment(answer.id, system_prompt, formatted_answer, nil, inspect(reason))
 
         conn
         |> put_status(:internal_server_error)
-        |> text("API request failed with status #{status}: #{body}")
-
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        save_comment(answer.id, system_prompt, formatted_answer, nil, reason)
-
-        conn
-        |> put_status(:internal_server_error)
-        |> text("HTTP request error: #{inspect(reason)}")
+        |> text("LLM request error: #{inspect(reason)}")
     end
   end
 
@@ -366,6 +320,4 @@ The student answer will be given below as part of the User Prompt.
         end
     }
   end
-
-
 end

@@ -151,7 +151,7 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_info.json", %{answer: answer}) do
     transform_map_for_view(answer, %{
-      id: &(&1.id),
+      id: & &1.id,
       ai_comments: &extract_ai_comments_per_answer(&1.id, &1.ai_comments),
       student: &extract_student_data(&1.submission.student),
       team: &extract_team_data(&1.submission.team),
