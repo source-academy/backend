@@ -2,6 +2,7 @@ defmodule CadetWeb.AICommentsHelpers do
   @moduledoc """
   Helper functions for Managing LLM related logic
   """
+  require Logger
 
   def decrypt_llm_api_key(nil), do: nil
 

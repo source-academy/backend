@@ -96,25 +96,17 @@ defmodule CadetWeb.AICodeAnalysisController do
          {:ok, answer} <- Assessments.get_answer(answer_id_parsed) do
       # Get head of answers (should only be one answer for given submission
       # and question since we filter to only 1 question)
-      case answer do
-        nil ->
-          conn
-          |> put_status(:not_found)
-          |> text("No answer found for the given answer_id")
-
-        _ ->
-          analyze_code(
-            conn,
-            %{
-              answer: answer,
-              api_key: key,
-              llm_model: course.llm_model,
-              llm_api_url: course.llm_api_url,
-              course_prompt: course.llm_course_level_prompt,
-              assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id)
-            }
-          )
-      end
+      analyze_code(
+        conn,
+        %{
+          answer: answer,
+          api_key: key,
+          llm_model: course.llm_model,
+          llm_api_url: course.llm_api_url,
+          course_prompt: course.llm_course_level_prompt,
+          assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id)
+        }
+      )
     else
       :error ->
         conn
