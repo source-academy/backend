@@ -248,6 +248,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       conn = get(conn, build_url(course.id, submission.id))
 
       expected = %{
+        "enable_llm_grading" => false,
         "assessment" => %{
           "id" => assessment.id,
           "title" => assessment.title,
@@ -266,6 +267,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             &case &1.question.type do
               :programming ->
                 %{
+                  "id" => &1.id,
+                  "prompts" => [],
                   "question" => %{
                     "prepend" => &1.question.question.prepend,
                     "postpend" => &1.question.question.postpend,
@@ -314,6 +317,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
                     "autogradingResults" => &1.autograding_results
                   },
+                  "ai_comments" => nil,
                   "solution" => &1.question.question.solution,
                   "grade" => %{
                     "xp" => &1.xp,
@@ -335,6 +339,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
               :mcq ->
                 %{
+                  "id" => &1.id,
+                  "prompts" => [],
                   "question" => %{
                     "type" => "#{&1.question.type}",
                     "blocking" => &1.question.blocking,
@@ -363,6 +369,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
                     "autogradingResults" => &1.autograding_results
                   },
+                  "ai_comments" => nil,
                   "solution" => "",
                   "grade" => %{
                     "xp" => &1.xp,
@@ -384,6 +391,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
               :voting ->
                 %{
+                  "id" => &1.id,
+                  "prompts" => [],
                   "question" => %{
                     "prepend" => &1.question.question.prepend,
                     "solutionTemplate" => &1.question.question.template,
@@ -409,6 +418,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "scoreLeaderboard" => [],
                     "popularVoteLeaderboard" => []
                   },
+                  "ai_comments" => nil,
                   "grade" => %{
                     "xp" => &1.xp,
                     "xpAdjustment" => &1.xp_adjustment,
@@ -1269,6 +1279,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       conn = get(conn, build_url(course.id, submission.id))
 
       expected = %{
+        "enable_llm_grading" => false,
         "assessment" => %{
           "id" => assessment.id,
           "title" => assessment.title,
@@ -1287,6 +1298,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
             &case &1.question.type do
               :programming ->
                 %{
+                  "id" => &1.id,
+                  "prompts" => [],
                   "question" => %{
                     "prepend" => &1.question.question.prepend,
                     "postpend" => &1.question.question.postpend,
@@ -1335,6 +1348,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
                     "autogradingResults" => &1.autograding_results
                   },
+                  "ai_comments" => nil,
                   "solution" => &1.question.question.solution,
                   "grade" => %{
                     "xp" => &1.xp,
@@ -1356,6 +1370,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
               :mcq ->
                 %{
+                  "id" => &1.id,
+                  "prompts" => [],
                   "question" => %{
                     "type" => "#{&1.question.type}",
                     "blocking" => &1.question.blocking,
@@ -1384,6 +1400,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
                     "autogradingResults" => &1.autograding_results
                   },
+                  "ai_comments" => nil,
                   "solution" => "",
                   "grade" => %{
                     "xp" => &1.xp,
@@ -1405,6 +1422,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
               :voting ->
                 %{
+                  "id" => &1.id,
+                  "prompts" => [],
                   "question" => %{
                     "prepend" => &1.question.question.prepend,
                     "solutionTemplate" => &1.question.question.template,
@@ -1430,6 +1449,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                     "scoreLeaderboard" => [],
                     "popularVoteLeaderboard" => []
                   },
+                  "ai_comments" => nil,
                   "grade" => %{
                     "xp" => &1.xp,
                     "xpAdjustment" => &1.xp_adjustment,
