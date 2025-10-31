@@ -10,25 +10,24 @@ defmodule CadetWeb.AICommentsHelpers do
       secret when is_binary(secret) and byte_size(secret) >= 16 ->
         key = binary_part(secret, 0, min(32, byte_size(secret)))
 
-        case Base.decode64(encrypted_key) do
-          {:ok, decoded} ->
-            case :binary.split(decoded, <<"|">>, [:global]) do
-              [iv, tag, ciphertext] ->
-                case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
-                  plain_text when is_binary(plain_text) -> {:ok, plain_text}
-                  _ -> {:decrypt_error, :decryption_failed}
-                end
-
+        case String.split(encrypted_key, ":", parts: 3, trim: false) do
+          [iv_b64, tag_b64, cipher_b64] ->
+            with {:ok, iv} <- Base.decode64(iv_b64),
+                 {:ok, tag} <- Base.decode64(tag_b64),
+                 {:ok, ciphertext} <- Base.decode64(cipher_b64) do
+              case :crypto.crypto_one_time_aead(:aes_gcm, key, iv, ciphertext, "", tag, false) do
+                plain_text when is_binary(plain_text) -> {:ok, plain_text}
+                _ -> {:decrypt_error, :decryption_failed}
+              end
+            else
               _ ->
-                {:error, :invalid_format}
+                Logger.error("Failed to decode one of the components of the encrypted key")
+                {:decrypt_error, :invalid_format}
             end
 
           _ ->
-            Logger.error(
-              "Failed to decode encrypted key, is it a valid AES-256 key of 16, 24 or 32 bytes?"
-            )
-
-            {:decrypt_error, :decryption_failed}
+            Logger.error("Encrypted key format is invalid")
+            {:decrypt_error, :invalid_format}
         end
 
       _ ->
@@ -57,7 +56,8 @@ defmodule CadetWeb.AICommentsHelpers do
         )
 
       # Store both the IV, ciphertext and tag
-      encrypted = Base.encode64(iv <> "|" <> tag <> "|" <> ciphertext)
+      encrypted =
+        Base.encode64(iv) <> ":" <> Base.encode64(tag) <> ":" <> Base.encode64(ciphertext)
     else
       {:error, :invalid_encryption_key}
     end
