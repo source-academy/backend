@@ -133,8 +133,8 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   defp process_questions(xml) do
-    default_library = xpath(xml, ~x"//TASK/DEPLOYMENT"e)
-    default_grading_library = xpath(xml, ~x"//TASK/GRADERDEPLOYMENT"e)
+    default_library = xpath(xml, ~x"//TASK/PROGRAMMINGLANGUAGE"e)
+    default_grading_library = xpath(xml, ~x"//TASK/GRADERPROGRAMMINGLANGUAGE"e)
 
     questions_params =
       xml
@@ -278,22 +278,23 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec process_question_library(map(), any(), any()) :: map() | {:error, String.t()}
   defp process_question_library(question, default_library, default_grading_library) do
-    library = xpath(question[:entity], ~x"./DEPLOYMENT"o) || default_library
+    library = xpath(question[:entity], ~x"./PROGRAMMINGLANGUAGE"o) || default_library
 
     grading_library =
-      xpath(question[:entity], ~x"./GRADERDEPLOYMENT"o) || default_grading_library || library
+      xpath(question[:entity], ~x"./GRADERPROGRAMMINGLANGUAGE"o) || default_grading_library ||
+        library
 
     if library do
       question
-      |> Map.put(:library, process_question_library(library))
-      |> Map.put(:grading_library, process_question_library(grading_library))
+      |> Map.put(:library, parse_programming_language(library))
+      |> Map.put(:grading_library, parse_programming_language(grading_library))
     else
-      {:error, "Missing DEPLOYMENT"}
+      {:error, "Missing PROGRAMMINGLANGUAGE"}
     end
   end
 
-  @spec process_question_library(any()) :: map()
-  defp process_question_library(library_entity) do
+  @spec parse_programming_language(any()) :: map()
+  defp parse_programming_language(library_entity) do
     globals =
       library_entity
       |> xpath(
@@ -313,6 +314,13 @@ defmodule Cadet.Updater.XMLParser do
         symbols: ~x"./SYMBOL/text()"sl
       )
 
+    options_list =
+      library_entity
+      |> xpath(~x"./OPTION"el, key: ~x"./@key"s, value: ~x"./@value"s)
+
+    options_map =
+      options_list |> Map.new(&{&1.key, &1.value})
+
     library_entity
     |> xpath(
       ~x"."e,
@@ -322,6 +330,7 @@ defmodule Cadet.Updater.XMLParser do
     )
     |> Map.put(:globals, globals)
     |> Map.put(:external, external)
+    |> Map.put(:language_options, options_map)
   end
 
   @spec process_charlist(charlist() | nil) :: String.t() | nil

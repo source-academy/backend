@@ -306,6 +306,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         "symbols" => &1.question.library.external.symbols
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
+                      "languageOptions" => %{},
                       "variant" => &1.question.library.variant
                     },
                     "maxXp" => &1.question.max_xp,
@@ -347,6 +348,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         "symbols" => &1.question.library.external.symbols
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
+                      "languageOptions" => %{},
                       "variant" => &1.question.library.variant
                     },
                     "maxXp" => &1.question.max_xp,
@@ -398,6 +400,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         "symbols" => &1.question.library.external.symbols
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
+                      "languageOptions" => %{},
                       "variant" => &1.question.library.variant
                     },
                     "maxXp" => &1.question.max_xp,
@@ -1327,6 +1330,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         "symbols" => &1.question.library.external.symbols
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
+                      "languageOptions" => %{},
                       "variant" => &1.question.library.variant
                     },
                     "maxXp" => &1.question.max_xp,
@@ -1368,6 +1372,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         "symbols" => &1.question.library.external.symbols
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
+                      "languageOptions" => %{},
                       "variant" => &1.question.library.variant
                     },
                     "content" => &1.question.question.content,
@@ -1419,6 +1424,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
                         "symbols" => &1.question.library.external.symbols
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
+                      "languageOptions" => %{},
                       "variant" => &1.question.library.variant
                     },
                     "maxXp" => &1.question.max_xp,
