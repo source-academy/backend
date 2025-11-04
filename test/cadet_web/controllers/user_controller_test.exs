@@ -90,7 +90,8 @@ defmodule CadetWeb.UserControllerTest do
               "viewable" => true,
               "role" => "#{another_cr.role}"
             }
-          ]
+          ],
+          "isPaused" => false
         },
         "courseRegistration" => %{
           "courseRegId" => cr.id,
@@ -114,6 +115,8 @@ defmodule CadetWeb.UserControllerTest do
           "sourceChapter" => 1,
           "sourceVariant" => "default",
           "viewable" => true,
+          "enableExamMode" => false,
+          "isOfficialCourse" => true,
           "enableContestLeaderboard" => true,
           "enableOverallLeaderboard" => true,
           "topLeaderboardDisplay" => 100,
@@ -176,7 +179,8 @@ defmodule CadetWeb.UserControllerTest do
         "user" => %{
           "userId" => user.id,
           "name" => user.name,
-          "courses" => []
+          "courses" => [],
+          "isPaused" => false
         },
         "courseRegistration" => nil,
         "courseConfiguration" => nil,
@@ -332,6 +336,8 @@ defmodule CadetWeb.UserControllerTest do
           "sourceChapter" => 1,
           "sourceVariant" => "default",
           "viewable" => true,
+          "enableExamMode" => false,
+          "isOfficialCourse" => true,
           "enableContestLeaderboard" => true,
           "enableOverallLeaderboard" => true,
           "topLeaderboardDisplay" => 100,
