@@ -19,7 +19,10 @@ defmodule Cadet.Test.XMLGenerator do
       ) do
     assessment_wide_library =
       if opts[:library] do
-        process_library(opts[:library], using: &deployment/2, no_deployment: opts[:no_deployment])
+        process_library(opts[:library],
+          using: &programminglanguage/2,
+          no_deployment: opts[:no_programminglanguage]
+        )
       else
         []
       end
@@ -28,8 +31,8 @@ defmodule Cadet.Test.XMLGenerator do
       if opts[:grading_library] do
         process_library(
           opts[:grading_library],
-          using: &graderdeployment/2,
-          no_deployment: opts[:no_deployment]
+          using: &graderprogramminglanguage/2,
+          no_deployment: opts[:no_programminglanguage]
         )
       else
         []
@@ -63,13 +66,13 @@ defmodule Cadet.Test.XMLGenerator do
                     process_question_by_question_type(question) ++
                     process_library(
                       question.library,
-                      using: &deployment/2,
-                      no_deployment: opts[:no_deployment]
+                      using: &programminglanguage/2,
+                      no_deployment: opts[:no_programminglanguage]
                     ) ++
                     process_library(
                       question.grading_library,
-                      using: &graderdeployment/2,
-                      no_deployment: opts[:no_deployment]
+                      using: &graderprogramminglanguage/2,
+                      no_deployment: opts[:no_programminglanguage]
                     )
                 )
               end
@@ -171,12 +174,12 @@ defmodule Cadet.Test.XMLGenerator do
     {"VOTING", map_permit_keys(raw_attr, ~w(assessment_number reveal_hours token_divider)a)}
   end
 
-  defp deployment(raw_attrs, children) do
-    {"DEPLOYMENT", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+  defp programminglanguage(raw_attrs, children) do
+    {"PROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
   end
 
-  defp graderdeployment(raw_attrs, children) do
-    {"GRADERDEPLOYMENT", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+  defp graderprogramminglanguage(raw_attrs, children) do
+    {"GRADERPROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
   end
 
   defp external(raw_attrs, children) do
