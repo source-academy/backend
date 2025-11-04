@@ -319,9 +319,7 @@ defmodule Cadet.Updater.XMLParser do
       |> xpath(~x"./OPTION"el, key: ~x"./@key"s, value: ~x"./@value"s)
 
     options_map =
-      Enum.reduce(options_list, %{}, fn %{key: k, value: v}, acc ->
-        Map.put(acc, k, v)
-      end)
+      options_list |> Map.new(&{&1.key, &1.value})
 
     library_entity
     |> xpath(
