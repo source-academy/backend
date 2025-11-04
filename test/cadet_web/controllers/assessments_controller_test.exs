@@ -1974,7 +1974,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
     @tag authenticate: :student
     test "pagination with offset and limit", %{conn: conn} do
       user = conn.assigns[:current_user]
-      test_cr = insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
       conn = assign(conn, :test_cr, test_cr)
       course = test_cr.course
       config = insert(:assessment_config, %{course: course})
@@ -2025,29 +2028,37 @@ defmodule CadetWeb.AssessmentsControllerTest do
     @tag authenticate: :student
     test "retrieves all contests for a course", %{conn: conn} do
       user = conn.assigns[:current_user]
-      test_cr = insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
       conn = assign(conn, :test_cr, test_cr)
       course = test_cr.course
       config = insert(:assessment_config, %{type: "Contests", course: course})
 
-      contest_1 = insert(:assessment, %{
-        course: course,
-        config: config,
-        is_published: true,
-        title: "Contest 1"
-      })
-      contest_2 = insert(:assessment, %{
-        course: course,
-        config: config,
-        is_published: false,
-        title: "Contest 2"
-      })
+      contest_1 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: true,
+          title: "Contest 1"
+        })
+
+      contest_2 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: false,
+          title: "Contest 2"
+        })
 
       voting_assessment = insert(:assessment, %{course: course})
+
       insert(:voting_question, %{
         assessment: voting_assessment,
         question: build(:voting_question_content, contest_number: contest_1.number)
       })
+
       insert(:voting_question, %{
         assessment: voting_assessment,
         question: build(:voting_question_content, contest_number: contest_2.number)
@@ -2066,7 +2077,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
     @tag authenticate: :student
     test "returns empty list when no contests exist", %{conn: conn} do
       user = conn.assigns[:current_user]
-      test_cr = insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
       conn = assign(conn, :test_cr, test_cr)
       course = test_cr.course
 
@@ -2083,7 +2097,10 @@ defmodule CadetWeb.AssessmentsControllerTest do
     @tag authenticate: :student
     test "uses visible_entries parameter when provided", %{conn: conn} do
       user = conn.assigns[:current_user]
-      test_cr = insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
       conn = assign(conn, :test_cr, test_cr)
       course = test_cr.course
 

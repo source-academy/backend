@@ -3372,18 +3372,20 @@ defmodule Cadet.AssessmentsTest do
     test "correctly fetches voting assessment id when contest exists" do
       course = insert(:course)
       config = insert(:assessment_config)
-      
+
       contest_assessment = insert(:assessment, %{course: course, config: config})
       voting_assessment = insert(:assessment, %{course: course, config: config})
-      
+
       contest_question = insert(:programming_question, assessment: contest_assessment)
-      voting_question = insert(:voting_question, %{
-        assessment: voting_assessment,
-        question: build(:voting_question_content, contest_number: contest_assessment.number)
-      })
-      
+
+      voting_question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+
       result = Assessments.fetch_contest_voting_assesment_id(voting_assessment.id)
-      
+
       assert result == contest_assessment.id
     end
 
@@ -3396,16 +3398,16 @@ defmodule Cadet.AssessmentsTest do
     test "returns nil when no contest number matches" do
       course = insert(:course)
       config = insert(:assessment_config)
-      
+
       voting_assessment = insert(:assessment, %{course: course, config: config})
-      
+
       insert(:voting_question, %{
         assessment: voting_assessment,
         question: build(:voting_question_content, contest_number: "non_existent_number")
       })
-      
+
       result = Assessments.fetch_contest_voting_assesment_id(voting_assessment.id)
-      
+
       assert is_nil(result)
     end
   end
@@ -3414,36 +3416,44 @@ defmodule Cadet.AssessmentsTest do
     test "fetches all contests for a course" do
       course = insert(:course)
       config = insert(:assessment_config, %{type: "Contests"})
-      
-      contest_assessment_1 = insert(:assessment, %{
-        course: course,
-        config: config,
-        is_published: true,
-        title: "Contest 1"
-      })
-      contest_assessment_2 = insert(:assessment, %{
-        course: course,
-        config: config,
-        is_published: false,
-        title: "Contest 2"
-      })
-      
+
+      contest_assessment_1 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: true,
+          title: "Contest 1"
+        })
+
+      contest_assessment_2 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: false,
+          title: "Contest 2"
+        })
+
       voting_assessment = insert(:assessment, %{course: course})
-      
+
       insert(:voting_question, %{
         assessment: voting_assessment,
         question: build(:voting_question_content, contest_number: contest_assessment_1.number)
       })
+
       insert(:voting_question, %{
         assessment: voting_assessment,
         question: build(:voting_question_content, contest_number: contest_assessment_2.number)
       })
-      
+
       result = Assessments.fetch_all_contests(course.id)
-      
+
       assert length(result) == 2
-      assert Enum.find(result, fn c -> c.contest_id == contest_assessment_1.id end).published == true
-      assert Enum.find(result, fn c -> c.contest_id == contest_assessment_2.id end).published == false
+
+      assert Enum.find(result, fn c -> c.contest_id == contest_assessment_1.id end).published ==
+               true
+
+      assert Enum.find(result, fn c -> c.contest_id == contest_assessment_2.id end).published ==
+               false
     end
 
     test "returns empty list when no voting questions exist" do
@@ -3455,22 +3465,23 @@ defmodule Cadet.AssessmentsTest do
     test "excludes contests that are not of type Contests" do
       course = insert(:course)
       non_contest_config = insert(:assessment_config, %{type: "Mission"})
-      
-      non_contest_assessment = insert(:assessment, %{
-        course: course,
-        config: non_contest_config,
-        is_published: true
-      })
-      
+
+      non_contest_assessment =
+        insert(:assessment, %{
+          course: course,
+          config: non_contest_config,
+          is_published: true
+        })
+
       voting_assessment = insert(:assessment, %{course: course})
-      
+
       insert(:voting_question, %{
         assessment: voting_assessment,
         question: build(:voting_question_content, contest_number: non_contest_assessment.number)
       })
-      
+
       result = Assessments.fetch_all_contests(course.id)
-      
+
       assert result == []
     end
   end
@@ -3515,7 +3526,7 @@ defmodule Cadet.AssessmentsTest do
         )
 
       top_2 = Assessments.fetch_top_relative_score_answers(contest_question.id, 2)
-      
+
       assert length(top_2) == 2
       assert Enum.all?(top_2, fn ans -> ans.rank <= 2 end)
       assert Enum.map(top_2, fn ans -> ans.relative_score end) == [10.0, 9.0]
@@ -3551,12 +3562,14 @@ defmodule Cadet.AssessmentsTest do
         question: contest_question,
         relative_score: 10.0
       })
+
       insert(:answer, %{
         answer: build(:programming_answer),
         submission: Enum.at(submission_list, 1),
         question: contest_question,
         relative_score: 10.0
       })
+
       insert(:answer, %{
         answer: build(:programming_answer),
         submission: Enum.at(submission_list, 2),
@@ -3565,7 +3578,7 @@ defmodule Cadet.AssessmentsTest do
       })
 
       top_2 = Assessments.fetch_top_relative_score_answers(contest_question.id, 2)
-      
+
       assert length(top_2) == 2
       assert Enum.count(top_2, fn ans -> ans.rank == 1 end) == 2
     end
@@ -3610,7 +3623,7 @@ defmodule Cadet.AssessmentsTest do
         )
 
       top_3 = Assessments.fetch_top_popular_score_answers(contest_question.id, 3)
-      
+
       assert length(top_3) == 3
       assert Enum.all?(top_3, fn ans -> ans.rank <= 3 end)
       assert Enum.map(top_3, fn ans -> ans.popular_score end) == [20.0, 19.0, 18.0]

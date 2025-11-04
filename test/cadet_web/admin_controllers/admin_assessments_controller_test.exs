@@ -165,7 +165,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
       config = insert(:assessment_config, %{course: course})
-      
+
       contest_assessment = insert(:assessment, %{course: course, config: config})
       contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
       contest_question = insert(:programming_question, %{assessment: contest_assessment})
@@ -185,11 +185,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
         )
 
       voting_assessment = insert(:assessment, %{course: course, config: config})
-      
-      voting_question = insert(:voting_question, %{
-        assessment: voting_assessment,
-        question: build(:voting_question_content, contest_number: contest_assessment.number)
-      })
+
+      voting_question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
 
       conn
       |> post(
@@ -205,7 +206,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       test_cr = conn.assigns.test_cr
       course = test_cr.course
       config = insert(:assessment_config, %{course: course})
-      
+
       contest_assessment = insert(:assessment, %{course: course, config: config})
       contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
       contest_question = insert(:programming_question, %{assessment: contest_assessment})
