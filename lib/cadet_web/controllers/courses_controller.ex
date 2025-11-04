@@ -2,18 +2,30 @@ defmodule CadetWeb.CoursesController do
   use CadetWeb, :controller
 
   use PhoenixSwagger
+  require Logger
 
   alias Cadet.Courses
   alias Cadet.Accounts.CourseRegistrations
 
   def index(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    user = conn.assigns.current_user
+    Logger.info("Fetching course configuration for user #{user.id} and course #{course_id}")
+
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
+        Logger.info(
+          "Successfully retrieved course configuration for user #{user.id} and course #{course_id}."
+        )
+
         render(conn, "config.json", config: config)
 
       # coveralls-ignore-start
       # no course error will not happen here
       {:error, {status, message}} ->
+        Logger.error(
+          "Failed to fetch course configuration for user #{user.id} and course #{course_id}. Status: #{status}."
+        )
+
         send_resp(conn, status, message)
         # coveralls-ignore-stop
     end
@@ -21,19 +33,26 @@ defmodule CadetWeb.CoursesController do
 
   def create(conn, params) do
     user = conn.assigns.current_user
+    Logger.info("Creating a new course for user #{user.id}. Super admin: #{user.super_admin}.")
+
     params = params |> to_snake_case_atom_keys()
 
     if user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 do
       case Courses.create_course_config(params, user) do
-        {:ok, _} ->
+        {:ok, course} ->
+          Logger.info("Successfully created course #{course.id} for user #{user.id}.")
           text(conn, "OK")
 
         {:error, _, _, _} ->
+          Logger.error("Invalid parameters provided by user #{user.id} while creating a course.")
+
           conn
           |> put_status(:bad_request)
           |> text("Invalid parameter(s)")
       end
     else
+      Logger.error("User #{user.id} has exceeded the limit of 5 admin courses.")
+
       conn
       |> put_status(:forbidden)
       |> text("User not allowed to be admin of more than 5 courses.")
@@ -54,6 +73,14 @@ defmodule CadetWeb.CoursesController do
       viewable(:body, :boolean, "Course viewability", required: true)
       enable_game(:body, :boolean, "Enable game", required: true)
       enable_achievements(:body, :boolean, "Enable achievements", required: true)
+      enable_overall_leaderboard(:body, :boolean, "Enable overall leaderboard", required: true)
+      enable_contest_leaderboard(:body, :boolean, "Enable contest leaderboard", required: true)
+      top_leaderboard_display(:body, :number, "Top leaderboard display", required: true)
+
+      top_contest_leaderboard_display(:body, :number, "Top contest leaderboard display",
+        required: true
+      )
+
       enable_sourcecast(:body, :boolean, "Enable sourcecast", required: true)
       enable_stories(:body, :boolean, "Enable stories", required: true)
       source_chapter(:body, :number, "Default source chapter", required: true)
@@ -95,6 +122,14 @@ defmodule CadetWeb.CoursesController do
             viewable(:boolean, "Course viewability", required: true)
             enable_game(:boolean, "Enable game", required: true)
             enable_achievements(:boolean, "Enable achievements", required: true)
+            enable_overall_leaderboard(:boolean, "Enable overall leaderboard", required: true)
+            enable_contest_leaderboard(:boolean, "Enable contest leaderboard", required: true)
+            top_leaderboard_display(:boolean, "Top leaderboard display", required: true)
+
+            top_contest_leaderboard_display(:boolean, "Top contest leaderboard display",
+              required: true
+            )
+
             enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
@@ -109,6 +144,10 @@ defmodule CadetWeb.CoursesController do
             viewable: true,
             enable_game: true,
             enable_achievements: true,
+            enable_overall_leaderboard: true,
+            enable_contest_leaderboard: true,
+            top_leaderboard_display: 100,
+            top_contest_leaderboard_display: 10,
             enable_sourcecast: true,
             enable_stories: false,
             source_chapter: 1,

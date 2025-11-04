@@ -34,7 +34,7 @@ defmodule Cadet.Updater.XMLParser do
       :ok
     else
       {:error, stage, %{errors: [assessment: {"has submissions", []}]}, _} when is_atom(stage) ->
-        Logger.warn("Assessment has submissions, ignoring...")
+        Logger.warning("Assessment has submissions, ignoring...")
         {:ok, "Assessment has submissions, ignoring..."}
 
       {:error, error_message} ->
@@ -246,22 +246,30 @@ defmodule Cadet.Updater.XMLParser do
   end
 
   defp process_question_entity_by_type(entity, "voting") do
-    Map.merge(
-      entity
-      |> xpath(
-        ~x"."e,
-        content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
-        prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
-        template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1)
-      ),
-      entity
-      |> xpath(
-        ~x"./VOTING"e,
-        contest_number: ~x"./@assessment_number"s,
-        reveal_hours: ~x"./@reveal_hours"i,
-        token_divider: ~x"./@token_divider"i
+    question_data =
+      Map.merge(
+        entity
+        |> xpath(
+          ~x"."e,
+          content: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+          prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
+          template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1)
+        ),
+        entity
+        |> xpath(
+          ~x"./VOTING"e,
+          contest_number: ~x"./@assessment_number"s,
+          reveal_hours: ~x"./@reveal_hours"i,
+          token_divider: ~x"./@token_divider"i
+        )
       )
-    )
+
+    xp_values =
+      entity
+      |> xpath(~x"./VOTING/XP_ARRAY/XP"el, value: ~x"./@value"i)
+      |> Enum.map(& &1[:value])
+
+    if xp_values == [], do: question_data, else: Map.merge(question_data, %{xp_values: xp_values})
   end
 
   defp process_question_entity_by_type(_, _) do

@@ -106,6 +106,10 @@ defmodule CadetWeb.AdminCoursesController do
       viewable(:body, :boolean, "Course viewability")
       enable_game(:body, :boolean, "Enable game")
       enable_achievements(:body, :boolean, "Enable achievements")
+      enable_overall_leaderboard(:body, :boolean, "Enable overall leaderboard")
+      enable_contest_leaderboard(:body, :boolean, "Enable contest leaderboard")
+      top_leaderboard_display(:body, :integer, "Top Leaderboard Display")
+      top_contest_leaderboard_display(:body, :integer, "Top Contest Leaderboard Display")
       enable_sourcecast(:body, :boolean, "Enable sourcecast")
       enable_stories(:body, :boolean, "Enable stories")
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
@@ -143,7 +147,11 @@ defmodule CadetWeb.AdminCoursesController do
           title("AdminSublanguage")
 
           properties do
-            chapter(:integer, "Chapter number from 1 to 4", required: true, minimum: 1, maximum: 4)
+            chapter(:integer, "Chapter number from 1 to 4",
+              required: true,
+              minimum: 1,
+              maximum: 4
+            )
 
             variant(Schema.ref(:SourceVariant), "Variant name", required: true)
           end

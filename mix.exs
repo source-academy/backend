@@ -81,13 +81,13 @@ defmodule Cadet.Mixfile do
       {:que, "~> 0.10"},
       {:recase, "~> 0.7", override: true},
       {:samly, "~> 1.0"},
-      {:sentry, "~> 10.6"},
+      {:sentry, "~> 11.0"},
       {:sweet_xml, "~> 0.6"},
       {:timex, "~> 3.7"},
 
       # notifiations system dependencies
       {:phoenix_html, "~> 4.2"},
-      {:bamboo, "~> 2.4.0"},
+      {:bamboo, "~> 2.5.0"},
       {:bamboo_ses, "~> 0.4.1"},
       {:bamboo_phoenix, "~> 1.0.0"},
       {:oban, "~> 2.13"},
@@ -108,6 +108,10 @@ defmodule Cadet.Mixfile do
       {:excoveralls, "~> 0.8", only: :test},
       {:exvcr, "~> 0.10", only: :test},
       {:mock, "~> 0.3.0", only: :test},
+
+      # Dependencies for logger unit testing
+      {:mox, "~> 1.2", only: :test},
+      {:logger_backends, "~> 1.0.0", only: :test},
 
       # The following are indirect dependencies, but we need to override the
       # versions due to conflicts
