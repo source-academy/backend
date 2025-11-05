@@ -18,17 +18,13 @@ defmodule Cadet.AIComments.AIComment do
     timestamps()
   end
 
+  @required_fields ~w(answer_id raw_prompt answers_json)a
+  @optional_fields ~w(response error final_comment)a
+
   def changeset(ai_comment, attrs) do
     ai_comment
-    |> cast(attrs, [
-      :answer_id,
-      :raw_prompt,
-      :answers_json,
-      :response,
-      :error,
-      :final_comment
-    ])
-    |> validate_required([:answer_id, :raw_prompt, :answers_json])
+    |> cast(attrs, @required_fields ++ @optional_fields)
+    |> validate_required(@required_fields)
     |> foreign_key_constraint(:answer_id)
   end
 end
