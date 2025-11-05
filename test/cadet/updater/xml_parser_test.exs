@@ -221,21 +221,21 @@ defmodule Cadet.Updater.XMLParserTest do
       end
     end
 
-    test "missing DEPLOYMENT", %{
+    test "missing PROGRAMMINGLANGUAGE", %{
       questions: questions,
       course: course,
       assessments_with_config: assessments_with_config
     } do
       for {assessment, assessment_config} <- assessments_with_config do
-        xml = XMLGenerator.generate_xml_for(assessment, questions, no_deployment: true)
+        xml = XMLGenerator.generate_xml_for(assessment, questions, no_programminglanguage: true)
 
         assert capture_log(fn ->
                  assert(
                    XMLParser.parse_xml(xml, course.id, assessment_config.id) ==
-                     {:error, {:bad_request, "Missing DEPLOYMENT"}}
+                     {:error, {:bad_request, "Missing PROGRAMMINGLANGUAGE"}}
                  )
                end) =~
-                 "Missing DEPLOYMENT"
+                 "Missing PROGRAMMINGLANGUAGE"
       end
     end
 
