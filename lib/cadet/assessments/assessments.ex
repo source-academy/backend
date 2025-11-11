@@ -2979,6 +2979,10 @@ defmodule Cadet.Assessments do
        ) do
     answer_content = build_answer_content(raw_answer, question.type)
 
+    Logger.info(
+      "(PA) Saving answer: cr_id=#{course_reg_id}, s_id=#{submission.id}, q_id=#{question.id}, answer=#{inspect(raw_answer)}"
+    )
+
     if question.type == :voting do
       insert_or_update_voting_answer(submission.id, course_reg_id, question.id, answer_content)
     else
