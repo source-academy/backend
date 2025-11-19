@@ -236,7 +236,8 @@ defmodule Cadet.Test.Seeds do
           display_order: id,
           assessment: assessment,
           max_xp: 1000,
-          show_solution: assessment.config.type == "path"
+          show_solution: assessment.config.type == "path",
+          question: build(:programming_question_content)
         })
       end)
 

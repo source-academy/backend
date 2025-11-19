@@ -36,6 +36,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:max_team_size, :integer, default: 1)
     field(:has_token_counter, :boolean, default: false)
     field(:has_voting_features, :boolean, default: false)
+    field(:llm_assessment_prompt, :string, default: nil)
 
     belongs_to(:config, AssessmentConfig)
     belongs_to(:course, Course)
@@ -46,7 +47,7 @@ defmodule Cadet.Assessments.Assessment do
 
   @required_fields ~w(title open_at close_at number course_id config_id max_team_size)a
   @optional_fields ~w(reading summary_short summary_long
-    is_published story cover_picture access password has_token_counter has_voting_features)a
+    is_published story cover_picture access password has_token_counter has_voting_features llm_assessment_prompt)a
   @optional_file_fields ~w(mission_pdf)a
 
   def changeset(assessment, params) do
