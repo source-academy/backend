@@ -118,3 +118,6 @@ erl_crash.dump
 
 # Generated lexer
 /src/source_lexer.erl
+
+# Ignore log files
+/log
