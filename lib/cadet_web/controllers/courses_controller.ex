@@ -13,11 +13,11 @@ defmodule CadetWeb.CoursesController do
 
     case Courses.get_course_config(course_id) do
       {:ok, config} ->
-        Logger.info(
-          "Successfully retrieved course configuration for user #{user.id} and course #{course_id}."
-        )
-
-        render(conn, "config.json", config: config)
+        if conn.assigns.course_reg.role == :admin do
+          render(conn, "config_admin.json", config: config)
+        else
+          render(conn, "config.json", config: config)
+        end
 
       # coveralls-ignore-start
       # no course error will not happen here
@@ -59,6 +59,36 @@ defmodule CadetWeb.CoursesController do
     end
   end
 
+  defp check_resume_code(course_id, resume_code) do
+    case Courses.get_course_config(course_id) do
+      {:ok, config} -> {:ok, config.resume_code == resume_code}
+      {:error, {status_code, message}} -> {:error, {status_code, message}}
+    end
+  end
+
+  defp unpause_user(conn, user) do
+    update_result =
+      user
+      |> Cadet.Accounts.User.changeset(%{is_paused: false})
+      |> Cadet.Repo.update()
+
+    case update_result do
+      {:ok, _} -> conn |> send_resp(:ok, "")
+      {:error, _} -> conn |> send_resp(500, "")
+    end
+  end
+
+  def try_unpause_user(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
+    user = conn.assigns.current_user
+    resume_code = Map.get(conn.body_params, "resume_code", nil)
+
+    case check_resume_code(course_id, resume_code) do
+      {:ok, true} -> unpause_user(conn, user)
+      {:ok, false} -> conn |> send_resp(:forbidden, "")
+      {:error, {status_code, message}} -> conn |> send_resp(status_code, message)
+    end
+  end
+
   swagger_path :create do
     post("/config/create")
 
@@ -83,6 +113,7 @@ defmodule CadetWeb.CoursesController do
 
       enable_sourcecast(:body, :boolean, "Enable sourcecast", required: true)
       enable_stories(:body, :boolean, "Enable stories", required: true)
+      enable_exam_mode(:body, :boolean, "Enable exam mode", required: true)
       source_chapter(:body, :number, "Default source chapter", required: true)
 
       source_variant(:body, Schema.ref(:SourceVariant), "Default source variant name",
@@ -132,6 +163,7 @@ defmodule CadetWeb.CoursesController do
 
             enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
+            enable_exam_mode(:boolean, "Enable exam mode", required: true)
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)

@@ -235,5 +235,13 @@ defmodule Cadet.Courses.CourseTest do
     test "invalid changeset with invalid chapter-variant combination" do
       assert_changeset(%{source_chapter: 4, source_variant: "lazy"}, :invalid)
     end
+
+    test "invalid changeset with invalid exam mode and official course combination" do
+      assert_changeset(%{enable_exam_mode: true, is_official_course: false}, :invalid)
+    end
+
+    test "invalid changeset with invalid course resume code" do
+      assert_changeset(%{resume_code: ""}, :invalid)
+    end
   end
 end
