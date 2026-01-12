@@ -289,7 +289,7 @@ defmodule CadetWeb.AuthControllerTest do
         assert response(conn, 302)
         assert get_resp_header(conn, "location") != []
 
-        location = get_resp_header(conn, "location") |> hd()
+        location = conn |> get_resp_header("location") |> hd()
         assert String.contains?(location, "access_token=")
         assert String.contains?(location, "refresh_token=")
       after
