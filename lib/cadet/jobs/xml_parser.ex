@@ -98,6 +98,8 @@ defmodule Cadet.Updater.XMLParser do
         reading: ~x"//READING/text()" |> transform_by(&process_charlist/1),
         summary_short: ~x"//WEBSUMMARY/text()" |> transform_by(&process_charlist/1),
         summary_long: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
+        llm_assessment_prompt:
+          ~x"./LLM_ASSESSMENT_PROMPT/text()" |> transform_by(&process_charlist/1),
         password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1)
       )
       |> Map.put(:is_published, false)
@@ -202,7 +204,8 @@ defmodule Cadet.Updater.XMLParser do
         prepend: ~x"./SNIPPET/PREPEND/text()" |> transform_by(&process_charlist/1),
         template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
         postpend: ~x"./SNIPPET/POSTPEND/text()" |> transform_by(&process_charlist/1),
-        solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1)
+        solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
+        llm_prompt: ~x"./LLM_GRADING_PROMPT/text()" |> transform_by(&process_charlist/1)
       ),
       entity
       |> xmap(
