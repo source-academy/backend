@@ -2,12 +2,19 @@ defmodule CadetWeb.AdminGradingView do
   use CadetWeb, :view
 
   import CadetWeb.AssessmentsHelpers
+  alias CadetWeb.AICodeAnalysisController
 
-  def render("show.json", %{answers: answers, assessment: assessment}) do
+  def render("show.json", %{course: course, answers: answers, assessment: assessment}) do
     %{
       assessment:
         render_one(assessment, CadetWeb.AdminGradingView, "assessment.json", as: :assessment),
-      answers: render_many(answers, CadetWeb.AdminGradingView, "grading_info.json", as: :answer)
+      answers:
+        render_many(answers, CadetWeb.AdminGradingView, "grading_info.json",
+          as: :answer,
+          course: course,
+          assessment: assessment
+        ),
+      enable_llm_grading: course.enable_llm_grading
     }
   end
 
@@ -147,11 +154,14 @@ defmodule CadetWeb.AdminGradingView do
     }
   end
 
-  def render("grading_info.json", %{answer: answer}) do
+  def render("grading_info.json", %{answer: answer, course: course, assessment: assessment}) do
     transform_map_for_view(answer, %{
+      id: & &1.id,
+      prompts: &build_prompts(&1, course, assessment),
+      ai_comments: &extract_ai_comments_per_answer(&1.id, &1.ai_comments),
       student: &extract_student_data(&1.submission.student),
       team: &extract_team_data(&1.submission.team),
-      question: &build_grading_question/1,
+      question: &build_grading_question(&1, course, assessment),
       solution: &(&1.question.question["solution"] || ""),
       grade: &build_grade/1
     })
@@ -159,6 +169,18 @@ defmodule CadetWeb.AdminGradingView do
 
   def render("grading_summary.json", %{cols: cols, summary: summary}) do
     %{cols: cols, rows: summary}
+  end
+
+  defp extract_ai_comments_per_answer(id, ai_comments) do
+    matching_comment =
+      ai_comments
+      # Equivalent to fn comment -> comment.question_id == question_id end
+      |> Enum.find(&(&1.answer_id == id))
+
+    case matching_comment do
+      nil -> nil
+      comment -> %{response: comment.response, insertedAt: comment.inserted_at}
+    end
   end
 
   defp extract_student_data(nil), do: %{}
@@ -190,12 +212,24 @@ defmodule CadetWeb.AdminGradingView do
     end
   end
 
-  defp build_grading_question(answer) do
-    %{question: answer.question}
+  defp build_grading_question(answer, course, assessment) do
+    %{question: answer.question |> Map.delete(:llm_prompt)}
     |> build_question_by_question_config(true)
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])
     |> Map.put(:autogradingStatus, answer.autograding_status)
     |> Map.put(:autogradingResults, answer.autograding_results)
+  end
+
+  defp build_prompts(answer, course, assessment) do
+    if course.enable_llm_grading do
+      AICodeAnalysisController.create_final_messages(
+        course.llm_course_level_prompt,
+        assessment.llm_assessment_prompt,
+        answer
+      )
+    else
+      []
+    end
   end
 
   defp build_grade(answer = %{grader: grader}) do

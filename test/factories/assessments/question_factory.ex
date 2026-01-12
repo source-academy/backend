@@ -51,7 +51,8 @@ defmodule Cadet.Assessments.QuestionFactory do
               answer: Faker.StarWars.character(),
               program: Faker.Lorem.Shakespeare.king_richard_iii()
             }
-          ]
+          ],
+          llm_prompt: nil
         }
       end
 
