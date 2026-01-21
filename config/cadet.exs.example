@@ -65,6 +65,11 @@ config :cadet,
     #      client_redirect_url: "http://cadet.frontend:8000/login/callback"
     #    }},
 
+    # # To use authentication with CAS
+    # "cas" =>
+    #   {Cadet.Auth.Providers.CAS,
+    #    %{service_validate_endpoint: "https://{CAS_SERVER_ENDPOINT}/serviceValidate"}},
+
     "test" =>
       {Cadet.Auth.Providers.Config,
        [
