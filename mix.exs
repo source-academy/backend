@@ -5,7 +5,7 @@ defmodule Cadet.Mixfile do
     [
       app: :cadet,
       version: "0.0.1",
-      elixir: "~> 1.10",
+      elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
