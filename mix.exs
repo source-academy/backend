@@ -96,7 +96,6 @@ defmodule Cadet.Mixfile do
       {:configparser_ex, "~> 4.0", only: [:dev, :test]},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:distillery, "~> 2.1", runtime: false},
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.4", only: [:dev, :test]},
 
