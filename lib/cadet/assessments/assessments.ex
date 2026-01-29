@@ -309,8 +309,10 @@ defmodule Cadet.Assessments do
   end
 
   def user_current_story(cr = %CourseRegistration{}) do
+    multi = Multi.new()
+
     {:ok, %{result: story}} =
-      Multi.new()
+      multi
       |> Multi.run(:unattempted, fn _repo, _ ->
         {:ok, get_user_story_by_type(cr, :unattempted)}
       end)
@@ -718,9 +720,11 @@ defmodule Cadet.Assessments do
       "Starting insert_or_update_assessments_and_questions with force_update: #{force_update}"
     )
 
+    multi = Multi.new()
+
     assessment_multi =
       Multi.insert_or_update(
-        Multi.new(),
+        multi,
         :assessment,
         insert_or_update_assessment_changeset(assessment_params, force_update)
       )
@@ -2099,7 +2103,9 @@ defmodule Cadet.Assessments do
       |> Repo.one()
     end
 
-    Multi.new()
+    multi = Multi.new()
+
+    multi
     |> Multi.run(:assessment, fn _repo, _ ->
       {:ok, model_assoc_count.(Assessment, :questions, assessment.id)}
     end)
@@ -2586,7 +2592,8 @@ defmodule Cadet.Assessments do
     end)
     |> Enum.map(fn changeset ->
       op_key = "answer_#{changeset.data.id}"
-      Multi.update(Multi.new(), op_key, changeset)
+      multi = Multi.new()
+      Multi.update(multi, op_key, changeset)
     end)
     |> Enum.reduce(Multi.new(), &Multi.append/2)
     |> Repo.transaction()
@@ -2600,7 +2607,8 @@ defmodule Cadet.Assessments do
     end)
     |> Enum.map(fn changeset ->
       op_key = "answer_#{changeset.data.id}"
-      Multi.update(Multi.new(), op_key, changeset)
+      multi = Multi.new()
+      Multi.update(multi, op_key, changeset)
     end)
     |> Enum.reduce(Multi.new(), &Multi.append/2)
     |> Repo.transaction()
@@ -3537,8 +3545,10 @@ defmodule Cadet.Assessments do
       SubmissionVotes
       |> where(voter_id: ^course_reg_id, question_id: ^question_id)
 
+    multi = Multi.new()
+
     voting_multi =
-      Multi.new()
+      multi
       |> Multi.update_all(:set_score_to_nil, set_score_to_nil, set: [score: nil])
 
     answer_content

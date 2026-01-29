@@ -20,7 +20,9 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
   def perform(params = %{answer_id: answer_id, result: result})
       when is_ecto_id(answer_id) do
-    Multi.new()
+    multi = Multi.new()
+
+    multi
     |> Multi.run(:fetch, fn _repo, _ -> fetch_answer(answer_id) end)
     |> Multi.run(:update, fn _repo, %{fetch: answer} ->
       update_answer(answer, result, params[:overwrite] || false)

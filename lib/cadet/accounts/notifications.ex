@@ -242,7 +242,9 @@ defmodule Cadet.Accounts.Notifications do
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_for_new_assessment(course_id, assessment_id)
       when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
-    Multi.new()
+    multi = Multi.new()
+
+    multi
     |> Multi.run(:insert_all, fn _repo, _ ->
       CourseRegistration
       |> where(course_id: ^course_id)

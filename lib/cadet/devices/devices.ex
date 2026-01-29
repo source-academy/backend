@@ -244,7 +244,7 @@ defmodule Cadet.Devices do
       nil ->
         with {:ok, address} <- get_endpoint_address(),
              {:ok, %{body: creds}} <- get_temporary_token(device_id, user_id) do
-          uri = URI.to_string(%URI{scheme: "wss", host: address, path: "/mqtt"})
+          uri = URI.to_string(URI.new!("wss://#{address}/mqtt"))
           region = Application.fetch_env!(:ex_aws, :region)
 
           {:ok, signed_url} =

@@ -30,8 +30,10 @@ defmodule Cadet.Courses do
   def create_course_config(params, user) do
     Logger.info("Creating new course configuration for user #{user.id}")
 
+    multi = Multi.new()
+
     result =
-      Multi.new()
+      multi
       |> Multi.insert(:course, Course.changeset(%Course{}, params))
       |> Multi.run(:course_reg, fn _repo, %{course: course} ->
         CourseRegistrations.enroll_course(%{
