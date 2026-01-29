@@ -10,12 +10,6 @@ defmodule Cadet.Mixfile do
       compilers: [:leex] ++ Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.post": :test,
-        "coveralls.html": :test
-      ],
       aliases: aliases(),
       deps: deps(),
       dialyzer: [
@@ -27,6 +21,18 @@ defmodule Cadet.Mixfile do
         cadet: [
           steps: [:assemble, :tar]
         ]
+      ]
+    ]
+  end
+
+  # Configuration for the Mix CLI
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
       ]
     ]
   end
