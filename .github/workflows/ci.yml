@@ -45,15 +45,7 @@ jobs:
           key: ${{ runner.os }}-mix-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
           restore-keys: |
             ${{ runner.os }}-mix-
-      - name: Cache _build
-        uses: actions/cache@v4
-        with:
-          path: |
-            _build
-            priv/plts
-          key: 1-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-${{ github.sha }}
-          restore-keys: |
-            1-${{ runner.os }}-erlang-${{ env.OTP_VERSION }}-elixir-${{ env.ELIXIR_VERSION }}-
+      # Don't cache build artifacts in CI
       - name: Setup Elixir
         uses: erlef/setup-elixir@v1
         with:
