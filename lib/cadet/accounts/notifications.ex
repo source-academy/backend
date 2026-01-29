@@ -101,6 +101,7 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Changes read status of notification(s) from false to true.
   """
+  @dialyzer {:nowarn_function, acknowledge: 2}
   @spec acknowledge({:array, :integer}, CourseRegistration.t()) ::
           {:ok, Ecto.Schema.t()}
           | {:error, any}
@@ -238,6 +239,7 @@ defmodule Cadet.Accounts.Notifications do
   @doc """
   Writes a notification to all students that a new assessment is available.
   """
+  @dialyzer {:nowarn_function, write_notification_for_new_assessment: 2}
   @spec write_notification_for_new_assessment(integer(), integer()) ::
           {:ok, Ecto.Schema.t()} | {:error, Ecto.Changeset.t()}
   def write_notification_for_new_assessment(course_id, assessment_id)

@@ -239,6 +239,7 @@ defmodule Cadet.Devices do
     end
   end
 
+  @dialyzer {:nowarn_function, get_device_ws_endpoint: 3}
   def get_device_ws_endpoint(%Device{id: device_id}, %User{id: user_id}, opts) do
     case Keyword.get(config(), :ws_endpoint_address) do
       nil ->

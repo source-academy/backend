@@ -308,6 +308,7 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @dialyzer {:nowarn_function, user_current_story: 1}
   def user_current_story(cr = %CourseRegistration{}) do
     {:ok, %{result: story}} =
       Multi.new()
@@ -709,6 +710,7 @@ defmodule Cadet.Assessments do
   @spec insert_or_update_assessments_and_questions(map(), [map()], boolean()) ::
           {:ok, any()}
           | {:error, Ecto.Multi.name(), any(), %{optional(Ecto.Multi.name()) => any()}}
+  @dialyzer {:nowarn_function, insert_or_update_assessments_and_questions: 3}
   def insert_or_update_assessments_and_questions(
         assessment_params,
         questions_params,
@@ -1449,6 +1451,7 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @dialyzer {:nowarn_function, unsubmit_submission: 2}
   def unsubmit_submission(
         submission_id,
         cr = %CourseRegistration{id: course_reg_id, role: role}
@@ -2086,6 +2089,7 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @dialyzer {:nowarn_function, update_submission_status: 2}
   defp update_submission_status(submission = %Submission{}, assessment = %Assessment{}) do
     Logger.info(
       "Updating submission status for submission #{submission.id} and assessment #{assessment.id}"
@@ -2516,6 +2520,7 @@ defmodule Cadet.Assessments do
   Computes the current relative_score of each voting submission answer
   based on current submitted votes.
   """
+  @dialyzer {:nowarn_function, compute_relative_score: 1}
   def compute_relative_score(contest_voting_question_id) do
     Logger.info(
       "Computing relative score for contest voting question #{contest_voting_question_id}"
@@ -3532,6 +3537,7 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @dialyzer {:nowarn_function, insert_or_update_voting_answer: 4}
   def insert_or_update_voting_answer(submission_id, course_reg_id, question_id, answer_content) do
     set_score_to_nil =
       SubmissionVotes
