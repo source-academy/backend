@@ -15,7 +15,9 @@ defmodule Cadet.Mixfile do
       dialyzer: [
         plt_add_apps: [:mix, :ex_unit],
         plt_local_path: "priv/plts",
-        plt_core_path: "priv/plts"
+        plt_core_path: "priv/plts",
+        flags: [:unmatched_returns, :error_handling, :underspecs],
+        ignore_warnings: ".dialyzer_ignore.exs"
       ],
       releases: [
         cadet: [
