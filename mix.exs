@@ -5,17 +5,11 @@ defmodule Cadet.Mixfile do
     [
       app: :cadet,
       version: "0.0.1",
-      elixir: "~> 1.10",
+      elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: Mix.compilers() ++ [:phoenix_swagger],
+      compilers: [:leex] ++ Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.post": :test,
-        "coveralls.html": :test
-      ],
       aliases: aliases(),
       deps: deps(),
       dialyzer: [
@@ -27,6 +21,18 @@ defmodule Cadet.Mixfile do
         cadet: [
           steps: [:assemble, :tar]
         ]
+      ]
+    ]
+  end
+
+  # Configuration for the Mix CLI
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
       ]
     ]
   end
@@ -96,7 +102,6 @@ defmodule Cadet.Mixfile do
       {:configparser_ex, "~> 4.0", only: [:dev, :test]},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:distillery, "~> 2.1", runtime: false},
       {:faker, "~> 0.10", only: [:dev, :test]},
       {:git_hooks, "~> 0.4", only: [:dev, :test]},
 

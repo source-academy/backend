@@ -27,6 +27,7 @@ defmodule Cadet.Courses do
   Creates a new course configuration, course registration, and sets
   the user's latest course id to the newly created course.
   """
+  @dialyzer {:nowarn_function, create_course_config: 2}
   def create_course_config(params, user) do
     Logger.info("Creating new course configuration for user #{user.id}")
 

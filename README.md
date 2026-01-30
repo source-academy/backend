@@ -14,18 +14,18 @@ Cadet is the web application powering Source Academy.
 
 ### System requirements
 
-1. Elixir 1.18+ (current version: 1.18.3)
-2. Erlang/OTP 27+ (current version: 27.3.3)
-3. PostgreSQL 12+ (tested to be working up to 17)
+1. Elixir 1.19+ (current version: 1.19.5)
+2. Erlang/OTP 28+ (current version: 28.3.1)
+3. PostgreSQL 12+ (tested to be working up to 18)
 
 It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but using a different version of Elixir may result in differences in e.g. `mix format`.
 
 > ## Setting up PostgreSQL
 >
 > The simplest way to get started is to use Docker. Simply [install Docker](https://docs.docker.com/get-docker/) and run the following command:
-> 
+>
 > ```bash
-> $ docker run --name sa-backend-db -e POSTGRES_HOST_AUTH_METHOD=trust -e -p 5432:5432 -d postgres
+> docker run --name sa-backend-db -e POSTGRES_HOST_AUTH_METHOD=trust -e -p 5432:5432 -d postgres
 > ```
 >
 > This configures PostgreSQL on port 5432. You can then connect to the database using `localhost:5432` as the host and `postgres` as the username. Note: `-e POSTGRES_HOST_AUTH_METHOD=trust` is used to disable password authentication for local development; since we are only accesing the database locally from our own machine, it is safe to do so.
@@ -35,38 +35,38 @@ It is probably okay to use a different version of PostgreSQL or Erlang/OTP, but 
 1. Set up the development secrets (replace the values appropriately)
 
    ```bash
-   $ cp config/dev.secrets.exs.example config/dev.secrets.exs
-   $ vim config/dev.secrets.exs
+   cp config/dev.secrets.exs.example config/dev.secrets.exs
+   vim config/dev.secrets.exs
    ```
 
 2. Install Elixir dependencies
 
    ```bash
-   $ mix deps.get
+   mix deps.get
    ```
 
    If you encounter error message `Fail to fetch record for 'hexpm/mime' from registry(using cache insted)`The following instruction may be useful for you.
 
    ```bash
-   $ mix local.hex --force
+   mix local.hex --force
    ```
 
 3. Initialise development database
 
    ```bash
-   $ mix ecto.setup
+   mix ecto.setup
    ```
 
    By default, the database is populated with 10 students and 5 assessments. Each student will have a submission to the corresponding submission. This can be changed in `priv/repo/seeds.exs` with the variables `number_of_students`, `number_of_assessments` and `number_of_questions`. Save the changes and run:
 
    ```bash
-   $ mix ecto.reset
+   mix ecto.reset
    ```
 
 4. Run the server on your local machine
 
    ```bash
-   $ mix phx.server
+   mix phx.server
    ```
 
 5. You may now make API calls to the server locally via `localhost:4000`. The API documentation can also be accessed at <http://localhost:4000/swagger>.
@@ -125,13 +125,13 @@ Your backend is now all set up for remote execution using a local MQTT server. T
 You can obtain an `access_token` JWT for a user with a given role by simply running:
 
 ```bash
-$ mix cadet.token <role>
+mix cadet.token <role>
 ```
 
 For more information, run
 
 ```bash
-$ mix help cadet.token
+mix help cadet.token
 ```
 
 ### Style Guide

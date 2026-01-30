@@ -18,6 +18,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   alias Cadet.Assessments.{Answer, Assessment, Submission}
   alias Cadet.Courses.AssessmentConfig
 
+  @dialyzer {:nowarn_function, perform: 1}
   def perform(params = %{answer_id: answer_id, result: result})
       when is_ecto_id(answer_id) do
     Multi.new()
