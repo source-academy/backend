@@ -67,7 +67,7 @@ defmodule Cadet.Mixfile do
       {:ex_aws_s3, "~> 2.0"},
       {:ex_aws_secretsmanager, "~> 2.0"},
       {:ex_aws_sts, "~> 2.1"},
-      {:ex_json_schema, "~> 0.7.4"},
+      {:ex_json_schema, "~> 0.11.0"},
       {:ex_machina, "~> 2.3"},
       {:ex_rated, "~> 2.0"},
       {:guardian, "~> 2.0"},
