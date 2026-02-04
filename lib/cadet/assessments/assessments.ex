@@ -3299,17 +3299,29 @@ defmodule Cadet.Assessments do
         _requesting_user = %CourseRegistration{id: grader_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
-    answer =
+    questions =
+      Question
+      |> where(question_id: ^question_id)
+      |> order_by(:display_order)
+      |> Repo.all()
+
+    answers =
       Answer
-      |> where(submission_id: ^submission_id, question_id: ^question_id)
+      |> where(submission_id: ^submission_id)
       |> preload([:question, :submission])
-      |> Repo.one()
+      |> order_by(:question_id)
+      |> Repo.all()
+
+    # the answer we want to target
+    answer =
+      answers
+      |> Enum.find(fn answer -> answer.question_id == question_id end)
 
     with {:get, answer} when not is_nil(answer) <- {:get, answer},
          {:status, true} <-
            {:status,
             answer.submission.student_id == grader_id or answer.submission.status == :submitted} do
-      GradingJob.grade_answer(answer, answer.question, true)
+      GradingJob.grade_answer(answer.question, answers, answer, questions, true)
       {:ok, nil}
     else
       {:get, nil} ->
