@@ -1,89 +1,83 @@
 defmodule Cadet.Chatbot.LlmConversations do
   @moduledoc """
   LLM Conversation service provides functions to create, update, and fetch LLM conversations.
+  Each user is locked to exactly one conversation.
   """
   use Cadet, [:context, :display]
 
   import Ecto.Query
   require Logger
 
-  alias Cadet.Chatbot.{Conversation, PromptBuilder}
+  alias Cadet.Chatbot.Conversation
 
-  # WARNING: unrestricted access to all conversations
-  def get_conversation(id) when is_ecto_id(id) do
-    Repo.get(Conversation, id)
-  end
+  @doc """
+  Gets the single conversation for a user. Each user has exactly one conversation.
+  If multiple exist (from old data), returns the most recent one.
+  Returns {:ok, conversation} if found, {:error, {:not_found, message}} if not.
+  """
+  @spec get_conversation_for_user(binary() | integer()) ::
+          {:ok, Conversation.t()} | {:error, {:not_found, binary()}}
+  def get_conversation_for_user(user_id) when is_ecto_id(user_id) do
+    Logger.info("Fetching conversation for user #{user_id}")
 
-  # Secured against unauthorized access
-  def get_conversation_for_user(user_id, conversation_id)
-      when is_ecto_id(user_id) and is_ecto_id(conversation_id) do
-    Logger.info("Fetching LLM conversation #{conversation_id} for user #{user_id}")
-
-    conversation = get_conversation(conversation_id)
-
-    case conversation do
+    case Conversation
+         |> where([c], c.user_id == ^user_id)
+         |> order_by([c], desc: c.inserted_at)
+         |> limit(1)
+         |> Repo.one() do
       nil ->
-        Logger.error("Conversation #{conversation_id} not found for user #{user_id}.")
-
+        Logger.info("No conversation found for user #{user_id}")
         {:error, {:not_found, "Conversation not found"}}
 
-      conversation when conversation.user_id == user_id ->
-        Logger.info("Successfully retrieved conversation #{conversation_id} for user #{user_id}.")
-
+      conversation ->
+        Logger.info("Found conversation #{conversation.id} for user #{user_id}")
         {:ok, conversation}
-
-      # user_id does not match, intentionally vague error message
-      %Conversation{} ->
-        Logger.error(
-          "User #{user_id} is not authorized to access conversation #{conversation_id}."
-        )
-
-        {:error, {:not_found, "Conversation not found"}}
-
-      _ ->
-        Logger.error(
-          "Unexpected error while fetching conversation #{conversation_id} for user #{user_id}."
-        )
-
-        {:error, {:internal_server_error, "An unexpected error occurred"}}
     end
   end
 
-  def get_conversations(user_id) when is_ecto_id(user_id) do
-    Logger.info("Fetching all conversations for user #{user_id}")
+  @doc """
+  Gets or creates the single conversation for a user.
+  If user already has a conversation, returns it.
+  If not, creates a new one.
+  """
+  @spec get_or_create_conversation(binary() | integer()) ::
+          {:ok, Conversation.t()} | {:error, binary()}
+  def get_or_create_conversation(user_id) when is_ecto_id(user_id) do
+    Logger.info("Getting or creating conversation for user #{user_id}")
 
-    Conversation
-    |> where([c], c.user_id == ^user_id)
-    |> Repo.all()
+    case get_conversation_for_user(user_id) do
+      {:ok, conversation} ->
+        Logger.info("User #{user_id} already has conversation #{conversation.id}")
+        {:ok, conversation}
+
+      {:error, {:not_found, _}} ->
+        Logger.info("Creating new conversation for user #{user_id}")
+        create_new_conversation(user_id)
+    end
   end
 
-  @spec create_conversation(binary() | integer(), binary(), binary()) ::
-          {:error, binary()} | {:ok, Conversation.t()}
-  def create_conversation(user_id, section, visible_paragraph_texts)
-      when is_ecto_id(user_id) and is_binary(section) and is_binary(visible_paragraph_texts) do
-    Logger.info("Creating a new conversation for user #{user_id} in section #{section}")
-
-    context = [
-      %{role: "system", content: PromptBuilder.build_prompt(section, visible_paragraph_texts)}
-    ]
+  @doc """
+  Creates a new conversation for a user. Should only be called when user has no existing conversation.
+  """
+  @spec create_new_conversation(binary() | integer()) ::
+          {:ok, Conversation.t()} | {:error, binary()}
+  defp create_new_conversation(user_id) do
+    Logger.info("Creating a new conversation for user #{user_id}")
 
     case %Conversation{
            user_id: user_id,
-           prepend_context: context,
+           prepend_context: [],
            messages: [get_initial_message()]
          }
          |> Conversation.changeset(%{})
          |> Repo.insert() do
       {:ok, conversation} ->
         Logger.info("Successfully created conversation #{conversation.id} for user #{user_id}.")
-
         {:ok, conversation}
 
       {:error, changeset} ->
         error_msg = full_error_messages(changeset)
-
         Logger.error("Failed to create conversation for user #{user_id}: #{error_msg}")
-
         {:error, error_msg}
     end
   end
