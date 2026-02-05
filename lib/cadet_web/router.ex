@@ -86,7 +86,7 @@ defmodule CadetWeb.Router do
     pipe_through([:api, :auth, :ensure_auth, :rate_limit])
 
     post("", ChatController, :init_chat)
-    post("/:conversationId/message", ChatController, :chat)
+    post("/message", ChatController, :chat)
   end
 
   # Authenticated Pages with course
