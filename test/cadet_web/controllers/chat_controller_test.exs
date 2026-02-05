@@ -122,5 +122,16 @@ defmodule CadetWeb.ChatControllerTest do
 
       assert response(conn, :not_found) == "Conversation not found"
     end
+
+    @tag authenticate: :student
+    test "missing parameters", %{conn: conn} do
+      conn =
+        post(conn, "/v2/chats/message", %{
+          "message" => "How to implement recursion in JavaScript?",
+          "section" => "SICP-1"
+        })
+
+      assert response(conn, :bad_request) == "Missing or invalid parameter(s)"
+    end
   end
 end

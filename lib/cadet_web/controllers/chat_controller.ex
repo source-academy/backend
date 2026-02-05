@@ -135,6 +135,11 @@ defmodule CadetWeb.ChatController do
     end
   end
 
+  def chat(conn, _params) do
+    Logger.error("Chat request failed due to missing parameters.")
+    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+  end
+
   @context_size 10
 
   @spec generate_payload(Conversation.t(), String.t()) :: list(map())
