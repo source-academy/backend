@@ -32,18 +32,18 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
-    test "missing section info", %{conn: conn} do
-      conn =
-        post(conn, "/v2/chats", %{
-          "section" => nil,
-          "initialContext" => "Recursion is a fundamental concept in computer science."
-        })
+    test "authenticated request initializes chat", %{conn: conn} do
+      conn = post(conn, "/v2/chats", %{})
 
-      assert response(conn, :bad_request) == "Missing course section"
+      assert %{
+               "conversationId" => _,
+               "messages" => _,
+               "maxContentSize" => _
+             } = json_response(conn, 200)
     end
   end
 
-  describe "POST /chats/:conversationId/message" do
+  describe "POST /chats/message" do
     @tag authenticate: :student
     @tag requires_setup: true
     test "Conversation belongs to another user", %{conn: conn, conversation_id: conversation_id} do
@@ -51,8 +51,10 @@ defmodule CadetWeb.ChatControllerTest do
 
       use_cassette "chatbot/chat_conversation#1", custom: true do
         conn =
-          post(conn, "/v2/chats/#{conversation_id}/message", %{
-            "message" => "How to implement recursion in JavaScript?"
+          post(conn, "/v2/chats/message", %{
+            "message" => "How to implement recursion in JavaScript?",
+            "section" => "SICP-1",
+            "initialContext" => "Recursion is a fundamental concept in computer science."
           })
 
         assert response(conn, :not_found) == "Conversation not found"
@@ -65,8 +67,10 @@ defmodule CadetWeb.ChatControllerTest do
         conversation = insert(:conversation, user: conn.assigns.current_user)
 
         conn =
-          post(conn, "/v2/chats/#{conversation.id}/message", %{
-            "message" => "How to implement recursion in JavaScript?"
+          post(conn, "/v2/chats/message", %{
+            "message" => "How to implement recursion in JavaScript?",
+            "section" => "SICP-1",
+            "initialContext" => "Recursion is a fundamental concept in computer science."
           })
 
         assert json_response(conn, 200) == %{
@@ -85,9 +89,11 @@ defmodule CadetWeb.ChatControllerTest do
       message_exceed_length = String.duplicate("a", max_message_length + 1)
 
       conn =
-        post(conn, "/v2/chats/#{conversation_id}/message", %{
+        post(conn, "/v2/chats/message", %{
           "conversation_id" => conversation_id,
-          "message" => "#{message_exceed_length}"
+          "message" => "#{message_exceed_length}",
+          "section" => "SICP-1",
+          "initialContext" => "Recursion is a fundamental concept in computer science."
         })
 
       assert response(conn, :unprocessable_entity) ==
@@ -95,29 +101,15 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
-    @tag requires_setup: true
-    test "The content length less than the maximum allowed length but conversation belongs to another user",
-         %{conn: conn, conversation_id: conversation_id} do
-      assert conversation_id != nil
+    test "no conversation for user with max-length message", %{conn: conn} do
       max_message_length = ChatController.max_content_length()
       message_exceed_length = String.duplicate("a", max_message_length)
 
       conn =
-        post(conn, "/v2/chats/#{conversation_id}/message", %{
-          "conversation_id" => conversation_id,
-          "message" => "#{message_exceed_length}"
-        })
-
-      assert response(conn, :not_found) == "Conversation not found"
-    end
-
-    @tag authenticate: :student
-    test "invalid conversation id", %{conn: conn} do
-      conversation_id = "-1"
-
-      conn =
-        post(conn, "/v2/chats/#{conversation_id}/message", %{
-          "message" => "How to implement recursion in JavaScript?"
+        post(conn, "/v2/chats/message", %{
+          "message" => "#{message_exceed_length}",
+          "section" => "SICP-1",
+          "initialContext" => "Recursion is a fundamental concept in computer science."
         })
 
       assert response(conn, :not_found) == "Conversation not found"
