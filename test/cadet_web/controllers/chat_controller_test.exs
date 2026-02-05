@@ -74,7 +74,7 @@ defmodule CadetWeb.ChatControllerTest do
           })
 
         assert json_response(conn, 200) == %{
-                 "conversationId" => Integer.to_string(conversation.id),
+                 "conversationId" => conversation.id,
                  "response" => "Some hardcoded test response."
                }
       end
@@ -121,6 +121,18 @@ defmodule CadetWeb.ChatControllerTest do
         post(conn, "/v2/chats/message", %{
           "message" => "How to implement recursion in JavaScript?",
           "section" => "SICP-1"
+        })
+
+      assert response(conn, :bad_request) == "Missing or invalid parameter(s)"
+    end
+
+    @tag authenticate: :student
+    test "nil initialContext", %{conn: conn} do
+      conn =
+        post(conn, "/v2/chats/message", %{
+          "message" => "How to implement recursion in JavaScript?",
+          "section" => "SICP-1",
+          "initialContext" => nil
         })
 
       assert response(conn, :bad_request) == "Missing or invalid parameter(s)"

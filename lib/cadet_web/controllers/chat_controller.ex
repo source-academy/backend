@@ -60,11 +60,15 @@ defmodule CadetWeb.ChatController do
     response(500, "When OpenAI API returns an error")
   end
 
-  def chat(conn, %{
-        "message" => user_message,
-        "section" => section,
-        "initialContext" => visible_text
-      }) do
+  def chat(
+        conn,
+        %{
+          "message" => user_message,
+          "section" => section,
+          "initialContext" => visible_text
+        }
+      )
+      when is_binary(user_message) and is_binary(section) and is_binary(visible_text) do
     user = conn.assigns.current_user
 
     Logger.info(
