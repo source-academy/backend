@@ -1958,6 +1958,196 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
+  describe "GET /combined_total_xp_for_all_users" do
+    @tag authenticate: :student
+    test "unauthorized for student role", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+
+      conn
+      |> get("/v2/courses/#{course.id}/all_users_xp")
+      |> response(401)
+    end
+  end
+
+  describe "GET /paginated_total_xp_for_leaderboard_display" do
+    @tag authenticate: :student
+    test "pagination with offset and limit", %{conn: conn} do
+      user = conn.assigns[:current_user]
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      conn = assign(conn, :test_cr, test_cr)
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+      assessment = insert(:assessment, %{course: course, config: config})
+      question = insert(:programming_question, assessment: assessment)
+
+      # Create 10 students with different XP amounts
+      student_list = insert_list(10, :course_registration, %{course: course, role: :student})
+
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: assessment,
+              status: "submitted",
+              is_grading_published: true
+            )
+          end
+        )
+
+      _ans_list =
+        Enum.map(
+          Enum.with_index(submission_list),
+          fn {submission, index} ->
+            insert(
+              :answer,
+              answer: build(:programming_answer),
+              submission: submission,
+              question: question,
+              xp: 100 + index * 10
+            )
+          end
+        )
+
+      # Test with offset and limit
+      conn = get(conn, "/v2/courses/#{course.id}/get_paginated_display?offset=0&page_size=5")
+      response = json_response(conn, 200)
+
+      assert response["total_count"] == 10
+      assert length(response["users"]) == 5
+    end
+  end
+
+  describe "GET /get_all_contests" do
+    @tag authenticate: :student
+    test "retrieves all contests for a course", %{conn: conn} do
+      user = conn.assigns[:current_user]
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      conn = assign(conn, :test_cr, test_cr)
+      course = test_cr.course
+      config = insert(:assessment_config, %{type: "Contests", course: course})
+
+      contest_1 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: true,
+          title: "Contest 1"
+        })
+
+      contest_2 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: false,
+          title: "Contest 2"
+        })
+
+      voting_assessment = insert(:assessment, %{course: course})
+
+      insert(:voting_question, %{
+        assessment: voting_assessment,
+        question: build(:voting_question_content, contest_number: contest_1.number)
+      })
+
+      insert(:voting_question, %{
+        assessment: voting_assessment,
+        question: build(:voting_question_content, contest_number: contest_2.number)
+      })
+
+      response =
+        conn
+        |> get("/v2/courses/#{course.id}/all_contests")
+        |> json_response(200)
+
+      assert length(response) == 2
+      assert Enum.any?(response, fn c -> c["title"] == "Contest 1" and c["published"] end)
+      assert Enum.any?(response, fn c -> c["title"] == "Contest 2" and not c["published"] end)
+    end
+
+    @tag authenticate: :student
+    test "returns empty list when no contests exist", %{conn: conn} do
+      user = conn.assigns[:current_user]
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      conn = assign(conn, :test_cr, test_cr)
+      course = test_cr.course
+
+      response =
+        conn
+        |> get("/v2/courses/#{course.id}/all_contests")
+        |> json_response(200)
+
+      assert response == []
+    end
+  end
+
+  describe "GET /:assessment_id/scoreLeaderboard with custom visible_entries" do
+    @tag authenticate: :student
+    test "uses visible_entries parameter when provided", %{conn: conn} do
+      user = conn.assigns[:current_user]
+
+      test_cr =
+        insert(:course_registration, %{course: insert(:course), role: :student, user: user})
+
+      conn = assign(conn, :test_cr, test_cr)
+      course = test_cr.course
+
+      config = insert(:assessment_config, %{course: course})
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_students = insert_list(10, :course_registration, %{course: course, role: :student})
+      contest_question = insert(:programming_question, %{assessment: contest_assessment})
+
+      contest_submissions =
+        contest_students
+        |> Enum.map(&insert(:submission, %{assessment: contest_assessment, student: &1}))
+
+      _contest_answer =
+        contest_submissions
+        |> Enum.map(
+          &insert(:answer, %{
+            question: contest_question,
+            submission: &1,
+            relative_score: 10.0,
+            answer: build(:programming_answer)
+          })
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      insert(
+        :voting_question,
+        %{
+          question: build(:voting_question_content, contest_number: contest_assessment.number),
+          assessment: voting_assessment
+        }
+      )
+
+      params = %{"visible_entries" => 5}
+
+      resp =
+        conn
+        |> get(
+          "/v2/courses/#{course.id}/assessments/#{voting_assessment.id}/scoreLeaderboard?visible_entries=5"
+        )
+        |> json_response(200)
+
+      assert length(resp["leaderboard"]) <= 5
+      assert Enum.all?(resp["leaderboard"], fn entry -> Map.has_key?(entry, "rank") end)
+    end
+  end
+
   defp build_url(course_id), do: "/v2/courses/#{course_id}/assessments/"
 
   defp build_url(course_id, assessment_id),
