@@ -111,7 +111,7 @@ defmodule Cadet.Mixfile do
       # unit testing dependencies
       {:bypass, "~> 2.1", only: :test},
       {:excoveralls, "~> 0.8", only: :test},
-      {:exvcr, "~> 0.10", only: :test},
+      {:exvcr, "~> 0.17", only: :test},
       {:mock, "~> 0.3.0", only: :test},
 
       # Dependencies for logger unit testing
