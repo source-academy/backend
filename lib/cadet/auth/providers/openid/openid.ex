@@ -23,6 +23,7 @@ defmodule Cadet.Auth.Providers.OpenID do
             OpenIDConnect.fetch_tokens(openid_provider, %{code: code, redirect_uri: redirect_uri})},
          {:get_token, token} when not is_nil(token) <-
            {:get_token, token_map[claim_extractor.get_token_type()]},
+          {:ok, _} <- {:ok, IO.inspect(token)},
          {:verify_sig, {:ok, claims}} <-
            {:verify_sig, OpenIDConnect.verify(openid_provider, token)},
          {:verify_claims, {:ok, _}} <-
@@ -50,7 +51,8 @@ defmodule Cadet.Auth.Providers.OpenID do
       {:get_token, nil} ->
         {:error, :invalid_credentials, "Missing token in response from OpenID provider"}
 
-      {:verify_sig, {:error, _, _}} ->
+      {:verify_sig, {:error, a, b}} ->
+          IO.inspect({:verify_sig, {:error, a, b}})
         {:error, :invalid_credentials, "Failed to verify token"}
 
       {:verify_claims, {:error, _}} ->
