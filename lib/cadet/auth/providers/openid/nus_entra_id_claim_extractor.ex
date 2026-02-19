@@ -30,9 +30,9 @@ defmodule Cadet.Auth.Providers.NusEntraIdClaimExtractor do
   defp map_key_to_raw(key), do: key
 
   defp get_userinfo(claims, key) do
-    with true <- check_allowed_domain(data),
+    with true <- check_allowed_domain(claims),
           mapped_key <- map_key_to_raw(key),
-          value when not is_nil(value) <- Map.get(data, mapped_key) do
+          value when not is_nil(value) <- Map.get(claims, mapped_key) do
       value
     else
       false -> nil
