@@ -19,7 +19,7 @@ defmodule Cadet.Auth.Providers.NusEntraIdClaimExtractor do
     get_userinfo(access_token, "displayName")
   end
 
-  def get_token_type, do: "access_token"
+  def get_token_type, do: "id_token"
 
   # Allowed Active Directory (AD) domains; modify as needed
   @allowed_domains ~w(student alum staff)
