@@ -62,7 +62,8 @@ defmodule Mix.Tasks.Cadet.Token do
     if Cadet.Env.env() in @env_allow_mock do
       user =
         User
-        |> where(role: ^role)
+        |> join(:inner, [u], cr in "course_registrations", on: u.id == cr.user_id)
+        |> where([u, cr], cr.role == ^role)
         |> first
         |> Repo.one()
 
