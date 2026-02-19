@@ -18,7 +18,8 @@ defmodule Cadet.Factory do
     LibraryFactory,
     QuestionFactory,
     SubmissionFactory,
-    SubmissionVotesFactory
+    SubmissionVotesFactory,
+    VersionFactory
   }
 
   use Cadet.Chatbot.{ConversationFactory}
