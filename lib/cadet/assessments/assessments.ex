@@ -20,7 +20,7 @@ defmodule Cadet.Assessments do
     CourseRegistrations
   }
 
-  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
+  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes, Version}
   alias Cadet.Autograder.GradingJob
   alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
@@ -3609,5 +3609,30 @@ defmodule Cadet.Assessments do
       )
 
     Repo.one(query)
+  end
+
+  def get_version(
+    question = %Question{},
+    cr = %CourseRegistration{}
+  ) do
+    {:ok, team} = find_team(question.assessment.id, cr.id)
+
+    case team do
+      %Team{} ->
+        Version
+        |> join(:inner, [v], a in assoc(v, :answer))
+        |> join(:inner, [v, a], s in assoc(a, :submission))
+        |> where([v, a, s], a.question_id == ^question.id)
+        |> where([v, a, s], s.team_id == ^team.id)
+        |> Repo.all()
+
+      nil ->
+        Version
+        |> join(:inner, [v], a in assoc(v, :answer))
+        |> join(:inner, [v, a], s in assoc(a, :submission))
+        |> where([v, a, s], a.question_id == ^question.id)
+        |> where([v, a, s], s.student_id == ^cr.id)
+        |> Repo.all()
+    end
   end
 end

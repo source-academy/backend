@@ -101,6 +101,10 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/answer", AnswerController, :submit)
 
+    get("/question/:questionid/version/history", VersionController, :history)
+    post("/question/:questionid/version/save", VersionController, :save)
+    put("/question/:questionid/version/name", VersionController, :name)
+
     post(
       "/assessments/question/:questionid/answerLastModified",
       AnswerController,

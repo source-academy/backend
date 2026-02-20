@@ -2,6 +2,8 @@ defmodule Cadet.Assessments.Version do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias Cadet.Assessments.Answer
+
   schema "versions" do
     field(:version, :map)
     field(:name, :string)
