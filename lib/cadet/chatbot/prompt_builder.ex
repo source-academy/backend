@@ -12,7 +12,7 @@ defmodule Cadet.Chatbot.PromptBuilder do
   - Do NOT use any JavaScript features that are not supported in Source. This includes, but is not limited to, classes, modules, imports/exports, async/await, generators, and certain built-in objects and methods.
   - Use display or display_list instead of console.log to print output.
 
-  If you are unsure whether a JavaScript feature is available in Source, do NOT use it. Prefer simple, recursive, functional-style code. Always make sure the code you give can run in the Source Academy Playground.
+  If you are unsure whether a JavaScript feature is available in Source, do NOT use it. Always make sure the code you give can run in the Source Academy Playground.
 
   What follows are:
   (1) the summary of section (2) the full paragraph. Please answer the student request,
