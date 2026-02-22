@@ -71,9 +71,8 @@ defmodule Mix.Tasks.Cadet.Token do
         user
       else
         role_capitalized = String.capitalize("#{role}")
-
         %User{}
-        |> User.changeset(%{name: "Test#{role_capitalized}", role: role})
+        |> User.changeset(%{name: "Test#{role_capitalized}", username: "test_#{role}", provider: "test"})
         |> Repo.insert!()
       end
     end
