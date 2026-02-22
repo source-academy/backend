@@ -72,6 +72,7 @@ defmodule Mix.Tasks.Cadet.Token do
         user
       else
         role_capitalized = String.capitalize("#{role}")
+<<<<<<< HEAD
 
         course =
           Course
@@ -108,6 +109,10 @@ defmodule Mix.Tasks.Cadet.Token do
           course_id: course.id,
           role: role
         })
+=======
+        %User{}
+        |> User.changeset(%{name: "Test#{role_capitalized}", username: "test_#{role}", provider: "test"})
+>>>>>>> c6485db (updated corresponding else clause)
         |> Repo.insert!()
 
         new_user
