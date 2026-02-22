@@ -111,11 +111,7 @@ defmodule Mix.Tasks.Cadet.Token do
         })
 
         %User{}
-        |> User.changeset(%{
-          name: "Test#{role_capitalized}",
-          username: "test_#{role}",
-          provider: "test"
-        })
+        |> User.changeset(%{name: "Test#{role_capitalized}", username: "test_#{role}", provider: "test"})
         |> Repo.insert!()
 
         new_user
