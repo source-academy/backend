@@ -79,8 +79,8 @@ defmodule Mix.Tasks.Cadet.Token do
               %Course{}
               |> Course.changeset(%{
                 course_name: "Test Course",
-                source_chapter: 1, source_variant:
-                "default"
+                source_chapter: 1,
+                source_variant: "default"
               })
               |> Repo.insert!()
 
