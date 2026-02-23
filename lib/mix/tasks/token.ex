@@ -19,7 +19,8 @@ defmodule Mix.Tasks.Cadet.Token do
   import Ecto.Query
   import IO.ANSI
 
-  alias Cadet.Accounts.{Role, User}
+  alias Cadet.Accounts.{CourseRegistration, Role, User}
+  alias Cadet.Courses.Course
   alias Cadet.Auth.Guardian
   alias Cadet.Repo
 
@@ -71,9 +72,25 @@ defmodule Mix.Tasks.Cadet.Token do
         user
       else
         role_capitalized = String.capitalize("#{role}")
-        %User{}
-        |> User.changeset(%{name: "Test#{role_capitalized}", username: "test_#{role}", provider: "test"})
+
+        course = case Repo.one(Course) do
+          course -> course
+          nil ->
+            %Course{}
+            |> Course.changeset(%{title: "Test Course", source_chapter: 1, source_variant: "default"})
+            |> Repo.insert!()
+        end
+
+        new_user =
+          %User{}
+          |> User.changeset(%{name: "Test#{role_capitalized}", username: "test_#{role}", provider: "test"})
+          |> Repo.insert!()
+
+        %CourseRegistration{}
+        |> CourseRegistration.changeset(%{user_id: new_user.id, course_id: course.id, role: role})
         |> Repo.insert!()
+
+        new_user
       end
     end
   end
