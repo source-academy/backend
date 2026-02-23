@@ -79,7 +79,8 @@ defmodule Mix.Tasks.Cadet.Token do
             |> Course.changeset(%{
               course_name: "Test Course",
               source_chapter: 1, source_variant:
-              "default"})
+              "default"
+            })
             |> Repo.insert!()
 
           course -> course
@@ -89,15 +90,17 @@ defmodule Mix.Tasks.Cadet.Token do
           %User{}
           |> User.changeset(%{
             name: "Test#{role_capitalized}",
-             username: "test_#{role}",
-              provider: "test"})
+            username: "test_#{role}",
+            provider: "test"
+          })
           |> Repo.insert!()
 
         %CourseRegistration{}
         |> CourseRegistration.changeset(%{
           user_id: new_user.id,
           course_id: course.id,
-          role: role})
+          role: role
+        })
         |> Repo.insert!()
 
         new_user
