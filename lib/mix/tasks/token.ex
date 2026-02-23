@@ -76,18 +76,28 @@ defmodule Mix.Tasks.Cadet.Token do
         course = case Repo.one(Course) do
           nil ->
             %Course{}
-            |> Course.changeset(%{course_name: "Test Course", source_chapter: 1, source_variant: "default"})
+            |> Course.changeset(%{
+              course_name: "Test Course",
+              source_chapter: 1, source_variant:
+              "default"})
             |> Repo.insert!()
+
           course -> course
         end
 
         new_user =
           %User{}
-          |> User.changeset(%{name: "Test#{role_capitalized}", username: "test_#{role}", provider: "test"})
+          |> User.changeset(%{
+            name: "Test#{role_capitalized}",
+             username: "test_#{role}",
+              provider: "test"})
           |> Repo.insert!()
 
         %CourseRegistration{}
-        |> CourseRegistration.changeset(%{user_id: new_user.id, course_id: course.id, role: role})
+        |> CourseRegistration.changeset(%{
+          user_id: new_user.id,
+          course_id: course.id,
+          role: role})
         |> Repo.insert!()
 
         new_user
