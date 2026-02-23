@@ -74,7 +74,12 @@ defmodule Mix.Tasks.Cadet.Token do
         role_capitalized = String.capitalize("#{role}")
 
         course =
-          case Repo.one(Course) do
+          Course
+          |> first
+          |> Repo.one()
+
+        course =
+          case course do
             nil ->
               %Course{}
               |> Course.changeset(%{
