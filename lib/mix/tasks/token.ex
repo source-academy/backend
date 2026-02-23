@@ -72,7 +72,6 @@ defmodule Mix.Tasks.Cadet.Token do
         user
       else
         role_capitalized = String.capitalize("#{role}")
-<<<<<<< HEAD
 
         course =
           Course
