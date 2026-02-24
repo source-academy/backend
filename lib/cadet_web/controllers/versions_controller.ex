@@ -1,4 +1,4 @@
-defmodule CadetWeb.VersionController do
+defmodule CadetWeb.VersionsController do
   @moduledoc """
   Handles code versioning and history
   """
@@ -17,8 +17,11 @@ defmodule CadetWeb.VersionController do
            {:question, Assessments.get_question(question_id)},
          {:versions, versions} <-
           {:versions, Assessments.get_version(question, course_reg)} do
-      # TODO
-      # render()
+
+      conn
+      |> put_status(:ok)
+      |> put_resp_content_type("application/json")
+      |> render("index.json", versions: versions)
     else
       {:question, nil} ->
         conn
@@ -27,7 +30,7 @@ defmodule CadetWeb.VersionController do
     end
   end
 
-  def save(conn, _params) do
+  def save(conn, %{"questionid" => question_id, "version" => version}) do
     # TODO
 
     text(conn, "save")

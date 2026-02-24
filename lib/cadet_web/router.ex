@@ -101,15 +101,15 @@ defmodule CadetWeb.Router do
     post("/assessments/:assessmentid/submit", AssessmentsController, :submit)
     post("/assessments/question/:questionid/answer", AnswerController, :submit)
 
-    get("/question/:questionid/version/history", VersionController, :history)
-    post("/question/:questionid/version/save", VersionController, :save)
-    put("/question/:questionid/version/name", VersionController, :name)
-
     post(
       "/assessments/question/:questionid/answerLastModified",
       AnswerController,
       :check_last_modified
     )
+
+    get("/assessments/question/:questionid/version/history", VersionsController, :history)
+    post("/assessments/question/:questionid/version/save", VersionsController, :save)
+    put("/assessments/question/:questionid/version/name", VersionsController, :name)
 
     get("/achievements", IncentivesController, :index_achievements)
     get("/self/goals", IncentivesController, :index_goals)
