@@ -12,14 +12,19 @@ defmodule Cadet.AIComments.AIComment do
     field(:response, :string)
     field(:error, :string)
     field(:final_comment, :string)
+    field(:selected_indices, {:array, :integer})
+    field(:finalized_at, :utc_datetime)
 
     belongs_to(:answer, Cadet.Assessments.Answer)
+    belongs_to(:finalized_by, Cadet.Accounts.User, foreign_key: :finalized_by_id)
+
+    has_many(:versions, Cadet.AIComments.AICommentVersion)
 
     timestamps()
   end
 
   @required_fields ~w(answer_id raw_prompt answers_json)a
-  @optional_fields ~w(response error final_comment)a
+  @optional_fields ~w(response error final_comment selected_indices finalized_by_id finalized_at)a
 
   def changeset(ai_comment, attrs) do
     ai_comment

@@ -5,7 +5,7 @@ defmodule Cadet.AIComments do
 
   import Ecto.Query
   alias Cadet.Repo
-  alias Cadet.AIComments.AIComment
+  alias Cadet.AIComments.{AIComment, AICommentVersion}
 
   @doc """
   Creates a new AI comment log entry.
@@ -73,5 +73,78 @@ defmodule Cadet.AIComments do
         |> AIComment.changeset(attrs)
         |> Repo.update()
     end
+  end
+
+  @doc """
+  Saves selected comment indices and finalization metadata for an AI comment.
+  """
+  def save_selected_comments(answer_id, selected_indices, finalized_by_id) do
+    case get_latest_ai_comment(answer_id) do
+      nil ->
+        {:error, :not_found}
+
+      comment ->
+        comment
+        |> AIComment.changeset(%{
+          selected_indices: selected_indices,
+          finalized_by_id: finalized_by_id,
+          finalized_at: DateTime.truncate(DateTime.utc_now(), :second)
+        })
+        |> Repo.update()
+    end
+  end
+
+  @doc """
+  Creates a new version entry for a specific comment index.
+  Automatically determines the next version number.
+  """
+  def create_comment_version(ai_comment_id, comment_index, content, editor_id, diff \\ %{}) do
+    next_version =
+      Repo.one(
+        from(v in AICommentVersion,
+          where: v.ai_comment_id == ^ai_comment_id and v.comment_index == ^comment_index,
+          select: coalesce(max(v.version_number), 0)
+        )
+      ) + 1
+
+    %AICommentVersion{}
+    |> AICommentVersion.changeset(
+      Map.merge(
+        %{
+          ai_comment_id: ai_comment_id,
+          comment_index: comment_index,
+          version_number: next_version,
+          content: content,
+          editor_id: editor_id
+        },
+        diff
+      )
+    )
+    |> Repo.insert()
+  end
+
+  @doc """
+  Gets all versions for a specific AI comment, ordered by comment_index and version_number.
+  """
+  def get_comment_versions(ai_comment_id) do
+    Repo.all(
+      from(v in AICommentVersion,
+        where: v.ai_comment_id == ^ai_comment_id,
+        order_by: [asc: v.comment_index, asc: v.version_number]
+      )
+    )
+  end
+
+  @doc """
+  Gets the latest version for a specific comment index.
+  """
+  def get_latest_version(ai_comment_id, comment_index) do
+    Repo.one(
+      from(v in AICommentVersion,
+        where: v.ai_comment_id == ^ai_comment_id and v.comment_index == ^comment_index,
+        order_by: [desc: v.version_number],
+        limit: 1
+      )
+    )
   end
 end
