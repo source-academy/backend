@@ -1284,7 +1284,8 @@ defmodule Cadet.Assessments do
     with {:ok, _team} <- find_team(question.assessment.id, cr_id),
          {:ok, submission} <- find_or_create_submission(cr, question.assessment),
          {:status, true} <- {:status, force_submit or submission.status != :submitted},
-         {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
+         {:ok, answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id),
+         {:ok, _version} <- insert_version(question, answer, raw_answer) do
       Logger.info("Successfully answered question #{question.id} for user #{cr_id}")
       update_submission_status_router(submission, question)
 
@@ -3635,4 +3636,87 @@ defmodule Cadet.Assessments do
         |> Repo.all()
     end
   end
+
+  def save_version(
+    question = %Question{},
+    cr = %CourseRegistration{id: cr_id},
+    raw_version
+  ) do
+    if question.type == :voting do
+      {:error, {:bad_request, "Cannot save version for voting question"}}
+    end
+
+    with {:ok, _team} <- find_team(question.assessment.id, cr_id),
+         {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+         {:ok, answer} <- find_or_create_answer(question, submission, raw_version),
+         {:ok, _version} <- insert_version(question, answer, raw_version) do
+      Logger.info("Successfully saved version for answer #{question.id} for user #{cr_id}")
+
+      {:ok, nil} # placeholder
+    else
+        {:error, :team_not_found} ->
+          Logger.error("Team not found for question #{question.id} and user #{cr_id}")
+          {:error, {:bad_request, "Your existing Team has been deleted!"}}
+    end
+
+    {:ok, nil}
+  end
+
+  defp find_or_create_answer(
+    question = %Question{},
+    submission = %Submission{},
+    raw_version
+  ) do
+    case find_answer(question, submission) do
+      {:ok, answer} -> {:ok, answer}
+      {:error, _} -> create_new_answer(question, submission, raw_version)
+    end
+  end
+
+  defp find_answer(question = %Question{}, submission = %Submission{}) do
+    answer =
+      Answer
+      |> where(submission_id: ^submission.id)
+      |> where(question_id: ^question.id)
+      |> Repo.one()
+
+    if answer do
+      {:ok, answer}
+    else
+      {:error, nil}
+    end
+  end
+
+  defp create_new_answer(
+    question = %Question{},
+    submission = %Submission{},
+    raw_version
+  ) do
+    answer_content = build_answer_content(raw_version, question.type)
+
+    %Answer{}
+    |> Answer.changeset(%{
+      answer: answer_content,
+      question_id: question.id,
+      submission_id: submission.id,
+      type: question.type
+    })
+    |> Repo.insert()
+  end
+
+  defp insert_version(
+    question = %Question{},
+    answer = %Answer{},
+    raw_version
+  ) do
+    version_content = build_answer_content(raw_version, question.type)
+
+    %Version{}
+    |> Version.changeset(%{
+      version: version_content,
+      answer_id: answer.id
+    })
+    |> Repo.insert()
+  end
+
 end

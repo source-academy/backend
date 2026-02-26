@@ -18,7 +18,7 @@ defmodule Cadet.Assessments.Version do
   @doc false
   def changeset(version, attrs) do
     version
-    |> cast(attrs, [:version, :name, :restored])
-    |> validate_required([:version, :restored])
+    |> cast(attrs, [:version, :name, :restored, :answer_id])
+    |> validate_required([:version, :restored, :answer_id])
   end
 end
