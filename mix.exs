@@ -76,7 +76,7 @@ defmodule Cadet.Mixfile do
       {:httpoison, "~> 2.3", override: true},
       {:jason, "~> 1.2"},
       {:openai, "~> 0.6.2"},
-      {:openid_connect, "~> 0.2"},
+      {:openid_connect, "~> 1.0"},
       {:phoenix, "~> 1.5"},
       {:phoenix_view, "~> 2.0"},
       {:phoenix_ecto, "~> 4.0"},
