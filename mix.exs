@@ -71,7 +71,7 @@ defmodule Cadet.Mixfile do
       {:ex_machina, "~> 2.3"},
       {:ex_rated, "~> 2.0"},
       {:guardian, "~> 2.0"},
-      {:guardian_db, "~> 2.0"},
+      {:guardian_db, "~> 3.0"},
       {:hackney, "~> 1.6"},
       {:httpoison, "~> 2.3", override: true},
       {:jason, "~> 1.2"},
