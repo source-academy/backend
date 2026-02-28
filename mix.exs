@@ -99,7 +99,7 @@ defmodule Cadet.Mixfile do
       {:oban, "~> 2.13"},
 
       # development dependencies
-      {:configparser_ex, "~> 4.0", only: [:dev, :test]},
+      {:configparser_ex, "~> 5.0", only: [:dev, :test]},
       {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:faker, "~> 0.10", only: [:dev, :test]},
