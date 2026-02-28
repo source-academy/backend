@@ -12,12 +12,25 @@ defmodule Cadet.Autograder.LambdaWorker do
   alias Cadet.Autograder.ResultStoreWorker
   alias Cadet.Assessments.{Answer, Question}
 
+  @type entrypoint_file :: String.t()
+
   @doc """
   This Que callback transforms an input of %{question: %Question{}, answer: %Answer{}} into
   the correct shape to dispatch to lambda, waits for the response, parses it, and enqueues a
   storage job.
   """
-  def perform(params = %{answer: answer = %Answer{}, question: %Question{}}) do
+  def perform(%{
+        base_question: base_question = %Question{},
+        questions: questions,
+        answers: answers,
+        answer: answer = %Answer{}
+      }) do
+    params = %{
+      base_question: base_question,
+      questions: questions,
+      answers: answers
+    }
+
     lambda_params = build_request_params(params)
 
     if Enum.empty?(lambda_params.testcases) do
@@ -42,7 +55,15 @@ defmodule Cadet.Autograder.LambdaWorker do
     end
   end
 
-  def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do
+  def on_failure(
+        %{
+          base_question: base_question = %Question{},
+          questions: questions,
+          answers: answers,
+          answer: answer = %Answer{}
+        },
+        error
+      ) do
     error_message =
       "Failed to get autograder result. answer_id: #{answer.id}, error: #{inspect(error, pretty: true)}"
 
@@ -74,28 +95,48 @@ defmodule Cadet.Autograder.LambdaWorker do
     )
   end
 
-  def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
-    question_content = question.question
-
+  # base_question is the actual question that this request grades on
+  def build_request_params(%{
+        base_question: base_question = %Question{},
+        questions: questions,
+        answers: answers
+      }) do
     {_, upcased_name_external} =
-      question.grading_library.external
+      base_question.grading_library.external
       |> Map.from_struct()
       |> Map.get_and_update(
         :name,
         &{&1, &1 |> String.upcase()}
       )
 
+    filesContent =
+      Enum.zip(questions, answers)
+      |> Enum.reduce(%{}, fn {question, answer}, acc ->
+        question_content = question.question
+        file_name = Integer.to_string(question.display_order) <> ".js"
+
+        final_answer_content =
+          (Map.get(question_content, "prepend") || "") <>
+            (Map.get(answer.answer, "code") || "") <>
+            (Map.get(question_content, "postpend") || "")
+
+        Map.put(acc, file_name, final_answer_content)
+      end)
+
+    base_question_content = base_question.question
+    # test
     %{
-      prependProgram: Map.get(question_content, "prepend", ""),
-      studentProgram: Map.get(answer.answer, "code"),
-      postpendProgram: Map.get(question_content, "postpend", ""),
+      files: filesContent,
+      # entrypointFile is the base question's question number
+      entrypointFile: Integer.to_string(base_question_content.display_order) <> ".js",
       testcases:
-        Map.get(question_content, "public", []) ++
-          Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", []),
+        Map.get(base_question_content, "public", []) ++
+          Map.get(base_question_content, "opaque", []) ++
+          Map.get(base_question_content, "secret", []),
       library: %{
-        chapter: question.grading_library.chapter,
+        chapter: base_question.grading_library.chapter,
         external: upcased_name_external,
-        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
+        globals: Enum.map(base_question.grading_library.globals, fn {k, v} -> [k, v] end)
       }
     }
   end
