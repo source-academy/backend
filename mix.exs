@@ -94,7 +94,7 @@ defmodule Cadet.Mixfile do
       # notifiations system dependencies
       {:phoenix_html, "~> 4.2"},
       {:bamboo, "~> 2.5.0"},
-      {:bamboo_ses, "~> 0.4.1"},
+      {:bamboo_ses, "~> 0.5.0"},
       {:bamboo_phoenix, "~> 1.0.0"},
       {:oban, "~> 2.13"},
 
