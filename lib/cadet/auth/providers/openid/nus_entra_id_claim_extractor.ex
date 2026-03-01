@@ -20,8 +20,6 @@ defmodule Cadet.Auth.Providers.NusEntraIdClaimExtractor do
 
   defp check_allowed_domain(claims) do
     domain = Map.get(claims, "ExtensionAttribute6")
-    # TODO: Remove log
-    IO.inspect({:domain, domain})
     domain in @allowed_domains
   end
 
