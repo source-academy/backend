@@ -20,7 +20,8 @@ defmodule Cadet.Assessments.Query do
     |> select([a, q], %Assessment{
       a
       | max_xp: q.max_xp,
-        question_count: q.question_count
+        question_count: q.question_count,
+        has_llm_questions: q.has_llm_questions
     })
   end
 
@@ -49,7 +50,9 @@ defmodule Cadet.Assessments.Query do
     |> select([q], %{
       assessment_id: q.assessment_id,
       max_xp: sum(q.max_xp),
-      question_count: count(q.id)
+      question_count: count(q.id),
+      has_llm_questions:
+        fragment("bool_or(? ->> 'llm_prompt' IS NOT NULL AND ? ->> 'llm_prompt' != '')", q.question, q.question)
     })
   end
 end

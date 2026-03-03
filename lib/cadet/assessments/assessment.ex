@@ -21,6 +21,7 @@ defmodule Cadet.Assessments.Assessment do
     field(:question_count, :integer, virtual: true)
     field(:graded_count, :integer, virtual: true)
     field(:is_grading_published, :boolean, virtual: true)
+    field(:has_llm_questions, :boolean, virtual: true, default: false)
     field(:title, :string)
     field(:is_published, :boolean, default: false)
     field(:summary_short, :string)
