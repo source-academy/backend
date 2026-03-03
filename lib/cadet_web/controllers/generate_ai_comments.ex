@@ -4,7 +4,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   require HTTPoison
   require Logger
 
-  alias Cadet.{Assessments, AIComments, Courses}
+  alias Cadet.{Assessments, AIComments, Courses, LLMStats}
   alias CadetWeb.{AICodeAnalysisController, AICommentsHelpers}
 
   # For logging outputs to both database and file
@@ -104,7 +104,8 @@ defmodule CadetWeb.AICodeAnalysisController do
           llm_model: course.llm_model,
           llm_api_url: course.llm_api_url,
           course_prompt: course.llm_course_level_prompt,
-          assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id)
+          assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id),
+          course_id: course_id
         }
       )
     else
@@ -201,7 +202,8 @@ defmodule CadetWeb.AICodeAnalysisController do
            llm_model: llm_model,
            llm_api_url: llm_api_url,
            course_prompt: course_prompt,
-           assessment_prompt: assessment_prompt
+           assessment_prompt: assessment_prompt,
+           course_id: course_id
          }
        ) do
     # Combine prompts if llm_prompt exists
@@ -235,6 +237,16 @@ defmodule CadetWeb.AICodeAnalysisController do
           Enum.at(final_messages, 1).content,
           content
         )
+
+        # Log LLM usage for statistics
+        LLMStats.log_usage(%{
+          course_id: course_id,
+          assessment_id: answer.question.assessment_id,
+          question_id: answer.question_id,
+          answer_id: answer.id,
+          submission_id: answer.submission_id,
+          user_id: conn.assigns.course_reg.user_id
+        })
 
         comments_list = String.split(content, "|||")
 
