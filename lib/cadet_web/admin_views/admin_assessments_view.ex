@@ -32,7 +32,8 @@ defmodule CadetWeb.AdminAssessmentsView do
       maxTeamSize: :max_team_size,
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter,
-      isVotingPublished: :is_voting_published
+      isVotingPublished: :is_voting_published,
+      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt != nil)
     })
   end
 

@@ -244,6 +244,12 @@ defmodule CadetWeb.Router do
       :save_chosen_comments
     )
 
+    # LLM Statistics & Feedback (per-assessment)
+    get("/llm-stats/:assessment_id", AdminLLMStatsController, :assessment_stats)
+    get("/llm-stats/:assessment_id/feedback", AdminLLMStatsController, :get_feedback)
+    post("/llm-stats/:assessment_id/feedback", AdminLLMStatsController, :submit_feedback)
+    get("/llm-stats/:assessment_id/:question_id", AdminLLMStatsController, :question_stats)
+
     get("/users", AdminUserController, :index)
     get("/users/teamformation", AdminUserController, :get_students)
     put("/users", AdminUserController, :upsert_users_and_groups)
