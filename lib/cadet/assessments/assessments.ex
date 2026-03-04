@@ -3719,4 +3719,40 @@ defmodule Cadet.Assessments do
     |> Repo.insert()
   end
 
+  def name_version(
+    question = %Question{},
+    cr = %CourseRegistration{id: cr_id},
+    version_id,
+    name
+  ) do
+    {:ok, team} = find_team(question.assessment.id, cr.id)
+
+    version = case team do
+      %Team{} ->
+        Version
+        |> join(:inner, [v], a in assoc(v, :answer))
+        |> join(:inner, [v, a], s in assoc(a, :submission))
+        |> where([v, a, s], v.id == ^version_id)
+        |> where([v, a, s], s.team_id == ^team.id)
+        |> Repo.one()
+
+      nil ->
+        Version
+        |> join(:inner, [v], a in assoc(v, :answer))
+        |> join(:inner, [v, a], s in assoc(a, :submission))
+        |> where([v, a, s], v.id == ^version_id)
+        |> where([v, a, s], s.student_id == ^cr.id)
+        |> Repo.one()
+    end
+
+    case version do
+      nil -> {:error, {:not_found, "Version not found"}}
+      version ->
+        version
+        |> Version.changeset(%{name: name})
+        |> Repo.update()
+    end
+
+  end
+
 end

@@ -50,9 +50,27 @@ defmodule CadetWeb.VersionsController do
     end
   end
 
-  def name(conn, _params) do
-    # TODO
+  def name(conn, %{
+    "questionid" => question_id,
+    "versionid" => version_id,
+    "name" => name
+  }) do
+    course_reg = conn.assigns[:course_reg]
 
-    text(conn, "save")
+    with {:question, question} when not is_nil(question) <-
+           {:question, Assessments.get_question(question_id)},
+         {:ok, _nil} <- Assessments.name_version(question, course_reg, version_id, name) do
+      text(conn, "OK")
+    else
+      {:question, nil} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Question not found")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+    end
   end
 end

@@ -109,7 +109,7 @@ defmodule CadetWeb.Router do
 
     get("/assessments/question/:questionid/version/history", VersionsController, :history)
     post("/assessments/question/:questionid/version/save", VersionsController, :save)
-    put("/assessments/question/:questionid/version/name", VersionsController, :name)
+    put("/assessments/question/:questionid/version/:versionid/name", VersionsController, :name)
 
     get("/achievements", IncentivesController, :index_achievements)
     get("/self/goals", IncentivesController, :index_goals)
