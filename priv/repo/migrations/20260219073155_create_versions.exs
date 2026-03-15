@@ -25,7 +25,10 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
             answer: a.answer,
             inserted_at: a.inserted_at,
             updated_at: a.updated_at
-          }
+          },
+          join: q in "questions",
+          on: q.id == a.question_id,
+          where: q.type != "voting"
         )
         |> repo().all()
 
