@@ -1,0 +1,74 @@
+[
+  {
+    "id": "lecture-L1A",
+    "title": "Lecture 1A",
+    "description": "Lecture 1 Part A",
+    "doc_type": "lecture",
+    "year": null,
+    "week": 1,
+    "s3_key": "lecture/lecture-L1A.print.pdf"
+  },
+  {
+    "id": "lecture-L1B",
+    "title": "Lecture 1B",
+    "description": "Lecture 1 Part B",
+    "doc_type": "lecture",
+    "year": null,
+    "week": 1,
+    "s3_key": "lecture/lecture-L1B.print.pdf"
+  },
+  {
+    "id": "lecture-L2A",
+    "title": "Lecture 2A",
+    "description": "Lecture 2 Part A",
+    "doc_type": "lecture",
+    "year": null,
+    "week": 2,
+    "s3_key": "lecture/lecture-L2A.print.pdf"
+  },
+  {
+    "id": "lecture-L2B",
+    "title": "Lecture 2B",
+    "description": "Lecture 2 Part B",
+    "doc_type": "lecture",
+    "year": null,
+    "week": 2,
+    "s3_key": "lecture/lecture-L2B.print.pdf"
+  },
+  {
+    "id": "lecture-L3A",
+    "title": "Lecture 3A",
+    "description": "Lecture 3 Part A",
+    "doc_type": "lecture",
+    "year": null,
+    "week": 3,
+    "s3_key": "lecture/lecture-L3A.print.pdf"
+  },
+  {
+    "id": "midterm-2223s1-solutions",
+    "title": "Midterm AY2022/23 S1 Solutions",
+    "description": "Midterm solutions for AY2022/2023 Semester 1",
+    "doc_type": "exam",
+    "year": 2022,
+    "week": null,
+    "s3_key": "past-year-midterms/midterm_2223s1_solutions.pdf"
+  },
+  {
+    "id": "midterm-2324s1-solutions",
+    "title": "Midterm AY2023/24 S1 Solutions",
+    "description": "Midterm solutions for AY2023/2024 Semester 1",
+    "doc_type": "exam",
+    "year": 2023,
+    "week": null,
+    "s3_key": "past-year-midterms/midterm_2324s1_solutions.pdf"
+  },
+  {
+    "id": "midterm-2425s1-solutions",
+    "title": "Midterm AY2024/25 S1 Solutions",
+    "description": "Midterm solutions for AY2024/2025 Semester 1",
+    "doc_type": "exam",
+    "year": 2024,
+    "week": null,
+    "s3_key": "past-year-midterms/midterm_2425s1_solutions.pdf"
+  }
+]

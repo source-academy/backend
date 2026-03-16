@@ -99,6 +99,13 @@ defmodule CadetWeb.Router do
     post("/message", ChatController, :chat)
   end
 
+  scope "/v2/rag_chat", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :rate_limit])
+
+    post("/", RagChatController, :init_chat)
+    post("/message", RagChatController, :chat)
+  end
+
   # Authenticated Pages with course
   scope "/v2/courses/:course_id", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])

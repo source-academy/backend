@@ -46,6 +46,11 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+# Configure RAG document retrieval (S3 bucket for course documents)
+config :cadet, :rag_documents,
+  bucket: "pixelbot-demo-bucket",
+  region: "us-east-1"
+
 # Configure ExAWS
 config :ex_aws,
   access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :instance_role],

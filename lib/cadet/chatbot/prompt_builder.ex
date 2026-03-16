@@ -36,4 +36,53 @@ defmodule Cadet.Chatbot.PromptBuilder do
 
     @prompt_prefix <> section_prefix <> @query_prefix <> context
   end
+
+  @routing_prompt """
+  You are a document routing assistant. Given a student's question and a list of available course documents, determine which documents are most relevant to answering the question.
+
+  Here is the list of available documents (JSON):
+  %DOCUMENT_MAP%
+
+  Instructions:
+  - Return ONLY a JSON array of document IDs that are relevant to the student's question.
+  - Select at most 5 documents.
+  - If no documents are relevant (e.g. the question is about the SICP textbook only), return an empty array: []
+  - Do NOT include any explanation, just the JSON array.
+
+  Example response: ["cs1101s-final-2023", "cs1101s-midterm-2023"]
+  Example response for no relevant documents: []
+  """
+
+  @doc """
+  Builds a system prompt for the routing LLM call (Step 1).
+  The LLM reads the document map and returns a JSON array of relevant document IDs.
+  """
+  def build_routing_prompt(document_map_json) do
+    map_string = Jason.encode!(document_map_json, pretty: true)
+    String.replace(@routing_prompt, "%DOCUMENT_MAP%", map_string)
+  end
+
+  @rag_answer_prompt """
+  You are a competent tutor assisting a computer science student on the Source Academy platform.
+
+  You have been provided with relevant course documents (exams, lecture slides, tutorial sheets, or recitation sheets) as PDF attachments. Use these documents to answer the student's question.
+
+  CRITICAL INSTRUCTIONS:
+  - Answer using ONLY the provided documents. Do not make up information.
+  - When citing information from a document, mention the document title and year.
+  - If the provided documents do not contain enough information to answer, say so clearly.
+  - The Source Academy platform uses the "Source" language, a restricted subset of JavaScript. When providing code examples, use valid Source language syntax.
+  - Do NOT use JavaScript features not supported in Source (classes, modules, imports/exports, async/await, generators).
+  - Use display or display_list instead of console.log.
+
+  Please answer the student's question using the attached documents.
+  """
+
+  @doc """
+  Builds a system prompt for the RAG answer generation LLM call.
+  Standalone prompt — no SICP textbook context needed.
+  """
+  def build_rag_answer_prompt do
+    @rag_answer_prompt
+  end
 end
