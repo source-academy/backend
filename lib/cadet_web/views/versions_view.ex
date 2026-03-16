@@ -12,6 +12,7 @@ defmodule CadetWeb.VersionsView do
       restored: :restored,
       restored_from: :restored_from,
       answer_id: :answer_id,
+      inserted_at: :inserted_at,
       updated_at: :updated_at,
       version: :version
     })
