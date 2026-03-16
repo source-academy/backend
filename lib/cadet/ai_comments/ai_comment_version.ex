@@ -11,8 +11,6 @@ defmodule Cadet.AIComments.AICommentVersion do
     field(:comment_index, :integer)
     field(:version_number, :integer)
     field(:content, :string)
-    field(:diff_json, :map)
-    field(:diff_unified, :string)
 
     belongs_to(:ai_comment, Cadet.AIComments.AIComment)
     belongs_to(:editor, Cadet.Accounts.User, foreign_key: :editor_id)
@@ -21,7 +19,7 @@ defmodule Cadet.AIComments.AICommentVersion do
   end
 
   @required_fields ~w(ai_comment_id comment_index version_number content)a
-  @optional_fields ~w(editor_id diff_json diff_unified)a
+  @optional_fields ~w(editor_id)a
 
   def changeset(version, attrs) do
     version
