@@ -72,7 +72,7 @@ defmodule Cadet.Mixfile do
       {:ex_rated, "~> 2.0"},
       {:guardian, "~> 2.0"},
       {:guardian_db, "~> 2.0"},
-      {:hackney, "~> 1.6"},
+      {:hackney, "~> 3.0"},
       {:httpoison, "~> 2.3", override: true},
       {:jason, "~> 1.2"},
       {:openai, "~> 0.6.2"},
