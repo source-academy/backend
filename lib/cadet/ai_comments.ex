@@ -41,24 +41,6 @@ defmodule Cadet.AIComments do
   end
 
   @doc """
-  Updates the final comment for a specific submission and question.
-  Returns the most recent comment entry for that submission/question.
-  """
-  def update_final_comment(answer_id, final_comment) do
-    comment = get_latest_ai_comment(answer_id)
-
-    case comment do
-      nil ->
-        {:error, :not_found}
-
-      _ ->
-        comment
-        |> AIComment.changeset(%{final_comment: final_comment})
-        |> Repo.update()
-    end
-  end
-
-  @doc """
   Updates an existing AI comment with new attributes.
   """
   def update_ai_comment(id, attrs) do
@@ -98,7 +80,7 @@ defmodule Cadet.AIComments do
   Creates a new version entry for a specific comment index.
   Automatically determines the next version number.
   """
-  def create_comment_version(ai_comment_id, comment_index, content, editor_id, diff \\ %{}) do
+  def create_comment_version(ai_comment_id, comment_index, content, editor_id) do
     next_version =
       Repo.one(
         from(v in AICommentVersion,
@@ -108,18 +90,13 @@ defmodule Cadet.AIComments do
       ) + 1
 
     %AICommentVersion{}
-    |> AICommentVersion.changeset(
-      Map.merge(
-        %{
-          ai_comment_id: ai_comment_id,
-          comment_index: comment_index,
-          version_number: next_version,
-          content: content,
-          editor_id: editor_id
-        },
-        diff
-      )
-    )
+    |> AICommentVersion.changeset(%{
+      ai_comment_id: ai_comment_id,
+      comment_index: comment_index,
+      version_number: next_version,
+      content: content,
+      editor_id: editor_id
+    })
     |> Repo.insert()
   end
 

@@ -32,10 +32,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         end
 
       existing_comment ->
-        # Convert the existing comment struct to a map before merging
-        updated_attrs = Map.merge(Map.from_struct(existing_comment), attrs)
-
-        case AIComments.update_ai_comment(existing_comment.id, updated_attrs) do
+        case AIComments.update_ai_comment(existing_comment.id, attrs) do
           {:error, :not_found} ->
             Logger.error("AI comment to update not found in database")
             {:error, :not_found}
@@ -286,32 +283,12 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   @doc """
-  Saves the final comment chosen for a submission.
-  """
-  def save_final_comment(conn, %{
-        "answer_id" => answer_id,
-        "comment" => comment
-      }) do
-    case AIComments.update_final_comment(answer_id, comment) do
-      {:ok, _updated_comment} ->
-        json(conn, %{"status" => "success"})
-
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> text("Failed to save final comment")
-    end
-  end
-
-  @doc """
   Saves the chosen comment indices and optional edits for each selected comment.
   Expects: selected_indices (list of ints), edits (optional map of index => edited_text).
   """
   def save_chosen_comments(
         conn,
         params = %{
-          "submissionid" => _submission_id,
-          "questionid" => _question_id,
           "answer_id" => answer_id,
           "selected_indices" => selected_indices
         }
@@ -322,26 +299,16 @@ defmodule CadetWeb.AICodeAnalysisController do
     with ai_comment when not is_nil(ai_comment) <- AIComments.get_latest_ai_comment(answer_id),
          {:ok, _updated} <-
            AIComments.save_selected_comments(answer_id, selected_indices, editor_id) do
-      # Split the original response into individual comments
-      original_comments =
-        (ai_comment.response || "")
-        |> String.split("|||")
-        |> Enum.map(&String.trim/1)
-        |> Enum.filter(&(&1 != ""))
-
       # Create version entries for each edit
       version_results =
         Enum.map(edits, fn {index_str, edited_text} ->
           index = String.to_integer(index_str)
-          original = Enum.at(original_comments, index, "")
-          diff = compute_diff(original, edited_text)
 
           AIComments.create_comment_version(
             ai_comment.id,
             index,
             edited_text,
-            editor_id,
-            diff
+            editor_id
           )
         end)
 
@@ -367,36 +334,6 @@ defmodule CadetWeb.AICodeAnalysisController do
     end
   end
 
-  defp compute_diff(original, edited) do
-    original_tokens = tokenize(original)
-    edited_tokens = tokenize(edited)
-
-    diff = List.myers_difference(original_tokens, edited_tokens)
-
-    ops =
-      diff
-      |> Enum.flat_map(fn
-        {:eq, tokens} -> [%{op: "eq", text: Enum.join(tokens)}]
-        {:del, tokens} -> [%{op: "del", text: Enum.join(tokens)}]
-        {:ins, tokens} -> [%{op: "add", text: Enum.join(tokens)}]
-      end)
-
-    unified =
-      Enum.map_join(ops, fn
-        %{op: "eq", text: text} -> " " <> text
-        %{op: "del", text: text} -> "-" <> text
-        %{op: "add", text: text} -> "+" <> text
-      end)
-
-    %{diff_json: %{"ops" => ops}, diff_unified: unified}
-  end
-
-  # Splits text into tokens at word boundaries, preserving whitespace and punctuation
-  # as separate tokens so the diff is word-level accurate.
-  defp tokenize(text) do
-    Regex.split(~r/\b/, text, include_captures: false, trim: true)
-  end
-
   swagger_path :generate_ai_comments do
     post("/courses/{course_id}/admin/generate-comments/{answer_id}")
 
@@ -419,30 +356,8 @@ defmodule CadetWeb.AICodeAnalysisController do
     response(403, "LLM grading is not enabled for this course")
   end
 
-  swagger_path :save_final_comment do
-    post("/courses/{course_id}/admin/save-final-comment/{answer_id}")
-
-    summary("Save the final comment chosen for a submission.")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      course_id(:path, :integer, "course id", required: true)
-      answer_id(:path, :integer, "answer id", required: true)
-      comment(:body, :string, "The final comment to save", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:SaveFinalComment))
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorized")
-    response(403, "Forbidden")
-  end
-
   swagger_path :save_chosen_comments do
-    post("/courses/{course_id}/admin/save-chosen-comments/{submissionid}/{questionid}")
+    post("/courses/{course_id}/admin/save-chosen-comments/{answer_id}")
 
     summary("Save chosen comment indices and optional edits for a submission.")
 
@@ -453,8 +368,7 @@ defmodule CadetWeb.AICodeAnalysisController do
 
     parameters do
       course_id(:path, :integer, "course id", required: true)
-      submissionid(:path, :integer, "submission id", required: true)
-      questionid(:path, :integer, "question id", required: true)
+      answer_id(:path, :integer, "answer id", required: true)
 
       body(:body, Schema.ref(:SaveChosenCommentsBody), "Chosen comments payload", required: true)
     end
@@ -472,17 +386,9 @@ defmodule CadetWeb.AICodeAnalysisController do
             comments(:string, "AI-generated comments on the submission answers")
           end
         end,
-      SaveFinalComment:
-        swagger_schema do
-          properties do
-            status(:string, "Status of the operation")
-          end
-        end,
       SaveChosenCommentsBody:
         swagger_schema do
           properties do
-            answer_id(:integer, "The answer ID", required: true)
-
             selected_indices(Schema.ref(:IntegerArray), "Indices of chosen comments",
               required: true
             )

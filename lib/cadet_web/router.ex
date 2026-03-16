@@ -233,13 +233,7 @@ defmodule CadetWeb.Router do
     )
 
     post(
-      "/save-final-comment/:answer_id",
-      AICodeAnalysisController,
-      :save_final_comment
-    )
-
-    post(
-      "/save-chosen-comments/:submissionid/:questionid",
+      "/save-chosen-comments/:answer_id",
       AICodeAnalysisController,
       :save_chosen_comments
     )

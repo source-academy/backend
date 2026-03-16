@@ -11,7 +11,6 @@ defmodule Cadet.AIComments.AIComment do
     field(:answers_json, :string)
     field(:response, :string)
     field(:error, :string)
-    field(:final_comment, :string)
     field(:selected_indices, {:array, :integer})
     field(:finalized_at, :utc_datetime)
 
@@ -24,7 +23,7 @@ defmodule Cadet.AIComments.AIComment do
   end
 
   @required_fields ~w(answer_id raw_prompt answers_json)a
-  @optional_fields ~w(response error final_comment selected_indices finalized_by_id finalized_at)a
+  @optional_fields ~w(response error selected_indices finalized_by_id finalized_at)a
 
   def changeset(ai_comment, attrs) do
     ai_comment
