@@ -70,6 +70,7 @@ config :arc, virtual_host: true
 
 # Configures Sentry
 config :sentry,
+  client: Sentry.HackneyClient
   included_environments: [:prod],
   environment_name: Mix.env(),
   enable_source_code_context: true,
