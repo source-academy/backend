@@ -4,7 +4,7 @@ defmodule Cadet.Assessments.Assessment do
   (mission, sidequest, path, and contest)
   """
   use Cadet, :model
-  use Arc.Ecto.Schema
+  use Waffle.Ecto.Schema
 
   alias Cadet.Repo
   alias Cadet.Assessments.{AssessmentAccess, Question, SubmissionStatus, Upload}
