@@ -421,7 +421,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       SaveChosenCommentsBody:
         swagger_schema do
           properties do
-            selected_indices(Schema.ref(:IntegerArray), "Indices of chosen comments",
+            selected_indices(Schema.array(:integer), "Indices of chosen comments",
               required: true
             )
 
