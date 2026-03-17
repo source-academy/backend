@@ -19,7 +19,8 @@ defmodule Mix.Tasks.Cadet.Token do
   import Ecto.Query
   import IO.ANSI
 
-  alias Cadet.Accounts.{Role, User}
+  alias Cadet.Accounts.{CourseRegistration, Role, User}
+  alias Cadet.Courses.Course
   alias Cadet.Auth.Guardian
   alias Cadet.Repo
 
@@ -62,7 +63,8 @@ defmodule Mix.Tasks.Cadet.Token do
     if Cadet.Env.env() in @env_allow_mock do
       user =
         User
-        |> where(role: ^role)
+        |> join(:inner, [u], cr in "course_registrations", on: u.id == cr.user_id)
+        |> where([u, cr], cr.role == ^role)
         |> first
         |> Repo.one()
 
@@ -71,9 +73,44 @@ defmodule Mix.Tasks.Cadet.Token do
       else
         role_capitalized = String.capitalize("#{role}")
 
-        %User{}
-        |> User.changeset(%{name: "Test#{role_capitalized}", role: role})
+        course =
+          Course
+          |> first
+          |> Repo.one()
+
+        course =
+          case course do
+            nil ->
+              %Course{}
+              |> Course.changeset(%{
+                course_name: "Test Course",
+                source_chapter: 1,
+                source_variant: "default"
+              })
+              |> Repo.insert!()
+
+            course ->
+              course
+          end
+
+        new_user =
+          %User{}
+          |> User.changeset(%{
+            name: "Test#{role_capitalized}",
+            username: "test_#{role}",
+            provider: "test"
+          })
+          |> Repo.insert!()
+
+        %CourseRegistration{}
+        |> CourseRegistration.changeset(%{
+          user_id: new_user.id,
+          course_id: course.id,
+          role: role
+        })
         |> Repo.insert!()
+
+        new_user
       end
     end
   end
