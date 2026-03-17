@@ -8,8 +8,6 @@ defmodule Cadet.Repo.Migrations.CreateAiCommentVersions do
       add(:version_number, :integer, null: false, default: 1)
       add(:editor_id, references(:users, on_delete: :nilify_all))
       add(:content, :text)
-      add(:diff_json, :map)
-      add(:diff_unified, :text)
 
       timestamps()
     end
