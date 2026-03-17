@@ -310,9 +310,9 @@ defmodule CadetWeb.AICodeAnalysisController do
     with {:ok, answer_id_parsed} <- parse_answer_id(answer_id),
          ai_comment when not is_nil(ai_comment) <-
            AIComments.get_latest_ai_comment(answer_id_parsed),
+         {:ok, parsed_edits} <- parse_edits(edits),
          {:ok, _updated} <-
-           AIComments.save_selected_comments(answer_id_parsed, selected_indices, editor_id),
-         {:ok, parsed_edits} <- parse_edits(edits) do
+           AIComments.save_selected_comments(answer_id_parsed, selected_indices, editor_id) do
       # Create version entries for each edit
       version_results =
         Enum.map(parsed_edits, fn {index, edited_text} ->
@@ -364,8 +364,6 @@ defmodule CadetWeb.AICodeAnalysisController do
       _ -> {:error, :invalid_answer_id}
     end
   end
-
-  defp parse_answer_id(_), do: {:error, :invalid_answer_id}
 
   defp parse_edits(edits) when is_map(edits) do
     edits
