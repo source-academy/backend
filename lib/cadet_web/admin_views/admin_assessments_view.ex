@@ -33,7 +33,7 @@ defmodule CadetWeb.AdminAssessmentsView do
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter,
       isVotingPublished: :is_voting_published,
-      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt != nil)
+      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""])
     })
   end
 

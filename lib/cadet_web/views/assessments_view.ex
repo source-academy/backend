@@ -36,7 +36,7 @@ defmodule CadetWeb.AssessmentsView do
       hasTokenCounter: :has_token_counter,
       isVotingPublished: :is_voting_published,
       hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay,
-      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt != nil)
+      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""])
     })
   end
 

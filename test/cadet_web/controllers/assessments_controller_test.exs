@@ -85,7 +85,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "hasTokenCounter" => &1.has_token_counter,
               "isVotingPublished" => false,
               "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
-              "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt != nil
+              "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]
             }
           )
 
@@ -177,7 +177,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "hasTokenCounter" => &1.has_token_counter,
             "isVotingPublished" => false,
             "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
-            "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt != nil,
+            "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""],
           }
         )
 
@@ -300,7 +300,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
                 else
                   &1.is_published
                 end,
-              "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt != nil
+              "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]
             }
           )
 
