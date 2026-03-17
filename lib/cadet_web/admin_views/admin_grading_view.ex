@@ -1,6 +1,7 @@
 defmodule CadetWeb.AdminGradingView do
   use CadetWeb, :view
 
+  alias Cadet.AIComments
   import CadetWeb.AssessmentsHelpers
   alias CadetWeb.AICodeAnalysisController
 
@@ -172,14 +173,34 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   defp extract_ai_comments_per_answer(id, ai_comments) do
-    matching_comment =
+    latest_comment =
       ai_comments
-      # Equivalent to fn comment -> comment.question_id == question_id end
-      |> Enum.find(&(&1.answer_id == id))
+      |> Enum.filter(&(&1.answer_id == id))
+      |> case do
+        [] -> nil
+        comments -> Enum.max_by(comments, & &1.inserted_at, NaiveDateTime)
+      end
 
-    case matching_comment do
+    case latest_comment do
       nil -> nil
-      comment -> %{response: comment.response, insertedAt: comment.inserted_at}
+      comment ->
+        selected_indices = comment.selected_indices || []
+
+        selected_edits =
+          selected_indices
+          |> Enum.reduce(%{}, fn index, acc ->
+            case AIComments.get_latest_version(comment.id, index) do
+              nil -> acc
+              version -> Map.put(acc, index, version.content)
+            end
+          end)
+
+        %{
+          response: comment.response,
+          insertedAt: comment.inserted_at,
+          selectedIndices: selected_indices,
+          selectedEdits: selected_edits
+        }
     end
   end
 
