@@ -34,7 +34,7 @@ defmodule CadetWeb.AdminLLMStatsController do
   GET /admin/llm-stats/:assessment_id/feedback
   Returns feedback for an assessment, optionally filtered by question_id query param.
   """
-  def get_feedback(conn, %{"course_id" => course_id, "assessment_id" => assessment_id} = params) do
+  def get_feedback(conn, params = %{"course_id" => course_id, "assessment_id" => assessment_id}) do
     question_id = Map.get(params, "question_id")
     feedback = LLMStats.get_feedback(course_id, assessment_id, question_id)
     json(conn, feedback)
@@ -46,7 +46,7 @@ defmodule CadetWeb.AdminLLMStatsController do
   """
   def submit_feedback(
         conn,
-        %{"course_id" => course_id, "assessment_id" => assessment_id} = params
+        params = %{"course_id" => course_id, "assessment_id" => assessment_id}
       ) do
     user = conn.assigns[:current_user]
 

@@ -44,7 +44,8 @@ defmodule Cadet.Assessments.QueryTest do
     )
 
     result =
-      Query.all_assessments_with_aggregates(course.id)
+      course.id
+      |> Query.all_assessments_with_aggregates()
       |> where(id: ^assessment.id)
       |> Repo.one()
 
@@ -66,7 +67,8 @@ defmodule Cadet.Assessments.QueryTest do
     )
 
     result =
-      Query.all_assessments_with_aggregates(course.id)
+      course.id
+      |> Query.all_assessments_with_aggregates()
       |> where(id: ^assessment.id)
       |> Repo.one()
 

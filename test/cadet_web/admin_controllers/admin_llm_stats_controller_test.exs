@@ -1,9 +1,7 @@
 defmodule CadetWeb.AdminLLMStatsControllerTest do
   use CadetWeb.ConnCase
 
-  alias Cadet.LLMStats
-  alias Cadet.Repo
-  alias Cadet.Courses.Course
+  alias Cadet.{LLMStats, Repo, Courses.Course}
 
   describe "GET /v2/courses/:course_id/admin/llm-stats/:assessment_id" do
     test "401 when not logged in", %{conn: conn} do

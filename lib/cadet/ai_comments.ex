@@ -81,36 +81,39 @@ defmodule Cadet.AIComments do
   Automatically determines the next version number.
   """
   def create_comment_version(ai_comment_id, comment_index, content, editor_id) do
-    Repo.transaction(fn ->
-      # Serialize version creation per (ai_comment_id, comment_index) to avoid duplicate version numbers.
-      case Repo.query("SELECT pg_advisory_xact_lock($1, $2)", [ai_comment_id, comment_index]) do
-        {:ok, _} ->
-          next_version =
-            Repo.one(
-              from(v in AICommentVersion,
-                where: v.ai_comment_id == ^ai_comment_id and v.comment_index == ^comment_index,
-                select: coalesce(max(v.version_number), 0)
-              )
-            ) + 1
+    transaction_result =
+      Repo.transaction(fn ->
+        # Serialize version creation per (ai_comment_id, comment_index)
+        # to avoid duplicate version numbers.
+        case Repo.query("SELECT pg_advisory_xact_lock($1, $2)", [ai_comment_id, comment_index]) do
+          {:ok, _} ->
+            next_version =
+              Repo.one(
+                from(v in AICommentVersion,
+                  where: v.ai_comment_id == ^ai_comment_id and v.comment_index == ^comment_index,
+                  select: coalesce(max(v.version_number), 0)
+                )
+              ) + 1
 
-          case %AICommentVersion{}
-               |> AICommentVersion.changeset(%{
-                 ai_comment_id: ai_comment_id,
-                 comment_index: comment_index,
-                 version_number: next_version,
-                 content: content,
-                 editor_id: editor_id
-               })
-               |> Repo.insert() do
-            {:ok, version} -> version
-            {:error, changeset} -> Repo.rollback(changeset)
-          end
+            case %AICommentVersion{}
+                 |> AICommentVersion.changeset(%{
+                   ai_comment_id: ai_comment_id,
+                   comment_index: comment_index,
+                   version_number: next_version,
+                   content: content,
+                   editor_id: editor_id
+                 })
+                 |> Repo.insert() do
+              {:ok, version} -> version
+              {:error, changeset} -> Repo.rollback(changeset)
+            end
 
-        {:error, error} ->
-          Repo.rollback(error)
-      end
-    end)
-    |> case do
+          {:error, error} ->
+            Repo.rollback(error)
+        end
+      end)
+
+    case transaction_result do
       {:ok, version} -> {:ok, version}
       {:error, reason} -> {:error, reason}
     end
