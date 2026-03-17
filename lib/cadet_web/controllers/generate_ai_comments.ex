@@ -292,13 +292,15 @@ defmodule CadetWeb.AICodeAnalysisController do
           "answer_id" => answer_id,
           "selected_indices" => selected_indices
         }
-      ) do
+      )
+      when is_ecto_id(answer_id) do
     editor_id = conn.assigns.course_reg.user_id
     edits = Map.get(params, "edits", %{})
 
-    with ai_comment when not is_nil(ai_comment) <- AIComments.get_latest_ai_comment(answer_id),
+    with {:ok, answer_id_parsed} <- parse_answer_id(answer_id),
+         ai_comment when not is_nil(ai_comment) <- AIComments.get_latest_ai_comment(answer_id_parsed),
          {:ok, _updated} <-
-           AIComments.save_selected_comments(answer_id, selected_indices, editor_id),
+           AIComments.save_selected_comments(answer_id_parsed, selected_indices, editor_id),
          {:ok, parsed_edits} <- parse_edits(edits) do
       # Create version entries for each edit
       version_results =
@@ -321,6 +323,11 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> text("Failed to save some comment versions")
       end
     else
+      {:error, :invalid_answer_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid answer ID format")
+
       nil ->
         conn
         |> put_status(:not_found)
@@ -337,6 +344,17 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> text("Failed to save chosen comments")
     end
   end
+
+  defp parse_answer_id(answer_id) when is_integer(answer_id), do: {:ok, answer_id}
+
+  defp parse_answer_id(answer_id) when is_binary(answer_id) do
+    case Integer.parse(answer_id) do
+      {parsed, ""} -> {:ok, parsed}
+      _ -> {:error, :invalid_answer_id}
+    end
+  end
+
+  defp parse_answer_id(_), do: {:error, :invalid_answer_id}
 
   defp parse_edits(edits) when is_map(edits) do
     edits
