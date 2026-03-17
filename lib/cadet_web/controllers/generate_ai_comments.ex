@@ -298,12 +298,11 @@ defmodule CadetWeb.AICodeAnalysisController do
 
     with ai_comment when not is_nil(ai_comment) <- AIComments.get_latest_ai_comment(answer_id),
          {:ok, _updated} <-
-           AIComments.save_selected_comments(answer_id, selected_indices, editor_id) do
+           AIComments.save_selected_comments(answer_id, selected_indices, editor_id),
+         {:ok, parsed_edits} <- parse_edits(edits) do
       # Create version entries for each edit
       version_results =
-        Enum.map(edits, fn {index_str, edited_text} ->
-          index = String.to_integer(index_str)
-
+        Enum.map(parsed_edits, fn {index, edited_text} ->
           AIComments.create_comment_version(
             ai_comment.id,
             index,
@@ -327,12 +326,45 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> put_status(:not_found)
         |> text("AI comment not found for this answer")
 
+      {:error, :invalid_edits} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> text("Invalid edits payload")
+
       {:error, _} ->
         conn
         |> put_status(:unprocessable_entity)
         |> text("Failed to save chosen comments")
     end
   end
+
+  defp parse_edits(edits) when is_map(edits) do
+    edits
+    |> Enum.reduce_while({:ok, []}, fn {index_str, edited_text}, {:ok, acc} ->
+      case {parse_edit_index(index_str), edited_text} do
+        {{:ok, index}, edited_text} when is_binary(edited_text) ->
+          {:cont, {:ok, [{index, edited_text} | acc]}}
+
+        _ ->
+          {:halt, {:error, :invalid_edits}}
+      end
+    end)
+    |> case do
+      {:ok, parsed_edits} -> {:ok, Enum.reverse(parsed_edits)}
+      {:error, :invalid_edits} -> {:error, :invalid_edits}
+    end
+  end
+
+  defp parse_edits(_), do: {:error, :invalid_edits}
+
+  defp parse_edit_index(index_str) when is_binary(index_str) do
+    case Integer.parse(index_str) do
+      {index, ""} -> {:ok, index}
+      _ -> {:error, :invalid_edits}
+    end
+  end
+
+  defp parse_edit_index(_), do: {:error, :invalid_edits}
 
   swagger_path :generate_ai_comments do
     post("/courses/{course_id}/admin/generate-comments/{answer_id}")
