@@ -13,8 +13,8 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
       timestamps()
     end
 
-    create index(:versions, [:answer_id])
-    create index(:versions, [:restored_from])
+    create(index(:versions, [:answer_id]))
+    create(index(:versions, [:restored_from]))
 
     # Backfill data from answers table
     execute(fn ->

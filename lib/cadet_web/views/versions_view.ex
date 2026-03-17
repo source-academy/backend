@@ -17,5 +17,4 @@ defmodule CadetWeb.VersionsView do
       version: :version
     })
   end
-
 end

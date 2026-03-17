@@ -20,7 +20,16 @@ defmodule Cadet.Assessments do
     CourseRegistrations
   }
 
-  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes, Version}
+  alias Cadet.Assessments.{
+    Answer,
+    Assessment,
+    Query,
+    Question,
+    Submission,
+    SubmissionVotes,
+    Version
+  }
+
   alias Cadet.Autograder.GradingJob
   alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
@@ -3613,9 +3622,9 @@ defmodule Cadet.Assessments do
   end
 
   def get_version(
-    question = %Question{},
-    cr = %CourseRegistration{}
-  ) do
+        question = %Question{},
+        cr = %CourseRegistration{}
+      ) do
     {:ok, team} = find_team(question.assessment.id, cr.id)
 
     case team do
@@ -3638,10 +3647,10 @@ defmodule Cadet.Assessments do
   end
 
   def save_version(
-    question = %Question{},
-    cr = %CourseRegistration{id: cr_id},
-    raw_version
-  ) do
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        raw_version
+      ) do
     if question.type == :voting do
       {:error, {:bad_request, "Cannot save version for voting question"}}
     end
@@ -3652,21 +3661,22 @@ defmodule Cadet.Assessments do
          {:ok, _version} <- insert_version(question, answer, raw_version) do
       Logger.info("Successfully saved version for answer #{question.id} for user #{cr_id}")
 
-      {:ok, nil} # placeholder
+      # placeholder
+      {:ok, nil}
     else
-        {:error, :team_not_found} ->
-          Logger.error("Team not found for question #{question.id} and user #{cr_id}")
-          {:error, {:bad_request, "Your existing Team has been deleted!"}}
+      {:error, :team_not_found} ->
+        Logger.error("Team not found for question #{question.id} and user #{cr_id}")
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
     end
 
     {:ok, nil}
   end
 
   defp find_or_create_answer(
-    question = %Question{},
-    submission = %Submission{},
-    raw_version
-  ) do
+         question = %Question{},
+         submission = %Submission{},
+         raw_version
+       ) do
     case find_answer(question, submission) do
       {:ok, answer} -> {:ok, answer}
       {:error, _} -> create_new_answer(question, submission, raw_version)
@@ -3688,10 +3698,10 @@ defmodule Cadet.Assessments do
   end
 
   defp create_new_answer(
-    question = %Question{},
-    submission = %Submission{},
-    raw_version
-  ) do
+         question = %Question{},
+         submission = %Submission{},
+         raw_version
+       ) do
     answer_content = build_answer_content(raw_version, question.type)
 
     %Answer{}
@@ -3705,10 +3715,10 @@ defmodule Cadet.Assessments do
   end
 
   defp insert_version(
-    question = %Question{},
-    answer = %Answer{},
-    raw_version
-  ) do
+         question = %Question{},
+         answer = %Answer{},
+         raw_version
+       ) do
     version_content = build_answer_content(raw_version, question.type)
 
     %Version{}
@@ -3720,39 +3730,40 @@ defmodule Cadet.Assessments do
   end
 
   def name_version(
-    question = %Question{},
-    cr = %CourseRegistration{id: cr_id},
-    version_id,
-    name
-  ) do
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        version_id,
+        name
+      ) do
     {:ok, team} = find_team(question.assessment.id, cr.id)
 
-    version = case team do
-      %Team{} ->
-        Version
-        |> join(:inner, [v], a in assoc(v, :answer))
-        |> join(:inner, [v, a], s in assoc(a, :submission))
-        |> where([v, a, s], v.id == ^version_id)
-        |> where([v, a, s], s.team_id == ^team.id)
-        |> Repo.one()
+    version =
+      case team do
+        %Team{} ->
+          Version
+          |> join(:inner, [v], a in assoc(v, :answer))
+          |> join(:inner, [v, a], s in assoc(a, :submission))
+          |> where([v, a, s], v.id == ^version_id)
+          |> where([v, a, s], s.team_id == ^team.id)
+          |> Repo.one()
 
-      nil ->
-        Version
-        |> join(:inner, [v], a in assoc(v, :answer))
-        |> join(:inner, [v, a], s in assoc(a, :submission))
-        |> where([v, a, s], v.id == ^version_id)
-        |> where([v, a, s], s.student_id == ^cr.id)
-        |> Repo.one()
-    end
+        nil ->
+          Version
+          |> join(:inner, [v], a in assoc(v, :answer))
+          |> join(:inner, [v, a], s in assoc(a, :submission))
+          |> where([v, a, s], v.id == ^version_id)
+          |> where([v, a, s], s.student_id == ^cr.id)
+          |> Repo.one()
+      end
 
     case version do
-      nil -> {:error, {:not_found, "Version not found"}}
+      nil ->
+        {:error, {:not_found, "Version not found"}}
+
       version ->
         version
         |> Version.changeset(%{name: name})
         |> Repo.update()
     end
-
   end
-
 end

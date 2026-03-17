@@ -11,13 +11,14 @@ defmodule CadetWeb.VersionsController do
   def history(conn, %{"questionid" => question_id}) do
     course_reg = conn.assigns[:course_reg]
 
-    Logger.info("Fetching all versions for question #{question_id} for user #{course_reg.id} in course #{course_reg.course_id}")
+    Logger.info(
+      "Fetching all versions for question #{question_id} for user #{course_reg.id} in course #{course_reg.course_id}"
+    )
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
          {:versions, versions} <-
-          {:versions, Assessments.get_version(question, course_reg)} do
-
+           {:versions, Assessments.get_version(question, course_reg)} do
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/json")
@@ -51,10 +52,10 @@ defmodule CadetWeb.VersionsController do
   end
 
   def name(conn, %{
-    "questionid" => question_id,
-    "versionid" => version_id,
-    "name" => name
-  }) do
+        "questionid" => question_id,
+        "versionid" => version_id,
+        "name" => name
+      }) do
     course_reg = conn.assigns[:course_reg]
 
     with {:question, question} when not is_nil(question) <-
