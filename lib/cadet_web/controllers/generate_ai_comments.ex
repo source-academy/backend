@@ -235,15 +235,25 @@ defmodule CadetWeb.AICodeAnalysisController do
           content
         )
 
-        # Log LLM usage for statistics
-        LLMStats.log_usage(%{
+        usage_attrs = %{
           course_id: course_id,
           assessment_id: answer.question.assessment_id,
           question_id: answer.question_id,
           answer_id: answer.id,
           submission_id: answer.submission_id,
           user_id: conn.assigns.course_reg.user_id
-        })
+        }
+
+        # Log LLM usage for statistics (non-blocking for response generation)
+        case LLMStats.log_usage(usage_attrs) do
+          {:ok, _usage_log} ->
+            :ok
+
+          {:error, changeset} ->
+            Logger.error(
+              "Failed to log LLM usage to database: #{inspect(changeset.errors)} attrs=#{inspect(usage_attrs)}"
+            )
+        end
 
         comments_list = String.split(content, "|||")
 
