@@ -182,7 +182,9 @@ defmodule CadetWeb.AdminGradingView do
       end
 
     case latest_comment do
-      nil -> nil
+      nil ->
+        nil
+
       comment ->
         selected_indices = comment.selected_indices || []
 

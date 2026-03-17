@@ -95,7 +95,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
             "isVotingPublished" => false,
-            "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""],
+            "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]
           }
         )
 
@@ -147,7 +147,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
             "isVotingPublished" => false,
-             "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""],
+            "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]
           }
         )
 

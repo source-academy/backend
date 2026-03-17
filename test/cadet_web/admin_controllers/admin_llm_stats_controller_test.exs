@@ -26,7 +26,8 @@ defmodule CadetWeb.AdminLLMStatsControllerTest do
 
     @tag authenticate: :staff
     test "returns assessment statistics with per-question breakdown", %{conn: conn} do
-      %{assessment: assessment, question_1: question_1, question_2: question_2} = seed_usage_logs(conn)
+      %{assessment: assessment, question_1: question_1, question_2: question_2} =
+        seed_usage_logs(conn)
 
       resp =
         conn
@@ -134,7 +135,9 @@ defmodule CadetWeb.AdminLLMStatsControllerTest do
 
       resp =
         conn
-        |> get(feedback_url(conn.assigns.course_id, assessment.id), %{"question_id" => question_1.id})
+        |> get(feedback_url(conn.assigns.course_id, assessment.id), %{
+          "question_id" => question_1.id
+        })
         |> json_response(200)
 
       assert length(resp) == 1
@@ -152,7 +155,9 @@ defmodule CadetWeb.AdminLLMStatsControllerTest do
       course = insert(:course)
       assessment = insert(:assessment, course: course)
 
-      conn = post(conn, feedback_url(course.id, assessment.id), %{"rating" => 5, "body" => "Great"})
+      conn =
+        post(conn, feedback_url(course.id, assessment.id), %{"rating" => 5, "body" => "Great"})
+
       assert response(conn, 401) =~ "Unauthorised"
     end
 
@@ -162,7 +167,9 @@ defmodule CadetWeb.AdminLLMStatsControllerTest do
       course = Repo.get!(Course, course_id)
       assessment = insert(:assessment, course: course)
 
-      conn = post(conn, feedback_url(course_id, assessment.id), %{"rating" => 5, "body" => "Great"})
+      conn =
+        post(conn, feedback_url(course_id, assessment.id), %{"rating" => 5, "body" => "Great"})
+
       assert response(conn, 403) =~ "Forbidden"
     end
 

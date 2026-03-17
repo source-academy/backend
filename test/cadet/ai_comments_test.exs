@@ -23,7 +23,10 @@ defmodule Cadet.AICommentsTest do
     {:ok, ai_comment: ai_comment, editor: editor}
   end
 
-  test "creates distinct version numbers for concurrent edits", %{ai_comment: ai_comment, editor: editor} do
+  test "creates distinct version numbers for concurrent edits", %{
+    ai_comment: ai_comment,
+    editor: editor
+  } do
     parent = self()
 
     create_version = fn content ->

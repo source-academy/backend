@@ -308,7 +308,8 @@ defmodule CadetWeb.AICodeAnalysisController do
     edits = Map.get(params, "edits", %{})
 
     with {:ok, answer_id_parsed} <- parse_answer_id(answer_id),
-         ai_comment when not is_nil(ai_comment) <- AIComments.get_latest_ai_comment(answer_id_parsed),
+         ai_comment when not is_nil(ai_comment) <-
+           AIComments.get_latest_ai_comment(answer_id_parsed),
          {:ok, _updated} <-
            AIComments.save_selected_comments(answer_id_parsed, selected_indices, editor_id),
          {:ok, parsed_edits} <- parse_edits(edits) do
@@ -449,9 +450,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       SaveChosenCommentsBody:
         swagger_schema do
           properties do
-            selected_indices(Schema.array(:integer), "Indices of chosen comments",
-              required: true
-            )
+            selected_indices(Schema.array(:integer), "Indices of chosen comments", required: true)
 
             edits(:object, "Map of comment index to edited text")
           end

@@ -52,7 +52,11 @@ defmodule Cadet.Assessments.Query do
       max_xp: sum(q.max_xp),
       question_count: count(q.id),
       has_llm_questions:
-        fragment("bool_or(? ->> 'llm_prompt' IS NOT NULL AND ? ->> 'llm_prompt' != '')", q.question, q.question)
+        fragment(
+          "bool_or(? ->> 'llm_prompt' IS NOT NULL AND ? ->> 'llm_prompt' != '')",
+          q.question,
+          q.question
+        )
     })
   end
 end

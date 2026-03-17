@@ -44,7 +44,10 @@ defmodule CadetWeb.AdminLLMStatsController do
   POST /admin/llm-stats/:assessment_id/feedback
   Submits new feedback for the LLM feature on an assessment (optionally for a specific question).
   """
-  def submit_feedback(conn, %{"course_id" => course_id, "assessment_id" => assessment_id} = params) do
+  def submit_feedback(
+        conn,
+        %{"course_id" => course_id, "assessment_id" => assessment_id} = params
+      ) do
     user = conn.assigns[:current_user]
 
     attrs = %{
