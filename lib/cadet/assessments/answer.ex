@@ -9,7 +9,7 @@ defmodule Cadet.Assessments.Answer do
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.Answer.AutogradingStatus
   alias Cadet.Assessments.AnswerTypes.{MCQAnswer, ProgrammingAnswer, VotingAnswer}
-  alias Cadet.Assessments.{Question, QuestionType, Submission}
+  alias Cadet.Assessments.{Question, QuestionType, Submission, Version}
   alias Cadet.AIComments.AIComment
 
   @type t :: %__MODULE__{}
@@ -31,6 +31,7 @@ defmodule Cadet.Assessments.Answer do
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
     has_many(:ai_comments, AIComment, on_delete: :delete_all)
+    has_many(:version, Version, on_delete: :delete_all)
 
     timestamps()
   end
