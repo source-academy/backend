@@ -1,8 +1,5 @@
 defmodule CadetWeb.RagChatController do
-  @moduledoc """
-  Handles the RAG chatbot API endpoints.
-  Separate from the SICP chatbot — uses course documents from S3.
-  """
+
   use CadetWeb, :controller
   require Logger
 

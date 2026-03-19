@@ -1,22 +1,9 @@
 defmodule Cadet.Chatbot.RagPipeline do
-  @moduledoc """
-  Orchestrates the two-pass RAG flow:
-  1. Routing LLM call — picks relevant documents from the document map
-  2. Fetch PDFs from S3 and base64-encode them
-  3. Return the RAG answer prompt + PDF attachments for the answer LLM call
-  """
-
   require Logger
 
   alias Cadet.Chatbot.{CourseDocuments, DocumentStore, PromptBuilder}
 
-  @doc """
-  Runs the RAG pipeline for a user message.
 
-  Returns:
-  - {:rag, system_prompt, pdf_attachments} when relevant documents are found
-  - {:fallback} when no documents are relevant or the pipeline fails
-  """
   def process_rag_query(user_message) do
     document_map = CourseDocuments.build_document_map_json()
 

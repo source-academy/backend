@@ -1,9 +1,4 @@
 defmodule Cadet.Chatbot.RagConversations do
-  @moduledoc """
-  Manages RAG chatbot conversations. Uses the existing llm_chats table
-  with prepend_context containing [%{"chat_type" => "rag"}] to distinguish
-  from SICP conversations.
-  """
   use Cadet, [:context, :display]
 
   import Ecto.Query

@@ -53,10 +53,6 @@ defmodule Cadet.Chatbot.PromptBuilder do
   Example response for no relevant documents: []
   """
 
-  @doc """
-  Builds a system prompt for the routing LLM call (Step 1).
-  The LLM reads the document map and returns a JSON array of relevant document IDs.
-  """
   def build_routing_prompt(document_map_json) do
     map_string = Jason.encode!(document_map_json, pretty: true)
     String.replace(@routing_prompt, "%DOCUMENT_MAP%", map_string)
@@ -78,10 +74,6 @@ defmodule Cadet.Chatbot.PromptBuilder do
   Please answer the student's question using the attached documents.
   """
 
-  @doc """
-  Builds a system prompt for the RAG answer generation LLM call.
-  Standalone prompt — no SICP textbook context needed.
-  """
   def build_rag_answer_prompt do
     @rag_answer_prompt
   end

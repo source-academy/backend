@@ -1,17 +1,6 @@
 defmodule Cadet.Chatbot.DocumentStore do
-  @moduledoc """
-  Fetches documents from the RAG S3 bucket and encodes them for
-  inclusion in OpenAI chat completion messages.
-  """
-
   require Logger
 
-  @doc """
-  Fetches the raw binary content of a document from S3.
-  The document map must contain an "s3_key" field.
-
-  Returns {:ok, binary} or {:error, reason}.
-  """
   def fetch_document_binary(document) when is_map(document) do
     config = rag_config()
     bucket = config[:bucket]
@@ -39,10 +28,6 @@ defmodule Cadet.Chatbot.DocumentStore do
     end
   end
 
-  @doc """
-  Fetches a document from S3 and returns it as a base64-encoded string.
-  Returns {:ok, base64_string} or {:error, reason}.
-  """
   def encode_document_base64(document) when is_map(document) do
     case fetch_document_binary(document) do
       {:ok, binary} -> {:ok, Base.encode64(binary)}
@@ -50,13 +35,6 @@ defmodule Cadet.Chatbot.DocumentStore do
     end
   end
 
-  @doc """
-  Fetches multiple documents and returns them as base64-encoded attachments
-  ready for inclusion in an OpenAI multimodal message.
-
-  Returns a list of %{title: String.t(), base64: String.t(), media_type: String.t()}.
-  Documents that fail to fetch are skipped with a warning.
-  """
   def fetch_and_encode_documents(documents) when is_list(documents) do
     documents
     |> Enum.reduce([], fn doc, acc ->
