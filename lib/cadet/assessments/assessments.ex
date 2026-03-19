@@ -136,10 +136,22 @@ defmodule Cadet.Assessments do
     result
   end
 
-  def assessments_total_xp(%CourseRegistration{id: cr_id}) do
+  def assessments_total_xp(%CourseRegistration{id: cr_id}) when is_ecto_id(cr_id) do
     Logger.info("Calculating total XP for assessments for user #{cr_id}")
-    teams = find_teams(cr_id)
-    submission_ids = get_submission_ids(cr_id, teams)
+
+    Logger.debug("Fetching submission IDs")
+
+    submission_ids =
+      Submission
+      |> join(:left, [s], t in Team, on: s.team_id == t.id)
+      |> join(:left, [s, t], tm in assoc(t, :team_members))
+      |> where(
+        [s, _t, tm],
+        s.student_id == ^cr_id or tm.student_id == ^cr_id
+      )
+      |> distinct(true)
+      |> select([s], s.id)
+
 
     Logger.info("Fetching XP for submissions")
 
