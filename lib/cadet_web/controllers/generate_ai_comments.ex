@@ -227,13 +227,16 @@ defmodule CadetWeb.AICodeAnalysisController do
              recv_timeout: 60_000
            ]
          }) do
-      {:ok, %{choices: [%{"message" => %{"content" => content}} | _]}} ->
+      {:ok, %{choices: [%{"message" => %{"content" => content}} | _], usage: usage}} ->
         save_comment(
           answer.id,
           Enum.at(final_messages, 0).content,
           Enum.at(final_messages, 1).content,
           content
         )
+
+        # get the tokens consumed and calc cost
+        Cadet.Assessments.update_llm_usage_and_cost(answer.question.assessment_id, usage)
 
         usage_attrs = %{
           course_id: course_id,

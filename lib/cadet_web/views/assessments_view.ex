@@ -36,7 +36,13 @@ defmodule CadetWeb.AssessmentsView do
       hasTokenCounter: :has_token_counter,
       isVotingPublished: :is_voting_published,
       hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay,
-      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""])
+      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]),
+      llmInputCost: :llm_input_cost,
+      llmOutputCost: :llm_output_cost,
+      llmTotalInputTokens: :llm_total_input_tokens,
+      llmTotalOutputTokens: :llm_total_output_tokens,
+      llmTotalCachedTokens: :llm_total_cached_tokens,
+      llmTotalCost: :llm_total_cost
     })
   end
 

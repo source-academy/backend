@@ -33,6 +33,10 @@ defmodule Cadet.LLMStats do
   - unique_submissions: unique submissions that had LLM used
   - unique_users: unique users who used the feature
   - questions: per-question breakdown with stats
+  - llm_total_cost: Total cost in SGD
+  - llm_total_input_tokens: Total standard input tokens
+  - llm_total_output_tokens: Total output tokens
+  - llm_total_cached_tokens: Total cached input tokens
   """
   def get_assessment_statistics(course_id, assessment_id) do
     base =
@@ -74,11 +78,31 @@ defmodule Cadet.LLMStats do
         )
       )
 
+    # ADDED: Fetch the cost and token data from the Assessment table
+    costs =
+      Repo.one(
+        from(a in Cadet.Assessments.Assessment,
+          where: a.id == ^assessment_id and a.course_id == ^course_id,
+          select: %{
+            llm_total_cost: a.llm_total_cost,
+            llm_total_input_tokens: a.llm_total_input_tokens,
+            llm_total_output_tokens: a.llm_total_output_tokens,
+            llm_total_cached_tokens: a.llm_total_cached_tokens
+          }
+        )
+      ) || %{}
+
+    # Merge the costs into the final map that gets sent to React
     %{
       total_uses: total_uses,
       unique_submissions: unique_submissions,
       unique_users: unique_users,
-      questions: questions
+      questions: questions,
+      # Add the cost data (with safe fallbacks if nil)
+      llm_total_cost: Map.get(costs, :llm_total_cost) || Decimal.new("0.0"),
+      llm_total_input_tokens: Map.get(costs, :llm_total_input_tokens) || 0,
+      llm_total_output_tokens: Map.get(costs, :llm_total_output_tokens) || 0,
+      llm_total_cached_tokens: Map.get(costs, :llm_total_cached_tokens) || 0
     }
   end
 

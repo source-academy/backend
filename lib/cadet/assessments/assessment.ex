@@ -38,6 +38,12 @@ defmodule Cadet.Assessments.Assessment do
     field(:has_token_counter, :boolean, default: false)
     field(:has_voting_features, :boolean, default: false)
     field(:llm_assessment_prompt, :string, default: nil)
+    field(:llm_input_cost, :decimal)
+    field(:llm_output_cost, :decimal)
+    field(:llm_total_input_tokens, :integer, default: 0)
+    field(:llm_total_output_tokens, :integer, default: 0)
+    field(:llm_total_cached_tokens, :integer, default: 0)
+    field(:llm_total_cost, :decimal, default: Decimal.new("0.0"))
 
     belongs_to(:config, AssessmentConfig)
     belongs_to(:course, Course)
@@ -48,7 +54,10 @@ defmodule Cadet.Assessments.Assessment do
 
   @required_fields ~w(title open_at close_at number course_id config_id max_team_size)a
   @optional_fields ~w(reading summary_short summary_long
-    is_published story cover_picture access password has_token_counter has_voting_features llm_assessment_prompt)a
+    is_published story cover_picture access password has_token_counter
+    has_voting_features llm_assessment_prompt
+    llm_input_cost llm_output_cost llm_total_input_tokens
+    llm_total_output_tokens llm_total_cached_tokens llm_total_cost)a
   @optional_file_fields ~w(mission_pdf)a
 
   def changeset(assessment, params) do
@@ -61,12 +70,14 @@ defmodule Cadet.Assessments.Assessment do
     |> cast_attachments(params, @optional_file_fields)
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    # ADD THIS LINE HERE to apply your defaults
+    |> put_default_costs()
     |> add_belongs_to_id_from_model([:config, :course], params)
     |> foreign_key_constraint(:config_id)
     |> foreign_key_constraint(:course_id)
     |> unique_constraint([:number, :course_id])
-    |> validate_config_course
-    |> validate_open_close_date
+    |> validate_config_course()
+    |> validate_open_close_date()
     |> validate_number(:max_team_size, greater_than_or_equal_to: 1)
   end
 
@@ -84,6 +95,20 @@ defmodule Cadet.Assessments.Assessment do
         else
           add_error(changeset, :config, "does not belong to the same course as this assessment")
         end
+    end
+  end
+
+  defp put_default_costs(changeset) do
+    changeset
+    |> put_fallback(:llm_input_cost, Decimal.new("3.20"))
+    |> put_fallback(:llm_output_cost, Decimal.new("12.80"))
+  end
+
+  defp put_fallback(changeset, field, default_val) do
+    if get_field(changeset, field) == nil do
+      put_change(changeset, field, default_val)
+    else
+      changeset
     end
   end
 
