@@ -3631,38 +3631,45 @@ defmodule Cadet.Assessments do
     Repo.one(query)
   end
 
-    def update_llm_usage_and_cost(assessment_id, usage) do
-  assessment = Repo.get(Assessment, assessment_id)
+  def update_llm_usage_and_cost(assessment_id, usage) do
+    assessment = Repo.get(Assessment, assessment_id)
 
-  # Try string keys first, fall back to atom keys
-  prompt = usage["prompt_tokens"] || usage[:prompt_tokens] || 0
-  completion = usage["completion_tokens"] || usage[:completion_tokens] || 0
+    # Try string keys first, fall back to atom keys
+    prompt = usage["prompt_tokens"] || usage[:prompt_tokens] || 0
+    completion = usage["completion_tokens"] || usage[:completion_tokens] || 0
 
-  # Try to find cached tokens in the nested map
-  details = usage["prompt_tokens_details"] || usage[:prompt_tokens_details] || %{}
-  cached = details["cached_tokens"] || details[:cached_tokens] || 0
+    # Try to find cached tokens in the nested map
+    details = usage["prompt_tokens_details"] || usage[:prompt_tokens_details] || %{}
+    cached = details["cached_tokens"] || details[:cached_tokens] || 0
 
-  # Logic: Use the keyed-in value if it's > 0, otherwise use SGD defaults
-  million = Decimal.new(1_000_000)
-  input_rate_1m = if assessment.llm_input_cost && Decimal.gt?(assessment.llm_input_cost, 0),
-                    do: assessment.llm_input_cost, else: Decimal.new("3.20")
-  output_rate_1m = if assessment.llm_output_cost && Decimal.gt?(assessment.llm_output_cost, 0),
-                    do: assessment.llm_output_cost, else: Decimal.new("12.80")
+    # Logic: Use the keyed-in value if it's > 0, otherwise use SGD defaults
+    million = Decimal.new(1_000_000)
 
-  # Math: (Tokens * Rate) / 1,000,000
-  new_cost = Decimal.add(
-    Decimal.div(Decimal.mult(Decimal.new(prompt), input_rate_1m), million),
-    Decimal.div(Decimal.mult(Decimal.new(completion), output_rate_1m), million)
-  )
+    input_rate_1m =
+      if assessment.llm_input_cost && Decimal.gt?(assessment.llm_input_cost, 0),
+        do: assessment.llm_input_cost,
+        else: Decimal.new("3.20")
 
-  # UPDATE CALL
-  assessment
-  |> Assessment.changeset(%{
-    llm_total_input_tokens: (assessment.llm_total_input_tokens || 0) + prompt,
-    llm_total_output_tokens: (assessment.llm_total_output_tokens || 0) + completion,
-    llm_total_cached_tokens: (assessment.llm_total_cached_tokens || 0) + cached,
-    llm_total_cost: Decimal.add(assessment.llm_total_cost || Decimal.new("0"), new_cost)
-  })
-  |> Repo.update()
-end
+    output_rate_1m =
+      if assessment.llm_output_cost && Decimal.gt?(assessment.llm_output_cost, 0),
+        do: assessment.llm_output_cost,
+        else: Decimal.new("12.80")
+
+    # Math: (Tokens * Rate) / 1,000,000
+    new_cost =
+      Decimal.add(
+        Decimal.div(Decimal.mult(Decimal.new(prompt), input_rate_1m), million),
+        Decimal.div(Decimal.mult(Decimal.new(completion), output_rate_1m), million)
+      )
+
+    # UPDATE CALL
+    assessment
+    |> Assessment.changeset(%{
+      llm_total_input_tokens: (assessment.llm_total_input_tokens || 0) + prompt,
+      llm_total_output_tokens: (assessment.llm_total_output_tokens || 0) + completion,
+      llm_total_cached_tokens: (assessment.llm_total_cached_tokens || 0) + cached,
+      llm_total_cost: Decimal.add(assessment.llm_total_cost || Decimal.new("0"), new_cost)
+    })
+    |> Repo.update()
+  end
 end
