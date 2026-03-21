@@ -227,58 +227,72 @@ defmodule CadetWeb.AICodeAnalysisController do
              recv_timeout: 60_000
            ]
          }) do
-      {:ok, %{choices: [%{"message" => %{"content" => content}} | _], usage: usage}} ->
-        save_comment(
-          answer.id,
-          Enum.at(final_messages, 0).content,
-          Enum.at(final_messages, 1).content,
-          content
-        )
-
-        # get the tokens consumed and calc cost
-        Cadet.Assessments.update_llm_usage_and_cost(answer.question.assessment_id, usage)
-
-        usage_attrs = %{
-          course_id: course_id,
-          assessment_id: answer.question.assessment_id,
-          question_id: answer.question_id,
-          answer_id: answer.id,
-          submission_id: answer.submission_id,
-          user_id: conn.assigns.course_reg.user_id
-        }
-
-        # Log LLM usage for statistics (non-blocking for response generation)
-        case LLMStats.log_usage(usage_attrs) do
-          {:ok, _usage_log} ->
-            :ok
-
-          {:error, changeset} ->
-            Logger.error(
-              "Failed to log LLM usage to database: #{inspect(changeset.errors)} attrs=#{inspect(usage_attrs)}"
+      {:ok, response} ->
+        # Handle cases where API may or may not return usage field
+        case response do
+          %{choices: [%{"message" => %{"content" => content}} | _]} ->
+            save_comment(
+              answer.id,
+              Enum.at(final_messages, 0).content,
+              Enum.at(final_messages, 1).content,
+              content
             )
+
+            # Optionally update cost tracking if usage data is available
+            case Map.get(response, :usage) do
+              nil ->
+                Logger.warning("LLM API response missing usage field for answer_id=#{answer.id}")
+
+              usage ->
+                # get the tokens consumed and calc cost
+                Cadet.Assessments.update_llm_usage_and_cost(
+                  answer.question.assessment_id,
+                  usage
+                )
+            end
+
+            usage_attrs = %{
+              course_id: course_id,
+              assessment_id: answer.question.assessment_id,
+              question_id: answer.question_id,
+              answer_id: answer.id,
+              submission_id: answer.submission_id,
+              user_id: conn.assigns.course_reg.user_id
+            }
+
+            # Log LLM usage for statistics (non-blocking for response generation)
+            case LLMStats.log_usage(usage_attrs) do
+              {:ok, _usage_log} ->
+                :ok
+
+              {:error, changeset} ->
+                Logger.error(
+                  "Failed to log LLM usage to database: #{inspect(changeset.errors)} attrs=#{inspect(usage_attrs)}"
+                )
+            end
+
+            comments_list = String.split(content, "|||")
+
+            filtered_comments =
+              Enum.filter(comments_list, fn comment ->
+                String.trim(comment) != ""
+              end)
+
+            json(conn, %{"comments" => filtered_comments})
+
+          _ ->
+            save_comment(
+              answer.id,
+              Enum.at(final_messages, 0).content,
+              Enum.at(final_messages, 1).content,
+              Jason.encode!(response),
+              "Unexpected JSON shape"
+            )
+
+            conn
+            |> put_status(:bad_gateway)
+            |> text("Unexpected response format from LLM")
         end
-
-        comments_list = String.split(content, "|||")
-
-        filtered_comments =
-          Enum.filter(comments_list, fn comment ->
-            String.trim(comment) != ""
-          end)
-
-        json(conn, %{"comments" => filtered_comments})
-
-      {:ok, other} ->
-        save_comment(
-          answer.id,
-          Enum.at(final_messages, 0).content,
-          Enum.at(final_messages, 1).content,
-          Jason.encode!(other),
-          "Unexpected JSON shape"
-        )
-
-        conn
-        |> put_status(:bad_gateway)
-        |> text("Unexpected response format from LLM")
 
       {:error, reason} ->
         save_comment(
