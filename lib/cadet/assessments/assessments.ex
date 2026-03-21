@@ -3647,16 +3647,13 @@ defmodule Cadet.Assessments do
 
     # Atomic database-level updates to prevent race conditions
     # All increments happen in a single transaction at the database level
-    Repo.update_all(
-      from(a in Assessment, where: a.id == ^assessment_id),
-      set: [
-        llm_total_input_tokens: fragment("COALESCE(llm_total_input_tokens, 0) + ?", ^prompt),
-        llm_total_output_tokens:
-          fragment("COALESCE(llm_total_output_tokens, 0) + ?", ^completion),
-        llm_total_cached_tokens: fragment("COALESCE(llm_total_cached_tokens, 0) + ?", ^cached),
-        llm_total_cost: fragment("COALESCE(llm_total_cost, 0) + ?", ^new_cost)
-      ]
-    )
+    query = from(a in Assessment, where: a.id == ^assessment_id, update: [set: [
+      llm_total_input_tokens: fragment("COALESCE(llm_total_input_tokens, 0) + ?", ^prompt),
+      llm_total_output_tokens: fragment("COALESCE(llm_total_output_tokens, 0) + ?", ^completion),
+      llm_total_cached_tokens: fragment("COALESCE(llm_total_cached_tokens, 0) + ?", ^cached),
+      llm_total_cost: fragment("COALESCE(llm_total_cost, 0) + ?", ^new_cost)
+    ]])
+    Repo.update_all(query, [])
 
     {:ok, nil}
   end
