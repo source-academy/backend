@@ -1451,6 +1451,14 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @doc """
+  Deletes all AI comment logs associated with the given list of answer IDs.
+  """
+  def delete_comments_for_answers(answer_ids) when is_list(answer_ids) do
+    query = from(c in "ai_comment_logs", where: c.answer_id in ^answer_ids)
+    Repo.delete_all(query)
+  end
+
   @dialyzer {:nowarn_function, unsubmit_submission: 2}
   def unsubmit_submission(
         submission_id,
@@ -1528,6 +1536,18 @@ defmodule Cadet.Assessments do
                |> Repo.update()}
           end
         end)
+      end)
+      |> Multi.run(:delete_ai_comments, fn _repo, _ ->
+        Logger.info("Deleting AI comments for submission #{submission_id}")
+
+        answer_ids =
+          Answer
+          |> where(submission_id: ^submission_id)
+          |> select([a], a.id)
+          |> Repo.all()
+
+        delete_comments_for_answers(answer_ids)
+        {:ok, nil}
       end)
       |> Repo.transaction()
 
@@ -3609,5 +3629,51 @@ defmodule Cadet.Assessments do
       )
 
     Repo.one(query)
+  end
+
+  def update_llm_usage_and_cost(assessment_id, usage) do
+    prompt = extract_val(usage, "prompt_tokens", :prompt_tokens, 0)
+    completion = extract_val(usage, "completion_tokens", :completion_tokens, 0)
+    details = extract_val(usage, "prompt_tokens_details", :prompt_tokens_details, %{})
+    cached = extract_val(details, "cached_tokens", :cached_tokens, 0)
+
+    # Fetch assessment to get cost rates
+    assessment = Repo.get(Assessment, assessment_id)
+
+    input_rate = get_valid_rate(assessment.llm_input_cost, "3.20")
+    output_rate = get_valid_rate(assessment.llm_output_cost, "12.80")
+
+    new_cost = calculate_token_cost(prompt, completion, input_rate, output_rate)
+
+    # Atomic database-level updates to prevent race conditions
+    # All increments happen in a single transaction at the database level
+    query = from(a in Assessment, where: a.id == ^assessment_id, update: [set: [
+      llm_total_input_tokens: fragment("COALESCE(llm_total_input_tokens, 0) + ?", ^prompt),
+      llm_total_output_tokens: fragment("COALESCE(llm_total_output_tokens, 0) + ?", ^completion),
+      llm_total_cached_tokens: fragment("COALESCE(llm_total_cached_tokens, 0) + ?", ^cached),
+      llm_total_cost: fragment("COALESCE(llm_total_cost, 0) + ?", ^new_cost)
+    ]])
+    Repo.update_all(query, [])
+
+    {:ok, nil}
+  end
+
+  defp extract_val(map, string_key, atom_key, default) do
+    Map.get(map, string_key) || Map.get(map, atom_key) || default
+  end
+
+  defp get_valid_rate(rate, default_rate) do
+    if rate && Decimal.gt?(rate, 0) do
+      rate
+    else
+      Decimal.new(default_rate)
+    end
+  end
+
+  defp calculate_token_cost(prompt, completion, input_rate, output_rate) do
+    million = Decimal.new(1_000_000)
+    in_cost = Decimal.div(Decimal.mult(Decimal.new(prompt), input_rate), million)
+    out_cost = Decimal.div(Decimal.mult(Decimal.new(completion), output_rate), million)
+    Decimal.add(in_cost, out_cost)
   end
 end
