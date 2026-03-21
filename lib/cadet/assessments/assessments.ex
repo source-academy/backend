@@ -3632,26 +3632,33 @@ defmodule Cadet.Assessments do
   end
 
   def update_llm_usage_and_cost(assessment_id, usage) do
-    assessment = Repo.get(Assessment, assessment_id)
-
     prompt = extract_val(usage, "prompt_tokens", :prompt_tokens, 0)
     completion = extract_val(usage, "completion_tokens", :completion_tokens, 0)
     details = extract_val(usage, "prompt_tokens_details", :prompt_tokens_details, %{})
     cached = extract_val(details, "cached_tokens", :cached_tokens, 0)
+
+    # Fetch assessment to get cost rates
+    assessment = Repo.get(Assessment, assessment_id)
 
     input_rate = get_valid_rate(assessment.llm_input_cost, "3.20")
     output_rate = get_valid_rate(assessment.llm_output_cost, "12.80")
 
     new_cost = calculate_token_cost(prompt, completion, input_rate, output_rate)
 
-    assessment
-    |> Assessment.changeset(%{
-      llm_total_input_tokens: (assessment.llm_total_input_tokens || 0) + prompt,
-      llm_total_output_tokens: (assessment.llm_total_output_tokens || 0) + completion,
-      llm_total_cached_tokens: (assessment.llm_total_cached_tokens || 0) + cached,
-      llm_total_cost: Decimal.add(assessment.llm_total_cost || Decimal.new("0"), new_cost)
-    })
-    |> Repo.update()
+    # Atomic database-level updates to prevent race conditions
+    # All increments happen in a single transaction at the database level
+    Repo.update_all(
+      from(a in Assessment, where: a.id == ^assessment_id),
+      set: [
+        llm_total_input_tokens: fragment("COALESCE(llm_total_input_tokens, 0) + ?", ^prompt),
+        llm_total_output_tokens:
+          fragment("COALESCE(llm_total_output_tokens, 0) + ?", ^completion),
+        llm_total_cached_tokens: fragment("COALESCE(llm_total_cached_tokens, 0) + ?", ^cached),
+        llm_total_cost: fragment("COALESCE(llm_total_cost, 0) + ?", ^new_cost)
+      ]
+    )
+
+    {:ok, nil}
   end
 
   defp extract_val(map, string_key, atom_key, default) do

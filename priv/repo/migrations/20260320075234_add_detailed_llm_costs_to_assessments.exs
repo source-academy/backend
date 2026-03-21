@@ -14,12 +14,12 @@ defmodule Cadet.Repo.Migrations.RepairLlmColumnsOnAssessments do
 
   def down do
     alter table(:assessments) do
-      remove_if_exists(:llm_input_cost)
-      remove_if_exists(:llm_output_cost)
-      remove_if_exists(:llm_total_input_tokens)
-      remove_if_exists(:llm_total_output_tokens)
-      remove_if_exists(:llm_total_cached_tokens)
-      remove_if_exists(:llm_total_cost)
+      remove(:llm_input_cost)
+      remove(:llm_output_cost)
+      remove(:llm_total_input_tokens)
+      remove(:llm_total_output_tokens)
+      remove(:llm_total_cached_tokens)
+      remove(:llm_total_cost)
     end
   end
 end
