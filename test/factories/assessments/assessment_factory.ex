@@ -41,7 +41,6 @@ defmodule Cadet.Assessments.AssessmentFactory do
           is_published: false,
           max_team_size: 1,
           llm_assessment_prompt: nil,
-
           llm_input_cost: Decimal.new("3.20"),
           llm_output_cost: Decimal.new("12.80"),
           llm_total_input_tokens: 0,
