@@ -4,19 +4,19 @@ defmodule Cadet.Chatbot.RagPipeline do
   alias Cadet.Chatbot.{CourseDocuments, DocumentStore, PromptBuilder}
 
 
-  def process_rag_query(user_message) do
+  def process_rag_query(user_message, opts \\ []) do
     document_map = CourseDocuments.build_document_map_json()
 
     if document_map == [] do
       Logger.info("RAG pipeline: no documents in map, falling back")
-      {:fallback}
+      {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
     else
-      run_routing(user_message, document_map)
+      run_routing(user_message, document_map, opts)
     end
   end
 
-  defp run_routing(user_message, document_map) do
-    routing_prompt = PromptBuilder.build_routing_prompt(document_map)
+  defp run_routing(user_message, document_map, opts) do
+    routing_prompt = PromptBuilder.build_routing_prompt(document_map, Keyword.fetch!(opts, :routing_prompt))
 
     payload = [
       %{role: "system", content: routing_prompt},
@@ -29,11 +29,11 @@ defmodule Cadet.Chatbot.RagPipeline do
       {:ok, result_map} ->
         result_map
         |> extract_routing_response()
-        |> handle_routing_result()
+        |> handle_routing_result(opts)
 
       {:error, reason} ->
         Logger.error("RAG pipeline: routing LLM call failed: #{inspect(reason)}")
-        {:fallback}
+        {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
     end
   end
 
@@ -85,32 +85,31 @@ defmodule Cadet.Chatbot.RagPipeline do
     end
   end
 
-  defp handle_routing_result({:ok, []}) do
+  defp handle_routing_result({:ok, []}, opts) do
     Logger.info("RAG pipeline: no relevant documents selected")
-    {:fallback}
+    {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
   end
 
-  defp handle_routing_result({:ok, doc_ids}) do
+  defp handle_routing_result({:ok, doc_ids}, opts) do
     documents = CourseDocuments.get_documents_by_ids(doc_ids)
 
     if documents == [] do
       Logger.warning("RAG pipeline: routing returned IDs but none matched document map")
-      {:fallback}
+      {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
     else
       Logger.info("RAG pipeline: fetching #{length(documents)} documents from S3")
       pdf_attachments = DocumentStore.fetch_and_encode_documents(documents)
 
       if pdf_attachments == [] do
         Logger.warning("RAG pipeline: all document fetches failed, falling back")
-        {:fallback}
+        {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
       else
-        rag_prompt = PromptBuilder.build_rag_answer_prompt()
-        {:rag, rag_prompt, pdf_attachments}
+        {:rag, Keyword.fetch!(opts, :answer_prompt), pdf_attachments}
       end
     end
   end
 
-  defp handle_routing_result({:error, _}) do
-    {:fallback}
+  defp handle_routing_result({:error, _}, opts) do
+    {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
   end
 end

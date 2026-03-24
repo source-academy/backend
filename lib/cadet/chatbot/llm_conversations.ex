@@ -22,6 +22,7 @@ defmodule Cadet.Chatbot.LlmConversations do
 
     case Conversation
          |> where([c], c.user_id == ^user_id)
+         |> where([c], c.prepend_context == ^[])
          |> order_by([c], desc: c.inserted_at)
          |> limit(1)
          |> Repo.one() do
@@ -113,6 +114,7 @@ defmodule Cadet.Chatbot.LlmConversations do
 
     case Conversation
          |> where([c], c.guest_uuid == ^guest_uuid)
+         |> where([c], c.prepend_context == ^[])
          |> order_by([c], desc: c.inserted_at)
          |> limit(1)
          |> Repo.one() do

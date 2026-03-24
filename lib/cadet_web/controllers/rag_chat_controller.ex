@@ -4,6 +4,8 @@ defmodule CadetWeb.RagChatController do
   require Logger
 
   alias Cadet.Chatbot.{Conversation, LlmConversations, RagConversations, RagPipeline}
+  alias Cadet.Courses.Course
+  alias Cadet.Repo
   @max_content_size 1000
   @context_size 10
 
@@ -34,30 +36,27 @@ defmodule CadetWeb.RagChatController do
 
     Logger.info("Processing RAG chat for user #{user.id}. Length: #{String.length(user_message)}")
 
+    course = if user.latest_viewed_course_id,
+      do: Repo.get(Course, user.latest_viewed_course_id),
+      else: nil
+
+    rag_opts = [
+      routing_prompt: (course && course.pixelbot_routing_prompt) || "",
+      answer_prompt: (course && course.pixelbot_answer_prompt) || ""
+    ]
+
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
          {:ok, conversation} <- RagConversations.get_conversation_for_user(user.id),
          {:ok, updated_conversation} <-
            LlmConversations.add_message(conversation, "user", user_message) do
-      case RagPipeline.process_rag_query(user_message) do
+      case RagPipeline.process_rag_query(user_message, rag_opts) do
         {:rag, system_prompt, pdf_attachments} ->
           payload = generate_payload(updated_conversation, system_prompt, pdf_attachments)
           handle_openai_call(conn, payload, updated_conversation, conversation.id)
 
-        {:fallback} ->
-          bot_message =
-            "I couldn't find relevant course documents for your question. " <>
-              "Try asking about specific lectures, tutorials, recitations, or past exams."
-
-          case LlmConversations.add_message(updated_conversation, "assistant", bot_message) do
-            {:ok, _} ->
-              render(conn, "conversation.json", %{
-                conversation_id: conversation.id,
-                response: bot_message
-              })
-
-            {:error, error_message} ->
-              send_resp(conn, 500, error_message)
-          end
+        {:no_docs, system_prompt} ->
+          payload = generate_fallback_payload(updated_conversation, system_prompt)
+          handle_openai_call(conn, payload, updated_conversation, conversation.id)
       end
     else
       {:error, :message_too_long} ->
@@ -113,6 +112,19 @@ defmodule CadetWeb.RagChatController do
         LlmConversations.add_error_message(updated_conversation)
         send_resp(conn, 500, error_message)
     end
+  end
+
+  defp generate_fallback_payload(%Conversation{} = conversation, system_prompt) do
+    system_context = [%{role: "system", content: system_prompt}]
+
+    messages_payload =
+      conversation.messages
+      |> Enum.reverse()
+      |> Enum.take(@context_size)
+      |> Enum.map(&Map.take(&1, [:role, :content, "role", "content"]))
+      |> Enum.reverse()
+
+    system_context ++ messages_payload
   end
 
   defp generate_payload(%Conversation{} = conversation, system_prompt, pdf_attachments) do

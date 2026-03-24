@@ -207,6 +207,8 @@ defmodule CadetWeb.Router do
       AdminCoursesController,
       :delete_assessment_config
     )
+
+    get("/config/pixelbot_document_map", AdminCoursesController, :get_document_map)
   end
 
   # Admin pages (Access: All staff)
