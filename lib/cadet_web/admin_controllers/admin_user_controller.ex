@@ -8,6 +8,12 @@ defmodule CadetWeb.AdminUserController do
   alias Cadet.{Accounts, Assessments, Courses}
   alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
 
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :course_reg, param: "course_reg_id", assign: :target_course_reg]
+    when action in [:combined_total_xp]
+  )
+
   # This controller is used to find all users of a course
 
   def index(conn, filter) do
@@ -17,8 +23,8 @@ defmodule CadetWeb.AdminUserController do
     render(conn, "users.json", users: users)
   end
 
-  def combined_total_xp(conn, %{"course_reg_id" => course_reg_id}) do
-    course_reg = Repo.get(CourseRegistration, course_reg_id)
+  def combined_total_xp(conn, %{"course_reg_id" => _course_reg_id}) do
+    course_reg = conn.assigns.target_course_reg
 
     course_id = course_reg.course_id
     user_id = course_reg.user_id

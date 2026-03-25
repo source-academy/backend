@@ -39,6 +39,15 @@ defmodule Cadet.Accounts.Teams do
     teams
   end
 
+  def get_team_in_course(team_id, course_id)
+      when is_ecto_id(team_id) and is_ecto_id(course_id) do
+    Team
+    |> where(id: ^team_id)
+    |> join(:inner, [t], a in assoc(t, :assessment))
+    |> where([_, a], a.course_id == ^course_id)
+    |> Repo.one()
+  end
+
   @doc """
   Creates a new team and assigns an assessment and team members to it.
 

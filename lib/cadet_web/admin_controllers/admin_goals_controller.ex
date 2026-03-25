@@ -4,16 +4,20 @@ defmodule CadetWeb.AdminGoalsController do
   use PhoenixSwagger
 
   alias Cadet.Incentives.Goals
-  alias Cadet.Accounts.CourseRegistration
+
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :course_reg, param: "course_reg_id", assign: :target_course_reg]
+    when action in [:index_goals_with_progress, :update_progress]
+  )
 
   def index(conn, _) do
     course_id = conn.assigns.course_reg.course_id
     render(conn, "index.json", goals: Goals.get(course_id))
   end
 
-  def index_goals_with_progress(conn, %{"course_reg_id" => course_reg_id}) do
-    course_id = conn.assigns.course_reg.course_id
-    course_reg = %CourseRegistration{id: String.to_integer(course_reg_id), course_id: course_id}
+  def index_goals_with_progress(conn, %{"course_reg_id" => _course_reg_id}) do
+    course_reg = conn.assigns.target_course_reg
 
     render(conn, "index_goals_with_progress.json", goals: Goals.get_with_progress(course_reg))
   end
@@ -38,10 +42,10 @@ defmodule CadetWeb.AdminGoalsController do
 
   def update_progress(conn, %{
         "uuid" => uuid,
-        "course_reg_id" => course_reg_id,
+        "course_reg_id" => _course_reg_id,
         "progress" => progress
       }) do
-    course_reg_id = String.to_integer(course_reg_id)
+    course_reg_id = conn.assigns.target_course_reg.id
 
     progress
     |> json_to_progress(uuid, course_reg_id)
