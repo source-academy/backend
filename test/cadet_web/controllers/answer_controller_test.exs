@@ -4,6 +4,7 @@ defmodule CadetWeb.AnswerControllerTest do
   import Ecto.Query
 
   alias Cadet.Assessments.{Answer, Submission, SubmissionVotes}
+  alias Cadet.Courses.Course
   alias Cadet.Repo
   alias CadetWeb.AnswerController
 
@@ -12,8 +13,13 @@ defmodule CadetWeb.AnswerControllerTest do
     AnswerController.swagger_path_submit(nil)
   end
 
-  setup do
-    course = insert(:course)
+  setup %{conn: conn} do
+    course =
+      case conn.assigns[:course_id] do
+        nil -> insert(:course)
+        course_id -> Repo.get(Course, course_id)
+      end
+
     config = insert(:assessment_config, %{course: course})
     assessment = insert(:assessment, %{is_published: true, course: course, config: config})
     mcq_question = insert(:mcq_question, %{assessment: assessment})
@@ -295,11 +301,13 @@ defmodule CadetWeb.AnswerControllerTest do
   test "invalid params not open submission is unsuccessful", %{conn: conn} do
     course_reg = conn.assigns.test_cr
     course_id = conn.assigns.course_id
+    course = Repo.get(Course, course_id)
 
     before_open_at_assessment =
       insert(:assessment, %{
         open_at: Timex.shift(Timex.now(), days: 5),
-        close_at: Timex.shift(Timex.now(), days: 10)
+        close_at: Timex.shift(Timex.now(), days: 10),
+        course: course
       })
 
     before_open_at_question = insert(:mcq_question, %{assessment: before_open_at_assessment})
@@ -316,7 +324,8 @@ defmodule CadetWeb.AnswerControllerTest do
     after_close_at_assessment =
       insert(:assessment, %{
         open_at: Timex.shift(Timex.now(), days: -10),
-        close_at: Timex.shift(Timex.now(), days: -5)
+        close_at: Timex.shift(Timex.now(), days: -5),
+        course: course
       })
 
     after_close_at_question = insert(:mcq_question, %{assessment: after_close_at_assessment})
@@ -330,7 +339,7 @@ defmodule CadetWeb.AnswerControllerTest do
              get_answer_value(after_close_at_question, after_close_at_assessment, course_reg)
            )
 
-    unpublished_assessment = insert(:assessment, %{is_published: false})
+    unpublished_assessment = insert(:assessment, %{is_published: false, course: course})
 
     unpublished_question = insert(:mcq_question, %{assessment: unpublished_assessment})
 
@@ -425,18 +434,20 @@ defmodule CadetWeb.AnswerControllerTest do
         }
       )
 
-    assert response(check_last_modified_conn, 403) == "Forbidden"
+    assert response(check_last_modified_conn, 400) == "Missing or invalid parameter(s)"
   end
 
   @tag authenticate: :student
   test "check last modified, not open submission is unsuccessful", %{conn: conn} do
     course_id = conn.assigns.course_id
+    course = Repo.get(Course, course_id)
     last_modified_at = DateTime.to_iso8601(DateTime.utc_now())
 
     before_open_at_assessment =
       insert(:assessment, %{
         open_at: Timex.shift(Timex.now(), days: 5),
-        close_at: Timex.shift(Timex.now(), days: 10)
+        close_at: Timex.shift(Timex.now(), days: 10),
+        course: course
       })
 
     before_open_at_question =
