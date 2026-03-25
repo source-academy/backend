@@ -266,7 +266,9 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     @tag authenticate: :staff
     test "deletes a team", %{conn: conn} do
       course_id = conn.assigns.course_id
-      team = insert(:team)
+      course = Repo.get(Course, course_id)
+      assessment = insert(:assessment, %{course: course})
+      team = insert(:team, %{assessment: assessment})
       conn = delete(conn, build_url(course_id, team.id))
       assert response(conn, 200) =~ "Team deleted successfully."
     end
@@ -275,7 +277,7 @@ defmodule CadetWeb.AdminTeamsControllerTest do
     test "delete a team that does not exist", %{conn: conn} do
       course_id = conn.assigns.course_id
       conn = delete(conn, build_url(course_id, -1))
-      assert response(conn, 404) =~ "Team not found!"
+      assert response(conn, 400) == "Missing or invalid parameter(s)"
     end
 
     @tag authenticate: :staff
