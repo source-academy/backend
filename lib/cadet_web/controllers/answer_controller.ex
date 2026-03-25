@@ -5,6 +5,12 @@ defmodule CadetWeb.AnswerController do
 
   alias Cadet.Assessments
 
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :question, param: "questionid", assign: :scoped_question]
+    when action in [:submit, :check_last_modified]
+  )
+
   # These roles can save and finalise answers for
   # closed assessments and submitted answers
   @bypass_closed_roles ~w(staff admin)a
@@ -13,19 +19,13 @@ defmodule CadetWeb.AnswerController do
       when is_ecto_id(question_id) do
     course_reg = conn.assigns[:course_reg]
     can_bypass? = course_reg.role in @bypass_closed_roles
+    question = conn.assigns.scoped_question
 
-    with {:question, question} when not is_nil(question) <-
-           {:question, Assessments.get_question(question_id)},
-         {:is_open?, true} <-
+    with {:is_open?, true} <-
            {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
          {:ok, _nil} <- Assessments.answer_question(question, course_reg, answer, can_bypass?) do
       text(conn, "OK")
     else
-      {:question, nil} ->
-        conn
-        |> put_status(:not_found)
-        |> text("Question not found")
-
       {:is_open?, false} ->
         conn
         |> put_status(:forbidden)
@@ -49,10 +49,9 @@ defmodule CadetWeb.AnswerController do
       when is_ecto_id(question_id) do
     course_reg = conn.assigns[:course_reg]
     can_bypass? = course_reg.role in @bypass_closed_roles
+    question = conn.assigns.scoped_question
 
-    with {:question, question} when not is_nil(question) <-
-           {:question, Assessments.get_question(question_id)},
-         {:is_open?, true} <-
+    with {:is_open?, true} <-
            {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
          {:ok, last_modified} <-
            Assessments.has_last_modified_answer?(
@@ -66,11 +65,6 @@ defmodule CadetWeb.AnswerController do
       |> put_resp_content_type("application/json")
       |> render("lastModified.json", lastModified: last_modified)
     else
-      {:question, nil} ->
-        conn
-        |> put_status(:not_found)
-        |> text("Question not found")
-
       {:is_open?, false} ->
         conn
         |> put_status(:forbidden)

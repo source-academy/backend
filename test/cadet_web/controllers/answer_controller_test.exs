@@ -265,6 +265,18 @@ defmodule CadetWeb.AnswerControllerTest do
   end
 
   @tag authenticate: :student
+  test "forbidden when question belongs to another course", %{conn: conn} do
+    course_id = conn.assigns.course_id
+    other_course = insert(:course)
+    other_assessment = insert(:assessment, %{course: other_course})
+    other_question = insert(:mcq_question, %{assessment: other_assessment})
+
+    conn = post(conn, build_url(course_id, other_question.id), %{answer: 5})
+
+    assert response(conn, 403) == "Forbidden"
+  end
+
+  @tag authenticate: :student
   test "invalid params missing question is unsuccessful", %{
     conn: conn,
     assessment: assessment,
@@ -275,7 +287,7 @@ defmodule CadetWeb.AnswerControllerTest do
     {:ok, _} = Repo.delete(mcq_question)
 
     conn = post(conn, build_url(course_id, mcq_question.id), %{answer: 5})
-    assert response(conn, 404) == "Question not found"
+    assert response(conn, 403) == "Forbidden"
     assert is_nil(get_answer_value(mcq_question, assessment, course_reg))
   end
 
@@ -413,7 +425,7 @@ defmodule CadetWeb.AnswerControllerTest do
         }
       )
 
-    assert response(check_last_modified_conn, 404) == "Question not found"
+    assert response(check_last_modified_conn, 403) == "Forbidden"
   end
 
   @tag authenticate: :student
