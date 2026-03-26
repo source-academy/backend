@@ -1483,46 +1483,50 @@ defmodule Cadet.Assessments do
       |> preload([_, a], assessment: a)
       |> Repo.get(submission_id)
 
-    with {:submission_found?, true} <- {:submission_found?, is_map(submission)} do
-      # allows staff to unsubmit own assessment
-      bypass = role in @bypass_closed_roles and submission.student_id == cr.id
+    case is_map(submission) do
+      true ->
+        # allows staff to unsubmit own assessment
+        bypass = role in @bypass_closed_roles and submission.student_id == cr.id
 
-      with {:is_open?, true} <- {:is_open?, bypass or open?(submission.assessment)},
-           {:status, :submitted} <- {:status, submission.status},
-           {:allowed_to_unsubmit?, true} <-
-             {:allowed_to_unsubmit?,
-              role == :admin or bypass or is_nil(submission.student_id) or
-                Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)},
-           {:is_grading_published?, false} <-
-             {:is_grading_published?, submission.is_grading_published} do
-        {:ok, submission}
-      else
-        {:is_open?, false} ->
-          Logger.error("Assessment for submission #{submission_id} is not open")
-          {:error, {:forbidden, "Assessment not open"}}
+        with {:is_open?, true} <- {:is_open?, bypass or open?(submission.assessment)},
+             {:status, :submitted} <- {:status, submission.status},
+             {:allowed_to_unsubmit?, true} <-
+               {:allowed_to_unsubmit?,
+                role == :admin or bypass or is_nil(submission.student_id) or
+                  Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)},
+             {:is_grading_published?, false} <-
+               {:is_grading_published?, submission.is_grading_published} do
+          {:ok, submission}
+        else
+          {:is_open?, false} ->
+            Logger.error("Assessment for submission #{submission_id} is not open")
+            {:error, {:forbidden, "Assessment not open"}}
 
-        {:status, :attempting} ->
-          Logger.error("Submission #{submission_id} is still attempting")
-          {:error, {:bad_request, "Some questions have not been attempted"}}
+          {:status, :attempting} ->
+            Logger.error("Submission #{submission_id} is still attempting")
+            {:error, {:bad_request, "Some questions have not been attempted"}}
 
-        {:status, :attempted} ->
-          Logger.error("Submission #{submission_id} has already been attempted")
-          {:error, {:bad_request, "Assessment has not been submitted"}}
+          {:status, :attempted} ->
+            Logger.error("Submission #{submission_id} has already been attempted")
+            {:error, {:bad_request, "Assessment has not been submitted"}}
 
-        {:allowed_to_unsubmit?, false} ->
-          Logger.error("User #{cr.id} is not allowed to unsubmit submission #{submission_id}")
-          {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
+          {:allowed_to_unsubmit?, false} ->
+            Logger.error("User #{cr.id} is not allowed to unsubmit submission #{submission_id}")
+            {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
 
-        {:is_grading_published?, true} ->
-          Logger.error("Grading for submission #{submission_id} has already been published")
-          {:error, {:forbidden, "Grading has not been unpublished"}}
+          {:is_grading_published?, true} ->
+            Logger.error("Grading for submission #{submission_id} has already been published")
+            {:error, {:forbidden, "Grading has not been unpublished"}}
 
-        _ ->
-          Logger.error("An unknown error occurred while unsubmitting submission #{submission_id}")
-          {:error, {:internal_server_error, "Please try again later."}}
-      end
-    else
-      {:submission_found?, false} ->
+          _ ->
+            Logger.error(
+              "An unknown error occurred while unsubmitting submission #{submission_id}"
+            )
+
+            {:error, {:internal_server_error, "Please try again later."}}
+        end
+
+      false ->
         Logger.error("Submission #{submission_id} not found")
         {:error, {:not_found, "Submission not found"}}
     end
