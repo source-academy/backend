@@ -159,20 +159,39 @@ defmodule Cadet.AssessmentsTest do
     end
 
     test "update_llm_usage_and_cost handles nonexistent assessment gracefully" do
-      usage = %{"prompt_tokens" => 10, "completion_tokens" => 20, "prompt_tokens_details" => %{"cached_tokens" => 5}}
+      usage = %{
+        "prompt_tokens" => 10,
+        "completion_tokens" => 20,
+        "prompt_tokens_details" => %{"cached_tokens" => 5}
+      }
 
       assert {:error, :not_found} = Assessments.update_llm_usage_and_cost(-1, usage)
     end
 
     test "update_llm_usage_and_cost explicitly preserves nil assessment path" do
-      usage = %{"prompt_tokens" => 1, "completion_tokens" => 1, "prompt_tokens_details" => %{"cached_tokens" => 0}}
+      usage = %{
+        "prompt_tokens" => 1,
+        "completion_tokens" => 1,
+        "prompt_tokens_details" => %{"cached_tokens" => 0}
+      }
 
       assert {:error, :not_found} = Assessments.update_llm_usage_and_cost(-999_999, usage)
     end
 
     test "update_llm_usage_and_cost increments LLM totals for existing assessment" do
-      assessment = insert(:assessment, %{llm_total_input_tokens: 0, llm_total_output_tokens: 0, llm_total_cached_tokens: 0, llm_total_cost: Decimal.new("0.0")})
-      usage = %{"prompt_tokens" => 10, "completion_tokens" => 20, "prompt_tokens_details" => %{"cached_tokens" => 5}}
+      assessment =
+        insert(:assessment, %{
+          llm_total_input_tokens: 0,
+          llm_total_output_tokens: 0,
+          llm_total_cached_tokens: 0,
+          llm_total_cost: Decimal.new("0.0")
+        })
+
+      usage = %{
+        "prompt_tokens" => 10,
+        "completion_tokens" => 20,
+        "prompt_tokens_details" => %{"cached_tokens" => 5}
+      }
 
       assert {:ok, nil} = Assessments.update_llm_usage_and_cost(assessment.id, usage)
 
