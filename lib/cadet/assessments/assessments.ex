@@ -3638,24 +3638,29 @@ defmodule Cadet.Assessments do
     cached = extract_val(details, "cached_tokens", :cached_tokens, 0)
 
     # Fetch assessment to get cost rates
-    assessment = Repo.get(Assessment, assessment_id)
+    case Repo.get(Assessment, assessment_id) do
+      nil ->
+        Logger.error("Assessment not found when updating LLM usage and cost: #{assessment_id}")
+        {:error, :not_found}
 
-    input_rate = get_valid_rate(assessment.llm_input_cost, "3.20")
-    output_rate = get_valid_rate(assessment.llm_output_cost, "12.80")
+      assessment ->
+        input_rate = get_valid_rate(assessment.llm_input_cost, "3.20")
+        output_rate = get_valid_rate(assessment.llm_output_cost, "12.80")
 
-    new_cost = calculate_token_cost(prompt, completion, input_rate, output_rate)
+        new_cost = calculate_token_cost(prompt, completion, input_rate, output_rate)
 
-    # Atomic database-level updates to prevent race conditions
-    # All increments happen in a single transaction at the database level
-    query = from(a in Assessment, where: a.id == ^assessment_id, update: [set: [
-      llm_total_input_tokens: fragment("COALESCE(llm_total_input_tokens, 0) + ?", ^prompt),
-      llm_total_output_tokens: fragment("COALESCE(llm_total_output_tokens, 0) + ?", ^completion),
-      llm_total_cached_tokens: fragment("COALESCE(llm_total_cached_tokens, 0) + ?", ^cached),
-      llm_total_cost: fragment("COALESCE(llm_total_cost, 0) + ?", ^new_cost)
-    ]])
-    Repo.update_all(query, [])
+        # Atomic database-level updates to prevent race conditions
+        # All increments happen in a single transaction at the database level
+        query = from(a in Assessment, where: a.id == ^assessment_id, update: [set: [
+          llm_total_input_tokens: fragment("COALESCE(llm_total_input_tokens, 0) + ?", ^prompt),
+          llm_total_output_tokens: fragment("COALESCE(llm_total_output_tokens, 0) + ?", ^completion),
+          llm_total_cached_tokens: fragment("COALESCE(llm_total_cached_tokens, 0) + ?", ^cached),
+          llm_total_cost: fragment("COALESCE(llm_total_cost, 0) + ?", ^new_cost)
+        ]])
 
-    {:ok, nil}
+        Repo.update_all(query, [])
+        {:ok, nil}
+    end
   end
 
   defp extract_val(map, string_key, atom_key, default) do
