@@ -13,13 +13,13 @@ case Cadet.Repo.start_link() do
   {:error, {:already_started, _pid}} -> :ok
 end
 
-case Ecto.Adapters.Postgres.storage_down(Cadet.Repo) do
+case Ecto.Adapters.Postgres.storage_down(Cadet.Repo.config()) do
   :ok -> :ok
   {:error, :already_down} -> :ok
   {:error, _} -> :ok
 end
 
-case Ecto.Adapters.Postgres.storage_up(Cadet.Repo) do
+case Ecto.Adapters.Postgres.storage_up(Cadet.Repo.config()) do
   :ok -> :ok
   {:error, :already_up} -> :ok
   {:error, _} -> :ok

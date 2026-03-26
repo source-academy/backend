@@ -1472,7 +1472,7 @@ defmodule Cadet.Assessments do
         perform_unsubmit_transaction(submission, submission_id, cr)
 
       {:error, reason} ->
-        reason
+        {:error, reason}
     end
   end
 
