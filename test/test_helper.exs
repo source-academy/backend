@@ -26,6 +26,6 @@ case Ecto.Adapters.Postgres.storage_up(Cadet.Repo.config()) do
 end
 
 # Run all pending migrations
-:ok = Ecto.Migrator.run(Cadet.Repo, :up, all: true)
+Ecto.Migrator.run(Cadet.Repo, :up, all: true)
 
 Ecto.Adapters.SQL.Sandbox.mode(Cadet.Repo, :manual)
