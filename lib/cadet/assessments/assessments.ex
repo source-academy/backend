@@ -1549,57 +1549,66 @@ defmodule Cadet.Assessments do
         delete_comments_for_answers(answer_ids)
         {:ok, nil}
       end)
-      |> Repo.transaction()
 
-      case submission.student_id do
-        # Team submission, handle notifications for team members
-        nil ->
-          Logger.info("Handling unsubmit notifications for team submission #{submission.id}")
-          team = Repo.get(Team, submission.team_id)
+      transaction_result = Repo.transaction()
 
-          query =
-            from(t in Team,
-              join: tm in TeamMember,
-              on: t.id == tm.team_id,
-              join: cr in CourseRegistration,
-              on: tm.student_id == cr.id,
-              where: t.id == ^team.id,
-              select: cr.id
-            )
+      case transaction_result do
+        {:ok, _result} ->
+          Logger.info("Successfully unsubmitting submission #{submission_id}")
 
-          team_members = Repo.all(query)
+          case submission.student_id do
+            # Team submission, handle notifications for team members
+            nil ->
+              Logger.info("Handling unsubmit notifications for team submission #{submission.id}")
+              team = Repo.get(Team, submission.team_id)
 
-          Enum.each(team_members, fn tm_id ->
-            Logger.info("Sending unsubmit notification to team member #{tm_id}")
+              query =
+                from(t in Team,
+                  join: tm in TeamMember,
+                  on: t.id == tm.team_id,
+                  join: cr in CourseRegistration,
+                  on: tm.student_id == cr.id,
+                  where: t.id == ^team.id,
+                  select: cr.id
+                )
 
-            Notifications.handle_unsubmit_notifications(
-              submission.assessment.id,
-              Repo.get(CourseRegistration, tm_id)
-            )
-          end)
+              team_members = Repo.all(query)
 
-        student_id ->
-          Logger.info(
-            "Handling unsubmit notifications for individual submission #{submission.id}"
-          )
+              Enum.each(team_members, fn tm_id ->
+                Logger.info("Sending unsubmit notification to team member #{tm_id}")
 
-          Notifications.handle_unsubmit_notifications(
-            submission.assessment.id,
-            Repo.get(CourseRegistration, student_id)
-          )
+                Notifications.handle_unsubmit_notifications(
+                  submission.assessment.id,
+                  Repo.get(CourseRegistration, tm_id)
+                )
+              end)
+
+            student_id ->
+              Logger.info(
+                "Handling unsubmit notifications for individual submission #{submission.id}"
+              )
+
+              Notifications.handle_unsubmit_notifications(
+                submission.assessment.id,
+                Repo.get(CourseRegistration, student_id)
+              )
+          end
+
+          Logger.info("Removing grading notifications for submission #{submission.id}")
+
+          # Remove grading notifications for submissions
+          Notification
+          |> where(submission_id: ^submission_id, type: :submitted)
+          |> select([n], n.id)
+          |> Repo.all()
+          |> Notifications.acknowledge(cr)
+
+          {:ok, nil}
+
+        {:error, _failed_operation, failed_value, _changes_so_far} ->
+          Logger.error("Failed to unsubmit submission #{submission_id}: #{inspect(failed_value)}")
+          {:error, {:internal_server_error, "Failed to unsubmit submission"}}
       end
-
-      Logger.info("Removing grading notifications for submission #{submission.id}")
-
-      # Remove grading notifications for submissions
-      Notification
-      |> where(submission_id: ^submission_id, type: :submitted)
-      |> select([n], n.id)
-      |> Repo.all()
-      |> Notifications.acknowledge(cr)
-
-      Logger.info("Successfully unsubmitting submission #{submission_id}")
-      {:ok, nil}
     else
       {:submission_found?, false} ->
         Logger.error("Submission #{submission_id} not found")

@@ -7,7 +7,11 @@ Faker.start()
 
 # Ensure test database exists and migrations are run
 _ = Ecto.Adapters.Postgres.ensure_all_started(Cadet.Repo, :temporary)
-{:ok, _pid} = Cadet.Repo.start_link()
+
+case Cadet.Repo.start_link() do
+  {:ok, _pid} -> :ok
+  {:error, {:already_started, _pid}} -> :ok
+end
 
 case Ecto.Adapters.Postgres.storage_down(Cadet.Repo) do
   :ok -> :ok
