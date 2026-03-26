@@ -3066,7 +3066,7 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  describe "is_fully_autograded? function" do
+  describe "fully_autograded? function" do
     setup do
       assessment = insert(:assessment)
       student = insert(:course_registration, role: :student)
@@ -3087,7 +3087,7 @@ defmodule Cadet.AssessmentsTest do
       insert(:answer, submission: submission, question: question, autograding_status: :success)
       insert(:answer, submission: submission, question: question2, autograding_status: :success)
 
-      assert Assessments.is_fully_autograded?(submission.id) == true
+      assert Assessments.fully_autograded?(submission.id) == true
     end
 
     test "returns false when not all answers are autograded successfully", %{
@@ -3098,7 +3098,7 @@ defmodule Cadet.AssessmentsTest do
       insert(:answer, submission: submission, question: question, autograding_status: :success)
       insert(:answer, submission: submission, question: question2, autograding_status: :failed)
 
-      assert Assessments.is_fully_autograded?(submission.id) == false
+      assert Assessments.fully_autograded?(submission.id) == false
     end
 
     test "returns false when not all answers are autograded successfully 2", %{
@@ -3109,7 +3109,7 @@ defmodule Cadet.AssessmentsTest do
       insert(:answer, submission: submission, question: question, autograding_status: :success)
       insert(:answer, submission: submission, question: question2, autograding_status: :none)
 
-      assert Assessments.is_fully_autograded?(submission.id) == false
+      assert Assessments.fully_autograded?(submission.id) == false
     end
   end
 
