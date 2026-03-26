@@ -14,7 +14,7 @@ defmodule CadetWeb.VersionsView do
       answer_id: :answer_id,
       inserted_at: :inserted_at,
       updated_at: :updated_at,
-      version: :version
+      content: :content
     })
   end
 end

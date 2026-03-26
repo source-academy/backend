@@ -31,7 +31,7 @@ defmodule Cadet.Assessments.Answer do
     belongs_to(:submission, Submission)
     belongs_to(:question, Question)
     has_many(:ai_comments, AIComment, on_delete: :delete_all)
-    has_many(:version, Version, on_delete: :delete_all)
+    has_many(:versions, Version, on_delete: :delete_all)
 
     timestamps()
   end

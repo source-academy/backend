@@ -3621,65 +3621,70 @@ defmodule Cadet.Assessments do
     Repo.one(query)
   end
 
-  def get_version(
+  def get_versions(
         question = %Question{},
         cr = %CourseRegistration{}
       ) do
-    {:ok, team} = find_team(question.assessment.id, cr.id)
-
-    case team do
-      %Team{} ->
+    with {:ok, team} <- find_team(question.assessment.id, cr.id) do
+      base_query =
         Version
         |> join(:inner, [v], a in assoc(v, :answer))
         |> join(:inner, [v, a], s in assoc(a, :submission))
         |> where([v, a, s], a.question_id == ^question.id)
-        |> where([v, a, s], s.team_id == ^team.id)
-        |> Repo.all()
 
-      nil ->
-        Version
-        |> join(:inner, [v], a in assoc(v, :answer))
-        |> join(:inner, [v, a], s in assoc(a, :submission))
-        |> where([v, a, s], a.question_id == ^question.id)
-        |> where([v, a, s], s.student_id == ^cr.id)
-        |> Repo.all()
+      query =
+        case team do
+          %Team{} ->
+            where(base_query, [_v, _a, s], s.team_id == ^team.id)
+
+          nil ->
+            where(base_query, [_v, _a, s], s.student_id == ^cr.id)
+        end
+
+      {:ok, Repo.all(query)}
+    else
+      {:error, :team_not_found} ->
+        Logger.error("Team not found for question #{question.id} and user #{cr.id}")
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+
+      error ->
+        error
     end
   end
 
   def save_version(
         question = %Question{},
         cr = %CourseRegistration{id: cr_id},
-        raw_version
+        raw_content
       ) do
     if question.type == :voting do
       {:error, {:bad_request, "Cannot save version for voting question"}}
-    end
-
-    with {:ok, _team} <- find_team(question.assessment.id, cr_id),
-         {:ok, submission} <- find_or_create_submission(cr, question.assessment),
-         {:ok, answer} <- find_or_create_answer(question, submission, raw_version),
-         {:ok, _version} <- insert_version(question, answer, raw_version) do
-      Logger.info("Successfully saved version for answer #{question.id} for user #{cr_id}")
-
-      # placeholder
-      {:ok, nil}
     else
-      {:error, :team_not_found} ->
-        Logger.error("Team not found for question #{question.id} and user #{cr_id}")
-        {:error, {:bad_request, "Your existing Team has been deleted!"}}
-    end
+      with {:ok, _team} <- find_team(question.assessment.id, cr_id),
+           {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+           {:ok, answer} <- find_or_create_answer(question, submission, raw_content),
+           {:ok, _version} <- insert_version(question, answer, raw_content) do
+        Logger.info("Successfully saved version for answer #{question.id} for user #{cr_id}")
+        {:ok, nil}
+      else
+        {:error, :team_not_found} ->
+          Logger.error("Team not found for question #{question.id} and user #{cr_id}")
+          {:error, {:bad_request, "Your existing Team has been deleted!"}}
 
-    {:ok, nil}
+        error ->
+          error
+      end
+    end
   end
 
   defp find_or_create_answer(
          question = %Question{},
          submission = %Submission{},
-         raw_version
+         raw_content
        ) do
     case find_answer(question, submission) do
       {:ok, answer} -> {:ok, answer}
-      {:error, _} -> create_new_answer(question, submission, raw_version)
+      {:error, _} -> create_new_answer(question, submission, raw_content)
     end
   end
 
@@ -3700,9 +3705,9 @@ defmodule Cadet.Assessments do
   defp create_new_answer(
          question = %Question{},
          submission = %Submission{},
-         raw_version
+         raw_answer
        ) do
-    answer_content = build_answer_content(raw_version, question.type)
+    answer_content = build_answer_content(raw_answer, question.type)
 
     %Answer{}
     |> Answer.changeset(%{
@@ -3717,13 +3722,13 @@ defmodule Cadet.Assessments do
   defp insert_version(
          question = %Question{},
          answer = %Answer{},
-         raw_version
+         raw_content
        ) do
-    version_content = build_answer_content(raw_version, question.type)
+    content = build_answer_content(raw_content, question.type)
 
     %Version{}
     |> Version.changeset(%{
-      version: version_content,
+      content: content,
       answer_id: answer.id
     })
     |> Repo.insert()
@@ -3735,35 +3740,42 @@ defmodule Cadet.Assessments do
         version_id,
         name
       ) do
-    {:ok, team} = find_team(question.assessment.id, cr.id)
+    with {:ok, team} <- find_team(question.assessment.id, cr.id) do
+      base_query =
+        Version
+        |> join(:inner, [v], a in assoc(v, :answer))
+        |> join(:inner, [v, a], s in assoc(a, :submission))
+        |> where([v, a, s], v.id == ^version_id)
 
-    version =
-      case team do
-        %Team{} ->
-          Version
-          |> join(:inner, [v], a in assoc(v, :answer))
-          |> join(:inner, [v, a], s in assoc(a, :submission))
-          |> where([v, a, s], v.id == ^version_id)
-          |> where([v, a, s], s.team_id == ^team.id)
-          |> Repo.one()
+      version =
+        case team do
+          %Team{} ->
+            base_query
+            |> where([v, a, s], s.team_id == ^team.id)
+            |> Repo.one()
 
+          nil ->
+            base_query
+            |> where([v, a, s], s.student_id == ^cr.id)
+            |> Repo.one()
+        end
+
+      case version do
         nil ->
-          Version
-          |> join(:inner, [v], a in assoc(v, :answer))
-          |> join(:inner, [v, a], s in assoc(a, :submission))
-          |> where([v, a, s], v.id == ^version_id)
-          |> where([v, a, s], s.student_id == ^cr.id)
-          |> Repo.one()
+          {:error, {:not_found, "Version not found"}}
+
+        version ->
+          version
+          |> Version.changeset(%{name: name})
+          |> Repo.update()
       end
+    else
+      {:error, :team_not_found} ->
+        Logger.error("Team not found for question #{question.id} and user #{cr.id}")
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
 
-    case version do
-      nil ->
-        {:error, {:not_found, "Version not found"}}
-
-      version ->
-        version
-        |> Version.changeset(%{name: name})
-        |> Repo.update()
+      error ->
+        error
     end
   end
 end

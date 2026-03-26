@@ -5,7 +5,7 @@ defmodule Cadet.Assessments.Version do
   alias Cadet.Assessments.Answer
 
   schema "versions" do
-    field(:version, :map)
+    field(:content, :map)
     field(:name, :string)
     field(:restored, :boolean, default: false)
     field(:restored_from, :id)
@@ -18,7 +18,7 @@ defmodule Cadet.Assessments.Version do
   @doc false
   def changeset(version, attrs) do
     version
-    |> cast(attrs, [:version, :name, :restored, :answer_id])
-    |> validate_required([:version, :restored, :answer_id])
+    |> cast(attrs, [:content, :name, :restored, :answer_id])
+    |> validate_required([:content, :restored, :answer_id])
   end
 end

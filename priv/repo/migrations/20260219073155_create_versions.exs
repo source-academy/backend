@@ -2,9 +2,9 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
   use Ecto.Migration
   import Ecto.Query, only: [from: 2]
 
-  def change do
+  def up do
     create table(:versions) do
-      add(:version, :map)
+      add(:content, :map)
       add(:name, :string)
       add(:restored, :boolean, default: false, null: false)
       add(:answer_id, references(:answers, on_delete: :delete_all))
@@ -17,33 +17,25 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
     create(index(:versions, [:restored_from]))
 
     # Backfill data from answers table
-    execute(fn ->
-      answers =
-        from(a in "answers",
-          select: %{
-            id: a.id,
-            answer: a.answer,
-            inserted_at: a.inserted_at,
-            updated_at: a.updated_at
-          },
-          join: q in "questions",
-          on: q.id == a.question_id,
-          where: q.type != "voting"
-        )
-        |> repo().all()
+    flush()
 
-      versions =
-        answers
-        |> Enum.map(fn a ->
-          %{
-            answer_id: a.id,
-            version: a.answer,
-            inserted_at: a.inserted_at,
-            updated_at: a.updated_at
-          }
-        end)
+    source_query =
+      from(a in "answers",
+        join: q in "questions",
+        on: q.id == a.question_id,
+        where: q.type != "voting",
+        select: %{
+          content: a.answer,
+          answer_id: a.id,
+          inserted_at: a.inserted_at,
+          updated_at: a.updated_at
+        }
+      )
 
-      repo().insert_all("versions", versions)
-    end)
+    repo().insert_all("versions", source_query)
+  end
+
+  def down do
+    drop(table(:versions))
   end
 end

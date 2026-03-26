@@ -17,8 +17,7 @@ defmodule CadetWeb.VersionsController do
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
-         {:versions, versions} <-
-           {:versions, Assessments.get_version(question, course_reg)} do
+         {:ok, versions} <- Assessments.get_versions(question, course_reg) do
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/json")
@@ -28,15 +27,27 @@ defmodule CadetWeb.VersionsController do
         conn
         |> put_status(:not_found)
         |> text("Question not found")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+
+      other ->
+        Logger.error("Unexpected error in versions controller: #{inspect(other)}")
+
+        conn
+        |> put_status(:internal_server_error)
+        |> text("An unexpected error occurred.")
     end
   end
 
-  def save(conn, %{"questionid" => question_id, "version" => version}) do
+  def save(conn, %{"questionid" => question_id, "content" => content}) do
     course_reg = conn.assigns[:course_reg]
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
-         {:ok, _nil} <- Assessments.save_version(question, course_reg, version) do
+         {:ok, _nil} <- Assessments.save_version(question, course_reg, content) do
       text(conn, "OK")
     else
       {:question, nil} ->
@@ -48,6 +59,13 @@ defmodule CadetWeb.VersionsController do
         conn
         |> put_status(status)
         |> text(message)
+
+      other ->
+        Logger.error("Unexpected error in versions controller: #{inspect(other)}")
+
+        conn
+        |> put_status(:internal_server_error)
+        |> text("An unexpected error occurred.")
     end
   end
 
@@ -72,6 +90,13 @@ defmodule CadetWeb.VersionsController do
         conn
         |> put_status(status)
         |> text(message)
+
+      other ->
+        Logger.error("Unexpected error in versions controller: #{inspect(other)}")
+
+        conn
+        |> put_status(:internal_server_error)
+        |> text("An unexpected error occurred.")
     end
   end
 end
