@@ -3672,9 +3672,8 @@ defmodule Cadet.Assessments do
         input_rate = get_valid_rate(assessment.llm_input_cost, "3.20")
         output_rate = get_valid_rate(assessment.llm_output_cost, "12.80")
 
-        new_cost =
-          calculate_token_cost(prompt, completion, input_rate, output_rate)
-          |> Decimal.round(6, :half_up)
+        raw_cost = calculate_token_cost(prompt, completion, input_rate, output_rate)
+        new_cost = Decimal.round(raw_cost, 6, :half_up)
 
         # Atomic database-level updates to prevent race conditions
         # All increments happen in a single transaction at the database level
