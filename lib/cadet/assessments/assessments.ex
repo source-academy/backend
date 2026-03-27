@@ -1460,6 +1460,7 @@ defmodule Cadet.Assessments do
   end
 
   @dialyzer {:nowarn_function, unsubmit_submission: 2}
+  @dialyzer {:nowarn_function, perform_unsubmit_transaction: 3}
   def unsubmit_submission(
         submission_id,
         cr = %CourseRegistration{id: course_reg_id, role: role}
