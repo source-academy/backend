@@ -9,7 +9,7 @@ defmodule CadetWeb.AssessmentsView do
   end
 
   def render("overview.json", %{assessment: assessment}) do
-    transform_map_for_view(assessment, %{
+    base_map = %{
       id: :id,
       courseId: :course_id,
       title: :title,
@@ -35,8 +35,29 @@ defmodule CadetWeb.AssessmentsView do
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter,
       isVotingPublished: :is_voting_published,
-      hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay
-    })
+      hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay,
+      isLlmGraded: &(&1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""])
+    }
+
+    # Only include LLM cost fields if the assessment is LLM graded
+    is_llm_graded =
+      assessment.has_llm_questions || assessment.llm_assessment_prompt not in [nil, ""]
+
+    final_map =
+      if is_llm_graded do
+        Map.merge(base_map, %{
+          llmInputCost: :llm_input_cost,
+          llmOutputCost: :llm_output_cost,
+          llmTotalInputTokens: :llm_total_input_tokens,
+          llmTotalOutputTokens: :llm_total_output_tokens,
+          llmTotalCachedTokens: :llm_total_cached_tokens,
+          llmTotalCost: :llm_total_cost
+        })
+      else
+        base_map
+      end
+
+    transform_map_for_view(assessment, final_map)
   end
 
   def render("show.json", %{assessment: assessment}) do

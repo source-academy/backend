@@ -51,7 +51,7 @@ defmodule Cadet.DataCase do
   end
 
   @doc """
-  A helper that builds a Plug.Upload struct to test Arc.Ecto fields
+  A helper that builds a Plug.Upload struct to test Waffle.Ecto fields
   """
   def build_upload(path, content_type \\ "image\png") do
     %Plug.Upload{path: path, filename: Path.basename(path), content_type: content_type}
