@@ -82,9 +82,7 @@ defmodule Cadet.Courses do
         Logger.info("Successfully retrieved course configuration for course #{course_id}")
 
         {:ok,
-         course
-         |> Map.put(:assessment_configs, assessment_configs)
-         |> Map.put(:has_llm_content, has_llm_content)}
+         %{course | assessment_configs: assessment_configs, has_llm_content: has_llm_content}}
     end
   end
 

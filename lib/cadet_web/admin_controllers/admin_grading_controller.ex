@@ -2,11 +2,6 @@ defmodule CadetWeb.AdminGradingController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  # Dialyzer false positive: Dialyzer cannot infer that assessment.course_id is guaranteed
-  # to be a positive integer, so it pessimistically assumes get_course_config may only
-  # return error. The code is safe because it handles both cases properly.
-  @dialyzer {:no_match, {:show, 2}}
-
   alias Cadet.{Assessments, Courses}
 
   @doc """
