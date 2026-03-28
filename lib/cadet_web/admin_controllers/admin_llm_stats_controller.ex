@@ -13,11 +13,13 @@ defmodule CadetWeb.AdminLLMStatsController do
   Returns assessment-level LLM usage statistics with per-question breakdown.
   """
   def course_stats(conn, %{"course_id" => course_id}) do
-    with {:ok, course_id} <- parse_id(course_id) do
-      stats = LLMStats.get_course_statistics(course_id)
-      json(conn, stats)
-    else
-      :error -> conn |> put_status(:bad_request) |> text("Invalid course_id")
+    case parse_id(course_id) do
+      {:ok, course_id} ->
+        stats = LLMStats.get_course_statistics(course_id)
+        json(conn, stats)
+
+      :error ->
+        conn |> put_status(:bad_request) |> text("Invalid course_id")
     end
   end
 
