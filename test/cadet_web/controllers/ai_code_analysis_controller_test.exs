@@ -117,6 +117,30 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       assert response(conn, 403) == "Forbidden"
     end
 
+    test "errors out when LLM API key is missing", %{conn: conn} do
+      course_without_key =
+        insert(:course, %{
+          enable_llm_grading: true,
+          llm_api_key: nil,
+          llm_model: "gpt-5-mini",
+          llm_api_url: "http://testapi.com",
+          llm_course_level_prompt: "Example Prompt"
+        })
+
+      assessment = insert(:assessment, %{course: course_without_key})
+      submission = insert(:submission, %{assessment: assessment})
+      question = insert(:programming_question, %{assessment: assessment})
+      answer = insert(:answer, %{submission: submission, question: question})
+      admin_user = insert(:course_registration, %{role: :admin, course: course_without_key})
+
+      conn =
+        conn
+        |> sign_in(admin_user.user)
+        |> post(build_url_generate_ai_comments(course_without_key.id, answer.id))
+
+      assert response(conn, 500) == "Failed to decrypt LLM API key"
+    end
+
     test "LLM endpoint returns an invalid response - should log errors in database", %{
       conn: conn,
       admin_user: admin_user,

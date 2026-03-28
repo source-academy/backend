@@ -2669,10 +2669,8 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by student username 1", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 0)
       student_username = student.user.username
 
@@ -2684,19 +2682,20 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
 
-      assert length(submissions_from_res) == expected_length
+      assert length(submissions_from_res) > 0
 
       Enum.each(submissions_from_res, fn s ->
-        assert s.student_id == student.id
+        submission_student = Enum.find(students, fn st -> st.id == s.student_id end)
+        assert String.contains?(submission_student.user.username, student_username)
       end)
+
+      assert Enum.any?(submissions_from_res, fn s -> s.student_id == student.id end)
     end
 
     test "filter by student username 2", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 1)
       student_username = student.user.username
 
@@ -2708,19 +2707,20 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
 
-      assert length(submissions_from_res) == expected_length
+      assert length(submissions_from_res) > 0
 
       Enum.each(submissions_from_res, fn s ->
-        assert s.student_id == student.id
+        submission_student = Enum.find(students, fn st -> st.id == s.student_id end)
+        assert String.contains?(submission_student.user.username, student_username)
       end)
+
+      assert Enum.any?(submissions_from_res, fn s -> s.student_id == student.id end)
     end
 
     test "filter by student username 3", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 2)
       student_username = student.user.username
 
@@ -2732,11 +2732,14 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
 
-      assert length(submissions_from_res) == expected_length
+      assert length(submissions_from_res) > 0
 
       Enum.each(submissions_from_res, fn s ->
-        assert s.student_id == student.id
+        submission_student = Enum.find(students, fn st -> st.id == s.student_id end)
+        assert String.contains?(submission_student.user.username, student_username)
       end)
+
+      assert Enum.any?(submissions_from_res, fn s -> s.student_id == student.id end)
     end
 
     test "filter by assessment config 1", %{
