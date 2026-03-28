@@ -79,8 +79,9 @@ defmodule CadetWeb.AICodeAnalysisController do
         "course_id" => course_id
       })
       when is_ecto_id(answer_id) do
-    with {answer_id_parsed, ""} <- Integer.parse(answer_id),
-         {:ok, course} <- Courses.get_course_config(course_id),
+    with {:ok, answer_id_parsed} <- parse_answer_id(answer_id),
+         {:ok, course_id_parsed} <- parse_course_id(course_id),
+         {:ok, course} <- Courses.get_course_config(course_id_parsed),
          {:ok} <- ensure_llm_enabled(course),
          {:ok, key} <- AICommentsHelpers.decrypt_llm_api_key(course.llm_api_key),
          {:ok} <-
@@ -102,14 +103,19 @@ defmodule CadetWeb.AICodeAnalysisController do
           llm_api_url: course.llm_api_url,
           course_prompt: course.llm_course_level_prompt,
           assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id),
-          course_id: course_id
+          course_id: course_id_parsed
         }
       )
     else
-      :error ->
+      {:error, :invalid_answer_id} ->
         conn
         |> put_status(:bad_request)
         |> text("Invalid question ID format")
+
+      {:error, :invalid_course_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid course ID format")
 
       {:decrypt_error, err} ->
         conn
@@ -379,6 +385,15 @@ defmodule CadetWeb.AICodeAnalysisController do
     case Integer.parse(answer_id) do
       {parsed, ""} -> {:ok, parsed}
       _ -> {:error, :invalid_answer_id}
+    end
+  end
+
+  defp parse_course_id(course_id) when is_integer(course_id), do: {:ok, course_id}
+
+  defp parse_course_id(course_id) when is_binary(course_id) do
+    case Integer.parse(course_id) do
+      {parsed, ""} -> {:ok, parsed}
+      _ -> {:error, :invalid_course_id}
     end
   end
 

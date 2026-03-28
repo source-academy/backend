@@ -104,9 +104,8 @@ defmodule Cadet.LLMStats do
   end
 
   def get_course_statistics(course_id) do
-    assessments_with_stats =
-      fetch_llm_course_assessments(course_id)
-      |> Enum.map(&build_course_assessment_stats(course_id, &1))
+    assessments = fetch_llm_course_assessments(course_id)
+    assessments_with_stats = Enum.map(assessments, &build_course_assessment_stats(course_id, &1))
 
     %{
       course_total_input_tokens: sum_assessment_input_tokens(assessments_with_stats),
@@ -165,14 +164,16 @@ defmodule Cadet.LLMStats do
   end
 
   defp get_assessment_avg_rating(course_id, assessment_id) do
-    Repo.one(
-      from(f in LLMFeedback,
-        where: f.course_id == ^course_id and f.assessment_id == ^assessment_id,
-        where: not is_nil(f.rating),
-        select: avg(f.rating)
+    avg_rating =
+      Repo.one(
+        from(f in LLMFeedback,
+          where: f.course_id == ^course_id and f.assessment_id == ^assessment_id,
+          where: not is_nil(f.rating),
+          select: avg(f.rating)
+        )
       )
-    )
-    |> normalize_avg_rating()
+
+    normalize_avg_rating(avg_rating)
   end
 
   defp get_llm_questions(assessment_id) do
@@ -192,8 +193,8 @@ defmodule Cadet.LLMStats do
   end
 
   defp get_question_stats(course_id, assessment, total_uses) do
-    get_llm_questions(assessment.assessment_id)
-    |> Enum.map(&build_question_stats(course_id, assessment, total_uses, &1))
+    llm_questions = get_llm_questions(assessment.assessment_id)
+    Enum.map(llm_questions, &build_question_stats(course_id, assessment, total_uses, &1))
   end
 
   defp build_question_stats(course_id, assessment, total_uses, question) do
@@ -226,16 +227,18 @@ defmodule Cadet.LLMStats do
   end
 
   defp get_question_avg_rating(course_id, assessment_id, question_id) do
-    Repo.one(
-      from(f in LLMFeedback,
-        where:
-          f.course_id == ^course_id and f.assessment_id == ^assessment_id and
-            f.question_id == ^question_id,
-        where: not is_nil(f.rating),
-        select: avg(f.rating)
+    avg_rating =
+      Repo.one(
+        from(f in LLMFeedback,
+          where:
+            f.course_id == ^course_id and f.assessment_id == ^assessment_id and
+              f.question_id == ^question_id,
+          where: not is_nil(f.rating),
+          select: avg(f.rating)
+        )
       )
-    )
-    |> normalize_avg_rating()
+
+    normalize_avg_rating(avg_rating)
   end
 
   defp normalize_avg_rating(nil), do: nil

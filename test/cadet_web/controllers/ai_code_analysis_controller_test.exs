@@ -105,6 +105,20 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       end
     end
 
+    test "errors out when given an invalid course id", %{
+      conn: conn,
+      admin_user: admin_user,
+      answer: answer
+    } do
+      response =
+        conn
+        |> sign_in(admin_user.user)
+        |> post(build_url_generate_ai_comments("invalid-course-id", answer.id))
+        |> text_response(400)
+
+      assert response == "Invalid course ID format"
+    end
+
     test "LLM endpoint returns an invalid response - should log errors in database", %{
       conn: conn,
       admin_user: admin_user,
