@@ -54,6 +54,9 @@ defmodule Cadet.Courses.Course do
     # for now, only settable from database
     field(:assets_prefix, :string, default: nil)
 
+    # Virtual field computed at runtime based on assessments in course
+    field(:has_llm_content, :boolean, virtual: true, default: false)
+
     has_many(:assessment_config, AssessmentConfig)
 
     timestamps()

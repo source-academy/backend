@@ -3,6 +3,84 @@ defmodule CadetWeb.AdminLLMStatsControllerTest do
 
   alias Cadet.{LLMStats, Repo, Courses.Course}
 
+  describe "GET /v2/courses/:course_id/admin/llm-stats" do
+    test "401 when not logged in", %{conn: conn} do
+      course = insert(:course)
+
+      conn = get(conn, "/v2/courses/#{course.id}/admin/llm-stats")
+      assert response(conn, 401) =~ "Unauthorised"
+    end
+
+    @tag authenticate: :student
+    test "403 for students", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      insert(:assessment, course_id: course_id, is_published: true)
+
+      conn = get(conn, "/v2/courses/#{course_id}/admin/llm-stats")
+      assert response(conn, 403) =~ "Forbidden"
+    end
+
+    @tag authenticate: :staff
+    test "returns course-level llm stats and assessment breakdown", %{conn: conn} do
+      course = Repo.get!(Course, conn.assigns.course_id)
+
+      assessment =
+        insert(:assessment,
+          course: course,
+          title: "Mission With LLM",
+          is_published: true,
+          llm_total_input_tokens: 10,
+          llm_total_output_tokens: 20,
+          llm_total_cost: Decimal.new("0.5")
+        )
+
+      insert(:assessment,
+        course: course,
+        title: "Mission Without LLM",
+        is_published: true,
+        llm_assessment_prompt: nil,
+        llm_total_input_tokens: 999,
+        llm_total_output_tokens: 999,
+        llm_total_cost: Decimal.new("9.99")
+      )
+
+      question =
+        insert(:question,
+          assessment: assessment,
+          display_order: 1,
+          question: %{"llm_prompt" => "x"}
+        )
+
+      student = insert(:course_registration, course: course, role: :student)
+      submission = insert(:submission, assessment: assessment, student: student)
+      answer = insert(:answer, submission: submission, question: question)
+
+      assert {:ok, _} =
+               LLMStats.log_usage(%{
+                 course_id: course.id,
+                 assessment_id: assessment.id,
+                 question_id: question.id,
+                 answer_id: answer.id,
+                 submission_id: submission.id,
+                 user_id: student.user_id
+               })
+
+      resp =
+        conn
+        |> get("/v2/courses/#{course.id}/admin/llm-stats")
+        |> json_response(200)
+
+      assert resp["course_total_input_tokens"] == 10
+      assert resp["course_total_output_tokens"] == 20
+      assert resp["course_total_cost"] == "0.5"
+      assert length(resp["assessments"]) == 1
+      [as] = resp["assessments"]
+      assert as["title"] == "Mission With LLM"
+      assert as["total_uses"] == 1
+      assert length(as["questions"]) == 1
+    end
+  end
+
   describe "GET /v2/courses/:course_id/admin/llm-stats/:assessment_id" do
     test "401 when not logged in", %{conn: conn} do
       course = insert(:course)

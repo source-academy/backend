@@ -77,8 +77,14 @@ defmodule Cadet.Courses do
           |> Enum.sort(&(&1.order < &2.order))
           |> Enum.map(& &1.type)
 
+        has_llm_content = Assessments.Query.course_has_llm_content?(course_id)
+
         Logger.info("Successfully retrieved course configuration for course #{course_id}")
-        {:ok, Map.put_new(course, :assessment_configs, assessment_configs)}
+
+        {:ok,
+         course
+         |> Map.put(:assessment_configs, assessment_configs)
+         |> Map.put(:has_llm_content, has_llm_content)}
     end
   end
 

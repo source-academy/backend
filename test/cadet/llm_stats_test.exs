@@ -133,6 +133,171 @@ defmodule Cadet.LLMStatsTest do
     end
   end
 
+  describe "get_course_statistics/1" do
+    test "aggregates per-course llm stats and includes question-level breakdown" do
+      course = insert(:course)
+
+      assessment =
+        insert(:assessment,
+          course: course,
+          is_published: true,
+          llm_total_input_tokens: 100,
+          llm_total_output_tokens: 200,
+          llm_total_cost: Decimal.new("1.50")
+        )
+
+      question_1 =
+        insert(:question,
+          assessment: assessment,
+          display_order: 1,
+          question: %{"llm_prompt" => "prompt"}
+        )
+
+      question_2 =
+        insert(:question,
+          assessment: assessment,
+          display_order: 2,
+          question: %{"llm_prompt" => "prompt2"}
+        )
+
+      student = insert(:course_registration, course: course, role: :student)
+      submission = insert(:submission, assessment: assessment, student: student)
+      answer1 = insert(:answer, submission: submission, question: question_1)
+      answer2 = insert(:answer, submission: submission, question: question_2)
+
+      user = insert(:user)
+
+      assert {:ok, _} =
+               LLMStats.log_usage(%{
+                 course_id: course.id,
+                 assessment_id: assessment.id,
+                 question_id: question_1.id,
+                 answer_id: answer1.id,
+                 submission_id: submission.id,
+                 user_id: user.id
+               })
+
+      assert {:ok, _} =
+               LLMStats.log_usage(%{
+                 course_id: course.id,
+                 assessment_id: assessment.id,
+                 question_id: question_2.id,
+                 answer_id: answer2.id,
+                 submission_id: submission.id,
+                 user_id: user.id
+               })
+
+      assert {:ok, _} =
+               LLMStats.submit_feedback(%{
+                 course_id: course.id,
+                 assessment_id: assessment.id,
+                 question_id: question_1.id,
+                 user_id: user.id,
+                 rating: 4,
+                 body: "good"
+               })
+
+      assert {:ok, _} =
+               LLMStats.submit_feedback(%{
+                 course_id: course.id,
+                 assessment_id: assessment.id,
+                 question_id: question_2.id,
+                 user_id: user.id,
+                 rating: 2,
+                 body: "bad"
+               })
+
+      result = LLMStats.get_course_statistics(course.id)
+
+      assert result.course_total_input_tokens == 100
+      assert result.course_total_output_tokens == 200
+      assert Decimal.cmp(result.course_total_cost, Decimal.new("1.50")) == :eq
+      assert length(result.assessments) == 1
+
+      [assessment_stats] = result.assessments
+      assert assessment_stats.total_uses == 2
+      assert assessment_stats.avg_rating == 3.0
+      assert length(assessment_stats.questions) == 2
+    end
+
+    test "excludes assessments without llm_assessment_prompt and llm_prompt from course statistics" do
+      course = insert(:course)
+
+      llm_assessment =
+        insert(:assessment,
+          course: course,
+          is_published: true,
+          title: "Mission With LLM",
+          llm_assessment_prompt: "Use this rubric",
+          llm_total_input_tokens: 10,
+          llm_total_output_tokens: 20,
+          llm_total_cost: Decimal.new("0.50")
+        )
+
+      # This assessment should never appear in course-level LLM stats.
+      insert(:assessment,
+        course: course,
+        is_published: true,
+        title: "Mission Without LLM",
+        llm_assessment_prompt: nil,
+        llm_total_input_tokens: 999,
+        llm_total_output_tokens: 999,
+        llm_total_cost: Decimal.new("9.99")
+      )
+
+      result = LLMStats.get_course_statistics(course.id)
+
+      assert length(result.assessments) == 1
+      [assessment_stats] = result.assessments
+      assert assessment_stats.assessment_id == llm_assessment.id
+      assert assessment_stats.title == "Mission With LLM"
+      assert result.course_total_input_tokens == 10
+      assert result.course_total_output_tokens == 20
+      assert Decimal.cmp(result.course_total_cost, Decimal.new("0.50")) == :eq
+    end
+
+    test "includes assessments with question-level llm_prompt even when llm_assessment_prompt is nil" do
+      course = insert(:course)
+
+      question_prompt_assessment =
+        insert(:assessment,
+          course: course,
+          is_published: true,
+          title: "Question Prompt Only",
+          llm_assessment_prompt: nil,
+          llm_total_input_tokens: 30,
+          llm_total_output_tokens: 40,
+          llm_total_cost: Decimal.new("0.70")
+        )
+
+      insert(:question,
+        assessment: question_prompt_assessment,
+        display_order: 1,
+        question: %{"llm_prompt" => "grade with rubric"}
+      )
+
+      insert(:assessment,
+        course: course,
+        is_published: true,
+        title: "No LLM Tags",
+        llm_assessment_prompt: nil,
+        llm_total_input_tokens: 999,
+        llm_total_output_tokens: 999,
+        llm_total_cost: Decimal.new("9.99")
+      )
+
+      result = LLMStats.get_course_statistics(course.id)
+
+      assert length(result.assessments) == 1
+      [assessment_stats] = result.assessments
+      assert assessment_stats.assessment_id == question_prompt_assessment.id
+      assert assessment_stats.title == "Question Prompt Only"
+      assert result.course_total_input_tokens == 30
+      assert result.course_total_output_tokens == 40
+      assert Decimal.cmp(result.course_total_cost, Decimal.new("0.70")) == :eq
+    end
+  end
+
   describe "get_question_statistics/3" do
     test "returns statistics scoped to one question" do
       course = insert(:course)

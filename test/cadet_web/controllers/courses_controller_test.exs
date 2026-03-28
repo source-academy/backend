@@ -169,10 +169,49 @@ defmodule CadetWeb.CoursesControllerTest do
                  "enableAchievements" => true,
                  "enableSourcecast" => true,
                  "enableStories" => false,
+                 "hasLlmContent" => false,
                  "sourceChapter" => 1,
                  "sourceVariant" => "default",
                  "moduleHelpText" => "Help Text",
                  "assessmentTypes" => ["Missions", "Quests", "Paths"]
+               }
+             } = resp
+    end
+
+    @tag authenticate: :student
+    test "returns hasLlmContent true when assessment has non-empty llm_assessment_prompt", %{
+      conn: conn
+    } do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+
+      insert(:assessment, course: course, llm_assessment_prompt: "Use this grading rubric")
+
+      resp = conn |> get(build_url_config(course_id)) |> json_response(200)
+
+      assert %{
+               "config" => %{
+                 "hasLlmContent" => true
+               }
+             } = resp
+    end
+
+    @tag authenticate: :student
+    test "returns hasLlmContent true when any question has non-empty llm_prompt", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      course = Repo.get(Course, course_id)
+      assessment = insert(:assessment, course: course, llm_assessment_prompt: nil)
+
+      insert(:question,
+        assessment: assessment,
+        question: build(:programming_question_content, llm_prompt: "Provide AI feedback")
+      )
+
+      resp = conn |> get(build_url_config(course_id)) |> json_response(200)
+
+      assert %{
+               "config" => %{
+                 "hasLlmContent" => true
                }
              } = resp
     end

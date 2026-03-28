@@ -12,6 +12,11 @@ defmodule CadetWeb.AdminLLMStatsController do
   GET /admin/llm-stats/:assessment_id
   Returns assessment-level LLM usage statistics with per-question breakdown.
   """
+  def course_stats(conn, %{"course_id" => course_id}) do
+    stats = LLMStats.get_course_statistics(course_id)
+    json(conn, stats)
+  end
+
   def assessment_stats(conn, %{"course_id" => course_id, "assessment_id" => assessment_id}) do
     stats = LLMStats.get_assessment_statistics(course_id, assessment_id)
     json(conn, stats)

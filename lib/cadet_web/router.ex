@@ -239,6 +239,7 @@ defmodule CadetWeb.Router do
     )
 
     # LLM Statistics & Feedback (per-assessment)
+    get("/llm-stats", AdminLLMStatsController, :course_stats)
     get("/llm-stats/:assessment_id", AdminLLMStatsController, :assessment_stats)
     get("/llm-stats/:assessment_id/feedback", AdminLLMStatsController, :get_feedback)
     post("/llm-stats/:assessment_id/feedback", AdminLLMStatsController, :submit_feedback)
