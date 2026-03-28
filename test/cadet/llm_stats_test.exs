@@ -296,6 +296,29 @@ defmodule Cadet.LLMStatsTest do
       assert result.course_total_output_tokens == 40
       assert Decimal.cmp(result.course_total_cost, Decimal.new("0.70")) == :eq
     end
+
+    test "treats null llm_total_cost as Decimal zero for course statistics" do
+      course = insert(:course)
+
+      assessment =
+        insert(:assessment,
+          course: course,
+          is_published: true,
+          title: "Null Cost Assessment",
+          llm_assessment_prompt: "Use this rubric",
+          llm_total_input_tokens: 10,
+          llm_total_output_tokens: 20,
+          llm_total_cost: nil
+        )
+
+      result = LLMStats.get_course_statistics(course.id)
+
+      assert length(result.assessments) == 1
+      [assessment_stats] = result.assessments
+      assert assessment_stats.assessment_id == assessment.id
+      assert Decimal.cmp(assessment_stats.llm_total_cost, Decimal.new("0.0")) == :eq
+      assert Decimal.cmp(result.course_total_cost, Decimal.new("0.0")) == :eq
+    end
   end
 
   describe "get_question_statistics/3" do
