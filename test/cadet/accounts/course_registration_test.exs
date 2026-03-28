@@ -285,13 +285,11 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
     test "failed due to incomplete changeset", %{course1: course1, user2: user2} do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
 
+      invalid_params =
+        for {k, v} <- [user_id: user2.id, course_id: course1.id], into: %{}, do: {k, v}
+
       assert_raise FunctionClauseError, fn ->
-        apply(CourseRegistrations, :insert_or_update_course_registration, [
-          %{
-            user_id: user2.id,
-            course_id: course1.id
-          }
-        ])
+        CourseRegistrations.insert_or_update_course_registration(invalid_params)
       end
 
       assert length(CourseRegistrations.get_users(course1.id)) == 1
