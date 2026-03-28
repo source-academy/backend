@@ -14,7 +14,8 @@ defmodule CadetWeb.AdminLLMStatsControllerTest do
     @tag authenticate: :student
     test "403 for students", %{conn: conn} do
       course_id = conn.assigns.course_id
-      insert(:assessment, course_id: course_id, is_published: true)
+      course = Repo.get!(Course, course_id)
+      insert(:assessment, course: course, is_published: true)
 
       conn = get(conn, "/v2/courses/#{course_id}/admin/llm-stats")
       assert response(conn, 403) =~ "Forbidden"
@@ -72,7 +73,7 @@ defmodule CadetWeb.AdminLLMStatsControllerTest do
 
       assert resp["course_total_input_tokens"] == 10
       assert resp["course_total_output_tokens"] == 20
-      assert resp["course_total_cost"] == "0.5"
+      assert resp["course_total_cost"] == "0.500000"
       assert length(resp["assessments"]) == 1
       [as] = resp["assessments"]
       assert as["title"] == "Mission With LLM"

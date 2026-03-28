@@ -2,8 +2,8 @@ import Mock
 
 defmodule CadetWeb.AICodeAnalysisControllerTest do
   use CadetWeb.ConnCase
-  alias Cadet.{Repo, AIComments}
-  alias Cadet.{AIComments.AIComment, Courses.Course}
+  alias Cadet.Repo
+  alias Cadet.AIComments.AIComment
   alias CadetWeb.AICommentsHelpers
 
   setup do
@@ -114,9 +114,9 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
         conn
         |> sign_in(admin_user.user)
         |> post(build_url_generate_ai_comments("invalid-course-id", answer.id))
-        |> text_response(400)
+        |> text_response(403)
 
-      assert response == "Invalid course ID format"
+      assert response == "Forbidden"
     end
 
     test "LLM endpoint returns an invalid response - should log errors in database", %{

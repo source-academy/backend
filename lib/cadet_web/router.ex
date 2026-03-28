@@ -320,8 +320,21 @@ defmodule CadetWeb.Router do
   defp assign_course(conn, _opts) do
     course_id = conn.path_params["course_id"]
 
+    parsed_course_id =
+      case Integer.parse(to_string(course_id)) do
+        {id, ""} -> id
+        _ -> nil
+      end
+
     course_reg =
-      Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)
+      if is_nil(parsed_course_id) do
+        nil
+      else
+        Cadet.Accounts.CourseRegistrations.get_user_record(
+          conn.assigns.current_user.id,
+          parsed_course_id
+        )
+      end
 
     case course_reg do
       nil -> conn |> send_resp(403, "Forbidden") |> halt()

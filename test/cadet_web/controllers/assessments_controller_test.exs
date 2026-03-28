@@ -1972,7 +1972,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   defp build_url_unlock(course_id, assessment_id),
     do: "/v2/courses/#{course_id}/assessments/#{assessment_id}/unlock"
 
-  defp build_popular_leaderboard_url(course_id, assessment_id, params \\ %{}) do
+  defp build_popular_leaderboard_url(course_id, assessment_id, params) do
     base_url = "#{build_url(course_id, assessment_id)}/contest_popular_leaderboard"
 
     if params != %{} do
@@ -1983,7 +1983,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  defp build_score_leaderboard_url(course_id, assessment_id, params \\ %{}) do
+  defp build_score_leaderboard_url(course_id, assessment_id, params) do
     base_url = "#{build_url(course_id, assessment_id)}/contest_score_leaderboard"
 
     if params != %{} do

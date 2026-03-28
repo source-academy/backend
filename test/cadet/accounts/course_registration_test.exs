@@ -286,10 +286,12 @@ defmodule Cadet.Accounts.CourseRegistrationTest do
       assert length(CourseRegistrations.get_users(course1.id)) == 1
 
       assert_raise FunctionClauseError, fn ->
-        CourseRegistrations.insert_or_update_course_registration(%{
-          user_id: user2.id,
-          course_id: course1.id
-        })
+        apply(CourseRegistrations, :insert_or_update_course_registration, [
+          %{
+            user_id: user2.id,
+            course_id: course1.id
+          }
+        ])
       end
 
       assert length(CourseRegistrations.get_users(course1.id)) == 1

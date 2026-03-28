@@ -211,7 +211,7 @@ defmodule Cadet.LLMStatsTest do
 
       assert result.course_total_input_tokens == 100
       assert result.course_total_output_tokens == 200
-      assert Decimal.cmp(result.course_total_cost, Decimal.new("1.50")) == :eq
+      assert Decimal.compare(result.course_total_cost, Decimal.new("1.50")) == :eq
       assert length(result.assessments) == 1
 
       [assessment_stats] = result.assessments
@@ -253,7 +253,7 @@ defmodule Cadet.LLMStatsTest do
       assert assessment_stats.title == "Mission With LLM"
       assert result.course_total_input_tokens == 10
       assert result.course_total_output_tokens == 20
-      assert Decimal.cmp(result.course_total_cost, Decimal.new("0.50")) == :eq
+      assert Decimal.compare(result.course_total_cost, Decimal.new("0.50")) == :eq
     end
 
     test "includes assessments with question-level llm_prompt even when llm_assessment_prompt is nil" do
@@ -294,7 +294,7 @@ defmodule Cadet.LLMStatsTest do
       assert assessment_stats.title == "Question Prompt Only"
       assert result.course_total_input_tokens == 30
       assert result.course_total_output_tokens == 40
-      assert Decimal.cmp(result.course_total_cost, Decimal.new("0.70")) == :eq
+      assert Decimal.compare(result.course_total_cost, Decimal.new("0.70")) == :eq
     end
 
     test "treats null llm_total_cost as Decimal zero for course statistics" do
@@ -316,8 +316,8 @@ defmodule Cadet.LLMStatsTest do
       assert length(result.assessments) == 1
       [assessment_stats] = result.assessments
       assert assessment_stats.assessment_id == assessment.id
-      assert Decimal.cmp(assessment_stats.llm_total_cost, Decimal.new("0.0")) == :eq
-      assert Decimal.cmp(result.course_total_cost, Decimal.new("0.0")) == :eq
+      assert Decimal.compare(assessment_stats.llm_total_cost, Decimal.new("0.0")) == :eq
+      assert Decimal.compare(result.course_total_cost, Decimal.new("0.0")) == :eq
     end
   end
 
