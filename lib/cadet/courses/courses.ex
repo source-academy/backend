@@ -59,7 +59,7 @@ defmodule Cadet.Courses do
   @doc """
   Returns the course configuration for the specified course.
   """
-  @spec get_course_config(integer) ::
+  @spec get_course_config(integer | binary) ::
           {:ok, Course.t()} | {:error, {:bad_request, String.t()}}
   def get_course_config(course_id) when is_ecto_id(course_id) do
     Logger.info("Retrieving course configuration for course #{course_id}")

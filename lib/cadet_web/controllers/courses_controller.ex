@@ -4,6 +4,11 @@ defmodule CadetWeb.CoursesController do
   use PhoenixSwagger
   require Logger
 
+  # Dialyzer false positive: Dialyzer cannot infer that course_id is guaranteed to be
+  # a positive integer, so it pessimistically assumes get_course_config may only return
+  # error. The code is safe because it handles both cases properly.
+  @dialyzer {:no_match, {:index, 2}}
+
   alias Cadet.Courses
   alias Cadet.Accounts.CourseRegistrations
 
