@@ -85,7 +85,10 @@ defmodule Cadet.AIComments do
       Repo.transaction(fn ->
         # Serialize version creation per (ai_comment_id, comment_index)
         # to avoid duplicate version numbers.
-        case Repo.query("SELECT pg_advisory_xact_lock($1, $2)", [ai_comment_id, comment_index]) do
+        case Repo.query(
+               "SELECT pg_advisory_xact_lock((($1::bigint << 32) | $2::bigint)::bigint)",
+               [ai_comment_id, comment_index]
+             ) do
           {:ok, _} ->
             next_version =
               Repo.one(
