@@ -41,9 +41,9 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       admin_user: admin_user,
       staff_user: staff_user,
       course_with_llm: course_with_llm,
-      example_assessment: example_assessment,
-      new_submission: new_submission,
-      question: question,
+      example_assessment: _example_assessment,
+      new_submission: _new_submission,
+      question: _question,
       answer: answer
     } do
       # Make the API call
@@ -83,12 +83,12 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
     test "errors out when given an invalid answer id", %{
       conn: conn,
       admin_user: admin_user,
-      staff_user: staff_user,
+      staff_user: _staff_user,
       course_with_llm: course_with_llm,
-      example_assessment: example_assessment,
-      new_submission: new_submission,
-      question: question,
-      answer: answer
+      example_assessment: _example_assessment,
+      new_submission: _new_submission,
+      question: _question,
+      answer: _answer
     } do
       random_answer_id = 324_324
 
@@ -97,11 +97,10 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
         chat_completion: fn _input, _overrides ->
           {:ok, %{:choices => [%{"message" => %{"content" => "Comment1|||Comment2"}}]}}
         end do
-        response =
-          conn
-          |> sign_in(admin_user.user)
-          |> post(build_url_generate_ai_comments(course_with_llm.id, random_answer_id))
-          |> text_response(400)
+        conn
+        |> sign_in(admin_user.user)
+        |> post(build_url_generate_ai_comments(course_with_llm.id, random_answer_id))
+        |> text_response(400)
       end
     end
 
@@ -110,23 +109,22 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
       admin_user: admin_user,
       answer: answer
     } do
-      response =
+      conn =
         conn
         |> sign_in(admin_user.user)
         |> post(build_url_generate_ai_comments("invalid-course-id", answer.id))
-        |> text_response(403)
 
-      assert response == "Forbidden"
+      assert response(conn, 403) == "Forbidden"
     end
 
     test "LLM endpoint returns an invalid response - should log errors in database", %{
       conn: conn,
       admin_user: admin_user,
-      staff_user: staff_user,
+      staff_user: _staff_user,
       course_with_llm: course_with_llm,
-      example_assessment: example_assessment,
-      new_submission: new_submission,
-      question: question,
+      example_assessment: _example_assessment,
+      new_submission: _new_submission,
+      question: _question,
       answer: answer
     } do
       # Make the API call that should fail
@@ -134,11 +132,10 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
         chat_completion: fn _input, _overrides ->
           {:ok, %{"body" => "Some unexpected response"}}
         end do
-        response =
-          conn
-          |> sign_in(admin_user.user)
-          |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
-          |> text_response(502)
+        conn
+        |> sign_in(admin_user.user)
+        |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
+        |> text_response(502)
       end
 
       # Verify database entry even with error
