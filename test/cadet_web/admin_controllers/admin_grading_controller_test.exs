@@ -483,7 +483,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
         |> get(build_url(course.id, submission.id))
         |> json_response(200)
 
-      programming_answers = Enum.filter(res["answers"], &(&1["question"]["type"] == "programming"))
+      programming_answers =
+        Enum.filter(res["answers"], &(&1["question"]["type"] == "programming"))
+
       assert Enum.all?(programming_answers, &(length(&1["prompts"]) == 2))
     end
 
@@ -498,7 +500,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
       programming_question = Enum.find(questions, &(&1.type == :programming))
 
       programming_question
-      |> Ecto.Changeset.change(question: Map.put(programming_question.question, "llm_prompt", "Task-level prompt"))
+      |> Ecto.Changeset.change(
+        question: Map.put(programming_question.question, "llm_prompt", "Task-level prompt")
+      )
       |> Repo.update!()
 
       res =

@@ -248,8 +248,8 @@ defmodule CadetWeb.AdminGradingView do
       Map.get(answer.question.question, "llm_prompt") ||
         Map.get(answer.question.question, :llm_prompt)
 
-        if course.enable_llm_grading &&
-          present_prompt?(assessment.llm_assessment_prompt) &&
+    if course.enable_llm_grading &&
+         present_prompt?(assessment.llm_assessment_prompt) &&
          present_prompt?(question_prompt) do
       AICodeAnalysisController.create_final_messages(
         course.llm_course_level_prompt,
