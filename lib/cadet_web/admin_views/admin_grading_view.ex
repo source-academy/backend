@@ -244,7 +244,13 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   defp build_prompts(answer, course, assessment) do
-    if course.enable_llm_grading do
+    question_prompt =
+      Map.get(answer.question.question, "llm_prompt") ||
+        Map.get(answer.question.question, :llm_prompt)
+
+        if course.enable_llm_grading &&
+          present_prompt?(assessment.llm_assessment_prompt) &&
+         present_prompt?(question_prompt) do
       AICodeAnalysisController.create_final_messages(
         course.llm_course_level_prompt,
         assessment.llm_assessment_prompt,
@@ -254,6 +260,9 @@ defmodule CadetWeb.AdminGradingView do
       []
     end
   end
+
+  defp present_prompt?(value) when is_binary(value), do: String.trim(value) != ""
+  defp present_prompt?(_), do: false
 
   defp build_grade(answer = %{grader: grader}) do
     transform_map_for_view(answer, %{
