@@ -4,6 +4,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
   alias CadetWeb.AdminGradingController
+  alias Ecto.Changeset
 
   import Mock
 
@@ -461,18 +462,18 @@ defmodule CadetWeb.AdminGradingControllerTest do
         seed_db(conn)
 
       course
-      |> Ecto.Changeset.change(enable_llm_grading: true)
+      |> Changeset.change(enable_llm_grading: true)
       |> Repo.update!()
 
       mission
-      |> Ecto.Changeset.change(llm_assessment_prompt: "Mission-level prompt")
+      |> Changeset.change(llm_assessment_prompt: "Mission-level prompt")
       |> Repo.update!()
 
       questions
       |> Enum.filter(&(&1.type == :programming))
       |> Enum.each(fn programming_question ->
         programming_question
-        |> Ecto.Changeset.change(
+        |> Changeset.change(
           question: Map.put(programming_question.question, "llm_prompt", "Task-level prompt")
         )
         |> Repo.update!()
@@ -494,13 +495,13 @@ defmodule CadetWeb.AdminGradingControllerTest do
       %{course: course, questions: questions, submissions: [submission | _]} = seed_db(conn)
 
       course
-      |> Ecto.Changeset.change(enable_llm_grading: true)
+      |> Changeset.change(enable_llm_grading: true)
       |> Repo.update!()
 
       programming_question = Enum.find(questions, &(&1.type == :programming))
 
       programming_question
-      |> Ecto.Changeset.change(
+      |> Changeset.change(
         question: Map.put(programming_question.question, "llm_prompt", "Task-level prompt")
       )
       |> Repo.update!()
@@ -519,11 +520,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
       %{course: course, mission: mission, submissions: [submission | _]} = seed_db(conn)
 
       course
-      |> Ecto.Changeset.change(enable_llm_grading: true)
+      |> Changeset.change(enable_llm_grading: true)
       |> Repo.update!()
 
       mission
-      |> Ecto.Changeset.change(llm_assessment_prompt: "Mission-level prompt")
+      |> Changeset.change(llm_assessment_prompt: "Mission-level prompt")
       |> Repo.update!()
 
       res =
