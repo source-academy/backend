@@ -22,7 +22,7 @@ defmodule CadetWeb.AssessmentsController do
            {:submission, Assessments.get_submission(assessment_id, cr)},
          {:is_open?, true} <-
            {:is_open?,
-            cr.role in @bypass_closed_roles or Assessments.is_open?(submission.assessment)},
+            cr.role in @bypass_closed_roles or Assessments.open?(submission.assessment)},
          {:ok, _nil} <- Assessments.finalise_submission(submission) do
       Logger.info("Successfully submitted assessment #{assessment_id} for user #{cr.id}.")
 

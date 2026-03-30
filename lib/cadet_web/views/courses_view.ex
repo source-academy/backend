@@ -17,6 +17,7 @@ defmodule CadetWeb.CoursesView do
           enableSourcecast: :enable_sourcecast,
           enableStories: :enable_stories,
           enableLlmGrading: :enable_llm_grading,
+          hasLlmContent: :has_llm_content,
           llmModel: :llm_model,
           llmApiUrl: :llm_api_url,
           llmCourseLevelPrompt: :llm_course_level_prompt,

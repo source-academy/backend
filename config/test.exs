@@ -90,7 +90,7 @@ config :cadet,
     client_role_arn: "test"
   ]
 
-config :arc, storage: Arc.Storage.Local
+config :waffle, storage: Waffle.Storage.Local
 
 if "test.secrets.exs" |> Path.expand(__DIR__) |> File.exists?(),
   do: import_config("test.secrets.exs")

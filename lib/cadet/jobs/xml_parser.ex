@@ -205,7 +205,9 @@ defmodule Cadet.Updater.XMLParser do
         template: ~x"./SNIPPET/TEMPLATE/text()" |> transform_by(&process_charlist/1),
         postpend: ~x"./SNIPPET/POSTPEND/text()" |> transform_by(&process_charlist/1),
         solution: ~x"./SNIPPET/SOLUTION/text()" |> transform_by(&process_charlist/1),
-        llm_prompt: ~x"./LLM_GRADING_PROMPT/text()" |> transform_by(&process_charlist/1)
+        llm_prompt:
+          ~x"(./LLM_QUESTION_PROMPT/text() | ./LLM_GRADING_PROMPT/text())[1]"so
+          |> transform_by(&process_charlist/1)
       ),
       entity
       |> xmap(
