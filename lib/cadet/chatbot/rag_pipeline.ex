@@ -3,7 +3,6 @@ defmodule Cadet.Chatbot.RagPipeline do
 
   alias Cadet.Chatbot.{CourseDocuments, DocumentStore, PromptBuilder}
 
-
   def process_rag_query(user_message, opts \\ []) do
     document_map = CourseDocuments.build_document_map_json()
 
@@ -16,7 +15,8 @@ defmodule Cadet.Chatbot.RagPipeline do
   end
 
   defp run_routing(user_message, document_map, opts) do
-    routing_prompt = PromptBuilder.build_routing_prompt(document_map, Keyword.fetch!(opts, :routing_prompt))
+    routing_prompt =
+      PromptBuilder.build_routing_prompt(document_map, Keyword.fetch!(opts, :routing_prompt))
 
     payload = [
       %{role: "system", content: routing_prompt},

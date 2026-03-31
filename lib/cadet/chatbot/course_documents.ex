@@ -1,5 +1,5 @@
 defmodule Cadet.Chatbot.CourseDocuments do
-  #Grab JSON from doucment_map"
+  # Grab JSON from doucment_map"
   def load_document_map do
     path = Application.app_dir(:cadet, "priv/course_documents/document_map.json")
 

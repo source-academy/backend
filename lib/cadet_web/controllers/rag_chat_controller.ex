@@ -1,5 +1,4 @@
 defmodule CadetWeb.RagChatController do
-
   use CadetWeb, :controller
   require Logger
 
@@ -35,10 +34,15 @@ defmodule CadetWeb.RagChatController do
     user = conn.assigns.current_user
 
     Logger.info("Processing RAG chat for user #{user.id}. Length: #{String.length(user_message)}")
+    Logger.info("User latest_viewed_course_id: #{inspect(user.latest_viewed_course_id)}")
 
-    course = if user.latest_viewed_course_id,
-      do: Repo.get(Course, user.latest_viewed_course_id),
-      else: nil
+    course =
+      if user.latest_viewed_course_id,
+        do: Repo.get(Course, user.latest_viewed_course_id),
+        else: nil
+
+    Logger.info("Course found: #{inspect(course != nil)}")
+    Logger.info("Answer prompt from DB: #{inspect(course && course.pixelbot_answer_prompt)}")
 
     rag_opts = [
       routing_prompt: (course && course.pixelbot_routing_prompt) || "",
@@ -124,7 +128,15 @@ defmodule CadetWeb.RagChatController do
       |> Enum.map(&Map.take(&1, [:role, :content, "role", "content"]))
       |> Enum.reverse()
 
-    system_context ++ messages_payload
+    {earlier_messages, last_message} =
+      case Enum.split(messages_payload, -1) do
+        {earlier, [last]} -> {earlier, [last]}
+        {[], []} -> {[], []}
+      end
+
+    system_reminder = [%{role: "system", content: system_prompt}]
+
+    system_context ++ earlier_messages ++ system_reminder ++ last_message
   end
 
   defp generate_payload(%Conversation{} = conversation, system_prompt, pdf_attachments) do
@@ -162,6 +174,8 @@ defmodule CadetWeb.RagChatController do
       content: [%{type: "text", text: user_text}] ++ pdf_content_blocks
     }
 
-    system_context ++ earlier_messages ++ [multimodal_message]
+    system_reminder = [%{role: "system", content: system_prompt}]
+
+    system_context ++ earlier_messages ++ system_reminder ++ [multimodal_message]
   end
 end
