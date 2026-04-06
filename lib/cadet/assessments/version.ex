@@ -1,3 +1,7 @@
+@moduledoc """
+  Versions model contains domain logic for versions management for
+  programming and multiple choice questions.
+"""
 defmodule Cadet.Assessments.Version do
   use Ecto.Schema
   import Ecto.Changeset
