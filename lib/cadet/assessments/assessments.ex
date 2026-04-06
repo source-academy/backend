@@ -3643,6 +3643,7 @@ defmodule Cadet.Assessments do
           end
 
         {:ok, Repo.all(query)}
+
       {:error, :team_not_found} ->
         Logger.error("Team not found for question #{question.id} and user #{cr.id}")
         {:error, {:bad_request, "Your existing Team has been deleted!"}}
