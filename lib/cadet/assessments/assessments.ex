@@ -3647,9 +3647,6 @@ defmodule Cadet.Assessments do
       {:error, :team_not_found} ->
         Logger.error("Team not found for question #{question.id} and user #{cr.id}")
         {:error, {:bad_request, "Your existing Team has been deleted!"}}
-
-      error ->
-        error
     end
   end
 
@@ -3781,9 +3778,6 @@ defmodule Cadet.Assessments do
       {:error, :team_not_found} ->
         Logger.error("Team not found for question #{question.id} and user #{cr.id}")
         {:error, {:bad_request, "Your existing Team has been deleted!"}}
-
-      error ->
-        error
     end
   end
 end
