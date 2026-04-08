@@ -51,10 +51,16 @@ defmodule Cadet.Chatbot.DocumentStore do
         end
       end,
       max_concurrency: 5,
-      timeout: 30_000
+      timeout: 30_000,
+      on_timeout: :kill_task
     )
-    |> Enum.map(fn {:ok, result} -> result end)
-    |> Enum.filter(& &1)
+    |> Enum.flat_map(fn
+      {:ok, result} when not is_nil(result) -> [result]
+      {:exit, :timeout} ->
+        Logger.warning("Document fetch timed out, skipping")
+        []
+      _ -> []
+    end)
   end
 
   defp media_type_for(s3_key) do
