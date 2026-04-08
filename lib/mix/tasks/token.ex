@@ -108,6 +108,7 @@ defmodule Mix.Tasks.Cadet.Token do
           course_id: course.id,
           role: role
         })
+        |> Repo.insert!()
 
         %User{}
         |> User.changeset(%{
