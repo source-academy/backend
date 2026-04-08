@@ -22,6 +22,7 @@ defmodule CadetWeb.CoursesView do
           llmCourseLevelPrompt: :llm_course_level_prompt,
           pixelbotRoutingPrompt: :pixelbot_routing_prompt,
           pixelbotAnswerPrompt: :pixelbot_answer_prompt,
+          feedbackUrl: :feedback_url,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,
