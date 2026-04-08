@@ -7,7 +7,10 @@ defmodule Cadet.Assessments.VersionFactory do
       alias Cadet.Assessments.Version
 
       def version_factory do
-        %Version{}
+        %Version{
+          content: %{"code" => "return true;"},
+          answer: build(:answer)
+        }
       end
     end
   end
