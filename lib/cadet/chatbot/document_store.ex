@@ -55,11 +55,15 @@ defmodule Cadet.Chatbot.DocumentStore do
       on_timeout: :kill_task
     )
     |> Enum.flat_map(fn
-      {:ok, result} when not is_nil(result) -> [result]
+      {:ok, result} when not is_nil(result) ->
+        [result]
+
       {:exit, :timeout} ->
         Logger.warning("Document fetch timed out, skipping")
         []
-      _ -> []
+
+      _ ->
+        []
     end)
   end
 

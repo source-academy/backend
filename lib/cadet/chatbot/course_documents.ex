@@ -26,13 +26,16 @@ defmodule Cadet.Chatbot.CourseDocuments do
     case File.read(path) do
       {:ok, contents} ->
         case Jason.decode(contents) do
-          {:ok, docs} -> docs
+          {:ok, docs} ->
+            docs
+
           {:error, reason} ->
             Logger.error("Failed to parse document_map.json: #{inspect(reason)}")
             []
         end
 
-      {:error, _} -> []
+      {:error, _} ->
+        []
     end
   end
 
