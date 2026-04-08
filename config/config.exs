@@ -48,8 +48,8 @@ config :logger, :console,
 
 # Configure RAG document retrieval (S3 bucket for course documents)
 config :cadet, :rag_documents,
-  bucket: "pixelbot-demo-bucket",
-  region: "us-east-1"
+  bucket: System.get_env("RAG_DOCUMENTS_BUCKET", "pixelbot-demo-bucket"),
+  region: System.get_env("RAG_DOCUMENTS_REGION", "us-east-1")
 
 # Configure ExAWS
 config :ex_aws,

@@ -46,21 +46,24 @@ defmodule CadetWeb.RagChatController do
 
     rag_opts = [
       routing_prompt: (course && course.pixelbot_routing_prompt) || "",
-      answer_prompt: (course && course.pixelbot_answer_prompt) || ""
+      answer_prompt: (course && course.pixelbot_answer_prompt) || "",
+      model: (course && course.llm_model) || "gpt-4o"
     ]
 
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
          {:ok, conversation} <- RagConversations.get_conversation_for_user(user.id),
          {:ok, updated_conversation} <-
            LlmConversations.add_message(conversation, "user", user_message) do
+      model = Keyword.get(rag_opts, :model, "gpt-4o")
+
       case RagPipeline.process_rag_query(user_message, rag_opts) do
         {:rag, system_prompt, pdf_attachments} ->
           payload = generate_payload(updated_conversation, system_prompt, pdf_attachments)
-          handle_openai_call(conn, payload, updated_conversation, conversation.id)
+          handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
 
         {:no_docs, system_prompt} ->
           payload = generate_fallback_payload(updated_conversation, system_prompt)
-          handle_openai_call(conn, payload, updated_conversation, conversation.id)
+          handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
       end
     else
       {:error, :message_too_long} ->
@@ -82,8 +85,8 @@ defmodule CadetWeb.RagChatController do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
-  defp handle_openai_call(conn, payload, updated_conversation, conversation_id) do
-    case OpenAI.chat_completion(model: "gpt-4o", messages: payload) do
+  defp handle_openai_call(conn, payload, updated_conversation, conversation_id, model) do
+    case OpenAI.chat_completion(model: model, messages: payload) do
       {:ok, result_map} ->
         choices = Map.get(result_map, :choices, [])
 

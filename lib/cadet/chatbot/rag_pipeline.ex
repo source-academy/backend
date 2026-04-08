@@ -25,7 +25,9 @@ defmodule Cadet.Chatbot.RagPipeline do
 
     Logger.info("RAG pipeline: calling routing LLM with #{length(document_map)} documents in map")
 
-    case OpenAI.chat_completion(model: "gpt-4o", messages: payload) do
+    model = Keyword.get(opts, :model, "gpt-4o")
+
+    case OpenAI.chat_completion(model: model, messages: payload) do
       {:ok, result_map} ->
         result_map
         |> extract_routing_response()

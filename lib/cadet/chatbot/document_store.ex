@@ -11,8 +11,6 @@ defmodule Cadet.Chatbot.DocumentStore do
 
     ExAws.S3.get_object(bucket, s3_key)
     |> ExAws.request(
-      access_key_id: config[:access_key_id],
-      secret_access_key: config[:secret_access_key],
       region: region,
       host: "s3.#{region}.amazonaws.com",
       scheme: "https://"
@@ -37,24 +35,26 @@ defmodule Cadet.Chatbot.DocumentStore do
 
   def fetch_and_encode_documents(documents) when is_list(documents) do
     documents
-    |> Enum.reduce([], fn doc, acc ->
-      case encode_document_base64(doc) do
-        {:ok, base64} ->
-          attachment = %{
-            title: doc["title"],
-            base64: base64,
-            media_type: media_type_for(doc["s3_key"])
-          }
+    |> Task.async_stream(
+      fn doc ->
+        case encode_document_base64(doc) do
+          {:ok, base64} ->
+            %{
+              title: doc["title"],
+              base64: base64,
+              media_type: media_type_for(doc["s3_key"])
+            }
 
-          [attachment | acc]
-
-        {:error, reason} ->
-          Logger.warning("Skipping document #{doc["id"]}: #{inspect(reason)}")
-
-          acc
-      end
-    end)
-    |> Enum.reverse()
+          {:error, reason} ->
+            Logger.warning("Skipping document #{doc["id"]}: #{inspect(reason)}")
+            nil
+        end
+      end,
+      max_concurrency: 5,
+      timeout: 30_000
+    )
+    |> Enum.map(fn {:ok, result} -> result end)
+    |> Enum.filter(& &1)
   end
 
   defp media_type_for(s3_key) do

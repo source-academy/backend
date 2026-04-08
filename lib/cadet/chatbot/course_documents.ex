@@ -1,10 +1,37 @@
 defmodule Cadet.Chatbot.CourseDocuments do
-  # Grab JSON from doucment_map"
+  require Logger
+
+  @cache_key {__MODULE__, :document_map}
+
+  # Grab JSON from document_map
   def load_document_map do
+    case :persistent_term.get(@cache_key, :not_cached) do
+      :not_cached ->
+        docs = read_document_map_from_disk()
+        :persistent_term.put(@cache_key, docs)
+        docs
+
+      cached ->
+        cached
+    end
+  end
+
+  def invalidate_cache do
+    :persistent_term.erase(@cache_key)
+  end
+
+  defp read_document_map_from_disk do
     path = Application.app_dir(:cadet, "priv/course_documents/document_map.json")
 
     case File.read(path) do
-      {:ok, contents} -> Jason.decode!(contents)
+      {:ok, contents} ->
+        case Jason.decode(contents) do
+          {:ok, docs} -> docs
+          {:error, reason} ->
+            Logger.error("Failed to parse document_map.json: #{inspect(reason)}")
+            []
+        end
+
       {:error, _} -> []
     end
   end
