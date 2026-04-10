@@ -55,7 +55,7 @@ defmodule CadetWeb.RagChatController do
         )
 
       is_nil(course.pixelbot_routing_prompt) or course.pixelbot_routing_prompt == "" or
-          is_nil(course.pixelbot_answer_prompt) or course.pixelbot_answer_prompt == "" ->
+        is_nil(course.pixelbot_answer_prompt) or course.pixelbot_answer_prompt == "" ->
         Logger.error(
           "RAG chat: course #{course.id} is missing pixelbot_routing_prompt or " <>
             "pixelbot_answer_prompt; refusing request"
