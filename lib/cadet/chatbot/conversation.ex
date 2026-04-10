@@ -8,9 +8,7 @@ defmodule Cadet.Chatbot.Conversation do
 
   @type t :: %__MODULE__{
           user: User.t(),
-          # { role: string; content: string }[]
           prepend_context: list(map()),
-          # { role: string; content: string, createdAt: string }[]
           messages: list(map())
         }
 

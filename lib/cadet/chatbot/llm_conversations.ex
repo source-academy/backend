@@ -22,6 +22,7 @@ defmodule Cadet.Chatbot.LlmConversations do
 
     case Conversation
          |> where([c], c.user_id == ^user_id)
+         |> where([c], c.prepend_context == ^[])
          |> order_by([c], desc: c.inserted_at)
          |> limit(1)
          |> Repo.one() do
@@ -83,12 +84,12 @@ defmodule Cadet.Chatbot.LlmConversations do
   end
 
   def add_message(conversation, role, content) do
+    updated_messages =
+      conversation.messages ++
+        [%{role: role, content: content, created_at: DateTime.utc_now()}]
+
     case conversation
-         |> Conversation.changeset(%{
-           messages:
-             conversation.messages ++
-               [%{role: role, content: content, created_at: DateTime.utc_now()}]
-         })
+         |> Conversation.changeset(%{messages: updated_messages})
          |> Repo.update() do
       {:ok, updated} -> {:ok, updated}
       {:error, changeset} -> {:error, full_error_messages(changeset)}

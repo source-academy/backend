@@ -85,29 +85,40 @@ defmodule CadetWeb.ChatController do
       case OpenAI.chat_completion(model: "gpt-4", messages: payload) do
         {:ok, result_map} ->
           choices = Map.get(result_map, :choices, [])
-          bot_message = Enum.at(choices, 0)["message"]["content"]
 
-          case LlmConversations.add_message(updated_conversation, "assistant", bot_message) do
-            {:ok, _} ->
-              Logger.info(
-                "Chat message processed successfully for user #{user.id}, conversation #{conversation.id}."
-              )
+          bot_message =
+            case choices do
+              [first | _] -> first["message"]["content"]
+              _ -> nil
+            end
 
-              render(conn, "conversation.json", %{
-                conversation_id: conversation.id,
-                response: bot_message
-              })
+          if is_nil(bot_message) do
+            Logger.error("OpenAI returned empty choices for user #{user.id}")
+            LlmConversations.add_error_message(updated_conversation)
+            send_resp(conn, 500, "No response from AI")
+          else
+            case LlmConversations.add_message(updated_conversation, "assistant", bot_message) do
+              {:ok, _} ->
+                Logger.info(
+                  "Chat message processed successfully for user #{user.id}, conversation #{conversation.id}."
+                )
 
-            {:error, error_message} ->
-              Logger.error(
-                "Failed to save bot response for user #{user.id}, conversation #{conversation.id}: #{error_message}."
-              )
+                render(conn, "conversation.json", %{
+                  conversation_id: conversation.id,
+                  response: bot_message
+                })
 
-              send_resp(conn, 500, error_message)
+              {:error, error_message} ->
+                Logger.error(
+                  "Failed to save bot response for user #{user.id}, conversation #{conversation.id}: #{error_message}."
+                )
+
+                send_resp(conn, 500, error_message)
+            end
           end
 
         {:error, reason} ->
-          error_message = reason["error"]["message"]
+          error_message = get_in(reason, ["error", "message"]) || "Unknown OpenAI error"
 
           Logger.error(
             "OpenAI API error for user #{user.id}, conversation #{conversation.id}: #{error_message}."

@@ -1,0 +1,407 @@
+[
+  {
+    "id": "lecture-L1A",
+    "title": "L1A: Introduction; Elements of Programming",
+    "description": "Introduction to CS1101S, course management, elements of programming.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 1,
+    "s3_key": "lecture/lecture-L1A.print.pdf"
+  },
+  {
+    "id": "lecture-L1B",
+    "title": "L1B: Runology",
+    "description": "First mission recap, Source in Pictures, Runology.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 1,
+    "s3_key": "lecture/lecture-L1B.print.pdf"
+  },
+  {
+    "id": "lecture-L2A",
+    "title": "L2A: Substitution Model, Recursion",
+    "description": "Substitution model (SICP 1.1.3, 1.1.5), recursion and iteration (SICP 1.2.1).",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 2,
+    "s3_key": "lecture/lecture-L2A.print.pdf"
+  },
+  {
+    "id": "lecture-L2B",
+    "title": "L2B: Orders of Growth",
+    "description": "Orders of growth, time and space complexity analysis.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 2,
+    "s3_key": "lecture/lecture-L2B.print.pdf"
+  },
+  {
+    "id": "lecture-L3A",
+    "title": "L3A: Higher-order Functions; Scope of Names",
+    "description": "Nested constant declarations, recursion, higher-order functions, scope of names.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 3,
+    "s3_key": "lecture/lecture-L3A.print.pdf"
+  },
+  {
+    "id": "lecture-L3B",
+    "title": "L3B: Curves and Sound",
+    "description": "Curves and sound processing using higher-order functions.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 3,
+    "s3_key": "lecture/lecture-L3B.print.pdf"
+  },
+  {
+    "id": "lecture-L4A",
+    "title": "L4A: Introduction to Data Abstraction",
+    "description": "Data abstraction, case study with rational numbers, making lists with pairs.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 4,
+    "s3_key": "lecture/lecture-L4A-print.pdf"
+  },
+  {
+    "id": "lecture-L5A",
+    "title": "L5A: List Processing",
+    "description": "List processing operations and techniques.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 5,
+    "s3_key": "lecture/lecture-L5A-print.pdf"
+  },
+  {
+    "id": "lecture-L5B",
+    "title": "L5B: Tree Processing and CPS",
+    "description": "Tree processing and continuation-passing style (CPS).",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 5,
+    "s3_key": "lecture/lecture-L5B-print.pdf"
+  },
+  {
+    "id": "lecture-L6A",
+    "title": "L6A: Sorting and Symbolic Processing",
+    "description": "Sorting algorithms and symbolic processing techniques.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 6,
+    "s3_key": "lecture/lecture-L6A-print.pdf"
+  },
+  {
+    "id": "lecture-L6B",
+    "title": "L6B: Programming Language Processing",
+    "description": "T-Diagrams, interpreters, compilers, combinations, Programming LEGO Bricks.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 6,
+    "s3_key": "lecture/lecture-L6B-print.pdf"
+  },
+  {
+    "id": "lecture-L7B",
+    "title": "L7B: Streams I",
+    "description": "Introduction to streams and lazy evaluation.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 7,
+    "s3_key": "lecture/lecture-L7B.print.pdf"
+  },
+  {
+    "id": "lecture-L8A",
+    "title": "L8A: Mutable Data; Arrays and Loops",
+    "description": "Mutable data structures, arrays, and loop constructs.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 8,
+    "s3_key": "lecture/lecture-L8A.print.pdf"
+  },
+  {
+    "id": "lecture-L8B",
+    "title": "L8B: Environment Model",
+    "description": "Environment model of evaluation for understanding scope and mutation.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 8,
+    "s3_key": "lecture/lecture-L8B.print.pdf"
+  },
+  {
+    "id": "lecture-L9A",
+    "title": "L9A: Introduction to the CSE Machine",
+    "description": "Introduction to the Control-Stash-Environment (CSE) machine.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 9,
+    "s3_key": "lecture/lecture-L9A.print.pdf"
+  },
+  {
+    "id": "lecture-L9B",
+    "title": "L9B: The Full CSE Machine",
+    "description": "Complete CSE machine with all features and evaluation rules.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 9,
+    "s3_key": "lecture/lecture-L9B.print.pdf"
+  },
+  {
+    "id": "lecture-L10A",
+    "title": "L10A: Searching and Sorting II; Memoization",
+    "description": "Advanced searching and sorting algorithms, memoization techniques.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 10,
+    "s3_key": "lecture/lecture-L10A.print.pdf"
+  },
+  {
+    "id": "lecture-L11A",
+    "title": "L11A: Streams II",
+    "description": "Advanced stream processing and applications.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 11,
+    "s3_key": "lecture/lecture-L11A.print.pdf"
+  },
+  {
+    "id": "lecture-L11B",
+    "title": "L11B: Programming a CSE Machine I",
+    "description": "Motivation and implementation of a CSE machine in Source.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 11,
+    "s3_key": "lecture/lecture-L11B.print.pdf"
+  },
+  {
+    "id": "lecture-L12A",
+    "title": "L12A: Programming a CSE Machine II",
+    "description": "CSE machine review, arrays, break statements, JavaScript-specific details, adding functions.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 12,
+    "s3_key": "lecture/lecture-L12A.print.pdf"
+  },
+  {
+    "id": "lecture-L12B",
+    "title": "L10B: Metacircular Evaluator",
+    "description": "Metacircular evaluators, calculator language, booleans, conditionals, sequences, blocks, declarations, simple functions, return statements.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 12,
+    "s3_key": "lecture/lecture-L12B.print.pdf"
+  },
+  {
+    "id": "lecture-L13A",
+    "title": "L13A: Types, Classes, and Objects",
+    "description": "Typed Source, classes and objects in programming.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 13,
+    "s3_key": "lecture/lecture-L13A.print.pdf"
+  },
+  {
+    "id": "lecture-L13B",
+    "title": "L13B: The Last Lecture",
+    "description": "Wrapping up, big ideas of CS1101S, areas of computer science, Source vs JavaScript.",
+    "doc_type": "lecture",
+    "year": 2025,
+    "week": 13,
+    "s3_key": "lecture/lecture-L13B.print.pdf"
+  },
+  {
+    "id": "midterm-2223s1-solutions",
+    "title": "Midterm AY2022/23 S1 Solutions",
+    "description": "Midterm exam solutions for CS1101S AY2022/2023 Semester 1, covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2022,
+    "week": null,
+    "s3_key": "past-year-midterms/midterm_2223s1_solutions.pdf"
+  },
+  {
+    "id": "midterm-2324s1-solutions",
+    "title": "Midterm AY2023/24 S1 Solutions",
+    "description": "Midterm exam solutions for CS1101S AY2023/2024 Semester 1, covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2023,
+    "week": null,
+    "s3_key": "past-year-midterms/midterm_2324s1_solutions.pdf"
+  },
+  {
+    "id": "midterm-2425s1-solutions",
+    "title": "Midterm AY2024/25 S1 Solutions",
+    "description": "Midterm exam solutions for CS1101S AY2024/2025 Semester 1, covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2024,
+    "week": null,
+    "s3_key": "past-year-midterms/midterm_2425s1_solutions.pdf"
+  },
+  {
+    "id": "studio-S2",
+    "title": "S2: Source Academy Burger Joint",
+    "description": "Studio on functions and conditionals: designing a point-of-sale system for a burger joint, encoding combos, biggie_size, unbiggie_size, is_biggie_size.",
+    "doc_type": "studio",
+    "year": 2025,
+    "week": 2,
+    "s3_key": "Studio/studio-S2.pdf"
+  },
+  {
+    "id": "studio-S3",
+    "title": "S3: Recursion; Iterative and Recursive Processes",
+    "description": "Studio on substitution model and recursion: rune functions, recursive evaluation using substitution model from Lecture L2A.",
+    "doc_type": "studio",
+    "year": 2025,
+    "week": 3,
+    "s3_key": "Studio/studio-S3.pdf"
+  },
+  {
+    "id": "studio-S4",
+    "title": "S4: Tree Recursion",
+    "description": "Studio on tree recursion: Pascal's triangle, tree-recursive processes, higher-order functions, function types and type notation.",
+    "doc_type": "studio",
+    "year": 2025,
+    "week": 4,
+    "s3_key": "Studio/studio-S4.pdf"
+  },
+  {
+    "id": "studio-S5",
+    "title": "S5: Box-and-Pointer Diagrams",
+    "description": "Studio on data structures: drawing box-and-pointer diagrams, list and box notation, reverse function analysis, list traversal with head/tail.",
+    "doc_type": "studio",
+    "year": 2025,
+    "week": 5,
+    "s3_key": "Studio/studio-S5.pdf"
+  },
+  {
+    "id": "studio-S6",
+    "title": "S6: Problem Solving and List Processing",
+    "description": "Studio on list processing using Source §2 LISTS functions: implementing map using accumulate, remove_duplicates using filter, coin change problem.",
+    "doc_type": "studio",
+    "year": 2025,
+    "week": 6,
+    "s3_key": "Studio/studio-S6.pdf"
+  },
+  {
+    "id": "studio-S9",
+    "title": "S9: Environment Model and Mutable Data",
+    "description": "Studio on environment model and mutation: variable assignment with change function, d_filter using mutable pairs, environment model reasoning.",
+    "doc_type": "studio",
+    "year": 2025,
+    "week": 9,
+    "s3_key": "Studio/studio-S9.pdf"
+  },
+  {
+    "id": "studio-S10",
+    "title": "S10: CSE Machine",
+    "description": "Studio on CSE machine and streams: CPS accumulate environment diagrams, stream operations, continuation-passing style analysis.",
+    "doc_type": "studio",
+    "year": 2025,
+    "week": 10,
+    "s3_key": "Studio/studio-S10 (1).pdf"
+  },
+  {
+    "id": "reflection-R1",
+    "title": "R1: Elements of Programming",
+    "description": "Reflection on Source §1, declaring names, booleans, comparison operators, function declarations, conditional expressions, Source Playground.",
+    "doc_type": "reflection",
+    "year": 2025,
+    "week": 1,
+    "s3_key": "reflection/reflection-R1.pdf"
+  },
+  {
+    "id": "reflection-R2",
+    "title": "R2: Recursion and Iteration",
+    "description": "Reflection on Source style guide, iterative vs recursive processes, deferred operations, SICP sections 1.1 and 1.2.1.",
+    "doc_type": "reflection",
+    "year": 2025,
+    "week": 2,
+    "s3_key": "reflection/reflection-R2.pdf"
+  },
+  {
+    "id": "reflection-R4",
+    "title": "R4: Data Abstraction",
+    "description": "Reflection on Source §2 list functions (pair, head, tail, is_null, list, length, list_ref, append, reverse), box-and-pointer diagrams, box notation, list notation.",
+    "doc_type": "reflection",
+    "year": 2025,
+    "week": 4,
+    "s3_key": "reflection/reflection-R4.pdf"
+  },
+  {
+    "id": "reflection-R6",
+    "title": "R6: Sorting",
+    "description": "Reflection on sorting algorithms: insertion sort with custom comparators, ascending/descending order, reversing lists using insertion_sort_cmp.",
+    "doc_type": "reflection",
+    "year": 2025,
+    "week": 6,
+    "s3_key": "reflection/reflection-R6.pdf"
+  },
+  {
+    "id": "reflection-R8",
+    "title": "R8: Mutable Data",
+    "description": "Reflection on mutable data: make_withdraw function from Lecture L8A, password-protected accounts, account disabling after failed attempts.",
+    "doc_type": "reflection",
+    "year": 2025,
+    "week": 8,
+    "s3_key": "reflection/reflection-R8.pdf"
+  },
+  {
+    "id": "ra1-2122s1",
+    "title": "Reading Assessment 1 AY2021/22 S1 Solutions",
+    "description": "RA1 solutions for AY2021/2022 Semester 1. 18 MCQs in 4 sections, 45 min, closed-book with one cheat sheet. Covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2021,
+    "week": null,
+    "s3_key": "RA1/reading_assessment_RA1_2122s1_solution.pdf"
+  },
+  {
+    "id": "ra1-2223s1",
+    "title": "Reading Assessment 1 AY2022/23 S1 Solutions",
+    "description": "RA1 solutions for AY2022/2023 Semester 1. 19 MCQs in 4 sections, 45 min, closed-book with one cheat sheet. Covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2022,
+    "week": null,
+    "s3_key": "RA1/reading_assessment_RA1_2223s1_solution.pdf"
+  },
+  {
+    "id": "ra1-2324s1",
+    "title": "Reading Assessment 1 AY2023/24 S1 Solutions",
+    "description": "RA1 solutions for AY2023/2024 Semester 1. 19 MCQs, 40 min, closed-book. Covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2023,
+    "week": null,
+    "s3_key": "RA1/reading_assessment_RA1_2324s1_solution.pdf"
+  },
+  {
+    "id": "ra1-2425s1",
+    "title": "Reading Assessment 1 AY2024/25 S1 Solutions",
+    "description": "RA1 solutions for AY2024/2025 Semester 1. 20 MCQs, 45 min, closed-book. Covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2024,
+    "week": null,
+    "s3_key": "RA1/reading_assessment_RA1_2425s1_solution.pdf"
+  },
+  {
+    "id": "ra1-2526s1",
+    "title": "Reading Assessment 1 AY2025/26 S1 Solutions",
+    "description": "RA1 solutions for AY2025/2026 Semester 1. 18 MCQs, 45 min, closed-book. Covers weeks 1-6 topics.",
+    "doc_type": "exam",
+    "year": 2025,
+    "week": null,
+    "s3_key": "RA1/reading_assessment_RA1_2526s1_solutions.pdf"
+  },
+  {
+    "id": "ra2-2122s1",
+    "title": "Reading Assessment 2 AY2021/22 S1 Solutions",
+    "description": "RA2 solutions for AY2021/2022 Semester 1. 22 MCQs in 4 sections, 45 min, closed-book with one cheat sheet. Covers weeks 7-13 topics, Source §3.",
+    "doc_type": "exam",
+    "year": 2021,
+    "week": null,
+    "s3_key": "RA2/reading_assessment_RA2_2122s1_solution.pdf"
+  },
+  {
+    "id": "ra2-2223s1",
+    "title": "Reading Assessment 2 AY2022/23 S1 Solutions",
+    "description": "RA2 solutions for AY2022/2023 Semester 1. 21 MCQs in 3 sections, 45 min, closed-book with one cheat sheet. Covers weeks 7-13 topics, Source §3.",
+    "doc_type": "exam",
+    "year": 2022,
+    "week": null,
+    "s3_key": "RA2/reading_assessment_RA2_2223s1_solution.pdf"
+  }
+]
