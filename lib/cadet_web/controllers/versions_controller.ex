@@ -118,9 +118,7 @@ defmodule CadetWeb.VersionsController do
       VersionSaveRequest:
         swagger_schema do
           properties do
-            content(:string_or_integer, "Version of the answer depending on question type",
-              required: true
-            )
+            content(:string_or_integer, "Version of the answer depending on question type", required: true)
           end
         end
     }

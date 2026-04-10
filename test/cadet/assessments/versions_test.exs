@@ -13,7 +13,7 @@ defmodule Cadet.Assessments.VersionsTest do
     answer = insert(:answer, %{submission: submission, question: programming_question})
 
     valid_params = %{
-      content: %{code: "console.log('v1');"},
+      content: %{"code": "console.log('v1');"},
       name: "version 1",
       restored: false,
       answer_id: answer.id

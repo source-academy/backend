@@ -34,14 +34,13 @@ defmodule CadetWeb.VersionsControllerTest do
       test "renders list of versions", %{
         conn: conn,
         assessment: assessment,
-        programming_question: programming_question
+        programming_question: programming_question,
       } do
         course_reg = conn.assigns.test_cr
         course_id = conn.assigns.course_id
 
         submission = insert(:submission, %{assessment: assessment, student: course_reg})
         answer = insert(:answer, %{submission: submission, question: programming_question})
-
         versions = [
           insert(:version, %{answer: answer, name: "v1"}),
           insert(:version, %{answer: answer, name: "v2"})
@@ -82,15 +81,10 @@ defmodule CadetWeb.VersionsControllerTest do
         course_reg = conn.assigns.test_cr
         course_id = conn.assigns.course_id
 
-        save_conn =
-          post(conn, build_url(course_id, programming_question.id, "save"), %{
-            content: "console.log('version 1');"
-          })
+        save_conn = post(conn, build_url(course_id, programming_question.id, "save"), %{content: "console.log('version 1');"})
 
         assert response(save_conn, 200) =~ "OK"
-
-        assert get_latest_version_value(programming_question, assessment, course_reg) ==
-                 "console.log('version 1');"
+        assert get_latest_version_value(programming_question, assessment, course_reg) == "console.log('version 1');"
       end
     end
 
@@ -108,10 +102,7 @@ defmodule CadetWeb.VersionsControllerTest do
         answer = insert(:answer, %{submission: submission, question: programming_question})
         version = insert(:version, %{answer: answer, name: "v1"})
 
-        name_conn =
-          put(conn, build_url(course_id, programming_question.id, "#{version.id}/name"), %{
-            name: "renamed"
-          })
+        name_conn = put(conn, build_url(course_id, programming_question.id, "#{version.id}/name"), %{name: "renamed"})
 
         assert response(name_conn, 200) =~ "OK"
         updated_version = Repo.get(Version, version.id)
@@ -145,7 +136,6 @@ defmodule CadetWeb.VersionsControllerTest do
   end
 
   defp format_timestamp(nil), do: nil
-
   defp format_timestamp(ts) do
     ts
     |> Timex.to_naive_datetime()
