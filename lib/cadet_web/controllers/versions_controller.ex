@@ -114,7 +114,7 @@ defmodule CadetWeb.VersionsController do
             inserted_at(:string, "Creation timestamp", format: "date-time")
             updated_at(:string, "Last update timestamp", format: "date-time")
           end
-        end,
+        end
       VersionSaveRequest:
         swagger_schema do
           properties do
