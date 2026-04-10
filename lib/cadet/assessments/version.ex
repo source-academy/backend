@@ -24,7 +24,5 @@ defmodule Cadet.Assessments.Version do
     version
     |> cast(attrs, [:content, :name, :restored, :answer_id])
     |> validate_required([:content, :restored, :answer_id])
-    |> foreign_key_constraint(:answer_id)
-    |> foreign_key_constraint(:restored_from)
   end
 end
