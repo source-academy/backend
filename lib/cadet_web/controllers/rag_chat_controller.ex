@@ -44,10 +44,43 @@ defmodule CadetWeb.RagChatController do
     Logger.info("Course found: #{inspect(course != nil)}")
     Logger.info("Answer prompt from DB: #{inspect(course && course.pixelbot_answer_prompt)}")
 
+    cond do
+      is_nil(course) ->
+        Logger.warning("RAG chat: user #{user.id} has no associated course; refusing request")
+
+        send_resp(
+          conn,
+          :unprocessable_entity,
+          "You must select a course before using the chatbot."
+        )
+
+      is_nil(course.pixelbot_routing_prompt) or course.pixelbot_routing_prompt == "" or
+          is_nil(course.pixelbot_answer_prompt) or course.pixelbot_answer_prompt == "" ->
+        Logger.error(
+          "RAG chat: course #{course.id} is missing pixelbot_routing_prompt or " <>
+            "pixelbot_answer_prompt; refusing request"
+        )
+
+        send_resp(
+          conn,
+          :unprocessable_entity,
+          "The chatbot is not configured for this course. Please contact your course staff."
+        )
+
+      true ->
+        do_chat(conn, user, course, user_message)
+    end
+  end
+
+  def chat(conn, _params) do
+    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+  end
+
+  defp do_chat(conn, user, course, user_message) do
     rag_opts = [
-      routing_prompt: (course && course.pixelbot_routing_prompt) || "",
-      answer_prompt: (course && course.pixelbot_answer_prompt) || "",
-      model: (course && course.llm_model) || "gpt-4o"
+      routing_prompt: course.pixelbot_routing_prompt,
+      answer_prompt: course.pixelbot_answer_prompt,
+      model: course.llm_model || "gpt-4o"
     ]
 
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
@@ -79,10 +112,6 @@ defmodule CadetWeb.RagChatController do
       {:error, error_message} ->
         send_resp(conn, 500, error_message)
     end
-  end
-
-  def chat(conn, _params) do
-    send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
   defp handle_openai_call(conn, payload, updated_conversation, conversation_id, model) do

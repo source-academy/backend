@@ -15,15 +15,25 @@ defmodule Cadet.Chatbot.RagPipeline do
   end
 
   defp run_routing(user_message, document_map, opts) do
-    routing_prompt =
-      PromptBuilder.build_routing_prompt(document_map, Keyword.fetch!(opts, :routing_prompt))
+    case PromptBuilder.build_routing_prompt(document_map, Keyword.fetch!(opts, :routing_prompt)) do
+      {:ok, routing_prompt} ->
+        Logger.info(
+          "RAG pipeline: calling routing LLM with #{length(document_map)} documents in map"
+        )
 
+        do_run_routing(user_message, routing_prompt, opts)
+
+      {:error, reason} ->
+        Logger.error("RAG pipeline: cannot build routing prompt (#{reason}), falling back")
+        {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
+    end
+  end
+
+  defp do_run_routing(user_message, routing_prompt, opts) do
     payload = [
       %{role: "system", content: routing_prompt},
       %{role: "user", content: user_message}
     ]
-
-    Logger.info("RAG pipeline: calling routing LLM with #{length(document_map)} documents in map")
 
     model = Keyword.get(opts, :model, "gpt-4o")
 

@@ -64,7 +64,7 @@ defmodule CadetWeb.ChatControllerTest do
     @tag authenticate: :student
     test "Conversation belongs to own user", %{conn: conn} do
       use_cassette "chatbot/chat_conversation#1", custom: true do
-        conversation = insert(:conversation, user: conn.assigns.current_user)
+        conversation = insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
 
         conn =
           post(conn, "/v2/chats/message", %{
