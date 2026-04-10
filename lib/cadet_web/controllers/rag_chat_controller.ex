@@ -150,7 +150,7 @@ defmodule CadetWeb.RagChatController do
     end
   end
 
-  defp generate_fallback_payload(%Conversation{} = conversation, system_prompt) do
+  defp generate_fallback_payload(conversation = %Conversation{}, system_prompt) do
     system_context = [%{role: "system", content: system_prompt}]
 
     messages_payload =
@@ -171,7 +171,7 @@ defmodule CadetWeb.RagChatController do
     system_context ++ earlier_messages ++ system_reminder ++ last_message
   end
 
-  defp generate_payload(%Conversation{} = conversation, system_prompt, pdf_attachments) do
+  defp generate_payload(conversation = %Conversation{}, system_prompt, pdf_attachments) do
     system_context = [%{role: "system", content: system_prompt}]
 
     messages_payload =
