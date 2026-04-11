@@ -99,4 +99,88 @@ defmodule CadetWeb.VersionsController do
         |> text("An unexpected error occurred.")
     end
   end
+
+  def swagger_definitions do
+    %{
+      Version:
+        swagger_schema do
+          properties do
+            id(:integer, "Unique identifier", required: true)
+            content(:object, "Version of the answer depending on question type", required: true)
+            name(:string, "The name of the version")
+            restored(:boolean, "Whether this version was restored from a previous version")
+            restored_from(:integer, "ID of the version this was restored from")
+            answer_id(:integer, "Associated answer ID", required: true)
+            inserted_at(:string, "Creation timestamp", format: "date-time")
+            updated_at(:string, "Last update timestamp", format: "date-time")
+          end
+        end,
+      VersionSaveRequest:
+        swagger_schema do
+          properties do
+            content(:string_or_integer, "Version of the answer depending on question type",
+              required: true
+            )
+          end
+        end
+    }
+  end
+
+  swagger_path :history do
+    post("/assessments/question/{questionId}/version/history")
+
+    summary("Get a list of versions for an answer")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    parameters do
+      questionId(:path, :integer, "question id", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(404, "Question not found")
+  end
+
+  swagger_path :save do
+    post("/assessments/question/{questionId}/version/save")
+
+    summary("Submit an answer to a question and save it as a version")
+
+    description(
+      "For MCQ, answer contains choice_id. For programming question, this is a string containing the student's code."
+    )
+
+    security([%{JWT: []}])
+
+    consumes("application/json")
+    produces("application/json")
+
+    parameters do
+      questionId(:path, :integer, "question id", required: true)
+      content(:body, Schema.ref(:VersionSaveRequest), "answer content", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(404, "Question not found")
+  end
+
+  swagger_path :name do
+    put("/assessments/question/{questionId}/version/{versionId}/name")
+
+    summary("Name a version")
+
+    parameters do
+      questionId(:path, :integer, "question id", required: true)
+      versionId(:path, :integer, "version id", required: true)
+      name(:body, :string, "new name", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(404, "Question or version not found")
+  end
 end
