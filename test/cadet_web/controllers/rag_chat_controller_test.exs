@@ -15,6 +15,26 @@ defmodule CadetWeb.RagChatControllerTest do
     HTTPoison.start()
   end
 
+  defp setup_rag_course(conn) do
+    user = conn.assigns.current_user
+    course = Repo.get!(Course, user.latest_viewed_course_id)
+
+    Repo.update!(
+      change(course, %{
+        pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
+        pixelbot_answer_prompt: "Answer the question."
+      })
+    )
+
+    insert(:conversation,
+      user: user,
+      prepend_context: @rag_tag,
+      messages: [%{role: "assistant", content: "Hi!", created_at: DateTime.utc_now()}]
+    )
+
+    :ok
+  end
+
   describe "POST /v2/rag_chat (init_chat)" do
     test "unauthenticated request returns 401", %{conn: conn} do
       conn = post(conn, "/v2/rag_chat", %{})
@@ -95,18 +115,7 @@ defmodule CadetWeb.RagChatControllerTest do
 
     @tag authenticate: :student
     test "message too long returns 422", %{conn: conn} do
-      user = conn.assigns.current_user
-      course = Repo.get!(Course, user.latest_viewed_course_id)
-
-      Repo.update!(
-        change(course, %{
-          pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
-          pixelbot_answer_prompt: "Answer the question."
-        })
-      )
-
-      # Create a RAG conversation for this user
-      insert(:conversation, user: user, prepend_context: @rag_tag)
+      setup_rag_course(conn)
 
       long_message = String.duplicate("a", 1001)
       conn = post(conn, "/v2/rag_chat/message", %{"message" => long_message})
@@ -133,21 +142,7 @@ defmodule CadetWeb.RagChatControllerTest do
 
     @tag authenticate: :student
     test "successful chat with configured course", %{conn: conn} do
-      user = conn.assigns.current_user
-      course = Repo.get!(Course, user.latest_viewed_course_id)
-
-      Repo.update!(
-        change(course, %{
-          pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
-          pixelbot_answer_prompt: "Answer the question."
-        })
-      )
-
-      insert(:conversation,
-        user: user,
-        prepend_context: @rag_tag,
-        messages: [%{role: "assistant", content: "Hi!", created_at: DateTime.utc_now()}]
-      )
+      setup_rag_course(conn)
 
       use_cassette "chatbot/rag_chat_conversation#1", custom: true do
         conn = post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
@@ -156,6 +151,26 @@ defmodule CadetWeb.RagChatControllerTest do
                  "conversationId" => _,
                  "response" => _
                } = json_response(conn, 200)
+      end
+    end
+
+    @tag authenticate: :student
+    test "OpenAI error returns 500", %{conn: conn} do
+      setup_rag_course(conn)
+
+      use_cassette "chatbot/openai_error#1", custom: true do
+        conn = post(conn, "/v2/rag_chat/message", %{"message" => "Hello"})
+        assert response(conn, 500) =~ "Internal server error"
+      end
+    end
+
+    @tag authenticate: :student
+    test "OpenAI empty choices returns 500", %{conn: conn} do
+      setup_rag_course(conn)
+
+      use_cassette "chatbot/openai_empty_choices#1", custom: true do
+        conn = post(conn, "/v2/rag_chat/message", %{"message" => "Hello"})
+        assert response(conn, 500) == "No response from AI"
       end
     end
   end

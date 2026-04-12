@@ -1,0 +1,18 @@
+[
+  {
+    "request": {
+      "url": "https://api.openai.com/v1/chat/completions",
+      "method": "post",
+      "body": "{\"model\":\"gpt-4\",\"messages\":[]}"
+    },
+    "response": {
+      "binary": false,
+      "status_code": 500,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": "{\"error\":{\"message\":\"Internal server error\",\"type\":\"server_error\",\"param\":null,\"code\":null}}",
+      "type": "ok"
+    }
+  }
+]

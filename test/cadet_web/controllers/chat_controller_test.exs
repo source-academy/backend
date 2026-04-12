@@ -116,6 +116,38 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
+    test "OpenAI error returns 500", %{conn: conn} do
+      use_cassette "chatbot/chat_openai_error#1", custom: true do
+        insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+        conn =
+          post(conn, "/v2/chats/message", %{
+            "message" => "Hello",
+            "section" => "SICP-1",
+            "initialContext" => "Some context."
+          })
+
+        assert response(conn, 500) =~ "Internal server error"
+      end
+    end
+
+    @tag authenticate: :student
+    test "OpenAI empty choices returns 500", %{conn: conn} do
+      use_cassette "chatbot/chat_empty_choices#1", custom: true do
+        insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+        conn =
+          post(conn, "/v2/chats/message", %{
+            "message" => "Hello",
+            "section" => "SICP-1",
+            "initialContext" => "Some context."
+          })
+
+        assert response(conn, 500) == "No response from AI"
+      end
+    end
+
+    @tag authenticate: :student
     test "missing parameters", %{conn: conn} do
       conn =
         post(conn, "/v2/chats/message", %{
