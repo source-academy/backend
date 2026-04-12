@@ -1303,25 +1303,34 @@ defmodule Cadet.Assessments do
       else
         {:status, _} ->
           Logger.error("Failed to answer question #{question.id} - submission already finalized")
-          {:error, {:forbidden, "Assessment submission already finalised"}}
+          # {:error, {:forbidden, "Assessment submission already finalised"}}
+          Repo.rollback({:forbidden, "Assessment submission already finalised"})
 
         {:error, :race_condition} ->
           Logger.error("Race condition encountered while answering question #{question.id}")
-          {:error, {:internal_server_error, "Please try again later."}}
+          # {:error, {:internal_server_error, "Please try again later."}}
+          Repo.rollback({:internal_server_error, "Please try again later."})
 
         {:error, :team_not_found} ->
           Logger.error("Team not found for question #{question.id} and user #{cr_id}")
-          {:error, {:bad_request, "Your existing Team has been deleted!"}}
+          # {:error, {:bad_request, "Your existing Team has been deleted!"}}
+          Repo.rollback({:bad_request, "Your existing Team has been deleted!"})
 
         {:error, :invalid_vote} ->
           Logger.error("Invalid vote for question #{question.id} by user #{cr_id}")
-          {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
+          # {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
+          Repo.rollback({:bad_request, "Invalid vote! Vote is not saved."})
 
         _ ->
           Logger.error("Failed to answer question #{question.id} - invalid parameters")
-          {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+          # {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+          Repo.rollback({:bad_request, "Missing or invalid parameter(s)"})
       end
     end)
+    |> case do
+      {:ok, success} -> success
+      {:error, error} -> {:error, error}
+    end
   end
 
   def is_team_assessment?(assessment_id) when is_ecto_id(assessment_id) do
