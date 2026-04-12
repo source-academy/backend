@@ -3683,7 +3683,7 @@ defmodule Cadet.Assessments do
               Repo.rollback({:bad_request, "Your existing Team has been deleted!"})
 
             error ->
-              error
+              Repo.rollback(error)
           end
         end)
 
