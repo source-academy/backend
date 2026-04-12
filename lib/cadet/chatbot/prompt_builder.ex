@@ -3,7 +3,11 @@ defmodule Cadet.Chatbot.PromptBuilder do
   The PromptBuilder module is responsible for building the prompt for the chatbot.
   """
 
+  require Logger
+
   alias Cadet.Chatbot.SicpNotes
+
+  @document_map_placeholder "%DOCUMENT_MAP%"
 
   @prompt_prefix """
   You are a competent tutor, assisting a student who is learning computer science following the textbook "Structure and Interpretation of Computer Programs, JavaScript edition" (SICP JS) on the Source Academy platform. The student request is about a paragraph of the book. The request may be a follow-up request to a request that was posed to you previously.
@@ -35,5 +39,26 @@ defmodule Cadet.Chatbot.PromptBuilder do
       end
 
     @prompt_prefix <> section_prefix <> @query_prefix <> context
+  end
+
+  def build_routing_prompt(document_map_json, prompt) when is_binary(prompt) and prompt != "" do
+    map_string = Jason.encode!(document_map_json, pretty: true)
+
+    if String.contains?(prompt, @document_map_placeholder) do
+      {:ok, String.replace(prompt, @document_map_placeholder, map_string)}
+    else
+      Logger.error(
+        "PromptBuilder: routing prompt is missing the #{@document_map_placeholder} " <>
+          "placeholder. The document map cannot be injected. Please update the course's " <>
+          "pixelbot_routing_prompt to include #{@document_map_placeholder}."
+      )
+
+      {:error, :missing_document_map_placeholder}
+    end
+  end
+
+  def build_routing_prompt(_document_map_json, _prompt) do
+    Logger.error("PromptBuilder: routing prompt is missing or empty")
+    {:error, :empty_routing_prompt}
   end
 end

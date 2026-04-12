@@ -1,0 +1,36 @@
+[
+  {
+    "request": {
+      "url": "https://api.openai.com/v1/chat/completions",
+      "method": "post",
+      "body": "{\"model\":\"gpt-4o\",\"messages\":[]}"
+    },
+    "response": {
+      "binary": false,
+      "status_code": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "Content-Length": "319"
+      },
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"[]\",\"role\":\"assistant\"},\"logprobs\":null}],\"created\":1677664795,\"id\":\"chatcmpl-rag-routing\",\"model\":\"gpt-4o\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":57,\"total_tokens\":59}}\n",
+      "type": "ok"
+    }
+  },
+  {
+    "request": {
+      "url": "https://api.openai.com/v1/chat/completions",
+      "method": "post",
+      "body": "{\"model\":\"gpt-4o\",\"messages\":[]}"
+    },
+    "response": {
+      "binary": false,
+      "status_code": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "Content-Length": "319"
+      },
+      "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"This is a RAG test response.\",\"role\":\"assistant\"},\"logprobs\":null}],\"created\":1677664796,\"id\":\"chatcmpl-rag-answer\",\"model\":\"gpt-4o\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":10,\"prompt_tokens\":57,\"total_tokens\":67}}\n",
+      "type": "ok"
+    }
+  }
+]

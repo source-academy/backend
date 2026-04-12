@@ -62,7 +62,9 @@ defmodule Cadet.AccountsTest do
           username: "student"
         })
 
-      assert {:ok, user} == Accounts.sign_in("student", "student_token", "test")
+      assert {:ok, returned_user} = Accounts.sign_in("student", "student_token", "test")
+      assert returned_user.id == user.id
+      assert returned_user.username == user.username
     end
 
     test "invalid token" do

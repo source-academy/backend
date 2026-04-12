@@ -1,0 +1,86 @@
+defmodule Cadet.Chatbot.DocumentStore do
+  @moduledoc """
+  Fetches and encodes course documents from S3 for the RAG pipeline.
+  """
+  require Logger
+
+  def fetch_document_binary(document) when is_map(document) do
+    config = rag_config()
+    bucket = config[:bucket]
+    s3_key = document["s3_key"]
+    region = config[:region]
+
+    Logger.info("Fetching document from S3: #{bucket}/#{s3_key} (region: #{region})")
+
+    bucket
+    |> ExAws.S3.get_object(s3_key)
+    |> ExAws.request(
+      region: region,
+      host: "s3.#{region}.amazonaws.com",
+      scheme: "https://"
+    )
+    |> case do
+      {:ok, %{body: body}} ->
+        Logger.info("Successfully fetched document #{s3_key} (#{byte_size(body)} bytes)")
+        {:ok, body}
+
+      {:error, reason} ->
+        Logger.error("Failed to fetch document #{s3_key}: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  def encode_document_base64(document) when is_map(document) do
+    case fetch_document_binary(document) do
+      {:ok, binary} -> {:ok, Base.encode64(binary)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def fetch_and_encode_documents(documents) when is_list(documents) do
+    documents
+    |> Task.async_stream(
+      fn doc ->
+        case encode_document_base64(doc) do
+          {:ok, base64} ->
+            %{
+              title: doc["title"],
+              base64: base64,
+              media_type: media_type_for(doc["s3_key"])
+            }
+
+          {:error, reason} ->
+            Logger.warning("Skipping document #{doc["id"]}: #{inspect(reason)}")
+            nil
+        end
+      end,
+      max_concurrency: 5,
+      timeout: 30_000,
+      on_timeout: :kill_task
+    )
+    |> Enum.flat_map(fn
+      {:ok, result} when not is_nil(result) ->
+        [result]
+
+      {:exit, :timeout} ->
+        Logger.warning("Document fetch timed out, skipping")
+        []
+
+      _ ->
+        []
+    end)
+  end
+
+  defp media_type_for(s3_key) do
+    case Path.extname(s3_key) do
+      ".pdf" -> "application/pdf"
+      ".pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      ".docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      _ -> "application/octet-stream"
+    end
+  end
+
+  defp rag_config do
+    Application.fetch_env!(:cadet, :rag_documents)
+  end
+end
