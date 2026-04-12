@@ -2,6 +2,11 @@ defmodule CadetWeb.RagChatControllerTest do
   use CadetWeb.ConnCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
+  alias Cadet.Courses.Course
+  alias Cadet.Repo
+
+  import Ecto.Changeset
+
   @moduletag :serial
 
   @rag_tag [%{"chat_type" => "rag"}]
@@ -56,7 +61,7 @@ defmodule CadetWeb.RagChatControllerTest do
     test "user with no course returns 422", %{conn: conn} do
       # Override the user to have no latest_viewed_course
       user = conn.assigns.current_user
-      Cadet.Repo.update!(Ecto.Changeset.change(user, latest_viewed_course_id: nil))
+      Repo.update!(change(user, latest_viewed_course_id: nil))
 
       conn =
         conn
@@ -70,11 +75,11 @@ defmodule CadetWeb.RagChatControllerTest do
     @tag authenticate: :student
     test "course with empty pixelbot prompts returns 422", %{conn: conn} do
       user = conn.assigns.current_user
-      course = Cadet.Repo.get!(Cadet.Courses.Course, user.latest_viewed_course_id)
+      course = Repo.get!(Course, user.latest_viewed_course_id)
 
       # Explicitly set prompts to empty strings
-      Cadet.Repo.update!(
-        Ecto.Changeset.change(course, %{
+      Repo.update!(
+        change(course, %{
           pixelbot_routing_prompt: "",
           pixelbot_answer_prompt: ""
         })
@@ -91,10 +96,10 @@ defmodule CadetWeb.RagChatControllerTest do
     @tag authenticate: :student
     test "message too long returns 422", %{conn: conn} do
       user = conn.assigns.current_user
-      course = Cadet.Repo.get!(Cadet.Courses.Course, user.latest_viewed_course_id)
+      course = Repo.get!(Course, user.latest_viewed_course_id)
 
-      Cadet.Repo.update!(
-        Ecto.Changeset.change(course, %{
+      Repo.update!(
+        change(course, %{
           pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
           pixelbot_answer_prompt: "Answer the question."
         })
@@ -113,10 +118,10 @@ defmodule CadetWeb.RagChatControllerTest do
     @tag authenticate: :student
     test "no RAG conversation returns 404", %{conn: conn} do
       user = conn.assigns.current_user
-      course = Cadet.Repo.get!(Cadet.Courses.Course, user.latest_viewed_course_id)
+      course = Repo.get!(Course, user.latest_viewed_course_id)
 
-      Cadet.Repo.update!(
-        Ecto.Changeset.change(course, %{
+      Repo.update!(
+        change(course, %{
           pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
           pixelbot_answer_prompt: "Answer the question."
         })
@@ -129,10 +134,10 @@ defmodule CadetWeb.RagChatControllerTest do
     @tag authenticate: :student
     test "successful chat with configured course", %{conn: conn} do
       user = conn.assigns.current_user
-      course = Cadet.Repo.get!(Cadet.Courses.Course, user.latest_viewed_course_id)
+      course = Repo.get!(Course, user.latest_viewed_course_id)
 
-      Cadet.Repo.update!(
-        Ecto.Changeset.change(course, %{
+      Repo.update!(
+        change(course, %{
           pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
           pixelbot_answer_prompt: "Answer the question."
         })
