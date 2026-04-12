@@ -3689,7 +3689,7 @@ defmodule Cadet.Assessments do
 
       case result do
         {:ok, success} -> success
-        {:error, error} -> error
+        {:error, error} -> {:error, error}
       end
     end
   end
