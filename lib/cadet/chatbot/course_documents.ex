@@ -1,4 +1,7 @@
 defmodule Cadet.Chatbot.CourseDocuments do
+  @moduledoc """
+  Manages course document metadata and provides lookup utilities for the RAG pipeline.
+  """
   require Logger
 
   @cache_key {__MODULE__, :document_map}

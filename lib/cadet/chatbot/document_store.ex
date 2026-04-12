@@ -1,4 +1,7 @@
 defmodule Cadet.Chatbot.DocumentStore do
+  @moduledoc """
+  Fetches and encodes course documents from S3 for the RAG pipeline.
+  """
   require Logger
 
   def fetch_document_binary(document) when is_map(document) do
@@ -9,7 +12,8 @@ defmodule Cadet.Chatbot.DocumentStore do
 
     Logger.info("Fetching document from S3: #{bucket}/#{s3_key} (region: #{region})")
 
-    ExAws.S3.get_object(bucket, s3_key)
+    bucket
+    |> ExAws.S3.get_object(s3_key)
     |> ExAws.request(
       region: region,
       host: "s3.#{region}.amazonaws.com",

@@ -1,4 +1,7 @@
 defmodule Cadet.Chatbot.RagPipeline do
+  @moduledoc """
+  Handles the RAG (Retrieval-Augmented Generation) pipeline for chatbot queries.
+  """
   require Logger
 
   alias Cadet.Chatbot.{CourseDocuments, DocumentStore, PromptBuilder}

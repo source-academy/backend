@@ -1,4 +1,7 @@
 defmodule Cadet.Chatbot.RagConversations do
+  @moduledoc """
+  Manages RAG-specific chat conversations for users.
+  """
   use Cadet, [:context, :display]
 
   import Ecto.Query
