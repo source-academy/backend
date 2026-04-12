@@ -3684,7 +3684,6 @@ defmodule Cadet.Assessments do
 
             error ->
               Logger.error("Unknown error occurred while saving version: #{inspect(error)}")
-              Repo.rollback({:internal_server_error, "An unexpected error occured."})
           end
         end)
 
@@ -3771,6 +3770,7 @@ defmodule Cadet.Assessments do
           |> join(:inner, [v], a in assoc(v, :answer))
           |> join(:inner, [v, a], s in assoc(a, :submission))
           |> where([v, a, s], v.id == ^version_id)
+          |> where([v, a, s], a.question_id == ^question.id)
 
         version =
           case team do
