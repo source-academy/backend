@@ -3683,7 +3683,8 @@ defmodule Cadet.Assessments do
               Repo.rollback({:bad_request, "Your existing Team has been deleted!"})
 
             error ->
-              Repo.rollback(error)
+              Logger.error("Unknown error occurred while saving version: #{inspect(error)}")
+              Repo.rollback({:internal_server_error, "An unexpected error occured."})
           end
         end)
 
