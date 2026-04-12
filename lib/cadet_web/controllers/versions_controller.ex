@@ -69,6 +69,12 @@ defmodule CadetWeb.VersionsController do
     end
   end
 
+  def save(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> text("Missing required parameters.")
+  end
+
   def name(conn, %{
         "questionid" => question_id,
         "versionid" => version_id,
@@ -100,6 +106,12 @@ defmodule CadetWeb.VersionsController do
     end
   end
 
+  def name(conn, _params) do
+    conn
+    |> put_status(:bad_request)
+    |> text("Missing required parameters.")
+  end
+
   def swagger_definitions do
     %{
       Version:
@@ -127,7 +139,7 @@ defmodule CadetWeb.VersionsController do
   end
 
   swagger_path :history do
-    post("/assessments/question/{questionId}/version/history")
+    get("/assessments/question/{questionId}/version/history")
 
     summary("Get a list of versions for an answer")
 

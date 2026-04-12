@@ -22,7 +22,7 @@ defmodule Cadet.Assessments.Version do
   @doc false
   def changeset(version, attrs) do
     version
-    |> cast(attrs, [:content, :name, :restored, :answer_id])
+    |> cast(attrs, [:content, :name, :restored, :restored_from, :answer_id])
     |> validate_required([:content, :restored, :answer_id])
     |> foreign_key_constraint(:answer_id)
   end
