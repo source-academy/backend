@@ -20,6 +20,7 @@ defmodule Cadet.Courses.AssessmentConfig do
     field(:is_grading_auto_published, :boolean, default: false)
     # marks an assessment type as a minigame (with different submission and testcase behaviour)
     field(:is_minigame, :boolean, default: false)
+    field(:is_autosave_enabled, :boolean, default: false)
 
     belongs_to(:course, Course)
 
@@ -28,7 +29,7 @@ defmodule Cadet.Courses.AssessmentConfig do
 
   @required_fields ~w(course_id)a
   @optional_fields ~w(order type early_submission_xp
-    hours_before_early_xp_decay show_grading_summary is_manually_graded has_voting_features has_token_counter is_grading_auto_published is_minigame)a
+    hours_before_early_xp_decay show_grading_summary is_manually_graded has_voting_features has_token_counter is_grading_auto_published is_minigame is_autosave_enabled)a
 
   def changeset(assessment_config, params) do
     assessment_config

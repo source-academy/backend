@@ -54,6 +54,7 @@ defmodule CadetWeb.AssessmentsView do
         hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         isMinigame: & &1.config.is_minigame,
+        isAutosaveEnabled: & &1.config.is_autosave_enabled,
         questions:
           &Enum.map(&1.questions, fn question ->
             map =
