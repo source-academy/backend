@@ -132,7 +132,7 @@ defmodule CadetWeb.UserControllerTest do
             "hasVotingFeatures" => false,
             "hasTokenCounter" => false,
             "isGradingAutoPublished" => false,
-            "isAutosaveEnabled" => false
+            "isAutosaveEnabled" => true
           },
           %{
             "type" => "test type 2",
@@ -145,7 +145,7 @@ defmodule CadetWeb.UserControllerTest do
             "hasVotingFeatures" => false,
             "hasTokenCounter" => false,
             "isGradingAutoPublished" => false,
-            "isAutosaveEnabled" => false
+            "isAutosaveEnabled" => true
           },
           %{
             "type" => "test type 3",
@@ -158,7 +158,7 @@ defmodule CadetWeb.UserControllerTest do
             "hasVotingFeatures" => false,
             "hasTokenCounter" => false,
             "isGradingAutoPublished" => false,
-            "isAutosaveEnabled" => false
+            "isAutosaveEnabled" => true
           }
         ]
       }

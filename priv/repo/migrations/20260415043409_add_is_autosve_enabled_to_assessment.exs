@@ -1,14 +1,14 @@
-defmodule Cadet.Repo.Migrations.AddIsAutosaveEnabledToAssessmentConfig do
+defmodule Cadet.Repo.Migrations.AddIsAutosveEnabledToAssessment do
   use Ecto.Migration
 
   def up do
-    alter table(:assessment_configs) do
+    alter table(:assessments) do
       add(:is_autosave_enabled, :boolean, default: true)
     end
   end
 
   def down do
-    alter table(:assessment_configs) do
+    alter table(:assessments) do
       remove(:is_autosave_enabled)
     end
   end

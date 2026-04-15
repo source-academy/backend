@@ -195,7 +195,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "assessmentConfigId" => config1.id,
           "hasVotingFeatures" => false,
           "hasTokenCounter" => false,
-          "isGradingAutoPublished" => false
+          "isGradingAutoPublished" => false,
+          "isAutosaveEnabled" => true
         },
         %{
           "earlySubmissionXp" => 200,
@@ -207,7 +208,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "assessmentConfigId" => config2.id,
           "hasVotingFeatures" => true,
           "hasTokenCounter" => true,
-          "isGradingAutoPublished" => false
+          "isGradingAutoPublished" => false,
+          "isAutosaveEnabled" => true
         },
         %{
           "earlySubmissionXp" => 200,
@@ -219,7 +221,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "assessmentConfigId" => config3.id,
           "hasVotingFeatures" => false,
           "hasTokenCounter" => false,
-          "isGradingAutoPublished" => false
+          "isGradingAutoPublished" => false,
+          "isAutosaveEnabled" => true
         }
       ]
 

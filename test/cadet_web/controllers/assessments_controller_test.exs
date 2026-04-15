@@ -84,7 +84,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "hasVotingFeatures" => &1.has_voting_features,
               "hasTokenCounter" => &1.has_token_counter,
               "isVotingPublished" => false,
-              "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay
+              "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
+              "isAutosaveEnabled" => &1.is_autosave_enabled
             }
           )
 
@@ -175,7 +176,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
             "isVotingPublished" => false,
-            "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay
+            "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
+            "isAutosaveEnabled" => true
           }
         )
 
@@ -292,6 +294,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "earlySubmissionXp" => &1.config.early_submission_xp,
               "isGradingPublished" => nil,
               "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
+              "isAutosaveEnabled" => &1.is_autosave_enabled,
               "isPublished" =>
                 if &1.config.type == hd(configs).type do
                   false
@@ -329,7 +332,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "hasTokenCounter" => assessment.has_token_counter,
             "missionPDF" => Cadet.Assessments.Upload.url({assessment.mission_pdf, assessment}),
             "isMinigame" => false,
-            "isAutosaveEnabled" => false
+            "isAutosaveEnabled" => true
           }
 
           resp_assessments =

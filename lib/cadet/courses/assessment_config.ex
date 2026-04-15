@@ -20,7 +20,7 @@ defmodule Cadet.Courses.AssessmentConfig do
     field(:is_grading_auto_published, :boolean, default: false)
     # marks an assessment type as a minigame (with different submission and testcase behaviour)
     field(:is_minigame, :boolean, default: false)
-    field(:is_autosave_enabled, :boolean, default: false)
+    field(:is_autosave_enabled, :boolean, default: true)
 
     belongs_to(:course, Course)
 
