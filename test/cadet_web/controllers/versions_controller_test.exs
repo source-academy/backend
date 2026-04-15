@@ -63,8 +63,8 @@ defmodule CadetWeb.VersionsControllerTest do
               "name" => v.name,
               "content" => v.content,
               "answer_id" => v.answer_id,
-              "restored" => v.restored,
-              "restored_from" => v.restored_from,
+              # "restored" => v.restored,
+              # "restored_from" => v.restored_from,
               "inserted_at" => format_timestamp(v.inserted_at),
               "updated_at" => format_timestamp(v.updated_at)
             }
@@ -121,47 +121,16 @@ defmodule CadetWeb.VersionsControllerTest do
             name: "v1"
           })
 
-        # save_conn =
-        #   post(conn, build_url(course_id, programming_question.id, "save"), %{
-        #     content: "console.log('version 1');"
-        #   })
-
         name_conn =
           put(conn, build_url(course_id, programming_question.id, "#{version.id}/name"), %{
             name: "renamed"
           })
 
         assert response(name_conn, 200) =~ "OK"
-
-        # assert get_latest_version_value(programming_question, assessment, course_reg) ==
-        #          "console.log('version 1');"
+        updated_version = Repo.get(Version, version.id)
+        assert updated_version.name == "renamed"
       end
     end
-
-    #   describe "PUT /assessments/question/{questionId}/version/{versionId}/name, #{role}" do
-    #     @tag authenticate: role
-    #     test "successfully renames a version", %{
-    #       conn: conn,
-    #       assessment: assessment,
-    #       programming_question: programming_question
-    #     } do
-    #       course_reg = conn.assigns.test_cr
-    #       course_id = conn.assigns.course_id
-
-    #       submission = insert(:submission, %{assessment: assessment, student: course_reg})
-    #       answer = insert(:answer, %{submission: submission, question: programming_question})
-    #       version = insert(:version, %{answer: answer, name: "v1"})
-
-    #       name_conn =
-    #         put(conn, build_url(course_id, programming_question.id, "#{version.id}/name"), %{
-    #           name: "renamed"
-    #         })
-
-    #       assert response(name_conn, 200) =~ "OK"
-    #       updated_version = Repo.get(Version, version.id)
-    #       assert updated_version.name == "renamed"
-    #     end
-    #   end
   end
 
   defp build_url(course_id, question_id, action) do

@@ -11,8 +11,8 @@ defmodule Cadet.Assessments.Version do
   schema "versions" do
     field(:content, :map)
     field(:name, :string)
-    field(:restored, :boolean, default: false)
-    field(:restored_from, :id)
+    # field(:restored, :boolean, default: false)
+    # field(:restored_from, :id)
 
     belongs_to(:answer, Answer)
 
@@ -22,8 +22,9 @@ defmodule Cadet.Assessments.Version do
   @doc false
   def changeset(version, attrs) do
     version
-    |> cast(attrs, [:content, :name, :restored, :restored_from, :answer_id])
-    |> validate_required([:content, :restored, :answer_id])
+    # |> cast(attrs, [:content, :name, :restored, :restored_from, :answer_id])
+    |> cast(attrs, [:content, :name, :answer_id])
+    |> validate_required([:content, :answer_id])
     |> foreign_key_constraint(:answer_id)
   end
 end
