@@ -172,17 +172,11 @@ if Cadet.Env.env() == :dev do
             })
 
           :mcq ->
-            %{id: id, answer: content} =
-              insert(:answer, %{
-                xp: Enum.random(0..500),
-                question: question,
-                submission: submission,
-                answer: build(:mcq_answer)
-              })
-
-            insert(:version, %{
-              answer_id: id,
-              content: content
+            insert(:answer, %{
+              xp: Enum.random(0..500),
+              question: question,
+              submission: submission,
+              answer: build(:mcq_answer)
             })
         end
       end

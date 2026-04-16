@@ -120,8 +120,6 @@ defmodule CadetWeb.VersionsController do
             id(:integer, "Unique identifier", required: true)
             content(:object, "Version of the answer depending on question type", required: true)
             name(:string, "The name of the version")
-            restored(:boolean, "Whether this version was restored from a previous version")
-            restored_from(:integer, "ID of the version this was restored from")
             answer_id(:integer, "Associated answer ID", required: true)
             inserted_at(:string, "Creation timestamp", format: "date-time")
             updated_at(:string, "Last update timestamp", format: "date-time")

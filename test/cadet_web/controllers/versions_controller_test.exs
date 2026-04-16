@@ -63,8 +63,6 @@ defmodule CadetWeb.VersionsControllerTest do
               "name" => v.name,
               "content" => v.content,
               "answer_id" => v.answer_id,
-              # "restored" => v.restored,
-              # "restored_from" => v.restored_from,
               "inserted_at" => format_timestamp(v.inserted_at),
               "updated_at" => format_timestamp(v.updated_at)
             }
@@ -151,7 +149,6 @@ defmodule CadetWeb.VersionsControllerTest do
 
     if version do
       case question.type do
-        :mcq -> Map.get(version.content, "choice_id")
         :programming -> Map.get(version.content, "code")
       end
     end

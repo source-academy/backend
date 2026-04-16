@@ -15,7 +15,6 @@ defmodule Cadet.Assessments.VersionsTest do
     valid_params = %{
       content: %{code: "console.log('v1');"},
       name: "version 1",
-      # restored: false,
       answer_id: answer.id
     }
 

@@ -6,15 +6,12 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
     create table(:versions) do
       add(:content, :map)
       add(:name, :string)
-      # add(:restored, :boolean, default: false, null: false)
       add(:answer_id, references(:answers, on_delete: :delete_all))
-      # add(:restored_from, references(:versions, on_delete: :nothing))
 
       timestamps()
     end
 
     create(index(:versions, [:answer_id]))
-    # create(index(:versions, [:restored_from]))
 
     # Backfill data from answers table
     flush()
@@ -23,7 +20,7 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
       from(a in "answers",
         join: q in "questions",
         on: q.id == a.question_id,
-        where: q.type != "voting",
+        where: q.type == "programming",
         select: %{
           content: a.answer,
           answer_id: a.id,

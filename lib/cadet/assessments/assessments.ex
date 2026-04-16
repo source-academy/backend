@@ -3666,8 +3666,8 @@ defmodule Cadet.Assessments do
         cr = %CourseRegistration{id: cr_id},
         raw_content
       ) do
-    if question.type == :voting do
-      {:error, {:bad_request, "Cannot save version for voting question"}}
+    if question.type != :programming do
+      {:error, {:bad_request, "Can only save version for programming questions"}}
     else
       result =
         Repo.transaction(fn ->
@@ -3743,7 +3743,7 @@ defmodule Cadet.Assessments do
          answer = %Answer{},
          raw_content
        ) do
-    if question.type == :voting do
+    if question.type != :programming do
       {:ok, :skipped}
     else
       content = build_answer_content(raw_content, question.type)
