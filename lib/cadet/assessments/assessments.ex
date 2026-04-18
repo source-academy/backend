@@ -20,7 +20,16 @@ defmodule Cadet.Assessments do
     CourseRegistrations
   }
 
-  alias Cadet.Assessments.{Answer, Assessment, Query, Question, Submission, SubmissionVotes}
+  alias Cadet.Assessments.{
+    Answer,
+    Assessment,
+    Query,
+    Question,
+    Submission,
+    SubmissionVotes,
+    Version
+  }
+
   alias Cadet.Autograder.GradingJob
   alias Cadet.Courses.{Group, AssessmentConfig}
   alias Cadet.Jobs.Log
@@ -1281,34 +1290,46 @@ defmodule Cadet.Assessments do
       ) do
     Logger.info("Attempting to answer question #{question.id} for user #{cr_id}")
 
-    with {:ok, _team} <- find_team(question.assessment.id, cr_id),
-         {:ok, submission} <- find_or_create_submission(cr, question.assessment),
-         {:status, true} <- {:status, force_submit or submission.status != :submitted},
-         {:ok, _answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id) do
-      Logger.info("Successfully answered question #{question.id} for user #{cr_id}")
-      update_submission_status_router(submission, question)
+    result =
+      Repo.transaction(fn ->
+        with {:ok, _team} <- find_team(question.assessment.id, cr_id),
+             {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+             {:status, true} <- {:status, force_submit or submission.status != :submitted},
+             {:ok, answer} <- insert_or_update_answer(submission, question, raw_answer, cr_id),
+             {:ok, _version} <- insert_version(question, answer, raw_answer) do
+          Logger.info("Successfully answered question #{question.id} for user #{cr_id}")
+          update_submission_status_router(submission, question)
 
-      {:ok, nil}
-    else
-      {:status, _} ->
-        Logger.error("Failed to answer question #{question.id} - submission already finalized")
-        {:error, {:forbidden, "Assessment submission already finalised"}}
+          {:ok, nil}
+        else
+          {:status, _} ->
+            Logger.error(
+              "Failed to answer question #{question.id} - submission already finalized"
+            )
 
-      {:error, :race_condition} ->
-        Logger.error("Race condition encountered while answering question #{question.id}")
-        {:error, {:internal_server_error, "Please try again later."}}
+            Repo.rollback({:forbidden, "Assessment submission already finalised"})
 
-      {:error, :team_not_found} ->
-        Logger.error("Team not found for question #{question.id} and user #{cr_id}")
-        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+          {:error, :race_condition} ->
+            Logger.error("Race condition encountered while answering question #{question.id}")
+            Repo.rollback({:internal_server_error, "Please try again later."})
 
-      {:error, :invalid_vote} ->
-        Logger.error("Invalid vote for question #{question.id} by user #{cr_id}")
-        {:error, {:bad_request, "Invalid vote! Vote is not saved."}}
+          {:error, :team_not_found} ->
+            Logger.error("Team not found for question #{question.id} and user #{cr_id}")
+            Repo.rollback({:bad_request, "Your existing Team has been deleted!"})
 
-      _ ->
-        Logger.error("Failed to answer question #{question.id} - invalid parameters")
-        {:error, {:bad_request, "Missing or invalid parameter(s)"}}
+          {:error, :invalid_vote} ->
+            Logger.error("Invalid vote for question #{question.id} by user #{cr_id}")
+            Repo.rollback({:bad_request, "Invalid vote! Vote is not saved."})
+
+          _ ->
+            Logger.error("Failed to answer question #{question.id} - invalid parameters")
+            Repo.rollback({:bad_request, "Missing or invalid parameter(s)"})
+        end
+      end)
+
+    case result do
+      {:ok, success} -> success
+      {:error, error} -> {:error, error}
     end
   end
 
@@ -3609,5 +3630,210 @@ defmodule Cadet.Assessments do
       )
 
     Repo.one(query)
+  end
+
+  def get_versions(
+        question = %Question{},
+        cr = %CourseRegistration{}
+      ) do
+    case find_team(question.assessment.id, cr.id) do
+      {:ok, team} ->
+        base_query =
+          Version
+          |> join(:inner, [v], a in assoc(v, :answer))
+          |> join(:inner, [v, a], s in assoc(a, :submission))
+          |> where([v, a, s], a.question_id == ^question.id)
+
+        query =
+          case team do
+            %Team{} ->
+              where(base_query, [_v, _a, s], s.team_id == ^team.id)
+
+            nil ->
+              where(base_query, [_v, _a, s], s.student_id == ^cr.id)
+          end
+
+        {:ok, Repo.all(query)}
+
+      {:error, :team_not_found} ->
+        Logger.error("Team not found for question #{question.id} and user #{cr.id}")
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+    end
+  end
+
+  def get_version(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        version_id
+      ) do
+    case find_team(question.assessment.id, cr.id) do
+      {:ok, team} ->
+        base_query =
+          Version
+          |> join(:inner, [v], a in assoc(v, :answer))
+          |> join(:inner, [v, a], s in assoc(a, :submission))
+          |> where([v, a, s], v.id == ^version_id)
+          |> where([v, a, s], a.question_id == ^question.id)
+
+        query =
+          case team do
+            %Team{} ->
+              base_query
+              |> where([v, a, s], s.team_id == ^team.id)
+
+            nil ->
+              base_query
+              |> where([v, a, s], s.student_id == ^cr.id)
+          end
+
+        case Repo.one(query) do
+          nil -> {:error, {:not_found, "Version not found"}}
+          version -> {:ok, version}
+        end
+
+      {:error, :team_not_found} ->
+        Logger.error("Team not found for question #{question.id} and user #{cr.id}")
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+    end
+  end
+
+  def save_version(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        raw_content
+      ) do
+    if question.type != :programming do
+      {:error, {:bad_request, "Can only save version for programming questions"}}
+    else
+      result =
+        Repo.transaction(fn ->
+          with {:ok, _team} <- find_team(question.assessment.id, cr_id),
+               {:ok, submission} <- find_or_create_submission(cr, question.assessment),
+               {:ok, answer} <- find_or_create_answer(question, submission, raw_content),
+               {:ok, _version} <- insert_version(question, answer, raw_content) do
+            Logger.info("Successfully saved version for answer #{question.id} for user #{cr_id}")
+            {:ok, nil}
+          else
+            {:error, :team_not_found} ->
+              Logger.error("Team not found for question #{question.id} and user #{cr_id}")
+              Repo.rollback({:bad_request, "Your existing Team has been deleted!"})
+
+            error ->
+              Logger.error("Unknown error occurred while saving version: #{inspect(error)}")
+          end
+        end)
+
+      case result do
+        {:ok, success} -> success
+        {:error, error} -> {:error, error}
+      end
+    end
+  end
+
+  defp find_or_create_answer(
+         question = %Question{},
+         submission = %Submission{},
+         raw_content
+       ) do
+    case find_answer(question, submission) do
+      {:ok, answer} -> {:ok, answer}
+      {:error, _} -> create_new_answer(question, submission, raw_content)
+    end
+  end
+
+  defp find_answer(question = %Question{}, submission = %Submission{}) do
+    answer =
+      Answer
+      |> where(submission_id: ^submission.id)
+      |> where(question_id: ^question.id)
+      |> Repo.one()
+
+    if answer do
+      {:ok, answer}
+    else
+      {:error, nil}
+    end
+  end
+
+  defp create_new_answer(
+         question = %Question{},
+         submission = %Submission{},
+         raw_answer
+       ) do
+    answer_content = build_answer_content(raw_answer, question.type)
+
+    %Answer{}
+    |> Answer.changeset(%{
+      answer: answer_content,
+      question_id: question.id,
+      submission_id: submission.id,
+      type: question.type
+    })
+    |> Repo.insert()
+  end
+
+  defp insert_version(_question, nil, _raw_content), do: {:ok, :skipped}
+
+  defp insert_version(
+         question = %Question{},
+         answer = %Answer{},
+         raw_content
+       ) do
+    if question.type != :programming do
+      {:ok, :skipped}
+    else
+      content = build_answer_content(raw_content, question.type)
+
+      %Version{}
+      |> Version.changeset(%{
+        content: content,
+        answer_id: answer.id
+      })
+      |> Repo.insert()
+    end
+  end
+
+  def name_version(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        version_id,
+        name
+      ) do
+    case find_team(question.assessment.id, cr.id) do
+      {:ok, team} ->
+        base_query =
+          Version
+          |> join(:inner, [v], a in assoc(v, :answer))
+          |> join(:inner, [v, a], s in assoc(a, :submission))
+          |> where([v, a, s], v.id == ^version_id)
+          |> where([v, a, s], a.question_id == ^question.id)
+
+        version =
+          case team do
+            %Team{} ->
+              base_query
+              |> where([v, a, s], s.team_id == ^team.id)
+              |> Repo.one()
+
+            nil ->
+              base_query
+              |> where([v, a, s], s.student_id == ^cr.id)
+              |> Repo.one()
+          end
+
+        case version do
+          nil ->
+            {:error, {:not_found, "Version not found"}}
+
+          version ->
+            version
+            |> Version.changeset(%{name: name})
+            |> Repo.update()
+        end
+
+      {:error, :team_not_found} ->
+        Logger.error("Team not found for question #{question.id} and user #{cr.id}")
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+    end
   end
 end

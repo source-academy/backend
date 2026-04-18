@@ -16,7 +16,8 @@ defmodule CadetWeb.AdminCoursesView do
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter,
       hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay,
-      isGradingAutoPublished: :is_grading_auto_published
+      isGradingAutoPublished: :is_grading_auto_published,
+      isAutosaveEnabled: :is_autosave_enabled
     })
   end
 end
