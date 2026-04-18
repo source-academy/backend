@@ -3686,7 +3686,10 @@ defmodule Cadet.Assessments do
               |> where([v, a, s], s.student_id == ^cr.id)
           end
 
-        {:ok, Repo.one(query)}
+        case Repo.one(query) do
+          nil -> {:error, {:not_found, "Version not found"}}
+          version -> {:ok, version}
+        end
 
       {:error, :team_not_found} ->
         Logger.error("Team not found for question #{question.id} and user #{cr.id}")
