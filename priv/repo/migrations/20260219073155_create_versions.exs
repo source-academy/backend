@@ -8,7 +8,7 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
       add(:name, :string)
       add(:answer_id, references(:answers, on_delete: :delete_all))
 
-      timestamps()
+      timestamps(type: :utc_datetime)
     end
 
     create(index(:versions, [:answer_id]))

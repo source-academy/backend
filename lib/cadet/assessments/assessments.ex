@@ -3661,6 +3661,39 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def get_version(
+        question = %Question{},
+        cr = %CourseRegistration{id: cr_id},
+        version_id
+      ) do
+    case find_team(question.assessment.id, cr.id) do
+      {:ok, team} ->
+        base_query =
+          Version
+          |> join(:inner, [v], a in assoc(v, :answer))
+          |> join(:inner, [v, a], s in assoc(a, :submission))
+          |> where([v, a, s], v.id == ^version_id)
+          |> where([v, a, s], a.question_id == ^question.id)
+
+        query =
+          case team do
+            %Team{} ->
+              base_query
+              |> where([v, a, s], s.team_id == ^team.id)
+
+            nil ->
+              base_query
+              |> where([v, a, s], s.student_id == ^cr.id)
+          end
+
+        {:ok, Repo.one(query)}
+
+      {:error, :team_not_found} ->
+        Logger.error("Team not found for question #{question.id} and user #{cr.id}")
+        {:error, {:bad_request, "Your existing Team has been deleted!"}}
+    end
+  end
+
   def save_version(
         question = %Question{},
         cr = %CourseRegistration{id: cr_id},

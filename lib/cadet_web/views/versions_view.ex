@@ -2,7 +2,16 @@ defmodule CadetWeb.VersionsView do
   use CadetWeb, :view
 
   def render("index.json", %{versions: versions}) do
-    render_many(versions, CadetWeb.VersionsView, "show.json", as: :version)
+    render_many(versions, CadetWeb.VersionsView, "overview.json", as: :version)
+  end
+
+  def render("overview.json", %{version: version}) do
+    transform_map_for_view(version, %{
+      id: :id,
+      name: :name,
+      inserted_at: :inserted_at,
+      updated_at: :updated_at
+    })
   end
 
   def render("show.json", %{version: version}) do

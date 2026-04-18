@@ -8,7 +8,7 @@ defmodule CadetWeb.VersionsController do
 
   alias Cadet.Assessments
 
-  def history(conn, %{"questionid" => question_id}) do
+  def index(conn, %{"questionid" => question_id}) do
     course_reg = conn.assigns[:course_reg]
 
     Logger.info(
@@ -22,6 +22,36 @@ defmodule CadetWeb.VersionsController do
       |> put_status(:ok)
       |> put_resp_content_type("application/json")
       |> render("index.json", versions: versions)
+    else
+      {:question, nil} ->
+        conn
+        |> put_status(:not_found)
+        |> text("Question not found")
+
+      {:error, {status, message}} ->
+        conn
+        |> put_status(status)
+        |> text(message)
+
+      other ->
+        Logger.error("Unexpected error in versions controller: #{inspect(other)}")
+
+        conn
+        |> put_status(:internal_server_error)
+        |> text("An unexpected error occurred.")
+    end
+  end
+
+  def show(conn, %{"questionid" => question_id, "versionid" => version_id}) do
+    course_reg = conn.assigns[:course_reg]
+
+    with {:question, question} when not is_nil(question) <-
+           {:question, Assessments.get_question(question_id)},
+         {:ok, version} <- Assessments.get_version(question, course_reg, version_id) do
+      conn
+      |> put_status(:ok)
+      |> put_resp_content_type("application/json")
+      |> render("show.json", version: version)
     else
       {:question, nil} ->
         conn
@@ -136,10 +166,10 @@ defmodule CadetWeb.VersionsController do
     }
   end
 
-  swagger_path :history do
-    get("/assessments/question/{questionId}/version/history")
+  swagger_path :index do
+    get("/assessments/question/{questionId}/versions/")
 
-    summary("Get a list of versions for an answer")
+    summary("Get a list of version overviews for an answer")
 
     security([%{JWT: []}])
 
@@ -154,8 +184,27 @@ defmodule CadetWeb.VersionsController do
     response(404, "Question not found")
   end
 
+  swagger_path :show do
+    get("/assessments/question/{questionId}/versions/{versionId}")
+
+    summary("Get content of a version for an answer")
+
+    security([%{JWT: []}])
+
+    produces("application/json")
+
+    parameters do
+      questionId(:path, :integer, "question id", required: true)
+      versionId(:path, :integer, "version id", required: true)
+    end
+
+    response(200, "OK")
+    response(400, "Invalid parameters")
+    response(404, "Question not found")
+  end
+
   swagger_path :save do
-    post("/assessments/question/{questionId}/version/save")
+    post("/assessments/question/{questionId}/versions/save")
 
     summary("Submit an answer to a question and save it as a version")
 
@@ -179,7 +228,7 @@ defmodule CadetWeb.VersionsController do
   end
 
   swagger_path :name do
-    put("/assessments/question/{questionId}/version/{versionId}/name")
+    put("/assessments/question/{questionId}/versions/{versionId}/name")
 
     summary("Name a version")
 

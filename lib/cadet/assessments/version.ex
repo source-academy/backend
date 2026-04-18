@@ -8,6 +8,8 @@ defmodule Cadet.Assessments.Version do
 
   alias Cadet.Assessments.Answer
 
+  @timestamps_opts [type: :utc_datetime]
+
   schema "versions" do
     field(:content, :map)
     field(:name, :string)
