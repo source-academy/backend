@@ -3640,6 +3640,7 @@ defmodule Cadet.Assessments do
       {:ok, team} ->
         base_query =
           Version
+          |> order_by(desc: :inserted_at)
           |> join(:inner, [v], a in assoc(v, :answer))
           |> join(:inner, [v, a], s in assoc(a, :submission))
           |> where([v, a, s], a.question_id == ^question.id)
