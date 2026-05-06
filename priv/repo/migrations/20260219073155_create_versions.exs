@@ -5,7 +5,7 @@ defmodule Cadet.Repo.Migrations.CreateVersions do
   def up do
     create table(:versions) do
       add(:content, :map)
-      add(:name, :string)
+      add(:name, :text)
       add(:answer_id, references(:answers, on_delete: :delete_all))
 
       timestamps(type: :utc_datetime)
