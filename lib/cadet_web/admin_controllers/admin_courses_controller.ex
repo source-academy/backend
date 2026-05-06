@@ -4,6 +4,7 @@ defmodule CadetWeb.AdminCoursesController do
   use PhoenixSwagger
 
   alias Cadet.Courses
+  alias Cadet.Chatbot.CourseDocuments
 
   def update_course_config(conn, params = %{"course_id" => course_id})
       when is_ecto_id(course_id) do
@@ -88,6 +89,11 @@ defmodule CadetWeb.AdminCoursesController do
         |> put_status(:bad_request)
         |> text(message)
     end
+  end
+
+  def get_document_map(conn, _params) do
+    document_map = CourseDocuments.build_document_map_json()
+    json(conn, %{documentMap: document_map})
   end
 
   swagger_path :update_course_config do
