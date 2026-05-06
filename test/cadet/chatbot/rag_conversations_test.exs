@@ -14,7 +14,7 @@ defmodule Cadet.Chatbot.RagConversationsTest do
       assert length(conversation.messages) == 1
 
       msg = hd(conversation.messages)
-      assert msg[:role] || msg["role"] == "assistant"
+      assert (msg[:role] || msg["role"]) == "assistant"
     end
 
     test "returns existing conversation when one exists" do
