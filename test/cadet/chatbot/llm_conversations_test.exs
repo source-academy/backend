@@ -41,6 +41,16 @@ defmodule Cadet.Chatbot.LlmConversationsTest do
 
       assert {:error, {:not_found, _}} = LlmConversations.get_conversation_for_user(user.id)
     end
+
+    test "returns non-RAG conversation when user has both types" do
+      user = insert(:user)
+      rag_conversation = insert(:conversation, user: user, prepend_context: [%{"chat_type" => "rag"}])
+      non_rag_conversation = insert(:conversation, user: user, prepend_context: [])
+
+      assert {:ok, found} = LlmConversations.get_or_create_conversation(user.id)
+      assert found.id == non_rag_conversation.id
+      refute found.id == rag_conversation.id
+    end
   end
 
   describe "add_message/3" do
