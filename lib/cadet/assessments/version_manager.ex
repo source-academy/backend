@@ -225,7 +225,7 @@ defmodule Cadet.Assessments.VersionManager do
     end
   end
 
-  defp find_or_create_submission(%CourseRegistration{} = cr, %Assessment{} = assessment) do
+  defp find_or_create_submission(cr = %CourseRegistration{}, assessment = %Assessment{}) do
     Cadet.Assessments.find_or_create_submission(cr, assessment)
   end
 
