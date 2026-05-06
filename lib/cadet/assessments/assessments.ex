@@ -3632,5 +3632,4 @@ defmodule Cadet.Assessments do
 
     Repo.one(query)
   end
-
 end
