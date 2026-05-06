@@ -57,7 +57,7 @@ defmodule CadetWeb.VersionsControllerTest do
 
         expected =
           versions
-          |> Enum.sort_by(& &1.id)
+          |> Enum.sort_by(& &1.inserted_at, :desc)
           |> Enum.map(fn v ->
             %{
               "id" => v.id,
