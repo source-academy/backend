@@ -7,6 +7,7 @@ defmodule CadetWeb.VersionsController do
   require Logger
 
   alias Cadet.Assessments
+  alias Cadet.Assessments.VersionManager
 
   def index(conn, %{"questionid" => question_id}) do
     course_reg = conn.assigns[:course_reg]
@@ -17,7 +18,7 @@ defmodule CadetWeb.VersionsController do
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
-         {:ok, versions} <- Assessments.get_versions(question, course_reg) do
+         {:ok, versions} <- VersionManager.get_versions(question, course_reg) do
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/json")
@@ -47,7 +48,7 @@ defmodule CadetWeb.VersionsController do
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
-         {:ok, version} <- Assessments.get_version(question, course_reg, version_id) do
+         {:ok, version} <- VersionManager.get_version(question, course_reg, version_id) do
       conn
       |> put_status(:ok)
       |> put_resp_content_type("application/json")
@@ -77,7 +78,7 @@ defmodule CadetWeb.VersionsController do
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
-         {:ok, _nil} <- Assessments.save_version(question, course_reg, content) do
+         {:ok, _nil} <- VersionManager.save_version(question, course_reg, content) do
       text(conn, "OK")
     else
       {:question, nil} ->
@@ -114,7 +115,7 @@ defmodule CadetWeb.VersionsController do
 
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
-         {:ok, _nil} <- Assessments.name_version(question, course_reg, version_id, name) do
+         {:ok, _nil} <- VersionManager.name_version(question, course_reg, version_id, name) do
       text(conn, "OK")
     else
       {:question, nil} ->
