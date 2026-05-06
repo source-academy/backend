@@ -1361,7 +1361,7 @@ defmodule Cadet.Assessments do
   end
 
   def find_team(assessment_id, cr_id)
-       when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
+      when is_ecto_id(assessment_id) and is_ecto_id(cr_id) do
     Logger.info("Finding team for assessment #{assessment_id} and user #{cr_id}")
 
     query =

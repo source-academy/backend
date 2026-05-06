@@ -163,10 +163,10 @@ defmodule Cadet.Assessments.VersionManager do
   def insert_version(_question, nil, _raw_content), do: {:ok, :skipped}
 
   def insert_version(
-         question = %Question{},
-         answer = %Answer{},
-         raw_content
-       ) do
+        question = %Question{},
+        answer = %Answer{},
+        raw_content
+      ) do
     if question.type != :programming do
       {:ok, :skipped}
     else
