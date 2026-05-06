@@ -134,7 +134,8 @@ defmodule CadetWeb.UserView do
             hasTokenCounter: :has_token_counter,
             earlySubmissionXp: :early_submission_xp,
             hoursBeforeEarlyXpDecay: :hours_before_early_xp_decay,
-            isGradingAutoPublished: :is_grading_auto_published
+            isGradingAutoPublished: :is_grading_auto_published,
+            isAutosaveEnabled: :is_autosave_enabled
           })
         end)
     end

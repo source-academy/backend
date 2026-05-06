@@ -107,6 +107,11 @@ defmodule CadetWeb.Router do
       :check_last_modified
     )
 
+    get("/assessments/question/:questionid/versions", VersionsController, :index)
+    get("/assessments/question/:questionid/versions/:versionid", VersionsController, :show)
+    post("/assessments/question/:questionid/versions/save", VersionsController, :save)
+    put("/assessments/question/:questionid/versions/:versionid/name", VersionsController, :name)
+
     get("/achievements", IncentivesController, :index_achievements)
     get("/self/goals", IncentivesController, :index_goals)
     post("/self/goals/:uuid/progress", IncentivesController, :update_progress)

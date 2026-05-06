@@ -158,11 +158,17 @@ if Cadet.Env.env() == :dev do
           question <- questions do
         case question.type do
           :programming ->
-            insert(:answer, %{
-              xp: Enum.random(0..1_000),
-              question: question,
-              submission: submission,
-              answer: build(:programming_answer)
+            %{id: id, answer: content} =
+              insert(:answer, %{
+                xp: Enum.random(0..1_000),
+                question: question,
+                submission: submission,
+                answer: build(:programming_answer)
+              })
+
+            insert(:version, %{
+              answer_id: id,
+              content: content
             })
 
           :mcq ->
