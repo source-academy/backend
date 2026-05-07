@@ -86,6 +86,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     max_team_size = params |> Map.get("maxTeamSize")
     has_token_counter = params |> Map.get("hasTokenCounter")
     has_voting_features = params |> Map.get("hasVotingFeatures")
+    is_autosave_enabled = params |> Map.get("isAutosaveEnabled")
     assign_entries_for_voting = params |> Map.get("assignEntriesForVoting")
 
     updated_assessment =
@@ -114,6 +115,13 @@ defmodule CadetWeb.AdminAssessmentsController do
         updated_assessment
       else
         Map.put(updated_assessment, :has_voting_features, has_voting_features)
+      end
+
+    updated_assessment =
+      if is_nil(is_autosave_enabled) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :is_autosave_enabled, is_autosave_enabled)
       end
 
     is_reassigning_voting =

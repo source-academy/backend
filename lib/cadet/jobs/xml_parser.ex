@@ -109,6 +109,7 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:config_id, assessment_config_id)
       |> Map.put(:has_token_counter, assessment_config.has_token_counter)
       |> Map.put(:has_voting_features, assessment_config.has_voting_features)
+      |> Map.put(:is_autosave_enabled, assessment_config.is_autosave_enabled)
       |> (&if(&1.access === "public",
             do: Map.put(&1, :password, nil),
             else: &1

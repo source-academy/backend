@@ -81,12 +81,18 @@ defmodule CadetWeb.Router do
     get("/devices/:id/ws_endpoint", DevicesController, :get_ws_endpoint)
   end
 
-  # LLM-related endpoints
   scope "/v2/chats", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :rate_limit])
 
-    post("", ChatController, :init_chat)
+    post("/", ChatController, :init_chat)
     post("/message", ChatController, :chat)
+  end
+
+  scope "/v2/rag_chat", CadetWeb do
+    pipe_through([:api, :auth, :ensure_auth, :rate_limit])
+
+    post("/", RagChatController, :init_chat)
+    post("/message", RagChatController, :chat)
   end
 
   # Authenticated Pages with course
@@ -106,6 +112,11 @@ defmodule CadetWeb.Router do
       AnswerController,
       :check_last_modified
     )
+
+    get("/assessments/question/:questionid/versions", VersionsController, :index)
+    get("/assessments/question/:questionid/versions/:versionid", VersionsController, :show)
+    post("/assessments/question/:questionid/versions/save", VersionsController, :save)
+    put("/assessments/question/:questionid/versions/:versionid/name", VersionsController, :name)
 
     get("/achievements", IncentivesController, :index_achievements)
     get("/self/goals", IncentivesController, :index_goals)
@@ -190,6 +201,8 @@ defmodule CadetWeb.Router do
       AdminCoursesController,
       :delete_assessment_config
     )
+
+    get("/config/pixelbot_document_map", AdminCoursesController, :get_document_map)
   end
 
   # Admin pages (Access: All staff)

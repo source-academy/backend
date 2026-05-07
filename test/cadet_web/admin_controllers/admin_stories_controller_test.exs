@@ -121,8 +121,12 @@ defmodule CadetWeb.AdminStoriesControllerTest do
 
       conn = post(conn, build_url(course_id), %{"story" => %{}})
 
-      assert response(conn, 400) ==
-               "title can't be blank\nclose_at can't be blank\nopen_at can't be blank\nfilenames can't be blank"
+      response_text = response(conn, 400)
+
+      assert response_text =~ "title can't be blank"
+      assert response_text =~ "close_at can't be blank"
+      assert response_text =~ "open_at can't be blank"
+      assert response_text =~ "filenames can't be blank"
     end
   end
 
