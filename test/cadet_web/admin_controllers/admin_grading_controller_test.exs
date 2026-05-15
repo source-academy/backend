@@ -4,6 +4,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
   alias CadetWeb.AdminGradingController
+  alias Ecto.Changeset
 
   import Mock
 
@@ -453,6 +454,86 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
       conn = get(conn, build_url(course_id, 1))
       assert response(conn, 400) == "Submission is not found."
+    end
+
+    @tag authenticate: :staff
+    test "returns prompts when both mission and question prompts are present", %{conn: conn} do
+      %{course: course, mission: mission, questions: questions, submissions: [submission | _]} =
+        seed_db(conn)
+
+      course
+      |> Changeset.change(enable_llm_grading: true)
+      |> Repo.update!()
+
+      mission
+      |> Changeset.change(llm_assessment_prompt: "Mission-level prompt")
+      |> Repo.update!()
+
+      questions
+      |> Enum.filter(&(&1.type == :programming))
+      |> Enum.each(fn programming_question ->
+        programming_question
+        |> Changeset.change(
+          question: Map.put(programming_question.question, "llm_prompt", "Task-level prompt")
+        )
+        |> Repo.update!()
+      end)
+
+      res =
+        conn
+        |> get(build_url(course.id, submission.id))
+        |> json_response(200)
+
+      programming_answers =
+        Enum.filter(res["answers"], &(&1["question"]["type"] == "programming"))
+
+      assert Enum.all?(programming_answers, &(length(&1["prompts"]) == 2))
+    end
+
+    @tag authenticate: :staff
+    test "returns empty prompts when mission-level prompt is missing", %{conn: conn} do
+      %{course: course, questions: questions, submissions: [submission | _]} = seed_db(conn)
+
+      course
+      |> Changeset.change(enable_llm_grading: true)
+      |> Repo.update!()
+
+      programming_question = Enum.find(questions, &(&1.type == :programming))
+
+      programming_question
+      |> Changeset.change(
+        question: Map.put(programming_question.question, "llm_prompt", "Task-level prompt")
+      )
+      |> Repo.update!()
+
+      res =
+        conn
+        |> get(build_url(course.id, submission.id))
+        |> json_response(200)
+
+      programming_answer = Enum.find(res["answers"], &(&1["question"]["type"] == "programming"))
+      assert programming_answer["prompts"] == []
+    end
+
+    @tag authenticate: :staff
+    test "returns empty prompts when question-level prompt is missing", %{conn: conn} do
+      %{course: course, mission: mission, submissions: [submission | _]} = seed_db(conn)
+
+      course
+      |> Changeset.change(enable_llm_grading: true)
+      |> Repo.update!()
+
+      mission
+      |> Changeset.change(llm_assessment_prompt: "Mission-level prompt")
+      |> Repo.update!()
+
+      res =
+        conn
+        |> get(build_url(course.id, submission.id))
+        |> json_response(200)
+
+      programming_answer = Enum.find(res["answers"], &(&1["question"]["type"] == "programming"))
+      assert programming_answer["prompts"] == []
     end
   end
 

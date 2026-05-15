@@ -30,7 +30,9 @@ defmodule Cadet.Courses.Course do
           source_chapter: integer(),
           source_variant: String.t(),
           module_help_text: String.t(),
-          assets_prefix: String.t() | nil
+          assets_prefix: String.t() | nil,
+          has_llm_content: boolean(),
+          assessment_configs: [String.t()]
         }
 
   schema "courses" do
@@ -59,6 +61,12 @@ defmodule Cadet.Courses.Course do
 
     # for now, only settable from database
     field(:assets_prefix, :string, default: nil)
+
+    # Virtual field computed at runtime based on assessments in course
+    field(:has_llm_content, :boolean, virtual: true, default: false)
+
+    # Virtual field populated at runtime by get_course_config/1
+    field(:assessment_configs, {:array, :string}, virtual: true, default: [])
 
     has_many(:assessment_config, AssessmentConfig)
 

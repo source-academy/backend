@@ -63,7 +63,7 @@ defmodule CadetWeb.AdminAssessmentsController do
   end
 
   def delete(conn, %{"course_id" => course_id, "assessmentid" => assessment_id}) do
-    with {:same_course, true} <- {:same_course, is_same_course(course_id, assessment_id)},
+    with {:same_course, true} <- {:same_course, same_course?(course_id, assessment_id)},
          {:ok, _} <- Assessments.delete_assessment(assessment_id) do
       text(conn, "OK")
     else
@@ -191,7 +191,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  defp is_same_course(course_id, assessment_id) do
+  defp same_course?(course_id, assessment_id) do
     Assessment
     |> where(id: ^assessment_id)
     |> where(course_id: ^course_id)

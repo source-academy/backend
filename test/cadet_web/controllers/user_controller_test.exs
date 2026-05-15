@@ -108,6 +108,8 @@ defmodule CadetWeb.UserControllerTest do
           "enableGame" => true,
           "enableSourcecast" => true,
           "enableStories" => false,
+          "enableLlmGrading" => false,
+          "hasLlmContent" => false,
           "courseShortName" => "CS1101S",
           "moduleHelpText" => "Help Text",
           "courseName" => "Programming Methodology",
@@ -328,8 +330,10 @@ defmodule CadetWeb.UserControllerTest do
           "enableAchievements" => true,
           "enableGame" => true,
           "enableSourcecast" => true,
+          "enableLlmGrading" => false,
           "courseShortName" => "CS1101S",
           "enableStories" => false,
+          "hasLlmContent" => false,
           "moduleHelpText" => "Help Text",
           "courseName" => "Programming Methodology",
           "sourceChapter" => 1,
@@ -345,6 +349,26 @@ defmodule CadetWeb.UserControllerTest do
       }
 
       assert expected == resp
+    end
+
+    @tag authenticate: :student
+    test "includes hasLlmContent when latest viewed course contains llm-tagged assessment", %{
+      conn: conn
+    } do
+      course = conn.assigns.current_user.latest_viewed_course
+
+      insert(:assessment, %{
+        is_published: true,
+        course: course,
+        llm_assessment_prompt: "Use this rubric"
+      })
+
+      resp =
+        conn
+        |> get("/v2/user/latest_viewed_course")
+        |> json_response(200)
+
+      assert resp["courseConfiguration"]["hasLlmContent"] == true
     end
 
     @tag sign_in: %{latest_viewed_course: nil}

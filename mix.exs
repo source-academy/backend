@@ -57,14 +57,14 @@ defmodule Cadet.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:arc, "~> 0.11"},
-      {:arc_ecto, "~> 0.11"},
+      {:waffle, "~> 1.1"},
+      {:waffle_ecto, "~> 0.0.12"},
       {:corsica, "~> 2.1"},
       {:csv, "~> 3.2"},
       {:ecto_enum, "~> 1.0"},
       {:ex_aws, "~> 2.1", override: true},
       {:ex_aws_lambda, "~> 2.0"},
-      {:ex_aws_s3, "~> 2.0"},
+      {:ex_aws_s3, "2.4.0"},
       {:ex_aws_secretsmanager, "~> 2.0"},
       {:ex_aws_sts, "~> 2.1"},
       {:ex_json_schema, "~> 0.11.0"},

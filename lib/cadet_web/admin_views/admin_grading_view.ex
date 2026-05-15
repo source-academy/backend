@@ -1,6 +1,7 @@
 defmodule CadetWeb.AdminGradingView do
   use CadetWeb, :view
 
+  alias Cadet.AIComments
   import CadetWeb.AssessmentsHelpers
   alias CadetWeb.AICodeAnalysisController
 
@@ -172,14 +173,36 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   defp extract_ai_comments_per_answer(id, ai_comments) do
-    matching_comment =
+    latest_comment =
       ai_comments
-      # Equivalent to fn comment -> comment.question_id == question_id end
-      |> Enum.find(&(&1.answer_id == id))
+      |> Enum.filter(&(&1.answer_id == id))
+      |> case do
+        [] -> nil
+        comments -> Enum.max_by(comments, & &1.inserted_at, NaiveDateTime)
+      end
 
-    case matching_comment do
-      nil -> nil
-      comment -> %{response: comment.response, insertedAt: comment.inserted_at}
+    case latest_comment do
+      nil ->
+        nil
+
+      comment ->
+        selected_indices = comment.selected_indices || []
+
+        selected_edits =
+          selected_indices
+          |> Enum.reduce(%{}, fn index, acc ->
+            case AIComments.get_latest_version(comment.id, index) do
+              nil -> acc
+              version -> Map.put(acc, index, version.content)
+            end
+          end)
+
+        %{
+          response: comment.response,
+          insertedAt: comment.inserted_at,
+          selectedIndices: selected_indices,
+          selectedEdits: selected_edits
+        }
     end
   end
 
@@ -221,7 +244,13 @@ defmodule CadetWeb.AdminGradingView do
   end
 
   defp build_prompts(answer, course, assessment) do
-    if course.enable_llm_grading do
+    question_prompt =
+      Map.get(answer.question.question, "llm_prompt") ||
+        Map.get(answer.question.question, :llm_prompt)
+
+    if course.enable_llm_grading &&
+         present_prompt?(assessment.llm_assessment_prompt) &&
+         present_prompt?(question_prompt) do
       AICodeAnalysisController.create_final_messages(
         course.llm_course_level_prompt,
         assessment.llm_assessment_prompt,
@@ -231,6 +260,9 @@ defmodule CadetWeb.AdminGradingView do
       []
     end
   end
+
+  defp present_prompt?(value) when is_binary(value), do: String.trim(value) != ""
+  defp present_prompt?(_), do: false
 
   defp build_grade(answer = %{grader: grader}) do
     transform_map_for_view(answer, %{

@@ -1,6 +1,5 @@
 defmodule CadetWeb.Plugs.RateLimiterTest do
   use CadetWeb.ConnCase
-  import Plug.Conn
   alias CadetWeb.Plugs.RateLimiter
 
   setup %{conn: conn} do
