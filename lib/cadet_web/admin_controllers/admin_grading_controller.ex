@@ -4,6 +4,32 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.{Assessments, Courses}
 
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :submission, param: "submissionid", assign: :scoped_submission]
+    when action in [
+           :show,
+           :update,
+           :unsubmit,
+           :unpublish_grades,
+           :publish_grades,
+           :autograde_submission,
+           :autograde_answer
+         ]
+  )
+
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :question, param: "questionid", assign: :scoped_question]
+    when action in [:update, :autograde_answer]
+  )
+
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :assessment, param: "assessmentid", assign: :scoped_assessment]
+    when action in [:publish_all_grades, :unpublish_all_grades]
+  )
+
   @doc """
   # Query Parameters
   - `pageSize`: Integer. The number of submissions to return. Default 10.

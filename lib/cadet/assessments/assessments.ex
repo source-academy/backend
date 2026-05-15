@@ -1258,6 +1258,23 @@ defmodule Cadet.Assessments do
     |> Repo.one()
   end
 
+  def get_assessment_in_course(assessment_id, course_id)
+      when is_ecto_id(assessment_id) and is_ecto_id(course_id) do
+    Assessment
+    |> where(id: ^assessment_id, course_id: ^course_id)
+    |> Repo.one()
+  end
+
+  def get_question_in_course(question_id, course_id)
+      when is_ecto_id(question_id) and is_ecto_id(course_id) do
+    Question
+    |> where(id: ^question_id)
+    |> join(:inner, [q], a in assoc(q, :assessment))
+    |> where([_, a], a.course_id == ^course_id)
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
   def delete_question(id) when is_ecto_id(id) do
     Logger.info("Deleting question #{id}")
 
@@ -1423,6 +1440,16 @@ defmodule Cadet.Assessments do
     Submission
     |> where(id: ^submission_id)
     |> join(:inner, [s], a in assoc(s, :assessment))
+    |> preload([_, a], assessment: a)
+    |> Repo.one()
+  end
+
+  def get_submission_in_course(submission_id, course_id)
+      when is_ecto_id(submission_id) and is_ecto_id(course_id) do
+    Submission
+    |> where(id: ^submission_id)
+    |> join(:inner, [s], a in assoc(s, :assessment))
+    |> where([_, a], a.course_id == ^course_id)
     |> preload([_, a], assessment: a)
     |> Repo.one()
   end
@@ -3115,6 +3142,21 @@ defmodule Cadet.Assessments do
     end
   end
 
+  def get_answer_in_course(answer_id, course_id)
+      when is_ecto_id(answer_id) and is_ecto_id(course_id) do
+    answer_query =
+      Answer
+      |> where(id: ^answer_id)
+      |> join(:inner, [a], q in assoc(a, :question))
+      |> join(:inner, [_, q], ast in assoc(q, :assessment))
+      |> where([_, _, ast], ast.course_id == ^course_id)
+
+    case Repo.exists?(answer_query) do
+      true -> get_answer(answer_id)
+      false -> {:error, {:forbidden, "Forbidden"}}
+    end
+  end
+
   @spec get_answers_in_submission(integer() | String.t()) ::
           {:ok, {[Answer.t()], Assessment.t()}}
           | {:error, {:bad_request, String.t()}}
@@ -3222,7 +3264,7 @@ defmodule Cadet.Assessments do
   def update_grading_info(
         %{submission_id: submission_id, question_id: question_id},
         attrs,
-        cr = %CourseRegistration{id: grader_id}
+        cr = %CourseRegistration{id: grader_id, course_id: course_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     attrs = Map.put(attrs, "grader_id", grader_id)
@@ -3235,7 +3277,9 @@ defmodule Cadet.Assessments do
     answer_query =
       answer_query
       |> join(:inner, [a], s in assoc(a, :submission))
-      |> preload([_, s], submission: s)
+      |> join(:inner, [_, s], asst in assoc(s, :assessment))
+      |> where([_, _, asst], asst.course_id == ^course_id)
+      |> preload([_, s, asst], submission: {s, assessment: asst})
 
     answer = Repo.one(answer_query)
 
@@ -3289,10 +3333,16 @@ defmodule Cadet.Assessments do
           {:ok, nil} | {:error, {:forbidden | :not_found, String.t()}}
   def force_regrade_submission(
         submission_id,
-        _requesting_user = %CourseRegistration{id: grader_id}
+        _requesting_user = %CourseRegistration{id: grader_id, course_id: course_id}
       )
       when is_ecto_id(submission_id) do
-    with {:get, sub} when not is_nil(sub) <- {:get, Repo.get(Submission, submission_id)},
+    submission_query =
+      Submission
+      |> where(id: ^submission_id)
+      |> join(:inner, [s], asst in assoc(s, :assessment))
+      |> where([_, asst], asst.course_id == ^course_id)
+
+    with {:get, sub} when not is_nil(sub) <- {:get, Repo.one(submission_query)},
          {:status, true} <- {:status, sub.student_id == grader_id or sub.status == :submitted} do
       GradingJob.force_grade_individual_submission(sub, true)
       {:ok, nil}
@@ -3318,12 +3368,15 @@ defmodule Cadet.Assessments do
   def force_regrade_answer(
         submission_id,
         question_id,
-        _requesting_user = %CourseRegistration{id: grader_id}
+        _requesting_user = %CourseRegistration{id: grader_id, course_id: course_id}
       )
       when is_ecto_id(submission_id) and is_ecto_id(question_id) do
     answer =
       Answer
       |> where(submission_id: ^submission_id, question_id: ^question_id)
+      |> join(:inner, [a], q in assoc(a, :question))
+      |> join(:inner, [_, q], asst in assoc(q, :assessment))
+      |> where([_, _, asst], asst.course_id == ^course_id)
       |> preload([:question, :submission])
       |> Repo.one()
 

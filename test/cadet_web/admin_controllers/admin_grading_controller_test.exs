@@ -452,7 +452,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       course_id = conn.assigns[:course_id]
 
       conn = get(conn, build_url(course_id, 1))
-      assert response(conn, 400) == "Submission is not found."
+      assert response(conn, 403) == "Forbidden"
     end
   end
 
@@ -499,7 +499,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "missing parameter", %{conn: conn} do
       course_id = conn.assigns.course_id
       conn = post(conn, build_url(course_id, 1, 3), %{})
-      assert response(conn, 400) =~ "Missing parameter"
+      assert response(conn, 403) == "Forbidden"
     end
 
     @tag authenticate: :staff
@@ -1486,7 +1486,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
       course_id = conn.assigns[:course_id]
 
       conn = get(conn, build_url(course_id, 1))
-      assert response(conn, 400) == "Submission is not found."
+      assert response(conn, 403) == "Forbidden"
     end
   end
 
@@ -1510,7 +1510,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
     test "missing parameter", %{conn: conn} do
       course_id = conn.assigns.course_id
       conn = post(conn, build_url(course_id, 1, 3), %{})
-      assert response(conn, 400) =~ "Missing parameter"
+      assert response(conn, 403) == "Forbidden"
     end
   end
 
@@ -1613,8 +1613,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
     @tag authenticate: :staff
     test "fails if not found", %{conn: conn, course: course} do
-      assert conn |> post(build_url_autograde(course.id, 2_147_483_647)) |> response(404) ==
-               "Submission not found"
+      assert conn |> post(build_url_autograde(course.id, 2_147_483_647)) |> response(403) ==
+               "Forbidden"
     end
   end
 
@@ -1661,8 +1661,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
     @tag authenticate: :staff
     test "fails if not found", %{conn: conn, course: course} do
-      assert conn |> post(build_url_autograde(course.id, 2_147_483_647, 123_456)) |> response(404) ==
-               "Answer not found"
+      assert conn |> post(build_url_autograde(course.id, 2_147_483_647, 123_456)) |> response(403) ==
+               "Forbidden"
     end
   end
 

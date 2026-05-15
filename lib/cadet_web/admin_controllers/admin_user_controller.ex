@@ -2,11 +2,15 @@ defmodule CadetWeb.AdminUserController do
   use CadetWeb, :controller
   use PhoenixSwagger
 
-  import Ecto.Query
-
   alias Cadet.Repo
   alias Cadet.{Accounts, Assessments, Courses}
-  alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
+  alias Cadet.Accounts.{CourseRegistrations, Role}
+
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :course_reg, param: "course_reg_id", assign: :target_course_reg]
+    when action in [:combined_total_xp, :update_role, :delete_user]
+  )
 
   # This controller is used to find all users of a course
 
@@ -17,8 +21,8 @@ defmodule CadetWeb.AdminUserController do
     render(conn, "users.json", users: users)
   end
 
-  def combined_total_xp(conn, %{"course_reg_id" => course_reg_id}) do
-    course_reg = Repo.get(CourseRegistration, course_reg_id)
+  def combined_total_xp(conn, %{"course_reg_id" => _course_reg_id}) do
+    course_reg = conn.assigns.target_course_reg
 
     course_id = course_reg.course_id
     user_id = course_reg.user_id
@@ -107,18 +111,15 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @update_role_roles ~w(admin)a
-  def update_role(conn, %{"role" => role, "course_reg_id" => course_reg_id}) do
-    course_reg_id = course_reg_id |> String.to_integer()
+  def update_role(conn, %{"role" => role, "course_reg_id" => _course_reg_id}) do
+    target_course_reg = conn.assigns.target_course_reg
+    course_reg_id = target_course_reg.id
 
-    %{id: admin_course_reg_id, role: admin_role, course_id: admin_course_id} =
+    %{id: admin_course_reg_id, role: admin_role} =
       conn.assigns.course_reg
 
     with {:validate_role, true} <- {:validate_role, admin_role in @update_role_roles},
-         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != course_reg_id},
-         {:get_cr, user_course_reg} when not is_nil(user_course_reg) <-
-           {:get_cr, CourseRegistration |> where(id: ^course_reg_id) |> Repo.one()},
-         {:validate_same_course, true} <-
-           {:validate_same_course, user_course_reg.course_id == admin_course_id} do
+         {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != course_reg_id} do
       case CourseRegistrations.update_role(role, course_reg_id) do
         {:ok, %{}} ->
           text(conn, "OK")
@@ -134,29 +135,21 @@ defmodule CadetWeb.AdminUserController do
 
       {:validate_not_self, false} ->
         conn |> put_status(:bad_request) |> text("Admin not allowed to downgrade own role")
-
-      {:get_cr, _} ->
-        conn |> put_status(:bad_request) |> text("User course registration does not exist")
-
-      {:validate_same_course, false} ->
-        conn |> put_status(:forbidden) |> text("User is in a different course")
     end
   end
 
   @delete_user_roles ~w(admin)a
-  def delete_user(conn, %{"course_reg_id" => course_reg_id}) do
-    course_reg_id = course_reg_id |> String.to_integer()
+  def delete_user(conn, %{"course_reg_id" => _course_reg_id}) do
+    target_course_reg = conn.assigns.target_course_reg
+    course_reg_id = target_course_reg.id
 
-    %{id: admin_course_reg_id, role: admin_role, course_id: admin_course_id} =
+    %{id: admin_course_reg_id, role: admin_role} =
       conn.assigns.course_reg
 
     with {:validate_role, true} <- {:validate_role, admin_role in @delete_user_roles},
          {:validate_not_self, true} <- {:validate_not_self, admin_course_reg_id != course_reg_id},
-         {:get_cr, user_course_reg} when not is_nil(user_course_reg) <-
-           {:get_cr, CourseRegistration |> where(id: ^course_reg_id) |> Repo.one()},
-         {:prevent_delete_admin, true} <- {:prevent_delete_admin, user_course_reg.role != :admin},
-         {:validate_same_course, true} <-
-           {:validate_same_course, user_course_reg.course_id == admin_course_id} do
+         {:prevent_delete_admin, true} <-
+           {:prevent_delete_admin, target_course_reg.role != :admin} do
       case CourseRegistrations.delete_course_registration(course_reg_id) do
         {:ok, %{}} ->
           text(conn, "OK")
@@ -175,14 +168,8 @@ defmodule CadetWeb.AdminUserController do
         |> put_status(:bad_request)
         |> text("Admin not allowed to delete ownself from course")
 
-      {:get_cr, _} ->
-        conn |> put_status(:bad_request) |> text("User course registration does not exist")
-
       {:prevent_delete_admin, false} ->
         conn |> put_status(:bad_request) |> text("Admins cannot be deleted")
-
-      {:validate_same_course, false} ->
-        conn |> put_status(:forbidden) |> text("User is in a different course")
     end
   end
 
