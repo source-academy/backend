@@ -53,6 +53,17 @@ defmodule CadetWeb.TeamsControllerTest do
 
   describe "GET /v2/courses/:course_id/team/:assessment_id" do
     @tag authenticate: :admin
+    test "forbidden when assessment belongs to another course", %{conn: conn} do
+      course_id = conn.assigns[:course_id]
+      other_course = insert(:course)
+      other_assessment = insert(:assessment, %{course: other_course})
+
+      conn = get(conn, build_url_get_by_assessment(course_id, other_assessment.id))
+
+      assert response(conn, 403) == "Forbidden"
+    end
+
+    @tag authenticate: :admin
     test "team not found", %{conn: conn} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)

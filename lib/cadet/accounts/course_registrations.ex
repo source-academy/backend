@@ -100,6 +100,13 @@ defmodule Cadet.Accounts.CourseRegistrations do
     |> Repo.all()
   end
 
+  def get_course_reg_in_course(course_reg_id, course_id)
+      when is_ecto_id(course_reg_id) and is_ecto_id(course_id) do
+    CourseRegistration
+    |> where(id: ^course_reg_id, course_id: ^course_id)
+    |> Repo.one()
+  end
+
   def get_staffs(course_id) do
     CourseRegistration
     |> where(course_id: ^course_id)

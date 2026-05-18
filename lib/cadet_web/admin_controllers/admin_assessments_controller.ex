@@ -9,18 +9,29 @@ defmodule CadetWeb.AdminAssessmentsController do
   alias CadetWeb.AssessmentsHelpers
   alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
-  alias Cadet.Accounts.CourseRegistration
 
-  def index(conn, %{"course_reg_id" => course_reg_id}) do
-    course_reg = Repo.get(CourseRegistration, course_reg_id)
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :course_reg, param: "course_reg_id", assign: :target_course_reg]
+    when action in [:index, :get_assessment]
+  )
+
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :assessment, param: "assessmentid", assign: :scoped_assessment]
+    when action in [:update, :calculate_contest_score, :dispatch_contest_xp]
+  )
+
+  def index(conn, %{"course_reg_id" => _course_reg_id}) do
+    course_reg = conn.assigns.target_course_reg
     {:ok, assessments} = Assessments.all_assessments(course_reg)
     assessments = Assessments.format_all_assessments(assessments)
     render(conn, "index.json", assessments: assessments)
   end
 
-  def get_assessment(conn, %{"course_reg_id" => course_reg_id, "assessmentid" => assessment_id})
+  def get_assessment(conn, %{"course_reg_id" => _course_reg_id, "assessmentid" => assessment_id})
       when is_ecto_id(assessment_id) do
-    course_reg = Repo.get(CourseRegistration, course_reg_id)
+    course_reg = conn.assigns.target_course_reg
 
     case Assessments.assessment_with_questions_and_answers(assessment_id, course_reg) do
       {:ok, assessment} -> render(conn, "show.json", assessment: assessment)
@@ -143,7 +154,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
     voting_questions =
       Question
       |> where(type: :voting)
@@ -158,7 +169,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
     voting_questions =
       Question
       |> where(type: :voting)

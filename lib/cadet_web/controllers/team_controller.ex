@@ -11,8 +11,15 @@ defmodule CadetWeb.TeamController do
   alias Cadet.Repo
   alias Cadet.Accounts.Team
 
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :assessment, param: "assessmentid", assign: :scoped_assessment]
+    when action in [:index]
+  )
+
   def index(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
+    assessment_id = conn.assigns.scoped_assessment.id
 
     query =
       from(t in Team,

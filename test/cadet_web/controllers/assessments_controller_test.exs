@@ -1603,7 +1603,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> sign_in(student.user)
         |> post(build_url_submit(course2.id, assessment.id))
 
-      assert response(conn, 404) == "Submission not found"
+      assert response(conn, 403) == "Forbidden"
     end
 
     test "forbidden if not in course", %{
@@ -1619,6 +1619,20 @@ defmodule CadetWeb.AssessmentsControllerTest do
         conn
         |> sign_in(student2.user)
         |> post(build_url_submit(course2.id, assessment.id))
+
+      assert response(conn, 403) == "Forbidden"
+    end
+  end
+
+  describe "GET /:assessment_id, scoped access" do
+    @tag authenticate: :student
+    test "forbidden when assessment belongs to another course", %{conn: conn} do
+      course_id = conn.assigns.course_id
+      other_course = insert(:course)
+      other_config = insert(:assessment_config, %{course: other_course})
+      other_assessment = insert(:assessment, %{course: other_course, config: other_config})
+
+      conn = get(conn, build_url(course_id, other_assessment.id))
 
       assert response(conn, 403) == "Forbidden"
     end

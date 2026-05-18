@@ -101,7 +101,8 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
           conn
           |> sign_in(admin_user.user)
           |> post(build_url_generate_ai_comments(course_with_llm.id, random_answer_id))
-          |> text_response(400)
+
+        assert response(response, 403) == "Forbidden"
       end
     end
 

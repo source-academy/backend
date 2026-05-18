@@ -7,6 +7,12 @@ defmodule CadetWeb.AICodeAnalysisController do
   alias Cadet.{Assessments, AIComments, Courses}
   alias CadetWeb.{AICodeAnalysisController, AICommentsHelpers}
 
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :answer, param: "answer_id", assign: :scoped_answer]
+    when action in [:generate_ai_comments, :save_final_comment]
+  )
+
   # For logging outputs to both database and file
   defp save_comment(answer_id, raw_prompt, answers_json, response, error \\ nil) do
     # Log to database
@@ -82,8 +88,9 @@ defmodule CadetWeb.AICodeAnalysisController do
         "course_id" => course_id
       })
       when is_ecto_id(answer_id) do
-    with {answer_id_parsed, ""} <- Integer.parse(answer_id),
-         {:ok, course} <- Courses.get_course_config(course_id),
+    answer = conn.assigns.scoped_answer
+
+    with {:ok, course} <- Courses.get_course_config(course_id),
          {:ok} <- ensure_llm_enabled(course),
          {:ok, key} <- AICommentsHelpers.decrypt_llm_api_key(course.llm_api_key),
          {:ok} <-
@@ -92,8 +99,7 @@ defmodule CadetWeb.AICodeAnalysisController do
              course.llm_model,
              course.llm_api_url,
              course.llm_course_level_prompt
-           ),
-         {:ok, answer} <- Assessments.get_answer(answer_id_parsed) do
+           ) do
       # Get head of answers (should only be one answer for given submission
       # and question since we filter to only 1 question)
       analyze_code(
@@ -108,11 +114,6 @@ defmodule CadetWeb.AICodeAnalysisController do
         }
       )
     else
-      :error ->
-        conn
-        |> put_status(:bad_request)
-        |> text("Invalid question ID format")
-
       {:decrypt_error, err} ->
         conn
         |> put_status(:internal_server_error)
@@ -123,11 +124,6 @@ defmodule CadetWeb.AICodeAnalysisController do
         conn
         |> put_status(:bad_request)
         |> text(error_msg)
-
-      {:error, {status, message}} ->
-        conn
-        |> put_status(status)
-        |> text(message)
     end
   end
 

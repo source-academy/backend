@@ -7,6 +7,18 @@ defmodule CadetWeb.AssessmentsController do
   alias Cadet.{Assessments, Repo}
   alias CadetWeb.AssessmentsHelpers
 
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :assessment, param: "assessmentid", assign: :scoped_assessment]
+    when action in [
+           :show,
+           :unlock,
+           :submit,
+           :contest_popular_leaderboard,
+           :contest_score_leaderboard
+         ]
+  )
+
   # These roles can save and finalise answers for closed assessments and
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
@@ -124,7 +136,8 @@ defmodule CadetWeb.AssessmentsController do
       "Fetching contest score leaderboard for assessment #{assessment_id} in course #{course_id}"
     )
 
-    case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+    case {:voting_question,
+          Assessments.get_contest_voting_question(conn.assigns.scoped_assessment.id)} do
       {:voting_question, voting_question} when not is_nil(voting_question) ->
         question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 
@@ -165,7 +178,8 @@ defmodule CadetWeb.AssessmentsController do
       "Fetching contest popular leaderboard for assessment #{assessment_id} in course #{course_id}"
     )
 
-    case {:voting_question, Assessments.get_contest_voting_question(assessment_id)} do
+    case {:voting_question,
+          Assessments.get_contest_voting_question(conn.assigns.scoped_assessment.id)} do
       {:voting_question, voting_question} when not is_nil(voting_question) ->
         question_id = Assessments.fetch_associated_contest_question_id(course_id, voting_question)
 

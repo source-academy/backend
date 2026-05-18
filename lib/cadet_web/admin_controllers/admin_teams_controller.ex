@@ -5,6 +5,12 @@ defmodule CadetWeb.AdminTeamsController do
 
   alias Cadet.Accounts.{Teams, Team}
 
+  plug(
+    CadetWeb.Plug.EnsureResourceScope,
+    [resource: :team, param: "teamid", assign: :scoped_team]
+    when action in [:update, :delete]
+  )
+
   def index(conn, %{"course_id" => course_id}) do
     teams = Teams.all_teams_for_course(course_id)
 
@@ -47,14 +53,9 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def update(conn, %{
-        "teamId" => teamId,
-        "assessmentId" => assessmentId,
-        "student_ids" => student_ids
-      }) do
+  def update(conn, %{"assessmentId" => assessmentId, "student_ids" => student_ids}) do
     team =
-      Team
-      |> Repo.get!(teamId)
+      conn.assigns.scoped_team
       |> Repo.preload(assessment: [:config], team_members: [student: [:user]])
 
     case Teams.update_team(team, assessmentId, student_ids) do
@@ -70,8 +71,8 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def delete(conn, %{"teamId" => team_id}) do
-    team = Repo.get(Team, team_id)
+  def delete(conn, %{"teamid" => _team_id}) do
+    team = conn.assigns.scoped_team
 
     if team do
       case Teams.delete_team(team) do
@@ -88,10 +89,6 @@ defmodule CadetWeb.AdminTeamsController do
       |> put_status(:not_found)
       |> text("Team not found!")
     end
-  end
-
-  def delete(conn, %{"course_id" => course_id, "teamid" => team_id}) do
-    delete(conn, %{"teamId" => team_id})
   end
 
   swagger_path :index do
