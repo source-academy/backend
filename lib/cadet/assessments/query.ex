@@ -20,7 +20,8 @@ defmodule Cadet.Assessments.Query do
     |> select([a, q], %Assessment{
       a
       | max_xp: q.max_xp,
-        question_count: q.question_count
+        question_count: q.question_count,
+        has_llm_questions: q.has_llm_questions
     })
   end
 
@@ -49,7 +50,33 @@ defmodule Cadet.Assessments.Query do
     |> select([q], %{
       assessment_id: q.assessment_id,
       max_xp: sum(q.max_xp),
-      question_count: count(q.id)
+      question_count: count(q.id),
+      has_llm_questions:
+        fragment(
+          "bool_or(? ->> 'llm_prompt' IS NOT NULL AND ? ->> 'llm_prompt' != '')",
+          q.question,
+          q.question
+        )
     })
+  end
+
+  @doc """
+  Checks if a course has any assessments with LLM content.
+  Returns true if any assessment has questions with llm_prompt or llm_assessment_prompt.
+  """
+  @spec course_has_llm_content?(integer()) :: boolean()
+  def course_has_llm_content?(course_id) when is_ecto_id(course_id) do
+    Assessment
+    |> where(course_id: ^course_id)
+    |> join(:left, [a], q in subquery(assessments_aggregates()), on: a.id == q.assessment_id)
+    |> select([a, q], %{
+      has_llm_questions: q.has_llm_questions,
+      llm_assessment_prompt: a.llm_assessment_prompt
+    })
+    |> Repo.all()
+    |> Enum.any?(fn assessment ->
+      assessment.has_llm_questions == true or
+        assessment.llm_assessment_prompt not in [nil, ""]
+    end)
   end
 end

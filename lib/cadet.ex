@@ -40,8 +40,8 @@ defmodule Cadet do
 
   def remote_assets do
     quote do
-      use Arc.Definition
-      use Arc.Ecto.Definition
+      use Waffle.Definition
+      use Waffle.Ecto.Definition
     end
   end
 end

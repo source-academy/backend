@@ -3,7 +3,7 @@ defmodule Cadet.Courses.Sourcecast do
   Sourcecast stores audio files and deltas for playback
   """
   use Cadet, :model
-  use Arc.Ecto.Schema
+  use Waffle.Ecto.Schema
 
   alias Cadet.Accounts.User
   alias Cadet.Courses.{Course, SourcecastUpload}

@@ -614,7 +614,7 @@ defmodule Cadet.Assessments do
     )
   end
 
-  defp is_voting_assigned(assessment_ids) do
+  defp voting_assigned?(assessment_ids) do
     Logger.debug("Checking if voting is assigned for assessment IDs: #{inspect(assessment_ids)}")
 
     voting_assigned_question_ids =
@@ -649,7 +649,7 @@ defmodule Cadet.Assessments do
     is_voting_assigned_map =
       assessments
       |> Enum.map(& &1.id)
-      |> is_voting_assigned()
+      |> voting_assigned?()
 
     Enum.map(assessments, fn a ->
       a = Map.put(a, :is_voting_published, Map.get(is_voting_assigned_map, a.id, false))
@@ -920,7 +920,7 @@ defmodule Cadet.Assessments do
     )
 
     if is_reassigning_voting do
-      if is_voting_published(assessment_id) do
+      if voting_published?(assessment_id) do
         Logger.info("Deleting existing submissions for assessment #{assessment_id}")
 
         Submission
@@ -965,7 +965,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_voting_published(assessment_id) do
+  defp voting_published?(assessment_id) do
     Logger.info("Checking if voting is published for assessment #{assessment_id}")
 
     voting_assigned_question_ids =
@@ -1473,7 +1473,16 @@ defmodule Cadet.Assessments do
     end
   end
 
+  @doc """
+  Deletes all AI comment logs associated with the given list of answer IDs.
+  """
+  def delete_comments_for_answers(answer_ids) when is_list(answer_ids) do
+    query = from(c in "ai_comment_logs", where: c.answer_id in ^answer_ids)
+    Repo.delete_all(query)
+  end
+
   @dialyzer {:nowarn_function, unsubmit_submission: 2}
+  @dialyzer {:nowarn_function, perform_unsubmit_transaction: 3}
   def unsubmit_submission(
         submission_id,
         cr = %CourseRegistration{id: course_reg_id, role: role}
@@ -1481,27 +1490,75 @@ defmodule Cadet.Assessments do
       when is_ecto_id(submission_id) do
     Logger.info("Unsubmitting submission #{submission_id} for user #{course_reg_id}")
 
+    case validate_unsubmit_submission(submission_id, cr) do
+      {:ok, submission} ->
+        perform_unsubmit_transaction(submission, submission_id, cr)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp validate_unsubmit_submission(submission_id, cr = %CourseRegistration{role: role}) do
     submission =
       Submission
       |> join(:inner, [s], a in assoc(s, :assessment))
       |> preload([_, a], assessment: a)
       |> Repo.get(submission_id)
 
-    # allows staff to unsubmit own assessment
-    bypass = role in @bypass_closed_roles and submission.student_id == course_reg_id
-    Logger.info("Bypass restrictions: #{bypass}")
+    case is_map(submission) do
+      true ->
+        # allows staff to unsubmit own assessment
+        bypass = role in @bypass_closed_roles and submission.student_id == cr.id
 
-    with {:submission_found?, true} <- {:submission_found?, is_map(submission)},
-         {:is_open?, true} <- {:is_open?, bypass or is_open?(submission.assessment)},
-         {:status, :submitted} <- {:status, submission.status},
-         {:allowed_to_unsubmit?, true} <-
-           {:allowed_to_unsubmit?,
-            role == :admin or bypass or is_nil(submission.student_id) or
-              Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)},
-         {:is_grading_published?, false} <-
-           {:is_grading_published?, submission.is_grading_published} do
-      Logger.info("All checks passed for unsubmitting submission #{submission_id}")
+        with {:is_open?, true} <- {:is_open?, bypass or open?(submission.assessment)},
+             {:status, :submitted} <- {:status, submission.status},
+             {:allowed_to_unsubmit?, true} <-
+               {:allowed_to_unsubmit?,
+                role == :admin or bypass or is_nil(submission.student_id) or
+                  Cadet.Accounts.Query.avenger_of?(cr, submission.student_id)},
+             {:is_grading_published?, false} <-
+               {:is_grading_published?, submission.is_grading_published} do
+          {:ok, submission}
+        else
+          {:is_open?, false} ->
+            Logger.error("Assessment for submission #{submission_id} is not open")
+            {:error, {:forbidden, "Assessment not open"}}
 
+          {:status, :attempting} ->
+            Logger.error("Submission #{submission_id} is still attempting")
+            {:error, {:bad_request, "Some questions have not been attempted"}}
+
+          {:status, :attempted} ->
+            Logger.error("Submission #{submission_id} has already been attempted")
+            {:error, {:bad_request, "Assessment has not been submitted"}}
+
+          {:allowed_to_unsubmit?, false} ->
+            Logger.error("User #{cr.id} is not allowed to unsubmit submission #{submission_id}")
+            {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
+
+          {:is_grading_published?, true} ->
+            Logger.error("Grading for submission #{submission_id} has already been published")
+            {:error, {:forbidden, "Grading has not been unpublished"}}
+
+          _ ->
+            Logger.error(
+              "An unknown error occurred while unsubmitting submission #{submission_id}"
+            )
+
+            {:error, {:internal_server_error, "Please try again later."}}
+        end
+
+      false ->
+        Logger.error("Submission #{submission_id} not found")
+        {:error, {:not_found, "Submission not found"}}
+    end
+  end
+
+  defp perform_unsubmit_transaction(submission, submission_id, cr) do
+    Logger.info("All checks passed for unsubmitting submission #{submission_id}")
+
+    multi =
       Multi.new()
       |> Multi.run(
         :rollback_submission,
@@ -1512,7 +1569,7 @@ defmodule Cadet.Assessments do
           |> Submission.changeset(%{
             status: :attempted,
             xp_bonus: 0,
-            unsubmitted_by_id: course_reg_id,
+            unsubmitted_by_id: cr.id,
             unsubmitted_at: Timex.now()
           })
           |> Repo.update()
@@ -1551,88 +1608,77 @@ defmodule Cadet.Assessments do
           end
         end)
       end)
-      |> Repo.transaction()
+      |> Multi.run(:delete_ai_comments, fn _repo, _ ->
+        Logger.info("Deleting AI comments for submission #{submission_id}")
 
-      case submission.student_id do
-        # Team submission, handle notifications for team members
-        nil ->
-          Logger.info("Handling unsubmit notifications for team submission #{submission.id}")
-          team = Repo.get(Team, submission.team_id)
+        answer_ids =
+          Answer
+          |> where(submission_id: ^submission_id)
+          |> select([a], a.id)
+          |> Repo.all()
 
-          query =
-            from(t in Team,
-              join: tm in TeamMember,
-              on: t.id == tm.team_id,
-              join: cr in CourseRegistration,
-              on: tm.student_id == cr.id,
-              where: t.id == ^team.id,
-              select: cr.id
+        delete_comments_for_answers(answer_ids)
+        {:ok, nil}
+      end)
+
+    transaction_result = Repo.transaction(multi)
+
+    case transaction_result do
+      {:ok, _result} ->
+        Logger.info("Successfully unsubmitting submission #{submission_id}")
+
+        case submission.student_id do
+          # Team submission, handle notifications for team members
+          nil ->
+            Logger.info("Handling unsubmit notifications for team submission #{submission.id}")
+            team = Repo.get(Team, submission.team_id)
+
+            query =
+              from(t in Team,
+                join: tm in TeamMember,
+                on: t.id == tm.team_id,
+                join: cr in CourseRegistration,
+                on: tm.student_id == cr.id,
+                where: t.id == ^team.id,
+                select: cr.id
+              )
+
+            team_members = Repo.all(query)
+
+            Enum.each(team_members, fn tm_id ->
+              Logger.info("Sending unsubmit notification to team member #{tm_id}")
+
+              Notifications.handle_unsubmit_notifications(
+                submission.assessment.id,
+                Repo.get(CourseRegistration, tm_id)
+              )
+            end)
+
+          student_id ->
+            Logger.info(
+              "Handling unsubmit notifications for individual submission #{submission.id}"
             )
-
-          team_members = Repo.all(query)
-
-          Enum.each(team_members, fn tm_id ->
-            Logger.info("Sending unsubmit notification to team member #{tm_id}")
 
             Notifications.handle_unsubmit_notifications(
               submission.assessment.id,
-              Repo.get(CourseRegistration, tm_id)
+              Repo.get(CourseRegistration, student_id)
             )
-          end)
+        end
 
-        student_id ->
-          Logger.info(
-            "Handling unsubmit notifications for individual submission #{submission.id}"
-          )
+        Logger.info("Removing grading notifications for submission #{submission.id}")
 
-          Notifications.handle_unsubmit_notifications(
-            submission.assessment.id,
-            Repo.get(CourseRegistration, student_id)
-          )
-      end
+        # Remove grading notifications for submissions
+        Notification
+        |> where(submission_id: ^submission_id, type: :submitted)
+        |> select([n], n.id)
+        |> Repo.all()
+        |> Notifications.acknowledge(cr)
 
-      Logger.info("Removing grading notifications for submission #{submission.id}")
+        {:ok, nil}
 
-      # Remove grading notifications for submissions
-      Notification
-      |> where(submission_id: ^submission_id, type: :submitted)
-      |> select([n], n.id)
-      |> Repo.all()
-      |> Notifications.acknowledge(cr)
-
-      Logger.info("Successfully unsubmitting submission #{submission_id}")
-      {:ok, nil}
-    else
-      {:submission_found?, false} ->
-        Logger.error("Submission #{submission_id} not found")
-        {:error, {:not_found, "Submission not found"}}
-
-      {:is_open?, false} ->
-        Logger.error("Assessment for submission #{submission_id} is not open")
-        {:error, {:forbidden, "Assessment not open"}}
-
-      {:status, :attempting} ->
-        Logger.error("Submission #{submission_id} is still attempting")
-        {:error, {:bad_request, "Some questions have not been attempted"}}
-
-      {:status, :attempted} ->
-        Logger.error("Submission #{submission_id} has already been attempted")
-        {:error, {:bad_request, "Assessment has not been submitted"}}
-
-      {:allowed_to_unsubmit?, false} ->
-        Logger.error(
-          "User #{course_reg_id} is not allowed to unsubmit submission #{submission_id}"
-        )
-
-        {:error, {:forbidden, "Only Avenger of student or Admin is permitted to unsubmit"}}
-
-      {:is_grading_published?, true} ->
-        Logger.error("Grading for submission #{submission_id} has already been published")
-        {:error, {:forbidden, "Grading has not been unpublished"}}
-
-      _ ->
-        Logger.error("An unknown error occurred while unsubmitting submission #{submission_id}")
-        {:error, {:internal_server_error, "Please try again later."}}
+      {:error, _failed_operation, failed_value, _changes_so_far} ->
+        Logger.error("Failed to unsubmit submission #{submission_id}: #{inspect(failed_value)}")
+        {:error, {:internal_server_error, "Failed to unsubmit submission"}}
     end
   end
 
@@ -1669,7 +1715,7 @@ defmodule Cadet.Assessments do
          {:status, :submitted} <- {:status, submission.status},
          {:is_manually_graded?, true} <-
            {:is_manually_graded?, submission.assessment.config.is_manually_graded},
-         {:fully_graded?, true} <- {:fully_graded?, is_fully_graded?(submission_id)},
+         {:fully_graded?, true} <- {:fully_graded?, fully_graded?(submission_id)},
          {:allowed_to_publish?, true} <-
            {:allowed_to_publish?,
             role == :admin or bypass or
@@ -3170,7 +3216,7 @@ defmodule Cadet.Assessments do
     end
   end
 
-  defp is_fully_graded?(submission_id) do
+  defp fully_graded?(submission_id) do
     submission =
       Submission
       |> Repo.get_by(id: submission_id)
@@ -3191,7 +3237,7 @@ defmodule Cadet.Assessments do
     question_count == graded_count
   end
 
-  def is_fully_autograded?(submission_id) do
+  def fully_autograded?(submission_id) do
     submission =
       Submission
       |> Repo.get_by(id: submission_id)
@@ -3257,7 +3303,7 @@ defmodule Cadet.Assessments do
          {:ok, _} <- Repo.update(changeset) do
       update_xp_bonus(submission)
 
-      if is_grading_auto_published and is_fully_graded?(submission_id) do
+      if is_grading_auto_published and fully_graded?(submission_id) do
         publish_grading(submission_id, cr)
       end
 
@@ -3372,8 +3418,8 @@ defmodule Cadet.Assessments do
   end
 
   # Checks if an assessment is open and published.
-  @spec is_open?(Assessment.t()) :: boolean()
-  def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
+  @spec open?(Assessment.t()) :: boolean()
+  def open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
     Timex.between?(Timex.now(), open_at, close_at, inclusive: :start) and is_published
   end
 
@@ -3631,5 +3677,66 @@ defmodule Cadet.Assessments do
       )
 
     Repo.one(query)
+  end
+
+  def update_llm_usage_and_cost(assessment_id, usage) do
+    prompt = extract_val(usage, "prompt_tokens", :prompt_tokens, 0)
+    completion = extract_val(usage, "completion_tokens", :completion_tokens, 0)
+    details = extract_val(usage, "prompt_tokens_details", :prompt_tokens_details, %{})
+    cached = extract_val(details, "cached_tokens", :cached_tokens, 0)
+
+    # Fetch assessment to get cost rates
+    case Repo.get(Assessment, assessment_id) do
+      nil ->
+        Logger.error("Assessment not found when updating LLM usage and cost: #{assessment_id}")
+        {:error, :not_found}
+
+      assessment ->
+        input_rate = get_valid_rate(assessment.llm_input_cost, "3.20")
+        output_rate = get_valid_rate(assessment.llm_output_cost, "12.80")
+
+        raw_cost = calculate_token_cost(prompt, completion, input_rate, output_rate)
+        new_cost = Decimal.round(raw_cost, 6, :half_up)
+
+        # Atomic database-level updates to prevent race conditions
+        # All increments happen in a single transaction at the database level
+        query =
+          from(a in Assessment,
+            where: a.id == ^assessment_id,
+            update: [
+              set: [
+                llm_total_input_tokens:
+                  fragment("COALESCE(llm_total_input_tokens, 0) + ?", ^prompt),
+                llm_total_output_tokens:
+                  fragment("COALESCE(llm_total_output_tokens, 0) + ?", ^completion),
+                llm_total_cached_tokens:
+                  fragment("COALESCE(llm_total_cached_tokens, 0) + ?", ^cached),
+                llm_total_cost: fragment("COALESCE(llm_total_cost, 0) + ?", ^new_cost)
+              ]
+            ]
+          )
+
+        Repo.update_all(query, [])
+        {:ok, nil}
+    end
+  end
+
+  defp extract_val(map, string_key, atom_key, default) do
+    Map.get(map, string_key) || Map.get(map, atom_key) || default
+  end
+
+  defp get_valid_rate(rate, default_rate) do
+    if rate && Decimal.gt?(rate, 0) do
+      rate
+    else
+      Decimal.new(default_rate)
+    end
+  end
+
+  defp calculate_token_cost(prompt, completion, input_rate, output_rate) do
+    million = Decimal.new(1_000_000)
+    in_cost = Decimal.div(Decimal.mult(Decimal.new(prompt), input_rate), million)
+    out_cost = Decimal.div(Decimal.mult(Decimal.new(completion), output_rate), million)
+    Decimal.add(in_cost, out_cost)
   end
 end

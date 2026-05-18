@@ -275,6 +275,80 @@ defmodule Cadet.Updater.XMLParserTest do
                  "Assessment has submissions, ignoring..."
       end
     end
+
+    test "maps LLM_QUESTION_PROMPT to programming question llm_prompt", %{
+      assessment_configs: [assessment_config | _],
+      course: course
+    } do
+      xml = """
+      <CONTENT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">
+        <TASK number=\"LLM_PROMPT_Q\" title=\"LLM Question Prompt\">
+          <PROGRAMMINGLANGUAGE interpreter=\"4\"><EXTERNAL name=\"SOURCE\" /></PROGRAMMINGLANGUAGE>
+          <READING>None</READING>
+          <WEBSUMMARY>Summary</WEBSUMMARY>
+          <TEXT>Long summary</TEXT>
+          <PROBLEMS>
+            <PROBLEM type=\"programming\" maxxp=\"100\">
+              <TEXT>Prompted programming question</TEXT>
+              <SNIPPET><TEMPLATE>display(1);</TEMPLATE></SNIPPET>
+              <LLM_QUESTION_PROMPT>Use rubric A.</LLM_QUESTION_PROMPT>
+            </PROBLEM>
+          </PROBLEMS>
+        </TASK>
+      </CONTENT>
+      """
+
+      assert :ok == XMLParser.parse_xml(xml, course.id, assessment_config.id)
+
+      assessment =
+        Assessment
+        |> where(number: "LLM_PROMPT_Q")
+        |> Repo.one!()
+
+      question =
+        Question
+        |> where(assessment_id: ^assessment.id)
+        |> Repo.one!()
+
+      assert question.question["llm_prompt"] == "Use rubric A."
+    end
+
+    test "keeps supporting legacy LLM_GRADING_PROMPT tag", %{
+      assessment_configs: [assessment_config | _],
+      course: course
+    } do
+      xml = """
+      <CONTENT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">
+        <TASK number=\"LLM_PROMPT_G\" title=\"LLM Grading Prompt\">
+          <PROGRAMMINGLANGUAGE interpreter=\"4\"><EXTERNAL name=\"SOURCE\" /></PROGRAMMINGLANGUAGE>
+          <READING>None</READING>
+          <WEBSUMMARY>Summary</WEBSUMMARY>
+          <TEXT>Long summary</TEXT>
+          <PROBLEMS>
+            <PROBLEM type=\"programming\" maxxp=\"100\">
+              <TEXT>Legacy prompted programming question</TEXT>
+              <SNIPPET><TEMPLATE>display(2);</TEMPLATE></SNIPPET>
+              <LLM_GRADING_PROMPT>Use rubric B.</LLM_GRADING_PROMPT>
+            </PROBLEM>
+          </PROBLEMS>
+        </TASK>
+      </CONTENT>
+      """
+
+      assert :ok == XMLParser.parse_xml(xml, course.id, assessment_config.id)
+
+      assessment =
+        Assessment
+        |> where(number: "LLM_PROMPT_G")
+        |> Repo.one!()
+
+      question =
+        Question
+        |> where(assessment_id: ^assessment.id)
+        |> Repo.one!()
+
+      assert question.question["llm_prompt"] == "Use rubric B."
+    end
   end
 
   describe "XML file processing" do

@@ -4,7 +4,7 @@ defmodule CadetWeb.AICommentsHelpers do
   """
   require Logger
 
-  def decrypt_llm_api_key(nil), do: nil
+  def decrypt_llm_api_key(nil), do: {:decrypt_error, :no_api_key_configured}
 
   def decrypt_llm_api_key(encrypted_key) do
     case Application.get_env(:openai, :encryption_key) do

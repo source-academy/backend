@@ -2,8 +2,8 @@ defmodule Cadet.Courses.SourcecastUpload do
   @moduledoc """
   Represents an uploaded file for Sourcecast
   """
-  use Arc.Definition
-  use Arc.Ecto.Definition
+  use Waffle.Definition
+  use Waffle.Ecto.Definition
 
   @extension_whitelist ~w(.wav)
   @versions [:original]

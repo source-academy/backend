@@ -4,7 +4,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   require HTTPoison
   require Logger
 
-  alias Cadet.{Assessments, AIComments, Courses}
+  alias Cadet.{Assessments, AIComments, Courses, LLMStats}
   alias CadetWeb.{AICodeAnalysisController, AICommentsHelpers}
 
   # For logging outputs to both database and file
@@ -32,10 +32,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         end
 
       existing_comment ->
-        # Convert the existing comment struct to a map before merging
-        updated_attrs = Map.merge(Map.from_struct(existing_comment), attrs)
-
-        case AIComments.update_ai_comment(existing_comment.id, updated_attrs) do
+        case AIComments.update_ai_comment(existing_comment.id, attrs) do
           {:error, :not_found} ->
             Logger.error("AI comment to update not found in database")
             {:error, :not_found}
@@ -82,8 +79,9 @@ defmodule CadetWeb.AICodeAnalysisController do
         "course_id" => course_id
       })
       when is_ecto_id(answer_id) do
-    with {answer_id_parsed, ""} <- Integer.parse(answer_id),
-         {:ok, course} <- Courses.get_course_config(course_id),
+    with {:ok, answer_id_parsed} <- parse_answer_id(answer_id),
+         {:ok, course_id_parsed} <- parse_course_id(course_id),
+         {:ok, course} <- Courses.get_course_config(course_id_parsed),
          {:ok} <- ensure_llm_enabled(course),
          {:ok, key} <- AICommentsHelpers.decrypt_llm_api_key(course.llm_api_key),
          {:ok} <-
@@ -104,16 +102,22 @@ defmodule CadetWeb.AICodeAnalysisController do
           llm_model: course.llm_model,
           llm_api_url: course.llm_api_url,
           course_prompt: course.llm_course_level_prompt,
-          assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id)
+          assessment_prompt: Assessments.get_llm_assessment_prompt(answer.question_id),
+          course_id: course_id_parsed
         }
       )
     else
-      :error ->
+      {:error, :invalid_answer_id} ->
         conn
         |> put_status(:bad_request)
         |> text("Invalid question ID format")
 
-      {:decrypt_error, err} ->
+      {:error, :invalid_course_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid course ID format")
+
+      {:decrypt_error, _err} ->
         conn
         |> put_status(:internal_server_error)
         |> text("Failed to decrypt LLM API key")
@@ -201,7 +205,8 @@ defmodule CadetWeb.AICodeAnalysisController do
            llm_model: llm_model,
            llm_api_url: llm_api_url,
            course_prompt: course_prompt,
-           assessment_prompt: assessment_prompt
+           assessment_prompt: assessment_prompt,
+           course_id: course_id
          }
        ) do
     # Combine prompts if llm_prompt exists
@@ -228,35 +233,72 @@ defmodule CadetWeb.AICodeAnalysisController do
              recv_timeout: 60_000
            ]
          }) do
-      {:ok, %{choices: [%{"message" => %{"content" => content}} | _]}} ->
-        save_comment(
-          answer.id,
-          Enum.at(final_messages, 0).content,
-          Enum.at(final_messages, 1).content,
-          content
-        )
+      {:ok, response} ->
+        # Handle cases where API may or may not return usage field
+        case response do
+          %{choices: [%{"message" => %{"content" => content}} | _]} ->
+            save_comment(
+              answer.id,
+              Enum.at(final_messages, 0).content,
+              Enum.at(final_messages, 1).content,
+              content
+            )
 
-        comments_list = String.split(content, "|||")
+            # Optionally update cost tracking if usage data is available
+            case Map.get(response, :usage) do
+              nil ->
+                Logger.warning("LLM API response missing usage field for answer_id=#{answer.id}")
 
-        filtered_comments =
-          Enum.filter(comments_list, fn comment ->
-            String.trim(comment) != ""
-          end)
+              usage ->
+                # get the tokens consumed and calc cost
+                Cadet.Assessments.update_llm_usage_and_cost(
+                  answer.question.assessment_id,
+                  usage
+                )
+            end
 
-        json(conn, %{"comments" => filtered_comments})
+            usage_attrs = %{
+              course_id: course_id,
+              assessment_id: answer.question.assessment_id,
+              question_id: answer.question_id,
+              answer_id: answer.id,
+              submission_id: answer.submission_id,
+              user_id: conn.assigns.course_reg.user_id
+            }
 
-      {:ok, other} ->
-        save_comment(
-          answer.id,
-          Enum.at(final_messages, 0).content,
-          Enum.at(final_messages, 1).content,
-          Jason.encode!(other),
-          "Unexpected JSON shape"
-        )
+            # Log LLM usage for statistics (non-blocking for response generation)
+            case LLMStats.log_usage(usage_attrs) do
+              {:ok, _usage_log} ->
+                :ok
 
-        conn
-        |> put_status(:bad_gateway)
-        |> text("Unexpected response format from LLM")
+              {:error, changeset} ->
+                Logger.error(
+                  "Failed to log LLM usage to database: #{inspect(changeset.errors)} attrs=#{inspect(usage_attrs)}"
+                )
+            end
+
+            comments_list = String.split(content, "|||")
+
+            filtered_comments =
+              Enum.filter(comments_list, fn comment ->
+                String.trim(comment) != ""
+              end)
+
+            json(conn, %{"comments" => filtered_comments})
+
+          _ ->
+            save_comment(
+              answer.id,
+              Enum.at(final_messages, 0).content,
+              Enum.at(final_messages, 1).content,
+              Jason.encode!(response),
+              "Unexpected JSON shape"
+            )
+
+            conn
+            |> put_status(:bad_gateway)
+            |> text("Unexpected response format from LLM")
+        end
 
       {:error, reason} ->
         save_comment(
@@ -274,22 +316,114 @@ defmodule CadetWeb.AICodeAnalysisController do
   end
 
   @doc """
-  Saves the final comment chosen for a submission.
+  Saves the chosen comment indices and optional edits for each selected comment.
+  Expects: selected_indices (list of ints), edits (optional map of index => edited_text).
   """
-  def save_final_comment(conn, %{
-        "answer_id" => answer_id,
-        "comment" => comment
-      }) do
-    case AIComments.update_final_comment(answer_id, comment) do
-      {:ok, _updated_comment} ->
-        json(conn, %{"status" => "success"})
+  def save_chosen_comments(
+        conn,
+        params = %{
+          "answer_id" => answer_id,
+          "selected_indices" => selected_indices
+        }
+      )
+      when is_ecto_id(answer_id) do
+    editor_id = conn.assigns.course_reg.user_id
+    edits = Map.get(params, "edits", %{})
 
-      {:error, changeset} ->
+    with {:ok, answer_id_parsed} <- parse_answer_id(answer_id),
+         ai_comment when not is_nil(ai_comment) <-
+           AIComments.get_latest_ai_comment(answer_id_parsed),
+         {:ok, parsed_edits} <- parse_edits(edits),
+         {:ok, _updated} <-
+           AIComments.save_selected_comments(answer_id_parsed, selected_indices, editor_id) do
+      # Create version entries for each edit
+      version_results =
+        Enum.map(parsed_edits, fn {index, edited_text} ->
+          AIComments.create_comment_version(
+            ai_comment.id,
+            index,
+            edited_text,
+            editor_id
+          )
+        end)
+
+      errors = Enum.filter(version_results, &match?({:error, _}, &1))
+
+      if errors == [] do
+        json(conn, %{"status" => "success"})
+      else
         conn
         |> put_status(:unprocessable_entity)
-        |> text("Failed to save final comment")
+        |> text("Failed to save some comment versions")
+      end
+    else
+      {:error, :invalid_answer_id} ->
+        conn
+        |> put_status(:bad_request)
+        |> text("Invalid answer ID format")
+
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> text("AI comment not found for this answer")
+
+      {:error, :invalid_edits} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> text("Invalid edits payload")
+
+      {:error, _} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> text("Failed to save chosen comments")
     end
   end
+
+  defp parse_answer_id(answer_id) when is_integer(answer_id), do: {:ok, answer_id}
+
+  defp parse_answer_id(answer_id) when is_binary(answer_id) do
+    case Integer.parse(answer_id) do
+      {parsed, ""} -> {:ok, parsed}
+      _ -> {:error, :invalid_answer_id}
+    end
+  end
+
+  defp parse_course_id(course_id) when is_integer(course_id), do: {:ok, course_id}
+
+  defp parse_course_id(course_id) when is_binary(course_id) do
+    case Integer.parse(course_id) do
+      {parsed, ""} -> {:ok, parsed}
+      _ -> {:error, :invalid_course_id}
+    end
+  end
+
+  defp parse_edits(edits) when is_map(edits) do
+    edits
+    |> Enum.reduce_while({:ok, []}, fn {index_str, edited_text}, {:ok, acc} ->
+      case {parse_edit_index(index_str), edited_text} do
+        {{:ok, index}, edited_text} when is_binary(edited_text) ->
+          {:cont, {:ok, [{index, edited_text} | acc]}}
+
+        _ ->
+          {:halt, {:error, :invalid_edits}}
+      end
+    end)
+    |> case do
+      {:ok, parsed_edits} -> {:ok, Enum.reverse(parsed_edits)}
+      {:error, :invalid_edits} -> {:error, :invalid_edits}
+    end
+  end
+
+  defp parse_edits(_), do: {:error, :invalid_edits}
+
+  defp parse_edit_index(index_str) when is_binary(index_str) do
+    case Integer.parse(index_str) do
+      {index, ""} -> {:ok, index}
+      _ -> {:error, :invalid_edits}
+    end
+  end
+
+  defp parse_edit_index(_), do: {:error, :invalid_edits}
 
   swagger_path :generate_ai_comments do
     post("/courses/{course_id}/admin/generate-comments/{answer_id}")
@@ -313,10 +447,10 @@ defmodule CadetWeb.AICodeAnalysisController do
     response(403, "LLM grading is not enabled for this course")
   end
 
-  swagger_path :save_final_comment do
-    post("/courses/{course_id}/admin/save-final-comment/{answer_id}")
+  swagger_path :save_chosen_comments do
+    post("/courses/{course_id}/admin/save-chosen-comments/{answer_id}")
 
-    summary("Save the final comment chosen for a submission.")
+    summary("Save chosen comment indices and optional edits for a submission.")
 
     security([%{JWT: []}])
 
@@ -326,13 +460,13 @@ defmodule CadetWeb.AICodeAnalysisController do
     parameters do
       course_id(:path, :integer, "course id", required: true)
       answer_id(:path, :integer, "answer id", required: true)
-      comment(:body, :string, "The final comment to save", required: true)
+
+      body(:body, Schema.ref(:SaveChosenCommentsBody), "Chosen comments payload", required: true)
     end
 
-    response(200, "OK", Schema.ref(:SaveFinalComment))
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorized")
-    response(403, "Forbidden")
+    response(200, "OK", Schema.ref(:SaveChosenComments))
+    response(404, "AI comment not found")
+    response(422, "Failed to save")
   end
 
   def swagger_definitions do
@@ -343,7 +477,15 @@ defmodule CadetWeb.AICodeAnalysisController do
             comments(:string, "AI-generated comments on the submission answers")
           end
         end,
-      SaveFinalComment:
+      SaveChosenCommentsBody:
+        swagger_schema do
+          properties do
+            selected_indices(Schema.array(:integer), "Indices of chosen comments", required: true)
+
+            edits(:object, "Map of comment index to edited text")
+          end
+        end,
+      SaveChosenComments:
         swagger_schema do
           properties do
             status(:string, "Status of the operation")

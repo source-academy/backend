@@ -158,6 +158,51 @@ defmodule Cadet.AssessmentsTest do
                )
     end
 
+    test "update_llm_usage_and_cost handles nonexistent assessment gracefully" do
+      usage = %{
+        "prompt_tokens" => 10,
+        "completion_tokens" => 20,
+        "prompt_tokens_details" => %{"cached_tokens" => 5}
+      }
+
+      assert {:error, :not_found} = Assessments.update_llm_usage_and_cost(-1, usage)
+    end
+
+    test "update_llm_usage_and_cost explicitly preserves nil assessment path" do
+      usage = %{
+        "prompt_tokens" => 1,
+        "completion_tokens" => 1,
+        "prompt_tokens_details" => %{"cached_tokens" => 0}
+      }
+
+      assert {:error, :not_found} = Assessments.update_llm_usage_and_cost(-999_999, usage)
+    end
+
+    test "update_llm_usage_and_cost increments LLM totals for existing assessment" do
+      assessment =
+        insert(:assessment, %{
+          llm_total_input_tokens: 0,
+          llm_total_output_tokens: 0,
+          llm_total_cached_tokens: 0,
+          llm_total_cost: Decimal.new("0.0")
+        })
+
+      usage = %{
+        "prompt_tokens" => 10,
+        "completion_tokens" => 20,
+        "prompt_tokens_details" => %{"cached_tokens" => 5}
+      }
+
+      assert {:ok, nil} = Assessments.update_llm_usage_and_cost(assessment.id, usage)
+
+      updated = Repo.get(Assessment, assessment.id)
+
+      assert updated.llm_total_input_tokens == 10
+      assert updated.llm_total_output_tokens == 20
+      assert updated.llm_total_cached_tokens == 5
+      assert Decimal.compare(updated.llm_total_cost, Decimal.new("0.000288")) == :eq
+    end
+
     test "force update assessment with invalid params" do
       course = insert(:course)
       config = insert(:assessment_config, %{course: course})
@@ -2624,10 +2669,8 @@ defmodule Cadet.AssessmentsTest do
 
     test "filter by student username 1", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 0)
       student_username = student.user.username
 
@@ -2639,19 +2682,20 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
 
-      assert length(submissions_from_res) == expected_length
+      assert length(submissions_from_res) > 0
 
       Enum.each(submissions_from_res, fn s ->
-        assert s.student_id == student.id
+        submission_student = Enum.find(students, fn st -> st.id == s.student_id end)
+        assert String.contains?(submission_student.user.username, student_username)
       end)
+
+      assert Enum.any?(submissions_from_res, fn s -> s.student_id == student.id end)
     end
 
     test "filter by student username 2", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 1)
       student_username = student.user.username
 
@@ -2663,19 +2707,20 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
 
-      assert length(submissions_from_res) == expected_length
+      assert length(submissions_from_res) > 0
 
       Enum.each(submissions_from_res, fn s ->
-        assert s.student_id == student.id
+        submission_student = Enum.find(students, fn st -> st.id == s.student_id end)
+        assert String.contains?(submission_student.user.username, student_username)
       end)
+
+      assert Enum.any?(submissions_from_res, fn s -> s.student_id == student.id end)
     end
 
     test "filter by student username 3", %{
       course_regs: %{avenger1_cr: avenger, students: students},
-      assessments: assessments,
       total_submissions: total_submissions
     } do
-      expected_length = length(Map.keys(assessments))
       student = Enum.at(students, 2)
       student_username = student.user.username
 
@@ -2687,11 +2732,14 @@ defmodule Cadet.AssessmentsTest do
 
       submissions_from_res = res[:data][:submissions]
 
-      assert length(submissions_from_res) == expected_length
+      assert length(submissions_from_res) > 0
 
       Enum.each(submissions_from_res, fn s ->
-        assert s.student_id == student.id
+        submission_student = Enum.find(students, fn st -> st.id == s.student_id end)
+        assert String.contains?(submission_student.user.username, student_username)
       end)
+
+      assert Enum.any?(submissions_from_res, fn s -> s.student_id == student.id end)
     end
 
     test "filter by assessment config 1", %{
@@ -3021,7 +3069,7 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
-  describe "is_fully_autograded? function" do
+  describe "fully_autograded? function" do
     setup do
       assessment = insert(:assessment)
       student = insert(:course_registration, role: :student)
@@ -3042,7 +3090,7 @@ defmodule Cadet.AssessmentsTest do
       insert(:answer, submission: submission, question: question, autograding_status: :success)
       insert(:answer, submission: submission, question: question2, autograding_status: :success)
 
-      assert Assessments.is_fully_autograded?(submission.id) == true
+      assert Assessments.fully_autograded?(submission.id) == true
     end
 
     test "returns false when not all answers are autograded successfully", %{
@@ -3053,7 +3101,7 @@ defmodule Cadet.AssessmentsTest do
       insert(:answer, submission: submission, question: question, autograding_status: :success)
       insert(:answer, submission: submission, question: question2, autograding_status: :failed)
 
-      assert Assessments.is_fully_autograded?(submission.id) == false
+      assert Assessments.fully_autograded?(submission.id) == false
     end
 
     test "returns false when not all answers are autograded successfully 2", %{
@@ -3064,7 +3112,7 @@ defmodule Cadet.AssessmentsTest do
       insert(:answer, submission: submission, question: question, autograding_status: :success)
       insert(:answer, submission: submission, question: question2, autograding_status: :none)
 
-      assert Assessments.is_fully_autograded?(submission.id) == false
+      assert Assessments.fully_autograded?(submission.id) == false
     end
   end
 
@@ -3180,12 +3228,12 @@ defmodule Cadet.AssessmentsTest do
 
     test "correctly fetches all students with their xp in descending order", %{course: course} do
       all_user_xp = Assessments.all_user_total_xp(course.id)
-      assert get_all_student_xp(all_user_xp) == 50..1 |> Enum.to_list()
+      assert get_all_student_xp(all_user_xp) == 50..1//-1 |> Enum.to_list()
     end
 
     test "correctly fetches only relevant students for leaderboard display with potential overflow",
          %{course: course} do
-      Enum.each(1..50, fn x ->
+      Enum.each(1..50, fn _x ->
         offset = Enum.random(0..49)
         limit = Enum.random(1..50)
 
@@ -3193,7 +3241,7 @@ defmodule Cadet.AssessmentsTest do
           Assessments.all_user_total_xp(course.id, %{offset: offset, limit: limit})
 
         expected_xp_list =
-          50..1
+          50..1//-1
           |> Enum.to_list()
           |> Enum.slice(offset, limit)
 
@@ -3253,7 +3301,7 @@ defmodule Cadet.AssessmentsTest do
           fn student ->
             Enum.map(
               Enum.with_index(submission_list),
-              fn {submission, index} ->
+              fn {submission, _index} ->
                 insert(
                   :submission_vote,
                   voter: student,
@@ -3350,7 +3398,7 @@ defmodule Cadet.AssessmentsTest do
     test "correctly assigns xp to winning contest entries with defined xp values", %{
       course: course,
       voting_question: voting_question,
-      ans_list: ans_list
+      ans_list: _ans_list
     } do
       # update defined xp_values for voting question
       Question

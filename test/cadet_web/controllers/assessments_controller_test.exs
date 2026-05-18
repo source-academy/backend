@@ -85,7 +85,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
               "hasTokenCounter" => &1.has_token_counter,
               "isVotingPublished" => false,
               "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
-              "isAutosaveEnabled" => &1.is_autosave_enabled
+              "isAutosaveEnabled" => &1.is_autosave_enabled,
+              "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]
             }
           )
 
@@ -177,7 +178,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "hasTokenCounter" => &1.has_token_counter,
             "isVotingPublished" => false,
             "hoursBeforeEarlyXpDecay" => &1.config.hours_before_early_xp_decay,
-            "isAutosaveEnabled" => true
+            "isAutosaveEnabled" => true,
+            "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]
           }
         )
 
@@ -300,7 +302,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
                   false
                 else
                   &1.is_published
-                end
+                end,
+              "isLlmGraded" => &1.has_llm_questions || &1.llm_assessment_prompt not in [nil, ""]
             }
           )
 
@@ -1973,7 +1976,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
   defp build_url_unlock(course_id, assessment_id),
     do: "/v2/courses/#{course_id}/assessments/#{assessment_id}/unlock"
 
-  defp build_popular_leaderboard_url(course_id, assessment_id, params \\ %{}) do
+  defp build_popular_leaderboard_url(course_id, assessment_id, params) do
     base_url = "#{build_url(course_id, assessment_id)}/contest_popular_leaderboard"
 
     if params != %{} do
@@ -1984,7 +1987,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  defp build_score_leaderboard_url(course_id, assessment_id, params \\ %{}) do
+  defp build_score_leaderboard_url(course_id, assessment_id, params) do
     base_url = "#{build_url(course_id, assessment_id)}/contest_score_leaderboard"
 
     if params != %{} do

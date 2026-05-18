@@ -67,6 +67,16 @@ defmodule Cadet.CoursesTest do
       assert course.assessment_configs == ["Missions", "Quests"]
     end
 
+    test "succeeds with string course id" do
+      course = insert(:course)
+      insert(:assessment_config, %{order: 1, type: "Missions", course: course})
+      insert(:assessment_config, %{order: 2, type: "Quests", course: course})
+
+      {:ok, loaded_course} = Courses.get_course_config(Integer.to_string(course.id))
+      assert loaded_course.id == course.id
+      assert loaded_course.assessment_configs == ["Missions", "Quests"]
+    end
+
     test "returns with error for invalid course id" do
       course = insert(:course)
 

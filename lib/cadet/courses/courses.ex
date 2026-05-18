@@ -59,7 +59,7 @@ defmodule Cadet.Courses do
   @doc """
   Returns the course configuration for the specified course.
   """
-  @spec get_course_config(integer) ::
+  @spec get_course_config(integer | binary) ::
           {:ok, Course.t()} | {:error, {:bad_request, String.t()}}
   def get_course_config(course_id) when is_ecto_id(course_id) do
     Logger.info("Retrieving course configuration for course #{course_id}")
@@ -77,8 +77,12 @@ defmodule Cadet.Courses do
           |> Enum.sort(&(&1.order < &2.order))
           |> Enum.map(& &1.type)
 
+        has_llm_content = Assessments.Query.course_has_llm_content?(course_id)
+
         Logger.info("Successfully retrieved course configuration for course #{course_id}")
-        {:ok, Map.put_new(course, :assessment_configs, assessment_configs)}
+
+        {:ok,
+         %{course | assessment_configs: assessment_configs, has_llm_content: has_llm_content}}
     end
   end
 

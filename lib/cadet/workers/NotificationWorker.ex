@@ -6,11 +6,11 @@ defmodule Cadet.Workers.NotificationWorker do
   alias Cadet.{Email, Notifications, Mailer}
   alias Cadet.Repo
 
-  defp is_system_enabled(notification_type_id) do
+  defp system_enabled?(notification_type_id) do
     Notifications.get_notification_type!(notification_type_id).is_enabled
   end
 
-  defp is_course_enabled(notification_type_id, course_id, assessment_config_id) do
+  defp course_enabled?(notification_type_id, course_id, assessment_config_id) do
     notification_config =
       Notifications.get_notification_config!(
         notification_type_id,
@@ -25,7 +25,7 @@ defmodule Cadet.Workers.NotificationWorker do
     end
   end
 
-  defp is_user_enabled(notification_type_id, course_reg_id) do
+  defp user_enabled?(notification_type_id, course_reg_id) do
     pref = Notifications.get_notification_preference(notification_type_id, course_reg_id)
 
     if is_nil(pref) do
@@ -37,7 +37,7 @@ defmodule Cadet.Workers.NotificationWorker do
 
   # Returns true if user preference matches the job's time option.
   # If user has made no preference, the default time option is used instead
-  def is_user_time_option_matched(
+  def user_time_option_matched?(
         notification_type_id,
         assessment_config_id,
         course_reg_id,
@@ -65,9 +65,9 @@ defmodule Cadet.Workers.NotificationWorker do
     ntype = Cadet.Notifications.get_notification_type_by_name!("AVENGER BACKLOG")
     notification_type_id = ntype.id
 
-    if is_system_enabled(notification_type_id) do
+    if system_enabled?(notification_type_id) do
       for course_id <- Cadet.Courses.get_all_course_ids() do
-        if is_course_enabled(notification_type_id, course_id, nil) do
+        if course_enabled?(notification_type_id, course_id, nil) do
           avengers_crs = Cadet.Accounts.CourseRegistrations.get_staffs(course_id)
 
           for avenger_cr <- avengers_crs do
@@ -118,7 +118,7 @@ defmodule Cadet.Workers.NotificationWorker do
     notification_type =
       Cadet.Notifications.get_notification_type_by_name!("ASSESSMENT SUBMISSION")
 
-    if is_system_enabled(notification_type.id) do
+    if system_enabled?(notification_type.id) do
       submission = Cadet.Assessments.get_submission_by_id(submission_id)
       course_id = submission.assessment.course_id
       student_id = submission.student_id
@@ -129,10 +129,10 @@ defmodule Cadet.Workers.NotificationWorker do
       avenger = avenger_cr.user
 
       cond do
-        !is_course_enabled(notification_type.id, course_id, assessment_config_id) ->
+        !course_enabled?(notification_type.id, course_id, assessment_config_id) ->
           IO.puts("[ASSESSMENT_SUBMISSION] course-level disabled")
 
-        !is_user_enabled(notification_type.id, avenger_cr.id) ->
+        !user_enabled?(notification_type.id, avenger_cr.id) ->
           IO.puts("[ASSESSMENT_SUBMISSION] user-level disabled")
 
         true ->

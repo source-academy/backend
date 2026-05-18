@@ -94,6 +94,8 @@ erl_crash.dump
 # variables.
 /config/*secrets.exs
 
+/config/cadet.exs
+
 # Uploaded file
 /cs1101s
 /uploads

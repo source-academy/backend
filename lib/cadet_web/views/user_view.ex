@@ -1,6 +1,7 @@
 defmodule CadetWeb.UserView do
   use CadetWeb, :view
 
+  alias Cadet.Assessments.Query
   alias Cadet.Courses
 
   def render("index.json", %{
@@ -97,7 +98,9 @@ defmodule CadetWeb.UserView do
         nil
 
       _ ->
-        transform_map_for_view(latest.course, %{
+        latest.course
+        |> Map.put(:has_llm_content, Query.course_has_llm_content?(latest.course.id))
+        |> transform_map_for_view(%{
           courseName: :course_name,
           courseShortName: :course_short_name,
           viewable: :viewable,
@@ -109,6 +112,8 @@ defmodule CadetWeb.UserView do
           topContestLeaderboardDisplay: :top_contest_leaderboard_display,
           enableSourcecast: :enable_sourcecast,
           enableStories: :enable_stories,
+          enableLlmGrading: :enable_llm_grading,
+          hasLlmContent: :has_llm_content,
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,

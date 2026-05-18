@@ -246,16 +246,17 @@ defmodule CadetWeb.Router do
     )
 
     post(
-      "/save-final-comment/:answer_id",
-      AICodeAnalysisController,
-      :save_final_comment
-    )
-
-    post(
-      "/save-chosen-comments/:submissionid/:questionid",
+      "/save-chosen-comments/:answer_id",
       AICodeAnalysisController,
       :save_chosen_comments
     )
+
+    # LLM Statistics & Feedback (per-assessment)
+    get("/llm-stats", AdminLLMStatsController, :course_stats)
+    get("/llm-stats/:assessment_id", AdminLLMStatsController, :assessment_stats)
+    get("/llm-stats/:assessment_id/feedback", AdminLLMStatsController, :get_feedback)
+    post("/llm-stats/:assessment_id/feedback", AdminLLMStatsController, :submit_feedback)
+    get("/llm-stats/:assessment_id/:question_id", AdminLLMStatsController, :question_stats)
 
     get("/users", AdminUserController, :index)
     get("/users/teamformation", AdminUserController, :get_students)
@@ -332,8 +333,21 @@ defmodule CadetWeb.Router do
   defp assign_course(conn, _opts) do
     course_id = conn.path_params["course_id"]
 
+    parsed_course_id =
+      case Integer.parse(to_string(course_id)) do
+        {id, ""} -> id
+        _ -> nil
+      end
+
     course_reg =
-      Cadet.Accounts.CourseRegistrations.get_user_record(conn.assigns.current_user.id, course_id)
+      if is_nil(parsed_course_id) do
+        nil
+      else
+        Cadet.Accounts.CourseRegistrations.get_user_record(
+          conn.assigns.current_user.id,
+          parsed_course_id
+        )
+      end
 
     case course_reg do
       nil -> conn |> send_resp(403, "Forbidden") |> halt()

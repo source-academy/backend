@@ -17,7 +17,7 @@ defmodule CadetWeb.AnswerController do
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
          {:is_open?, true} <-
-           {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
+           {:is_open?, can_bypass? or Assessments.open?(question.assessment)},
          {:ok, _nil} <- Assessments.answer_question(question, course_reg, answer, can_bypass?) do
       text(conn, "OK")
     else
@@ -53,7 +53,7 @@ defmodule CadetWeb.AnswerController do
     with {:question, question} when not is_nil(question) <-
            {:question, Assessments.get_question(question_id)},
          {:is_open?, true} <-
-           {:is_open?, can_bypass? or Assessments.is_open?(question.assessment)},
+           {:is_open?, can_bypass? or Assessments.open?(question.assessment)},
          {:ok, last_modified} <-
            Assessments.has_last_modified_answer?(
              question,
