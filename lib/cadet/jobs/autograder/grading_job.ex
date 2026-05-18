@@ -179,10 +179,16 @@ defmodule Cadet.Autograder.GradingJob do
     end
   end
 
-  def grade_answer(answer = %Answer{}, question = %Question{type: type}, overwrite \\ false) do
+  def grade_answer(
+        question = %Question{type: type},
+        answers,
+        answer = %Answer{},
+        questions,
+        overwrite \\ false
+      ) do
     case type do
       :programming ->
-        Utilities.dispatch_programming_answer(answer, question, overwrite)
+        Utilities.dispatch_programming_answer(question, answers, answer, questions, overwrite)
 
       :mcq ->
         grade_mcq_answer(answer, question)
@@ -266,7 +272,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   defp grade_submission_question_answer_lists(
          submission_id,
-         [question = %Question{} | question_tail],
+         questions = [question = %Question{} | question_tail],
          answers = [answer = %Answer{} | answer_tail],
          regrade,
          overwrite
@@ -274,7 +280,7 @@ defmodule Cadet.Autograder.GradingJob do
        when is_boolean(regrade) and is_boolean(overwrite) and is_ecto_id(submission_id) do
     if question.id == answer.question_id do
       if regrade || answer.autograding_status in [:none, :failed] do
-        grade_answer(answer, question, overwrite)
+        grade_answer(question, answers, answer, questions, overwrite)
       end
 
       grade_submission_question_answer_lists(
