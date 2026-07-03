@@ -34,8 +34,7 @@ defmodule Cadet.Factory do
   use Cadet.Courses.{
     AssessmentConfigFactory,
     CourseFactory,
-    GroupFactory,
-    SourcecastFactory
+    GroupFactory
   }
 
   use Cadet.Notifications.{

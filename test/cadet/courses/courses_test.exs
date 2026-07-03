@@ -3,7 +3,7 @@ defmodule Cadet.CoursesTest do
 
   alias Cadet.{Courses, Repo}
   alias Cadet.Accounts.{CourseRegistration, User}
-  alias Cadet.Courses.{Course, Group, Sourcecast, SourcecastUpload}
+  alias Cadet.Courses.{Course, Group}
   alias Cadet.Assessments.Assessment
 
   describe "create course config" do

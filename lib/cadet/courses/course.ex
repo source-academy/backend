@@ -17,7 +17,6 @@ defmodule Cadet.Courses.Course do
           enable_contest_leaderboard: boolean(),
           top_leaderboard_display: integer(),
           top_contest_leaderboard_display: integer(),
-          enable_sourcecast: boolean(),
           enable_stories: boolean(),
           enable_llm_grading: boolean(),
           llm_api_key: String.t() | nil,
@@ -43,7 +42,6 @@ defmodule Cadet.Courses.Course do
     field(:enable_contest_leaderboard, :boolean, default: true)
     field(:top_leaderboard_display, :integer, default: 100)
     field(:top_contest_leaderboard_display, :integer, default: 10)
-    field(:enable_sourcecast, :boolean, default: true)
     field(:enable_stories, :boolean, default: false)
     field(:enable_llm_grading, :boolean, default: false)
     field(:llm_api_key, :string, default: nil)
@@ -66,7 +64,7 @@ defmodule Cadet.Courses.Course do
   end
 
   @required_fields ~w(course_name viewable enable_game
-    enable_achievements enable_overall_leaderboard enable_contest_leaderboard top_leaderboard_display top_contest_leaderboard_display enable_sourcecast enable_stories source_chapter source_variant)a
+    enable_achievements enable_overall_leaderboard enable_contest_leaderboard top_leaderboard_display top_contest_leaderboard_display enable_stories source_chapter source_variant)a
   @optional_fields ~w(course_short_name module_help_text enable_llm_grading llm_api_key llm_model llm_api_url llm_course_level_prompt pixelbot_routing_prompt pixelbot_answer_prompt feedback_url)a
 
   def changeset(course, params) do

@@ -116,7 +116,6 @@ defmodule CadetWeb.AdminCoursesController do
       enable_contest_leaderboard(:body, :boolean, "Enable contest leaderboard")
       top_leaderboard_display(:body, :integer, "Top Leaderboard Display")
       top_contest_leaderboard_display(:body, :integer, "Top Contest Leaderboard Display")
-      enable_sourcecast(:body, :boolean, "Enable sourcecast")
       enable_stories(:body, :boolean, "Enable stories")
       enable_llm_grading(:body, :boolean, "Enable LLM grading")
       llm_api_key(:body, :string, "OpenAI API key for this course")

@@ -14,7 +14,6 @@ defmodule CadetWeb.CoursesView do
           enableContestLeaderboard: :enable_contest_leaderboard,
           topLeaderboardDisplay: :top_leaderboard_display,
           topContestLeaderboardDisplay: :top_contest_leaderboard_display,
-          enableSourcecast: :enable_sourcecast,
           enableStories: :enable_stories,
           enableLlmGrading: :enable_llm_grading,
           llmModel: :llm_model,
