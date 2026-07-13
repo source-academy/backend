@@ -1,0 +1,4 @@
+langchain-openai>=0.3.0
+langchain-text-splitters>=0.3.0
+psycopg[binary]>=3.2.0
+tiktoken>=0.7.0

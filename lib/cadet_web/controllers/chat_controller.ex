@@ -7,7 +7,7 @@ defmodule CadetWeb.ChatController do
   use PhoenixSwagger
   require Logger
 
-  alias Cadet.Chatbot.{Conversation, LlmConversations}
+  alias Cadet.Chatbot.{Conversation, LlmConversations, VectorRag}
   @max_content_size 1000
 
   def init_chat(conn, _params) do
@@ -66,24 +66,37 @@ defmodule CadetWeb.ChatController do
           "message" => user_message,
           "section" => section,
           "initialContext" => visible_text
-        }
+        } = params
       )
       when is_binary(user_message) and is_binary(section) and is_binary(visible_text) do
     user = conn.assigns.current_user
+    language = VectorRag.normalize_language(Map.get(params, "language"))
 
     Logger.info(
       "Processing chat message for user #{user.id}. Message length: #{String.length(user_message)}."
     )
 
     # User is locked to a single conversation - fetch it by user_id only
-    with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
+    with true <- not is_nil(language) || {:error, :invalid_language},
+         true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
          {:ok, conversation} <- LlmConversations.get_conversation_for_user(user.id),
          {:ok, updated_conversation} <-
            LlmConversations.add_message(conversation, "user", user_message),
-         system_prompt <- Cadet.Chatbot.PromptBuilder.build_prompt(section, visible_text),
+         retrieved_chunks <- retrieve_chunks(user, user_message, visible_text, language),
+         system_prompt <-
+           Cadet.Chatbot.PromptBuilder.build_prompt(
+             section,
+             visible_text,
+             language,
+             retrieved_chunks
+           ),
          payload <- generate_payload(updated_conversation, system_prompt) do
       handle_openai_call(conn, payload, updated_conversation, conversation.id)
     else
+      {:error, :invalid_language} ->
+        Logger.error("Chat request failed due to invalid language.")
+        send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+
       {:error, :message_too_long} ->
         Logger.error(
           "Message too long for user #{user.id}. Length: #{String.length(user_message)}."
@@ -109,6 +122,29 @@ defmodule CadetWeb.ChatController do
   def chat(conn, _params) do
     Logger.error("Chat request failed due to missing parameters.")
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+  end
+
+  defp retrieve_chunks(user, user_message, visible_text, language) do
+    query = build_retrieval_query(user_message, visible_text)
+
+    case VectorRag.retriever().retrieve(query,
+           course_id: user.latest_viewed_course_id,
+           language: language,
+           limit: VectorRag.top_k()
+         ) do
+      {:ok, chunks} ->
+        chunks
+
+      {:error, reason} ->
+        Logger.error("Vector RAG retrieval failed: #{inspect(reason)}")
+        []
+    end
+  end
+
+  defp build_retrieval_query(user_message, visible_text) do
+    [user_message, visible_text]
+    |> Enum.join("\n\n")
+    |> String.slice(0, 2_000)
   end
 
   defp handle_openai_call(conn, payload, updated_conversation, conversation_id) do

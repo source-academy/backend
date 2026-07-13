@@ -81,6 +81,45 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
+    test "uses configured vector retriever when language is provided", %{conn: conn} do
+      original_config = Application.get_env(:cadet, :vector_rag)
+
+      Application.put_env(:cadet, :vector_rag,
+        enabled: true,
+        top_k: 5,
+        min_similarity: nil,
+        retriever: CadetWeb.ChatControllerTest.FakeRetriever,
+        embedding_provider: Cadet.Chatbot.OpenAIEmbeddings,
+        embedding_model: "text-embedding-3-small",
+        embedding_api_url: "https://api.openai.com/v1/embeddings"
+      )
+
+      on_exit(fn -> Application.put_env(:cadet, :vector_rag, original_config) end)
+
+      use_cassette "chatbot/chat_conversation#1", custom: true do
+        conversation = insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+        conn =
+          post(conn, "/v2/chats/message", %{
+            "message" => "How do functions work?",
+            "section" => "1.1.4",
+            "language" => "python",
+            "initialContext" => "Functions bind names to reusable computations."
+          })
+
+        assert_received {:vector_rag_retrieved, query, opts}
+        assert String.contains?(query, "How do functions work?")
+        assert opts[:language] == "python"
+        assert opts[:limit] == 5
+
+        assert json_response(conn, 200) == %{
+                 "conversationId" => conversation.id,
+                 "response" => "Some hardcoded test response."
+               }
+      end
+    end
+
+    @tag authenticate: :student
     @tag requires_setup: true
     test "The content length is too long",
          %{conn: conn, conversation_id: conversation_id} do
@@ -169,5 +208,12 @@ defmodule CadetWeb.ChatControllerTest do
 
       assert response(conn, :bad_request) == "Missing or invalid parameter(s)"
     end
+  end
+end
+
+defmodule CadetWeb.ChatControllerTest.FakeRetriever do
+  def retrieve(query, opts) do
+    send(self(), {:vector_rag_retrieved, query, opts})
+    {:ok, [%{title: "Python notes", content: "Python uses def to define functions."}]}
   end
 end

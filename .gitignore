@@ -115,6 +115,10 @@ erl_crash.dump
 .vscode
 
 .env
+.venv/
+__pycache__/
+*.pyc
+/priv/rag/chunk_outputs/
 
 # Generated lexer
 /src/source_lexer.erl

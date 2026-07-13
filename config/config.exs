@@ -51,6 +51,18 @@ config :cadet, :rag_documents,
   bucket: System.get_env("RAG_DOCUMENTS_BUCKET", "pixelbot-demo-bucket"),
   region: System.get_env("RAG_DOCUMENTS_REGION", "us-east-1")
 
+# Configure optional paragraph-level vector RAG for the legacy chat endpoint.
+config :cadet, :vector_rag,
+  enabled: System.get_env("VECTOR_RAG_ENABLED") in ["true", "1"],
+  debug: System.get_env("VECTOR_RAG_DEBUG") in ["true", "1"],
+  embedding_model: System.get_env("VECTOR_RAG_EMBEDDING_MODEL", "text-embedding-3-small"),
+  embedding_api_url:
+    System.get_env("VECTOR_RAG_EMBEDDING_API_URL", "https://api.openai.com/v1/embeddings"),
+  top_k: 5,
+  min_similarity: nil,
+  retriever: Cadet.Chatbot.VectorRetriever,
+  embedding_provider: Cadet.Chatbot.OpenAIEmbeddings
+
 # Configure ExAWS
 config :ex_aws,
   access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :instance_role],

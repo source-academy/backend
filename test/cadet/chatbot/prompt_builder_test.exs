@@ -19,6 +19,42 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
     end
   end
 
+  describe "build_prompt/4" do
+    test "includes retrieved chunks when available" do
+      result =
+        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", "javascript", [
+          %{title: "Lecture notes", content: "Use substitution to reason about calls."}
+        ])
+
+      assert String.contains?(result, "Lecture notes")
+      assert String.contains?(result, "Use substitution to reason about calls.")
+      assert String.contains?(result, "Some paragraph text")
+    end
+
+    test "includes retrieved chunk section metadata when available" do
+      result =
+        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", "python", [
+          %{
+            title: "Python notes",
+            content: "Functions can call themselves.",
+            metadata: %{"section" => "2.3", "section_title" => "Symbolic Data"}
+          }
+        ])
+
+      assert String.contains?(result, "Section: 2.3 Symbolic Data")
+      assert String.contains?(result, "You can read more about it in Section")
+    end
+
+    test "uses python-specific instructions without JavaScript section summaries" do
+      result = PromptBuilder.build_prompt("1.1.1", "Some paragraph text", "python", [])
+
+      assert String.contains?(result, "using Python")
+      assert String.contains?(result, "beginner-friendly Python")
+      assert String.contains?(result, "There is no section summary")
+      refute String.contains?(result, "Source Academy platform uses the \"Source\" language")
+    end
+  end
+
   describe "build_routing_prompt/2" do
     test "injects document map into prompt with placeholder" do
       docs = [%{"id" => 1, "title" => "Lecture 1"}]
