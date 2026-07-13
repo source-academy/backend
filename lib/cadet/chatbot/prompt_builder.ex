@@ -5,36 +5,30 @@ defmodule Cadet.Chatbot.PromptBuilder do
 
   require Logger
 
-  alias Cadet.Chatbot.{SicpNotes, SicpNotesPy}
+  alias Cadet.Chatbot.SicpNotesPy
 
   @document_map_placeholder "%DOCUMENT_MAP%"
 
   @prompt_prefix """
-  You are a competent tutor, assisting a student who is learning computer science following the textbook "Structure and Interpretation of Computer Programs, JavaScript edition" (SICP JS) on the Source Academy platform. The student request is about a paragraph of the book. The request may be a follow-up request to a request that was posed to you previously.
+  You are a competent tutor assisting a student who is learning computer science using Python. The student request is about a paragraph or concept from the course material. The request may be a follow-up request to a request that was posed previously.
 
-  CRITICAL: The Source Academy platform uses the "Source" language, which is a restricted subset of JavaScript. When you provide code examples, you MUST use valid Source language syntax. Follow these rules strictly:
-  - Do NOT use any JavaScript features that are not supported in Source. This includes, but is not limited to, classes, modules, imports/exports, async/await, generators, and certain built-in objects and methods.
-  - Use display or display_list instead of console.log to print output.
-
-  If you are unsure whether a JavaScript feature is available in Source, do NOT use it. Always make sure the code you give can run in the Source Academy Playground.
+  CRITICAL: When you provide code examples, use clear beginner-friendly Python. Avoid JavaScript, Source, browser APIs, and Source Academy syntax unless the student explicitly asks to compare languages.
 
   What follows are:
-  (1) the summary of section (2) the full paragraph. Please answer the student request,
-  not the requests of the history. If the student request is not related to the book, ask them to ask questions that are related to the book. Do not say that I provide you text.
+  (1) the summary of the relevant section if available, (1b) retrieved course notes if available, and (2) the full paragraph currently visible to the student. Please answer the student request, not the requests of the history. If the student request is not related to the course material, ask them to ask questions that are related to the course. Do not say that I provide you text.
 
-  When it would genuinely help the student, and only if a relevant section number is present in the provided summary, paragraph, or retrieved notes, you may add a short suggestion along with your answer, such as "You can read more about it in Section 1.2.1." Do not include a section suggestion in every answer, and do not invent section numbers.
+  When it would genuinely help the student, and only if a relevant section number is present in the provided summary, paragraph, or retrieved notes, you may add a short suggestion along with your answer, such as "You can read more about it in Section 2.3." Do not include a section suggestion in every answer, and do not invent section numbers.
 
   """
 
   @query_prefix "\n(2) Here is the paragraph:\n"
 
   def build_prompt(section, context) do
-    build_prompt(section, context, "javascript", [])
+    build_prompt(section, context, [])
   end
 
-  def build_prompt(section, context, language, retrieved_chunks) do
-    language = Cadet.Chatbot.VectorRag.normalize_language(language) || "javascript"
-    section_summary = get_section_summary(language, section)
+  def build_prompt(section, context, retrieved_chunks) do
+    section_summary = SicpNotesPy.get_summary(section)
 
     section_prefix =
       case section_summary do
@@ -45,32 +39,12 @@ defmodule Cadet.Chatbot.PromptBuilder do
           "\n(1) Here is the summary of this section:\n" <> summary
       end
 
-    language_prompt(language) <>
+    @prompt_prefix <>
       section_prefix <>
       retrieved_chunks_prefix(retrieved_chunks) <>
       @query_prefix <>
       context
   end
-
-  defp get_section_summary("javascript", section), do: SicpNotes.get_summary(section)
-  defp get_section_summary("python", section), do: SicpNotesPy.get_summary(section)
-  defp get_section_summary(_language, _section), do: nil
-
-  defp language_prompt("python") do
-    """
-    You are a competent tutor assisting a student who is learning computer science using Python. The student request is about a paragraph or concept from the course material. The request may be a follow-up request to a request that was posed previously.
-
-    CRITICAL: When you provide code examples, use clear beginner-friendly Python. Avoid JavaScript, Source, browser APIs, and Source Academy syntax unless the student explicitly asks to compare languages.
-
-    What follows are:
-    (1) the summary of the relevant section if available, (1b) retrieved course notes if available, and (2) the full paragraph currently visible to the student. Please answer the student request, not the requests of the history. If the student request is not related to the course material, ask them to ask questions that are related to the course. Do not say that I provide you text.
-
-    When it would genuinely help the student, and only if a relevant section number is present in the provided summary, paragraph, or retrieved notes, you may add a short suggestion along with your answer, such as "You can read more about it in Section 2.3." Do not include a section suggestion in every answer, and do not invent section numbers.
-
-    """
-  end
-
-  defp language_prompt(_language), do: @prompt_prefix
 
   defp retrieved_chunks_prefix(chunks) when is_list(chunks) and chunks != [] do
     formatted_chunks =

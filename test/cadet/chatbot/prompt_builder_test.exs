@@ -4,11 +4,13 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
   alias Cadet.Chatbot.PromptBuilder
 
   describe "build_prompt/2" do
-    test "includes section summary when available" do
+    test "builds a python-only prompt" do
       result = PromptBuilder.build_prompt("1.1.1", "Some paragraph text")
       assert is_binary(result)
       assert String.contains?(result, "Some paragraph text")
-      assert String.contains?(result, "Here is the summary of this section")
+      assert String.contains?(result, "using Python")
+      assert String.contains?(result, "beginner-friendly Python")
+      refute String.contains?(result, "Source Academy platform uses the \"Source\" language")
     end
 
     test "handles missing section summary" do
@@ -19,10 +21,10 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
     end
   end
 
-  describe "build_prompt/4" do
+  describe "build_prompt/3" do
     test "includes retrieved chunks when available" do
       result =
-        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", "javascript", [
+        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", [
           %{title: "Lecture notes", content: "Use substitution to reason about calls."}
         ])
 
@@ -33,7 +35,7 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
 
     test "includes retrieved chunk section metadata when available" do
       result =
-        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", "python", [
+        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", [
           %{
             title: "Python notes",
             content: "Functions can call themselves.",
@@ -43,15 +45,6 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
 
       assert String.contains?(result, "Section: 2.3 Symbolic Data")
       assert String.contains?(result, "You can read more about it in Section")
-    end
-
-    test "uses python-specific instructions without JavaScript section summaries" do
-      result = PromptBuilder.build_prompt("1.1.1", "Some paragraph text", "python", [])
-
-      assert String.contains?(result, "using Python")
-      assert String.contains?(result, "beginner-friendly Python")
-      assert String.contains?(result, "There is no section summary")
-      refute String.contains?(result, "Source Academy platform uses the \"Source\" language")
     end
   end
 

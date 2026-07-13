@@ -29,7 +29,7 @@ defmodule Cadet.Chatbot.RagDocument do
     document
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:language, ["javascript", "python"])
+    |> validate_inclusion(:language, ["python"])
     |> validate_inclusion(:status, ["processing", "ready", "failed"])
     |> foreign_key_constraint(:course_id)
     |> unique_constraint([:course_id, :language, :checksum])

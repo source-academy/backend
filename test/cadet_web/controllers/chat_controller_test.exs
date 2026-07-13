@@ -81,7 +81,7 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
-    test "uses configured vector retriever when language is provided", %{conn: conn} do
+    test "uses configured vector retriever with python language internally", %{conn: conn} do
       original_config = Application.get_env(:cadet, :vector_rag)
 
       Application.put_env(:cadet, :vector_rag,
@@ -103,7 +103,6 @@ defmodule CadetWeb.ChatControllerTest do
           post(conn, "/v2/chats/message", %{
             "message" => "How do functions work?",
             "section" => "1.1.4",
-            "language" => "python",
             "initialContext" => "Functions bind names to reusable computations."
           })
 

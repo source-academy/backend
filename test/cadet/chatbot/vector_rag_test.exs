@@ -3,19 +3,12 @@ defmodule Cadet.Chatbot.VectorRagTest do
 
   alias Cadet.Chatbot.VectorRag
 
-  describe "normalize_language/1" do
-    test "defaults missing language to javascript" do
-      assert VectorRag.normalize_language(nil) == "javascript"
-    end
-
-    test "normalizes common aliases" do
-      assert VectorRag.normalize_language("JS") == "javascript"
-      assert VectorRag.normalize_language("source") == "javascript"
-      assert VectorRag.normalize_language("py") == "python"
-    end
-
-    test "rejects unsupported languages" do
-      assert VectorRag.normalize_language("ruby") == nil
+  describe "language/0" do
+    test "uses python as the only internal retrieval language" do
+      assert VectorRag.language() == "python"
+      assert VectorRag.valid_language?("python")
+      refute VectorRag.valid_language?("javascript")
+      refute VectorRag.valid_language?("source")
     end
   end
 end

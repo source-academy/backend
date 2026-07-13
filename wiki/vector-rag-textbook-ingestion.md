@@ -23,19 +23,19 @@ mix ecto.migrate
 Dry-run chunking:
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --language python --title "SICP Python" --dry-run
+.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python" --dry-run
 ```
 
 Dry-run chunking and write all chunks locally:
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --language python --title "SICP Python" --dry-run --dry-run-output priv/rag/chunk_outputs/sicpy_chunks.jsonl
+.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python" --dry-run --dry-run-output priv/rag/chunk_outputs/sicpy_chunks.jsonl
 ```
 
 Actual ingestion:
 
 ```bash
-DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --language python --title "SICP Python"
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python"
 ```
 
 For local development, the ingestion script automatically reads the OpenAI API key from `config/dev.secrets.exs` under `config :openai`. You do not need to export `OPENAI_API_KEY` unless you want to override the dev secrets value.
@@ -159,7 +159,6 @@ Always dry-run first.
 ```bash
 .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/<FILE>.md \
   --course-id <COURSE_ID> \
-  --language python \
   --title "<DISPLAY TITLE>" \
   --dry-run
 ```
@@ -169,7 +168,6 @@ Example:
 ```bash
 .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md \
   --course-id 1 \
-  --language python \
   --title "SICP Python" \
   --dry-run \
   --dry-run-output priv/rag/chunk_outputs/sicpy_chunks.jsonl
@@ -240,7 +238,7 @@ The actual ingestion needs database access and an OpenAI API key.
 For the default local Docker/Postgres setup, pass the database URL inline:
 
 ```bash
-DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --language python --title "SICP Python"
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python"
 ```
 
 The OpenAI API key is loaded in this order:
@@ -264,7 +262,6 @@ After dry-run looks correct:
 ```bash
 .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/<FILE>.md \
   --course-id <COURSE_ID> \
-  --language python \
   --title "<DISPLAY TITLE>"
 ```
 
@@ -273,7 +270,6 @@ Example:
 ```bash
 .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md \
   --course-id 1 \
-  --language python \
   --title "SICP Python"
 ```
 
@@ -284,7 +280,7 @@ This writes:
 - one embedding per chunk
 - section metadata into `rag_chunks.metadata`
 
-The script is checksum-aware. If the same file content has already been ingested for the same course and language, it exits instead of duplicating rows.
+The script is checksum-aware. If the same file content has already been ingested for the same course, it exits instead of duplicating rows.
 
 ## 7. Verify DB Rows
 
@@ -355,23 +351,11 @@ Frontend should send:
 {
   "message": "How do recursive functions return?",
   "section": "1.1.4",
-  "initialContext": "Visible paragraph text from the frontend",
-  "language": "python"
+  "initialContext": "Visible paragraph text from the frontend"
 }
 ```
 
-If `language` is missing, backend defaults to JavaScript/Source behavior.
-
-Supported language values are:
-
-```text
-javascript
-js
-source
-source_js
-python
-py
-```
+The frontend does not send a language field. The backend is Python-only for this chatbot and always retrieves Python chunks internally.
 
 ## 9. How Retrieval Works At Runtime
 
@@ -407,7 +391,7 @@ You can read more about it in Section 1.1.1.
 
 If the file content changes, its checksum changes. Running ingestion again creates a new `rag_documents` row and new chunks.
 
-If you want to replace old chunks for the same course/language, delete the old document row:
+If you want to replace old chunks for the same course, delete the old document row:
 
 ```sql
 DELETE FROM rag_documents
@@ -442,6 +426,5 @@ Check:
 
 - `VECTOR_RAG_ENABLED=true`
 - `rag_documents.status = 'ready'`
-- frontend sends the expected `language`
 - chunks exist for the user's `latest_viewed_course_id`
-- chunks exist for the same language, for example `python`
+- chunks exist with internal language `python`

@@ -11,7 +11,7 @@ import tiktoken
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-SUPPORTED_LANGUAGES = {"javascript", "python"}
+SUPPORTED_LANGUAGES = {"python"}
 MARKDOWN_HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 SECTION_HEADING_PATTERN = re.compile(r"^((?:\d+\.)*\d+)\s+(.+)$")
 FENCED_CODE_PATTERN = re.compile(r"^\s*(```|~~~)")
@@ -25,9 +25,9 @@ def parse_args():
     parser.add_argument("--course-id", required=True, type=int, help="Cadet course id")
     parser.add_argument(
         "--language",
-        default="javascript",
+        default="python",
         choices=sorted(SUPPORTED_LANGUAGES),
-        help="Language tag used by chat retrieval",
+        help="Internal language tag used by chat retrieval. Defaults to python.",
     )
     parser.add_argument("--title", help="Display title for retrieved chunks")
     parser.add_argument(

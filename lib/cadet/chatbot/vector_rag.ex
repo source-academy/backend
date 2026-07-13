@@ -1,7 +1,7 @@
 defmodule Cadet.Chatbot.VectorRag do
   @moduledoc false
 
-  @languages ~w(javascript python)
+  @language "python"
 
   def enabled? do
     config(:enabled, false)
@@ -35,25 +35,9 @@ defmodule Cadet.Chatbot.VectorRag do
     config(:debug, false)
   end
 
-  def normalize_language(nil), do: "javascript"
+  def language, do: @language
 
-  def normalize_language(language) when is_binary(language) do
-    language
-    |> String.downcase()
-    |> case do
-      "js" -> "javascript"
-      "javascript" -> "javascript"
-      "source" -> "javascript"
-      "source_js" -> "javascript"
-      "python" -> "python"
-      "py" -> "python"
-      _ -> nil
-    end
-  end
-
-  def normalize_language(_language), do: nil
-
-  def valid_language?(language), do: language in @languages
+  def valid_language?(language), do: language == @language
 
   defp config(key, default) do
     :cadet

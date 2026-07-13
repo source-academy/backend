@@ -66,37 +66,30 @@ defmodule CadetWeb.ChatController do
           "message" => user_message,
           "section" => section,
           "initialContext" => visible_text
-        } = params
+        }
       )
       when is_binary(user_message) and is_binary(section) and is_binary(visible_text) do
     user = conn.assigns.current_user
-    language = VectorRag.normalize_language(Map.get(params, "language"))
 
     Logger.info(
       "Processing chat message for user #{user.id}. Message length: #{String.length(user_message)}."
     )
 
     # User is locked to a single conversation - fetch it by user_id only
-    with true <- not is_nil(language) || {:error, :invalid_language},
-         true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
+    with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
          {:ok, conversation} <- LlmConversations.get_conversation_for_user(user.id),
          {:ok, updated_conversation} <-
            LlmConversations.add_message(conversation, "user", user_message),
-         retrieved_chunks <- retrieve_chunks(user, user_message, visible_text, language),
+         retrieved_chunks <- retrieve_chunks(user, user_message, visible_text),
          system_prompt <-
            Cadet.Chatbot.PromptBuilder.build_prompt(
              section,
              visible_text,
-             language,
              retrieved_chunks
            ),
          payload <- generate_payload(updated_conversation, system_prompt) do
       handle_openai_call(conn, payload, updated_conversation, conversation.id)
     else
-      {:error, :invalid_language} ->
-        Logger.error("Chat request failed due to invalid language.")
-        send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
-
       {:error, :message_too_long} ->
         Logger.error(
           "Message too long for user #{user.id}. Length: #{String.length(user_message)}."
@@ -124,12 +117,12 @@ defmodule CadetWeb.ChatController do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
-  defp retrieve_chunks(user, user_message, visible_text, language) do
+  defp retrieve_chunks(user, user_message, visible_text) do
     query = build_retrieval_query(user_message, visible_text)
 
     case VectorRag.retriever().retrieve(query,
            course_id: user.latest_viewed_course_id,
-           language: language,
+           language: VectorRag.language(),
            limit: VectorRag.top_k()
          ) do
       {:ok, chunks} ->

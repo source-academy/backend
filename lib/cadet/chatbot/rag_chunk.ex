@@ -27,7 +27,7 @@ defmodule Cadet.Chatbot.RagChunk do
     chunk
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_inclusion(:language, ["javascript", "python"])
+    |> validate_inclusion(:language, ["python"])
     |> foreign_key_constraint(:rag_document_id)
     |> foreign_key_constraint(:course_id)
   end
