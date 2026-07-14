@@ -1,4 +1,5 @@
 defmodule CadetWeb.ChatControllerTest do
+  alias Cadet.Repo
   alias CadetWeb.ChatController
   use CadetWeb.ConnCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
@@ -33,13 +34,32 @@ defmodule CadetWeb.ChatControllerTest do
 
     @tag authenticate: :student
     test "authenticated request initializes chat", %{conn: conn} do
-      conn = post(conn, "/v2/chats", %{})
+      conn = post(conn, "/v2/chats", %{"languageId" => "python1"})
 
       assert %{
-               "conversationId" => _,
+               "conversationId" => conversation_id,
                "messages" => _,
                "maxContentSize" => _
              } = json_response(conn, 200)
+
+      assert is_integer(conversation_id)
+
+      assert Repo.get!(Cadet.Chatbot.Conversation, conversation_id).language_id ==
+               "python1"
+    end
+
+    @tag authenticate: :student
+    test "rejects a language without a SICPy textbook", %{conn: conn} do
+      conn = post(conn, "/v2/chats", %{"languageId" => "source1"})
+
+      assert response(conn, :bad_request) == "Unsupported languageId"
+    end
+
+    @tag authenticate: :student
+    test "rejects Python Full because it has no SICPy textbook", %{conn: conn} do
+      conn = post(conn, "/v2/chats", %{"languageId" => "pythonFull"})
+
+      assert response(conn, :bad_request) == "Unsupported languageId"
     end
   end
 
@@ -186,10 +206,9 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
-    test "missing parameters", %{conn: conn} do
+    test "missing message", %{conn: conn} do
       conn =
         post(conn, "/v2/chats/message", %{
-          "message" => "How to implement recursion in JavaScript?",
           "section" => "SICP-1"
         })
 
@@ -197,15 +216,51 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
-    test "nil initialContext", %{conn: conn} do
+    test "optional section and initialContext may be omitted", %{conn: conn} do
+      conversation = insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+      use_cassette "chatbot/chat_conversation#1", custom: true do
+        conn =
+          post(conn, "/v2/chats/message", %{
+            "message" => "How do functions work?",
+            "languageId" => "python4",
+            "conversationId" => conversation.id
+          })
+
+        assert %{
+                 "conversationId" => response_conversation_id,
+                 "response" => "Some hardcoded test response."
+               } = json_response(conn, 200)
+
+        assert response_conversation_id == conversation.id
+        assert Repo.reload(conversation).language_id == "python4"
+      end
+    end
+
+    @tag authenticate: :student
+    test "rejects an unknown conversationId", %{conn: conn} do
+      insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
       conn =
         post(conn, "/v2/chats/message", %{
-          "message" => "How to implement recursion in JavaScript?",
-          "section" => "SICP-1",
-          "initialContext" => nil
+          "message" => "How do functions work?",
+          "conversationId" => 999_999_999
         })
 
-      assert response(conn, :bad_request) == "Missing or invalid parameter(s)"
+      assert response(conn, :not_found) == "Conversation not found"
+    end
+
+    @tag authenticate: :student
+    test "rejects a non-SICPy language for a message", %{conn: conn} do
+      insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+      conn =
+        post(conn, "/v2/chats/message", %{
+          "message" => "How do functions work?",
+          "languageId" => "source2"
+        })
+
+      assert response(conn, :bad_request) == "Unsupported languageId"
     end
   end
 end

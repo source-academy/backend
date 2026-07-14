@@ -41,32 +41,28 @@ defmodule Cadet.Chatbot.LlmConversations do
   If user already has a conversation, returns it.
   If not, creates a new one.
   """
-  @spec get_or_create_conversation(binary() | integer()) ::
+  @spec get_or_create_conversation(binary() | integer(), map()) ::
           {:ok, Conversation.t()} | {:error, binary()}
-  def get_or_create_conversation(user_id) when is_ecto_id(user_id) do
+  def get_or_create_conversation(user_id, attrs \\ %{}) when is_ecto_id(user_id) do
     Logger.info("Getting or creating conversation for user #{user_id}")
 
     case get_conversation_for_user(user_id) do
       {:ok, conversation} ->
         Logger.info("User #{user_id} already has conversation #{conversation.id}")
-        {:ok, conversation}
+        maybe_update_language(conversation, Map.get(attrs, :language_id))
 
       {:error, {:not_found, _}} ->
         Logger.info("Creating new conversation for user #{user_id}")
-        create_new_conversation(user_id)
+        create_new_conversation(user_id, attrs)
     end
   end
 
-  @doc """
-  Creates a new conversation for a user. Should only be called when user has no existing conversation.
-  """
-  @spec create_new_conversation(binary() | integer()) ::
-          {:ok, Conversation.t()} | {:error, binary()}
-  defp create_new_conversation(user_id) do
+  defp create_new_conversation(user_id, attrs) do
     Logger.info("Creating a new conversation for user #{user_id}")
 
     case %Conversation{
            user_id: user_id,
+           language_id: Map.get(attrs, :language_id),
            prepend_context: [],
            messages: [get_initial_message()]
          }
@@ -80,6 +76,26 @@ defmodule Cadet.Chatbot.LlmConversations do
         error_msg = full_error_messages(changeset)
         Logger.error("Failed to create conversation for user #{user_id}: #{error_msg}")
         {:error, error_msg}
+    end
+  end
+
+  @spec update_language(Conversation.t(), String.t()) ::
+          {:ok, Conversation.t()} | {:error, binary()}
+  def update_language(conversation, language_id) when is_binary(language_id) do
+    maybe_update_language(conversation, language_id)
+  end
+
+  defp maybe_update_language(conversation, nil), do: {:ok, conversation}
+
+  defp maybe_update_language(%{language_id: language_id} = conversation, language_id),
+    do: {:ok, conversation}
+
+  defp maybe_update_language(conversation, language_id) do
+    case conversation
+         |> Conversation.changeset(%{language_id: language_id})
+         |> Repo.update() do
+      {:ok, updated} -> {:ok, updated}
+      {:error, changeset} -> {:error, full_error_messages(changeset)}
     end
   end
 

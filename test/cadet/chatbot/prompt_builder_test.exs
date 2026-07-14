@@ -10,6 +10,9 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
       assert String.contains?(result, "Some paragraph text")
       assert String.contains?(result, "using Python")
       assert String.contains?(result, "beginner-friendly Python")
+      assert String.contains?(result, "Here is the summary of this section")
+      assert String.contains?(result, "Expressions")
+      refute String.contains?(result, "There is no section summary")
       refute String.contains?(result, "Source Academy platform uses the \"Source\" language")
     end
 

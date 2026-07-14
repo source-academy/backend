@@ -7,27 +7,30 @@ defmodule CadetWeb.ChatController do
   use PhoenixSwagger
   require Logger
 
-  alias Cadet.Chatbot.{Conversation, LlmConversations, VectorRag}
+  alias Cadet.Chatbot.{Conversation, LanguageDirectory, LlmConversations, VectorRag}
   @max_content_size 1000
 
-  def init_chat(conn, _params) do
+  def init_chat(conn, params) do
     user = conn.assigns.current_user
     Logger.info("Initializing chat for user #{user.id}")
 
-    # Get existing conversation for user or create a new one (one per user)
-    case LlmConversations.get_or_create_conversation(user.id) do
-      {:ok, conversation} ->
-        Logger.info(
-          "Chat initialized successfully for user #{user.id}. Conversation ID: #{conversation.id}."
-        )
+    with {:ok, language_id} <- validate_language_id(Map.get(params, "languageId")),
+         {:ok, conversation} <-
+           LlmConversations.get_or_create_conversation(user.id, %{language_id: language_id}) do
+      Logger.info(
+        "Chat initialized successfully for user #{user.id}. Conversation ID: #{conversation.id}."
+      )
 
-        conn
-        |> put_status(:ok)
-        |> render("conversation_init.json", %{
-          conversation_id: conversation.id,
-          messages: conversation.messages,
-          max_content_size: @max_content_size
-        })
+      conn
+      |> put_status(:ok)
+      |> render("conversation_init.json", %{
+        conversation_id: conversation.id,
+        messages: conversation.messages,
+        max_content_size: @max_content_size
+      })
+    else
+      {:error, :unsupported_language} ->
+        send_resp(conn, :bad_request, "Unsupported languageId")
 
       {:error, error_message} ->
         Logger.error("Failed to initialize chat for user #{user.id}. Error: #{error_message}.")
@@ -60,31 +63,32 @@ defmodule CadetWeb.ChatController do
     response(500, "When OpenAI API returns an error")
   end
 
-  def chat(
-        conn,
-        %{
-          "message" => user_message,
-          "section" => section,
-          "initialContext" => visible_text
-        }
-      )
-      when is_binary(user_message) and is_binary(section) and is_binary(visible_text) do
+  def chat(conn, %{"message" => user_message} = params) when is_binary(user_message) do
     user = conn.assigns.current_user
+    section = Map.get(params, "section")
+    visible_text = Map.get(params, "initialContext", "")
+    language_id = Map.get(params, "languageId")
+    conversation_id = Map.get(params, "conversationId")
 
     Logger.info(
       "Processing chat message for user #{user.id}. Message length: #{String.length(user_message)}."
     )
 
-    # User is locked to a single conversation - fetch it by user_id only
-    with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
+    with :ok <- validate_optional_string(section),
+         :ok <- validate_optional_string(visible_text),
+         :ok <- validate_optional_conversation_id(conversation_id),
+         {:ok, language_id} <- validate_language_id(language_id),
+         true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
          {:ok, conversation} <- LlmConversations.get_conversation_for_user(user.id),
+         :ok <- validate_conversation_id(conversation, conversation_id),
+         {:ok, conversation} <- maybe_update_language(conversation, language_id),
          {:ok, updated_conversation} <-
            LlmConversations.add_message(conversation, "user", user_message),
-         retrieved_chunks <- retrieve_chunks(user, user_message, visible_text),
+         retrieved_chunks <- retrieve_chunks(user, user_message, visible_text || ""),
          system_prompt <-
            Cadet.Chatbot.PromptBuilder.build_prompt(
              section,
-             visible_text,
+             visible_text || "",
              retrieved_chunks
            ),
          payload <- generate_payload(updated_conversation, system_prompt) do
@@ -100,6 +104,15 @@ defmodule CadetWeb.ChatController do
           :unprocessable_entity,
           "Message exceeds the maximum allowed length of #{@max_content_size}"
         )
+
+      {:error, :unsupported_language} ->
+        send_resp(conn, :bad_request, "Unsupported languageId")
+
+      {:error, :invalid_conversation} ->
+        send_resp(conn, :not_found, "Conversation not found")
+
+      :error ->
+        send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
 
       {:error, {:not_found, error_message}} ->
         Logger.error("No conversation found for user #{user.id}. User must init_chat first.")
@@ -138,6 +151,43 @@ defmodule CadetWeb.ChatController do
     [user_message, visible_text]
     |> Enum.join("\n\n")
     |> String.slice(0, 2_000)
+  end
+
+  defp validate_language_id(nil), do: {:ok, nil}
+
+  defp validate_language_id(language_id) when is_binary(language_id) do
+    if LanguageDirectory.sicpy_language?(language_id) do
+      {:ok, language_id}
+    else
+      {:error, :unsupported_language}
+    end
+  end
+
+  defp validate_language_id(_language_id), do: {:error, :unsupported_language}
+
+  defp validate_optional_string(nil), do: :ok
+  defp validate_optional_string(value) when is_binary(value), do: :ok
+  defp validate_optional_string(_value), do: :error
+
+  defp validate_optional_conversation_id(nil), do: :ok
+
+  defp validate_optional_conversation_id(value) when is_binary(value) or is_integer(value),
+    do: :ok
+
+  defp validate_optional_conversation_id(_value), do: :error
+
+  defp validate_conversation_id(_conversation, nil), do: :ok
+
+  defp validate_conversation_id(conversation, conversation_id) do
+    if to_string(conversation.id) == to_string(conversation_id),
+      do: :ok,
+      else: {:error, :invalid_conversation}
+  end
+
+  defp maybe_update_language(conversation, nil), do: {:ok, conversation}
+
+  defp maybe_update_language(conversation, language_id) do
+    LlmConversations.update_language(conversation, language_id)
   end
 
   defp handle_openai_call(conn, payload, updated_conversation, conversation_id) do

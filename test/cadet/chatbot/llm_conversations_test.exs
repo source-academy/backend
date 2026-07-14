@@ -3,7 +3,7 @@ defmodule Cadet.Chatbot.LlmConversationsTest do
 
   alias Cadet.Chatbot.LlmConversations
 
-  describe "get_or_create_conversation/1" do
+  describe "get_or_create_conversation/1 and /2" do
     test "creates a new conversation when none exists" do
       user = insert(:user)
       assert {:ok, conversation} = LlmConversations.get_or_create_conversation(user.id)
@@ -18,6 +18,26 @@ defmodule Cadet.Chatbot.LlmConversationsTest do
 
       assert {:ok, conversation} = LlmConversations.get_or_create_conversation(user.id)
       assert conversation.id == existing.id
+    end
+
+    test "stores language metadata on a new conversation" do
+      user = insert(:user)
+
+      assert {:ok, conversation} =
+               LlmConversations.get_or_create_conversation(user.id, %{language_id: "python2"})
+
+      assert conversation.language_id == "python2"
+    end
+
+    test "updates language metadata on an existing conversation" do
+      user = insert(:user)
+      existing = insert(:conversation, user: user, prepend_context: [], language_id: "python1")
+
+      assert {:ok, conversation} =
+               LlmConversations.get_or_create_conversation(user.id, %{language_id: "python3"})
+
+      assert conversation.id == existing.id
+      assert conversation.language_id == "python3"
     end
   end
 
