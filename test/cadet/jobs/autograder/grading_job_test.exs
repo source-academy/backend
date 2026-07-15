@@ -55,7 +55,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
     test "all assessments attempted, all questions graded, assocs preloaded, should enqueue all jobs",
          %{course: course, assessments: assessments} do
-      Oban.Testing.with_testing_mode(:manual, fn ->
+      with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         [{assessment, questions} | _] = assessments
@@ -88,7 +88,7 @@ defmodule Cadet.Autograder.GradingJobTest do
     test "all assessments attempted, all questions graded, no assocs preloaded, " <>
            "should enqueue all jobs",
          %{course: course, assessments: assessments} do
-      Oban.Testing.with_testing_mode(:manual, fn ->
+      with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         [{assessment, questions} | _] = assessments
@@ -145,7 +145,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       course: course,
       assessments: assessments
     } do
-      Oban.Testing.with_testing_mode(:manual, fn ->
+      with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         submissions_answers =
@@ -213,7 +213,7 @@ defmodule Cadet.Autograder.GradingJobTest do
            course: course,
            assessments: assessments
          } do
-      Oban.Testing.with_testing_mode(:manual, fn ->
+      with_testing_mode(:manual, fn ->
         group = insert(:group, %{course: course})
 
         student =
@@ -242,7 +242,7 @@ defmodule Cadet.Autograder.GradingJobTest do
            course: course,
            assessments: assessments
          } do
-      Oban.Testing.with_testing_mode(:manual, fn ->
+      with_testing_mode(:manual, fn ->
         group = insert(:group, %{course: course})
 
         student =
@@ -268,7 +268,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       course: course,
       assessments: assessments
     } do
-      Oban.Testing.with_testing_mode(:manual, fn ->
+      with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         GradingJob.grade_all_due_yesterday()
@@ -323,7 +323,7 @@ defmodule Cadet.Autograder.GradingJobTest do
            course: course,
            assessments: assessments
          } do
-      Oban.Testing.with_testing_mode(:manual, fn ->
+      with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         # Do not answer first question in each assessment

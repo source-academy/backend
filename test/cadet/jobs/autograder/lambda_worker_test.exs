@@ -52,7 +52,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
   describe "#perform" do
     test "success", %{question: question, answer: answer} do
       use_cassette "autograder/success#1", custom: true do
-        Oban.Testing.with_testing_mode(:manual, fn ->
+        with_testing_mode(:manual, fn ->
           LambdaWorker.perform(%{
             question_id: question.id,
             answer_id: answer.id
@@ -79,7 +79,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
 
     test "submission errors", %{question: question, answer: answer} do
       use_cassette "autograder/errors#1", custom: true do
-        Oban.Testing.with_testing_mode(:manual, fn ->
+        with_testing_mode(:manual, fn ->
           LambdaWorker.perform(%{
             question_id: question.id,
             answer_id: answer.id
@@ -130,7 +130,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
 
     test "lambda errors", %{question: question, answer: answer} do
       use_cassette "autograder/errors#2", custom: true do
-        Oban.Testing.with_testing_mode(:manual, fn ->
+        with_testing_mode(:manual, fn ->
           LambdaWorker.perform(%{
             question_id: question.id,
             answer_id: answer.id
