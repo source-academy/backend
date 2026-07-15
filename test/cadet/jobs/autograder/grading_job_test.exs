@@ -4,6 +4,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
   import Mock
   import Ecto.Query
+  import Oban.Testing, only: [with_testing_mode: 2]
 
   alias Cadet.Accounts.Notification
   alias Cadet.Assessments.{Answer, Submission, SubmissionVotes}
