@@ -4,6 +4,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
   use Oban.Testing, repo: Cadet.Repo
 
   import ExUnit.CaptureLog
+  import Oban.Testing, only: [with_testing_mode: 2]
 
   alias Cadet.Assessments.{Answer, Question}
   alias Cadet.Autograder.{LambdaWorker, ResultStoreWorker}
