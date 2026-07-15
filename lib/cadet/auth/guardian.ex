@@ -42,9 +42,7 @@ defmodule Cadet.Auth.Guardian do
   end
 
   def on_refresh({old_token, old_claims}, {new_token, new_claims}, _options) do
-    with {:ok, _} <- DB.on_refresh({old_token, old_claims}, {new_token, new_claims}) do
-      {:ok, {old_token, old_claims}, {new_token, new_claims}}
-    end
+    DB.on_refresh({old_token, old_claims}, {new_token, new_claims})
   end
 
   def on_revoke(claims, token, _options) do
