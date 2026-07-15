@@ -514,8 +514,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        open_at: Timex.shift(Timex.now(), days: -30),
-        close_at: Timex.shift(Timex.now(), days: -20)
+        open_at: DateTime.add(DateTime.utc_now(), -30 * 86_400, :second),
+        close_at: DateTime.add(DateTime.utc_now(), -20 * 86_400, :second)
       })
       |> Repo.update()
 
@@ -601,7 +601,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        close_at: Timex.shift(Timex.now(), days: 20)
+        close_at: DateTime.add(DateTime.utc_now(), 20 * 86_400, :second)
       })
       |> Repo.update()
 
@@ -687,7 +687,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        close_at: Timex.shift(Timex.now(), days: 20)
+        close_at: DateTime.add(DateTime.utc_now(), 20 * 86_400, :second)
       })
       |> Repo.update()
 
@@ -946,8 +946,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       mission.assessment
       |> Assessment.changeset(%{
-        open_at: Timex.shift(Timex.now(), days: 5),
-        close_at: Timex.shift(Timex.now(), days: 10)
+        open_at: DateTime.add(DateTime.utc_now(), 5 * 86_400, :second),
+        close_at: DateTime.add(DateTime.utc_now(), 10 * 86_400, :second)
       })
       |> Repo.update!()
 
@@ -1014,8 +1014,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         mission.assessment
         |> Assessment.changeset(%{
-          open_at: Timex.shift(Timex.now(), days: 5),
-          close_at: Timex.shift(Timex.now(), days: 10)
+          open_at: DateTime.add(DateTime.utc_now(), 5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), 10 * 86_400, :second)
         })
         |> Repo.update!()
 
@@ -1122,8 +1122,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: Timex.shift(Timex.now(), hours: -40),
-            close_at: Timex.shift(Timex.now(), days: 7),
+            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
+            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1175,8 +1175,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: Timex.shift(Timex.now(), hours: -40),
-            close_at: Timex.shift(Timex.now(), days: 7),
+            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
+            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1242,8 +1242,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: Timex.shift(Timex.now(), hours: -40),
-            close_at: Timex.shift(Timex.now(), days: 7),
+            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
+            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1309,8 +1309,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: Timex.shift(Timex.now(), hours: -40),
-            close_at: Timex.shift(Timex.now(), days: 7),
+            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
+            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1364,8 +1364,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           assessment =
             insert(
               :assessment,
-              open_at: Timex.shift(Timex.now(), hours: -hours_after),
-              close_at: Timex.shift(Timex.now(), hours: 100),
+              open_at: DateTime.add(DateTime.utc_now(), -hours_after * 3_600, :second),
+              close_at: DateTime.add(DateTime.utc_now(), 100 * 3_600, :second),
               is_published: true,
               config: assessment_config,
               course: course1
@@ -1397,7 +1397,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
           submission_db = Repo.get(Submission, submission.id)
 
           proportion =
-            Timex.diff(assessment.close_at, Timex.now(), :hours) / (100 + hours_after - 48)
+            DateTime.diff(assessment.close_at, DateTime.utc_now(), :hour) / (100 + hours_after - 48)
 
           assert submission_db.status == :submitted
           assert submission_db.xp_bonus == round(proportion * 100)
@@ -1423,8 +1423,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           assessment =
             insert(
               :assessment,
-              open_at: Timex.shift(Timex.now(), hours: -hours_after),
-              close_at: Timex.shift(Timex.now(), hours: 1),
+              open_at: DateTime.add(DateTime.utc_now(), -hours_after * 3_600, :second),
+              close_at: DateTime.add(DateTime.utc_now(), 1 * 3_600, :second),
               is_published: true,
               config: assessment_config,
               course: course1
@@ -1479,8 +1479,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           assessment =
             insert(
               :assessment,
-              open_at: Timex.shift(Timex.now(), hours: -hours_after),
-              close_at: Timex.shift(Timex.now(), days: 7),
+              open_at: DateTime.add(DateTime.utc_now(), -hours_after * 3_600, :second),
+              close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
               is_published: true,
               config: assessment_config,
               course: course1
@@ -1572,8 +1572,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
       # before opening and would fall under "Submission not found"
       after_close_at_assessment =
         insert(:assessment, %{
-          open_at: Timex.shift(Timex.now(), days: -10),
-          close_at: Timex.shift(Timex.now(), days: -5),
+          open_at: DateTime.add(DateTime.utc_now(), -10 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
           course: course1
         })
 
@@ -1633,8 +1633,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     assessment =
       insert(
         :assessment,
-        open_at: Timex.shift(Timex.now(), hours: -2),
-        close_at: Timex.shift(Timex.now(), days: 7),
+        open_at: DateTime.add(DateTime.utc_now(), -2 * 3_600, :second),
+        close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
         is_published: true,
         config: config,
         course: course1
@@ -1693,8 +1693,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assessment
       |> Assessment.changeset(%{
         password: "mysupersecretpassword",
-        open_at: Timex.shift(Timex.now(), days: -2),
-        close_at: Timex.shift(Timex.now(), days: +1)
+        open_at: DateTime.add(DateTime.utc_now(), -2 * 86_400, :second),
+        close_at: DateTime.add(DateTime.utc_now(), 1 * 86_400, :second)
       })
       |> Repo.update!()
 
@@ -1790,8 +1790,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       mission.assessment
       |> Assessment.changeset(%{
-        open_at: Timex.shift(Timex.now(), days: -2),
-        close_at: Timex.shift(Timex.now(), days: -1)
+        open_at: DateTime.add(DateTime.utc_now(), -2 * 86_400, :second),
+        close_at: DateTime.add(DateTime.utc_now(), -1 * 86_400, :second)
       })
       |> Repo.update!()
 
@@ -1995,7 +1995,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end
   end
 
-  defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
+  defp open_at_asc_comparator(x, y), do: DateTime.compare(x.open_at, y.open_at) == :lt
 
   defp get_assessment_status(course_reg = %CourseRegistration{}, assessment = %Assessment{}) do
     submission =

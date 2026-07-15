@@ -20,7 +20,12 @@ defmodule Cadet.Jobs.Log do
 
   alias Cadet.Jobs.LogEntry
 
-  def log_execution(name, %Timex.Duration{} = period) when is_binary(name) do
+  @doc """
+  Records an execution of `name` if the previous recorded execution is older
+  than `period_seconds` seconds ago. Returns `true` if the caller should
+  proceed, `false` if a recent execution precludes running.
+  """
+  def log_execution(name, period_seconds) when is_binary(name) and is_integer(period_seconds) do
     result =
       Repo.transaction(fn ->
         entry =
@@ -29,7 +34,7 @@ defmodule Cadet.Jobs.Log do
           |> lock("FOR UPDATE")
           |> Repo.one()
 
-        now = DateTime.truncate(Timex.now(), :second)
+        now = DateTime.utc_now() |> DateTime.truncate(:second)
 
         cond do
           # no log entry, try to insert and then return true (run the job)
@@ -42,7 +47,7 @@ defmodule Cadet.Jobs.Log do
 
           # existing log entry and the last_run is far enough in the past
           # we have the lock, update and return true (run the job)
-          now |> Timex.subtract(period) |> Timex.compare(entry.last_run) >= 0 ->
+          DateTime.compare(DateTime.add(now, -period_seconds, :second), entry.last_run) != :lt ->
             entry
             |> change(last_run: now)
             |> Repo.update!()

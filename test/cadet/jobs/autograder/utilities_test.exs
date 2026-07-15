@@ -11,8 +11,8 @@ defmodule Cadet.Autograder.UtilitiesTest do
       yesterday =
         insert_list(2, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           course: course,
           config: config
         })
@@ -20,8 +20,8 @@ defmodule Cadet.Autograder.UtilitiesTest do
       past =
         insert_list(2, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), days: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 86_400, :second),
           course: course,
           config: config
         })
@@ -29,8 +29,8 @@ defmodule Cadet.Autograder.UtilitiesTest do
       future =
         insert_list(2, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -3),
-          close_at: Timex.shift(Timex.now(), days: 4),
+          open_at: DateTime.add(DateTime.utc_now(), -3 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), 4 * 86_400, :second),
           course: course,
           config: config
         })
@@ -50,8 +50,8 @@ defmodule Cadet.Autograder.UtilitiesTest do
       assessment =
         insert(:assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           course: course,
           config: config
         })

@@ -57,7 +57,7 @@ defmodule CadetWeb.AICommentsHelpers do
         )
 
       # Store both the IV, ciphertext and tag
-      encrypted =
+      _encrypted =
         Base.encode64(iv) <> ":" <> Base.encode64(tag) <> ":" <> Base.encode64(ciphertext)
     else
       {:error, :invalid_encryption_key}

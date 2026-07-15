@@ -30,12 +30,12 @@ defmodule CadetWeb.ViewHelper do
   def format_datetime(datetime = %DateTime{}) do
     datetime
     |> DateTime.truncate(:millisecond)
-    |> Timex.format!("{ISO:Extended}")
+    |> DateTime.to_iso8601(:extended)
   end
 
   def format_datetime(datetime = %NaiveDateTime{}) do
     datetime
-    |> Timex.to_datetime()
+    |> DateTime.from_naive!("Etc/UTC")
     |> format_datetime()
   end
 

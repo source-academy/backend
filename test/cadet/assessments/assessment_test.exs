@@ -25,8 +25,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           course_id: course1.id,
           title: "mission",
           number: "M#{Enum.random(0..10)}",
-          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-          close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
+          open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
+          close_at:
+            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
+              Integer.to_string()
         },
         :valid
       )
@@ -37,8 +39,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           course_id: course2.id,
           title: "mission",
           number: "M#{Enum.random(0..10)}",
-          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-          close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string(),
+          open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
+          close_at:
+            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
+              Integer.to_string(),
           cover_picture: Faker.Avatar.image_url(),
           mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
         },
@@ -62,8 +66,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           config_id: config1.id,
           course_id: course1.id,
           title: "mission",
-          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-          close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
+          open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
+          close_at:
+            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
+              Integer.to_string()
         },
         :invalid
       )
@@ -80,8 +86,8 @@ defmodule Cadet.Assessments.AssessmentTest do
           course_id: course1.id,
           title: "mission",
           number: "4",
-          open_at: Timex.now(),
-          close_at: Timex.shift(Timex.now(), days: 7)
+          open_at: DateTime.utc_now(),
+          close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second)
         })
 
       {:error, changeset} = Repo.insert(config_not_in_course)
@@ -98,11 +104,11 @@ defmodule Cadet.Assessments.AssessmentTest do
           course_id: course1.id,
           title: "invalid config",
           number: "M#{Enum.random(1..10)}",
-          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
+          open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
-            Timex.now()
-            |> Timex.shift(days: Enum.random(1..7))
-            |> Timex.to_unix()
+            DateTime.utc_now()
+            |> DateTime.add(Enum.random(1..7) * 86_400, :second)
+            |> DateTime.to_unix()
             |> Integer.to_string()
         })
 
@@ -118,8 +124,8 @@ defmodule Cadet.Assessments.AssessmentTest do
           course_id: course1.id,
           title: "mission",
           number: "4",
-          open_at: Timex.shift(Timex.now(), days: 7),
-          close_at: Timex.now()
+          open_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+          close_at: DateTime.utc_now()
         })
 
       {:error, changeset} = Repo.insert(invalid_date)
@@ -138,8 +144,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           title: "mission",
           number: "M#{Enum.random(0..10)}",
           max_team_size: -1,
-          open_at: Timex.now() |> Timex.to_unix() |> Integer.to_string(),
-          close_at: Timex.now() |> Timex.shift(days: 7) |> Timex.to_unix() |> Integer.to_string()
+          open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
+          close_at:
+            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
+              Integer.to_string()
         })
 
       assert changeset.valid? == false

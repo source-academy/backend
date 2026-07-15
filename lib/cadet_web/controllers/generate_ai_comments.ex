@@ -5,7 +5,7 @@ defmodule CadetWeb.AICodeAnalysisController do
   require Logger
 
   alias Cadet.{Assessments, AIComments, Courses}
-  alias CadetWeb.{AICodeAnalysisController, AICommentsHelpers}
+  alias CadetWeb.AICommentsHelpers
 
   # For logging outputs to both database and file
   defp save_comment(answer_id, raw_prompt, answers_json, response, error \\ nil) do
@@ -50,7 +50,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     end
   end
 
-  defp check_llm_grading_parameters(llm_api_key, llm_model, llm_api_url, llm_course_level_prompt) do
+  defp check_llm_grading_parameters(_llm_api_key, llm_model, llm_api_url, llm_course_level_prompt) do
     cond do
       is_nil(llm_model) or llm_model == "" ->
         {:parameter_error, "LLM model is not configured for this course"}
@@ -113,7 +113,7 @@ defmodule CadetWeb.AICodeAnalysisController do
         |> put_status(:bad_request)
         |> text("Invalid question ID format")
 
-      {:decrypt_error, err} ->
+      {:decrypt_error, _err} ->
         conn
         |> put_status(:internal_server_error)
         |> text("Failed to decrypt LLM API key")
@@ -284,7 +284,7 @@ defmodule CadetWeb.AICodeAnalysisController do
       {:ok, _updated_comment} ->
         json(conn, %{"status" => "success"})
 
-      {:error, changeset} ->
+      {:error, _changeset} ->
         conn
         |> put_status(:unprocessable_entity)
         |> text("Failed to save final comment")

@@ -1,11 +1,11 @@
 defmodule Cadet.Autograder.ResultStoreWorker do
-  # Suppress no_match from macro
-  @dialyzer {:no_match, __after_compile__: 2}
   @moduledoc """
   This module writes results from the autograder to db. Separate worker is created with lower
   concurrency on the assumption that autograding time >> db IO time so as to reduce db load.
   """
-  use Que.Worker, concurrency: 5
+  use Oban.Worker,
+    queue: :autograder,
+    max_attempts: 1
 
   require Logger
 
@@ -18,18 +18,32 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   alias Cadet.Assessments.{Answer, Assessment, Submission}
   alias Cadet.Courses.AssessmentConfig
 
-  @dialyzer {:nowarn_function, perform: 1}
-  def perform(params = %{answer_id: answer_id, result: result})
+  @doc """
+  Oban entry point.
+  """
+  @impl Oban.Worker
+  def perform(%Oban.Job{args: args}), do: run(args)
+
+  # Backwards-compatible direct entry: tests and other call-sites pass a
+  # plain args map.
+  def perform(args) when is_map(args) and not is_struct(args), do: run(args)
+
+  @doc """
+  Public entry point used by tests and direct callers (does not require an
+  Oban job struct).
+  """
+  @dialyzer {:nowarn_function, run: 1}
+  def run(params = %{answer_id: answer_id, result: result})
       when is_ecto_id(answer_id) do
     Multi.new()
     |> Multi.run(:fetch, fn _repo, _ -> fetch_answer(answer_id) end)
     |> Multi.run(:update, fn _repo, %{fetch: answer} ->
-      update_answer(answer, result, params[:overwrite] || false)
+      update_answer(answer, result, Map.get(params, :overwrite, false))
     end)
     |> Repo.transaction()
     |> case do
       {:ok, _} ->
-        nil
+        :ok
 
       {:error, failed_operation, failed_value, _} ->
         error_message =
@@ -38,6 +52,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
         Logger.error(error_message)
         Sentry.capture_message(error_message)
+        {:error, error_message}
     end
   end
 

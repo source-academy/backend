@@ -6,7 +6,6 @@ defmodule CadetWeb.AdminAssessmentsController do
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 
-  alias CadetWeb.AssessmentsHelpers
   alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.CourseRegistration
@@ -143,7 +142,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
     voting_questions =
       Question
       |> where(type: :voting)
@@ -158,7 +157,7 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
     voting_questions =
       Question
       |> where(type: :voting)
@@ -181,7 +180,7 @@ defmodule CadetWeb.AdminAssessmentsController do
       formatted_open_date = elem(DateTime.from_iso8601(open_at), 1)
       formatted_close_date = elem(DateTime.from_iso8601(close_at), 1)
 
-      if Timex.before?(formatted_close_date, formatted_open_date) do
+      if DateTime.compare(formatted_close_date, formatted_open_date) == :lt do
         {:error, {:bad_request, "New end date should occur after new opening date"}}
       else
         assessment = Map.put(assessment, :open_at, formatted_open_date)
