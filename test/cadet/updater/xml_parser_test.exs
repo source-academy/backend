@@ -277,6 +277,170 @@ defmodule Cadet.Updater.XMLParserTest do
     end
   end
 
+  describe "Conductor programming language" do
+    test "happy path at TASK-level applies to all problems", %{
+      course: course,
+      assessments_with_config: assessments_with_config
+    } do
+      conductor =
+        build(:programming_question,
+          library: build(:conductor_library),
+          grading_library: build(:conductor_library)
+        )
+
+      for {assessment, assessment_config} <- assessments_with_config do
+        xml = XMLGenerator.generate_xml_for(assessment, [conductor])
+        assert :ok == XMLParser.parse_xml(xml, course.id, assessment_config.id)
+      end
+    end
+
+    test "happy path per-PROBLEM override", %{
+      course: course,
+      assessments_with_config: assessments_with_config
+    } do
+      conductor =
+        build(:programming_question,
+          library: build(:conductor_library),
+          grading_library: build(:conductor_library)
+        )
+
+      for {assessment, assessment_config} <- assessments_with_config do
+        xml = XMLGenerator.generate_xml_for(assessment, [conductor])
+        assert :ok == XMLParser.parse_xml(xml, course.id, assessment_config.id)
+      end
+    end
+
+    test "only language attribute (no evaluator) is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(
+        raw_conductor_problem(%{language: "python-3"}),
+        course,
+        assessments_with_config
+      )
+    end
+
+    test "only evaluator attribute (no language) is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(
+        raw_conductor_problem(%{evaluator: "lambda-pyeval-v1"}),
+        course,
+        assessments_with_config
+      )
+    end
+
+    test "language+evaluator mixed with interpreter is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(
+        raw_conductor_problem(%{
+          interpreter: 1,
+          language: "python-3",
+          evaluator: "lambda-pyeval-v1"
+        }),
+        course,
+        assessments_with_config
+      )
+    end
+
+    test "conductor with EXTERNAL child element is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(
+        raw_conductor_problem_with_children(
+          %{language: "python-3", evaluator: "lambda-pyeval-v1"},
+          ~s(<EXTERNAL name="runes"/>)
+        ),
+        course,
+        assessments_with_config
+      )
+    end
+
+    test "conductor with GLOBAL child element is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(
+        raw_conductor_problem_with_children(
+          %{language: "python-3", evaluator: "lambda-pyeval-v1"},
+          "<GLOBAL><IDENTIFIER>g</IDENTIFIER><VALUE>v</VALUE></GLOBAL>"
+        ),
+        course,
+        assessments_with_config
+      )
+    end
+
+    test "conductor with @variant is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(
+        raw_conductor_problem(%{language: "python-3", evaluator: "e1", variant: "typed"}),
+        course,
+        assessments_with_config
+      )
+    end
+
+    test "conductor with @exectime is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(
+        raw_conductor_problem(%{language: "python-3", evaluator: "e1", exectime: 2000}),
+        course,
+        assessments_with_config
+      )
+    end
+
+    test "empty PROGRAMMINGLANGUAGE element is invalid",
+         %{course: course, assessments_with_config: assessments_with_config} do
+      assert_conductor_error(raw_conductor_problem(%{}), course, assessments_with_config)
+    end
+
+    # Build a minimal XML document with a single PROBLEM containing a
+    # single PROGRAMMINGLANGUAGE element whose attribute map and (optional)
+    # inner children we control directly.
+    defp raw_conductor_problem(attrs) do
+      attrs_xml =
+        attrs
+        |> Enum.map(fn {k, v} -> ~s(#{k}="#{v}") end)
+        |> Enum.join(" ")
+
+      """
+      <CONTENT>
+        <TASK number="1" title="Conductor Test">
+          <PROBLEMS>
+            <PROBLEM type="programming" maxxp="100">
+              <TEXT>do something</TEXT>
+              <PROGRAMMINGLANGUAGE #{attrs_xml}/>
+            </PROBLEM>
+          </PROBLEMS>
+        </TASK>
+      </CONTENT>
+      """
+    end
+
+    defp raw_conductor_problem_with_children(attrs, inner_xml) do
+      attrs_xml =
+        attrs
+        |> Enum.map(fn {k, v} -> ~s(#{k}="#{v}") end)
+        |> Enum.join(" ")
+
+      """
+      <CONTENT>
+        <TASK number="1" title="Conductor Test">
+          <PROBLEMS>
+            <PROBLEM type="programming" maxxp="100">
+              <TEXT>do something</TEXT>
+              <PROGRAMMINGLANGUAGE #{attrs_xml}>#{inner_xml}</PROGRAMMINGLANGUAGE>
+            </PROBLEM>
+          </PROBLEMS>
+        </TASK>
+      </CONTENT>
+      """
+    end
+
+    defp assert_conductor_error(xml, course, assessments_with_config) do
+      for {_assessment, assessment_config} <- assessments_with_config do
+        assert capture_log(fn ->
+                 assert {:error, {:bad_request, _msg}} =
+                          XMLParser.parse_xml(xml, course.id, assessment_config.id)
+               end)
+      end
+    end
+  end
+
   describe "XML file processing" do
     test "happy path", %{
       questions: questions,

@@ -126,8 +126,28 @@ defmodule Cadet.Autograder.LambdaWorker do
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
     question_content = question.question
 
+    cond do
+      # Conductor libraries must not be evaluated by the legacy Source-based
+      # lambda. A future conductor autograder pipeline is expected to take
+      # over; until then we explicitly refuse to grade so the caller can
+      # surface a clear error rather than crashing.
+      question.grading_library.format == :conductor ->
+        raise __MODULE__.UnsupportedGradingFormatError,
+          message:
+            "Conductor libraries (language/evaluator) are not supported by the legacy lambda autograder."
+
+      is_nil(question.grading_library.external) ->
+        raise ArgumentError,
+          message: "Question #{question.id} has no external library; cannot autograde."
+
+      true ->
+        do_build_request_params(question_content, question.grading_library, answer)
+    end
+  end
+
+  defp do_build_request_params(question_content, grading_library, answer) do
     {_, upcased_name_external} =
-      question.grading_library.external
+      grading_library.external
       |> Map.from_struct()
       |> Map.get_and_update(
         :name,
@@ -142,11 +162,15 @@ defmodule Cadet.Autograder.LambdaWorker do
         Map.get(question_content, "public", []) ++
           Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", []),
       library: %{
-        chapter: question.grading_library.chapter,
+        chapter: grading_library.chapter,
         external: upcased_name_external,
-        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
+        globals: Enum.map(grading_library.globals, fn {k, v} -> [k, v] end)
       }
     }
+  end
+
+  defmodule UnsupportedGradingFormatError do
+    defexception [:message]
   end
 
   defp parse_response(response) when is_map(response) do
