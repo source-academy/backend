@@ -29,9 +29,10 @@ defmodule Cadet.StoriesTest do
 
     test "invalid params", %{valid_params: params} do
       invalid_params = %{
-      params
-      | :open_at => DateTime.add(DateTime.utc_now(), 365 * 86_400, :second)
-    }
+        params
+        | :open_at => DateTime.add(DateTime.utc_now(), 365 * 86_400, :second)
+      }
+
       assert_changeset_db(invalid_params, :invalid)
     end
   end

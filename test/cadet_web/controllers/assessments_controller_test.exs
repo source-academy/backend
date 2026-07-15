@@ -1397,7 +1397,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           submission_db = Repo.get(Submission, submission.id)
 
           proportion =
-            DateTime.diff(assessment.close_at, DateTime.utc_now(), :hour) / (100 + hours_after - 48)
+            DateTime.diff(assessment.close_at, DateTime.utc_now(), :hour) /
+              (100 + hours_after - 48)
 
           assert submission_db.status == :submitted
           assert submission_db.xp_bonus == round(proportion * 100)
