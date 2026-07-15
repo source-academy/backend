@@ -67,7 +67,8 @@ defmodule Cadet.Autograder.LambdaWorker do
   end
 
   defp enqueue_result_store(args) do
-    ResultStoreWorker.new(args)
+    args
+    |> ResultStoreWorker.new()
     |> Oban.insert()
   end
 
