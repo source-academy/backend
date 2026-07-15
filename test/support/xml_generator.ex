@@ -175,11 +175,13 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp programminglanguage(raw_attrs, children) do
-    {"PROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+    {"PROGRAMMINGLANGUAGE",
+     map_permit_keys(raw_attrs, ~w(interpreter variant exectime language evaluator)a), children}
   end
 
   defp graderprogramminglanguage(raw_attrs, children) do
-    {"GRADERPROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+    {"GRADERPROGRAMMINGLANGUAGE",
+     map_permit_keys(raw_attrs, ~w(interpreter variant exectime language evaluator)a), children}
   end
 
   defp external(raw_attrs, children) do
@@ -211,18 +213,42 @@ defmodule Cadet.Test.XMLGenerator do
     if no_deployment do
       []
     else
-      [
-        tag_function.(
-          %{interpreter: library.chapter},
-          [
-            external(
-              %{name: library.external.name},
-              Enum.map(library.external.symbols, &symbol/1)
-            )
-          ] ++ process_globals(library[:globals])
-        )
-      ]
+      tag_function.(
+        library_attrs(library),
+        library_children(library)
+      )
+      |> List.wrap()
     end
+  end
+
+  defp library_attrs(%{format: :conductor} = library) do
+    Map.take(library, [:language, :evaluator, :variant, :exectime, :interpreter])
+    |> Map.reject(fn {_k, v} -> is_nil(v) end)
+  end
+
+  defp library_attrs(library) do
+    %{interpreter: library.chapter}
+  end
+
+  defp library_children(%{format: :conductor}), do: []
+
+  defp library_children(library) do
+    [
+      external(
+        %{name: library.external.name},
+        Enum.map(library.external.symbols, &symbol/1)
+      )
+    ] ++ process_globals(library[:globals])
+  end
+
+  # Allows tests to build a raw XML snippet that intentionally violates
+  # the conductor/legacy rules.
+  def raw_programminglanguage(attrs, children \\ []) do
+    {"PROGRAMMINGLANGUAGE", attrs, children}
+  end
+
+  def raw_graderprogramminglanguage(attrs, children \\ []) do
+    {"GRADERPROGRAMMINGLANGUAGE", attrs, children}
   end
 
   defp process_globals(nil) do

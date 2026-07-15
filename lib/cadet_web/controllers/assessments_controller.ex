@@ -483,8 +483,25 @@ defmodule CadetWeb.AssessmentsController do
         end,
       Library:
         swagger_schema do
+          description(
+            "Discriminated library union. Fields depend on `format`. " <>
+              "`format=legacy`: chapter, variant, execTimeMs, globals, external, languageOptions. " <>
+              "`format=conductor`: language, evaluator (legacy fields must be absent)."
+          )
+
           properties do
-            chapter(:integer)
+            format(
+              :string,
+              "Library format discriminator",
+              enum: [:legacy, :conductor],
+              required: true
+            )
+
+            chapter(:integer, "Source language chapter (legacy only)")
+
+            variant(:string, "Source language variant (legacy only)")
+
+            execTimeMs(:integer, "Execution time in milliseconds (legacy only)")
 
             globals(
               Schema.new do
@@ -495,12 +512,32 @@ defmodule CadetWeb.AssessmentsController do
                     type(:string)
                   end
                 )
-              end
+              end,
+              "Map of global identifier to value (legacy only, serialized as array)"
             )
 
             external(
               Schema.ref(:ExternalLibrary),
-              "The external library for this question"
+              "The external library for this question (legacy only)"
+            )
+
+            languageOptions(
+              Schema.new do
+                type(:object)
+
+                additional_properties(true)
+              end,
+              "Language options key/value map (legacy only)"
+            )
+
+            language(
+              :string,
+              "Conductor language identifier (conductor only)"
+            )
+
+            evaluator(
+              :string,
+              "Conductor evaluator identifier (conductor only)"
             )
           end
         end,
