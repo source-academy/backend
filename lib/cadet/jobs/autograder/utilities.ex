@@ -32,7 +32,8 @@ defmodule Cadet.Autograder.Utilities do
   the queued Oban job (used by tests).
   """
   def enqueue_lambda(args) do
-    Cadet.Autograder.LambdaWorker.new(args)
+    args
+    |> Cadet.Autograder.LambdaWorker.new()
     |> Oban.insert()
   end
 
