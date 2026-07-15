@@ -27,8 +27,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           number: "M#{Enum.random(0..10)}",
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
-            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
-              Integer.to_string()
+            DateTime.utc_now()
+            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.to_unix()
+            |> Integer.to_string()
         },
         :valid
       )
@@ -41,8 +43,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           number: "M#{Enum.random(0..10)}",
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
-            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
-              Integer.to_string(),
+            DateTime.utc_now()
+            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.to_unix()
+            |> Integer.to_string(),
           cover_picture: Faker.Avatar.image_url(),
           mission_pdf: build_upload("test/fixtures/upload.pdf", "application/pdf")
         },
@@ -68,8 +72,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           title: "mission",
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
-            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
-              Integer.to_string()
+            DateTime.utc_now()
+            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.to_unix()
+            |> Integer.to_string()
         },
         :invalid
       )
@@ -146,8 +152,10 @@ defmodule Cadet.Assessments.AssessmentTest do
           max_team_size: -1,
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
-            DateTime.utc_now() |> DateTime.add(7 * 86_400, :second) |> DateTime.to_unix() |>
-              Integer.to_string()
+            DateTime.utc_now()
+            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.to_unix()
+            |> Integer.to_string()
         })
 
       assert changeset.valid? == false

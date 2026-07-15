@@ -497,8 +497,12 @@ defmodule Cadet.Assessments do
         |> order_by(:display_order)
         |> Repo.all()
         |> Enum.map(fn
-          {q, nil, _, _} -> %{q | answer: %Answer{grader: nil}}
-          {q, %Answer{} = a, nil, _} -> %{q | answer: %Answer{a | grader: nil}}
+          {q, nil, _, _} ->
+            %{q | answer: %Answer{grader: nil}}
+
+          {q, %Answer{} = a, nil, _} ->
+            %{q | answer: %Answer{a | grader: nil}}
+
           {q, %Answer{} = a, %CourseRegistration{} = g, u} ->
             %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
         end)
@@ -2077,7 +2081,10 @@ defmodule Cadet.Assessments do
         if total.total_xp <= 0 do
           0
         else
-          if DateTime.compare(cur_time, DateTime.add(assessment.open_at, early_hours * 3_600, :second)) ==
+          if DateTime.compare(
+               cur_time,
+               DateTime.add(assessment.open_at, early_hours * 3_600, :second)
+             ) ==
                :lt do
             max_bonus_xp
           else
@@ -2249,7 +2256,11 @@ defmodule Cadet.Assessments do
 
   defp leaderboard_open?(assessment, voting_question) do
     DateTime.compare(
-      DateTime.add(assessment.close_at, voting_question.question["reveal_hours"] * 3_600, :second),
+      DateTime.add(
+        assessment.close_at,
+        voting_question.question["reveal_hours"] * 3_600,
+        :second
+      ),
       DateTime.utc_now()
     ) == :lt
   end
@@ -3525,7 +3536,10 @@ defmodule Cadet.Assessments do
       Repo.insert(
         answer_changeset,
         on_conflict: [
-          set: [answer: get_change(answer_changeset, :answer), last_modified_at: DateTime.utc_now()]
+          set: [
+            answer: get_change(answer_changeset, :answer),
+            last_modified_at: DateTime.utc_now()
+          ]
         ],
         conflict_target: [:submission_id, :question_id]
       )
