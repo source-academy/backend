@@ -31,7 +31,7 @@ defmodule Cadet.Stories.Story do
 
   defp validate_open_close_date(changeset) do
     validate_change(changeset, :open_at, fn :open_at, open_at ->
-      if Timex.before?(open_at, get_field(changeset, :close_at)) do
+      if DateTime.compare(open_at, get_field(changeset, :close_at)) == :lt do
         []
       else
         [open_at: "Open date must be before close date"]

@@ -1,24 +1,28 @@
 defmodule Cadet.Autograder.GradingJobTest do
   use Cadet.DataCase
+  use Oban.Testing, repo: Cadet.Repo
 
   import Mock
   import Ecto.Query
 
-  alias Que.Persistence, as: JobsQueue
-
   alias Cadet.Accounts.Notification
-  alias Cadet.Assessments.{Answer, Question, Submission, SubmissionVotes}
+  alias Cadet.Assessments.{Answer, Submission, SubmissionVotes}
   alias Cadet.Autograder.{GradingJob, LambdaWorker}
 
   defp assert_dispatched(answer_question_list) do
     for {answer, question} <- answer_question_list do
-      assert_called(
-        Que.add(LambdaWorker, %{
-          question: Repo.get(Question, question.id),
-          answer: Repo.get(Answer, answer.id)
-        })
+      assert_enqueued(
+        worker: LambdaWorker,
+        args: %{
+          question_id: question.id,
+          answer_id: answer.id
+        }
       )
     end
+  end
+
+  defp assert_no_jobs_enqueued do
+    refute_enqueued(worker: Cadet.Autograder.LambdaWorker)
   end
 
   describe "#force_grade_individual_submission, all programming questions" do
@@ -35,8 +39,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           config: assessment_config,
           course: course
         })
@@ -51,7 +55,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
     test "all assessments attempted, all questions graded, assocs preloaded, should enqueue all jobs",
          %{course: course, assessments: assessments} do
-      with_mock Que, add: fn _, _ -> nil end do
+      Oban.Testing.with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         [{assessment, questions} | _] = assessments
@@ -78,13 +82,13 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert_dispatched(Enum.zip(answers, questions))
-      end
+      end)
     end
 
     test "all assessments attempted, all questions graded, no assocs preloaded, " <>
            "should enqueue all jobs",
          %{course: course, assessments: assessments} do
-      with_mock Que, add: fn _, _ -> nil end do
+      Oban.Testing.with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         [{assessment, questions} | _] = assessments
@@ -111,7 +115,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert_dispatched(Enum.zip(answers, questions))
-      end
+      end)
     end
   end
 
@@ -123,8 +127,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           config: assessment_config,
           course: course
         })
@@ -141,7 +145,7 @@ defmodule Cadet.Autograder.GradingJobTest do
       course: course,
       assessments: assessments
     } do
-      with_mock Que, add: fn _, _ -> nil end do
+      Oban.Testing.with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         submissions_answers =
@@ -176,7 +180,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         end
 
         assert_dispatched(Enum.zip(answers, questions))
-      end
+      end)
     end
 
     test "all assessments attempted, all questions graded, should not do anything", %{
@@ -201,7 +205,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
       GradingJob.grade_all_due_yesterday()
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
 
     test "all assessments attempted, should update all submission statuses and create notifications",
@@ -209,7 +213,7 @@ defmodule Cadet.Autograder.GradingJobTest do
            course: course,
            assessments: assessments
          } do
-      with_mock Que, add: fn _, _ -> nil end do
+      Oban.Testing.with_testing_mode(:manual, fn ->
         group = insert(:group, %{course: course})
 
         student =
@@ -230,7 +234,7 @@ defmodule Cadet.Autograder.GradingJobTest do
                  |> Repo.one()
                  |> is_nil()
         end
-      end
+      end)
     end
 
     test "all assessments submitted, should not create notifications",
@@ -238,7 +242,7 @@ defmodule Cadet.Autograder.GradingJobTest do
            course: course,
            assessments: assessments
          } do
-      with_mock Que, add: fn _, _ -> nil end do
+      Oban.Testing.with_testing_mode(:manual, fn ->
         group = insert(:group, %{course: course})
 
         student =
@@ -257,14 +261,14 @@ defmodule Cadet.Autograder.GradingJobTest do
                  |> Repo.one()
                  |> is_nil()
         end
-      end
+      end)
     end
 
     test "all assessments unattempted, should create submissions", %{
       course: course,
       assessments: assessments
     } do
-      with_mock Que, add: fn _, _ -> nil end do
+      Oban.Testing.with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         GradingJob.grade_all_due_yesterday()
@@ -278,7 +282,7 @@ defmodule Cadet.Autograder.GradingJobTest do
 
           assert submission && submission.status == :submitted
         end
-      end
+      end)
     end
 
     test "all assessments attempting, no questions answered, " <>
@@ -309,7 +313,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.answer == %{"code" => "// Question was left blank by the student."}
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
 
     # Test unanswered question behaviour of two finger walk
@@ -319,7 +323,7 @@ defmodule Cadet.Autograder.GradingJobTest do
            course: course,
            assessments: assessments
          } do
-      with_mock Que, add: fn _, _ -> nil end do
+      Oban.Testing.with_testing_mode(:manual, fn ->
         student = insert(:course_registration, %{course: course, role: :student})
 
         # Do not answer first question in each assessment
@@ -371,7 +375,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert answer.autograding_status == :success
           assert answer.answer == %{"code" => "// Question was left blank by the student."}
         end
-      end
+      end)
     end
 
     test "all assessments attempted, all questions answered, instance raced, should not do anything",
@@ -412,7 +416,7 @@ defmodule Cadet.Autograder.GradingJobTest do
           assert Repo.get(Answer, answer.id).autograding_status == :none
         end
 
-        assert Enum.empty?(JobsQueue.all())
+        assert_no_jobs_enqueued()
       end
     end
   end
@@ -431,8 +435,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           config: assessment_config,
           course: course
         })
@@ -481,7 +485,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.answer == %{"choice_id" => 0}
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
 
     test "all assessments attempted, all questions answered, " <>
@@ -533,7 +537,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer_db.autograding_status == :success
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
   end
 
@@ -547,8 +551,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           config: assessment_config,
           course: course
         })
@@ -597,7 +601,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.answer == %{"choice_id" => 0}
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
 
     test "all assessments attempted, all questions answered, " <>
@@ -649,7 +653,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer_db.autograding_status == :success
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
   end
 
@@ -667,8 +671,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           config: assessment_config,
           course: course
         })
@@ -717,7 +721,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.answer == %{"completed" => false}
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
 
     test "all assessments attempted, all questions aswered, " <>
@@ -780,7 +784,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer_db.autograding_status == :success
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
   end
 
@@ -794,8 +798,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
           config: assessment_config,
           course: course
         })
@@ -844,7 +848,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer.answer == %{"completed" => false}
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
 
     test "all assessments attempted, all questions aswered, " <>
@@ -907,7 +911,7 @@ defmodule Cadet.Autograder.GradingJobTest do
         assert answer_db.autograding_status == :success
       end
 
-      assert Enum.empty?(JobsQueue.all())
+      assert_no_jobs_enqueued()
     end
   end
 end

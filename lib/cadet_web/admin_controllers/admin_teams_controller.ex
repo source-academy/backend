@@ -90,7 +90,7 @@ defmodule CadetWeb.AdminTeamsController do
     end
   end
 
-  def delete(conn, %{"course_id" => course_id, "teamid" => team_id}) do
+  def delete(conn, %{"course_id" => _course_id, "teamid" => team_id}) do
     delete(conn, %{"teamId" => team_id})
   end
 

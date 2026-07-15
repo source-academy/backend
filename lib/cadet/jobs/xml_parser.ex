@@ -12,10 +12,6 @@ defmodule Cadet.Updater.XMLParser do
 
   require Logger
 
-  defmacrop is_non_empty_list(term) do
-    quote do: is_list(unquote(term)) and unquote(term) != []
-  end
-
   @spec parse_xml(String.t(), integer(), integer(), boolean()) ::
           :ok | {:ok, String.t()} | {:error, {atom(), String.t()}}
   def parse_xml(xml, course_id, assessment_config_id, force_update \\ false) do
@@ -73,13 +69,15 @@ defmodule Cadet.Updater.XMLParser do
   @spec process_assessment(String.t(), integer(), integer()) ::
           {:ok, map()} | {:error, String.t()}
   defp process_assessment(xml, course_id, assessment_config_id) do
-    open_at =
-      Timex.now()
-      |> Timex.beginning_of_day()
-      |> Timex.shift(days: 3)
-      |> Timex.shift(hours: 4)
+    today = Date.utc_today()
 
-    close_at = Timex.shift(open_at, days: 7)
+    open_at =
+      today
+      |> DateTime.new!(~T[00:00:00.000000])
+      |> DateTime.add(3 * 86_400, :second)
+      |> DateTime.add(4 * 3_600, :second)
+
+    close_at = DateTime.add(open_at, 7 * 86_400, :second)
 
     assessment_config =
       AssessmentConfig

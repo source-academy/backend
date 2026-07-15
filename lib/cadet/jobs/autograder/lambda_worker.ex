@@ -1,29 +1,51 @@
 defmodule Cadet.Autograder.LambdaWorker do
-  # Suppress no_match from macro
-  @dialyzer {:no_match, __after_compile__: 2}
   @moduledoc """
   This module submits the answer to the autograder and creates a job for the ResultStoreWorker to
   write the received result to db.
   """
-  use Que.Worker, concurrency: 20
+  use Oban.Worker,
+    queue: :autograder,
+    max_attempts: 1
 
   require Logger
 
-  alias Cadet.Autograder.ResultStoreWorker
   alias Cadet.Assessments.{Answer, Question}
+  alias Cadet.Autograder.ResultStoreWorker
+  alias Cadet.Repo
 
   @doc """
-  This Que callback transforms an input of %{question: %Question{}, answer: %Answer{}} into
-  the correct shape to dispatch to lambda, waits for the response, parses it, and enqueues a
-  storage job.
+  Oban entry point.
   """
-  def perform(params = %{answer: answer = %Answer{}, question: %Question{}}) do
-    lambda_params = build_request_params(params)
+  @impl Oban.Worker
+  def perform(%Oban.Job{args: args}) do
+    run(args)
+  end
+
+  # Backwards-compatible direct entry: tests and other call-sites pass a
+  # plain args map.
+  def perform(args) when is_map(args) and not is_struct(args) do
+    run(args)
+  end
+
+  @doc """
+  Public entry point used by tests and by code that wants to bypass Oban.
+  Accepts a plain args map (not an %Oban.Job{}) with the same shape Oban would
+  pass in `args`.
+  """
+  def run(args = %{question_id: question_id, answer_id: answer_id}) do
+    question = Repo.get!(Question, question_id)
+    answer = Repo.get!(Answer, answer_id)
+    run_with_models(args, answer, question)
+  end
+
+  defp run_with_models(args, answer = %Answer{}, question = %Question{}) do
+    lambda_params = build_request_params(%{question: question, answer: answer})
 
     if Enum.empty?(lambda_params.testcases) do
       Logger.warning("No testcases found. Skipping autograding for answer_id: #{answer.id}")
       # Fix for https://github.com/source-academy/backend/issues/472
       Process.sleep(1000)
+      :ok
     else
       response =
         :cadet
@@ -34,44 +56,28 @@ defmodule Cadet.Autograder.LambdaWorker do
 
       result = parse_response(response)
 
-      Que.add(ResultStoreWorker, %{
+      enqueue_result_store(%{
         answer_id: answer.id,
         result: result,
-        overwrite: params[:overwrite] || false
+        overwrite: Map.get(args, :overwrite, false)
       })
+
+      :ok
     end
   end
 
-  def on_failure(%{answer: answer = %Answer{}, question: %Question{}}, error) do
+  defp enqueue_result_store(args) do
+    ResultStoreWorker.new(args)
+    |> Oban.insert()
+  end
+
+  def on_failure(_args, error) do
     error_message =
-      "Failed to get autograder result. answer_id: #{answer.id}, error: #{inspect(error, pretty: true)}"
+      "Failed to get autograder result. error: #{inspect(error, pretty: true)}"
 
     Logger.error(error_message)
     Sentry.capture_message(error_message)
-
-    Que.add(
-      ResultStoreWorker,
-      %{
-        answer_id: answer.id,
-        result: %{
-          score: 0,
-          max_score: 1,
-          status: :failed,
-          result: [
-            %{
-              "resultType" => "error",
-              "errors" => [
-                %{
-                  "errorType" => "systemError",
-                  "errorMessage" =>
-                    "Autograder runtime error. Please contact a system administrator"
-                }
-              ]
-            }
-          ]
-        }
-      }
-    )
+    :ok
   end
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do

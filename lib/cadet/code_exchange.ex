@@ -27,7 +27,7 @@ defmodule Cadet.TokenExchange do
         {:error, "Not found"}
 
       struct ->
-        if Timex.before?(struct.expires_at, Timex.now()) do
+        if DateTime.compare(struct.expires_at, DateTime.utc_now()) == :lt do
           {:error, "Expired"}
         else
           struct = Repo.preload(struct, :user)
@@ -38,7 +38,7 @@ defmodule Cadet.TokenExchange do
   end
 
   def delete_expired do
-    now = Timex.now()
+    now = DateTime.utc_now()
 
     Repo.delete_all(from(c in __MODULE__, where: c.expires_at < ^now))
   end

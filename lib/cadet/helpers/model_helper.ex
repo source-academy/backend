@@ -5,21 +5,17 @@ defmodule Cadet.ModelHelper do
 
   import Ecto.Changeset
 
-  alias Timex.Timezone
-
   def convert_date(:invalid, _) do
     :invalid
   end
 
   def convert_date(params, field) do
     if is_binary(params[field]) && params[field] != "" do
-      timezone = Timezone.get("Asia/Singapore", Timex.now())
-
       date =
         params[field]
         |> String.to_integer()
-        |> Timex.from_unix(:second)
-        |> Timezone.convert(timezone)
+        |> DateTime.from_unix!(:second)
+        |> DateTime.shift_zone!("Asia/Singapore")
 
       Map.put(params, field, date)
     else
