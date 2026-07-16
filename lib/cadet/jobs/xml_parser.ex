@@ -62,15 +62,17 @@ defmodule Cadet.Updater.XMLParser do
 
   defp extract_changeset_error_message(errors_list) do
     errors_list
-    |> Enum.map(fn {field, messages} ->
-      formatted =
-        messages
-        |> List.wrap()
-        |> Enum.map_join(" ", &stringify_error_message/1)
+    |> Enum.map_join(
+      fn {field, messages} ->
+        formatted =
+          messages
+          |> List.wrap()
+          |> Enum.map_join(" ", &stringify_error_message/1)
 
-      "#{to_string(field)} #{formatted}"
-    end)
-    |> Enum.join(" ")
+        "#{to_string(field)} #{formatted}"
+      end,
+      " "
+    )
   end
 
   defp stringify_error_message(msg) when is_binary(msg), do: msg
