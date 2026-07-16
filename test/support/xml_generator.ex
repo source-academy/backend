@@ -213,16 +213,18 @@ defmodule Cadet.Test.XMLGenerator do
     if no_deployment do
       []
     else
-      tag_function.(
-        library_attrs(library),
-        library_children(library)
+      List.wrap(
+        tag_function.(
+          library_attrs(library),
+          library_children(library)
+        )
       )
-      |> List.wrap()
     end
   end
 
-  defp library_attrs(%{format: :conductor} = library) do
-    Map.take(library, [:language, :evaluator, :variant, :exectime, :interpreter])
+  defp library_attrs(library = %{format: :conductor}) do
+    library
+    |> Map.take([:language, :evaluator, :variant, :exectime, :interpreter])
     |> Map.reject(fn {_k, v} -> is_nil(v) end)
   end
 

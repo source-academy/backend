@@ -67,7 +67,8 @@ defmodule Cadet.Assessments.Library do
   defp validate_conductor_no_legacy_fields(changeset) do
     forbidden = [:chapter, :variant, :exec_time_ms, :globals, :language_options]
 
-    Enum.reduce(forbidden, changeset, fn field, acc ->
+    forbidden
+    |> Enum.reduce(changeset, fn field, acc ->
       case fetch_change(acc, field) do
         {:ok, _value} ->
           add_error(acc, field, "must not be set for conductor format")

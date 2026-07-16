@@ -397,8 +397,7 @@ defmodule Cadet.Updater.XMLParserTest do
     defp raw_conductor_problem(attrs) do
       attrs_xml =
         attrs
-        |> Enum.map(fn {k, v} -> ~s(#{k}="#{v}") end)
-        |> Enum.join(" ")
+        |> Enum.map_join(fn {k, v} -> ~s(#{k}="#{v}") end, " ")
 
       """
       <CONTENT>
@@ -417,8 +416,7 @@ defmodule Cadet.Updater.XMLParserTest do
     defp raw_conductor_problem_with_children(attrs, inner_xml) do
       attrs_xml =
         attrs
-        |> Enum.map(fn {k, v} -> ~s(#{k}="#{v}") end)
-        |> Enum.join(" ")
+        |> Enum.map_join(fn {k, v} -> ~s(#{k}="#{v}") end, " ")
 
       """
       <CONTENT>
