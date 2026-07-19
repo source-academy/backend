@@ -87,15 +87,16 @@ defmodule Cadet.Chatbot.LlmConversations do
 
   defp maybe_update_language(conversation, nil), do: {:ok, conversation}
 
-  defp maybe_update_language(conversation = %{language_id: language_id}, language_id),
-    do: {:ok, conversation}
-
   defp maybe_update_language(conversation, language_id) do
-    case conversation
-         |> Conversation.changeset(%{language_id: language_id})
-         |> Repo.update() do
-      {:ok, updated} -> {:ok, updated}
-      {:error, changeset} -> {:error, full_error_messages(changeset)}
+    if conversation.language_id == language_id do
+      {:ok, conversation}
+    else
+      case conversation
+           |> Conversation.changeset(%{language_id: language_id})
+           |> Repo.update() do
+        {:ok, updated} -> {:ok, updated}
+        {:error, changeset} -> {:error, full_error_messages(changeset)}
+      end
     end
   end
 
