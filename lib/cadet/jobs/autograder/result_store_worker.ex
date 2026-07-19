@@ -32,7 +32,6 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   Public entry point used by tests and direct callers (does not require an
   Oban job struct).
   """
-  @dialyzer {:nowarn_function, run: 1}
   def run(params) when is_map(params) do
     answer_id = get_arg(params, :answer_id)
     result = normalize_result(get_arg(params, :result))
@@ -40,6 +39,9 @@ defmodule Cadet.Autograder.ResultStoreWorker do
     do_run(answer_id, result, get_arg(params, :overwrite, false))
   end
 
+  # Suppress the Ecto.Multi opaqueness false positive (call_without_opaque) from
+  # the idiomatic `Multi.new() |> Multi.run(...)` pipeline.
+  @dialyzer {:nowarn_function, do_run: 3}
   defp do_run(answer_id, result, overwrite) when is_ecto_id(answer_id) do
     Multi.new()
     |> Multi.run(:fetch, fn _repo, _ -> fetch_answer(answer_id) end)
