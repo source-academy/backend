@@ -87,7 +87,7 @@ defmodule Cadet.Chatbot.LlmConversations do
 
   defp maybe_update_language(conversation, nil), do: {:ok, conversation}
 
-  defp maybe_update_language(%{language_id: language_id} = conversation, language_id),
+  defp maybe_update_language(conversation = %{language_id: language_id}, language_id),
     do: {:ok, conversation}
 
   defp maybe_update_language(conversation, language_id) do
