@@ -69,7 +69,7 @@ def checksum(text):
 
 
 def now():
-    return datetime.utcnow().replace(microsecond=0)
+    return datetime.now(timezone.utc).replace(microsecond=0)
 
 
 def count_tokens(text, model):
