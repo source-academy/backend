@@ -33,12 +33,18 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   Oban job struct).
   """
   @dialyzer {:nowarn_function, run: 1}
-  def run(params = %{answer_id: answer_id, result: result})
-      when is_ecto_id(answer_id) do
+  def run(params) when is_map(params) do
+    answer_id = get_arg(params, :answer_id)
+    result = normalize_result(get_arg(params, :result))
+
+    do_run(answer_id, result, get_arg(params, :overwrite, false))
+  end
+
+  defp do_run(answer_id, result, overwrite) when is_ecto_id(answer_id) do
     Multi.new()
     |> Multi.run(:fetch, fn _repo, _ -> fetch_answer(answer_id) end)
     |> Multi.run(:update, fn _repo, %{fetch: answer} ->
-      update_answer(answer, result, Map.get(params, :overwrite, false))
+      update_answer(answer, result, overwrite)
     end)
     |> Repo.transaction()
     |> case do
@@ -54,6 +60,23 @@ defmodule Cadet.Autograder.ResultStoreWorker do
         Sentry.capture_message(error_message)
         {:error, error_message}
     end
+  end
+
+  defp normalize_result(result) when is_map(result) do
+    %{
+      score: get_arg(result, :score),
+      max_score: get_arg(result, :max_score),
+      status: normalize_status(get_arg(result, :status)),
+      result: get_arg(result, :result)
+    }
+  end
+
+  defp normalize_status("success"), do: :success
+  defp normalize_status("failed"), do: :failed
+  defp normalize_status(status) when is_atom(status), do: status
+
+  defp get_arg(args, key, default \\ nil) do
+    Map.get(args, key, Map.get(args, Atom.to_string(key), default))
   end
 
   defp fetch_answer(answer_id) when is_ecto_id(answer_id) do
