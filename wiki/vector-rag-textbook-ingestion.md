@@ -52,6 +52,12 @@ Optional local retrieval debugging:
 export VECTOR_RAG_DEBUG=true
 ```
 
+Optional similarity threshold override. The default is `0.35`; set an empty value to disable threshold filtering.
+
+```bash
+export VECTOR_RAG_MIN_SIMILARITY=0.35
+```
+
 When enabled, the backend logs the retrieved top chunks for each chat request, including similarity score, section, section title, source filename, and a short content preview.
 
 Change `--course-id 1` to the real course id. If the final file has a different filename, replace `priv/rag/source_texts/sicpy.md` in the commands.

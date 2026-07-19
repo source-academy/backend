@@ -139,6 +139,38 @@ defmodule CadetWeb.ChatControllerTest do
     end
 
     @tag authenticate: :student
+    test "returns textbook scope message when vector RAG finds no context", %{conn: conn} do
+      original_config = Application.get_env(:cadet, :vector_rag)
+
+      Application.put_env(:cadet, :vector_rag,
+        enabled: true,
+        top_k: 8,
+        min_similarity: 0.35,
+        retriever: CadetWeb.ChatControllerTest.EmptyRetriever,
+        embedding_provider: Cadet.Chatbot.OpenAIEmbeddings,
+        embedding_model: "text-embedding-3-small",
+        embedding_api_url: "https://api.openai.com/v1/embeddings"
+      )
+
+      on_exit(fn -> Application.put_env(:cadet, :vector_rag, original_config) end)
+
+      conversation = insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+      conn =
+        post(conn, "/v2/chats/message", %{
+          "message" => "what is matrix multiplication and eigenvector",
+          "section" => "index",
+          "initialContext" => ""
+        })
+
+      assert json_response(conn, 200) == %{
+               "conversationId" => conversation.id,
+               "response" =>
+                 "I can only help with questions related to the Python textbook material. Please ask a textbook-related question."
+             }
+    end
+
+    @tag authenticate: :student
     @tag requires_setup: true
     test "The content length is too long",
          %{conn: conn, conversation_id: conversation_id} do
@@ -270,4 +302,8 @@ defmodule CadetWeb.ChatControllerTest.FakeRetriever do
     send(self(), {:vector_rag_retrieved, query, opts})
     {:ok, [%{title: "Python notes", content: "Python uses def to define functions."}]}
   end
+end
+
+defmodule CadetWeb.ChatControllerTest.EmptyRetriever do
+  def retrieve(_query, _opts), do: {:ok, []}
 end

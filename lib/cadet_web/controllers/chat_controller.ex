@@ -7,7 +7,7 @@ defmodule CadetWeb.ChatController do
   use PhoenixSwagger
   require Logger
 
-  alias Cadet.Chatbot.{Conversation, LanguageDirectory, LlmConversations, VectorRag}
+  alias Cadet.Chatbot.{Conversation, LanguageDirectory, LlmConversations, SicpNotesPy, VectorRag}
   @max_content_size 1000
   @openai_http_options [timeout: 60_000, recv_timeout: 60_000]
 
@@ -86,6 +86,14 @@ defmodule CadetWeb.ChatController do
          {:ok, updated_conversation} <-
            LlmConversations.add_message(conversation, "user", user_message),
          retrieved_chunks <- retrieve_chunks(user, user_message, visible_text || ""),
+         :ok <-
+           ensure_textbook_context(
+             section,
+             visible_text || "",
+             retrieved_chunks,
+             updated_conversation,
+             conversation.id
+           ),
          system_prompt <-
            Cadet.Chatbot.PromptBuilder.build_prompt(
              section,
@@ -111,6 +119,9 @@ defmodule CadetWeb.ChatController do
 
       {:error, :invalid_conversation} ->
         send_resp(conn, :not_found, "Conversation not found")
+
+      {:error, {:off_scope, off_scope_conversation, off_scope_conversation_id}} ->
+        handle_off_scope_message(conn, off_scope_conversation, off_scope_conversation_id)
 
       :error ->
         send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
@@ -152,6 +163,38 @@ defmodule CadetWeb.ChatController do
     [user_message, visible_text]
     |> Enum.join("\n\n")
     |> String.slice(0, 2_000)
+  end
+
+  defp ensure_textbook_context(section, visible_text, retrieved_chunks, conversation, conversation_id) do
+    if !VectorRag.enabled?() || textbook_context_available?(section, visible_text, retrieved_chunks) do
+      :ok
+    else
+      {:error, {:off_scope, conversation, conversation_id}}
+    end
+  end
+
+  defp textbook_context_available?(section, visible_text, retrieved_chunks) do
+    String.trim(visible_text) != "" ||
+      retrieved_chunks != [] ||
+      !is_nil(SicpNotesPy.get_summary(section))
+  end
+
+  defp handle_off_scope_message(conn, conversation, conversation_id) do
+    bot_message =
+      "I can only help with questions related to the Python textbook material. " <>
+        "Please ask a textbook-related question."
+
+    case LlmConversations.add_message(conversation, "assistant", bot_message) do
+      {:ok, _} ->
+        render(conn, "conversation.json", %{
+          conversation_id: conversation_id,
+          response: bot_message
+        })
+
+      {:error, error_message} ->
+        Logger.error("Failed to save off-scope bot response: #{error_message}")
+        send_resp(conn, 500, error_message)
+    end
   end
 
   defp validate_language_id(nil), do: {:ok, nil}
