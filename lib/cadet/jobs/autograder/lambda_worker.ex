@@ -18,13 +18,11 @@ defmodule Cadet.Autograder.LambdaWorker do
   """
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
-    try do
-      run(args)
-    rescue
-      error -> handle_failure(args, :error, error, __STACKTRACE__)
-    catch
-      kind, reason -> handle_failure(args, kind, reason, __STACKTRACE__)
-    end
+    run(args)
+  rescue
+    error -> handle_failure(args, :error, error, __STACKTRACE__)
+  catch
+    kind, reason -> handle_failure(args, kind, reason, __STACKTRACE__)
   end
 
   # Backwards-compatible direct entry: tests and other call-sites pass a
