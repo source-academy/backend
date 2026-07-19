@@ -24,7 +24,7 @@ defmodule Cadet.Chatbot.VectorRag do
   end
 
   def top_k do
-    config(:top_k, 5)
+    config(:top_k, 8)
   end
 
   def min_similarity do

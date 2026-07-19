@@ -89,13 +89,13 @@ It then chunks text inside those heading sections using LangChain and stores met
 }
 ```
 
-During chat, the backend embeds the student's question plus the visible paragraph context, retrieves the top relevant chunks from `rag_chunks`, and injects those chunks into the prompt. If useful, the model may answer with a reference such as:
+During chat, the backend embeds the student's question plus the visible paragraph context, retrieves the top relevant chunks from `rag_chunks`, and injects those chunks into the prompt. The default retrieval count is 8 chunks. When the answer relies on retrieved notes with section metadata, the model should end with a short reference such as:
 
 ```text
-You can read more about it in Section 1.1.1.
+Read more: Section 1.1.1.
 ```
 
-The model is instructed not to do this every time and not to invent section numbers.
+The model is instructed not to invent section numbers when no relevant section metadata is available.
 
 ## Prerequisites
 
@@ -371,7 +371,7 @@ When a student sends a chat message:
 If `VECTOR_RAG_DEBUG=true`, the backend also logs the selected chunks:
 
 ```text
-Vector RAG retrieved 5 chunk(s) for course_id=1 language=python limit=5
+Vector RAG retrieved 8 chunk(s) for course_id=1 language=python limit=8
 1. id=123 chunk_index=42 similarity=0.8123 section=1.1.1 section_title="Expressions" title="SICP Python" source="sicpy.md" preview="..."
 ```
 
@@ -381,10 +381,10 @@ Section: 1.1.1 Expressions
 ...
 ```
 
-The model can then answer and, when useful, add:
+The model can then answer and, when it relies on retrieved notes with section metadata, add:
 
 ```text
-You can read more about it in Section 1.1.1.
+Read more: Section 1.1.1.
 ```
 
 ## 10. Updating An Existing Textbook

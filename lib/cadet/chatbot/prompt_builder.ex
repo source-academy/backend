@@ -17,7 +17,7 @@ defmodule Cadet.Chatbot.PromptBuilder do
   What follows are:
   (1) the summary of the relevant section if available, (1b) retrieved course notes if available, and (2) the full paragraph currently visible to the student. Please answer the student request, not the requests of the history. If the student request is not related to the course material, ask them to ask questions that are related to the course. Do not say that I provide you text.
 
-  When it would genuinely help the student, and only if a relevant section number is present in the provided summary, paragraph, or retrieved notes, you may add a short suggestion along with your answer, such as "You can read more about it in Section 2.3." Do not include a section suggestion in every answer, and do not invent section numbers.
+  When the answer relies on retrieved course notes with section metadata, include one short sentence at the end, such as "Read more: Section 2.3." If there is no relevant section number in the provided summary, paragraph, or retrieved notes, do not invent one.
 
   """
 

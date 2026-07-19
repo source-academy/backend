@@ -47,7 +47,7 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
         ])
 
       assert String.contains?(result, "Section: 2.3 Symbolic Data")
-      assert String.contains?(result, "You can read more about it in Section")
+      assert String.contains?(result, "Read more: Section")
     end
   end
 

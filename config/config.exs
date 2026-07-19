@@ -58,7 +58,7 @@ config :cadet, :vector_rag,
   embedding_model: System.get_env("VECTOR_RAG_EMBEDDING_MODEL", "text-embedding-3-small"),
   embedding_api_url:
     System.get_env("VECTOR_RAG_EMBEDDING_API_URL", "https://api.openai.com/v1/embeddings"),
-  top_k: 5,
+  top_k: 8,
   min_similarity: nil,
   retriever: Cadet.Chatbot.VectorRetriever,
   embedding_provider: Cadet.Chatbot.OpenAIEmbeddings

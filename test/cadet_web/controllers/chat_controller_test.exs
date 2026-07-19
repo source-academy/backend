@@ -106,7 +106,7 @@ defmodule CadetWeb.ChatControllerTest do
 
       Application.put_env(:cadet, :vector_rag,
         enabled: true,
-        top_k: 5,
+        top_k: 8,
         min_similarity: nil,
         retriever: CadetWeb.ChatControllerTest.FakeRetriever,
         embedding_provider: Cadet.Chatbot.OpenAIEmbeddings,
@@ -129,7 +129,7 @@ defmodule CadetWeb.ChatControllerTest do
         assert_received {:vector_rag_retrieved, query, opts}
         assert String.contains?(query, "How do functions work?")
         assert opts[:language] == "python"
-        assert opts[:limit] == 5
+        assert opts[:limit] == 8
 
         assert json_response(conn, 200) == %{
                  "conversationId" => conversation.id,

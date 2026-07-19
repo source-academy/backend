@@ -104,7 +104,7 @@ config :cadet, Cadet.Mailer, adapter: Bamboo.TestAdapter
 config :cadet, :vector_rag,
   enabled: false,
   debug: false,
-  top_k: 5,
+  top_k: 8,
   min_similarity: nil,
   retriever: Cadet.Chatbot.VectorRetriever,
   embedding_provider: Cadet.Chatbot.OpenAIEmbeddings,
