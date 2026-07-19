@@ -1,0 +1,1666 @@
+{
+  "options": {
+    "output": "tmp/rag_eval_full.json",
+    "limit": 5,
+    "only": null,
+    "language": "python",
+    "course_id": 1,
+    "model": "gpt-4",
+    "fail_on_miss": false
+  },
+  "summary": {
+    "total": 26,
+    "retrieval_hits": 24,
+    "required_citations": 14,
+    "citation_hits": 26,
+    "failures": [
+      "environment_closure_lookup",
+      "lazy_stream_infinite_sequence"
+    ]
+  },
+  "generated_at": "2026-07-19T06:15:55.980283Z",
+  "results": [
+    {
+      "id": "normal_vs_applicative_order",
+      "question": "In the p() example, why does one evaluation order terminate while Python's usual evaluation gets stuck? I thought both orders should compute the same value.",
+      "answer": "You're correct that both the normal-order evaluation and the applicative-order evaluation (that Python uses) should produce the same result *if they complete*. However, the key is in the \"if they complete\" caveat.\n\nIn the example code:\n\n```python\ndef p(): return p()\n\ndef test(x, y):\n    return 0 if x == 0 else y\n\ntest(0, p())\n```\n\nWhile using the normal-order evaluation, the `test` function is first evaluated. Since `x == 0` is `True`, the interpreter never gets to evaluate `y`, which is `p()`. Therefore, `p()`—an infinite recursive function—never runs and the `test` function returns `0`.\n\nIn contrast, in the applicative-order evaluation (which Python uses), all arguments to the function are evaluated when the function is called—in this case, `p()` is evaluated before `test`. As `p()` is an infinite recursive function, the Python interpreter gets stuck trying to evaluate it.\n\nThis example takes advantage of the evaluation order to create different behaviors based on how the language is implemented.\n\nYou can find more detail about evaluation orders in the Section 1.1.5.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "1.1.5"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 18,
+          "title": "SICP Python",
+          "chunk_index": 17,
+          "source_filename": "sicpy.md",
+          "section": "1.1.5",
+          "section_title": "The Substitution Model for Function Application",
+          "similarity": 0.6051627325319078,
+          "preview": "#### Applicative order versus normal order According to the description of evaluation given in section 1.1.4, the interpreter first evaluates the function and argument expressions and then applies the resulting function to the resulting arguments. This is not the only way to perform evaluation. An alternative evaluation model would not evaluate the arguments until their values were needed. Instead it would first substitute argument expressions for parameters until it obtained an expression invol"
+        },
+        {
+          "id": 326,
+          "title": "SICP Python",
+          "chunk_index": 325,
+          "source_filename": "sicpy.md",
+          "section": "4.1.5",
+          "section_title": "Data as Programs",
+          "similarity": 0.5138708649561525,
+          "preview": "Another striking aspect of the evaluator is that it acts as a bridge between the data objects that are manipulated by our programming language and the programming language itself. Imagine that the evaluator program (implemented in Python) is running, and that a user is typing programs to the evaluator and observing the results. From the perspective of the user, an input program such as `x * x;` is a program in the programming language, which the evaluator should execute. From the perspective of "
+        },
+        {
+          "id": 280,
+          "title": "SICP Python",
+          "chunk_index": 279,
+          "source_filename": "sicpy.md",
+          "section": "3.5.4",
+          "section_title": "Streams and Delayed Evaluation",
+          "similarity": 0.5138300508401673,
+          "preview": "#### Normal-order evaluation The examples in this section illustrate how delayed evaluation provides great programming flexibility, but the same examples also show how this can make our programs more complex. Our new `integral`function, for instance, gives us the power to model systems with loops, but we must now remember that `integral` should be called with a delayed integrand, and every function that uses `integral` must be aware of this. In effect, we have created two classes of functions: o"
+        },
+        {
+          "id": 21,
+          "title": "SICP Python",
+          "chunk_index": 20,
+          "source_filename": "sicpy.md",
+          "section": "1.1.6",
+          "section_title": "Conditional Expressions and Predicates",
+          "similarity": 0.5131239306980693,
+          "preview": "As an example of how these predicates are used, the condition that a number $x$ be in the range $5 < x < 10$ may be expressed as ```python x > 5 and x < 10 ``` The syntactic form `and` has lower precedence than the comparison operators `>` and `<`, and the conditional-expression syntactic form $\\cdots$`if`$\\cdots$`else`$\\cdots$ has lower precedence than any other operator we have encountered so far, a property we used in the `abs` functions above. As another example, we can define a predicate to"
+        },
+        {
+          "id": 335,
+          "title": "SICP Python",
+          "chunk_index": 334,
+          "source_filename": "sicpy.md",
+          "section": "4.2.1",
+          "section_title": "Normal Order and Applicative Order",
+          "similarity": 0.496416539187834,
+          "preview": "### 4.2.1 Normal Order and Applicative Order In section 1.1, where we began our discussion of models of evaluation, we noted that Python is an *applicative-order* language, namely, that all the arguments to Python functions are evaluated when the function is applied. In contrast, *normal-order* languages delay evaluation of function arguments until the actual argument values are needed. Delaying evaluation of function arguments until the last possible moment (e.g., until they are required by a p"
+        }
+      ]
+    },
+    {
+      "id": "recursive_process_python_stack",
+      "question": "My factorial helper is tail-recursive, so why can it still hit recursion depth in Python? Is tail recursion the same thing as an iterative process?",
+      "answer": "Yes, you're correct in understanding that tail recursion, when supported, is a way to write functions that perform iterative processes. In a tail-recursive function, the recursive call is the last operation in the function, which is what your factorial helper seems to be.\n\nHowever, Python, unlike some other languages, doesn't have built-in support for tail recursion elimination, which is an optimization that allows tail-recursive functions to be executed in constant space. Since Python doesn't eliminate tail recursion, even if your factorial helper function is tail-recursive, it could still hit the recursion depth limit if it recurses too deeply. \n\nAn iterative process in Python is typically written with looping constructs like `for` or `while` loops. In contrast to recursion, these loops don't build up a stack of deferred operations, so they're not limited by Python's recursion limit.\n\nAs you continue with your studies in Python and computer science, you'll often find that understanding these distinctions and trade-offs can be incredibly useful when deciding how to approach problem-solving with code. To grasp more about the concepts of recursion, iteration, tail recursion, and their difference in Python, you might find it helpful to revisit Section 1.2.1.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "1.2.1"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 328,
+          "title": "SICP Python",
+          "chunk_index": 327,
+          "source_filename": "sicpy.md",
+          "section": "4.1.6",
+          "section_title": "Internal Declarations",
+          "similarity": 0.5901865215384435,
+          "preview": "**Exercise 4.18.** Recursive functions are obtained in a roundabout way in our interpreter: First declare the name that will refer to the recursive function and assign to it the special value `\"*unassigned*\"`; then define the recursive function in the scope of that name; and finally assign the defined function to the name. By the time the recursive function gets applied, any occurrences of the name in the body properly refer to the recursive function. Amazingly, it is possible to specify recursi"
+        },
+        {
+          "id": 33,
+          "title": "SICP Python",
+          "chunk_index": 32,
+          "source_filename": "sicpy.md",
+          "section": "1.2.2",
+          "section_title": "Tree Recursion",
+          "similarity": 0.5706545470655755,
+          "preview": "We can also formulate an iterative process for computing the Fibonacci numbers. The idea is to use a pair of integers $a$ and $b$, initialized to $\\textrm{Fib}(1)=1$ and $\\textrm{Fib}(0)=0$, and to repeatedly apply the simultaneous transformations $$\\begin{array}{lll} a & \\leftarrow & a+b \\\\ b & \\leftarrow & a \\end{array}$$ It is not hard to show that, after applying this transformation $n$ times, $a$ and $b$ will be equal, respectively, to $\\textrm{Fib}(n+1)$ and $\\textrm{Fib}(n)$. Thus, we can"
+        },
+        {
+          "id": 29,
+          "title": "SICP Python",
+          "chunk_index": 28,
+          "source_filename": "sicpy.md",
+          "section": "1.2.1",
+          "section_title": "Linear Recursion and Iteration",
+          "similarity": 0.5686132812607444,
+          "preview": "### 1.2.1 Linear Recursion and Iteration We begin by considering the factorial function, defined by $$\\begin{array}{lll} n! &=& n\\cdot(n-1)\\cdot(n-2)\\cdots3\\cdot2\\cdot1 \\end{array}$$ There are many ways to compute factorials. One way is to make use of the observation that $n!$ is equal to $n$ times $(n-1)!$ for any positive integer $n$: $$\\begin{array}{lll} n! &=& n\\cdot\\left[(n-1)\\cdot(n-2)\\cdots3\\cdot2\\cdot1\\right] \\quad = \\quad n \\cdot(n-1)! \\end{array}$$ Thus, we can compute $n!$ by computin"
+        },
+        {
+          "id": 514,
+          "title": "SICP Python",
+          "chunk_index": 513,
+          "source_filename": "sicpy.md",
+          "section": "5.5.5",
+          "section_title": "An Example of Compiled Code",
+          "similarity": 0.5584835540859279,
+          "preview": "```python function factorial(n) { function iter(product, counter) { return counter > n ? product : iter(product * counter, counter + 1); } return iter(1, 1); } ``` Annotate the resulting code, showing the essential difference between the code for iterative and recursive versions of `factorial` that makes one process build up stack space and the other run in constant stack space. **Exercise 5.38.** What program was compiled to produce the code shown in figure 5.20? **Figure 5.20.** An example of "
+        },
+        {
+          "id": 30,
+          "title": "SICP Python",
+          "chunk_index": 29,
+          "source_filename": "sicpy.md",
+          "section": "1.2.1",
+          "section_title": "Linear Recursion and Iteration",
+          "similarity": 0.556782062414362,
+          "preview": "**Figure 1.4.** A linear iterative process for computing $6!$. of computing $6!$, as shown in figure 1.4. Compare the two processes. From one point of view, they seem hardly different at all. Both compute the same mathematical function on the same domain, and each requires a number of steps proportional to $n$ to compute $n!$. Indeed, both processes even carry out the same sequence of multiplications, obtaining the same sequence of partial products. On the other hand, when we consider the \"shape"
+        }
+      ]
+    },
+    {
+      "id": "tree_recursion_repeated_work",
+      "question": "Why is the simple recursive Fibonacci function so slow if each line of code looks small? Where does all the repeated work come from?",
+      "answer": "The simplicity of each line in the recursive Fibonacci function can be deceptive. While each individual operation is pretty straightforward, the total number of operations explodes due to the nature of the function itself.\n\nIn particular, the function is called recursively twice for each non-base case: once for `fib(n - 1)` and once for `fib(n - 2)`. Because of this, the function ends up performing a lot of duplicated work. \n\nTo see where this happens, consider the computation for `fib(5)`. This requires computing `fib(4)` and `fib(3)`. However, computing `fib(4)` itself requires computing `fib(3)` and `fib(2)`. Here, we see that `fib(3)` is being computed twice — once as part of `fib(5)` and once as part of `fib(4)`. These redundancies compound as `n` gets larger, which results in a very significant overhead.\n\nThis is a characteristic of what's called \"tree recursion\". If you were to draw out the calls made during the computation, you'd see they form a tree that grows exponentially as `n` increases. Hence, the function has an exponential time complexity.\n\nYou can visualize this process with the following diagram (which represents the execution of fib(5)):\n\n```\n                fib(5)\n               /     \\\n            fib(4)   fib(3)\n           /    \\    /    \\\n       fib(3) fib(2) fib(2) fib(1)\n       ...\n\n```\n\nIn the diagram, it's clear to see that we're repeating computations. For example, fib(3) is being calculated twice, and as the tree expands, the repetitions increase.\n\nThis is why this approach to calculating Fibonacci numbers can be quite slow for larger numbers, even though each individual part of the computation is straight-forward. The recursive Fibonacci algorithm has an O(2^n) time complexity, which denotes that for every additional element in the sequence, the time it takes to calculate that number doubles. \n\nIn contrast, the iterative version of the Fibonacci sequence has linear time complexity, O(n), because it simply involves repeated addition without any redundant computation. The trade-off is that the iterative version is arguably less intuitive to understand at a glance, as it doesn't follow the mathematical definition of the Fibonacci sequence as directly as the recursive version.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "1.2.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 33,
+          "title": "SICP Python",
+          "chunk_index": 32,
+          "source_filename": "sicpy.md",
+          "section": "1.2.2",
+          "section_title": "Tree Recursion",
+          "similarity": 0.5836931307262244,
+          "preview": "We can also formulate an iterative process for computing the Fibonacci numbers. The idea is to use a pair of integers $a$ and $b$, initialized to $\\textrm{Fib}(1)=1$ and $\\textrm{Fib}(0)=0$, and to repeatedly apply the simultaneous transformations $$\\begin{array}{lll} a & \\leftarrow & a+b \\\\ b & \\leftarrow & a \\end{array}$$ It is not hard to show that, after applying this transformation $n$ times, $a$ and $b$ will be equal, respectively, to $\\textrm{Fib}(n+1)$ and $\\textrm{Fib}(n)$. Thus, we can"
+        },
+        {
+          "id": 32,
+          "title": "SICP Python",
+          "chunk_index": 31,
+          "source_filename": "sicpy.md",
+          "section": "1.2.2",
+          "section_title": "Tree Recursion",
+          "similarity": 0.5715838433641006,
+          "preview": "### 1.2.2 Tree Recursion Another common pattern of computation is called *tree recursion*. As an example, consider computing the sequence of Fibonacci numbers, in which each number is the sum of the preceding two: $$\\begin{array}{l} 0, 1, 1, 2, 3, 5, 8, 13, 21, \\ldots \\end{array}$$ In general, the Fibonacci numbers can be defined by the rule $$\\begin{array}{lll} \\textrm{Fib}(n) & = & \\left\\{ \\begin{array}{ll} 0 & \\text{if $n=0$}\\\\ 1 & \\text{if $n=1$}\\\\ \\textrm{Fib}(n-1)+\\textrm{Fib}(n-2) & \\text"
+        },
+        {
+          "id": 432,
+          "title": "SICP Python",
+          "chunk_index": 431,
+          "source_filename": "sicpy.md",
+          "section": "5.1.4",
+          "section_title": "Using a Stack to Implement Recursion",
+          "similarity": 0.5172877635143578,
+          "preview": "#### A double recursion Let us examine a more complex recursive process, the tree-recursive computation of the Fibonacci numbers, which we introduced in section 1.2.2: ```python def fib(n): return 0 if n == 0 else 1 if n == 1 else fib(n - 1) + fib(n - 2) ``` Just as with factorial, we can implement the recursive Fibonacci computation as a register machine with registers `n`, `val`, and `continue`. The machine is more complex than the one for factorial, because there are two places in the control"
+        },
+        {
+          "id": 514,
+          "title": "SICP Python",
+          "chunk_index": 513,
+          "source_filename": "sicpy.md",
+          "section": "5.5.5",
+          "section_title": "An Example of Compiled Code",
+          "similarity": 0.5126173934631192,
+          "preview": "```python function factorial(n) { function iter(product, counter) { return counter > n ? product : iter(product * counter, counter + 1); } return iter(1, 1); } ``` Annotate the resulting code, showing the essential difference between the code for iterative and recursive versions of `factorial` that makes one process build up stack space and the other run in constant stack space. **Exercise 5.38.** What program was compiled to produce the code shown in figure 5.20? **Figure 5.20.** An example of "
+        },
+        {
+          "id": 328,
+          "title": "SICP Python",
+          "chunk_index": 327,
+          "source_filename": "sicpy.md",
+          "section": "4.1.6",
+          "section_title": "Internal Declarations",
+          "similarity": 0.4917381749369627,
+          "preview": "**Exercise 4.18.** Recursive functions are obtained in a roundabout way in our interpreter: First declare the name that will refer to the recursive function and assign to it the special value `\"*unassigned*\"`; then define the recursive function in the scope of that name; and finally assign the defined function to the name. By the time the recursive function gets applied, any occurrences of the name in the body properly refer to the recursive function. Amazingly, it is possible to specify recursi"
+        }
+      ]
+    },
+    {
+      "id": "fermat_carmichael_false_positive",
+      "question": "If a number passes the Fermat primality test for many bases, is it definitely prime? What exactly goes wrong with Carmichael numbers?",
+      "answer": "The Fermat test checks for prime numbers based on Fermat's Little Theorem, which states that if n is a prime number and a is any positive integer less than n, then a raised to the nth power is congruent to a modulo n.\n\nHowever, the Fermat test is not always conclusive. If a number fails the Fermat test, we can definitively say it is non-prime. If it passes the Fermat test, it is likely, but not guaranteed, to be prime. In fact, the test should be repeated multiple times with different values of 'a'. If the number keeps passing the test, then the probability of it being prime increases, but it is still not absolute certainty.\n\nThis is where Carmichael numbers come in. Carmichael numbers \"fool\" the Fermat test because they are composite numbers (not prime) that still satisfy the properties outlined in Fermat's theorem for any choice of 'a'. They are named after mathematician Robert Carmichael and are rare, but they exist. The first few Carmichael numbers are 561, 1105, 1729, 2465, 2821, and 6601. So, despite repeatedly passing the Fermat test, these numbers are actually non-prime, illustrating the inherent limitation of the Fermat test.\n\nTo handle this, resilient variants of the Fermat test, such as the Miller-Rabin test, are used which cannot be fooled by Carmichael numbers. These advanced tests enhance the probabilistic nature and reliability of the primality check.\n\nYou can read more about these concepts in detail in Section 1.2.6 from the course material.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "1.2.6"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 48,
+          "title": "SICP Python",
+          "chunk_index": 47,
+          "source_filename": "sicpy.md",
+          "section": "1.2.6",
+          "section_title": "Example: Testing for Primality",
+          "similarity": 0.657669181362215,
+          "preview": "#### Probabilistic methods The Fermat test differs in character from most familiar algorithms, in which one computes an answer that is guaranteed to be correct. Here, the answer obtained is only probably correct. More precisely, if $n$ ever fails the Fermat test, we can be certain that $n$ is not prime. But the fact that $n$ passes the test, while an extremely strong indication, is still not a guarantee that $n$ is prime. What we would like to say is that for any number $n$, if we perform the te"
+        },
+        {
+          "id": 46,
+          "title": "SICP Python",
+          "chunk_index": 45,
+          "source_filename": "sicpy.md",
+          "section": "1.2.6",
+          "section_title": "Example: Testing for Primality",
+          "similarity": 0.6090652793112816,
+          "preview": "#### The Fermat test The $\\Theta(\\log n)$ primality test is based on a result from number theory known as Fermat's Little Theorem. [^44: Pierre de Fermat (1601–1665) is considered to be the founder of modern number theory. He obtained many important number-theoretic results, but he usually announced just the results, without providing his proofs. Fermat's Little Theorem was stated in a letter he wrote in 1640. The first published proof was given by Euler in 1736 (and an earlier, identical proof "
+        },
+        {
+          "id": 50,
+          "title": "SICP Python",
+          "chunk_index": 49,
+          "source_filename": "sicpy.md",
+          "section": "1.2.6",
+          "section_title": "Example: Testing for Primality",
+          "similarity": 0.5963674281731172,
+          "preview": "**Exercise 1.24.** Modify the `timed_prime_test`function of exercise 1.22 to use `fast_is_prime` (the Fermat method), and test each of the 12 primes you found in that exercise. Since the Fermat test has $\\Theta(\\log n)$ growth, how would you expect the time to test primes near 1,000,000 to compare with the time needed to test primes near 1000? Do your data bear this out? Can you explain any discrepancy you find? **Exercise 1.25.** Alyssa P. Hacker complains that we went to a lot of extra work in"
+        },
+        {
+          "id": 47,
+          "title": "SICP Python",
+          "chunk_index": 46,
+          "source_filename": "sicpy.md",
+          "section": "1.2.6",
+          "section_title": "Example: Testing for Primality",
+          "similarity": 0.540345621724322,
+          "preview": "The Fermat test is performed by choosing at random a number $a$ between 1 and $n-1$ inclusive and checking whether the remainder modulo $n$ of the $n$th power of $a$ is equal to $a$. The random number $a$ is chosen using the primitive function `random_random`, which returns a nonnegative number less than 1. Hence, to obtain a random number between 1 and $n-1$, we multiply the return value of `random_random` by $n-1$, round down the result with the primitive function `math_floor`, and add 1: ```p"
+        },
+        {
+          "id": 44,
+          "title": "SICP Python",
+          "chunk_index": 43,
+          "source_filename": "sicpy.md",
+          "section": "1.2.6",
+          "section_title": "Example: Testing for Primality",
+          "similarity": 0.4907761544168837,
+          "preview": "### 1.2.6 Example: Testing for Primality This section describes two methods for checking the primality of an integer $n$, one with order of growth $\\Theta(\\sqrt{n})$, and a \"probabilistic\" algorithm with order of growth $\\Theta(\\log n)$. The exercises at the end of this section suggest programming projects based on these algorithms."
+        }
+      ]
+    },
+    {
+      "id": "fixed_point_nonconvergence_damping",
+      "question": "My fixed-point iteration keeps bouncing between two values. How does average damping change the process, and when should I use it?",
+      "answer": "Average damping is a technique used to aid the convergence of fixed-point searches. It is especially useful when you notice that your iteration is oscillating, i.e. bouncing between two values and not converging on an answer.\n\nThe basic idea behind average damping is trying to slow down the changes between each step of the iteration. With this, we try to prevent the guesses from changing too rapidly which might cause this oscillation. One simple way to achieve this is to take the average of the current guess and the next undamped guess. This technique helps in smoothing out the oscillations and allows the iteration to converge to the answer.\n\nAs an example, let's consider finding the square root of a number, 'x'. We can express square root of x as the fixed point of the function y -> x/y. Now, if we start iterating using this function, we may end up in a situation where the guesses are oscillating.\n\nTo damp these oscillations, we can change our function to y -> average(y, x/y), where 'average' function returns the average of two numbers. So now, instead of moving the full step from y to x/y in each iteration, we only take a half step, by averaging y and x/y. This helps to slow down the changes and allows the iteration to converge.\n\nRemember to use average damping when your fixed-point search is exhibiting oscillations and not converging correctly. By adjusting the process to change less abruptly, you'll often achieve better results.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "1.3.3",
+        "1.3.4"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 69,
+          "title": "SICP Python",
+          "chunk_index": 68,
+          "source_filename": "sicpy.md",
+          "section": "1.3.4",
+          "section_title": "Functions as Returned Values",
+          "similarity": 0.5588777979660455,
+          "preview": "**Exercise 1.45.** We saw in section 1.3.3 that attempting to compute square roots by naively finding a fixed point of $y\\mapsto x/y$ does not converge, and that this can be fixed by average damping. The same method works for finding cube roots as fixed points of the average-damped $y\\mapsto x/y^2$. Unfortunately, the process does not work for fourth roots—a single average damp is not enough to make a fixed-point search for $y\\mapsto x/y^3$ converge. On the other hand, if we average-damp twice ("
+        },
+        {
+          "id": 62,
+          "title": "SICP Python",
+          "chunk_index": 61,
+          "source_filename": "sicpy.md",
+          "section": "1.3.3",
+          "section_title": "Functions as General Methods",
+          "similarity": 0.4715208690112387,
+          "preview": "#### Finding fixed points of functions A number $x$ is called a *fixed point* of a function $f$ if $x$ satisfies the equation $f(x)=x$. For some functions $f$ we can locate a fixed point by beginning with an initial guess and applying $f$ repeatedly, $$\\begin{array}{l} f(x), \\ f(f(x)), \\ f(f(f(x))), \\ \\ldots \\end{array}$$ until the value does not change very much. Using this idea, we can devise a function`fixed_point` that takes as inputs a function and an initial guess and produces an approxima"
+        },
+        {
+          "id": 63,
+          "title": "SICP Python",
+          "chunk_index": 62,
+          "source_filename": "sicpy.md",
+          "section": "1.3.3",
+          "section_title": "Functions as General Methods",
+          "similarity": 0.45798000185736554,
+          "preview": "```python def sqrt(x): return fixed_point(lambda y: average(y, x / y), 1) ``` (Note that $y=\\frac{1}{2}(y+x/y)$ is a simple transformation of the equation $y=x/y$; to derive it, add $y$ to both sides of the equation and divide by 2.) With this modification, the square-root function works. In fact, if we unravel the definitions, we can see that the sequence of approximations to the square root generated here is precisely the same as the one generated by our original square-root function of sectio"
+        },
+        {
+          "id": 65,
+          "title": "SICP Python",
+          "chunk_index": 64,
+          "source_filename": "sicpy.md",
+          "section": "1.3.4",
+          "section_title": "Functions as Returned Values",
+          "similarity": 0.4358066040869619,
+          "preview": "### 1.3.4 Functions as Returned Values The above examples demonstrate how the ability to pass functions as arguments significantly enhances the expressive power of our programming language. We can achieve even more expressive power by creating functions whose returned values are themselves functions. We can illustrate this idea by looking again at the fixed-point example described at the end of section 1.3.3. We formulated a new version of the square-root function as a fixed-point search, starti"
+        },
+        {
+          "id": 66,
+          "title": "SICP Python",
+          "chunk_index": 65,
+          "source_filename": "sicpy.md",
+          "section": "1.3.4",
+          "section_title": "Functions as Returned Values",
+          "similarity": 0.37804085295889656,
+          "preview": "#### Newton's method When we first introduced the square-root function, in section 1.1.7, we mentioned that this was a special case of *Newton's method*. If $x\\mapsto g(x)$ is a differentiable function, then a solution of the equation $g(x)=0$ is a fixed point of the function $x\\mapsto f(x)$ where $$\\begin{array}{lll} f(x) & = & x - \\dfrac{g(x)}{Dg(x)} \\end{array}$$ and $Dg(x)$ is the derivative of $g$ evaluated at $x$. Newton's method is the use of the fixed-point method we saw above to approxi"
+        }
+      ]
+    },
+    {
+      "id": "interval_dependency_problem",
+      "question": "Why do two algebraically equivalent interval formulas give different ranges when the same uncertain value appears twice?",
+      "answer": "In interval arithmetic, when an uncertain value appears more than once in an algebraic expression, the uncertainty is taken into account each time the value appears. For an expression where the uncertain value only appears once, the interval of possible values for the expression is calculated based on a single instance of uncertainty. But when the same uncertain value appears more than once in an expression, the interval computation now takes into account the compounded uncertainty of that value. \n\nAs a result, two algebraically equivalent formulas can give different ranges when calculated using interval arithmetic, if one of the formulas has repeated uncertain values. This effect is due to the repeated propagation of uncertainty in computing the interval for the repeated value.\n\nFor example, consider the formula for calculating the resistance of two parallel resistors: \n\n1) R_p = R1*R2 / (R1 + R2) \n2) R_p = 1 / (1/R1 + 1/R2)\n\nEven though they are algebraically equivalent, in interval arithmetic, the second formula will yield a smaller range of values than the first one, if R1 and R2 are intervals rather than exact values. This is because the uncertainty of R1 and R2 is taken into account twice in the first formula, but only once in the second.\n\nThis phenomenon is an in-depth concept that is covered in Section 2.1.4 of your course material.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "2.1.4"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 84,
+          "title": "SICP Python",
+          "chunk_index": 83,
+          "source_filename": "sicpy.md",
+          "section": "2.1.4",
+          "section_title": "Extended Exercise: Interval Arithmetic",
+          "similarity": 0.45481343670707275,
+          "preview": "After considerable work, Alyssa P. Hacker delivers her finished system. Several years later, after she has forgotten all about it, she gets a frenzied call from an irate user, Lem E. Tweakit. It seems that Lem has noticed that the formula for parallel resistors can be written in two algebraically equivalent ways: $$\\dfrac{R_{1}R_{2}}{R_{1}+R_{2}}$$ and $$\\dfrac{1}{1/R_{1}+1/R_{2}}$$ He has written the following two programs, each of which computes the parallel-resistors formula differently: ```p"
+        },
+        {
+          "id": 82,
+          "title": "SICP Python",
+          "chunk_index": 81,
+          "source_filename": "sicpy.md",
+          "section": "2.1.4",
+          "section_title": "Extended Exercise: Interval Arithmetic",
+          "similarity": 0.4514857560773806,
+          "preview": "### 2.1.4 Extended Exercise: Interval Arithmetic Alyssa P. Hacker is designing a system to help people solve engineering problems. One feature she wants to provide in her system is the ability to manipulate inexact quantities (such as measured parameters of physical devices) with known precision, so that when computations are done with such approximate quantities the results will be numbers of known precision. Electrical engineers will be using Alyssa's system to compute electrical quantities. I"
+        },
+        {
+          "id": 83,
+          "title": "SICP Python",
+          "chunk_index": 82,
+          "source_filename": "sicpy.md",
+          "section": "2.1.4",
+          "section_title": "Extended Exercise: Interval Arithmetic",
+          "similarity": 0.3786697550325717,
+          "preview": "```python def div_interval(x, y): return mul_interval(x, make_interval(1 / upper_bound(y), 1 / lower_bound(y))) ``` **Exercise 2.7.** Alyssa's program is incomplete because she has not specified the implementation of the interval abstraction. Here is a definition of the interval constructor: ```python def make_interval(x, y): return pair(x, y) ``` Define selectors `upper_bound` and `lower_bound` to complete the implementation. **Exercise 2.8.** Using reasoning analogous to Alyssa's, describe how"
+        },
+        {
+          "id": 61,
+          "title": "SICP Python",
+          "chunk_index": 60,
+          "source_filename": "sicpy.md",
+          "section": "1.3.3",
+          "section_title": "Functions as General Methods",
+          "similarity": 0.3452508312239696,
+          "preview": "```python def half_interval_method(f, a, b): a_value = f(a) b_value = f(b) if negative(a_value) and positive(b_value): return search(f, a, b) elif negative(b_value) and positive(a_value): return search(f, b, a) else: error(\"values are not of opposite sign\") ``` The following example uses the half-interval method to approximate $\\pi$ as the root between 2 and 4 of $\\sin\\, x = 0$: ```python print(half_interval_method(math_sin, 2, 4)) ``` ``` 3.14111328125 ``` Here is another example, using the hal"
+        },
+        {
+          "id": 60,
+          "title": "SICP Python",
+          "chunk_index": 59,
+          "source_filename": "sicpy.md",
+          "section": "1.3.3",
+          "section_title": "Functions as General Methods",
+          "similarity": 0.33880999660645283,
+          "preview": "#### Finding roots of equations by the half-interval method The *half-interval method* is a simple but powerful technique for finding roots of an equation $f(x)=0$, where $f$ is a continuous function. The idea is that, if we are given points $a$ and $b$ such that $f(a) < 0 < f(b)$, then $f$ must have at least one zero between $a$ and $b$. To locate a zero, let $x$ be the average of $a$ and $b$ and compute $f(x)$. If $f(x) > 0$, then $f$ must have a zero between $a$ and $x$. If $f(x) < 0$, then $"
+        }
+      ]
+    },
+    {
+      "id": "abstraction_barrier_rational_numbers",
+      "question": "If I change the internal representation of rational numbers, which code should need to change and which code should not?",
+      "answer": "Upon changing the internal representation of rational numbers, you would need to update the constructors and selectors that directly interact with the changed representation. In the SICP notes, these include the functions `make_rat`, `numer`, and `denom`.\n\nThe functions that perform operations on rational numbers (like `add_rat`, `sub_rat`, `mul_rat`, `div_rat`, and `equal_rat`) should not need to be updated. This is because they are designed to work with the abstraction of the data provided by the constructors and selectors. They should continue to work as long as the constructors and selectors fulfill their contracts, irrespective of the underlying details of the internal representation. This is one of the advantages of designing programs using data abstraction; it helps isolate changes and makes the program easier to understand, maintain, and modify.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "2.1.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 79,
+          "title": "SICP Python",
+          "chunk_index": 78,
+          "source_filename": "sicpy.md",
+          "section": "2.1.3",
+          "section_title": "What Is Meant by Data?",
+          "similarity": 0.49022142367153165,
+          "preview": "### 2.1.3 What Is Meant by Data? We began the rational-number implementation in section 2.1.1 by implementing the rational-number operations `add_rat`,`sub_rat`, and so on in terms of three unspecified functions:`make_rat`,`numer`, and `denom`. At that point, we could think of the operations as being defined in terms of data objects—numerators, denominators, and rational numbers—whose behavior was specified by the latter three functions. But exactly what is meant by *data*? It is not enough to s"
+        },
+        {
+          "id": 142,
+          "title": "SICP Python",
+          "chunk_index": 141,
+          "source_filename": "sicpy.md",
+          "section": "2.4.1",
+          "section_title": "Representations for Complex Numbers",
+          "similarity": 0.4873970118992037,
+          "preview": "### 2.4.1 Representations for Complex Numbers We will develop a system that performs arithmetic operations on complex numbers as a simple but unrealistic example of a program that uses generic operations. We begin by discussing two plausible representations for complex numbers as ordered pairs: rectangular form (real part and imaginary part) and polar form (magnitude and angle). [^37: In actual computational systems, rectangular form is preferable to polar form most of the time because of roundo"
+        },
+        {
+          "id": 77,
+          "title": "SICP Python",
+          "chunk_index": 76,
+          "source_filename": "sicpy.md",
+          "section": "2.1.2",
+          "section_title": "Abstraction Barriers",
+          "similarity": 0.48626458329938815,
+          "preview": "### 2.1.2 Abstraction Barriers Before continuing with more examples of compound data and data abstraction, let us consider some of the issues raised by the rational-number example. We defined the rational-number operations in terms of a constructor `make_rat` and selectors `numer` and `denom`. In general, the underlying idea of data abstraction is to identify for each type of data object a basic set of operations in terms of which all manipulations of data objects of that type will be expressed,"
+        },
+        {
+          "id": 147,
+          "title": "SICP Python",
+          "chunk_index": 146,
+          "source_filename": "sicpy.md",
+          "section": "2.4.2",
+          "section_title": "Tagged data",
+          "similarity": 0.45139636285149065,
+          "preview": "![](https://sicp.sourceacademy.org/img_javascript/ch2-Z-G-62.svg) **Figure 2.21.** Structure of the generic complex-arithmetic system. The resulting complex-number system has the structure shown in figure 2.21. The system has been decomposed into three relatively independent parts: the complex-number-arithmetic operations, Alyssa's polar implementation, and Ben's rectangular implementation. The polar and rectangular implementations could have been written by Ben and Alyssa working separately, an"
+        },
+        {
+          "id": 146,
+          "title": "SICP Python",
+          "chunk_index": 145,
+          "source_filename": "sicpy.md",
+          "section": "2.4.2",
+          "section_title": "Tagged data",
+          "similarity": 0.450920108628158,
+          "preview": "and here is Alyssa's revised polar representation: ```python def real_part_polar(z): return magnitude_polar(z) * math_cos(angle_polar(z)) def imag_part_polar(z): return magnitude_polar(z) * math_sin(angle_polar(z)) def magnitude_polar(z): return head(z) def angle_polar(z): return tail(z) def make_from_real_imag_polar(x, y): return attach_tag(\"polar\", pair(math_sqrt(square(x) + square(y)), math_atan2(y, x))) def make_from_mag_ang_polar(r, a): return attach_tag(\"polar\", pair(r, a)) ``` Each generi"
+        }
+      ]
+    },
+    {
+      "id": "closure_property_nested_sequences",
+      "question": "What does the closure property mean for lists and trees? Why is it important that pairs can contain other pairs?",
+      "answer": "The closure property for lists and trees refers to the ability to create pairs whose elements are pairs themselves. For instance, you can create a pair where the first element is a pair of two numbers, and the second element could be another pair or even another set of pairs. This property is vital because it allows you to build complex data structures like lists and trees. \n\nA simple list contains elements placed in a linear order. However, with the help of the closure property, each element of the list could be a list itself, or a pair, leading to the formation of hierarchical data structures. In terms of trees, each node could potentially represent a subtree, creating a recursive, nested structure.\n\nThe importance of this property is that it allows us to represent and work with data that naturally forms hierarchical and non-linear structures. For instance, the structure of a webpage (DOM structure), organization charts, file systems - these are all examples of real-world data that can be modelled as trees. Thus, pairs having other pairs as elements enable us to construct hierarchical, nested data structures that can effectively model and handle such real-world data.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "2.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 85,
+          "title": "SICP Python",
+          "chunk_index": 84,
+          "source_filename": "sicpy.md",
+          "section": "2.2",
+          "section_title": "Hierarchical Data and the Closure Property",
+          "similarity": 0.6963911210577856,
+          "preview": "## 2.2 Hierarchical Data and the Closure Property As we have seen, pairs provide a primitive \"glue\" that we can use to construct compound data objects. Figure 2.2 shows a standard way to visualize a pair—in this case, the pair formed by `pair(1, 2)`. In this representation, which is called *box-and-pointer notation*, each compound object is shown as a *pointer* to a box. The box for a pair has two parts, the left part containing the head of the pair and the right part containing the tail. ![](ht"
+        },
+        {
+          "id": 75,
+          "title": "SICP Python",
+          "chunk_index": 74,
+          "source_filename": "sicpy.md",
+          "section": "2.1.1",
+          "section_title": "Example: Arithmetic Operations for Rational Numbers",
+          "similarity": 0.4798249278289892,
+          "preview": "#### Pairs To enable us to implement the concrete level of our data abstraction, our Python environment provides a compound structure called a *pair*, which can be constructed with the primitive function`pair`. This function takes two arguments and returns a compound data object that contains the two arguments as parts. Given a pair, we can extract the parts using the primitive functions`head` and `tail`. Thus, we can use `pair`,`head`, and `tail` as follows: ```python x = pair(1, 2) ``` ```pyth"
+        },
+        {
+          "id": 93,
+          "title": "SICP Python",
+          "chunk_index": 92,
+          "source_filename": "sicpy.md",
+          "section": "2.2.2",
+          "section_title": "Hierarchical Structures",
+          "similarity": 0.471581425764831,
+          "preview": "### 2.2.2 Hierarchical Structures The representation of sequences in terms of linked lists generalizes naturally to represent sequences whose elements may themselves be sequences. For example, we can regard the object ` [[1, [2, None]], [3, [4, None]]] ` constructed by ```python pair(llist(1, 2), llist(3, 4)) ``` as a linked list of three items, the first of which is itself a linked list, `[1, [2, None]]`. Figure 2.5 shows the representation of this structure in terms of pairs. ![](https://sicp."
+        },
+        {
+          "id": 86,
+          "title": "SICP Python",
+          "chunk_index": 85,
+          "source_filename": "sicpy.md",
+          "section": "2.2.1",
+          "section_title": "Representing Sequences",
+          "similarity": 0.4660399387066435,
+          "preview": "### 2.2.1 Representing Sequences One of the useful structures we can build with pairs is a *sequence*—an ordered collection of data objects. There are, of course, many ways to represent sequences in terms of pairs. One particularly straightforward representation is illustrated in figure 2.4, where the sequence 1, 2, 3, 4 is represented as a chain of pairs. The `head` of each pair is the corresponding item in the chain, and the `tail` of the pair is the next pair in the chain. The `tail` of the f"
+        },
+        {
+          "id": 206,
+          "title": "SICP Python",
+          "chunk_index": 205,
+          "source_filename": "sicpy.md",
+          "section": "3.3.1",
+          "section_title": "Mutable List Structure",
+          "similarity": 0.4419863771333602,
+          "preview": "### 3.3.1 Mutable List Structure The basic operations on pairs—`pair`, `head`, and `tail`—can be used to construct list structure and to select parts from list structure, but they are incapable of modifying list structure. The same is true of the list operations we have used so far, such as `append` and `list`, since these can be defined in terms of `pair`,`head`, and `tail`. To modify list structures we need new operations. The primitive mutators for pairs are `set_head` and `set_tail`.The func"
+        }
+      ]
+    },
+    {
+      "id": "symbolic_derivative_new_operator",
+      "question": "My symbolic differentiator handles sums and products, but exponentiation gives the wrong answer. Where should a new operator's rules be added?",
+      "answer": "A new operator's rules should be added within the `deriv` function definition. For example, suppose we wanted to add support for exponentiation, represented as `**`. We could include a case in the `deriv` function to handle expressions where `is_exp` is `True`. This function might look for a base and an exponent, analogous to the `multiplicand` and `multiplier` for the `is_product` case.\n\nHere's an example to give you an idea:\n\n```python\ndef deriv(exp, variable):\n    if is_number(exp):\n        return 0\n    elif is_variable(exp):\n        return (1 if is_same_variable(exp, variable) else 0)\n    elif is_sum(exp):\n        return make_sum(deriv(addend(exp), variable),deriv(augend(exp), variable))\n    elif is_product(exp):\n        return make_sum(make_product(multiplier(exp),deriv(multiplicand(exp), variable)),\n                        make_product(deriv(multiplier(exp), variable),multiplicand(exp)))\n    elif is_exp(exp):  # add support for exponentiation\n        return make_product(multiply(exponent(exp), make_exp(base(exp), subtract(exponent(exp), 1))),\n                            deriv(base(exp), variable))\n    else:\n        error(exp, \"unknown expression type -- deriv\")\n```\n\nThis code includes hypothetical functions such as `is_exp`, `base`, `exponent`, and `make_exp` which you would need to define in order to handle exponentiation expressions for differentiating. This outline will be expanded upon in Section 2.3.2, specifically the exercise 2.56.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "2.3.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 123,
+          "title": "SICP Python",
+          "chunk_index": 122,
+          "source_filename": "sicpy.md",
+          "section": "2.3.2",
+          "section_title": "Example: Symbolic Differentiation",
+          "similarity": 0.546664097798529,
+          "preview": "The program produces answers that are correct; however, they are unsimplified. It is true that $$\\begin{array}{lll} \\dfrac{d(xy)}{dx} & = & x\\cdot 0+1\\cdot y \\end{array}$$ but we would like the program to know that $x\\cdot 0 = 0$, $1\\cdot y = y$, and $0+y = y$. The answer for the second example should have been simply `y`. As the third example shows, this becomes a serious issue when the expressions are complex. Our difficulty is much like the one we encountered with the rational-number implemen"
+        },
+        {
+          "id": 122,
+          "title": "SICP Python",
+          "chunk_index": 121,
+          "source_filename": "sicpy.md",
+          "section": "2.3.2",
+          "section_title": "Example: Symbolic Differentiation",
+          "similarity": 0.5432310614440405,
+          "preview": "#### Representing algebraic expressions We can imagine many ways to use linked list structure to represent algebraic expressions. For example, we could use linked lists of symbols that mirror the usual algebraic notation, representing $ax+b$ as `llist(\"a\", \"*\", \"x\", \"+\", \"b\")`. However, it will be more convenient if we reflect the mathematical structure of the expression in the Python value representing it; that is, to represent $ax+b$ as `llist(\"+\", llist(\"*\", \"a\", \"x\"), \"b\")`. Placing a binary"
+        },
+        {
+          "id": 124,
+          "title": "SICP Python",
+          "chunk_index": 123,
+          "source_filename": "sicpy.md",
+          "section": "2.3.2",
+          "section_title": "Example: Symbolic Differentiation",
+          "similarity": 0.5102337869769865,
+          "preview": "$$\\begin{array}{lll} \\dfrac {d(u^{n})}{dx} & = & nu^{n-1}\\left( \\dfrac{du}{dx}\\right) \\end{array}$$ by adding a new clause to the `deriv` program and defining appropriate functions`is_exp`,`base`, `exponent`, and `make_exp`. (You may use the string `\"**\"` to denote exponentiation.) Build in the rules that anything raised to the power 0 is 1 and anything raised to the power 1 is the thing itself. **Exercise 2.57.** Extend the differentiation program to handle sums and products of arbitrary number"
+        },
+        {
+          "id": 120,
+          "title": "SICP Python",
+          "chunk_index": 119,
+          "source_filename": "sicpy.md",
+          "section": "2.3.2",
+          "section_title": "Example: Symbolic Differentiation",
+          "similarity": 0.5072547407095412,
+          "preview": "### 2.3.2 Example: Symbolic Differentiation As an illustration of symbol manipulation and a further illustration of data abstraction, consider the design of a function that performs symbolic differentiation of algebraic expressions. We would like the function to take as arguments an algebraic expression and a variable and to return the derivative of the expression with respect to the variable. For example, if the arguments to the function are $ax^2 + bx +c$ and $x$, the function should return $2"
+        },
+        {
+          "id": 121,
+          "title": "SICP Python",
+          "chunk_index": 120,
+          "source_filename": "sicpy.md",
+          "section": "2.3.2",
+          "section_title": "Example: Symbolic Differentiation",
+          "similarity": 0.5051969972725743,
+          "preview": "#### The differentiation program with abstract data To keep things simple, we will consider a very simple symbolic-differentiation program that handles expressions that are built up using only the operations of addition and multiplication with two arguments. Differentiation of any such expression can be carried out by applying the following reduction rules: $$\\begin{array}{rll} \\dfrac{dc}{dx} & = & 0\\quad \\text{for $c$ a constant or a variable different from $x$} \\\\[12pt] \\dfrac{dx}{dx} & = & 1 "
+        }
+      ]
+    },
+    {
+      "id": "huffman_prefix_decode_failure",
+      "question": "Why can Huffman codes be decoded without separators between symbols, and what happens if one bit is corrupted?",
+      "answer": "Huffman codes can be decoded without separators between symbols because they are constructed as prefix codes. In a prefix code, no code for any symbol is a beginning (or \"prefix\") of the code for another symbol. This means that each symbol's code is distinct and unambiguous, and can be identified directly from the sequence of bits. \n\nLet's illustrate this with an example: say we have the codes `A=0`, `B=100`, `C=1010`. If you are given the bit sequence `01001010`, you can decode it as `ABCA` without needing separators.\n\nNow suppose that one bit is corrupted or lost. Since Huffman codes are prefix codes, a single bit error could potentially lead to the incorrect decoding of multiple symbols. This could happen in cases where the error creates a sequence of bits that coincidentally match the code for a different symbol, or if a bit is missing, it can shift the entire sequence of symbols.\n\nA simple example would be the sequence `0100` decoded as `AB` for the codes mentioned above. If the third bit is altered or corrupted, the sequence changes to `0000` which would be decoded as `AA`. So one bit change can have a more significant effect on the decoded message. While error correction is outside the scope of Huffman encoding itself, a lot of modern communication protocols include additional features for error detection and correction.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "2.3.4"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 134,
+          "title": "SICP Python",
+          "chunk_index": 133,
+          "source_filename": "sicpy.md",
+          "section": "2.3.4",
+          "section_title": "Example: Huffman Encoding Trees",
+          "similarity": 0.6052499061588958,
+          "preview": "One of the difficulties of using a variable-length code is knowing when you have reached the end of a symbol in reading a sequence of zeros and ones. Morse code solves this problem by using a special *separator code* (in this case, a pause) after the sequence of dots and dashes for each letter. Another solution is to design the code in such a way that no complete code for any symbol is the beginning (or *prefix*) of the code for another symbol. Such a code is called a *prefix code*. In the examp"
+        },
+        {
+          "id": 133,
+          "title": "SICP Python",
+          "chunk_index": 132,
+          "source_filename": "sicpy.md",
+          "section": "2.3.4",
+          "section_title": "Example: Huffman Encoding Trees",
+          "similarity": 0.5758147330866044,
+          "preview": "### 2.3.4 Example: Huffman Encoding Trees This section provides practice in the use of linked list structure and data abstraction to manipulate sets and trees. The application is to methods for representing data as sequences of ones and zeros (bits). For example, the ASCII standard code used to represent text in computers encodes each character as a sequence of seven bits. Using seven bits allows us to distinguish $2^7$, or 128, possible different characters. In general, if we want to distinguis"
+        },
+        {
+          "id": 135,
+          "title": "SICP Python",
+          "chunk_index": 134,
+          "source_filename": "sicpy.md",
+          "section": "2.3.4",
+          "section_title": "Example: Huffman Encoding Trees",
+          "similarity": 0.5278453512593663,
+          "preview": "#### Generating Huffman trees Given an \"alphabet\" of symbols and their relative frequencies, how do we construct the \"best\" code? (In other words, which tree will encode messages with the fewest bits?) Huffman gave an algorithm for doing this and showed that the resulting code is indeed the best variable-length code for messages where the relative frequency of the symbols matches the frequencies with which the code was constructed. We will not prove this optimality of Huffman codes here, but we "
+        },
+        {
+          "id": 137,
+          "title": "SICP Python",
+          "chunk_index": 136,
+          "source_filename": "sicpy.md",
+          "section": "2.3.4",
+          "section_title": "Example: Huffman Encoding Trees",
+          "similarity": 0.49046269689530686,
+          "preview": "#### The decoding function The following function implements the decoding algorithm. It takes as arguments a linked list of zeros and ones, together with a Huffman tree. ```python def decode(bits, tree): def decode_1(bits, current_branch): if is_none(bits): return None else: next_branch = choose_branch(head(bits), current_branch) return (pair(symbol_leaf(next_branch), decode_1(tail(bits), tree)) if is_leaf(next_branch) else decode_1(tail(bits), next_branch)) return decode_1(bits, tree) def choos"
+        },
+        {
+          "id": 136,
+          "title": "SICP Python",
+          "chunk_index": 135,
+          "source_filename": "sicpy.md",
+          "section": "2.3.4",
+          "section_title": "Example: Huffman Encoding Trees",
+          "similarity": 0.41266078623052327,
+          "preview": "#### Representing Huffman trees In the exercises below we will work with a system that uses Huffman trees to encode and decode messages and generates Huffman trees according to the algorithm outlined above. We will begin by discussing how trees are represented. Leaves of the tree are represented by a linked list consisting of the string `\"leaf\"`, the symbol at the leaf, and the weight: ```python def make_leaf(symbol, weight): return llist(\"leaf\", symbol, weight) def is_leaf(object): return head("
+        }
+      ]
+    },
+    {
+      "id": "data_directed_new_type_vs_new_operation",
+      "question": "When using data-directed programming, why is adding a new type different from adding a new operation? Which approach changes fewer files?",
+      "answer": "In data-directed programming, adding a new type and adding a new operation have different implications.\n\nWhen you add a new type, you are essentially adding a new column to your operation-and-type table. This requires adding entries (functions) for each operation that is applicable to this newly introduced type. The primary advantage is that this addition does not require modifying the existing code, it just requires entering the new functions/operations for this type in the table. Thus, it allows \"additive\" changes, where existing functions are left unchanged, supporting modularity of the system design.\n\nOn the other hand, adding a new operation is akin to adding a new row in the operation-and-type table. This requires adding a function for each existing type to handle the new operation. If you're using an operation-and-type table or a similar dispatch mechanism, this too can be purely additive—you just add a new operation to the table for each type. However, if individual types have \"hard-coded\" responses to operations (like in the message-passing style), each of those data objects would need to be updated to handle the new operation.\n\nIn general, under the data-directed style, adding a new representation or type typically affects fewer files or modules than adding a new operation. Adding a new type mostly involves adding a new module/file (or updating an existing one) with the implementation for the new type, whereas adding a new operation can require touching the modules/files of every existing type, depending on the specific dispatch mechanism in use.\n\nThis gives you some flexibility in managing the complexity of your system, which is one of reasons for the use of data-directed programming discussed in Section 2.4.3.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "2.4.3"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 148,
+          "title": "SICP Python",
+          "chunk_index": 147,
+          "source_filename": "sicpy.md",
+          "section": "2.4.3",
+          "section_title": "Data-Directed Programming and Additivity",
+          "similarity": 0.6060836182039603,
+          "preview": "### 2.4.3 Data-Directed Programming and Additivity The general strategy of checking the type of a datum and calling an appropriate function is called *dispatching on type*. This is a powerful strategy for obtaining modularity in system design. On the other hand, implementing the dispatch as in section 2.4.2 has two significant weaknesses. One weakness is that the generic interface functions(`real_part`,`imag_part`,`magnitude`, and `angle`) must know about all the different representations. For i"
+        },
+        {
+          "id": 153,
+          "title": "SICP Python",
+          "chunk_index": 152,
+          "source_filename": "sicpy.md",
+          "section": "2.4.3",
+          "section_title": "Data-Directed Programming and Additivity",
+          "similarity": 0.4877320461244887,
+          "preview": "#### Message passing The key idea of data-directed programming is to handle generic operations in programs by dealing explicitly with operation-and-type tables, such as the table in figure 2.22. The style of programming we used in section 2.4.2 organized the required dispatching on type by having each operation take care of its own dispatching. In effect, this decomposes the operation-and-type table into rows, with each generic operation function representing a row of the table. An alternative i"
+        },
+        {
+          "id": 151,
+          "title": "SICP Python",
+          "chunk_index": 150,
+          "source_filename": "sicpy.md",
+          "section": "2.4.3",
+          "section_title": "Data-Directed Programming and Additivity",
+          "similarity": 0.4854164117481956,
+          "preview": "We can also extract from the table the constructors to be used by the programs external to the packages in making complex numbers from real and imaginary parts and from magnitudes and angles. As in section 2.4.2, we construct rectangular numbers whenever we have real and imaginary parts, and polar numbers whenever we have magnitudes and angles: ```python def make_from_real_imag(x, y): return get(\"make_from_real_imag\", \"rectangular\")(x, y) def make_from_mag_ang(r, a): return get(\"make_from_mag_an"
+        },
+        {
+          "id": 161,
+          "title": "SICP Python",
+          "chunk_index": 160,
+          "source_filename": "sicpy.md",
+          "section": "2.5.2",
+          "section_title": "Combining Data of Different Types",
+          "similarity": 0.4848438855235835,
+          "preview": "This coercion scheme has many advantages over the method of defining explicit cross-type operations, as outlined above. Although we still need to write coercion functions to relate the types (possibly $n^2$functions for a system with $n$ types), we need to write only one function for each pair of types rather than a different function for each collection of types and each generic operation. [^45: If we are clever, we can usually get by with fewer than $n^2$ coercion functions. For instance, if w"
+        },
+        {
+          "id": 72,
+          "title": "SICP Python",
+          "chunk_index": 71,
+          "source_filename": "sicpy.md",
+          "section": "2",
+          "section_title": "Building Abstractions with Data",
+          "similarity": 0.475963639423823,
+          "preview": "We begin this chapter by implementing the rational-number arithmetic system mentioned above. This will form the background for our discussion of compound data and data abstraction. As with compound functions, the main issue to be addressed is that of abstraction as a technique for coping with complexity, and we will see how data abstraction enables us to erect suitable *abstraction barriers* between different parts of a program. We will see that the key to forming compound data is that a program"
+        }
+      ]
+    },
+    {
+      "id": "generic_coercion_ambiguity",
+      "question": "If two generic numeric types can both be coerced toward each other, how should the system choose a coercion path without doing the wrong operation?",
+      "answer": "The order in which coercions are tried usually follows a certain approach designed to ensure results are accurate and meaningful.\n\nWhen two generic arguments need to be coerced for a binary operation, the `apply_generic` function attempts to find a coercion path in the following way:\n\n1. First, it checks if there is a function defined for the operation with the given types. If so, that function is used.\n2. If not, the function attempts to find a coercion function that changes the type of the first argument to the type of the second.\n3. If it can't find such a function, `apply_generic` tries to find a coercion function in the other direction - that is, changing the type of the second argument to that of the first.\n4. If no coercion function is found in either direction, an error is returned.\n\nHere's a simplified version of how this might look:\n\n```python\ndef apply_generic(op, args):\n    type1 = type_tag(args[0])\n    type2 = type_tag(args[1])\n\n    function = get(op, (type1, type2)) # check if operation is defined for these types\n\n    if not function: # if not, try to coerce\n        t1_to_t2 = get_coercion(type1, type2)\n        t2_to_t1 = get_coercion(type2, type1)\n\n        if t1_to_t2: # try to change type1 to type2\n            return apply_generic(op, [t1_to_t2(args[0]), args[1]])\n        elif t2_to_t1: # else try to change type2 to type1\n            return apply_generic(op, [args[0], t2_to_t1(args[1])])\n        else:\n            return \"No suitable method found\" # if no path found, return error\n    else:\n        return function(args[0], args[1])\n```\nNote that this method isn't perfect - it requires the coercion table to be carefully managed to avoid infinite loops or incorrect results. However, it's a decent first approach to handling generic operations on mixed types. As you advance in your study of computer science, you'll encounter more sophisticated ways of handling these kinds of problems.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "2.5.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 161,
+          "title": "SICP Python",
+          "chunk_index": 160,
+          "source_filename": "sicpy.md",
+          "section": "2.5.2",
+          "section_title": "Combining Data of Different Types",
+          "similarity": 0.6592233495315455,
+          "preview": "This coercion scheme has many advantages over the method of defining explicit cross-type operations, as outlined above. Although we still need to write coercion functions to relate the types (possibly $n^2$functions for a system with $n$ types), we need to write only one function for each pair of types rather than a different function for each collection of types and each generic operation. [^45: If we are clever, we can usually get by with fewer than $n^2$ coercion functions. For instance, if w"
+        },
+        {
+          "id": 160,
+          "title": "SICP Python",
+          "chunk_index": 159,
+          "source_filename": "sicpy.md",
+          "section": "2.5.2",
+          "section_title": "Combining Data of Different Types",
+          "similarity": 0.564444951922175,
+          "preview": "#### Coercion In the general situation of completely unrelated operations acting on completely unrelated types, implementing explicit cross-type operations, cumbersome though it may be, is the best that one can hope for. Fortunately, we can usually do better by taking advantage of additional structure that may be latent in our type system. Often the different data types are not completely independent, and there may be ways by which objects of one type may be viewed as being of another type. This"
+        },
+        {
+          "id": 163,
+          "title": "SICP Python",
+          "chunk_index": 162,
+          "source_filename": "sicpy.md",
+          "section": "2.5.2",
+          "section_title": "Combining Data of Different Types",
+          "similarity": 0.5463497399516921,
+          "preview": "#### Inadequacies of hierarchies If the data types in our system can be naturally arranged in a tower, this greatly simplifies the problems of dealing with generic operations on different types, as we have seen. Unfortunately, this is usually not the case. Figure 2.26 illustrates a more complex arrangement of mixed types, this one showing relations among different types of geometric figures. We see that, in general, a type may have more than one subtype. Triangles and quadrilaterals, for instanc"
+        },
+        {
+          "id": 162,
+          "title": "SICP Python",
+          "chunk_index": 161,
+          "source_filename": "sicpy.md",
+          "section": "2.5.2",
+          "section_title": "Combining Data of Different Types",
+          "similarity": 0.4808487636688309,
+          "preview": "#### Hierarchies of types The coercion scheme presented above relied on the existence of natural relations between pairs of types. Often there is more \"global\" structure in how the different types relate to each other. For instance, suppose we are building a generic arithmetic system to handle integers, rational numbers, real numbers, and complex numbers. In such a system, it is quite natural to regard an integer as a special kind of rational number, which is in turn a special kind of real numbe"
+        },
+        {
+          "id": 172,
+          "title": "SICP Python",
+          "chunk_index": 171,
+          "source_filename": "sicpy.md",
+          "section": "2.5.3",
+          "section_title": "Example: Symbolic Algebra",
+          "similarity": 0.455822432472063,
+          "preview": "#### Hierarchies of types in symbolic algebra Our polynomial system illustrates how objects of one type (polynomials) may in fact be complex objects that have objects of many different types as parts. This poses no real difficulty in defining generic operations. We need only install appropriate generic operations for performing the necessary manipulations of the parts of the compound types. In fact, we saw that polynomials form a kind of \"recursive data abstraction,\" in that parts of a polynomia"
+        }
+      ]
+    },
+    {
+      "id": "assignment_referential_transparency",
+      "question": "After adding assignment, why can't I replace a function call with its value the way substitution says I can?",
+      "answer": "In functional programming, you can substitute a function call with its returned value because functions are deterministic: given the same inputs, they will always produce the same outputs. This characteristic of functional programming aligns nicely with the substitution model of computation.\n\nOnce we introduce assignment into the mix, things become more complex. Now, functions can have \"state\" - variables that maintain information across separate function calls. As such, a function's output could now depend not only on its inputs but also on its state. In this new model, even if a function is called with the same inputs, it might return a different value, depending on the state of the variables inside it.\n\nTo take an example from the course material, look at the `make_simplified_withdraw` function. Each time the inner `withdraw` function is called, it modifies the `balance` variable, changing the output of any subsequent calls to `withdraw`.\n\nWith assignment and state, replacing a function call with its returned value can lead to incorrect outcomes because it doesn't take into account changes in state that could happen inside the function. That's why the substitution model can't be used once assignment is introduced.\n\nYou can learn more about the consequences of introducing assignment in Section 3.1.3 in the course material.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "3.1.3"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 186,
+          "title": "SICP Python",
+          "chunk_index": 185,
+          "source_filename": "sicpy.md",
+          "section": "3.1.3",
+          "section_title": "The Costs of Introducing Assignment",
+          "similarity": 0.6242985633451973,
+          "preview": "### 3.1.3 The Costs of Introducing Assignment As we have seen, assignment enables us to model objects that have local state. However, this advantage comes at a price. Our programming language can no longer be interpreted in terms of the substitution model of function application that we introduced in section 1.1.5. Moreover, no simple model with \"nice\" mathematical properties can be an adequate framework for dealing with objects and assignment in programming languages. So long as we do not use a"
+        },
+        {
+          "id": 187,
+          "title": "SICP Python",
+          "chunk_index": 186,
+          "source_filename": "sicpy.md",
+          "section": "3.1.3",
+          "section_title": "The Costs of Introducing Assignment",
+          "similarity": 0.5209160559656264,
+          "preview": "withdraw(20) ``` Now we apply the function by substituting 20 for `amount` in the body of the function definition: ```python balance = 25 - 20 return 25 ``` If we adhered to the substitution model, we would have to say that the meaning of the function application is to first set `balance` to 5 and then return 25 as the value of the expression. This gets the wrong answer. In order to get the correct answer, we would have to somehow distinguish the first occurrence of `balance` (before the effect "
+        },
+        {
+          "id": 478,
+          "title": "SICP Python",
+          "chunk_index": 477,
+          "source_filename": "sicpy.md",
+          "section": "5.4.3",
+          "section_title": "Blocks, Assignments, and Declarations",
+          "similarity": 0.5111187639905655,
+          "preview": "#### Assignments and declarations Assignments are handled by `ev_assignment`, reached from `eval_dispatch` with the assignment expression in `comp`. The code at `ev_assignment` first evaluates the value part of the expression and then installs the new value in the environment. The function `assign_symbol_value` is assumed to be available as a machine operation. ```python \"ev_assignment\", assign(\"unev\", list(op(\"assignment_symbol\"), reg(\"comp\"))), save(\"unev\"), // save variable for later assign(\""
+        },
+        {
+          "id": 298,
+          "title": "SICP Python",
+          "chunk_index": 297,
+          "source_filename": "sicpy.md",
+          "section": "4.1.1",
+          "section_title": "The Core of the Evaluator",
+          "similarity": 0.508123809401443,
+          "preview": "#### Assignments and declarations The function `eval_assignment` handles assignments to names. (To simplify the presentation of our evaluator, we are allowing assignment not just to variables but also—erroneously—to constants. Exercise 4.11 explains how we could distinguish constants from variables and prevent assignment to constants.) The function `eval_assignment` calls `evaluate` on the value expression to find the value to be assigned and calls `assignment_symbol` to retrieve the symbol that"
+        },
+        {
+          "id": 309,
+          "title": "SICP Python",
+          "chunk_index": 308,
+          "source_filename": "sicpy.md",
+          "section": "4.1.2",
+          "section_title": "Representing Components",
+          "similarity": 0.4985203325790949,
+          "preview": "#### Assignments Assignments are parsed as follows: $$\\begin{align*} \\ll\\ \\mathit{name}\\ \\ \\texttt{=}\\ \\ \\mathit{expression}\\ \\gg & = \\texttt{list(\"assignment\", }\\ll\\ \\mathit{name}\\gg \\texttt{, }\\ll\\ \\mathit{expression}\\ \\gg \\texttt{)} \\end{align*}$$ The syntax predicate is `is_assignment` and the selectors are `assignment_symbol` and `assignment_value_expression`. The symbol is wrapped in a tagged list representing the name, and thus `assignment_symbol` needs to unwrap it. ```python function as"
+        }
+      ]
+    },
+    {
+      "id": "aliasing_mutable_pairs",
+      "question": "Two variables point to the same list. Why does mutating one variable's list change what I see through the other variable?",
+      "answer": "This behavior is due to the concept of mutable data and variable references in Python.\n\nIn Python, variables don't \"hold\" the data directly. Instead, they reference or \"point to\" the data. When you declare a list and then assign it to a variable, the variable points to the location in memory where the list is stored. If you then assign this variable to another variable, both variables reference or point to the same list in memory.\n\nTherefore, if you mutate the list through one variable, you are actually mutating the single list that exists in memory. Since the other variable also points to this same spot in memory, it will reflect the change you made, because they are referencing the same underlying list data.\n\nFor example, consider the following Python code:\n\n```python\nx = ['apple', 'banana']\n\n# y now also points to the same list in memory that x does\ny = x\n\n# Mutate the list through x\nx[0] = 'avocado'\n\n# Print y\nprint(y)  # Output: ['avocado', 'banana']\n```\n\nIn this example, `y` reflects the changes made via the variable `x`, because they both reference the same list in memory. This shared data or shared reference phenomenon is a critical aspect of understanding how data objects work in Python and many other programming languages as well.\n\nYou can refer to the concept of \"Sharing and identity\" in the section 3.3.1 of the SICP course notes for more detailed information.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "3.3.1"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 209,
+          "title": "SICP Python",
+          "chunk_index": 208,
+          "source_filename": "sicpy.md",
+          "section": "3.3.1",
+          "section_title": "Mutable List Structure",
+          "similarity": 0.5233328400236336,
+          "preview": "#### Sharing and identity We mentioned in section 3.1.3 the theoretical issues of \"sameness\" and \"change\" raised by the introduction of assignment. These issues arise in practice when individual pairs are *shared* among different data objects. For example, consider the structure formed by ```python x = llist(\"a\", \"b\") z1 = pair(x, x) ``` As shown in figure 3.16, `z1` is a pair whose `head` and `tail` both point to the same pair `x`. This sharing of `x` by the `head` and `tail` of `z1` is a conse"
+        },
+        {
+          "id": 189,
+          "title": "SICP Python",
+          "chunk_index": 188,
+          "source_filename": "sicpy.md",
+          "section": "3.1.3",
+          "section_title": "The Costs of Introducing Assignment",
+          "similarity": 0.47077138881851266,
+          "preview": "As an example of how this issue arises in programming, consider the situation where Peter and Paul have a bank account with $100 in it. There is a substantial difference between modeling this as ```python peter_acc = make_account(100) paul_acc = make_account(100) ``` and modeling it as ```python peter_acc = make_account(100) paul_acc = peter_acc ``` In the first situation, the two bank accounts are distinct. Transactions made by Peter will not affect Paul's account, and vice versa. In the second"
+        },
+        {
+          "id": 211,
+          "title": "SICP Python",
+          "chunk_index": 210,
+          "source_filename": "sicpy.md",
+          "section": "3.3.1",
+          "section_title": "Mutable List Structure",
+          "similarity": 0.4597249282991369,
+          "preview": "#### Mutation is just assignment When we introduced compound data, we observed in section 2.1.3 that pairs can be represented purely in terms of functions: ```python def pair(x, y): def dispatch(m): return (x if m == \"head\" else y if m == \"tail\" else error(m, \"undefined operation -- pair\")) return dispatch def head(z): return z(\"head\") def tail(z): return z(\"tail\") ``` The same observation is true for mutable data. We can implement mutable data objects as functions using assignment and local sta"
+        },
+        {
+          "id": 206,
+          "title": "SICP Python",
+          "chunk_index": 205,
+          "source_filename": "sicpy.md",
+          "section": "3.3.1",
+          "section_title": "Mutable List Structure",
+          "similarity": 0.45823901471470885,
+          "preview": "### 3.3.1 Mutable List Structure The basic operations on pairs—`pair`, `head`, and `tail`—can be used to construct list structure and to select parts from list structure, but they are incapable of modifying list structure. The same is true of the list operations we have used so far, such as `append` and `list`, since these can be defined in terms of `pair`,`head`, and `tail`. To modify list structures we need new operations. The primitive mutators for pairs are `set_head` and `set_tail`.The func"
+        },
+        {
+          "id": 239,
+          "title": "SICP Python",
+          "chunk_index": 238,
+          "source_filename": "sicpy.md",
+          "section": "3.4.1",
+          "section_title": "The Nature of Time in Concurrent Systems",
+          "similarity": 0.4421146983227191,
+          "preview": "The general phenomenon illustrated here is that several threads may share a common state variable. What makes this complicated is that more than one thread may be trying to manipulate the shared state at the same time. For the bank account example, during each transaction, each customer should be able to act as if the other customers did not exist. When customers change the balance in a way that depends on the balance, they must be able to assume that, just before the moment of change, the balan"
+        }
+      ]
+    },
+    {
+      "id": "environment_closure_lookup",
+      "question": "A function returned from another function still remembers an old variable. Which environment is used when that inner function runs?",
+      "answer": "When the inner function runs, it uses the environment in which it was first created. This is called a \"closure\" in computer science. \n\nIn Python, when you define a function, it has access to the variables in the environment where it was defined. When you return that function and call it elsewhere, it still retains access to its original environment. Therefore it remembers the older variables even if they are out of scope at the location from which the function is called.\n\nFor example, consider this code:\n\n```python\ndef outer_function(x):\n    def inner_function(y):\n        return x + y\n    return inner_function\n\nadd_5 = outer_function(5)\nprint(add_5(10))\n```\n\nIn this code, even when we call the `inner_function` (which we named `add_5`), it still remembers the value of `x` from its original environment. So when we call `add_5(10)`, it knows to add 5 and 10, even though the variable `x` is not in scope at the point where `add_5(10)` is called.\n\nThis is explained in detail in Section 3.2.2 and Section 3.2.3.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "3.2.2",
+        "3.2.3"
+      ],
+      "retrieval_expected_section": false,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 201,
+          "title": "SICP Python",
+          "chunk_index": 200,
+          "source_filename": "sicpy.md",
+          "section": "3.2.4",
+          "section_title": "Internal Declarations",
+          "similarity": 0.510577304044733,
+          "preview": "The environment model thus explains the two key properties that make local function definitions a useful technique for modularizing programs: - The names of the local functions do not interfere with names external to the enclosing function, because the local function names will be bound in the frame that the block creates when it is evaluated, rather than being bound in the program environment. - The local functions can access the arguments of the enclosing function, simply by using parameter na"
+        },
+        {
+          "id": 200,
+          "title": "SICP Python",
+          "chunk_index": 199,
+          "source_filename": "sicpy.md",
+          "section": "3.2.4",
+          "section_title": "Internal Declarations",
+          "similarity": 0.5002398013846098,
+          "preview": "### 3.2.4 Internal Declarations In this section we handle the evaluation of function bodies or other blocks (such as the branches of conditional statements) that contain declarations. Each block opens a new scope for names declared in the block. In order to evaluate a block in a given environment, we extend that environment by a new frame that contains all names declared directly (that is, outside of nested blocks) in the body of the block and then evaluate the body in the newly constructed envi"
+        },
+        {
+          "id": 203,
+          "title": "SICP Python",
+          "chunk_index": 202,
+          "source_filename": "sicpy.md",
+          "section": "3.2.5",
+          "section_title": "CSE Machine",
+          "similarity": 0.46387269686118127,
+          "preview": "### 3.2.5 CSE Machine The environment model as presented so far focuses on how functions can refer to their parameters, locally declared names, and names that are declared outside the function. We achieve this by evaluating statements and expressions with respect to a *current environment*. It does not specify how we keep track of environments as computation proceeds. For example, when we evaluate an expression `f(x) + y`, we need to evaluate `x` in the current environment, establish as the new "
+        },
+        {
+          "id": 192,
+          "title": "SICP Python",
+          "chunk_index": 191,
+          "source_filename": "sicpy.md",
+          "section": "3.2",
+          "section_title": "The Environment Model of Evaluation",
+          "similarity": 0.4510863893700554,
+          "preview": "## 3.2 The Environment Model of Evaluation When we introduced compound functions in chapter 1, we used the substitution model of evaluation (section 1.1.5) to define what is meant by applying a function to arguments: - To apply a compound function to arguments, evaluate the return expression of the function (more generally, the body) with each parameter replaced by the corresponding argument. Once we admit reassignment into our programming language, such a definition is no longer adequate. In pa"
+        },
+        {
+          "id": 194,
+          "title": "SICP Python",
+          "chunk_index": 193,
+          "source_filename": "sicpy.md",
+          "section": "3.2.1",
+          "section_title": "The Rules for Evaluation",
+          "similarity": 0.4509608057217227,
+          "preview": "Now that we have seen how functions are created, we can describe how functions are applied. The environment model specifies: To apply a function to arguments, create a new environment containing a frame that binds the parameters to the values of the arguments. The enclosing environment of this frame is the environment specified by the function. Now, within this new environment, evaluate the function body. To show how this rule is followed, figure 3.3 illustrates the environment structure created"
+        }
+      ]
+    },
+    {
+      "id": "concurrent_exchange_deadlock",
+      "question": "Why is exchanging two account balances concurrently harder than just transferring money? How can serializers still lead to deadlock?",
+      "answer": "Exchanging balances of two bank accounts concurrently is more complicated because it involves multiple shared resources. When you're exchanging balances between two accounts, you have to make sure that the operation is atomic or un-interruptible for both accounts to ensure data consistency. In other words, no other operations or exchanges should be able to occur on either of these accounts during the process of the exchange. If other operations occur during the exchange, they might use and modify the 'stale' balance value, which leads to data inconsistency.\n\nSerializers can help achieve this atomicity by ensuring that only one operation from a given set can run at a time. However, they can still lead to deadlocks in cases where two or more operations need to acquire more than one serializer or resource at once. Deadlock can occur when one operation holds one serializer and waits for another one held by a different operation, resulting in a circular wait where each operation is waiting for the other to release its serializer/resource - hence neither can proceed.\n\nFor instance, consider two threads, T1 and T2, which are trying to exchange balances of accounts A1 and A2 concurrently: T1 wants to exchange balances of A1 and A2, and T2 wants to exchange balances of A2 and A1. If T1 acquires serializer for A1 and T2 acquires serializer for A2 simultaneously, then T1 will wait for the serializer of A2 and T2 will wait for the serializer of A1, leading to deadlock as they'll be waiting for each other indefinitely.\n\nOne way to avoid deadlock is to impose an ordering on the acquisition of serializers, for example by numbering them and always acquiring them in ascending order. However, this is just one specific solution and doesn't cover all scenarios. Understanding and managing deadlock situations is an important aspect of controlling concurrency, as briefly explained in Section 3.4.2.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "3.4.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 247,
+          "title": "SICP Python",
+          "chunk_index": 246,
+          "source_filename": "sicpy.md",
+          "section": "3.4.2",
+          "section_title": "Mechanisms for Controlling Concurrency",
+          "similarity": 0.677129187089474,
+          "preview": "#### Complexity of using multiple shared resources Serializers provide a powerful abstraction that helps isolate the complexities of concurrent programs so that they can be dealt with carefully and (hopefully) correctly. However, while using serializers is relatively straightforward when there is only a single shared resource (such as a single bank account), concurrent programming can be treacherously difficult when there are multiple shared resources. To illustrate one of the difficulties that "
+        },
+        {
+          "id": 251,
+          "title": "SICP Python",
+          "chunk_index": 250,
+          "source_filename": "sicpy.md",
+          "section": "3.4.2",
+          "section_title": "Mechanisms for Controlling Concurrency",
+          "similarity": 0.6515466808710326,
+          "preview": "#### Deadlock Now that we have seen how to implement serializers, we can see that account exchanging still has a problem, even with the `serialized_exchange`function above. Imagine that Peter attempts to exchange $a_1$ with $a_2$ while Paul concurrently attempts to exchange $a_2$ with $a_1$. Suppose that Peter's thread reaches the point where it has entered a serialized function protecting $a_1$ and, just after that, Paul's thread enters a serialized function protecting $a_2$. Now Peter cannot p"
+        },
+        {
+          "id": 248,
+          "title": "SICP Python",
+          "chunk_index": 247,
+          "source_filename": "sicpy.md",
+          "section": "3.4.2",
+          "section_title": "Mechanisms for Controlling Concurrency",
+          "similarity": 0.6023858257737775,
+          "preview": "```python def deposit(account, amount): s = account(\"serializer\") d = account(\"deposit\") s(d(amount)) ``` Exporting the serializer in this way gives us enough flexibility to implement a serialized exchange program. We simply serialize the original `exchange`function with the serializers for both accounts: ```python def serialized_exchange(account1, account2): serializer1 = account1(\"serializer\") serializer2 = account2(\"serializer\") serializer1(serializer2(exchange))(account1, account2) ``` **Exe"
+        },
+        {
+          "id": 244,
+          "title": "SICP Python",
+          "chunk_index": 243,
+          "source_filename": "sicpy.md",
+          "section": "3.4.2",
+          "section_title": "Mechanisms for Controlling Concurrency",
+          "similarity": 0.5843765172211233,
+          "preview": "#### Serializers To make the above mechanism more concrete, suppose that we have extended Python to include a function called `concurrent_execute`: concurrent_execute($f_{1}$, $f_{2}$, $\\ldots$, $f_{k}$) Each $f$ must be a function of no arguments. The function `concurrent_execute` creates a separate thread for each $f$, which applies $f$ (to no arguments). These threads all run concurrently. [^44: The function `concurrent_execute` is not part of the Python standard, but the examples in this sec"
+        },
+        {
+          "id": 245,
+          "title": "SICP Python",
+          "chunk_index": 244,
+          "source_filename": "sicpy.md",
+          "section": "3.4.2",
+          "section_title": "Mechanisms for Controlling Concurrency",
+          "similarity": 0.581795431856365,
+          "preview": "```python def make_account(balance): def withdraw(amount): nonlocal balance if balance > amount: balance = balance - amount return balance else: return \"Insufficient funds\" def deposit(amount): nonlocal balance balance = balance + amount return balance protect = make_serializer() def dispatch(m): return (protect(withdraw) if m == \"withdraw\" else protect(deposit) if m == \"deposit\" else balance if m == \"balance\" else error(m, \"unknown request -- make_account\")) return dispatch ``` With this implem"
+        }
+      ]
+    },
+    {
+      "id": "lazy_stream_infinite_sequence",
+      "question": "Why does my infinite stream work only when the tail is delayed? What goes wrong if I build the whole sequence eagerly?",
+      "answer": "An important feature and advantage of infinite streams, or lazy sequences, is that they generate values on-demand. This lets us create \"infinite\" sequences while only calculating the parts we need. That's what makes them feasible to use in the first place. If you build the entire sequence eagerly, you'd be trying to calculate an infinite amount of values, which is impossible and would lead to a never-ending process or overflowing your memory.\n\nA good way to visualize this is to think about a sequence of all possible natural numbers (1, 2, 3, 4, 5, ...). This sequence is infinite, and cannot possibly be computed in entirety. However with lazy sequences, or infinite streams, the sequence is not actually computed at creation, rather each element is computed only when requested, and the sequence can go on forever as each next number can always be computed when needed.\n\nApplying this concept, let's take the case where we want the first 5 numbers from this stream. If the tail of the stream is delayed (i.e., the stream is designed to work lazily), we can easily retrieve the first 5 numbers. However, if the entire sequence was eagerly built, Python would try to generate all natural numbers in the sequence, which is not possible. Therefore, the tail of an infinite stream must be delayed to make working with infinite sequences feasible.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "3.5.2",
+        "3.5.4"
+      ],
+      "retrieval_expected_section": false,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 254,
+          "title": "SICP Python",
+          "chunk_index": 253,
+          "source_filename": "sicpy.md",
+          "section": "3.5.1",
+          "section_title": "Streams Are Delayed Lists",
+          "similarity": 0.5629979026383882,
+          "preview": "### 3.5.1 Streams Are Delayed Lists As we saw in section 2.2.3, sequences can serve as standard interfaces for combining program modules. We formulated powerful abstractions for manipulating sequences, such as `map`, `filter`, and `accumulate`, that capture a wide variety of operations in a manner that is both succinct and elegant. Unfortunately, if we represent sequences as lists, this elegance is bought at the price of severe inefficiency with respect to both the time and space required by our"
+        },
+        {
+          "id": 255,
+          "title": "SICP Python",
+          "chunk_index": 254,
+          "source_filename": "sicpy.md",
+          "section": "3.5.1",
+          "section_title": "Streams Are Delayed Lists",
+          "similarity": 0.5002404306328547,
+          "preview": "To accomplish this, we will construct streams using pairs, with the first item of the stream in the head of the pair. However, rather than placing the value of the rest of the stream into the tail of the pair, we will put there a \"promise\" to compute the rest if it is ever requested. If we have a data item `h` and a stream `t`, we construct a stream whose head is `h` and whose tail is `t` by evaluating `pair(h, lambda: t)`—the tail `t` of a stream is \"wrapped\" in a function of no arguments, so t"
+        },
+        {
+          "id": 343,
+          "title": "SICP Python",
+          "chunk_index": 342,
+          "source_filename": "sicpy.md",
+          "section": "4.2.3",
+          "section_title": "Streams as Lazy Lists",
+          "similarity": 0.48934621129616684,
+          "preview": "### 4.2.3 Streams as Lazy Lists In section 3.5.1, we showed how to implement streams as delayed lists. We used a lambda expression to construct a \"promise\" to compute the tail of a stream, without actually fulfilling that promise until later. We were forced to create streams as a new kind of data object similar but not identical to lists, and this required us to reimplement many ordinary list operations (`map`, `append`, and so on) for use with streams. With lazy evaluation, streams and lists ca"
+        },
+        {
+          "id": 269,
+          "title": "SICP Python",
+          "chunk_index": 268,
+          "source_filename": "sicpy.md",
+          "section": "3.5.3",
+          "section_title": "Exploiting the Stream Paradigm",
+          "similarity": 0.4822967458202513,
+          "preview": "One such accelerator, due to the eighteenth-century Swiss mathematician Leonhard Euler, works well with sequences that are partial sums of alternating series (series of terms with alternating signs). In Euler's technique, if $S_n$ is the $n$th term of the original sum sequence, then the accelerated sequence has terms $$\\begin{array}{l} S_{n+1} - \\dfrac{(S_{n+1}-S_n)^2}{S_{n-1}-2S_n+S_{n+1}} \\end{array}$$ Thus, if the original sequence is represented as a stream of values, the transformed sequenc"
+        },
+        {
+          "id": 267,
+          "title": "SICP Python",
+          "chunk_index": 266,
+          "source_filename": "sicpy.md",
+          "section": "3.5.3",
+          "section_title": "Exploiting the Stream Paradigm",
+          "similarity": 0.4752855053004037,
+          "preview": "### 3.5.3 Exploiting the Stream Paradigm Streams with delayed evaluation can be a powerful modeling tool, providing many of the benefits of local state and assignment. Moreover, they avoid some of the theoretical tangles that accompany the introduction of assignment into a programming language. The stream approach can be illuminating because it allows us to build systems with different module boundaries than systems organized around assignment to state variables. For example, we can think of an "
+        }
+      ]
+    },
+    {
+      "id": "lazy_thunk_memoization_side_effect",
+      "question": "If a delayed argument has a side effect, will it run once or every time the parameter is used? How does memoizing thunks change the answer?",
+      "answer": "In languages with lazy evaluation, like the one we are discussing, a delayed argument, or thunk, is not evaluated immediately. Instead, the argument is packaged with its context for future evaluation when its value is actually needed.\n\nIf you do not use memoization and this argument has a side effect (like altering a global variable or printing to the console), the side effect will occur every time the argument is evaluated. This means the side effect happens each time the parameter is used.\n\nHowever, if memoization is used, this argument, once evaluated, does not need to be reassessed for its result. Instead, the result is saved or \"memoized\". Future requests for this thunk's value can instantly return the memoized result, which means that the side effect will only occur once - when the argument is first evaluated.\n\nFor example, if you have a function that increases a global counter each time it's called, applying that function to a delay_would cause the counter to increase every time you use the resulting thunk if memoization isn't used. But with memoization, the counter would increase only the first time the resulting thunk is used (which triggers the evaluation), and subsequent uses of the thunk simply return the memoized value without increasing the counter.\n\nTo learn more details about memoization and lazy evaluation, re-read Section 4.2.2.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "4.2.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 340,
+          "title": "SICP Python",
+          "chunk_index": 339,
+          "source_filename": "sicpy.md",
+          "section": "4.2.2",
+          "section_title": "An Interpreter with Lazy Evaluation",
+          "similarity": 0.5652429775885389,
+          "preview": "#### Representing thunks Our evaluator must arrange to create thunks when functions are applied to arguments and to force these thunks later. A thunk must package an expression together with the environment, so that the argument can be produced later. To force the thunk, we simply extract the expression and environment from the thunk and evaluate the expression in the environment. We use `actual_value` rather than `evaluate` so that in case the value of the expression is itself a thunk, we will "
+        },
+        {
+          "id": 337,
+          "title": "SICP Python",
+          "chunk_index": 336,
+          "source_filename": "sicpy.md",
+          "section": "4.2.2",
+          "section_title": "An Interpreter with Lazy Evaluation",
+          "similarity": 0.5102212946360921,
+          "preview": "### 4.2.2 An Interpreter with Lazy Evaluation In this section we will implement a normal-order language that is the same as Python except that compound functions are non-strict in each argument. Primitive functions will still be strict. It is not difficult to modify the evaluator of section  so that the language it interprets behaves this way. Almost all the required changes center around function application. The basic idea is that, when applying a function, the interpreter must determine which"
+        },
+        {
+          "id": 280,
+          "title": "SICP Python",
+          "chunk_index": 279,
+          "source_filename": "sicpy.md",
+          "section": "3.5.4",
+          "section_title": "Streams and Delayed Evaluation",
+          "similarity": 0.4936200829955969,
+          "preview": "#### Normal-order evaluation The examples in this section illustrate how delayed evaluation provides great programming flexibility, but the same examples also show how this can make our programs more complex. Our new `integral`function, for instance, gives us the power to model systems with loops, but we must now remember that `integral` should be called with a delayed integrand, and every function that uses `integral` must be aware of this. In effect, we have created two classes of functions: o"
+        },
+        {
+          "id": 258,
+          "title": "SICP Python",
+          "chunk_index": 257,
+          "source_filename": "sicpy.md",
+          "section": "3.5.1",
+          "section_title": "Streams Are Delayed Lists",
+          "similarity": 0.4054883081286571,
+          "preview": "#### An optimization When we construct stream pairs, we delay the evaluation of their tail expressions by wrapping these expressions in a function. We force their evaluation when needed, by applying the function. This implementation suffices for streams to work as advertised, but there is an important optimization that we shall consider where needed. In many applications, we end up forcing the same delayed object many times. This can lead to serious inefficiency in recursive programs involving s"
+        },
+        {
+          "id": 330,
+          "title": "SICP Python",
+          "chunk_index": 329,
+          "source_filename": "sicpy.md",
+          "section": "4.1.6",
+          "section_title": "Internal Declarations",
+          "similarity": 0.4048031939574094,
+          "preview": "Sequential declaration processing is more efficient and easier to implement than scanning out names. However, with sequential processing, the declaration to which a name refers may depend on the order in which the statements in a block are evaluated. In exercise 4.19, we see that views may differ as to whether that is desirable. **Exercise 4.19.** Ben Bitdiddle, Alyssa P. Hacker, and Eva Lu Ator are arguing about the desired result of evaluating the program ```python a = 1 def f(x): b = a + x a "
+        }
+      ]
+    },
+    {
+      "id": "internal_definitions_scan_out",
+      "question": "Why do internal function definitions sometimes need to be scanned out before evaluating the body? What bug appears if they are treated sequentially?",
+      "answer": "Internal function definitions often need to be \"scanned out\" and pre-processed before evaluating the body of the code specifically when the functions are mutually recursive. Mutually recursive functions are functions that depend on each other to calculate their result, meaning one calls the other within its definition, and vice versa.\n\nFor instance, take the example of `is_even` and `is_odd` functions from the course notes:\n\n```python\ndef f(x):\n    def is_even(n):\n        return True if n == 0 else is_odd(n - 1)\n    def is_odd(n):\n        return False if n == 0 else is_even(n - 1)\n    return is_even(x)\n```\n\nIn the function above, `is_even` calls `is_odd`, and `is_odd` calls `is_even`, forming a mutually recursive relationship. When the function `is_even` is being defined, if function declarations were processed sequentially, the function `is_odd` wouldn't yet be defined, leading to an error because `is_odd` is called within the `is_even` function. \n\n\"Scanning out\" these function definitions ahead of time works like this: before any computations are done within the `f` function, Python first recognizes that `is_even` and `is_odd` are functions to be defined. Python reserves memory space for both `is_even` and `is_odd` in the local environment -- even before it knows what they do. Then when it comes across the definitions of `is_even` and `is_odd`, it fills in the details of these functions in the reserved memory space. By doing this, Python ensures that when `is_even` is defined, `is_odd` is already known to be a function (though its specific details aren't known yet), which makes the mutual recursion work correctly.\n\nOn the other hand, if function declarations were processed sequentially, when the function `is_even` would be getting defined, it would not recognize `is_odd` as a valid function since it hasn't been defined yet, causing a NameError. This is why we need to scan out declarations ahead of time when mutually recursive functions are used. \n\nHowever, remember that not all situations with internal definitions require scanning out ahead of time, only those where the declarations rely on each others' definitions. Other times, sequential processing can be more efficient.\n",
+      "require_section_reference": false,
+      "expected_sections": [
+        "4.1.6"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 329,
+          "title": "SICP Python",
+          "chunk_index": 328,
+          "source_filename": "sicpy.md",
+          "section": "4.1.6",
+          "section_title": "Internal Declarations",
+          "similarity": 0.5428962401077474,
+          "preview": "#### Sequential Declaration Processing The design of our evaluator of section  imposes a runtime burden on the evaluation of blocks: It needs to scan the body of the block for locally declared names, extend the current environment with a new frame that binds those names, and evaluate the block body in this extended environment. Alternatively, the evaluation of a block could extend the current environment with an empty frame. The evaluation of each declaration in the block body would then add a n"
+        },
+        {
+          "id": 327,
+          "title": "SICP Python",
+          "chunk_index": 326,
+          "source_filename": "sicpy.md",
+          "section": "4.1.6",
+          "section_title": "Internal Declarations",
+          "similarity": 0.5359315266728814,
+          "preview": "### 4.1.6 Internal Declarations In Python, the scope of a declaration is the entire block that immediately surrounds the declaration, not just the portion of the block starting at the point where the declaration occurs. This section takes a closer look at this design choice. Let us revisit the pair of mutually recursive functions `is_even` and `is_odd` from Section 3.2.4, declared locally in the body of a function `f`. ```python def f(x): def is_even(n): return True if n == 0 else is_odd(n - 1) "
+        },
+        {
+          "id": 200,
+          "title": "SICP Python",
+          "chunk_index": 199,
+          "source_filename": "sicpy.md",
+          "section": "3.2.4",
+          "section_title": "Internal Declarations",
+          "similarity": 0.528000947891923,
+          "preview": "### 3.2.4 Internal Declarations In this section we handle the evaluation of function bodies or other blocks (such as the branches of conditional statements) that contain declarations. Each block opens a new scope for names declared in the block. In order to evaluate a block in a given environment, we extend that environment by a new frame that contains all names declared directly (that is, outside of nested blocks) in the body of the block and then evaluate the body in the newly constructed envi"
+        },
+        {
+          "id": 333,
+          "title": "SICP Python",
+          "chunk_index": 332,
+          "source_filename": "sicpy.md",
+          "section": "4.1.7",
+          "section_title": "Separating Syntactic Analysis from Execution",
+          "similarity": 0.5106832981866829,
+          "preview": "The body of a block is scanned only once for local declarations. The bindings are installed in the environment when the execution function for the block is called. ```python def analyze_block(component): body = block_body(component) bfun = analyze(body) locals = scan_out_declarations(body) unassigneds = list_of_unassigned(locals) return lambda env: (bfun(extend_environment(locals, unassigneds, env))) ``` For return statements, we analyze the return expression. The execution function for the retu"
+        },
+        {
+          "id": 477,
+          "title": "SICP Python",
+          "chunk_index": 476,
+          "source_filename": "sicpy.md",
+          "section": "5.4.3",
+          "section_title": "Blocks, Assignments, and Declarations",
+          "similarity": 0.5085783791320904,
+          "preview": "#### Blocks The body of a block is evaluated with respect to the current environment extended by a frame that binds all local names to the value `\"*unassigned*\"`. We temporarily make use of the `val` register to hold the list of all variables declared in the block, which is obtained by `scan_out_declarations` from section . The functions `scan_out_declarations` and `list_of_unassigned` are assumed to be available as machine operations. [^31: Footnote suggests that an actual implementation would "
+        }
+      ]
+    },
+    {
+      "id": "amb_backtracking_state_restore",
+      "question": "In the amb evaluator, if I assign to a variable and then backtrack, should the assignment be undone?",
+      "answer": "Yes, in the amb evaluator, if you assign a variable and then backtrack, the assignment should be undone. This is important for the correct implementation of the backtracking logic in `amb` strategy, as it ensures that each computation is performed in the correct environment.\n\nThis is achieved by saving the old value of a variable in a success continuation before performing the assignment, and if failure occurs, the old value is restored by calling the failure continuation that was saved during the assignment. This supports the non-deterministic nature of `amb`, where different actions can lead to different outcomes and if a choice fails, it can backtrack and try another choice in its original state.\n\nIn essence, this \"undoing\" of assignment is a critical feature enabling the `amb` evaluator to systematically search its solution space, without the interference of previous, unsuccessful attempts.\n\nThis behaviour is detailed in Section 4.3.3.\n",
+      "require_section_reference": true,
+      "expected_sections": [
+        "4.3.3"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 348,
+          "title": "SICP Python",
+          "chunk_index": 347,
+          "source_filename": "sicpy.md",
+          "section": "4.3.1",
+          "section_title": "Search and `amb`",
+          "similarity": 0.4974825351429095,
+          "preview": "On the other hand, if we have a machine that can execute only one process (or a few concurrent processes), we must consider the alternatives sequentially. One could imagine modifying an evaluator to pick at random a branch to follow whenever it encounters a choice point. Random choice, however, can easily lead to failing values. We might try running the evaluator over and over, making random choices and hoping to find a non-failing value, but it is better to *systematically search* all possible "
+        },
+        {
+          "id": 478,
+          "title": "SICP Python",
+          "chunk_index": 477,
+          "source_filename": "sicpy.md",
+          "section": "5.4.3",
+          "section_title": "Blocks, Assignments, and Declarations",
+          "similarity": 0.4840724630539629,
+          "preview": "#### Assignments and declarations Assignments are handled by `ev_assignment`, reached from `eval_dispatch` with the assignment expression in `comp`. The code at `ev_assignment` first evaluates the value part of the expression and then installs the new value in the environment. The function `assign_symbol_value` is assumed to be available as a machine operation. ```python \"ev_assignment\", assign(\"unev\", list(op(\"assignment_symbol\"), reg(\"comp\"))), save(\"unev\"), // save variable for later assign(\""
+        },
+        {
+          "id": 366,
+          "title": "SICP Python",
+          "chunk_index": 365,
+          "source_filename": "sicpy.md",
+          "section": "4.3.3",
+          "section_title": "Implementing the `amb` Evaluator",
+          "similarity": 0.47791554217205356,
+          "preview": "#### Driver loop The driver loop for the `amb` evaluator is complex, due to the mechanism that permits the user to retry in evaluating a program. The driver uses a function called `internal_loop`, which takes as argument a function`retry`. The intent is that calling `retry` should go on to the next untried alternative in the nondeterministic evaluation. The function `internal_loop` either calls `retry` in response to the user typing `retry` at the driver loop, or else starts a new evaluation by "
+        },
+        {
+          "id": 357,
+          "title": "SICP Python",
+          "chunk_index": 356,
+          "source_filename": "sicpy.md",
+          "section": "4.3.3",
+          "section_title": "Implementing the `amb` Evaluator",
+          "similarity": 0.46853811930759104,
+          "preview": "### 4.3.3 Implementing the `amb` Evaluator The evaluation of an ordinary Python program may return a value, may never terminate, or may signal an error. In nondeterministic Python the evaluation of a program may in addition result in the discovery of a dead end, in which case evaluation must backtrack to a previous choice point. The interpretation of nondeterministic Python is complicated by this extra case. We will construct the `amb` evaluator for nondeterministic Python by modifying the analy"
+        },
+        {
+          "id": 367,
+          "title": "SICP Python",
+          "chunk_index": 366,
+          "source_filename": "sicpy.md",
+          "section": "4.3.3",
+          "section_title": "Implementing the `amb` Evaluator",
+          "similarity": 0.4615634806910599,
+          "preview": "``` Starting a new problem amb-evaluate value: [\"a\", [\"b\", [2, null]]] ``` ```python amb-evaluate input: ``` ```python retry ``` ``` amb-evaluate value: [\"a\", [\"c\", [3, null]]] ``` What values would have been displayed if we had used the original meaning of assignment rather than permanent assignment? **Exercise 4.50.** We shall horribly abuse the syntax for conditional statements, by implementing a construct of the following form: if (evaluation_succeeds_take) { $statement$ } else { $alternativ"
+        }
+      ]
+    },
+    {
+      "id": "logic_not_order_dependence",
+      "question": "Why can putting not before a query pattern in the logic system produce a different answer than putting it after?",
+      "answer": "In the query language of the logic programming, the `not` operator behaves differently than in mathematical logic. The `not` operator in a query language operates like a filter on the value of variables. That is, it will filter out all values that satisfy the condition specified after `not`. \n\nThe order of applying `not` can affect the results because `not` operates on the current state of variables. For example, if we have a query `and(supervisor($x, $y), not(job($x, 'programmer')))`, first it finds all possible pairs of supervisor and supervisee, and then removes the pairs where the supervisor is a programmer.\n\nHowever, if `not` is placed in the first position like `and(not(job($x, 'programmer')), supervisor($x, $y))`, it filters out all programmers first. Given that the only incoming frame at this point is empty, it checks the database for patterns satisfying `job($x, 'programmer')`. Generally speaking, there are entries of this form, so `not` filters out the empty frame and returns an empty stream of frames. Consequently, the overall composite query returns nothing, even if there are non-programmer supervisors.\n\nTherefore, the difference of where we put `not` in the query can give us a completely different result, even though logically they might seem equivalent at first. This discrepancy arises because these aren't fully procedural interpretation of logical statements and 'not' acts as a frame filter that misbehaves on unbound variables. \n\nThis distinction between logical negation and how `not` works in the context of a query language is one of the examples how procedural interpretation in logic programming differs from mathematical logic.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "4.4.3"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 392,
+          "title": "SICP Python",
+          "chunk_index": 391,
+          "source_filename": "sicpy.md",
+          "section": "4.4.3",
+          "section_title": "Is Logic Programming Mathematical Logic?",
+          "similarity": 0.521088157046957,
+          "preview": "### 4.4.3 Is Logic Programming Mathematical Logic? The means of combination used in the query language may at first seem identical to the operations `and`, `or`, and `not` of mathematical logic, and the application of query-language rules is in fact accomplished through a legitimate method of inference. [^68: That a particular method of inference is legitimate is not a trivial assertion. One must prove that if one starts with true premises, only true conclusions can be derived. The method of inf"
+        },
+        {
+          "id": 394,
+          "title": "SICP Python",
+          "chunk_index": 393,
+          "source_filename": "sicpy.md",
+          "section": "4.4.3",
+          "section_title": "Is Logic Programming Mathematical Logic?",
+          "similarity": 0.5146207113139506,
+          "preview": "#### Problems with `not` Another quirk in the query system concerns `not`. Given the data base of section 4.4.1, consider the following two queries: ```python and(supervisor($x, $y), not(job($x, llist(\"computer\", \"programmer\")))) and(not(job($x, llist(\"computer\", \"programmer\"))), supervisor($x, $y)) ``` These two queries do not produce the same result. The first query begins by finding all entries in the data base that match `supervisor($x, $y)`, and then filters the resulting frames by removing"
+        },
+        {
+          "id": 376,
+          "title": "SICP Python",
+          "chunk_index": 375,
+          "source_filename": "sicpy.md",
+          "section": "4.4.1",
+          "section_title": "Deductive Information Retrieval",
+          "similarity": 0.5121535737788109,
+          "preview": "#### Compound queries Simple queries form the primitive operations of the query language. In order to form compound operations, the query language provides means of combination. One thing that makes the query language a logic programming language is that the means of combination mirror the means of combination used in forming logical expressions: `and`, `or`, and `not`. We can use `and` as follows to find the addresses of all the computer programmers: ```python and(job($person, llist(\"computer\","
+        },
+        {
+          "id": 382,
+          "title": "SICP Python",
+          "chunk_index": 381,
+          "source_filename": "sicpy.md",
+          "section": "4.4.2",
+          "section_title": "How the Query System Works",
+          "similarity": 0.5091985624095711,
+          "preview": "### 4.4.2 How the Query System Works In section 4.4.4 we will present an implementation of the query interpreter as a collection of functions. In this section we give an overview that explains the general structure of the system independent of low-level implementation details. After describing the implementation of the interpreter, we will be in a position to understand some of its limitations and some of the subtle ways in which the query language's logical operations differ from the operations"
+        },
+        {
+          "id": 387,
+          "title": "SICP Python",
+          "chunk_index": 386,
+          "source_filename": "sicpy.md",
+          "section": "4.4.2",
+          "section_title": "How the Query System Works",
+          "similarity": 0.49266615412766135,
+          "preview": "#### Unification In order to handle rules in the query language, we must be able to find the rules whose conclusions match a given query pattern. Rule conclusions are like assertions except that they can contain variables, so we will need a generalization of pattern matching—called *unification*—in which both the \"pattern\" and the \"datum\" may contain variables. A unifier takes two patterns, each containing constants and variables, and determines whether it is possible to assign values to the var"
+        }
+      ]
+    },
+    {
+      "id": "unification_occurs_check",
+      "question": "What goes wrong if unification lets a variable match an expression that contains that same variable?",
+      "answer": "This situation could lead to ambiguous and potentially catastrophic consequences. When a variable matches an expression involving the same variable, it could result in cyclic references or infinite loops. This is because the matching process might continually try to resolve the value of the variable endlessly if it's defined in terms of itself.\n\nConsider an example where you're trying to unify the patterns `llist($x, $x)` and `llist($y,`$\\langle$*expression**involving*`$y`$\\rangle$`). If you try to bind variable $x to expression involving $y, it would result in self-referential instructions. In other words, the system then needs to find a $y such that $y is equal to an expression involving $y which is logically impossible and would result in endless recursion or a cyclic reference. \n\nHowever, keep in mind that unifying a variable with itself is not harmful. If you are unifying `llist($x, $x)` and `llist($y, $y)`. This doesn't create any problem as $x and $y are the same, so you'd simply end up with an appropriate binding for these variables.\n\nThis is a part of Section 4.4.2 and further discussed in section 4.4.4.4 in the context of understanding unification and pattern matching.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "4.4.2",
+        "4.4.3"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 407,
+          "title": "SICP Python",
+          "chunk_index": 406,
+          "source_filename": "sicpy.md",
+          "section": "4.4.4.4",
+          "section_title": "Rules and Unification",
+          "similarity": 0.6532321753438071,
+          "preview": "The second check deals with attempts to bind a variable to a pattern that includes that variable. Such a situation can occur whenever a variable is repeated in both patterns. Consider, for example, unifying the two patterns `llist($x, $x)` and `llist($y,`$\\langle$*expression**involving*`$y`$\\rangle$`)` in a frame where both `$x` and `$y` are unbound. First `$x` is matched against `$y`, making a binding of `$x` to `$y`. Next, the same `$x` is matched against the given expression involving `$y`. S"
+        },
+        {
+          "id": 388,
+          "title": "SICP Python",
+          "chunk_index": 387,
+          "source_filename": "sicpy.md",
+          "section": "4.4.2",
+          "section_title": "How the Query System Works",
+          "similarity": 0.5978833223067094,
+          "preview": "and hence that $$\\begin{array}{lll} \\texttt{\\$x} & = & \\texttt{llist(\"a\", \"b\", \"c\")} \\end{array}$$ In a successful pattern match, all pattern variables become bound, and the values to which they are bound contain only constants. This is also true of all the examples of unification we have seen so far. In general, however, a successful unification may not completely determine the variable values; some variables may remain unbound and others may be bound to values that contain variables. Consider "
+        },
+        {
+          "id": 387,
+          "title": "SICP Python",
+          "chunk_index": 386,
+          "source_filename": "sicpy.md",
+          "section": "4.4.2",
+          "section_title": "How the Query System Works",
+          "similarity": 0.5451558152034989,
+          "preview": "#### Unification In order to handle rules in the query language, we must be able to find the rules whose conclusions match a given query pattern. Rule conclusions are like assertions except that they can contain variables, so we will need a generalization of pattern matching—called *unification*—in which both the \"pattern\" and the \"datum\" may contain variables. A unifier takes two patterns, each containing constants and variables, and determines whether it is possible to assign values to the var"
+        },
+        {
+          "id": 406,
+          "title": "SICP Python",
+          "chunk_index": 405,
+          "source_filename": "sicpy.md",
+          "section": "4.4.4.4",
+          "section_title": "Rules and Unification",
+          "similarity": 0.519744553765568,
+          "preview": "```python def unify_match(p1, p2, frame): return \"failed\" if frame == \"failed\" else frame if equal(p1, p2) else extend_if_possible(p1, p2, frame) if is_variable(p1) else extend_if_possible(p2, p1, frame) if is_variable(p2) else unify_match(tail(p1), tail(p2), unify_match(head(p1), head(p2), frame)) if is_pair(p1) and is_pair(p2) else \"failed\" ``` In unification, as in one-sided pattern matching, we want to accept a proposed extension of the frame only if it is consistent with existing bindings. "
+        },
+        {
+          "id": 188,
+          "title": "SICP Python",
+          "chunk_index": 187,
+          "source_filename": "sicpy.md",
+          "section": "3.1.3",
+          "section_title": "The Costs of Introducing Assignment",
+          "similarity": 0.44932203223677014,
+          "preview": "#### Sameness and change The issue surfacing here is more profound than the mere breakdown of a particular model of computation. As soon as we introduce change into our computational models, many notions that were previously straightforward become problematical. Consider the concept of two things being \"the same.\" Suppose we call `make_decrementer` twice with the same argument to create two functions: ```python D1 = make_decrementer(25) D2 = make_decrementer(25) ``` Are `D1` and `D2` the same? A"
+        }
+      ]
+    },
+    {
+      "id": "register_machine_stack_recursion",
+      "question": "In the register-machine factorial, why do we save and restore registers around the recursive call? Which value would be lost otherwise?",
+      "answer": "In the register-machine factorial, saving and restoring registers around the recursive call is critical to preserve the state of the computation at each recursive level. \n\nConsider how the recursive factorial function operates: To compute the factorial of n (n!), we need to first compute the factorial of (n-1) ((n-1)!), then multiply the result by n. The (n-1)! computation is a sub-problem of the original problem. \n\nThe challenge here is, when the (n-1)! computation is performing, the machine needs to remember the original value of n so it can multiply the result with it later. However, during the computation of (n-1)!, the register `n` is decremented, which changes its value. If this change is not managed properly, the original value of n would be lost and the computation cannot proceed accurately.\n\nTo prevent this, we save the current n (and `continue`) register value onto the stack before starting the recursive call (i.e., before computing (n-1)!), and restore them after the recursive call has completed. The stack is used because it operates in a Last-In-First-Out manner, which aligns with the nature of recursive computations - the last recursion initiated is the first to complete.\n\nThis mechanism effectively suspends the computation of the 'parent' factorial while the 'child' (i.e., the recursive call) is being computed, and then restores the state of the 'parent' computation once the 'child' computation finishes, ensuring the accuracy of the recursion.\n\nThis mechanism of saving and restoring register values while working on recursive problems is introduced and discussed in Section 5.1.4.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "5.1.4"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 431,
+          "title": "SICP Python",
+          "chunk_index": 430,
+          "source_filename": "sicpy.md",
+          "section": "5.1.4",
+          "section_title": "Using a Stack to Implement Recursion",
+          "similarity": 0.6552106025949108,
+          "preview": "Figure 5.11 shows the data paths and controller for a machine that implements the recursive `factorial`function. The machine has a stack and three registers, called `n`, `val`, and `continue`. To simplify the data-path diagram, we have not named the register-assignment buttons, only the stack-operation buttons (`sc` and `sn` to save registers, `rc` and `rn` to restore registers). To operate the machine, we put in register `n` the number whose factorial we wish to compute and start the machine. W"
+        },
+        {
+          "id": 429,
+          "title": "SICP Python",
+          "chunk_index": 428,
+          "source_filename": "sicpy.md",
+          "section": "5.1.4",
+          "section_title": "Using a Stack to Implement Recursion",
+          "similarity": 0.6325136936429712,
+          "preview": "### 5.1.4 Using a Stack to Implement Recursion With the ideas illustrated so far, we can implement any iterative process by specifying a register machine that has a register corresponding to each state variable of the process. The machine repeatedly executes a controller loop, changing the contents of the registers, until some termination condition is satisfied. At each point in the controller sequence, the state of the machine (representing the state of the iterative process) is completely dete"
+        },
+        {
+          "id": 430,
+          "title": "SICP Python",
+          "chunk_index": 429,
+          "source_filename": "sicpy.md",
+          "section": "5.1.4",
+          "section_title": "Using a Stack to Implement Recursion",
+          "similarity": 0.6224413042340817,
+          "preview": "Since there is no a priori limit on the depth of nested recursive calls, we may need to save an arbitrary number of register values. These values must be restored in the reverse of the order in which they were saved, since in a nest of recursions the last subproblem to be entered is the first to be finished. This dictates the use of a *stack*, or \"last in, first out\" data structure, to save register values. We can extend the register-machine language to include a stack by adding two kinds of ins"
+        },
+        {
+          "id": 456,
+          "title": "SICP Python",
+          "chunk_index": 455,
+          "source_filename": "sicpy.md",
+          "section": "5.3.1",
+          "section_title": "Memory as Vectors",
+          "similarity": 0.5492316940157798,
+          "preview": "#### Implementing stacks Although our register machines use stacks, we need do nothing special here, since stacks can be modeled in terms of lists. The stack can be a list of the saved values, pointed to by a special register `the_stack`. Thus, `save(`*reg*`)` can be implemented as ```python assign(\"the_stack\", list(op(\"pair\"), reg(*reg*), reg(\"the_stack\"))) ``` Similarly, `restore(`*reg*`)` can be implemented as ```python assign(*reg*, list(op(\"head\"), reg(\"the_stack\"))) assign(\"the_stack\", lis"
+        },
+        {
+          "id": 464,
+          "title": "SICP Python",
+          "chunk_index": 463,
+          "source_filename": "sicpy.md",
+          "section": "5.4",
+          "section_title": "The Explicit-Control Evaluator",
+          "similarity": 0.5489846072378161,
+          "preview": "#### Registers and operations In designing the explicit-control evaluator, we must specify the operations to be used in our register machine. We described the metacircular evaluator in terms of abstract syntax, using functions such as `is_literal` and `make_function`. In implementing the register machine, we could expand these functions into sequences of elementary list-structure memory operations, and implement these operations on our register machine. However, this would make our evaluator ver"
+        }
+      ]
+    },
+    {
+      "id": "garbage_collection_forwarding_pointers",
+      "question": "In stop-and-copy garbage collection, why do copied objects need forwarding pointers instead of just copying every pair reached?",
+      "answer": "The reason forwarding pointers are used during the stop-and-copy garbage collection method is to handle cases where the same object is referred to more than once.\n\nSuppose we have a program in execution and there are several instances where a pair (let's call it Pair A) is reached. When we first reach Pair A during garbage collection, we move it to the new memory location and replace its old spot with a *broken heart* (an indicator that the object has been moved) and a *forwarding address* (which points to the new memory location).\n\nNow, when we encounter Pair A again from a different route, instead of copying it again (which would waste memory space and create unnecessary duplicates), we recognize the *broken heart* at its original position and therefore know that it has already been moved. The *forwarding address* tells us exactly where to find the new copy of Pair A in the new memory. That way, all references to Pair A can be updated to this new location, ensuring that all parts of the program that need Pair A will correctly point to its new location.\n\nThus, using forwarding pointers and broken hearts not only saves us memory space by avoiding unnecessary duplications but also helps to ensure that all references to an object point to the correct location after garbage collection.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "5.3.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 458,
+          "title": "SICP Python",
+          "chunk_index": 457,
+          "source_filename": "sicpy.md",
+          "section": "5.3.2",
+          "section_title": "Maintaining the Illusion of Infinite Memory",
+          "similarity": 0.6126257149957899,
+          "preview": "There are many ways to perform garbage collection. The method we shall examine here is called *stop-and-copy*. The basic idea is to divide memory into two halves: \"working memory\" and \"free memory.\" When `pair` constructs pairs, it allocates these in working memory. When working memory is full, we perform garbage collection by locating all the useful pairs in working memory and copying these into consecutive locations in free memory. (The useful pairs are located by tracing all the `head` and `t"
+        },
+        {
+          "id": 459,
+          "title": "SICP Python",
+          "chunk_index": 458,
+          "source_filename": "sicpy.md",
+          "section": "5.3.2",
+          "section_title": "Maintaining the Illusion of Infinite Memory",
+          "similarity": 0.5917033738304337,
+          "preview": "#### Implementation of a stop-and-copy garbage collector We now use our register-machine language to describe the stop-and-copy algorithm in more detail. We will assume that there is a register called `root` that contains a pointer to a structure that eventually points at all accessible data. This can be arranged by storing the contents of all the machine registers in a preallocated list pointed at by `root` just before starting garbage collection. [^17: This list of registers does not include t"
+        },
+        {
+          "id": 460,
+          "title": "SICP Python",
+          "chunk_index": 459,
+          "source_filename": "sicpy.md",
+          "section": "5.3.2",
+          "section_title": "Maintaining the Illusion of Infinite Memory",
+          "similarity": 0.46638763646877535,
+          "preview": "After relocating the root, the garbage collector enters its basic cycle. At each step in the algorithm, the `scan` pointer (initially pointing at the relocated root) points at a pair that has been moved to the new memory but whose `head` and `tail` pointers still refer to objects in the old memory. These objects are each relocated, and the `scan` pointer is incremented. To relocate an object (for example, the object indicated by the `head` pointer of the pair we are scanning) we check to see if "
+        },
+        {
+          "id": 462,
+          "title": "SICP Python",
+          "chunk_index": 461,
+          "source_filename": "sicpy.md",
+          "section": "5.3.2",
+          "section_title": "Maintaining the Illusion of Infinite Memory",
+          "similarity": 0.46606884555623496,
+          "preview": "At the very end of the garbage collection process, we interchange the role of old and new memories by interchanging pointers: interchanging `the_heads` with `new_heads`, and `the_tails` with `new_tails`. We will then be ready to perform another garbage collection the next time memory runs out. ```python \"gc_flip\", assign(\"temp\", reg(\"the_tails\")), assign(\"the_tails\", reg(\"new_tails\")), assign(\"new_tails\", reg(\"temp\")), assign(\"temp\", reg(\"the_heads\")), assign(\"the_heads\", reg(\"new_heads\")), assi"
+        },
+        {
+          "id": 457,
+          "title": "SICP Python",
+          "chunk_index": 456,
+          "source_filename": "sicpy.md",
+          "section": "5.3.2",
+          "section_title": "Maintaining the Illusion of Infinite Memory",
+          "similarity": 0.43539033139869754,
+          "preview": "### 5.3.2 Maintaining the Illusion of Infinite Memory The representation method outlined in section 5.3.1 solves the problem of implementing list structure, provided that we have an infinite amount of memory. With a real computer we will eventually run out of free space in which to construct new pairs. [^14: This may not be true eventually, because memories may get large enough so that it would be impossible to run out of free memory in the lifetime of the computer. For example, there are about "
+        }
+      ]
+    },
+    {
+      "id": "explicit_control_tail_recursion",
+      "question": "How does the explicit-control evaluator avoid growing the stack for a tail-recursive call?",
+      "answer": "The explicit-control evaluator avoids growing the stack for a tail-recursive call by introducing the concept of \"tail recursion\". This is a property in which an evaluator can execute a function that makes self-calls without requiring an increasing amount of storage.\n\nWhen the evaluator encounters a function call to itself (recursive call) that is the final operation in the function, it doesn’t need to keep track of the current state of execution because there’s nothing more to do in the current function. This is where the term “tail recursion” comes from: the function call to itself is at the end, or tail position of the function. \n\nBy detecting this condition, the evaluator can optimize its usage of the stack by not pushing more information onto it during the recursive call. This eliminates the need for handing control back to the caller once the called function is finished, as there is nothing left to do in the calling function after the call.\n\nThis behavior is achieved in the explicit-control evaluator with the help of two procedures, `push_marker_to_stack` and `revert_stack_to_marker`. `Push_marker_to_stack` is used to mark the current state of the stack just before entering the function body. After evaluating the function body, instead of adding a return address to the stack, the evaluator uses `revert_stack_to_marker` to revert the stack back to its state at the time of the function call.\n\nThis way, evaluating a return expression—even if it involves a function call—will not cause any information to accumulate on the stack, thus enabling tail-recursive calls without growing the stack. Alternatively, this approach also supports iterations expressed using tail-recursive procedures.\n\nFor more information on how the explicit-control evaluator handles tail recursion, please refer to Section 5.4.2.",
+      "require_section_reference": true,
+      "expected_sections": [
+        "5.4.2"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 475,
+          "title": "SICP Python",
+          "chunk_index": 474,
+          "source_filename": "sicpy.md",
+          "section": "5.4.2",
+          "section_title": "Evaluating Function Applications",
+          "similarity": 0.6214941615992862,
+          "preview": "#### Return Statements and Tail Recursion In chapter 1 we said that the process described by a function such as ```python function sqrt_iter(guess, x) { return is_good_enough(guess, x) ? guess : sqrt_iter(improve(guess, x), x); } ``` is an iterative process. Even though the function is syntactically recursive (defined in terms of itself), it is not logically necessary for an evaluator to save information in passing from one call to `sqrt_iter` to the next. [^29: We saw in section 5.1 how to impl"
+        },
+        {
+          "id": 506,
+          "title": "SICP Python",
+          "chunk_index": 505,
+          "source_filename": "sicpy.md",
+          "section": "5.5.3",
+          "section_title": "Compiling Applications and Return Statements",
+          "similarity": 0.5948430424594724,
+          "preview": "We have shown how to generate tail-recursive linkage code for a function application when the linkage is `\"return\"`—that is, when the application is in a return statement and its value is the result to be returned. Similarly, as explained in section , the stack-marker mechanism used here (and in the explicit-control evaluator) for the call and return produces tail-recursive behavior only in that situation. These two aspects of the code generated for function application combine to ensure that wh"
+        },
+        {
+          "id": 481,
+          "title": "SICP Python",
+          "chunk_index": 480,
+          "source_filename": "sicpy.md",
+          "section": "5.4.4",
+          "section_title": "Running the Evaluator",
+          "similarity": 0.5375326381177543,
+          "preview": "#### Monitoring the performance of the evaluator Simulation can be a powerful tool to guide the implementation of evaluators. Simulations make it easy not only to explore variations of the register-machine design but also to monitor the performance of the simulated evaluator. For example, one important factor in performance is how efficiently the evaluator uses the stack. We can observe the number of stack operations required to evaluate various programs by defining the evaluator register machin"
+        },
+        {
+          "id": 476,
+          "title": "SICP Python",
+          "chunk_index": 475,
+          "source_filename": "sicpy.md",
+          "section": "5.4.2",
+          "section_title": "Evaluating Function Applications",
+          "similarity": 0.5349237591899213,
+          "preview": "\"ev_return\", // alternative implementation: not tail-recursive assign(\"comp\", list(op(\"return_expression\"), reg(\"comp\"))), assign(\"continue\", label(\"ev_restore_stack\")), go_to(label(\"eval_dispatch\")), \"ev_restore_stack\", revert_stack_to_marker(), // undo saves in current function restore(\"continue\"), // undo save at $\\texttt{ev\\char`_application}$ go_to(reg(\"continue\")), This may seem like a minor change to our previous code for evaluation of return statements: The only difference is that we del"
+        },
+        {
+          "id": 479,
+          "title": "SICP Python",
+          "chunk_index": 478,
+          "source_filename": "sicpy.md",
+          "section": "5.4.4",
+          "section_title": "Running the Evaluator",
+          "similarity": 0.514898081835726,
+          "preview": "### 5.4.4 Running the Evaluator With the implementation of the explicit-control evaluator we come to the end of a development, begun in chapter 1, in which we have explored successively more precise models of the evaluation process. We started with the relatively informal substitution model, then extended this in chapter 3 to the environment model, which enabled us to deal with state and change. In the metacircular evaluator of chapter 4, we used Python itself as a language for making more expli"
+        }
+      ]
+    },
+    {
+      "id": "compiler_lexical_addressing",
+      "question": "What does lexical addressing buy us in the compiler? Why is it better than searching frames by variable name at runtime?",
+      "answer": "Lexical addressing provides us with a form of optimization in the compiler that makes our programs run faster and more efficiently. \n\nDuring the process of running your program, whenever you try to access a variable, its value needs to be looked up in an environment that is constructed of multiple frames. These frames each contain variable bindings -- pairs of variable names and corresponding values. This lookup procedure often involves searching these frames, one by one, from the innermost (most recent) to outermost (base) frame, which could be an expensive operation, especially if the frames are deeply nested or contain numerous names.\n\nHowever, if you're using lexical scoping like most modern languages like Python do, the determination of which variable a name refers to can be done at compile time, because it only depends on where the name is in the code, not the runtime state of the program. Hence, the programmer can know in advance which frame (and which position in that frame) a variable's value will be found in. Instead of searching through each frame every time a variable is accessed, the variable's value can be accessed directly using its *lexical address* -- a pair of numbers indicating the frame and the displacement (or position) in that frame. \n\nSo, with lexical addressing, name lookup becomes a constant-time operation, because it's just fetching an array element, rather than potentially having to traverse all frames. That is why it provides a significantly faster and more efficient way to manage variable access and assignments. Additionally, it also saves memory because there's no need to store variable names in the frames at runtime, only their values.",
+      "require_section_reference": false,
+      "expected_sections": [
+        "5.5.6"
+      ],
+      "retrieval_expected_section": true,
+      "section_citation": true,
+      "top_chunks": [
+        {
+          "id": 517,
+          "title": "SICP Python",
+          "chunk_index": 516,
+          "source_filename": "sicpy.md",
+          "section": "5.5.6",
+          "section_title": "Lexical Addressing",
+          "similarity": 0.7101891572368206,
+          "preview": "### 5.5.6 Lexical Addressing One of the most common optimizations performed by compilers is the optimization of name lookup. Our compiler, as we have implemented it so far, generates code that uses the `lookup_symbol_value` operation of the evaluator machine. This searches for a name by comparing it with each name that is currently bound, working frame by frame outward through the runtime environment. This search can be expensive if the frames are deeply nested or if there are many names. For ex"
+        },
+        {
+          "id": 518,
+          "title": "SICP Python",
+          "chunk_index": 517,
+          "source_filename": "sicpy.md",
+          "section": "5.5.6",
+          "section_title": "Lexical Addressing",
+          "similarity": 0.6214387287716701,
+          "preview": "((x, y) => (a, b, c, d, e) => ((y, z) => $e_1$)($e_2$, c + d + x))(3, 4); One way for the compiler to produce code that uses lexical addressing is to maintain a data structure called a *compile-time environment*. This keeps track of which bindings will be at which positions in which frames in the runtime environment when a particular name-access operation is executed. The compile-time environment is a list of frames, each containing a list of symbols. There will be no values associated with the "
+        },
+        {
+          "id": 486,
+          "title": "SICP Python",
+          "chunk_index": 485,
+          "source_filename": "sicpy.md",
+          "section": "5.5",
+          "section_title": "Compilation",
+          "similarity": 0.48662461862022566,
+          "preview": "```python assign(\"fun\", list(op(\"lookup_symbol_value\"), constant(\"f\"), reg(\"env\"))) ``` where the argument to `lookup_symbol_value` is extracted at compile time from the parser's representation of `f(96, 22)`. This code not only avoids the unnecessary saves and restores but also assigns the value of the lookup directly to `fun`, whereas the interpreter would obtain the result in `val` and then move this to `fun`. A compiler can also optimize access to the environment. Having analyzed the code, t"
+        },
+        {
+          "id": 519,
+          "title": "SICP Python",
+          "chunk_index": 518,
+          "source_filename": "sicpy.md",
+          "section": "5.5.6",
+          "section_title": "Lexical Addressing",
+          "similarity": 0.45927318314393384,
+          "preview": "```python find_symbol(\"w\", list(list(\"y\", \"z\"), list(\"a\", \"b\", \"c\", \"d\", \"e\"), list(\"x\", \"y\"))); ``` ``` \"not found\" ``` **Exercise 5.45.** Using `find_symbol` from exercise 5.44, rewrite `compile_assignment_declaration` and `compile_name` to output lexical-address instructions. In cases where `find_symbol` returns `\"not found\"` (that is, where the name is not in the compile-time environment), you should report a compile-time error. Test the modified compiler on a few simple cases, such as the n"
+        },
+        {
+          "id": 485,
+          "title": "SICP Python",
+          "chunk_index": 484,
+          "source_filename": "sicpy.md",
+          "section": "5.5",
+          "section_title": "Compilation",
+          "similarity": 0.439559581862345,
+          "preview": "#### An overview of the compiler Our compiler is much like our interpreter, both in its structure and in the function it performs. Accordingly, the mechanisms used by the compiler for analyzing components will be similar to those used by the interpreter. Moreover, to make it easy to interface compiled and interpreted code, we will design the compiler to generate code that obeys the same conventions of register usage as the interpreter: The environment will be kept in the `env` register, argument"
+        }
+      ]
+    }
+  ]
+}

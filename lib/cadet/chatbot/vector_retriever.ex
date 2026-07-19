@@ -55,14 +55,14 @@ defmodule Cadet.Chatbot.VectorRetriever do
       rd.title,
       rd.source_filename,
       rc.metadata,
-      1 - (rc.embedding <=> $1::vector) AS similarity
+      1 - (rc.embedding <=> $1::text::vector) AS similarity
     FROM rag_chunks rc
     JOIN rag_documents rd ON rd.id = rc.rag_document_id
     WHERE rc.course_id = $2
       AND rc.language = $3
       AND rd.status = 'ready'
-      AND ($5::float8 IS NULL OR 1 - (rc.embedding <=> $1::vector) >= $5::float8)
-    ORDER BY rc.embedding <=> $1::vector
+      AND ($5::float8 IS NULL OR 1 - (rc.embedding <=> $1::text::vector) >= $5::float8)
+    ORDER BY rc.embedding <=> $1::text::vector
     LIMIT $4
     """
 
