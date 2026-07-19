@@ -165,8 +165,15 @@ defmodule CadetWeb.ChatController do
     |> String.slice(0, 2_000)
   end
 
-  defp ensure_textbook_context(section, visible_text, retrieved_chunks, conversation, conversation_id) do
-    if !VectorRag.enabled?() || textbook_context_available?(section, visible_text, retrieved_chunks) do
+  defp ensure_textbook_context(
+         section,
+         visible_text,
+         retrieved_chunks,
+         conversation,
+         conversation_id
+       ) do
+    if !VectorRag.enabled?() ||
+         textbook_context_available?(section, visible_text, retrieved_chunks) do
       :ok
     else
       {:error, {:off_scope, conversation, conversation_id}}
