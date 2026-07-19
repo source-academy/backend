@@ -18,7 +18,13 @@ defmodule Cadet.Autograder.LambdaWorker do
   """
   @impl Oban.Worker
   def perform(%Oban.Job{args: args}) do
-    run(args)
+    try do
+      run(args)
+    rescue
+      error -> handle_failure(args, :error, error, __STACKTRACE__)
+    catch
+      kind, reason -> handle_failure(args, kind, reason, __STACKTRACE__)
+    end
   end
 
   # Backwards-compatible direct entry: tests and other call-sites pass a
@@ -32,7 +38,9 @@ defmodule Cadet.Autograder.LambdaWorker do
   Accepts a plain args map (not an %Oban.Job{}) with the same shape Oban would
   pass in `args`.
   """
-  def run(args = %{question_id: question_id, answer_id: answer_id}) do
+  def run(args) when is_map(args) do
+    question_id = get_arg(args, :question_id)
+    answer_id = get_arg(args, :answer_id)
     question = Repo.get!(Question, question_id)
     answer = Repo.get!(Answer, answer_id)
     run_with_models(args, answer, question)
@@ -59,7 +67,7 @@ defmodule Cadet.Autograder.LambdaWorker do
       enqueue_result_store(%{
         answer_id: answer.id,
         result: result,
-        overwrite: Map.get(args, :overwrite, false)
+        overwrite: get_arg(args, :overwrite, false)
       })
 
       :ok
@@ -72,13 +80,46 @@ defmodule Cadet.Autograder.LambdaWorker do
     |> Oban.insert()
   end
 
-  def on_failure(_args, error) do
+  defp handle_failure(args, kind, error, stacktrace) do
+    answer_id = get_arg(args, :answer_id)
+
     error_message =
-      "Failed to get autograder result. error: #{inspect(error, pretty: true)}"
+      "Failed to get autograder result. answer_id: #{answer_id}, " <>
+        "error: #{Exception.format(kind, error, stacktrace)}"
 
     Logger.error(error_message)
     Sentry.capture_message(error_message)
+
+    enqueue_result_store(%{
+      answer_id: answer_id,
+      result: failed_result(),
+      overwrite: get_arg(args, :overwrite, false)
+    })
+
     :ok
+  end
+
+  defp failed_result do
+    %{
+      score: 0,
+      max_score: 1,
+      status: :failed,
+      result: [
+        %{
+          "resultType" => "error",
+          "errors" => [
+            %{
+              "errorType" => "systemError",
+              "errorMessage" => "Autograder runtime error. Please contact a system administrator"
+            }
+          ]
+        }
+      ]
+    }
+  end
+
+  defp get_arg(args, key, default \\ nil) do
+    Map.get(args, key, Map.get(args, Atom.to_string(key), default))
   end
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do

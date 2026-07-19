@@ -4,6 +4,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
   use Oban.Testing, repo: Cadet.Repo
 
   import ExUnit.CaptureLog
+  import Mock
   import Oban.Testing, only: [with_testing_mode: 2]
 
   alias Cadet.Assessments.{Answer, Question}
@@ -54,9 +55,12 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
     test "success", %{question: question, answer: answer} do
       use_cassette "autograder/success#1", custom: true do
         with_testing_mode(:manual, fn ->
-          LambdaWorker.perform(%{
-            question_id: question.id,
-            answer_id: answer.id
+          LambdaWorker.perform(%Oban.Job{
+            args: %{
+              "question_id" => question.id,
+              "answer_id" => answer.id,
+              "overwrite" => true
+            }
           })
 
           assert_enqueued(
@@ -71,7 +75,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                 score: 2,
                 max_score: 2,
                 status: :success
-              }
+              },
+              overwrite: true
             }
           )
         end)
@@ -190,20 +195,55 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
     end
   end
 
-  describe "on_failure" do
-    test "it stores error message", %{question: question, answer: answer} do
-      error = %{"errorMessage" => "Task timed out after 1.00 seconds"}
+  describe "failure handling" do
+    test "enqueues a failed result when the Lambda request raises", %{
+      question: question,
+      answer: answer
+    } do
+      with_testing_mode(:manual, fn ->
+        with_mock ExAws, [:passthrough],
+          request!: fn _request -> raise "Lambda unavailable" end do
+          log =
+            capture_log(fn ->
+              assert :ok =
+                       LambdaWorker.perform(%Oban.Job{
+                         args: %{
+                           "question_id" => question.id,
+                           "answer_id" => answer.id,
+                           "overwrite" => true
+                         }
+                       })
+            end)
 
-      log =
-        capture_log(fn ->
-          LambdaWorker.on_failure(
-            %{question_id: question.id, answer_id: answer.id},
-            inspect(error)
+          assert log =~ "Failed to get autograder result. answer_id: #{answer.id}"
+          assert log =~ "Lambda unavailable"
+
+          assert_enqueued(
+            worker: ResultStoreWorker,
+            args: %{
+              answer_id: answer.id,
+              overwrite: true,
+              result: %{
+                score: 0,
+                max_score: 1,
+                status: :failed,
+                result: [
+                  %{
+                    "resultType" => "error",
+                    "errors" => [
+                      %{
+                        "errorType" => "systemError",
+                        "errorMessage" =>
+                          "Autograder runtime error. Please contact a system administrator"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           )
-        end)
-
-      assert log =~ "Failed to get autograder result."
-      assert log =~ "Task timed out after 1.00 seconds"
+        end
+      end)
     end
   end
 
