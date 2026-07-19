@@ -61,14 +61,17 @@ defmodule Cadet.Chatbot.VectorRetriever do
     WHERE rc.course_id = $2
       AND rc.language = $3
       AND rd.status = 'ready'
-      AND ($5::float8 IS NULL OR 1 - (rc.embedding <=> $1::text::vector) >= $5::float8)
     ORDER BY rc.embedding <=> $1::text::vector
     LIMIT $4
     """
 
-    case Ecto.Adapters.SQL.query(Repo, query, [vector, course_id, language, limit, min_similarity]) do
+    case Ecto.Adapters.SQL.query(Repo, query, [vector, course_id, language, limit]) do
       {:ok, %{rows: rows}} ->
-        chunks = Enum.map(rows, &to_chunk/1)
+        chunks =
+          rows
+          |> Enum.map(&to_chunk/1)
+          |> maybe_filter_similarity(min_similarity)
+
         maybe_log_debug_chunks(chunks, course_id, language, limit)
         {:ok, chunks}
 
@@ -119,5 +122,11 @@ defmodule Cadet.Chatbot.VectorRetriever do
 
   defp encode_vector(embedding) do
     "[" <> Enum.map_join(embedding, ",", &to_string/1) <> "]"
+  end
+
+  defp maybe_filter_similarity(chunks, nil), do: chunks
+
+  defp maybe_filter_similarity(chunks, min_similarity) do
+    Enum.filter(chunks, &(&1.similarity >= min_similarity))
   end
 end

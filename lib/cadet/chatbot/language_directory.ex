@@ -11,7 +11,6 @@ defmodule Cadet.Chatbot.LanguageDirectory do
   require Logger
 
   @default_url "https://source-academy.github.io/language-directory/directory.json"
-  @fallback_path Path.expand("../../../priv/language_directory/directory.json", __DIR__)
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -38,7 +37,8 @@ defmodule Cadet.Chatbot.LanguageDirectory do
   @impl true
   def init(opts) do
     config = Application.get_env(:cadet, :language_directory, [])
-    fallback_path = Keyword.get(opts, :fallback_path, config[:fallback_path] || @fallback_path)
+    default_fallback = Application.app_dir(:cadet, "priv/language_directory/directory.json")
+    fallback_path = Keyword.get(opts, :fallback_path, config[:fallback_path] || default_fallback)
     languages = fallback_path |> load_fallback() |> directory_by_id()
 
     state = %{
