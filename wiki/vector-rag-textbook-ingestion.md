@@ -52,10 +52,10 @@ Optional local retrieval debugging:
 export VECTOR_RAG_DEBUG=true
 ```
 
-Optional similarity threshold override. The default is `0.35`; set an empty value to disable threshold filtering.
+Optional similarity threshold override. The default is `0.3`; set an empty value to disable threshold filtering.
 
 ```bash
-export VECTOR_RAG_MIN_SIMILARITY=0.35
+export VECTOR_RAG_MIN_SIMILARITY=0.3
 ```
 
 When enabled, the backend logs the retrieved top chunks for each chat request, including similarity score, section, section title, source filename, and a short content preview.

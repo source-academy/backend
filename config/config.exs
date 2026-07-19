@@ -53,7 +53,7 @@ config :cadet, :rag_documents,
 
 vector_rag_min_similarity =
   case System.get_env("VECTOR_RAG_MIN_SIMILARITY") do
-    nil -> 0.35
+    nil -> 0.3
     "" -> nil
     value -> String.to_float(value)
   end
