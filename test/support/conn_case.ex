@@ -18,6 +18,7 @@ defmodule CadetWeb.ConnCase do
   import Plug.Conn
 
   alias Cadet.Factory
+  alias Phoenix.ConnTest
 
   using do
     quote do
@@ -29,6 +30,7 @@ defmodule CadetWeb.ConnCase do
       import Phoenix.ConnTest, except: [post: 2, post: 3, put: 2, put: 3, patch: 2, patch: 3]
       import CadetWeb.Router.Helpers
       import Cadet.{AssertHelper, Factory}
+      alias CadetWeb.ConnCase
 
       # The default endpoint for testing
       @endpoint CadetWeb.Endpoint
@@ -41,17 +43,17 @@ defmodule CadetWeb.ConnCase do
       # accepts them. Multipart uploads (bodies containing `%Plug.Upload{}`) and
       # raw string bodies are dispatched unchanged.
       def post(conn, path, params \\ nil),
-        do: CadetWeb.ConnCase.json_dispatch(conn, @endpoint, :post, path, params)
+        do: ConnCase.json_dispatch(conn, @endpoint, :post, path, params)
 
       def put(conn, path, params \\ nil),
-        do: CadetWeb.ConnCase.json_dispatch(conn, @endpoint, :put, path, params)
+        do: ConnCase.json_dispatch(conn, @endpoint, :put, path, params)
 
       def patch(conn, path, params \\ nil),
-        do: CadetWeb.ConnCase.json_dispatch(conn, @endpoint, :patch, path, params)
+        do: ConnCase.json_dispatch(conn, @endpoint, :patch, path, params)
 
       # Helper function
       def sign_in(conn, user) do
-        CadetWeb.ConnCase.sign_in(conn, user)
+        ConnCase.sign_in(conn, user)
       end
     end
   end
@@ -63,7 +65,7 @@ defmodule CadetWeb.ConnCase do
       Ecto.Adapters.SQL.Sandbox.mode(Cadet.Repo, {:shared, self()})
     end
 
-    conn = Phoenix.ConnTest.build_conn()
+    conn = ConnTest.build_conn()
 
     if tags[:authenticate] do
       course = Factory.insert(:course, id: tags[:course_id])
@@ -122,10 +124,10 @@ defmodule CadetWeb.ConnCase do
       {:ok, body} ->
         conn
         |> put_req_header("content-type", "application/json")
-        |> Phoenix.ConnTest.dispatch(endpoint, method, path, body)
+        |> ConnTest.dispatch(endpoint, method, path, body)
 
       :passthrough ->
-        Phoenix.ConnTest.dispatch(conn, endpoint, method, path, params)
+        ConnTest.dispatch(conn, endpoint, method, path, params)
     end
   end
 

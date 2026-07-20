@@ -333,7 +333,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     end
   end
 
-  # FIXME: the route `POST .../admin/save-chosen-comments/:submissionid/:questionid`
+  # TODO: the route `POST .../admin/save-chosen-comments/:submissionid/:questionid`
   # (router.ex) points at `save_chosen_comments`, which does NOT exist -- every call
   # 500s. Left in place per decision (flag, don't delete); tracked in
   # test/cadet_web/api_spec_test.exs @dead_routes. Implement the action or remove the route.

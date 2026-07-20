@@ -168,7 +168,7 @@ defmodule CadetWeb.AdminTeamsController do
     delete(conn, %{"teamId" => team_id})
   end
 
-  # FIXME: the route `POST .../admin/teams/upload` (router.ex) points at `bulk_upload`,
+  # TODO: the route `POST .../admin/teams/upload` (router.ex) points at `bulk_upload`,
   # which does NOT exist -- every call 500s. Left in place per decision (flag, don't
   # delete); tracked in test/cadet_web/api_spec_test.exs @dead_routes. Implement the
   # action or remove the route.
