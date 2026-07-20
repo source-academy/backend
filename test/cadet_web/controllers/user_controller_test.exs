@@ -2,26 +2,20 @@ defmodule CadetWeb.UserControllerTest do
   use CadetWeb.ConnCase
 
   import Ecto.Query
+  import OpenApiSpex.TestAssertions
 
   import Cadet.{Factory, TestEntityHelper}
 
-  alias CadetWeb.UserController
   alias Cadet.Accounts.{User, CourseRegistration}
   alias Cadet.{Repo, Courses}
 
-  test "swagger" do
-    assert is_map(UserController.swagger_definitions())
-    assert is_map(UserController.swagger_path_index(nil))
-    assert is_map(UserController.swagger_path_get_latest_viewed(nil))
-    assert is_map(UserController.swagger_path_update_latest_viewed(nil))
-    assert is_map(UserController.swagger_path_update_game_states(nil))
-    assert is_map(UserController.swagger_path_update_research_agreement(nil))
-    assert is_map(UserController.swagger_path_combined_total_xp(nil))
+  setup_all do
+    {:ok, api_spec: CadetWeb.ApiSpec.spec()}
   end
 
   describe "GET v2/user" do
     @tag authenticate: :student, group: true
-    test "success, student non-story fields", %{conn: conn} do
+    test "success, student non-story fields", %{conn: conn, api_spec: api_spec} do
       user = conn.assigns.current_user
       course = user.latest_viewed_course
       config2 = insert(:assessment_config, %{order: 2, type: "test type 2", course: course})
@@ -70,6 +64,8 @@ defmodule CadetWeb.UserControllerTest do
         |> get("/v2/user")
         |> json_response(200)
         |> put_in(["courseRegistration", "story"], nil)
+
+      assert_schema(resp, "UserInfoResponse", api_spec)
 
       expected = %{
         "user" => %{
@@ -198,7 +194,8 @@ defmodule CadetWeb.UserControllerTest do
   describe "GET /v2/courses/{course_id}/user/total_xp" do
     @tag authenticate: :student, group: true
     test "achievement, one completed goal", %{
-      conn: conn
+      conn: conn,
+      api_spec: api_spec
     } do
       test_cr = conn.assigns.test_cr
       course = conn.assigns.test_cr.course
@@ -260,12 +257,13 @@ defmodule CadetWeb.UserControllerTest do
         |> json_response(200)
 
       assert resp["totalXp"] == 210
+      assert_schema(resp, "TotalXP", api_spec)
     end
   end
 
   describe "GET /v2/user/latest_viewed_course" do
     @tag authenticate: :student, group: true
-    test "success, student non-story fields", %{conn: conn} do
+    test "success, student non-story fields", %{conn: conn, api_spec: api_spec} do
       user = conn.assigns.current_user
       course = user.latest_viewed_course
 
@@ -311,6 +309,8 @@ defmodule CadetWeb.UserControllerTest do
         |> get("/v2/user/latest_viewed_course")
         |> json_response(200)
         |> put_in(["courseRegistration", "story"], nil)
+
+      assert_schema(resp, "LatestViewedInfo", api_spec)
 
       expected = %{
         "courseRegistration" => %{

@@ -1,8 +1,29 @@
 defmodule CadetWeb.SourcecastController do
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   alias Cadet.Courses
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["Sourcecast"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get all sourcecasts in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok:
+        {"List of sourcecasts", "application/json",
+         %Schema{type: :array, items: Schemas.Sourcecast}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def index(conn, %{"course_id" => course_id}) do
     sourcecasts = Courses.get_sourcecast_files(course_id)
@@ -32,34 +53,4 @@ defmodule CadetWeb.SourcecastController do
   #       |> text(message)
   #   end
   # end
-
-  swagger_path :index do
-    get("/courses/{course_id}/sourcecast")
-    description("Lists all sourcecasts")
-    summary("Show all sourcecasts")
-    produces("application/json")
-    security([%{JWT: []}])
-
-    response(200, "Success")
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorised")
-  end
-
-  def swagger_definitions do
-    %{
-      Sourcecast:
-        swagger_schema do
-          properties do
-            title(:string, "title", required: true)
-            playbackData(:string, "playback data", required: true)
-            description(:string, "description", required: false)
-            uid(:string, "uid", required: false)
-
-            # Note: this is technically an invalid type in Swagger/OpenAPI 2.0,
-            # but represents that a string or integer could be returned.
-            audio(:file, "audio file", required: true)
-          end
-        end
-    }
-  end
 end

@@ -19,10 +19,6 @@ defmodule CadetWeb.ChatControllerTest do
     end
   end
 
-  test "swagger" do
-    ChatController.swagger_path_chat("json")
-  end
-
   describe "POST /chats" do
     test "unauthenticated request", %{conn: conn} do
       conn =

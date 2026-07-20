@@ -37,6 +37,9 @@ defmodule CadetWeb.ApiSpec.ErrorResponses do
   @spec conflict() :: {String.t(), String.t(), Schema.t()}
   def conflict, do: {"Conflict", "text/plain", @string}
 
+  @spec too_many_requests() :: {String.t(), String.t(), Schema.t()}
+  def too_many_requests, do: {"Too many requests: rate limit exceeded", "text/plain", @string}
+
   @spec internal_server_error() :: {String.t(), String.t(), Schema.t()}
   def internal_server_error, do: {"Internal server error", "text/plain", @string}
 end

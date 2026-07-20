@@ -3,11 +3,34 @@ defmodule CadetWeb.VersionsController do
   Handles code versioning and history
   """
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
   require Logger
 
   alias Cadet.Assessments
   alias Cadet.Assessments.VersionManager
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["Assessments"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get the version history overview for a question's answer",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      questionid: [in: :path, type: :integer, required: true, description: "Question ID"]
+    ],
+    responses: [
+      ok:
+        {"List of version overviews", "application/json",
+         %Schema{type: :array, items: Schemas.VersionOverview}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def index(conn, %{"questionid" => question_id}) do
     course_reg = conn.assigns[:course_reg]
@@ -43,6 +66,22 @@ defmodule CadetWeb.VersionsController do
     end
   end
 
+  operation(:show,
+    summary: "Get the content of a specific answer version",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      questionid: [in: :path, type: :integer, required: true, description: "Question ID"],
+      versionid: [in: :path, type: :integer, required: true, description: "Version ID"]
+    ],
+    responses: [
+      ok: {"Version content", "application/json", Schemas.Version},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
+
   def show(conn, %{"questionid" => question_id, "versionid" => version_id}) do
     course_reg = conn.assigns[:course_reg]
 
@@ -72,6 +111,23 @@ defmodule CadetWeb.VersionsController do
         |> text("An unexpected error occurred.")
     end
   end
+
+  operation(:save,
+    summary: "Save the current answer as a new version",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      questionid: [in: :path, type: :integer, required: true, description: "Question ID"]
+    ],
+    request_body: {"The answer content", "application/json", Schemas.SaveVersionRequest},
+    responses: [
+      ok: {"Version saved", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def save(conn, %{"questionid" => question_id, "content" => content}) do
     course_reg = conn.assigns[:course_reg]
@@ -105,6 +161,24 @@ defmodule CadetWeb.VersionsController do
     |> put_status(:bad_request)
     |> text("Missing required parameters.")
   end
+
+  operation(:name,
+    summary: "Name a version",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      questionid: [in: :path, type: :integer, required: true, description: "Question ID"],
+      versionid: [in: :path, type: :integer, required: true, description: "Version ID"]
+    ],
+    request_body: {"The new version name", "application/json", Schemas.NameVersionRequest},
+    responses: [
+      ok: {"Version named", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def name(conn, %{
         "questionid" => question_id,
@@ -141,106 +215,5 @@ defmodule CadetWeb.VersionsController do
     conn
     |> put_status(:bad_request)
     |> text("Missing required parameters.")
-  end
-
-  def swagger_definitions do
-    %{
-      Version:
-        swagger_schema do
-          properties do
-            id(:integer, "Unique identifier", required: true)
-            content(:object, "Version of the answer depending on question type", required: true)
-            name(:string, "The name of the version")
-            answer_id(:integer, "Associated answer ID", required: true)
-            inserted_at(:string, "Creation timestamp", format: "date-time")
-            updated_at(:string, "Last update timestamp", format: "date-time")
-          end
-        end,
-      VersionSaveRequest:
-        swagger_schema do
-          properties do
-            content(:string_or_integer, "Version of the answer depending on question type",
-              required: true
-            )
-          end
-        end
-    }
-  end
-
-  swagger_path :index do
-    get("/assessments/question/{questionId}/versions/")
-
-    summary("Get a list of version overviews for an answer")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    parameters do
-      questionId(:path, :integer, "question id", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Invalid parameters")
-    response(404, "Question not found")
-  end
-
-  swagger_path :show do
-    get("/assessments/question/{questionId}/versions/{versionId}")
-
-    summary("Get content of a version for an answer")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    parameters do
-      questionId(:path, :integer, "question id", required: true)
-      versionId(:path, :integer, "version id", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Invalid parameters")
-    response(404, "Question not found")
-  end
-
-  swagger_path :save do
-    post("/assessments/question/{questionId}/versions/save")
-
-    summary("Submit an answer to a question and save it as a version")
-
-    description(
-      "For MCQ, answer contains choice_id. For programming question, this is a string containing the student's code."
-    )
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      questionId(:path, :integer, "question id", required: true)
-      content(:body, Schema.ref(:VersionSaveRequest), "answer content", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Invalid parameters")
-    response(404, "Question not found")
-  end
-
-  swagger_path :name do
-    put("/assessments/question/{questionId}/versions/{versionId}/name")
-
-    summary("Name a version")
-
-    parameters do
-      questionId(:path, :integer, "question id", required: true)
-      versionId(:path, :integer, "version id", required: true)
-      name(:body, :string, "new name", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Invalid parameters")
-    response(404, "Question or version not found")
   end
 end

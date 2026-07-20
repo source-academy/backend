@@ -1,16 +1,17 @@
 defmodule CadetWeb.TeamsControllerTest do
   use CadetWeb.ConnCase
 
+  import OpenApiSpex.TestAssertions
+
   alias Cadet.Repo
   alias Cadet.Courses.Course
-  alias CadetWeb.TeamController
+
+  setup_all do
+    {:ok, api_spec: CadetWeb.ApiSpec.spec()}
+  end
 
   setup do
     Cadet.Test.Seeds.assessments()
-  end
-
-  test "swagger" do
-    TeamController.swagger_path_index(nil)
   end
 
   describe "GET /v2/admin/teams" do
@@ -62,7 +63,7 @@ defmodule CadetWeb.TeamsControllerTest do
     end
 
     @tag authenticate: :admin
-    test "team(s) found", %{conn: conn} do
+    test "team(s) found", %{conn: conn, api_spec: api_spec} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
       cr = conn.assigns[:test_cr]
@@ -91,6 +92,7 @@ defmodule CadetWeb.TeamsControllerTest do
       }
 
       assert response(conn, 200) == "#{Jason.encode!(team_formation_overview)}"
+      assert_schema(json_response(conn, 200), "TeamFormationOverview", api_spec)
     end
   end
 

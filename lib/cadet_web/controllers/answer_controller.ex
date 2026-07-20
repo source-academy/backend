@@ -1,13 +1,33 @@
 defmodule CadetWeb.AnswerController do
   use CadetWeb, :controller
-
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   alias Cadet.Assessments
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+
+  tags(["Assessments"])
+  security([%{"JWT" => []}])
 
   # These roles can save and finalise answers for
   # closed assessments and submitted answers
   @bypass_closed_roles ~w(staff admin)a
+
+  operation(:submit,
+    summary: "Submit an answer to a question",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      questionid: [in: :path, type: :integer, required: true, description: "Question ID"]
+    ],
+    request_body: {"The answer", "application/json", Schemas.SubmitAnswerRequest},
+    responses: [
+      ok: {"Answer submitted", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def submit(conn, %{"questionid" => question_id, "answer" => answer})
       when is_ecto_id(question_id) do
@@ -41,6 +61,23 @@ defmodule CadetWeb.AnswerController do
   def submit(conn, _params) do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
+
+  operation(:check_last_modified,
+    summary: "Check whether the stored answer is newer than the client's copy",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      questionid: [in: :path, type: :integer, required: true, description: "Question ID"]
+    ],
+    request_body:
+      {"The client's last-known modification time", "application/json",
+       Schemas.CheckLastModifiedRequest},
+    responses: [
+      ok: {"Comparison result", "application/json", Schemas.LastModifiedResponse},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def check_last_modified(conn, %{
         "questionid" => question_id,
@@ -81,46 +118,5 @@ defmodule CadetWeb.AnswerController do
         |> put_status(:forbidden)
         |> text("Forbidden")
     end
-  end
-
-  swagger_path :submit do
-    post("/assessments/question/{questionId}/answer")
-
-    summary("Submit an answer to a question")
-
-    description(
-      "For MCQ, answer contains choice_id. For programming question, this is a string containing the student's code."
-    )
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      questionId(:path, :integer, "question id", required: true)
-      answer(:body, Schema.ref(:Answer), "answer", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Invalid parameters")
-    response(403, "User not permitted to answer questions or assessment not open")
-    response(404, "Question not found")
-  end
-
-  def swagger_definitions do
-    %{
-      Answer:
-        swagger_schema do
-          properties do
-            answer(
-              # Note: this is technically an invalid type in Swagger/OpenAPI 2.0,
-              # but represents that a string or integer could be returned.
-              :string_or_integer,
-              "answer of appropriate type depending on question type",
-              required: true
-            )
-          end
-        end
-    }
   end
 end

@@ -1,8 +1,28 @@
 defmodule CadetWeb.AdminSourcecastController do
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   alias Cadet.Courses
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+
+  tags(["Sourcecast"])
+  security([%{"JWT" => []}])
+
+  operation(:create,
+    summary: "Upload a sourcecast",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The sourcecast to upload", "multipart/form-data", Schemas.CreateSourcecastRequest},
+    responses: [
+      ok: {"Sourcecast uploaded", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def create(conn, %{"sourcecast" => sourcecast}) do
     result = Courses.upload_sourcecast_file(conn.assigns.course_reg, sourcecast)
@@ -22,6 +42,20 @@ defmodule CadetWeb.AdminSourcecastController do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
+  operation(:delete,
+    summary: "Delete a sourcecast",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      id: [in: :path, type: :integer, required: true, description: "Sourcecast ID"]
+    ],
+    responses: [
+      ok: {"Sourcecast deleted", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def delete(conn, %{"id" => id}) do
     result = Courses.delete_sourcecast_file(id)
 
@@ -34,60 +68,5 @@ defmodule CadetWeb.AdminSourcecastController do
         |> put_status(status)
         |> text(message)
     end
-  end
-
-  swagger_path :create do
-    post("/sourcecast")
-    description("Uploads sourcecast")
-    summary("Upload sourcecast")
-    consumes("multipart/form-data")
-    security([%{JWT: []}])
-
-    parameters do
-      public(
-        :body,
-        :boolean,
-        "Uploads as public sourcecast when 'public' is specified regardless of truthy or falsy"
-      )
-
-      sourcecast(:body, Schema.ref(:Sourcecast), "sourcecast object", required: true)
-    end
-
-    response(200, "Success")
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/sourcecast/{id}")
-    description("Deletes sourcecast by id")
-    summary("Delete sourcecast")
-    security([%{JWT: []}])
-
-    parameters do
-      id(:path, :integer, "sourcecast id", required: true)
-    end
-
-    response(200, "Success")
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorised")
-  end
-
-  def swagger_definitions do
-    %{
-      Sourcecast:
-        swagger_schema do
-          properties do
-            title(:string, "title", required: true)
-            playbackData(:string, "playback data", required: true)
-            description(:string, "description", required: false)
-            uid(:string, "uid", required: false)
-
-            # Note: this is technically an invalid type in Swagger/OpenAPI 2.0,
-            # but represents that a string or integer could be returned.
-            audio(:file, "audio file", required: true)
-          end
-        end
-    }
   end
 end

@@ -84,7 +84,12 @@ defmodule CadetWeb.Schemas.GoalWithProgress do
         description: "When count reaches this number, the goal is completed"
       },
       type: %Schema{type: :string, description: "Goal type"},
-      meta: %Schema{type: :object, description: "Goal satisfaction information"}
+      meta: %Schema{type: :object, description: "Goal satisfaction information"},
+      achievementUuids: %Schema{
+        type: :array,
+        items: %Schema{type: :string, format: :uuid},
+        description: "UUIDs of achievements this goal contributes to"
+      }
     },
     required: [:uuid, :completed, :count, :targetCount]
   })

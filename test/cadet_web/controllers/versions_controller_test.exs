@@ -5,15 +5,6 @@ defmodule CadetWeb.VersionsControllerTest do
 
   alias Cadet.Assessments.Version
   alias Cadet.Repo
-  alias CadetWeb.VersionsController
-
-  test "swagger" do
-    VersionsController.swagger_definitions()
-    VersionsController.swagger_path_index(nil)
-    VersionsController.swagger_path_show(nil)
-    VersionsController.swagger_path_save(nil)
-    VersionsController.swagger_path_name(nil)
-  end
 
   setup do
     course = insert(:course)

@@ -33,8 +33,24 @@ defmodule CadetWeb.ApiSpecTest do
   # controller is listed, replace the scoped assertion below with a blanket one.
   @migrated_controllers [
     CadetWeb.IncentivesController,
-    CadetWeb.AdminAchievementsController
+    CadetWeb.AdminAchievementsController,
+    CadetWeb.NotificationsController,
+    CadetWeb.StoriesController,
+    CadetWeb.LeaderboardController,
+    CadetWeb.TeamController,
+    CadetWeb.SourcecastController,
+    CadetWeb.AdminGoalsController,
+    CadetWeb.AdminStoriesController,
+    CadetWeb.AdminSourcecastController,
+    CadetWeb.ChatController,
+    CadetWeb.RagChatController,
+    CadetWeb.CoursesController,
+    CadetWeb.UserController,
+    CadetWeb.AnswerController,
+    CadetWeb.VersionsController
   ]
+
+  @http_verbs ~w(get post put patch delete)
 
   describe "the generated OpenAPI document" do
     test "builds and serialises to JSON" do
@@ -73,6 +89,16 @@ defmodule CadetWeb.ApiSpecTest do
     end
   end
 
+  describe "path parameters" do
+    test "every path-template parameter is declared by its operations" do
+      spec_map = OpenApiSpex.OpenApi.to_map(ApiSpec.spec())
+      problems = Enum.flat_map(spec_map["paths"], &path_param_problems/1)
+
+      assert problems == [],
+             "Operations missing declared path params: #{inspect(problems)}"
+    end
+  end
+
   # All routes that are candidates for documentation: controller actions only
   # (drops `forward`s, whose plug_opts is not an action atom), de-duplicated.
   defp documentable_routes do
@@ -85,5 +111,33 @@ defmodule CadetWeb.ApiSpecTest do
   defp documented?({plug, action}) do
     function_exported?(plug, :open_api_operation, 1) and
       not is_nil(plug.open_api_operation(action))
+  end
+
+  # For one path, return {path, verb, missing_params} for each operation whose
+  # declared path parameters do not cover every `{param}` in the path template.
+  defp path_param_problems({path, item}) do
+    template_params =
+      ~r/\{(\w+)\}/
+      |> Regex.scan(path)
+      |> Enum.map(fn [_, param] -> param end)
+
+    path_level = declared_path_params(Map.get(item, "parameters", []))
+
+    item
+    |> Enum.filter(fn {verb, _op} -> verb in @http_verbs end)
+    |> Enum.flat_map(fn {verb, op} ->
+      declared = path_level ++ declared_path_params(Map.get(op, "parameters", []))
+
+      case template_params -- declared do
+        [] -> []
+        missing -> [{path, verb, missing}]
+      end
+    end)
+  end
+
+  defp declared_path_params(params) do
+    params
+    |> Enum.filter(fn param -> param["in"] == "path" end)
+    |> Enum.map(fn param -> param["name"] end)
   end
 end

@@ -1,14 +1,44 @@
 defmodule CadetWeb.LeaderboardController do
   use CadetWeb, :controller
-
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   alias Cadet.Assessments
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+
+  tags(["Leaderboard"])
+  security([%{"JWT" => []}])
+
+  operation(:xp_all,
+    summary: "Get the total XP of all users in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok: {"XP leaderboard", "application/json", Schemas.XPLeaderboardUsers},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def xp_all(conn, %{"course_id" => course_id}) do
     users_with_xp = Assessments.all_user_total_xp(course_id)
     json(conn, %{users: users_with_xp.users})
   end
+
+  operation(:xp_paginated,
+    summary: "Get the total XP of all users in the course (paginated)",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      offset: [in: :query, type: :integer, required: false, description: "Pagination offset"],
+      page_size: [in: :query, type: :integer, required: false, description: "Users per page"]
+    ],
+    responses: [
+      ok: {"XP leaderboard", "application/json", Schemas.XPLeaderboardUsers},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def xp_paginated(conn, %{"course_id" => course_id}) do
     offset = String.to_integer(conn.params["offset"] || "0")
@@ -18,62 +48,5 @@ defmodule CadetWeb.LeaderboardController do
       Assessments.all_user_total_xp(course_id, %{offset: offset, limit: page_size})
 
     json(conn, paginated_display)
-  end
-
-  swagger_path :xp_all do
-    get("/courses/{course_id}/leaderboards/xp_all")
-
-    summary("Get all users XP in course")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    response(200, "OK", Schema.ref(:XPLeaderboardUsers))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :xp_paginated do
-    get("/courses/{course_id}/leaderboards/xp")
-
-    summary("Get all users XP in course (paginated)")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    parameters do
-      offset(:query, :integer, "Pagination offset", required: false, default: 0)
-      page_size(:query, :integer, "Number of users per page", required: false, default: 25)
-    end
-
-    response(200, "OK", Schema.ref(:XPLeaderboardUsers))
-    response(401, "Unauthorised")
-  end
-
-  def swagger_definitions do
-    %{
-      XPLeaderboardUsers:
-        swagger_schema do
-          description("XP Leaderboard Response")
-
-          properties do
-            users(:array, "List of users in the leaderboard",
-              items: %{
-                type: :object,
-                properties: %{
-                  name: %{type: :string, description: "User's full name"},
-                  username: %{type: :string, description: "User's login name"},
-                  rank: %{type: :integer, description: "User's rank"},
-                  user_id: %{type: :integer, description: "User ID"},
-                  total_xp: %{type: :integer, description: "User's total XP"}
-                }
-              }
-            )
-
-            total_count(:integer, "Total number of users in the leaderboard (for paginated)")
-          end
-        end
-    }
   end
 end
