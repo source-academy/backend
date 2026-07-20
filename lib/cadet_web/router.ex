@@ -33,6 +33,13 @@ defmodule CadetWeb.Router do
     plug(:ensure_role, [:admin])
   end
 
+  # Minimal pipeline for the OpenAPI spec + Swagger UI routes: it only needs the
+  # API spec placed in the conn (for RenderSpec), with no `:accepts` restriction
+  # so the HTML Swagger UI is served too.
+  pipeline :openapi_spec do
+    plug(OpenApiSpex.Plug.PutApiSpec, module: CadetWeb.ApiSpec)
+  end
+
   scope "/", CadetWeb do
     get("/.well-known/jwks.json", JWKSController, :index)
   end
@@ -299,25 +306,13 @@ defmodule CadetWeb.Router do
   #   pipe_through :api
   # end
 
-  def swagger_info do
-    %{
-      info: %{
-        version: "2.0",
-        title: "cadet"
-      },
-      basePath: "/v2",
-      securityDefinitions: %{
-        JWT: %{
-          type: "apiKey",
-          in: "header",
-          name: "Authorization"
-        }
-      }
-    }
-  end
-
+  # Interactive API docs (Swagger UI) backed by the OpenAPI 3.0 spec, which is
+  # served as JSON at `/swagger/openapi.json` by `RenderSpec`.
   scope "/swagger" do
-    forward("/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json")
+    pipe_through(:openapi_spec)
+
+    get("/", OpenApiSpex.Plug.SwaggerUI, path: "/swagger/openapi.json")
+    get("/openapi.json", OpenApiSpex.Plug.RenderSpec, [])
   end
 
   scope "/", CadetWeb do

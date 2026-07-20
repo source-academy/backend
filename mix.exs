@@ -7,7 +7,7 @@ defmodule Cadet.Mixfile do
       version: "0.0.1",
       elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: [:leex] ++ Mix.compilers() ++ [:phoenix_swagger],
+      compilers: [:leex] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
       aliases: aliases(),
@@ -80,7 +80,6 @@ defmodule Cadet.Mixfile do
       {:phoenix, "~> 1.8"},
       {:phoenix_view, "~> 2.0"},
       {:phoenix_ecto, "~> 4.7"},
-      {:phoenix_swagger, "~> 0.8"},
       {:open_api_spex, "~> 3.21"},
       {:plug_cowboy, "~> 2.8"},
       {:postgrex, ">= 0.0.0"},
@@ -139,11 +138,14 @@ defmodule Cadet.Mixfile do
       test: ["ecto.create --quiet", "ecto.migrate", "test"],
       "phx.server": ["cadet.server"],
       "phx.digest": ["cadet.digest"],
-      # Regenerate the committed OpenAPI 3.0 spec from CadetWeb.ApiSpec. Written
-      # to openapi.json (not swagger.json) while the phoenix_swagger compiler
-      # still owns swagger.json; the two are reconciled at cutover.
+      # Regenerate the committed OpenAPI 3.0 spec from CadetWeb.ApiSpec.
       "openapi.spec": [
         "openapi.spec.json --spec CadetWeb.ApiSpec --pretty=true priv/static/openapi.json"
+      ],
+      # CI freshness gate: fail if the committed spec is stale. Builds the spec
+      # from the running app (needs the DB), so run it after `mix ecto.setup`.
+      "openapi.check": [
+        "openapi.spec.json --spec CadetWeb.ApiSpec --pretty=true --check=true priv/static/openapi.json"
       ],
       sentry_recompile: ["deps.compile sentry --force", "compile"]
     ]

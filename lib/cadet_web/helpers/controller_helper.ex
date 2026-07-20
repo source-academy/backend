@@ -5,8 +5,6 @@ defmodule CadetWeb.ControllerHelper do
 
   alias Plug.Conn
 
-  alias PhoenixSwagger.Schema
-
   @doc """
   Sends a response based on a standard result.
   """
@@ -31,15 +29,4 @@ defmodule CadetWeb.ControllerHelper do
 
   def handle_standard_result({:error, {code, response}}, conn, _),
     do: Conn.send_resp(conn, code, response)
-
-  def schema_array(type, extra \\ []) do
-    %Schema{
-      type: :array,
-      items:
-        %Schema{
-          type: type
-        }
-        |> Map.merge(Enum.into(extra, %{}))
-    }
-  end
 end

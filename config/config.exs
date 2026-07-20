@@ -39,7 +39,6 @@ config :cadet, CadetWeb.Endpoint,
 
 # Set Phoenix JSON library
 config :phoenix, :json_library, Jason
-config :phoenix_swagger, json_library: Jason
 
 # Configures Elixir's Logger
 config :logger, :console,
@@ -81,14 +80,6 @@ config :sentry,
   enable_source_code_context: true,
   root_source_code_path: File.cwd!(),
   context_lines: 5
-
-# Configure Phoenix Swagger
-config :cadet, :phoenix_swagger,
-  swagger_files: %{
-    "priv/static/swagger.json" => [
-      router: CadetWeb.Router
-    ]
-  }
 
 # Configure GuardianDB
 config :guardian, Guardian.DB,
