@@ -9,7 +9,6 @@ defmodule CadetWeb.AssessmentsControllerTest do
   alias Cadet.Accounts.{Role, CourseRegistration}
   alias Cadet.Assessments.{Assessment, Submission, SubmissionStatus}
   alias Cadet.Autograder.GradingJob
-  alias CadetWeb.AssessmentsController
 
   @local_name "test/fixtures/local_repo"
 
@@ -21,14 +20,6 @@ defmodule CadetWeb.AssessmentsControllerTest do
     end)
 
     Cadet.Test.Seeds.assessments()
-  end
-
-  test "swagger" do
-    AssessmentsController.swagger_definitions()
-    AssessmentsController.swagger_path_index(nil)
-    AssessmentsController.swagger_path_show(nil)
-    AssessmentsController.swagger_path_unlock(nil)
-    AssessmentsController.swagger_path_submit(nil)
   end
 
   describe "GET /, unauthenticated" do

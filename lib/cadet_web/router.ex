@@ -193,10 +193,9 @@ defmodule CadetWeb.Router do
     delete("/users/:course_reg_id", AdminUserController, :delete_user)
 
     put("/config", AdminCoursesController, :update_course_config)
-    # TODO: Missing corresponding Swagger path entry
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
-    # TODO: Missing corresponding Swagger path entry
+
     delete(
       "/config/assessment_config/:assessment_config_id",
       AdminCoursesController,
@@ -264,7 +263,6 @@ defmodule CadetWeb.Router do
     get("/users/:course_reg_id/assessments", AdminAssessmentsController, :index)
 
     # The admin route for getting assessment information for a specifc user
-    # TODO: Missing Swagger path
     get(
       "/users/:course_reg_id/assessments/:assessmentid",
       AdminAssessmentsController,

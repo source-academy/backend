@@ -4,19 +4,11 @@ defmodule CadetWeb.AdminAssetsControllerTest do
 
   alias Cadet.Courses.Course
   alias Cadet.Repo
-  alias CadetWeb.AdminAssetsController
 
   import Ecto.Query, only: [where: 2]
 
   setup_all do
     HTTPoison.start()
-  end
-
-  test "swagger" do
-    AdminAssetsController.swagger_definitions()
-    AdminAssetsController.swagger_path_index(nil)
-    AdminAssetsController.swagger_path_upload(nil)
-    AdminAssetsController.swagger_path_delete(nil)
   end
 
   describe "public access, unauthenticated" do

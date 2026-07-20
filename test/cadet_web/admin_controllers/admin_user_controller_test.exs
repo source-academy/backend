@@ -4,19 +4,9 @@ defmodule CadetWeb.AdminUserControllerTest do
   import Ecto.Query
   import Cadet.{Factory, TestEntityHelper}
 
-  alias CadetWeb.AdminUserController
   alias Cadet.Repo
   alias Cadet.Courses.{Course, Group}
   alias Cadet.Accounts.CourseRegistration
-
-  test "swagger" do
-    assert is_map(AdminUserController.swagger_definitions())
-    assert is_map(AdminUserController.swagger_path_index(nil))
-    assert is_map(AdminUserController.swagger_path_upsert_users_and_groups(nil))
-    assert is_map(AdminUserController.swagger_path_update_role(nil))
-    assert is_map(AdminUserController.swagger_path_delete_user(nil))
-    assert is_map(AdminUserController.swagger_path_combined_total_xp(nil))
-  end
 
   describe "GET /v2/courses/{course_id}/admin/users" do
     @tag authenticate: :staff

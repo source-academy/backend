@@ -1,14 +1,33 @@
 defmodule CadetWeb.AdminUserController do
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   import Ecto.Query
 
   alias Cadet.Repo
   alias Cadet.{Accounts, Assessments, Courses}
   alias Cadet.Accounts.{CourseRegistrations, CourseRegistration, Role}
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["User"])
+  security([%{"JWT" => []}])
 
   # This controller is used to find all users of a course
+
+  operation(:index,
+    summary: "Get all users in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok:
+        {"List of users", "application/json", %Schema{type: :array, items: Schemas.AdminUserInfo}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def index(conn, filter) do
     users =
@@ -16,6 +35,19 @@ defmodule CadetWeb.AdminUserController do
 
     render(conn, "users.json", users: users)
   end
+
+  operation(:combined_total_xp,
+    summary: "Get a specific user's total XP from achievements and assessments",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      course_reg_id: [in: :path, type: :integer, required: true, description: "Course reg ID"]
+    ],
+    responses: [
+      ok: {"Total XP", "application/json", Schemas.TotalXP},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def combined_total_xp(conn, %{"course_reg_id" => course_reg_id}) do
     course_reg = Repo.get(CourseRegistration, course_reg_id)
@@ -29,6 +61,21 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @add_users_role ~w(admin)a
+
+  operation(:get_students,
+    summary: "Get the students in the course (for team formation)",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok:
+        {"List of students", "application/json",
+         %Schema{type: :array, items: %Schema{type: :object}}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def get_students(conn, filter) do
     users =
       filter |> try_keywordise_string_keys() |> Accounts.get_users_by(conn.assigns.course_reg)
@@ -36,7 +83,20 @@ defmodule CadetWeb.AdminUserController do
     render(conn, "get_students.json", users: users)
   end
 
-  @add_users_role ~w(admin)a
+  operation(:upsert_users_and_groups,
+    summary: "Add or update users (and their groups) in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body: {"The users to upsert", "application/json", Schemas.UpsertUsersRequest},
+    responses: [
+      ok: {"Users upserted", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def upsert_users_and_groups(conn, %{
         "course_id" => course_id,
         "users" => usernames_roles_groups,
@@ -107,6 +167,22 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @update_role_roles ~w(admin)a
+
+  operation(:update_role,
+    summary: "Update the role of a user in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      course_reg_id: [in: :path, type: :integer, required: true, description: "Course reg ID"]
+    ],
+    request_body: {"The new role", "application/json", Schemas.UpdateRoleRequest},
+    responses: [
+      ok: {"Role updated", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def update_role(conn, %{"role" => role, "course_reg_id" => course_reg_id}) do
     course_reg_id = course_reg_id |> String.to_integer()
 
@@ -144,6 +220,21 @@ defmodule CadetWeb.AdminUserController do
   end
 
   @delete_user_roles ~w(admin)a
+
+  operation(:delete_user,
+    summary: "Delete a user from the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      course_reg_id: [in: :path, type: :integer, required: true, description: "Course reg ID"]
+    ],
+    responses: [
+      ok: {"User deleted", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def delete_user(conn, %{"course_reg_id" => course_reg_id}) do
     course_reg_id = course_reg_id |> String.to_integer()
 
@@ -184,145 +275,5 @@ defmodule CadetWeb.AdminUserController do
       {:validate_same_course, false} ->
         conn |> put_status(:forbidden) |> text("User is in a different course")
     end
-  end
-
-  swagger_path :index do
-    get("/courses/{course_id}/admin/users")
-
-    summary("Returns a list of users in the course owned by the admin")
-
-    security([%{JWT: []}])
-    produces("application/json")
-    response(200, "OK", Schema.ref(:AdminUserInfo))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :combined_total_xp do
-    get("/courses/{course_id}/admin/users/{course_reg_id}/total_xp")
-
-    summary("Get the specified user's total XP from achievements and assessments")
-
-    security([%{JWT: []}])
-    produces("application/json")
-
-    parameters do
-      course_id(:path, :integer, "Course ID", required: true)
-      course_reg_id(:path, :integer, "Course registration ID", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:TotalXPInfo))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :upsert_users_and_groups do
-    put("/courses/{course_id}/admin/users")
-
-    summary("Adds the list of usernames and roles to the course")
-    security([%{JWT: []}])
-    consumes("application/json")
-
-    parameters do
-      course_id(:path, :integer, "Course ID", required: true)
-      users(:body, Schema.array(:UsernameAndRole), "Array of usernames and roles", required: true)
-
-      provider(:body, :string, "The authentication provider linked to these usernames",
-        required: true
-      )
-    end
-
-    response(200, "OK")
-    response(400, "Bad Request. Invalid provider, username or role")
-    response(403, "Forbidden. You are not an admin")
-  end
-
-  swagger_path :update_role do
-    put("/courses/{course_id}/admin/users/{course_reg_id}/role")
-
-    summary("Updates the role of the given user in the the course")
-    security([%{JWT: []}])
-    consumes("application/json")
-
-    parameters do
-      course_id(:path, :integer, "Course ID", required: true)
-      role(:body, :role, "The new role", required: true)
-
-      courseRegId(
-        :body,
-        :integer,
-        "The course registration of the user whose role is to be updated",
-        required: true
-      )
-    end
-
-    response(200, "OK")
-
-    response(
-      400,
-      "Bad Request. User course registration does not exist or admin not allowed to downgrade own role"
-    )
-
-    response(403, "Forbidden. User is in different course, or you are not an admin")
-  end
-
-  swagger_path :delete_user do
-    delete("/courses/{course_id}/admin/users/{course_reg_id}")
-
-    summary("Deletes a user from a course")
-    consumes("application/json")
-
-    parameters do
-      course_id(:path, :integer, "Course ID", required: true)
-
-      courseRegId(
-        :body,
-        :integer,
-        "The course registration of the user whose role is to be updated",
-        required: true
-      )
-    end
-
-    response(200, "OK")
-
-    response(
-      400,
-      "Bad Request. User course registration does not exist or admin not allowed to delete ownself from course or admins cannot be deleted"
-    )
-
-    response(403, "Forbidden. User is in different course, or you are not an admin")
-  end
-
-  def swagger_definitions do
-    %{
-      AdminUserInfo:
-        swagger_schema do
-          title("User")
-          description("Basic information about the user in this course")
-
-          properties do
-            userId(:integer, "User's ID")
-            name(:string, "Full name of the user")
-
-            role(
-              :string,
-              "Role of the user in this course. Can be 'student', 'staff', or 'admin'"
-            )
-
-            group(
-              :string,
-              "Group the user belongs to in this course. May be null if the user does not belong to any group"
-            )
-          end
-        end,
-      UsernameAndRole:
-        swagger_schema do
-          title("Username and role")
-          description("Username and role of the user to add to this course")
-
-          properties do
-            username(:string, "The user's username")
-            role(:role, "The user's role. Can be 'student', 'staff', or 'admin'")
-          end
-        end
-    }
   end
 end

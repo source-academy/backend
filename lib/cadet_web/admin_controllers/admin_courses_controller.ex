@@ -1,10 +1,31 @@
 defmodule CadetWeb.AdminCoursesController do
   use CadetWeb, :controller
-
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   alias Cadet.Courses
   alias Cadet.Chatbot.CourseDocuments
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["Courses"])
+  security([%{"JWT" => []}])
+
+  operation(:update_course_config,
+    summary: "Update the configuration of the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The course configuration to update", "application/json",
+       Schemas.UpdateCourseConfigRequest},
+    responses: [
+      ok: {"Configuration updated", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def update_course_config(conn, params = %{"course_id" => course_id})
       when is_ecto_id(course_id) do
@@ -28,10 +49,40 @@ defmodule CadetWeb.AdminCoursesController do
     end
   end
 
+  operation(:get_assessment_configs,
+    summary: "Get the assessment configurations of the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok:
+        {"List of assessment configurations", "application/json",
+         %Schema{type: :array, items: Schemas.AssessmentConfiguration}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def get_assessment_configs(conn, %{"course_id" => course_id}) when is_ecto_id(course_id) do
     assessment_configs = Courses.get_assessment_configs(course_id)
     render(conn, "assessment_configs.json", %{configs: assessment_configs})
   end
+
+  operation(:update_assessment_configs,
+    summary: "Replace the assessment configurations of the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The assessment configurations", "application/json",
+       Schemas.UpdateAssessmentConfigsRequest},
+    responses: [
+      ok: {"Configurations updated", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def update_assessment_configs(conn, %{
         "course_id" => course_id,
@@ -75,6 +126,25 @@ defmodule CadetWeb.AdminCoursesController do
     send_resp(conn, :bad_request, "missing assessmentConfig")
   end
 
+  operation(:delete_assessment_config,
+    summary: "Delete an assessment configuration from the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessment_config_id: [
+        in: :path,
+        type: :integer,
+        required: true,
+        description: "Assessment config ID"
+      ]
+    ],
+    responses: [
+      ok: {"Configuration deleted", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def delete_assessment_config(conn, %{
         "course_id" => course_id,
         "assessment_config_id" => assessment_config_id
@@ -91,84 +161,20 @@ defmodule CadetWeb.AdminCoursesController do
     end
   end
 
+  operation(:get_document_map,
+    summary: "Get the Pixelbot document map for the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok: {"The document map", "application/json", Schemas.DocumentMapResponse},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def get_document_map(conn, _params) do
     document_map = CourseDocuments.build_document_map_json()
     json(conn, %{documentMap: document_map})
-  end
-
-  swagger_path :update_course_config do
-    put("/courses/{course_id}/admin/config")
-
-    summary("Updates the course configuration for the specified course")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      course_id(:path, :integer, "Course ID", required: true)
-      course_name(:body, :string, "Course name")
-      course_short_name(:body, :string, "Course module code")
-      viewable(:body, :boolean, "Course viewability")
-      enable_game(:body, :boolean, "Enable game")
-      enable_achievements(:body, :boolean, "Enable achievements")
-      enable_overall_leaderboard(:body, :boolean, "Enable overall leaderboard")
-      enable_contest_leaderboard(:body, :boolean, "Enable contest leaderboard")
-      top_leaderboard_display(:body, :integer, "Top Leaderboard Display")
-      top_contest_leaderboard_display(:body, :integer, "Top Contest Leaderboard Display")
-      enable_sourcecast(:body, :boolean, "Enable sourcecast")
-      enable_stories(:body, :boolean, "Enable stories")
-      enable_llm_grading(:body, :boolean, "Enable LLM grading")
-      llm_api_key(:body, :string, "OpenAI API key for this course")
-      sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
-      module_help_text(:body, :string, "Module help text")
-    end
-
-    response(200, "OK")
-    response(400, "Missing or invalid parameter(s)")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :update_assessment_configs do
-    put("/courses/{course_id}/admin/config/assessment_configs")
-
-    summary("Updates the assessment configuration for the specified course")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      course_id(:path, :integer, "Course ID", required: true)
-      assessment_configs(:body, :list, "Assessment Configs")
-    end
-
-    response(200, "OK")
-    response(400, "Missing or invalid parameter(s)")
-    response(403, "Forbidden")
-  end
-
-  def swagger_definitions do
-    %{
-      AdminSublanguage:
-        swagger_schema do
-          title("AdminSublanguage")
-
-          properties do
-            chapter(:integer, "Chapter number from 1 to 4",
-              required: true,
-              minimum: 1,
-              maximum: 4
-            )
-
-            variant(Schema.ref(:SourceVariant), "Variant name", required: true)
-          end
-
-          example(%{
-            chapter: 2,
-            variant: "lazy"
-          })
-        end
-    }
   end
 end

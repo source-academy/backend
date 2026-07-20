@@ -3,12 +3,16 @@ defmodule CadetWeb.AuthController do
   Handles user login and authentication.
   """
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
   require Logger
 
   alias Cadet.{Accounts, Accounts.User}
   alias Cadet.Auth.{Guardian, Provider}
   alias Cadet.TokenExchange
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+
+  tags(["Authentication"])
 
   @doc """
   Receives a /login request with valid attributes.
@@ -17,6 +21,26 @@ defmodule CadetWeb.AuthController do
   the user has not been registered before, register the user, then return the
   `Tokens`.
   """
+  operation(:create,
+    summary: "Obtain access and refresh tokens (OAuth2 login)",
+    parameters: [
+      code: [in: :query, type: :string, required: true, description: "OAuth2 code"],
+      provider: [in: :query, type: :string, required: true, description: "OAuth2 provider id"],
+      client_id: [in: :query, type: :string, required: false, description: "OAuth2 client id"],
+      redirect_uri: [
+        in: :query,
+        type: :string,
+        required: false,
+        description: "OAuth2 redirect URI"
+      ]
+    ],
+    responses: [
+      ok: {"Tokens", "application/json", Schemas.Tokens},
+      bad_request: ErrorResponses.bad_request(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
+
   def create(
         conn,
         params = %{
@@ -56,6 +80,17 @@ defmodule CadetWeb.AuthController do
   @doc """
   Callback URL which processes a SAML redirect from the Assertion Consumer Service (ACS).
   """
+  operation(:saml_redirect,
+    summary: "SAML redirect callback; generates tokens then redirects to the frontend",
+    parameters: [
+      provider: [in: :query, type: :string, required: true, description: "Provider id"]
+    ],
+    responses: [
+      found: "Redirect to the frontend with tokens",
+      bad_request: ErrorResponses.bad_request()
+    ]
+  )
+
   def saml_redirect(
         conn,
         %{
@@ -102,6 +137,18 @@ defmodule CadetWeb.AuthController do
   @doc """
   Exchanges a short-lived code for access and refresh tokens.
   """
+  operation(:exchange,
+    summary: "Exchange a short-lived code for tokens and redirect to the client",
+    parameters: [
+      code: [in: :query, type: :string, required: true, description: "Short-lived code"],
+      provider: [in: :query, type: :string, required: true, description: "Provider id"]
+    ],
+    responses: [
+      found: "Redirect to the client with tokens",
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def exchange(
         conn,
         %{
@@ -143,6 +190,17 @@ defmodule CadetWeb.AuthController do
   @doc """
   Alternate callback URL which redirect to VSCode via deeplinking.
   """
+  operation(:saml_redirect_vscode,
+    summary: "SAML redirect callback for VSCode deep-linking",
+    parameters: [
+      provider: [in: :query, type: :string, required: true, description: "Provider id"]
+    ],
+    responses: [
+      found: "Redirect to VSCode with a short-lived code",
+      bad_request: ErrorResponses.bad_request()
+    ]
+  )
+
   def saml_redirect_vscode(
         conn,
         %{
@@ -241,6 +299,16 @@ defmodule CadetWeb.AuthController do
 
   Exchanges the refresh_token with a new access_token.
   """
+  operation(:refresh,
+    summary: "Obtain a new access token using a refresh token",
+    request_body: {"The refresh token", "application/json", Schemas.RefreshTokenRequest},
+    responses: [
+      ok: {"Tokens", "application/json", Schemas.Tokens},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised()
+    ]
+  )
+
   def refresh(conn, %{"refresh_token" => refresh_token}) do
     Logger.info("Attempting to refresh tokens for the provided refresh token.")
 
@@ -264,6 +332,17 @@ defmodule CadetWeb.AuthController do
   @doc """
   Receives a /logout request with valid attribute.
   """
+  operation(:logout,
+    summary: "Log out and invalidate the tokens",
+    request_body:
+      {"The refresh token to invalidate", "application/json", Schemas.RefreshTokenRequest},
+    responses: [
+      ok: {"Logged out", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised()
+    ]
+  )
+
   def logout(conn, %{"refresh_token" => refresh_token}) do
     Logger.info("Attempting to log out using the provided refresh token.")
 
@@ -301,98 +380,5 @@ defmodule CadetWeb.AuthController do
     |> :crypto.strong_rand_bytes()
     |> Base.url_encode64(padding: false)
     |> String.slice(0, 22)
-  end
-
-  swagger_path :create do
-    post("/auth/login")
-
-    summary("Obtain access and refresh tokens to authenticate user")
-
-    description(
-      "Get a set of access and refresh tokens, using the authentication code " <>
-        "from the OAuth2 provider. When accessing resources, pass the access " <>
-        "token in the Authorization HTTP header using the Bearer schema: " <>
-        "`Authorization: Bearer <token>`."
-    )
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      code(:query, :string, "OAuth2 code", required: true)
-      provider(:query, :string, "OAuth2 provider ID", required: true)
-      client_id(:query, :string, "OAuth2 client ID", required: false)
-      redirect_uri(:query, :string, "OAuth2 redirect URI", required: false)
-    end
-
-    response(200, "OK", Schema.ref(:Tokens))
-    response(400, "Missing or invalid parameters or credentials, or upstream error")
-    response(500, "Internal server error")
-  end
-
-  swagger_path :refresh do
-    post("/auth/refresh")
-    summary("Obtain a new access token using a refresh token")
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      refresh_token(
-        :body,
-        Schema.ref(:RefreshToken),
-        "Refresh token obtained from /auth/login",
-        required: true
-      )
-    end
-
-    response(200, "OK", Schema.ref(:Tokens))
-    response(400, "Missing parameter(s)")
-    response(401, "Invalid refresh token")
-  end
-
-  swagger_path :logout do
-    post("/auth/logout")
-    summary("Logout and invalidate the tokens")
-    consumes("application/json")
-
-    parameters do
-      tokens(:body, Schema.ref(:RefreshToken), "Refresh token to be invalidated", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Missing parameter(s)")
-    response(401, "Invalid token")
-  end
-
-  swagger_path :saml_redirect do
-    get("/auth/saml_redirect")
-
-    summary(
-      "SAML redirect endpoint after Assertion Consumer Service validation. Generates JWT tokens before redirecting again to the frontend."
-    )
-
-    response(302, "Found")
-  end
-
-  def swagger_definitions do
-    %{
-      Tokens:
-        swagger_schema do
-          title("Tokens")
-
-          properties do
-            access_token(:string, "Access token with TTL of 1 hour", required: true)
-            refresh_token(:string, "Refresh token with TTL of 1 week", required: true)
-          end
-        end,
-      RefreshToken:
-        swagger_schema do
-          title("Refresh Token")
-
-          properties do
-            refresh_token(:string, "Refresh token", required: true)
-          end
-        end
-    }
   end
 end

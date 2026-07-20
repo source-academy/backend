@@ -3,20 +3,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
 
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
-  alias CadetWeb.AdminGradingController
 
   import Mock
-
-  test "swagger" do
-    AdminGradingController.swagger_definitions()
-    AdminGradingController.swagger_path_index(nil)
-    AdminGradingController.swagger_path_show(nil)
-    AdminGradingController.swagger_path_update(nil)
-    AdminGradingController.swagger_path_unsubmit(nil)
-    AdminGradingController.swagger_path_autograde_submission(nil)
-    AdminGradingController.swagger_path_autograde_answer(nil)
-    AdminGradingController.swagger_path_grading_summary(nil)
-  end
 
   describe "GET /, unauthenticated" do
     test "unauthorized", %{conn: conn} do

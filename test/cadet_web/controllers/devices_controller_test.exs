@@ -3,26 +3,12 @@ defmodule DevicesControllerTest do
 
   alias Cadet.{Devices, Repo}
   alias Cadet.Devices.{Device, DeviceRegistration}
-  alias CadetWeb.DevicesController
 
   import Mock
 
   setup do
     device = insert(:device)
     %{device: device}
-  end
-
-  test "swagger" do
-    DevicesController.swagger_definitions()
-    DevicesController.swagger_path_index(nil)
-    DevicesController.swagger_path_register(nil)
-    DevicesController.swagger_path_edit(nil)
-    DevicesController.swagger_path_deregister(nil)
-    DevicesController.swagger_path_get_ws_endpoint(nil)
-    DevicesController.swagger_path_get_cert(nil)
-    DevicesController.swagger_path_get_key(nil)
-    DevicesController.swagger_path_get_client_id(nil)
-    DevicesController.swagger_path_get_mqtt_endpoint(nil)
   end
 
   describe "GET /devices" do

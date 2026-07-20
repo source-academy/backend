@@ -6,17 +6,9 @@ defmodule CadetWeb.AuthControllerTest do
   import Mock
 
   alias Cadet.Auth.Guardian
-  alias CadetWeb.AuthController
 
   setup_all do
     HTTPoison.start()
-  end
-
-  test "swagger" do
-    AuthController.swagger_definitions()
-    AuthController.swagger_path_create(nil)
-    AuthController.swagger_path_refresh(nil)
-    AuthController.swagger_path_logout(nil)
   end
 
   describe "POST /auth/login" do

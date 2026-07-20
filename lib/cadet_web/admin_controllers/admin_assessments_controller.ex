@@ -1,7 +1,6 @@
 defmodule CadetWeb.AdminAssessmentsController do
   use CadetWeb, :controller
-
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
@@ -9,6 +8,27 @@ defmodule CadetWeb.AdminAssessmentsController do
   alias Cadet.Assessments.{Question, Assessment}
   alias Cadet.{Assessments, Repo}
   alias Cadet.Accounts.CourseRegistration
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["Assessments"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get the assessment overviews for a specific user",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      course_reg_id: [in: :path, type: :integer, required: true, description: "Course reg ID"]
+    ],
+    responses: [
+      ok:
+        {"List of assessments", "application/json",
+         %Schema{type: :array, items: Schemas.AssessmentOverview}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def index(conn, %{"course_reg_id" => course_reg_id}) do
     course_reg = Repo.get(CourseRegistration, course_reg_id)
@@ -16,6 +36,21 @@ defmodule CadetWeb.AdminAssessmentsController do
     assessments = Assessments.format_all_assessments(assessments)
     render(conn, "index.json", assessments: assessments)
   end
+
+  operation(:get_assessment,
+    summary: "Get an assessment (with questions and answers) as seen by a specific user",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      course_reg_id: [in: :path, type: :integer, required: true, description: "Course reg ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    responses: [
+      ok: {"The assessment", "application/json", Schemas.Assessment},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def get_assessment(conn, %{"course_reg_id" => course_reg_id, "assessmentid" => assessment_id})
       when is_ecto_id(assessment_id) do
@@ -26,6 +61,21 @@ defmodule CadetWeb.AdminAssessmentsController do
       {:error, {status, message}} -> send_resp(conn, status, message)
     end
   end
+
+  operation(:create,
+    summary: "Create or update an assessment from an XML file",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The assessment XML and options", "multipart/form-data", Schemas.CreateAssessmentRequest},
+    responses: [
+      ok: {"Assessment created or updated", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def create(conn, %{
         "course_id" => course_id,
@@ -61,6 +111,19 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
+  operation(:delete,
+    summary: "Delete an assessment",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    responses: [
+      ok: {"Assessment deleted", "text/plain", %Schema{type: :string}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def delete(conn, %{"course_id" => course_id, "assessmentid" => assessment_id}) do
     with {:same_course, true} <- {:same_course, is_same_course(course_id, assessment_id)},
          {:ok, _} <- Assessments.delete_assessment(assessment_id) do
@@ -77,6 +140,22 @@ defmodule CadetWeb.AdminAssessmentsController do
         |> text(message)
     end
   end
+
+  operation(:update,
+    summary: "Update an assessment's dates and settings",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    request_body:
+      {"The assessment settings to update", "application/json", Schemas.UpdateAssessmentRequest},
+    responses: [
+      ok: {"Assessment updated", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def update(conn, params = %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     open_at = params |> Map.get("openAt")
@@ -142,6 +221,19 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
+  operation(:calculate_contest_score,
+    summary: "Calculate relative contest scores for an assessment's voting question",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    responses: [
+      ok: {"Scores calculated", "text/plain", %Schema{type: :string}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
     voting_questions =
       Question
@@ -156,6 +248,19 @@ defmodule CadetWeb.AdminAssessmentsController do
       text(conn, "No voting questions found for the given assessment")
     end
   end
+
+  operation(:dispatch_contest_xp,
+    summary: "Dispatch XP to the winning contest entries of an assessment",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    responses: [
+      ok: {"XP dispatched", "text/plain", %Schema{type: :string}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
     voting_questions =
@@ -195,124 +300,5 @@ defmodule CadetWeb.AdminAssessmentsController do
     |> where(id: ^assessment_id)
     |> where(course_id: ^course_id)
     |> Repo.exists?()
-  end
-
-  swagger_path :index do
-    get("/courses/{course_id}/admin/users/{courseRegId}/assessments")
-
-    summary("Fetches assessment overviews of a user")
-
-    security([%{JWT: []}])
-
-    parameters do
-      courseRegId(:path, :integer, "Course Reg ID", required: true)
-    end
-
-    response(200, "OK", Schema.array(:AssessmentsList))
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :create do
-    post("/courses/{course_id}/admin/assessments")
-
-    summary("Creates a new assessment or updates an existing assessment")
-
-    security([%{JWT: []}])
-
-    consumes("multipart/form-data")
-
-    parameters do
-      assessment(:formData, :file, "Assessment to create or update", required: true)
-      forceUpdate(:formData, :boolean, "Force update", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "XML parse error")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/assessments/{assessmentId}")
-
-    summary("Deletes an assessment")
-
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-    end
-
-    response(200, "OK")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :update do
-    post("/courses/{course_id}/admin/assessments/{assessmentId}")
-
-    summary("Updates an assessment")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-
-      assessment(:body, Schema.ref(:AdminUpdateAssessmentPayload), "Updated assessment details",
-        required: true
-      )
-    end
-
-    response(200, "OK")
-    response(401, "Assessment is already opened")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :get_popular_leaderboard do
-    get("/courses/{course_id}/admin/assessments/:assessmentid/popularVoteLeaderboard")
-
-    summary("get the top 10 contest entries based on popularity")
-
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-    end
-
-    response(200, "OK", Schema.array(:Leaderboard))
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :get_score_leaderboard do
-    get("/courses/{course_id}/admin/assessments/:assessmentid/scoreLeaderboard")
-
-    summary("get the top X contest entries based on score")
-
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-    end
-
-    response(200, "OK", Schema.array(:Leaderboard))
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  def swagger_definitions do
-    %{
-      # Schemas for payloads to modify data
-      AdminUpdateAssessmentPayload:
-        swagger_schema do
-          properties do
-            closeAt(:string, "Open date", required: false)
-            openAt(:string, "Close date", required: false)
-            isPublished(:boolean, "Whether the assessment is published", required: false)
-            maxTeamSize(:number, "Max team size of the assessment", required: false)
-          end
-        end
-    }
   end
 end

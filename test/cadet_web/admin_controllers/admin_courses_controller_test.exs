@@ -5,13 +5,6 @@ defmodule CadetWeb.AdminCoursesControllerTest do
 
   alias Cadet.{Repo, Courses}
   alias Cadet.Courses.Course
-  alias CadetWeb.AdminCoursesController
-
-  test "swagger" do
-    AdminCoursesController.swagger_definitions()
-    AdminCoursesController.swagger_path_update_course_config(nil)
-    AdminCoursesController.swagger_path_update_assessment_configs(nil)
-  end
 
   describe "PUT /v2/courses/{course_id}/admin/config" do
     @tag authenticate: :admin

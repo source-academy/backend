@@ -9,7 +9,6 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   alias Cadet.Accounts.CourseRegistration
   alias Cadet.Assessments.{Assessment, Submission}
   alias Cadet.Test.XMLGenerator
-  alias CadetWeb.AdminAssessmentsController
 
   @local_name "test/fixtures/local_repo"
 
@@ -21,14 +20,6 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end)
 
     Cadet.Test.Seeds.assessments()
-  end
-
-  test "swagger" do
-    AdminAssessmentsController.swagger_definitions()
-    AdminAssessmentsController.swagger_path_index(nil)
-    AdminAssessmentsController.swagger_path_create(nil)
-    AdminAssessmentsController.swagger_path_delete(nil)
-    AdminAssessmentsController.swagger_path_update(nil)
   end
 
   describe "GET /:course_reg_id, unauthenticated" do

@@ -27,29 +27,6 @@ defmodule CadetWeb.ApiSpecTest do
     {CadetWeb.AICodeAnalysisController, :save_chosen_comments}
   ]
 
-  # Controllers fully migrated to open_api_spex `operation` specs. Every routed
-  # action on a listed controller must have an operation (or be in @doc_exempt /
-  # @dead_routes). Add a controller here as it is migrated; once every
-  # controller is listed, replace the scoped assertion below with a blanket one.
-  @migrated_controllers [
-    CadetWeb.IncentivesController,
-    CadetWeb.AdminAchievementsController,
-    CadetWeb.NotificationsController,
-    CadetWeb.StoriesController,
-    CadetWeb.LeaderboardController,
-    CadetWeb.TeamController,
-    CadetWeb.SourcecastController,
-    CadetWeb.AdminGoalsController,
-    CadetWeb.AdminStoriesController,
-    CadetWeb.AdminSourcecastController,
-    CadetWeb.ChatController,
-    CadetWeb.RagChatController,
-    CadetWeb.CoursesController,
-    CadetWeb.UserController,
-    CadetWeb.AnswerController,
-    CadetWeb.VersionsController
-  ]
-
   @http_verbs ~w(get post put patch delete)
 
   describe "the generated OpenAPI document" do
@@ -76,16 +53,15 @@ defmodule CadetWeb.ApiSpecTest do
   end
 
   describe "documentation completeness" do
-    test "every migrated controller documents all of its actions" do
+    test "every documentable route has an operation" do
       undocumented =
         documentable_routes()
-        |> Enum.filter(fn {plug, _action} -> plug in @migrated_controllers end)
         |> Enum.reject(fn route ->
           route in @doc_exempt or route in @dead_routes or documented?(route)
         end)
 
       assert undocumented == [],
-             "Migrated controllers with undocumented actions: #{inspect(undocumented)}"
+             "Routes without an OpenAPI operation: #{inspect(undocumented)}"
     end
   end
 
