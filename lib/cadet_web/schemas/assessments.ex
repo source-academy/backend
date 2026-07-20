@@ -41,9 +41,13 @@ defmodule CadetWeb.Schemas.Library do
     properties: %{
       format: %Schema{type: :string, enum: ["legacy", "conductor"]},
       chapter: %Schema{type: :integer, description: "Source chapter (legacy only)"},
-      variant: %Schema{type: :string, description: "Source variant (legacy only)"},
+      variant: %Schema{
+        type: :string,
+        nullable: true,
+        description: "Source variant (legacy only)"
+      },
       execTimeMs: %Schema{type: :integer, description: "Execution time in ms (legacy only)"},
-      globals: %Schema{type: :array, items: %Schema{type: :string}},
+      globals: %Schema{type: :object, description: "Map of global symbol name to value"},
       external: ExternalLibrary,
       languageOptions: %Schema{type: :object, description: "Language options (legacy only)"},
       language: %Schema{type: :string, description: "Conductor language (conductor only)"},
@@ -115,7 +119,11 @@ defmodule CadetWeb.Schemas.Question do
       type: %Schema{type: :string, description: "mcq or programming"},
       content: %Schema{type: :string},
       choices: %Schema{type: :array, items: MCQChoice, description: "MCQ choices (mcq only)"},
-      solution: %Schema{type: :integer, nullable: true},
+      solution: %Schema{
+        nullable: true,
+        oneOf: [%Schema{type: :string}, %Schema{type: :integer}],
+        description: "Model solution; code string (programming) or choice index (mcq); staff-only"
+      },
       answer: %Schema{
         nullable: true,
         oneOf: [%Schema{type: :string}, %Schema{type: :integer}],
@@ -126,7 +134,7 @@ defmodule CadetWeb.Schemas.Question do
       solutionTemplate: %Schema{type: :string},
       postpend: %Schema{type: :string},
       testcases: %Schema{type: :array, items: Testcase},
-      grader: GraderInfo,
+      grader: %Schema{nullable: true, allOf: [GraderInfo]},
       gradedAt: %Schema{type: :string, format: :"date-time", nullable: true},
       xp: %Schema{type: :integer, description: "Final XP (students only)"},
       grade: %Schema{type: :integer, description: "Final grade (students only)"},

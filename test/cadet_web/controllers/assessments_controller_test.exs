@@ -1,5 +1,6 @@
 defmodule CadetWeb.AssessmentsControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
   use Timex
 
   import Ecto.Query
@@ -80,10 +81,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
             }
           )
 
-        resp =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id))
+
+        assert_operation_response(conn)
+
+        resp =
+          conn
           |> json_response(200)
           |> Enum.map(&Map.delete(&1, "xp"))
           |> Enum.map(&Map.delete(&1, "isGradingPublished"))
@@ -107,10 +113,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Assessment.changeset(%{password: "mysupersecretpassword"})
           |> Repo.update()
 
-        resp =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id))
+
+        assert_operation_response(conn)
+
+        resp =
+          conn
           |> json_response(200)
           |> Enum.find(&(&1["type"] == hd(configs).type))
           |> Map.get("private")
@@ -172,10 +183,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
           }
         )
 
-      resp =
+      conn =
         conn
         |> sign_in(student.user)
         |> get(build_url(course1.id))
+
+      assert_operation_response(conn)
+
+      resp =
+        conn
         |> json_response(200)
         |> Enum.map(&Map.delete(&1, "xp"))
 
@@ -197,10 +213,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> Submission.changeset(%{status: status})
         |> Repo.update()
 
-        resp =
+        conn =
           conn
           |> sign_in(student.user)
           |> get(build_url(course1.id))
+
+        assert_operation_response(conn)
+
+        resp =
+          conn
           |> json_response(200)
           |> Enum.find(&(&1["id"] == assessment.id))
           |> Map.get("status")
@@ -218,10 +239,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       assessment = assessments[hd(configs).type].assessment
 
-      resp =
+      conn =
         conn
         |> sign_in(student_grading_published.user)
         |> get(build_url(course1.id))
+
+      assert_operation_response(conn)
+
+      resp =
+        conn
         |> json_response(200)
         |> Enum.find(&(&1["id"] == assessment.id))
         |> Map.get("xp")
@@ -247,10 +273,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Assessment.changeset(%{is_published: false})
           |> Repo.update()
 
-        resp =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id))
+
+        assert_operation_response(conn)
+
+        resp =
+          conn
           |> json_response(200)
           |> Enum.map(&Map.delete(&1, "xp"))
 
@@ -326,10 +357,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
             "isAutosaveEnabled" => true
           }
 
-          resp_assessments =
+          conn =
             conn
             |> sign_in(course_reg.user)
             |> get(build_url(course1.id, assessment.id))
+
+          assert_operation_response(conn)
+
+          resp_assessments =
+            conn
             |> json_response(200)
             |> Map.delete("questions")
 
@@ -471,10 +507,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
           expected_questions =
             expected_programming_questions ++ expected_mcq_questions ++ expected_voting_questions
 
-          resp_questions =
+          conn =
             conn
             |> sign_in(course_reg.user)
             |> get(build_url(course1.id, assessment.id))
+
+          assert_operation_response(conn)
+
+          resp_questions =
+            conn
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.delete(&1, "answer"))
@@ -568,10 +609,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
       for role <- Role.__enum_map__() do
         course_reg = Map.get(role_crs, role)
 
-        resp_leaderboard =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id, voting_question.assessment.id))
+
+        assert_operation_response(conn)
+
+        resp_leaderboard =
+          conn
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.find(&(&1["id"] == voting_question.id))
@@ -654,10 +700,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
       for role <- [:admin, :staff] do
         course_reg = Map.get(role_crs, role)
 
-        resp_leaderboard =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id, voting_question.assessment.id))
+
+        assert_operation_response(conn)
+
+        resp_leaderboard =
+          conn
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.find(&(&1["id"] == voting_question.id))
@@ -714,10 +765,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       expected_leaderboard = []
 
-      resp_leaderboard =
+      conn =
         conn
         |> sign_in(course_reg.user)
         |> get(build_url(course1.id, voting_question.assessment.id))
+
+      assert_operation_response(conn)
+
+      resp_leaderboard =
+        conn
         |> json_response(200)
         |> Map.get("questions", [])
         |> Enum.find(&(&1["id"] == voting_question.id))
@@ -758,10 +814,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
               }
             )
 
-          resp_libraries =
+          conn =
             conn
             |> sign_in(course_reg.user)
             |> get(build_url(course1.id, assessment.id))
+
+          assert_operation_response(conn)
+
+          resp_libraries =
+            conn
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, "library"))
@@ -803,10 +864,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
             expected_mcq_solutions ++ expected_programming_solutions ++ expected_voting_solutions
           )
 
-        resp_solutions =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id, assessment.id))
+
+        assert_operation_response(conn)
+
+        resp_solutions =
+          conn
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["solution"]))
@@ -851,10 +917,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
               )
             end
 
-          resp =
+          conn =
             conn
             |> sign_in(course_reg.user)
             |> get(build_url(course1.id, assessment.id))
+
+          assert_operation_response(conn)
+
+          resp =
+            conn
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.take(&1, ~w(xp)))
@@ -877,10 +948,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
              %{
                assessment: assessment
              }} <- Map.delete(assessments, "path") do
-          resp_solutions =
+          conn =
             conn
             |> sign_in(course_reg.user)
             |> get(build_url(course1.id, assessment.id))
+
+          assert_operation_response(conn)
+
+          resp_solutions =
+            conn
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["solution"]))
@@ -917,10 +993,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
         expected_answers =
           expected_programming_answers ++ expected_mcq_answers ++ expected_voting_answers
 
-        resp_answers =
+        conn =
           conn
           |> sign_in(student.user)
           |> get(build_url(course1.id, assessment.id))
+
+        assert_operation_response(conn)
+
+        resp_answers =
+          conn
           |> json_response(200)
           |> Map.get("questions", [])
           |> Enum.map(&Map.take(&1, ["answer"]))
@@ -981,10 +1062,15 @@ defmodule CadetWeb.AssessmentsControllerTest do
         course_reg = Map.get(role_crs, role)
 
         for {_type, %{assessment: assessment}} <- assessments do
-          resp_answers =
+          conn =
             conn
             |> sign_in(course_reg.user)
             |> get(build_url(course1.id, assessment.id))
+
+          assert_operation_response(conn)
+
+          resp_answers =
+            conn
             |> json_response(200)
             |> Map.get("questions", [])
             |> Enum.map(&Map.get(&1, ["answer"]))
@@ -1010,11 +1096,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
         })
         |> Repo.update!()
 
-        resp =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id, mission.assessment.id))
-          |> json_response(200)
+
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
 
         assert resp["id"] == mission.assessment.id
       end
@@ -1034,11 +1122,13 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> Assessment.changeset(%{is_published: false})
           |> Repo.update()
 
-        resp =
+        conn =
           conn
           |> sign_in(course_reg.user)
           |> get(build_url(course1.id, mission.assessment.id))
-          |> json_response(200)
+
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
 
         assert resp["id"] == mission.assessment.id
       end
@@ -1650,9 +1740,14 @@ defmodule CadetWeb.AssessmentsControllerTest do
     )
 
     get_graded_count = fn ->
+      conn =
+        conn
+        |> sign_in(course_reg.user)
+        |> get(build_url(course1.id))
+
+      assert_operation_response(conn)
+
       conn
-      |> sign_in(course_reg.user)
-      |> get(build_url(course1.id))
       |> json_response(200)
       |> Enum.find(&(&1["id"] == assessment.id))
       |> Map.get("gradedCount")
@@ -1733,6 +1828,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
          } do
       insert(:submission, %{assessment: protected_assessment, student: student})
       conn = conn |> sign_in(student.user) |> get(build_url(course1.id, protected_assessment.id))
+      assert_operation_response(conn)
       assert response(conn, 200)
     end
 
@@ -1749,9 +1845,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
           conn
           |> sign_in(course_reg.user)
           |> post(build_url_unlock(course1.id, assessment.id), %{:password => "wrong"})
-          |> json_response(200)
 
-        assert conn["id"] == assessment.id
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
+
+        assert resp["id"] == assessment.id
       end
     end
 
@@ -1768,9 +1866,11 @@ defmodule CadetWeb.AssessmentsControllerTest do
           |> post(build_url_unlock(course1.id, protected_assessment.id), %{
             :password => "mysupersecretpassword"
           })
-          |> json_response(200)
 
-        assert conn["id"] == protected_assessment.id
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
+
+        assert resp["id"] == protected_assessment.id
       end
     end
 
@@ -1792,6 +1892,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
         |> sign_in(student.user)
         |> get(build_url(course1.id, mission.assessment.id))
 
+      assert_operation_response(conn)
       assert response(conn, 200)
     end
   end
@@ -1881,10 +1982,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
         "count" => 1
       }
 
-      resp =
-        conn
-        |> get(build_popular_leaderboard_url(course.id, voting_assessment.id, params))
-        |> json_response(200)
+      conn = get(conn, build_popular_leaderboard_url(course.id, voting_assessment.id, params))
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert expected == resp["leaderboard"]
     end
@@ -1945,10 +2045,9 @@ defmodule CadetWeb.AssessmentsControllerTest do
         "count" => 1
       }
 
-      resp =
-        conn
-        |> get(build_score_leaderboard_url(course.id, voting_assessment.id, params))
-        |> json_response(200)
+      conn = get(conn, build_score_leaderboard_url(course.id, voting_assessment.id, params))
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert expected == resp["leaderboard"]
     end

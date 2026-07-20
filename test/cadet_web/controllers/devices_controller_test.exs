@@ -1,5 +1,6 @@
 defmodule DevicesControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
 
   alias Cadet.{Devices, Repo}
   alias Cadet.Devices.{Device, DeviceRegistration}
@@ -16,6 +17,9 @@ defmodule DevicesControllerTest do
     test "succeeds if authenticated", %{conn: conn, device: device} do
       registration = insert_registration(conn, device)
 
+      conn = get(conn, build_url())
+      assert_operation_response(conn)
+
       assert [
                %{
                  "id" => registration.id,
@@ -23,10 +27,7 @@ defmodule DevicesControllerTest do
                  "title" => registration.title,
                  "type" => device.type
                }
-             ] ==
-               conn
-               |> get(build_url())
-               |> json_response(200)
+             ] == json_response(conn, 200)
     end
 
     test "401 if unauthenticated", %{conn: conn} do
@@ -41,10 +42,9 @@ defmodule DevicesControllerTest do
     test "succeeds if authenticated", %{conn: conn, device: device} do
       registration = make_json_registration(device)
 
-      assert response =
-               conn
-               |> post(build_url(), registration)
-               |> json_response(200)
+      conn = post(conn, build_url(), registration)
+      assert_operation_response(conn)
+      assert response = json_response(conn, 200)
 
       assert registration["title"] == response["title"]
       assert device.secret == response["secret"]
@@ -170,14 +170,14 @@ defmodule DevicesControllerTest do
                         client_name_prefix: "client_name_prefix"
                       }}
                    end do
+      conn = get(conn, build_url(registration.id, "ws_endpoint"))
+      assert_operation_response(conn)
+
       assert %{
                "clientNamePrefix" => "client_name_prefix",
                "endpoint" => "fake_endpoint",
                "thingName" => "thing_name"
-             } ==
-               conn
-               |> get(build_url(registration.id, "ws_endpoint"))
-               |> json_response(200)
+             } == json_response(conn, 200)
     end
 
     @tag authenticate: :student

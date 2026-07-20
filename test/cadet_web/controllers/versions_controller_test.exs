@@ -1,5 +1,6 @@
 defmodule CadetWeb.VersionsControllerTest do
   use CadetWeb.ConnCase, async: false
+  import OpenApiSpex.TestAssertions
 
   import Ecto.Query
 
@@ -58,10 +59,9 @@ defmodule CadetWeb.VersionsControllerTest do
             }
           end)
 
-        resp =
-          conn
-          |> get(build_url(course_id, programming_question.id, ""))
-          |> json_response(200)
+        conn = get(conn, build_url(course_id, programming_question.id, ""))
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
 
         assert expected == resp
       end
@@ -96,10 +96,9 @@ defmodule CadetWeb.VersionsControllerTest do
           "updated_at" => format_timestamp(version.updated_at)
         }
 
-        resp =
-          conn
-          |> get(build_url(course_id, programming_question.id, "#{version.id}"))
-          |> json_response(200)
+        conn = get(conn, build_url(course_id, programming_question.id, "#{version.id}"))
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
 
         assert expected == resp
       end

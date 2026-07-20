@@ -2,6 +2,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   use CadetWeb.ConnCase
   use Timex
 
+  import OpenApiSpex.TestAssertions
   import Ecto.Query
   import ExUnit.CaptureLog
 
@@ -89,11 +90,13 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
           }
         )
 
-      resp =
+      conn =
         conn
         |> sign_in(staff.user)
         |> get(build_user_assessments_url(course1.id, view_as.id))
-        |> json_response(200)
+
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert expected == resp
     end
@@ -140,11 +143,13 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
           }
         )
 
-      resp =
+      conn =
         conn
         |> sign_in(staff.user)
         |> get(build_user_assessments_url(course1.id, view_as.id))
-        |> json_response(200)
+
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert expected == resp
     end

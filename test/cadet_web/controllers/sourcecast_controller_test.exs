@@ -1,5 +1,6 @@
 defmodule CadetWeb.SourcecastControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
 
   import Ecto.Query
 
@@ -71,9 +72,11 @@ defmodule CadetWeb.SourcecastControllerTest do
           }
         )
 
+      conn = get(conn, build_url(course_id))
+      assert_operation_response(conn)
+
       res =
         conn
-        |> get(build_url(course_id))
         |> json_response(200)
         |> Enum.map(&Map.delete(&1, "audio"))
         |> Enum.map(&Map.delete(&1, "inserted_at"))

@@ -2,6 +2,8 @@ defmodule CadetWeb.AdminAssetsControllerTest do
   use CadetWeb.ConnCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
+  import OpenApiSpex.TestAssertions
+
   alias Cadet.Courses.Course
   alias Cadet.Repo
 
@@ -126,6 +128,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
 
       use_cassette "aws/controller_list_assets#1" do
         conn = get(conn, build_url(course_id, "testFolder"), %{})
+        assert_operation_response(conn)
 
         assert json_response(conn, 200) ===
                  ["testFolder/", "testFolder/test.png", "testFolder/test2.png"]
@@ -231,6 +234,7 @@ defmodule CadetWeb.AdminAssetsControllerTest do
 
       use_cassette "aws/controller_list_assets#2" do
         conn = get(conn, build_url(course_id, "testFolder"), %{})
+        assert_operation_response(conn)
 
         assert json_response(conn, 200) ===
                  ["testFolder/", "testFolder/test.png", "testFolder/test2.png"]

@@ -1,5 +1,6 @@
 defmodule CadetWeb.AuthControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   import Cadet.Factory
@@ -21,6 +22,7 @@ defmodule CadetWeb.AuthControllerTest do
           "client_id" => ""
         })
 
+      assert_operation_response(conn)
       assert response(conn, 200)
     end
 
@@ -152,10 +154,9 @@ defmodule CadetWeb.AuthControllerTest do
       {:ok, refresh_token, _} =
         Guardian.encode_and_sign(user, %{}, token_type: "refresh", ttl: {1, :week})
 
-      resp =
-        conn
-        |> post("/v2/auth/refresh", %{"refresh_token" => refresh_token})
-        |> json_response(200)
+      conn = post(conn, "/v2/auth/refresh", %{"refresh_token" => refresh_token})
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert %{"access_token" => access_token, "refresh_token" => refresh_token} = resp
       assert {:ok, _} = Guardian.decode_and_verify(access_token)

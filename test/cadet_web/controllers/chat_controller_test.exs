@@ -1,6 +1,7 @@
 defmodule CadetWeb.ChatControllerTest do
   alias CadetWeb.ChatController
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   @moduletag :serial
@@ -30,6 +31,7 @@ defmodule CadetWeb.ChatControllerTest do
     @tag authenticate: :student
     test "authenticated request initializes chat", %{conn: conn} do
       conn = post(conn, "/v2/chats", %{})
+      assert_operation_response(conn)
 
       assert %{
                "conversationId" => _,
@@ -68,6 +70,8 @@ defmodule CadetWeb.ChatControllerTest do
             "section" => "SICP-1",
             "initialContext" => "Recursion is a fundamental concept in computer science."
           })
+
+        assert_operation_response(conn)
 
         assert json_response(conn, 200) == %{
                  "conversationId" => conversation.id,

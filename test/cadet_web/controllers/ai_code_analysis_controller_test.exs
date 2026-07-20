@@ -2,6 +2,7 @@ import Mock
 
 defmodule CadetWeb.AICodeAnalysisControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
   alias Cadet.{Repo, AIComments}
   alias Cadet.{AIComments.AIComment, Courses.Course}
   alias CadetWeb.AICommentsHelpers
@@ -51,21 +52,26 @@ defmodule CadetWeb.AICodeAnalysisControllerTest do
         chat_completion: fn _input, _overrides ->
           {:ok, %{:choices => [%{"message" => %{"content" => "Comment1|||Comment2"}}]}}
         end do
-        conn
-        |> sign_in(staff_user.user)
-        |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
-        |> json_response(200)
+        staff_conn =
+          conn
+          |> sign_in(staff_user.user)
+          |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
+
+        assert_operation_response(staff_conn)
+        json_response(staff_conn, 200)
       end
 
       with_mock OpenAI,
         chat_completion: fn _input, _overrides ->
           {:ok, %{:choices => [%{"message" => %{"content" => "Comment1|||Comment2"}}]}}
         end do
-        response =
+        admin_conn =
           conn
           |> sign_in(admin_user.user)
           |> post(build_url_generate_ai_comments(course_with_llm.id, answer.id))
-          |> json_response(200)
+
+        assert_operation_response(admin_conn)
+        response = json_response(admin_conn, 200)
 
         # Verify response
         assert response["comments"] == ["Comment1", "Comment2"]

@@ -1,6 +1,7 @@
 defmodule CadetWeb.AdminCoursesControllerTest do
   use CadetWeb.ConnCase
 
+  import OpenApiSpex.TestAssertions
   import Cadet.SharedHelper
 
   alias Cadet.{Repo, Courses}
@@ -172,10 +173,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           has_token_counter: true
         })
 
-      resp =
-        conn
-        |> get(build_url_assessment_configs(course_id))
-        |> json_response(200)
+      conn = get(conn, build_url_assessment_configs(course_id))
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       expected = [
         %{

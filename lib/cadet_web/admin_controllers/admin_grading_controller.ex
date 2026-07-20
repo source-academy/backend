@@ -9,6 +9,7 @@ defmodule CadetWeb.AdminGradingController do
 
   alias Cadet.{Assessments, Courses}
   alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
   alias OpenApiSpex.Schema
 
   tags(["Grading"])
@@ -46,7 +47,7 @@ defmodule CadetWeb.AdminGradingController do
       offset: [in: :query, type: :integer, required: false, description: "Offset (default 0)"]
     ],
     responses: [
-      ok: {"Grading summaries", "application/json", %Schema{type: :object}},
+      ok: {"Grading summaries", "application/json", Schemas.GradingSummaries},
       unauthorized: ErrorResponses.unauthorised(),
       forbidden: ErrorResponses.forbidden()
     ]
@@ -97,7 +98,7 @@ defmodule CadetWeb.AdminGradingController do
       course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
     ],
     responses: [
-      ok: {"Grading summaries", "application/json", %Schema{type: :object}},
+      ok: {"Grading summaries", "application/json", Schemas.GradingSummaries},
       unauthorized: ErrorResponses.unauthorised(),
       forbidden: ErrorResponses.forbidden()
     ]
@@ -121,7 +122,7 @@ defmodule CadetWeb.AdminGradingController do
       submissionid: [in: :path, type: :integer, required: true, description: "Submission ID"]
     ],
     responses: [
-      ok: {"Submission answers", "application/json", %Schema{type: :object}},
+      ok: {"Submission answers", "application/json", Schemas.SubmissionGradingInfo},
       bad_request: ErrorResponses.bad_request(),
       unauthorized: ErrorResponses.unauthorised(),
       forbidden: ErrorResponses.forbidden(),
@@ -404,7 +405,7 @@ defmodule CadetWeb.AdminGradingController do
       course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
     ],
     responses: [
-      ok: {"Grading summary", "application/json", %Schema{type: :object}},
+      ok: {"Grading summary", "application/json", Schemas.GradingGroupSummary},
       unauthorized: ErrorResponses.unauthorised(),
       forbidden: ErrorResponses.forbidden()
     ]

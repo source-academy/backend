@@ -31,7 +31,11 @@ defmodule CadetWeb.Schemas.Sourcecast do
       uid: %Schema{type: :string, nullable: true, description: "Unique identifier"},
       playbackData: %Schema{type: :string, description: "Playback data (JSON-encoded)"},
       url: %Schema{type: :string, nullable: true, description: "URL of the audio file"},
-      audio: %Schema{type: :string, nullable: true, description: "Audio filename"},
+      audio: %Schema{
+        type: :object,
+        nullable: true,
+        description: "Audio attachment (Waffle) metadata"
+      },
       inserted_at: %Schema{type: :string, format: :"date-time", description: "Creation time"},
       updated_at: %Schema{type: :string, format: :"date-time", description: "Last update time"},
       courseId: %Schema{
