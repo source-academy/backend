@@ -97,17 +97,8 @@ defmodule CadetWeb.Schemas.CreateCourseRequest do
       sourceVariant: SourceVariant,
       moduleHelpText: %Schema{type: :string}
     },
-    required: [
-      :courseName,
-      :courseShortName,
-      :viewable,
-      :enableGame,
-      :enableAchievements,
-      :enableSourcecast,
-      :enableStories,
-      :sourceChapter,
-      :sourceVariant,
-      :moduleHelpText
-    ]
+    # Accepts both camelCase (frontend) and snake_case; the action validates the
+    # required fields, so none are enforced here (additionalProperties allowed).
+    additionalProperties: true
   })
 end

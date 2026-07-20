@@ -2,6 +2,11 @@ defmodule CadetWeb.AdminUserController do
   use CadetWeb, :controller
   use OpenApiSpex.ControllerSpecs
 
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   import Ecto.Query
 
   alias Cadet.Repo

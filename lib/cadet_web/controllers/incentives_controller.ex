@@ -7,6 +7,11 @@ defmodule CadetWeb.IncentivesController do
   alias CadetWeb.Schemas
   alias OpenApiSpex.Schema
 
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   tags(["Incentives"])
   security([%{"JWT" => []}])
 

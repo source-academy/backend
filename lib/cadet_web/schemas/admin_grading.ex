@@ -12,7 +12,6 @@ defmodule CadetWeb.Schemas.UpdateGradingRequest do
         type: :object,
         description: "Grading fields, e.g. xpAdjustment and comments"
       }
-    },
-    required: [:grading]
+    }
   })
 end

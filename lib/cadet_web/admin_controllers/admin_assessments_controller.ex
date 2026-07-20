@@ -2,6 +2,13 @@ defmodule CadetWeb.AdminAssessmentsController do
   use CadetWeb, :controller
   use OpenApiSpex.ControllerSpecs
 
+  # :create is multipart/form-data (XML upload); skip request validation for it.
+  plug(
+    OpenApiSpex.Plug.CastAndValidate,
+    [render_error: CadetWeb.Plugs.OpenApiErrorRenderer, replace_params: false]
+    when action not in [:create]
+  )
+
   import Ecto.Query, only: [where: 2]
   import Cadet.Updater.XMLParser, only: [parse_xml: 4]
 

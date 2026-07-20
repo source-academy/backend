@@ -4,6 +4,12 @@ defmodule CadetWeb.AuthController do
   """
   use CadetWeb, :controller
   use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   require Logger
 
   alias Cadet.{Accounts, Accounts.User}
@@ -23,17 +29,7 @@ defmodule CadetWeb.AuthController do
   """
   operation(:create,
     summary: "Obtain access and refresh tokens (OAuth2 login)",
-    parameters: [
-      code: [in: :query, type: :string, required: true, description: "OAuth2 code"],
-      provider: [in: :query, type: :string, required: true, description: "OAuth2 provider id"],
-      client_id: [in: :query, type: :string, required: false, description: "OAuth2 client id"],
-      redirect_uri: [
-        in: :query,
-        type: :string,
-        required: false,
-        description: "OAuth2 redirect URI"
-      ]
-    ],
+    request_body: {"OAuth2 login parameters", "application/json", Schemas.LoginRequest},
     responses: [
       ok: {"Tokens", "application/json", Schemas.Tokens},
       bad_request: ErrorResponses.bad_request(),
@@ -83,7 +79,7 @@ defmodule CadetWeb.AuthController do
   operation(:saml_redirect,
     summary: "SAML redirect callback; generates tokens then redirects to the frontend",
     parameters: [
-      provider: [in: :query, type: :string, required: true, description: "Provider id"]
+      provider: [in: :query, type: :string, required: false, description: "Provider id"]
     ],
     responses: [
       found: "Redirect to the frontend with tokens",
@@ -140,8 +136,8 @@ defmodule CadetWeb.AuthController do
   operation(:exchange,
     summary: "Exchange a short-lived code for tokens and redirect to the client",
     parameters: [
-      code: [in: :query, type: :string, required: true, description: "Short-lived code"],
-      provider: [in: :query, type: :string, required: true, description: "Provider id"]
+      code: [in: :query, type: :string, required: false, description: "Short-lived code"],
+      provider: [in: :query, type: :string, required: false, description: "Provider id"]
     ],
     responses: [
       found: "Redirect to the client with tokens",
@@ -193,7 +189,7 @@ defmodule CadetWeb.AuthController do
   operation(:saml_redirect_vscode,
     summary: "SAML redirect callback for VSCode deep-linking",
     parameters: [
-      provider: [in: :query, type: :string, required: true, description: "Provider id"]
+      provider: [in: :query, type: :string, required: false, description: "Provider id"]
     ],
     responses: [
       found: "Redirect to VSCode with a short-lived code",

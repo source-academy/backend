@@ -1,6 +1,12 @@
 defmodule CadetWeb.CoursesController do
   use CadetWeb, :controller
   use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   require Logger
 
   alias Cadet.Courses

@@ -2,6 +2,14 @@ defmodule CadetWeb.AdminAssetsController do
   use CadetWeb, :controller
   use OpenApiSpex.ControllerSpecs
 
+  # :upload is multipart/form-data and :delete has a wildcard (`*filename`) path
+  # segment; skip request validation for both.
+  plug(
+    OpenApiSpex.Plug.CastAndValidate,
+    [render_error: CadetWeb.Plugs.OpenApiErrorRenderer, replace_params: false]
+    when action not in [:upload, :delete]
+  )
+
   alias Cadet.Assets.Assets
   alias Cadet.Courses
   alias CadetWeb.ApiSpec.ErrorResponses

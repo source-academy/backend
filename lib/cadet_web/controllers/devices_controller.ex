@@ -2,6 +2,14 @@ defmodule CadetWeb.DevicesController do
   use CadetWeb, :controller
   use OpenApiSpex.ControllerSpecs
 
+  # The secret-based device routes bypass the :api pipeline (no PutApiSpec), so
+  # they cannot be validated by CastAndValidate.
+  plug(
+    OpenApiSpex.Plug.CastAndValidate,
+    [render_error: CadetWeb.Plugs.OpenApiErrorRenderer, replace_params: false]
+    when action not in [:get_cert, :get_key, :get_client_id, :get_mqtt_endpoint]
+  )
+
   alias Cadet.{Devices, DisplayHelper}
   alias Cadet.Devices.Device
   alias CadetWeb.ApiSpec.ErrorResponses

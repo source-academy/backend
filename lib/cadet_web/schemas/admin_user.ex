@@ -29,8 +29,7 @@ defmodule CadetWeb.Schemas.UsernameAndRole do
       username: %Schema{type: :string, description: "The user's username"},
       role: %Schema{type: :string, description: "student, staff or admin"},
       group: %Schema{type: :string, nullable: true, description: "Group name, if any"}
-    },
-    required: [:username, :role]
+    }
   })
 end
 
@@ -47,8 +46,7 @@ defmodule CadetWeb.Schemas.UpsertUsersRequest do
     properties: %{
       users: %Schema{type: :array, items: UsernameAndRole},
       provider: %Schema{type: :string, description: "The authentication provider for these users"}
-    },
-    required: [:users, :provider]
+    }
   })
 end
 

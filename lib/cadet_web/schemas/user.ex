@@ -184,12 +184,12 @@ defmodule CadetWeb.Schemas.UpdateGameStatesRequest do
   require OpenApiSpex
   alias OpenApiSpex.Schema
 
+  # The action validates the value type and returns its own error.
   OpenApiSpex.schema(%{
     title: "UpdateGameStatesRequest",
     description: "Request body for updating the user's game save states",
     type: :object,
-    properties: %{gameStates: %Schema{type: :object, description: "New game save states"}},
-    required: [:gameStates]
+    properties: %{gameStates: %Schema{description: "New game save states (object)"}}
   })
 end
 
@@ -198,11 +198,11 @@ defmodule CadetWeb.Schemas.UpdateResearchAgreementRequest do
   require OpenApiSpex
   alias OpenApiSpex.Schema
 
+  # The action validates the value type and returns its own error.
   OpenApiSpex.schema(%{
     title: "UpdateResearchAgreementRequest",
     description: "Request body for updating the user's research participation agreement",
     type: :object,
-    properties: %{agreedToResearch: %Schema{type: :boolean}},
-    required: [:agreedToResearch]
+    properties: %{agreedToResearch: %Schema{description: "Whether the user agrees (boolean)"}}
   })
 end

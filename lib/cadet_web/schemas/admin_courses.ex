@@ -54,14 +54,18 @@ defmodule CadetWeb.Schemas.UpdateAssessmentConfigsRequest do
   alias OpenApiSpex.Schema
   alias CadetWeb.Schemas.AssessmentConfiguration
 
+  # `assessmentConfigs` is validated by the action (which checks it is a list of
+  # config objects and returns its own errors), so its type is not enforced here.
   OpenApiSpex.schema(%{
     title: "UpdateAssessmentConfigsRequest",
     description: "Request body for replacing the course's assessment configurations",
     type: :object,
     properties: %{
-      assessmentConfigs: %Schema{type: :array, items: AssessmentConfiguration}
-    },
-    required: [:assessmentConfigs]
+      assessmentConfigs: %Schema{
+        description: "List of assessment configuration objects",
+        items: AssessmentConfiguration
+      }
+    }
   })
 end
 

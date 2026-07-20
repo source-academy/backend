@@ -247,7 +247,9 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       conn = put(conn, build_url_users(course_id), params)
 
-      assert response(conn, 400) == "Invalid username(s) provided"
+      # A null username violates the string type and is now rejected at the edge
+      # by OpenApiSpex.Plug.CastAndValidate.
+      assert response(conn, 400) == "Missing or invalid parameter(s)"
     end
 
     @tag authenticate: :admin

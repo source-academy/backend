@@ -11,11 +11,11 @@ defmodule CadetWeb.Schemas.SubmitAnswerRequest do
     type: :object,
     properties: %{
       answer: %Schema{
-        oneOf: [%Schema{type: :string}, %Schema{type: :integer}],
-        description: "The answer, of the appropriate type for the question"
+        description:
+          "The answer. Type depends on the question: a string (programming), " <>
+            "an integer choice id (MCQ), or a list of ranked entries (voting)."
       }
-    },
-    required: [:answer]
+    }
   })
 end
 

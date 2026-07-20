@@ -82,7 +82,9 @@ defmodule CadetWeb.CoursesControllerTest do
 
       conn = post(conn, build_url_create(), params)
 
-      assert response(conn, 400) == "Invalid parameter(s)"
+      # `viewable` is typed as a boolean; the non-boolean value is now rejected
+      # at the edge by OpenApiSpex.Plug.CastAndValidate.
+      assert response(conn, 400) == "Missing or invalid parameter(s)"
     end
 
     @tag authenticate: :student

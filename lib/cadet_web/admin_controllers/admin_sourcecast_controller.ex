@@ -2,6 +2,13 @@ defmodule CadetWeb.AdminSourcecastController do
   use CadetWeb, :controller
   use OpenApiSpex.ControllerSpecs
 
+  # :create is multipart/form-data; skip request validation for it.
+  plug(
+    OpenApiSpex.Plug.CastAndValidate,
+    [render_error: CadetWeb.Plugs.OpenApiErrorRenderer, replace_params: false]
+    when action not in [:create]
+  )
+
   alias Cadet.Courses
   alias CadetWeb.ApiSpec.ErrorResponses
   alias CadetWeb.Schemas

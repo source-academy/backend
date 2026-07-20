@@ -60,8 +60,9 @@ defmodule CadetWeb.Schemas.Achievement do
         items: %Schema{type: :string, format: :uuid},
         description: "Prerequisite achievement UUIDs"
       }
-    },
-    required: [:title, :isTask, :position, :view]
+    }
+    # No required fields: this schema is used both for responses and as an
+    # upsert input (which may omit fields); the action validates on write.
   })
 end
 
