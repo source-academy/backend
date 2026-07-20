@@ -99,7 +99,8 @@ defmodule CadetWeb.ChatController do
              section,
              visible_text || "",
              retrieved_chunks,
-             Map.get(params, "louisChatbotPrompt")
+             Map.get(params, "louisChatbotPrompt"),
+             updated_conversation.language_id
            ),
          payload <- generate_payload(updated_conversation, system_prompt) do
       handle_openai_call(conn, payload, updated_conversation, conversation.id)

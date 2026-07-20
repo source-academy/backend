@@ -34,6 +34,35 @@ defmodule Cadet.Chatbot.LanguageDirectory do
 
   def sicpy_language?(_language_id, _directory), do: false
 
+  @spec semantics_prompt(String.t() | nil) :: String.t()
+  def semantics_prompt("python1") do
+    """
+
+    SELECTED LANGUAGE: Python §1.
+    Keep all code examples valid for Python §1. Lists, loops, reassignment, break, continue, global, nonlocal, rest/spread parameters, annotated assignments, and the `is` operator are not allowed. Do not suggest constructs from later Python sublanguages.
+    """
+  end
+
+  def semantics_prompt("python2") do
+    """
+
+    SELECTED LANGUAGE: Python §2.
+    Keep all code examples valid for Python §2. The textbook linked-list library is available, but Python lists, loops, reassignment, break, continue, global, nonlocal, rest/spread parameters, annotated assignments, and the `is` operator are not allowed. Do not suggest constructs from later Python sublanguages.
+    """
+  end
+
+  def semantics_prompt(language_id) when language_id in ["python3", "python4"] do
+    chapter = String.replace_prefix(language_id, "python", "")
+
+    """
+
+    SELECTED LANGUAGE: Python §#{chapter}.
+    Keep all code examples valid for Python §#{chapter}. Lists, loops, and reassignment are allowed. `for` loops are restricted to `range(...)`; break and continue may only appear within loops; annotated assignments are not allowed.
+    """
+  end
+
+  def semantics_prompt(_language_id), do: ""
+
   @impl true
   def init(opts) do
     config = Application.get_env(:cadet, :language_directory, [])

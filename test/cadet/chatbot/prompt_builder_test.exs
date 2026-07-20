@@ -80,6 +80,25 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
     end
   end
 
+  describe "build_prompt/5" do
+    test "keeps selected-language semantics with a custom prefix and standard context" do
+      result =
+        PromptBuilder.build_prompt(
+          "1.1.1",
+          "Visible paragraph",
+          [],
+          "Be concise.",
+          "python2"
+        )
+
+      assert String.starts_with?(result, "Be concise.")
+      assert result =~ "SELECTED LANGUAGE: Python §2"
+      assert result =~ "linked-list library is available"
+      assert result =~ "Here is the summary of this section:"
+      assert String.ends_with?(result, "Visible paragraph")
+    end
+  end
+
   describe "build_routing_prompt/2" do
     test "injects document map into prompt with placeholder" do
       docs = [%{"id" => 1, "title" => "Lecture 1"}]

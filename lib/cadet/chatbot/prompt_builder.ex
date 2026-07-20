@@ -5,7 +5,7 @@ defmodule Cadet.Chatbot.PromptBuilder do
 
   require Logger
 
-  alias Cadet.Chatbot.SicpNotesPy
+  alias Cadet.Chatbot.{LanguageDirectory, SicpNotesPy}
 
   @document_map_placeholder "%DOCUMENT_MAP%"
 
@@ -34,6 +34,10 @@ defmodule Cadet.Chatbot.PromptBuilder do
   end
 
   def build_prompt(section, context, retrieved_chunks, custom_prompt) do
+    build_prompt(section, context, retrieved_chunks, custom_prompt, nil)
+  end
+
+  def build_prompt(section, context, retrieved_chunks, custom_prompt, language_id) do
     section_summary = SicpNotesPy.get_summary(section)
 
     section_prefix =
@@ -46,6 +50,7 @@ defmodule Cadet.Chatbot.PromptBuilder do
       end
 
     prompt_prefix(custom_prompt) <>
+      LanguageDirectory.semantics_prompt(language_id) <>
       section_prefix <>
       retrieved_chunks_prefix(retrieved_chunks) <>
       @query_prefix <>

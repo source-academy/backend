@@ -46,4 +46,24 @@ defmodule Cadet.Chatbot.LanguageDirectoryTest do
     refute LanguageDirectory.sicpy_language?("pythonFull", directory)
     refute LanguageDirectory.sicpy_language?("source1", directory)
   end
+
+  describe "semantics_prompt/1" do
+    test "describes the restrictions for each Python textbook language" do
+      assert LanguageDirectory.semantics_prompt("python1") =~ "Lists, loops, reassignment"
+      assert LanguageDirectory.semantics_prompt("python1") =~ "are not allowed"
+
+      assert LanguageDirectory.semantics_prompt("python2") =~
+               "linked-list library is available"
+
+      assert LanguageDirectory.semantics_prompt("python3") =~
+               "`for` loops are restricted to `range(...)`"
+
+      assert LanguageDirectory.semantics_prompt("python4") =~ "Python §4"
+    end
+
+    test "returns no semantic context without a selected supported language" do
+      assert LanguageDirectory.semantics_prompt(nil) == ""
+      assert LanguageDirectory.semantics_prompt("source1") == ""
+    end
+  end
 end
