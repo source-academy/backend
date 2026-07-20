@@ -1,9 +1,28 @@
 defmodule CadetWeb.AdminAchievementsController do
   use CadetWeb, :controller
-
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
 
   alias Cadet.Incentives.Achievements
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+
+  tags(["Incentives"])
+  security([%{"JWT" => []}])
+
+  operation(:bulk_update,
+    summary: "Insert or update multiple achievements in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The achievements to insert, or sets of properties to update", "application/json",
+       Schemas.BulkUpdateAchievementsRequest},
+    responses: [
+      no_content: "Achievements inserted or updated",
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def bulk_update(conn, %{"achievements" => achievements}) do
     course_reg = conn.assigns.course_reg
@@ -14,6 +33,27 @@ defmodule CadetWeb.AdminAchievementsController do
     |> handle_standard_result(conn)
   end
 
+  operation(:update,
+    summary: "Insert or update a single achievement",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      uuid: [
+        in: :path,
+        type: :string,
+        required: true,
+        description: "Achievement UUID; takes precedence over any UUID in the payload"
+      ]
+    ],
+    request_body:
+      {"The achievement to insert, or properties to update", "application/json",
+       Schemas.UpdateAchievementRequest},
+    responses: [
+      no_content: "Achievement inserted or updated",
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def update(conn, %{"uuid" => uuid, "achievement" => achievement}) do
     course_reg = conn.assigns.course_reg
 
@@ -22,6 +62,20 @@ defmodule CadetWeb.AdminAchievementsController do
     |> Achievements.upsert()
     |> handle_standard_result(conn)
   end
+
+  operation(:delete,
+    summary: "Delete an achievement",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      uuid: [in: :path, type: :string, required: true, description: "Achievement UUID"]
+    ],
+    responses: [
+      no_content: "Achievement deleted",
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def delete(conn, %{"uuid" => uuid}) do
     uuid
@@ -58,68 +112,5 @@ defmodule CadetWeb.AdminAchievementsController do
     else
       Map.put(json, "uuid", uuid)
     end
-  end
-
-  swagger_path :update do
-    put("/courses/{course_id}/admin/achievements/{uuid}")
-
-    summary("Inserts or updates an achievement")
-
-    security([%{JWT: []}])
-
-    parameters do
-      uuid(:path, :string, "Achievement UUID; takes precendence over UUID in payload",
-        required: true,
-        format: :uuid
-      )
-
-      achievement(
-        :body,
-        Schema.ref(:Achievement),
-        "The achievement to insert, or properties to update",
-        required: true
-      )
-    end
-
-    response(204, "Success")
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :bulk_update do
-    put("/courses/{course_id}/admin/achievements")
-
-    summary("Inserts or updates achievements")
-
-    security([%{JWT: []}])
-
-    parameters do
-      achievement(
-        :body,
-        Schema.array(:Achievement),
-        "The achievements to insert or sets of properties to update",
-        required: true
-      )
-    end
-
-    response(204, "Success")
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/achievements/{uuid}")
-
-    summary("Deletes an achievement")
-    security([%{JWT: []}])
-
-    parameters do
-      uuid(:path, :string, "Achievement UUID", required: true, format: :uuid)
-    end
-
-    response(204, "Success")
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-    response(404, "Achievement not found")
   end
 end

@@ -5,6 +5,7 @@ defmodule CadetWeb.Router do
     plug(:accepts, ["json"])
     plug(:fetch_session)
     plug(:put_secure_browser_headers)
+    plug(OpenApiSpex.Plug.PutApiSpec, module: CadetWeb.ApiSpec)
   end
 
   pipeline :auth do
