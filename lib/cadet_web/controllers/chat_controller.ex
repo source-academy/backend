@@ -98,7 +98,8 @@ defmodule CadetWeb.ChatController do
            Cadet.Chatbot.PromptBuilder.build_prompt(
              section,
              visible_text || "",
-             retrieved_chunks
+             retrieved_chunks,
+             Map.get(params, "louisChatbotPrompt")
            ),
          payload <- generate_payload(updated_conversation, system_prompt) do
       handle_openai_call(conn, payload, updated_conversation, conversation.id)

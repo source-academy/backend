@@ -30,6 +30,10 @@ defmodule Cadet.Chatbot.PromptBuilder do
   end
 
   def build_prompt(section, context, retrieved_chunks) do
+    build_prompt(section, context, retrieved_chunks, nil)
+  end
+
+  def build_prompt(section, context, retrieved_chunks, custom_prompt) do
     section_summary = SicpNotesPy.get_summary(section)
 
     section_prefix =
@@ -41,12 +45,21 @@ defmodule Cadet.Chatbot.PromptBuilder do
           "\n(1) Here is the summary of this section:\n" <> summary
       end
 
-    @prompt_prefix <>
+    prompt_prefix(custom_prompt) <>
       section_prefix <>
       retrieved_chunks_prefix(retrieved_chunks) <>
       @query_prefix <>
       context
   end
+
+  defp prompt_prefix(custom_prompt) when is_binary(custom_prompt) do
+    case String.trim(custom_prompt) do
+      "" -> @prompt_prefix
+      trimmed_prompt -> trimmed_prompt
+    end
+  end
+
+  defp prompt_prefix(_custom_prompt), do: @prompt_prefix
 
   defp retrieved_chunks_prefix(chunks) when is_list(chunks) and chunks != [] do
     formatted_chunks =

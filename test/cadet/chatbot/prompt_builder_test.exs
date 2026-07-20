@@ -54,6 +54,32 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
     end
   end
 
+  describe "build_prompt/4" do
+    test "uses a trimmed custom Louis prompt as the prefix before standard context" do
+      result =
+        PromptBuilder.build_prompt(
+          "1.1.1",
+          "Visible paragraph",
+          [],
+          "  Use simple examples suitable for beginners. \n"
+        )
+
+      assert String.starts_with?(result, "Use simple examples suitable for beginners.")
+      refute result =~ "You are a competent tutor"
+      assert result =~ "Here is the summary of this section:"
+      assert result =~ "Visible paragraph"
+      assert String.ends_with?(result, "Visible paragraph")
+    end
+
+    test "uses only the default prompt for empty, missing, or invalid custom prompts" do
+      default = PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [])
+
+      assert PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [], " \n ") == default
+      assert PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [], nil) == default
+      assert PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [], 123) == default
+    end
+  end
+
   describe "build_routing_prompt/2" do
     test "injects document map into prompt with placeholder" do
       docs = [%{"id" => 1, "title" => "Lecture 1"}]

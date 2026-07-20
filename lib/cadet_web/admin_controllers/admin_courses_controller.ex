@@ -120,6 +120,8 @@ defmodule CadetWeb.AdminCoursesController do
       enable_stories(:body, :boolean, "Enable stories")
       enable_llm_grading(:body, :boolean, "Enable LLM grading")
       llm_api_key(:body, :string, "OpenAI API key for this course")
+      louis_chatbot_prompt(:body, :string, "Custom Louis chatbot prompt")
+      enable_louis_chatbot(:body, :boolean, "Enable Louis chatbot")
       sublanguage(:body, Schema.ref(:AdminSublanguage), "sublanguage object")
       module_help_text(:body, :string, "Module help text")
     end

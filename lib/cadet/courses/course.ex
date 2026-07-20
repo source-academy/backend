@@ -26,6 +26,8 @@ defmodule Cadet.Courses.Course do
           llm_course_level_prompt: String.t() | nil,
           pixelbot_routing_prompt: String.t() | nil,
           pixelbot_answer_prompt: String.t() | nil,
+          louis_chatbot_prompt: String.t() | nil,
+          enable_louis_chatbot: boolean(),
           feedback_url: String.t() | nil,
           source_chapter: integer(),
           source_variant: String.t(),
@@ -52,6 +54,8 @@ defmodule Cadet.Courses.Course do
     field(:llm_course_level_prompt, :string, default: nil)
     field(:pixelbot_routing_prompt, :string, default: nil)
     field(:pixelbot_answer_prompt, :string, default: nil)
+    field(:louis_chatbot_prompt, :string, default: nil)
+    field(:enable_louis_chatbot, :boolean, default: false)
     field(:feedback_url, :string, default: nil)
     field(:source_chapter, :integer)
     field(:source_variant, :string)
@@ -67,7 +71,7 @@ defmodule Cadet.Courses.Course do
 
   @required_fields ~w(course_name viewable enable_game
     enable_achievements enable_overall_leaderboard enable_contest_leaderboard top_leaderboard_display top_contest_leaderboard_display enable_sourcecast enable_stories source_chapter source_variant)a
-  @optional_fields ~w(course_short_name module_help_text enable_llm_grading llm_api_key llm_model llm_api_url llm_course_level_prompt pixelbot_routing_prompt pixelbot_answer_prompt feedback_url)a
+  @optional_fields ~w(course_short_name module_help_text enable_llm_grading llm_api_key llm_model llm_api_url llm_course_level_prompt pixelbot_routing_prompt pixelbot_answer_prompt louis_chatbot_prompt enable_louis_chatbot feedback_url)a
 
   def changeset(course, params) do
     course
