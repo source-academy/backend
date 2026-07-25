@@ -127,17 +127,17 @@ defmodule CadetWeb.AdminAssessmentsController do
       end
 
     updated_assessment =
-      if is_nil(language_id) do
-        updated_assessment
-      else
+      if Map.has_key?(params, "languageId") do
         Map.put(updated_assessment, :language_id, language_id)
+      else
+        updated_assessment
       end
 
     updated_assessment =
-      if is_nil(evaluator_id) do
-        updated_assessment
-      else
+      if Map.has_key?(params, "evaluatorId") do
         Map.put(updated_assessment, :evaluator_id, evaluator_id)
+      else
+        updated_assessment
       end
 
     is_reassigning_voting =
