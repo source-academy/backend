@@ -94,7 +94,9 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
-            "isVotingPublished" => false
+            "isVotingPublished" => false,
+            "languageId" => &1.language_id,
+            "evaluatorId" => &1.evaluator_id
           }
         )
 
@@ -145,7 +147,9 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
             "earlySubmissionXp" => &1.config.early_submission_xp,
             "hasVotingFeatures" => &1.has_voting_features,
             "hasTokenCounter" => &1.has_token_counter,
-            "isVotingPublished" => false
+            "isVotingPublished" => false,
+            "languageId" => &1.language_id,
+            "evaluatorId" => &1.evaluator_id
           }
         )
 
