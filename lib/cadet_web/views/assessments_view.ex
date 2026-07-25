@@ -36,7 +36,9 @@ defmodule CadetWeb.AssessmentsView do
       hasTokenCounter: :has_token_counter,
       isVotingPublished: :is_voting_published,
       hoursBeforeEarlyXpDecay: & &1.config.hours_before_early_xp_decay,
-      isAutosaveEnabled: :is_autosave_enabled
+      isAutosaveEnabled: :is_autosave_enabled,
+      languageId: :language_id,
+      evaluatorId: :evaluator_id
     })
   end
 
@@ -56,6 +58,8 @@ defmodule CadetWeb.AssessmentsView do
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
         isMinigame: & &1.config.is_minigame,
         isAutosaveEnabled: :is_autosave_enabled,
+        languageId: :language_id,
+        evaluatorId: :evaluator_id,
         questions:
           &Enum.map(&1.questions, fn question ->
             map =

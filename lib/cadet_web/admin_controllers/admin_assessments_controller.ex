@@ -88,6 +88,8 @@ defmodule CadetWeb.AdminAssessmentsController do
     has_voting_features = params |> Map.get("hasVotingFeatures")
     is_autosave_enabled = params |> Map.get("isAutosaveEnabled")
     assign_entries_for_voting = params |> Map.get("assignEntriesForVoting")
+    language_id = params |> Map.get("languageId")
+    evaluator_id = params |> Map.get("evaluatorId")
 
     updated_assessment =
       if is_nil(is_published) do
@@ -122,6 +124,20 @@ defmodule CadetWeb.AdminAssessmentsController do
         updated_assessment
       else
         Map.put(updated_assessment, :is_autosave_enabled, is_autosave_enabled)
+      end
+
+    updated_assessment =
+      if is_nil(language_id) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :language_id, language_id)
+      end
+
+    updated_assessment =
+      if is_nil(evaluator_id) do
+        updated_assessment
+      else
+        Map.put(updated_assessment, :evaluator_id, evaluator_id)
       end
 
     is_reassigning_voting =
@@ -312,6 +328,14 @@ defmodule CadetWeb.AdminAssessmentsController do
             openAt(:string, "Close date", required: false)
             isPublished(:boolean, "Whether the assessment is published", required: false)
             maxTeamSize(:number, "Max team size of the assessment", required: false)
+
+            languageId(:string, "Language directory id for the assessment's evaluator",
+              required: false
+            )
+
+            evaluatorId(:string, "Evaluator id within the language for the assessment",
+              required: false
+            )
           end
         end
     }

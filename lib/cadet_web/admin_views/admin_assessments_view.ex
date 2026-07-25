@@ -32,7 +32,9 @@ defmodule CadetWeb.AdminAssessmentsView do
       maxTeamSize: :max_team_size,
       hasVotingFeatures: :has_voting_features,
       hasTokenCounter: :has_token_counter,
-      isVotingPublished: :is_voting_published
+      isVotingPublished: :is_voting_published,
+      languageId: :language_id,
+      evaluatorId: :evaluator_id
     })
   end
 
@@ -50,6 +52,8 @@ defmodule CadetWeb.AdminAssessmentsView do
         longSummary: :summary_long,
         hasTokenCounter: :has_token_counter,
         missionPDF: &Cadet.Assessments.Upload.url({&1.mission_pdf, &1}),
+        languageId: :language_id,
+        evaluatorId: :evaluator_id,
         questions:
           &Enum.map(&1.questions, fn question ->
             map =
