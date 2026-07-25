@@ -100,7 +100,8 @@ defmodule Cadet.Updater.XMLParser do
         summary_long: ~x"./TEXT/text()" |> transform_by(&process_charlist/1),
         llm_assessment_prompt:
           ~x"./LLM_ASSESSMENT_PROMPT/text()" |> transform_by(&process_charlist/1),
-        password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1)
+        password: ~x"//PASSWORD/text()"so |> transform_by(&process_charlist/1),
+        deployment_interpreter: ~x"./DEPLOYMENT/@interpreter"oi
       )
       |> Map.put(:is_published, false)
       |> Map.put(:open_at, open_at)
@@ -110,6 +111,7 @@ defmodule Cadet.Updater.XMLParser do
       |> Map.put(:has_token_counter, assessment_config.has_token_counter)
       |> Map.put(:has_voting_features, assessment_config.has_voting_features)
       |> Map.put(:is_autosave_enabled, assessment_config.is_autosave_enabled)
+      |> put_conductor_language_config()
       |> (&if(&1.access === "public",
             do: Map.put(&1, :password, nil),
             else: &1
@@ -126,6 +128,20 @@ defmodule Cadet.Updater.XMLParser do
       {:error, "Missing TASK"}
   end
 
+  # The <DEPLOYMENT interpreter="N"/> tag names a Python sub-chapter (1-4). There's no per-tag
+  # evaluator choice: DEPLOYMENT-tagged assessments always deploy on the Py2JS transpiler.
+  @spec put_conductor_language_config(map()) :: map()
+  defp put_conductor_language_config(%{deployment_interpreter: nil} = params) do
+    Map.delete(params, :deployment_interpreter)
+  end
+
+  defp put_conductor_language_config(%{deployment_interpreter: n} = params) do
+    params
+    |> Map.delete(:deployment_interpreter)
+    |> Map.put(:language_id, "python#{n}")
+    |> Map.put(:evaluator_id, "python#{n}Py2js")
+  end
+
   def process_access("private") do
     "private"
   end
@@ -136,7 +152,12 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   defp process_questions(xml) do
-    default_library = xpath(xml, ~x"//TASK/PROGRAMMINGLANGUAGE"e)
+    # <DEPLOYMENT interpreter="N"/> shares PROGRAMMINGLANGUAGE's @interpreter attribute shape, so it
+    # can stand in as the default library when a Conductor-only assessment omits PROGRAMMINGLANGUAGE
+    # entirely (e.g. a Python-only mission with no js-slang question variant).
+    default_library =
+      xpath(xml, ~x"//TASK/PROGRAMMINGLANGUAGE"e) || xpath(xml, ~x"//TASK/DEPLOYMENT"e)
+
     default_grading_library = xpath(xml, ~x"//TASK/GRADERPROGRAMMINGLANGUAGE"e)
 
     questions_params =
