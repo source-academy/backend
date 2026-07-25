@@ -131,11 +131,11 @@ defmodule Cadet.Updater.XMLParser do
   # The <DEPLOYMENT interpreter="N"/> tag names a Python sub-chapter (1-4). There's no per-tag
   # evaluator choice: DEPLOYMENT-tagged assessments always deploy on the Py2JS transpiler.
   @spec put_conductor_language_config(map()) :: map()
-  defp put_conductor_language_config(%{deployment_interpreter: nil} = params) do
+  defp put_conductor_language_config(params = %{deployment_interpreter: nil}) do
     Map.delete(params, :deployment_interpreter)
   end
 
-  defp put_conductor_language_config(%{deployment_interpreter: n} = params) do
+  defp put_conductor_language_config(params = %{deployment_interpreter: n}) do
     params
     |> Map.delete(:deployment_interpreter)
     |> Map.put(:language_id, "python#{n}")
