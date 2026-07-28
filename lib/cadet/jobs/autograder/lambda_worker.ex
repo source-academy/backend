@@ -125,23 +125,21 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
     question_content = question.question
+    grading_library = question.grading_library
 
     cond do
-      # Conductor libraries must not be evaluated by the legacy Source-based
-      # lambda. A future conductor autograder pipeline is expected to take
-      # over; until then we explicitly refuse to grade so the caller can
-      # surface a clear error rather than crashing.
-      question.grading_library.format == :conductor ->
-        raise __MODULE__.UnsupportedGradingFormatError,
-          message:
-            "Conductor libraries (language/evaluator) are not supported by the legacy lambda autograder."
+      # Conductor libraries carry a (language, evaluator) pair that the grader
+      # resolves to an external runtime. The rest of the request (programs and
+      # testcases) is identical to the legacy case.
+      grading_library.format == :conductor ->
+        do_build_conductor_request_params(question_content, grading_library, answer)
 
-      is_nil(question.grading_library.external) ->
+      is_nil(grading_library.external) ->
         raise ArgumentError,
           message: "Question #{question.id} has no external library; cannot autograde."
 
       true ->
-        do_build_request_params(question_content, question.grading_library, answer)
+        do_build_request_params(question_content, grading_library, answer)
     end
   end
 
@@ -154,23 +152,34 @@ defmodule Cadet.Autograder.LambdaWorker do
         &{&1, &1 |> String.upcase()}
       )
 
+    question_content
+    |> base_request_params(answer)
+    |> Map.put(:library, %{
+      chapter: grading_library.chapter,
+      external: upcased_name_external,
+      globals: Enum.map(grading_library.globals, fn {k, v} -> [k, v] end)
+    })
+  end
+
+  defp do_build_conductor_request_params(question_content, grading_library, answer) do
+    question_content
+    |> base_request_params(answer)
+    |> Map.put(:library, %{
+      format: "conductor",
+      language: grading_library.language,
+      evaluator: grading_library.evaluator
+    })
+  end
+
+  defp base_request_params(question_content, answer) do
     %{
       prependProgram: Map.get(question_content, "prepend", ""),
       studentProgram: Map.get(answer.answer, "code"),
       postpendProgram: Map.get(question_content, "postpend", ""),
       testcases:
         Map.get(question_content, "public", []) ++
-          Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", []),
-      library: %{
-        chapter: grading_library.chapter,
-        external: upcased_name_external,
-        globals: Enum.map(grading_library.globals, fn {k, v} -> [k, v] end)
-      }
+          Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", [])
     }
-  end
-
-  defmodule UnsupportedGradingFormatError do
-    defexception [:message]
   end
 
   defp parse_response(response) when is_map(response) do
