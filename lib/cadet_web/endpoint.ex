@@ -2,12 +2,7 @@ defmodule CadetWeb.Endpoint do
   use Sentry.PlugCapture
   use Phoenix.Endpoint, otp_app: :cadet
 
-  cors_origins =
-    if Code.ensure_loaded?(__MODULE__) do
-      Application.compile_env(:cadet, :cors_endpoints, "*")
-    else
-      "*"
-    end
+  cors_origins = Application.compile_env(:cadet, :cors_endpoints, "*")
 
   plug(
     Corsica,
