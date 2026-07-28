@@ -116,8 +116,6 @@ defmodule Cadet.Accounts.Teams do
     Enum.all?(team_attrs, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
 
-      _unique_ids_count = ids |> Enum.uniq() |> Enum.count()
-
       student_already_in_team?(-1, ids, assessment_id)
     end)
   end

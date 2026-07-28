@@ -50,7 +50,7 @@ defmodule CadetWeb.AICodeAnalysisController do
     end
   end
 
-  defp check_llm_grading_parameters(_llm_api_key, llm_model, llm_api_url, llm_course_level_prompt) do
+  defp check_llm_grading_parameters(llm_model, llm_api_url, llm_course_level_prompt) do
     cond do
       is_nil(llm_model) or llm_model == "" ->
         {:parameter_error, "LLM model is not configured for this course"}
@@ -88,7 +88,6 @@ defmodule CadetWeb.AICodeAnalysisController do
          {:ok, key} <- AICommentsHelpers.decrypt_llm_api_key(course.llm_api_key),
          {:ok} <-
            check_llm_grading_parameters(
-             key,
              course.llm_model,
              course.llm_api_url,
              course.llm_course_level_prompt
