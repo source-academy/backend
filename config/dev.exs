@@ -40,7 +40,7 @@ config :cadet, CadetWeb.Endpoint,
       ~r{lib/cadet_web/templates/.*(eex)$}
     ]
   ],
-  reloadable_compilers: [:gettext, :phoenix, :elixir, :phoenix_swagger]
+  reloadable_compilers: [:gettext, :phoenix, :elixir]
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"

@@ -18,6 +18,7 @@ defmodule CadetWeb.ConnCase do
   import Plug.Conn
 
   alias Cadet.Factory
+  alias Phoenix.ConnTest
 
   using do
     quote do
@@ -25,9 +26,11 @@ defmodule CadetWeb.ConnCase do
       # This line causes a false positive with MultiAliasImportRequireUse
       # credo:disable-for-next-line
       import Plug.Conn
-      import Phoenix.ConnTest
+      # post/put/patch are overridden below to send map bodies as JSON.
+      import Phoenix.ConnTest, except: [post: 2, post: 3, put: 2, put: 3, patch: 2, patch: 3]
       import CadetWeb.Router.Helpers
       import Cadet.{AssertHelper, Factory}
+      alias CadetWeb.ConnCase
 
       # The default endpoint for testing
       @endpoint CadetWeb.Endpoint
@@ -35,9 +38,22 @@ defmodule CadetWeb.ConnCase do
       # Helper function for formatting datetime for views
       import CadetWeb.ViewHelper
 
+      # Send map/list request bodies as `application/json` (matching what the
+      # frontend sends in production), so `OpenApiSpex.Plug.CastAndValidate`
+      # accepts them. Multipart uploads (bodies containing `%Plug.Upload{}`) and
+      # raw string bodies are dispatched unchanged.
+      def post(conn, path, params \\ nil),
+        do: ConnCase.json_dispatch(conn, @endpoint, :post, path, params)
+
+      def put(conn, path, params \\ nil),
+        do: ConnCase.json_dispatch(conn, @endpoint, :put, path, params)
+
+      def patch(conn, path, params \\ nil),
+        do: ConnCase.json_dispatch(conn, @endpoint, :patch, path, params)
+
       # Helper function
       def sign_in(conn, user) do
-        CadetWeb.ConnCase.sign_in(conn, user)
+        ConnCase.sign_in(conn, user)
       end
     end
   end
@@ -49,7 +65,7 @@ defmodule CadetWeb.ConnCase do
       Ecto.Adapters.SQL.Sandbox.mode(Cadet.Repo, {:shared, self()})
     end
 
-    conn = Phoenix.ConnTest.build_conn()
+    conn = ConnTest.build_conn()
 
     if tags[:authenticate] do
       course = Factory.insert(:course, id: tags[:course_id])
@@ -101,4 +117,29 @@ defmodule CadetWeb.ConnCase do
     |> Cadet.Auth.Guardian.Plug.sign_in(user)
     |> assign(:current_user, user)
   end
+
+  @doc false
+  def json_dispatch(conn, endpoint, method, path, params) do
+    case encode_json_body(params) do
+      {:ok, body} ->
+        conn
+        |> put_req_header("content-type", "application/json")
+        |> ConnTest.dispatch(endpoint, method, path, body)
+
+      :passthrough ->
+        ConnTest.dispatch(conn, endpoint, method, path, params)
+    end
+  end
+
+  # Encode map/list bodies as JSON. Anything not JSON-encodable -- multipart
+  # uploads (`%Plug.Upload{}`), tuples, etc. -- and raw string bodies are passed
+  # through unchanged (dispatched as-is, e.g. multipart/form-data).
+  defp encode_json_body(params) when is_map(params) or is_list(params) do
+    case Jason.encode(params) do
+      {:ok, body} -> {:ok, body}
+      {:error, _} -> :passthrough
+    end
+  end
+
+  defp encode_json_body(_), do: :passthrough
 end

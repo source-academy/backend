@@ -1,19 +1,11 @@
 defmodule CadetWeb.VersionsControllerTest do
   use CadetWeb.ConnCase, async: false
+  import OpenApiSpex.TestAssertions
 
   import Ecto.Query
 
   alias Cadet.Assessments.Version
   alias Cadet.Repo
-  alias CadetWeb.VersionsController
-
-  test "swagger" do
-    VersionsController.swagger_definitions()
-    VersionsController.swagger_path_index(nil)
-    VersionsController.swagger_path_show(nil)
-    VersionsController.swagger_path_save(nil)
-    VersionsController.swagger_path_name(nil)
-  end
 
   setup do
     course = insert(:course)
@@ -67,10 +59,9 @@ defmodule CadetWeb.VersionsControllerTest do
             }
           end)
 
-        resp =
-          conn
-          |> get(build_url(course_id, programming_question.id, ""))
-          |> json_response(200)
+        conn = get(conn, build_url(course_id, programming_question.id, ""))
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
 
         assert expected == resp
       end
@@ -105,10 +96,9 @@ defmodule CadetWeb.VersionsControllerTest do
           "updated_at" => format_timestamp(version.updated_at)
         }
 
-        resp =
-          conn
-          |> get(build_url(course_id, programming_question.id, "#{version.id}"))
-          |> json_response(200)
+        conn = get(conn, build_url(course_id, programming_question.id, "#{version.id}"))
+        assert_operation_response(conn)
+        resp = json_response(conn, 200)
 
         assert expected == resp
       end

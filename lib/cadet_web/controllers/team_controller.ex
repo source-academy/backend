@@ -4,12 +4,37 @@ defmodule CadetWeb.TeamController do
   """
 
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
 
   import Ecto.Query
 
   alias Cadet.Repo
   alias Cadet.Accounts.Team
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+
+  tags(["Teams"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get the current user's team formation overview for an assessment",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    responses: [
+      ok: {"Team formation overview", "application/json", Schemas.TeamFormationOverview},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def index(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
@@ -54,53 +79,5 @@ defmodule CadetWeb.TeamController do
     }
 
     team_formation_overview
-  end
-
-  swagger_path :index do
-    get("/admin/teams")
-
-    summary("Fetches team formation overview based on assessment ID")
-
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentid(:query, :string, "Assessment ID", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:TeamFormationOverview))
-    response(404, "Not Found")
-    response(403, "Forbidden")
-  end
-
-  def swagger_definitions do
-    %{
-      TeamFormationOverview: %{
-        "type" => "object",
-        "properties" => %{
-          "teamId" => %{"type" => "number", "description" => "The ID of the team"},
-          "assessmentId" => %{"type" => "number", "description" => "The ID of the assessment"},
-          "assessmentName" => %{"type" => "string", "description" => "The name of the assessment"},
-          "assessmentType" => %{"type" => "string", "description" => "The type of the assessment"},
-          "studentIds" => %{
-            "type" => "array",
-            "items" => %{"type" => "number"},
-            "description" => "List of student IDs"
-          },
-          "studentNames" => %{
-            "type" => "array",
-            "items" => %{"type" => "string"},
-            "description" => "List of student names"
-          }
-        },
-        "required" => [
-          "teamId",
-          "assessmentId",
-          "assessmentName",
-          "assessmentType",
-          "studentIds",
-          "studentNames"
-        ]
-      }
-    }
   end
 end

@@ -3,10 +3,14 @@ defmodule CadetWeb.StoriesControllerTest do
   use Timex
 
   import Ecto.Query
+  import OpenApiSpex.TestAssertions
 
   alias Cadet.Courses.Course
   alias Cadet.Repo
-  alias CadetWeb.StoriesController
+
+  setup_all do
+    {:ok, api_spec: CadetWeb.ApiSpec.spec()}
+  end
 
   setup do
     valid_params = %{
@@ -24,11 +28,6 @@ defmodule CadetWeb.StoriesControllerTest do
     }
 
     {:ok, %{valid_params: valid_params, updated_params: updated_params}}
-  end
-
-  test "swagger" do
-    StoriesController.swagger_definitions()
-    StoriesController.swagger_path_index(nil)
   end
 
   describe "unauthenticated" do
@@ -102,7 +101,7 @@ defmodule CadetWeb.StoriesControllerTest do
     end
 
     @tag authenticate: :staff
-    test "All fields are present and in the right format", %{conn: conn} do
+    test "All fields are present and in the right format", %{conn: conn, api_spec: api_spec} do
       course_id = conn.assigns[:course_id]
       course = Course |> where(id: ^course_id) |> Repo.one()
 
@@ -113,6 +112,8 @@ defmodule CadetWeb.StoriesControllerTest do
         |> get(build_url(course_id))
         |> response(200)
         |> Jason.decode()
+
+      assert_schema(resp, "Story", api_spec)
 
       required_fields = ~w(openAt closeAt isPublished id title filenames imageUrl courseId)
 

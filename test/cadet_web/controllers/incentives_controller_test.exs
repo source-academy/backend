@@ -2,28 +2,26 @@ defmodule CadetWeb.IncentivesControllerTest do
   use CadetWeb.ConnCase
 
   import Cadet.{Factory, TestEntityHelper}
+  import OpenApiSpex.TestAssertions
 
   alias Cadet.Repo
-  alias CadetWeb.IncentivesController
   alias Cadet.Incentives.{Goals, GoalProgress}
   alias Ecto.UUID
 
-  test "swagger" do
-    assert is_map(IncentivesController.swagger_definitions())
-    assert is_map(IncentivesController.swagger_path_index_achievements(nil))
-    assert is_map(IncentivesController.swagger_path_index_goals(nil))
-    assert is_map(IncentivesController.swagger_path_update_progress(nil))
+  setup_all do
+    {:ok, api_spec: CadetWeb.ApiSpec.spec()}
   end
 
   describe "GET v2/coures/:course_id/achievements" do
     @tag authenticate: :student
-    test "succeeds if authenticated", %{conn: conn} do
+    test "succeeds if authenticated", %{conn: conn, api_spec: api_spec} do
       course = conn.assigns.test_cr.course
       insert(:achievement, Map.merge(achievement_literal(0), %{course: course}))
 
       resp = conn |> get(build_url_achievements(course.id)) |> json_response(200)
 
       assert [achievement_json_literal(0)] = resp
+      Enum.each(resp, &assert_schema(&1, "Achievement", api_spec))
     end
 
     test "401 if unauthenticated", %{conn: conn} do
@@ -34,13 +32,14 @@ defmodule CadetWeb.IncentivesControllerTest do
 
   describe "GET v2/coures/:course_id/self/goals" do
     @tag authenticate: :student
-    test "succeeds if authenticated", %{conn: conn} do
+    test "succeeds if authenticated", %{conn: conn, api_spec: api_spec} do
       course = conn.assigns.test_cr.course
       insert(:goal, Map.merge(goal_literal(0), %{course: course}))
 
       resp = conn |> get(build_url_goals(course.id)) |> json_response(200)
 
       assert [goal_json_literal(0)] = resp
+      Enum.each(resp, &assert_schema(&1, "GoalWithProgress", api_spec))
     end
 
     @tag authenticate: :student

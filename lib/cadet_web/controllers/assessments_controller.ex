@@ -1,15 +1,40 @@
 defmodule CadetWeb.AssessmentsController do
   use CadetWeb, :controller
+  use OpenApiSpex.ControllerSpecs
 
-  use PhoenixSwagger
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   require Logger
 
   alias Cadet.Assessments
-  alias CadetWeb.AssessmentsHelpers
+  alias CadetWeb.{AssessmentsHelpers, Schemas}
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias OpenApiSpex.Schema
+
+  tags(["Assessments"])
+  security([%{"JWT" => []}])
 
   # These roles can save and finalise answers for closed assessments and
   # submitted answers
   @bypass_closed_roles ~w(staff admin)a
+
+  operation(:submit,
+    summary: "Finalise the current user's submission for an assessment",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    responses: [
+      ok: {"Submission finalised", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def submit(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
@@ -53,6 +78,20 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
+  operation(:index,
+    summary: "Get all assessments in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok:
+        {"List of assessments", "application/json",
+         %Schema{type: :array, items: Schemas.AssessmentOverview}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def index(conn, _) do
     cr = conn.assigns.course_reg
     Logger.info("Fetching all assessments for user #{cr.id} in course #{cr.course_id}")
@@ -64,6 +103,20 @@ defmodule CadetWeb.AssessmentsController do
 
     render(conn, "index.json", assessments: assessments)
   end
+
+  operation(:show,
+    summary: "Get one assessment, including questions and the user's answers",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    responses: [
+      ok: {"The assessment", "application/json", Schemas.Assessment},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def show(conn, %{"assessmentid" => assessment_id}) when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
@@ -91,6 +144,21 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
+  operation(:unlock,
+    summary: "Unlock a password-protected assessment and return it",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"]
+    ],
+    request_body: {"The unlock password", "application/json", Schemas.UnlockAssessmentRequest},
+    responses: [
+      ok: {"The assessment", "application/json", Schemas.Assessment},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def unlock(conn, %{"assessmentid" => assessment_id, "password" => password})
       when is_ecto_id(assessment_id) do
     cr = conn.assigns.course_reg
@@ -113,6 +181,21 @@ defmodule CadetWeb.AssessmentsController do
         send_resp(conn, status, message)
     end
   end
+
+  operation(:contest_score_leaderboard,
+    summary: "Get the top contest entries by relative score",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"],
+      count: [in: :query, type: :integer, required: false, description: "Entries (default 10)"]
+    ],
+    responses: [
+      ok: {"The leaderboard", "application/json", Schemas.ContestLeaderboardResponse},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def contest_score_leaderboard(conn, %{
         "assessmentid" => assessment_id,
@@ -155,6 +238,21 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
+  operation(:contest_popular_leaderboard,
+    summary: "Get the top contest entries by popular vote",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      assessmentid: [in: :path, type: :integer, required: true, description: "Assessment ID"],
+      count: [in: :query, type: :integer, required: false, description: "Entries (default 10)"]
+    ],
+    responses: [
+      ok: {"The leaderboard", "application/json", Schemas.ContestLeaderboardResponse},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
+
   def contest_popular_leaderboard(conn, %{
         "assessmentid" => assessment_id,
         "course_id" => course_id
@@ -196,6 +294,20 @@ defmodule CadetWeb.AssessmentsController do
     end
   end
 
+  operation(:get_all_contests,
+    summary: "Get all contest assessments in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok:
+        {"List of contests", "application/json",
+         %Schema{type: :array, items: %Schema{type: :object}}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def get_all_contests(conn, %{"course_id" => course_id}) do
     Logger.info("Fetching all contests for course #{course_id}")
 
@@ -204,397 +316,5 @@ defmodule CadetWeb.AssessmentsController do
     Logger.info("Successfully fetched all contests for course #{course_id}.")
 
     json(conn, contests)
-  end
-
-  swagger_path :submit do
-    post("/courses/{course_id}/assessments/{assessmentId}/submit")
-    summary("Finalise submission for an assessment")
-    security([%{JWT: []}])
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-    end
-
-    response(200, "OK")
-
-    response(
-      400,
-      "Invalid parameters or incomplete submission (submission with unanswered questions)"
-    )
-
-    response(403, "User not permitted to answer questions or assessment not open")
-    response(404, "Submission not found")
-  end
-
-  swagger_path :index do
-    get("/courses/{course_id}/assessments")
-
-    summary("Get a list of all assessments")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    response(200, "OK", Schema.ref(:AssessmentsList))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :show do
-    get("/courses/{course_id}/assessments/{assessmentId}")
-
-    summary("Get information about one particular assessment")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:Assessment))
-    response(400, "Missing parameter(s) or invalid assessmentId")
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :unlock do
-    post("/courses/{course_id}/assessments/{assessmentId}/unlock")
-
-    summary("Unlocks a password-protected assessment and returns its information")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      assessmentId(:path, :integer, "Assessment ID", required: true)
-
-      password(:body, Schema.ref(:UnlockAssessmentPayload), "Password to unlock assessment",
-        required: true
-      )
-    end
-
-    response(200, "OK", Schema.ref(:Assessment))
-    response(400, "Missing parameter(s) or invalid assessmentId")
-    response(401, "Unauthorised")
-    response(403, "Password incorrect")
-  end
-
-  def swagger_definitions do
-    %{
-      AssessmentsList:
-        swagger_schema do
-          description("A list of all assessments")
-          type(:array)
-          items(Schema.ref(:AssessmentOverview))
-        end,
-      AssessmentOverview:
-        swagger_schema do
-          properties do
-            id(:integer, "The assessment ID", required: true)
-            title(:string, "The title of the assessment", required: true)
-
-            config(Schema.ref(:AssessmentConfig), "The assessment config", required: true)
-
-            shortSummary(:string, "Short summary", required: true)
-
-            number(
-              :string,
-              "The string identifying the relative position of this assessment",
-              required: true
-            )
-
-            story(:string, "The story that should be shown for this assessment")
-            reading(:string, "The reading for this assessment")
-            openAt(:string, "The opening date", format: "date-time", required: true)
-            closeAt(:string, "The closing date", format: "date-time", required: true)
-
-            status(
-              Schema.ref(:AssessmentStatus),
-              "One of 'not_attempted/attempting/attempted/submitted' indicating whether the assessment has been attempted by the current user",
-              required: true
-            )
-
-            hasTokenCounter(:boolean, "Does the assessment have Token Counter enabled?")
-
-            maxXp(
-              :integer,
-              "The maximum XP for this assessment",
-              required: true
-            )
-
-            xp(:integer, "The XP earned for this assessment", required: true)
-
-            coverImage(:string, "The URL to the cover picture", required: true)
-
-            private(:boolean, "Is this an private assessment?", required: true)
-
-            isPublished(:boolean, "Is the assessment published?", required: true)
-
-            questionCount(:integer, "The number of questions in this assessment", required: true)
-
-            gradedCount(
-              :integer,
-              "The number of answers in the submission which have been graded",
-              required: true
-            )
-
-            maxTeamSize(:integer, "The maximum team size allowed", required: true)
-          end
-        end,
-      Assessment:
-        swagger_schema do
-          properties do
-            id(:integer, "The assessment ID", required: true)
-            title(:string, "The title of the assessment", required: true)
-
-            config(Schema.ref(:AssessmentConfig), "The assessment config", required: true)
-
-            number(
-              :string,
-              "The string identifying the relative position of this assessment",
-              required: true
-            )
-
-            story(:string, "The story that should be shown for this assessment")
-            reading(:string, "The reading for this assessment")
-            longSummary(:string, "Long summary", required: true)
-            hasTokenCounter(:boolean, "Does the assessment have Token Counter enabled?")
-            missionPDF(:string, "The URL to the assessment pdf")
-
-            questions(Schema.ref(:Questions), "The list of questions for this assessment")
-          end
-        end,
-      AssessmentConfig:
-        swagger_schema do
-          description("Assessment config")
-          type(:string)
-          enum([:mission, :sidequest, :path, :contest, :practical])
-        end,
-      AssessmentStatus:
-        swagger_schema do
-          type(:string)
-          enum([:not_attempted, :attempting, :attempted, :submitted])
-        end,
-      Questions:
-        swagger_schema do
-          description("A list of questions")
-          type(:array)
-          items(Schema.ref(:Question))
-        end,
-      Question:
-        swagger_schema do
-          properties do
-            id(:integer, "The question ID", required: true)
-            type(:string, "The question type (mcq/programming)", required: true)
-            content(:string, "The question content", required: true)
-
-            choices(
-              Schema.new do
-                type(:array)
-                items(Schema.ref(:MCQChoice))
-              end,
-              "MCQ choices if question type is mcq"
-            )
-
-            solution(:integer, "Solution to a mcq question if it belongs to path assessment")
-
-            answer(
-              # Note: this is technically an invalid type in Swagger/OpenAPI 2.0,
-              # but represents that a string or integer could be returned.
-              :string_or_integer,
-              "Previous answer for this question (string/int) depending on question type",
-              required: true
-            )
-
-            library(
-              Schema.ref(:Library),
-              "The library used for this question"
-            )
-
-            prepend(:string, "Prepend program for programming questions")
-            solutionTemplate(:string, "Solution template for programming questions")
-            postpend(:string, "Postpend program for programming questions")
-
-            testcases(
-              Schema.new do
-                type(:array)
-                items(Schema.ref(:Testcase))
-              end,
-              "Testcase programs for programming questions"
-            )
-
-            grader(Schema.ref(:GraderInfo))
-
-            gradedAt(:string, "Last graded at", format: "date-time", required: false)
-
-            xp(:integer, "Final XP given to this question. Only provided for students.")
-            grade(:integer, "Final grade given to this question. Only provided for students.")
-            comments(:string, "String of comments given to a student's answer", required: false)
-
-            maxGrade(
-              :integer,
-              "The max grade for this question",
-              required: true
-            )
-
-            maxXp(
-              :integer,
-              "The max xp for this question",
-              required: true
-            )
-
-            autogradingStatus(Schema.ref(:AutogradingStatus), "The status of the autograder")
-
-            autogradingResults(
-              Schema.new do
-                type(:array)
-                items(Schema.ref(:AutogradingResult))
-              end
-            )
-          end
-        end,
-      MCQChoice:
-        swagger_schema do
-          properties do
-            content(:string, "The choice content", required: true)
-            hint(:string, "The hint", required: true)
-          end
-        end,
-      ExternalLibrary:
-        swagger_schema do
-          properties do
-            name(:string, "Name of the external library", required: true)
-
-            symbols(
-              Schema.new do
-                type(:array)
-
-                items(
-                  Schema.new do
-                    type(:string)
-                  end
-                )
-              end
-            )
-          end
-        end,
-      Library:
-        swagger_schema do
-          description(
-            "Discriminated library union. Fields depend on `format`. " <>
-              "`format=legacy`: chapter, variant, execTimeMs, globals, external, languageOptions. " <>
-              "`format=conductor`: language, evaluator (legacy fields must be absent)."
-          )
-
-          properties do
-            format(
-              :string,
-              "Library format discriminator",
-              enum: [:legacy, :conductor],
-              required: true
-            )
-
-            chapter(:integer, "Source language chapter (legacy only)")
-
-            variant(:string, "Source language variant (legacy only)")
-
-            execTimeMs(:integer, "Execution time in milliseconds (legacy only)")
-
-            globals(
-              Schema.new do
-                type(:array)
-
-                items(
-                  Schema.new do
-                    type(:string)
-                  end
-                )
-              end,
-              "Map of global identifier to value (legacy only, serialized as array)"
-            )
-
-            external(
-              Schema.ref(:ExternalLibrary),
-              "The external library for this question (legacy only)"
-            )
-
-            languageOptions(
-              Schema.new do
-                type(:object)
-
-                additional_properties(true)
-              end,
-              "Language options key/value map (legacy only)"
-            )
-
-            language(
-              :string,
-              "Conductor language identifier (conductor only)"
-            )
-
-            evaluator(
-              :string,
-              "Conductor evaluator identifier (conductor only)"
-            )
-          end
-        end,
-      Testcase:
-        swagger_schema do
-          properties do
-            answer(:string)
-            score(:integer)
-            program(:string)
-            type(Schema.ref(:TestcaseType), "One of public/opaque/secret")
-          end
-        end,
-      TestcaseType:
-        swagger_schema do
-          type(:string)
-          enum([:public, :opaque, :secret])
-        end,
-      AutogradingResult:
-        swagger_schema do
-          properties do
-            resultType(Schema.ref(:AutogradingResultType), "One of pass/fail/error")
-            expected(:string)
-            actual(:string)
-          end
-        end,
-      AutogradingResultType:
-        swagger_schema do
-          type(:string)
-          enum([:pass, :fail, :error])
-        end,
-      AutogradingStatus:
-        swagger_schema do
-          type(:string)
-          enum([:none, :processing, :success, :failed])
-        end,
-      Leaderboard:
-        swagger_schema do
-          description("A list of top entries for leaderboard")
-          type(:array)
-          items(Schema.ref(:ContestEntries))
-        end,
-      ContestEntries:
-        swagger_schema do
-          properties do
-            student_name(:string, "Name of the student", required: true)
-            answer(:string, "The code that the student submitted", required: true)
-            final_score(:float, "The score that the student obtained", required: true)
-          end
-        end,
-
-      # Schemas for payloads to modify data
-      UnlockAssessmentPayload:
-        swagger_schema do
-          properties do
-            password(:string, "Password", required: true)
-          end
-        end
-    }
   end
 end

@@ -1,11 +1,21 @@
 defmodule CadetWeb.AICodeAnalysisController do
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   require HTTPoison
   require Logger
 
   alias Cadet.{Assessments, AIComments, Courses}
-  alias CadetWeb.AICommentsHelpers
+  alias CadetWeb.{AICommentsHelpers, Schemas}
+  alias CadetWeb.ApiSpec.ErrorResponses
+
+  tags(["Grading"])
+  security([%{"JWT" => []}])
 
   # For logging outputs to both database and file
   defp save_comment(answer_id, raw_prompt, answers_json, response, error \\ nil) do
@@ -77,6 +87,23 @@ defmodule CadetWeb.AICodeAnalysisController do
   @doc """
   Fetches the question details and answers based on answer_id and generates AI-generated comments.
   """
+  operation(:generate_ai_comments,
+    summary: "Generate AI comment suggestions for a submission answer",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      answer_id: [in: :path, type: :integer, required: true, description: "Answer ID"]
+    ],
+    responses: [
+      ok: {"AI comment suggestions", "application/json", Schemas.GenerateAICommentsResponse},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      bad_gateway:
+        {"Unexpected response from the LLM", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
+
   def generate_ai_comments(conn, %{
         "answer_id" => answer_id,
         "course_id" => course_id
@@ -276,6 +303,21 @@ defmodule CadetWeb.AICodeAnalysisController do
   @doc """
   Saves the final comment chosen for a submission.
   """
+  operation(:save_final_comment,
+    summary: "Save the final chosen comment for a submission answer",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      answer_id: [in: :path, type: :integer, required: true, description: "Answer ID"]
+    ],
+    request_body: {"The final comment", "application/json", Schemas.SaveFinalCommentRequest},
+    responses: [
+      ok: {"Comment saved", "application/json", Schemas.SaveFinalCommentResponse},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      unprocessable_entity: ErrorResponses.unprocessable()
+    ]
+  )
+
   def save_final_comment(conn, %{
         "answer_id" => answer_id,
         "comment" => comment
@@ -291,64 +333,9 @@ defmodule CadetWeb.AICodeAnalysisController do
     end
   end
 
-  swagger_path :generate_ai_comments do
-    post("/courses/{course_id}/admin/generate-comments/{answer_id}")
-
-    summary("Generate AI comments for a given submission.")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      course_id(:path, :integer, "course id", required: true)
-      answer_id(:path, :integer, "answer id", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:GenerateAIComments))
-    response(400, "Invalid or missing parameter(s) or submission and/or question not found")
-    response(401, "Unauthorized")
-    response(403, "Forbidden")
-    response(403, "LLM grading is not enabled for this course")
-  end
-
-  swagger_path :save_final_comment do
-    post("/courses/{course_id}/admin/save-final-comment/{answer_id}")
-
-    summary("Save the final comment chosen for a submission.")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      course_id(:path, :integer, "course id", required: true)
-      answer_id(:path, :integer, "answer id", required: true)
-      comment(:body, :string, "The final comment to save", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:SaveFinalComment))
-    response(400, "Invalid or missing parameter(s)")
-    response(401, "Unauthorized")
-    response(403, "Forbidden")
-  end
-
-  def swagger_definitions do
-    %{
-      GenerateAIComments:
-        swagger_schema do
-          properties do
-            comments(:string, "AI-generated comments on the submission answers")
-          end
-        end,
-      SaveFinalComment:
-        swagger_schema do
-          properties do
-            status(:string, "Status of the operation")
-          end
-        end
-    }
-  end
+  # TODO: the route `POST .../admin/save-chosen-comments/:submissionid/:questionid`
+  # (router.ex) points at `save_chosen_comments`, which does NOT exist -- every call
+  # 500s. Left in place per decision (flag, don't delete); tracked in
+  # test/cadet_web/api_spec_test.exs @dead_routes. Implement the action or remove the route.
+  operation(:save_chosen_comments, false)
 end

@@ -3,15 +3,6 @@ defmodule CadetWeb.AdminTeamsControllerTest do
 
   alias Cadet.Repo
   alias Cadet.Courses.Course
-  alias CadetWeb.AdminTeamsController
-
-  test "swagger" do
-    AdminTeamsController.swagger_definitions()
-    AdminTeamsController.swagger_path_index(nil)
-    AdminTeamsController.swagger_path_create(nil)
-    AdminTeamsController.swagger_path_update(nil)
-    AdminTeamsController.swagger_path_delete(nil)
-  end
 
   describe "GET /admin/teams" do
     test "unauthenticated", %{conn: conn} do

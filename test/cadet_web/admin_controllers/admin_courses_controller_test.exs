@@ -1,17 +1,11 @@
 defmodule CadetWeb.AdminCoursesControllerTest do
   use CadetWeb.ConnCase
 
+  import OpenApiSpex.TestAssertions
   import Cadet.SharedHelper
 
   alias Cadet.{Repo, Courses}
   alias Cadet.Courses.Course
-  alias CadetWeb.AdminCoursesController
-
-  test "swagger" do
-    AdminCoursesController.swagger_definitions()
-    AdminCoursesController.swagger_path_update_course_config(nil)
-    AdminCoursesController.swagger_path_update_assessment_configs(nil)
-  end
 
   describe "PUT /v2/courses/{course_id}/admin/config" do
     @tag authenticate: :admin
@@ -179,10 +173,9 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           has_token_counter: true
         })
 
-      resp =
-        conn
-        |> get(build_url_assessment_configs(course_id))
-        |> json_response(200)
+      conn = get(conn, build_url_assessment_configs(course_id))
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       expected = [
         %{

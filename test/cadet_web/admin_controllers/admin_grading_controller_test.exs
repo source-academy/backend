@@ -1,22 +1,12 @@
 defmodule CadetWeb.AdminGradingControllerTest do
   use CadetWeb.ConnCase
 
+  import OpenApiSpex.TestAssertions
+
   alias Cadet.Assessments.{Answer, Submission}
   alias Cadet.Repo
-  alias CadetWeb.AdminGradingController
 
   import Mock
-
-  test "swagger" do
-    AdminGradingController.swagger_definitions()
-    AdminGradingController.swagger_path_index(nil)
-    AdminGradingController.swagger_path_show(nil)
-    AdminGradingController.swagger_path_update(nil)
-    AdminGradingController.swagger_path_unsubmit(nil)
-    AdminGradingController.swagger_path_autograde_submission(nil)
-    AdminGradingController.swagger_path_autograde_answer(nil)
-    AdminGradingController.swagger_path_grading_summary(nil)
-  end
 
   describe "GET /, unauthenticated" do
     test "unauthorized", %{conn: conn} do
@@ -148,6 +138,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           end)
       }
 
+      assert_operation_response(conn)
       res = json_response(conn, 200)
 
       assert expected == %{
@@ -165,11 +156,13 @@ defmodule CadetWeb.AdminGradingControllerTest do
       test_cr = conn.assigns.test_cr
       new_staff = insert(:course_registration, %{course: test_cr.course, role: :staff})
 
-      resp =
+      conn =
         conn
         |> sign_in(new_staff.user)
         |> get(build_url(test_cr.course_id), %{"group" => "true"})
-        |> json_response(200)
+
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert resp == %{"count" => 0, "data" => []}
     end
@@ -223,6 +216,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           end)
       }
 
+      assert_operation_response(conn)
       res = json_response(conn, 200)
 
       assert expected == %{
@@ -447,6 +441,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           )
       }
 
+      assert_operation_response(conn)
       assert expected == json_response(conn, 200)
     end
 
@@ -1206,6 +1201,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           end)
       }
 
+      assert_operation_response(conn)
       res = json_response(conn, 200)
 
       assert expected == %{
@@ -1261,6 +1257,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           end)
       }
 
+      assert_operation_response(conn)
       res = json_response(conn, 200)
 
       assert expected == %{
@@ -1484,6 +1481,7 @@ defmodule CadetWeb.AdminGradingControllerTest do
           )
       }
 
+      assert_operation_response(conn)
       assert expected == json_response(conn, 200)
     end
 
@@ -1540,7 +1538,9 @@ defmodule CadetWeb.AdminGradingControllerTest do
         answers: answers2
       } = seed_db(conn, insert(:course_registration, %{course: course, role: :staff}))
 
-      resp = conn |> get(build_url_summary(course.id)) |> json_response(200)
+      conn = get(conn, build_url_summary(course.id))
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       expected = %{
         "cols" => [

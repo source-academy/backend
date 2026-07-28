@@ -4,11 +4,32 @@ defmodule CadetWeb.ChatController do
   Each user has exactly one conversation.
   """
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   require Logger
 
   alias Cadet.Chatbot.{Conversation, LlmConversations}
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
   @max_content_size 1000
+
+  tags(["Chat"])
+  security([%{"JWT" => []}])
+
+  operation(:init_chat,
+    summary: "Initialise (or fetch) the current user's chatbot conversation",
+    responses: [
+      ok: {"Conversation", "application/json", Schemas.ConversationInit},
+      unauthorized: ErrorResponses.unauthorised(),
+      unprocessable_entity: ErrorResponses.unprocessable(),
+      too_many_requests: ErrorResponses.too_many_requests()
+    ]
+  )
 
   def init_chat(conn, _params) do
     user = conn.assigns.current_user
@@ -35,30 +56,19 @@ defmodule CadetWeb.ChatController do
     end
   end
 
-  swagger_path :chat do
-    put("/chat")
-
-    summary("A wrapper for client that send queries to LLMs")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      message(
-        :body,
-        :list,
-        "User message to send to the chatbot. Each user has a single conversation that is automatically used."
-      )
-    end
-
-    response(200, "OK")
-    response(400, "Missing or invalid parameter(s)")
-    response(401, "Unauthorized")
-    response(404, "No conversation found for user")
-    response(422, "Message exceeds the maximum allowed length")
-    response(500, "When OpenAI API returns an error")
-  end
+  operation(:chat,
+    summary: "Send a message to the section chatbot",
+    request_body: {"The user's message", "application/json", Schemas.ChatMessageRequest},
+    responses: [
+      ok: {"Chatbot response", "application/json", Schemas.ConversationResponse},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      not_found: ErrorResponses.not_found(),
+      unprocessable_entity: ErrorResponses.unprocessable(),
+      too_many_requests: ErrorResponses.too_many_requests(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def chat(
         conn,

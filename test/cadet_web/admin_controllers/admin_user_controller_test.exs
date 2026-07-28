@@ -1,22 +1,13 @@
 defmodule CadetWeb.AdminUserControllerTest do
   use CadetWeb.ConnCase
 
+  import OpenApiSpex.TestAssertions
   import Ecto.Query
   import Cadet.{Factory, TestEntityHelper}
 
-  alias CadetWeb.AdminUserController
   alias Cadet.Repo
   alias Cadet.Courses.{Course, Group}
   alias Cadet.Accounts.CourseRegistration
-
-  test "swagger" do
-    assert is_map(AdminUserController.swagger_definitions())
-    assert is_map(AdminUserController.swagger_path_index(nil))
-    assert is_map(AdminUserController.swagger_path_upsert_users_and_groups(nil))
-    assert is_map(AdminUserController.swagger_path_update_role(nil))
-    assert is_map(AdminUserController.swagger_path_delete_user(nil))
-    assert is_map(AdminUserController.swagger_path_combined_total_xp(nil))
-  end
 
   describe "GET /v2/courses/{course_id}/admin/users" do
     @tag authenticate: :staff
@@ -58,10 +49,9 @@ defmodule CadetWeb.AdminUserControllerTest do
         }
       ]
 
-      resp =
-        conn
-        |> get(build_url_users(course_id))
-        |> json_response(200)
+      conn = get(conn, build_url_users(course_id))
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert expected == Enum.sort(resp, &(&1["courseRegId"] < &2["courseRegId"]))
     end
@@ -74,10 +64,9 @@ defmodule CadetWeb.AdminUserControllerTest do
       insert(:course_registration, %{role: :student, course: course, group: group})
       insert(:course_registration, %{role: :staff, course: course, group: group})
 
-      resp =
-        conn
-        |> get(build_url_users(course_id) <> "?role=student")
-        |> json_response(200)
+      conn = get(conn, build_url_users(course_id) <> "?role=student")
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert 1 == Enum.count(resp)
       assert "student" == List.first(resp)["role"]
@@ -91,10 +80,9 @@ defmodule CadetWeb.AdminUserControllerTest do
       insert(:course_registration, %{role: :student, course: course, group: group})
       insert(:course_registration, %{role: :staff, course: course, group: group})
 
-      resp =
-        conn
-        |> get(build_url_users(course_id) <> "?group=#{group.name}")
-        |> json_response(200)
+      conn = get(conn, build_url_users(course_id) <> "?group=#{group.name}")
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert 2 == Enum.count(resp)
       assert group.name == List.first(resp)["group"]
@@ -257,7 +245,9 @@ defmodule CadetWeb.AdminUserControllerTest do
 
       conn = put(conn, build_url_users(course_id), params)
 
-      assert response(conn, 400) == "Invalid username(s) provided"
+      # A null username violates the string type and is now rejected at the edge
+      # by OpenApiSpex.Plug.CastAndValidate.
+      assert response(conn, 400) == "Missing or invalid parameter(s)"
     end
 
     @tag authenticate: :admin
@@ -625,10 +615,9 @@ defmodule CadetWeb.AdminUserControllerTest do
         ]
       })
 
-      resp =
-        conn
-        |> get("/v2/courses/#{course.id}/admin/users/#{test_cr.id}/total_xp")
-        |> json_response(200)
+      conn = get(conn, "/v2/courses/#{course.id}/admin/users/#{test_cr.id}/total_xp")
+      assert_operation_response(conn)
+      resp = json_response(conn, 200)
 
       assert resp["totalXp"] == 210
     end

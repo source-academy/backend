@@ -2,24 +2,19 @@ defmodule CadetWeb.AdminGoalsControllerTest do
   use CadetWeb.ConnCase
 
   import Cadet.TestEntityHelper
+  import OpenApiSpex.TestAssertions
 
   alias Cadet.Repo
   alias Cadet.Incentives.{Goal, Goals, GoalProgress}
-  alias CadetWeb.AdminGoalsController
   alias Ecto.UUID
 
-  test "swagger" do
-    assert is_map(AdminGoalsController.swagger_path_index(nil))
-    assert is_map(AdminGoalsController.swagger_path_index_goals_with_progress(nil))
-    assert is_map(AdminGoalsController.swagger_path_update(nil))
-    assert is_map(AdminGoalsController.swagger_path_bulk_update(nil))
-    assert is_map(AdminGoalsController.swagger_path_delete(nil))
-    assert is_map(AdminGoalsController.swagger_path_update_progress(nil))
+  setup_all do
+    {:ok, api_spec: CadetWeb.ApiSpec.spec()}
   end
 
   describe "GET v2/courses/:course_id/admin/goals" do
     @tag authenticate: :staff
-    test "succeeds for staff", %{conn: conn} do
+    test "succeeds for staff", %{conn: conn, api_spec: api_spec} do
       course_id = conn.assigns.course_id
 
       {:ok, goal} =
@@ -34,6 +29,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
       assert goal_json_literal(5) = resp_goal
       assert resp_goal["uuid"] == goal.uuid
+      assert_schema(resp_goal, "Goal", api_spec)
     end
 
     @tag authenticate: :student
@@ -56,7 +52,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
 
   describe "GET v2/courses/:course_id/admin/users/:course_reg_id/goals" do
     @tag authenticate: :staff
-    test "succeeds for staff", %{conn: conn} do
+    test "succeeds for staff", %{conn: conn, api_spec: api_spec} do
       course = conn.assigns.test_cr.course
 
       {:ok, g} =
@@ -84,6 +80,7 @@ defmodule CadetWeb.AdminGoalsControllerTest do
       assert resp_goal["uuid"] == g.uuid
       assert resp_goal["count"] == p.count
       assert resp_goal["completed"] == p.completed
+      assert_schema(resp_goal, "GoalWithProgress", api_spec)
     end
 
     @tag authenticate: :student

@@ -1,10 +1,38 @@
 defmodule CadetWeb.AdminAssetsController do
   use CadetWeb, :controller
+  use OpenApiSpex.ControllerSpecs
 
-  use PhoenixSwagger
+  # :upload is multipart/form-data and :delete has a wildcard (`*filename`) path
+  # segment; skip request validation for both.
+  plug(
+    OpenApiSpex.Plug.CastAndValidate,
+    [render_error: CadetWeb.Plugs.OpenApiErrorRenderer, replace_params: false]
+    when action not in [:upload, :delete]
+  )
 
   alias Cadet.Assets.Assets
   alias Cadet.Courses
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias OpenApiSpex.Schema
+
+  tags(["Assets"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get all asset paths in a folder",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      foldername: [in: :path, type: :string, required: true, description: "Folder name"]
+    ],
+    responses: [
+      ok:
+        {"List of asset paths", "application/json",
+         %Schema{type: :array, items: %Schema{type: :string}}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def index(conn, _params = %{"foldername" => foldername}) do
     course_reg = conn.assigns.course_reg
@@ -14,6 +42,23 @@ defmodule CadetWeb.AdminAssetsController do
       assets -> render(conn, "index.json", assets: assets)
     end
   end
+
+  operation(:delete,
+    summary: "Delete a file from an asset folder",
+    description:
+      "The file path (which may contain subfolders) is the trailing `*filename` segment.",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      foldername: [in: :path, type: :string, required: true, description: "Folder name"]
+    ],
+    responses: [
+      no_content: "File deleted",
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
   def delete(conn, _params = %{"foldername" => foldername, "filename" => filename}) do
@@ -30,6 +75,29 @@ defmodule CadetWeb.AdminAssetsController do
   # `Assets.upload_to_s3` function to see the type,
   # it clearly returns a string URL
   @dialyzer {:no_match, upload: 2}
+
+  operation(:upload,
+    summary: "Upload a file to an asset folder",
+    description:
+      "The file path (which may contain subfolders) is the trailing `*filename` segment.",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      foldername: [in: :path, type: :string, required: true, description: "Folder name"]
+    ],
+    request_body:
+      {"The file to upload", "multipart/form-data",
+       %Schema{
+         type: :object,
+         properties: %{upload: %Schema{type: :string, format: :binary}},
+         required: [:upload]
+       }},
+    responses: [
+      ok: {"URL of the uploaded asset", "application/json", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def upload(conn, %{
         "upload" => upload_params,
@@ -48,91 +116,5 @@ defmodule CadetWeb.AdminAssetsController do
       {:error, {status, message}} -> conn |> put_status(status) |> text(message)
       resp -> render(conn, "show.json", resp: resp)
     end
-  end
-
-  def swagger_definitions do
-    %{
-      Asset:
-        swagger_schema do
-          title("Asset")
-          description("A path to an asset")
-          example("assets/hello.png")
-        end,
-      Assets:
-        swagger_schema do
-          title("Assets")
-          description("An array of asset paths")
-          type(:array)
-          items(PhoenixSwagger.Schema.ref(:Asset))
-        end,
-      AssetURL:
-        swagger_schema do
-          title("Asset URL")
-          description("A URL to an uploaded asset")
-          type(:string)
-          example("https://bucket-name.s3.amazonaws.com/assets/hello.png")
-        end
-    }
-  end
-
-  swagger_path :index do
-    get("/courses/{course_id}/admin/assets/{folderName}")
-
-    summary("Get a list of all assets in a folder")
-
-    parameters do
-      folderName(:path, :string, "Folder name", required: true)
-    end
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    response(200, "OK", :Assets)
-    response(400, "Invalid folder name")
-    response(403, "User is not allowed to manage assets")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/courses/{course_id}/admin/assets/{folderName}/{fileName}")
-
-    summary("Delete a file from an asset folder")
-
-    parameters do
-      folderName(:path, :string, "Folder name", required: true)
-
-      fileName(:path, :string, "File path in folder, which may contain subfolders",
-        required: true
-      )
-    end
-
-    security([%{JWT: []}])
-
-    response(204, "OK")
-    response(400, "Invalid folder name, file name or file type")
-    response(403, "User is not allowed to manage assets")
-    response(404, "File not found")
-  end
-
-  swagger_path :upload do
-    post("/courses/{course_id}/admin/assets/{folderName}/{fileName}")
-
-    summary("Upload a file to an asset folder")
-
-    parameters do
-      folderName(:path, :string, "Folder name", required: true)
-
-      fileName(:path, :string, "File path in folder, which may contain subfolders",
-        required: true
-      )
-    end
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    response(200, "OK", :AssetURL)
-    response(400, "Invalid folder name, file name or file type")
-    response(403, "User is not allowed to manage assets")
   end
 end

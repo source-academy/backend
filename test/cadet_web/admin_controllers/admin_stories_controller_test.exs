@@ -7,7 +7,6 @@ defmodule CadetWeb.AdminStoriesControllerTest do
   alias Cadet.Courses.Course
   alias Cadet.Repo
   alias Cadet.Stories.Story
-  alias CadetWeb.AdminStoriesController
 
   setup do
     valid_params = %{
@@ -25,13 +24,6 @@ defmodule CadetWeb.AdminStoriesControllerTest do
     }
 
     {:ok, %{valid_params: valid_params, updated_params: updated_params}}
-  end
-
-  test "swagger" do
-    AdminStoriesController.swagger_definitions()
-    AdminStoriesController.swagger_path_create(nil)
-    AdminStoriesController.swagger_path_delete(nil)
-    AdminStoriesController.swagger_path_update(nil)
   end
 
   describe "unauthenticated" do

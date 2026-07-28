@@ -5,13 +5,6 @@ defmodule CadetWeb.AdminSourcecastControllerTest do
 
   alias Cadet.Repo
   alias Cadet.Courses.Course
-  alias CadetWeb.AdminSourcecastController
-
-  test "swagger" do
-    AdminSourcecastController.swagger_definitions()
-    AdminSourcecastController.swagger_path_create(nil)
-    AdminSourcecastController.swagger_path_delete(nil)
-  end
 
   describe "POST /v2/courses/{course_id}/sourcecast, unauthenticated" do
     test "unauthorized", %{conn: conn} do

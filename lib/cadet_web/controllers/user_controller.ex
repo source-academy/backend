@@ -4,11 +4,30 @@ defmodule CadetWeb.UserController do
   """
 
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   require Logger
   alias Cadet.Accounts.CourseRegistrations
 
   alias Cadet.{Accounts, Assessments}
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+
+  tags(["User"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get the current user, their courses and their latest viewed course configuration",
+    responses: [
+      ok: {"User information", "application/json", Schemas.UserInfoResponse},
+      unauthorized: ErrorResponses.unauthorised()
+    ]
+  )
 
   def index(conn, _) do
     user = conn.assigns.current_user
@@ -44,6 +63,14 @@ defmodule CadetWeb.UserController do
     end
   end
 
+  operation(:get_latest_viewed,
+    summary: "Get the current user's latest viewed course registration and configuration",
+    responses: [
+      ok: {"Latest viewed course information", "application/json", Schemas.LatestViewedInfo},
+      unauthorized: ErrorResponses.unauthorised()
+    ]
+  )
+
   def get_latest_viewed(conn, _) do
     user = conn.assigns.current_user
     Logger.info("Fetching latest viewed course for user #{user.id}")
@@ -76,6 +103,17 @@ defmodule CadetWeb.UserController do
     )
   end
 
+  operation(:update_latest_viewed,
+    summary: "Update the current user's latest viewed course",
+    request_body:
+      {"The new latest viewed course", "application/json", Schemas.UpdateLatestViewedRequest},
+    responses: [
+      ok: {"Updated", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised()
+    ]
+  )
+
   def update_latest_viewed(conn, %{"courseId" => course_id}) do
     user = conn.assigns.current_user
     Logger.info("Updating latest viewed course to #{course_id} for user #{user.id}")
@@ -95,6 +133,20 @@ defmodule CadetWeb.UserController do
         |> text(message)
     end
   end
+
+  operation(:update_game_states,
+    summary: "Update the current user's game save states in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body: {"The new game states", "application/json", Schemas.UpdateGameStatesRequest},
+    responses: [
+      ok: {"Updated", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def update_game_states(conn, %{"gameStates" => new_game_states}) do
     cr = conn.assigns[:course_reg]
@@ -116,6 +168,21 @@ defmodule CadetWeb.UserController do
         |> text(message)
     end
   end
+
+  operation(:update_research_agreement,
+    summary: "Update the user's agreement to the anonymised collection of programs for research",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The research agreement", "application/json", Schemas.UpdateResearchAgreementRequest},
+    responses: [
+      ok: {"Updated", "text/plain", %OpenApiSpex.Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def update_research_agreement(conn, %{"agreedToResearch" => agreed_to_research}) do
     course_reg = conn.assigns[:course_reg]
@@ -141,6 +208,18 @@ defmodule CadetWeb.UserController do
     end
   end
 
+  operation(:combined_total_xp,
+    summary: "Get the current user's total XP from achievements and assessments in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok: {"Total XP", "application/json", Schemas.TotalXP},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def combined_total_xp(conn, _) do
     course_id = conn.assigns.course_reg.course_id
     user_id = conn.assigns.course_reg.user_id
@@ -152,262 +231,5 @@ defmodule CadetWeb.UserController do
     Logger.info("Successfully calculated total XP for user #{user_id}: #{total_xp}.")
 
     json(conn, %{totalXp: total_xp})
-  end
-
-  swagger_path :index do
-    get("/user")
-
-    summary("Get the name, and latest_viewed_course of a user")
-
-    security([%{JWT: []}])
-    produces("application/json")
-    response(200, "OK", Schema.ref(:IndexInfo))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :get_latest_viewed do
-    get("/user/latest_viewed_course")
-
-    summary("Get the latest_viewed_course of a user")
-
-    security([%{JWT: []}])
-    produces("application/json")
-    response(200, "OK", Schema.ref(:LatestViewedInfo))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :update_latest_viewed do
-    put("/user/latest_viewed_course")
-    summary("Update user's latest viewed course")
-    security([%{JWT: []}])
-    consumes("application/json")
-
-    parameters do
-      course_id(:body, :integer, "new latest viewed course", required: true)
-    end
-
-    response(200, "OK")
-  end
-
-  swagger_path :update_game_states do
-    put("/courses/:course_id/user/game_states")
-    summary("Update user's game states")
-    security([%{JWT: []}])
-    consumes("application/json")
-
-    parameters do
-      gameStates(:body, Schema.ref(:UserGameStates), "new game states", required: true)
-    end
-
-    response(200, "OK")
-  end
-
-  swagger_path :update_research_agreement do
-    put("/courses/:course_id/user/research_agreement")
-    summary("Update the user's agreement to the anonymized collection of programs for research")
-    security([%{JWT: []}])
-    consumes("application/json")
-
-    parameters do
-      course_id(:path, :integer, "course ID", required: true)
-
-      agreedToResearch(
-        :body,
-        :boolean,
-        "whether the user has agreed to participate in the research",
-        required: true
-      )
-    end
-
-    response(200, "OK")
-    response(400, "Bad Request")
-  end
-
-  swagger_path :combined_total_xp do
-    get("/courses/:course_id/user/total_xp")
-
-    summary("Get the user's total XP from achievements and assessments")
-
-    security([%{JWT: []}])
-    produces("application/json")
-
-    parameters do
-      course_id(:path, :integer, "course ID", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:TotalXPInfo))
-    response(401, "Unauthorised")
-  end
-
-  def swagger_definitions do
-    %{
-      IndexInfo:
-        swagger_schema do
-          title("User Index")
-          description("user, course_registration and course configuration of the latest course")
-
-          properties do
-            user(Schema.ref(:UserInfo), "user info")
-
-            courseRegistration(
-              Schema.ref(:CourseRegistration),
-              "course registration of the latest viewed course"
-            )
-
-            courseConfiguration(
-              Schema.ref(:CourseConfiguration),
-              "course configuration of the latest viewed course"
-            )
-          end
-        end,
-      TotalXPInfo:
-        swagger_schema do
-          title("User Total XP")
-          description("the user's total achievement and assessment XP")
-
-          properties do
-            totalXp(:integer, "total XP")
-          end
-        end,
-      LatestViewedInfo:
-        swagger_schema do
-          title("Latest viewed course")
-          description("course_registration and course configuration of the latest course")
-
-          properties do
-            courseRegistration(
-              Schema.ref(:CourseRegistration),
-              "course registration of the latest viewed course"
-            )
-
-            courseConfiguration(
-              Schema.ref(:CourseConfiguration),
-              "course configuration of the latest viewed course"
-            )
-          end
-        end,
-      UserInfo:
-        swagger_schema do
-          title("User")
-          description("Basic information about the user")
-
-          properties do
-            userId(:integer, "User's ID", required: true)
-            name(:string, "Full name of the user", required: true)
-          end
-        end,
-      CourseRegistration:
-        swagger_schema do
-          title("CourseRegistration")
-          description("information about the CourseRegistration")
-
-          properties do
-            role(
-              :string,
-              "Role of the user. Can be 'Student', 'Staff', or 'Admin'",
-              required: true
-            )
-
-            group(
-              :string,
-              "Group the user belongs to. May be null if the user does not belong to any group.",
-              required: true
-            )
-
-            story(Schema.ref(:UserStory), "Story to displayed to current user. ")
-
-            maxXp(
-              :integer,
-              "Total maximum xp achievable based on submitted assessments. " <>
-                "Only provided for 'Student'"
-            )
-
-            xp(
-              :integer,
-              "Amount of xp. Only provided for 'Student'. " <> "Value will be 0 for non-students."
-            )
-
-            game_states(
-              Schema.ref(:UserGameStates),
-              "States for user's game, including users' game progress, settings and collectibles.\n"
-            )
-
-            agreed_to_research(
-              :boolean,
-              "Whether the user as agreed to participate in the collection of anonymized data for research purposes."
-            )
-          end
-        end,
-      CourseConfiguration:
-        swagger_schema do
-          title("Course Configuration")
-
-          properties do
-            course_name(:string, "Course name", required: true)
-            course_short_name(:string, "Course module code", required: true)
-            viewable(:boolean, "Course viewability", required: true)
-            enable_game(:boolean, "Enable game", required: true)
-            enable_achievements(:boolean, "Enable achievements", required: true)
-            enable_overall_leaderboard(:boolean, "Enable overall leaderboard", required: true)
-            enable_contest_leaderboard(:boolean, "Enable contest leadeboard", required: true)
-            top_leaderboard_display(:integer, "Top leaderboard display", required: true)
-
-            top_contest_leaderboard_display(:integer, "Top contest leaderboard display",
-              required: true
-            )
-
-            enable_sourcecast(:boolean, "Enable sourcecast", required: true)
-            enable_stories(:boolean, "Enable stories", required: true)
-            source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
-            source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
-            module_help_text(:string, "Module help text", required: true)
-            assessment_types(:list, "Assessment Types", required: true)
-            assets_prefix(:string, "Assets prefix, used by the game")
-          end
-
-          example(%{
-            course_name: "Programming Methodology",
-            course_short_name: "CS1101S",
-            viewable: true,
-            enable_game: true,
-            enable_achievements: true,
-            enable_overall_leaderboard: true,
-            enable_contest_leaderboard: true,
-            top_leaderboard_display: 100,
-            top_contest_leaderboard_display: 10,
-            enable_sourcecast: true,
-            enable_stories: false,
-            source_chapter: 1,
-            source_variant: "default",
-            module_help_text: "Help text",
-            assessment_types: ["Missions", "Quests", "Paths", "Contests", "Others"],
-            assets_prefix: "courses-prod/1/"
-          })
-        end,
-      SourceVariant:
-        swagger_schema do
-          type(:string)
-          enum([:default, :concurrent, :gpu, :lazy, "non-det", :wasm])
-        end,
-      UserStory:
-        swagger_schema do
-          properties do
-            story(
-              :string,
-              "Name of story to be displayed to current user. May only be null before start of semester" <>
-                " when no assessments are open"
-            )
-
-            playStory(
-              :boolean,
-              "Whether story should be played (false indicates story field should only be used to fetch" <>
-                " assets, display open world view)"
-            )
-          end
-        end,
-      UserGameStates:
-        swagger_schema do
-        end
-    }
   end
 end

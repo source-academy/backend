@@ -5,14 +5,7 @@ defmodule CadetWeb.AdminAchievementsControllerTest do
 
   alias Cadet.Repo
   alias Cadet.Incentives.Achievement
-  alias CadetWeb.AdminAchievementsController
   alias Ecto.UUID
-
-  test "swagger" do
-    assert is_map(AdminAchievementsController.swagger_path_update(nil))
-    assert is_map(AdminAchievementsController.swagger_path_bulk_update(nil))
-    assert is_map(AdminAchievementsController.swagger_path_delete(nil))
-  end
 
   describe "PUT v2/courses/:course_id/admin/achievements/:uuid" do
     @tag authenticate: :staff

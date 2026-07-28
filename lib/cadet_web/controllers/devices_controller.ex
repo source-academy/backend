@@ -1,16 +1,50 @@
 defmodule CadetWeb.DevicesController do
   use CadetWeb, :controller
+  use OpenApiSpex.ControllerSpecs
 
-  use PhoenixSwagger
+  # The secret-based device routes bypass the :api pipeline (no PutApiSpec), so
+  # they cannot be validated by CastAndValidate.
+  plug(
+    OpenApiSpex.Plug.CastAndValidate,
+    [render_error: CadetWeb.Plugs.OpenApiErrorRenderer, replace_params: false]
+    when action not in [:get_cert, :get_key, :get_client_id, :get_mqtt_endpoint]
+  )
 
   alias Cadet.{Devices, DisplayHelper}
   alias Cadet.Devices.Device
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["Devices"])
+
+  @jwt [%{"JWT" => []}]
+
+  operation(:index,
+    summary: "Get the devices registered by the current user",
+    security: @jwt,
+    responses: [
+      ok: {"List of devices", "application/json", %Schema{type: :array, items: Schemas.Device}},
+      unauthorized: ErrorResponses.unauthorised()
+    ]
+  )
 
   def index(conn, _params) do
     render(conn, "index.json",
       registrations: Devices.get_user_registrations(conn.assigns.current_user)
     )
   end
+
+  operation(:register,
+    summary: "Register a new device",
+    security: @jwt,
+    request_body: {"The device to register", "application/json", Schemas.RegisterDevicePayload},
+    responses: [
+      ok: {"The registered device", "application/json", Schemas.Device},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised()
+    ]
+  )
 
   def register(conn, %{"title" => title, "type" => type, "secret" => secret}) do
     case Devices.register(title, type, secret, conn.assigns.current_user) do
@@ -24,6 +58,19 @@ defmodule CadetWeb.DevicesController do
         send_resp(conn, :bad_request, DisplayHelper.full_error_messages(changeset))
     end
   end
+
+  operation(:edit,
+    summary: "Edit the title of a registered device",
+    security: @jwt,
+    parameters: [id: [in: :path, type: :integer, required: true, description: "Device ID"]],
+    request_body: {"The updated device details", "application/json", Schemas.EditDevicePayload},
+    responses: [
+      no_content: "Device updated",
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def edit(conn, %{"id" => device_id, "title" => title}) do
     with {:get_registration, registration} when not is_nil(registration) <-
@@ -40,6 +87,17 @@ defmodule CadetWeb.DevicesController do
     end
   end
 
+  operation(:deregister,
+    summary: "Unregister a device",
+    security: @jwt,
+    parameters: [id: [in: :path, type: :integer, required: true, description: "Device ID"]],
+    responses: [
+      no_content: "Device unregistered",
+      unauthorized: ErrorResponses.unauthorised(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
+
   def deregister(conn, %{"id" => device_id}) do
     with {:get_registration, registration} when not is_nil(registration) <-
            {:get_registration,
@@ -51,6 +109,18 @@ defmodule CadetWeb.DevicesController do
         send_resp(conn, :not_found, "Registration not found")
     end
   end
+
+  operation(:get_ws_endpoint,
+    summary: "Generate a WebSocket endpoint URL for a device",
+    security: @jwt,
+    parameters: [id: [in: :path, type: :integer, required: true, description: "Device ID"]],
+    responses: [
+      ok: {"The WebSocket endpoint", "application/json", Schemas.WebSocketEndpoint},
+      unauthorized: ErrorResponses.unauthorised(),
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def get_ws_endpoint(conn, %{"id" => device_id}) do
     with {:get_registration, registration} when not is_nil(registration) <-
@@ -75,6 +145,16 @@ defmodule CadetWeb.DevicesController do
   # The reason they are separate is so we can avoid the devices having to parse
   # JSON
 
+  operation(:get_cert,
+    summary: "Get the device's PEM-encoded client certificate",
+    parameters: [secret: [in: :path, type: :string, required: true, description: "Device secret"]],
+    responses: [
+      ok: {"The client certificate", "text/plain", %Schema{type: :string}},
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
+
   def get_cert(conn, %{"secret" => secret}) do
     case Devices.get_device_key_cert(secret) do
       {:ok, {_, cert}} ->
@@ -89,6 +169,16 @@ defmodule CadetWeb.DevicesController do
         send_resp(conn, :internal_server_error, "Upstream AWS error")
     end
   end
+
+  operation(:get_key,
+    summary: "Get the device's PEM-encoded client key",
+    parameters: [secret: [in: :path, type: :string, required: true, description: "Device secret"]],
+    responses: [
+      ok: {"The client key", "text/plain", %Schema{type: :string}},
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def get_key(conn, %{"secret" => secret}) do
     case Devices.get_device_key_cert(secret) do
@@ -105,6 +195,15 @@ defmodule CadetWeb.DevicesController do
     end
   end
 
+  operation(:get_client_id,
+    summary: "Get the device's MQTT client id",
+    parameters: [secret: [in: :path, type: :string, required: true, description: "Device secret"]],
+    responses: [
+      ok: {"The MQTT client id", "text/plain", %Schema{type: :string}},
+      not_found: ErrorResponses.not_found()
+    ]
+  )
+
   def get_client_id(conn, %{"secret" => secret}) do
     case Devices.get_device(secret) do
       %Device{id: id} -> text(conn, Devices.get_thing_name(id))
@@ -112,201 +211,18 @@ defmodule CadetWeb.DevicesController do
     end
   end
 
+  operation(:get_mqtt_endpoint,
+    summary: "Get the MQTT endpoint the device should connect to",
+    parameters: [secret: [in: :path, type: :string, required: true, description: "Device secret"]],
+    responses: [
+      ok: {"The MQTT endpoint", "text/plain", %Schema{type: :string}}
+    ]
+  )
+
   @spec get_mqtt_endpoint(Plug.Conn.t(), any) :: Plug.Conn.t()
   def get_mqtt_endpoint(conn, _params) do
     # we have the secret but we don't check it currently
     {:ok, endpoint} = Devices.get_endpoint_address()
     text(conn, endpoint)
-  end
-
-  swagger_path :index do
-    get("/devices")
-
-    summary("Returns the devices registered by the user")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    response(200, "OK", Schema.array(:Device))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :register do
-    post("/devices")
-
-    summary("Registers a new device")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-    produces("application/json")
-
-    parameters do
-      device(
-        :body,
-        Schema.ref(:RegisterDevicePayload),
-        "Device details",
-        required: true
-      )
-    end
-
-    response(200, "OK", Schema.ref(:Device))
-    response(400, "Conflicting device type or missing or invalid parameters")
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :edit do
-    post("/devices/{id}")
-
-    summary("Edits the given device")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      id(:path, :integer, "Device ID", required: true)
-      device(:body, Schema.ref(:EditDevicePayload), "Device details", required: true)
-    end
-
-    response(204, "OK")
-    response(400, "Missing or invalid parameters")
-    response(401, "Unauthorised")
-    response(404, "Device not found")
-  end
-
-  swagger_path :deregister do
-    PhoenixSwagger.Path.delete("/devices/{id}")
-
-    summary("Unregisters the given device")
-
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      id(:path, :integer, "Device ID", required: true)
-    end
-
-    response(204, "OK")
-    response(401, "Unauthorised")
-    response(404, "Device not found")
-  end
-
-  swagger_path :get_ws_endpoint do
-    get("/devices/{id}/ws_endpoint")
-
-    summary("Generates a WebSocket endpoint URL for the given device")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    parameters do
-      id(:path, :integer, "Device ID", required: true)
-    end
-
-    response(200, "OK", Schema.ref(:WebSocketEndpoint))
-    response(401, "Unauthorised")
-    response(404, "Device not found")
-  end
-
-  swagger_path :get_cert do
-    get("/devices/{secret}/cert")
-
-    summary("Returns the device's PEM-encoded client certificate")
-
-    produces("text/plain")
-
-    parameters do
-      secret(:path, :string, "Device secret", required: true)
-    end
-
-    response(200, "OK", %PhoenixSwagger.Schema{type: :string})
-    response(404, "Device not found")
-  end
-
-  swagger_path :get_key do
-    get("/devices/{secret}/key")
-
-    summary("Returns the device's PEM-encoded client key")
-
-    produces("text/plain")
-
-    parameters do
-      secret(:path, :string, "Device secret", required: true)
-    end
-
-    response(200, "OK", %PhoenixSwagger.Schema{type: :string})
-    response(404, "Device not found")
-  end
-
-  swagger_path :get_client_id do
-    get("/devices/{secret}/client_id")
-
-    summary("Returns the device's MQTT client ID")
-
-    produces("text/plain")
-
-    parameters do
-      secret(:path, :string, "Device secret", required: true)
-    end
-
-    response(200, "OK", %PhoenixSwagger.Schema{type: :string})
-    response(404, "Device not found")
-  end
-
-  swagger_path :get_mqtt_endpoint do
-    get("/devices/{secret}/mqtt_endpoint")
-
-    summary("Returns the MQTT endpoint the device should connect to")
-
-    produces("text/plain")
-
-    parameters do
-      secret(:path, :string, "Device secret", required: true)
-    end
-
-    response(200, "OK", %PhoenixSwagger.Schema{type: :string})
-    response(404, "Device not found")
-  end
-
-  def swagger_definitions do
-    %{
-      Device:
-        swagger_schema do
-          properties do
-            id(:integer, "Device ID (unique to user)", required: true)
-            type(:string, "User type", required: true)
-            title(:string, "User-given device title", required: true)
-            secret(:string, "Device unique secret", required: true)
-          end
-        end,
-      WebSocketEndpoint:
-        swagger_schema do
-          properties do
-            endpoint(:string, "Endpoint URL", required: true)
-            clientNamePrefix(:string, "Client name prefix to use", required: true)
-            thingName(:string, "Device name", required: true)
-          end
-        end,
-
-      # Schemas for payloads to modify data
-      RegisterDevicePayload:
-        swagger_schema do
-          properties do
-            type(:string, "User type", required: true)
-            title(:string, "User-given device title", required: true)
-            secret(:string, "Device unique secret", required: true)
-          end
-        end,
-      EditDevicePayload:
-        swagger_schema do
-          properties do
-            title(:string, "User-given device title", required: true)
-          end
-        end
-    }
   end
 end

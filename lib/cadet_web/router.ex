@@ -5,6 +5,7 @@ defmodule CadetWeb.Router do
     plug(:accepts, ["json"])
     plug(:fetch_session)
     plug(:put_secure_browser_headers)
+    plug(OpenApiSpex.Plug.PutApiSpec, module: CadetWeb.ApiSpec)
   end
 
   pipeline :auth do
@@ -30,6 +31,13 @@ defmodule CadetWeb.Router do
 
   pipeline :ensure_admin do
     plug(:ensure_role, [:admin])
+  end
+
+  # Minimal pipeline for the OpenAPI spec + Swagger UI routes: it only needs the
+  # API spec placed in the conn (for RenderSpec), with no `:accepts` restriction
+  # so the HTML Swagger UI is served too.
+  pipeline :openapi_spec do
+    plug(OpenApiSpex.Plug.PutApiSpec, module: CadetWeb.ApiSpec)
   end
 
   scope "/", CadetWeb do
@@ -192,10 +200,9 @@ defmodule CadetWeb.Router do
     delete("/users/:course_reg_id", AdminUserController, :delete_user)
 
     put("/config", AdminCoursesController, :update_course_config)
-    # TODO: Missing corresponding Swagger path entry
     get("/config/assessment_configs", AdminCoursesController, :get_assessment_configs)
     put("/config/assessment_configs", AdminCoursesController, :update_assessment_configs)
-    # TODO: Missing corresponding Swagger path entry
+
     delete(
       "/config/assessment_config/:assessment_config_id",
       AdminCoursesController,
@@ -263,7 +270,6 @@ defmodule CadetWeb.Router do
     get("/users/:course_reg_id/assessments", AdminAssessmentsController, :index)
 
     # The admin route for getting assessment information for a specifc user
-    # TODO: Missing Swagger path
     get(
       "/users/:course_reg_id/assessments/:assessmentid",
       AdminAssessmentsController,
@@ -300,25 +306,13 @@ defmodule CadetWeb.Router do
   #   pipe_through :api
   # end
 
-  def swagger_info do
-    %{
-      info: %{
-        version: "2.0",
-        title: "cadet"
-      },
-      basePath: "/v2",
-      securityDefinitions: %{
-        JWT: %{
-          type: "apiKey",
-          in: "header",
-          name: "Authorization"
-        }
-      }
-    }
-  end
-
+  # Interactive API docs (Swagger UI) backed by the OpenAPI 3.0 spec, which is
+  # served as JSON at `/swagger/openapi.json` by `RenderSpec`.
   scope "/swagger" do
-    forward("/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :cadet, swagger_file: "swagger.json")
+    pipe_through(:openapi_spec)
+
+    get("/", OpenApiSpex.Plug.SwaggerUI, path: "/swagger/openapi.json")
+    get("/openapi.json", OpenApiSpex.Plug.RenderSpec, [])
   end
 
   scope "/", CadetWeb do

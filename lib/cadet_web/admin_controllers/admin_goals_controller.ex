@@ -1,15 +1,57 @@
 defmodule CadetWeb.AdminGoalsController do
   use CadetWeb, :controller
+  use OpenApiSpex.ControllerSpecs
 
-  use PhoenixSwagger
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
 
   alias Cadet.Incentives.Goals
   alias Cadet.Accounts.CourseRegistration
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["Incentives"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get all goal definitions in the course",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok: {"List of goals", "application/json", %Schema{type: :array, items: Schemas.Goal}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def index(conn, _) do
     course_id = conn.assigns.course_reg.course_id
     render(conn, "index.json", goals: Goals.get(course_id))
   end
+
+  operation(:index_goals_with_progress,
+    summary: "Get all goals and a specific user's progress",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      course_reg_id: [
+        in: :path,
+        type: :integer,
+        required: true,
+        description: "Course registration ID of the user"
+      ]
+    ],
+    responses: [
+      ok:
+        {"List of goals with progress", "application/json",
+         %Schema{type: :array, items: Schemas.GoalWithProgress}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def index_goals_with_progress(conn, %{"course_reg_id" => course_reg_id}) do
     course_id = conn.assigns.course_reg.course_id
@@ -17,6 +59,20 @@ defmodule CadetWeb.AdminGoalsController do
 
     render(conn, "index_goals_with_progress.json", goals: Goals.get_with_progress(course_reg))
   end
+
+  operation(:bulk_update,
+    summary: "Insert or update multiple goals",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The goals to insert or update", "application/json", Schemas.BulkUpdateGoalsRequest},
+    responses: [
+      no_content: "Goals inserted or updated",
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def bulk_update(conn, %{"goals" => goals}) do
     course_reg = conn.assigns.course_reg
@@ -27,6 +83,20 @@ defmodule CadetWeb.AdminGoalsController do
     |> handle_standard_result(conn)
   end
 
+  operation(:update,
+    summary: "Insert or update a single goal",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      uuid: [in: :path, type: :string, required: true, description: "Goal UUID"]
+    ],
+    request_body: {"The goal to insert or update", "application/json", Schemas.UpdateGoalRequest},
+    responses: [
+      no_content: "Goal inserted or updated",
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
+
   def update(conn, %{"uuid" => uuid, "goal" => goal}) do
     course_reg = conn.assigns.course_reg
 
@@ -35,6 +105,28 @@ defmodule CadetWeb.AdminGoalsController do
     |> Goals.upsert()
     |> handle_standard_result(conn)
   end
+
+  operation(:update_progress,
+    summary: "Insert or update a user's progress for a goal",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      course_reg_id: [
+        in: :path,
+        type: :integer,
+        required: true,
+        description: "Course registration ID of the user"
+      ],
+      uuid: [in: :path, type: :string, required: true, description: "Goal UUID"]
+    ],
+    request_body:
+      {"The goal progress to insert or update", "application/json",
+       Schemas.UpdateGoalProgressRequest},
+    responses: [
+      no_content: "Goal progress inserted or updated",
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def update_progress(conn, %{
         "uuid" => uuid,
@@ -48,6 +140,20 @@ defmodule CadetWeb.AdminGoalsController do
     |> Goals.upsert_progress(uuid, course_reg_id)
     |> handle_standard_result(conn)
   end
+
+  operation(:delete,
+    summary: "Delete a goal",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"],
+      uuid: [in: :path, type: :string, required: true, description: "Goal UUID"]
+    ],
+    responses: [
+      no_content: "Goal deleted",
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found()
+    ]
+  )
 
   def delete(conn, %{"uuid" => uuid}) do
     course_reg = conn.assigns.course_reg
@@ -84,114 +190,5 @@ defmodule CadetWeb.AdminGoalsController do
       goal_uuid: uuid,
       course_reg_id: course_reg_id
     }
-  end
-
-  swagger_path :index do
-    get("/admin/goals")
-
-    summary("Gets goals")
-    security([%{JWT: []}])
-
-    response(200, "OK", Schema.array(:Goal))
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :index_goals_with_progress do
-    get("/admin/goals/{courseRegId}")
-
-    summary("Gets goals and goal progress of a user")
-    security([%{JWT: []}])
-
-    parameters do
-      courseRegId(:path, :integer, "Course Reg ID", required: true)
-    end
-
-    response(200, "OK", Schema.array(:GoalWithProgress))
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :update do
-    put("/admin/goals/{uuid}")
-
-    summary("Inserts or updates a goal")
-
-    security([%{JWT: []}])
-
-    parameters do
-      uuid(:path, :string, "Goal UUID", required: true, format: :uuid)
-
-      goal(
-        :body,
-        Schema.ref(:Goal),
-        "The goal to insert, or properties to update",
-        required: true
-      )
-    end
-
-    response(204, "Success")
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :bulk_update do
-    put("/admin/goals")
-
-    summary("Inserts or updates goals")
-
-    security([%{JWT: []}])
-
-    parameters do
-      goals(
-        :body,
-        Schema.array(:Goal),
-        "The goals to insert or sets of properties to update",
-        required: true
-      )
-    end
-
-    response(204, "Success")
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :update_progress do
-    post("/admin/users/{courseRegId}/goals/{uuid}/progress")
-
-    summary("Inserts or updates own goal progress of specifed goal")
-    security([%{JWT: []}])
-
-    parameters do
-      uuid(:path, :string, "Goal UUID", required: true, format: :uuid)
-      courseRegId(:path, :integer, "Course Reg ID", required: true)
-
-      progress(
-        :body,
-        Schema.ref(:GoalProgress),
-        "The goal progress to insert or update",
-        required: true
-      )
-    end
-
-    response(204, "Success")
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-  end
-
-  swagger_path :delete do
-    PhoenixSwagger.Path.delete("/admin/goals/{uuid}")
-
-    summary("Deletes a goal")
-    security([%{JWT: []}])
-
-    parameters do
-      uuid(:path, :string, "Goal UUID", required: true, format: :uuid)
-    end
-
-    response(204, "Success")
-    response(401, "Unauthorised")
-    response(403, "Forbidden")
-    response(404, "Goal not found")
   end
 end

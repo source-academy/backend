@@ -1,9 +1,9 @@
 defmodule DevicesControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
 
   alias Cadet.{Devices, Repo}
   alias Cadet.Devices.{Device, DeviceRegistration}
-  alias CadetWeb.DevicesController
 
   import Mock
 
@@ -12,23 +12,13 @@ defmodule DevicesControllerTest do
     %{device: device}
   end
 
-  test "swagger" do
-    DevicesController.swagger_definitions()
-    DevicesController.swagger_path_index(nil)
-    DevicesController.swagger_path_register(nil)
-    DevicesController.swagger_path_edit(nil)
-    DevicesController.swagger_path_deregister(nil)
-    DevicesController.swagger_path_get_ws_endpoint(nil)
-    DevicesController.swagger_path_get_cert(nil)
-    DevicesController.swagger_path_get_key(nil)
-    DevicesController.swagger_path_get_client_id(nil)
-    DevicesController.swagger_path_get_mqtt_endpoint(nil)
-  end
-
   describe "GET /devices" do
     @tag authenticate: :student
     test "succeeds if authenticated", %{conn: conn, device: device} do
       registration = insert_registration(conn, device)
+
+      conn = get(conn, build_url())
+      assert_operation_response(conn)
 
       assert [
                %{
@@ -37,10 +27,7 @@ defmodule DevicesControllerTest do
                  "title" => registration.title,
                  "type" => device.type
                }
-             ] ==
-               conn
-               |> get(build_url())
-               |> json_response(200)
+             ] == json_response(conn, 200)
     end
 
     test "401 if unauthenticated", %{conn: conn} do
@@ -55,10 +42,9 @@ defmodule DevicesControllerTest do
     test "succeeds if authenticated", %{conn: conn, device: device} do
       registration = make_json_registration(device)
 
-      assert response =
-               conn
-               |> post(build_url(), registration)
-               |> json_response(200)
+      conn = post(conn, build_url(), registration)
+      assert_operation_response(conn)
+      assert response = json_response(conn, 200)
 
       assert registration["title"] == response["title"]
       assert device.secret == response["secret"]
@@ -184,14 +170,14 @@ defmodule DevicesControllerTest do
                         client_name_prefix: "client_name_prefix"
                       }}
                    end do
+      conn = get(conn, build_url(registration.id, "ws_endpoint"))
+      assert_operation_response(conn)
+
       assert %{
                "clientNamePrefix" => "client_name_prefix",
                "endpoint" => "fake_endpoint",
                "thingName" => "thing_name"
-             } ==
-               conn
-               |> get(build_url(registration.id, "ws_endpoint"))
-               |> json_response(200)
+             } == json_response(conn, 200)
     end
 
     @tag authenticate: :student

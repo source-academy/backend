@@ -1,16 +1,11 @@
 defmodule CadetWeb.SourcecastControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
 
   import Ecto.Query
 
   alias Cadet.Repo
   alias Cadet.Courses.Course
-  alias CadetWeb.SourcecastController
-
-  test "swagger" do
-    SourcecastController.swagger_definitions()
-    SourcecastController.swagger_path_index(nil)
-  end
 
   # describe "GET /v2/sourcecast, unauthenticated" do
   #   test "renders a list of all sourcecast entries for public (those without course_id)", %{
@@ -77,9 +72,11 @@ defmodule CadetWeb.SourcecastControllerTest do
           }
         )
 
+      conn = get(conn, build_url(course_id))
+      assert_operation_response(conn)
+
       res =
         conn
-        |> get(build_url(course_id))
         |> json_response(200)
         |> Enum.map(&Map.delete(&1, "audio"))
         |> Enum.map(&Map.delete(&1, "inserted_at"))

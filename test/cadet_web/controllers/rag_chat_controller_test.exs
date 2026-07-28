@@ -1,5 +1,6 @@
 defmodule CadetWeb.RagChatControllerTest do
   use CadetWeb.ConnCase
+  import OpenApiSpex.TestAssertions
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias Cadet.Courses.Course
@@ -44,6 +45,7 @@ defmodule CadetWeb.RagChatControllerTest do
     @tag authenticate: :student
     test "authenticated request initializes RAG chat", %{conn: conn} do
       conn = post(conn, "/v2/rag_chat", %{})
+      assert_operation_response(conn)
 
       assert %{
                "conversationId" => _,
@@ -55,9 +57,11 @@ defmodule CadetWeb.RagChatControllerTest do
     @tag authenticate: :student
     test "returns existing conversation on second init", %{conn: conn} do
       conn1 = post(conn, "/v2/rag_chat", %{})
+      assert_operation_response(conn1)
       resp1 = json_response(conn1, 200)
 
       conn2 = post(conn, "/v2/rag_chat", %{})
+      assert_operation_response(conn2)
       resp2 = json_response(conn2, 200)
 
       assert resp1["conversationId"] == resp2["conversationId"]
@@ -146,6 +150,7 @@ defmodule CadetWeb.RagChatControllerTest do
 
       use_cassette "chatbot/rag_chat_conversation#1", custom: true do
         conn = post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+        assert_operation_response(conn)
 
         assert %{
                  "conversationId" => _,

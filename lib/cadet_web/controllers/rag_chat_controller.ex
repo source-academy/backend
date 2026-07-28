@@ -1,12 +1,34 @@
 defmodule CadetWeb.RagChatController do
   use CadetWeb, :controller
+  use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
+
   require Logger
 
   alias Cadet.Chatbot.{Conversation, LlmConversations, RagConversations, RagPipeline}
   alias Cadet.Courses.Course
   alias Cadet.Repo
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
   @max_content_size 1000
   @context_size 10
+
+  tags(["Chat"])
+  security([%{"JWT" => []}])
+
+  operation(:init_chat,
+    summary: "Initialise (or fetch) the current user's RAG chatbot conversation",
+    responses: [
+      ok: {"Conversation", "application/json", Schemas.ConversationInit},
+      unauthorized: ErrorResponses.unauthorised(),
+      unprocessable_entity: ErrorResponses.unprocessable(),
+      too_many_requests: ErrorResponses.too_many_requests()
+    ]
+  )
 
   def init_chat(conn, _params) do
     user = conn.assigns.current_user
@@ -29,6 +51,20 @@ defmodule CadetWeb.RagChatController do
         send_resp(conn, :unprocessable_entity, error_message)
     end
   end
+
+  operation(:chat,
+    summary: "Send a message to the RAG chatbot",
+    request_body: {"The user's message", "application/json", Schemas.RagChatMessageRequest},
+    responses: [
+      ok: {"Chatbot response", "application/json", Schemas.ConversationResponse},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      not_found: ErrorResponses.not_found(),
+      unprocessable_entity: ErrorResponses.unprocessable(),
+      too_many_requests: ErrorResponses.too_many_requests(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def chat(conn, %{"message" => user_message}) when is_binary(user_message) do
     user = conn.assigns.current_user

@@ -2,16 +2,14 @@ defmodule CadetWeb.CoursesControllerTest do
   use CadetWeb.ConnCase
 
   import Ecto.Query
+  import OpenApiSpex.TestAssertions
 
   alias Cadet.Repo
   alias Cadet.Accounts.{User, CourseRegistration}
   alias Cadet.Courses.Course
-  alias CadetWeb.CoursesController
 
-  test "swagger" do
-    CoursesController.swagger_definitions()
-    CoursesController.swagger_path_index(nil)
-    CoursesController.swagger_path_create(nil)
+  setup_all do
+    {:ok, api_spec: CadetWeb.ApiSpec.spec()}
   end
 
   describe "POST /v2/config/create" do
@@ -84,7 +82,9 @@ defmodule CadetWeb.CoursesControllerTest do
 
       conn = post(conn, build_url_create(), params)
 
-      assert response(conn, 400) == "Invalid parameter(s)"
+      # `viewable` is typed as a boolean; the non-boolean value is now rejected
+      # at the edge by OpenApiSpex.Plug.CastAndValidate.
+      assert response(conn, 400) == "Missing or invalid parameter(s)"
     end
 
     @tag authenticate: :student
@@ -150,7 +150,7 @@ defmodule CadetWeb.CoursesControllerTest do
 
   describe "GET /v2/courses/course_id/config" do
     @tag authenticate: :student
-    test "succeeds", %{conn: conn} do
+    test "succeeds", %{conn: conn, api_spec: api_spec} do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
 
@@ -159,6 +159,8 @@ defmodule CadetWeb.CoursesControllerTest do
       insert(:assessment_config, %{order: 2, type: "Quests", course: course})
 
       resp = conn |> get(build_url_config(course_id)) |> json_response(200)
+
+      assert_schema(resp, "CourseConfigResponse", api_spec)
 
       assert %{
                "config" => %{

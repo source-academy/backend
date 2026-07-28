@@ -1,12 +1,10 @@
 defmodule CadetWeb.NotificationsControllerTest do
   use CadetWeb.ConnCase
 
-  alias CadetWeb.NotificationsController
+  import OpenApiSpex.TestAssertions
 
-  test "swagger" do
-    NotificationsController.swagger_definitions()
-    NotificationsController.swagger_path_index(nil)
-    NotificationsController.swagger_path_acknowledge(nil)
+  setup_all do
+    {:ok, api_spec: CadetWeb.ApiSpec.spec()}
   end
 
   setup do
@@ -63,7 +61,8 @@ defmodule CadetWeb.NotificationsControllerTest do
       course: course,
       student: student,
       assessment: assessment,
-      notifications: notifications
+      notifications: notifications,
+      api_spec: api_spec
     } do
       expected =
         notifications
@@ -90,6 +89,7 @@ defmodule CadetWeb.NotificationsControllerTest do
         |> Enum.sort(&(&1["id"] < &2["id"]))
 
       assert results == expected
+      Enum.each(results, &assert_schema(&1, "Notification", api_spec))
     end
 
     test "avenger fetches unread notifications", %{
@@ -97,7 +97,8 @@ defmodule CadetWeb.NotificationsControllerTest do
       course: course,
       avenger: avenger,
       assessment: assessment,
-      submission: submission
+      submission: submission,
+      api_spec: api_spec
     } do
       notifications =
         insert_list(3, :notification, %{
@@ -133,6 +134,7 @@ defmodule CadetWeb.NotificationsControllerTest do
         |> Enum.sort(&(&1["id"] < &2["id"]))
 
       assert results == expected
+      Enum.each(results, &assert_schema(&1, "Notification", api_spec))
     end
   end
 

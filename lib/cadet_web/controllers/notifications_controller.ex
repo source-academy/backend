@@ -4,9 +4,34 @@ defmodule CadetWeb.NotificationsController do
   """
 
   use CadetWeb, :controller
-  use PhoenixSwagger
+  use OpenApiSpex.ControllerSpecs
+
+  plug(OpenApiSpex.Plug.CastAndValidate,
+    render_error: CadetWeb.Plugs.OpenApiErrorRenderer,
+    replace_params: false
+  )
 
   alias Cadet.Accounts.Notifications
+  alias CadetWeb.ApiSpec.ErrorResponses
+  alias CadetWeb.Schemas
+  alias OpenApiSpex.Schema
+
+  tags(["Notifications"])
+  security([%{"JWT" => []}])
+
+  operation(:index,
+    summary: "Get the unread notifications belonging to the current user",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    responses: [
+      ok:
+        {"List of notifications", "application/json",
+         %Schema{type: :array, items: Schemas.Notification}},
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden()
+    ]
+  )
 
   def index(conn, _) do
     {:ok, notifications} = Notifications.fetch(conn.assigns.course_reg)
@@ -17,6 +42,24 @@ defmodule CadetWeb.NotificationsController do
       notifications: notifications
     )
   end
+
+  operation(:acknowledge,
+    summary: "Acknowledge one or more notifications",
+    parameters: [
+      course_id: [in: :path, type: :integer, required: true, description: "Course ID"]
+    ],
+    request_body:
+      {"The notification ids to acknowledge", "application/json",
+       Schemas.AcknowledgeNotificationsRequest},
+    responses: [
+      ok: {"Notifications acknowledged", "text/plain", %Schema{type: :string}},
+      bad_request: ErrorResponses.bad_request(),
+      unauthorized: ErrorResponses.unauthorised(),
+      forbidden: ErrorResponses.forbidden(),
+      not_found: ErrorResponses.not_found(),
+      internal_server_error: ErrorResponses.internal_server_error()
+    ]
+  )
 
   def acknowledge(conn, %{"notificationIds" => notification_ids}) do
     case Notifications.acknowledge(
@@ -36,80 +79,5 @@ defmodule CadetWeb.NotificationsController do
         |> put_status(:internal_server_error)
         |> text("Please try again later")
     end
-  end
-
-  swagger_path :index do
-    get("/courses/{course_id}/notifications")
-
-    summary("Get the unread notifications belonging to a user")
-
-    security([%{JWT: []}])
-
-    produces("application/json")
-
-    response(200, "OK", Schema.array(:Notification))
-    response(401, "Unauthorised")
-  end
-
-  swagger_path :acknowledge do
-    post("/courses/{course_id}/notifications/acknowledge")
-    summary("Acknowledge notification(s)")
-    security([%{JWT: []}])
-
-    consumes("application/json")
-
-    parameters do
-      notificationIds(:body, Schema.ref(:NotificationIds), "notification ids", required: true)
-    end
-
-    response(200, "OK")
-    response(400, "Invalid parameters")
-    response(401, "Unauthorised")
-    response(404, "Notification does not exist or does not belong to
-    user")
-  end
-
-  def swagger_definitions do
-    %{
-      Notification:
-        swagger_schema do
-          title("Notification")
-          description("Information about a single notification")
-
-          properties do
-            id(:integer, "the notification id", required: true)
-            type(Schema.ref(:NotificationType), "the type of the notification", required: true)
-            read(:boolean, "the read status of the notification", required: true)
-
-            submission_id(:integer, "the submission id the notification references",
-              required: true
-            )
-
-            question_id(:integer, "the question id the notification references")
-
-            assessment_id(:integer, "the assessment id the notification references")
-            assessment(Schema.ref(:AssessmentInfo), "the assessment the notification references")
-          end
-        end,
-      NotificationIds:
-        swagger_schema do
-          properties do
-            notificationIds(Schema.array(:integer), "the notification ids")
-          end
-        end,
-      NotificationType:
-        swagger_schema do
-          type(:string)
-
-          enum([
-            :new,
-            :submitted,
-            :unsubmitted,
-            :unpublished_grading,
-            :published_grading,
-            :new_message
-          ])
-        end
-    }
   end
 end
