@@ -464,11 +464,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assessment = insert(:assessment, %{course: course, config: config})
 
       new_open_at =
-        DateTime.utc_now()
-        |> Map.put(:hour, 0)
-        |> Map.put(:minute, 0)
-        |> Map.put(:second, 0)
-        |> Map.put(:microsecond, {0, 6})
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
         |> DateTime.add(3 * 86_400, :second)
         |> DateTime.add(4 * 3_600, :second)
 
@@ -497,11 +494,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assessment = insert(:assessment, %{course: course, config: config})
 
       new_open_at =
-        DateTime.utc_now()
-        |> Map.put(:hour, 0)
-        |> Map.put(:minute, 0)
-        |> Map.put(:second, 0)
-        |> Map.put(:microsecond, {0, 6})
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
         |> DateTime.add(3 * 86_400, :second)
         |> DateTime.add(4 * 3_600, :second)
 
@@ -529,11 +523,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        DateTime.utc_now()
-        |> Map.put(:hour, 0)
-        |> Map.put(:minute, 0)
-        |> Map.put(:second, 0)
-        |> Map.put(:microsecond, {0, 6})
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
         |> DateTime.add(3 * 86_400, :second)
         |> DateTime.add(4 * 3_600, :second)
 
@@ -581,11 +572,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        DateTime.utc_now()
-        |> Map.put(:hour, 0)
-        |> Map.put(:minute, 0)
-        |> Map.put(:second, 0)
-        |> Map.put(:microsecond, {0, 6})
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
         |> DateTime.add(-3 * 86_400, :second)
         |> DateTime.add(4 * 3_600, :second)
 
@@ -629,11 +617,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        DateTime.utc_now()
-        |> Map.put(:hour, 0)
-        |> Map.put(:minute, 0)
-        |> Map.put(:second, 0)
-        |> Map.put(:microsecond, {0, 6})
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
         |> DateTime.add(3 * 86_400, :second)
         |> DateTime.add(4 * 3_600, :second)
 
@@ -677,11 +662,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        DateTime.utc_now()
-        |> Map.put(:hour, 0)
-        |> Map.put(:minute, 0)
-        |> Map.put(:second, 0)
-        |> Map.put(:microsecond, {0, 6})
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
         |> DateTime.add(-3 * 86_400, :second)
         |> DateTime.add(4 * 3_600, :second)
 
@@ -725,11 +707,8 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        DateTime.utc_now()
-        |> Map.put(:hour, 0)
-        |> Map.put(:minute, 0)
-        |> Map.put(:second, 0)
-        |> Map.put(:microsecond, {0, 6})
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
         |> DateTime.add(3 * 86_400, :second)
         |> DateTime.add(4 * 3_600, :second)
 
