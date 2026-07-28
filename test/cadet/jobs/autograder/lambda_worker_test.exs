@@ -205,7 +205,7 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
           request!: fn _request -> raise "Lambda unavailable" end do
           log =
             capture_log(fn ->
-              assert :ok =
+              assert {:error, _} =
                        LambdaWorker.perform(%Oban.Job{
                          args: %{
                            "question_id" => question.id,

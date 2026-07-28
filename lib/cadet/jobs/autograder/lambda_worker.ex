@@ -94,7 +94,10 @@ defmodule Cadet.Autograder.LambdaWorker do
       overwrite: get_arg(args, :overwrite, false)
     })
 
-    :ok
+    # Report the failure to Oban so it is recorded as `discarded` (max_attempts:
+    # 1) rather than `completed`, keeping Oban telemetry accurate. The failed
+    # result has already been enqueued above so the answer is still updated.
+    {:error, error_message}
   end
 
   defp failed_result do
