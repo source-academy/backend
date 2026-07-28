@@ -31,7 +31,11 @@ defmodule Cadet.Stories.Story do
 
   defp validate_open_close_date(changeset) do
     validate_change(changeset, :open_at, fn :open_at, open_at ->
-      if DateTime.compare(open_at, get_field(changeset, :close_at)) == :lt do
+      close_at = get_field(changeset, :close_at)
+
+      # `close_at` may be nil (e.g. missing on insert); leave that to
+      # `validate_required/2` rather than crashing in `DateTime.compare/2`.
+      if is_nil(close_at) or DateTime.compare(open_at, close_at) == :lt do
         []
       else
         [open_at: "Open date must be before close date"]
