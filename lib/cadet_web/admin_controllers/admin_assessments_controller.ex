@@ -142,34 +142,40 @@ defmodule CadetWeb.AdminAssessmentsController do
     end
   end
 
-  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
-    voting_questions =
-      Question
-      |> where(type: :voting)
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
-
-    if voting_questions do
-      Assessments.compute_relative_score(voting_questions.id)
+  def calculate_contest_score(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    with_contest_voting_question(conn, course_id, assessment_id, fn voting_question ->
+      Assessments.compute_relative_score(voting_question.id)
       text(conn, "Contest scores calculated")
-    else
-      text(conn, "No voting questions found for the given assessment")
-    end
+    end)
   end
 
-  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => _course_id}) do
-    voting_questions =
-      Question
-      |> where(type: :voting)
-      |> where(assessment_id: ^assessment_id)
-      |> Repo.one()
-
-    if voting_questions do
-      Assessments.assign_winning_contest_entries_xp(voting_questions.id)
-
+  def dispatch_contest_xp(conn, %{"assessmentid" => assessment_id, "course_id" => course_id}) do
+    with_contest_voting_question(conn, course_id, assessment_id, fn voting_question ->
+      Assessments.assign_winning_contest_entries_xp(voting_question.id)
       text(conn, "XP Dispatched")
+    end)
+  end
+
+  # Verifies the assessment belongs to `course_id` (guarding against cross-course
+  # access) then looks up its voting question, invoking `on_voting_question` with
+  # the question when one is found.
+  defp with_contest_voting_question(conn, course_id, assessment_id, on_voting_question) do
+    if is_same_course(course_id, assessment_id) do
+      voting_question =
+        Question
+        |> where(type: :voting)
+        |> where(assessment_id: ^assessment_id)
+        |> Repo.one()
+
+      if voting_question do
+        on_voting_question.(voting_question)
+      else
+        text(conn, "No voting questions found for the given assessment")
+      end
     else
-      text(conn, "No voting questions found for the given assessment")
+      conn
+      |> put_status(403)
+      |> text("User not allowed to modify contest assessments from another course")
     end
   end
 
