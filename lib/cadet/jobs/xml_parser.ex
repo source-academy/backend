@@ -74,10 +74,10 @@ defmodule Cadet.Updater.XMLParser do
     open_at =
       today
       |> DateTime.new!(~T[00:00:00.000000])
-      |> DateTime.add(3 * 86_400, :second)
-      |> DateTime.add(4 * 3_600, :second)
+      |> DateTime.add(3, :day)
+      |> DateTime.add(4, :hour)
 
-    close_at = DateTime.add(open_at, 7 * 86_400, :second)
+    close_at = DateTime.add(open_at, 7, :day)
 
     assessment_config =
       AssessmentConfig

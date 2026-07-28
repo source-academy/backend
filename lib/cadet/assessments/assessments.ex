@@ -2083,7 +2083,7 @@ defmodule Cadet.Assessments do
         else
           if DateTime.compare(
                cur_time,
-               DateTime.add(assessment.open_at, early_hours * 3_600, :second)
+               DateTime.add(assessment.open_at, early_hours, :hour)
              ) ==
                :lt do
             max_bonus_xp
@@ -2258,8 +2258,8 @@ defmodule Cadet.Assessments do
     DateTime.compare(
       DateTime.add(
         assessment.close_at,
-        voting_question.question["reveal_hours"] * 3_600,
-        :second
+        voting_question.question["reveal_hours"],
+        :hour
       ),
       DateTime.utc_now()
     ) == :lt
@@ -2458,7 +2458,7 @@ defmodule Cadet.Assessments do
 
   def fetch_voting_questions_due_yesterday do
     now = DateTime.utc_now()
-    yesterday = DateTime.add(now, -1 * 86_400, :second)
+    yesterday = DateTime.add(now, -1, :day)
 
     Question
     |> join(:left, [q], a in assoc(q, :assessment))
