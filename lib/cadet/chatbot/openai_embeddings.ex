@@ -25,7 +25,10 @@ defmodule Cadet.Chatbot.OpenAIEmbeddings do
         {"Content-Type", "application/json"}
       ]
 
-      case HTTPoison.post(VectorRag.embedding_api_url(), body, headers, recv_timeout: 60_000) do
+      case HTTPoison.post(VectorRag.embedding_api_url(), body, headers,
+             timeout: 30_000,
+             recv_timeout: 120_000
+           ) do
         {:ok, %{status_code: status, body: response_body}} when status in 200..299 ->
           parse_embedding_response(response_body)
 

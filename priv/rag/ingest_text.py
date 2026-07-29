@@ -4,6 +4,9 @@ import hashlib
 import json
 import os
 import re
+import ssl
+from urllib.parse import unquote, urlparse
+from urllib.request import Request, urlopen
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,7 +24,10 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Chunk a course text file and insert embeddings into Cadet pgvector tables."
     )
-    parser.add_argument("path", help="Path to the professor-provided .txt file")
+    parser.add_argument(
+        "source",
+        help="Path or HTTP(S) URL to the professor-provided Markdown/text file",
+    )
     parser.add_argument("--course-id", required=True, type=int, help="Cadet course id")
     parser.add_argument(
         "--language",
@@ -30,6 +36,10 @@ def parse_args():
         help="Internal language tag used by chat retrieval. Defaults to python.",
     )
     parser.add_argument("--title", help="Display title for retrieved chunks")
+    parser.add_argument(
+        "--source-filename",
+        help="Filename stored in chunk metadata. Defaults to the local filename or URL path basename.",
+    )
     parser.add_argument(
         "--database-url",
         default=os.environ.get("DATABASE_URL"),
@@ -62,6 +72,49 @@ def parse_args():
         help="Optional JSONL path where dry-run writes every chunk and its metadata.",
     )
     return parser.parse_args()
+
+
+def source_is_url(source):
+    return urlparse(source).scheme in ["http", "https"]
+
+
+def filename_from_source(source):
+    if source_is_url(source):
+        path = unquote(urlparse(source).path)
+        filename = Path(path).name
+        return filename or "remote_textbook.md"
+
+    return Path(source).name
+
+
+def title_from_source(source):
+    return Path(filename_from_source(source)).stem
+
+
+def load_source_text(source):
+    if source_is_url(source):
+        request = Request(
+            source,
+            headers={
+                "User-Agent": "cadet-vector-rag-ingest/1.0",
+            },
+        )
+        context = ssl_context()
+
+        with urlopen(request, timeout=30, context=context) as response:
+            charset = response.headers.get_content_charset() or "utf-8"
+            return response.read().decode(charset)
+
+    return Path(source).read_text(encoding="utf-8")
+
+
+def ssl_context():
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
 
 
 def checksum(text):
@@ -321,10 +374,10 @@ def ensure_openai_api_key(args):
 def main():
     args = parse_args()
 
-    path = Path(args.path)
-    source_text = path.read_text(encoding="utf-8")
+    source_text = load_source_text(args.source)
     source_checksum = checksum(source_text)
-    title = args.title or path.stem
+    source_filename = args.source_filename or filename_from_source(args.source)
+    title = args.title or title_from_source(args.source)
 
     splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         model_name=args.embedding_model,
@@ -332,7 +385,7 @@ def main():
         chunk_overlap=args.chunk_overlap,
         separators=["\n\n", "\n", ". ", " ", ""],
     )
-    chunks = build_chunks(source_text, path.name, splitter)
+    chunks = build_chunks(source_text, source_filename, splitter)
 
     if not chunks:
         raise SystemExit("No chunks produced from input file")
@@ -387,7 +440,7 @@ def main():
                 (
                     args.course_id,
                     title,
-                    path.name,
+                    source_filename,
                     source_checksum,
                     args.language,
                     args.embedding_model,

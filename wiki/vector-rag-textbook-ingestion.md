@@ -1,10 +1,41 @@
 # Vector RAG Textbook Ingestion
 
-This guide explains how to add or replace a Markdown textbook/course note file in the backend vector RAG pipeline used by the legacy chat endpoint.
+This guide explains how to add or replace a Markdown textbook/course note source in the backend vector RAG pipeline used by the legacy chat endpoint.
 
-The current `priv/rag/source_texts/sicpy.md` is a working draft. If a final textbook file arrives later, replace or add the new file in `priv/rag/source_texts/`, run the dry-run again, then run ingestion again.
+The preferred source is the deployed Markdown textbook URL. A local file in `priv/rag/source_texts/` can still be used for offline development or emergency fallback, but it should not be treated as canonical once the deployed URL is available.
 
-## Quick Commands
+## Production Deployment
+
+Production deployment runs textbook ingestion automatically after migrations:
+
+```bash
+"$BASEDIR/bin/cadet" rpc Cadet.Release.migrate
+"$BASEDIR/bin/cadet" rpc Cadet.Release.ingest_sicpy_textbook
+```
+
+The deploy script calls both commands in `deployment/init.sh`. The ingestion task is checksum-aware, so repeated deploys do not duplicate rows when the deployed Markdown content has not changed.
+
+Set these environment values in the deployed runtime config:
+
+```bash
+SICPY_MARKDOWN_URL="https://sicp.sourceacademy.org/sicpy.md"
+SICPY_COURSE_ID="<COURSE_ID>"
+SICPY_TITLE="SICP Python"
+SICPY_SOURCE_FILENAME="sicpy.md"
+SICPY_EMBEDDING_RETRIES="3"
+OPENAI_API_KEY="<OPENAI_API_KEY>"
+```
+
+`SICPY_COURSE_ID` must match the real production course id. Chat retrieval filters by `course_id`, so ingesting under the wrong course id makes the textbook chunks invisible to that course.
+
+The release task uses:
+
+- `Cadet.Release.ingest_sicpy_textbook`
+- `Cadet.Chatbot.TextbookIngestion`
+- the app's configured embedding model, defaulting to `text-embedding-3-small`
+- the app's configured OpenAI embedding API URL
+
+## Local Quick Commands
 
 Run everything from the backend root:
 
@@ -20,25 +51,31 @@ python3 -m venv .venv
 mix ecto.migrate
 ```
 
+Set the deployed textbook URL:
+
+```bash
+export SICPY_MARKDOWN_URL="https://sicp.sourceacademy.org/sicpy.md"
+```
+
 Dry-run chunking:
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python" --dry-run
+.venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" --course-id 1 --title "SICP Python" --source-filename sicpy.md --dry-run
 ```
 
 Dry-run chunking and write all chunks locally:
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python" --dry-run --dry-run-output priv/rag/chunk_outputs/sicpy_chunks.jsonl
+.venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" --course-id 1 --title "SICP Python" --source-filename sicpy.md --dry-run --dry-run-output priv/rag/chunk_outputs/sicpy_chunks.jsonl
 ```
 
-Actual ingestion:
+Manual local ingestion, if needed:
 
 ```bash
-DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python"
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" --course-id 1 --title "SICP Python" --source-filename sicpy.md
 ```
 
-For local development, the ingestion script automatically reads the OpenAI API key from `config/dev.secrets.exs` under `config :openai`. You do not need to export `OPENAI_API_KEY` unless you want to override the dev secrets value.
+For local development, the Python ingestion script automatically reads the OpenAI API key from `config/dev.secrets.exs` under `config :openai`. You do not need to export `OPENAI_API_KEY` unless you want to override the dev secrets value.
 
 Turn on vector RAG for chat:
 
@@ -60,19 +97,19 @@ export VECTOR_RAG_MIN_SIMILARITY=0.3
 
 When enabled, the backend logs the retrieved top chunks for each chat request, including similarity score, section, section title, source filename, and a short content preview.
 
-Change `--course-id 1` to the real course id. If the final file has a different filename, replace `priv/rag/source_texts/sicpy.md` in the commands.
+Change `--course-id 1` to the real course id. If the deployed URL does not end in a useful filename, pass `--source-filename sicpy.md` so chunk metadata remains readable.
 
 The flow is:
 
-1. Put the source Markdown file in `priv/rag/source_texts/`.
-2. Run a dry-run to verify section-aware chunking.
-3. Run database migrations if needed.
-4. Run ingestion to populate `rag_documents` and `rag_chunks`.
+1. Point the ingestion task at the deployed Markdown URL.
+2. Run a local dry-run when validating a new textbook source or parser change.
+3. Deploy migrations.
+4. Run `Cadet.Release.ingest_sicpy_textbook` to populate `rag_documents` and `rag_chunks`.
 5. Enable vector retrieval for chat.
 
 ## What This Pipeline Does
 
-The ingestion script reads a Markdown file, detects headings such as:
+The production release task reads Markdown from the deployed HTTP(S) URL. The local Python script can also read a local file for dry-runs and emergency manual ingestion. Both paths detect headings such as:
 
 ```md
 # 1 Building Abstractions with Functions
@@ -131,21 +168,27 @@ The ingestion script assumes the embedding model produces 1536-dimensional vecto
 text-embedding-3-small
 ```
 
-## 1. Put The Markdown File In The Source Text Folder
+## 1. Choose The Markdown Source
 
-Place the new textbook/course note file here:
+Prefer the deployed Markdown textbook URL:
 
-```text
-priv/rag/source_texts/
+```bash
+export SICPY_MARKDOWN_URL="https://sicp.sourceacademy.org/sicpy.md"
 ```
 
-Example:
+If the URL path does not end with a meaningful filename, add a metadata filename override when running ingestion:
 
-```text
-priv/rag/source_texts/sicpy.md
+```bash
+--source-filename sicpy.md
 ```
 
-Use a clear filename. The filename is stored in metadata and helps debugging later.
+For offline development only, a local file can still be used:
+
+```text
+priv/rag/source_texts/<FILE>.md
+```
+
+The source filename is stored in metadata and helps debugging later.
 
 ## 2. Install Python Ingestion Dependencies
 
@@ -163,7 +206,7 @@ If `.venv` already exists and dependencies are installed, you can skip this step
 Always dry-run first.
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/<FILE>.md \
+.venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" \
   --course-id <COURSE_ID> \
   --title "<DISPLAY TITLE>" \
   --dry-run
@@ -172,7 +215,7 @@ Always dry-run first.
 Example:
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md \
+.venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" \
   --course-id 1 \
   --title "SICP Python" \
   --dry-run \
@@ -198,7 +241,7 @@ Each line looks like:
 For `sicpy.md`, the dry-run result was:
 
 ```text
-Chunks: 543
+Chunks: 542
 Section buckets: 131
 Numbered sections: 130
 ```
@@ -239,12 +282,12 @@ The parser expects Markdown headings with numeric titles:
 
 ## 5. Set Database URL and OpenAI Key
 
-The actual ingestion needs database access and an OpenAI API key.
+Manual Python ingestion needs database access and an OpenAI API key.
 
 For the default local Docker/Postgres setup, pass the database URL inline:
 
 ```bash
-DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md --course-id 1 --title "SICP Python"
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/cadet_dev" .venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" --course-id 1 --title "SICP Python" --source-filename sicpy.md
 ```
 
 The OpenAI API key is loaded in this order:
@@ -261,22 +304,31 @@ Optional:
 export VECTOR_RAG_EMBEDDING_MODEL="text-embedding-3-small"
 ```
 
-## 6. Run Actual Ingestion
+## 6. Run Ingestion
 
-After dry-run looks correct:
+In production, ingestion runs through the release task after migrations:
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/<FILE>.md \
+"$BASEDIR/bin/cadet" rpc Cadet.Release.ingest_sicpy_textbook
+```
+
+For manual local ingestion after dry-run looks correct:
+
+
+```bash
+.venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" \
   --course-id <COURSE_ID> \
-  --title "<DISPLAY TITLE>"
+  --title "<DISPLAY TITLE>" \
+  --source-filename sicpy.md
 ```
 
 Example:
 
 ```bash
-.venv/bin/python priv/rag/ingest_text.py priv/rag/source_texts/sicpy.md \
+.venv/bin/python priv/rag/ingest_text.py "$SICPY_MARKDOWN_URL" \
   --course-id 1 \
-  --title "SICP Python"
+  --title "SICP Python" \
+  --source-filename sicpy.md
 ```
 
 This writes:
@@ -286,7 +338,7 @@ This writes:
 - one embedding per chunk
 - section metadata into `rag_chunks.metadata`
 
-The script is checksum-aware. If the same file content has already been ingested for the same course, it exits instead of duplicating rows.
+Both ingestion paths are checksum-aware. If the same source content has already been ingested for the same course, ingestion exits instead of duplicating rows.
 
 ## 7. Verify DB Rows
 
