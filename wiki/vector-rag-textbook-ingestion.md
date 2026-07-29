@@ -2,7 +2,7 @@
 
 This guide explains how to add or replace a Markdown textbook/course note source in the backend vector RAG pipeline used by the legacy chat endpoint.
 
-The preferred source is the deployed Markdown textbook URL. A local file in `priv/rag/source_texts/` can still be used for offline development or emergency fallback, but it should not be treated as canonical once the deployed URL is available.
+The preferred source is the deployed Markdown textbook URL. The local Python helper can still read a local file for offline development or emergency manual ingestion, but local files should not be treated as canonical once the deployed URL is available.
 
 ## Production Deployment
 
@@ -34,6 +34,8 @@ The release task uses:
 - `Cadet.Chatbot.TextbookIngestion`
 - the app's configured embedding model, defaulting to `text-embedding-3-small`
 - the app's configured OpenAI embedding API URL
+- `SICPY_CHUNK_SIZE`, defaulting to `3600` characters
+- `SICPY_CHUNK_OVERLAP`, defaulting to `600` characters
 
 ## Local Quick Commands
 
@@ -117,7 +119,7 @@ The production release task reads Markdown from the deployed HTTP(S) URL. The lo
 ### 1.1.1 Expressions
 ```
 
-It then chunks text inside those heading sections using LangChain and stores metadata for each chunk:
+It then chunks text inside those heading sections and stores metadata for each chunk. Production uses the Elixir splitter in `Cadet.Chatbot.TextbookIngestion`; the local Python helper uses LangChain's `RecursiveCharacterTextSplitter` for dry-runs and manual ingestion.
 
 ```json
 {
@@ -162,7 +164,7 @@ It creates:
 - `rag_chunks`
 - `rag_chunks.embedding vector(1536)`
 
-The ingestion script assumes the embedding model produces 1536-dimensional vectors. The default is:
+The ingestion paths assume the embedding model produces 1536-dimensional vectors. The default is:
 
 ```text
 text-embedding-3-small
@@ -185,7 +187,7 @@ If the URL path does not end with a meaningful filename, add a metadata filename
 For offline development only, a local file can still be used:
 
 ```text
-priv/rag/source_texts/<FILE>.md
+path/to/<FILE>.md
 ```
 
 The source filename is stored in metadata and helps debugging later.
@@ -266,7 +268,13 @@ Bad signs:
 - one section has hundreds of chunks unexpectedly
 - chunks split headings from their section body
 
-If section detection looks wrong, adjust the heading format or update the parser in:
+If section detection looks wrong for the production release task, adjust the heading format or update the parser in:
+
+```text
+lib/cadet/chatbot/textbook_ingestion.ex
+```
+
+If section detection looks wrong for Python dry-runs or manual Python ingestion, update the parser in:
 
 ```text
 priv/rag/ingest_text.py
@@ -298,7 +306,7 @@ The OpenAI API key is loaded in this order:
 
 So for local development, adding the key to `config/dev.secrets.exs` is enough. Do not commit API keys or database credentials.
 
-Optional:
+Optional for manual Python ingestion:
 
 ```bash
 export VECTOR_RAG_EMBEDDING_MODEL="text-embedding-3-small"
