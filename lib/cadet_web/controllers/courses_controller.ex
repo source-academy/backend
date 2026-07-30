@@ -37,25 +37,37 @@ defmodule CadetWeb.CoursesController do
 
     params = params |> to_snake_case_atom_keys()
 
-    if user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 do
-      case Courses.create_course_config(params, user) do
-        {:ok, course} ->
-          Logger.info("Successfully created course #{course.id} for user #{user.id}.")
-          text(conn, "OK")
+    cond do
+      Cadet.Env.hardened_mode?() and not user.super_admin ->
+        Logger.error(
+          "Rejected course creation by user #{user.id}: hardened mode restricts creation to super admins."
+        )
 
-        {:error, _, _, _} ->
-          Logger.error("Invalid parameters provided by user #{user.id} while creating a course.")
+        # Opaque 401 — identical to Cadet.Auth.ErrorHandler, does not disclose the restriction.
+        send_resp(conn, 401, "Unauthorised")
 
-          conn
-          |> put_status(:bad_request)
-          |> text("Invalid parameter(s)")
-      end
-    else
-      Logger.error("User #{user.id} has exceeded the limit of 5 admin courses.")
+      user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 ->
+        case Courses.create_course_config(params, user) do
+          {:ok, course} ->
+            Logger.info("Successfully created course #{course.id} for user #{user.id}.")
+            text(conn, "OK")
 
-      conn
-      |> put_status(:forbidden)
-      |> text("User not allowed to be admin of more than 5 courses.")
+          {:error, _, _, _} ->
+            Logger.error(
+              "Invalid parameters provided by user #{user.id} while creating a course."
+            )
+
+            conn
+            |> put_status(:bad_request)
+            |> text("Invalid parameter(s)")
+        end
+
+      true ->
+        Logger.error("User #{user.id} has exceeded the limit of 5 admin courses.")
+
+        conn
+        |> put_status(:forbidden)
+        |> text("User not allowed to be admin of more than 5 courses.")
     end
   end
 

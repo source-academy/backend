@@ -152,6 +152,9 @@ config :cadet,
 # config :cadet, Cadet.Jobs.Scheduler,
 #   timezone: "Asia/Singapore",
 
+# Hardened mode: when true, only super admins may create courses.
+# config :cadet, hardened_mode: true
+
 # # Additional configuration for SAML authentication
 # # For more details, see https://github.com/handnot2/samly
 # config :samly, Samly.Provider,
