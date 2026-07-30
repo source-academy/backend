@@ -16,7 +16,7 @@ defmodule CadetWeb.ChatController do
     user = conn.assigns.current_user
     Logger.info("Initializing chat for user #{user.id}")
 
-    with :ok <- ensure_chatbot_enabled(user),
+    with {:ok, _course} <- fetch_chatbot_course(user),
          {:ok, language_id} <- validate_language_id(Map.get(params, "languageId")),
          {:ok, conversation} <-
            LlmConversations.get_or_create_conversation(user.id, %{language_id: language_id}) do
@@ -80,7 +80,7 @@ defmodule CadetWeb.ChatController do
       "Processing chat message for user #{user.id}. Message length: #{String.length(user_message)}."
     )
 
-    with :ok <- ensure_chatbot_enabled(user),
+    with {:ok, course} <- fetch_chatbot_course(user),
          :ok <- validate_optional_string(section),
          :ok <- validate_optional_string(visible_text),
          :ok <- validate_optional_conversation_id(conversation_id),
@@ -105,7 +105,7 @@ defmodule CadetWeb.ChatController do
              section,
              visible_text || "",
              retrieved_chunks,
-             Map.get(params, "louisChatbotPrompt"),
+             course.louis_chatbot_prompt,
              updated_conversation.language_id
            ),
          payload <- generate_payload(updated_conversation, system_prompt) do
@@ -153,13 +153,13 @@ defmodule CadetWeb.ChatController do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
+  defp fetch_chatbot_course(%{latest_viewed_course_id: nil}), do: {:error, :chatbot_disabled}
+
   # The fontend hides the louis widget based on the enable_louis_chatbot flag
   # This is an additional safeguard in the backend
-  defp ensure_chatbot_enabled(%{latest_viewed_course_id: nil}), do: {:error, :chatbot_disabled}
-
-  defp ensure_chatbot_enabled(%{latest_viewed_course_id: course_id}) do
+  defp fetch_chatbot_course(%{latest_viewed_course_id: course_id}) do
     case Courses.get_course_config(course_id) do
-      {:ok, %{enable_louis_chatbot: true}} -> :ok
+      {:ok, %{enable_louis_chatbot: true} = course} -> {:ok, course}
       _ -> {:error, :chatbot_disabled}
     end
   end
