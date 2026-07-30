@@ -16,6 +16,6 @@ defmodule Cadet.Env do
   """
   @spec restrict_course_creation? :: boolean()
   def restrict_course_creation? do
-    Application.get_env(:cadet, :restrict_course_creation, false)
+    Application.get_env(:cadet, :restrict_course_creation)
   end
 end
