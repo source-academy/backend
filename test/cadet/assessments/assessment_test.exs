@@ -28,7 +28,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
             DateTime.utc_now()
-            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.add(7, :day)
             |> DateTime.to_unix()
             |> Integer.to_string()
         },
@@ -44,7 +44,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
             DateTime.utc_now()
-            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.add(7, :day)
             |> DateTime.to_unix()
             |> Integer.to_string(),
           cover_picture: Faker.Avatar.image_url(),
@@ -73,7 +73,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
             DateTime.utc_now()
-            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.add(7, :day)
             |> DateTime.to_unix()
             |> Integer.to_string()
         },
@@ -93,7 +93,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           title: "mission",
           number: "4",
           open_at: DateTime.utc_now(),
-          close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second)
+          close_at: DateTime.add(DateTime.utc_now(), 7, :day)
         })
 
       {:error, changeset} = Repo.insert(config_not_in_course)
@@ -113,7 +113,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
             DateTime.utc_now()
-            |> DateTime.add(Enum.random(1..7) * 86_400, :second)
+            |> DateTime.add(Enum.random(1..7), :day)
             |> DateTime.to_unix()
             |> Integer.to_string()
         })
@@ -130,7 +130,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           course_id: course1.id,
           title: "mission",
           number: "4",
-          open_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+          open_at: DateTime.add(DateTime.utc_now(), 7, :day),
           close_at: DateTime.utc_now()
         })
 
@@ -153,7 +153,7 @@ defmodule Cadet.Assessments.AssessmentTest do
           open_at: DateTime.utc_now() |> DateTime.to_unix() |> Integer.to_string(),
           close_at:
             DateTime.utc_now()
-            |> DateTime.add(7 * 86_400, :second)
+            |> DateTime.add(7, :day)
             |> DateTime.to_unix()
             |> Integer.to_string()
         })

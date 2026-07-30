@@ -10,7 +10,7 @@ defmodule Cadet.Jobs.LogEntryTest do
 
     entry = LogEntry |> where(name: @name) |> Repo.one()
 
-    assert DateTime.compare(entry.last_run, DateTime.utc_now() |> DateTime.add(-60, :second)) ==
+    assert DateTime.compare(entry.last_run, DateTime.utc_now() |> DateTime.add(-1, :minute)) ==
              :gt
   end
 
@@ -19,7 +19,7 @@ defmodule Cadet.Jobs.LogEntryTest do
       name: @name,
       last_run:
         DateTime.utc_now()
-        |> DateTime.add(-25 * 60 * 60, :second)
+        |> DateTime.add(-25, :hour)
         |> DateTime.truncate(:second)
     }
     |> Repo.insert!()
@@ -28,7 +28,7 @@ defmodule Cadet.Jobs.LogEntryTest do
 
     entry = LogEntry |> where(name: @name) |> Repo.one()
 
-    assert DateTime.compare(entry.last_run, DateTime.utc_now() |> DateTime.add(-60, :second)) ==
+    assert DateTime.compare(entry.last_run, DateTime.utc_now() |> DateTime.add(-1, :minute)) ==
              :gt
   end
 
@@ -37,7 +37,7 @@ defmodule Cadet.Jobs.LogEntryTest do
       name: @name,
       last_run:
         DateTime.utc_now()
-        |> DateTime.add(-23 * 60 * 60, :second)
+        |> DateTime.add(-23, :hour)
         |> DateTime.truncate(:second)
     }
     |> Repo.insert!()

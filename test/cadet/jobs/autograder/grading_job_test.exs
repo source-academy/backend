@@ -40,8 +40,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :hour),
           config: assessment_config,
           course: course
         })
@@ -128,8 +128,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :hour),
           config: assessment_config,
           course: course
         })
@@ -436,8 +436,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :hour),
           config: assessment_config,
           course: course
         })
@@ -552,8 +552,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :hour),
           config: assessment_config,
           course: course
         })
@@ -672,8 +672,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :hour),
           config: assessment_config,
           course: course
         })
@@ -799,8 +799,8 @@ defmodule Cadet.Autograder.GradingJobTest do
       assessments =
         insert_list(3, :assessment, %{
           is_published: true,
-          open_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), -4 * 3_600, :second),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :hour),
           config: assessment_config,
           course: course
         })

@@ -466,14 +466,14 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       new_open_at =
         Date.utc_today()
         |> DateTime.new!(~T[00:00:00.000000])
-        |> DateTime.add(3 * 86_400, :second)
-        |> DateTime.add(4 * 3_600, :second)
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
       new_open_at_string =
         new_open_at
         |> DateTime.to_iso8601(:extended)
 
-      new_close_at = DateTime.add(new_open_at, 7 * 86_400, :second)
+      new_close_at = DateTime.add(new_open_at, 7, :day)
 
       new_close_at_string =
         new_close_at
@@ -496,14 +496,14 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       new_open_at =
         Date.utc_today()
         |> DateTime.new!(~T[00:00:00.000000])
-        |> DateTime.add(3 * 86_400, :second)
-        |> DateTime.add(4 * 3_600, :second)
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
       new_open_at_string =
         new_open_at
         |> DateTime.to_iso8601(:extended)
 
-      new_close_at = DateTime.add(new_open_at, 7 * 86_400, :second)
+      new_close_at = DateTime.add(new_open_at, 7, :day)
 
       new_close_at_string =
         new_close_at
@@ -525,10 +525,10 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       open_at =
         Date.utc_today()
         |> DateTime.new!(~T[00:00:00.000000])
-        |> DateTime.add(3 * 86_400, :second)
-        |> DateTime.add(4 * 3_600, :second)
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = DateTime.add(open_at, 7 * 86_400, :second)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -540,7 +540,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_open_at =
         open_at
-        |> DateTime.add(3 * 86_400, :second)
+        |> DateTime.add(3, :day)
 
       new_open_at_string =
         new_open_at
@@ -548,7 +548,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_close_at =
         close_at
-        |> DateTime.add(5 * 86_400, :second)
+        |> DateTime.add(5, :day)
 
       new_close_at_string =
         new_close_at
@@ -574,10 +574,10 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       open_at =
         Date.utc_today()
         |> DateTime.new!(~T[00:00:00.000000])
-        |> DateTime.add(-3 * 86_400, :second)
-        |> DateTime.add(4 * 3_600, :second)
+        |> DateTime.add(-3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = DateTime.add(open_at, 7 * 86_400, :second)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -589,7 +589,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_open_at =
         open_at
-        |> DateTime.add(6 * 86_400, :second)
+        |> DateTime.add(6, :day)
 
       new_open_at_string =
         new_open_at
@@ -619,10 +619,10 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       open_at =
         Date.utc_today()
         |> DateTime.new!(~T[00:00:00.000000])
-        |> DateTime.add(3 * 86_400, :second)
-        |> DateTime.add(4 * 3_600, :second)
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = DateTime.add(open_at, 7 * 86_400, :second)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -634,7 +634,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_close_at =
         open_at
-        |> DateTime.add(-1 * 86_400, :second)
+        |> DateTime.add(-1, :day)
 
       new_close_at_string =
         new_close_at
@@ -664,10 +664,10 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       open_at =
         Date.utc_today()
         |> DateTime.new!(~T[00:00:00.000000])
-        |> DateTime.add(-3 * 86_400, :second)
-        |> DateTime.add(4 * 3_600, :second)
+        |> DateTime.add(-3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = DateTime.add(open_at, 7 * 86_400, :second)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -679,7 +679,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_close_at =
         DateTime.utc_now()
-        |> DateTime.add(-1 * 86_400, :second)
+        |> DateTime.add(-1, :day)
 
       new_close_at_string =
         new_close_at
@@ -709,10 +709,10 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       open_at =
         Date.utc_today()
         |> DateTime.new!(~T[00:00:00.000000])
-        |> DateTime.add(3 * 86_400, :second)
-        |> DateTime.add(4 * 3_600, :second)
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = DateTime.add(open_at, 7 * 86_400, :second)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -724,7 +724,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_open_at =
         DateTime.utc_now()
-        |> DateTime.add(-1 * 86_400, :second)
+        |> DateTime.add(-1, :day)
 
       new_open_at_string =
         new_open_at

@@ -83,10 +83,10 @@ defmodule Cadet.Updater.XMLParserTest do
         open_at =
           Date.utc_today()
           |> DateTime.new!(~T[00:00:00.000000])
-          |> DateTime.add(3 * 86_400, :second)
-          |> DateTime.add(4 * 3_600, :second)
+          |> DateTime.add(3, :day)
+          |> DateTime.add(4, :hour)
 
-        close_at = DateTime.add(open_at, 7 * 86_400, :second)
+        close_at = DateTime.add(open_at, 7, :day)
 
         expected_assesment =
           assessment
@@ -130,8 +130,8 @@ defmodule Cadet.Updater.XMLParserTest do
         still_closed_assessment =
           Map.from_struct(%{
             assessment
-            | open_at: DateTime.add(DateTime.utc_now(), 2 * 86_400, :second),
-              close_at: DateTime.add(DateTime.utc_now(), 6 * 86_400, :second)
+            | open_at: DateTime.add(DateTime.utc_now(), 2, :day),
+              close_at: DateTime.add(DateTime.utc_now(), 6, :day)
           })
 
         %Assessment{}
@@ -248,8 +248,8 @@ defmodule Cadet.Updater.XMLParserTest do
         already_open_assessment =
           Map.from_struct(%{
             assessment
-            | open_at: DateTime.add(DateTime.utc_now(), -2 * 86_400, :second),
-              close_at: DateTime.add(DateTime.utc_now(), 2 * 86_400, :second)
+            | open_at: DateTime.add(DateTime.utc_now(), -2, :day),
+              close_at: DateTime.add(DateTime.utc_now(), 2, :day)
           })
 
         inserted_asst =

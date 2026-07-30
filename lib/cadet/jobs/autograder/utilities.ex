@@ -86,7 +86,7 @@ defmodule Cadet.Autograder.Utilities do
     |> where(
       [a],
       a.close_at < ^DateTime.utc_now() and
-        a.close_at >= ^DateTime.add(DateTime.utc_now(), -86_400, :second)
+        a.close_at >= ^DateTime.add(DateTime.utc_now(), -1, :day)
     )
     |> join(:inner, [a, c], q in assoc(a, :questions))
     |> preload([_, q], questions: q)

@@ -286,8 +286,8 @@ defmodule CadetWeb.AnswerControllerTest do
 
     before_open_at_assessment =
       insert(:assessment, %{
-        open_at: DateTime.add(DateTime.utc_now(), 5 * 86_400, :second),
-        close_at: DateTime.add(DateTime.utc_now(), 10 * 86_400, :second)
+        open_at: DateTime.add(DateTime.utc_now(), 5, :day),
+        close_at: DateTime.add(DateTime.utc_now(), 10, :day)
       })
 
     before_open_at_question = insert(:mcq_question, %{assessment: before_open_at_assessment})
@@ -303,8 +303,8 @@ defmodule CadetWeb.AnswerControllerTest do
 
     after_close_at_assessment =
       insert(:assessment, %{
-        open_at: DateTime.add(DateTime.utc_now(), -10 * 86_400, :second),
-        close_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second)
+        open_at: DateTime.add(DateTime.utc_now(), -10, :day),
+        close_at: DateTime.add(DateTime.utc_now(), -5, :day)
       })
 
     after_close_at_question = insert(:mcq_question, %{assessment: after_close_at_assessment})
@@ -423,8 +423,8 @@ defmodule CadetWeb.AnswerControllerTest do
 
     before_open_at_assessment =
       insert(:assessment, %{
-        open_at: DateTime.add(DateTime.utc_now(), 5 * 86_400, :second),
-        close_at: DateTime.add(DateTime.utc_now(), 10 * 86_400, :second)
+        open_at: DateTime.add(DateTime.utc_now(), 5, :day),
+        close_at: DateTime.add(DateTime.utc_now(), 10, :day)
       })
 
     before_open_at_question =

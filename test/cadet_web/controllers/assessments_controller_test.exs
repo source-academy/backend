@@ -514,8 +514,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        open_at: DateTime.add(DateTime.utc_now(), -30 * 86_400, :second),
-        close_at: DateTime.add(DateTime.utc_now(), -20 * 86_400, :second)
+        open_at: DateTime.add(DateTime.utc_now(), -30, :day),
+        close_at: DateTime.add(DateTime.utc_now(), -20, :day)
       })
       |> Repo.update()
 
@@ -601,7 +601,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        close_at: DateTime.add(DateTime.utc_now(), 20 * 86_400, :second)
+        close_at: DateTime.add(DateTime.utc_now(), 20, :day)
       })
       |> Repo.update()
 
@@ -687,7 +687,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
       voting_assessment
       |> Assessment.changeset(%{
-        close_at: DateTime.add(DateTime.utc_now(), 20 * 86_400, :second)
+        close_at: DateTime.add(DateTime.utc_now(), 20, :day)
       })
       |> Repo.update()
 
@@ -946,8 +946,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       mission.assessment
       |> Assessment.changeset(%{
-        open_at: DateTime.add(DateTime.utc_now(), 5 * 86_400, :second),
-        close_at: DateTime.add(DateTime.utc_now(), 10 * 86_400, :second)
+        open_at: DateTime.add(DateTime.utc_now(), 5, :day),
+        close_at: DateTime.add(DateTime.utc_now(), 10, :day)
       })
       |> Repo.update!()
 
@@ -1014,8 +1014,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
 
         mission.assessment
         |> Assessment.changeset(%{
-          open_at: DateTime.add(DateTime.utc_now(), 5 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), 10 * 86_400, :second)
+          open_at: DateTime.add(DateTime.utc_now(), 5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 10, :day)
         })
         |> Repo.update!()
 
@@ -1122,8 +1122,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
-            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+            open_at: DateTime.add(DateTime.utc_now(), -40, :hour),
+            close_at: DateTime.add(DateTime.utc_now(), 7, :day),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1175,8 +1175,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
-            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+            open_at: DateTime.add(DateTime.utc_now(), -40, :hour),
+            close_at: DateTime.add(DateTime.utc_now(), 7, :day),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1242,8 +1242,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
-            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+            open_at: DateTime.add(DateTime.utc_now(), -40, :hour),
+            close_at: DateTime.add(DateTime.utc_now(), 7, :day),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1309,8 +1309,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
         assessment =
           insert(
             :assessment,
-            open_at: DateTime.add(DateTime.utc_now(), -40 * 3_600, :second),
-            close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+            open_at: DateTime.add(DateTime.utc_now(), -40, :hour),
+            close_at: DateTime.add(DateTime.utc_now(), 7, :day),
             is_published: true,
             config: assessment_config,
             course: course1
@@ -1364,8 +1364,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           assessment =
             insert(
               :assessment,
-              open_at: DateTime.add(DateTime.utc_now(), -hours_after * 3_600, :second),
-              close_at: DateTime.add(DateTime.utc_now(), 100 * 3_600, :second),
+              open_at: DateTime.add(DateTime.utc_now(), -hours_after, :hour),
+              close_at: DateTime.add(DateTime.utc_now(), 100, :hour),
               is_published: true,
               config: assessment_config,
               course: course1
@@ -1424,8 +1424,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           assessment =
             insert(
               :assessment,
-              open_at: DateTime.add(DateTime.utc_now(), -hours_after * 3_600, :second),
-              close_at: DateTime.add(DateTime.utc_now(), 1 * 3_600, :second),
+              open_at: DateTime.add(DateTime.utc_now(), -hours_after, :hour),
+              close_at: DateTime.add(DateTime.utc_now(), 1, :hour),
               is_published: true,
               config: assessment_config,
               course: course1
@@ -1480,8 +1480,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
           assessment =
             insert(
               :assessment,
-              open_at: DateTime.add(DateTime.utc_now(), -hours_after * 3_600, :second),
-              close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+              open_at: DateTime.add(DateTime.utc_now(), -hours_after, :hour),
+              close_at: DateTime.add(DateTime.utc_now(), 7, :day),
               is_published: true,
               config: assessment_config,
               course: course1
@@ -1573,8 +1573,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
       # before opening and would fall under "Submission not found"
       after_close_at_assessment =
         insert(:assessment, %{
-          open_at: DateTime.add(DateTime.utc_now(), -10 * 86_400, :second),
-          close_at: DateTime.add(DateTime.utc_now(), -5 * 86_400, :second),
+          open_at: DateTime.add(DateTime.utc_now(), -10, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -5, :day),
           course: course1
         })
 
@@ -1634,8 +1634,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     assessment =
       insert(
         :assessment,
-        open_at: DateTime.add(DateTime.utc_now(), -2 * 3_600, :second),
-        close_at: DateTime.add(DateTime.utc_now(), 7 * 86_400, :second),
+        open_at: DateTime.add(DateTime.utc_now(), -2, :hour),
+        close_at: DateTime.add(DateTime.utc_now(), 7, :day),
         is_published: true,
         config: config,
         course: course1
@@ -1694,8 +1694,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
       assessment
       |> Assessment.changeset(%{
         password: "mysupersecretpassword",
-        open_at: DateTime.add(DateTime.utc_now(), -2 * 86_400, :second),
-        close_at: DateTime.add(DateTime.utc_now(), 1 * 86_400, :second)
+        open_at: DateTime.add(DateTime.utc_now(), -2, :day),
+        close_at: DateTime.add(DateTime.utc_now(), 1, :day)
       })
       |> Repo.update!()
 
@@ -1791,8 +1791,8 @@ defmodule CadetWeb.AssessmentsControllerTest do
     } do
       mission.assessment
       |> Assessment.changeset(%{
-        open_at: DateTime.add(DateTime.utc_now(), -2 * 86_400, :second),
-        close_at: DateTime.add(DateTime.utc_now(), -1 * 86_400, :second)
+        open_at: DateTime.add(DateTime.utc_now(), -2, :day),
+        close_at: DateTime.add(DateTime.utc_now(), -1, :day)
       })
       |> Repo.update!()
 

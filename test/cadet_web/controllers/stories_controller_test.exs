@@ -10,8 +10,8 @@ defmodule CadetWeb.StoriesControllerTest do
 
   setup do
     valid_params = %{
-      open_at: DateTime.add(DateTime.utc_now(), 1 * 86_400, :second),
-      close_at: DateTime.add(DateTime.utc_now(), Enum.random(2..30) * 86_400, :second),
+      open_at: DateTime.add(DateTime.utc_now(), 1, :day),
+      close_at: DateTime.add(DateTime.utc_now(), Enum.random(2..30), :day),
       is_published: false,
       filenames: ["mission-1.txt"],
       title: "Mission1",
@@ -47,7 +47,7 @@ defmodule CadetWeb.StoriesControllerTest do
     } do
       course_id = conn.assigns[:course_id]
       course = Course |> where(id: ^course_id) |> Repo.one()
-      one_week_ago = DateTime.add(DateTime.utc_now(), -7 * 86_400, :second)
+      one_week_ago = DateTime.add(DateTime.utc_now(), -7, :day)
 
       insert(:story, %{course: course})
       insert(:story, %{Map.put(params, :course, course) | :is_published => true})
@@ -78,7 +78,7 @@ defmodule CadetWeb.StoriesControllerTest do
     test "obtain all stories from own course", %{conn: conn, valid_params: params} do
       course_id = conn.assigns[:course_id]
       course = Course |> where(id: ^course_id) |> Repo.one()
-      one_week_ago = DateTime.add(DateTime.utc_now(), -7 * 86_400, :second)
+      one_week_ago = DateTime.add(DateTime.utc_now(), -7, :day)
 
       insert(:story, %{course: course})
       insert(:story, %{Map.put(params, :course, course) | :is_published => true})

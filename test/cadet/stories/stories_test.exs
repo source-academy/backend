@@ -5,8 +5,8 @@ defmodule Cadet.StoriesTest do
 
   setup do
     valid_params = %{
-      open_at: DateTime.add(DateTime.utc_now(), 1 * 86_400, :second),
-      close_at: DateTime.add(DateTime.utc_now(), Enum.random(2..30) * 86_400, :second),
+      open_at: DateTime.add(DateTime.utc_now(), 1, :day),
+      close_at: DateTime.add(DateTime.utc_now(), Enum.random(2..30), :day),
       is_published: false,
       filenames: ["mission-1.txt"],
       title: "Mission1",
@@ -30,7 +30,7 @@ defmodule Cadet.StoriesTest do
     test "invalid params", %{valid_params: params} do
       invalid_params = %{
         params
-        | :open_at => DateTime.add(DateTime.utc_now(), 365 * 86_400, :second)
+        | :open_at => DateTime.add(DateTime.utc_now(), 365, :day)
       }
 
       assert_changeset_db(invalid_params, :invalid)
@@ -57,7 +57,7 @@ defmodule Cadet.StoriesTest do
     end
 
     test "Only show published and open stories", %{valid_params: params} do
-      one_week_ago = DateTime.add(DateTime.utc_now(), -7 * 86_400, :second)
+      one_week_ago = DateTime.add(DateTime.utc_now(), -7, :day)
 
       course = insert(:course)
       insert(:story, %{course: course})
