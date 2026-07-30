@@ -112,6 +112,8 @@ defmodule CadetWeb.UserView do
           sourceChapter: :source_chapter,
           sourceVariant: :source_variant,
           moduleHelpText: :module_help_text,
+          louisChatbotPrompt: :louis_chatbot_prompt,
+          enableLouisChatbot: :enable_louis_chatbot,
           assetsPrefix: &Courses.assets_prefix/1
         })
     end

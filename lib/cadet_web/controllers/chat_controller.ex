@@ -8,6 +8,7 @@ defmodule CadetWeb.ChatController do
   require Logger
 
   alias Cadet.Chatbot.{Conversation, LanguageDirectory, LlmConversations, SicpNotesPy, VectorRag}
+  alias Cadet.Courses
   @max_content_size 1000
   @openai_http_options [timeout: 60_000, recv_timeout: 60_000]
 
@@ -15,7 +16,8 @@ defmodule CadetWeb.ChatController do
     user = conn.assigns.current_user
     Logger.info("Initializing chat for user #{user.id}")
 
-    with {:ok, language_id} <- validate_language_id(Map.get(params, "languageId")),
+    with :ok <- ensure_chatbot_enabled(user),
+         {:ok, language_id} <- validate_language_id(Map.get(params, "languageId")),
          {:ok, conversation} <-
            LlmConversations.get_or_create_conversation(user.id, %{language_id: language_id}) do
       Logger.info(
@@ -30,6 +32,9 @@ defmodule CadetWeb.ChatController do
         max_content_size: @max_content_size
       })
     else
+      {:error, :chatbot_disabled} ->
+        handle_chatbot_disabled(conn, user)
+
       {:error, :unsupported_language} ->
         send_resp(conn, :bad_request, "Unsupported languageId")
 
@@ -75,7 +80,8 @@ defmodule CadetWeb.ChatController do
       "Processing chat message for user #{user.id}. Message length: #{String.length(user_message)}."
     )
 
-    with :ok <- validate_optional_string(section),
+    with :ok <- ensure_chatbot_enabled(user),
+         :ok <- validate_optional_string(section),
          :ok <- validate_optional_string(visible_text),
          :ok <- validate_optional_conversation_id(conversation_id),
          {:ok, language_id} <- validate_language_id(language_id),
@@ -105,6 +111,9 @@ defmodule CadetWeb.ChatController do
          payload <- generate_payload(updated_conversation, system_prompt) do
       handle_openai_call(conn, payload, updated_conversation, conversation.id)
     else
+      {:error, :chatbot_disabled} ->
+        handle_chatbot_disabled(conn, user)
+
       {:error, :message_too_long} ->
         Logger.error(
           "Message too long for user #{user.id}. Length: #{String.length(user_message)}."
@@ -142,6 +151,26 @@ defmodule CadetWeb.ChatController do
   def chat(conn, _params) do
     Logger.error("Chat request failed due to missing parameters.")
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
+  end
+
+  # The fontend hides the louis widget based on the enable_louis_chatbot flag
+  # This is an additional safeguard in the backend
+  defp ensure_chatbot_enabled(%{latest_viewed_course_id: nil}), do: {:error, :chatbot_disabled}
+
+  defp ensure_chatbot_enabled(%{latest_viewed_course_id: course_id}) do
+    case Courses.get_course_config(course_id) do
+      {:ok, %{enable_louis_chatbot: true}} -> :ok
+      _ -> {:error, :chatbot_disabled}
+    end
+  end
+
+  defp handle_chatbot_disabled(conn, user) do
+    Logger.error(
+      "Chatbot is disabled for user #{user.id}'s course " <>
+        "(#{inspect(user.latest_viewed_course_id)}); rejecting request."
+    )
+
+    send_resp(conn, :forbidden, "Chatbot is not enabled for this course")
   end
 
   defp retrieve_chunks(user, user_message, visible_text) do

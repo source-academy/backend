@@ -12,12 +12,24 @@ defmodule CadetWeb.ChatControllerTest do
   end
 
   setup context do
+    # Tests that louis flag safeguard in the backend works
+    if context[:conn] && Map.has_key?(context.conn.assigns, :course_id) do
+      set_chatbot_enabled(context.conn.assigns.course_id, context[:chatbot_enabled] != false)
+    end
+
     if context[:requires_setup] do
       conversation = insert(:conversation)
       {:ok, conversation_id: conversation.id}
     else
       {:ok, conversation_id: nil}
     end
+  end
+
+  defp set_chatbot_enabled(course_id, enabled) do
+    Cadet.Courses.Course
+    |> Repo.get!(course_id)
+    |> Ecto.Changeset.change(enable_louis_chatbot: enabled)
+    |> Repo.update!()
   end
 
   test "swagger" do
@@ -293,6 +305,51 @@ defmodule CadetWeb.ChatControllerTest do
         })
 
       assert response(conn, :bad_request) == "Unsupported languageId"
+    end
+  end
+
+  describe "course-level chatbot authorization" do
+    @tag authenticate: :student
+    @tag chatbot_enabled: false
+    test "rejects init_chat when the course has the chatbot disabled", %{conn: conn} do
+      conn = post(conn, "/v2/chats", %{"languageId" => "python1"})
+
+      assert response(conn, :forbidden) == "Chatbot is not enabled for this course"
+      assert Repo.all(Cadet.Chatbot.Conversation) == []
+    end
+
+    @tag authenticate: :student
+    @tag chatbot_enabled: false
+    test "rejects a message when the course has the chatbot disabled", %{conn: conn} do
+      conversation = insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+      conn =
+        post(conn, "/v2/chats/message", %{
+          "message" => "How do functions work?",
+          "languageId" => "python1"
+        })
+
+      assert response(conn, :forbidden) == "Chatbot is not enabled for this course"
+
+      # The rejected message must not be persisted to the conversation.
+      persisted = Repo.get!(Cadet.Chatbot.Conversation, conversation.id).messages
+      assert length(persisted) == length(conversation.messages)
+      refute Enum.any?(persisted, &(&1["role"] == "user"))
+    end
+
+    @tag authenticate: :staff
+    @tag chatbot_enabled: false
+    test "rejects staff too, not just students", %{conn: conn} do
+      conn = post(conn, "/v2/chats", %{"languageId" => "python1"})
+
+      assert response(conn, :forbidden) == "Chatbot is not enabled for this course"
+    end
+
+    @tag authenticate: :student
+    test "allows init_chat when the course has the chatbot enabled", %{conn: conn} do
+      conn = post(conn, "/v2/chats", %{"languageId" => "python1"})
+
+      assert %{"conversationId" => _} = json_response(conn, 200)
     end
   end
 end
