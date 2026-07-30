@@ -43,8 +43,10 @@ defmodule CadetWeb.CoursesController do
           "Rejected course creation by user #{user.id}: course creation is restricted to super admins."
         )
 
-        # Opaque 401 — identical to Cadet.Auth.ErrorHandler, does not disclose the restriction.
-        send_resp(conn, 401, "Unauthorised")
+        # Opaque 403 — generic "Forbidden" body, does not disclose the restriction.
+        conn
+        |> put_status(:forbidden)
+        |> text("Forbidden")
 
       user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 ->
         case Courses.create_course_config(params, user) do

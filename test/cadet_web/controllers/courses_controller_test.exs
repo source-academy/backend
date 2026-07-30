@@ -140,7 +140,7 @@ defmodule CadetWeb.CoursesControllerTest do
     end
 
     @tag authenticate: :student
-    test "when course creation is restricted, non-super-admin is rejected with opaque 401", %{
+    test "when course creation is restricted, non-super-admin is rejected with opaque 403", %{
       conn: conn
     } do
       original = Application.get_env(:cadet, :restrict_course_creation, false)
@@ -169,7 +169,7 @@ defmodule CadetWeb.CoursesControllerTest do
 
       resp = post(conn, build_url_create(), params)
 
-      assert response(resp, 401) == "Unauthorised"
+      assert response(resp, 403) == "Forbidden"
       # no course should have been created
       assert CourseRegistration |> where(user_id: ^user.id) |> Repo.all() |> length() == 1
     end
