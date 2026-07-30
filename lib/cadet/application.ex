@@ -12,6 +12,8 @@ defmodule Cadet.Application do
     children = [
       # Start the Ecto repository
       supervisor(Cadet.Repo, []),
+      # Cache the frontend language directory before chat traffic is accepted
+      {Cadet.Chatbot.LanguageDirectory, []},
       # Start the endpoint when the application starts
       supervisor(CadetWeb.Endpoint, []),
       {Phoenix.PubSub, [name: Cadet.PubSub, adapter: Phoenix.PubSub.PG2]},

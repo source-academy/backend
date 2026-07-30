@@ -41,3 +41,4 @@ while ! "$BASEDIR/bin/cadet" rpc 1; do
 done
 sleep 5 # Allow application to fully start up - avoid a race condition
 "$BASEDIR/bin/cadet" rpc Cadet.Release.migrate
+"$BASEDIR/bin/cadet" rpc Cadet.Release.ingest_sicpy_textbook

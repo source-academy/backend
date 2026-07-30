@@ -40,6 +40,8 @@ defmodule CadetWeb.AdminCoursesControllerTest do
       params = %{
         "courseName" => "Data Structures and Algorithms",
         "courseShortName" => "CS2040S",
+        "louisChatbotPrompt" => "Use simple examples.",
+        "enableLouisChatbot" => true,
         "enableGame" => false,
         "enableAchievements" => false,
         "enableSourcecast" => true,

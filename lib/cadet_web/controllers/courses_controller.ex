@@ -109,6 +109,9 @@ defmodule CadetWeb.CoursesController do
         required: false
       )
 
+      louis_chatbot_prompt(:body, :string, "Custom Louis chatbot prompt", required: false)
+      enable_louis_chatbot(:body, :boolean, "Enable Louis chatbot", required: false)
+
       source_chapter(:body, :number, "Default source chapter", required: true)
 
       source_variant(:body, Schema.ref(:SourceVariant), "Default source variant name",
@@ -167,6 +170,9 @@ defmodule CadetWeb.CoursesController do
               required: false
             )
 
+            louis_chatbot_prompt(:string, "Custom Louis chatbot prompt", required: false)
+            enable_louis_chatbot(:boolean, "Enable Louis chatbot", required: false)
+
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
@@ -191,6 +197,8 @@ defmodule CadetWeb.CoursesController do
             llm_api_url: "https://api.openai.com/v1/chat/completions",
             llm_course_level_prompt:
               "You are a helpful teaching assistant for an introductory programming course",
+            louis_chatbot_prompt: "Use simple examples suitable for beginners.",
+            enable_louis_chatbot: true,
             source_chapter: 1,
             source_variant: "default",
             module_help_text: "Help text",
