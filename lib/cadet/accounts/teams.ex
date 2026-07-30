@@ -157,6 +157,8 @@ defmodule Cadet.Accounts.Teams do
     count == length(all_ids)
   end
 
+  # Checks if any of the given students are already in another team for the same
+  # assessment. Pass team_id: -1 for team creation (matches no existing team).
   defp student_already_in_team?(team_id, student_ids, assessment_id) do
     query =
       from(tm in TeamMember,
