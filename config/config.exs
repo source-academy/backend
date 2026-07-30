@@ -11,6 +11,9 @@ config :cadet, environment: Mix.env()
 config :cadet,
   ecto_repos: [Cadet.Repo]
 
+# When true, only super admins may create courses.
+config :cadet, restrict_course_creation: false
+
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 # Scheduler, e.g. for CS1101S
