@@ -12,11 +12,10 @@ defmodule Cadet.Env do
   end
 
   @doc """
-  Returns whether hardened mode is enabled. Under hardened mode, course
-  creation is restricted to super admins.
+  Returns whether course creation is restricted to super admins.
   """
-  @spec hardened_mode? :: boolean()
-  def hardened_mode? do
-    Application.get_env(:cadet, :hardened_mode, false)
+  @spec restrict_course_creation? :: boolean()
+  def restrict_course_creation? do
+    Application.get_env(:cadet, :restrict_course_creation, false)
   end
 end

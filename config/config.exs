@@ -11,8 +11,8 @@ config :cadet, environment: Mix.env()
 config :cadet,
   ecto_repos: [Cadet.Repo]
 
-# Hardened mode: when true, only super admins may create courses.
-config :cadet, hardened_mode: false
+# When true, only super admins may create courses.
+config :cadet, restrict_course_creation: false
 
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 

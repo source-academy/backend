@@ -140,10 +140,12 @@ defmodule CadetWeb.CoursesControllerTest do
     end
 
     @tag authenticate: :student
-    test "under hardened mode, non-super-admin is rejected with an opaque 401", %{conn: conn} do
-      original = Application.get_env(:cadet, :hardened_mode, false)
-      Application.put_env(:cadet, :hardened_mode, true)
-      on_exit(fn -> Application.put_env(:cadet, :hardened_mode, original) end)
+    test "when course creation is restricted, non-super-admin is rejected with opaque 401", %{
+      conn: conn
+    } do
+      original = Application.get_env(:cadet, :restrict_course_creation, false)
+      Application.put_env(:cadet, :restrict_course_creation, true)
+      on_exit(fn -> Application.put_env(:cadet, :restrict_course_creation, original) end)
 
       user = conn.assigns.current_user
       assert CourseRegistration |> where(user_id: ^user.id) |> Repo.all() |> length() == 1
@@ -173,10 +175,10 @@ defmodule CadetWeb.CoursesControllerTest do
     end
 
     @tag authenticate: :student
-    test "under hardened mode, super admin can create a course", %{conn: conn} do
-      original = Application.get_env(:cadet, :hardened_mode, false)
-      Application.put_env(:cadet, :hardened_mode, true)
-      on_exit(fn -> Application.put_env(:cadet, :hardened_mode, original) end)
+    test "when course creation is restricted, super admin can create a course", %{conn: conn} do
+      original = Application.get_env(:cadet, :restrict_course_creation, false)
+      Application.put_env(:cadet, :restrict_course_creation, true)
+      on_exit(fn -> Application.put_env(:cadet, :restrict_course_creation, original) end)
 
       user = conn.assigns.current_user
       {:ok, user} = user |> User.changeset(%{super_admin: true}) |> Repo.update()

@@ -38,9 +38,9 @@ defmodule CadetWeb.CoursesController do
     params = params |> to_snake_case_atom_keys()
 
     cond do
-      Cadet.Env.hardened_mode?() and not user.super_admin ->
+      Cadet.Env.restrict_course_creation?() and not user.super_admin ->
         Logger.error(
-          "Rejected course creation by user #{user.id}: hardened mode restricts creation to super admins."
+          "Rejected course creation by user #{user.id}: course creation is restricted to super admins."
         )
 
         # Opaque 401 — identical to Cadet.Auth.ErrorHandler, does not disclose the restriction.
