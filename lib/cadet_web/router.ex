@@ -46,7 +46,6 @@ defmodule CadetWeb.Router do
   scope "/v2", CadetWeb do
     pipe_through([:api, :auth])
 
-    # get("/sourcecast", SourcecastController, :index)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
