@@ -16,14 +16,15 @@ defmodule Cadet.Repo.Migrations.CreateVectorRagTables do
       embedding_model varchar(255) NOT NULL,
       metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
       inserted_at timestamp(0) without time zone NOT NULL,
-      updated_at timestamp(0) without time zone NOT NULL
+      updated_at timestamp(0) without time zone NOT NULL,
+      UNIQUE (id, course_id)
     )
     """)
 
     execute("""
     CREATE TABLE rag_chunks (
       id bigserial PRIMARY KEY,
-      rag_document_id bigint NOT NULL REFERENCES rag_documents(id) ON DELETE CASCADE,
+      rag_document_id bigint NOT NULL,
       course_id bigint NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
       language varchar(32) NOT NULL,
       chunk_index integer NOT NULL,
@@ -32,7 +33,9 @@ defmodule Cadet.Repo.Migrations.CreateVectorRagTables do
       metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
       embedding vector(1536) NOT NULL,
       inserted_at timestamp(0) without time zone NOT NULL,
-      updated_at timestamp(0) without time zone NOT NULL
+      updated_at timestamp(0) without time zone NOT NULL,
+      FOREIGN KEY (rag_document_id, course_id)
+        REFERENCES rag_documents (id, course_id) ON DELETE CASCADE
     )
     """)
 

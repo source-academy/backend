@@ -53,9 +53,17 @@ config :cadet, :rag_documents,
 
 vector_rag_min_similarity =
   case System.get_env("VECTOR_RAG_MIN_SIMILARITY") do
-    nil -> 0.3
-    "" -> nil
-    value -> String.to_float(value)
+    nil ->
+      0.3
+
+    "" ->
+      nil
+
+    value ->
+      case Float.parse(value) do
+        {float, _} -> float
+        :error -> raise "VECTOR_RAG_MIN_SIMILARITY must be a number, got: #{inspect(value)}"
+      end
   end
 
 # Configure optional paragraph-level vector RAG for the legacy chat endpoint.
