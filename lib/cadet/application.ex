@@ -27,7 +27,7 @@ defmodule Cadet.Application do
     children =
       case Application.get_env(:cadet, :openid_connect_providers) do
         nil -> children
-        providers -> children ++ [{OpenIDConnect.Worker, [providers]}]
+        providers -> children ++ [{OpenIDConnect.Worker, providers}]
       end
 
     {:ok, _} = Logger.add_backend(Sentry.LoggerBackend)
