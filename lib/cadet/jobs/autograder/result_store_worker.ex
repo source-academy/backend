@@ -4,7 +4,7 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   concurrency on the assumption that autograding time >> db IO time so as to reduce db load.
   """
   use Oban.Worker,
-    queue: :autograder,
+    queue: :autograder_results,
     max_attempts: 1
 
   require Logger

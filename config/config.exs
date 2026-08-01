@@ -114,7 +114,7 @@ config :cadet, Oban,
         args: %{"notification_type" => "avenger_backlog"}}
      ]}
   ],
-  queues: [default: 10, notifications: 1, autograder: 20]
+  queues: [default: 10, notifications: 1, autograder: 20, autograder_results: 5]
 
 config :cadet, Cadet.Mailer, adapter: Bamboo.LocalAdapter
 
