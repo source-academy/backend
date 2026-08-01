@@ -151,6 +151,9 @@ config :cadet,
 # config :cadet, Cadet.Jobs.Scheduler,
 #   timezone: "Asia/Singapore",
 
+# When true, only super admins may create courses.
+# config :cadet, restrict_course_creation: true
+
 # # Additional configuration for SAML authentication
 # # For more details, see https://github.com/handnot2/samly
 # config :samly, Samly.Provider,
