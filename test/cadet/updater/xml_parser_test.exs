@@ -81,12 +81,12 @@ defmodule Cadet.Updater.XMLParserTest do
           |> Repo.one()
 
         open_at =
-          Timex.now()
-          |> Timex.beginning_of_day()
-          |> Timex.shift(days: 3)
-          |> Timex.shift(hours: 4)
+          Date.utc_today()
+          |> DateTime.new!(~T[00:00:00.000000])
+          |> DateTime.add(3, :day)
+          |> DateTime.add(4, :hour)
 
-        close_at = Timex.shift(open_at, days: 7)
+        close_at = DateTime.add(open_at, 7, :day)
 
         expected_assesment =
           assessment
@@ -130,8 +130,8 @@ defmodule Cadet.Updater.XMLParserTest do
         still_closed_assessment =
           Map.from_struct(%{
             assessment
-            | open_at: Timex.shift(Timex.now(), days: 2),
-              close_at: Timex.shift(Timex.now(), days: 6)
+            | open_at: DateTime.add(DateTime.utc_now(), 2, :day),
+              close_at: DateTime.add(DateTime.utc_now(), 6, :day)
           })
 
         %Assessment{}
@@ -248,8 +248,8 @@ defmodule Cadet.Updater.XMLParserTest do
         already_open_assessment =
           Map.from_struct(%{
             assessment
-            | open_at: Timex.shift(Timex.now(), days: -2),
-              close_at: Timex.shift(Timex.now(), days: 2)
+            | open_at: DateTime.add(DateTime.utc_now(), -2, :day),
+              close_at: DateTime.add(DateTime.utc_now(), 2, :day)
           })
 
         inserted_asst =
@@ -343,7 +343,7 @@ defmodule Cadet.Updater.XMLParserTest do
 
       case map1[key] do
         %DateTime{} ->
-          assert(Timex.equal?(map1[key], map2[key]), assert_error_message)
+          assert(DateTime.compare(map1[key], map2[key]) == :eq, assert_error_message)
 
         %{} ->
           assert_map_keys(

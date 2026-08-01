@@ -30,7 +30,7 @@ defmodule Cadet.Autograder.GradingJob do
 
   def grade_all_due_yesterday do
     # 1435 = 1 day - 5 minutes
-    if Log.log_execution("grading_job", Timex.Duration.from_minutes(1435)) do
+    if Log.log_execution("grading_job", 1435 * 60) do
       Logger.info("Started autograding")
 
       for assessment <- Utilities.fetch_assessments_due_yesterday() do

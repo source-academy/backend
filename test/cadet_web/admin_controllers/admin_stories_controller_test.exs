@@ -11,8 +11,8 @@ defmodule CadetWeb.AdminStoriesControllerTest do
 
   setup do
     valid_params = %{
-      open_at: Timex.shift(Timex.now(), days: 1),
-      close_at: Timex.shift(Timex.now(), days: Enum.random(2..30)),
+      open_at: DateTime.add(DateTime.utc_now(), 1, :day),
+      close_at: DateTime.add(DateTime.utc_now(), Enum.random(2..30), :day),
       is_published: false,
       filenames: ["mission-1.txt"],
       title: "Mission1",
