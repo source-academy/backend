@@ -14,7 +14,6 @@ defmodule Cadet.Courses.CourseFactory do
           viewable: true,
           enable_game: true,
           enable_achievements: true,
-          enable_sourcecast: true,
           enable_stories: false,
           source_chapter: 1,
           source_variant: "default",

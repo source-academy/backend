@@ -95,7 +95,6 @@ defmodule CadetWeb.CoursesController do
         required: true
       )
 
-      enable_sourcecast(:body, :boolean, "Enable sourcecast", required: true)
       enable_stories(:body, :boolean, "Enable stories", required: true)
       enable_llm_grading(:body, :boolean, "Enable LLM grading", required: false)
       llm_api_key(:body, :string, "OpenAI API key for this course", required: false)
@@ -156,7 +155,6 @@ defmodule CadetWeb.CoursesController do
               required: true
             )
 
-            enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
             enable_llm_grading(:boolean, "Enable LLM grading", required: false)
             llm_api_key(:string, "OpenAI API key for this course", required: false)
@@ -183,7 +181,6 @@ defmodule CadetWeb.CoursesController do
             enable_contest_leaderboard: true,
             top_leaderboard_display: 100,
             top_contest_leaderboard_display: 10,
-            enable_sourcecast: true,
             enable_stories: false,
             enable_llm_grading: false,
             llm_api_key: "sk-1234567890",

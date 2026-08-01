@@ -46,7 +46,6 @@ defmodule CadetWeb.Router do
   scope "/v2", CadetWeb do
     pipe_through([:api, :auth])
 
-    # get("/sourcecast", SourcecastController, :index)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
@@ -98,8 +97,6 @@ defmodule CadetWeb.Router do
   # Authenticated Pages with course
   scope "/v2/courses/:course_id", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
-
-    get("/sourcecast", SourcecastController, :index)
 
     get("/assessments", AssessmentsController, :index)
     get("/assessments/:assessmentid", AssessmentsController, :show)
@@ -208,8 +205,6 @@ defmodule CadetWeb.Router do
   # Admin pages (Access: All staff)
   scope "/v2/courses/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
-
-    resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
     post(
       "/assessments/:assessmentid/contest_calculate_score",

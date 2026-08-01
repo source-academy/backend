@@ -106,7 +106,6 @@ defmodule CadetWeb.UserControllerTest do
         "courseConfiguration" => %{
           "enableAchievements" => true,
           "enableGame" => true,
-          "enableSourcecast" => true,
           "enableStories" => false,
           "courseShortName" => "CS1101S",
           "moduleHelpText" => "Help Text",
@@ -327,7 +326,6 @@ defmodule CadetWeb.UserControllerTest do
         "courseConfiguration" => %{
           "enableAchievements" => true,
           "enableGame" => true,
-          "enableSourcecast" => true,
           "courseShortName" => "CS1101S",
           "enableStories" => false,
           "moduleHelpText" => "Help Text",

@@ -42,7 +42,6 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         "courseShortName" => "CS2040S",
         "enableGame" => false,
         "enableAchievements" => false,
-        "enableSourcecast" => true,
         "enableStories" => false,
         "sourceChapter" => 1,
         "sourceVariant" => "default",
@@ -68,7 +67,6 @@ defmodule CadetWeb.AdminCoursesControllerTest do
         "enableGame" => false,
         "enableStories" => false,
         "enableAchievements" => false,
-        "enableSourcecast" => true,
         "moduleHelpText" => "help"
       }
 
@@ -150,7 +148,6 @@ defmodule CadetWeb.AdminCoursesControllerTest do
           "courseShortName" => "CS2040S",
           "enableGame" => false,
           "enableAchievements" => false,
-          "enableSourcecast" => true,
           "enableStories" => false,
           "moduleHelpText" => "help",
           "sourceVariant" => "default"

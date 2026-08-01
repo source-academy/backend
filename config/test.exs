@@ -81,8 +81,7 @@ config :cadet,
   ],
   uploader: [
     assets_bucket: "test-sa-assets",
-    assets_prefix: "courses-test/",
-    sourcecasts_bucket: "test-cadet-sourcecasts"
+    assets_prefix: "courses-test/"
   ],
   remote_execution: [
     thing_prefix: "env-sling",
