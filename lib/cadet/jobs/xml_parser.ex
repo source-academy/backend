@@ -347,35 +347,55 @@ defmodule Cadet.Updater.XMLParser do
   defp coerce_string(charlist) when is_list(charlist), do: to_string(charlist)
   defp coerce_string(value) when is_binary(value), do: value
 
+  # The presence of a `language` attribute selects the format: conductor when
+  # present, legacy otherwise. Validating each mode separately keeps the
+  # compound conditions (and thus cyclomatic complexity) low.
   defp validate_programming_language_element(attrs, library_entity) do
-    has_external = not is_nil(xpath(library_entity, ~x"./EXTERNAL"o))
-    has_globals = child_list_nonempty?(library_entity, ~x"./GLOBAL"l)
-    has_options = child_list_nonempty?(library_entity, ~x"./OPTION"el)
-    has_children? = has_external or has_globals or has_options
+    if blank?(attrs[:language]) do
+      validate_legacy_programming_language(attrs)
+    else
+      validate_conductor_programming_language(attrs, library_entity)
+    end
+  end
 
+  defp validate_legacy_programming_language(attrs) do
     cond do
-      not blank?(attrs[:language]) and blank?(attrs[:evaluator]) ->
+      not blank?(attrs[:evaluator]) ->
         {:error, "Both 'language' and 'evaluator' must be present, or neither"}
 
-      blank?(attrs[:language]) and not blank?(attrs[:evaluator]) ->
-        {:error, "Both 'language' and 'evaluator' must be present, or neither"}
-
-      not blank?(attrs[:language]) and not is_nil(attrs[:interpreter]) ->
-        {:error,
-         "Cannot mix 'language'/'evaluator' with 'interpreter' on a single PROGRAMMINGLANGUAGE element"}
-
-      not blank?(attrs[:language]) and
-          (not blank?(attrs[:variant]) or not is_nil(attrs[:exectime]) or has_children?) ->
-        {:error,
-         "Conductor PROGRAMMINGLANGUAGE must not have variant/exectime or any child elements"}
-
-      blank?(attrs[:language]) and is_nil(attrs[:interpreter]) ->
+      is_nil(attrs[:interpreter]) ->
         {:error,
          "PROGRAMMINGLANGUAGE element must specify either interpreter or language+evaluator"}
 
       true ->
         :ok
     end
+  end
+
+  defp validate_conductor_programming_language(attrs, library_entity) do
+    cond do
+      blank?(attrs[:evaluator]) ->
+        {:error, "Both 'language' and 'evaluator' must be present, or neither"}
+
+      not is_nil(attrs[:interpreter]) ->
+        {:error,
+         "Cannot mix 'language'/'evaluator' with 'interpreter' on a single PROGRAMMINGLANGUAGE element"}
+
+      conductor_has_disallowed_content?(attrs, library_entity) ->
+        {:error,
+         "Conductor PROGRAMMINGLANGUAGE must not have variant/exectime or any child elements"}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp conductor_has_disallowed_content?(attrs, library_entity) do
+    not blank?(attrs[:variant]) or
+      not is_nil(attrs[:exectime]) or
+      not is_nil(xpath(library_entity, ~x"./EXTERNAL"o)) or
+      child_list_nonempty?(library_entity, ~x"./GLOBAL"l) or
+      child_list_nonempty?(library_entity, ~x"./OPTION"el)
   end
 
   defp blank?(nil), do: true
