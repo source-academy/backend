@@ -84,7 +84,7 @@ defmodule Cadet.Mixfile do
       {:plug_cowboy, "~> 2.0"},
       {:postgrex, ">= 0.0.0"},
       {:quantum, "~> 3.0"},
-      {:que, "~> 0.10"},
+      {:que, "~> 0.12"},
       {:recase, "~> 0.7", override: true},
       {:samly, "~> 1.0"},
       {:sentry, "~> 13.0"},
