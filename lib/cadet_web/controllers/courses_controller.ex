@@ -50,7 +50,7 @@ defmodule CadetWeb.CoursesController do
 
       user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 ->
         case Courses.create_course_config(params, user) do
-          {:ok, course} ->
+          {:ok, %{course: course}} ->
             Logger.info("Successfully created course #{course.id} for user #{user.id}.")
             text(conn, "OK")
 
