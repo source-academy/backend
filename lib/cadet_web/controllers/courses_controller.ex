@@ -37,25 +37,39 @@ defmodule CadetWeb.CoursesController do
 
     params = params |> to_snake_case_atom_keys()
 
-    if user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 do
-      case Courses.create_course_config(params, user) do
-        {:ok, course} ->
-          Logger.info("Successfully created course #{course.id} for user #{user.id}.")
-          text(conn, "OK")
+    cond do
+      Cadet.Env.restrict_course_creation?() and not user.super_admin ->
+        Logger.error(
+          "Rejected course creation by user #{user.id}: course creation is restricted to super admins."
+        )
 
-        {:error, _, _, _} ->
-          Logger.error("Invalid parameters provided by user #{user.id} while creating a course.")
+        # Opaque 403 — generic "Forbidden" body, does not disclose the restriction.
+        conn
+        |> put_status(:forbidden)
+        |> text("Forbidden")
 
-          conn
-          |> put_status(:bad_request)
-          |> text("Invalid parameter(s)")
-      end
-    else
-      Logger.error("User #{user.id} has exceeded the limit of 5 admin courses.")
+      user.super_admin or CourseRegistrations.get_admin_courses_count(user) < 5 ->
+        case Courses.create_course_config(params, user) do
+          {:ok, course} ->
+            Logger.info("Successfully created course #{course.id} for user #{user.id}.")
+            text(conn, "OK")
 
-      conn
-      |> put_status(:forbidden)
-      |> text("User not allowed to be admin of more than 5 courses.")
+          {:error, _, _, _} ->
+            Logger.error(
+              "Invalid parameters provided by user #{user.id} while creating a course."
+            )
+
+            conn
+            |> put_status(:bad_request)
+            |> text("Invalid parameter(s)")
+        end
+
+      true ->
+        Logger.error("User #{user.id} has exceeded the limit of 5 admin courses.")
+
+        conn
+        |> put_status(:forbidden)
+        |> text("User not allowed to be admin of more than 5 courses.")
     end
   end
 
@@ -81,7 +95,6 @@ defmodule CadetWeb.CoursesController do
         required: true
       )
 
-      enable_sourcecast(:body, :boolean, "Enable sourcecast", required: true)
       enable_stories(:body, :boolean, "Enable stories", required: true)
       enable_llm_grading(:body, :boolean, "Enable LLM grading", required: false)
       llm_api_key(:body, :string, "OpenAI API key for this course", required: false)
@@ -142,7 +155,6 @@ defmodule CadetWeb.CoursesController do
               required: true
             )
 
-            enable_sourcecast(:boolean, "Enable sourcecast", required: true)
             enable_stories(:boolean, "Enable stories", required: true)
             enable_llm_grading(:boolean, "Enable LLM grading", required: false)
             llm_api_key(:string, "OpenAI API key for this course", required: false)
@@ -169,7 +181,6 @@ defmodule CadetWeb.CoursesController do
             enable_contest_leaderboard: true,
             top_leaderboard_display: 100,
             top_contest_leaderboard_display: 10,
-            enable_sourcecast: true,
             enable_stories: false,
             enable_llm_grading: false,
             llm_api_key: "sk-1234567890",

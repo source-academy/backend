@@ -106,8 +106,7 @@ config :cadet,
   ],
   uploader: [
     assets_bucket: "<unique-identifier>-assets",
-    assets_prefix: "courses/",
-    sourcecasts_bucket: "<unique-identifier>-cadet-sourcecasts"
+    assets_prefix: "courses/"
   ],
   # Configuration for Sling integration (executing on remote devices)
   remote_execution: [
@@ -151,6 +150,9 @@ config :cadet,
 # You may also want to change the timezone used for scheduled jobs
 # config :cadet, Cadet.Jobs.Scheduler,
 #   timezone: "Asia/Singapore",
+
+# When true, only super admins may create courses.
+# config :cadet, restrict_course_creation: true
 
 # # Additional configuration for SAML authentication
 # # For more details, see https://github.com/handnot2/samly

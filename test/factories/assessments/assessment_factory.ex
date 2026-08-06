@@ -36,8 +36,8 @@ defmodule Cadet.Assessments.AssessmentFactory do
           reading: Faker.Lorem.sentence(),
           config: config,
           course: course,
-          open_at: Timex.now(),
-          close_at: Timex.shift(Timex.now(), days: Enum.random(1..30)),
+          open_at: DateTime.utc_now(),
+          close_at: DateTime.add(DateTime.utc_now(), Enum.random(1..30), :day),
           is_published: false,
           max_team_size: 1,
           llm_assessment_prompt: nil

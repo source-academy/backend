@@ -1,9 +1,11 @@
 defmodule Cadet.Autograder.LambdaWorkerTest do
   use Cadet.DataCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
+  use Oban.Testing, repo: Cadet.Repo
 
-  import Mock
   import ExUnit.CaptureLog
+  import Mock
+  import Oban.Testing, only: [with_testing_mode: 2]
 
   alias Cadet.Assessments.{Answer, Question}
   alias Cadet.Autograder.{LambdaWorker, ResultStoreWorker}
@@ -52,14 +54,18 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
   describe "#perform" do
     test "success", %{question: question, answer: answer} do
       use_cassette "autograder/success#1", custom: true do
-        with_mock Que, add: fn _, _ -> nil end do
-          LambdaWorker.perform(%{
-            question: Repo.get(Question, question.id),
-            answer: Repo.get(Answer, answer.id)
+        with_testing_mode(:manual, fn ->
+          LambdaWorker.perform(%Oban.Job{
+            args: %{
+              "question_id" => question.id,
+              "answer_id" => answer.id,
+              "overwrite" => true
+            }
           })
 
-          assert_called(
-            Que.add(ResultStoreWorker, %{
+          assert_enqueued(
+            worker: ResultStoreWorker,
+            args: %{
               answer_id: answer.id,
               result: %{
                 result: [
@@ -69,23 +75,25 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                 score: 2,
                 max_score: 2,
                 status: :success
-              }
-            })
+              },
+              overwrite: true
+            }
           )
-        end
+        end)
       end
     end
 
     test "submission errors", %{question: question, answer: answer} do
       use_cassette "autograder/errors#1", custom: true do
-        with_mock Que, add: fn _, _ -> nil end do
+        with_testing_mode(:manual, fn ->
           LambdaWorker.perform(%{
-            question: Repo.get(Question, question.id),
-            answer: Repo.get(Answer, answer.id)
+            question_id: question.id,
+            answer_id: answer.id
           })
 
-          assert_called(
-            Que.add(ResultStoreWorker, %{
+          assert_enqueued(
+            worker: ResultStoreWorker,
+            args: %{
               answer_id: answer.id,
               result: %{
                 result: [
@@ -120,22 +128,23 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                 max_score: 2,
                 status: :success
               }
-            })
+            }
           )
-        end
+        end)
       end
     end
 
     test "lambda errors", %{question: question, answer: answer} do
       use_cassette "autograder/errors#2", custom: true do
-        with_mock Que, add: fn _, _ -> nil end do
+        with_testing_mode(:manual, fn ->
           LambdaWorker.perform(%{
-            question: Repo.get(Question, question.id),
-            answer: Repo.get(Answer, answer.id)
+            question_id: question.id,
+            answer_id: answer.id
           })
 
-          assert_called(
-            Que.add(ResultStoreWorker, %{
+          assert_enqueued(
+            worker: ResultStoreWorker,
+            args: %{
               answer_id: answer.id,
               result: %{
                 score: 0,
@@ -154,9 +163,9 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                   }
                 ]
               }
-            })
+            }
           )
-        end
+        end)
       end
     end
 
@@ -177,8 +186,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
       log =
         capture_log(fn ->
           LambdaWorker.perform(%{
-            question: Repo.get(Question, question.id),
-            answer: Repo.get(Answer, answer.id)
+            question_id: question.id,
+            answer_id: answer.id
           })
         end)
 
@@ -186,28 +195,34 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
     end
   end
 
-  describe "on_failure" do
-    test "it stores error message", %{question: question, answer: answer} do
-      with_mock Que, add: fn _, _ -> nil end do
-        error = %{"errorMessage" => "Task timed out after 1.00 seconds"}
+  describe "failure handling" do
+    test "enqueues a failed result when the Lambda request raises", %{
+      question: question,
+      answer: answer
+    } do
+      with_testing_mode(:manual, fn ->
+        with_mock ExAws, [:passthrough],
+          request!: fn _request -> raise "Lambda unavailable" end do
+          log =
+            capture_log(fn ->
+              assert {:error, _} =
+                       LambdaWorker.perform(%Oban.Job{
+                         args: %{
+                           "question_id" => question.id,
+                           "answer_id" => answer.id,
+                           "overwrite" => true
+                         }
+                       })
+            end)
 
-        log =
-          capture_log(fn ->
-            LambdaWorker.on_failure(
-              %{question: question, answer: answer},
-              inspect(error)
-            )
-          end)
+          assert log =~ "Failed to get autograder result. answer_id: #{answer.id}"
+          assert log =~ "Lambda unavailable"
 
-        assert log =~ "Failed to get autograder result."
-        assert log =~ "answer_id: #{answer.id}"
-        assert log =~ "Task timed out after 1.00 seconds"
-
-        assert_called(
-          Que.add(
-            ResultStoreWorker,
-            %{
+          assert_enqueued(
+            worker: ResultStoreWorker,
+            args: %{
               answer_id: answer.id,
+              overwrite: true,
               result: %{
                 score: 0,
                 max_score: 1,
@@ -227,8 +242,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
               }
             }
           )
-        )
-      end
+        end
+      end)
     end
   end
 

@@ -1,11 +1,11 @@
 defmodule Cadet.Autograder.ResultStoreWorker do
-  # Suppress no_match from macro
-  @dialyzer {:no_match, __after_compile__: 2}
   @moduledoc """
   This module writes results from the autograder to db. Separate worker is created with lower
   concurrency on the assumption that autograding time >> db IO time so as to reduce db load.
   """
-  use Que.Worker, concurrency: 5
+  use Oban.Worker,
+    queue: :autograder_results,
+    max_attempts: 1
 
   require Logger
 
@@ -18,18 +18,40 @@ defmodule Cadet.Autograder.ResultStoreWorker do
   alias Cadet.Assessments.{Answer, Assessment, Submission}
   alias Cadet.Courses.AssessmentConfig
 
-  @dialyzer {:nowarn_function, perform: 1}
-  def perform(params = %{answer_id: answer_id, result: result})
-      when is_ecto_id(answer_id) do
+  @doc """
+  Oban entry point.
+  """
+  @impl Oban.Worker
+  def perform(%Oban.Job{args: args}), do: run(args)
+
+  # Backwards-compatible direct entry: tests and other call-sites pass a
+  # plain args map.
+  def perform(args) when is_map(args) and not is_struct(args), do: run(args)
+
+  @doc """
+  Public entry point used by tests and direct callers (does not require an
+  Oban job struct).
+  """
+  def run(params) when is_map(params) do
+    answer_id = get_arg(params, :answer_id)
+    result = normalize_result(get_arg(params, :result))
+
+    do_run(answer_id, result, get_arg(params, :overwrite, false))
+  end
+
+  # Suppress the Ecto.Multi opaqueness false positive (call_without_opaque) from
+  # the idiomatic `Multi.new() |> Multi.run(...)` pipeline.
+  @dialyzer {:nowarn_function, do_run: 3}
+  defp do_run(answer_id, result, overwrite) when is_ecto_id(answer_id) do
     Multi.new()
     |> Multi.run(:fetch, fn _repo, _ -> fetch_answer(answer_id) end)
     |> Multi.run(:update, fn _repo, %{fetch: answer} ->
-      update_answer(answer, result, params[:overwrite] || false)
+      update_answer(answer, result, overwrite)
     end)
     |> Repo.transaction()
     |> case do
       {:ok, _} ->
-        nil
+        :ok
 
       {:error, failed_operation, failed_value, _} ->
         error_message =
@@ -38,7 +60,25 @@ defmodule Cadet.Autograder.ResultStoreWorker do
 
         Logger.error(error_message)
         Sentry.capture_message(error_message)
+        {:error, error_message}
     end
+  end
+
+  defp normalize_result(result) when is_map(result) do
+    %{
+      score: get_arg(result, :score),
+      max_score: get_arg(result, :max_score),
+      status: normalize_status(get_arg(result, :status)),
+      result: get_arg(result, :result)
+    }
+  end
+
+  defp normalize_status("success"), do: :success
+  defp normalize_status("failed"), do: :failed
+  defp normalize_status(status) when is_atom(status), do: status
+
+  defp get_arg(args, key, default \\ nil) do
+    Map.get(args, key, Map.get(args, Atom.to_string(key), default))
   end
 
   defp fetch_answer(answer_id) when is_ecto_id(answer_id) do

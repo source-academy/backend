@@ -30,7 +30,6 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_contest_leaderboard" => "true",
         "top_leaderboard_display" => "100",
         "top_contest_leaderboard_display" => "10",
-        "enable_sourcecast" => "true",
         "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
@@ -53,7 +52,6 @@ defmodule CadetWeb.CoursesControllerTest do
         "course_short_name" => "CS1101S",
         "viewable" => "true",
         "enable_achievements" => "true",
-        "enable_sourcecast" => "true",
         "enable_stories" => "true",
         "source_variant" => "default",
         "module_help_text" => "Help Text"
@@ -75,7 +73,6 @@ defmodule CadetWeb.CoursesControllerTest do
         "viewable" => "boolean",
         "enable_game" => "true",
         "enable_achievements" => "true",
-        "enable_sourcecast" => "true",
         "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
@@ -98,7 +95,6 @@ defmodule CadetWeb.CoursesControllerTest do
         "viewable" => "true",
         "enable_game" => "true",
         "enable_achievements" => "true",
-        "enable_sourcecast" => "true",
         "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
@@ -126,7 +122,6 @@ defmodule CadetWeb.CoursesControllerTest do
         "enable_contest_leaderboard" => "true",
         "top_leaderboard_display" => "100",
         "top_contest_leaderboard_display" => "10",
-        "enable_sourcecast" => "true",
         "enable_stories" => "true",
         "source_chapter" => "1",
         "source_variant" => "default",
@@ -137,6 +132,71 @@ defmodule CadetWeb.CoursesControllerTest do
 
       assert response(resp, 200) == "OK"
       assert CourseRegistration |> where(user_id: ^user.id) |> Repo.all() |> length() == 7
+    end
+
+    @tag authenticate: :student
+    test "when course creation is restricted, non-super-admin is rejected with opaque 403", %{
+      conn: conn
+    } do
+      original = Application.get_env(:cadet, :restrict_course_creation, false)
+      Application.put_env(:cadet, :restrict_course_creation, true)
+      on_exit(fn -> Application.put_env(:cadet, :restrict_course_creation, original) end)
+
+      user = conn.assigns.current_user
+      assert CourseRegistration |> where(user_id: ^user.id) |> Repo.all() |> length() == 1
+
+      params = %{
+        "course_name" => "CS1101S Programming Methodology (AY20/21 Sem 1)",
+        "course_short_name" => "CS1101S",
+        "viewable" => "true",
+        "enable_game" => "true",
+        "enable_achievements" => "true",
+        "enable_overall_leaderboard" => "true",
+        "enable_contest_leaderboard" => "true",
+        "top_leaderboard_display" => "100",
+        "top_contest_leaderboard_display" => "10",
+        "enable_stories" => "true",
+        "source_chapter" => "1",
+        "source_variant" => "default",
+        "module_help_text" => "Help Text"
+      }
+
+      resp = post(conn, build_url_create(), params)
+
+      assert response(resp, 403) == "Forbidden"
+      # no course should have been created
+      assert CourseRegistration |> where(user_id: ^user.id) |> Repo.all() |> length() == 1
+    end
+
+    @tag authenticate: :student
+    test "when course creation is restricted, super admin can create a course", %{conn: conn} do
+      original = Application.get_env(:cadet, :restrict_course_creation, false)
+      Application.put_env(:cadet, :restrict_course_creation, true)
+      on_exit(fn -> Application.put_env(:cadet, :restrict_course_creation, original) end)
+
+      user = conn.assigns.current_user
+      {:ok, user} = user |> User.changeset(%{super_admin: true}) |> Repo.update()
+
+      params = %{
+        "course_name" => "CS1101S Programming Methodology (AY20/21 Sem 1)",
+        "course_short_name" => "CS1101S",
+        "viewable" => "true",
+        "enable_game" => "true",
+        "enable_achievements" => "true",
+        "enable_overall_leaderboard" => "true",
+        "enable_contest_leaderboard" => "true",
+        "top_leaderboard_display" => "100",
+        "top_contest_leaderboard_display" => "10",
+        "enable_stories" => "true",
+        "source_chapter" => "1",
+        "source_variant" => "default",
+        "module_help_text" => "Help Text"
+      }
+
+      resp = post(conn, build_url_create(), params)
+
+      assert response(resp, 200) == "OK"
+      assert CourseRegistration |> where(user_id: ^user.id) |> Repo.all() |> length() == 2
     end
   end
 
@@ -167,7 +227,6 @@ defmodule CadetWeb.CoursesControllerTest do
                  "viewable" => true,
                  "enableGame" => true,
                  "enableAchievements" => true,
-                 "enableSourcecast" => true,
                  "enableStories" => false,
                  "sourceChapter" => 1,
                  "sourceVariant" => "default",

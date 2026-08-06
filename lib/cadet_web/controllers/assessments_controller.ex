@@ -4,7 +4,7 @@ defmodule CadetWeb.AssessmentsController do
   use PhoenixSwagger
   require Logger
 
-  alias Cadet.{Assessments, Repo}
+  alias Cadet.Assessments
   alias CadetWeb.AssessmentsHelpers
 
   # These roles can save and finalise answers for closed assessments and
