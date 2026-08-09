@@ -45,7 +45,8 @@ defmodule Cadet.Chatbot.PromptBuilder do
     map_string = Jason.encode!(document_map_json, pretty: true)
 
     if String.contains?(prompt, @document_map_placeholder) do
-      {:ok, String.replace(prompt, @document_map_placeholder, map_string)}
+      prompt_with_map = String.replace(prompt, @document_map_placeholder, map_string)
+      {:ok, "Today's date is #{Date.utc_today()}.\n\n" <> prompt_with_map}
     else
       Logger.error(
         "PromptBuilder: routing prompt is missing the #{@document_map_placeholder} " <>
