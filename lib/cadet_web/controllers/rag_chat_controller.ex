@@ -57,6 +57,15 @@ defmodule CadetWeb.RagChatController do
           "You must select a course before using the chatbot."
         )
 
+      not course.enable_pixelbot ->
+        Logger.info("RAG chat: course #{course.id} has Pixel disabled; refusing request")
+
+        send_resp(
+          conn,
+          :forbidden,
+          "The chatbot is not enabled for this course."
+        )
+
       is_nil(course.pixelbot_routing_prompt) or course.pixelbot_routing_prompt == "" or
         is_nil(course.pixelbot_answer_prompt) or course.pixelbot_answer_prompt == "" ->
         Logger.error(

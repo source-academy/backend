@@ -110,6 +110,18 @@ defmodule CadetWeb.RagChatControllerTest do
     end
 
     @tag authenticate: :student
+    test "course with pixelbot disabled returns 403", %{conn: conn} do
+      user = conn.assigns.current_user
+      setup_rag_course(conn)
+      course = Repo.get!(Course, user.latest_viewed_course_id)
+      Repo.update!(change(course, %{enable_pixelbot: false}))
+
+      conn = post(conn, "/v2/rag_chat/message", %{"message" => "Hello"})
+
+      assert response(conn, :forbidden) =~ "The chatbot is not enabled for this course."
+    end
+
+    @tag authenticate: :student
     test "course with empty pixelbot prompts returns 422", %{conn: conn} do
       user = conn.assigns.current_user
       course = Repo.get!(Course, user.latest_viewed_course_id)

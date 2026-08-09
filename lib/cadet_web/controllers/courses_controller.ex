@@ -97,6 +97,7 @@ defmodule CadetWeb.CoursesController do
 
       enable_stories(:body, :boolean, "Enable stories", required: true)
       enable_llm_grading(:body, :boolean, "Enable LLM grading", required: false)
+      enable_pixelbot(:body, :boolean, "Enable the Pixel chatbot", required: false)
       llm_api_key(:body, :string, "OpenAI API key for this course", required: false)
       llm_model(:body, :string, "LLM model to be used for this course", required: false)
       llm_api_url(:body, :string, "LLM API URL to be used for this course", required: false)
@@ -157,6 +158,7 @@ defmodule CadetWeb.CoursesController do
 
             enable_stories(:boolean, "Enable stories", required: true)
             enable_llm_grading(:boolean, "Enable LLM grading", required: false)
+            enable_pixelbot(:boolean, "Enable the Pixel chatbot", required: false)
             llm_api_key(:string, "OpenAI API key for this course", required: false)
             llm_model(:string, "LLM model to be used for this course", required: false)
             llm_api_url(:string, "LLM API URL to be used for this course", required: false)
@@ -183,6 +185,7 @@ defmodule CadetWeb.CoursesController do
             top_contest_leaderboard_display: 10,
             enable_stories: false,
             enable_llm_grading: false,
+            enable_pixelbot: true,
             llm_api_key: "sk-1234567890",
             llm_model: "gpt-4",
             llm_api_url: "https://api.openai.com/v1/chat/completions",
