@@ -78,8 +78,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
               mediaType: media_type,
               title: metadata.title,
               description: metadata.description,
-              # The admin fills this in before saving; the LLM has no way to know when a
-              # document is meant to be released.
+              # The LLM can't know this; the admin fills it in before saving.
               releaseDate: nil
             }
 
@@ -111,9 +110,8 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   end
 
   @doc """
-  Bulk-saves entries proposed by upload/2 (inserts) plus edits to already-saved documents
-  (updates). Every incoming s3Key is re-validated against this course's prefix so an admin
-  can't graft another course's S3 object onto their own document map.
+  Bulk-saves new entries from upload/2 plus edits to existing ones. Every s3Key is re-validated
+  against this course's prefix so an admin can't graft another course's object onto their map.
   """
   def save(conn, %{"entries" => entries}) when is_list(entries) do
     course_id = course_id(conn)
@@ -185,8 +183,6 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
     end
   end
 
-  # Maps the fixed set of camelCase fields a save entry may carry to their snake_case atom
-  # keys.
   @save_entry_keys %{
     "id" => :id,
     "categoryId" => :category_id,

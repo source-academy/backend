@@ -1,8 +1,7 @@
 defmodule Cadet.Chatbot.PixelbotDocument do
   @moduledoc """
-  A course document available to the pixelbot RAG pipeline. `s3_key` is intentionally
-  independent of the document's category and title, so renaming either never requires
-  moving the underlying S3 object (see Cadet.Chatbot.DocumentUploader).
+  A course document available to the pixelbot RAG pipeline. `s3_key` is independent of category
+  and title, so renaming either never moves the underlying S3 object.
   """
   use Cadet, :model
 

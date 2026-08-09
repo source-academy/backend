@@ -27,9 +27,8 @@ defmodule CadetWeb.RagChatControllerTest do
       })
     )
 
-    # The routing step is a no-op (and skips its HTTP call entirely) for a course with zero
-    # documents, so the cassettes below - which record both a routing response and an answer
-    # response - need at least one document present to exercise both calls.
+    # Routing skips its HTTP call for a course with no documents, so the cassettes below (which
+    # record both a routing and an answer response) need at least one document to exercise both.
     {:ok, category} = CourseDocuments.create_category(course.id, "lecture")
 
     {:ok, _} =

@@ -1,14 +1,7 @@
 defmodule Cadet.Chatbot.DocumentUploader do
   @moduledoc """
-  Uploads and deletes pixelbot course documents in S3.
-
-  A file is written to S3 as soon as it is uploaded, but its `pixelbot_documents` row is only
-  created when the admin saves. An upload abandoned before that leaves the object behind with
-  nothing referencing it. That is accepted deliberately: the volume is a handful of files a
-  year, and the alternative — a job that enumerates the bucket and deletes whatever is not in
-  the database — risks deleting live documents whenever it runs against an incomplete one. If
-  the orphans ever become worth reclaiming, stage uploads under a `pending/` prefix and let an
-  S3 lifecycle rule expire that prefix, so nothing can delete a saved document by construction.
+  Uploads and deletes pixelbot course documents in S3. An upload abandoned before the admin
+  saves leaks its object; that is accepted rather than run a job that deletes by absence.
   """
   require Logger
 
@@ -82,10 +75,8 @@ defmodule Cadet.Chatbot.DocumentUploader do
   defp megabytes(bytes), do: Float.round(bytes / 1_000_000, 1)
 
   @doc """
-  Moves a document to a new S3 key derived from `new_filename`, copying then deleting the old
-  object. Returns the new key/media type on success. If the delete of the old key fails after
-  the copy succeeds, the old object is left behind: the document row already points at the new
-  key, so nothing is broken, and a stray object costs only storage.
+  Moves a document to a new S3 key, copying then deleting the old object. A failed delete just
+  leaks the old object; the row already points at the new key.
   """
   @spec rename(String.t(), String.t(), integer()) ::
           {:ok, %{s3_key: String.t(), media_type: String.t()}}

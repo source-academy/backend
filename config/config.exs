@@ -50,10 +50,6 @@ config :logger, :console,
   metadata: [:request_id]
 
 # Configure RAG document retrieval (S3 bucket for course documents).
-#
-# The bucket has no default on purpose: a deployment that fell back to a shared one would be
-# deleting files another deployment's database still points at. Unset means uploads are
-# rejected with a clear message, not sent somewhere arbitrary.
 config :cadet, :rag_documents,
   bucket: System.get_env("RAG_DOCUMENTS_BUCKET"),
   region: System.get_env("RAG_DOCUMENTS_REGION", "us-east-1")

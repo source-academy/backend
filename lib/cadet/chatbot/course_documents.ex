@@ -1,8 +1,7 @@
 defmodule Cadet.Chatbot.CourseDocuments do
   @moduledoc """
   Manages course-scoped pixelbot categories/documents and provides lookup utilities for the
-  RAG pipeline. Backed by the `pixelbot_categories` / `pixelbot_documents` tables rather than
-  the old static `priv/course_documents/document_map.json` file.
+  RAG pipeline.
   """
   require Logger
   import Ecto.Query
@@ -91,10 +90,8 @@ defmodule Cadet.Chatbot.CourseDocuments do
   end
 
   @doc """
-  Inserts one pixelbot document row per `entries` item. Each entry must already carry a
-  validated `s3_key` (see the admin controller, which checks the `course-<id>/` prefix before
-  calling this) plus `category_id`, `filename`, `media_type`, `title`, and the optional
-  `description`/`release_date`.
+  Inserts one row per entry. Each must carry an `s3_key` already validated against the
+  `course-<id>/` prefix by the admin controller.
   """
   def create_documents(course_id, entries) do
     if Repo.in_transaction?() do
@@ -251,10 +248,8 @@ defmodule Cadet.Chatbot.CourseDocuments do
   end
 
   @doc false
-  # Ecto raises Ecto.Query.CastError (a plain 500, not a Plug.Exception) if a query parameter
-  # can't be cast to its column's type. Path params always arrive as binaries, and `is_ecto_id`
-  # (used as a controller guard) accepts any binary, not just digit strings — so a malformed id
-  # must be rejected here, before it reaches Ecto, to get a clean :not_found instead of a crash.
+  # `is_ecto_id` accepts any binary, so a malformed id must be rejected before it reaches Ecto,
+  # which would raise Ecto.Query.CastError (a plain 500) instead of returning :not_found.
   defp cast_id(id) when is_integer(id), do: {:ok, id}
 
   defp cast_id(id) when is_binary(id) do
@@ -282,17 +277,8 @@ defmodule Cadet.Chatbot.CourseDocuments do
   # ---- RAG pipeline lookups (string-keyed, matches the old JSON shape) -----
 
   @doc """
-  Strips everything the routing LLM shouldn't see (s3_key, filename, ids) and produces the
-  string-keyed shape the routing prompt expects.
-
-  Only documents whose `release_date` has already passed (or is unset) are included — a
-  document scheduled for the future is invisible to Pixel until that date, matching the
-  Live/Scheduled status shown in the admin directory.
-
-  Uses `Jason.OrderedObject` rather than a plain map so the encoded keys stay in the order
-  written below — a map would serialise them alphabetically, burying `id` and `title` in the
-  middle. `release_date` is omitted entirely when null, so documents that aren't tied to a
-  point in the term don't spend prompt tokens saying so.
+  Builds the routing prompt's document map, omitting anything the LLM shouldn't see and any
+  document not yet released. `Jason.OrderedObject` keeps key order; a plain map would sort it.
   """
   def build_document_map_json(course_id) do
     PixelbotDocument
@@ -324,12 +310,8 @@ defmodule Cadet.Chatbot.CourseDocuments do
   defp optional_pair(key, value), do: [{key, value}]
 
   @doc """
-  Returns the documents named by `ids` (routing LLM doc keys), scoped to `course_id` so one
-  course's routing response can never reach into another course's documents. Shape matches what
-  Cadet.Chatbot.DocumentStore expects (string-keyed `s3_key`/`title`).
-
-  Re-applies the same released-only filter as `build_document_map_json/1`, so a document that
-  gets scheduled for the future after routing already picked it can't slip through.
+  Returns the documents named by `ids`, scoped to `course_id` so one course's routing response
+  can't reach another's. Re-applies the released-only filter in case it changed since routing.
   """
   def get_documents_by_ids(course_id, ids) when is_list(ids) do
     PixelbotDocument
