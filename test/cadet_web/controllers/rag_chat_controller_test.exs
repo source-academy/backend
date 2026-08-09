@@ -3,6 +3,7 @@ defmodule CadetWeb.RagChatControllerTest do
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias Cadet.Courses.Course
+  alias Cadet.Chatbot.CourseDocuments
   alias Cadet.Repo
 
   import Ecto.Changeset
@@ -25,6 +26,22 @@ defmodule CadetWeb.RagChatControllerTest do
         pixelbot_answer_prompt: "Answer the question."
       })
     )
+
+    # The routing step is a no-op (and skips its HTTP call entirely) for a course with zero
+    # documents, so the cassettes below - which record both a routing response and an answer
+    # response - need at least one document present to exercise both calls.
+    {:ok, category} = CourseDocuments.create_category(course.id, "lecture")
+
+    {:ok, _} =
+      CourseDocuments.create_documents(course.id, [
+        %{
+          category_id: category.id,
+          title: "L1A",
+          s3_key: "course-#{course.id}/l1a.pdf",
+          filename: "l1a.pdf",
+          media_type: "application/pdf"
+        }
+      ])
 
     insert(:conversation,
       user: user,
