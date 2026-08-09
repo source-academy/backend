@@ -199,7 +199,32 @@ defmodule CadetWeb.Router do
       :delete_assessment_config
     )
 
-    get("/config/pixelbot_document_map", AdminCoursesController, :get_document_map)
+    get("/pixelbot_documents", AdminPixelbotDocumentsController, :index)
+    post("/pixelbot_documents/upload", AdminPixelbotDocumentsController, :upload)
+    put("/pixelbot_documents", AdminPixelbotDocumentsController, :save)
+
+    put(
+      "/pixelbot_documents/:document_id/rename",
+      AdminPixelbotDocumentsController,
+      :rename
+    )
+
+    delete("/pixelbot_documents/:document_id", AdminPixelbotDocumentsController, :delete)
+    get("/pixelbot_documents/map_preview", AdminPixelbotDocumentsController, :preview_map)
+
+    post("/pixelbot_categories", AdminPixelbotDocumentsController, :create_category)
+
+    put(
+      "/pixelbot_categories/:category_id",
+      AdminPixelbotDocumentsController,
+      :rename_category
+    )
+
+    delete(
+      "/pixelbot_categories/:category_id",
+      AdminPixelbotDocumentsController,
+      :delete_category
+    )
   end
 
   # Admin pages (Access: All staff)

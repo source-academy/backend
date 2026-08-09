@@ -30,7 +30,7 @@ defmodule CadetWeb.RagChatController do
     end
   end
 
-  def chat(conn, %{"message" => user_message}) when is_binary(user_message) do
+  def chat(conn, %{"message" => user_message} = params) when is_binary(user_message) do
     user = conn.assigns.current_user
 
     Logger.info("Processing RAG chat for user #{user.id}. Length: #{String.length(user_message)}")
@@ -43,6 +43,8 @@ defmodule CadetWeb.RagChatController do
 
     Logger.info("Course found: #{inspect(course != nil)}")
     Logger.info("Answer prompt from DB: #{inspect(course && course.pixelbot_answer_prompt)}")
+
+    screen_context = build_screen_context(params["code"], params["question"])
 
     cond do
       is_nil(course) ->
@@ -68,7 +70,7 @@ defmodule CadetWeb.RagChatController do
         )
 
       true ->
-        do_chat(conn, user, course, user_message)
+        do_chat(conn, user, course, user_message, screen_context)
     end
   end
 
@@ -76,11 +78,41 @@ defmodule CadetWeb.RagChatController do
     send_resp(conn, :bad_request, "Missing or invalid parameter(s)")
   end
 
-  defp do_chat(conn, user, course, user_message) do
+  @spec build_screen_context(term(), term()) :: String.t() | nil
+  defp build_screen_context(code, question) do
+    sections =
+      [
+        optional_section("The student's current question/problem statement", question),
+        optional_section("The student's current code in their editor", code)
+      ]
+      |> Enum.reject(&is_nil/1)
+
+    case sections do
+      [] ->
+        nil
+
+      _ ->
+        "Here is what the student currently has on their screen. Use it only if relevant to " <>
+          "their question — it is not necessarily related to what they're asking about:\n\n" <>
+          Enum.join(sections, "\n\n")
+    end
+  end
+
+  defp optional_section(_label, value) when not is_binary(value), do: nil
+
+  defp optional_section(label, value) do
+    case String.trim(value) do
+      "" -> nil
+      trimmed -> "#{label}:\n#{trimmed}"
+    end
+  end
+
+  defp do_chat(conn, user, course, user_message, screen_context) do
     rag_opts = [
       routing_prompt: course.pixelbot_routing_prompt,
       answer_prompt: course.pixelbot_answer_prompt,
-      model: course.llm_model || "gpt-4o"
+      model: course.llm_model || "gpt-4o",
+      course_id: course.id
     ]
 
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
@@ -91,11 +123,13 @@ defmodule CadetWeb.RagChatController do
 
       case RagPipeline.process_rag_query(user_message, rag_opts) do
         {:rag, system_prompt, pdf_attachments} ->
-          payload = generate_payload(updated_conversation, system_prompt, pdf_attachments)
+          payload =
+            generate_payload(updated_conversation, system_prompt, pdf_attachments, screen_context)
+
           handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
 
         {:no_docs, system_prompt} ->
-          payload = generate_fallback_payload(updated_conversation, system_prompt)
+          payload = generate_fallback_payload(updated_conversation, system_prompt, screen_context)
           handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
       end
     else
@@ -143,14 +177,20 @@ defmodule CadetWeb.RagChatController do
         end
 
       {:error, reason} ->
-        error_message = get_in(reason, ["error", "message"]) || "Unknown OpenAI error"
+        error_message = openai_error_message(reason)
         Logger.error("OpenAI API error in RAG chat: #{error_message}")
         LlmConversations.add_error_message(updated_conversation)
         send_resp(conn, 500, error_message)
     end
   end
 
-  defp generate_fallback_payload(conversation = %Conversation{}, system_prompt) do
+  defp openai_error_message(reason) when is_map(reason) do
+    get_in(reason, ["error", "message"]) || "Unknown OpenAI error"
+  end
+
+  defp openai_error_message(reason), do: "Unknown OpenAI error: #{inspect(reason)}"
+
+  defp generate_fallback_payload(conversation = %Conversation{}, system_prompt, screen_context) do
     system_context = [%{role: "system", content: system_prompt}]
 
     messages_payload =
@@ -166,12 +206,18 @@ defmodule CadetWeb.RagChatController do
         {[], []} -> {[], []}
       end
 
-    system_reminder = [%{role: "system", content: system_prompt}]
+    system_reminder =
+      [%{role: "system", content: system_prompt}] ++ screen_context_message(screen_context)
 
     system_context ++ earlier_messages ++ system_reminder ++ last_message
   end
 
-  defp generate_payload(conversation = %Conversation{}, system_prompt, pdf_attachments) do
+  defp generate_payload(
+         conversation = %Conversation{},
+         system_prompt,
+         pdf_attachments,
+         screen_context
+       ) do
     system_context = [%{role: "system", content: system_prompt}]
 
     messages_payload =
@@ -192,13 +238,7 @@ defmodule CadetWeb.RagChatController do
 
     pdf_content_blocks =
       Enum.map(pdf_attachments, fn att ->
-        %{
-          type: "file",
-          file: %{
-            filename: att.title,
-            file_data: "data:#{att.media_type};base64,#{att.base64}"
-          }
-        }
+        Cadet.Chatbot.LlmContentBlock.build(att.title, att.base64, att.media_type)
       end)
 
     multimodal_message = %{
@@ -206,8 +246,12 @@ defmodule CadetWeb.RagChatController do
       content: [%{type: "text", text: user_text}] ++ pdf_content_blocks
     }
 
-    system_reminder = [%{role: "system", content: system_prompt}]
+    system_reminder =
+      [%{role: "system", content: system_prompt}] ++ screen_context_message(screen_context)
 
     system_context ++ earlier_messages ++ system_reminder ++ [multimodal_message]
   end
+
+  defp screen_context_message(nil), do: []
+  defp screen_context_message(screen_context), do: [%{role: "system", content: screen_context}]
 end

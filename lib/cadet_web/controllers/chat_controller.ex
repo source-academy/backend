@@ -141,12 +141,18 @@ defmodule CadetWeb.ChatController do
         end
 
       {:error, reason} ->
-        error_message = get_in(reason, ["error", "message"]) || "Unknown OpenAI error"
+        error_message = openai_error_message(reason)
         Logger.error("OpenAI API error: #{error_message}")
         LlmConversations.add_error_message(updated_conversation)
         send_resp(conn, 500, error_message)
     end
   end
+
+  defp openai_error_message(reason) when is_map(reason) do
+    get_in(reason, ["error", "message"]) || "Unknown OpenAI error"
+  end
+
+  defp openai_error_message(reason), do: "Unknown OpenAI error: #{inspect(reason)}"
 
   @context_size 10
 
