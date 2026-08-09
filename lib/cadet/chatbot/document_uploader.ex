@@ -7,6 +7,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
   alias Cadet.Chatbot.Slug
 
   @accepted_extensions ~w(.pdf .pptx .docx .tex .xml)
+  @max_upload_bytes 10_000_000
 
   def accepted_extensions, do: @accepted_extensions
 
@@ -14,9 +15,10 @@ defmodule Cadet.Chatbot.DocumentUploader do
           {:ok, %{s3_key: String.t(), media_type: String.t()}}
           | {:error, {:bad_request, String.t()}}
   def upload(filename, tmp_path, course_id, claimed_keys \\ MapSet.new()) do
-    ext = Path.extname(filename) |> String.downcase()
+    ext = filename |> Path.extname() |> String.downcase()
 
-    if ext in @accepted_extensions do
+    with :ok <- validate_extension(ext),
+         :ok <- validate_size(tmp_path) do
       base_name = "course-#{course_id}/#{Slug.slugify(Path.rootname(filename))}"
 
       s3_key =
@@ -29,10 +31,33 @@ defmodule Cadet.Chatbot.DocumentUploader do
         :ok -> {:ok, %{s3_key: s3_key, media_type: media_type_for(ext)}}
         {:error, reason} -> {:error, {:bad_request, "Failed to upload to S3: #{inspect(reason)}"}}
       end
+    end
+  end
+
+  defp validate_extension(ext) do
+    if ext in @accepted_extensions do
+      :ok
     else
       {:error, {:bad_request, "Unsupported file type #{ext}"}}
     end
   end
+
+  defp validate_size(tmp_path) do
+    case File.stat(tmp_path) do
+      {:ok, %File.Stat{size: size}} when size > @max_upload_bytes ->
+        {:error,
+         {:bad_request,
+          "File is #{megabytes(size)} MB, which exceeds the #{megabytes(@max_upload_bytes)} MB limit"}}
+
+      {:ok, _stat} ->
+        :ok
+
+      {:error, reason} ->
+        {:error, {:bad_request, "Could not read uploaded file: #{inspect(reason)}"}}
+    end
+  end
+
+  defp megabytes(bytes), do: Float.round(bytes / 1_000_000, 1)
 
   @doc """
   Moves a document to a new S3 key derived from `new_filename`, copying then deleting the old

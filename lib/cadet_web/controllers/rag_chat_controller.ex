@@ -6,7 +6,7 @@ defmodule CadetWeb.RagChatController do
   alias Cadet.Courses.Course
   alias Cadet.Repo
   @max_content_size 1000
-  @max_screen_context_size 20_000
+  @max_screen_context_size 8_000
   @context_size 10
 
   def init_chat(conn, _params) do

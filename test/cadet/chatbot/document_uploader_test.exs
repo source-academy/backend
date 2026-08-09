@@ -7,6 +7,24 @@ defmodule Cadet.Chatbot.DocumentUploaderTest do
   alias Cadet.Chatbot.DocumentUploader
 
   @moduletag :serial
+  test "upload/4 rejects a file over the size limit without touching S3" do
+    path = Path.join(System.tmp_dir!(), "oversized-#{System.unique_integer([:positive])}.pdf")
+    File.write!(path, :binary.copy(<<0>>, 10_000_001))
+    on_exit(fn -> File.rm(path) end)
+
+    with_mock ExAws, [:passthrough], request: fn _operation, _options -> {:ok, %{}} end do
+      assert {:error, {:bad_request, message}} =
+               DocumentUploader.upload("lecture.pdf", path, 1)
+
+      assert message =~ "10.0 MB limit"
+      refute called(ExAws.request(:_, :_))
+    end
+  end
+
+  test "upload/4 rejects an unsupported extension before stat'ing the file" do
+    assert {:error, {:bad_request, "Unsupported file type .exe"}} =
+             DocumentUploader.upload("malware.exe", "/nonexistent/path", 1)
+  end
 
   test "rename/3 returns the old key without probing S3 when the filename is unchanged" do
     assert {:ok, %{s3_key: "course-1/notes.pdf"}} =
