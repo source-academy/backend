@@ -30,9 +30,7 @@ config :cadet, Cadet.Jobs.Scheduler,
     # Collate contest entries that close in the previous day at 00:01
     {"1 0 * * *", {Cadet.Assessments, :update_final_contest_entries, []}},
     # Clean up expired exchange tokens at 00:01
-    {"1 0 * * *", {Cadet.TokenExchange, :delete_expired, []}},
-    # Enqueue cleanup of abandoned pixelbot document uploads daily
-    {"15 0 * * *", {Cadet.Workers.PixelbotOrphanSweeper, :enqueue, []}}
+    {"1 0 * * *", {Cadet.TokenExchange, :delete_expired, []}}
   ]
 
 # Configures the endpoint
@@ -51,9 +49,13 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Configure RAG document retrieval (S3 bucket for course documents)
+# Configure RAG document retrieval (S3 bucket for course documents).
+#
+# The bucket has no default on purpose: a deployment that fell back to a shared one would be
+# deleting files another deployment's database still points at. Unset means uploads are
+# rejected with a clear message, not sent somewhere arbitrary.
 config :cadet, :rag_documents,
-  bucket: System.get_env("RAG_DOCUMENTS_BUCKET", "pixelbot-demo-bucket"),
+  bucket: System.get_env("RAG_DOCUMENTS_BUCKET"),
   region: System.get_env("RAG_DOCUMENTS_REGION", "us-east-1")
 
 # Configure ExAWS

@@ -1,6 +1,14 @@
 defmodule Cadet.Chatbot.DocumentUploader do
   @moduledoc """
   Uploads and deletes pixelbot course documents in S3.
+
+  A file is written to S3 as soon as it is uploaded, but its `pixelbot_documents` row is only
+  created when the admin saves. An upload abandoned before that leaves the object behind with
+  nothing referencing it. That is accepted deliberately: the volume is a handful of files a
+  year, and the alternative — a job that enumerates the bucket and deletes whatever is not in
+  the database — risks deleting live documents whenever it runs against an incomplete one. If
+  the orphans ever become worth reclaiming, stage uploads under a `pending/` prefix and let an
+  S3 lifecycle rule expire that prefix, so nothing can delete a saved document by construction.
   """
   require Logger
 
@@ -18,7 +26,8 @@ defmodule Cadet.Chatbot.DocumentUploader do
   def upload(filename, tmp_path, course_id, claimed_keys \\ MapSet.new()) do
     ext = filename |> Path.extname() |> String.downcase()
 
-    with :ok <- validate_extension(ext),
+    with :ok <- validate_bucket(),
+         :ok <- validate_extension(ext),
          :ok <- validate_size(tmp_path) do
       base_name = "course-#{course_id}/#{Slug.slugify(Path.rootname(filename))}"
 
@@ -32,6 +41,18 @@ defmodule Cadet.Chatbot.DocumentUploader do
         :ok -> {:ok, %{s3_key: s3_key, media_type: media_type_for(ext)}}
         {:error, reason} -> {:error, {:bad_request, "Failed to upload to S3: #{inspect(reason)}"}}
       end
+    end
+  end
+
+  # Checked first, so a deployment with no bucket configured says so plainly instead of failing
+  # later with an ExAws error that reads like a credentials problem.
+  defp validate_bucket do
+    if rag_config()[:bucket] do
+      :ok
+    else
+      {:error,
+       {:bad_request,
+        "Document storage is not configured for this deployment (RAG_DOCUMENTS_BUCKET is unset)"}}
     end
   end
 
@@ -63,8 +84,8 @@ defmodule Cadet.Chatbot.DocumentUploader do
   @doc """
   Moves a document to a new S3 key derived from `new_filename`, copying then deleting the old
   object. Returns the new key/media type on success. If the delete of the old key fails after
-  the copy succeeds, the old object is left behind for the orphan sweeper to reclaim later —
-  the document row already points at the new key, so nothing is broken.
+  the copy succeeds, the old object is left behind: the document row already points at the new
+  key, so nothing is broken, and a stray object costs only storage.
   """
   @spec rename(String.t(), String.t(), integer()) ::
           {:ok, %{s3_key: String.t(), media_type: String.t()}}

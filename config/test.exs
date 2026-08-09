@@ -103,3 +103,10 @@ config :cadet, Cadet.Mailer, adapter: Bamboo.TestAdapter
 config :openai,
   # Input your own AES-256 encryption key here for encrypting LLM API keys
   encryption_key: "b4u7g0AyN3Tu2br9WSdZQjLMQ8bed/wgQWrH2x3qPdW8D55iv10+ySgs+bxDirWE"
+
+# Pixelbot document storage. Set explicitly because config.exs has no default, and an unset
+# bucket makes DocumentUploader reject every upload. All S3 calls are mocked, so the name only
+# has to be present, not real.
+config :cadet, :rag_documents,
+  bucket: "test-pixelbot-documents",
+  region: "us-east-1"
