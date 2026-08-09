@@ -122,16 +122,18 @@ defmodule Cadet.Chatbot.DocumentUploader do
     end
   end
 
+
   defp do_upload(tmp_path, s3_key) do
     config = rag_config()
 
-    tmp_path
-    |> ExAws.S3.Upload.stream_file()
-    |> ExAws.S3.upload(config[:bucket], s3_key)
-    |> ExAws.request(request_opts(config))
-    |> case do
-      {:ok, _} -> :ok
-      {:error, reason} -> {:error, reason}
+    with {:ok, contents} <- File.read(tmp_path) do
+      config[:bucket]
+      |> ExAws.S3.put_object(s3_key, contents)
+      |> ExAws.request(request_opts(config))
+      |> case do
+        {:ok, _} -> :ok
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 
