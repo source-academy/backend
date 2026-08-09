@@ -1,7 +1,9 @@
 defmodule Cadet.Chatbot.CourseDocumentsTest do
   use Cadet.DataCase
 
-  alias Cadet.Chatbot.CourseDocuments
+  import Mock
+
+  alias Cadet.Chatbot.{CourseDocuments, DocumentUploader}
 
   describe "categories" do
     test "create_category/2 creates a category for a course" do
@@ -83,7 +85,7 @@ defmodule Cadet.Chatbot.CourseDocumentsTest do
         ])
 
       [entry] = CourseDocuments.build_document_map_json(course.id)
-      refute Map.has_key?(entry, "s3_key")
+      refute Jason.encode!(entry) =~ "\"s3_key\""
     end
 
     test "only includes documents belonging to the given course" do
@@ -140,6 +142,95 @@ defmodule Cadet.Chatbot.CourseDocumentsTest do
                CourseDocuments.get_documents_by_ids(course_a.id, [document.doc_key])
 
       assert s3_key == document.s3_key
+    end
+  end
+
+  describe "validation" do
+    test "create_documents/2 returns a changeset error for a missing title" do
+      course = insert(:course)
+      {:ok, category} = CourseDocuments.create_category(course.id, "lecture")
+
+      assert {:error, changeset} =
+               CourseDocuments.create_documents(course.id, [
+                 %{
+                   category_id: category.id,
+                   s3_key: "course-#{course.id}/untitled.pdf",
+                   filename: "untitled.pdf",
+                   media_type: "application/pdf"
+                 }
+               ])
+
+      assert "can't be blank" in errors_on(changeset).title
+    end
+
+    test "list_documents_for_category/2 returns an empty list for malformed IDs" do
+      course = insert(:course)
+      assert CourseDocuments.list_documents_for_category(course.id, "not-an-id") == []
+    end
+
+    test "update_document/3 normalizes a nil description" do
+      course = insert(:course)
+      {:ok, category} = CourseDocuments.create_category(course.id, "lecture")
+
+      {:ok, [document]} =
+        CourseDocuments.create_documents(course.id, [
+          %{
+            category_id: category.id,
+            title: "L1A",
+            description: "Old description",
+            s3_key: "course-#{course.id}/l1a.pdf",
+            filename: "l1a.pdf",
+            media_type: "application/pdf"
+          }
+        ])
+
+      assert {:ok, updated} =
+               CourseDocuments.update_document(course.id, document.id, %{description: nil})
+
+      assert updated.description == ""
+    end
+  end
+
+  describe "rename_document/3" do
+    test "restores the old S3 key when the database update fails" do
+      course = insert(:course)
+      {:ok, category} = CourseDocuments.create_category(course.id, "lecture")
+
+      {:ok, [document, conflicting_document]} =
+        CourseDocuments.create_documents(course.id, [
+          %{
+            category_id: category.id,
+            title: "Original",
+            s3_key: "course-#{course.id}/original.pdf",
+            filename: "original.pdf",
+            media_type: "application/pdf"
+          },
+          %{
+            category_id: category.id,
+            title: "Conflict",
+            s3_key: "course-#{course.id}/conflict.pdf",
+            filename: "conflict.pdf",
+            media_type: "application/pdf"
+          }
+        ])
+
+      parent = self()
+
+      with_mock DocumentUploader, [:passthrough],
+        rename: fn _old_key, _filename, _course_id ->
+          {:ok, %{s3_key: conflicting_document.s3_key, media_type: "application/pdf"}}
+        end,
+        restore_rename: fn new_key, old_key ->
+          send(parent, {:restored, new_key, old_key})
+          :ok
+        end do
+        assert {:error, %Ecto.Changeset{}} =
+                 CourseDocuments.rename_document(course.id, document.id, "conflict.pdf")
+
+        assert_receive {:restored, new_key, old_key}
+        assert new_key == conflicting_document.s3_key
+        assert old_key == document.s3_key
+      end
     end
   end
 end

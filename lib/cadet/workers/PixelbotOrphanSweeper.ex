@@ -35,21 +35,33 @@ defmodule Cadet.Workers.PixelbotOrphanSweeper do
       |> Enum.map(& &1.key)
 
     if orphans != [] do
-      bucket
-      |> ExAws.S3.delete_multiple_objects(orphans)
-      |> ExAws.request(request_opts)
-      |> case do
-        {:ok, _} ->
-          Logger.info("PixelbotOrphanSweeper: deleted #{length(orphans)} orphaned object(s)")
-
-        {:error, reason} ->
-          Logger.error("PixelbotOrphanSweeper: delete failed: #{inspect(reason)}")
-      end
+      orphans
+      |> Enum.chunk_every(1_000)
+      |> Enum.each(&delete_orphan_batch(bucket, &1, request_opts))
     else
       Logger.info("PixelbotOrphanSweeper: no orphans found")
     end
 
     :ok
+  end
+
+  def enqueue do
+    %{}
+    |> new()
+    |> Oban.insert()
+  end
+
+  defp delete_orphan_batch(bucket, keys, request_opts) do
+    bucket
+    |> ExAws.S3.delete_multiple_objects(keys)
+    |> ExAws.request(request_opts)
+    |> case do
+      {:ok, _} ->
+        Logger.info("PixelbotOrphanSweeper: deleted #{length(keys)} orphaned object(s)")
+
+      {:error, reason} ->
+        Logger.error("PixelbotOrphanSweeper: delete failed: #{inspect(reason)}")
+    end
   end
 
   defp known_s3_keys do

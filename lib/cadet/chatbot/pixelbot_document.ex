@@ -40,6 +40,8 @@ defmodule Cadet.Chatbot.PixelbotDocument do
   @optional_fields ~w(description release_date)a
 
   def changeset(document, params) do
+    params = normalize_nil_description(params)
+
     document
     |> cast(params, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
@@ -48,4 +50,12 @@ defmodule Cadet.Chatbot.PixelbotDocument do
     |> unique_constraint([:course_id, :doc_key])
     |> unique_constraint(:s3_key)
   end
+
+  defp normalize_nil_description(%{description: nil} = params),
+    do: Map.put(params, :description, "")
+
+  defp normalize_nil_description(%{"description" => nil} = params),
+    do: Map.put(params, "description", "")
+
+  defp normalize_nil_description(params), do: params
 end

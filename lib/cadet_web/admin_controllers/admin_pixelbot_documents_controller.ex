@@ -3,6 +3,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   require Logger
 
   alias Cadet.Chatbot.{CourseDocuments, DocumentUploader, MetadataGenerator}
+  alias Cadet.Repo
 
   # ---- Categories -----------------------------------------------------------
 
@@ -43,15 +44,28 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
     end
   end
 
-
   def upload(conn, %{"category_id" => category_id, "files" => files})
       when is_ecto_id(category_id) do
+    case validate_uploads(files) do
+      {:ok, uploads} ->
+        process_uploads(conn, category_id, uploads)
+
+      {:error, :invalid_upload} ->
+        upload(conn, %{})
+    end
+  end
+
+  def upload(conn, _params) do
+    send_resp(conn, :bad_request, "Missing category_id or files")
+  end
+
+  defp process_uploads(conn, category_id, uploads) do
     course = conn.assigns.course_reg.course
-    course_id = course.id
-    files = List.wrap(files)
 
     {entries, _claimed} =
-      Enum.reduce(files, {[], MapSet.new()}, fn upload, {acc, claimed} ->
+      Enum.reduce(uploads, {[], MapSet.new()}, fn %Plug.Upload{} = upload, {acc, claimed} ->
+        course_id = course.id
+
         case DocumentUploader.upload(upload.filename, upload.path, course_id, claimed) do
           {:ok, %{s3_key: s3_key, media_type: media_type}} ->
             metadata = generate_metadata(upload, s3_key, media_type, course)
@@ -88,8 +102,12 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
     json(conn, %{entries: Enum.reverse(entries)})
   end
 
-  def upload(conn, _params) do
-    send_resp(conn, :bad_request, "Missing category_id or files")
+  defp validate_uploads(files) do
+    uploads = List.wrap(files)
+
+    if uploads != [] and Enum.all?(uploads, &match?(%Plug.Upload{}, &1)),
+      do: {:ok, uploads},
+      else: {:error, :invalid_upload}
   end
 
   @doc """
@@ -104,8 +122,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
     {new_entries, existing_entries} = Enum.split_with(entries, &is_nil(&1[:id]))
 
     with :ok <- validate_s3_keys(new_entries, course_id),
-         {:ok, _inserted} <- CourseDocuments.create_documents(course_id, new_entries),
-         :ok <- update_existing(course_id, existing_entries) do
+         {:ok, _inserted} <- save_entries(course_id, new_entries, existing_entries) do
       render(conn, "index.json", %{
         categories: CourseDocuments.list_categories(course_id),
         documents: CourseDocuments.list_documents(course_id)
@@ -118,6 +135,17 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
 
   def save(conn, _params) do
     send_resp(conn, :bad_request, "Missing entries")
+  end
+
+  defp save_entries(course_id, new_entries, existing_entries) do
+    Repo.transaction(fn ->
+      with {:ok, inserted} <- CourseDocuments.create_documents(course_id, new_entries),
+           :ok <- update_existing(course_id, existing_entries) do
+        inserted
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   def rename(conn, %{"document_id" => document_id, "filename" => filename})
@@ -141,8 +169,6 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   def preview_map(conn, _params) do
     json(conn, %{documentMap: CourseDocuments.build_document_map_json(course_id(conn))})
   end
-
-
 
   defp course_id(conn), do: conn.assigns.course_reg.course_id
 

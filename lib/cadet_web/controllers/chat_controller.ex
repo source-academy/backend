@@ -152,7 +152,10 @@ defmodule CadetWeb.ChatController do
     get_in(reason, ["error", "message"]) || "Unknown OpenAI error"
   end
 
-  defp openai_error_message(reason), do: "Unknown OpenAI error: #{inspect(reason)}"
+  defp openai_error_message(reason) do
+    Logger.error("Unexpected non-map OpenAI error: #{inspect(reason)}")
+    "Unknown OpenAI error"
+  end
 
   @context_size 10
 

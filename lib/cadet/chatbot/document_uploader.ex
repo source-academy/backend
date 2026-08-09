@@ -50,7 +50,10 @@ defmodule Cadet.Chatbot.DocumentUploader do
       base_name = "course-#{course_id}/#{Slug.slugify(Path.rootname(new_filename))}"
 
       new_key =
-        Slug.unique(base_name, fn candidate -> object_exists?(candidate <> ext) end) <> ext
+        Slug.unique(base_name, fn candidate ->
+          candidate_key = candidate <> ext
+          candidate_key != old_s3_key and object_exists?(candidate_key)
+        end) <> ext
 
       if new_key == old_s3_key do
         {:ok, %{s3_key: new_key, media_type: media_type_for(ext)}}
@@ -59,6 +62,21 @@ defmodule Cadet.Chatbot.DocumentUploader do
       end
     else
       {:error, {:bad_request, "Unsupported file type #{ext}"}}
+    end
+  end
+
+  @doc false
+  @spec restore_rename(String.t(), String.t()) ::
+          :ok | {:error, {:bad_request, String.t()}}
+  def restore_rename(new_key, old_key) do
+    case copy_object(new_key, old_key) do
+      {:ok, _} ->
+        delete(new_key)
+        :ok
+
+      {:error, reason} ->
+        Logger.error("Failed to restore #{new_key} -> #{old_key}: #{inspect(reason)}")
+        {:error, {:bad_request, "Failed to restore document in S3"}}
     end
   end
 
@@ -93,15 +111,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
   end
 
   defp do_rename(old_key, new_key, ext) do
-    config = rag_config()
-    bucket = config[:bucket]
-
-    copy_result =
-      bucket
-      |> ExAws.S3.put_object_copy(new_key, bucket, old_key)
-      |> ExAws.request(request_opts(config))
-
-    case copy_result do
+    case copy_object(old_key, new_key) do
       {:ok, _} ->
         delete(old_key)
         {:ok, %{s3_key: new_key, media_type: media_type_for(ext)}}
@@ -110,6 +120,15 @@ defmodule Cadet.Chatbot.DocumentUploader do
         Logger.error("Failed to copy #{old_key} -> #{new_key}: #{inspect(reason)}")
         {:error, {:bad_request, "Failed to rename document in S3"}}
     end
+  end
+
+  defp copy_object(source_key, destination_key) do
+    config = rag_config()
+    bucket = config[:bucket]
+
+    bucket
+    |> ExAws.S3.put_object_copy(destination_key, bucket, source_key)
+    |> ExAws.request(request_opts(config))
   end
 
   defp object_exists?(s3_key) do
@@ -121,8 +140,19 @@ defmodule Cadet.Chatbot.DocumentUploader do
       |> ExAws.request(request_opts(config))
 
     case response do
-      {:error, _} -> false
-      _ -> true
+      {:ok, _} ->
+        true
+
+      {:error, {:http_error, 404, _}} ->
+        false
+
+      {:error, reason} ->
+        Logger.warning(
+          "Could not verify whether pixelbot S3 object #{s3_key} exists; " <>
+            "treating it as occupied: #{inspect(reason)}"
+        )
+
+        true
     end
   end
 

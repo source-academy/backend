@@ -74,10 +74,16 @@ defmodule Cadet.Chatbot.CourseDocuments do
   end
 
   def list_documents_for_category(course_id, category_id) do
-    PixelbotDocument
-    |> where([d], d.course_id == ^course_id and d.category_id == ^category_id)
-    |> order_by([d], asc: d.inserted_at)
-    |> Repo.all()
+    case cast_id(category_id) do
+      {:ok, id} ->
+        PixelbotDocument
+        |> where([d], d.course_id == ^course_id and d.category_id == ^id)
+        |> order_by([d], asc: d.inserted_at)
+        |> Repo.all()
+
+      :error ->
+        []
+    end
   end
 
   @doc """
@@ -87,29 +93,45 @@ defmodule Cadet.Chatbot.CourseDocuments do
   `description`/`release_date`.
   """
   def create_documents(course_id, entries) do
-    Repo.transaction(fn ->
-      Enum.map(entries, fn entry ->
-        category_id = entry["category_id"] || entry[:category_id]
+    if Repo.in_transaction?() do
+      {:ok, insert_documents(course_id, entries)}
+    else
+      Repo.transaction(fn -> insert_documents(course_id, entries) end)
+    end
+  end
 
-        unless category_belongs_to_course?(course_id, category_id) do
-          Repo.rollback({:bad_request, "Invalid category"})
-        end
+  defp insert_documents(course_id, entries) do
+    Enum.map(entries, fn entry ->
+      category_id = entry["category_id"] || entry[:category_id]
 
-        doc_key =
-          Slug.unique(Slug.slugify(entry["title"] || entry[:title]), fn candidate ->
-            doc_key_taken?(course_id, candidate)
-          end)
+      unless category_belongs_to_course?(course_id, category_id) do
+        Repo.rollback({:bad_request, "Invalid category"})
+      end
 
-        params =
-          entry
-          |> normalize_entry()
-          |> Map.merge(%{course_id: course_id, doc_key: doc_key})
+      normalized = normalize_entry(entry)
+      title = normalized[:title]
 
-        case %PixelbotDocument{} |> PixelbotDocument.changeset(params) |> Repo.insert() do
-          {:ok, document} -> document
-          {:error, changeset} -> Repo.rollback(changeset)
-        end
-      end)
+      unless is_binary(title) and String.trim(title) != "" do
+        changeset =
+          %PixelbotDocument{}
+          |> PixelbotDocument.changeset(
+            Map.merge(normalized, %{course_id: course_id, doc_key: ""})
+          )
+
+        Repo.rollback(changeset)
+      end
+
+      doc_key =
+        Slug.unique(Slug.slugify(title), fn candidate ->
+          doc_key_taken?(course_id, candidate)
+        end)
+
+      params = Map.merge(normalized, %{course_id: course_id, doc_key: doc_key})
+
+      case %PixelbotDocument{} |> PixelbotDocument.changeset(params) |> Repo.insert() do
+        {:ok, document} -> document
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
     end)
   end
 
@@ -147,13 +169,22 @@ defmodule Cadet.Chatbot.CourseDocuments do
     with %PixelbotDocument{} = document <- get_document(course_id, document_id) do
       case DocumentUploader.rename(document.s3_key, new_filename, course_id) do
         {:ok, %{s3_key: s3_key, media_type: media_type}} ->
-          document
-          |> PixelbotDocument.changeset(%{
-            s3_key: s3_key,
-            media_type: media_type,
-            filename: new_filename
-          })
-          |> Repo.update()
+          update_result =
+            Repo.transaction(fn ->
+              document
+              |> PixelbotDocument.changeset(%{
+                s3_key: s3_key,
+                media_type: media_type,
+                filename: new_filename
+              })
+              |> Repo.update()
+              |> case do
+                {:ok, updated_document} -> updated_document
+                {:error, reason} -> Repo.rollback(reason)
+              end
+            end)
+
+          restore_after_failed_rename(update_result, document.s3_key, s3_key)
 
         {:error, _} = error ->
           error
@@ -161,6 +192,23 @@ defmodule Cadet.Chatbot.CourseDocuments do
     else
       nil -> {:error, :not_found}
     end
+  end
+
+  defp restore_after_failed_rename({:ok, document}, _old_s3_key, _new_s3_key),
+    do: {:ok, document}
+
+  defp restore_after_failed_rename({:error, _reason} = error, old_s3_key, new_s3_key) do
+    if old_s3_key != new_s3_key do
+      case DocumentUploader.restore_rename(new_s3_key, old_s3_key) do
+        :ok ->
+          :ok
+
+        {:error, restore_reason} ->
+          Logger.error("Failed to compensate document rename: #{inspect(restore_reason)}")
+      end
+    end
+
+    error
   end
 
   def delete_document(course_id, document_id) do

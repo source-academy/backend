@@ -142,6 +142,21 @@ defmodule CadetWeb.RagChatControllerTest do
     end
 
     @tag authenticate: :student
+    test "combined screen context that is too long returns 422", %{conn: conn} do
+      setup_rag_course(conn)
+
+      conn =
+        post(conn, "/v2/rag_chat/message", %{
+          "message" => "Help",
+          "code" => String.duplicate("a", 10_001),
+          "question" => String.duplicate("b", 10_000)
+        })
+
+      assert response(conn, :unprocessable_entity) =~
+               "Screen context exceeds the maximum allowed length"
+    end
+
+    @tag authenticate: :student
     test "no RAG conversation returns 404", %{conn: conn} do
       user = conn.assigns.current_user
       course = Repo.get!(Course, user.latest_viewed_course_id)
