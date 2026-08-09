@@ -122,7 +122,6 @@ defmodule Cadet.Chatbot.DocumentUploader do
     end
   end
 
-
   defp do_upload(tmp_path, s3_key) do
     config = rag_config()
 
