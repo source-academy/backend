@@ -173,11 +173,12 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   defp course_id(conn), do: conn.assigns.course_reg.course_id
 
   defp generate_metadata(upload, _s3_key, media_type, course) do
-    with {:ok, binary} <- File.read(upload.path) do
-      base64 = Base.encode64(binary)
-      model = course.llm_model || "gpt-4o"
-      MetadataGenerator.generate(upload.filename, base64, media_type, model)
-    else
+    case File.read(upload.path) do
+      {:ok, binary} ->
+        base64 = Base.encode64(binary)
+        model = course.llm_model || "gpt-4o"
+        MetadataGenerator.generate(upload.filename, base64, media_type, model)
+
       {:error, reason} ->
         Logger.warning("Could not read #{upload.filename} for metadata: #{inspect(reason)}")
         %{title: Path.rootname(upload.filename), description: ""}
@@ -185,7 +186,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   end
 
   # Maps the fixed set of camelCase fields a save entry may carry to their snake_case atom
-  # keys. 
+  # keys.
   @save_entry_keys %{
     "id" => :id,
     "categoryId" => :category_id,

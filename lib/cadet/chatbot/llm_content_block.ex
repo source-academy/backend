@@ -1,4 +1,12 @@
 defmodule Cadet.Chatbot.LlmContentBlock do
+  @moduledoc """
+  Builds the content block for one document attached to an OpenAI chat completion.
+
+  Text-based formats are sent as plain text rather than as a file attachment: the model reads
+  them directly, and it avoids paying the base64 overhead on content it could already read.
+  Anything that isn't valid UTF-8 once decoded falls back to a file block.
+  """
+
   @text_media_types ~w(text/x-tex application/xml text/xml)
 
   @spec build(String.t(), String.t(), String.t()) :: map()

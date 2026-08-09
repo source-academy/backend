@@ -51,10 +51,10 @@ defmodule Cadet.Chatbot.PixelbotDocument do
     |> unique_constraint(:s3_key)
   end
 
-  defp normalize_nil_description(%{description: nil} = params),
+  defp normalize_nil_description(params = %{description: nil}),
     do: Map.put(params, :description, "")
 
-  defp normalize_nil_description(%{"description" => nil} = params),
+  defp normalize_nil_description(params = %{"description" => nil}),
     do: Map.put(params, "description", "")
 
   defp normalize_nil_description(params), do: params

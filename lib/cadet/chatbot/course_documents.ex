@@ -26,29 +26,33 @@ defmodule Cadet.Chatbot.CourseDocuments do
   end
 
   def rename_category(course_id, category_id, new_name) do
-    with %PixelbotCategory{} = category <- get_category(course_id, category_id) do
-      category
-      |> PixelbotCategory.changeset(%{name: new_name})
-      |> Repo.update()
-    else
-      nil -> {:error, :not_found}
+    case get_category(course_id, category_id) do
+      nil ->
+        {:error, :not_found}
+
+      category ->
+        category
+        |> PixelbotCategory.changeset(%{name: new_name})
+        |> Repo.update()
     end
   end
 
   def delete_category(course_id, category_id) do
-    with %PixelbotCategory{} = category <- get_category(course_id, category_id) do
-      document_count =
-        PixelbotDocument
-        |> where([d], d.category_id == ^category_id)
-        |> Repo.aggregate(:count, :id)
+    case get_category(course_id, category_id) do
+      nil ->
+        {:error, :not_found}
 
-      if document_count > 0 do
-        {:error, {:bad_request, "This category still has #{document_count} document(s)"}}
-      else
-        Repo.delete(category)
-      end
-    else
-      nil -> {:error, :not_found}
+      category ->
+        document_count =
+          PixelbotDocument
+          |> where([d], d.category_id == ^category_id)
+          |> Repo.aggregate(:count, :id)
+
+        if document_count > 0 do
+          {:error, {:bad_request, "This category still has #{document_count} document(s)"}}
+        else
+          Repo.delete(category)
+        end
     end
   end
 
@@ -166,38 +170,44 @@ defmodule Cadet.Chatbot.CourseDocuments do
   document in it), this touches exactly one S3 object, so it's safe to actually move it.
   """
   def rename_document(course_id, document_id, new_filename) do
-    with %PixelbotDocument{} = document <- get_document(course_id, document_id) do
-      case DocumentUploader.rename(document.s3_key, new_filename, course_id) do
-        {:ok, %{s3_key: s3_key, media_type: media_type}} ->
-          update_result =
-            Repo.transaction(fn ->
-              document
-              |> PixelbotDocument.changeset(%{
-                s3_key: s3_key,
-                media_type: media_type,
-                filename: new_filename
-              })
-              |> Repo.update()
-              |> case do
-                {:ok, updated_document} -> updated_document
-                {:error, reason} -> Repo.rollback(reason)
-              end
-            end)
+    case get_document(course_id, document_id) do
+      nil ->
+        {:error, :not_found}
 
-          restore_after_failed_rename(update_result, document.s3_key, s3_key)
+      document ->
+        rename_stored_document(document, new_filename, course_id)
+    end
+  end
 
-        {:error, _} = error ->
-          error
-      end
-    else
-      nil -> {:error, :not_found}
+  defp rename_stored_document(document, new_filename, course_id) do
+    case DocumentUploader.rename(document.s3_key, new_filename, course_id) do
+      {:ok, %{s3_key: s3_key, media_type: media_type}} ->
+        update_result =
+          Repo.transaction(fn ->
+            document
+            |> PixelbotDocument.changeset(%{
+              s3_key: s3_key,
+              media_type: media_type,
+              filename: new_filename
+            })
+            |> Repo.update()
+            |> case do
+              {:ok, updated_document} -> updated_document
+              {:error, reason} -> Repo.rollback(reason)
+            end
+          end)
+
+        restore_after_failed_rename(update_result, document.s3_key, s3_key)
+
+      {:error, _} = error ->
+        error
     end
   end
 
   defp restore_after_failed_rename({:ok, document}, _old_s3_key, _new_s3_key),
     do: {:ok, document}
 
-  defp restore_after_failed_rename({:error, _reason} = error, old_s3_key, new_s3_key) do
+  defp restore_after_failed_rename(error = {:error, _reason}, old_s3_key, new_s3_key) do
     if old_s3_key != new_s3_key do
       case DocumentUploader.restore_rename(new_s3_key, old_s3_key) do
         :ok ->
@@ -212,17 +222,19 @@ defmodule Cadet.Chatbot.CourseDocuments do
   end
 
   def delete_document(course_id, document_id) do
-    with %PixelbotDocument{} = document <- get_document(course_id, document_id) do
-      case Repo.delete(document) do
-        {:ok, deleted} ->
-          DocumentUploader.delete(deleted.s3_key)
-          {:ok, deleted}
+    case get_document(course_id, document_id) do
+      nil ->
+        {:error, :not_found}
 
-        {:error, _} = error ->
-          error
-      end
-    else
-      nil -> {:error, :not_found}
+      document ->
+        case Repo.delete(document) do
+          {:ok, deleted} ->
+            DocumentUploader.delete(deleted.s3_key)
+            {:ok, deleted}
+
+          {:error, _} = error ->
+            error
+        end
     end
   end
 

@@ -5,6 +5,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
   require Logger
 
   alias Cadet.Chatbot.Slug
+  alias ExAws.S3
 
   @accepted_extensions ~w(.pdf .pptx .docx .tex .xml)
   @max_upload_bytes 10_000_000
@@ -69,7 +70,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
           {:ok, %{s3_key: String.t(), media_type: String.t()}}
           | {:error, {:bad_request, String.t()}}
   def rename(old_s3_key, new_filename, course_id) do
-    ext = Path.extname(new_filename) |> String.downcase()
+    ext = new_filename |> Path.extname() |> String.downcase()
 
     if ext in @accepted_extensions do
       base_name = "course-#{course_id}/#{Slug.slugify(Path.rootname(new_filename))}"
@@ -110,7 +111,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
     config = rag_config()
 
     config[:bucket]
-    |> ExAws.S3.delete_object(s3_key)
+    |> S3.delete_object(s3_key)
     |> ExAws.request(request_opts(config))
     |> case do
       {:ok, _} ->
@@ -127,7 +128,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
 
     with {:ok, contents} <- File.read(tmp_path) do
       config[:bucket]
-      |> ExAws.S3.put_object(s3_key, contents)
+      |> S3.put_object(s3_key, contents)
       |> ExAws.request(request_opts(config))
       |> case do
         {:ok, _} -> :ok
@@ -153,7 +154,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
     bucket = config[:bucket]
 
     bucket
-    |> ExAws.S3.put_object_copy(destination_key, bucket, source_key)
+    |> S3.put_object_copy(destination_key, bucket, source_key)
     |> ExAws.request(request_opts(config))
   end
 
@@ -162,7 +163,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
 
     response =
       config[:bucket]
-      |> ExAws.S3.head_object(s3_key)
+      |> S3.head_object(s3_key)
       |> ExAws.request(request_opts(config))
 
     case response do
