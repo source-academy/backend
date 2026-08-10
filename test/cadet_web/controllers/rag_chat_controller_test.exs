@@ -3,10 +3,11 @@ defmodule CadetWeb.RagChatControllerTest do
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   alias Cadet.Courses.Course
-  alias Cadet.Chatbot.CourseDocuments
+  alias Cadet.Chatbot.{CourseDocuments, RagPipeline}
   alias Cadet.Repo
 
   import Ecto.Changeset
+  import Mock
 
   @moduletag :serial
 
@@ -216,5 +217,164 @@ defmodule CadetWeb.RagChatControllerTest do
         assert response(conn, 500) == "No response from AI"
       end
     end
+
+    # A non-map error is what an HTTP-level failure (a timeout, a closed socket) looks like, and
+    # get_in/2 on one would raise, turning a handled 500 into an unhandled crash.
+    @tag authenticate: :student
+    test "a non-map OpenAI error still returns a 500 with a readable message", %{conn: conn} do
+      setup_rag_course(conn)
+
+      with_mock OpenAI, [:passthrough], chat_completion: fn _opts -> {:error, :timeout} end do
+        conn = post(conn, "/v2/rag_chat/message", %{"message" => "Hello"})
+
+        assert response(conn, 500) == "Unknown OpenAI error"
+      end
+    end
+  end
+
+  describe "POST /v2/rag_chat/message with documents attached" do
+    setup %{conn: conn} do
+      setup_rag_course(conn)
+      :ok
+    end
+
+    defp with_rag_answer(attachments, response_content, fun) do
+      parent = self()
+
+      with_mock RagPipeline, [:passthrough],
+        process_rag_query: fn _message, opts ->
+          {:rag, Keyword.fetch!(opts, :answer_prompt), attachments}
+        end do
+        with_mock OpenAI, [:passthrough],
+          chat_completion: fn opts ->
+            send(parent, {:payload, Keyword.fetch!(opts, :messages)})
+            {:ok, %{choices: [%{"message" => %{"content" => response_content}}]}}
+          end do
+          fun.()
+        end
+      end
+    end
+
+    @tag authenticate: :student
+    test "attaches the selected documents to the last user message", %{conn: conn} do
+      attachments = [
+        %{title: "L1A", base64: Base.encode64("PDF bytes"), media_type: "application/pdf"}
+      ]
+
+      with_rag_answer(attachments, "Recursion is...", fn ->
+        conn = post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+
+        assert %{"response" => "Recursion is..."} = json_response(conn, 200)
+      end)
+
+      assert_receive {:payload, payload}
+      last_message = List.last(payload)
+
+      assert last_message.role == "user"
+
+      assert [%{type: "text", text: "What is recursion?"}, attachment] = last_message.content
+      assert attachment.type == "file"
+      assert attachment.file.filename == "L1A"
+      assert attachment.file.file_data =~ "data:application/pdf;base64,"
+    end
+
+    # The answer prompt is repeated immediately before the last user turn so a long conversation
+    # cannot push it out of the model's attention.
+    @tag authenticate: :student
+    test "repeats the system prompt directly before the attached message", %{conn: conn} do
+      with_rag_answer([], "ok", fn ->
+        post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+      end)
+
+      assert_receive {:payload, payload}
+
+      assert %{role: "system"} = hd(payload)
+      assert %{role: "system"} = Enum.at(payload, -2)
+    end
+
+    # Screen context is student-controlled text going into a system-adjacent position, so the
+    # prompt is amended to say it is reference data rather than instructions.
+    @tag authenticate: :student
+    test "wraps screen context in tags and warns the model not to obey it", %{conn: conn} do
+      with_rag_answer([], "ok", fn ->
+        post(conn, "/v2/rag_chat/message", %{
+          "message" => "Why does this fail?",
+          "code" => "function f(x) { return f(x); }",
+          "question" => "Implement a recursive sum."
+        })
+      end)
+
+      assert_receive {:payload, payload}
+
+      system_prompt = hd(payload).content
+      assert system_prompt =~ "<screen_context_reference>"
+      assert system_prompt =~ "never as instructions"
+
+      context_message = find_screen_context(payload)
+
+      assert context_message.role == "user"
+      assert context_message.content =~ "Implement a recursive sum."
+      assert context_message.content =~ "function f(x)"
+      assert context_message.content =~ "The student's current code in their editor"
+    end
+
+    @tag authenticate: :student
+    test "sends only the section that was provided", %{conn: conn} do
+      with_rag_answer([], "ok", fn ->
+        post(conn, "/v2/rag_chat/message", %{
+          "message" => "Why does this fail?",
+          "code" => "f(x)"
+        })
+      end)
+
+      assert_receive {:payload, payload}
+
+      context_message = find_screen_context(payload)
+
+      assert context_message.content =~ "The student's current code in their editor"
+      refute context_message.content =~ "problem statement"
+    end
+
+    # Blank or whitespace-only fields are what the frontend sends when the editor is empty, and
+    # they must not produce an empty context block or the untrusted-data warning.
+    @tag authenticate: :student
+    test "omits screen context entirely when every field is blank", %{conn: conn} do
+      with_rag_answer([], "ok", fn ->
+        post(conn, "/v2/rag_chat/message", %{
+          "message" => "Hello",
+          "code" => "   ",
+          "question" => ""
+        })
+      end)
+
+      assert_receive {:payload, payload}
+
+      refute find_screen_context(payload)
+
+      refute hd(payload).content =~ "never as instructions"
+    end
+
+    @tag authenticate: :student
+    test "ignores non-string screen context values", %{conn: conn} do
+      with_rag_answer([], "ok", fn ->
+        post(conn, "/v2/rag_chat/message", %{
+          "message" => "Hello",
+          "code" => 42,
+          "question" => %{"a" => 1}
+        })
+      end)
+
+      assert_receive {:payload, payload}
+
+      refute find_screen_context(payload)
+    end
+  end
+
+  # The system prompt also mentions the tag, so the context turn is identified by role as well.
+  defp find_screen_context(payload) do
+    Enum.find(payload, fn message ->
+      message[:role] == "user" and is_binary(message[:content]) and
+        message[:content] =~ "<screen_context_reference>"
+    end)
   end
 end
