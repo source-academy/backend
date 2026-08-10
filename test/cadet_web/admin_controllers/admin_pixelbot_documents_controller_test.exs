@@ -7,12 +7,9 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
   test "upload/2 returns 400 for values that are not Plug uploads" do
     for files <- ["not-an-upload", %{"filename" => "notes.pdf"}, [["nested"]]] do
       conn =
-        AdminPixelbotDocumentsController.upload(build_conn(), %{
-          "category_id" => "1",
-          "files" => files
-        })
+        AdminPixelbotDocumentsController.upload(build_conn(), %{"files" => files})
 
-      assert response(conn, :bad_request) == "Missing category_id or files"
+      assert response(conn, :bad_request) == "Missing files"
     end
   end
 

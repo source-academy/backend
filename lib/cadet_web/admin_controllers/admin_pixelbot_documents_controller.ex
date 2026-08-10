@@ -44,11 +44,14 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
     end
   end
 
-  def upload(conn, %{"category_id" => category_id, "files" => files})
-      when is_ecto_id(category_id) do
+  @doc """
+  Uploads files to S3 and extracts metadata for the admin to review. No document rows are created
+  here, so no category is involved: the admin picks one per file and save/2 persists it.
+  """
+  def upload(conn, %{"files" => files}) do
     case validate_uploads(files) do
       {:ok, uploads} ->
-        process_uploads(conn, category_id, uploads)
+        process_uploads(conn, uploads)
 
       {:error, :invalid_upload} ->
         upload(conn, %{})
@@ -56,10 +59,10 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   end
 
   def upload(conn, _params) do
-    send_resp(conn, :bad_request, "Missing category_id or files")
+    send_resp(conn, :bad_request, "Missing files")
   end
 
-  defp process_uploads(conn, category_id, uploads) do
+  defp process_uploads(conn, uploads) do
     course = conn.assigns.course_reg.course
 
     {entries, _claimed} =
@@ -72,7 +75,6 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
 
             entry = %{
               status: "ready",
-              categoryId: category_id,
               s3Key: s3_key,
               filename: upload.filename,
               mediaType: media_type,
@@ -89,7 +91,6 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
 
             entry = %{
               status: "error",
-              categoryId: category_id,
               filename: upload.filename,
               error: message
             }
