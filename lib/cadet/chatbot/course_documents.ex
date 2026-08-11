@@ -5,6 +5,7 @@ defmodule Cadet.Chatbot.CourseDocuments do
   """
   require Logger
   import Ecto.Query
+  import Ecto.Changeset, only: [change: 1, no_assoc_constraint: 2]
 
   alias Cadet.Repo
   alias Cadet.Chatbot.{DocumentUploader, PixelbotCategory, PixelbotDocument, Slug}
@@ -36,23 +37,36 @@ defmodule Cadet.Chatbot.CourseDocuments do
     end
   end
 
+  # The emptiness check is Postgres', not ours: pixelbot_documents.category_id is declared
+  # on_delete: :restrict, so the DELETE fails if any document still points at the category.
+  # Counting first and deleting second leaves a window in which another admin files a document
+  # into the category, and the delete then fails against the constraint anyway -- as an
+  # Ecto.ConstraintError, which is a 500 rather than the 400 below. The count is read afterwards,
+  # only to say how many documents are in the way.
   def delete_category(course_id, category_id) do
     case get_category(course_id, category_id) do
       nil ->
         {:error, :not_found}
 
       category ->
-        document_count =
-          PixelbotDocument
-          |> where([d], d.category_id == ^category_id)
-          |> Repo.aggregate(:count, :id)
-
-        if document_count > 0 do
-          {:error, {:bad_request, "This category still has #{document_count} document(s)"}}
-        else
-          Repo.delete(category)
+        category
+        |> change()
+        |> no_assoc_constraint(:documents)
+        |> Repo.delete()
+        |> case do
+          {:ok, deleted} -> {:ok, deleted}
+          {:error, _changeset} -> {:error, {:bad_request, category_in_use_message(category.id)}}
         end
     end
+  end
+
+  defp category_in_use_message(category_id) do
+    document_count =
+      PixelbotDocument
+      |> where([d], d.category_id == ^category_id)
+      |> Repo.aggregate(:count, :id)
+
+    "This category still has #{document_count} document(s)"
   end
 
   defp get_category(course_id, category_id) do

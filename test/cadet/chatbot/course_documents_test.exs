@@ -62,6 +62,59 @@ defmodule Cadet.Chatbot.CourseDocumentsTest do
       {:ok, category} = CourseDocuments.create_category(course.id, "empty")
       assert {:ok, _} = CourseDocuments.delete_category(course.id, category.id)
     end
+
+    # The category is empty when the delete is decided on and occupied by the time it runs, which
+    # is what happens when one admin files a document into a category another admin is deleting.
+    # The restrict constraint on pixelbot_documents.category_id is what has to catch it: checking
+    # the count in application code first leaves a window between the check and the delete, and
+    # losing that race raises Ecto.ConstraintError — a 500 — instead of this 400.
+    test "delete_category/2 refuses even when a count says the category is empty" do
+      course = insert(:course)
+      {:ok, category} = CourseDocuments.create_category(course.id, "lecture")
+
+      {:ok, _} =
+        CourseDocuments.create_documents(course.id, [
+          %{
+            category_id: category.id,
+            title: "Filed a moment too late",
+            s3_key: "course-#{course.id}/late.pdf",
+            filename: "late.pdf",
+            media_type: "application/pdf"
+          }
+        ])
+
+      # A count of zero against an occupied category is exactly what an application-level check
+      # sees when it reads before the other admin's insert commits. Deciding on that count would
+      # send a doomed DELETE to Postgres and raise Ecto.ConstraintError.
+      with_mock Repo, [:passthrough], aggregate: fn _queryable, :count, :id -> 0 end do
+        assert {:error, {:bad_request, _message}} =
+                 CourseDocuments.delete_category(course.id, category.id)
+      end
+
+      # The category survives, so the documents pointing at it keep a valid doc_type.
+      assert [_] = CourseDocuments.list_categories(course.id)
+    end
+
+    test "delete_category/2 reports how many documents are in the way" do
+      course = insert(:course)
+      {:ok, category} = CourseDocuments.create_category(course.id, "lecture")
+
+      for n <- 1..3 do
+        {:ok, _} =
+          CourseDocuments.create_documents(course.id, [
+            %{
+              category_id: category.id,
+              title: "L#{n}",
+              s3_key: "course-#{course.id}/l#{n}.pdf",
+              filename: "l#{n}.pdf",
+              media_type: "application/pdf"
+            }
+          ])
+      end
+
+      assert {:error, {:bad_request, "This category still has 3 document(s)"}} =
+               CourseDocuments.delete_category(course.id, category.id)
+    end
   end
 
   describe "build_document_map_json/1" do
