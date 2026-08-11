@@ -50,11 +50,8 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   """
   def upload(conn, %{"files" => files}) do
     case validate_uploads(files) do
-      {:ok, uploads} ->
-        process_uploads(conn, uploads)
-
-      {:error, :invalid_upload} ->
-        upload(conn, %{})
+      {:ok, uploads} -> process_uploads(conn, uploads)
+      {:error, message} -> send_resp(conn, :bad_request, message)
     end
   end
 
@@ -102,12 +99,24 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
     json(conn, %{entries: Enum.reverse(entries)})
   end
 
+  # Each rejection says what was actually wrong. Folding them all into "Missing files" told an
+  # admin whose files were plainly attached to go and attach them, which sends them looking in the
+  # wrong place; an unreadable part and an empty selection need different things done about them.
   defp validate_uploads(files) do
     uploads = List.wrap(files)
 
-    if uploads != [] and Enum.all?(uploads, &match?(%Plug.Upload{}, &1)),
-      do: {:ok, uploads},
-      else: {:error, :invalid_upload}
+    cond do
+      uploads == [] ->
+        {:error, "No files were selected for upload"}
+
+      Enum.all?(uploads, &match?(%Plug.Upload{}, &1)) ->
+        {:ok, uploads}
+
+      true ->
+        {:error,
+         "One of the uploaded parts is not a file. Accepted file types are " <>
+           "#{DocumentUploader.accepted_types_sentence()}."}
+    end
   end
 
   @doc """

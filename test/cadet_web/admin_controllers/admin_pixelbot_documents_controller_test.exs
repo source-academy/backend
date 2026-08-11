@@ -186,12 +186,25 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
       assert response(conn, :bad_request) == "Missing files"
     end
 
-    test "returns 400 for values that are not Plug uploads" do
-      for files <- ["not-an-upload", %{"filename" => "notes.pdf"}, [["nested"]], []] do
+    # Each rejection says what actually went wrong. Answering "Missing files" to a request whose
+    # files were plainly attached sends the admin looking in the wrong place.
+    test "returns 400 naming the accepted types when a part is not a file" do
+      for files <- ["not-an-upload", %{"filename" => "notes.pdf"}, [["nested"]]] do
         conn = AdminPixelbotDocumentsController.upload(build_conn(), %{"files" => files})
 
-        assert response(conn, :bad_request) == "Missing files"
+        message = response(conn, :bad_request)
+        assert message =~ "is not a file"
+        assert message =~ "Accepted file types are"
+        assert message =~ ".pdf"
       end
+    end
+
+    test "returns 400 distinguishing an empty selection from a missing field" do
+      conn = AdminPixelbotDocumentsController.upload(build_conn(), %{"files" => []})
+      assert response(conn, :bad_request) == "No files were selected for upload"
+
+      conn = AdminPixelbotDocumentsController.upload(build_conn(), %{})
+      assert response(conn, :bad_request) == "Missing files"
     end
 
     test "stores each file and returns the LLM-proposed metadata for review" do
@@ -236,7 +249,9 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
       with_mock DocumentUploader, [:passthrough],
         upload: fn
           "virus.exe", _path, _course_id, _claimed ->
-            {:error, {:bad_request, "Unsupported file type .exe"}}
+            {:error,
+             {:bad_request,
+              ".exe files are not supported. Accepted file types are .pdf, .pptx, .docx, .tex, .xml."}}
 
           filename, _path, _course_id, _claimed ->
             {:ok, %{s3_key: "course-#{course.id}/#{filename}", media_type: "application/pdf"}}
@@ -253,11 +268,10 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
           assert first["status"] == "ready"
           assert first["filename"] == "l1a.pdf"
 
-          assert second == %{
-                   "status" => "error",
-                   "filename" => "virus.exe",
-                   "error" => "Unsupported file type .exe"
-                 }
+          assert second["status"] == "error"
+          assert second["filename"] == "virus.exe"
+          assert second["error"] =~ ".exe files are not supported"
+          assert second["error"] =~ "Accepted file types are"
         end
       end
     end
@@ -565,7 +579,9 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
           "filename" => "l1a.exe"
         })
 
-      assert response(conn, :bad_request) == "Unsupported file type .exe"
+      message = response(conn, :bad_request)
+      assert message =~ ".exe files are not supported"
+      assert message =~ "Accepted file types are"
     end
   end
 

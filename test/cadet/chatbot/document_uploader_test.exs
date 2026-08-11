@@ -21,9 +21,30 @@ defmodule Cadet.Chatbot.DocumentUploaderTest do
     end
   end
 
+  # The message names the offending type and what would have been accepted, so an admin who picked
+  # the wrong file out of a folder can see which one and what to convert it to.
   test "upload/4 rejects an unsupported extension before stat'ing the file" do
-    assert {:error, {:bad_request, "Unsupported file type .exe"}} =
+    assert {:error, {:bad_request, message}} =
              DocumentUploader.upload("malware.exe", "/nonexistent/path", 1)
+
+    assert message ==
+             ".exe files are not supported. Accepted file types are .pdf, .pptx, .docx, .tex, .xml."
+  end
+
+  test "upload/4 says so when the file has no extension at all" do
+    assert {:error, {:bad_request, message}} =
+             DocumentUploader.upload("lecture-notes", "/nonexistent/path", 1)
+
+    assert message =~ "Files must have an extension"
+    assert message =~ ".pdf"
+  end
+
+  test "accepted_types_sentence/0 lists every extension upload/4 accepts" do
+    sentence = DocumentUploader.accepted_types_sentence()
+
+    for ext <- DocumentUploader.accepted_extensions() do
+      assert sentence =~ ext
+    end
   end
 
   test "rename/3 returns the old key without probing S3 when the filename is unchanged" do
@@ -193,8 +214,11 @@ defmodule Cadet.Chatbot.DocumentUploaderTest do
     end
 
     test "rejects an unsupported extension" do
-      assert {:error, {:bad_request, "Unsupported file type .exe"}} =
+      assert {:error, {:bad_request, message}} =
                DocumentUploader.rename("course-1/old.pdf", "new.exe", 1)
+
+      assert message =~ ".exe files are not supported"
+      assert message =~ "Accepted file types are"
     end
   end
 

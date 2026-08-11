@@ -13,6 +13,13 @@ defmodule Cadet.Chatbot.DocumentUploader do
 
   def accepted_extensions, do: @accepted_extensions
 
+  @doc """
+  The accepted extensions as a readable list, for error messages that have to tell an admin what
+  they can upload instead of what they just tried.
+  """
+  @spec accepted_types_sentence() :: String.t()
+  def accepted_types_sentence, do: Enum.join(@accepted_extensions, ", ")
+
   @spec upload(String.t(), Path.t(), integer(), MapSet.t(String.t())) ::
           {:ok, %{s3_key: String.t(), media_type: String.t()}}
           | {:error, {:bad_request, String.t()}}
@@ -53,8 +60,18 @@ defmodule Cadet.Chatbot.DocumentUploader do
     if ext in @accepted_extensions do
       :ok
     else
-      {:error, {:bad_request, "Unsupported file type #{ext}"}}
+      {:error, {:bad_request, unsupported_type_message(ext)}}
     end
+  end
+
+  # Names the offending type and what to use instead. "Unsupported file type" on its own leaves an
+  # admin guessing which of their files was rejected and what would have been accepted.
+  defp unsupported_type_message("") do
+    "Files must have an extension. Accepted file types are #{accepted_types_sentence()}."
+  end
+
+  defp unsupported_type_message(ext) do
+    "#{ext} files are not supported. Accepted file types are #{accepted_types_sentence()}."
   end
 
   defp validate_size(tmp_path) do
@@ -99,7 +116,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
         do_rename(old_s3_key, new_key, ext)
       end
     else
-      {:error, {:bad_request, "Unsupported file type #{ext}"}}
+      {:error, {:bad_request, unsupported_type_message(ext)}}
     end
   end
 
