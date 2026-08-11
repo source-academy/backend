@@ -54,6 +54,8 @@ config :cadet, :rag_documents,
   bucket: System.get_env("RAG_DOCUMENTS_BUCKET"),
   region: System.get_env("RAG_DOCUMENTS_REGION", "us-east-1")
 
+config :openai, http_options: [recv_timeout: 120_000]
+
 # Configure ExAWS
 config :ex_aws,
   access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}, {:awscli, "default", 30}, :instance_role],
