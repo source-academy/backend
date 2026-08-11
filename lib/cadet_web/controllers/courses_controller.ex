@@ -185,7 +185,7 @@ defmodule CadetWeb.CoursesController do
             top_contest_leaderboard_display: 10,
             enable_stories: false,
             enable_llm_grading: false,
-            enable_pixelbot: true,
+            enable_pixelbot: false,
             llm_api_key: "sk-1234567890",
             llm_model: "gpt-4",
             llm_api_url: "https://api.openai.com/v1/chat/completions",

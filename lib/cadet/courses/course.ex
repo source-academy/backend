@@ -45,7 +45,7 @@ defmodule Cadet.Courses.Course do
     field(:top_contest_leaderboard_display, :integer, default: 10)
     field(:enable_stories, :boolean, default: false)
     field(:enable_llm_grading, :boolean, default: false)
-    field(:enable_pixelbot, :boolean, default: true)
+    field(:enable_pixelbot, :boolean, default: false)
     field(:llm_api_key, :string, default: nil)
     field(:llm_model, :string, default: nil)
     field(:llm_api_url, :string, default: nil)

@@ -21,8 +21,10 @@ defmodule CadetWeb.RagChatControllerTest do
     user = conn.assigns.current_user
     course = Repo.get!(Course, user.latest_viewed_course_id)
 
+    # Pixel is off until staff turn it on, so a course used for chat has to enable it explicitly.
     Repo.update!(
       change(course, %{
+        enable_pixelbot: true,
         pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
         pixelbot_answer_prompt: "Answer the question."
       })
@@ -126,9 +128,10 @@ defmodule CadetWeb.RagChatControllerTest do
       user = conn.assigns.current_user
       course = Repo.get!(Course, user.latest_viewed_course_id)
 
-      # Explicitly set prompts to empty strings
+      # Pixel is enabled but never configured, which is the state the 422 exists for.
       Repo.update!(
         change(course, %{
+          enable_pixelbot: true,
           pixelbot_routing_prompt: "",
           pixelbot_answer_prompt: ""
         })
@@ -175,6 +178,7 @@ defmodule CadetWeb.RagChatControllerTest do
 
       Repo.update!(
         change(course, %{
+          enable_pixelbot: true,
           pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
           pixelbot_answer_prompt: "Answer the question."
         })
