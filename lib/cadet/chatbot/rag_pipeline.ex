@@ -40,8 +40,6 @@ defmodule Cadet.Chatbot.RagPipeline do
     ]
 
     model = Keyword.get(opts, :model, "gpt-4o")
-    # Required, not defaulted: a bare %OpenAI.Config{} would fall back to the global api_key,
-    # which is what running on the course's own key exists to prevent.
     llm_config = Keyword.fetch!(opts, :llm_config)
 
     case OpenAI.chat_completion([model: model, messages: payload], llm_config) do
