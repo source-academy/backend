@@ -60,18 +60,13 @@ defmodule Cadet.Chatbot.DocumentUploader do
     if ext in @accepted_extensions do
       :ok
     else
-      {:error, {:bad_request, unsupported_type_message(ext)}}
+      prefix =
+        if ext == "",
+          do: "Files must have an extension.",
+          else: "#{ext} files are not supported."
+
+      {:error, {:bad_request, "#{prefix} Accepted file types are #{accepted_types_sentence()}."}}
     end
-  end
-
-  # Names the offending type and what to use instead. "Unsupported file type" on its own leaves an
-  # admin guessing which of their files was rejected and what would have been accepted.
-  defp unsupported_type_message("") do
-    "Files must have an extension. Accepted file types are #{accepted_types_sentence()}."
-  end
-
-  defp unsupported_type_message(ext) do
-    "#{ext} files are not supported. Accepted file types are #{accepted_types_sentence()}."
   end
 
   defp validate_size(tmp_path) do
@@ -101,7 +96,7 @@ defmodule Cadet.Chatbot.DocumentUploader do
   def rename(old_s3_key, new_filename, course_id) do
     ext = new_filename |> Path.extname() |> String.downcase()
 
-    if ext in @accepted_extensions do
+    with :ok <- validate_extension(ext) do
       base_name = "course-#{course_id}/#{Slug.slugify(Path.rootname(new_filename))}"
 
       new_key =
@@ -115,8 +110,6 @@ defmodule Cadet.Chatbot.DocumentUploader do
       else
         do_rename(old_s3_key, new_key, ext)
       end
-    else
-      {:error, {:bad_request, unsupported_type_message(ext)}}
     end
   end
 
