@@ -3,6 +3,8 @@ defmodule CadetWeb.ChatControllerTest do
   use CadetWeb.ConnCase
   use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
+  import Mock
+
   @moduletag :serial
 
   setup_all do
@@ -144,6 +146,25 @@ defmodule CadetWeb.ChatControllerTest do
           })
 
         assert response(conn, 500) == "No response from AI"
+      end
+    end
+
+    # An HTTP-level failure (a timeout, a closed socket) surfaces as a bare atom rather than the
+    # error map the API returns, and get_in/2 on one would raise — turning a handled 500 into an
+    # unhandled crash.
+    @tag authenticate: :student
+    test "a non-map OpenAI error still returns a 500 with a readable message", %{conn: conn} do
+      insert(:conversation, user: conn.assigns.current_user, prepend_context: [])
+
+      with_mock OpenAI, [:passthrough], chat_completion: fn _opts -> {:error, :timeout} end do
+        conn =
+          post(conn, "/v2/chats/message", %{
+            "message" => "Hello",
+            "section" => "SICP-1",
+            "initialContext" => "Some context."
+          })
+
+        assert response(conn, 500) == "Unknown OpenAI error"
       end
     end
 

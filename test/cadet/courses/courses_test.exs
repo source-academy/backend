@@ -44,6 +44,58 @@ defmodule Cadet.CoursesTest do
       assert User |> where(id: ^user.id) |> Repo.one() |> Map.fetch!(:latest_viewed_course_id) ==
                Enum.at(course_regs, 0).course_id
     end
+
+    # Pixel is opt-in. It needs a routing prompt, an answer prompt, and uploaded documents before
+    # it can answer anything, so a course that has not been set up must not advertise it — the
+    # chat endpoint would answer 422 "not configured" to every student who tried.
+    test "leaves the Pixel chatbot disabled unless it is asked for" do
+      user = insert(:user)
+
+      {:ok, %{course: course}} =
+        Courses.create_course_config(
+          %{
+            course_name: "CS1101S Programming Methodology",
+            viewable: true,
+            enable_game: true,
+            enable_achievements: true,
+            enable_overall_leaderboard: true,
+            enable_contest_leaderboard: true,
+            top_leaderboard_display: 100,
+            top_contest_leaderboard_display: 10,
+            enable_stories: false,
+            source_chapter: 1,
+            source_variant: "default"
+          },
+          user
+        )
+
+      refute Repo.get!(Course, course.id).enable_pixelbot
+    end
+
+    test "enables the Pixel chatbot when it is asked for" do
+      user = insert(:user)
+
+      {:ok, %{course: course}} =
+        Courses.create_course_config(
+          %{
+            course_name: "CS1101S Programming Methodology",
+            viewable: true,
+            enable_game: true,
+            enable_achievements: true,
+            enable_overall_leaderboard: true,
+            enable_contest_leaderboard: true,
+            top_leaderboard_display: 100,
+            top_contest_leaderboard_display: 10,
+            enable_stories: false,
+            enable_pixelbot: true,
+            source_chapter: 1,
+            source_variant: "default"
+          },
+          user
+        )
+
+      assert Repo.get!(Course, course.id).enable_pixelbot
+    end
   end
 
   describe "get course config" do

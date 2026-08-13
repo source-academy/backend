@@ -49,10 +49,12 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Configure RAG document retrieval (S3 bucket for course documents)
+# Configure RAG document retrieval (S3 bucket for course documents).
 config :cadet, :rag_documents,
-  bucket: System.get_env("RAG_DOCUMENTS_BUCKET", "pixelbot-demo-bucket"),
+  bucket: System.get_env("RAG_DOCUMENTS_BUCKET"),
   region: System.get_env("RAG_DOCUMENTS_REGION", "us-east-1")
+
+config :openai, http_options: [recv_timeout: 120_000]
 
 # Configure ExAWS
 config :ex_aws,

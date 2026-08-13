@@ -7,7 +7,8 @@ defmodule Cadet.Chatbot.RagPipeline do
   alias Cadet.Chatbot.{CourseDocuments, DocumentStore, PromptBuilder}
 
   def process_rag_query(user_message, opts \\ []) do
-    document_map = CourseDocuments.build_document_map_json()
+    course_id = Keyword.fetch!(opts, :course_id)
+    document_map = CourseDocuments.build_document_map_json(course_id)
 
     if document_map == [] do
       Logger.info("RAG pipeline: no documents in map, falling back")
@@ -106,7 +107,7 @@ defmodule Cadet.Chatbot.RagPipeline do
   end
 
   defp handle_routing_result({:ok, doc_ids}, opts) do
-    documents = CourseDocuments.get_documents_by_ids(doc_ids)
+    documents = CourseDocuments.get_documents_by_ids(Keyword.fetch!(opts, :course_id), doc_ids)
 
     if documents == [] do
       Logger.warning("RAG pipeline: routing returned IDs but none matched document map")
