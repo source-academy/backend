@@ -102,5 +102,62 @@ defmodule Cadet.Assessments.LibraryTest do
       |> Map.delete(:external)
       |> assert_changeset(:valid)
     end
+
+    test "valid conductor library changeset" do
+      params = %{
+        format: :conductor,
+        language: "python-3",
+        evaluator: "lambda-pyeval-v1"
+      }
+
+      assert_changeset(params, :valid)
+    end
+
+    test "conductor without language is invalid" do
+      params = %{
+        format: :conductor,
+        evaluator: "lambda-pyeval-v1"
+      }
+
+      assert_changeset(params, :invalid)
+    end
+
+    test "conductor without evaluator is invalid" do
+      params = %{
+        format: :conductor,
+        language: "python-3"
+      }
+
+      assert_changeset(params, :invalid)
+    end
+
+    test "conductor with external is invalid", %{valid_params: legacy} do
+      params =
+        Map.merge(legacy, %{
+          format: :conductor,
+          language: "python-3",
+          evaluator: "lambda-pyeval-v1"
+        })
+
+      assert_changeset(params, :invalid)
+    end
+
+    test "legacy with language set is invalid", %{valid_params: params} do
+      params
+      |> Map.put(:language, "python-3")
+      |> assert_changeset(:invalid)
+    end
+
+    test "legacy with evaluator set is invalid", %{valid_params: params} do
+      params
+      |> Map.put(:evaluator, "lambda-pyeval-v1")
+      |> assert_changeset(:invalid)
+    end
+
+    test "legacy with explicit format is valid", %{valid_params: params} do
+      params
+      |> Map.put(:format, :legacy)
+      |> assert_changeset(:valid)
+    end
   end
 end

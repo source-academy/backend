@@ -125,27 +125,60 @@ defmodule Cadet.Autograder.LambdaWorker do
 
   def build_request_params(%{question: question = %Question{}, answer: answer = %Answer{}}) do
     question_content = question.question
+    grading_library = question.grading_library
 
+    cond do
+      # Conductor libraries carry a (language, evaluator) pair that the grader
+      # resolves to an external runtime. The rest of the request (programs and
+      # testcases) is identical to the legacy case.
+      grading_library.format == :conductor ->
+        do_build_conductor_request_params(question_content, grading_library, answer)
+
+      is_nil(grading_library.external) ->
+        raise ArgumentError,
+          message: "Question #{question.id} has no external library; cannot autograde."
+
+      true ->
+        do_build_request_params(question_content, grading_library, answer)
+    end
+  end
+
+  defp do_build_request_params(question_content, grading_library, answer) do
     {_, upcased_name_external} =
-      question.grading_library.external
+      grading_library.external
       |> Map.from_struct()
       |> Map.get_and_update(
         :name,
         &{&1, &1 |> String.upcase()}
       )
 
+    question_content
+    |> base_request_params(answer)
+    |> Map.put(:library, %{
+      chapter: grading_library.chapter,
+      external: upcased_name_external,
+      globals: Enum.map(grading_library.globals, fn {k, v} -> [k, v] end)
+    })
+  end
+
+  defp do_build_conductor_request_params(question_content, grading_library, answer) do
+    question_content
+    |> base_request_params(answer)
+    |> Map.put(:library, %{
+      format: "conductor",
+      language: grading_library.language,
+      evaluator: grading_library.evaluator
+    })
+  end
+
+  defp base_request_params(question_content, answer) do
     %{
       prependProgram: Map.get(question_content, "prepend", ""),
       studentProgram: Map.get(answer.answer, "code"),
       postpendProgram: Map.get(question_content, "postpend", ""),
       testcases:
         Map.get(question_content, "public", []) ++
-          Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", []),
-      library: %{
-        chapter: question.grading_library.chapter,
-        external: upcased_name_external,
-        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
-      }
+          Map.get(question_content, "opaque", []) ++ Map.get(question_content, "secret", [])
     }
   end
 

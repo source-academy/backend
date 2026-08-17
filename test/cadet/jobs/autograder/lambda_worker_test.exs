@@ -270,5 +270,56 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                answer: Repo.get(Answer, answer.id)
              }) == expected
     end
+
+    test "it should build conductor params for a conductor grading library" do
+      question =
+        insert(
+          :programming_question,
+          %{
+            grading_library: build(:conductor_library),
+            question:
+              build(:programming_question_content, %{
+                public: [%{"score" => 1, "answer" => "1", "program" => "f(1);"}],
+                opaque: [],
+                secret: []
+              })
+          }
+        )
+
+      submission =
+        insert(:submission, %{
+          student: insert(:course_registration, %{role: :student}),
+          assessment: question.assessment
+        })
+
+      answer =
+        insert(:answer, %{
+          submission: submission,
+          question: question,
+          answer: %{code: "print(f(1))"}
+        })
+
+      question = Repo.get(Question, question.id)
+      answer = Repo.get(Answer, answer.id)
+
+      # The conductor request reuses the same programs/testcases as the legacy
+      # case but carries a (format, language, evaluator) library with none of the
+      # legacy chapter/external/globals fields.
+      expected = %{
+        prependProgram: question.question["prepend"],
+        postpendProgram: question.question["postpend"],
+        studentProgram: answer.answer["code"],
+        testcases:
+          question.question["public"] ++
+            question.question["opaque"] ++ question.question["secret"],
+        library: %{
+          format: "conductor",
+          language: question.grading_library.language,
+          evaluator: question.grading_library.evaluator
+        }
+      }
+
+      assert LambdaWorker.build_request_params(%{question: question, answer: answer}) == expected
+    end
   end
 end

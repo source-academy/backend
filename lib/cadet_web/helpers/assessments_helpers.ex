@@ -4,7 +4,25 @@ defmodule CadetWeb.AssessmentsHelpers do
   """
   import CadetWeb.ViewHelper
 
+  defp build_library(%{library: %{format: :conductor} = library}) do
+    %{
+      "format" => "conductor",
+      "language" => library.language,
+      "evaluator" => library.evaluator
+    }
+  end
+
+  defp build_library(%{library: %{format: :legacy} = library}) do
+    library
+    |> build_legacy_library_fields()
+    |> Map.put("format", "legacy")
+  end
+
   defp build_library(%{library: library}) do
+    build_library(%{library: Map.put(library, :format, :legacy)})
+  end
+
+  defp build_legacy_library_fields(library) do
     transform_map_for_view(library, %{
       chapter: :chapter,
       variant: :variant,

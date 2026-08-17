@@ -62,9 +62,23 @@ defmodule Cadet.Updater.XMLParser do
 
   defp extract_changeset_error_message(errors_list) do
     errors_list
-    |> Enum.map(fn {field, {error, _}} -> "#{to_string(field)} #{error}" end)
-    |> List.foldr("", fn x, acc -> "#{acc <> x} " end)
+    |> Enum.map_join(
+      " ",
+      fn {field, messages} ->
+        formatted =
+          messages
+          |> List.wrap()
+          |> Enum.map_join(" ", &stringify_error_message/1)
+
+        "#{to_string(field)} #{formatted}"
+      end
+    )
   end
+
+  defp stringify_error_message(msg) when is_binary(msg), do: msg
+  defp stringify_error_message({msg, _opts}) when is_binary(msg), do: msg
+  defp stringify_error_message(%Ecto.Changeset{}), do: "embed invalid"
+  defp stringify_error_message(other), do: inspect(other)
 
   @spec process_assessment(String.t(), integer(), integer()) ::
           {:ok, map()} | {:error, String.t()}
@@ -287,16 +301,115 @@ defmodule Cadet.Updater.XMLParser do
         library
 
     if library do
-      question
-      |> Map.put(:library, parse_programming_language(library))
-      |> Map.put(:grading_library, parse_programming_language(grading_library))
+      with {:ok, library_attrs} <- parse_programming_language(library),
+           {:ok, grading_library_attrs} <- parse_programming_language(grading_library) do
+        question
+        |> Map.put(:library, library_attrs)
+        |> Map.put(:grading_library, grading_library_attrs)
+      end
     else
       {:error, "Missing PROGRAMMINGLANGUAGE"}
     end
   end
 
-  @spec parse_programming_language(any()) :: map()
+  @spec parse_programming_language(any()) :: {:ok, map()} | {:error, String.t()}
   defp parse_programming_language(library_entity) do
+    attrs = read_programming_language_attrs(library_entity)
+
+    with :ok <- validate_programming_language_element(attrs, library_entity) do
+      if blank?(attrs[:language]) do
+        {:ok, build_legacy_programming_language_map(library_entity)}
+      else
+        {:ok,
+         %{
+           format: :conductor,
+           language: attrs[:language],
+           evaluator: attrs[:evaluator]
+         }}
+      end
+    end
+  end
+
+  defp read_programming_language_attrs(library_entity) do
+    xpath(
+      library_entity,
+      ~x"."e,
+      interpreter: ~x"./@interpreter"oi,
+      language: ~x"./@language"o |> transform_by(&coerce_string/1),
+      evaluator: ~x"./@evaluator"o |> transform_by(&coerce_string/1),
+      variant: ~x"./@variant"o |> transform_by(&coerce_string/1),
+      exectime: ~x"./@exectime"oi
+    )
+  end
+
+  defp coerce_string(nil), do: nil
+  defp coerce_string(""), do: nil
+  defp coerce_string(charlist) when is_list(charlist), do: to_string(charlist)
+  defp coerce_string(value) when is_binary(value), do: value
+
+  # The presence of a `language` attribute selects the format: conductor when
+  # present, legacy otherwise. Validating each mode separately keeps the
+  # compound conditions (and thus cyclomatic complexity) low.
+  defp validate_programming_language_element(attrs, library_entity) do
+    if blank?(attrs[:language]) do
+      validate_legacy_programming_language(attrs)
+    else
+      validate_conductor_programming_language(attrs, library_entity)
+    end
+  end
+
+  defp validate_legacy_programming_language(attrs) do
+    cond do
+      not blank?(attrs[:evaluator]) ->
+        {:error, "Both 'language' and 'evaluator' must be present, or neither"}
+
+      is_nil(attrs[:interpreter]) ->
+        {:error,
+         "PROGRAMMINGLANGUAGE element must specify either interpreter or language+evaluator"}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp validate_conductor_programming_language(attrs, library_entity) do
+    cond do
+      blank?(attrs[:evaluator]) ->
+        {:error, "Both 'language' and 'evaluator' must be present, or neither"}
+
+      not is_nil(attrs[:interpreter]) ->
+        {:error,
+         "Cannot mix 'language'/'evaluator' with 'interpreter' on a single PROGRAMMINGLANGUAGE element"}
+
+      conductor_has_disallowed_content?(attrs, library_entity) ->
+        {:error,
+         "Conductor PROGRAMMINGLANGUAGE must not have variant/exectime or any child elements"}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp conductor_has_disallowed_content?(attrs, library_entity) do
+    not blank?(attrs[:variant]) or
+      not is_nil(attrs[:exectime]) or
+      not is_nil(xpath(library_entity, ~x"./EXTERNAL"o)) or
+      child_list_nonempty?(library_entity, ~x"./GLOBAL"l) or
+      child_list_nonempty?(library_entity, ~x"./OPTION"el)
+  end
+
+  defp blank?(nil), do: true
+  defp blank?(""), do: true
+  defp blank?(_), do: false
+
+  defp child_list_nonempty?(library_entity, spec) do
+    case xpath(library_entity, spec) do
+      list when is_list(list) -> list != []
+      _ -> false
+    end
+  end
+
+  defp build_legacy_programming_language_map(library_entity) do
     globals =
       library_entity
       |> xpath(
@@ -323,13 +436,17 @@ defmodule Cadet.Updater.XMLParser do
     options_map =
       options_list |> Map.new(&{&1.key, &1.value})
 
-    library_entity
-    |> xpath(
-      ~x"."e,
-      chapter: ~x"./@interpreter"i,
-      exec_time_ms: ~x"./@exectime"oi,
-      variant: ~x"./@variant"os
-    )
+    base =
+      xpath(
+        library_entity,
+        ~x"."e,
+        chapter: ~x"./@interpreter"i,
+        exec_time_ms: ~x"./@exectime"oi,
+        variant: ~x"./@variant"os
+      )
+
+    base
+    |> Map.put(:format, :legacy)
     |> Map.put(:globals, globals)
     |> Map.put(:external, external)
     |> Map.put(:language_options, options_map)
