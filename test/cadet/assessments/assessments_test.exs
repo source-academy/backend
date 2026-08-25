@@ -3368,6 +3368,268 @@ defmodule Cadet.AssessmentsTest do
     end
   end
 
+  describe "fetch_contest_voting_assesment_id function" do
+    test "correctly fetches voting assessment id when contest exists" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      contest_question = insert(:programming_question, assessment: contest_assessment)
+
+      voting_question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+
+      result = Assessments.fetch_contest_voting_assesment_id(voting_assessment.id)
+
+      assert result == contest_assessment.id
+    end
+
+    test "returns nil when assessment does not exist" do
+      non_existent_id = 999_999
+      result = Assessments.fetch_contest_voting_assesment_id(non_existent_id)
+      assert is_nil(result)
+    end
+
+    test "returns nil when no contest number matches" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      insert(:voting_question, %{
+        assessment: voting_assessment,
+        question: build(:voting_question_content, contest_number: "non_existent_number")
+      })
+
+      result = Assessments.fetch_contest_voting_assesment_id(voting_assessment.id)
+
+      assert is_nil(result)
+    end
+  end
+
+  describe "fetch_all_contests function" do
+    test "fetches all contests for a course" do
+      course = insert(:course)
+      config = insert(:assessment_config, %{type: "Contests"})
+
+      contest_assessment_1 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: true,
+          title: "Contest 1"
+        })
+
+      contest_assessment_2 =
+        insert(:assessment, %{
+          course: course,
+          config: config,
+          is_published: false,
+          title: "Contest 2"
+        })
+
+      voting_assessment = insert(:assessment, %{course: course})
+
+      insert(:voting_question, %{
+        assessment: voting_assessment,
+        question: build(:voting_question_content, contest_number: contest_assessment_1.number)
+      })
+
+      insert(:voting_question, %{
+        assessment: voting_assessment,
+        question: build(:voting_question_content, contest_number: contest_assessment_2.number)
+      })
+
+      result = Assessments.fetch_all_contests(course.id)
+
+      assert length(result) == 2
+
+      assert Enum.find(result, fn c -> c.contest_id == contest_assessment_1.id end).published ==
+               true
+
+      assert Enum.find(result, fn c -> c.contest_id == contest_assessment_2.id end).published ==
+               false
+    end
+
+    test "returns empty list when no voting questions exist" do
+      course = insert(:course)
+      result = Assessments.fetch_all_contests(course.id)
+      assert result == []
+    end
+
+    test "excludes contests that are not of type Contests" do
+      course = insert(:course)
+      non_contest_config = insert(:assessment_config, %{type: "Mission"})
+
+      non_contest_assessment =
+        insert(:assessment, %{
+          course: course,
+          config: non_contest_config,
+          is_published: true
+        })
+
+      voting_assessment = insert(:assessment, %{course: course})
+
+      insert(:voting_question, %{
+        assessment: voting_assessment,
+        question: build(:voting_question_content, contest_number: non_contest_assessment.number)
+      })
+
+      result = Assessments.fetch_all_contests(course.id)
+
+      assert result == []
+    end
+  end
+
+  describe "fetch_top_relative_score_answers ranking" do
+    test "correctly ranks answers with RANK() OVER function" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_question = insert(:programming_question, assessment: contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+      voting_question = insert(:voting_question, assessment: voting_assessment)
+
+      # generate 5 students with answers having different relative scores
+      student_list = insert_list(5, :course_registration, %{course: course, role: :student})
+
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: contest_assessment,
+              status: "submitted"
+            )
+          end
+        )
+
+      ans_list =
+        Enum.map(
+          Enum.with_index(submission_list),
+          fn {submission, index} ->
+            insert(
+              :answer,
+              answer: build(:programming_answer),
+              submission: submission,
+              question: contest_question,
+              relative_score: 10 - index
+            )
+          end
+        )
+
+      top_2 = Assessments.fetch_top_relative_score_answers(contest_question.id, 2)
+
+      assert length(top_2) == 2
+      assert Enum.all?(top_2, fn ans -> ans.rank <= 2 end)
+      assert Enum.map(top_2, fn ans -> ans.relative_score end) == [10.0, 9.0]
+    end
+
+    test "handles tied scores correctly with RANK() OVER" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_question = insert(:programming_question, assessment: contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+      voting_question = insert(:voting_question, assessment: voting_assessment)
+
+      student_list = insert_list(3, :course_registration, %{course: course, role: :student})
+
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: contest_assessment,
+              status: "submitted"
+            )
+          end
+        )
+
+      # Two answers with same relative_score (tied for first)
+      insert(:answer, %{
+        answer: build(:programming_answer),
+        submission: Enum.at(submission_list, 0),
+        question: contest_question,
+        relative_score: 10.0
+      })
+
+      insert(:answer, %{
+        answer: build(:programming_answer),
+        submission: Enum.at(submission_list, 1),
+        question: contest_question,
+        relative_score: 10.0
+      })
+
+      insert(:answer, %{
+        answer: build(:programming_answer),
+        submission: Enum.at(submission_list, 2),
+        question: contest_question,
+        relative_score: 9.0
+      })
+
+      top_2 = Assessments.fetch_top_relative_score_answers(contest_question.id, 2)
+
+      assert length(top_2) == 2
+      assert Enum.count(top_2, fn ans -> ans.rank == 1 end) == 2
+    end
+  end
+
+  describe "fetch_top_popular_score_answers ranking" do
+    test "correctly ranks answers with RANK() OVER function" do
+      course = insert(:course)
+      config = insert(:assessment_config)
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_question = insert(:programming_question, assessment: contest_assessment)
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+      voting_question = insert(:voting_question, assessment: voting_assessment)
+
+      student_list = insert_list(5, :course_registration, %{course: course, role: :student})
+
+      submission_list =
+        Enum.map(
+          student_list,
+          fn student ->
+            insert(
+              :submission,
+              student: student,
+              assessment: contest_assessment,
+              status: "submitted"
+            )
+          end
+        )
+
+      ans_list =
+        Enum.map(
+          Enum.with_index(submission_list),
+          fn {submission, index} ->
+            insert(
+              :answer,
+              answer: build(:programming_answer),
+              submission: submission,
+              question: contest_question,
+              popular_score: 20 - index
+            )
+          end
+        )
+
+      top_3 = Assessments.fetch_top_popular_score_answers(contest_question.id, 3)
+
+      assert length(top_3) == 3
+      assert Enum.all?(top_3, fn ans -> ans.rank <= 3 end)
+      assert Enum.map(top_3, fn ans -> ans.popular_score end) == [20.0, 19.0, 18.0]
+    end
+  end
+
   defp get_answer_relative_scores(answers) do
     answers |> Enum.map(fn ans -> ans.relative_score end)
   end
