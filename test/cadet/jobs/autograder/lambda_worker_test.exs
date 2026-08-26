@@ -261,7 +261,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
             name: question.grading_library.external.name |> String.upcase(),
             symbols: question.grading_library.external.symbols
           },
-          globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
+          globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end),
+          runtime: question.grading_library.runtime
         }
       }
 
@@ -269,6 +270,115 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
                question: Repo.get(Question, question.id),
                answer: Repo.get(Answer, answer.id)
              }) == expected
+    end
+
+    test "it passes the python runtime through to the grader", %{answer: answer} do
+      question =
+        insert(:programming_question, %{grading_library: build(:library, %{runtime: "python"})})
+
+      params =
+        LambdaWorker.build_request_params(%{
+          question: Repo.get(Question, question.id),
+          answer: Repo.get(Answer, answer.id)
+        })
+
+      assert params.library.runtime == "python"
+    end
+  end
+
+  describe "runtime routing" do
+    setup %{answer: answer} do
+      python_question =
+        insert(:programming_question, %{
+          grading_library: build(:library, %{runtime: "python"}),
+          question:
+            build(:programming_question_content, %{
+              public: [%{"score" => 1, "answer" => "1", "program" => "f(1);"}],
+              opaque: [],
+              secret: []
+            })
+        })
+
+      python_answer =
+        insert(:answer, %{
+          submission:
+            insert(:submission, %{
+              student: insert(:course_registration, %{role: :student}),
+              assessment: python_question.assessment
+            }),
+          question: python_question,
+          answer: %{code: "1"}
+        })
+
+      %{python_question: python_question, python_answer: python_answer, answer: answer}
+    end
+
+    test "python questions invoke the configured python lambda", %{python_answer: python_answer} do
+      with_testing_mode(:manual, fn ->
+        with_mocks [
+          {ExAws.Lambda, [:passthrough],
+           invoke: fn lambda_name, _params, _opts ->
+             send(self(), {:invoked_lambda, lambda_name})
+             %{stub: lambda_name}
+           end},
+          {ExAws, [:passthrough],
+           request!: fn _request -> %{"totalScore" => 0, "maxScore" => 0, "results" => []} end}
+        ] do
+          LambdaWorker.perform(%{
+            question_id: python_answer.question_id,
+            answer_id: python_answer.id
+          })
+
+          assert_received {:invoked_lambda, "dummy-python"}
+        end
+      end)
+    end
+
+    test "python questions fail gracefully when no python lambda is configured", %{
+      python_answer: python_answer
+    } do
+      original = Application.fetch_env!(:cadet, :autograder)
+      on_exit(fn -> Application.put_env(:cadet, :autograder, original) end)
+      Application.put_env(:cadet, :autograder, Keyword.delete(original, :python_lambda_name))
+
+      with_testing_mode(:manual, fn ->
+        log =
+          capture_log(fn ->
+            assert {:error, _} =
+                     LambdaWorker.perform(%Oban.Job{
+                       args: %{
+                         "question_id" => python_answer.question_id,
+                         "answer_id" => python_answer.id
+                       }
+                     })
+          end)
+
+        assert log =~ "No autograder lambda configured for runtime \"python\""
+
+        assert_enqueued(
+          worker: ResultStoreWorker,
+          args: %{
+            answer_id: python_answer.id,
+            result: %{
+              score: 0,
+              max_score: 1,
+              status: :failed,
+              result: [
+                %{
+                  "resultType" => "error",
+                  "errors" => [
+                    %{
+                      "errorType" => "systemError",
+                      "errorMessage" =>
+                        "Autograder runtime error. Please contact a system administrator"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        )
+      end)
     end
   end
 end

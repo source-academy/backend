@@ -175,11 +175,11 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp programminglanguage(raw_attrs, children) do
-    {"PROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+    {"PROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter runtime)a), children}
   end
 
   defp graderprogramminglanguage(raw_attrs, children) do
-    {"GRADERPROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter)a), children}
+    {"GRADERPROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter runtime)a), children}
   end
 
   defp external(raw_attrs, children) do
@@ -213,7 +213,7 @@ defmodule Cadet.Test.XMLGenerator do
     else
       [
         tag_function.(
-          %{interpreter: library.chapter},
+          %{interpreter: library.chapter, runtime: library[:runtime]},
           [
             external(
               %{name: library.external.name},

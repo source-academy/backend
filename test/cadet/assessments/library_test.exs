@@ -102,5 +102,20 @@ defmodule Cadet.Assessments.LibraryTest do
       |> Map.delete(:external)
       |> assert_changeset(:valid)
     end
+
+    test "valid changeset with runtime", %{valid_params: params} do
+      params
+      |> Map.put(:runtime, "python")
+      |> assert_changeset(:valid)
+    end
+
+    test "runtime defaults to legacy", %{valid_params: params} do
+      library =
+        %Library{}
+        |> Library.changeset(params)
+        |> Ecto.Changeset.apply_changes()
+
+      assert library.runtime == "legacy"
+    end
   end
 end
