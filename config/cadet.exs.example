@@ -102,7 +102,10 @@ config :cadet,
   #   ]
   # ],
   autograder: [
-    lambda_name: "<unique-identifier>-grader"
+    lambda_name: "<unique-identifier>-grader",
+    # Invoked for questions with runtime "python". If omitted, such questions
+    # fail gracefully rather than being graded by the legacy interpreter.
+    python_lambda_name: "<unique-identifier>-python-grader"
   ],
   uploader: [
     assets_bucket: "<unique-identifier>-assets",
