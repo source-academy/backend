@@ -53,10 +53,15 @@ defmodule Cadet.Autograder.LambdaWorker do
       Process.sleep(1000)
       :ok
     else
+      config = Application.fetch_env!(:cadet, :autograder)
+      runtime = resolve_runtime(question.grading_library.runtime)
+
+      lambda_name =
+        Keyword.get(config, lambda_key_for(runtime)) ||
+          raise "No autograder lambda configured for runtime #{inspect(runtime)}"
+
       response =
-        :cadet
-        |> Application.fetch_env!(:autograder)
-        |> Keyword.get(:lambda_name)
+        lambda_name
         |> ExAws.Lambda.invoke(lambda_params, %{})
         |> ExAws.request!()
 
@@ -71,6 +76,13 @@ defmodule Cadet.Autograder.LambdaWorker do
       :ok
     end
   end
+
+  # might want to check if this is actually needed
+  defp resolve_runtime(runtime) when runtime in [nil, ""], do: "python"
+  defp resolve_runtime(runtime), do: runtime
+
+  defp lambda_key_for("legacy"), do: :lambda_name
+  defp lambda_key_for("python"), do: :python_lambda_name
 
   defp enqueue_result_store(args) do
     args
@@ -144,7 +156,8 @@ defmodule Cadet.Autograder.LambdaWorker do
       library: %{
         chapter: question.grading_library.chapter,
         external: upcased_name_external,
-        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end)
+        globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end),
+        runtime: question.grading_library.runtime
       }
     }
   end

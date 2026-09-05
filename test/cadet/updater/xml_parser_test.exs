@@ -277,6 +277,42 @@ defmodule Cadet.Updater.XMLParserTest do
     end
   end
 
+  describe "runtime parsing" do
+    setup %{course: course, assessments_with_config: assessments_with_config} do
+      [{assessment, assessment_config} | _] = Enum.to_list(assessments_with_config)
+      %{course: course, assessment: assessment, assessment_config: assessment_config}
+    end
+
+    test "parses the grading library runtime", context do
+      question =
+        build(:programming_question, grading_library: build(:library, %{runtime: "python"}))
+
+      assert parse_single_question(context, question).grading_library.runtime == "python"
+    end
+
+    test "defaults to python when the runtime attribute is absent", context do
+      question = build(:programming_question, grading_library: build(:library))
+
+      assert parse_single_question(context, question).grading_library.runtime == "python"
+    end
+
+    test "rejects an unknown runtime", %{
+      course: course,
+      assessment: assessment,
+      assessment_config: assessment_config
+    } do
+      question =
+        build(:programming_question, grading_library: build(:library, %{runtime: "haskell"}))
+
+      xml = XMLGenerator.generate_xml_for(assessment, [question])
+
+      assert capture_log(fn ->
+               assert XMLParser.parse_xml(xml, course.id, assessment_config.id) ==
+                        {:error, {:bad_request, "Invalid runtime \"haskell\""}}
+             end) =~ "Invalid runtime \"haskell\""
+    end
+  end
+
   describe "XML file processing" do
     test "happy path", %{
       questions: questions,
@@ -359,6 +395,18 @@ defmodule Cadet.Updater.XMLParserTest do
           assert(map1[key] == map2[key], assert_error_message)
       end
     end
+  end
+
+  defp parse_single_question(
+         %{course: course, assessment: assessment, assessment_config: assessment_config},
+         question
+       ) do
+    xml = XMLGenerator.generate_xml_for(assessment, [question])
+
+    assert XMLParser.parse_xml(xml, course.id, assessment_config.id) == :ok
+
+    assessment_db = Repo.get_by!(Assessment, number: assessment.number)
+    Repo.one!(where(Question, assessment_id: ^assessment_db.id))
   end
 
   defp convert_map_keys_to_string(struct = %{__struct__: _}) do
