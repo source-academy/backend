@@ -109,13 +109,13 @@ defmodule Cadet.Assessments.LibraryTest do
       |> assert_changeset(:valid)
     end
 
-    test "runtime defaults to legacy", %{valid_params: params} do
+    test "runtime defaults to python", %{valid_params: params} do
       library =
         %Library{}
         |> Library.changeset(params)
         |> Ecto.Changeset.apply_changes()
 
-      assert library.runtime == "legacy"
+      assert library.runtime == "python"
     end
   end
 end

@@ -290,10 +290,10 @@ defmodule Cadet.Updater.XMLParserTest do
       assert parse_single_question(context, question).grading_library.runtime == "python"
     end
 
-    test "defaults to legacy when the runtime attribute is absent", context do
+    test "defaults to python when the runtime attribute is absent", context do
       question = build(:programming_question, grading_library: build(:library))
 
-      assert parse_single_question(context, question).grading_library.runtime == "legacy"
+      assert parse_single_question(context, question).grading_library.runtime == "python"
     end
 
     test "rejects an unknown runtime", %{

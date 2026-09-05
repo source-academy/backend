@@ -78,7 +78,7 @@ defmodule Cadet.Autograder.LambdaWorker do
   end
 
   # might want to check if this is actually needed
-  defp resolve_runtime(runtime) when runtime in [nil, ""], do: "legacy"
+  defp resolve_runtime(runtime) when runtime in [nil, ""], do: "python"
   defp resolve_runtime(runtime), do: runtime
 
   defp lambda_key_for("legacy"), do: :lambda_name

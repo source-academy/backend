@@ -13,7 +13,7 @@ defmodule Cadet.Assessments.Library do
     field(:exec_time_ms, :integer, default: 1000)
     field(:globals, :map, default: %{})
     field(:language_options, :map, default: %{})
-    field(:runtime, :string, default: "legacy")
+    field(:runtime, :string, default: "python")
     embeds_one(:external, ExternalLibrary, on_replace: :update)
   end
 
