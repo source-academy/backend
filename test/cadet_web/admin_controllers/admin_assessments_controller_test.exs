@@ -159,6 +159,85 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
     end
   end
 
+  describe "POST /assessments/:assessmentid/calculateContestScore" do
+    @tag authenticate: :admin
+    test "successfully calculates contest score", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
+      contest_question = insert(:programming_question, %{assessment: contest_assessment})
+
+      contest_submissions =
+        contest_students
+        |> Enum.map(&insert(:submission, %{assessment: contest_assessment, student: &1}))
+
+      _contest_answers =
+        contest_submissions
+        |> Enum.map(
+          &insert(:answer, %{
+            question: contest_question,
+            submission: &1,
+            answer: build(:programming_answer)
+          })
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+
+      voting_question =
+        insert(:voting_question, %{
+          assessment: voting_assessment,
+          question: build(:voting_question_content, contest_number: contest_assessment.number)
+        })
+
+      conn
+      |> post(
+        "/v2/courses/#{course.id}/admin/assessments/#{voting_assessment.id}/calculateContestScore"
+      )
+      |> response(200)
+    end
+  end
+
+  describe "POST /assessments/:assessmentid/dispatchContestXp" do
+    @tag authenticate: :admin
+    test "successfully dispatches xp to contest winners", %{conn: conn} do
+      test_cr = conn.assigns.test_cr
+      course = test_cr.course
+      config = insert(:assessment_config, %{course: course})
+
+      contest_assessment = insert(:assessment, %{course: course, config: config})
+      contest_students = insert_list(5, :course_registration, %{course: course, role: :student})
+      contest_question = insert(:programming_question, %{assessment: contest_assessment})
+
+      contest_submissions =
+        contest_students
+        |> Enum.map(&insert(:submission, %{assessment: contest_assessment, student: &1}))
+
+      _contest_answers =
+        contest_submissions
+        |> Enum.map(
+          &insert(:answer, %{
+            question: contest_question,
+            submission: &1,
+            popular_score: 10.0,
+            relative_score: 10.0,
+            answer: build(:programming_answer)
+          })
+        )
+
+      voting_assessment = insert(:assessment, %{course: course, config: config})
+      voting_question = insert(:voting_question, %{assessment: voting_assessment})
+
+      conn
+      |> post(
+        "/v2/courses/#{course.id}/admin/assessments/#{voting_assessment.id}/dispatchContestXp"
+      )
+      |> response(200)
+    end
+  end
+
   describe "POST /, unauthenticated" do
     test "unauthorized", %{
       conn: conn,
