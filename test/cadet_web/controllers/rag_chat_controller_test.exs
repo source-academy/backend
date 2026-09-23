@@ -22,8 +22,13 @@ defmodule CadetWeb.RagChatControllerTest do
     course = Repo.get!(Course, user.latest_viewed_course_id)
 
     # Pixel is off until staff turn it on, so a course used for chat has to enable it explicitly.
+    # The key goes via Course.changeset so it is encrypted; change/2 would store it in plaintext.
+    course
+    |> Course.changeset(%{llm_api_key: "sk-course-key"})
+    |> Repo.update!()
+
     Repo.update!(
-      change(course, %{
+      change(Repo.get!(Course, course.id), %{
         enable_pixelbot: true,
         pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
         pixelbot_answer_prompt: "Answer the question."
@@ -176,8 +181,12 @@ defmodule CadetWeb.RagChatControllerTest do
       user = conn.assigns.current_user
       course = Repo.get!(Course, user.latest_viewed_course_id)
 
+      course
+      |> Course.changeset(%{llm_api_key: "sk-course-key"})
+      |> Repo.update!()
+
       Repo.update!(
-        change(course, %{
+        change(Repo.get!(Course, course.id), %{
           enable_pixelbot: true,
           pixelbot_routing_prompt: "Route: %DOCUMENT_MAP%",
           pixelbot_answer_prompt: "Answer the question."
@@ -228,7 +237,8 @@ defmodule CadetWeb.RagChatControllerTest do
     test "a non-map OpenAI error still returns a 500 with a readable message", %{conn: conn} do
       setup_rag_course(conn)
 
-      with_mock OpenAI, [:passthrough], chat_completion: fn _opts -> {:error, :timeout} end do
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _opts, _config -> {:error, :timeout} end do
         conn = post(conn, "/v2/rag_chat/message", %{"message" => "Hello"})
 
         assert response(conn, 500) == "Unknown OpenAI error"
@@ -250,7 +260,7 @@ defmodule CadetWeb.RagChatControllerTest do
           {:rag, Keyword.fetch!(opts, :answer_prompt), attachments}
         end do
         with_mock OpenAI, [:passthrough],
-          chat_completion: fn opts ->
+          chat_completion: fn opts, _config ->
             send(parent, {:payload, Keyword.fetch!(opts, :messages)})
             {:ok, %{choices: [%{"message" => %{"content" => response_content}}]}}
           end do
@@ -282,8 +292,104 @@ defmodule CadetWeb.RagChatControllerTest do
       assert attachment.file.file_data =~ "data:application/pdf;base64,"
     end
 
-    # The answer prompt is repeated immediately before the last user turn so a long conversation
-    # cannot push it out of the model's attention.
+    @tag authenticate: :student
+    test "sends the course's own API key, not the global one", %{conn: conn} do
+      parent = self()
+
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _params, config ->
+          send(parent, {:api_key, config.api_key})
+          {:ok, %{choices: [%{"message" => %{"content" => "ok"}}]}}
+        end do
+        post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+      end
+
+      # Both the routing call and the answer run on the course key.
+      assert_receive {:api_key, "sk-course-key"}
+      assert_receive {:api_key, "sk-course-key"}
+    end
+
+    @tag authenticate: :student
+    test "refuses to chat when the course has no API key", %{conn: conn} do
+      course = Repo.get!(Course, conn.assigns.current_user.latest_viewed_course_id)
+      Repo.update!(change(course, %{llm_api_key: nil}))
+
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _params, _config ->
+          {:ok, %{choices: [%{"message" => %{"content" => "ok"}}]}}
+        end do
+        conn = post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+
+        assert response(conn, :unprocessable_entity) =~
+                 "The chatbot is not configured for this course"
+
+        refute called(OpenAI.chat_completion(:_, :_))
+      end
+    end
+
+    @tag authenticate: :student
+    test "refuses to chat when the stored key cannot be decrypted", %{conn: conn} do
+      course = Repo.get!(Course, conn.assigns.current_user.latest_viewed_course_id)
+      # Not the iv:tag:ciphertext shape the decryptor expects.
+      Repo.update!(change(course, %{llm_api_key: "plaintext-never-encrypted"}))
+
+      conn = post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+
+      assert response(conn, :unprocessable_entity) =~
+               "The chatbot is not configured for this course"
+    end
+
+    # Pixel used to read llm_model, so a cheap grading model silently changed student answers.
+    @tag authenticate: :student
+    test "runs on the course's Pixel model, not its grading model", %{conn: conn} do
+      course = Repo.get!(Course, conn.assigns.current_user.latest_viewed_course_id)
+      Repo.update!(change(course, %{llm_model: "gpt-5-mini", pixelbot_model: "gpt-4o"}))
+
+      parent = self()
+
+      with_mock RagPipeline, [:passthrough],
+        process_rag_query: fn _message, opts ->
+          send(parent, {:routing_model, Keyword.fetch!(opts, :model)})
+          {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
+        end do
+        with_mock OpenAI, [:passthrough],
+          chat_completion: fn opts, _config ->
+            send(parent, {:answer_model, Keyword.fetch!(opts, :model)})
+            {:ok, %{choices: [%{"message" => %{"content" => "ok"}}]}}
+          end do
+          post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+        end
+      end
+
+      # Both the routing call and the answer run on the Pixel model.
+      assert_receive {:routing_model, "gpt-4o"}
+      assert_receive {:answer_model, "gpt-4o"}
+    end
+
+    @tag authenticate: :student
+    test "falls back to a default when no Pixel model is set", %{conn: conn} do
+      course = Repo.get!(Course, conn.assigns.current_user.latest_viewed_course_id)
+      Repo.update!(change(course, %{llm_model: "gpt-5-mini", pixelbot_model: nil}))
+
+      parent = self()
+
+      with_mock RagPipeline, [:passthrough],
+        process_rag_query: fn _message, opts ->
+          send(parent, {:routing_model, Keyword.fetch!(opts, :model)})
+          {:no_docs, Keyword.fetch!(opts, :answer_prompt)}
+        end do
+        with_mock OpenAI, [:passthrough],
+          chat_completion: fn _opts, _config ->
+            {:ok, %{choices: [%{"message" => %{"content" => "ok"}}]}}
+          end do
+          post(conn, "/v2/rag_chat/message", %{"message" => "What is recursion?"})
+        end
+      end
+
+      # The grading model is not the fallback.
+      assert_receive {:routing_model, "gpt-4o"}
+    end
+
     @tag authenticate: :student
     test "repeats the system prompt directly before the attached message", %{conn: conn} do
       with_rag_answer([], "ok", fn ->

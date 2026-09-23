@@ -18,14 +18,15 @@ defmodule Cadet.Chatbot.MetadataGeneratorTest do
         "Lecture 1A.pdf",
         Base.encode64("hi"),
         "application/pdf",
-        "gpt-4o"
+        "gpt-4o",
+        %OpenAI.Config{api_key: "sk-course-key"}
       )
     end
   end
 
   test "returns the description from a clean JSON response" do
     metadata =
-      generate(fn _opts ->
+      generate(fn _opts, _config ->
         openai_response(~s({"description": "Covers recursion and the substitution model."}))
       end)
 
@@ -37,7 +38,7 @@ defmodule Cadet.Chatbot.MetadataGeneratorTest do
 
   test "tolerates whitespace and a fenced code block around the JSON" do
     metadata =
-      generate(fn _opts ->
+      generate(fn _opts, _config ->
         openai_response("""
         Here you go:
 
@@ -54,7 +55,7 @@ defmodule Cadet.Chatbot.MetadataGeneratorTest do
   # proposal next to the file they just picked, and a model-invented title would not match it.
   test "derives the title from the filename and ignores any the model supplies" do
     metadata =
-      generate(fn _opts ->
+      generate(fn _opts, _config ->
         openai_response(~s({"title": "Something Else", "description": "Covers lists."}))
       end)
 
@@ -62,19 +63,19 @@ defmodule Cadet.Chatbot.MetadataGeneratorTest do
   end
 
   test "falls back to a blank description when the response is not JSON at all" do
-    metadata = generate(fn _opts -> openai_response("I cannot read this document.") end)
+    metadata = generate(fn _opts, _config -> openai_response("I cannot read this document.") end)
 
     assert metadata == %{title: "Lecture 1A", description: ""}
   end
 
   test "falls back to a blank description when the JSON is malformed" do
-    metadata = generate(fn _opts -> openai_response(~s({"description": )) end)
+    metadata = generate(fn _opts, _config -> openai_response(~s({"description": )) end)
 
     assert metadata == %{title: "Lecture 1A", description: ""}
   end
 
   test "falls back to a blank description when the model returns an empty one" do
-    metadata = generate(fn _opts -> openai_response(~s({"description": ""})) end)
+    metadata = generate(fn _opts, _config -> openai_response(~s({"description": ""})) end)
 
     assert metadata == %{title: "Lecture 1A", description: ""}
   end
@@ -82,19 +83,20 @@ defmodule Cadet.Chatbot.MetadataGeneratorTest do
   # The braces are found but what is between them is not valid JSON, so the second decode fails
   # too and there is nothing left to try.
   test "falls back to a blank description when the extracted object is malformed" do
-    metadata = generate(fn _opts -> openai_response(~s(Here you go: {"description": } done)) end)
+    metadata =
+      generate(fn _opts, _config -> openai_response(~s(Here you go: {"description": } done)) end)
 
     assert metadata == %{title: "Lecture 1A", description: ""}
   end
 
   test "falls back to a blank description when the JSON is not an object" do
-    metadata = generate(fn _opts -> openai_response(~s(["a", "b"])) end)
+    metadata = generate(fn _opts, _config -> openai_response(~s(["a", "b"])) end)
 
     assert metadata == %{title: "Lecture 1A", description: ""}
   end
 
   test "falls back to a blank description when there are no choices" do
-    metadata = generate(fn _opts -> {:ok, %{choices: []}} end)
+    metadata = generate(fn _opts, _config -> {:ok, %{choices: []}} end)
 
     assert metadata == %{title: "Lecture 1A", description: ""}
   end
@@ -108,7 +110,7 @@ defmodule Cadet.Chatbot.MetadataGeneratorTest do
       capture_log(fn ->
         send(
           parent,
-          {:metadata, generate(fn _opts -> {:error, %{"error" => "rate limited"}} end)}
+          {:metadata, generate(fn _opts, _config -> {:error, %{"error" => "rate limited"}} end)}
         )
       end)
 
@@ -121,11 +123,17 @@ defmodule Cadet.Chatbot.MetadataGeneratorTest do
     parent = self()
 
     with_mock OpenAI, [:passthrough],
-      chat_completion: fn opts ->
+      chat_completion: fn opts, _config ->
         send(parent, {:payload, Keyword.fetch!(opts, :messages), Keyword.fetch!(opts, :model)})
         openai_response(~s({"description": "ok"}))
       end do
-      MetadataGenerator.generate("notes.tex", Base.encode64("hello"), "text/x-tex", "gpt-5")
+      MetadataGenerator.generate(
+        "notes.tex",
+        Base.encode64("hello"),
+        "text/x-tex",
+        "gpt-5",
+        %OpenAI.Config{api_key: "sk-course-key"}
+      )
     end
 
     assert_receive {:payload, [system, user], "gpt-5"}

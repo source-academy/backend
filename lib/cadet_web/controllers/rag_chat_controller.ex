@@ -2,7 +2,7 @@ defmodule CadetWeb.RagChatController do
   use CadetWeb, :controller
   require Logger
 
-  alias Cadet.Chatbot.{Conversation, LlmConversations, RagConversations, RagPipeline}
+  alias Cadet.Chatbot.{Conversation, CourseLlm, LlmConversations, RagConversations, RagPipeline}
   alias Cadet.Courses.Course
   alias Cadet.Repo
   @max_content_size 1000
@@ -148,11 +148,31 @@ defmodule CadetWeb.RagChatController do
   end
 
   defp do_chat(conn, user, course, user_message, screen_context) do
+    case CourseLlm.config(course) do
+      {:ok, llm_config} ->
+        do_chat(conn, user, course, user_message, screen_context, llm_config)
+
+      {:error, reason} ->
+        Logger.error(
+          "RAG chat: course #{course.id} has no usable LLM API key (#{inspect(reason)}); " <>
+            "refusing request"
+        )
+
+        send_resp(
+          conn,
+          :unprocessable_entity,
+          "The chatbot is not configured for this course. Please contact your course staff."
+        )
+    end
+  end
+
+  defp do_chat(conn, user, course, user_message, screen_context, llm_config) do
     rag_opts = [
       routing_prompt: course.pixelbot_routing_prompt,
       answer_prompt: course.pixelbot_answer_prompt,
-      model: course.llm_model || "gpt-4o",
-      course_id: course.id
+      model: course.pixelbot_model || "gpt-4o",
+      course_id: course.id,
+      llm_config: llm_config
     ]
 
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
@@ -166,11 +186,26 @@ defmodule CadetWeb.RagChatController do
           payload =
             generate_payload(updated_conversation, system_prompt, pdf_attachments, screen_context)
 
-          handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
+          handle_openai_call(
+            conn,
+            payload,
+            updated_conversation,
+            conversation.id,
+            model,
+            llm_config
+          )
 
         {:no_docs, system_prompt} ->
           payload = generate_fallback_payload(updated_conversation, system_prompt, screen_context)
-          handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
+
+          handle_openai_call(
+            conn,
+            payload,
+            updated_conversation,
+            conversation.id,
+            model,
+            llm_config
+          )
       end
     else
       {:error, :message_too_long} ->
@@ -188,8 +223,8 @@ defmodule CadetWeb.RagChatController do
     end
   end
 
-  defp handle_openai_call(conn, payload, updated_conversation, conversation_id, model) do
-    case OpenAI.chat_completion(model: model, messages: payload) do
+  defp handle_openai_call(conn, payload, updated_conversation, conversation_id, model, llm_config) do
+    case OpenAI.chat_completion([model: model, messages: payload], llm_config) do
       {:ok, result_map} ->
         choices = Map.get(result_map, :choices, [])
 
