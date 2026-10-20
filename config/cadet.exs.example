@@ -101,8 +101,10 @@ config :cadet,
   #     scope: "openid profile"
   #   ]
   # ],
+  # python lambda required for python grading runtime
   autograder: [
-    lambda_name: "<unique-identifier>-grader"
+    lambda_name: "<unique-identifier>-grader",
+    python_lambda_name: "<unique-identifier>-python-grader"
   ],
   uploader: [
     assets_bucket: "<unique-identifier>-assets",

@@ -310,7 +310,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -355,7 +356,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -410,7 +412,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -1344,7 +1347,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -1389,7 +1393,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.choice_id,
@@ -1444,7 +1449,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,

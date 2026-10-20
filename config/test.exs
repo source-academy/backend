@@ -77,7 +77,8 @@ config :cadet,
        }}
   },
   autograder: [
-    lambda_name: "dummy"
+    lambda_name: "dummy",
+    python_lambda_name: "dummy-python"
   ],
   uploader: [
     assets_bucket: "test-sa-assets",

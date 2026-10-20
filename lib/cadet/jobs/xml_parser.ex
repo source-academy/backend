@@ -287,15 +287,20 @@ defmodule Cadet.Updater.XMLParser do
         library
 
     if library do
-      question
-      |> Map.put(:library, parse_programming_language(library))
-      |> Map.put(:grading_library, parse_programming_language(grading_library))
+      with {:ok, parsed_library} <- parse_programming_language(library),
+           {:ok, parsed_grading_library} <- parse_programming_language(grading_library) do
+        question
+        |> Map.put(:library, parsed_library)
+        |> Map.put(:grading_library, parsed_grading_library)
+      end
     else
       {:error, "Missing PROGRAMMINGLANGUAGE"}
     end
   end
 
-  @spec parse_programming_language(any()) :: map()
+  @valid_runtimes ~w(legacy python)
+
+  @spec parse_programming_language(any()) :: {:ok, map()} | {:error, String.t()}
   defp parse_programming_language(library_entity) do
     globals =
       library_entity
@@ -323,17 +328,31 @@ defmodule Cadet.Updater.XMLParser do
     options_map =
       options_list |> Map.new(&{&1.key, &1.value})
 
-    library_entity
-    |> xpath(
-      ~x"."e,
-      chapter: ~x"./@interpreter"i,
-      exec_time_ms: ~x"./@exectime"oi,
-      variant: ~x"./@variant"os
-    )
-    |> Map.put(:globals, globals)
-    |> Map.put(:external, external)
-    |> Map.put(:language_options, options_map)
+    parsed =
+      library_entity
+      |> xpath(
+        ~x"."e,
+        chapter: ~x"./@interpreter"i,
+        exec_time_ms: ~x"./@exectime"oi,
+        variant: ~x"./@variant"os,
+        runtime: ~x"./@runtime"os
+      )
+      |> Map.put(:globals, globals)
+      |> Map.put(:external, external)
+      |> Map.put(:language_options, options_map)
+
+    case validate_runtime(parsed.runtime) do
+      {:ok, runtime} -> {:ok, put_runtime(parsed, runtime)}
+      error -> error
+    end
   end
+
+  defp validate_runtime(""), do: {:ok, nil}
+  defp validate_runtime(runtime) when runtime in @valid_runtimes, do: {:ok, runtime}
+  defp validate_runtime(runtime), do: {:error, "Invalid runtime #{inspect(runtime)}"}
+
+  defp put_runtime(parsed, nil), do: Map.delete(parsed, :runtime)
+  defp put_runtime(parsed, runtime), do: Map.put(parsed, :runtime, runtime)
 
   @spec process_charlist(charlist() | nil) :: String.t() | nil
 
