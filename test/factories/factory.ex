@@ -34,8 +34,7 @@ defmodule Cadet.Factory do
   use Cadet.Courses.{
     AssessmentConfigFactory,
     CourseFactory,
-    GroupFactory,
-    SourcecastFactory
+    GroupFactory
   }
 
   use Cadet.Notifications.{
@@ -46,12 +45,4 @@ defmodule Cadet.Factory do
   }
 
   use Cadet.Devices.DeviceFactory
-
-  def upload_factory do
-    %Plug.Upload{
-      content_type: "text/plain",
-      filename: sequence(:upload, &"upload#{&1}.txt"),
-      path: "test/fixtures/upload.txt"
-    }
-  end
 end

@@ -7,7 +7,7 @@ defmodule Cadet.Repo.Migrations.CreateNotificationPreferences do
 
       add(
         :notification_config_id,
-        references(:notification_configs, on_delete: :delete_all, null: false),
+        references(:notification_configs, on_delete: :delete_all),
         null: false
       )
 

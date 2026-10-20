@@ -17,8 +17,8 @@ defmodule Cadet.AssessmentsTest do
         title: "test",
         config_id: config_id,
         number: "#{config.type |> String.upcase()}#{Enum.random(0..10)}",
-        open_at: Timex.now(),
-        close_at: Timex.shift(Timex.now(), days: 7)
+        open_at: DateTime.utc_now(),
+        close_at: DateTime.add(DateTime.utc_now(), 7, :day)
       })
 
     assert %{title: "test", config_id: ^config_id, course_id: ^course_id} = assessment
@@ -166,8 +166,8 @@ defmodule Cadet.AssessmentsTest do
         insert(:assessment, %{
           config: config,
           course: course,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: +5),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 5, :hour),
           is_published: true
         })
 
@@ -258,8 +258,8 @@ defmodule Cadet.AssessmentsTest do
           config: config,
           course: course,
           max_team_size: 10,
-          open_at: Timex.shift(Timex.now(), days: -15),
-          close_at: Timex.shift(Timex.now(), days: -5),
+          open_at: DateTime.add(DateTime.utc_now(), -15, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -5, :day),
           is_published: true,
           password: "123"
         })
@@ -279,8 +279,8 @@ defmodule Cadet.AssessmentsTest do
           config: config,
           course: course,
           max_team_size: 10,
-          open_at: Timex.shift(Timex.now(), days: -15),
-          close_at: Timex.shift(Timex.now(), days: +5),
+          open_at: DateTime.add(DateTime.utc_now(), -15, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 5, :day),
           is_published: true
         })
 
@@ -313,8 +313,8 @@ defmodule Cadet.AssessmentsTest do
           config: config,
           course: course,
           max_team_size: 10,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: +5),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 5, :hour),
           is_published: true
         })
 
@@ -350,8 +350,8 @@ defmodule Cadet.AssessmentsTest do
           config: config,
           course: course,
           max_team_size: 10,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: +5),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 5, :hour),
           is_published: true
         })
 
@@ -386,8 +386,8 @@ defmodule Cadet.AssessmentsTest do
         insert(:assessment, %{
           config: config,
           course: course,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: +5),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 5, :hour),
           is_published: true
         })
 
@@ -417,8 +417,8 @@ defmodule Cadet.AssessmentsTest do
           config: config,
           course: course,
           max_team_size: 10,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: +5),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 5, :hour),
           is_published: true
         })
 
@@ -444,8 +444,8 @@ defmodule Cadet.AssessmentsTest do
       closed_contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -1, :hour),
           course: course,
           config: config
         )
@@ -514,8 +514,8 @@ defmodule Cadet.AssessmentsTest do
       open_contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: 1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 1, :hour),
           course: course,
           config: config
         )
@@ -564,8 +564,8 @@ defmodule Cadet.AssessmentsTest do
       closed_contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -1, :hour),
           course: course,
           config: config
         )
@@ -635,8 +635,8 @@ defmodule Cadet.AssessmentsTest do
       closed_contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -1, :hour),
           course: course,
           config: config
         )
@@ -645,8 +645,8 @@ defmodule Cadet.AssessmentsTest do
       open_contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: 1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 1, :hour),
           course: course,
           config: config
         )
@@ -655,8 +655,8 @@ defmodule Cadet.AssessmentsTest do
       compiled_contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -1, :hour),
           course: course,
           config: config
         )
@@ -846,8 +846,8 @@ defmodule Cadet.AssessmentsTest do
       contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -1, :hour),
           course: course,
           config: config
         )
@@ -886,8 +886,8 @@ defmodule Cadet.AssessmentsTest do
       contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -1, :hour),
           course: course,
           config: config,
           number: "test"
@@ -917,8 +917,8 @@ defmodule Cadet.AssessmentsTest do
       contest_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -1),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -1, :hour),
           course: course_1,
           config: config,
           number: "test"
@@ -1026,8 +1026,8 @@ defmodule Cadet.AssessmentsTest do
       current_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -1),
-          close_at: Timex.shift(Timex.now(), days: +1),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :day),
+          close_at: DateTime.add(DateTime.utc_now(), 1, :day),
           course: course,
           config: config
         )
@@ -1039,8 +1039,8 @@ defmodule Cadet.AssessmentsTest do
       yesterday_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), hours: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :hour),
           course: course,
           config: config
         )
@@ -1052,8 +1052,8 @@ defmodule Cadet.AssessmentsTest do
       past_assessment =
         insert(:assessment,
           is_published: true,
-          open_at: Timex.shift(Timex.now(), days: -5),
-          close_at: Timex.shift(Timex.now(), days: -4),
+          open_at: DateTime.add(DateTime.utc_now(), -5, :day),
+          close_at: DateTime.add(DateTime.utc_now(), -4, :day),
           course: course,
           config: config
         )
@@ -2082,8 +2082,8 @@ defmodule Cadet.AssessmentsTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           config: config,
           course: course

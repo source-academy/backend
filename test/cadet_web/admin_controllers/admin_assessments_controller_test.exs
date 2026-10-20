@@ -464,20 +464,20 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assessment = insert(:assessment, %{course: course, config: config})
 
       new_open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
       new_open_at_string =
         new_open_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
-      new_close_at = Timex.shift(new_open_at, days: 7)
+      new_close_at = DateTime.add(new_open_at, 7, :day)
 
       new_close_at_string =
         new_close_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_dates = %{openAt: new_open_at_string, closeAt: new_close_at_string}
       conn = post(conn, build_url(course.id, assessment.id), new_dates)
@@ -494,20 +494,20 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       assessment = insert(:assessment, %{course: course, config: config})
 
       new_open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
       new_open_at_string =
         new_open_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
-      new_close_at = Timex.shift(new_open_at, days: 7)
+      new_close_at = DateTime.add(new_open_at, 7, :day)
 
       new_close_at_string =
         new_close_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_dates = %{openAt: new_open_at_string, closeAt: new_close_at_string}
       conn = post(conn, build_url(course.id, assessment.id), new_dates)
@@ -523,12 +523,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = Timex.shift(open_at, days: 7)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -540,19 +540,19 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_open_at =
         open_at
-        |> Timex.shift(days: 3)
+        |> DateTime.add(3, :day)
 
       new_open_at_string =
         new_open_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_close_at =
         close_at
-        |> Timex.shift(days: 5)
+        |> DateTime.add(5, :day)
 
       new_close_at_string =
         new_close_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_dates = %{openAt: new_open_at_string, closeAt: new_close_at_string}
 
@@ -572,12 +572,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: -3)
-        |> Timex.shift(hours: 4)
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
+        |> DateTime.add(-3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = Timex.shift(open_at, days: 7)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -589,15 +589,15 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_open_at =
         open_at
-        |> Timex.shift(days: 6)
+        |> DateTime.add(6, :day)
 
       new_open_at_string =
         new_open_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       close_at_string =
         close_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_dates = %{openAt: new_open_at_string, closeAt: close_at_string}
 
@@ -617,12 +617,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = Timex.shift(open_at, days: 7)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -634,15 +634,15 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
 
       new_close_at =
         open_at
-        |> Timex.shift(days: -1)
+        |> DateTime.add(-1, :day)
 
       new_close_at_string =
         new_close_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       open_at_string =
         open_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_dates = %{openAt: open_at_string, closeAt: new_close_at_string}
 
@@ -662,12 +662,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: -3)
-        |> Timex.shift(hours: 4)
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
+        |> DateTime.add(-3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = Timex.shift(open_at, days: 7)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -678,16 +678,16 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
         })
 
       new_close_at =
-        Timex.now()
-        |> Timex.shift(days: -1)
+        DateTime.utc_now()
+        |> DateTime.add(-1, :day)
 
       new_close_at_string =
         new_close_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       open_at_string =
         open_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_dates = %{openAt: open_at_string, closeAt: new_close_at_string}
 
@@ -707,12 +707,12 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
       config = insert(:assessment_config, %{course: course})
 
       open_at =
-        Timex.now()
-        |> Timex.beginning_of_day()
-        |> Timex.shift(days: 3)
-        |> Timex.shift(hours: 4)
+        Date.utc_today()
+        |> DateTime.new!(~T[00:00:00.000000])
+        |> DateTime.add(3, :day)
+        |> DateTime.add(4, :hour)
 
-      close_at = Timex.shift(open_at, days: 7)
+      close_at = DateTime.add(open_at, 7, :day)
 
       assessment =
         insert(:assessment, %{
@@ -723,16 +723,16 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
         })
 
       new_open_at =
-        Timex.now()
-        |> Timex.shift(days: -1)
+        DateTime.utc_now()
+        |> DateTime.add(-1, :day)
 
       new_open_at_string =
         new_open_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       close_at_string =
         close_at
-        |> Timex.format!("{ISO:Extended}")
+        |> DateTime.to_iso8601(:extended)
 
       new_dates = %{openAt: new_open_at_string, closeAt: close_at_string}
 
@@ -824,7 +824,7 @@ defmodule CadetWeb.AdminAssessmentsControllerTest do
   defp build_user_assessments_url(course_id, course_reg_id),
     do: "/v2/courses/#{course_id}/admin/users/#{course_reg_id}/assessments"
 
-  defp open_at_asc_comparator(x, y), do: Timex.before?(x.open_at, y.open_at)
+  defp open_at_asc_comparator(x, y), do: DateTime.compare(x.open_at, y.open_at) == :lt
 
   defp get_assessment_status(course_reg = %CourseRegistration{}, assessment = %Assessment{}) do
     submission =

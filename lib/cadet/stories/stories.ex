@@ -22,7 +22,7 @@ defmodule Cadet.Stories.Stories do
         Story
         |> where(course_id: ^course_id)
         |> where(is_published: ^true)
-        |> where([s], s.open_at <= ^Timex.now())
+        |> where([s], s.open_at <= ^DateTime.utc_now())
         |> Repo.all()
       end
 

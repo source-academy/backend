@@ -46,7 +46,7 @@ defmodule Cadet.Chatbot.DocumentStore do
             %{
               title: doc["title"],
               base64: base64,
-              media_type: media_type_for(doc["s3_key"])
+              media_type: doc["media_type"] || media_type_for(doc["s3_key"])
             }
 
           {:error, reason} ->
@@ -76,6 +76,8 @@ defmodule Cadet.Chatbot.DocumentStore do
       ".pdf" -> "application/pdf"
       ".pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
       ".docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ".tex" -> "text/x-tex"
+      ".xml" -> "application/xml"
       _ -> "application/octet-stream"
     end
   end

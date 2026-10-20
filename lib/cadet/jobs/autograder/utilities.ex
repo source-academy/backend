@@ -20,11 +20,21 @@ defmodule Cadet.Autograder.Utilities do
       |> Answer.autograding_changeset(%{autograding_status: :processing})
       |> Repo.update!()
 
-    Que.add(Cadet.Autograder.LambdaWorker, %{
-      question: question,
-      answer: answer,
+    enqueue_lambda(%{
+      question_id: question.id,
+      answer_id: answer.id,
       overwrite: overwrite
     })
+  end
+
+  @doc """
+  Enqueue a lambda invocation. Returns `{:ok, job}` so callers can inspect
+  the queued Oban job (used by tests).
+  """
+  def enqueue_lambda(args) do
+    args
+    |> Cadet.Autograder.LambdaWorker.new()
+    |> Oban.insert()
   end
 
   def fetch_submissions(assessment_id, course_id)
@@ -73,7 +83,11 @@ defmodule Cadet.Autograder.Utilities do
   def fetch_assessments_due_yesterday do
     Assessment
     |> where(is_published: true)
-    |> where([a], a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1))
+    |> where(
+      [a],
+      a.close_at < ^DateTime.utc_now() and
+        a.close_at >= ^DateTime.add(DateTime.utc_now(), -1, :day)
+    )
     |> join(:inner, [a, c], q in assoc(a, :questions))
     |> preload([_, q], questions: q)
     |> Repo.all()

@@ -12,10 +12,6 @@ defmodule Cadet.Updater.XMLParser do
 
   require Logger
 
-  defmacrop is_non_empty_list(term) do
-    quote do: is_list(unquote(term)) and unquote(term) != []
-  end
-
   @spec parse_xml(String.t(), integer(), integer(), boolean()) ::
           :ok | {:ok, String.t()} | {:error, {atom(), String.t()}}
   def parse_xml(xml, course_id, assessment_config_id, force_update \\ false) do
@@ -73,13 +69,15 @@ defmodule Cadet.Updater.XMLParser do
   @spec process_assessment(String.t(), integer(), integer()) ::
           {:ok, map()} | {:error, String.t()}
   defp process_assessment(xml, course_id, assessment_config_id) do
-    open_at =
-      Timex.now()
-      |> Timex.beginning_of_day()
-      |> Timex.shift(days: 3)
-      |> Timex.shift(hours: 4)
+    today = Date.utc_today()
 
-    close_at = Timex.shift(open_at, days: 7)
+    open_at =
+      today
+      |> DateTime.new!(~T[00:00:00.000000])
+      |> DateTime.add(3, :day)
+      |> DateTime.add(4, :hour)
+
+    close_at = DateTime.add(open_at, 7, :day)
 
     assessment_config =
       AssessmentConfig
@@ -289,15 +287,20 @@ defmodule Cadet.Updater.XMLParser do
         library
 
     if library do
-      question
-      |> Map.put(:library, parse_programming_language(library))
-      |> Map.put(:grading_library, parse_programming_language(grading_library))
+      with {:ok, parsed_library} <- parse_programming_language(library),
+           {:ok, parsed_grading_library} <- parse_programming_language(grading_library) do
+        question
+        |> Map.put(:library, parsed_library)
+        |> Map.put(:grading_library, parsed_grading_library)
+      end
     else
       {:error, "Missing PROGRAMMINGLANGUAGE"}
     end
   end
 
-  @spec parse_programming_language(any()) :: map()
+  @valid_runtimes ~w(legacy python)
+
+  @spec parse_programming_language(any()) :: {:ok, map()} | {:error, String.t()}
   defp parse_programming_language(library_entity) do
     globals =
       library_entity
@@ -325,17 +328,31 @@ defmodule Cadet.Updater.XMLParser do
     options_map =
       options_list |> Map.new(&{&1.key, &1.value})
 
-    library_entity
-    |> xpath(
-      ~x"."e,
-      chapter: ~x"./@interpreter"i,
-      exec_time_ms: ~x"./@exectime"oi,
-      variant: ~x"./@variant"os
-    )
-    |> Map.put(:globals, globals)
-    |> Map.put(:external, external)
-    |> Map.put(:language_options, options_map)
+    parsed =
+      library_entity
+      |> xpath(
+        ~x"."e,
+        chapter: ~x"./@interpreter"i,
+        exec_time_ms: ~x"./@exectime"oi,
+        variant: ~x"./@variant"os,
+        runtime: ~x"./@runtime"os
+      )
+      |> Map.put(:globals, globals)
+      |> Map.put(:external, external)
+      |> Map.put(:language_options, options_map)
+
+    case validate_runtime(parsed.runtime) do
+      {:ok, runtime} -> {:ok, put_runtime(parsed, runtime)}
+      error -> error
+    end
   end
+
+  defp validate_runtime(""), do: {:ok, nil}
+  defp validate_runtime(runtime) when runtime in @valid_runtimes, do: {:ok, runtime}
+  defp validate_runtime(runtime), do: {:error, "Invalid runtime #{inspect(runtime)}"}
+
+  defp put_runtime(parsed, nil), do: Map.delete(parsed, :runtime)
+  defp put_runtime(parsed, runtime), do: Map.put(parsed, :runtime, runtime)
 
   @spec process_charlist(charlist() | nil) :: String.t() | nil
 

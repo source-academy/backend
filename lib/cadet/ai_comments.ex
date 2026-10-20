@@ -43,15 +43,17 @@ defmodule Cadet.AIComments do
   @doc """
   Updates the final comment for a specific submission and question.
   Returns the most recent comment entry for that submission/question.
+
+  If no AI comment log exists yet for this answer (e.g. the grader never used
+  AI-assisted commenting), there is nothing to attach the final comment to, so
+  this is treated as a no-op success rather than an error.
   """
   def update_final_comment(answer_id, final_comment) do
-    comment = get_latest_ai_comment(answer_id)
-
-    case comment do
+    case get_latest_ai_comment(answer_id) do
       nil ->
-        {:error, :not_found}
+        {:ok, nil}
 
-      _ ->
+      comment ->
         comment
         |> AIComment.changeset(%{final_comment: final_comment})
         |> Repo.update()

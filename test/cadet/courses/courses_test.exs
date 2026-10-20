@@ -3,7 +3,7 @@ defmodule Cadet.CoursesTest do
 
   alias Cadet.{Courses, Repo}
   alias Cadet.Accounts.{CourseRegistration, User}
-  alias Cadet.Courses.{Course, Group, Sourcecast, SourcecastUpload}
+  alias Cadet.Courses.{Course, Group}
   alias Cadet.Assessments.Assessment
 
   describe "create course config" do
@@ -23,7 +23,6 @@ defmodule Cadet.CoursesTest do
         enable_contest_leaderboard: true,
         top_leaderboard_display: 100,
         top_contest_leaderboard_display: 10,
-        enable_sourcecast: true,
         enable_stories: false,
         source_chapter: 1,
         source_variant: "default",
@@ -45,6 +44,58 @@ defmodule Cadet.CoursesTest do
       assert User |> where(id: ^user.id) |> Repo.one() |> Map.fetch!(:latest_viewed_course_id) ==
                Enum.at(course_regs, 0).course_id
     end
+
+    # Pixel is opt-in. It needs a routing prompt, an answer prompt, and uploaded documents before
+    # it can answer anything, so a course that has not been set up must not advertise it — the
+    # chat endpoint would answer 422 "not configured" to every student who tried.
+    test "leaves the Pixel chatbot disabled unless it is asked for" do
+      user = insert(:user)
+
+      {:ok, %{course: course}} =
+        Courses.create_course_config(
+          %{
+            course_name: "CS1101S Programming Methodology",
+            viewable: true,
+            enable_game: true,
+            enable_achievements: true,
+            enable_overall_leaderboard: true,
+            enable_contest_leaderboard: true,
+            top_leaderboard_display: 100,
+            top_contest_leaderboard_display: 10,
+            enable_stories: false,
+            source_chapter: 1,
+            source_variant: "default"
+          },
+          user
+        )
+
+      refute Repo.get!(Course, course.id).enable_pixelbot
+    end
+
+    test "enables the Pixel chatbot when it is asked for" do
+      user = insert(:user)
+
+      {:ok, %{course: course}} =
+        Courses.create_course_config(
+          %{
+            course_name: "CS1101S Programming Methodology",
+            viewable: true,
+            enable_game: true,
+            enable_achievements: true,
+            enable_overall_leaderboard: true,
+            enable_contest_leaderboard: true,
+            top_leaderboard_display: 100,
+            top_contest_leaderboard_display: 10,
+            enable_stories: false,
+            enable_pixelbot: true,
+            source_chapter: 1,
+            source_variant: "default"
+          },
+          user
+        )
+
+      assert Repo.get!(Course, course.id).enable_pixelbot
+    end
   end
 
   describe "get course config" do
@@ -59,7 +110,6 @@ defmodule Cadet.CoursesTest do
       assert course.viewable == true
       assert course.enable_game == true
       assert course.enable_achievements == true
-      assert course.enable_sourcecast == true
       assert course.enable_stories == false
       assert course.source_chapter == 1
       assert course.source_variant == "default"
@@ -86,7 +136,6 @@ defmodule Cadet.CoursesTest do
           viewable: false,
           enable_game: false,
           enable_achievements: false,
-          enable_sourcecast: false,
           enable_stories: true,
           module_help_text: ""
         })
@@ -96,7 +145,6 @@ defmodule Cadet.CoursesTest do
       assert updated_course.viewable == false
       assert updated_course.enable_game == false
       assert updated_course.enable_achievements == false
-      assert updated_course.enable_sourcecast == false
       assert updated_course.enable_stories == true
       assert updated_course.source_chapter == 1
       assert updated_course.source_variant == "default"
@@ -114,7 +162,6 @@ defmodule Cadet.CoursesTest do
           viewable: false,
           enable_game: false,
           enable_achievements: false,
-          enable_sourcecast: false,
           enable_stories: true,
           source_chapter: new_chapter,
           source_variant: "default",
@@ -126,7 +173,6 @@ defmodule Cadet.CoursesTest do
       assert updated_course.viewable == false
       assert updated_course.enable_game == false
       assert updated_course.enable_achievements == false
-      assert updated_course.enable_sourcecast == false
       assert updated_course.enable_stories == true
       assert updated_course.source_chapter == new_chapter
       assert updated_course.source_variant == "default"
@@ -144,7 +190,6 @@ defmodule Cadet.CoursesTest do
           viewable: false,
           enable_game: false,
           enable_achievements: false,
-          enable_sourcecast: false,
           enable_stories: false,
           module_help_text: "help"
         })
@@ -547,38 +592,6 @@ defmodule Cadet.CoursesTest do
         Group |> where(course_id: ^course2.id) |> where(name: "Existing Group") |> Repo.one()
 
       assert group2 |> Map.fetch!(:leader_id) == new_group_leader.id
-    end
-  end
-
-  describe "Sourcecast" do
-    setup do
-      on_exit(fn -> File.rm_rf!("uploads/test/sourcecasts") end)
-    end
-
-    test "upload file to folder then delete it" do
-      inserter_course_registration = insert(:course_registration, %{role: :staff})
-
-      upload = %Plug.Upload{
-        content_type: "audio/wav",
-        filename: "upload.wav",
-        path: "test/fixtures/upload.wav"
-      }
-
-      result =
-        Courses.upload_sourcecast_file(inserter_course_registration, %{
-          title: "Test Upload",
-          audio: upload,
-          playbackData:
-            "{\"init\":{\"editorValue\":\"// Type your program in here!\"},\"inputs\":[]}"
-        })
-
-      assert {:ok, sourcecast} = result
-      path = SourcecastUpload.url({sourcecast.audio, sourcecast})
-      assert path =~ "/uploads/test/sourcecasts/upload.wav"
-
-      assert {:ok, _} = Courses.delete_sourcecast_file(sourcecast.id)
-      assert Repo.get(Sourcecast, sourcecast.id) == nil
-      refute File.exists?("uploads/test/sourcecasts/upload.wav")
     end
   end
 

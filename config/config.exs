@@ -11,6 +11,9 @@ config :cadet, environment: Mix.env()
 config :cadet,
   ecto_repos: [Cadet.Repo]
 
+# When true, only super admins may create courses.
+config :cadet, restrict_course_creation: false
+
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 # Scheduler, e.g. for CS1101S
@@ -46,10 +49,12 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-# Configure RAG document retrieval (S3 bucket for course documents)
+# Configure RAG document retrieval (S3 bucket for course documents).
 config :cadet, :rag_documents,
-  bucket: System.get_env("RAG_DOCUMENTS_BUCKET", "pixelbot-demo-bucket"),
+  bucket: System.get_env("RAG_DOCUMENTS_BUCKET"),
   region: System.get_env("RAG_DOCUMENTS_REGION", "us-east-1")
+
+config :openai, http_options: [recv_timeout: 120_000]
 
 vector_rag_min_similarity =
   case System.get_env("VECTOR_RAG_MIN_SIMILARITY") do
@@ -138,7 +143,7 @@ config :cadet, Oban,
         args: %{"notification_type" => "avenger_backlog"}}
      ]}
   ],
-  queues: [default: 10, notifications: 1]
+  queues: [default: 10, notifications: 1, autograder: 20, autograder_results: 5]
 
 config :cadet, Cadet.Mailer, adapter: Bamboo.LocalAdapter
 

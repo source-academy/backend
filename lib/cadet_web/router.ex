@@ -46,7 +46,6 @@ defmodule CadetWeb.Router do
   scope "/v2", CadetWeb do
     pipe_through([:api, :auth])
 
-    # get("/sourcecast", SourcecastController, :index)
     post("/auth/refresh", AuthController, :refresh)
     post("/auth/login", AuthController, :create)
     post("/auth/logout", AuthController, :logout)
@@ -98,8 +97,6 @@ defmodule CadetWeb.Router do
   # Authenticated Pages with course
   scope "/v2/courses/:course_id", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course])
-
-    get("/sourcecast", SourcecastController, :index)
 
     get("/assessments", AssessmentsController, :index)
     get("/assessments/:assessmentid", AssessmentsController, :show)
@@ -202,14 +199,37 @@ defmodule CadetWeb.Router do
       :delete_assessment_config
     )
 
-    get("/config/pixelbot_document_map", AdminCoursesController, :get_document_map)
+    get("/pixelbot_documents", AdminPixelbotDocumentsController, :index)
+    post("/pixelbot_documents/upload", AdminPixelbotDocumentsController, :upload)
+    put("/pixelbot_documents", AdminPixelbotDocumentsController, :save)
+
+    put(
+      "/pixelbot_documents/:document_id/rename",
+      AdminPixelbotDocumentsController,
+      :rename
+    )
+
+    delete("/pixelbot_documents/:document_id", AdminPixelbotDocumentsController, :delete)
+    get("/pixelbot_documents/map_preview", AdminPixelbotDocumentsController, :preview_map)
+
+    post("/pixelbot_categories", AdminPixelbotDocumentsController, :create_category)
+
+    put(
+      "/pixelbot_categories/:category_id",
+      AdminPixelbotDocumentsController,
+      :rename_category
+    )
+
+    delete(
+      "/pixelbot_categories/:category_id",
+      AdminPixelbotDocumentsController,
+      :delete_category
+    )
   end
 
   # Admin pages (Access: All staff)
   scope "/v2/courses/:course_id/admin", CadetWeb do
     pipe_through([:api, :auth, :ensure_auth, :course, :ensure_staff])
-
-    resources("/sourcecast", AdminSourcecastController, only: [:create, :delete])
 
     post(
       "/assessments/:assessmentid/contest_calculate_score",

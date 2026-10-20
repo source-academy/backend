@@ -66,7 +66,6 @@ defmodule Cadet.Courses.CourseTest do
 
       assert_changeset(
         %{
-          enable_sourcecast: false,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
@@ -104,7 +103,6 @@ defmodule Cadet.Courses.CourseTest do
         %{
           enable_game: true,
           enable_achievements: true,
-          enable_sourcecast: true,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,
           source_variant: "default",
@@ -118,7 +116,6 @@ defmodule Cadet.Courses.CourseTest do
         %{
           enable_game: true,
           enable_achievements: true,
-          enable_sourcecast: true,
           enable_stories: false,
           course_name: "Data Structures and Algorithms",
           source_chapter: 1,

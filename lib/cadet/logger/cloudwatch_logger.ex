@@ -45,6 +45,8 @@ defmodule Cadet.Logger.CloudWatchLogger do
     {:ok, :ok, configure(options, state)}
   end
 
+  def handle_call(_, state), do: {:ok, :ok, state}
+
   @impl true
   def handle_event({level, _gl, {Logger, msg, ts, md}}, state) do
     %{
@@ -80,6 +82,8 @@ defmodule Cadet.Logger.CloudWatchLogger do
     end
   end
 
+  def handle_event(_, state), do: {:ok, state}
+
   @impl true
   def handle_info(:flush_buffer, state) do
     %{buffer: buffer, timer_ref: timer_ref, log_stream: log_stream, log_group: log_group} = state
@@ -98,6 +102,8 @@ defmodule Cadet.Logger.CloudWatchLogger do
     {:ok, %{new_state | timer_ref: new_timer_ref}}
   end
 
+  def handle_info(_, state), do: {:ok, state}
+
   @impl true
   def terminate(_reason, state) do
     %{log_stream: log_stream, log_group: log_group, buffer: buffer, timer_ref: timer_ref} = state
@@ -106,10 +112,6 @@ defmodule Cadet.Logger.CloudWatchLogger do
     flush_buffer_sync(log_stream, log_group, buffer)
     :ok
   end
-
-  def handle_event(_, state), do: {:ok, state}
-  def handle_call(_, state), do: {:ok, :ok, state}
-  def handle_info(_, state), do: {:ok, state}
 
   # Helpers
   defp configure(options, state) do
@@ -345,11 +347,6 @@ defmodule Cadet.Logger.CloudWatchLogger do
   defp read_env do
     Application.get_env(:logger, __MODULE__, Application.get_env(:logger, :cloudwatch_logger, []))
   end
-
-  """
-  Merges the given options with the existing environment configuration.
-  If a key exists in both, the value from `options` will take precedence.
-  """
 
   defp configure_merge(env, options) do
     Keyword.merge(env, options, fn

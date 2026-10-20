@@ -5,11 +5,11 @@ defmodule Cadet.Auth.Providers.NusEntraIdClaimExtractor do
 
   @behaviour Cadet.Auth.Providers.OpenID.ClaimExtractor
 
-  def get_username(claims, access_token) do
+  def get_username(claims, _access_token) do
     get_userinfo(claims, "samAccountName")
   end
 
-  def get_name(claims, access_token) do
+  def get_name(claims, _access_token) do
     get_userinfo(claims, "displayName")
   end
 

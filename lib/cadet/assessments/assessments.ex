@@ -27,7 +27,6 @@ defmodule Cadet.Assessments do
     Question,
     Submission,
     SubmissionVotes,
-    Version,
     VersionManager
   }
 
@@ -36,7 +35,6 @@ defmodule Cadet.Assessments do
   alias Cadet.Jobs.Log
   alias Cadet.ProgramAnalysis.Lexer
   alias Ecto.{Multi, Changeset}
-  alias Timex.Duration
 
   require Decimal
 
@@ -291,7 +289,7 @@ defmodule Cadet.Assessments do
       |> subquery()
       |> select([t], count(t.user_id))
 
-    {status, {rows, total_count}} =
+    {_status, {rows, total_count}} =
       Repo.transaction(fn ->
         users =
           Enum.map(Repo.all(ranked_xp_query), fn user ->
@@ -387,7 +385,7 @@ defmodule Cadet.Assessments do
         given_password
       ) do
     cond do
-      Timex.compare(Timex.now(), assessment.close_at) >= 0 ->
+      DateTime.compare(DateTime.utc_now(), assessment.close_at) != :lt ->
         assessment_with_questions_and_answers(assessment, cr)
 
       match?({:ok, _}, find_submission(cr, assessment)) ->
@@ -471,7 +469,8 @@ defmodule Cadet.Assessments do
           -1
       end
 
-    if Timex.compare(Timex.now(), assessment.open_at) >= 0 or role in @open_all_assessment_roles do
+    if DateTime.compare(DateTime.utc_now(), assessment.open_at) != :lt or
+         role in @open_all_assessment_roles do
       Logger.info("Assessment #{id} is open or user #{user_id} has access")
 
       answer_query =
@@ -498,9 +497,14 @@ defmodule Cadet.Assessments do
         |> order_by(:display_order)
         |> Repo.all()
         |> Enum.map(fn
-          {q, nil, _, _} -> %{q | answer: %Answer{grader: nil}}
-          {q, a, nil, _} -> %{q | answer: %Answer{a | grader: nil}}
-          {q, a, g, u} -> %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
+          {q, nil, _, _} ->
+            %{q | answer: %Answer{grader: nil}}
+
+          {q, %Answer{} = a, nil, _} ->
+            %{q | answer: %Answer{a | grader: nil}}
+
+          {q, %Answer{} = a, %CourseRegistration{} = g, u} ->
+            %{q | answer: %Answer{a | grader: %CourseRegistration{g | user: u}}}
         end)
         |> load_contest_voting_entries(course_reg, assessment, visible_entries)
 
@@ -817,7 +821,7 @@ defmodule Cadet.Assessments do
     if assessment_id do
       open_date = Repo.get(Assessment, assessment_id).open_at
       # check if assessment is already opened
-      if Timex.compare(open_date, Timex.now()) >= 0 do
+      if DateTime.compare(open_date, DateTime.utc_now()) != :lt do
         Logger.info("Assessment #{assessment_id} is not yet open")
         false
       else
@@ -981,7 +985,7 @@ defmodule Cadet.Assessments do
 
   def update_final_contest_entries do
     # 1435 = 1 day - 5 minutes
-    if Log.log_execution("update_final_contest_entries", Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_entries", 1435 * 60) do
       Logger.info("Started update of contest entry pools")
       questions = fetch_unassigned_voting_questions()
 
@@ -1054,7 +1058,7 @@ defmodule Cadet.Assessments do
 
       {:error, error_changeset}
     else
-      if Timex.compare(contest_assessment.close_at, Timex.now()) < 0 do
+      if DateTime.compare(contest_assessment.close_at, DateTime.utc_now()) == :lt do
         Logger.info("Contest has closed for assessment #{contest_assessment.id}")
         compile_entries(course_id, contest_assessment, question_id)
       else
@@ -1513,7 +1517,7 @@ defmodule Cadet.Assessments do
             status: :attempted,
             xp_bonus: 0,
             unsubmitted_by_id: course_reg_id,
-            unsubmitted_at: Timex.now()
+            unsubmitted_at: DateTime.utc_now()
           })
           |> Repo.update()
         end
@@ -2033,7 +2037,7 @@ defmodule Cadet.Assessments do
     Logger.info("Updating submission status for submission #{submission.id}")
 
     submission
-    |> Submission.changeset(%{status: :submitted, submitted_at: Timex.now()})
+    |> Submission.changeset(%{status: :submitted, submitted_at: DateTime.utc_now()})
     |> Repo.update()
   end
 
@@ -2068,7 +2072,7 @@ defmodule Cadet.Assessments do
 
       cur_time =
         if submission.submitted_at == nil do
-          Timex.now()
+          DateTime.utc_now()
         else
           submission.submitted_at
         end
@@ -2077,14 +2081,18 @@ defmodule Cadet.Assessments do
         if total.total_xp <= 0 do
           0
         else
-          if Timex.before?(cur_time, Timex.shift(assessment.open_at, hours: early_hours)) do
+          if DateTime.compare(
+               cur_time,
+               DateTime.add(assessment.open_at, early_hours, :hour)
+             ) ==
+               :lt do
             max_bonus_xp
           else
             # This logic interpolates from max bonus at early hour to 0 bonus at close time
             decaying_hours =
-              Timex.diff(assessment.close_at, assessment.open_at, :hours) - early_hours
+              DateTime.diff(assessment.close_at, assessment.open_at, :hour) - early_hours
 
-            remaining_hours = Enum.max([0, Timex.diff(assessment.close_at, cur_time, :hours)])
+            remaining_hours = Enum.max([0, DateTime.diff(assessment.close_at, cur_time, :hour)])
             proportion = if(decaying_hours > 0, do: remaining_hours / decaying_hours, else: 1)
             bonus_xp = round(max_bonus_xp * proportion)
             Enum.max([0, bonus_xp])
@@ -2247,10 +2255,14 @@ defmodule Cadet.Assessments do
   end
 
   defp leaderboard_open?(assessment, voting_question) do
-    Timex.before?(
-      Timex.shift(assessment.close_at, hours: voting_question.question["reveal_hours"]),
-      Timex.now()
-    )
+    DateTime.compare(
+      DateTime.add(
+        assessment.close_at,
+        voting_question.question["reveal_hours"],
+        :hour
+      ),
+      DateTime.utc_now()
+    ) == :lt
   end
 
   def fetch_contest_voting_assesment_id(assessment_id) do
@@ -2386,7 +2398,7 @@ defmodule Cadet.Assessments do
   def update_rolling_contest_leaderboards do
     Logger.info("Updating rolling contest leaderboards")
     # 115 = 2 hours - 5 minutes is default.
-    if Log.log_execution("update_rolling_contest_leaderboards", Duration.from_minutes(115)) do
+    if Log.log_execution("update_rolling_contest_leaderboards", 115 * 60) do
       Logger.info("Started update_rolling_contest_leaderboards")
 
       voting_questions_to_update = fetch_active_voting_questions()
@@ -2400,11 +2412,13 @@ defmodule Cadet.Assessments do
   end
 
   def fetch_active_voting_questions do
+    now = DateTime.utc_now()
+
     Question
     |> join(:left, [q], a in assoc(q, :assessment))
     |> where([q, a], q.type == "voting")
     |> where([q, a], a.is_published)
-    |> where([q, a], a.open_at <= ^Timex.now() and a.close_at >= ^Timex.now())
+    |> where([q, a], a.open_at <= ^now and a.close_at >= ^now)
     |> Repo.all()
   end
 
@@ -2414,7 +2428,7 @@ defmodule Cadet.Assessments do
   def update_final_contest_leaderboards do
     Logger.info("Updating final contest leaderboards")
     # 1435 = 24 hours - 5 minutes
-    if Log.log_execution("update_final_contest_leaderboards", Duration.from_minutes(1435)) do
+    if Log.log_execution("update_final_contest_leaderboards", 1435 * 60) do
       Logger.info("Started update_final_contest_leaderboards")
 
       voting_questions_to_update = fetch_voting_questions_due_yesterday() || []
@@ -2428,7 +2442,7 @@ defmodule Cadet.Assessments do
         end)
 
       if Enum.empty?(voting_questions_to_update) do
-        Logger.warn("No voting questions to update.")
+        Logger.warning("No voting questions to update.")
       else
         # Process each voting question
         Enum.each(voting_questions_to_update, fn qn ->
@@ -2443,14 +2457,17 @@ defmodule Cadet.Assessments do
   end
 
   def fetch_voting_questions_due_yesterday do
+    now = DateTime.utc_now()
+    yesterday = DateTime.add(now, -1, :day)
+
     Question
     |> join(:left, [q], a in assoc(q, :assessment))
     |> where([q, a], q.type == "voting")
     |> where([q, a], a.is_published)
-    |> where([q, a], a.open_at <= ^Timex.now())
+    |> where([q, a], a.open_at <= ^now)
     |> where(
       [q, a],
-      a.close_at < ^Timex.now() and a.close_at >= ^Timex.shift(Timex.now(), days: -1)
+      a.close_at < ^now and a.close_at >= ^yesterday
     )
     |> Repo.all()
   end
@@ -2478,14 +2495,14 @@ defmodule Cadet.Assessments do
       |> Repo.one()
 
     if is_nil(contest_question_id) do
-      Logger.warn("Contest question ID is missing. Terminating.")
+      Logger.warning("Contest question ID is missing. Terminating.")
       :ok
     else
       default_xp_values = %Cadet.Assessments.QuestionTypes.VotingQuestion{} |> Map.get(:xp_values)
       scores = voting_questions.question["xp_values"] || default_xp_values
 
       if scores == [] do
-        Logger.warn("No XP values provided. Terminating.")
+        Logger.warning("No XP values provided. Terminating.")
         :ok
       else
         Repo.transaction(fn ->
@@ -3374,7 +3391,10 @@ defmodule Cadet.Assessments do
   # Checks if an assessment is open and published.
   @spec is_open?(Assessment.t()) :: boolean()
   def is_open?(%Assessment{open_at: open_at, close_at: close_at, is_published: is_published}) do
-    Timex.between?(Timex.now(), open_at, close_at, inclusive: :start) and is_published
+    now = DateTime.utc_now()
+
+    DateTime.compare(now, open_at) != :lt and DateTime.compare(now, close_at) == :lt and
+      is_published
   end
 
   @spec get_group_grading_summary(integer()) ::
@@ -3510,13 +3530,16 @@ defmodule Cadet.Assessments do
           question_id: question.id,
           submission_id: submission.id,
           type: question.type,
-          last_modified_at: Timex.now()
+          last_modified_at: DateTime.utc_now()
         })
 
       Repo.insert(
         answer_changeset,
         on_conflict: [
-          set: [answer: get_change(answer_changeset, :answer), last_modified_at: Timex.now()]
+          set: [
+            answer: get_change(answer_changeset, :answer),
+            last_modified_at: DateTime.utc_now()
+          ]
         ],
         conflict_target: [:submission_id, :question_id]
       )

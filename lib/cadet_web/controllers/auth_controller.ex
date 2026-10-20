@@ -165,8 +165,8 @@ defmodule CadetWeb.AuthController do
 
         TokenExchange.insert(%{
           code: code,
-          generated_at: Timex.now(),
-          expires_at: Timex.add(Timex.now(), Timex.Duration.from_seconds(code_ttl)),
+          generated_at: DateTime.utc_now(),
+          expires_at: DateTime.add(DateTime.utc_now(), code_ttl, :second),
           user_id: user.id
         })
 

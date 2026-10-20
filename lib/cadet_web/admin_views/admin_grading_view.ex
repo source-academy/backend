@@ -212,7 +212,7 @@ defmodule CadetWeb.AdminGradingView do
     end
   end
 
-  defp build_grading_question(answer, course, assessment) do
+  defp build_grading_question(answer, _course, _assessment) do
     %{question: answer.question |> Map.delete(:llm_prompt)}
     |> build_question_by_question_config(true)
     |> Map.put(:answer, answer.answer["code"] || answer.answer["choice_id"])

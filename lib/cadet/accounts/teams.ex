@@ -112,41 +112,14 @@ defmodule Cadet.Accounts.Teams do
     end
   end
 
-  @doc """
-  Validates whether there are student(s) who are already assigned to another group.
-
-  ## Parameters
-
-    * `team_attrs` - A list of all the teams and their members.
-    * `assessment_id` - Id of the target assessment.
-
-  ## Returns
-
-  Returns `true` on success; otherwise, `false`.
-
-  """
   defp student_already_assigned?(team_attrs, assessment_id) do
     Enum.all?(team_attrs, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
-
-      unique_ids_count = ids |> Enum.uniq() |> Enum.count()
 
       student_already_in_team?(-1, ids, assessment_id)
     end)
   end
 
-  @doc """
-  Checks there is no duplicated student during team creation.
-
-  ## Parameters
-
-    * `team_attrs` - IDs of the team members being created
-
-  ## Returns
-
-  Returns `true` if all students in the list are distinct; otherwise, returns `false`.
-
-  """
   defp all_students_distinct?(team_attrs) do
     all_ids =
       team_attrs
@@ -160,19 +133,6 @@ defmodule Cadet.Accounts.Teams do
     all_ids_distinct
   end
 
-  @doc """
-  Checks if all the teams satisfy the max team size constraint.
-
-  ## Parameters
-
-    * `teams` - IDs of the team members being created
-    * `max_team_size` - max team size of the team
-
-  ## Returns
-
-  Returns `true` if all the teams have size less or equal to the max team size; otherwise, returns `false`.
-
-  """
   defp all_team_within_max_size?(teams, max_team_size) do
     Enum.all?(teams, fn team ->
       ids = Enum.map(team, &Map.get(&1, "userId"))
@@ -180,19 +140,6 @@ defmodule Cadet.Accounts.Teams do
     end)
   end
 
-  @doc """
-  Checks if one or more students are enrolled in the course.
-
-  ## Parameters
-
-    * `teams` - ID of the team being created
-    * `course_id` - ID of the course
-
-  ## Returns
-
-  Returns `true` if all students in the list enroll in the course; otherwise, returns `false`.
-
-  """
   defp all_student_enrolled_in_course?(teams, course_id) do
     all_ids =
       teams
@@ -210,20 +157,8 @@ defmodule Cadet.Accounts.Teams do
     count == length(all_ids)
   end
 
-  @doc """
-  Checks if one or more students are already in another team for the same assessment.
-
-  ## Parameters
-
-    * `team_id` - ID of the team being updated (use -1 for team creation)
-    * `student_ids` - List of student IDs
-    * `assessment_id` - ID of the assessment
-
-  ## Returns
-
-  Returns `true` if any student in the list is already a member of another team for the same assessment; otherwise, returns `false`.
-
-  """
+  # Checks if any of the given students are already in another team for the same
+  # assessment. Pass team_id: -1 for team creation (matches no existing team).
   defp student_already_in_team?(team_id, student_ids, assessment_id) do
     query =
       from(tm in TeamMember,
@@ -276,16 +211,6 @@ defmodule Cadet.Accounts.Teams do
     end
   end
 
-  @doc """
-  Updates team members based on the new list of student IDs.
-
-  ## Parameters
-
-    * `team` - The team being updated
-    * `student_ids` - List of student ids for team members
-    * `team_id` - ID of the team
-
-  """
   defp update_team_members(team, student_ids, team_id) do
     current_student_ids = team.team_members |> Enum.map(& &1.student_id)
     new_student_ids = Enum.map(hd(student_ids), fn student -> Map.get(student, "userId") end)
@@ -361,18 +286,6 @@ defmodule Cadet.Accounts.Teams do
     end
   end
 
-  @doc """
-  Check whether a team has subnitted submissions and answers.
-
-  ## Parameters
-
-    * `team_id` - The team id of the team to be checked
-
-  ## Returns
-
-  Returns `true` if any one of the submission has the status of "submitted", `false` otherwise
-
-  """
   defp has_submitted_answer?(team_id) do
     submission =
       Submission

@@ -11,7 +11,8 @@ defmodule CadetWeb.AssessmentsHelpers do
       execTimeMs: :exec_time_ms,
       globals: :globals,
       external: &build_external_library(%{external_library: &1.external}),
-      languageOptions: :language_options
+      languageOptions: :language_options,
+      runtime: :runtime
     })
   end
 

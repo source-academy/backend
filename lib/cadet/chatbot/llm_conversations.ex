@@ -57,6 +57,10 @@ defmodule Cadet.Chatbot.LlmConversations do
     end
   end
 
+  # Creates a new conversation for a user. Should only be called when the user has
+  # no existing conversation.
+  @spec create_new_conversation(binary() | integer(), map()) ::
+          {:ok, Conversation.t()} | {:error, binary()}
   defp create_new_conversation(user_id, attrs) do
     Logger.info("Creating a new conversation for user #{user_id}")
 

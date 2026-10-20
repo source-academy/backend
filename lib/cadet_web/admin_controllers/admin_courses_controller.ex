@@ -4,7 +4,6 @@ defmodule CadetWeb.AdminCoursesController do
   use PhoenixSwagger
 
   alias Cadet.Courses
-  alias Cadet.Chatbot.CourseDocuments
 
   def update_course_config(conn, params = %{"course_id" => course_id})
       when is_ecto_id(course_id) do
@@ -91,11 +90,6 @@ defmodule CadetWeb.AdminCoursesController do
     end
   end
 
-  def get_document_map(conn, _params) do
-    document_map = CourseDocuments.build_document_map_json()
-    json(conn, %{documentMap: document_map})
-  end
-
   swagger_path :update_course_config do
     put("/courses/{course_id}/admin/config")
 
@@ -116,7 +110,6 @@ defmodule CadetWeb.AdminCoursesController do
       enable_contest_leaderboard(:body, :boolean, "Enable contest leaderboard")
       top_leaderboard_display(:body, :integer, "Top Leaderboard Display")
       top_contest_leaderboard_display(:body, :integer, "Top Contest Leaderboard Display")
-      enable_sourcecast(:body, :boolean, "Enable sourcecast")
       enable_stories(:body, :boolean, "Enable stories")
       enable_llm_grading(:body, :boolean, "Enable LLM grading")
       llm_api_key(:body, :string, "OpenAI API key for this course")

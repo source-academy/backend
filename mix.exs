@@ -43,7 +43,7 @@ defmodule Cadet.Mixfile do
   def application do
     [
       mod: {Cadet.Application, []},
-      extra_applications: [:sentry, :logger, :que, :runtime_tools]
+      extra_applications: [:sentry, :logger, :runtime_tools]
     ]
   end
 
@@ -61,49 +61,48 @@ defmodule Cadet.Mixfile do
       {:arc_ecto, "~> 0.11"},
       {:corsica, "~> 2.1"},
       {:csv, "~> 3.2"},
-      {:ecto_enum, "~> 1.0"},
-      {:ex_aws, "~> 2.1", override: true},
-      {:ex_aws_lambda, "~> 2.0"},
-      {:ex_aws_s3, "~> 2.0"},
+      {:ecto_enum, "~> 1.4"},
+      {:ex_aws, "~> 2.5", override: true},
+      {:ex_aws_lambda, "~> 2.1"},
+      {:ex_aws_s3, "~> 2.4"},
       {:ex_aws_secretsmanager, "~> 2.0"},
       {:ex_aws_sts, "~> 2.1"},
-      {:ex_json_schema, "~> 0.11.0"},
+      {:ex_json_schema, "~> 0.11"},
       {:ex_machina, "~> 2.3"},
       {:ex_rated, "~> 2.0"},
-      {:guardian, "~> 2.0"},
-      {:guardian_db, "~> 2.0"},
-      {:hackney, "~> 1.6"},
+      {:guardian, "~> 2.4"},
+      {:guardian_db, "~> 2.1"},
+      {:hackney, "~> 1.25"},
       {:httpoison, "~> 2.3", override: true},
-      {:jason, "~> 1.2"},
+      {:jason, "~> 1.4"},
       {:openai, "~> 0.6.2"},
       {:openid_connect, "~> 0.2"},
-      {:phoenix, "~> 1.5"},
+      {:phoenix, "~> 1.8"},
       {:phoenix_view, "~> 2.0"},
-      {:phoenix_ecto, "~> 4.0"},
+      {:phoenix_ecto, "~> 4.7"},
       {:phoenix_swagger, "~> 0.8"},
-      {:plug_cowboy, "~> 2.0"},
+      {:plug_cowboy, "~> 2.8"},
       {:postgrex, ">= 0.0.0"},
-      {:quantum, "~> 3.0"},
-      {:que, "~> 0.10"},
-      {:recase, "~> 0.7", override: true},
-      {:samly, "~> 1.0"},
+      {:quantum, "~> 3.5"},
+      {:recase, "~> 0.9", override: true},
+      {:samly, "~> 1.4"},
       {:sentry, "~> 13.0"},
-      {:sweet_xml, "~> 0.6"},
+      {:sweet_xml, "~> 0.7"},
       {:timex, "~> 3.7"},
 
       # notifiations system dependencies
-      {:phoenix_html, "~> 4.2"},
-      {:bamboo, "~> 2.5.0"},
-      {:bamboo_ses, "~> 0.4.1"},
-      {:bamboo_phoenix, "~> 1.0.0"},
-      {:oban, "~> 2.13"},
+      {:phoenix_html, "~> 4.3"},
+      {:bamboo, "~> 2.5"},
+      {:bamboo_ses, "~> 0.4"},
+      {:bamboo_phoenix, "~> 1.0"},
+      {:oban, "~> 2.23"},
 
       # development dependencies
       {:configparser_ex, "~> 4.0", only: [:dev, :test]},
-      {:credo, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:faker, "~> 0.10", only: [:dev, :test]},
-      {:git_hooks, "~> 0.4", only: [:dev, :test]},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:faker, "~> 0.19", only: [:dev, :test]},
+      {:git_hooks, "~> 0.9", only: [:dev, :test]},
 
       # RC to fix https://github.com/rrrene/inch_ex/pull/68
       {:inch_ex, "~> 2.1-rc", only: [:dev, :test]},
@@ -111,16 +110,17 @@ defmodule Cadet.Mixfile do
       # unit testing dependencies
       {:bypass, "~> 2.1", only: :test},
       {:excoveralls, "~> 0.8", only: :test},
-      {:exvcr, "~> 0.10", only: :test},
-      {:mock, "~> 0.3.0", only: :test},
+      {:exvcr, "~> 0.17", only: :test},
+      {:mock, "~> 0.3", only: :test},
 
       # Dependencies for logger unit testing
       {:mox, "~> 1.2", only: :test},
-      {:logger_backends, "~> 1.0.0", only: :test},
+      {:logger_backends, "~> 1.0", only: :test},
 
       # The following are indirect dependencies, but we need to override the
       # versions due to conflicts
       {:jsx, "~> 3.1", override: true},
+      {:meck, "~> 0.9", override: true},
       {:xml_builder, "~> 2.1", override: true}
     ]
   end

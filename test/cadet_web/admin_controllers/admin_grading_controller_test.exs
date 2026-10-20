@@ -310,7 +310,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -355,7 +356,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -410,7 +412,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -544,8 +547,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           config: config,
           course: course
@@ -599,8 +602,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           config: config,
           course: course
@@ -635,8 +638,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           config: config,
           course: course
@@ -674,8 +677,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: 1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), 1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           course: course,
           config: config
@@ -710,8 +713,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           course: course,
           config: config
@@ -748,8 +751,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           course: course,
           config: config
@@ -788,8 +791,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: 1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), 1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           course: course,
           config: config
@@ -830,8 +833,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           course: course,
           config: config
@@ -882,8 +885,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           config: config,
           course: course
@@ -971,8 +974,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
       assessment =
         insert(
           :assessment,
-          open_at: Timex.shift(Timex.now(), hours: -1),
-          close_at: Timex.shift(Timex.now(), hours: 500),
+          open_at: DateTime.add(DateTime.utc_now(), -1, :hour),
+          close_at: DateTime.add(DateTime.utc_now(), 500, :hour),
           is_published: true,
           config: config,
           course: course
@@ -1344,7 +1347,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
@@ -1389,7 +1393,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.choice_id,
@@ -1444,7 +1449,8 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       },
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
-                      "variant" => &1.question.library.variant
+                      "variant" => &1.question.library.variant,
+                      "runtime" => &1.question.library.runtime
                     },
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,

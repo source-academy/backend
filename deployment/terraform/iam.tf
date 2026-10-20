@@ -3,8 +3,6 @@ data "aws_iam_policy_document" "assets" {
     effect  = "Allow"
     actions = ["s3:*"]
     resources = [
-      aws_s3_bucket.sourcecasts.arn,
-      "${aws_s3_bucket.sourcecasts.arn}/*",
       data.aws_s3_bucket.assets.arn,
       "${data.aws_s3_bucket.assets.arn}/*",
     ]
@@ -116,7 +114,7 @@ resource "aws_iam_role" "frontend" {
 
 resource "aws_iam_policy" "assets" {
   name        = "${var.env}-cadet-assets"
-  description = "Allows R/W access to the ${aws_s3_bucket.sourcecasts.bucket} and ${data.aws_s3_bucket.assets.bucket} S3 buckets"
+  description = "Allows R/W access to the ${data.aws_s3_bucket.assets.bucket} S3 bucket"
   policy      = data.aws_iam_policy_document.assets.json
 }
 

@@ -14,9 +14,7 @@ defmodule Cadet.Courses do
   alias Cadet.Courses.{
     AssessmentConfig,
     Course,
-    Group,
-    Sourcecast,
-    SourcecastUpload
+    Group
   }
 
   alias Cadet.Assessments
@@ -366,124 +364,6 @@ defmodule Cadet.Courses do
         {:ok, group}
     end
   end
-
-  @doc """
-  Upload a sourcecast file.
-
-  Note that there are no checks for whether the user belongs to the course,
-  as this has been checked inside a plug in the router.
-  """
-  def upload_sourcecast_file(
-        _inserter = %CourseRegistration{user_id: user_id, course_id: course_id},
-        attrs = %{}
-      ) do
-    Logger.info("Uploading sourcecast file for user #{user_id} in course #{course_id}")
-
-    changeset =
-      Sourcecast.changeset(%Sourcecast{uploader_id: user_id, course_id: course_id}, attrs)
-
-    case Repo.insert(changeset) do
-      {:ok, sourcecast} ->
-        Logger.info("Successfully uploaded sourcecast #{sourcecast.id} for user #{user_id}")
-        {:ok, sourcecast}
-
-      {:error, changeset} ->
-        Logger.error(
-          "Failed to upload sourcecast for user #{user_id}: #{full_error_messages(changeset)}"
-        )
-
-        {:error, {:bad_request, full_error_messages(changeset)}}
-    end
-  end
-
-  # @doc """
-  # Upload a public sourcecast file.
-
-  # Note that there are no checks for whether the user belongs to the course,
-  # as this has been checked inside a plug in the router.
-  # unused in the current version
-  # """
-  # def upload_sourcecast_file_public(
-  #       inserter,
-  #       _inserter_course_reg = %CourseRegistration{role: role},
-  #       attrs = %{}
-  #     ) do
-  #   if role in @upload_file_roles do
-  #     changeset =
-  #       %Sourcecast{}
-  #       |> Sourcecast.changeset(attrs)
-  #       |> put_assoc(:uploader, inserter)
-
-  #     case Repo.insert(changeset) do
-  #       {:ok, sourcecast} ->
-  #         {:ok, sourcecast}
-
-  #       {:error, changeset} ->
-  #         {:error, {:bad_request, full_error_messages(changeset)}}
-  #     end
-  #   else
-  #     {:error, {:forbidden, "User is not permitted to upload"}}
-  #   end
-  # end
-
-  @doc """
-  Delete a sourcecast file
-
-  Note that there are no checks for whether the user belongs to the course, as this has been checked
-  inside a plug in the router.
-  """
-  def delete_sourcecast_file(sourcecast_id) do
-    Logger.info("Deleting sourcecast file #{sourcecast_id}")
-
-    sourcecast = Repo.get(Sourcecast, sourcecast_id)
-
-    case sourcecast do
-      nil ->
-        Logger.error("Sourcecast #{sourcecast_id} not found")
-        {:error, {:not_found, "Sourcecast not found!"}}
-
-      sourcecast ->
-        SourcecastUpload.delete({sourcecast.audio, sourcecast})
-        result = Repo.delete(sourcecast)
-
-        case result do
-          {:ok, _} ->
-            Logger.info("Successfully deleted sourcecast #{sourcecast_id}")
-
-          {:error, changeset} ->
-            Logger.error(
-              "Failed to delete sourcecast #{sourcecast_id}: #{full_error_messages(changeset)}"
-            )
-        end
-
-        result
-    end
-  end
-
-  @doc """
-  Get sourcecast files
-  """
-  def get_sourcecast_files(course_id) when is_ecto_id(course_id) do
-    Logger.info("Retrieving sourcecast files for course #{course_id}")
-
-    sourcecasts =
-      Sourcecast
-      |> where(course_id: ^course_id)
-      |> Repo.all()
-      |> Repo.preload(:uploader)
-
-    Logger.info("Retrieved #{length(sourcecasts)} sourcecast files for course #{course_id}")
-    sourcecasts
-  end
-
-  # unused in the current version
-  # def get_sourcecast_files do
-  #   Sourcecast
-  #   # Public sourcecasts are those without course_id
-  #   |> where([s], is_nil(s.course_id))
-  #   |> Repo.all()
-  #   |> Repo.preload(:uploader)
-  # end
 
   @spec assets_prefix(Course.t()) :: binary()
   def assets_prefix(course) do

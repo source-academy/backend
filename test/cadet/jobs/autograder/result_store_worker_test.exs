@@ -72,6 +72,29 @@ defmodule Cadet.Autograder.ResultStoreWorkerTest do
   end
 
   describe "#perform, valid answer_id" do
+    test "stores an Oban job with JSON-decoded arguments", %{answer: answer} do
+      answer =
+        answer
+        |> Answer.grading_changeset(%{xp_adjustment: 1})
+        |> Repo.update!()
+
+      args =
+        %{
+          answer_id: answer.id,
+          overwrite: true,
+          result: %{status: :success, score: 1, max_score: 1, result: []}
+        }
+        |> Jason.encode!()
+        |> Jason.decode!()
+
+      assert :ok = ResultStoreWorker.perform(%Oban.Job{args: args})
+
+      answer = Answer |> Repo.get!(answer.id) |> Repo.preload(:question)
+      assert answer.autograding_status == :success
+      assert answer.xp == answer.question.max_xp
+      assert answer.xp_adjustment == 0
+    end
+
     test "before manual grading, grading auto published and manual grading required", %{
       answer: answer,
       results: results

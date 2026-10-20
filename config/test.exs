@@ -8,8 +8,8 @@ config :cadet, CadetWeb.Endpoint,
 
 config :cadet, environment: :test
 
-# Print only warnings and errors during test
-config :logger, level: :warning, compile_time_purge_matching: [[level_lower_than: :warning]]
+# Run at :info so interpolated log expressions are evaluated (and thus tested)
+config :logger, level: :info
 
 config :ex_aws,
   access_key_id: "hello",
@@ -77,12 +77,12 @@ config :cadet,
        }}
   },
   autograder: [
-    lambda_name: "dummy"
+    lambda_name: "dummy",
+    python_lambda_name: "dummy-python"
   ],
   uploader: [
     assets_bucket: "test-sa-assets",
-    assets_prefix: "courses-test/",
-    sourcecasts_bucket: "test-cadet-sourcecasts"
+    assets_prefix: "courses-test/"
   ],
   remote_execution: [
     thing_prefix: "env-sling",
@@ -116,3 +116,9 @@ config :cadet, :language_directory, refresh_on_start: false
 config :openai,
   # Input your own AES-256 encryption key here for encrypting LLM API keys
   encryption_key: "b4u7g0AyN3Tu2br9WSdZQjLMQ8bed/wgQWrH2x3qPdW8D55iv10+ySgs+bxDirWE"
+
+# Set explicitly because config.exs has no default and an unset bucket makes DocumentUploader
+# reject every upload. All S3 calls are mocked, so the name only has to be present, not real.
+config :cadet, :rag_documents,
+  bucket: "test-pixelbot-documents",
+  region: "us-east-1"

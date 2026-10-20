@@ -11,7 +11,6 @@ defmodule Cadet.Assessments.VersionManager do
 
   alias Cadet.Assessments.{
     Answer,
-    AnswerTypes.ProgrammingAnswer,
     Assessment,
     Question,
     Submission,
