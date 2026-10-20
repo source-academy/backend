@@ -10,7 +10,6 @@ defmodule CadetWeb.ChatController do
   alias Cadet.Chatbot.{Conversation, LanguageDirectory, LlmConversations, SicpNotesPy, VectorRag}
   alias Cadet.Courses
   @max_content_size 1000
-  @openai_http_options [timeout: 60_000, recv_timeout: 60_000]
 
   def init_chat(conn, params) do
     user = conn.assigns.current_user
@@ -273,9 +272,7 @@ defmodule CadetWeb.ChatController do
   end
 
   defp handle_openai_call(conn, payload, updated_conversation, conversation_id) do
-    openai_config = %OpenAI.Config{http_options: @openai_http_options}
-
-    case OpenAI.chat_completion([model: "gpt-4", messages: payload], openai_config) do
+    case OpenAI.chat_completion(model: "gpt-4", messages: payload) do
       {:ok, result_map} ->
         choices = Map.get(result_map, :choices, [])
 

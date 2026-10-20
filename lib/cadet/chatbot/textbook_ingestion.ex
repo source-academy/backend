@@ -5,6 +5,7 @@ defmodule Cadet.Chatbot.TextbookIngestion do
 
   alias Cadet.Chatbot.{Embeddings, VectorRag}
   alias Cadet.Repo
+  alias Ecto.Adapters.SQL
 
   @default_url "https://sicp.sourceacademy.org/sicpy.md"
   @default_title "SICP Python"
@@ -82,7 +83,7 @@ defmodule Cadet.Chatbot.TextbookIngestion do
     end
   end
 
-  defp checksum(text), do: :crypto.hash(:sha256, text) |> Base.encode16(case: :lower)
+  defp checksum(text), do: :sha256 |> :crypto.hash(text) |> Base.encode16(case: :lower)
 
   defp existing_document(course_id, checksum) do
     query = """
@@ -91,7 +92,7 @@ defmodule Cadet.Chatbot.TextbookIngestion do
     WHERE course_id = $1 AND language = $2 AND checksum = $3
     """
 
-    case Ecto.Adapters.SQL.query(Repo, query, [course_id, @language, checksum]) do
+    case SQL.query(Repo, query, [course_id, @language, checksum]) do
       {:ok, %{rows: [[id, status]]}} -> {:ok, %{id: id, status: status}}
       {:ok, %{rows: []}} -> {:ok, nil}
       {:error, error} -> {:error, error}
@@ -190,7 +191,7 @@ defmodule Cadet.Chatbot.TextbookIngestion do
     }
   end
 
-  defp flush_section(%{lines: []} = state), do: state
+  defp flush_section(state = %{lines: []}), do: state
 
   defp flush_section(state) do
     content =
@@ -319,7 +320,7 @@ defmodule Cadet.Chatbot.TextbookIngestion do
       now
     ]
 
-    case Ecto.Adapters.SQL.query(Repo, query, params) do
+    case SQL.query(Repo, query, params) do
       {:ok, %{rows: [[id]]}} -> {:ok, id}
       {:error, error} -> {:error, error}
     end
@@ -424,11 +425,11 @@ defmodule Cadet.Chatbot.TextbookIngestion do
       now
     ]
 
-    Ecto.Adapters.SQL.query(Repo, query, params)
+    SQL.query(Repo, query, params)
   end
 
   defp mark_document_ready(document_id) do
-    Ecto.Adapters.SQL.query!(
+    SQL.query!(
       Repo,
       "UPDATE rag_documents SET status = 'ready', updated_at = $1 WHERE id = $2",
       [now(), document_id]
