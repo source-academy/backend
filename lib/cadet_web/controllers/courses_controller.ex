@@ -102,6 +102,8 @@ defmodule CadetWeb.CoursesController do
       llm_model(:body, :string, "LLM model to be used for this course", required: false)
       llm_api_url(:body, :string, "LLM API URL to be used for this course", required: false)
 
+      pixelbot_model(:body, :string, "LLM model used by the Pixel chatbot", required: false)
+
       llm_course_level_prompt(
         :body,
         :string,
@@ -167,6 +169,8 @@ defmodule CadetWeb.CoursesController do
               required: false
             )
 
+            pixelbot_model(:string, "LLM model used by the Pixel chatbot", required: false)
+
             source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
@@ -191,6 +195,7 @@ defmodule CadetWeb.CoursesController do
             llm_api_url: "https://api.openai.com/v1/chat/completions",
             llm_course_level_prompt:
               "You are a helpful teaching assistant for an introductory programming course",
+            pixelbot_model: "gpt-4o",
             source_chapter: 1,
             source_variant: "default",
             module_help_text: "Help text",

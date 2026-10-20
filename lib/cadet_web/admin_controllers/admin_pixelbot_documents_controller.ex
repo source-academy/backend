@@ -2,7 +2,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   use CadetWeb, :controller
   require Logger
 
-  alias Cadet.Chatbot.{CourseDocuments, DocumentUploader, MetadataGenerator}
+  alias Cadet.Chatbot.{CourseDocuments, CourseLlm, DocumentUploader, MetadataGenerator}
   alias Cadet.Repo
 
   # ---- Categories -----------------------------------------------------------
@@ -181,14 +181,14 @@ defmodule CadetWeb.AdminPixelbotDocumentsController do
   defp course_id(conn), do: conn.assigns.course_reg.course_id
 
   defp generate_metadata(upload, _s3_key, media_type, course) do
-    case File.read(upload.path) do
-      {:ok, binary} ->
-        base64 = Base.encode64(binary)
-        model = course.llm_model || "gpt-4o"
-        MetadataGenerator.generate(upload.filename, base64, media_type, model)
-
+    with {:ok, llm_config} <- CourseLlm.config(course),
+         {:ok, binary} <- File.read(upload.path) do
+      base64 = Base.encode64(binary)
+      model = course.pixelbot_model || "gpt-4o"
+      MetadataGenerator.generate(upload.filename, base64, media_type, model, llm_config)
+    else
       {:error, reason} ->
-        Logger.warning("Could not read #{upload.filename} for metadata: #{inspect(reason)}")
+        Logger.warning("No metadata generated for #{upload.filename}: #{inspect(reason)}")
         %{title: Path.rootname(upload.filename), description: ""}
     end
   end

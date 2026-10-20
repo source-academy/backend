@@ -4,6 +4,8 @@ defmodule Cadet.Chatbot.MetadataGenerator do
   """
   require Logger
 
+  alias Cadet.Chatbot.CourseLlm
+
   @system_prompt """
   You are cataloging a course document for a university course assistant chatbot named Pixel.
   Pixel reads your description (without the file itself) to decide whether this document is
@@ -24,8 +26,8 @@ defmodule Cadet.Chatbot.MetadataGenerator do
   Do NOT include any explanation outside the JSON object.
   """
 
-  @spec generate(String.t(), String.t(), String.t(), String.t()) :: map()
-  def generate(filename, base64, media_type, model) do
+  @spec generate(String.t(), String.t(), String.t(), String.t(), CourseLlm.t()) :: map()
+  def generate(filename, base64, media_type, model, llm_config) do
     payload = [
       %{role: "system", content: @system_prompt},
       %{
@@ -34,7 +36,7 @@ defmodule Cadet.Chatbot.MetadataGenerator do
       }
     ]
 
-    case OpenAI.chat_completion(model: model, messages: payload) do
+    case OpenAI.chat_completion([model: model, messages: payload], llm_config) do
       {:ok, result_map} ->
         result_map
         |> extract_content()

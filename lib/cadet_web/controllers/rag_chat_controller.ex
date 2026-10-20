@@ -2,7 +2,7 @@ defmodule CadetWeb.RagChatController do
   use CadetWeb, :controller
   require Logger
 
-  alias Cadet.Chatbot.{Conversation, LlmConversations, RagConversations, RagPipeline}
+  alias Cadet.Chatbot.{Conversation, CourseLlm, LlmConversations, RagConversations, RagPipeline}
   alias Cadet.Courses.Course
   alias Cadet.Repo
   @max_content_size 1000
@@ -88,7 +88,8 @@ defmodule CadetWeb.RagChatController do
 
       true ->
         {:ok, screen_context} = screen_context_result
-        do_chat(conn, user, course, user_message, screen_context)
+        language = language_name(params["language"])
+        do_chat(conn, user, course, user_message, {screen_context, language})
     end
   end
 
@@ -147,12 +148,32 @@ defmodule CadetWeb.RagChatController do
     "#{label}:\n#{value}"
   end
 
-  defp do_chat(conn, user, course, user_message, screen_context) do
+  defp do_chat(conn, user, course, user_message, context) do
+    case CourseLlm.config(course) do
+      {:ok, llm_config} ->
+        do_chat(conn, user, course, user_message, context, llm_config)
+
+      {:error, reason} ->
+        Logger.error(
+          "RAG chat: course #{course.id} has no usable LLM API key (#{inspect(reason)}); " <>
+            "refusing request"
+        )
+
+        send_resp(
+          conn,
+          :unprocessable_entity,
+          "The chatbot is not configured for this course. Please contact your course staff."
+        )
+    end
+  end
+
+  defp do_chat(conn, user, course, user_message, {screen_context, language}, llm_config) do
     rag_opts = [
       routing_prompt: course.pixelbot_routing_prompt,
-      answer_prompt: course.pixelbot_answer_prompt,
-      model: course.llm_model || "gpt-4o",
-      course_id: course.id
+      answer_prompt: answer_prompt_with_language(course.pixelbot_answer_prompt, language),
+      model: course.pixelbot_model || "gpt-4o",
+      course_id: course.id,
+      llm_config: llm_config
     ]
 
     with true <- String.length(user_message) <= @max_content_size || {:error, :message_too_long},
@@ -166,11 +187,26 @@ defmodule CadetWeb.RagChatController do
           payload =
             generate_payload(updated_conversation, system_prompt, pdf_attachments, screen_context)
 
-          handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
+          handle_openai_call(
+            conn,
+            payload,
+            updated_conversation,
+            conversation.id,
+            model,
+            llm_config
+          )
 
         {:no_docs, system_prompt} ->
           payload = generate_fallback_payload(updated_conversation, system_prompt, screen_context)
-          handle_openai_call(conn, payload, updated_conversation, conversation.id, model)
+
+          handle_openai_call(
+            conn,
+            payload,
+            updated_conversation,
+            conversation.id,
+            model,
+            llm_config
+          )
       end
     else
       {:error, :message_too_long} ->
@@ -188,8 +224,8 @@ defmodule CadetWeb.RagChatController do
     end
   end
 
-  defp handle_openai_call(conn, payload, updated_conversation, conversation_id, model) do
-    case OpenAI.chat_completion(model: model, messages: payload) do
+  defp handle_openai_call(conn, payload, updated_conversation, conversation_id, model, llm_config) do
+    case OpenAI.chat_completion([model: model, messages: payload], llm_config) do
       {:ok, result_map} ->
         choices = Map.get(result_map, :choices, [])
 
@@ -306,6 +342,21 @@ defmodule CadetWeb.RagChatController do
         content: "<screen_context_reference>\n#{screen_context}\n</screen_context_reference>"
       }
     ]
+  end
+
+  # Maps the frontend's selected language id to its display name; unknown ids are ignored
+  defp language_name("python" <> chapter) when chapter in ~w(1 2 3 4), do: "Python §" <> chapter
+  defp language_name("pythonFull"), do: "Python"
+  defp language_name("source" <> chapter) when chapter in ~w(1 2 3 4), do: "Source §" <> chapter
+  defp language_name(_language_id), do: nil
+
+  defp answer_prompt_with_language(answer_prompt, nil), do: answer_prompt
+
+  defp answer_prompt_with_language(answer_prompt, language) do
+    answer_prompt <>
+      "\n\nThe student currently has #{language} selected in the playground. " <>
+      "Write code that runs in #{language}, and say so if a feature they ask about " <>
+      "needs a later sublanguage."
   end
 
   defp system_prompt_with_screen_context_instruction(system_prompt, nil), do: system_prompt

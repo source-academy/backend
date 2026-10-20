@@ -40,8 +40,9 @@ defmodule Cadet.Chatbot.RagPipeline do
     ]
 
     model = Keyword.get(opts, :model, "gpt-4o")
+    llm_config = Keyword.fetch!(opts, :llm_config)
 
-    case OpenAI.chat_completion(model: model, messages: payload) do
+    case OpenAI.chat_completion([model: model, messages: payload], llm_config) do
       {:ok, result_map} ->
         result_map
         |> extract_routing_response()

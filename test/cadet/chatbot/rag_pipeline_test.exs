@@ -22,7 +22,8 @@ defmodule Cadet.Chatbot.RagPipelineTest do
         routing_prompt: "Select relevant docs from: %DOCUMENT_MAP%",
         answer_prompt: @answer_prompt,
         model: "gpt-4o",
-        course_id: course_id
+        course_id: course_id,
+        llm_config: %OpenAI.Config{api_key: "sk-course-key"}
       ],
       overrides
     )
@@ -63,9 +64,10 @@ defmodule Cadet.Chatbot.RagPipelineTest do
     test "does not call the routing LLM when the map is empty" do
       course = insert(:course)
 
-      with_mock OpenAI, [:passthrough], chat_completion: fn _opts -> routing_response("[]") end do
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _opts, _config -> routing_response("[]") end do
         RagPipeline.process_rag_query("What is recursion?", opts_for(course.id))
-        refute called(OpenAI.chat_completion(:_))
+        refute called(OpenAI.chat_completion(:_, :_))
       end
     end
 
@@ -73,7 +75,7 @@ defmodule Cadet.Chatbot.RagPipelineTest do
       {course, document} = course_with_document()
 
       with_mock OpenAI, [:passthrough],
-        chat_completion: fn _opts -> routing_response(~s(["#{document.doc_key}"])) end do
+        chat_completion: fn _opts, _config -> routing_response(~s(["#{document.doc_key}"])) end do
         with_mock ExAws, [:passthrough], request: fn _op, _opts -> {:ok, %{body: "PDF"}} end do
           assert {:rag, @answer_prompt, [attachment]} =
                    RagPipeline.process_rag_query("What is recursion?", opts_for(course.id))
@@ -91,7 +93,7 @@ defmodule Cadet.Chatbot.RagPipelineTest do
       {course, document} = course_with_document()
 
       with_mock OpenAI, [:passthrough],
-        chat_completion: fn _opts ->
+        chat_completion: fn _opts, _config ->
           routing_response(
             "Sure! The relevant document is:\n[\"#{document.doc_key}\"]\nHope that helps."
           )
@@ -108,7 +110,8 @@ defmodule Cadet.Chatbot.RagPipelineTest do
     test "falls back when the routing LLM selects nothing" do
       {course, _document} = course_with_document()
 
-      with_mock OpenAI, [:passthrough], chat_completion: fn _opts -> routing_response("[]") end do
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _opts, _config -> routing_response("[]") end do
         assert {:no_docs, @answer_prompt} =
                  RagPipeline.process_rag_query("What is the weather?", opts_for(course.id))
       end
@@ -121,7 +124,9 @@ defmodule Cadet.Chatbot.RagPipelineTest do
       {_other_course, other_document} = course_with_document("Other", "other.pdf")
 
       with_mock OpenAI, [:passthrough],
-        chat_completion: fn _opts -> routing_response(~s(["#{other_document.doc_key}"])) end do
+        chat_completion: fn _opts, _config ->
+          routing_response(~s(["#{other_document.doc_key}"]))
+        end do
         assert {:no_docs, @answer_prompt} =
                  capture_log_result(fn ->
                    RagPipeline.process_rag_query("What is recursion?", opts_for(course.id))
@@ -133,7 +138,7 @@ defmodule Cadet.Chatbot.RagPipelineTest do
       {course, document} = course_with_document()
 
       with_mock OpenAI, [:passthrough],
-        chat_completion: fn _opts -> routing_response(~s(["#{document.doc_key}"])) end do
+        chat_completion: fn _opts, _config -> routing_response(~s(["#{document.doc_key}"])) end do
         with_mock ExAws, [:passthrough], request: fn _op, _opts -> {:error, :timeout} end do
           assert {:no_docs, @answer_prompt} =
                    capture_log_result(fn ->
@@ -147,7 +152,9 @@ defmodule Cadet.Chatbot.RagPipelineTest do
       {course, _document} = course_with_document()
 
       with_mock OpenAI, [:passthrough],
-        chat_completion: fn _opts -> routing_response("I don't know which document to use.") end do
+        chat_completion: fn _opts, _config ->
+          routing_response("I don't know which document to use.")
+        end do
         assert {:no_docs, @answer_prompt} =
                  capture_log_result(fn ->
                    RagPipeline.process_rag_query("What is recursion?", opts_for(course.id))
@@ -159,7 +166,7 @@ defmodule Cadet.Chatbot.RagPipelineTest do
       {course, _document} = course_with_document()
 
       with_mock OpenAI, [:passthrough],
-        chat_completion: fn _opts -> routing_response("Here: [\"l1a\", ] done") end do
+        chat_completion: fn _opts, _config -> routing_response("Here: [\"l1a\", ] done") end do
         assert {:no_docs, @answer_prompt} =
                  capture_log_result(fn ->
                    RagPipeline.process_rag_query("What is recursion?", opts_for(course.id))
@@ -170,7 +177,8 @@ defmodule Cadet.Chatbot.RagPipelineTest do
     test "falls back when the routing response has no choices" do
       {course, _document} = course_with_document()
 
-      with_mock OpenAI, [:passthrough], chat_completion: fn _opts -> {:ok, %{choices: []}} end do
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _opts, _config -> {:ok, %{choices: []}} end do
         assert {:no_docs, @answer_prompt} =
                  capture_log_result(fn ->
                    RagPipeline.process_rag_query("What is recursion?", opts_for(course.id))
@@ -182,7 +190,7 @@ defmodule Cadet.Chatbot.RagPipelineTest do
       {course, _document} = course_with_document()
 
       with_mock OpenAI, [:passthrough],
-        chat_completion: fn _opts -> {:error, %{"error" => "rate limited"}} end do
+        chat_completion: fn _opts, _config -> {:error, %{"error" => "rate limited"}} end do
         assert {:no_docs, @answer_prompt} =
                  capture_log_result(fn ->
                    RagPipeline.process_rag_query("What is recursion?", opts_for(course.id))
@@ -195,7 +203,8 @@ defmodule Cadet.Chatbot.RagPipelineTest do
     test "falls back when the routing prompt has no document map placeholder" do
       {course, _document} = course_with_document()
 
-      with_mock OpenAI, [:passthrough], chat_completion: fn _opts -> routing_response("[]") end do
+      with_mock OpenAI, [:passthrough],
+        chat_completion: fn _opts, _config -> routing_response("[]") end do
         assert {:no_docs, @answer_prompt} =
                  capture_log_result(fn ->
                    RagPipeline.process_rag_query(
@@ -204,7 +213,7 @@ defmodule Cadet.Chatbot.RagPipelineTest do
                    )
                  end)
 
-        refute called(OpenAI.chat_completion(:_))
+        refute called(OpenAI.chat_completion(:_, :_))
       end
     end
   end

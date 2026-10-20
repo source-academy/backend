@@ -6,6 +6,14 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
   alias Cadet.Chatbot.{CourseDocuments, DocumentUploader, MetadataGenerator}
   alias CadetWeb.AdminPixelbotDocumentsController
 
+  defp insert_course_with_llm_key do
+    course = insert(:course)
+
+    course
+    |> Cadet.Courses.Course.changeset(%{llm_api_key: "sk-course-key"})
+    |> Cadet.Repo.update!()
+  end
+
   defp documents_url(course_id), do: "/v2/courses/#{course_id}/admin/pixelbot_documents"
   defp categories_url(course_id), do: "/v2/courses/#{course_id}/admin/pixelbot_categories"
 
@@ -208,7 +216,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
     end
 
     test "stores each file and returns the LLM-proposed metadata for review" do
-      course = insert(:course)
+      course = insert_course_with_llm_key()
       conn = assign(build_conn(), :course_reg, %{course_id: course.id, course: course})
       upload = plug_upload("l1a.pdf", "lecture one")
 
@@ -217,7 +225,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
           {:ok, %{s3_key: "course-#{course.id}/l1a.pdf", media_type: "application/pdf"}}
         end do
         with_mock MetadataGenerator, [:passthrough],
-          generate: fn _filename, _base64, _media_type, _model ->
+          generate: fn _filename, _base64, _media_type, _model, _config ->
             %{title: "L1A", description: "Covers recursion."}
           end do
           conn = AdminPixelbotDocumentsController.upload(conn, %{"files" => [upload]})
@@ -241,7 +249,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
     # One rejected file must not sink the rest of the batch: the admin gets a per-file verdict
     # and can fix and re-upload only what failed.
     test "reports a per-file error without dropping the files that succeeded" do
-      course = insert(:course)
+      course = insert_course_with_llm_key()
       conn = assign(build_conn(), :course_reg, %{course_id: course.id, course: course})
       good = plug_upload("l1a.pdf", "lecture one")
       bad = plug_upload("virus.exe", "nope")
@@ -257,7 +265,7 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
             {:ok, %{s3_key: "course-#{course.id}/#{filename}", media_type: "application/pdf"}}
         end do
         with_mock MetadataGenerator, [:passthrough],
-          generate: fn _filename, _base64, _media_type, _model ->
+          generate: fn _filename, _base64, _media_type, _model, _config ->
             %{title: "L1A", description: ""}
           end do
           conn = AdminPixelbotDocumentsController.upload(conn, %{"files" => [good, bad]})
@@ -276,10 +284,36 @@ defmodule CadetWeb.AdminPixelbotDocumentsControllerTest do
       end
     end
 
+    # The file is still stored and reviewable, just without a proposed description.
+    test "skips metadata generation when the course has no LLM key" do
+      course = insert(:course)
+      conn = assign(build_conn(), :course_reg, %{course_id: course.id, course: course})
+      upload = plug_upload("l1a.pdf", "lecture one")
+
+      with_mock DocumentUploader, [:passthrough],
+        upload: fn _filename, _path, _course_id, _claimed ->
+          {:ok, %{s3_key: "course-#{course.id}/l1a.pdf", media_type: "application/pdf"}}
+        end do
+        with_mock MetadataGenerator, [:passthrough],
+          generate: fn _filename, _base64, _media_type, _model, _config ->
+            %{title: "Should not be called", description: "Should not be called"}
+          end do
+          conn = AdminPixelbotDocumentsController.upload(conn, %{"files" => [upload]})
+
+          assert %{"entries" => [entry]} = json_response(conn, 200)
+          assert entry["status"] == "ready"
+          assert entry["title"] == "l1a"
+          assert entry["description"] == ""
+
+          refute called(MetadataGenerator.generate(:_, :_, :_, :_, :_))
+        end
+      end
+    end
+
     # No row exists yet at upload time, so an unreadable temp file has to degrade to a blank
     # description rather than fail the upload the admin has already paid the S3 write for.
     test "falls back to a filename-derived title when the file cannot be read for metadata" do
-      course = insert(:course)
+      course = insert_course_with_llm_key()
       conn = assign(build_conn(), :course_reg, %{course_id: course.id, course: course})
       upload = %Plug.Upload{filename: "l1a.pdf", path: "/nonexistent/l1a.pdf"}
 
