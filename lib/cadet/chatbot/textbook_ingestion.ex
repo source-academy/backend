@@ -298,15 +298,14 @@ defmodule Cadet.Chatbot.TextbookIngestion do
     RETURNING id
     """
 
-    metadata =
-      Jason.encode!(%{
-        chunk_size: opts[:chunk_size],
-        chunk_overlap: opts[:chunk_overlap],
-        total_chunks: length(chunks),
-        section_count: section_count(chunks),
-        section_aware: true,
-        source_url: opts[:url]
-      })
+    metadata = %{
+      chunk_size: opts[:chunk_size],
+      chunk_overlap: opts[:chunk_overlap],
+      total_chunks: length(chunks),
+      section_count: section_count(chunks),
+      section_aware: true,
+      source_url: opts[:url]
+    }
 
     params = [
       opts[:course_id],
@@ -419,7 +418,7 @@ defmodule Cadet.Chatbot.TextbookIngestion do
       chunk_index,
       chunk.content,
       nil,
-      Jason.encode!(chunk.metadata),
+      chunk.metadata,
       vector_literal(chunk.embedding),
       now,
       now
