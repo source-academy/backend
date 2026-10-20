@@ -4,11 +4,19 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
   alias Cadet.Chatbot.PromptBuilder
 
   describe "build_prompt/2" do
-    test "includes section summary when available" do
+    test "builds a python-only prompt" do
       result = PromptBuilder.build_prompt("1.1.1", "Some paragraph text")
       assert is_binary(result)
       assert String.contains?(result, "Some paragraph text")
+      assert String.contains?(result, "using Python")
+      assert String.contains?(result, "beginner-friendly Python")
+      assert String.contains?(result, "provided Python textbook material")
+      assert String.contains?(result, "textbook-related question")
+      assert String.contains?(result, "do not provide code")
       assert String.contains?(result, "Here is the summary of this section")
+      assert String.contains?(result, "Expressions")
+      refute String.contains?(result, "There is no section summary")
+      refute String.contains?(result, "Source Academy platform uses the \"Source\" language")
     end
 
     test "handles missing section summary" do
@@ -16,6 +24,78 @@ defmodule Cadet.Chatbot.PromptBuilderTest do
       assert is_binary(result)
       assert String.contains?(result, "Some paragraph text")
       assert String.contains?(result, "There is no section summary")
+    end
+  end
+
+  describe "build_prompt/3" do
+    test "includes retrieved chunks when available" do
+      result =
+        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", [
+          %{title: "Lecture notes", content: "Use substitution to reason about calls."}
+        ])
+
+      assert String.contains?(result, "Lecture notes")
+      assert String.contains?(result, "Use substitution to reason about calls.")
+      assert String.contains?(result, "Some paragraph text")
+    end
+
+    test "includes retrieved chunk section metadata when available" do
+      result =
+        PromptBuilder.build_prompt("1.1.1", "Some paragraph text", [
+          %{
+            title: "Python notes",
+            content: "Functions can call themselves.",
+            metadata: %{"section" => "2.3", "section_title" => "Symbolic Data"}
+          }
+        ])
+
+      assert String.contains?(result, "Section: 2.3 Symbolic Data")
+      assert String.contains?(result, "Read more: Section")
+    end
+  end
+
+  describe "build_prompt/4" do
+    test "uses a trimmed custom Louis prompt as the prefix before standard context" do
+      result =
+        PromptBuilder.build_prompt(
+          "1.1.1",
+          "Visible paragraph",
+          [],
+          "  Use simple examples suitable for beginners. \n"
+        )
+
+      assert String.starts_with?(result, "Use simple examples suitable for beginners.")
+      refute result =~ "You are a competent tutor"
+      assert result =~ "Here is the summary of this section:"
+      assert result =~ "Visible paragraph"
+      assert String.ends_with?(result, "Visible paragraph")
+    end
+
+    test "uses only the default prompt for empty, missing, or invalid custom prompts" do
+      default = PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [])
+
+      assert PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [], " \n ") == default
+      assert PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [], nil) == default
+      assert PromptBuilder.build_prompt("1.1.1", "Visible paragraph", [], 123) == default
+    end
+  end
+
+  describe "build_prompt/5" do
+    test "keeps selected-language semantics with a custom prefix and standard context" do
+      result =
+        PromptBuilder.build_prompt(
+          "1.1.1",
+          "Visible paragraph",
+          [],
+          "Be concise.",
+          "python2"
+        )
+
+      assert String.starts_with?(result, "Be concise.")
+      assert result =~ "SELECTED LANGUAGE: Python §2"
+      assert result =~ "linked-list library is available"
+      assert result =~ "Here is the summary of this section:"
+      assert String.ends_with?(result, "Visible paragraph")
     end
   end
 

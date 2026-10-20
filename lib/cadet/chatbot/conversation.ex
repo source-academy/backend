@@ -8,6 +8,7 @@ defmodule Cadet.Chatbot.Conversation do
 
   @type t :: %__MODULE__{
           user: User.t(),
+          language_id: String.t() | nil,
           prepend_context: list(map()),
           messages: list(map())
         }
@@ -15,6 +16,7 @@ defmodule Cadet.Chatbot.Conversation do
   schema "llm_chats" do
     field(:prepend_context, {:array, :map}, default: [])
     field(:messages, {:array, :map}, default: [])
+    field(:language_id, :string)
 
     belongs_to(:user, User)
 
@@ -22,7 +24,7 @@ defmodule Cadet.Chatbot.Conversation do
   end
 
   @required_fields ~w(user_id)a
-  @optional_fields ~w(prepend_context messages)a
+  @optional_fields ~w(prepend_context messages language_id)a
 
   def changeset(conversation, params) do
     conversation

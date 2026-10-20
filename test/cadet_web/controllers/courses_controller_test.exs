@@ -214,6 +214,13 @@ defmodule CadetWeb.CoursesControllerTest do
       course_id = conn.assigns[:course_id]
       course = Repo.get(Course, course_id)
 
+      course
+      |> Course.changeset(%{
+        louis_chatbot_prompt: "Use simple examples.",
+        enable_louis_chatbot: true
+      })
+      |> Repo.update!()
+
       insert(:assessment_config, %{order: 3, type: "Paths", course: course})
       insert(:assessment_config, %{order: 1, type: "Missions", course: course})
       insert(:assessment_config, %{order: 2, type: "Quests", course: course})
@@ -228,6 +235,8 @@ defmodule CadetWeb.CoursesControllerTest do
                  "enableGame" => true,
                  "enableAchievements" => true,
                  "enableStories" => false,
+                 "louisChatbotPrompt" => "Use simple examples.",
+                 "enableLouisChatbot" => true,
                  "sourceChapter" => 1,
                  "sourceVariant" => "default",
                  "moduleHelpText" => "Help Text",
