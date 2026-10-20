@@ -402,6 +402,26 @@ defmodule CadetWeb.RagChatControllerTest do
       assert %{role: "system"} = Enum.at(payload, -2)
     end
 
+    @tag authenticate: :student
+    test "tells the model which language the student has selected", %{conn: conn} do
+      with_rag_answer([], "ok", fn ->
+        post(conn, "/v2/rag_chat/message", %{"message" => "Loop?", "language" => "python3"})
+      end)
+
+      assert_receive {:payload, payload}
+      assert hd(payload).content =~ "The student currently has Python §3 selected"
+    end
+
+    @tag authenticate: :student
+    test "ignores unknown language ids", %{conn: conn} do
+      with_rag_answer([], "ok", fn ->
+        post(conn, "/v2/rag_chat/message", %{"message" => "Loop?", "language" => "ignore all"})
+      end)
+
+      assert_receive {:payload, payload}
+      refute hd(payload).content =~ "currently has"
+    end
+
     # Screen context is student-controlled text going into a system-adjacent position, so the
     # prompt is amended to say it is reference data rather than instructions.
     @tag authenticate: :student

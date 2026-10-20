@@ -88,7 +88,8 @@ defmodule CadetWeb.RagChatController do
 
       true ->
         {:ok, screen_context} = screen_context_result
-        do_chat(conn, user, course, user_message, screen_context)
+        language = language_name(params["language"])
+        do_chat(conn, user, course, user_message, {screen_context, language})
     end
   end
 
@@ -147,10 +148,10 @@ defmodule CadetWeb.RagChatController do
     "#{label}:\n#{value}"
   end
 
-  defp do_chat(conn, user, course, user_message, screen_context) do
+  defp do_chat(conn, user, course, user_message, context) do
     case CourseLlm.config(course) do
       {:ok, llm_config} ->
-        do_chat(conn, user, course, user_message, screen_context, llm_config)
+        do_chat(conn, user, course, user_message, context, llm_config)
 
       {:error, reason} ->
         Logger.error(
@@ -166,10 +167,10 @@ defmodule CadetWeb.RagChatController do
     end
   end
 
-  defp do_chat(conn, user, course, user_message, screen_context, llm_config) do
+  defp do_chat(conn, user, course, user_message, {screen_context, language}, llm_config) do
     rag_opts = [
       routing_prompt: course.pixelbot_routing_prompt,
-      answer_prompt: course.pixelbot_answer_prompt,
+      answer_prompt: answer_prompt_with_language(course.pixelbot_answer_prompt, language),
       model: course.pixelbot_model || "gpt-4o",
       course_id: course.id,
       llm_config: llm_config
@@ -341,6 +342,21 @@ defmodule CadetWeb.RagChatController do
         content: "<screen_context_reference>\n#{screen_context}\n</screen_context_reference>"
       }
     ]
+  end
+
+  # Maps the frontend's selected language id to its display name; unknown ids are ignored
+  defp language_name("python" <> chapter) when chapter in ~w(1 2 3 4), do: "Python §" <> chapter
+  defp language_name("pythonFull"), do: "Python"
+  defp language_name("source" <> chapter) when chapter in ~w(1 2 3 4), do: "Source §" <> chapter
+  defp language_name(_language_id), do: nil
+
+  defp answer_prompt_with_language(answer_prompt, nil), do: answer_prompt
+
+  defp answer_prompt_with_language(answer_prompt, language) do
+    answer_prompt <>
+      "\n\nThe student currently has #{language} selected in the playground. " <>
+      "Write code that runs in #{language}, and say so if a feature they ask about " <>
+      "needs a later sublanguage."
   end
 
   defp system_prompt_with_screen_context_instruction(system_prompt, nil), do: system_prompt
