@@ -25,7 +25,19 @@ defmodule Cadet.Assessments.LibraryTest do
       end
     end
 
+    test "valid changeset chapter in the language directory", %{valid_params: params} do
+      for chapter <- [5, 6, 12, 20] do
+        params
+        |> Map.put(:chapter, chapter)
+        |> assert_changeset(:valid)
+      end
+    end
+
     test "invalid changeset invalid chapter", %{valid_params: params} do
+      params
+      |> Map.put(:chapter, 21)
+      |> assert_changeset(:invalid)
+
       params
       |> Map.put(:chapter, 100)
       |> assert_changeset(:invalid)

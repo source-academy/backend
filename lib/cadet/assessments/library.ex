@@ -46,9 +46,15 @@ defmodule Cadet.Assessments.Library do
     end
   end
 
+  # With Conductor, the chapter of a library is the 1-based position of a language in the language
+  # directory (python1 to python4 are 1 to 4, then python4Typed, and so on), not only a Source
+  # chapter 1 to 4. The directory has about a dozen languages; the frontend checks the number
+  # against the real list.
+  @max_chapter 20
+
   defp validate_chapter(changeset) do
     case changeset |> fetch_change(:chapter) do
-      {:ok, c} when c in 1..4 -> changeset
+      {:ok, c} when c in 1..@max_chapter -> changeset
       :error -> changeset
       _ -> add_error(changeset, :chapter, "invalid chapter")
     end
