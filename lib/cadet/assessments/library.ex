@@ -49,7 +49,8 @@ defmodule Cadet.Assessments.Library do
   # When the frontend has Conductor enabled, it reads the chapter as a 1-based index into the
   # language directory (python1 to python4 are 1 to 4, python4Typed is 5, and so on); otherwise
   # it is a Source chapter. This is only a sanity bound: the frontend clears the language for an
-  # unknown index, and the Python grader currently accepts only chapters 1 to 4.
+  # unknown index. The Python grader runs chapters 1 to 4 as Python 1 to 4 and every chapter from 5
+  # on (python4Typed) as Python 4 Typed, with a type check.
   @max_chapter 20
 
   defp validate_chapter(changeset) do
