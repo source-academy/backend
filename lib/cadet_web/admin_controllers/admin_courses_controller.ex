@@ -148,10 +148,10 @@ defmodule CadetWeb.AdminCoursesController do
           title("AdminSublanguage")
 
           properties do
-            chapter(:integer, "Chapter number from 1 to 4",
+            chapter(:integer, "Chapter number from 1 to 20",
               required: true,
               minimum: 1,
-              maximum: 4
+              maximum: 20
             )
 
             variant(Schema.ref(:SourceVariant), "Variant name", required: true)

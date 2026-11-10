@@ -102,6 +102,9 @@ defmodule Cadet.Courses.Course do
     end
   end
 
+  # Chapters above 4 are positions in the language directory; the bound is the same as for libraries.
+  @max_source_chapter 20
+
   # Validates combination of Source chapter and variant
   defp validate_sublanguage_combination(changeset, params) do
     chap = Map.has_key?(params, :source_chapter)
@@ -134,6 +137,11 @@ defmodule Cadet.Courses.Course do
 
           4 ->
             validate_inclusion(changeset, :source_variant, ["default", "gpu", "native"])
+
+          # With Conductor, the frontend saves the 1-based position of a language in the language
+          # directory (python4Typed is 5, and so on) with the variant "default".
+          chapter when is_integer(chapter) and chapter in 5..@max_source_chapter ->
+            validate_inclusion(changeset, :source_variant, ["default"])
 
           _ ->
             add_error(changeset, :source_chapter, "is invalid")

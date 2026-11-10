@@ -167,7 +167,7 @@ defmodule CadetWeb.CoursesController do
               required: false
             )
 
-            source_chapter(:integer, "Source Chapter number from 1 to 4", required: true)
+            source_chapter(:integer, "Source Chapter number from 1 to 20", required: true)
             source_variant(Schema.ref(:SourceVariant), "Source Variant name", required: true)
             module_help_text(:string, "Module help text", required: true)
             assessment_types(:list, "Assessment Types", required: true)
