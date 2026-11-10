@@ -46,10 +46,10 @@ defmodule Cadet.Assessments.Library do
     end
   end
 
-  # With Conductor, the chapter of a library is the 1-based position of a language in the language
-  # directory (python1 to python4 are 1 to 4, then python4Typed, and so on), not only a Source
-  # chapter 1 to 4. The directory has about a dozen languages; the frontend checks the number
-  # against the real list.
+  # When the frontend has Conductor enabled, it reads the chapter as a 1-based index into the
+  # language directory (python1 to python4 are 1 to 4, python4Typed is 5, and so on); otherwise
+  # it is a Source chapter. This is only a sanity bound: the frontend clears the language for an
+  # unknown index, and the Python grader currently accepts only chapters 1 to 4.
   @max_chapter 20
 
   defp validate_chapter(changeset) do

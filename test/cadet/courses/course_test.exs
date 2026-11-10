@@ -221,8 +221,16 @@ defmodule Cadet.Courses.CourseTest do
       assert_changeset(%{source_variant: "default"}, :invalid)
     end
 
+    test "valid changeset with a language directory position as chapter" do
+      for chapter <- [5, 6, 20] do
+        assert_changeset(%{source_chapter: chapter, source_variant: "default"}, :valid)
+      end
+    end
+
     test "invalid changeset with invalid chapter" do
-      assert_changeset(%{source_chapter: 5, source_variant: "default"}, :invalid)
+      assert_changeset(%{source_chapter: 21, source_variant: "default"}, :invalid)
+      assert_changeset(%{source_chapter: 0, source_variant: "default"}, :invalid)
+      assert_changeset(%{source_chapter: 5, source_variant: "lazy"}, :invalid)
     end
 
     test "invalid changeset with invalid variant" do
