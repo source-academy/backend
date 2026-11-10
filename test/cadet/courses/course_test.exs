@@ -3,6 +3,17 @@ defmodule Cadet.Courses.CourseTest do
 
   use Cadet.ChangesetCase, entity: Course
 
+  # Everything that is required, so that only the chapter and the variant decide.
+  defp with_chapter(source_chapter, source_variant) do
+    %{
+      course_name: "Programming Methodology",
+      source_chapter: source_chapter,
+      source_variant: source_variant,
+      top_leaderboard_display: 100,
+      top_contest_leaderboard_display: 10
+    }
+  end
+
   describe "Course Configuration Changesets" do
     test "valid changesets" do
       assert_changeset(
@@ -223,14 +234,15 @@ defmodule Cadet.Courses.CourseTest do
 
     test "valid changeset with a language directory position as chapter" do
       for chapter <- [5, 6, 20] do
-        assert_changeset(%{source_chapter: chapter, source_variant: "default"}, :valid)
+        assert_changeset(with_chapter(chapter, "default"), :valid)
       end
     end
 
     test "invalid changeset with invalid chapter" do
-      assert_changeset(%{source_chapter: 21, source_variant: "default"}, :invalid)
-      assert_changeset(%{source_chapter: 0, source_variant: "default"}, :invalid)
-      assert_changeset(%{source_chapter: 5, source_variant: "lazy"}, :invalid)
+      assert_changeset(with_chapter(1, "default"), :valid)
+      assert_changeset(with_chapter(21, "default"), :invalid)
+      assert_changeset(with_chapter(0, "default"), :invalid)
+      assert_changeset(with_chapter(5, "lazy"), :invalid)
     end
 
     test "invalid changeset with invalid variant" do
