@@ -232,10 +232,11 @@ defmodule Cadet.Updater.XMLParserTest do
         assert capture_log(fn ->
                  assert(
                    XMLParser.parse_xml(xml, course.id, assessment_config.id) ==
-                     {:error, {:bad_request, "Missing PROGRAMMINGLANGUAGE"}}
+                     {:error,
+                      {:bad_request, "Missing USER_PROGRAMMING_LANGUAGE (or PROGRAMMINGLANGUAGE)"}}
                  )
                end) =~
-                 "Missing PROGRAMMINGLANGUAGE"
+                 "Missing USER_PROGRAMMING_LANGUAGE (or PROGRAMMINGLANGUAGE)"
       end
     end
 
@@ -310,6 +311,96 @@ defmodule Cadet.Updater.XMLParserTest do
                assert XMLParser.parse_xml(xml, course.id, assessment_config.id) ==
                         {:error, {:bad_request, "Invalid runtime \"haskell\""}}
              end) =~ "Invalid runtime \"haskell\""
+    end
+  end
+
+  describe "languages and evaluators (the user, the frontend grader and the backend grader)" do
+    setup %{course: course, assessments_with_config: assessments_with_config} do
+      [{assessment, assessment_config} | _] = Enum.to_list(assessments_with_config)
+      %{course: course, assessment: assessment, assessment_config: assessment_config}
+    end
+
+    defp language(language, evaluator),
+      do: build(:library, %{language: language, evaluator: evaluator})
+
+    test "stores the language and evaluator of each of the three", context do
+      question =
+        build(:programming_question,
+          library: language("python2", "python2Py2js"),
+          grading_library: language("python4", "python4Py2js"),
+          frontend_grading_library: language("python4Typed", "python4TypedPy2js")
+        )
+
+      stored = parse_single_question(context, question)
+      assert {stored.library.language, stored.library.evaluator} == {"python2", "python2Py2js"}
+
+      assert {stored.grading_library.language, stored.grading_library.evaluator} ==
+               {"python4", "python4Py2js"}
+
+      assert {stored.frontend_grading_library.language, stored.frontend_grading_library.evaluator} ==
+               {"python4Typed", "python4TypedPy2js"}
+    end
+
+    test "the new tag names are accepted, as the old names are", %{
+      course: course,
+      assessment: assessment,
+      assessment_config: assessment_config
+    } do
+      question =
+        build(:programming_question,
+          library: language("ocaml", "ocamlJsOfOCaml"),
+          grading_library: language("ocaml", "ocamlJsOfOCaml")
+        )
+
+      xml = XMLGenerator.generate_xml_for(assessment, [question], new_tag_names: true)
+      assert xml =~ "USER_PROGRAMMING_LANGUAGE"
+      assert xml =~ "BACKEND_GRADER_PROGRAMMING_LANGUAGE"
+      refute xml =~ "<PROGRAMMINGLANGUAGE"
+      assert XMLParser.parse_xml(xml, course.id, assessment_config.id) == :ok
+
+      stored =
+        Repo.one!(
+          where(Question, assessment_id: ^Repo.get_by!(Assessment, number: assessment.number).id)
+        )
+
+      assert stored.library.language == "ocaml"
+      assert stored.grading_library.evaluator == "ocamlJsOfOCaml"
+    end
+
+    test "the backend grader falls back to the user's, and the frontend grader to the backend grader",
+         context do
+      question =
+        build(:programming_question,
+          library: language("python2", "python2Py2js"),
+          grading_library: language("python4", "python4Py2js"),
+          frontend_grading_library: nil
+        )
+
+      stored = parse_single_question(context, question)
+      assert stored.frontend_grading_library.language == "python4"
+      assert stored.frontend_grading_library.evaluator == "python4Py2js"
+    end
+
+    test "a question without ids has none: the chapter is all there is", context do
+      stored = parse_single_question(context, build(:programming_question))
+      assert stored.library.language == nil
+      assert stored.library.evaluator == nil
+    end
+
+    test "an evaluator without its language is rejected", %{
+      course: course,
+      assessment: assessment,
+      assessment_config: assessment_config
+    } do
+      question =
+        build(:programming_question, library: build(:library, %{evaluator: "ocamlJsOfOCaml"}))
+
+      xml = XMLGenerator.generate_xml_for(assessment, [question])
+
+      capture_log(fn ->
+        assert {:error, {:bad_request, _}} =
+                 XMLParser.parse_xml(xml, course.id, assessment_config.id)
+      end)
     end
   end
 

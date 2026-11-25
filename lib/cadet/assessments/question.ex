@@ -20,6 +20,9 @@ defmodule Cadet.Assessments.Question do
     field(:answer, :map, virtual: true)
     embeds_one(:library, Library, on_replace: :update)
     embeds_one(:grading_library, Library, on_replace: :update)
+    # What the test cases run under in the workspace (the frontend grader); nil for a question
+    # saved before it existed, which the frontend treats as its grading library
+    embeds_one(:frontend_grading_library, Library, on_replace: :update)
     belongs_to(:assessment, Assessment)
     timestamps()
   end
@@ -34,6 +37,7 @@ defmodule Cadet.Assessments.Question do
     |> add_belongs_to_id_from_model(:assessment, params)
     |> cast_embed(:library)
     |> cast_embed(:grading_library)
+    |> cast_embed(:frontend_grading_library)
     |> validate_required(@required_fields ++ @required_embeds)
     |> validate_question_content()
     |> foreign_key_constraint(:assessment_id)

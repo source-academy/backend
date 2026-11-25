@@ -17,10 +17,18 @@ defmodule Cadet.Test.XMLGenerator do
         questions,
         opts \\ []
       ) do
+    # the tags are PROGRAMMINGLANGUAGE and GRADERPROGRAMMINGLANGUAGE, or (new_tag_names) their new names
+    {user_tag, backend_grader_tag} =
+      if opts[:new_tag_names] do
+        {&user_programming_language/2, &backend_grader_programming_language/2}
+      else
+        {&programminglanguage/2, &graderprogramminglanguage/2}
+      end
+
     assessment_wide_library =
       if opts[:library] do
         process_library(opts[:library],
-          using: &programminglanguage/2,
+          using: user_tag,
           no_deployment: opts[:no_programminglanguage]
         )
       else
@@ -31,7 +39,18 @@ defmodule Cadet.Test.XMLGenerator do
       if opts[:grading_library] do
         process_library(
           opts[:grading_library],
-          using: &graderprogramminglanguage/2,
+          using: backend_grader_tag,
+          no_deployment: opts[:no_programminglanguage]
+        )
+      else
+        []
+      end
+
+    assessment_wide_frontend_grading_library =
+      if opts[:frontend_grading_library] do
+        process_library(
+          opts[:frontend_grading_library],
+          using: &frontend_grader_programming_language/2,
           no_deployment: opts[:no_programminglanguage]
         )
       else
@@ -66,18 +85,25 @@ defmodule Cadet.Test.XMLGenerator do
                     process_question_by_question_type(question) ++
                     process_library(
                       question.library,
-                      using: &programminglanguage/2,
+                      using: user_tag,
                       no_deployment: opts[:no_programminglanguage]
                     ) ++
                     process_library(
                       question.grading_library,
-                      using: &graderprogramminglanguage/2,
+                      using: backend_grader_tag,
+                      no_deployment: opts[:no_programminglanguage]
+                    ) ++
+                    process_library(
+                      Map.get(question, :frontend_grading_library),
+                      using: &frontend_grader_programming_language/2,
                       no_deployment: opts[:no_programminglanguage]
                     )
                 )
               end
             ])
-          ] ++ assessment_wide_library ++ assessment_wide_grading_library
+          ] ++
+            assessment_wide_library ++
+            assessment_wide_grading_library ++ assessment_wide_frontend_grading_library
         )
       ])
     )
@@ -174,12 +200,26 @@ defmodule Cadet.Test.XMLGenerator do
     {"VOTING", map_permit_keys(raw_attr, ~w(assessment_number reveal_hours token_divider)a)}
   end
 
+  @language_attrs ~w(interpreter runtime language evaluator)a
+
   defp programminglanguage(raw_attrs, children) do
-    {"PROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter runtime)a), children}
+    {"PROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, @language_attrs), children}
   end
 
   defp graderprogramminglanguage(raw_attrs, children) do
-    {"GRADERPROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, ~w(interpreter runtime)a), children}
+    {"GRADERPROGRAMMINGLANGUAGE", map_permit_keys(raw_attrs, @language_attrs), children}
+  end
+
+  defp user_programming_language(raw_attrs, children) do
+    {"USER_PROGRAMMING_LANGUAGE", map_permit_keys(raw_attrs, @language_attrs), children}
+  end
+
+  defp backend_grader_programming_language(raw_attrs, children) do
+    {"BACKEND_GRADER_PROGRAMMING_LANGUAGE", map_permit_keys(raw_attrs, @language_attrs), children}
+  end
+
+  defp frontend_grader_programming_language(raw_attrs, children) do
+    {"FRONTEND_GRADER_PROGRAMMING_LANGUAGE", map_permit_keys(raw_attrs, @language_attrs), children}
   end
 
   defp external(raw_attrs, children) do
@@ -213,7 +253,12 @@ defmodule Cadet.Test.XMLGenerator do
     else
       [
         tag_function.(
-          %{interpreter: library.chapter, runtime: library[:runtime]},
+          %{
+            interpreter: library.chapter,
+            runtime: library[:runtime],
+            language: library[:language],
+            evaluator: library[:evaluator]
+          },
           [
             external(
               %{name: library.external.name},

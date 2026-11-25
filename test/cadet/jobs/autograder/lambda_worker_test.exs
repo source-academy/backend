@@ -262,7 +262,14 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
             symbols: question.grading_library.external.symbols
           },
           globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end),
-          runtime: question.grading_library.runtime
+          runtime: question.grading_library.runtime,
+          language: question.grading_library.language,
+          evaluator: question.grading_library.evaluator
+        },
+        userLibrary: %{
+          chapter: question.library.chapter,
+          language: question.library.language,
+          evaluator: question.library.evaluator
         }
       }
 
@@ -283,6 +290,27 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
         })
 
       assert params.library.runtime == "python"
+    end
+  end
+
+  describe "language and evaluator" do
+    test "the event carries the backend grader's and the user's, by id", %{answer: answer} do
+      question =
+        insert(:programming_question, %{
+          library: build(:library, %{language: "python2", evaluator: "python2Py2js"}),
+          grading_library: build(:library, %{language: "python4", evaluator: "python4Py2js"})
+        })
+
+      params =
+        LambdaWorker.build_request_params(%{
+          question: Repo.get(Question, question.id),
+          answer: Repo.get(Answer, answer.id)
+        })
+
+      assert {params.library.language, params.library.evaluator} == {"python4", "python4Py2js"}
+
+      assert {params.userLibrary.language, params.userLibrary.evaluator} ==
+               {"python2", "python2Py2js"}
     end
   end
 

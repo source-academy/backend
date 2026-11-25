@@ -134,8 +134,19 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   defp process_questions(xml) do
-    default_library = xpath(xml, ~x"//TASK/PROGRAMMINGLANGUAGE"e)
-    default_grading_library = xpath(xml, ~x"//TASK/GRADERPROGRAMMINGLANGUAGE"e)
+    # The task's defaults for the three languages and evaluators: the user's (what the student runs in the
+    # workspace), the frontend grader's (what the test cases run under in the workspace) and the backend
+    # grader's (what the autograder runs). The names of the first and the last were PROGRAMMINGLANGUAGE and
+    # GRADERPROGRAMMINGLANGUAGE, which are still accepted.
+    default_libraries = %{
+      library:
+        xpath(xml, ~x"//TASK/USER_PROGRAMMING_LANGUAGE"e) ||
+          xpath(xml, ~x"//TASK/PROGRAMMINGLANGUAGE"e),
+      grading_library:
+        xpath(xml, ~x"//TASK/BACKEND_GRADER_PROGRAMMING_LANGUAGE"e) ||
+          xpath(xml, ~x"//TASK/GRADERPROGRAMMINGLANGUAGE"e),
+      frontend_grading_library: xpath(xml, ~x"//TASK/FRONTEND_GRADER_PROGRAMMING_LANGUAGE"e)
+    }
 
     questions_params =
       xml
@@ -154,7 +165,7 @@ defmodule Cadet.Updater.XMLParser do
                SharedHelper.process_map_booleans(param, [:show_solution, :blocking]),
              question when is_map(question) <- process_question_by_question_type(param),
              question when is_map(question) <-
-               process_question_library(question, default_library, default_grading_library),
+               process_question_library(question, default_libraries),
              question when is_map(question) <- Map.delete(question, :entity) do
           question
         else
@@ -278,23 +289,37 @@ defmodule Cadet.Updater.XMLParser do
     {:error, "Invalid question type."}
   end
 
-  @spec process_question_library(map(), any(), any()) :: map() | {:error, String.t()}
-  defp process_question_library(question, default_library, default_grading_library) do
-    library = xpath(question[:entity], ~x"./PROGRAMMINGLANGUAGE"o) || default_library
+  @spec process_question_library(map(), map()) :: map() | {:error, String.t()}
+  defp process_question_library(question, defaults) do
+    entity = question[:entity]
 
+    library =
+      xpath(entity, ~x"./USER_PROGRAMMING_LANGUAGE"o) || xpath(entity, ~x"./PROGRAMMINGLANGUAGE"o) ||
+        defaults.library
+
+    # The backend grader runs what the user's setting says unless told otherwise; the frontend grader
+    # runs what the backend grader does, so that a student's test results in the workspace match the
+    # autograder's.
     grading_library =
-      xpath(question[:entity], ~x"./GRADERPROGRAMMINGLANGUAGE"o) || default_grading_library ||
-        library
+      xpath(entity, ~x"./BACKEND_GRADER_PROGRAMMING_LANGUAGE"o) ||
+        xpath(entity, ~x"./GRADERPROGRAMMINGLANGUAGE"o) || defaults.grading_library || library
+
+    frontend_grading_library =
+      xpath(entity, ~x"./FRONTEND_GRADER_PROGRAMMING_LANGUAGE"o) ||
+        defaults.frontend_grading_library || grading_library
 
     if library do
       with {:ok, parsed_library} <- parse_programming_language(library),
-           {:ok, parsed_grading_library} <- parse_programming_language(grading_library) do
+           {:ok, parsed_grading_library} <- parse_programming_language(grading_library),
+           {:ok, parsed_frontend_grading_library} <-
+             parse_programming_language(frontend_grading_library) do
         question
         |> Map.put(:library, parsed_library)
         |> Map.put(:grading_library, parsed_grading_library)
+        |> Map.put(:frontend_grading_library, parsed_frontend_grading_library)
       end
     else
-      {:error, "Missing PROGRAMMINGLANGUAGE"}
+      {:error, "Missing USER_PROGRAMMING_LANGUAGE (or PROGRAMMINGLANGUAGE)"}
     end
   end
 
@@ -335,16 +360,30 @@ defmodule Cadet.Updater.XMLParser do
         chapter: ~x"./@interpreter"i,
         exec_time_ms: ~x"./@exectime"oi,
         variant: ~x"./@variant"os,
-        runtime: ~x"./@runtime"os
+        runtime: ~x"./@runtime"os,
+        language: ~x"./@language"os,
+        evaluator: ~x"./@evaluator"os
       )
       |> Map.put(:globals, globals)
       |> Map.put(:external, external)
       |> Map.put(:language_options, options_map)
 
     case validate_runtime(parsed.runtime) do
-      {:ok, runtime} -> {:ok, put_runtime(parsed, runtime)}
-      error -> error
+      {:ok, runtime} ->
+        {:ok,
+         parsed
+         |> put_runtime(runtime)
+         |> drop_if_empty(:language)
+         |> drop_if_empty(:evaluator)}
+
+      error ->
+        error
     end
+  end
+
+  # an attribute that is not there reads as "": the library then keeps its default (no language)
+  defp drop_if_empty(parsed, key) do
+    if Map.get(parsed, key) == "", do: Map.delete(parsed, key), else: parsed
   end
 
   defp validate_runtime(""), do: {:ok, nil}

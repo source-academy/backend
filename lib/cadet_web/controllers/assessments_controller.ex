@@ -411,7 +411,12 @@ defmodule CadetWeb.AssessmentsController do
 
             library(
               Schema.ref(:Library),
-              "The library used for this question"
+              "The library used for this question: the user's language and evaluator"
+            )
+
+            frontendGradingLibrary(
+              Schema.ref(:Library),
+              "The language and evaluator that the test cases run under in the workspace; absent for a question saved before it existed, which then runs them as its library"
             )
 
             prepend(:string, "Prepend program for programming questions")
@@ -485,6 +490,16 @@ defmodule CadetWeb.AssessmentsController do
         swagger_schema do
           properties do
             chapter(:integer)
+
+            language(
+              :string,
+              "The language, by its id in the language directory (for example \"ocaml\")"
+            )
+
+            evaluator(
+              :string,
+              "The evaluator of the language, by its id in the language directory (for example \"ocamlJsOfOCaml\")"
+            )
 
             globals(
               Schema.new do
