@@ -489,6 +489,7 @@ defmodule CadetWeb.AssessmentsControllerTest do
             |> Enum.map(&Map.delete(&1, "answer"))
             |> Enum.map(&Map.delete(&1, "solution"))
             |> Enum.map(&Map.delete(&1, "library"))
+            |> Enum.map(&Map.delete(&1, "frontendGradingLibrary"))
             |> Enum.map(&Map.delete(&1, "xp"))
             |> Enum.map(&Map.delete(&1, "lastModifiedAt"))
             |> Enum.map(&Map.delete(&1, "maxXp"))

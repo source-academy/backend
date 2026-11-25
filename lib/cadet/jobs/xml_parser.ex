@@ -373,17 +373,18 @@ defmodule Cadet.Updater.XMLParser do
         {:ok,
          parsed
          |> put_runtime(runtime)
-         |> drop_if_empty(:language)
-         |> drop_if_empty(:evaluator)}
+         |> nil_if_empty(:language)
+         |> nil_if_empty(:evaluator)}
 
       error ->
         error
     end
   end
 
-  # an attribute that is not there reads as "": the library then keeps its default (no language)
-  defp drop_if_empty(parsed, key) do
-    if Map.get(parsed, key) == "", do: Map.delete(parsed, key), else: parsed
+  # An attribute that is not there reads as "": it is set to nil, not left out, so that a question
+  # that is updated forgets the language or evaluator that it had
+  defp nil_if_empty(parsed, key) do
+    if Map.get(parsed, key) == "", do: Map.put(parsed, key, nil), else: parsed
   end
 
   defp validate_runtime(""), do: {:ok, nil}

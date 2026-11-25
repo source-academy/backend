@@ -311,8 +311,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
                       "variant" => &1.question.library.variant,
-                      "runtime" => &1.question.library.runtime
+                      "runtime" => &1.question.library.runtime,
+                      "language" => &1.question.library.language,
+                      "evaluator" => &1.question.library.evaluator
                     },
+                    "frontendGradingLibrary" => nil,
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.code,
@@ -357,8 +360,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
                       "variant" => &1.question.library.variant,
-                      "runtime" => &1.question.library.runtime
+                      "runtime" => &1.question.library.runtime,
+                      "language" => &1.question.library.language,
+                      "evaluator" => &1.question.library.evaluator
                     },
+                    "frontendGradingLibrary" => nil,
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.choice_id,
@@ -413,8 +419,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
                       "variant" => &1.question.library.variant,
-                      "runtime" => &1.question.library.runtime
+                      "runtime" => &1.question.library.runtime,
+                      "language" => &1.question.library.language,
+                      "evaluator" => &1.question.library.evaluator
                     },
+                    "frontendGradingLibrary" => nil,
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
@@ -1348,8 +1357,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
                       "variant" => &1.question.library.variant,
-                      "runtime" => &1.question.library.runtime
+                      "runtime" => &1.question.library.runtime,
+                      "language" => &1.question.library.language,
+                      "evaluator" => &1.question.library.evaluator
                     },
+                    "frontendGradingLibrary" => nil,
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.code,
@@ -1394,8 +1406,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
                       "variant" => &1.question.library.variant,
-                      "runtime" => &1.question.library.runtime
+                      "runtime" => &1.question.library.runtime,
+                      "language" => &1.question.library.language,
+                      "evaluator" => &1.question.library.evaluator
                     },
+                    "frontendGradingLibrary" => nil,
                     "content" => &1.question.question.content,
                     "answer" => &1.answer.choice_id,
                     "maxXp" => &1.question.max_xp,
@@ -1450,8 +1465,11 @@ defmodule CadetWeb.AdminGradingControllerTest do
                       "execTimeMs" => &1.question.library.exec_time_ms,
                       "languageOptions" => %{},
                       "variant" => &1.question.library.variant,
-                      "runtime" => &1.question.library.runtime
+                      "runtime" => &1.question.library.runtime,
+                      "language" => &1.question.library.language,
+                      "evaluator" => &1.question.library.evaluator
                     },
+                    "frontendGradingLibrary" => nil,
                     "maxXp" => &1.question.max_xp,
                     "content" => &1.question.question.content,
                     "autogradingStatus" => Atom.to_string(&1.autograding_status),
