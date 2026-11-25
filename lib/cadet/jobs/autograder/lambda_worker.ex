@@ -162,9 +162,9 @@ defmodule Cadet.Autograder.LambdaWorker do
         language: question.grading_library.language,
         evaluator: question.grading_library.evaluator
       },
-      # What the student runs in the workspace: the grader runs the student's program under it too, so
-      # that the student gets the error messages of their own language; the test cases decide the result
-      # under the library above
+      # What the student runs in the workspace: the grader runs the student's program under it
+      # too, so that the student gets the error messages of their own language; the test cases
+      # decide the result under the library above
       userLibrary: %{
         chapter: question.library.chapter,
         language: question.library.language,

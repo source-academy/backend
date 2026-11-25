@@ -134,10 +134,10 @@ defmodule Cadet.Updater.XMLParser do
 
   @spec process_questions(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   defp process_questions(xml) do
-    # The task's defaults for the three languages and evaluators: the user's (what the student runs in the
-    # workspace), the frontend grader's (what the test cases run under in the workspace) and the backend
-    # grader's (what the autograder runs). The names of the first and the last were PROGRAMMINGLANGUAGE and
-    # GRADERPROGRAMMINGLANGUAGE, which are still accepted.
+    # The task's defaults for the three languages and evaluators: the user's (what the student
+    # runs in the workspace), the frontend grader's (what the test cases run under in the
+    # workspace) and the backend grader's (what the autograder runs). The names of the first and
+    # the last were PROGRAMMINGLANGUAGE and GRADERPROGRAMMINGLANGUAGE, which are still accepted.
     default_libraries = %{
       library:
         xpath(xml, ~x"//TASK/USER_PROGRAMMING_LANGUAGE"e) ||

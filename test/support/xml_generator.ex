@@ -17,7 +17,8 @@ defmodule Cadet.Test.XMLGenerator do
         questions,
         opts \\ []
       ) do
-    # the tags are PROGRAMMINGLANGUAGE and GRADERPROGRAMMINGLANGUAGE, or (new_tag_names) their new names
+    # the tags are PROGRAMMINGLANGUAGE and GRADERPROGRAMMINGLANGUAGE, or, with new_tag_names,
+    # USER_PROGRAMMING_LANGUAGE and BACKEND_GRADER_PROGRAMMING_LANGUAGE
     {user_tag, backend_grader_tag} =
       if opts[:new_tag_names] do
         {&user_programming_language/2, &backend_grader_programming_language/2}
