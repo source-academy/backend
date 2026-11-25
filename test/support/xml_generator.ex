@@ -219,7 +219,8 @@ defmodule Cadet.Test.XMLGenerator do
   end
 
   defp frontend_grader_programming_language(raw_attrs, children) do
-    {"FRONTEND_GRADER_PROGRAMMING_LANGUAGE", map_permit_keys(raw_attrs, @language_attrs), children}
+    {"FRONTEND_GRADER_PROGRAMMING_LANGUAGE", map_permit_keys(raw_attrs, @language_attrs),
+     children}
   end
 
   defp external(raw_attrs, children) do
