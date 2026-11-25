@@ -42,11 +42,11 @@ defmodule Cadet.DisplayHelper do
   end
 
   # The errors of an embedded schema are a map (`embeds_one`) or a list of maps (`embeds_many`)
-  defp format_value(%{} = sub), do: "{#{format_message(sub)}}"
+  defp format_value(sub = %{}), do: "{#{format_message(sub)}}"
 
   defp format_value(list) when is_list(list) do
     Enum.map_join(list, "; ", fn
-      %{} = sub -> "{#{format_message(sub)}}"
+      sub = %{} -> "{#{format_message(sub)}}"
       str -> str
     end)
   end
