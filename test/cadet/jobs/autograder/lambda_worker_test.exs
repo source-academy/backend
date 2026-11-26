@@ -265,11 +265,6 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
           runtime: question.grading_library.runtime,
           language: question.grading_library.language,
           evaluator: question.grading_library.evaluator
-        },
-        userLibrary: %{
-          chapter: question.library.chapter,
-          language: question.library.language,
-          evaluator: question.library.evaluator
         }
       }
 
@@ -294,7 +289,9 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
   end
 
   describe "language and evaluator" do
-    test "the event carries the backend grader's and the user's, by id", %{answer: answer} do
+    test "the event carries the backend grader's, by id, and nothing of the user's", %{
+      answer: answer
+    } do
       question =
         insert(:programming_question, %{
           library: build(:library, %{language: "python2", evaluator: "python2Py2js"}),
@@ -309,8 +306,8 @@ defmodule Cadet.Autograder.LambdaWorkerTest do
 
       assert {params.library.language, params.library.evaluator} == {"python4", "python4Py2js"}
 
-      assert {params.userLibrary.language, params.userLibrary.evaluator} ==
-               {"python2", "python2Py2js"}
+      # The grader runs the program under `library` only; the user's language is not sent.
+      refute Map.has_key?(params, :userLibrary)
     end
   end
 
