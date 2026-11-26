@@ -157,7 +157,10 @@ defmodule Cadet.Autograder.LambdaWorker do
         chapter: question.grading_library.chapter,
         external: upcased_name_external,
         globals: Enum.map(question.grading_library.globals, fn {k, v} -> [k, v] end),
-        runtime: question.grading_library.runtime
+        runtime: question.grading_library.runtime,
+        # the backend grader's language and evaluator, by their ids in the language directory
+        language: question.grading_library.language,
+        evaluator: question.grading_library.evaluator
       }
     }
   end

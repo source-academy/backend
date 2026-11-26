@@ -14,11 +14,15 @@ defmodule Cadet.Assessments.Library do
     field(:globals, :map, default: %{})
     field(:language_options, :map, default: %{})
     field(:runtime, :string, default: "python")
+    # The language and the evaluator, by their ids in the language directory (for example "ocaml"
+    # and "ocamlJsOfOCaml"). They name what runs, instead of a position in the directory (`chapter`).
+    field(:language, :string, default: nil)
+    field(:evaluator, :string, default: nil)
     embeds_one(:external, ExternalLibrary, on_replace: :update)
   end
 
   @required_fields ~w(chapter)a
-  @optional_fields ~w(globals variant language_options exec_time_ms runtime)a
+  @optional_fields ~w(globals variant language_options exec_time_ms runtime language evaluator)a
   @required_embeds ~w(external)a
 
   def changeset(library, params \\ %{}) do
@@ -30,6 +34,28 @@ defmodule Cadet.Assessments.Library do
     |> validate_globals()
     |> validate_chapter()
     |> validate_chapter_variant()
+    |> validate_language_and_evaluator()
+  end
+
+  # A language id and an evaluator id name a language directory entry: letters and digits. An
+  # evaluator is only meaningful with its language.
+  @id_format ~r/^[A-Za-z][A-Za-z0-9_]*$/
+
+  defp validate_language_and_evaluator(changeset) do
+    changeset
+    |> validate_format(:language, @id_format, message: "invalid language id")
+    |> validate_format(:evaluator, @id_format, message: "invalid evaluator id")
+    |> validate_evaluator_has_language()
+  end
+
+  defp validate_evaluator_has_language(changeset) do
+    case {fetch_field(changeset, :language), fetch_field(changeset, :evaluator)} do
+      {{_, language}, {_, evaluator}} when is_nil(language) and not is_nil(evaluator) ->
+        add_error(changeset, :evaluator, "an evaluator needs its language")
+
+      _ ->
+        changeset
+    end
   end
 
   defp validate_globals(changeset) do

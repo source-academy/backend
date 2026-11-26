@@ -12,8 +12,18 @@ defmodule CadetWeb.AssessmentsHelpers do
       globals: :globals,
       external: &build_external_library(%{external_library: &1.external}),
       languageOptions: :language_options,
-      runtime: :runtime
+      runtime: :runtime,
+      language: :language,
+      evaluator: :evaluator
     })
+  end
+
+  # What the test cases run under in the workspace; nil for a question saved before it existed
+  defp build_frontend_grading_library(question) do
+    case Map.get(question, :frontend_grading_library) do
+      nil -> nil
+      library -> build_library(%{library: library})
+    end
   end
 
   defp build_external_library(%{external_library: external_library}) do
@@ -52,6 +62,7 @@ defmodule CadetWeb.AssessmentsHelpers do
       id: :id,
       type: :type,
       library: &build_library(%{library: &1.library}),
+      frontendGradingLibrary: &build_frontend_grading_library/1,
       maxXp: :max_xp,
       blocking: :blocking
     })
