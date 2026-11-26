@@ -8,7 +8,6 @@ defmodule CadetWeb.AuthController do
 
   alias Cadet.{Accounts, Accounts.User}
   alias Cadet.Auth.{Guardian, Provider}
-  alias Cadet.TokenExchange
 
   @doc """
   Receives a /login request with valid attributes.
@@ -51,142 +50,6 @@ defmodule CadetWeb.AuthController do
   def create(conn, _params) do
     Logger.error("Login request failed due to missing parameters.")
     send_resp(conn, :bad_request, "Missing parameter")
-  end
-
-  @doc """
-  Callback URL which processes a SAML redirect from the Assertion Consumer Service (ACS).
-  """
-  def saml_redirect(
-        conn,
-        %{
-          "provider" => provider
-        }
-      ) do
-    Logger.info("Processing SAML redirect for provider '#{provider}'.")
-
-    case create_user_and_tokens(%{
-           conn: conn,
-           provider_instance: provider,
-           code: nil,
-           client_id: nil,
-           redirect_uri: nil
-         }) do
-      {:ok, tokens} ->
-        {_provider, %{client_redirect_url: client_redirect_url}} =
-          Application.get_env(:cadet, :identity_providers, %{})[provider]
-
-        encoded_tokens = tokens |> Jason.encode!()
-
-        Logger.info("SAML redirect successful for provider '#{provider}'. Redirecting to client.")
-
-        conn
-        |> put_resp_cookie("jwts", encoded_tokens,
-          domain: URI.new!(client_redirect_url).host,
-          http_only: false
-        )
-        |> put_resp_header("location", URI.encode(client_redirect_url))
-        |> send_resp(302, "")
-        |> halt()
-
-      conn ->
-        Logger.error("SAML redirect failed for provider '#{provider}'.")
-        conn
-    end
-  end
-
-  def saml_redirect(conn, _params) do
-    Logger.error("SAML redirect request failed due to missing parameters.")
-    send_resp(conn, :bad_request, "Missing parameter")
-  end
-
-  @doc """
-  Exchanges a short-lived code for access and refresh tokens.
-  """
-  def exchange(
-        conn,
-        %{
-          "code" => code,
-          "provider" => provider
-        }
-      ) do
-    Logger.info("Exchanging code for tokens for provider '#{provider}'.")
-
-    case TokenExchange.get_by_code(code) do
-      {:error, _message} ->
-        Logger.error("Code exchange failed. Invalid code provided.")
-
-        conn
-        |> put_status(:forbidden)
-        |> text("Invalid code")
-
-      {:ok, struct} ->
-        tokens = generate_tokens(struct.user)
-
-        {_provider, %{client_post_exchange_redirect_url: client_post_exchange_redirect_url}} =
-          Application.get_env(:cadet, :identity_providers, %{})[provider]
-
-        Logger.info("Code exchange successful for provider '#{provider}'. Redirecting to client.")
-
-        conn
-        |> put_resp_header(
-          "location",
-          URI.encode(
-            client_post_exchange_redirect_url <>
-              "?access_token=" <> tokens.access_token <> "&refresh_token=" <> tokens.refresh_token
-          )
-        )
-        |> send_resp(302, "")
-        |> halt()
-    end
-  end
-
-  @doc """
-  Alternate callback URL which redirect to VSCode via deeplinking.
-  """
-  def saml_redirect_vscode(
-        conn,
-        %{
-          "provider" => provider
-        }
-      ) do
-    Logger.info("Processing SAML redirect for VSCode with provider '#{provider}'.")
-
-    code_ttl = 60
-
-    case create_user(%{
-           conn: conn,
-           provider_instance: provider,
-           code: nil,
-           client_id: nil,
-           redirect_uri: nil
-         }) do
-      {:ok, user} ->
-        code = generate_code()
-
-        TokenExchange.insert(%{
-          code: code,
-          generated_at: DateTime.utc_now(),
-          expires_at: DateTime.add(DateTime.utc_now(), code_ttl, :second),
-          user_id: user.id
-        })
-
-        {_provider, %{vscode_redirect_url_prefix: vscode_redirect_url_prefix}} =
-          Application.get_env(:cadet, :identity_providers, %{})[provider]
-
-        Logger.info("SAML redirect for VSCode successful. Redirecting with generated code.")
-
-        conn
-        |> put_resp_header(
-          "location",
-          vscode_redirect_url_prefix <> "?provider=" <> provider <> "&code=" <> code
-        )
-        |> send_resp(302, "")
-        |> halt()
-
-      conn ->
-        Logger.error("SAML redirect for VSCode failed for provider '#{provider}'.")
-        conn
-    end
   end
 
   @spec create_user(Provider.authorise_params()) :: {:ok, User.t()} | Plug.Conn.t()
@@ -295,14 +158,6 @@ defmodule CadetWeb.AuthController do
     %{access_token: access_token, refresh_token: refresh_token}
   end
 
-  @spec generate_code :: String.t()
-  defp generate_code do
-    16
-    |> :crypto.strong_rand_bytes()
-    |> Base.url_encode64(padding: false)
-    |> String.slice(0, 22)
-  end
-
   swagger_path :create do
     post("/auth/login")
 
@@ -362,16 +217,6 @@ defmodule CadetWeb.AuthController do
     response(200, "OK")
     response(400, "Missing parameter(s)")
     response(401, "Invalid token")
-  end
-
-  swagger_path :saml_redirect do
-    get("/auth/saml_redirect")
-
-    summary(
-      "SAML redirect endpoint after Assertion Consumer Service validation. Generates JWT tokens before redirecting again to the frontend."
-    )
-
-    response(302, "Found")
   end
 
   def swagger_definitions do

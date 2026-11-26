@@ -57,14 +57,6 @@ config :cadet,
     #      claim_extractor: Cadet.Auth.Providers.CognitoClaimExtractor
     #    }},
 
-    # # Example SAML authentication with NUS Student IdP
-    # "test_saml" =>
-    #   {Cadet.Auth.Providers.SAML,
-    #    %{
-    #      assertion_extractor: Cadet.Auth.Providers.NusstuAssertionExtractor,
-    #      client_redirect_url: "http://cadet.frontend:8000/login/callback"
-    #    }},
-
     "test" =>
       {Cadet.Auth.Providers.Config,
        [
@@ -156,28 +148,3 @@ config :cadet,
 # When true, only super admins may create courses.
 # config :cadet, restrict_course_creation: true
 
-# # Additional configuration for SAML authentication
-# # For more details, see https://github.com/handnot2/samly
-# config :samly, Samly.Provider,
-#   idp_id_from: :path_segment,
-#   service_providers: [
-#     %{
-#       id: "source-academy-backend",
-#       certfile: "example_path/certfile.pem",
-#       keyfile: "example_path/keyfile.pem"
-#     }
-#   ],
-#   identity_providers: [
-#     %{
-#       id: "student",
-#       sp_id: "source-academy-backend",
-#       base_url: "https://example_backend/sso",
-#       metadata_file: "student_idp_metadata.xml"
-#     },
-#     %{
-#       id: "staff",
-#       sp_id: "source-academy-backend",
-#       base_url: "https://example_backend/sso",
-#       metadata_file: "staff_idp_metadata.xml"
-#     }
-#   ]
