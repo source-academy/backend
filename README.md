@@ -140,6 +140,28 @@ We follow this style guide: <https://github.com/lexmag/elixir-style-guide> and <
 
 Where there is a conflict between the two, the first one (lexmag) shall be the one followed.
 
+## Deploying
+
+A release is built by the `Build release` workflow (`.github/workflows/cd.yml`) on every push to `stable`, `master`, `deploy` or `deploy-stg`, and published as the GitHub release `latest-<branch>` (`cadet-0.0.1.tar.gz`). `deployment/terraform` describes the AWS infrastructure (EC2, RDS, Lambda, ...).
+
+On a server (an Ubuntu instance running systemd), [`deployment/init.sh`](deployment/init.sh) installs or upgrades the application. Run it as root. It downloads the `latest-deploy` release, stops the `cadet` service, replaces `/opt/cadet`, starts the service again and waits until the application answers.
+
+### Database migrations
+
+**`init.sh` ends by migrating the database:** it runs `bin/cadet rpc Cadet.Release.migrate` ([`lib/cadet/release.ex`](lib/cadet/release.ex)), which applies every pending migration in `priv/repo/migrations`. A deployment through `init.sh` therefore needs no extra step.
+
+If you deploy a release another way, run the migrations yourself once the new release is running:
+
+```bash
+/opt/cadet/bin/cadet rpc Cadet.Release.migrate
+```
+
+Things to know before deploying a release that adds a migration (a new file in `priv/repo/migrations`):
+
+- The new release starts **before** it is migrated, so for the few seconds in between, requests that need a new column can fail.
+- The deployment scripts neither roll a migration back nor back the database up. Take a database snapshot first if the migration is not purely additive (adding a nullable column is).
+- Look at the migration (and the pull request that adds it) before you deploy.
+
 ## Entity-Relationship Diagram
 
 Generated with [DBeaver](https://dbeaver.io/) on 19 May 2024
