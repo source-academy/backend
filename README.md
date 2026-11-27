@@ -144,6 +144,8 @@ Where there is a conflict between the two, the first one (lexmag) shall be the o
 
 A release is built by the `Build release` workflow (`.github/workflows/cd.yml`) on every push to `stable`, `master`, `deploy` or `deploy-stg`, and published as the GitHub release `latest-<branch>` (`cadet-0.0.1.tar.gz`). `deployment/terraform` describes the AWS infrastructure (EC2, RDS, Lambda, ...).
 
+The Node.js runtime of the Lambdas (`runtime` in [`deployment/terraform/lambda.tf`](deployment/terraform/lambda.tf)) is the version given on the *Node.js version* page of the Source Academy documentation (the `source-academy/documentation` repository), and changes when that page does. `lambda.tf` still says `nodejs12.x`, which does not match: it is to be corrected once the runtime of the function that is deployed has been checked in AWS (source-academy/documentation#52).
+
 On a server (an Ubuntu instance running systemd), [`deployment/init.sh`](deployment/init.sh) installs or upgrades the application. Run it as root. It downloads the `latest-deploy` release, stops the `cadet` service, replaces `/opt/cadet`, starts the service again and waits until the application answers.
 
 ### Database migrations
