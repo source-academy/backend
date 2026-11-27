@@ -2863,13 +2863,9 @@ defmodule Cadet.AssessmentsTest do
           end
         )
 
-      Enum.reduce(
-        submissions_by_title,
-        fn x, y ->
-          assert x.title >= y.title
-          y
-        end
-      )
+      submissions_by_title
+      |> Enum.map(& &1.title)
+      |> assert_sorted_by_db_collation(:asc)
     end
 
     test "sorting by assessment title descending", %{
@@ -2897,13 +2893,9 @@ defmodule Cadet.AssessmentsTest do
           end
         )
 
-      Enum.reduce(
-        submissions_by_title,
-        fn x, y ->
-          assert x.title <= y.title
-          y
-        end
-      )
+      submissions_by_title
+      |> Enum.map(& &1.title)
+      |> assert_sorted_by_db_collation(:desc)
     end
 
     test "sorting by assessment type ascending", %{
@@ -3387,5 +3379,27 @@ defmodule Cadet.AssessmentsTest do
   defp get_all_student_xp(all_users) do
     all_users.users
     |> Enum.map(fn user -> user.total_xp end)
+  end
+
+  # submissions_by_grader_for_index sorts titles with `upper(title)` in the
+  # database, which uses PostgreSQL's locale collation. That ordering does not
+  # match Elixir's binary string comparison (e.g. they disagree on how spaces
+  # and punctuation sort relative to letters), so comparing the returned titles
+  # with Elixir's `<=`/`>=` is flaky against the randomly generated titles.
+  # Instead, assert the returned order matches how the database itself sorts the
+  # same titles, comparing `upper(title)` on both sides for a stable check.
+  defp assert_sorted_by_db_collation(titles, direction) when direction in [:asc, :desc] do
+    %{rows: [[returned, expected]]} =
+      Repo.query!(
+        """
+        SELECT
+          array_agg(upper(t) ORDER BY ord),
+          array_agg(upper(t) ORDER BY upper(t) #{direction})
+        FROM unnest($1::text[]) WITH ORDINALITY AS x(t, ord)
+        """,
+        [titles]
+      )
+
+    assert returned == expected
   end
 end
