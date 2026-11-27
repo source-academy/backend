@@ -18,6 +18,10 @@ on:
       - ".github/workflows/cd.yml"
       - "!config/*.example"
 
+# The release step (marvinpinto/action-automatic-releases) creates a release with the built-in token.
+permissions:
+  contents: write
+
 jobs:
   ci:
     name: Build release
