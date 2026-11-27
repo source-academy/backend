@@ -4,6 +4,7 @@ defmodule Cadet.AssessmentsTest do
   import Cadet.{Factory, TestEntityHelper}
   alias Cadet.Assessments
   alias Cadet.Assessments.{Assessment, Question, SubmissionVotes, Submission, Answer}
+  import Ecto.Query, only: [from: 2]
 
   test "create assessments of all types" do
     course = insert(:course)
@@ -2863,13 +2864,7 @@ defmodule Cadet.AssessmentsTest do
           end
         )
 
-      Enum.reduce(
-        submissions_by_title,
-        fn x, y ->
-          assert x.title >= y.title
-          y
-        end
-      )
+      assert_sorted_by_database_title(submissions_by_title, :asc)
     end
 
     test "sorting by assessment title descending", %{
@@ -2897,13 +2892,7 @@ defmodule Cadet.AssessmentsTest do
           end
         )
 
-      Enum.reduce(
-        submissions_by_title,
-        fn x, y ->
-          assert x.title <= y.title
-          y
-        end
-      )
+      assert_sorted_by_database_title(submissions_by_title, :desc)
     end
 
     test "sorting by assessment type ascending", %{
@@ -3387,5 +3376,28 @@ defmodule Cadet.AssessmentsTest do
   defp get_all_student_xp(all_users) do
     all_users.users
     |> Enum.map(fn user -> user.total_xp end)
+  end
+
+  # The database sorts titles with its own collation, which ignores spaces and punctuation, so
+  # comparing the titles with Elixir's byte order (`>=`) fails on random titles such as "I will
+  # speak daggers to her, but use none." and "In my mind's eye.". The expected order is the one
+  # that the database gives the same titles.
+  defp assert_sorted_by_database_title(assessments, direction) do
+    titles = Enum.map(assessments, & &1.title)
+
+    rank =
+      Cadet.Repo.all(
+        from(a in Assessment,
+          where: a.title in ^titles,
+          distinct: a.title,
+          order_by: [{^direction, a.title}],
+          select: a.title
+        )
+      )
+      |> Enum.with_index()
+      |> Map.new()
+
+    ranks = Enum.map(titles, &Map.fetch!(rank, &1))
+    assert ranks == Enum.sort(ranks)
   end
 end
