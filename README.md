@@ -2,7 +2,6 @@
 
 [![Build Status](https://travis-ci.org/source-academy/backend.svg?branch=master)](https://travis-ci.org/source-academy/backend)
 [![Coverage Status](https://coveralls.io/repos/github/source-academy/backend/badge.svg?branch=master)](https://coveralls.io/github/source-academy/backend?branch=master)
-[![Inline docs](https://inch-ci.org/github/source-academy/backend.svg)](http://inch-ci.org/github/source-academy/backend)
 [![License](https://img.shields.io/github/license/source-academy/backend)](https://github.com/source-academy/backend/blob/master/LICENSE)
 
 Cadet is the web application powering Source Academy.
